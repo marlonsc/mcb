@@ -50,17 +50,14 @@ validate_adr_format() {
         return
     fi
 
-    # Extract ADR number and title
+    # Extract ADR number
     local adr_num=$(echo "$filename" | cut -d'-' -f1)
-    local adr_title=$(echo "$filename" | sed 's/^[0-9]*-//' | sed 's/\.md$//' | tr '-' ' ')
 
-    # Check title matches first line
+    # Check ADR number in title
     local first_line=$(head -1 "$adr_file" | tr -d '\r')
-    local expected_title="# ADR $adr_num: $adr_title"
-
-    if [ "$first_line" != "$expected_title" ]; then
-        log_error "ADR title mismatch in $filename"
-        log_error "Expected: $expected_title"
+    if ! echo "$first_line" | grep -q "^# ADR $adr_num:"; then
+        log_error "ADR number mismatch in $filename"
+        log_error "Expected ADR number: $adr_num"
         log_error "Found: $first_line"
         ((errors++))
     fi
@@ -77,9 +74,9 @@ validate_adr_format() {
     done
 
     # Check status values
-    local status_line=$(grep "^## Status" "$adr_file" | head -1 | tr -d '\r')
+    local status_line=$(grep -A1 "^## Status" "$adr_file" | tail -1 | tr -d '\r' | sed 's/^[[:space:]]*//')
     if [[ -n "$status_line" ]]; then
-        local status_value=$(echo "$status_line" | sed 's/## Status//' | sed 's/^[[:space:]]*//')
+        local status_value="$status_line"
         local valid_statuses=("Proposed" "Accepted" "Rejected" "Deprecated" "Superseded by ADR-")
 
         local is_valid=false

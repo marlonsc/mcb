@@ -1,0 +1,24 @@
+@startuml System Context - MCP Context Browser
+!include <C4/C4_Container>
+
+title System Context - MCP Context Browser
+
+Person(ai_user, "AI Assistant User", "Uses AI assistants like Claude Desktop, ChatGPT")
+Person(developer, "Developer", "Writes and maintains code")
+
+System(mcp_server, "MCP Context Browser", "Provides semantic code search and analysis capabilities")
+System(codebase, "Code Repository", "Git repositories with source code files")
+System_Ext(ai_provider, "AI Provider", "OpenAI, Anthropic, Ollama for embeddings")
+System_Ext(vector_db, "Vector Database", "Milvus, Pinecone, Qdrant for vector storage")
+System_Ext(metadata_store, "Metadata Store", "PostgreSQL for structured data")
+
+Rel(ai_user, mcp_server, "Queries code using natural language", "MCP Protocol")
+Rel(developer, mcp_server, "Indexes and searches code", "MCP Protocol")
+Rel(developer, codebase, "Manages code repositories", "Git")
+
+Rel(mcp_server, codebase, "Reads and indexes code files", "File System")
+Rel(mcp_server, ai_provider, "Generates vector embeddings", "HTTP/gRPC")
+Rel(mcp_server, vector_db, "Stores and searches vectors", "gRPC/REST")
+Rel(mcp_server, metadata_store, "Stores metadata and search history", "SQL")
+
+@enduml

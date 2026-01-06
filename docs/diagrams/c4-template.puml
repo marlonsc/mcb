@@ -1,0 +1,73 @@
+@startuml C4 Template
+!include <C4/C4_Container>
+
+' C4 Model Template for MCP Context Browser
+' Copy this template and customize for specific diagrams
+
+' Level 1: System Context
+' Uncomment and customize for system context diagrams
+'
+' title System Context - [System Name]
+'
+' Person(user, "[User Type]", "[User Description]")
+' System(system, "[System Name]", "[System Description]")
+' System_Ext(external, "[External System]", "[External Description]")
+'
+' Rel(user, system, "[Relationship]", "[Technology]")
+
+' Level 2: Container Architecture
+' Uncomment and customize for container diagrams
+'
+' title Container - [System Name]
+'
+' Person(user, "[User Type]", "[User Description]")
+'
+' System_Boundary(system_boundary, "[System Name]") {
+'     Container(api, "[Container Name]", "[Technology]", "[Description]")
+'     Container(service, "[Container Name]", "[Technology]", "[Description]")
+'     Container(database, "[Container Name]", "[Technology]", "[Description]")
+' }
+'
+' System_Ext(external, "[External System]", "[Description]")
+'
+' Rel(user, api, "[Relationship]", "[Technology]")
+' Rel(api, service, "[Relationship]", "[Technology]")
+' Rel(service, database, "[Relationship]", "[Technology]")
+' Rel(service, external, "[Relationship]", "[Technology]")
+
+' Level 3: Component Architecture
+' Uncomment and customize for component diagrams
+'
+' title Component - [Container Name]
+'
+' Container_Boundary(container, "[Container Name]") {
+'     Component(component1, "[Component Name]", "[Technology]", "[Description]")
+'     Component(component2, "[Component Name]", "[Technology]", "[Description]")
+'     Component(component3, "[Component Name]", "[Technology]", "[Description]")
+' }
+'
+' System_Ext(external, "[External System]", "[Description]")
+'
+' Rel(component1, component2, "[Relationship]", "[Technology]")
+' Rel(component2, component3, "[Relationship]", "[Technology]")
+' Rel(component3, external, "[Relationship]", "[Technology]")
+
+' Level 4: Code Architecture (Class Diagrams)
+' Uncomment and customize for code-level diagrams
+'
+' title Class - [Component Name]
+'
+' class Class1 {
+'     +method1()
+'     +method2()
+'     -field1
+' }
+'
+' class Class2 {
+'     +method1()
+'     -field1
+' }
+'
+' Class1 --> Class2 : uses
+
+@enduml

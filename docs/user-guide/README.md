@@ -3,13 +3,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.0.1--alpha-blue)](https://github.com/marlonsc/mcp-context-browser/releases)
+[![Version](https://img.shields.io/badge/version-0.0.2--alpha-blue)](https://github.com/marlonsc/mcp-context-browser/releases)
 
 **Model Context Protocol Server** - Provides semantic code search and analysis capabilities to AI assistants through a standardized MCP interface.
 
-## 🎯 Current Capabilities (v0.0.1)
+## 🎯 Current Capabilities (v0.0.2)
 
 ### Core Features
+
 - **🔍 Vector-Based Search**: Semantic similarity search using embeddings
 - **💾 In-Memory Storage**: Fast vector storage for development and testing
 - **🎭 Mock Embeddings**: Fixed-dimension embedding generation for testing
@@ -17,6 +18,7 @@
 - **📁 File Processing**: Simple text-based code file reading and chunking
 
 ### Architecture
+
 - **🏗️ Modular Design**: Clean separation with core, providers, services, and server layers
 - **🔌 Provider Pattern**: Extensible system for embeddings and vector storage
 - **⚡ Async Processing**: Tokio-based asynchronous operations
@@ -24,14 +26,7 @@
 
 ## 📋 Documentation
 
-- [**ARCHITECTURE.md**](ARCHITECTURE.md) - Technical architecture and design
-- [**ROADMAP.md**](ROADMAP.md) - Development roadmap and milestones
-- [**DEPLOYMENT.md**](DEPLOYMENT.md) - Deployment guides and configurations
-- [**CONTRIBUTING.md**](CONTRIBUTING.md) - Contribution guidelines
-
-## 📋 Documentation
-
-- [**ARCHITECTURE.md**](ARCHITECTURE.md) - Technical architecture and design
+- [**ARCHITECTURE.md**](../architecture/ARCHITECTURE.md) - Technical architecture and design
 - [**ROADMAP.md**](ROADMAP.md) - Development roadmap and milestones
 - [**DEPLOYMENT.md**](DEPLOYMENT.md) - Deployment guides and configurations
 - [**CONTRIBUTING.md**](CONTRIBUTING.md) - Contribution guidelines

@@ -124,7 +124,7 @@ mod tests {
     fn test_indexing_service_creation() {
         let service_provider = create_test_service_provider();
         let context_service = Arc::new(ContextService::new(&service_provider).unwrap());
-        let indexing_service = IndexingService::new(context_service);
+        let _indexing_service = IndexingService::new(context_service);
 
         // Just verify it can be created
         assert!(true); // If we reach here, creation was successful
@@ -167,7 +167,7 @@ mod tests {
     fn test_search_service_creation() {
         let service_provider = create_test_service_provider();
         let context_service = Arc::new(ContextService::new(&service_provider).unwrap());
-        let search_service = SearchService::new(context_service);
+        let _search_service = SearchService::new(context_service);
 
         // Just verify it can be created
         assert!(true);

@@ -1,15 +1,12 @@
 # ADR 004: Multi-Provider Strategy
 
 ## Status
-
 Accepted
 
 ## Context
-
 The MCP Context Browser depends on external AI and storage services that have varying reliability, cost structures, and performance characteristics. Single-provider architectures create vendor lock-in, single points of failure, and cost optimization challenges.
 
 External dependencies and risks:
-
 - **AI Providers**: OpenAI (expensive, reliable), Ollama (free, local), Anthropic (premium)
 - **Vector Databases**: Milvus (scalable, complex), Pinecone (managed, expensive), Qdrant (simple, limited scale)
 - **Service Outages**: Any provider can experience downtime
@@ -20,11 +17,9 @@ External dependencies and risks:
 The system needs to be resilient, cost-effective, and performant while avoiding vendor lock-in.
 
 ## Decision
-
 Implement a multi-provider strategy with automatic failover, load balancing, and provider selection based on context. The system will support multiple providers for each service type with intelligent routing and fallback mechanisms.
 
 Key architectural elements:
-
 - **Provider Health Monitoring**: Continuous monitoring of provider availability and performance
 - **Intelligent Routing**: Context-aware provider selection (cost, speed, quality)
 - **Automatic Failover**: Seamless fallback to alternative providers
@@ -33,11 +28,9 @@ Key architectural elements:
 - **Configuration Flexibility**: Runtime provider switching and reconfiguration
 
 ## Consequences
-
 Multi-provider strategy provides excellent resilience and flexibility but adds significant operational complexity.
 
 ### Positive Consequences
-
 - **High Availability**: No single points of failure for external services
 - **Cost Optimization**: Choose providers based on cost/performance trade-offs
 - **Performance Optimization**: Route to fastest available provider
@@ -46,7 +39,6 @@ Multi-provider strategy provides excellent resilience and flexibility but adds s
 - **Quality Control**: Select providers based on use case requirements
 
 ### Negative Consequences
-
 - **Operational Complexity**: Managing multiple provider configurations
 - **Development Overhead**: Additional abstraction layers and error handling
 - **Testing Complexity**: Need to test with multiple provider combinations
@@ -57,21 +49,18 @@ Multi-provider strategy provides excellent resilience and flexibility but adds s
 ## Alternatives Considered
 
 ### Alternative 1: Single Provider Architecture
-
 - **Description**: Use one primary provider for each service type
 - **Pros**: Simpler implementation, easier configuration, predictable costs
 - **Cons**: Vendor lock-in, single point of failure, limited flexibility
 - **Rejection Reason**: Creates unacceptable availability and cost risks
 
 ### Alternative 2: Provider Abstraction Only
-
 - **Description**: Abstract providers but still use single provider at runtime
 - **Pros**: Ready for multi-provider, simpler initial implementation
 - **Cons**: Doesn't solve availability issues, still vendor-dependent
 - **Rejection Reason**: Doesn't provide the resilience and flexibility needed
 
 ### Alternative 3: Provider Mesh with Manual Failover
-
 - **Description**: Support multiple providers but require manual intervention for failover
 - **Pros**: Simpler than automatic failover, still provides flexibility
 - **Cons**: Slow recovery from outages, requires on-call intervention
@@ -350,5 +339,6 @@ impl ProviderCircuitBreaker {
 ```
 
 ## References
-
 - [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
+- [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/provider-selection-strategies/)
+- [Multi-Cloud Architecture Patterns](https://aws.amazon.com/blogs/architecture/category/multi-cloud/)

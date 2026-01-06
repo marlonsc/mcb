@@ -379,7 +379,7 @@ This release represents months of architectural design and prototyping. Special 
 **Released**: January 6, 2026
 **Maintainer**: Marlon Carvalho <marlonsc@proton.me>
 **License**: MIT
-**Repository**: <https://github.com/marlonsc/mcp-context-browser>
+**Repository**: https://github.com/marlonsc/mcp-context-browser
 
 ## [0.0.1] - 2026-01-06
 

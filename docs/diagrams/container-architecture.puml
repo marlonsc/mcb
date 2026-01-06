@@ -1,0 +1,38 @@
+@startuml Container - MCP Context Browser
+!include <C4/C4_Container>
+
+title Container - MCP Context Browser
+
+Person(ai_user, "AI Assistant User", "Uses AI assistants for code queries")
+Person(developer, "Developer", "Manages code indexing and searching")
+
+System_Boundary(mcp_system, "MCP Context Browser") {
+    Container(mcp_server, "MCP Server", "Rust/Tokio", "Protocol handler, tool dispatcher")
+    Container(core_services, "Core Services", "Rust", "Business logic, orchestration")
+    Container(provider_layer, "Provider Layer", "Rust + SDKs", "AI and storage provider abstractions")
+    Container(metadata_store, "Metadata Store", "PostgreSQL", "Structured data, search history")
+    Container(vector_db, "Vector Database", "Milvus/Qdrant", "High-dimensional vector storage")
+    Container(cache, "Cache Layer", "Redis", "Fast data caching and sessions")
+}
+
+System_Ext(code_repository, "Code Repository", "Git repositories, file systems")
+System_Ext(ai_provider, "AI Provider", "OpenAI, Ollama, Anthropic")
+System_Ext(identity_provider, "Identity Provider", "Optional OAuth/JWT provider")
+
+Rel(ai_user, mcp_server, "MCP protocol messages", "stdio/HTTP")
+Rel(developer, mcp_server, "MCP protocol messages", "stdio/HTTP")
+
+Rel(mcp_server, core_services, "Tool calls, responses", "Internal API")
+Rel(core_services, provider_layer, "Provider operations", "Async traits")
+Rel(core_services, metadata_store, "CRUD operations", "SQL")
+Rel(core_services, vector_db, "Vector operations", "gRPC/REST")
+Rel(core_services, cache, "Cache operations", "Redis protocol")
+
+Rel(provider_layer, ai_provider, "Embedding generation", "HTTP/gRPC")
+Rel(provider_layer, vector_db, "Vector storage/retrieval", "gRPC/REST")
+
+Rel(core_services, code_repository, "File reading, indexing", "File system/Git")
+
+Rel(mcp_server, identity_provider, "Authentication (future)", "OAuth/JWT")
+
+@enduml

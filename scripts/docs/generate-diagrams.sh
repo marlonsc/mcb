@@ -7,8 +7,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DIAGRAMS_DIR="$PROJECT_ROOT/docs/diagrams"
-OUTPUT_DIR="$PROJECT_ROOT/docs/diagrams/generated"
+DIAGRAMS_DIR="$PROJECT_ROOT/docs/architecture/diagrams"
+OUTPUT_DIR="$PROJECT_ROOT/docs/architecture/diagrams/generated"
 
 # Colors for output
 RED='\033[0;31m'

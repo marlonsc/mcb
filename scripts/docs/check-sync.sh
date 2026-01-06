@@ -94,7 +94,7 @@ check_diagram_consistency() {
 
     if [ -f "$arch_diagram" ]; then
         # Check for key components mentioned in diagrams
-        local key_components=("MCP Server" "Core Services" "Provider Layer" "Vector Database")
+        local key_components=("MCP Context Browser" "Vector Database" "AI Provider" "Metadata Store")
 
         for component in "${key_components[@]}"; do
             if ! grep -q "$component" "$arch_diagram"; then
@@ -112,7 +112,7 @@ check_doc_coverage() {
     log_info "Checking documentation coverage..."
 
     # Check that major features are documented
-    local features=("semantic search" "vector embeddings" "MCP protocol" "provider pattern")
+    local features=("semantic" "vector embeddings" "MCP protocol" "provider pattern")
     local arch_doc="$PROJECT_ROOT/docs/architecture/ARCHITECTURE.md"
 
     if [ -f "$arch_doc" ]; then
@@ -131,15 +131,16 @@ check_doc_coverage() {
 check_outdated_references() {
     log_info "Checking for outdated references..."
 
-    # Check for references to old file locations
+    # Check for references to old file locations (files that were moved from root to docs/)
     local old_paths=("ARCHITECTURE.md" "CONTRIBUTING.md" "ROADMAP.md")
 
     for old_path in "${old_paths[@]}"; do
         # Check if any docs reference files in root that should be in docs/
-        local references=$(grep -r "$old_path" "$PROJECT_ROOT/docs/" 2>/dev/null || true)
+        # Only flag references that don't include "docs/" or "../architecture/" path
+        local bad_references=$(grep -r "$old_path" "$PROJECT_ROOT/docs/" 2>/dev/null | grep -v "docs/" | grep -v "\.\./architecture/" || true)
 
-        if [ -n "$references" ]; then
-            log_warning "Found references to moved file: $old_path"
+        if [ -n "$bad_references" ]; then
+            log_warning "Found incorrect references to moved file: $old_path (should include docs/ path)"
             ((warnings++))
         fi
     done

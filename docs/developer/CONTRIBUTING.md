@@ -154,7 +154,7 @@ Include:
 
 - **Issues**: Use GitHub Issues for bugs and features
 - **Discussions**: Use GitHub Discussions for questions
-- **Documentation**: Check ARCHITECTURE.md for technical details
+- **Documentation**: Check docs/architecture/ARCHITECTURE.md for technical details
 
 ## 🙏 Code of Conduct
 
