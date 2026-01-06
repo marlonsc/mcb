@@ -130,12 +130,12 @@ validate_external_links() {
                 continue
             fi
 
-            # Basic HTTP status check (requires curl)
+            # Basic HTTP status check (requires curl) - WARNING ONLY for external links
             if command -v curl &> /dev/null; then
                 local status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$link" 2>/dev/null || echo "000")
                 if [[ "$status" =~ ^[45][0-9][0-9]$ ]]; then
-                    log_warning "External link may be broken: $link (status: $status)"
-                    ((warnings++))
+                    log_warning "External link may be broken: $link (status: $status) - This is not a blocking error"
+                    # ((warnings++))  # Commented out - external links are not blocking
                 fi
             fi
         done

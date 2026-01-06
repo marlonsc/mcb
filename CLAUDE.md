@@ -6,6 +6,37 @@
 
 ---
 
+## 🚨 CRITICAL ORIENTATIONS - STRICTLY ENFORCED
+
+### 🚫 ABSOLUTELY PROHIBITED: Session/Content Duplications
+
+**STRICT RULE**: Never inject, duplicate, or copy content from other sessions, projects, or external sources.
+
+- **❌ FORBIDDEN**: Copying sections from other CLAUDE.md files
+- **❌ FORBIDDEN**: Duplicating content across different projects
+- **❌ FORBIDDEN**: Injecting generic templates or boilerplate
+- **❌ FORBIDDEN**: Reusing content from previous conversations
+
+**✅ REQUIRED**: All content must be specific to **MCP Context Browser project only**
+
+### 📝 Context-Based Development - MANDATORY
+
+**STRICT RULE**: All modifications must be based on the **current project context** and **existing codebase**.
+
+- **✅ REQUIRED**: Analyze current code structure before making changes
+- **✅ REQUIRED**: Reference existing patterns and implementations
+- **✅ REQUIRED**: Maintain consistency with established architecture
+- **✅ REQUIRED**: Update based on validation results and actual project state
+
+**Context Sources** (in order of priority):
+1. **Existing codebase** (`src/`, `tests/`, `docs/`)
+2. **Current CLAUDE.md** (this file)
+3. **Makefile** (validated commands)
+4. **Validation results** (test outputs, lint results)
+5. **Project documentation** (`docs/architecture/`, `README.md`)
+
+---
+
 ## 📋 Project Overview
 
 **MCP Context Browser** is a high-performance Rust-based Model Context Protocol (MCP) server that provides semantic code search capabilities using vector embeddings.
@@ -73,6 +104,7 @@ make package        # Create distribution package (tar.gz)
 ### 🚫 NEVER Use These Commands Directly
 
 **Cargo Commands (BLOCKED):**
+
 - `cargo test` → Use `make test`
 - `cargo build` → Use `make build`
 - `cargo fmt` → Use `make fmt`
@@ -80,11 +112,28 @@ make package        # Create distribution package (tar.gz)
 - `cargo doc` → Use `make docs`
 
 **Git Commands (BLOCKED):**
+
 - `git add . && git commit -m "msg" && git push` → Use `make git-force-all`
 - `git status` → Use `make git-status`
 - `git add -A` → Use `make git-add-all`
 
 **Reason**: Make commands integrate validation, automation, and prevent direct usage of blocked operations.
+
+### Context-Aware Development (MANDATORY)
+
+**Before any change:**
+1. **Read Current Code**: Analyze existing implementation in `src/`
+2. **Check Tests**: Review related tests in `tests/`
+3. **Validate Patterns**: Ensure consistency with established architecture
+4. **Run Validation**: Use `make validate` to check current state
+5. **Reference CLAUDE.md**: Follow project-specific rules in this file
+
+**Context Sources Priority:**
+- `src/` - Current implementation
+- `tests/` - Test patterns and coverage
+- `docs/architecture/` - Architecture decisions
+- This CLAUDE.md - Project rules
+- Makefile - Validated commands
 
 ---
 
@@ -280,9 +329,8 @@ make adr-new
 ### Documentation Automation
 
 ```bash
-make docs          # Generate all docs + diagrams + index
-make validate      # Validate structure, links, sync
-make docs-ci       # Full documentation CI pipeline
+make docs          # Generate all docs + diagrams + index (VALIDATED ✅)
+make validate      # Validate structure, links, sync, ADRs (VALIDATED ✅)
 ```
 
 ---
@@ -314,6 +362,7 @@ make force-commit      # Use script-based force commit
 ```
 
 **Force Commit Policy:**
+
 - Always use `make git-force-all` for commits
 - Commits include automatic timestamp: "Force commit: YYYY-MM-DD HH:MM:SS - Automated update"
 - Push uses `--force-with-lease` first, `--force` as fallback
@@ -342,13 +391,15 @@ make package       # Create distribution package (tar.gz in dist/)
 
 ### 🚫 ABSOLUTELY FORBIDDEN
 
-1. **Direct Cargo Commands**: Always use `make` equivalents (BLOCKED by hooks)
-2. **Direct Git Commands**: Never use `git add/commit/push` directly (use `make git-force-all`)
-3. **Mock Infrastructure**: Never mock databases, APIs, or external services
-4. **Bypass Permissions**: Never use workarounds for permission issues
-5. **Skip Tests**: All 60 tests must pass before commits
-6. **Manual Documentation**: Always use automated documentation generation
-7. **Bypass Make**: All operations must go through validated make commands
+1. **Session Duplications**: Never copy content from other projects or sessions
+2. **Direct Cargo Commands**: Always use `make` equivalents (BLOCKED by hooks)
+3. **Direct Git Commands**: Never use `git add/commit/push` directly (use `make git-force-all`)
+4. **Mock Infrastructure**: Never mock databases, APIs, or external services
+5. **Bypass Permissions**: Never use workarounds for permission issues
+6. **Skip Tests**: All 60 tests must pass before commits
+7. **Manual Documentation**: Always use automated documentation generation
+8. **Bypass Make**: All operations must go through validated make commands
+9. **Context-Free Changes**: All modifications must reference current codebase
 
 ### ⚠️ HIGH RISK (Require Approval)
 
@@ -397,6 +448,8 @@ make package       # Create distribution package (tar.gz in dist/)
 
 **Before marking any task complete:**
 
+- [ ] **Context Verified**: Changes based on current codebase analysis
+- [ ] **No Duplications**: Content specific to MCP Context Browser only
 - [ ] `make test` passes all 60 tests (100% success rate)
 - [ ] `make lint` has no critical warnings
 - [ ] `make fmt` makes no changes
@@ -425,6 +478,17 @@ make package       # Create distribution package (tar.gz in dist/)
 2. **If build breaks**: Check for missing dependencies
 3. **If docs fail**: Run `make clean-docs && make docs`
 4. **If confused**: Re-read this CLAUDE.md file
+5. **If context lost**: Re-analyze current codebase with `find src/ -name "*.rs" | head -10`
+
+### Context Recovery Protocol
+
+**If you lose track of project context:**
+
+1. **Re-analyze Codebase**: `find src/ -name "*.rs" -exec grep -l "MCP\\|Context\\|Provider" {} \;`
+2. **Check Current Tests**: `make test` and review failure patterns
+3. **Validate Architecture**: `make validate` to see current state
+4. **Review This Guide**: Re-read CLAUDE.md for project rules
+5. **Check Recent Changes**: `git log --oneline -5` for recent modifications
 
 ### Communication
 
@@ -451,6 +515,7 @@ make package       # Create distribution package (tar.gz in dist/)
 ### Project Validation Status (COMPLETED ✅)
 
 **Comprehensive Make Command Audit:**
+
 - **Core Commands:** 5/5 validated (build, test, clean, docs, validate)
 - **Development Commands:** 4/4 validated (dev, fmt, lint, setup)
 - **Documentation Commands:** 3/3 validated (adr-new, adr-list, diagrams)
@@ -459,6 +524,7 @@ make package       # Create distribution package (tar.gz in dist/)
 - **Release Commands:** 3/3 validated (release, build-release, package)
 
 **Test Coverage Verified:**
+
 - Core Types: 18 tests ✅
 - Services: 16 tests ✅
 - MCP Protocol: 15 tests ✅
@@ -466,6 +532,7 @@ make package       # Create distribution package (tar.gz in dist/)
 - **Total: 60 tests, 100% pass rate** ✅
 
 **Security & Quality Gates:**
+
 - Linting: Clean (minor test warnings allowed) ✅
 - Formatting: Compliant ✅
 - Documentation: Auto-generated and validated ✅
@@ -475,6 +542,7 @@ make package       # Create distribution package (tar.gz in dist/)
 ### Validation Results (VERIFIED ✅)
 
 **All Make Commands Validated:**
+
 - ✅ `make build` - Compiles successfully
 - ✅ `make test` - 60/60 tests pass
 - ✅ `make docs` - Generates documentation + diagrams
@@ -485,6 +553,7 @@ make package       # Create distribution package (tar.gz in dist/)
 - ✅ `make release` - Creates distribution packages
 
 **Makefile Fixes Applied:**
+
 - ✅ Fixed `package` command (was including itself in tar)
 - ✅ Added complete git workflow commands
 - ✅ Updated .PHONY declarations

@@ -98,8 +98,16 @@ package: ## Package release
 	@cp target/release/mcp-context-browser dist/
 	@cp docs/user-guide/README.md dist/README.md
 	@cp LICENSE dist/
-	@cd dist && tar -czf mcp-context-browser-0.0.2.tar.gz mcp-context-browser README.md LICENSE
+	@cd dist && tar -czf mcp-context-browser-$(shell grep '^version' Cargo.toml | head -1 | sed 's/.*= *"\([^"]*\)".*/\1/').tar.gz mcp-context-browser README.md LICENSE
 	@echo "📦 Release created: dist/mcp-context-browser-$(shell grep '^version' Cargo.toml | head -1 | sed 's/.*= *"\([^"]*\)".*/\1/').tar.gz"
+
+github-release: release ## Create GitHub release
+	@echo "🚀 Creating GitHub release v$(shell grep '^version' Cargo.toml | head -1 | sed 's/.*= *"\([^"]*\)".*/\1/')..."
+	@gh release create v$(shell grep '^version' Cargo.toml | head -1 | sed 's/.*= *"\([^"]*\)".*/\1/') \
+		--title "MCP Context Browser v$(shell grep '^version' Cargo.toml | head -1 | sed 's/.*= *"\([^"]*\)".*/\1/')" \
+		--notes "Release v$(shell grep '^version' Cargo.toml | head -1 | sed 's/.*= *"\([^"]*\)".*/\1/') - TDD Complete Implementation" \
+		dist/mcp-context-browser-$(shell grep '^version' Cargo.toml | head -1 | sed 's/.*= *"\([^"]*\)".*/\1/').tar.gz
+	@echo "✅ GitHub release created successfully!"
 
 # =============================================================================
 # QUALITY COMMANDS
