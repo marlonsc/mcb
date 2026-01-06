@@ -69,6 +69,8 @@ setup: ## Setup development tools
 	cargo install cargo-watch
 	cargo install cargo-tarpaulin
 	cargo install cargo-audit
+	npm install -g markdownlint-cli
+	@echo "✅ Development environment ready"
 
 # =============================================================================
 # DOCUMENTATION COMMANDS
