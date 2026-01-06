@@ -8,9 +8,19 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 // Global performance metrics instance
-lazy_static::lazy_static! {
-    /// Global performance metrics collector
-    pub static ref PERFORMANCE_METRICS: Mutex<PerformanceMetrics> = Mutex::new(PerformanceMetrics::new(1000));
+static mut PERFORMANCE_METRICS: Option<Mutex<PerformanceMetrics>> = None;
+
+/// Get global performance metrics instance
+pub fn get_performance_metrics() -> &'static Mutex<PerformanceMetrics> {
+    static INIT: std::sync::Once = std::sync::Once::new();
+
+    INIT.call_once(|| {
+        unsafe {
+            PERFORMANCE_METRICS = Some(Mutex::new(PerformanceMetrics::new(1000)));
+        }
+    });
+
+    unsafe { PERFORMANCE_METRICS.as_ref().unwrap() }
 }
 
 /// Query performance metrics

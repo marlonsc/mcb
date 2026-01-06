@@ -230,13 +230,13 @@ impl ContextDaemon {
             );
         }
 
-        // Log active locks for debugging
+        // Log active locks for debugging (sanitized)
         if lock_count > 0 {
             println!("[DAEMON] Active sync operations: {}", lock_count);
             for lock in &active_locks {
                 println!(
-                    "[DAEMON]   - {} (PID: {}, Host: {})",
-                    lock.codebase_path, lock.pid, lock.hostname
+                    "[DAEMON]   - {} (ID: {}, Since: {})",
+                    lock.codebase_path, lock.instance_id, lock.acquired_at
                 );
             }
         }

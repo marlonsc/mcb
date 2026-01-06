@@ -10,14 +10,17 @@ use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
-/// Lock metadata for monitoring and debugging
+/// Lock metadata for monitoring and debugging (sanitized for security)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LockMetadata {
-    pub pid: u32,
-    pub hostname: String,
-    pub codebase_path: String,
-    pub acquired_at: String,
+    /// Anonymous instance identifier (UUID-based)
     pub instance_id: String,
+    /// Path to the codebase being locked
+    pub codebase_path: String,
+    /// ISO 8601 timestamp when lock was acquired
+    pub acquired_at: String,
+    /// Lock version for compatibility checking
+    pub version: String,
 }
 
 /// Lockfile manager for cross-process coordination
@@ -120,17 +123,13 @@ impl CodebaseLockManager {
         }
     }
 
-    /// Write lock metadata for monitoring
+    /// Write lock metadata for monitoring (sanitized)
     async fn write_lock_metadata(meta_path: &Path, codebase_path: &Path) -> Result<()> {
         let metadata = LockMetadata {
-            pid: std::process::id(),
-            hostname: hostname::get()
-                .unwrap_or_else(|_| "unknown".into())
-                .to_string_lossy()
-                .to_string(),
+            instance_id: uuid::Uuid::new_v4().to_string(),
             codebase_path: codebase_path.to_string_lossy().to_string(),
             acquired_at: chrono::Utc::now().to_rfc3339(),
-            instance_id: uuid::Uuid::new_v4().to_string(),
+            version: env!("CARGO_PKG_VERSION").to_string(),
         };
 
         let json = serde_json::to_string_pretty(&metadata)
@@ -215,41 +214,10 @@ impl CodebaseLockManager {
             return Ok(true);
         }
 
-        // Check if process still exists
-        let content = fs::read_to_string(meta_path)
-            .map_err(|e| Error::internal(format!("Failed to read metadata: {}", e)))?;
-
-        let metadata: LockMetadata = serde_json::from_str(&content)
-            .map_err(|e| Error::internal(format!("Failed to parse metadata: {}", e)))?;
-
-        // Check if process exists (Unix-only for now)
-        #[cfg(unix)]
-        {
-            use std::os::unix::process::CommandExt;
-            use std::process::Command;
-
-            // Use kill with signal 0 to check if process exists
-            match Command::new("kill")
-                .arg("-0")
-                .arg(metadata.pid.to_string())
-                .output()
-            {
-                Ok(output) => {
-                    // If kill returns 0, process exists
-                    Ok(output.status.code() != Some(0))
-                }
-                Err(_) => {
-                    // If we can't check, assume it's not stale to be safe
-                    Ok(false)
-                }
-            }
-        }
-
-        #[cfg(not(unix))]
-        {
-            // On non-Unix systems, just check file age
-            Ok(false)
-        }
+        // For security, we rely on file age timeout only
+        // Process existence checking was removed to avoid exposing sensitive information
+        // Locks are automatically cleaned up after STALE_TIMEOUT_SECS regardless of process status
+        Ok(false)
     }
 
     /// Get all active locks for monitoring

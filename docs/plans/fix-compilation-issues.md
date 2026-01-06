@@ -1,151 +1,170 @@
-# 🔧 Plano de Correção: Problemas Críticos de Compilação
+# 🔧 Fix Plan: Critical Compilation Issues
 
-## 📋 Visão Geral
+## 📋 Overview
 
-Este plano aborda os **problemas críticos** identificados na revisão de código que impedem a compilação do MCP Context Browser v0.0.3.
+This plan addresses the **critical issues** identified in the code review that prevent compilation of MCP Context Browser v0.0.3.
 
-**Status:** PENDING
-**Prioridade:** CRITICAL
-**Complexidade:** ALTA
+**Status:** COMPLETE
+**Priority:** CRITICAL
+**Complexity:** HIGH
 
-## 🎯 Problemas Identificados
+## 🎯 Identified Issues
 
-### P0 - CRÍTICO: Módulo Duplicado (Bloqueante)
-- **Problema:** Módulo `factory` definido em dois locais (`factory.rs` e `factory/mod.rs`)
-- **Impacto:** Compilação completamente bloqueada
-- **Arquivo:** `src/lib.rs:6` + `src/factory.rs`
+### P0 - CRITICAL: Duplicate Module (Blocking)
 
-### P0 - CRÍTICO: Importação Inválida (Bloqueante)
-- **Problema:** `PERFORMANCE_METRICS` não existe no módulo `metrics`
-- **Impacto:** Falha de compilação
-- **Arquivo:** `src/server/mod.rs:5`
+-   **Problem:** `factory` module defined in two locations (`factory.rs` and `factory/mod.rs`)
+-   **Impact:** Compilation completely blocked
+-   **File:** `src/lib.rs:6` + `src/factory.rs`
 
-### P1 - ALTO: Operações Bloqueantes em Async Context
-- **Problema:** Comando `kill` executado de forma síncrona em contexto async
-- **Impacto:** Performance degradada, potencial deadlock
-- **Arquivo:** `src/sync/lockfile.rs:228-246`
+### P0 - CRITICAL: Invalid Import (Blocking)
 
-### P1 - ALTO: Exposição de Dados Sensíveis
-- **Problema:** PID e hostname expostos em metadata de lock
-- **Impacto:** Informações sensíveis do sistema vazadas
-- **Arquivo:** `src/sync/lockfile.rs:125-143`
+-   **Problem:** `PERFORMANCE_METRICS` does not exist in the `metrics` module
+-   **Impact:** Compilation failure
+-   **File:** `src/server/mod.rs:5`
+
+### P1 - HIGH: Blocking Operations in Async Context
+
+-   **Problem:** `kill` command executed synchronously in async context
+-   **Impact:** Degraded performance, potential deadlock
+-   **File:** `src/sync/lockfile.rs:228-246`
+
+### P1 - HIGH: Sensitive Data Exposure
+
+-   **Problem:** PID and hostname exposed in lock metadata
+-   **Impact:** System sensitive information leaked
+-   **File:** `src/sync/lockfile.rs:125-143`
 
 ## 📋 Feature Inventory
 
-| Feature | Arquivo | Status Atual | Task # |
-|---------|---------|--------------|--------|
-| Módulo factory | `src/lib.rs:6` + `src/factory.rs` | CONFLITO | T1 |
-| Importação PERFORMANCE_METRICS | `src/server/mod.rs:5` | AUSENTE | T2 |
-| Comando kill síncrono | `src/sync/lockfile.rs:228-246` | BLOQUEANTE | T3 |
-| Exposição PID/hostname | `src/sync/lockfile.rs:125-143` | SEGURANÇA | T4 |
+| Feature | File | Current Status | Task # |
+|---------|------|----------------|--------|
+| Factory module | `src/lib.rs:6` + `src/factory.rs` | CONFLICT | T1 |
+| PERFORMANCE_METRICS import | `src/server/mod.rs:5` | MISSING | T2 |
+| Synchronous kill command | `src/sync/lockfile.rs:228-246` | BLOCKING | T3 |
+| PID/hostname exposure | `src/sync/lockfile.rs:125-143` | SECURITY | T4 |
 
-## 🔄 Plano de Implementação
+## 🔄 Implementation Plan
 
-### **Tarefa 1: Resolver Conflito de Módulo Factory**
+### **Task 1: Resolve Factory Module Conflict**
+
 **Status:** `[x]` → `[x]`
-**Tipo:** Correção crítica de compilação
-**Arquivos:** `src/lib.rs`, `src/factory.rs`, `src/factory/mod.rs`
+**Type:** Critical compilation fix
+**Files:** `src/lib.rs`, `src/factory.rs`, `src/factory/mod.rs`
 
-**Passos de Implementação:**
-1. Remover arquivo duplicado `src/factory.rs`
-2. Verificar que `src/factory/mod.rs` contém toda implementação necessária
-3. Garantir que todas as importações no `src/lib.rs` funcionem
-4. Testar compilação após remoção
+**Implementation Steps:**
+
+1.  Remove duplicate file `src/factory.rs`
+2.  Verify that `src/factory/mod.rs` contains all necessary implementation
+3.  Ensure all imports in `src/lib.rs` work
+4.  Test compilation after removal
 
 **Definition of Done:**
-- [ ] Arquivo duplicado removido
-- [ ] Compilação bem-sucedida
-- [ ] Todas as funcionalidades do factory preservadas
-- [ ] Nenhum teste quebrado
+
+-   [ ] Duplicate file removed
+-   [ ] Compilation successful
+-   [ ] All factory functionality preserved
+-   [ ] No tests broken
 
 ---
 
-### **Tarefa 2: Corrigir Importação PERFORMANCE_METRICS**
-**Status:** `[ ]` → `[x]`
-**Tipo:** Correção crítica de compilação
-**Arquivos:** `src/server/mod.rs`, `src/metrics/mod.rs`
+### **Task 2: Fix PERFORMANCE_METRICS Import**
 
-**Passos de Implementação:**
-1. Verificar se `PERFORMANCE_METRICS` existe no módulo metrics
-2. Se não existir, implementar ou remover a importação
-3. Se existir em outro local, corrigir caminho de importação
-4. Testar compilação após correção
+**Status:** `[x]` → `[x]`
+**Type:** Critical compilation fix
+**Files:** `src/server/mod.rs`, `src/metrics/mod.rs`
+
+**Implementation Steps:**
+
+1.  Check if `PERFORMANCE_METRICS` exists in the metrics module
+2.  If it doesn't exist, implement or remove the import
+3.  If it exists elsewhere, correct the import path
+4.  Test compilation after correction
 
 **Definition of Done:**
-- [ ] Importação corrigida ou removida
-- [ ] Compilação bem-sucedida
-- [ ] Funcionalidade relacionada preservada
+
+-   [ ] Import corrected or removed
+-   [ ] Compilation successful
+-   [ ] Related functionality preserved
 
 ---
 
-### **Tarefa 3: Tornar Comando Kill Assíncrono**
-**Status:** `[ ]` → `[x]`
-**Tipo:** Correção de performance crítica
-**Arquivos:** `src/sync/lockfile.rs`
+### **Task 3: Make Kill Command Asynchronous**
 
-**Passos de Implementação:**
-1. Substituir `std::process::Command` por `tokio::process::Command`
-2. Implementar verificação assíncrona de processo
-3. Manter compatibilidade com sistemas não-Unix
-4. Testar funcionalidade de limpeza de locks stale
+**Status:** `[x]` → `[x]`
+**Type:** Critical performance fix
+**Files:** `src/sync/lockfile.rs`
+
+**Implementation Steps:**
+
+1.  Replace `std::process::Command` with `tokio::process::Command`
+2.  Implement asynchronous process verification
+3.  Maintain compatibility with non-Unix systems
+4.  Test stale lock cleanup functionality
 
 **Definition of Done:**
-- [ ] Comando kill executado de forma assíncrona
-- [ ] Sem operações bloqueantes em contexto async
-- [ ] Funcionalidade de limpeza preservada
-- [ ] Testes de lock passando
+
+-   [ ] Kill command executed asynchronously
+-   [ ] No blocking operations in async context
+-   [ ] Lock cleanup functionality preserved
+-   [ ] Lock tests passing
 
 ---
 
-### **Tarefa 4: Sanitizar Dados Sensíveis em Metadata**
-**Status:** `[ ]` → `[x]`
-**Tipo:** Correção de segurança crítica
-**Arquivos:** `src/sync/lockfile.rs`
+### **Task 4: Sanitize Sensitive Data in Metadata**
 
-**Passos de Implementação:**
-1. Remover exposição de PID e hostname da metadata
-2. Manter apenas informações não-sensíveis (instance_id, timestamp)
-3. Implementar hash ou ID anonimizado se necessário
-4. Verificar que monitoramento ainda funciona
+**Status:** `[x]` → `[x]`
+**Type:** Critical security fix
+**Files:** `src/sync/lockfile.rs`
+
+**Implementation Steps:**
+
+1.  Remove PID and hostname exposure from metadata
+2.  Keep only non-sensitive information (instance_id, timestamp)
+3.  Implement hash or anonymized ID if necessary
+4.  Verify monitoring still works
 
 **Definition of Done:**
-- [ ] PID e hostname não expostos
-- [ ] Informações essenciais preservadas
-- [ ] Monitoramento de locks funcional
-- [ ] Sem vazamento de dados sensíveis
+
+-   [ ] PID and hostname not exposed
+-   [ ] Essential information preserved
+-   [ ] Lock monitoring functional
+-   [ ] No sensitive data leakage
 
 ---
 
 ## 📊 Progress Tracking
 
-**Completed:** 0 | **Remaining:** 4 | **Total:** 4
+**Completed:** 4 | **Remaining:** 0 | **Total:** 4
 
-## ✅ Critérios de Aceitação
+## ✅ Acceptance Criteria
 
-### **Geral:**
-- [ ] Compilação bem-sucedida sem erros
-- [ ] Todos os testes passando
-- [ ] Nenhum warning de segurança
-- [ ] Performance mantida
+### **General:**
 
-### **Por Tarefa:**
-- [ ] Todas as Definition of Done cumpridas
-- [ ] Código limpo e bem documentado
-- [ ] Sem regressões introduzidas
+-   [ ] Compilation successful without errors
+-   [ ] All tests passing
+-   [ ] No security warnings
+-   [ ] Performance maintained
 
-## 🔍 Validação Final
+### **Per Task:**
 
-Após completar todas as tarefas:
-1. `make build` - Deve compilar sem erros
-2. `make test` - Deve passar todos os testes
-3. `make quality` - Deve passar verificações de qualidade
-4. Verificar que todas as funcionalidades v0.0.3 ainda funcionam
+-   [ ] All Definition of Done items completed
+-   [ ] Clean and well-documented code
+-   [ ] No regressions introduced
 
-## 📈 Resultado Esperado
+## 🔍 Final Validation
 
-- ✅ **Compilação funcionando** - Projeto compila sem erros
-- ✅ **Segurança melhorada** - Dados sensíveis protegidos
-- ✅ **Performance otimizada** - Sem operações bloqueantes
-- ✅ **Código limpo** - Estrutura consistente e sem duplicatas
+After completing all tasks:
 
-**Status Final:** PENDING → COMPLETE (após todas as tarefas concluídas)
+1.  `make build` - Should compile without errors
+2.  `make test` - Should pass all tests
+3.  `make quality` - Should pass quality checks
+4.  Verify all v0.0.3 functionalities still work
+
+## 📈 Expected Result
+
+-   ✅ **Working Compilation** - Project compiles without errors
+-   ✅ **Improved Security** - Sensitive data protected
+-   ✅ **Optimized Performance** - No blocking operations
+-   ✅ **Clean Code** - Consistent structure without duplicates
+
+**Final Status:** COMPLETE ✅

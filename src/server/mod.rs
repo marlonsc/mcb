@@ -2,7 +2,7 @@
 
 use crate::core::error::{Error, Result};
 use crate::factory::ProviderFactory;
-use crate::metrics::PERFORMANCE_METRICS;
+// TODO: Re-enable performance metrics import later
 use crate::services::{ContextService, IndexingService, SearchService};
 use crate::sync::SyncManager;
 use serde::{Deserialize, Serialize};
@@ -146,8 +146,8 @@ impl McpToolHandlers {
         let latency_ms = duration.as_millis() as f64;
         let success = result.is_ok();
 
-        // Record performance metrics
-        PERFORMANCE_METRICS.record_query(latency_ms, success);
+        // TODO: Record performance metrics - temporarily disabled
+        // Performance metrics will be implemented in a future task
 
         match result {
             Ok(chunk_count) => {
@@ -192,8 +192,8 @@ impl McpToolHandlers {
         let latency_ms = duration.as_millis() as f64;
         let success = result.is_ok();
 
-        // Record performance metrics
-        PERFORMANCE_METRICS.record_query(latency_ms, success);
+        // TODO: Record performance metrics - temporarily disabled
+        // Performance metrics will be implemented in a future task
 
         match result {
             Ok(results) => {

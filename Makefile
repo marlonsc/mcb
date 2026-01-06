@@ -1,28 +1,72 @@
-# MCP Context Browser - Simple Makefile v0.0.3
+# MCP Context Browser - Organized Makefile v0.0.3
 
-.PHONY: help all build test release version-all clean
+.PHONY: help all build test release version-all clean fmt lint docs
 
-# Default target
-all: test build release ## Complete workflow
+# Default target - complete workflow
+all: test build release ## Complete development workflow
 
-help: ## Show commands
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
+# =============================================================================
+# HELP & INFO
+# =============================================================================
 
-# Core commands
-build: ## Build project
+help: ## Show all available commands
+	@echo "MCP Context Browser v0.0.3 - Organized Makefile"
+	@echo "=============================================="
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -v '^help' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
+
+# =============================================================================
+# CORE DEVELOPMENT
+# =============================================================================
+
+build: ## Build project in debug mode
 	cargo build
 
-test: ## Run tests
+test: ## Run all tests
 	cargo test
 
-release: ## Create release
+release: ## Build project in release mode
 	cargo build --release
 
-version-all: ## Version management for v0.0.3
+# =============================================================================
+# CODE QUALITY
+# =============================================================================
+
+# =============================================================================
+# VERSION MANAGEMENT
+# =============================================================================
+
+version-all: ## Complete version management workflow
 	@echo "Version management completed"
 
-clean: ## Clean build artifacts
-	cargo clean
+# =============================================================================
+# DEVELOPMENT WORKFLOWS
+# =============================================================================
+
+check: build test ## Build and test (basic validation)
+fix: fmt ## Auto-fix code formatting
+ci: check lint ## CI pipeline simulation
+
+# =============================================================================
+# DEVELOPMENT WORKFLOWS
+# =============================================================================
+
+check: build test ## Build and test (basic validation)
+fix: fmt ## Auto-fix code formatting
+ci: check lint ## CI pipeline simulation
+
+# =============================================================================
+# MAINTENANCE
+# =============================================================================
+
+test-quiet: ## Run tests quietly
+	cargo test --quiet
+
+# Short aliases
+b: build
+t: test
+r: release
+f: fix
+c: check
 
 docs: ## Generate all documentation
 	@echo "🎨 Generating diagrams..."
