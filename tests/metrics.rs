@@ -1,6 +1,6 @@
 //! Tests for metrics collection module
 
-use mcp_context_browser::metrics::{SystemMetricsCollector, CpuMetrics, MemoryMetrics};
+use mcp_context_browser::metrics::{CpuMetrics, MemoryMetrics, SystemMetricsCollector};
 
 #[test]
 fn test_system_metrics_collector_creation() {

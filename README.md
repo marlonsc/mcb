@@ -62,20 +62,21 @@ make dev
 
 ## 🧪 Testing & Quality
 
-The project follows TDD (Test-Driven Development) principles with comprehensive test coverage:
+The project follows TDD (Test-Driven Development) principles with comprehensive test coverage and strict quality gates:
 
 ```bash
-# Run all tests
-make test
+# Complete quality assurance
+make quality        # fmt + lint + lint-md + test + audit + validate
 
-# Run tests with coverage
-make coverage
+# Individual checks
+make test           # Run all tests (60 tests, 100% pass rate)
+make lint           # Rust code linting (clippy)
+make lint-md        # Markdown linting (markdownlint-cli required)
+make validate       # Documentation validation
+make audit          # Security audit
 
-# Run tests in watch mode
-make test-watch
-
-# Run all validation checks
-make validate
+# Auto-fix issues
+make fix            # Auto-fix formatting and markdown issues
 ```
 
 ### Test Structure

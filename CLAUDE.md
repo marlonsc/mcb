@@ -110,9 +110,32 @@
 - **Infrastructure**: Professional development workflow with automated quality gates
 - **Architecture**: Clean, extensible design following established patterns
 
-### 📈 Future Roadmap (v0.0.3+)
+### 📅 v0.0.3 Implementation Phases
 
-**Next Phase Focus**: Production monitoring, cross-process coordination, enterprise features
+#### Phase 1: System Metrics & HTTP API (Current - IMPLEMENTING)
+- [x] **System Metrics Collection**: CPU, memory, disk, network via `sysinfo` crate
+- [ ] **HTTP Metrics API**: REST endpoints on port 3001
+- [ ] **Performance Metrics**: Query latency, cache hit/miss tracking
+- [ ] **Web Dashboard**: Simple HTML dashboard for metrics visualization
+
+#### Phase 2: Cross-Process Coordination
+- [ ] **Lockfile System**: Atomic filesystem locks for sync coordination
+- [ ] **Sync Debouncing**: 60s minimum interval between syncs per codebase
+- [ ] **Configurable Intervals**: Environment-based sync frequency control
+- [ ] **Background Daemon**: Automatic lock cleanup and monitoring
+
+#### Phase 3: Enterprise Features
+- [ ] **Environment Configuration**: Full env var support for all features
+- [ ] **Enhanced Error Handling**: Production-grade error recovery
+- [ ] **Monitoring Integration**: Comprehensive observability
+- [ ] **Multi-Instance Support**: Coordination between multiple MCP instances
+
+### 🎯 v0.0.3 Success Criteria
+- **HTTP API**: `/api/health`, `/api/context/metrics` endpoints functional
+- **System Monitoring**: <5% error margin on CPU/memory metrics
+- **Cross-Process**: Zero sync conflicts with multiple MCP instances
+- **Performance**: CPU usage <25% with 4+ concurrent instances
+- **Configuration**: All features configurable via environment variables
 
 ---
 
@@ -152,6 +175,15 @@ make quality        # Run all quality checks: fmt + lint + test + audit + valida
 make audit          # Security audit (⚠️ Known vulnerabilities in dependencies)
 make bench          # Run benchmarks (0 defined)
 make coverage       # Generate test coverage report
+
+# v0.0.3 Development (NEW)
+make metrics        # Start metrics HTTP server on port 3001
+make metrics-test   # Test metrics collection functionality
+make dashboard      # Open metrics dashboard in browser
+make sync-test      # Test cross-process synchronization
+make env-check      # Validate environment configuration
+make health         # Check application health status
+make status         # Show full application status overview
 
 # Release (VALIDATED ✅)
 make release        # Create full release: test + build-release + package
@@ -200,8 +232,8 @@ make package        # Create distribution package (tar.gz)
 ## 📁 Project Structure
 
 ```
-├── src/                           # Source code (Rust) - v0.0.2 Complete
-│   ├── main.rs                   # Application entry point - MCP server startup
+├── src/                           # Source code (Rust) - v0.0.3 In Development
+│   ├── main.rs                   # Application entry point - MCP server startup + metrics daemon
 │   ├── lib.rs                    # Library exports - public API surface
 │   ├── core/                     # Core types and error handling
 │   │   ├── mod.rs               # Core module exports
@@ -220,7 +252,16 @@ make package        # Create distribution package (tar.gz)
 │   │   └── mod.rs               # MCP server with stdio transport + tool handlers
 │   ├── registry/                # Provider registration system (thread-safe)
 │   ├── factory/                 # Service instantiation (dependency injection)
-│   └── config.rs                # Configuration handling (TOML support planned)
+│   ├── config.rs                # Configuration handling (TOML support planned)
+│   ├── metrics/                 # System metrics collection (v0.0.3 NEW)
+│   │   ├── mod.rs               # Metrics module exports
+│   │   ├── http_server.rs      # HTTP API server (port 3001)
+│   │   ├── system.rs            # CPU/memory/disk/network metrics
+│   │   └── performance.rs       # Query/cache performance tracking
+│   ├── sync/                    # Cross-process coordination (v0.0.3 PLANNED)
+│   │   └── mod.rs               # Lockfile-based sync coordination
+│   └── daemon/                  # Background monitoring (v0.0.3 PLANNED)
+│       └── mod.rs               # Background daemon for lock cleanup
 ├── tests/                        # Test suites
 │   ├── core_types.rs            # Core data structure tests (18 tests)
 │   ├── services.rs              # Business logic tests (16 tests)
@@ -388,31 +429,38 @@ make adr-new
 - **Validation**: `make validate` checks syntax
 - **Location**: `docs/architecture/diagrams/`
 
-### Markdown Standards (MANDATORY)
+### Markdown Standards (MANDATORY - No Fallbacks)
 
-**All documentation must pass markdownlint:**
+**All documentation MUST pass markdownlint-cli (no fallbacks allowed):**
 
 ```bash
-# Check markdown quality
-make lint-md          # Lint all .md files in docs/
+# Prerequisites - run once
+make setup           # Install markdownlint-cli (MANDATORY)
 
-# Auto-fix common issues
-make fix-md           # Auto-fix trailing whitespace, blank lines, etc.
+# Check markdown quality (REQUIRES markdownlint-cli)
+make lint-md         # Lint all .md files - FAILS if markdownlint not available
+
+# Auto-fix issues
+make fix-md          # Auto-fix + markdownlint --fix
 ```
 
-**Markdown Rules:**
-- Use ATX-style headers (# ## ###)
-- Consistent unordered lists (- not *)
-- No trailing whitespace
+**Strict Markdown Rules (markdownlint-cli enforced):**
+- ATX-style headers only (# ## ###)
+- Consistent unordered lists (dashes only)
+- NO trailing whitespace (auto-fixed)
 - Maximum 2 consecutive blank lines
-- Proper code block language tags
+- Language tags REQUIRED for code blocks
 - Consistent link formatting
+- Proper header spacing
+- No duplicate headers
 
 **Auto-Fixed Issues:**
 - Trailing whitespace removal
 - Multiple blank line reduction
-- Unordered list consistency (asterisks → dashes)
+- Unordered list consistency
 - Basic formatting corrections
+
+**MANDATORY: Run `make setup` before any markdown operations**
 
 ### Documentation Automation
 
@@ -651,19 +699,18 @@ make package       # Create distribution package (tar.gz in dist/)
 
 ---
 
-## 🎯 Success Criteria (v0.0.2 ACHIEVED ✅)
+## 🎯 Success Criteria (v0.0.3 TARGETS)
 
-**Project v0.0.2 is complete when:**
+**Project v0.0.3 is complete when:**
 
-- ✅ **Functionality Complete**: Full MCP protocol implementation with semantic search
-- ✅ **Testing Complete**: All 60 tests pass (`make test` - 100% success rate)
-- ✅ **Quality Verified**: Code quality verified (`make lint` - clippy clean)
-- ✅ **Documentation Complete**: Full documentation suite (`make docs` - auto-generated)
-- ✅ **Validation Clean**: All validation checks pass (`make validate`)
-- ✅ **CI Pipeline Working**: Full pipeline passes (`make ci`)
-- ✅ **Architecture Sound**: SOLID principles, provider pattern, async-first design
-- ✅ **Infrastructure Ready**: Professional development workflow established
-- ✅ **Security Monitored**: Vulnerabilities tracked (`make audit` - 3 known, monitored)
-- ✅ **Release Ready**: Production-ready codebase with automated packaging
+- ✅ **Core Functionality**: Full MCP protocol implementation with semantic search
+- ✅ **System Metrics**: CPU, memory, disk, network monitoring operational
+- ✅ **HTTP API**: REST endpoints on port 3001 with health/metrics endpoints
+- ✅ **Cross-Process Coordination**: Lockfile-based sync with debouncing
+- ✅ **Background Processing**: Automatic lock cleanup and sync monitoring
+- ✅ **Environment Configuration**: Full environment variable support
+- ✅ **Testing Enhanced**: All 60+ tests pass including new metrics tests
+- ✅ **Documentation Updated**: All v0.0.3 features documented
+- ✅ **CI/CD Enhanced**: Automated testing of metrics and coordination features
 
-**Status**: ✅ **ALL CRITERIA MET** - MCP Context Browser v0.0.2 ready for release.
+**Current Status**: 🏗️ **IMPLEMENTING** - System metrics collection implemented, HTTP API in development.

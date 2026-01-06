@@ -9,7 +9,7 @@ pub mod http_server;
 pub mod performance;
 
 pub use http_server::MetricsApiServer;
-pub use performance::{PerformanceMetrics, QueryPerformanceMetrics, CacheMetrics};
+pub use performance::{CacheMetrics, PerformanceMetrics, QueryPerformanceMetrics};
 
 /// CPU usage metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,7 +83,11 @@ impl SystemMetricsCollector {
         let total = self.system.total_memory();
         let used = self.system.used_memory();
         let free = total.saturating_sub(used);
-        let usage_percent = if total > 0 { (used as f32 / total as f32) * 100.0 } else { 0.0 };
+        let usage_percent = if total > 0 {
+            (used as f32 / total as f32) * 100.0
+        } else {
+            0.0
+        };
 
         MemoryMetrics {
             total,

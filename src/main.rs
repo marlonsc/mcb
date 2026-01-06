@@ -26,8 +26,8 @@
 //!
 //! Licensed under the MIT License.
 
-use mcp_context_browser::server::McpToolHandlers;
 use mcp_context_browser::metrics::MetricsApiServer;
+use mcp_context_browser::server::McpToolHandlers;
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 
@@ -76,7 +76,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         }
     });
 
-    println!("📊 Metrics API available at http://localhost:{}", metrics_port);
+    println!(
+        "📊 Metrics API available at http://localhost:{}",
+        metrics_port
+    );
 
     // Create tool handlers
     let tool_handlers = match McpToolHandlers::new() {

@@ -51,6 +51,12 @@ thiserror = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+# File locking for sync coordination (v0.0.3)
+fs2 = "0.4"
+
+# Hostname detection for lock metadata
+hostname = "0.4"
+
 # Utilities
 regex = "1.10"
 chrono = { version = "0.4", features = ["serde"] }

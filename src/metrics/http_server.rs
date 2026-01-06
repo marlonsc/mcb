@@ -5,18 +5,12 @@
 //! - System metrics (CPU, memory, disk, network)
 //! - Performance metrics (queries, cache)
 
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::Json,
-    routing::get,
-    Router,
-};
+use axum::{extract::State, http::StatusCode, response::Json, routing::get, Router};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::metrics::{SystemMetricsCollector, PerformanceMetrics};
+use crate::metrics::{PerformanceMetrics, SystemMetricsCollector};
 
 /// Comprehensive metrics response
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,11 +75,23 @@ impl MetricsApiServer {
 
         Router::new()
             .route("/api/health", get(Self::health_handler))
-            .route("/api/context/metrics", get(Self::comprehensive_metrics_handler))
+            .route(
+                "/api/context/metrics",
+                get(Self::comprehensive_metrics_handler),
+            )
             .route("/api/context/metrics/cpu", get(Self::cpu_metrics_handler))
-            .route("/api/context/metrics/memory", get(Self::memory_metrics_handler))
-            .route("/api/context/metrics/queries", get(Self::query_metrics_handler))
-            .route("/api/context/metrics/cache", get(Self::cache_metrics_handler))
+            .route(
+                "/api/context/metrics/memory",
+                get(Self::memory_metrics_handler),
+            )
+            .route(
+                "/api/context/metrics/queries",
+                get(Self::query_metrics_handler),
+            )
+            .route(
+                "/api/context/metrics/cache",
+                get(Self::cache_metrics_handler),
+            )
             .route("/api/context/status", get(Self::status_handler))
             .layer(tower_http::cors::CorsLayer::permissive())
             .with_state(state)
@@ -150,8 +156,20 @@ impl MetricsApiServer {
         let uptime = state.start_time.elapsed().as_secs();
 
         // Health thresholds
-        let cpu_health = if cpu.usage < 80.0 { "healthy" } else if cpu.usage < 90.0 { "warning" } else { "critical" };
-        let memory_health = if memory.usage_percent < 80.0 { "healthy" } else if memory.usage_percent < 90.0 { "warning" } else { "critical" };
+        let cpu_health = if cpu.usage < 80.0 {
+            "healthy"
+        } else if cpu.usage < 90.0 {
+            "warning"
+        } else {
+            "critical"
+        };
+        let memory_health = if memory.usage_percent < 80.0 {
+            "healthy"
+        } else if memory.usage_percent < 90.0 {
+            "warning"
+        } else {
+            "critical"
+        };
 
         let status = serde_json::json!({
             "timestamp": std::time::SystemTime::now()

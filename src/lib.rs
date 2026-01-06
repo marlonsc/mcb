@@ -8,3 +8,4 @@ pub mod providers;
 pub mod registry;
 pub mod server;
 pub mod services;
+pub mod sync;
