@@ -1,6 +1,6 @@
 [package]
 name = "mcp-context-browser"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Model Context Protocol server for code analysis using Milvus vector database"
 authors = ["Marlon Carvalho <marlonsc@proton.me>"]
