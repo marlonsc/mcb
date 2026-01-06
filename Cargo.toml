@@ -57,6 +57,9 @@ fs2 = "0.4"
 # Hostname detection for lock metadata
 hostname = "0.4"
 
+# Hashing for snapshots
+sha2 = "0.10"
+
 # Utilities
 regex = "1.10"
 chrono = { version = "0.4", features = ["serde"] }

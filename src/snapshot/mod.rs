@@ -1,10 +1,11 @@
 //! Snapshot management for incremental codebase tracking
 //!
-//! Tracks file changes using Merkle tree hashing for efficient incremental sync.
+//! Tracks file changes using SHA256 hashing for efficient incremental sync.
 //! Avoids reprocessing unchanged files during codebase indexing.
 
 use crate::core::error::{Error, Result};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -257,14 +258,12 @@ impl SnapshotManager {
         })
     }
 
-    /// Calculate simple hash of content (for change detection)
+    /// Calculate SHA256 hash of content (for change detection)
     fn calculate_hash(&self, content: &[u8]) -> String {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
-        let mut hasher = DefaultHasher::new();
-        content.hash(&mut hasher);
-        format!("{:x}", hasher.finish())
+        let mut hasher = Sha256::new();
+        hasher.update(content);
+        let result = hasher.finalize();
+        format!("{:x}", result)
     }
 
     /// Check if file should be skipped

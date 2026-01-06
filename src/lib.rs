@@ -1,5 +1,6 @@
 //! MCP Context Browser - A semantic code search server
 
+pub mod chunking;
 pub mod config;
 pub mod core;
 pub mod daemon;

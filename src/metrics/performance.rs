@@ -4,7 +4,14 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
+
+// Global performance metrics instance
+lazy_static::lazy_static! {
+    /// Global performance metrics collector
+    pub static ref PERFORMANCE_METRICS: Mutex<PerformanceMetrics> = Mutex::new(PerformanceMetrics::new(1000));
+}
 
 /// Query performance metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
