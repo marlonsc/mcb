@@ -1,13 +1,23 @@
 [package]
 name = "mcp-context-browser"
-version = "0.1.1"
+version = "0.0.1"
 edition = "2021"
-description = "Model Context Protocol server for code analysis using Milvus vector database"
+description = "A Model Context Protocol server for semantic code analysis using vector embeddings"
 authors = ["Marlon Carvalho <marlonsc@proton.me>"]
 license = "MIT"
 repository = "https://github.com/marlonsc/mcp-context-browser"
-keywords = ["mcp", "rust", "code-analysis", "milvus", "embeddings"]
-categories = ["development-tools", "api-bindings"]
+homepage = "https://github.com/marlonsc/mcp-context-browser"
+documentation = "https://github.com/marlonsc/mcp-context-browser#readme"
+readme = "README.md"
+keywords = ["mcp", "rust", "semantic-search", "code-analysis", "vector-embeddings", "ai", "development-tools"]
+categories = ["development-tools", "api-bindings", "science::artificial-intelligence"]
+exclude = [
+    "target/",
+    "*.bak",
+    ".git/",
+    ".gitignore",
+    "Makefile",
+]
 
 [dependencies]
 

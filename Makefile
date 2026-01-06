@@ -94,7 +94,76 @@ git-commit: ## Commit with message (usage: make git-commit MSG="your message")
 	git commit -m "$(MSG)"
 
 git-push: ## Push to remote repository
-	git push origin main
+	GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git push origin main
+
+git-force-push: ## Force push to remote repository (use with caution)
+	GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git push -f origin main
+
+# Version management
+version-show: ## Show current version
+	@grep '^version' Cargo.toml | head -1 | cut -d'"' -f2
+
+version-bump-patch: ## Bump patch version (0.0.1 -> 0.0.2)
+	@CURRENT=$$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2); \
+	PATCH=$$(echo $$CURRENT | cut -d. -f3); \
+	NEW_PATCH=$$(expr $$PATCH + 1); \
+	NEW_VERSION=$$(echo $$CURRENT | sed "s/\.[0-9]*$$/.$$NEW_PATCH/"); \
+	sed -i "s/version = \"$$CURRENT\"/version = \"$$NEW_VERSION\"/" Cargo.toml; \
+	echo "Version bumped: $$CURRENT -> $$NEW_VERSION"
+
+version-bump-minor: ## Bump minor version (0.0.1 -> 0.1.0)
+	@CURRENT=$$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2); \
+	MINOR=$$(echo $$CURRENT | cut -d. -f2); \
+	NEW_MINOR=$$(expr $$MINOR + 1); \
+	NEW_VERSION=$$(echo $$CURRENT | sed "s/\.[0-9]*\.[0-9]*$$/.$$NEW_MINOR.0/"); \
+	sed -i "s/version = \"$$CURRENT\"/version = \"$$NEW_VERSION\"/" Cargo.toml; \
+	echo "Version bumped: $$CURRENT -> $$NEW_VERSION"
+
+version-bump-major: ## Bump major version (0.0.1 -> 1.0.0)
+	@CURRENT=$$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2); \
+	MAJOR=$$(echo $$CURRENT | cut -d. -f1); \
+	NEW_MAJOR=$$(expr $$MAJOR + 1); \
+	NEW_VERSION="$$NEW_MAJOR.0.0"; \
+	sed -i "s/version = \"$$CURRENT\"/version = \"$$NEW_VERSION\"/" Cargo.toml; \
+	echo "Version bumped: $$CURRENT -> $$NEW_VERSION"
+
+# Release management
+release-patch: version-bump-patch release-commit release-tag release-push ## Create patch release
+release-minor: version-bump-minor release-commit release-tag release-push ## Create minor release
+release-major: version-bump-major release-commit release-tag release-push ## Create major release
+
+release-commit: ## Commit version changes
+	@VERSION=$$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2); \
+	git add Cargo.toml; \
+	git commit -m "chore: bump version to $$VERSION"
+
+release-tag: ## Create git tag for current version
+	@VERSION=$$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2); \
+	git tag -a "v$$VERSION" -m "Release version $$VERSION"
+
+release-push: ## Push commits and tags
+	GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git push origin main --tags
+
+# Package management
+package-build: ## Build release package
+	cargo build --release
+
+package-tar: ## Create source tarball
+	@VERSION=$$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2); \
+	tar -czf mcp-context-browser-$$VERSION.tar.gz --exclude='.git' --exclude='target' --exclude='*.bak' .
+
+package-zip: ## Create source zip
+	@VERSION=$$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2); \
+	zip -r mcp-context-browser-$$VERSION.zip . -x '.git/*' 'target/*' '*.bak'
+
+# GitHub release (requires gh CLI)
+github-release: ## Create GitHub release
+	@VERSION=$$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2); \
+	gh release create "v$$VERSION" --title "MCP Context Browser v$$VERSION" --generate-notes
+
+# Full workflow
+workflow-dev: format lint test build ## Run full development workflow
+workflow-release: workflow-dev package-build package-tar github-release ## Run full release workflow
 
 # Project info
 info: ## Show project information

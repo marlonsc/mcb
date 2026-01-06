@@ -1,4 +1,30 @@
-//! MCP Context Browser - Main entry point
+//! # MCP Context Browser - Main Entry Point
+//!
+//! This is the main entry point for the MCP Context Browser application.
+//! It initializes the MCP server and starts listening for requests on stdio.
+//!
+//! ## Usage
+//!
+//! The application is designed to be used as an MCP server by AI assistants
+//! like Claude Desktop. It communicates via stdio using the MCP protocol.
+//!
+//! ## Architecture
+//!
+//! The main function:
+//! 1. Initializes logging with tracing
+//! 2. Creates MCP tool handlers with dependency injection
+//! 3. Sets up async stdio communication
+//! 4. Processes MCP messages in a loop
+//! 5. Handles graceful shutdown
+//!
+//! ## Error Handling
+//!
+//! All errors are properly logged and the application exits gracefully
+//! on critical failures. Network and I/O errors are handled robustly.
+//!
+//! ## License
+//!
+//! Licensed under the MIT License.
 
 use mcp_context_browser::server::McpToolHandlers;
 use serde::{Deserialize, Serialize};
