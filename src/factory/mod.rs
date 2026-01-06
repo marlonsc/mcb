@@ -5,7 +5,9 @@ use crate::core::{
     types::{EmbeddingConfig, VectorStoreConfig},
 };
 use crate::providers::{
-    EmbeddingProvider, InMemoryVectorStoreProvider, MockEmbeddingProvider, VectorStoreProvider,
+    embedding::{MockEmbeddingProvider, OpenAIEmbeddingProvider},
+    vector_store::InMemoryVectorStoreProvider,
+    EmbeddingProvider, VectorStoreProvider,
 };
 use async_trait::async_trait;
 use std::sync::Arc;
@@ -41,8 +43,19 @@ impl ProviderFactory for DefaultProviderFactory {
         config: &EmbeddingConfig,
     ) -> Result<Arc<dyn EmbeddingProvider>> {
         match config.provider.as_str() {
+            "openai" => {
+                let api_key = config
+                    .api_key
+                    .as_ref()
+                    .ok_or_else(|| Error::config("OpenAI API key required"))?;
+                Ok(Arc::new(OpenAIEmbeddingProvider::new(
+                    api_key.clone(),
+                    config.base_url.clone(),
+                    config.model.clone(),
+                )))
+            }
             "mock" => Ok(Arc::new(MockEmbeddingProvider::new())),
-            _ => Err(Error::generic(format!(
+            _ => Err(Error::config(format!(
                 "Unsupported embedding provider: {}",
                 config.provider
             ))),
@@ -63,7 +76,7 @@ impl ProviderFactory for DefaultProviderFactory {
     }
 
     fn supported_embedding_providers(&self) -> Vec<String> {
-        vec!["mock".to_string()]
+        vec!["openai".to_string(), "mock".to_string()]
     }
 
     fn supported_vector_store_providers(&self) -> Vec<String> {

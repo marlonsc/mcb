@@ -198,7 +198,10 @@ impl McpToolHandlers {
         match result {
             Ok(results) => {
                 let mut message = format!("🔍 **Search Results for:** \"{}\"\n\n", query);
-                message.push_str(&format!("⚡ **Search completed in:** {:.2}s\n\n", duration.as_secs_f64()));
+                message.push_str(&format!(
+                    "⚡ **Search completed in:** {:.2}s\n\n",
+                    duration.as_secs_f64()
+                ));
 
                 if results.is_empty() {
                     message.push_str("❌ No relevant results found.");

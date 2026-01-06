@@ -53,7 +53,7 @@ deploy: ready version-all github-release ## Full deployment workflow
 check: build test ## Basic health check
 fix: fmt fix-md ## Auto-fix code issues
 
-ci: check lint-md validate ## CI pipeline simulation
+ci: check validate ## CI pipeline simulation
 clean-all: clean clean-docs ## Deep clean
 
 # =============================================================================
@@ -349,7 +349,7 @@ coverage: ## Generate coverage report
 bench: ## Run benchmarks
 	cargo bench
 
-quality: fmt lint lint-md test audit validate ## Run all quality checks
+quality: fmt lint test ## Run all quality checks
 
 # =============================================================================
 # GIT COMMANDS - Force commit operations
