@@ -138,6 +138,12 @@ git-push-force: ## Force push to remote repository
 	@git push --force-with-lease origin main || git push --force origin main
 	@echo "Changes pushed successfully"
 
+git-tag: ## Create and push git tag
+	@echo "Creating and pushing tag v$(shell grep '^version' Cargo.toml | cut -d'"' -f2)..."
+	@git tag v$(shell grep '^version' Cargo.toml | cut -d'"' -f2)
+	@git push origin v$(shell grep '^version' Cargo.toml | cut -d'"' -f2)
+	@echo "Tag v$(shell grep '^version' Cargo.toml | cut -d'"' -f2) created and pushed!"
+
 git-force-all: git-add-all git-commit-force git-push-force ## Add, commit and push all changes with force
 	@echo "Force commit and push completed!"
 

@@ -139,5 +139,5 @@ mod tests {
 
 ## References
 - [Provider Pattern](https://en.wikipedia.org/wiki/Provider_model)
-- [Dependency Injection Patterns in Rust](https://rust-unofficial.github.io/patterns/patterns/creational/dependency-injection.html)
+- [Dependency Injection in Rust](https://doc.rust-lang.org/book/ch10-02-traits.html)
 - [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
