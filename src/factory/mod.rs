@@ -5,13 +5,16 @@ use crate::core::{
     types::{EmbeddingConfig, VectorStoreConfig},
 };
 use crate::providers::{
-    embedding::{
-        MockEmbeddingProvider, OllamaEmbeddingProvider, OpenAIEmbeddingProvider,
-        VoyageAIEmbeddingProvider,
-    },
-    vector_store::{InMemoryVectorStoreProvider, MilvusVectorStoreProvider},
+    embedding::MockEmbeddingProvider,
     EmbeddingProvider, VectorStoreProvider,
 };
+
+// Import individual providers that exist
+use crate::providers::embedding::ollama::OllamaEmbeddingProvider;
+use crate::providers::embedding::openai::OpenAIEmbeddingProvider;
+use crate::providers::embedding::voyageai::VoyageAIEmbeddingProvider;
+use crate::providers::vector_store::milvus::MilvusVectorStoreProvider;
+use crate::providers::vector_store::InMemoryVectorStoreProvider;
 use async_trait::async_trait;
 use std::sync::Arc;
 

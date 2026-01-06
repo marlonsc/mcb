@@ -9,7 +9,10 @@ pub mod http_server;
 pub mod performance;
 
 pub use http_server::MetricsApiServer;
-pub use performance::{CacheMetrics, PerformanceMetrics, QueryPerformanceMetrics, PERFORMANCE_METRICS};
+pub use performance::{
+    CacheMetrics, PerformanceMetrics, QueryPerformanceMetrics,
+};
+pub use performance::PERFORMANCE_METRICS;
 
 /// CPU usage metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]

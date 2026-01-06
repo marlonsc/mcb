@@ -24,9 +24,6 @@ build: ## Build project in debug mode
 test: ## Run all tests
 	cargo test
 
-release: ## Build project in release mode
-	cargo build --release
-
 # =============================================================================
 # CODE QUALITY
 # =============================================================================
@@ -35,8 +32,9 @@ release: ## Build project in release mode
 # VERSION MANAGEMENT
 # =============================================================================
 
-version-all: ## Complete version management workflow
-	@echo "Version management completed"
+# =============================================================================
+# DEVELOPMENT WORKFLOWS
+# =============================================================================
 
 # =============================================================================
 # DEVELOPMENT WORKFLOWS
@@ -44,15 +42,7 @@ version-all: ## Complete version management workflow
 
 check: build test ## Build and test (basic validation)
 fix: fmt ## Auto-fix code formatting
-ci: check lint ## CI pipeline simulation
-
-# =============================================================================
-# DEVELOPMENT WORKFLOWS
-# =============================================================================
-
-check: build test ## Build and test (basic validation)
-fix: fmt ## Auto-fix code formatting
-ci: check lint ## CI pipeline simulation
+ci: clean validate test build docs ## Run full CI pipeline
 
 # =============================================================================
 # MAINTENANCE
@@ -79,9 +69,6 @@ docs: ## Generate all documentation
 
 validate: ## Validate project structure
 	@echo "✅ Project structure validated"
-
-ci: clean validate test build docs ## Run full CI pipeline
-	@echo "🚀 CI pipeline completed"
 
 clean: ## Clean everything
 	cargo clean

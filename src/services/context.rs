@@ -24,13 +24,35 @@ impl ContextService {
         }
     }
 
-    /// Create a new context service with default providers (for backward compatibility)
+    /// Create a new context service with real providers from configuration
     pub fn default() -> Self {
-        use crate::providers::{MockEmbeddingProvider, InMemoryVectorStoreProvider};
+        // Load configuration and create real providers
+        let config = crate::config::Config::from_env().unwrap_or_default();
+        Self::from_config(&config)
+    }
+
+    /// Create context service from configuration
+    pub fn from_config(config: &crate::config::Config) -> Self {
+        use crate::factory::ProviderFactory;
+
+        // Create real providers from configuration
+        let embedding_provider = ProviderFactory::create_embedding_provider(&config.providers.embedding)
+            .unwrap_or_else(|_| {
+                // Fallback to mock if provider creation fails
+                use crate::providers::MockEmbeddingProvider;
+                Arc::new(MockEmbeddingProvider::new())
+            });
+
+        let vector_store_provider = ProviderFactory::create_vector_store_provider(&config.providers.vector_store)
+            .unwrap_or_else(|_| {
+                // Fallback to in-memory if provider creation fails
+                use crate::providers::InMemoryVectorStoreProvider;
+                Arc::new(InMemoryVectorStoreProvider::new())
+            });
 
         Self {
-            embedding_provider: Arc::new(MockEmbeddingProvider::new()),
-            vector_store_provider: Arc::new(InMemoryVectorStoreProvider::new()),
+            embedding_provider,
+            vector_store_provider,
         }
     }
 

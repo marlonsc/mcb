@@ -21,7 +21,9 @@ impl IntelligentChunker {
         match language {
             Language::Rust => self.chunk_rust(content, file_name),
             Language::Python => self.chunk_python(content, file_name),
-            Language::JavaScript | Language::TypeScript => self.chunk_javascript(content, file_name, language),
+            Language::JavaScript | Language::TypeScript => {
+                self.chunk_javascript(content, file_name, language)
+            }
             _ => self.chunk_generic(content, file_name, language),
         }
     }
@@ -56,9 +58,7 @@ impl IntelligentChunker {
             Ok(tree) => {
                 self.extract_python_nodes(&tree, content, file_name, &mut chunks);
             }
-            Err(_) => {
-                self.chunk_python_fallback(content, file_name)
-            }
+            Err(_) => self.chunk_python_fallback(content, file_name),
         }
 
         if chunks.is_empty() {
@@ -69,7 +69,12 @@ impl IntelligentChunker {
     }
 
     /// Chunk JavaScript/TypeScript code using tree-sitter
-    fn chunk_javascript(&self, content: &str, file_name: &str, language: Language) -> Vec<CodeChunk> {
+    fn chunk_javascript(
+        &self,
+        content: &str,
+        file_name: &str,
+        language: Language,
+    ) -> Vec<CodeChunk> {
         let mut chunks = Vec::new();
         let ts_language = match language {
             Language::TypeScript => tree_sitter_typescript::language_tsx(),
@@ -80,9 +85,7 @@ impl IntelligentChunker {
             Ok(tree) => {
                 self.extract_javascript_nodes(&tree, content, file_name, &mut chunks);
             }
-            Err(_) => {
-                self.chunk_javascript_fallback(content, file_name, language)
-            }
+            Err(_) => self.chunk_javascript_fallback(content, file_name, language),
         }
 
         if chunks.is_empty() {
@@ -130,19 +133,31 @@ impl IntelligentChunker {
     }
 
     /// Parse code with tree-sitter
-    fn parse_with_tree_sitter(&self, content: &str, language: tree_sitter::Language) -> Result<tree_sitter::Tree> {
+    fn parse_with_tree_sitter(
+        &self,
+        content: &str,
+        language: tree_sitter::Language,
+    ) -> Result<tree_sitter::Tree> {
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(language)
+        parser
+            .set_language(language)
             .map_err(|e| Error::internal(format!("Failed to set tree-sitter language: {:?}", e)))?;
 
-        let tree = parser.parse(content, None)
+        let tree = parser
+            .parse(content, None)
             .ok_or_else(|| Error::internal("Tree-sitter parsing failed".to_string()))?;
 
         Ok(tree)
     }
 
     /// Extract meaningful nodes from Rust AST
-    fn extract_rust_nodes(&self, tree: &tree_sitter::Tree, content: &str, file_name: &str, chunks: &mut Vec<CodeChunk>) {
+    fn extract_rust_nodes(
+        &self,
+        tree: &tree_sitter::Tree,
+        content: &str,
+        file_name: &str,
+        chunks: &mut Vec<CodeChunk>,
+    ) {
         let mut cursor = tree.walk();
 
         // Traverse the tree to find functions, structs, impls, etc.
@@ -158,14 +173,17 @@ impl IntelligentChunker {
         content: &str,
         file_name: &str,
         depth: usize,
-        chunks: &mut Vec<CodeChunk>
+        chunks: &mut Vec<CodeChunk>,
     ) {
         loop {
             let node = cursor.node();
             let node_type = node.kind();
 
             // Extract meaningful code blocks
-            if matches!(node_type, "function_item" | "struct_item" | "impl_item" | "trait_item" | "mod_item") {
+            if matches!(
+                node_type,
+                "function_item" | "struct_item" | "impl_item" | "trait_item" | "mod_item"
+            ) {
                 if let Ok(code) = self.extract_node_content(node, content) {
                     if code.len() > 50 && code.lines().count() > 2 {
                         let start_line = node.start_position().row;
@@ -205,7 +223,13 @@ impl IntelligentChunker {
     }
 
     /// Extract Python nodes (functions, classes)
-    fn extract_python_nodes(&self, tree: &tree_sitter::Tree, content: &str, file_name: &str, chunks: &mut Vec<CodeChunk>) {
+    fn extract_python_nodes(
+        &self,
+        tree: &tree_sitter::Tree,
+        content: &str,
+        file_name: &str,
+        chunks: &mut Vec<CodeChunk>,
+    ) {
         let mut cursor = tree.walk();
 
         if cursor.goto_first_child() {
@@ -219,7 +243,7 @@ impl IntelligentChunker {
         content: &str,
         file_name: &str,
         depth: usize,
-        chunks: &mut Vec<CodeChunk>
+        chunks: &mut Vec<CodeChunk>,
     ) {
         loop {
             let node = cursor.node();
@@ -264,7 +288,13 @@ impl IntelligentChunker {
     }
 
     /// Extract JavaScript/TypeScript nodes
-    fn extract_javascript_nodes(&self, tree: &tree_sitter::Tree, content: &str, file_name: &str, chunks: &mut Vec<CodeChunk>) {
+    fn extract_javascript_nodes(
+        &self,
+        tree: &tree_sitter::Tree,
+        content: &str,
+        file_name: &str,
+        chunks: &mut Vec<CodeChunk>,
+    ) {
         let mut cursor = tree.walk();
 
         if cursor.goto_first_child() {
@@ -278,18 +308,26 @@ impl IntelligentChunker {
         content: &str,
         file_name: &str,
         depth: usize,
-        chunks: &mut Vec<CodeChunk>
+        chunks: &mut Vec<CodeChunk>,
     ) {
         loop {
             let node = cursor.node();
             let node_type = node.kind();
 
-            if matches!(node_type, "function_declaration" | "function" | "class_declaration" | "method_definition" | "arrow_function") {
+            if matches!(
+                node_type,
+                "function_declaration"
+                    | "function"
+                    | "class_declaration"
+                    | "method_definition"
+                    | "arrow_function"
+            ) {
                 if let Ok(code) = self.extract_node_content(node, content) {
                     if code.len() > 30 {
                         let start_line = node.start_position().row;
                         let end_line = node.end_position().row;
-                        let language = if file_name.ends_with(".ts") || file_name.ends_with(".tsx") {
+                        let language = if file_name.ends_with(".ts") || file_name.ends_with(".tsx")
+                        {
                             Language::TypeScript
                         } else {
                             Language::JavaScript
@@ -358,14 +396,21 @@ impl IntelligentChunker {
             current_block.push(line.clone());
 
             // Detect significant Rust constructs
-            if trimmed.starts_with("fn ") ||
-               trimmed.starts_with("struct ") ||
-               trimmed.starts_with("impl ") ||
-               trimmed.starts_with("pub fn ") ||
-               trimmed.starts_with("pub struct ") {
-
+            if trimmed.starts_with("fn ")
+                || trimmed.starts_with("struct ")
+                || trimmed.starts_with("impl ")
+                || trimmed.starts_with("pub fn ")
+                || trimmed.starts_with("pub struct ")
+            {
                 if current_block.len() > 1 {
-                    self.create_chunk(&current_block[..current_block.len()-1], block_start, i-1, file_name, Language::Rust, &mut chunks);
+                    self.create_chunk(
+                        &current_block[..current_block.len() - 1],
+                        block_start,
+                        i - 1,
+                        file_name,
+                        Language::Rust,
+                        &mut chunks,
+                    );
                     current_block = vec![line.clone()];
                     block_start = i;
                 }
@@ -376,14 +421,28 @@ impl IntelligentChunker {
             let close_braces = line.chars().filter(|&c| c == '}').count();
 
             if open_braces > 0 && close_braces == open_braces && current_block.len() > 3 {
-                self.create_chunk(&current_block, block_start, i, file_name, Language::Rust, &mut chunks);
+                self.create_chunk(
+                    &current_block,
+                    block_start,
+                    i,
+                    file_name,
+                    Language::Rust,
+                    &mut chunks,
+                );
                 current_block.clear();
                 block_start = i + 1;
             }
         }
 
         if !current_block.is_empty() {
-            self.create_chunk(&current_block, block_start, lines.len() - 1, file_name, Language::Rust, &mut chunks);
+            self.create_chunk(
+                &current_block,
+                block_start,
+                lines.len() - 1,
+                file_name,
+                Language::Rust,
+                &mut chunks,
+            );
         }
 
         chunks
@@ -403,7 +462,14 @@ impl IntelligentChunker {
 
             if trimmed.starts_with("def ") || trimmed.starts_with("class ") {
                 if !current_function.is_empty() {
-                    self.create_chunk(&current_function, function_start, i-1, file_name, Language::Python, &mut chunks);
+                    self.create_chunk(
+                        &current_function,
+                        function_start,
+                        i - 1,
+                        file_name,
+                        Language::Python,
+                        &mut chunks,
+                    );
                     current_function.clear();
                 }
                 current_function.push(line.clone());
@@ -413,7 +479,14 @@ impl IntelligentChunker {
                 let current_indent = line.chars().take_while(|c| c.is_whitespace()).count();
 
                 if current_indent <= indent_level && !line.chars().all(|c| c.is_whitespace()) {
-                    self.create_chunk(&current_function, function_start, i-1, file_name, Language::Python, &mut chunks);
+                    self.create_chunk(
+                        &current_function,
+                        function_start,
+                        i - 1,
+                        file_name,
+                        Language::Python,
+                        &mut chunks,
+                    );
                     current_function.clear();
                 } else {
                     current_function.push(line.clone());
@@ -422,14 +495,26 @@ impl IntelligentChunker {
         }
 
         if !current_function.is_empty() {
-            self.create_chunk(&current_function, function_start, lines.len() - 1, file_name, Language::Python, &mut chunks);
+            self.create_chunk(
+                &current_function,
+                function_start,
+                lines.len() - 1,
+                file_name,
+                Language::Python,
+                &mut chunks,
+            );
         }
 
         chunks
     }
 
     /// Fallback JavaScript chunking
-    fn chunk_javascript_fallback(&self, content: &str, file_name: &str, language: Language) -> Vec<CodeChunk> {
+    fn chunk_javascript_fallback(
+        &self,
+        content: &str,
+        file_name: &str,
+        language: Language,
+    ) -> Vec<CodeChunk> {
         let mut chunks = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -439,12 +524,19 @@ impl IntelligentChunker {
         for (i, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
 
-            if trimmed.starts_with("function ") ||
-               trimmed.starts_with("const ") && trimmed.contains("=>") ||
-               trimmed.starts_with("class ") {
-
+            if trimmed.starts_with("function ")
+                || trimmed.starts_with("const ") && trimmed.contains("=>")
+                || trimmed.starts_with("class ")
+            {
                 if !current_function.is_empty() {
-                    self.create_chunk(&current_function, function_start, i-1, file_name, language.clone(), &mut chunks);
+                    self.create_chunk(
+                        &current_function,
+                        function_start,
+                        i - 1,
+                        file_name,
+                        language.clone(),
+                        &mut chunks,
+                    );
                     current_function.clear();
                 }
                 current_function.push(line.clone());
@@ -453,18 +545,38 @@ impl IntelligentChunker {
                 current_function.push(line.clone());
 
                 // Simple heuristic: end function on balanced braces
-                let open_count = current_function.iter().map(|l| l.chars().filter(|&c| c == '{').count()).sum::<usize>();
-                let close_count = current_function.iter().map(|l| l.chars().filter(|&c| c == '}').count()).sum::<usize>();
+                let open_count = current_function
+                    .iter()
+                    .map(|l| l.chars().filter(|&c| c == '{').count())
+                    .sum::<usize>();
+                let close_count = current_function
+                    .iter()
+                    .map(|l| l.chars().filter(|&c| c == '}').count())
+                    .sum::<usize>();
 
                 if open_count > 0 && open_count == close_count && current_function.len() > 2 {
-                    self.create_chunk(&current_function, function_start, i, file_name, language.clone(), &mut chunks);
+                    self.create_chunk(
+                        &current_function,
+                        function_start,
+                        i,
+                        file_name,
+                        language.clone(),
+                        &mut chunks,
+                    );
                     current_function.clear();
                 }
             }
         }
 
         if !current_function.is_empty() {
-            self.create_chunk(&current_function, function_start, lines.len() - 1, file_name, language, &mut chunks);
+            self.create_chunk(
+                &current_function,
+                function_start,
+                lines.len() - 1,
+                file_name,
+                language,
+                &mut chunks,
+            );
         }
 
         chunks
@@ -478,7 +590,7 @@ impl IntelligentChunker {
         end_line: usize,
         file_name: &str,
         language: Language,
-        chunks: &mut Vec<CodeChunk>
+        chunks: &mut Vec<CodeChunk>,
     ) {
         let content = lines.join("\n").trim().to_string();
         if content.is_empty() || content.len() < 20 {
