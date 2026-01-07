@@ -55,7 +55,7 @@ cargo run
 
 ### Code Structure
 
-```
+```text
 src/
 ├── core/           # Core types and error handling
 ├── providers/      # External service integrations
@@ -149,6 +149,60 @@ Include:
 -   Proposed solution
 -   Use cases
 -   Alternative approaches considered
+
+## 🚀 Examples
+
+The project includes several examples demonstrating different usage patterns:
+
+### Configuration Examples
+
+**Basic Configuration** (`examples/config_demo.rs`):
+
+```rust
+// Demonstrates TOML configuration loading and validation
+use mcp_context_browser::config::Config;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load configuration from config.toml
+    let config = Config::from_file("config.toml").await?;
+    println!("Loaded configuration: {:?}", config);
+    Ok(())
+}
+```
+
+**Advanced Routing** (`examples/advanced_routing.rs`):
+
+```rust
+// Demonstrates provider routing with circuit breakers and failover
+use mcp_context_browser::routing::{Router, CircuitBreakerConfig};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Configure routing with multiple providers and circuit breakers
+    let router = Router::new()
+        .with_circuit_breaker(CircuitBreakerConfig::default())
+        .with_failover_providers(vec!["openai", "ollama", "gemini"]);
+
+    // Route requests intelligently based on health and performance
+    let result = router.route_embedding_request(query).await?;
+    println!("Routed through: {}", result.provider_used);
+    Ok(())
+}
+```
+
+### Running Examples
+
+```bash
+# Run a specific example
+cargo run --example config_demo
+
+# Run with custom configuration
+CONFIG_FILE=my_config.toml cargo run --example advanced_routing
+
+# List all available examples
+cargo run --bin mcp-context-browser -- --help
+```
 
 ## 📞 Getting Help
 

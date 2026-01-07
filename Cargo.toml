@@ -1,6 +1,6 @@
 [package]
 name = "mcp-context-browser"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 description = "A Model Context Protocol server for semantic code analysis using vector embeddings"
 authors = ["Marlon Carvalho <marlonsc@proton.me>"]
@@ -151,6 +151,8 @@ tokio-util = { version = "0.7", features = ["time"] }
 dashmap = "6.0"
 # Health checks
 health = "0.2"
+# EdgeVec high-performance vector database
+edgevec = "0.6"
 
 
 [[example]]

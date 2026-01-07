@@ -43,9 +43,6 @@ pub enum RateLimitBackend {
     Redis {
         /// Redis connection URL
         url: String,
-        /// Connection pool size
-        #[serde(default = "default_redis_pool_size")]
-        pool_size: usize,
     },
 }
 
@@ -53,9 +50,6 @@ fn default_memory_max_entries() -> usize {
     10000
 }
 
-fn default_redis_pool_size() -> usize {
-    10
-}
 
 impl Default for RateLimitConfig {
     fn default() -> Self {
@@ -121,7 +115,6 @@ enum RateLimitStorage {
     /// Redis storage for clustered deployments
     Redis {
         client: Arc<RwLock<Option<Client>>>,
-        pool_size: usize,
     },
 }
 
@@ -138,18 +131,13 @@ impl RateLimiter {
     /// Create a new rate limiter
     pub fn new(config: RateLimitConfig) -> Self {
         let storage = match &config.backend {
-            RateLimitBackend::Memory { max_entries } => {
-                RateLimitStorage::Memory {
-                    windows: Arc::new(RwLock::new(HashMap::new())),
-                    max_entries: *max_entries,
-                }
-            }
-            RateLimitBackend::Redis { url: _, pool_size } => {
-                RateLimitStorage::Redis {
-                    client: Arc::new(RwLock::new(None)),
-                    pool_size: *pool_size,
-                }
-            }
+            RateLimitBackend::Memory { max_entries } => RateLimitStorage::Memory {
+                windows: Arc::new(RwLock::new(HashMap::new())),
+                max_entries: *max_entries,
+            },
+            RateLimitBackend::Redis { .. } => RateLimitStorage::Redis {
+                client: Arc::new(RwLock::new(None)),
+            },
         };
 
         Self {
@@ -176,14 +164,17 @@ impl RateLimiter {
                     _ => unreachable!(),
                 };
 
-                let redis_client = Client::open(redis_config.as_str())
-                    .map_err(|e| Error::internal(format!("Failed to create Redis client: {}", e)))?;
+                let redis_client = Client::open(redis_config.as_str()).map_err(|e| {
+                    Error::internal(format!("Failed to create Redis client: {}", e))
+                })?;
 
                 // Test connection
-                let mut conn = redis_client.get_connection()
+                let mut conn = redis_client
+                    .get_connection()
                     .map_err(|e| Error::internal(format!("Failed to connect to Redis: {}", e)))?;
 
-                let _: String = redis::cmd("PING").query(&mut conn)
+                let _: String = redis::cmd("PING")
+                    .query(&mut conn)
                     .map_err(|e| Error::internal(format!("Redis PING failed: {}", e)))?;
 
                 *client.write().await = Some(redis_client);
@@ -214,10 +205,10 @@ impl RateLimiter {
         let result = self.check_storage_rate_limit(key).await?;
 
         // Cache result for 1 second
-        self.memory_cache.write().await.insert(
-            cache_key,
-            (Instant::now(), result.clone())
-        );
+        self.memory_cache
+            .write()
+            .await
+            .insert(cache_key, (Instant::now(), result.clone()));
 
         Ok(result)
     }
@@ -225,8 +216,12 @@ impl RateLimiter {
     /// Check rate limit against storage backend
     async fn check_storage_rate_limit(&self, key: &RateLimitKey) -> Result<RateLimitResult> {
         match &self.storage {
-            RateLimitStorage::Memory { windows, max_entries } => {
-                self.check_memory_rate_limit(key, windows, *max_entries).await
+            RateLimitStorage::Memory {
+                windows,
+                max_entries,
+            } => {
+                self.check_memory_rate_limit(key, windows, *max_entries)
+                    .await
             }
             RateLimitStorage::Redis { client, .. } => {
                 self.check_redis_rate_limit(key, client).await
@@ -261,7 +256,9 @@ impl RateLimiter {
         }
 
         // Get or create window for this key
-        let window = windows_guard.entry(storage_key.clone()).or_insert_with(VecDeque::new);
+        let window = windows_guard
+            .entry(storage_key.clone())
+            .or_insert_with(VecDeque::new);
 
         // Remove old entries outside the window
         while let Some(&(timestamp, _)) = window.front() {
@@ -301,12 +298,18 @@ impl RateLimiter {
     }
 
     /// Check rate limit against Redis with sliding window algorithm
-    async fn check_redis_rate_limit(&self, key: &RateLimitKey, client: &Arc<RwLock<Option<Client>>>) -> Result<RateLimitResult> {
+    async fn check_redis_rate_limit(
+        &self,
+        key: &RateLimitKey,
+        client: &Arc<RwLock<Option<Client>>>,
+    ) -> Result<RateLimitResult> {
         let client_guard = client.read().await;
-        let redis_client = client_guard.as_ref()
+        let redis_client = client_guard
+            .as_ref()
             .ok_or_else(|| Error::internal("Redis client not initialized"))?;
 
-        let mut conn = redis_client.get_connection()
+        let mut conn = redis_client
+            .get_connection()
             .map_err(|e| Error::internal(format!("Redis connection failed: {}", e)))?;
 
         let redis_key = format!("ratelimit:{}", key);
@@ -399,10 +402,12 @@ impl RateLimiter {
             }
             RateLimitStorage::Redis { client, .. } => {
                 let client_guard = client.read().await;
-                let redis_client = client_guard.as_ref()
+                let redis_client = client_guard
+                    .as_ref()
                     .ok_or_else(|| Error::internal("Redis client not initialized"))?;
 
-                let mut conn = redis_client.get_connection()
+                let mut conn = redis_client
+                    .get_connection()
                     .map_err(|e| Error::internal(format!("Redis connection failed: {}", e)))?;
 
                 let redis_key = format!("ratelimit:{}", key);
@@ -491,7 +496,6 @@ mod tests {
         let redis_config = RateLimitConfig {
             backend: RateLimitBackend::Redis {
                 url: "redis://localhost:6379".to_string(),
-                pool_size: 5,
             },
             ..Default::default()
         };

@@ -87,7 +87,10 @@ impl VectorStoreProvider for NullVectorStoreProvider {
         stats.insert("collection".to_string(), serde_json::json!(collection));
         stats.insert("status".to_string(), serde_json::json!("active"));
         stats.insert("vectors_count".to_string(), serde_json::json!(0));
-        stats.insert("provider".to_string(), serde_json::json!(self.provider_name()));
+        stats.insert(
+            "provider".to_string(),
+            serde_json::json!(self.provider_name()),
+        );
         Ok(stats)
     }
 

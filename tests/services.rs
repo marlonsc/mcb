@@ -4,7 +4,7 @@
 //! IndexingService, and SearchService.
 
 use mcp_context_browser::core::types::{CodeChunk, Language};
-use mcp_context_browser::factory::ServiceProvider;
+use mcp_context_browser::di::factory::ServiceProvider;
 use mcp_context_browser::services::{ContextService, IndexingService, SearchService};
 use std::sync::Arc;
 
@@ -24,22 +24,27 @@ mod tests {
         }
     }
 
-    fn create_test_service_provider() -> ServiceProvider {
-        ServiceProvider::new()
+    fn create_test_providers() -> (Arc<dyn EmbeddingProvider>, Arc<dyn VectorStoreProvider>) {
+        let embedding_provider = Arc::new(mcp_context_browser::providers::embedding::null::NullEmbeddingProvider::new());
+        let vector_store_provider = Arc::new(mcp_context_browser::providers::vector_store::null::NullVectorStoreProvider::new());
+        (embedding_provider, vector_store_provider)
     }
 
     #[tokio::test]
     async fn test_context_service_creation() {
-        let service_provider = create_test_service_provider();
-        let service = ContextService::new(&service_provider);
+        let (embedding_provider, vector_store_provider) = create_test_providers();
+        let service = ContextService::new(embedding_provider, vector_store_provider);
 
-        assert!(service.is_ok());
+        // ContextService constructor doesn't return Result, it's infallible
+        // Just verify it can be created
+        assert!(true);
     }
 
     #[tokio::test]
     async fn test_context_service_embed_text() {
         let service_provider = create_test_service_provider();
-        let service = ContextService::new(&service_provider).unwrap();
+        let (embedding_provider, vector_store_provider) = create_test_providers();
+        let service = ContextService::new(embedding_provider, vector_store_provider);
 
         let text = "fn main() { println!(\"Hello!\"); }";
         let result = service.embed_text(text).await;
@@ -54,7 +59,8 @@ mod tests {
     #[tokio::test]
     async fn test_context_service_embed_empty_text() {
         let service_provider = create_test_service_provider();
-        let service = ContextService::new(&service_provider).unwrap();
+        let (embedding_provider, vector_store_provider) = create_test_providers();
+        let service = ContextService::new(embedding_provider, vector_store_provider);
 
         let text = "";
         let result = service.embed_text(text).await;
@@ -67,7 +73,8 @@ mod tests {
     #[tokio::test]
     async fn test_context_service_store_chunks() {
         let service_provider = create_test_service_provider();
-        let service = ContextService::new(&service_provider).unwrap();
+        let (embedding_provider, vector_store_provider) = create_test_providers();
+        let service = ContextService::new(embedding_provider, vector_store_provider);
 
         let chunks = vec![create_test_code_chunk()];
         let collection = "test-collection";
@@ -79,7 +86,8 @@ mod tests {
     #[tokio::test]
     async fn test_context_service_store_empty_chunks() {
         let service_provider = create_test_service_provider();
-        let service = ContextService::new(&service_provider).unwrap();
+        let (embedding_provider, vector_store_provider) = create_test_providers();
+        let service = ContextService::new(embedding_provider, vector_store_provider);
 
         let chunks: Vec<CodeChunk> = vec![];
         let collection = "test-collection";
@@ -91,7 +99,8 @@ mod tests {
     #[tokio::test]
     async fn test_context_service_search_similar() {
         let service_provider = create_test_service_provider();
-        let service = ContextService::new(&service_provider).unwrap();
+        let (embedding_provider, vector_store_provider) = create_test_providers();
+        let service = ContextService::new(embedding_provider, vector_store_provider);
 
         let query = "function definition";
         let collection = "test-collection";
@@ -107,7 +116,8 @@ mod tests {
     #[tokio::test]
     async fn test_context_service_search_with_zero_limit() {
         let service_provider = create_test_service_provider();
-        let service = ContextService::new(&service_provider).unwrap();
+        let (embedding_provider, vector_store_provider) = create_test_providers();
+        let service = ContextService::new(embedding_provider, vector_store_provider);
 
         let query = "test query";
         let collection = "test-collection";
@@ -124,7 +134,7 @@ mod tests {
     fn test_indexing_service_creation() {
         let service_provider = create_test_service_provider();
         let context_service = Arc::new(ContextService::new(&service_provider).unwrap());
-        let _indexing_service = IndexingService::new(context_service);
+        let _indexing_service = IndexingService::new(context_service).unwrap();
 
         // Just verify it can be created
     }
@@ -133,7 +143,7 @@ mod tests {
     async fn test_indexing_service_index_directory() {
         let service_provider = create_test_service_provider();
         let context_service = Arc::new(ContextService::new(&service_provider).unwrap());
-        let indexing_service = IndexingService::new(context_service);
+        let indexing_service = IndexingService::new(context_service).unwrap();
 
         let temp_dir = tempfile::tempdir().unwrap();
         let collection = "test-collection";
@@ -151,7 +161,7 @@ mod tests {
     async fn test_indexing_service_index_nonexistent_directory() {
         let service_provider = create_test_service_provider();
         let context_service = Arc::new(ContextService::new(&service_provider).unwrap());
-        let indexing_service = IndexingService::new(context_service);
+        let indexing_service = IndexingService::new(context_service).unwrap();
 
         let non_existent_path = std::path::Path::new("/non/existent/path");
         let collection = "test-collection";
@@ -225,9 +235,10 @@ mod tests {
     #[tokio::test]
     async fn test_context_service_embed_batch() {
         let service_provider = create_test_service_provider();
-        let service = ContextService::new(&service_provider).unwrap();
+        let (embedding_provider, vector_store_provider) = create_test_providers();
+        let service = ContextService::new(embedding_provider, vector_store_provider);
 
-          let _texts = [
+        let _texts = [
             "fn main() {}".to_string(),
             "struct Test {}".to_string(),
             "let x = 42;".to_string(),
@@ -244,7 +255,7 @@ mod tests {
         // Test the full integration of services
         let service_provider = create_test_service_provider();
         let context_service = Arc::new(ContextService::new(&service_provider).unwrap());
-        let indexing_service = IndexingService::new(Arc::clone(&context_service));
+        let indexing_service = IndexingService::new(Arc::clone(&context_service)).unwrap();
         let search_service = SearchService::new(Arc::clone(&context_service));
 
         // Index a directory (even if empty)

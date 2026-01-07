@@ -56,8 +56,8 @@ pub trait VectorStoreProvider: Send + Sync {
 
 // Submodules
 pub mod embedding;
-pub mod vector_store;
 pub mod routing;
+pub mod vector_store;
 
 // Re-export implementations
 pub use embedding::NullEmbeddingProvider as MockEmbeddingProvider; // Backward compatibility

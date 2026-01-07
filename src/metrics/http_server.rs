@@ -11,9 +11,10 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::core::cache::{get_global_cache_manager, CacheStats};
-use crate::core::rate_limit::RateLimiter;
 use crate::core::limits::ResourceLimits;
+use crate::core::rate_limit::RateLimiter;
 // Rate limiting middleware will be added later
+use crate::server::security::request_validation_middleware;
 
 use crate::metrics::{PerformanceMetrics, SystemMetricsCollector};
 
@@ -48,7 +49,7 @@ pub struct MetricsApiServer {
     system_collector: Arc<Mutex<SystemMetricsCollector>>,
     performance_metrics: Arc<Mutex<PerformanceMetrics>>,
     start_time: std::time::Instant,
-    rate_limiter: Option<Arc<RateLimiter>>,
+    _rate_limiter: Option<Arc<RateLimiter>>,
     resource_limits: Option<Arc<ResourceLimits>>,
 }
 
@@ -65,7 +66,7 @@ impl MetricsApiServer {
             system_collector: Arc::new(Mutex::new(SystemMetricsCollector::new())),
             performance_metrics: Arc::new(Mutex::new(PerformanceMetrics::new())),
             start_time: std::time::Instant::now(),
-            rate_limiter,
+            _rate_limiter: rate_limiter,
             resource_limits: None,
         }
     }
@@ -77,19 +78,23 @@ impl MetricsApiServer {
             system_collector: Arc::new(Mutex::new(SystemMetricsCollector::new())),
             performance_metrics: Arc::new(Mutex::new(PerformanceMetrics::new())),
             start_time: std::time::Instant::now(),
-            rate_limiter: None,
+            _rate_limiter: None,
             resource_limits,
         }
     }
 
     /// Create a new metrics API server with both rate limiting and resource limits
-    pub fn with_limits(port: u16, rate_limiter: Option<Arc<RateLimiter>>, resource_limits: Option<Arc<ResourceLimits>>) -> Self {
+    pub fn with_limits(
+        port: u16,
+        rate_limiter: Option<Arc<RateLimiter>>,
+        resource_limits: Option<Arc<ResourceLimits>>,
+    ) -> Self {
         Self {
             port,
             system_collector: Arc::new(Mutex::new(SystemMetricsCollector::new())),
             performance_metrics: Arc::new(Mutex::new(PerformanceMetrics::new())),
             start_time: std::time::Instant::now(),
-            rate_limiter,
+            _rate_limiter: rate_limiter,
             resource_limits,
         }
     }
@@ -113,7 +118,7 @@ impl MetricsApiServer {
             system_collector: Arc::clone(&self.system_collector),
             performance_metrics: Arc::clone(&self.performance_metrics),
             start_time: self.start_time,
-            rate_limiter: self.rate_limiter.clone(),
+            _rate_limiter: self._rate_limiter.clone(),
             resource_limits: self.resource_limits.clone(),
         };
 
@@ -137,6 +142,7 @@ impl MetricsApiServer {
                 get(Self::cache_metrics_handler),
             )
             .route("/api/context/status", get(Self::status_handler))
+            .layer(axum::middleware::from_fn(request_validation_middleware))
             .layer(tower_http::cors::CorsLayer::permissive())
             .with_state(state)
     }
@@ -298,6 +304,6 @@ struct MetricsServerState {
     system_collector: Arc<Mutex<SystemMetricsCollector>>,
     performance_metrics: Arc<Mutex<PerformanceMetrics>>,
     start_time: std::time::Instant,
-    rate_limiter: Option<Arc<RateLimiter>>,
+    _rate_limiter: Option<Arc<RateLimiter>>,
     resource_limits: Option<Arc<ResourceLimits>>,
 }

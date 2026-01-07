@@ -1,21 +1,21 @@
 # 🚀 MCP Context Browser - Kubernetes Deployment
 
-Esta documentação descreve como implantar o MCP Context Browser em um cluster Kubernetes com auto-scaling horizontal usando HPA (HorizontalPodAutoscaler).
+This documentation describes how to deploy MCP Context Browser in a Kubernetes cluster with horizontal auto-scaling using HPA (HorizontalPodAutoscaler).
 
-## 📋 Pré-requisitos
+## 📋 Prerequisites
 
-- Kubernetes 1.24+
-- Helm 3.x (opcional, para dependências)
-- Cert-Manager (para TLS automático)
-- NGINX Ingress Controller
-- Prometheus Operator (para métricas e HPA customizado)
-- Redis (para cache distribuído)
-- PostgreSQL (para metadados)
-- Milvus (para vector store)
+-   Kubernetes 1.24+
+-   Helm 3.x (optional, for dependencies)
+-   Cert-Manager (for automatic TLS)
+-   NGINX Ingress Controller
+-   Prometheus Operator (for metrics and custom HPA)
+-   Redis (for distributed cache)
+-   PostgreSQL (for metadata)
+-   Milvus (for vector store)
 
-## 🏗️ Arquitetura
+## 🏗️ Architecture
 
-```
+```text
 Internet → Ingress → Service → Pods (2-10 replicas) → Dependencies
                        ↓
                    HPA (Auto-scaling)
@@ -23,32 +23,32 @@ Internet → Ingress → Service → Pods (2-10 replicas) → Dependencies
                  Prometheus Metrics
 ```
 
-### Componentes
+### Components
 
-- **Deployment**: Aplicação principal com health checks
-- **HPA**: Auto-scaling baseado em CPU, memória e métricas customizadas
-- **Service**: Load balancing interno
-- **Ingress**: Exposição externa com TLS
-- **ConfigMap**: Configurações da aplicação
-- **Secrets**: Credenciais sensíveis
-- **RBAC**: Controle de acesso
-- **NetworkPolicy**: Segurança de rede
-- **PodDisruptionBudget**: Alta disponibilidade
+-   **Deployment**: Main application with health checks
+-   **HPA**: Auto-scaling based on CPU, memory and custom metrics
+-   **Service**: Internal load balancing
+-   **Ingress**: External exposure with TLS
+-   **ConfigMap**: Application configurations
+-   **Secrets**: Sensitive credentials
+-   **RBAC**: Access control
+-   **NetworkPolicy**: Network security
+-   **PodDisruptionBudget**: High availability
 
 ## 🚀 Deploy
 
-### 1. Preparar Secrets
+### 1. Prepare Secrets
 
-Antes do deployment, você precisa criar/popular os secrets com valores reais:
+Before deployment, you need to create/populate secrets with real values:
 
 ```bash
-# Exemplo: Codificar Redis URL em base64
+# Example: Encode Redis URL in base64
 echo -n "redis://user:password@redis-service:6379/0" | base64
 
-# Atualizar o secrets.yaml com os valores codificados
+# Update secrets.yaml with encoded values
 ```
 
-### 2. Deploy das Dependências
+### 2. Deploy Dependencies
 
 ```bash
 # Redis
@@ -58,38 +58,38 @@ helm install redis bitnami/redis -n default
 # PostgreSQL
 helm install postgresql bitnami/postgresql -n default
 
-# Milvus (opcional, para vector store avançado)
+# Milvus (optional, for advanced vector store)
 helm repo add milvus https://milvus-io.github.io/milvus-helm/
 helm install milvus milvus/milvus -n default
 
-# Ollama (opcional, para embeddings locais)
+# Ollama (optional, for local embeddings)
 helm repo add ollama https://otwld.github.io/ollama-helm/
 helm install ollama ollama-ollama -n default
 ```
 
-### 3. Deploy da Aplicação
+### 3. Deploy Application
 
 ```bash
-# Deploy completo
+# Complete deploy
 ./deploy.sh
 
-# Ou aplicar manualmente
+# Or apply manually
 kubectl apply -f . -n default
 ```
 
-### 4. Verificar Deploy
+### 4. Verify Deploy
 
 ```bash
-# Status dos pods
+# Pod status
 kubectl get pods -l app=mcp-context-browser
 
-# Status do HPA
+# HPA status
 kubectl get hpa mcp-context-browser-hpa
 
-# Logs da aplicação
+# Application logs
 kubectl logs -f deployment/mcp-context-browser
 
-# Métricas
+# Metrics
 curl http://your-domain.com:3001/api/context/metrics
 ```
 
@@ -97,15 +97,15 @@ curl http://your-domain.com:3001/api/context/metrics
 
 ### Auto-scaling
 
-O HPA está configurado para:
+The HPA is configured for:
 
-- **Mínimo**: 2 réplicas
-- **Máximo**: 10 réplicas
-- **Métricas**:
-  - CPU: 70% utilização média
-  - Memória: 80% utilização média
-  - Requests/s: 100 requests por pod
-  - Conexões ativas: 50 conexões por pod
+-   **Minimum**: 2 replicas
+-   **Maximum**: 10 replicas
+-   **Metrics**:
+    -   CPU: 70% average utilization
+    -   Memory: 80% average utilization
+    -   Requests/s: 100 requests per pod
+    -   Active connections: 50 connections per pod
 
 ### Resource Limits
 
@@ -120,21 +120,21 @@ limits:
 
 ### Health Checks
 
-- **Liveness**: `/api/health` a cada 10s
-- **Readiness**: `/api/health` a cada 5s
-- **Startup**: `/api/health` com timeout de 6 tentativas
+-   **Liveness**: `/api/health` a cada 10s
+-   **Readiness**: `/api/health` a cada 5s
+-   **Startup**: `/api/health` com timeout de 6 tentativas
 
 ## 📊 Monitoramento
 
-### Métricas Prometheus
+### Prometheus Metrics
 
-O ServiceMonitor expõe métricas em `/api/context/metrics`:
+The ServiceMonitor exposes metrics at `/api/context/metrics`:
 
-- `mcp_http_requests_total`: Total de requests HTTP
-- `mcp_http_request_duration_seconds`: Duração das requests
-- `mcp_active_connections`: Conexões ativas
-- `mcp_cache_hit_ratio`: Taxa de acerto do cache
-- `mcp_resource_limits_*`: Limites de recursos
+-   `mcp_http_requests_total`: Total HTTP requests
+-   `mcp_http_request_duration_seconds`: Request duration
+-   `mcp_active_connections`: Active connections
+-   `mcp_cache_hit_ratio`: Cache hit ratio
+-   `mcp_resource_limits_*`: Resource limits
 
 ### Dashboards Grafana
 
@@ -144,10 +144,10 @@ Importe o dashboard fornecido em `docs/diagrams/grafana-dashboard.json`.
 
 ### Problemas Comuns
 
-1. **Pods não iniciam**: Verificar secrets e configmaps
-2. **HPA não escala**: Verificar métricas do Prometheus
-3. **Timeouts**: Ajustar resource limits
-4. **Cache errors**: Verificar conexão Redis
+1.  **Pods don't start**: Check secrets and configmaps
+2.  **HPA doesn't scale**: Check Prometheus metrics
+3.  **Timeouts**: Ajustar resource limits
+4.  **Cache errors**: Verificar conexão Redis
 
 ### Debug Commands
 
@@ -168,7 +168,7 @@ kubectl port-forward svc/mcp-context-browser-service 3000:80
 
 ## 🔄 Updates
 
-Para atualizar a aplicação:
+To update the application:
 
 ```bash
 # Build new image
@@ -183,17 +183,17 @@ kubectl rollout status deployment/mcp-context-browser
 
 ## 🛡️ Segurança
 
-- **RBAC**: ServiceAccount com permissões mínimas
-- **NetworkPolicy**: Controle de tráfego de rede
-- **Secrets**: Credenciais em base64
-- **TLS**: Certificados automáticos via cert-manager
-- **SecurityContext**: Execução como non-root
+-   **RBAC**: ServiceAccount with minimal permissions
+-   **NetworkPolicy**: Network traffic control
+-   **Secrets**: Base64 encoded credentials
+-   **TLS**: Automatic certificates via cert-manager
+-   **SecurityContext**: Run as non-root
 
 ## 📈 Performance Tuning
 
 ### HPA Custom Metrics
 
-Para métricas customizadas, adicione ao HPA:
+For custom metrics, add to HPA:
 
 ```yaml
 - type: Pods
@@ -220,6 +220,7 @@ kubectl edit deployment mcp-context-browser
 ## 🤝 Suporte
 
 Para issues, consulte:
-- [GitHub Issues](https://github.com/mcp-context-browser/issues)
-- [Documentation](https://docs.mcp-context-browser.com)
-- [Kubernetes Best Practices](https://kubernetes.io/docs/concepts/)
+
+-   [GitHub Issues](https://github.com/mcp-context-browser/issues)
+-   [Documentation](https://docs.mcp-context-browser.com)
+-   [Kubernetes Best Practices](https://kubernetes.io/docs/concepts/)

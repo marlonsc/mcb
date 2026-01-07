@@ -6,8 +6,8 @@
 use crate::core::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::sync::{Mutex, Semaphore};
 use std::time::Duration;
+use tokio::sync::{Mutex, Semaphore};
 
 /// Resource limits configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -175,11 +175,27 @@ pub struct OperationStats {
 /// Resource limit violations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ResourceViolation {
-    MemoryLimitExceeded { current_percent: f32, limit_percent: f32 },
-    CpuLimitExceeded { current_percent: f32, limit_percent: f32 },
-    DiskLimitExceeded { current_percent: f32, limit_percent: f32 },
-    DiskSpaceLow { available_bytes: u64, required_bytes: u64 },
-    ConcurrencyLimitExceeded { operation_type: String, current: usize, limit: usize },
+    MemoryLimitExceeded {
+        current_percent: f32,
+        limit_percent: f32,
+    },
+    CpuLimitExceeded {
+        current_percent: f32,
+        limit_percent: f32,
+    },
+    DiskLimitExceeded {
+        current_percent: f32,
+        limit_percent: f32,
+    },
+    DiskSpaceLow {
+        available_bytes: u64,
+        required_bytes: u64,
+    },
+    ConcurrencyLimitExceeded {
+        operation_type: String,
+        current: usize,
+        limit: usize,
+    },
 }
 
 /// Resource limits enforcer
@@ -209,7 +225,9 @@ impl ResourceLimits {
         Self {
             indexing_semaphore: Arc::new(Semaphore::new(config.operations.max_concurrent_indexing)),
             search_semaphore: Arc::new(Semaphore::new(config.operations.max_concurrent_search)),
-            embedding_semaphore: Arc::new(Semaphore::new(config.operations.max_concurrent_embedding)),
+            embedding_semaphore: Arc::new(Semaphore::new(
+                config.operations.max_concurrent_embedding,
+            )),
             operation_counters: Arc::new(Mutex::new(OperationCounters::default())),
             config,
         }
@@ -224,7 +242,10 @@ impl ResourceLimits {
         // Check system resources
         let violations = self.check_system_limits().await?;
         if !violations.is_empty() {
-            return Err(Error::generic(format!("Resource limits exceeded: {:?}", violations[0])));
+            return Err(Error::generic(format!(
+                "Resource limits exceeded: {:?}",
+                violations[0]
+            )));
         }
 
         // Check concurrency limits
@@ -234,7 +255,10 @@ impl ResourceLimits {
     }
 
     /// Acquire a permit for an operation
-    pub async fn acquire_operation_permit(&self, operation_type: &str) -> Result<OperationPermit<'_>> {
+    pub async fn acquire_operation_permit(
+        &self,
+        operation_type: &str,
+    ) -> Result<OperationPermit<'_>> {
         if !self.config.enabled {
             return Ok(OperationPermit {
                 _permit: None,
@@ -245,28 +269,34 @@ impl ResourceLimits {
 
         let permit = match operation_type {
             "indexing" => {
-                let permit = self.indexing_semaphore.acquire().await
-                    .map_err(|e| Error::generic(format!("Failed to acquire indexing permit: {}", e)))?;
+                let permit = self.indexing_semaphore.acquire().await.map_err(|e| {
+                    Error::generic(format!("Failed to acquire indexing permit: {}", e))
+                })?;
                 let mut counters = self.operation_counters.lock().await;
                 counters.active_indexing += 1;
                 Some(permit)
             }
             "search" => {
-                let permit = self.search_semaphore.acquire().await
-                    .map_err(|e| Error::generic(format!("Failed to acquire search permit: {}", e)))?;
+                let permit = self.search_semaphore.acquire().await.map_err(|e| {
+                    Error::generic(format!("Failed to acquire search permit: {}", e))
+                })?;
                 let mut counters = self.operation_counters.lock().await;
                 counters.active_search += 1;
                 Some(permit)
             }
             "embedding" => {
-                let permit = self.embedding_semaphore.acquire().await
-                    .map_err(|e| Error::generic(format!("Failed to acquire embedding permit: {}", e)))?;
+                let permit = self.embedding_semaphore.acquire().await.map_err(|e| {
+                    Error::generic(format!("Failed to acquire embedding permit: {}", e))
+                })?;
                 let mut counters = self.operation_counters.lock().await;
                 counters.active_embedding += 1;
                 Some(permit)
             }
             _ => {
-                return Err(Error::invalid_argument(format!("Unknown operation type: {}", operation_type)));
+                return Err(Error::invalid_argument(format!(
+                    "Unknown operation type: {}",
+                    operation_type
+                )));
             }
         };
 
@@ -369,9 +399,11 @@ impl ResourceLimits {
     async fn get_memory_stats(&self) -> Result<MemoryStats> {
         #[cfg(target_os = "linux")]
         {
-            use sysinfo::{System, RefreshKind, MemoryRefreshKind};
+            use sysinfo::{MemoryRefreshKind, RefreshKind, System};
 
-            let mut system = System::new_with_specifics(RefreshKind::new().with_memory(MemoryRefreshKind::new().with_ram()));
+            let mut system = System::new_with_specifics(
+                RefreshKind::new().with_memory(MemoryRefreshKind::new().with_ram()),
+            );
             system.refresh_memory();
 
             let total = system.total_memory();
@@ -407,15 +439,16 @@ impl ResourceLimits {
     async fn get_cpu_stats(&self) -> Result<CpuStats> {
         #[cfg(target_os = "linux")]
         {
-            use sysinfo::{System, RefreshKind, CpuRefreshKind};
+            use sysinfo::{CpuRefreshKind, RefreshKind, System};
 
-            let mut system = System::new_with_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::new().with_frequency()));
+            let mut system = System::new_with_specifics(
+                RefreshKind::new().with_cpu(CpuRefreshKind::new().with_frequency()),
+            );
             system.refresh_cpu();
 
             let cores = system.cpus().len();
-            let usage_percent = system.cpus().iter()
-                .map(|cpu| cpu.cpu_usage())
-                .sum::<f32>() / cores as f32;
+            let usage_percent =
+                system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f32>() / cores as f32;
 
             Ok(CpuStats {
                 usage_percent,
@@ -512,7 +545,9 @@ impl Drop for OperationPermit<'_> {
             match operation_type.as_str() {
                 "indexing" => counters.active_indexing = counters.active_indexing.saturating_sub(1),
                 "search" => counters.active_search = counters.active_search.saturating_sub(1),
-                "embedding" => counters.active_embedding = counters.active_embedding.saturating_sub(1),
+                "embedding" => {
+                    counters.active_embedding = counters.active_embedding.saturating_sub(1)
+                }
                 _ => {}
             }
         });
@@ -525,7 +560,8 @@ static RESOURCE_LIMITS: std::sync::OnceLock<ResourceLimits> = std::sync::OnceLoc
 /// Initialize global resource limits
 pub fn init_global_resource_limits(config: ResourceLimitsConfig) -> Result<()> {
     let limits = ResourceLimits::new(config);
-    RESOURCE_LIMITS.set(limits)
+    RESOURCE_LIMITS
+        .set(limits)
         .map_err(|_| "Resource limits already initialized".into())
 }
 

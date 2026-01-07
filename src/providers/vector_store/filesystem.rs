@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{BufReader, BufWriter, Read, Write, Seek};
+use std::io::{BufReader, BufWriter, Read, Seek, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -107,7 +107,10 @@ impl FilesystemVectorStore {
     /// Load existing state from disk for a collection
     async fn load_collection_state(&self, collection: &str) -> Result<()> {
         // Load global index
-        let index_path = self.config.base_path.join(format!("{}_index.json", collection));
+        let index_path = self
+            .config
+            .base_path
+            .join(format!("{}_index.json", collection));
         if index_path.exists() {
             let file = File::open(index_path)?;
             let reader = BufReader::new(file);
@@ -134,7 +137,14 @@ impl FilesystemVectorStore {
         }
 
         // Find next shard ID
-        let max_shard_id = self.shard_cache.read().await.keys().max().copied().unwrap_or(0);
+        let max_shard_id = self
+            .shard_cache
+            .read()
+            .await
+            .keys()
+            .max()
+            .copied()
+            .unwrap_or(0);
         *self.next_shard_id.write().await = max_shard_id + 1;
 
         Ok(())
@@ -145,7 +155,10 @@ impl FilesystemVectorStore {
         let collection = self.current_collection.read().await.clone();
 
         // Save global index
-        let index_path = self.config.base_path.join(format!("{}_index.json", collection));
+        let index_path = self
+            .config
+            .base_path
+            .join(format!("{}_index.json", collection));
         let index = self.index_cache.read().await;
         let file = File::create(index_path)?;
         let writer = BufWriter::new(file);
@@ -168,8 +181,15 @@ impl FilesystemVectorStore {
 
     /// Get shard file path for current collection
     fn get_shard_path(&self, shard_id: u32) -> PathBuf {
-        let collection = self.current_collection.try_read().map(|c| c.clone()).unwrap_or_else(|_| "default".to_string());
-        self.config.base_path.join(format!("{}_shards", collection)).join(format!("shard_{}.dat", shard_id))
+        let collection = self
+            .current_collection
+            .try_read()
+            .map(|c| c.clone())
+            .unwrap_or_else(|_| "default".to_string());
+        self.config
+            .base_path
+            .join(format!("{}_shards", collection))
+            .join(format!("shard_{}.dat", shard_id))
     }
 
     /// Allocate next shard ID
@@ -211,7 +231,13 @@ impl FilesystemVectorStore {
     }
 
     /// Write vector to shard
-    async fn write_vector_to_shard(&self, shard_id: u32, id: &str, vector: &[f32], metadata: &HashMap<String, serde_json::Value>) -> Result<u64> {
+    async fn write_vector_to_shard(
+        &self,
+        shard_id: u32,
+        _id: &str,
+        vector: &[f32],
+        metadata: &HashMap<String, serde_json::Value>,
+    ) -> Result<u64> {
         self.ensure_shard_capacity(shard_id).await?;
 
         let shard_path = self.get_shard_path(shard_id);
@@ -244,7 +270,11 @@ impl FilesystemVectorStore {
     }
 
     /// Read vector from shard
-    async fn read_vector_from_shard(&self, shard_id: u32, offset: u64) -> Result<(Vec<f32>, HashMap<String, serde_json::Value>)> {
+    async fn read_vector_from_shard(
+        &self,
+        shard_id: u32,
+        offset: u64,
+    ) -> Result<(Vec<f32>, HashMap<String, serde_json::Value>)> {
         let shard_path = self.get_shard_path(shard_id);
         let mut file = File::open(&shard_path)?;
 
@@ -293,25 +323,35 @@ impl FilesystemVectorStore {
     }
 
     /// Perform similarity search using brute force
-    async fn brute_force_search(&self, query_vector: &[f32], limit: usize) -> Result<Vec<SearchResult>> {
+    async fn brute_force_search(
+        &self,
+        query_vector: &[f32],
+        limit: usize,
+    ) -> Result<Vec<SearchResult>> {
         let mut results = Vec::new();
         let index = self.index_cache.read().await;
 
-        for (id, entry) in index.iter() {
-            if let Ok((vector, metadata)) = self.read_vector_from_shard(entry.shard_id, entry.offset).await {
+        for (_id, entry) in index.iter() {
+            if let Ok((vector, metadata)) = self
+                .read_vector_from_shard(entry.shard_id, entry.offset)
+                .await
+            {
                 let similarity = self.cosine_similarity(query_vector, &vector);
 
                 // Extract file path and line number from metadata
-                let file_path = metadata.get("file_path")
+                let file_path = metadata
+                    .get("file_path")
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown")
                     .to_string();
 
-                let line_number = metadata.get("line_number")
+                let line_number = metadata
+                    .get("line_number")
                     .and_then(|v| v.as_u64())
                     .unwrap_or(0) as u32;
 
-                let content = metadata.get("content")
+                let content = metadata
+                    .get("content")
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .to_string();
@@ -327,7 +367,11 @@ impl FilesystemVectorStore {
         }
 
         // Sort by similarity (descending) and take top results
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         results.truncate(limit);
 
         Ok(results)
@@ -382,7 +426,7 @@ impl VectorStoreProvider for FilesystemVectorStore {
         *self.current_collection.write().await = name.to_string();
 
         // Try to load existing collection, if it doesn't exist, create it
-        if let Err(_) = self.load_collection_state(name).await {
+        if self.load_collection_state(name).await.is_err() {
             // Collection doesn't exist, save initial empty state
             self.save_collection_state().await?;
         }
@@ -439,7 +483,9 @@ impl VectorStoreProvider for FilesystemVectorStore {
         for (i, (vector, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
             let id = format!("{}_{}", collection, i); // Simple ID generation
             let shard_id = self.find_optimal_shard().await?;
-            let offset = self.write_vector_to_shard(shard_id, &id, &vector.vector, meta).await?;
+            let offset = self
+                .write_vector_to_shard(shard_id, &id, &vector.vector, meta)
+                .await?;
 
             let index_entry = IndexEntry {
                 id: id.clone(),
@@ -508,10 +554,16 @@ impl VectorStoreProvider for FilesystemVectorStore {
         stats.insert("collection".to_string(), serde_json::json!(collection));
         stats.insert("total_vectors".to_string(), serde_json::json!(index.len()));
         stats.insert("total_shards".to_string(), serde_json::json!(shards.len()));
-        stats.insert("dimensions".to_string(), serde_json::json!(self.config.dimensions));
+        stats.insert(
+            "dimensions".to_string(),
+            serde_json::json!(self.config.dimensions),
+        );
 
         let total_size: u64 = shards.values().map(|s| s.vectors_size).sum();
-        stats.insert("total_size_bytes".to_string(), serde_json::json!(total_size));
+        stats.insert(
+            "total_size_bytes".to_string(),
+            serde_json::json!(total_size),
+        );
 
         Ok(stats)
     }
@@ -545,25 +597,24 @@ mod tests {
         store.create_collection("test", 3).await.unwrap();
 
         // Insert vectors
-        let vectors = vec![
-            Embedding {
-                vector: vec![1.0, 2.0, 3.0],
-                model: "test".to_string(),
-                dimensions: 3,
-            }
-        ];
+        let vectors = vec![Embedding {
+            vector: vec![1.0, 2.0, 3.0],
+            model: "test".to_string(),
+            dimensions: 3,
+        }];
 
-        let metadata = vec![
-            {
-                let mut meta = HashMap::new();
-                meta.insert("file_path".to_string(), serde_json::json!("test.rs"));
-                meta.insert("line_number".to_string(), serde_json::json!(42));
-                meta.insert("content".to_string(), serde_json::json!("test content"));
-                meta
-            }
-        ];
+        let metadata = vec![{
+            let mut meta = HashMap::new();
+            meta.insert("file_path".to_string(), serde_json::json!("test.rs"));
+            meta.insert("line_number".to_string(), serde_json::json!(42));
+            meta.insert("content".to_string(), serde_json::json!("test content"));
+            meta
+        }];
 
-        let ids = store.insert_vectors("test", &vectors, metadata).await.unwrap();
+        let ids = store
+            .insert_vectors("test", &vectors, metadata)
+            .await
+            .unwrap();
         assert_eq!(ids.len(), 1);
 
         // Search similar

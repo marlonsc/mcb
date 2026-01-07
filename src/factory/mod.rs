@@ -2,7 +2,7 @@
 
 use crate::core::{
     error::{Error, Result},
-    types::{EmbeddingConfig, VectorStoreConfig},
+    types::{EmbeddingConfig, VectorStoreConfig, VectorStoreProviderConfig},
 };
 use crate::providers::{EmbeddingProvider, VectorStoreProvider};
 
@@ -117,6 +117,44 @@ impl ProviderFactory for DefaultProviderFactory {
                 };
                 Ok(Arc::new(FilesystemVectorStore::new(fs_config).await?))
             }
+            "edgevec" => {
+                use crate::providers::vector_store::edgevec::{EdgeVecVectorStoreProvider, EdgeVecConfig, MetricType, HnswConfig};
+
+                // Parse EdgeVec-specific config from the provider config
+                let edgevec_config = if let Some(VectorStoreProviderConfig::EdgeVec {
+                    max_vectors: _,
+                    collection,
+                    hnsw_m: _,
+                    hnsw_ef_construction: _,
+                    distance_metric: _,
+                    use_quantization,
+                }) = &config.provider_config {
+                    EdgeVecConfig {
+                        dimensions: config.dimensions.unwrap_or(1536),
+                        hnsw_config: HnswConfig {
+                            m: hnsw_m.unwrap_or(16) as u32,
+                            m0: (hnsw_m.unwrap_or(16) * 2) as u32, // m0 is typically 2*m
+                            ef_construction: hnsw_ef_construction.unwrap_or(200) as u32,
+                            ef_search: 64, // Default search parameter
+                        },
+                        metric: match distance_metric.as_deref() {
+                            Some("l2_squared") | Some("euclidean") => MetricType::L2Squared,
+                            Some("dot_product") => MetricType::DotProduct,
+                            _ => MetricType::Cosine, // Default
+                        },
+                        use_quantization: use_quantization.unwrap_or(false),
+                        quantizer_config: Default::default(),
+                    }
+                } else {
+                    EdgeVecConfig {
+                        dimensions: config.dimensions.unwrap_or(1536),
+                        ..Default::default()
+                    }
+                };
+
+                let collection = collection.clone().unwrap_or_else(|| "default".to_string());
+                Ok(Arc::new(EdgeVecVectorStoreProvider::with_collection(edgevec_config, collection)?))
+            }
             "milvus" => {
                 let address = config
                     .address
@@ -144,7 +182,7 @@ impl ProviderFactory for DefaultProviderFactory {
     }
 
     fn supported_vector_store_providers(&self) -> Vec<String> {
-        vec!["in-memory".to_string(), "filesystem".to_string(), "milvus".to_string()]
+        vec!["in-memory".to_string(), "filesystem".to_string(), "edgevec".to_string(), "milvus".to_string()]
     }
 }
 
@@ -157,14 +195,14 @@ impl Default for DefaultProviderFactory {
 /// Service provider for dependency injection
 pub struct ServiceProvider {
     factory: DefaultProviderFactory,
-    registry: crate::registry::ProviderRegistry,
+    registry: crate::di::registry::ProviderRegistry,
 }
 
 impl ServiceProvider {
     pub fn new() -> Self {
         Self {
             factory: DefaultProviderFactory::new(),
-            registry: crate::registry::ProviderRegistry::new(),
+            registry: crate::di::registry::ProviderRegistry::new(),
         }
     }
 
@@ -172,18 +210,62 @@ impl ServiceProvider {
         &self,
         config: &EmbeddingConfig,
     ) -> Result<Arc<dyn EmbeddingProvider>> {
-        self.factory.create_embedding_provider(config).await
+        // First try to get from registry
+        if let Ok(provider) = self.registry.get_embedding_provider(&config.provider) {
+            return Ok(provider);
+        }
+
+        // If not found, create via factory and register
+        let provider = self.factory.create_embedding_provider(config).await?;
+        self.registry.register_embedding_provider(&config.provider, Arc::clone(&provider))?;
+
+        Ok(provider)
     }
 
     pub async fn get_vector_store_provider(
         &self,
         config: &VectorStoreConfig,
     ) -> Result<Arc<dyn VectorStoreProvider>> {
-        self.factory.create_vector_store_provider(config).await
+        // First try to get from registry
+        if let Ok(provider) = self.registry.get_vector_store_provider(&config.provider) {
+            return Ok(provider);
+        }
+
+        // If not found, create via factory and register
+        let provider = self.factory.create_vector_store_provider(config).await?;
+        self.registry.register_vector_store_provider(&config.provider, Arc::clone(&provider))?;
+
+        Ok(provider)
     }
 
-    pub fn registry(&self) -> &crate::registry::ProviderRegistry {
+    pub fn registry(&self) -> &crate::di::registry::ProviderRegistry {
         &self.registry
+    }
+
+    /// Register an embedding provider directly
+    pub fn register_embedding_provider(
+        &self,
+        name: &str,
+        provider: Arc<dyn EmbeddingProvider>,
+    ) -> Result<()> {
+        self.registry.register_embedding_provider(name, provider)
+    }
+
+    /// Register a vector store provider directly
+    pub fn register_vector_store_provider(
+        &self,
+        name: &str,
+        provider: Arc<dyn VectorStoreProvider>,
+    ) -> Result<()> {
+        self.registry.register_vector_store_provider(name, provider)
+    }
+
+    /// List all registered providers
+    pub fn list_providers(&self) -> (Vec<String>, Vec<String>) {
+        (
+            self.registry.list_embedding_providers(),
+            self.registry.list_vector_store_providers(),
+        )
     }
 }
 

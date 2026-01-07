@@ -10,6 +10,7 @@ use crate::core::auth::AuthConfig;
 use crate::core::cache::CacheConfig;
 use crate::core::database::DatabaseConfig;
 use crate::core::error::{Error, Result};
+use crate::core::hybrid_search::HybridSearchConfig;
 use crate::core::limits::ResourceLimitsConfig;
 use crate::core::rate_limit::RateLimitConfig;
 use crate::daemon::DaemonConfig;
@@ -77,6 +78,21 @@ pub enum EmbeddingProviderConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "provider")]
 pub enum VectorStoreProviderConfig {
+    #[serde(rename = "edgevec")]
+    EdgeVec {
+        #[serde(default)]
+        max_vectors: Option<usize>,
+        #[serde(default)]
+        collection: Option<String>,
+        #[serde(default)]
+        hnsw_m: Option<usize>,
+        #[serde(default)]
+        hnsw_ef_construction: Option<usize>,
+        #[serde(default)]
+        distance_metric: Option<String>,
+        #[serde(default)]
+        use_quantization: Option<bool>,
+    },
     #[serde(rename = "milvus")]
     Milvus {
         address: String,
@@ -181,6 +197,7 @@ pub struct Config {
     /// Advanced caching configuration (v0.0.3)
     #[serde(default)]
     pub cache: CacheConfig,
+    pub hybrid_search: HybridSearchConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -205,8 +222,8 @@ pub struct ConfigManager {
 impl ConfigManager {
     /// Create new configuration manager
     pub fn new() -> Result<Self> {
-        let home_dir = dirs::home_dir()
-            .ok_or_else(|| Error::config("Cannot determine home directory"))?;
+        let home_dir =
+            dirs::home_dir().ok_or_else(|| Error::config("Cannot determine home directory"))?;
 
         Ok(Self {
             global_config_path: home_dir.join(".context").join("config.toml"),
@@ -261,91 +278,135 @@ impl ConfigManager {
     }
 
     /// Convert embedding provider config to legacy format
-    fn provider_config_to_legacy(&self, config: &EmbeddingProviderConfig) -> crate::core::types::EmbeddingConfig {
+    fn provider_config_to_legacy(
+        &self,
+        config: &EmbeddingProviderConfig,
+    ) -> crate::core::types::EmbeddingConfig {
         match config {
-            EmbeddingProviderConfig::OpenAI { model, api_key, base_url, dimensions, max_tokens } => {
-                crate::core::types::EmbeddingConfig {
-                    provider: "openai".to_string(),
-                    model: model.clone(),
-                    api_key: Some(api_key.clone()),
-                    base_url: base_url.clone(),
-                    dimensions: *dimensions,
-                    max_tokens: *max_tokens,
-                }
-            }
-            EmbeddingProviderConfig::Ollama { model, host, dimensions, max_tokens } => {
-                crate::core::types::EmbeddingConfig {
-                    provider: "ollama".to_string(),
-                    model: model.clone(),
-                    api_key: host.clone().map(|h| format!("http://{}", h)),
-                    base_url: host.clone(),
-                    dimensions: *dimensions,
-                    max_tokens: *max_tokens,
-                }
-            }
-            EmbeddingProviderConfig::VoyageAI { model, api_key, dimensions, max_tokens } => {
-                crate::core::types::EmbeddingConfig {
-                    provider: "voyageai".to_string(),
-                    model: model.clone(),
-                    api_key: Some(api_key.clone()),
-                    base_url: None,
-                    dimensions: *dimensions,
-                    max_tokens: *max_tokens,
-                }
-            }
-            EmbeddingProviderConfig::Gemini { model, api_key, base_url, dimensions, max_tokens } => {
-                crate::core::types::EmbeddingConfig {
-                    provider: "gemini".to_string(),
-                    model: model.clone(),
-                    api_key: Some(api_key.clone()),
-                    base_url: base_url.clone(),
-                    dimensions: *dimensions,
-                    max_tokens: *max_tokens,
-                }
-            }
-            EmbeddingProviderConfig::Mock { dimensions, max_tokens } => {
-                crate::core::types::EmbeddingConfig {
-                    provider: "mock".to_string(),
-                    model: "mock".to_string(),
-                    api_key: None,
-                    base_url: None,
-                    dimensions: *dimensions,
-                    max_tokens: *max_tokens,
-                }
-            }
+            EmbeddingProviderConfig::OpenAI {
+                model,
+                api_key,
+                base_url,
+                dimensions,
+                max_tokens,
+            } => crate::core::types::EmbeddingConfig {
+                provider: "openai".to_string(),
+                model: model.clone(),
+                api_key: Some(api_key.clone()),
+                base_url: base_url.clone(),
+                dimensions: *dimensions,
+                max_tokens: *max_tokens,
+            },
+            EmbeddingProviderConfig::Ollama {
+                model,
+                host,
+                dimensions,
+                max_tokens,
+            } => crate::core::types::EmbeddingConfig {
+                provider: "ollama".to_string(),
+                model: model.clone(),
+                api_key: host.clone().map(|h| format!("http://{}", h)),
+                base_url: host.clone(),
+                dimensions: *dimensions,
+                max_tokens: *max_tokens,
+            },
+            EmbeddingProviderConfig::VoyageAI {
+                model,
+                api_key,
+                dimensions,
+                max_tokens,
+            } => crate::core::types::EmbeddingConfig {
+                provider: "voyageai".to_string(),
+                model: model.clone(),
+                api_key: Some(api_key.clone()),
+                base_url: None,
+                dimensions: *dimensions,
+                max_tokens: *max_tokens,
+            },
+            EmbeddingProviderConfig::Gemini {
+                model,
+                api_key,
+                base_url,
+                dimensions,
+                max_tokens,
+            } => crate::core::types::EmbeddingConfig {
+                provider: "gemini".to_string(),
+                model: model.clone(),
+                api_key: Some(api_key.clone()),
+                base_url: base_url.clone(),
+                dimensions: *dimensions,
+                max_tokens: *max_tokens,
+            },
+            EmbeddingProviderConfig::Mock {
+                dimensions,
+                max_tokens,
+            } => crate::core::types::EmbeddingConfig {
+                provider: "mock".to_string(),
+                model: "mock".to_string(),
+                api_key: None,
+                base_url: None,
+                dimensions: *dimensions,
+                max_tokens: *max_tokens,
+            },
         }
     }
 
     /// Convert vector store config to legacy format
-    fn vector_config_to_legacy(&self, config: &VectorStoreProviderConfig) -> crate::core::types::VectorStoreConfig {
+    fn vector_config_to_legacy(
+        &self,
+        config: &VectorStoreProviderConfig,
+    ) -> crate::core::types::VectorStoreConfig {
         match config {
-            VectorStoreProviderConfig::Milvus { address, token, collection, dimensions } => {
-                crate::core::types::VectorStoreConfig {
-                    provider: "milvus".to_string(),
-                    address: Some(address.clone()),
-                    token: token.clone(),
-                    collection: collection.clone(),
-                    dimensions: *dimensions,
-                }
-            }
-            VectorStoreProviderConfig::Pinecone { api_key, environment, index_name, dimensions } => {
-                crate::core::types::VectorStoreConfig {
-                    provider: "pinecone".to_string(),
-                    address: Some(format!("https://{}.pinecone.io", environment.clone())),
-                    token: Some(api_key.clone()),
-                    collection: Some(index_name.clone()),
-                    dimensions: *dimensions,
-                }
-            }
-            VectorStoreProviderConfig::Qdrant { url, api_key, collection, dimensions } => {
-                crate::core::types::VectorStoreConfig {
-                    provider: "qdrant".to_string(),
-                    address: Some(url.clone()),
-                    token: api_key.clone(),
-                    collection: collection.clone(),
-                    dimensions: *dimensions,
-                }
-            }
+            VectorStoreProviderConfig::EdgeVec {
+                max_vectors: _,
+                collection,
+                hnsw_m: _,
+                hnsw_ef_construction: _,
+                distance_metric: _,
+                use_quantization: _,
+            } => crate::core::types::VectorStoreConfig {
+                provider: "edgevec".to_string(),
+                address: None,
+                token: None,
+                collection: collection.clone(),
+                dimensions: Some(1536), // Default, will be overridden by EdgeVec config
+            },
+            VectorStoreProviderConfig::Milvus {
+                address,
+                token,
+                collection,
+                dimensions,
+            } => crate::core::types::VectorStoreConfig {
+                provider: "milvus".to_string(),
+                address: Some(address.clone()),
+                token: token.clone(),
+                collection: collection.clone(),
+                dimensions: *dimensions,
+            },
+            VectorStoreProviderConfig::Pinecone {
+                api_key,
+                environment,
+                index_name,
+                dimensions,
+            } => crate::core::types::VectorStoreConfig {
+                provider: "pinecone".to_string(),
+                address: Some(format!("https://{}.pinecone.io", environment.clone())),
+                token: Some(api_key.clone()),
+                collection: Some(index_name.clone()),
+                dimensions: *dimensions,
+            },
+            VectorStoreProviderConfig::Qdrant {
+                url,
+                api_key,
+                collection,
+                dimensions,
+            } => crate::core::types::VectorStoreConfig {
+                provider: "qdrant".to_string(),
+                address: Some(url.clone()),
+                token: api_key.clone(),
+                collection: collection.clone(),
+                dimensions: *dimensions,
+            },
             VectorStoreProviderConfig::InMemory { dimensions } => {
                 crate::core::types::VectorStoreConfig {
                     provider: "in-memory".to_string(),
@@ -355,15 +416,20 @@ impl ConfigManager {
                     dimensions: *dimensions,
                 }
             }
-            VectorStoreProviderConfig::Filesystem { base_path, max_vectors_per_shard: _, dimensions, compression_enabled: _, index_cache_size: _, memory_mapping_enabled: _ } => {
-                crate::core::types::VectorStoreConfig {
-                    provider: "filesystem".to_string(),
-                    address: base_path.clone(),
-                    token: None,
-                    collection: None,
-                    dimensions: *dimensions,
-                }
-            }
+            VectorStoreProviderConfig::Filesystem {
+                base_path,
+                max_vectors_per_shard: _,
+                dimensions,
+                compression_enabled: _,
+                index_cache_size: _,
+                memory_mapping_enabled: _,
+            } => crate::core::types::VectorStoreConfig {
+                provider: "filesystem".to_string(),
+                address: base_path.clone(),
+                token: None,
+                collection: None,
+                dimensions: *dimensions,
+            },
         }
     }
 
@@ -454,7 +520,8 @@ impl ConfigManager {
                     config.providers.vector_store.token = Some(key.clone());
                 }
                 if let Some(env) = self.env_config.get("PINECONE_ENVIRONMENT") {
-                    config.providers.vector_store.address = Some(format!("https://{}.pinecone.io", env));
+                    config.providers.vector_store.address =
+                        Some(format!("https://{}.pinecone.io", env));
                 }
             }
             "qdrant" => {
@@ -499,7 +566,10 @@ impl ConfigManager {
     }
 
     /// Validate embedding provider configuration
-    fn validate_embedding_config(&self, config: &crate::core::types::EmbeddingConfig) -> Result<()> {
+    fn validate_embedding_config(
+        &self,
+        config: &crate::core::types::EmbeddingConfig,
+    ) -> Result<()> {
         // Check required fields based on provider
         match config.provider.as_str() {
             "openai" => {
@@ -532,7 +602,12 @@ impl ConfigManager {
                 }
             }
             "mock" => {} // Mock provider has no requirements
-            _ => return Err(Error::config(format!("Unknown embedding provider: {}", config.provider))),
+            _ => {
+                return Err(Error::config(format!(
+                    "Unknown embedding provider: {}",
+                    config.provider
+                )))
+            }
         }
 
         // Validate dimensions if specified
@@ -553,7 +628,10 @@ impl ConfigManager {
     }
 
     /// Validate vector store configuration
-    fn validate_vector_store_config(&self, config: &crate::core::types::VectorStoreConfig) -> Result<()> {
+    fn validate_vector_store_config(
+        &self,
+        config: &crate::core::types::VectorStoreConfig,
+    ) -> Result<()> {
         match config.provider.as_str() {
             "milvus" => {
                 if config.address.is_none() || config.address.as_ref().unwrap().is_empty() {
@@ -574,7 +652,12 @@ impl ConfigManager {
                 }
             }
             "in-memory" => {} // In-memory has no requirements
-            _ => return Err(Error::config(format!("Unknown vector store provider: {}", config.provider))),
+            _ => {
+                return Err(Error::config(format!(
+                    "Unknown vector store provider: {}",
+                    config.provider
+                )))
+            }
         }
 
         // Validate dimensions if specified
@@ -589,7 +672,9 @@ impl ConfigManager {
 
     /// Create example configuration file at ~/.context/config.toml
     pub fn create_example_config(&self) -> Result<()> {
-        let config_dir = self.global_config_path.parent()
+        let config_dir = self
+            .global_config_path
+            .parent()
             .ok_or_else(|| Error::config("Cannot determine config directory"))?;
 
         // Create ~/.context directory if it doesn't exist
@@ -714,7 +799,10 @@ monitoring_interval_secs = 60  # 1 minute
         fs::write(&self.global_config_path, example_config)
             .map_err(|e| Error::config(format!("Failed to write example config: {}", e)))?;
 
-        println!("✅ Example configuration created: {}", self.global_config_path.display());
+        println!(
+            "✅ Example configuration created: {}",
+            self.global_config_path.display()
+        );
         println!("📝 Edit this file with your actual API keys and settings");
         println!("🔄 Then restart MCP Context Browser to use the new configuration");
 
@@ -825,6 +913,7 @@ impl Default for Config {
             daemon: DaemonConfig::default(),
             resource_limits: ResourceLimitsConfig::default(),
             cache: CacheConfig::default(),
+            hybrid_search: HybridSearchConfig::default(),
         }
     }
 }
@@ -870,7 +959,6 @@ impl Default for MetricsConfig {
     }
 }
 
-
 impl Config {
     /// Load configuration using ConfigManager (professional approach like Claude Context)
     pub fn from_env() -> Result<Self> {
@@ -880,7 +968,9 @@ impl Config {
 
     /// Legacy method for backward compatibility - DEPRECATED
     /// Use ConfigManager::new()?.load_config() instead
-    #[deprecated(note = "Use ConfigManager::new()?.load_config() for professional configuration management")]
+    #[deprecated(
+        note = "Use ConfigManager::new()?.load_config() for professional configuration management"
+    )]
     pub fn from_env_legacy() -> Result<Self> {
         Ok(Self {
             name: std::env::var("MCP_NAME").unwrap_or_else(|_| "MCP Context Browser".to_string()),
@@ -910,6 +1000,7 @@ impl Config {
             daemon: DaemonConfig::from_env(),
             resource_limits: ResourceLimitsConfig::default(),
             cache: CacheConfig::default(),
+            hybrid_search: HybridSearchConfig::default(),
         })
     }
 
@@ -967,35 +1058,74 @@ impl Config {
         println!("🔧 MCP Context Browser - Configuration Summary");
         println!("=============================================");
         println!("📡 Server: {}:{}", self.server.host, self.server.port);
-        println!("📊 Metrics: {} (enabled: {})", self.metrics_addr(), self.metrics.enabled);
-        println!("🔄 Sync: {}ms (lockfile: {})", self.sync.interval_ms, self.sync.enable_lockfile);
-        println!("🤖 Daemon: cleanup={}s, monitoring={}s",
-                self.daemon.cleanup_interval_secs, self.daemon.monitoring_interval_secs);
+        println!(
+            "📊 Metrics: {} (enabled: {})",
+            self.metrics_addr(),
+            self.metrics.enabled
+        );
+        println!(
+            "🔄 Sync: {}ms (lockfile: {})",
+            self.sync.interval_ms, self.sync.enable_lockfile
+        );
+        println!(
+            "🤖 Daemon: cleanup={}s, monitoring={}s",
+            self.daemon.cleanup_interval_secs, self.daemon.monitoring_interval_secs
+        );
 
         // Provider information (similar to Claude Context logging)
         println!();
-        println!("🧠 Embedding Provider: {}", self.providers.embedding.provider);
+        println!(
+            "🧠 Embedding Provider: {}",
+            self.providers.embedding.provider
+        );
         println!("   Model: {}", self.providers.embedding.model);
 
         match self.providers.embedding.provider.as_str() {
             "openai" => {
-                println!("   API Key: {}", self.providers.embedding.api_key.as_ref()
-                    .map(|_| "✅ Configured").unwrap_or("❌ Missing"));
+                println!(
+                    "   API Key: {}",
+                    self.providers
+                        .embedding
+                        .api_key
+                        .as_ref()
+                        .map(|_| "✅ Configured")
+                        .unwrap_or("❌ Missing")
+                );
                 if let Some(base_url) = &self.providers.embedding.base_url {
                     println!("   Base URL: {}", base_url);
                 }
             }
             "ollama" => {
-                println!("   Host: {}", self.providers.embedding.base_url
-                    .as_ref().unwrap_or(&"http://127.0.0.1:11434".to_string()));
+                println!(
+                    "   Host: {}",
+                    self.providers
+                        .embedding
+                        .base_url
+                        .as_ref()
+                        .unwrap_or(&"http://127.0.0.1:11434".to_string())
+                );
             }
             "voyageai" => {
-                println!("   API Key: {}", self.providers.embedding.api_key.as_ref()
-                    .map(|_| "✅ Configured").unwrap_or("❌ Missing"));
+                println!(
+                    "   API Key: {}",
+                    self.providers
+                        .embedding
+                        .api_key
+                        .as_ref()
+                        .map(|_| "✅ Configured")
+                        .unwrap_or("❌ Missing")
+                );
             }
             "gemini" => {
-                println!("   API Key: {}", self.providers.embedding.api_key.as_ref()
-                    .map(|_| "✅ Configured").unwrap_or("❌ Missing"));
+                println!(
+                    "   API Key: {}",
+                    self.providers
+                        .embedding
+                        .api_key
+                        .as_ref()
+                        .map(|_| "✅ Configured")
+                        .unwrap_or("❌ Missing")
+                );
                 if let Some(base_url) = &self.providers.embedding.base_url {
                     println!("   Base URL: {}", base_url);
                 }
@@ -1016,20 +1146,53 @@ impl Config {
 
         match self.providers.vector_store.provider.as_str() {
             "milvus" => {
-                println!("   Address: {}", self.providers.vector_store.address
-                    .as_ref().unwrap_or(&"Not configured".to_string()));
-                println!("   Token: {}", self.providers.vector_store.token.as_ref()
-                    .map(|_| "✅ Configured").unwrap_or("❌ Missing"));
+                println!(
+                    "   Address: {}",
+                    self.providers
+                        .vector_store
+                        .address
+                        .as_ref()
+                        .unwrap_or(&"Not configured".to_string())
+                );
+                println!(
+                    "   Token: {}",
+                    self.providers
+                        .vector_store
+                        .token
+                        .as_ref()
+                        .map(|_| "✅ Configured")
+                        .unwrap_or("❌ Missing")
+                );
             }
             "pinecone" => {
-                println!("   API Key: {}", self.providers.vector_store.token.as_ref()
-                    .map(|_| "✅ Configured").unwrap_or("❌ Missing"));
+                println!(
+                    "   API Key: {}",
+                    self.providers
+                        .vector_store
+                        .token
+                        .as_ref()
+                        .map(|_| "✅ Configured")
+                        .unwrap_or("❌ Missing")
+                );
             }
             "qdrant" => {
-                println!("   URL: {}", self.providers.vector_store.address
-                    .as_ref().unwrap_or(&"Not configured".to_string()));
-                println!("   API Key: {}", self.providers.vector_store.token.as_ref()
-                    .map(|_| "✅ Configured").unwrap_or("Optional"));
+                println!(
+                    "   URL: {}",
+                    self.providers
+                        .vector_store
+                        .address
+                        .as_ref()
+                        .unwrap_or(&"Not configured".to_string())
+                );
+                println!(
+                    "   API Key: {}",
+                    self.providers
+                        .vector_store
+                        .token
+                        .as_ref()
+                        .map(|_| "✅ Configured")
+                        .unwrap_or("Optional")
+                );
             }
             "in-memory" => println!("   Status: Development mode"),
             _ => println!("   Status: Unknown provider"),

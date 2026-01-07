@@ -14,16 +14,11 @@ use std::fs;
 use std::path::Path;
 
 /// Encryption algorithm configuration
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum EncryptionAlgorithm {
     #[serde(rename = "aes256-gcm")]
+    #[default]
     Aes256Gcm,
-}
-
-impl Default for EncryptionAlgorithm {
-    fn default() -> Self {
-        EncryptionAlgorithm::Aes256Gcm
-    }
 }
 
 /// Master key configuration for envelope encryption
@@ -271,7 +266,11 @@ mod tests {
     #[tokio::test]
     async fn test_encrypt_decrypt_roundtrip() {
         let temp_dir = tempdir().unwrap();
-        let key_path = temp_dir.path().join("test_master.key").to_string_lossy().to_string();
+        let key_path = temp_dir
+            .path()
+            .join("test_master.key")
+            .to_string_lossy()
+            .to_string();
 
         let config = EncryptionConfig {
             master_key: MasterKeyConfig {
@@ -307,7 +306,11 @@ mod tests {
     #[tokio::test]
     async fn test_master_key_persistence() {
         let temp_dir = tempdir().unwrap();
-        let key_path = temp_dir.path().join("persistent_master.key").to_string_lossy().to_string();
+        let key_path = temp_dir
+            .path()
+            .join("persistent_master.key")
+            .to_string_lossy()
+            .to_string();
 
         // Create first instance
         let config1 = EncryptionConfig {

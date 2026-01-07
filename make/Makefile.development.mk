@@ -1,8 +1,8 @@
 # =============================================================================
-# DEVELOPMENT WORKFLOWS - Development server, setup, and workflows
+# DEVELOPMENT - Fluxos de desenvolvimento e configuração
 # =============================================================================
 
-.PHONY: dev dev-metrics dev-sync setup check ci dev-cycle dev-ready dev-deploy
+.PHONY: dev dev-metrics dev-sync setup ci dev-cycle dev-ready dev-deploy docker-up docker-down docker-logs test-integration-docker test-docker-full docker-status
 
 # Development server
 dev: ## Run development server
@@ -38,19 +38,17 @@ setup: ## Setup development tools (MANDATORY)
 	fi
 	@echo "✅ Development environment ready with full markdown linting"
 
-# Development workflows
-check: build test ## Build and test (basic validation)
-
+# Continuous integration
 ci: clean validate test build docs ## Run full CI pipeline
 
-# Development iteration cycles
+# Development cycles
 dev-cycle: fix test-quiet ## Development iteration: fix + test
 
 dev-ready: dev-cycle quality ## Development ready: iteration + quality
 
 dev-deploy: dev-ready version-all github-release ## Development deploy: ready + version + release
 
-# Docker-based integration testing
+# Docker integration testing
 docker-up: ## Start Docker test services (OpenAI mock, Ollama, Milvus)
 	@echo "🚀 Starting Docker test services..."
 	@docker-compose up -d

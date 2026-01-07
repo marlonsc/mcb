@@ -4,7 +4,7 @@
 //! Run with: make test-integration-docker
 
 use mcp_context_browser::core::types::{EmbeddingConfig, VectorStoreConfig};
-use mcp_context_browser::factory::ServiceProvider;
+use mcp_context_browser::di::ServiceProvider;
 use std::env;
 
 #[cfg(test)]
@@ -53,7 +53,7 @@ mod tests {
     #[tokio::test]
     async fn test_openai_mock_embedding() {
         let config = get_openai_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&config)
@@ -74,7 +74,7 @@ mod tests {
     #[tokio::test]
     async fn test_openai_mock_batch_embedding() {
         let config = get_openai_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&config)
@@ -103,7 +103,7 @@ mod tests {
     #[tokio::test]
     async fn test_ollama_embedding() {
         let config = get_ollama_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&config)
@@ -124,7 +124,7 @@ mod tests {
     #[tokio::test]
     async fn test_milvus_vector_store_operations() {
         let config = get_milvus_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let vector_store_provider = service_provider
             .get_vector_store_provider(&config)
@@ -243,7 +243,7 @@ mod tests {
     async fn test_full_pipeline_openai_milvus() {
         let embedding_config = get_openai_config();
         let vector_config = get_milvus_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&embedding_config)
@@ -343,7 +343,7 @@ mod tests {
             max_tokens: Some(8192),
         };
 
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let result = service_provider
             .get_embedding_provider(&invalid_config)
@@ -358,7 +358,7 @@ mod tests {
     #[tokio::test]
     async fn test_ollama_real_provider_integration() {
         let config = get_ollama_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&config)
@@ -386,7 +386,7 @@ mod tests {
     #[tokio::test]
     async fn test_ollama_real_batch_embedding_integration() {
         let config = get_ollama_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&config)
@@ -413,8 +413,16 @@ mod tests {
 
             // Verify vector values are reasonable floats
             for &value in &embedding.vector {
-                assert!(value.is_finite(), "Embedding value should be finite for text {}", i);
-                assert!(!value.is_nan(), "Embedding value should not be NaN for text {}", i);
+                assert!(
+                    value.is_finite(),
+                    "Embedding value should be finite for text {}",
+                    i
+                );
+                assert!(
+                    !value.is_nan(),
+                    "Embedding value should not be NaN for text {}",
+                    i
+                );
             }
         }
     }
@@ -437,11 +445,14 @@ mod tests {
                 max_tokens: Some(8192),
             };
 
-            let service_provider = ServiceProvider::new();
+            let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
             let embedding_provider = service_provider
                 .get_embedding_provider(&config)
                 .await
-                .expect(&format!("Failed to create Ollama provider for model {}", model));
+                .expect(&format!(
+                    "Failed to create Ollama provider for model {}",
+                    model
+                ));
 
             let test_text = &format!("Test text for model {}", model);
             let embedding = embedding_provider
@@ -464,7 +475,7 @@ mod tests {
     #[tokio::test]
     async fn test_ollama_real_empty_batch() {
         let config = get_ollama_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&config)
@@ -492,7 +503,7 @@ mod tests {
             max_tokens: Some(8192),
         };
 
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
         let embedding_provider = service_provider
             .get_embedding_provider(&invalid_config)
             .await
@@ -505,7 +516,7 @@ mod tests {
     #[tokio::test]
     async fn test_ollama_real_large_text() {
         let config = get_ollama_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&config)
@@ -528,7 +539,7 @@ mod tests {
     #[tokio::test]
     async fn test_ollama_real_provider_metadata() {
         let config = get_ollama_config();
-        let service_provider = ServiceProvider::new();
+        let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
 
         let embedding_provider = service_provider
             .get_embedding_provider(&config)

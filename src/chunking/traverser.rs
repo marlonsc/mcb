@@ -3,9 +3,9 @@
 //! This module provides the AstTraverser that walks tree-sitter ASTs
 //! and extracts code chunks according to configurable rules.
 
+use crate::chunking::config::NodeExtractionRule;
 use crate::core::error::Result;
 use crate::core::types::{CodeChunk, Language};
-use crate::chunking::config::NodeExtractionRule;
 use std::collections::HashMap;
 
 /// Generic AST node traverser with configurable rules
@@ -17,7 +17,11 @@ pub struct AstTraverser<'a> {
 
 impl<'a> AstTraverser<'a> {
     pub fn new(rules: &'a [NodeExtractionRule], language: &'a Language) -> Self {
-        Self { rules, language, max_chunks: 100 }
+        Self {
+            rules,
+            language,
+            max_chunks: 100,
+        }
     }
 
     pub fn with_max_chunks(mut self, max_chunks: usize) -> Self {
@@ -60,13 +64,16 @@ impl<'a> AstTraverser<'a> {
                                 node_type,
                                 depth,
                                 rule.priority,
-                                chunks.len()
+                                chunks.len(),
                             );
 
                             // Add context metadata if available
                             if let Some(context_lines) = context {
                                 if let Some(metadata) = chunk.metadata.as_object_mut() {
-                                    metadata.insert("context_lines".to_string(), serde_json::json!(context_lines));
+                                    metadata.insert(
+                                        "context_lines".to_string(),
+                                        serde_json::json!(context_lines),
+                                    );
                                 }
                             }
 
@@ -106,18 +113,26 @@ impl<'a> AstTraverser<'a> {
         let end = node.end_byte();
 
         if start >= content.len() || end > content.len() || start >= end {
-            return Err(crate::core::error::Error::internal("Invalid node range".to_string()));
+            return Err(crate::core::error::Error::internal(
+                "Invalid node range".to_string(),
+            ));
         }
 
         let code = content[start..end].trim();
         if code.is_empty() {
-            return Err(crate::core::error::Error::internal("Empty node content".to_string()));
+            return Err(crate::core::error::Error::internal(
+                "Empty node content".to_string(),
+            ));
         }
 
         Ok(code.to_string())
     }
 
-    fn extract_node_with_context(node: tree_sitter::Node, content: &str, context_lines: usize) -> (Option<String>, Option<usize>) {
+    fn extract_node_with_context(
+        node: tree_sitter::Node,
+        content: &str,
+        context_lines: usize,
+    ) -> (Option<String>, Option<usize>) {
         let start = node.start_byte();
         let end = node.end_byte();
 
@@ -132,7 +147,10 @@ impl<'a> AstTraverser<'a> {
         }
 
         // Calculate line numbers for context
-        let _before_start = content[..start].lines().count().saturating_sub(context_lines);
+        let _before_start = content[..start]
+            .lines()
+            .count()
+            .saturating_sub(context_lines);
         let _after_end = content[end..].lines().count().min(context_lines);
 
         // Extract context
@@ -162,7 +180,10 @@ impl<'a> AstTraverser<'a> {
         let end_line = node.end_position().row;
 
         CodeChunk {
-            id: format!("{}_{}_{}_{}_{}_{}", file_name, node_type, start_line, end_line, priority, chunk_index),
+            id: format!(
+                "{}_{}_{}_{}_{}_{}",
+                file_name, node_type, start_line, end_line, priority, chunk_index
+            ),
             content,
             file_path: file_name.to_string(),
             start_line: start_line as u32,

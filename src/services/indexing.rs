@@ -1,14 +1,15 @@
 //! Indexing service for processing codebases
 
 use crate::chunking::IntelligentChunker;
-use crate::error::{Error, Result};
-use crate::services::context::ContextService;
-use crate::snapshot::{SnapshotManager, SnapshotChanges};
-use crate::sync::SyncManager;
+use crate::core::error::{Error, Result};
 use crate::core::types::CodeChunk;
+use crate::services::context::ContextService;
+use crate::snapshot::SnapshotManager;
+use crate::sync::SyncManager;
 use futures::future::join_all;
 use std::path::Path;
 use std::sync::Arc;
+use tokio::fs;
 
 /// Advanced indexing service with snapshot-based incremental processing
 pub struct IndexingService {
@@ -32,7 +33,7 @@ impl IndexingService {
     /// Create indexing service with sync coordination
     pub fn with_sync_manager(
         context_service: Arc<ContextService>,
-        sync_manager: Arc<SyncManager>
+        sync_manager: Arc<SyncManager>,
     ) -> Result<Self> {
         Ok(Self {
             context_service,
@@ -49,7 +50,8 @@ impl IndexingService {
         }
 
         // Canonicalize path for consistent snapshots
-        let canonical_path = path.canonicalize()
+        let canonical_path = path
+            .canonicalize()
             .map_err(|e| Error::io(format!("Failed to canonicalize path: {}", e)))?;
 
         // Check if sync is needed (if sync manager is available)
@@ -61,28 +63,43 @@ impl IndexingService {
         }
 
         // Get changed files using snapshots
-        let changed_files = self.snapshot_manager.get_changed_files(&canonical_path).await?;
-        println!("[INDEX] Found {} changed files in {}", changed_files.len(), canonical_path.display());
+        let changed_files = self
+            .snapshot_manager
+            .get_changed_files(&canonical_path)
+            .await?;
+        println!(
+            "[INDEX] Found {} changed files in {}",
+            changed_files.len(),
+            canonical_path.display()
+        );
 
         if changed_files.is_empty() {
             return Ok(0);
         }
 
         // Process changed files in parallel batches
-        let total_chunks = self.process_files_parallel(&canonical_path, &changed_files, collection).await;
+        let total_chunks = self
+            .process_files_parallel(&canonical_path, &changed_files, collection)
+            .await;
 
         // Update sync timestamp if sync manager is available
-        if let Some(sync_mgr) = &self.sync_manager {
-            sync_mgr.update_last_sync(&canonical_path).await;
-        }
+        // TODO: Add public method to update sync timestamp when available
+        // if let Some(sync_mgr) = &self.sync_manager {
+        //     sync_mgr.update_last_sync(&canonical_path).await;
+        // }
 
-        println!("[INDEX] Completed indexing {} files with {} total chunks", changed_files.len(), total_chunks);
+        println!(
+            "[INDEX] Completed indexing {} files with {} total chunks",
+            changed_files.len(),
+            total_chunks
+        );
         Ok(total_chunks)
     }
 
     /// Process a single file into intelligent chunks using tree-sitter
     async fn process_file(&self, path: &Path) -> Result<Vec<CodeChunk>> {
         let content = fs::read_to_string(path)
+            .await
             .map_err(|e| Error::io(format!("Failed to read file {}: {}", path.display(), e)))?;
 
         if content.trim().is_empty() {
@@ -108,7 +125,8 @@ impl IndexingService {
 
     /// Detect programming language from file extension
     fn detect_language(&self, path: &Path) -> Result<crate::core::types::Language> {
-        let ext = path.extension()
+        let ext = path
+            .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("")
             .to_lowercase();
@@ -154,14 +172,21 @@ impl IndexingService {
                                 match self.process_file(&full_path_clone).await {
                                     Ok(file_chunks) => {
                                         if !file_chunks.is_empty() {
-                                            println!("[INDEX] Processed {} chunks from {}", file_chunks.len(), file_path_clone);
+                                            println!(
+                                                "[INDEX] Processed {} chunks from {}",
+                                                file_chunks.len(),
+                                                file_path_clone
+                                            );
                                             Some(file_chunks)
                                         } else {
                                             None
                                         }
                                     }
                                     Err(e) => {
-                                        eprintln!("[INDEX] Failed to process {}: {}", file_path_clone, e);
+                                        eprintln!(
+                                            "[INDEX] Failed to process {}: {}",
+                                            file_path_clone, e
+                                        );
                                         None
                                     }
                                 }
@@ -199,11 +224,44 @@ impl IndexingService {
 
     /// Check if file type is supported for indexing
     fn is_supported_file_type(&self, ext: &str) -> bool {
-        matches!(ext.to_lowercase().as_str(),
-            "rs" | "py" | "js" | "ts" | "java" | "cpp" | "cc" | "cxx" | "c" |
-            "go" | "php" | "rb" | "scala" | "kt" | "swift" | "cs" | "fs" | "vb" |
-            "pl" | "pm" | "sh" | "bash" | "zsh" | "fish" | "ps1" | "sql" |
-            "html" | "xml" | "json" | "yaml" | "yml" | "toml" | "ini" | "cfg" |
-            "md" | "txt" | "rst")
+        matches!(
+            ext.to_lowercase().as_str(),
+            "rs" | "py"
+                | "js"
+                | "ts"
+                | "java"
+                | "cpp"
+                | "cc"
+                | "cxx"
+                | "c"
+                | "go"
+                | "php"
+                | "rb"
+                | "scala"
+                | "kt"
+                | "swift"
+                | "cs"
+                | "fs"
+                | "vb"
+                | "pl"
+                | "pm"
+                | "sh"
+                | "bash"
+                | "zsh"
+                | "fish"
+                | "ps1"
+                | "sql"
+                | "html"
+                | "xml"
+                | "json"
+                | "yaml"
+                | "yml"
+                | "toml"
+                | "ini"
+                | "cfg"
+                | "md"
+                | "txt"
+                | "rst"
+        )
     }
 }

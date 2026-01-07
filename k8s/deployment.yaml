@@ -4,7 +4,7 @@ metadata:
   name: mcp-context-browser
   labels:
     app: mcp-context-browser
-    version: v0.0.4
+    version: v0.0.3
 spec:
   replicas: 2
   strategy:
@@ -19,7 +19,7 @@ spec:
     metadata:
       labels:
         app: mcp-context-browser
-        version: v0.0.4
+        version: v0.0.3
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "3001"
@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: mcp-context-browser
-        image: mcp-context-browser:v0.0.4
+        image: mcp-context-browser:v0.0.3
         ports:
         - containerPort: 3000
           name: http

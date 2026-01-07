@@ -1,8 +1,8 @@
 # =============================================================================
-# MAINTENANCE - Health checks, updates, and monitoring
+# MAINTENANCE - Verificações de saúde, atualizações e monitoramento
 # =============================================================================
 
-.PHONY: update audit health maintain verify env-check status
+.PHONY: update audit health maintain verify env-check status metrics metrics-test sync-test daemon-test dashboard
 
 # Dependency management
 update: ## Update all dependencies (MANDATORY)
@@ -17,7 +17,7 @@ audit: ## Security audit (MANDATORY)
 	@echo "✅ Security audit completed"
 
 # Health checks
-health: ## Health check all components (MANDATORY)
+health: check test-unit ## Health check all components (MANDATORY)
 	@echo "🏥 Running health checks..."
 	@cargo check
 	@cargo test --no-run
@@ -59,12 +59,12 @@ status: ## Show project status (MANDATORY)
 	@echo "=================="
 	@make git-status
 	@echo ""
-	@echo "Tests: $(shell cargo test --quiet 2>/dev/null && echo '✅ PASS' || echo '❌ FAIL')"
-	@echo "Build: $(shell cargo check --quiet 2>/dev/null && echo '✅ PASS' || echo '❌ FAIL')"
-	@echo "Lint: $(shell cargo clippy --quiet -- -D warnings 2>/dev/null && echo '✅ PASS' || echo '❌ FAIL')"
+	@echo "Tests: $(shell cargo test --quiet 2>/dev/null && echo '✅ PASSED' || echo '❌ FAILED')"
+	@echo "Build: $(shell cargo check --quiet 2>/dev/null && echo '✅ PASSED' || echo '❌ FAILED')"
+	@echo "Lint: $(shell cargo clippy --quiet -- -D warnings 2>/dev/null && echo '✅ PASSED' || echo '❌ FAILED')"
 
-# v0.0.3 Complete Workflow - Auto-managed
-v0.0.3: ## Complete v0.0.3 workflow (MANDATORY - All quality gates)
+# Complete v0.0.3 workflow - Auto-managed
+v0.0.3: status validate ## Complete v0.0.3 workflow (MANDATORY - All quality gates)
 	@echo "🚀 Starting complete v0.0.3 workflow..."
 	@echo "📋 Step 1: Check project status..."
 	@make status

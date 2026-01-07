@@ -49,7 +49,9 @@ impl HttpClientPool {
     }
 
     /// Create a new HTTP client pool with custom configuration
-    pub fn with_config(config: HttpClientConfig) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn with_config(
+        config: HttpClientConfig,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let client = Client::builder()
             .pool_max_idle_per_host(config.max_idle_per_host)
             .pool_idle_timeout(config.idle_timeout)
@@ -72,7 +74,10 @@ impl HttpClientPool {
     }
 
     /// Create a new client with custom timeout for specific operations
-    pub fn client_with_timeout(&self, timeout: Duration) -> Result<Client, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn client_with_timeout(
+        &self,
+        timeout: Duration,
+    ) -> Result<Client, Box<dyn std::error::Error + Send + Sync>> {
         let client = Client::builder()
             .pool_max_idle_per_host(self.config.max_idle_per_host)
             .pool_idle_timeout(self.config.idle_timeout)
@@ -89,9 +94,12 @@ impl HttpClientPool {
 static HTTP_CLIENT_POOL: std::sync::OnceLock<Arc<HttpClientPool>> = std::sync::OnceLock::new();
 
 /// Initialize the global HTTP client pool
-pub fn init_global_http_client(config: HttpClientConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub fn init_global_http_client(
+    config: HttpClientConfig,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let pool = Arc::new(HttpClientPool::with_config(config)?);
-    HTTP_CLIENT_POOL.set(pool)
+    HTTP_CLIENT_POOL
+        .set(pool)
         .map_err(|_| "HTTP client pool already initialized".into())
 }
 
@@ -101,12 +109,14 @@ pub fn get_global_http_client() -> Option<Arc<HttpClientPool>> {
 }
 
 /// Get the global HTTP client or create a default one
-pub fn get_or_create_global_http_client() -> Result<Arc<HttpClientPool>, Box<dyn std::error::Error + Send + Sync>> {
+pub fn get_or_create_global_http_client(
+) -> Result<Arc<HttpClientPool>, Box<dyn std::error::Error + Send + Sync>> {
     if let Some(pool) = get_global_http_client() {
         Ok(pool)
     } else {
         let pool = Arc::new(HttpClientPool::new()?);
-        HTTP_CLIENT_POOL.set(Arc::clone(&pool))
+        HTTP_CLIENT_POOL
+            .set(Arc::clone(&pool))
             .map_err(|_| "HTTP client pool already initialized")?;
         Ok(pool)
     }

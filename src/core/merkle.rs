@@ -4,8 +4,8 @@
 //! and enables efficient incremental synchronization across large codebases.
 
 use crate::core::error::{Error, Result};
-use sha2::{Digest, Sha256};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
 /// Merkle tree node representing either a file or directory
@@ -78,14 +78,17 @@ impl MerkleTree {
 
     /// Build a Merkle node from filesystem
     fn build_node(path: &std::path::Path, name: &str) -> Result<MerkleNode> {
-        let metadata = std::fs::metadata(path)
-            .map_err(|e| Error::Io {
-                source: std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to read metadata for {}: {}", path.display(), e))
-            })?;
+        let metadata = std::fs::metadata(path).map_err(|e| Error::Io {
+            source: std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Failed to read metadata for {}: {}", path.display(), e),
+            ),
+        })?;
 
         if metadata.is_file() {
-            let content = std::fs::read(path)
-                .map_err(|e| Error::generic(format!("Failed to read file {}: {}", path.display(), e)))?;
+            let content = std::fs::read(path).map_err(|e| {
+                Error::generic(format!("Failed to read file {}: {}", path.display(), e))
+            })?;
 
             let hash = Self::hash_content(&content);
             let name = if name.is_empty() {
@@ -106,12 +109,18 @@ impl MerkleTree {
             let mut children = HashMap::new();
             let mut child_hashes = Vec::new();
 
-            let entries = std::fs::read_dir(path)
-                .map_err(|e| Error::generic(format!("Failed to read directory {}: {}", path.display(), e)))?;
+            let entries = std::fs::read_dir(path).map_err(|e| {
+                Error::generic(format!(
+                    "Failed to read directory {}: {}",
+                    path.display(),
+                    e
+                ))
+            })?;
 
             for entry in entries {
-                let entry: std::fs::DirEntry = entry
-                    .map_err(|e| Error::generic(format!("Failed to read directory entry: {}", e)))?;
+                let entry: std::fs::DirEntry = entry.map_err(|e| {
+                    Error::generic(format!("Failed to read directory entry: {}", e))
+                })?;
                 let entry_path = entry.path();
 
                 // Skip hidden files and directories
@@ -126,7 +135,8 @@ impl MerkleTree {
                     continue;
                 }
 
-                let entry_name = entry_path.file_name()
+                let entry_name = entry_path
+                    .file_name()
                     .unwrap_or_default()
                     .to_string_lossy()
                     .to_string();
@@ -155,7 +165,10 @@ impl MerkleTree {
                 children,
             })
         } else {
-            Err(Error::generic(format!("Unsupported file type: {}", path.display())))
+            Err(Error::generic(format!(
+                "Unsupported file type: {}",
+                path.display()
+            )))
         }
     }
 
@@ -207,8 +220,18 @@ impl MerkleTree {
     /// Compare two Merkle nodes and return differences
     fn diff_nodes(left: &MerkleNode, right: &MerkleNode, path: Vec<String>) -> MerkleDiff {
         match (left, right) {
-            (MerkleNode::File { name: left_name, hash: left_hash, .. },
-             MerkleNode::File { name: right_name, hash: right_hash, .. }) => {
+            (
+                MerkleNode::File {
+                    name: left_name,
+                    hash: left_hash,
+                    ..
+                },
+                MerkleNode::File {
+                    name: right_name,
+                    hash: right_hash,
+                    ..
+                },
+            ) => {
                 if left_name != right_name {
                     return MerkleDiff::default();
                 }
@@ -221,8 +244,18 @@ impl MerkleTree {
                     MerkleDiff::default()
                 }
             }
-            (MerkleNode::Directory { name: left_name, children: left_children, .. },
-             MerkleNode::Directory { name: right_name, children: right_children, .. }) => {
+            (
+                MerkleNode::Directory {
+                    name: left_name,
+                    children: left_children,
+                    ..
+                },
+                MerkleNode::Directory {
+                    name: right_name,
+                    children: right_children,
+                    ..
+                },
+            ) => {
                 if left_name != right_name {
                     return MerkleDiff::default();
                 }
@@ -291,23 +324,17 @@ impl MerkleDiff {
 
     /// Convert path vectors to string paths
     pub fn added_paths(&self) -> Vec<String> {
-        self.added.iter()
-            .map(|path| path.join("/"))
-            .collect()
+        self.added.iter().map(|path| path.join("/")).collect()
     }
 
     /// Convert path vectors to string paths
     pub fn modified_paths(&self) -> Vec<String> {
-        self.modified.iter()
-            .map(|path| path.join("/"))
-            .collect()
+        self.modified.iter().map(|path| path.join("/")).collect()
     }
 
     /// Convert path vectors to string paths
     pub fn removed_paths(&self) -> Vec<String> {
-        self.removed.iter()
-            .map(|path| path.join("/"))
-            .collect()
+        self.removed.iter().map(|path| path.join("/")).collect()
     }
 }
 

@@ -146,6 +146,8 @@ impl VoyageAIEmbeddingProvider {
 
     /// Get the base URL for this provider
     pub fn base_url(&self) -> &str {
-        self.base_url.as_deref().unwrap_or("https://api.voyageai.com/v1")
+        self.base_url
+            .as_deref()
+            .unwrap_or("https://api.voyageai.com/v1")
     }
 }

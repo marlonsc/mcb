@@ -21,7 +21,7 @@ mod openai_tests {
             "test-key".to_string(),
             Some("https://api.openai.com/v1".to_string()),
             "text-embedding-3-small".to_string(),
-        );
+        ).expect("Failed to create OpenAI provider");
 
         assert_eq!(provider.provider_name(), "openai");
         assert_eq!(provider.model(), "text-embedding-3-small");
@@ -43,7 +43,7 @@ mod openai_tests {
                 "test-key".to_string(),
                 None,
                 model.to_string(),
-            );
+            ).expect("Failed to create OpenAI provider");
             assert_eq!(
                 provider.dimensions(),
                 expected_dims,
@@ -60,14 +60,14 @@ mod openai_tests {
             "test-key".to_string(),
             None,
             "text-embedding-3-small".to_string(),
-        );
+        ).expect("Failed to create OpenAI provider");
         assert_eq!(provider_no_url.base_url(), "https://api.openai.com/v1");
 
         let provider_with_url = OpenAIEmbeddingProvider::new(
             "test-key".to_string(),
             Some("https://custom.openai.com/v1".to_string()),
             "text-embedding-3-small".to_string(),
-        );
+        ).expect("Failed to create OpenAI provider");
         assert_eq!(provider_with_url.base_url(), "https://custom.openai.com/v1");
     }
 
@@ -96,7 +96,7 @@ mod openai_tests {
             "test-key".to_string(),
             Some(server.url()),
             "text-embedding-3-small".to_string(),
-        );
+        ).expect("Failed to create OpenAI provider");
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()
@@ -119,7 +119,7 @@ mod ollama_tests {
         let provider = OllamaEmbeddingProvider::new(
             "http://localhost:11434".to_string(),
             "nomic-embed-text".to_string(),
-        );
+        ).expect("Failed to create Ollama provider");
 
         assert_eq!(provider.provider_name(), "ollama");
         assert_eq!(provider.model(), "nomic-embed-text");
@@ -141,7 +141,7 @@ mod ollama_tests {
             let provider = OllamaEmbeddingProvider::new(
                 "http://localhost:11434".to_string(),
                 model.to_string(),
-            );
+            ).expect("Failed to create Ollama provider");
             assert_eq!(
                 provider.dimensions(),
                 expected_dims,
@@ -189,7 +189,7 @@ mod voyageai_tests {
             "test-key".to_string(),
             Some("https://api.voyageai.com/v1".to_string()),
             "voyage-code-3".to_string(),
-        );
+        ).expect("Failed to create VoyageAI provider");
 
         assert_eq!(provider.provider_name(), "voyageai");
         assert_eq!(provider.model(), "voyage-code-3");
@@ -363,7 +363,7 @@ mod provider_trait_tests {
             "test-key".to_string(),
             None,
             "text-embedding-3-small".to_string(),
-        );
+        ).unwrap();
         let gemini_provider = GeminiEmbeddingProvider::new(
             "test-key".to_string(),
             None,
@@ -915,19 +915,19 @@ mod provider_trait_tests {
             }
 
             if let Ok(api_key) = std::env::var("GEMINI_API_KEY") {
-                let gemini_provider = GeminiEmbeddingProvider::new(
+                if let Ok(gemini_provider) = GeminiEmbeddingProvider::new(
                     api_key,
                     None,
                     "gemini-embedding-001".to_string(),
-                );
+                ) {
+                    let start = std::time::Instant::now();
+                    let result = runtime.block_on(gemini_provider.embed_batch(&test_texts));
+                    let gemini_duration = start.elapsed();
 
-                let start = std::time::Instant::now();
-                let result = runtime.block_on(gemini_provider.embed_batch(&test_texts));
-                let gemini_duration = start.elapsed();
-
-                if result.is_ok() {
-                    println!("  Gemini API: {:?}", gemini_duration);
-                    println!("  Gemini Throughput: {:.2} embeddings/sec", test_texts.len() as f64 / gemini_duration.as_secs_f64());
+                    if result.is_ok() {
+                        println!("  Gemini API: {:?}", gemini_duration);
+                        println!("  Gemini Throughput: {:.2} embeddings/sec", test_texts.len() as f64 / gemini_duration.as_secs_f64());
+                    }
                 }
             }
 
@@ -940,7 +940,7 @@ mod provider_trait_tests {
 mod factory_tests {
     use super::*;
     use mcp_context_browser::core::types::EmbeddingConfig;
-    use mcp_context_browser::factory::{DefaultProviderFactory, ProviderFactory};
+    use mcp_context_browser::di::factory::{DefaultProviderFactory, ProviderFactory};
 
     #[test]
     fn test_supported_providers() {

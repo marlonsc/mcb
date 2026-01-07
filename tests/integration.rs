@@ -236,7 +236,7 @@ mod tests {
 
         // Skip test if Milvus is not available
         if std::process::Command::new("curl")
-              .args([
+            .args([
                 "-s",
                 "--max-time",
                 "1",
@@ -299,14 +299,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_mcp_server_stdio_communication() {
-        use tokio::process::Command;
-        use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-        use std::time::Duration;
         use std::process::Stdio;
+        use std::time::Duration;
+        use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+        use tokio::process::Command;
 
         // Start MCP server process with environment variables for testing
         let mut child = Command::new("cargo")
-              .args(["run"])
+            .args(["run"])
             .env("CONTEXT_METRICS_ENABLED", "false") // Disable metrics for test
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -329,7 +329,12 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(100)).await;
 
             // Check if we can read stderr for startup messages
-            while let Ok(bytes) = tokio::time::timeout(Duration::from_millis(10), stderr_reader.read_line(&mut stderr_buf)).await {
+            while let Ok(bytes) = tokio::time::timeout(
+                Duration::from_millis(10),
+                stderr_reader.read_line(&mut stderr_buf),
+            )
+            .await
+            {
                 if bytes.is_ok() && stderr_buf.contains("MCP Context Browser ready") {
                     startup_complete = true;
                     break;
@@ -342,21 +347,26 @@ mod tests {
             }
         }
 
-        assert!(startup_complete, "Server did not start within 15 seconds. Stderr: {}", stderr_buf);
+        assert!(
+            startup_complete,
+            "Server did not start within 15 seconds. Stderr: {}",
+            stderr_buf
+        );
 
         // Test 1: Initialize request
         let initialize_request = r#"{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}"#;
 
-        stdin.write_all(format!("{}\n", initialize_request).as_bytes()).await
+        stdin
+            .write_all(format!("{}\n", initialize_request).as_bytes())
+            .await
             .expect("Failed to write initialize request");
         stdin.flush().await.expect("Failed to flush stdin");
 
         // Read response
         let mut response_line = String::new();
-        let read_result = tokio::time::timeout(
-            Duration::from_secs(5),
-            reader.read_line(&mut response_line)
-        ).await;
+        let read_result =
+            tokio::time::timeout(Duration::from_secs(5), reader.read_line(&mut response_line))
+                .await;
 
         assert!(read_result.is_ok(), "Timeout reading initialize response");
 
@@ -370,18 +380,20 @@ mod tests {
         assert!(response["result"]["serverInfo"].is_object());
 
         // Test 2: Tools list request
-        let tools_list_request = r#"{"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}"#;
+        let tools_list_request =
+            r#"{"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}"#;
 
-        stdin.write_all(format!("{}\n", tools_list_request).as_bytes()).await
+        stdin
+            .write_all(format!("{}\n", tools_list_request).as_bytes())
+            .await
             .expect("Failed to write tools/list request");
         stdin.flush().await.expect("Failed to flush stdin");
 
         // Read response
         response_line.clear();
-        let read_result = tokio::time::timeout(
-            Duration::from_secs(5),
-            reader.read_line(&mut response_line)
-        ).await;
+        let read_result =
+            tokio::time::timeout(Duration::from_secs(5), reader.read_line(&mut response_line))
+                .await;
 
         assert!(read_result.is_ok(), "Timeout reading tools/list response");
 
@@ -395,30 +407,45 @@ mod tests {
 
         // Verify expected tools are present
         let tools = response["result"]["tools"].as_array().unwrap();
-        let tool_names: Vec<&str> = tools.iter()
-            .filter_map(|t| t["name"].as_str())
-            .collect();
+        let tool_names: Vec<&str> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
 
-        assert!(tool_names.contains(&"index_codebase"), "index_codebase tool should be present");
-        assert!(tool_names.contains(&"search_code"), "search_code tool should be present");
-        assert!(tool_names.contains(&"get_indexing_status"), "get_indexing_status tool should be present");
-        assert!(tool_names.contains(&"clear_index"), "clear_index tool should be present");
+        assert!(
+            tool_names.contains(&"index_codebase"),
+            "index_codebase tool should be present"
+        );
+        assert!(
+            tool_names.contains(&"search_code"),
+            "search_code tool should be present"
+        );
+        assert!(
+            tool_names.contains(&"get_indexing_status"),
+            "get_indexing_status tool should be present"
+        );
+        assert!(
+            tool_names.contains(&"clear_index"),
+            "clear_index tool should be present"
+        );
 
         // Test 3: Invalid method (should return error)
-        let invalid_request = r#"{"jsonrpc": "2.0", "id": 3, "method": "invalid_method", "params": {}}"#;
+        let invalid_request =
+            r#"{"jsonrpc": "2.0", "id": 3, "method": "invalid_method", "params": {}}"#;
 
-        stdin.write_all(format!("{}\n", invalid_request).as_bytes()).await
+        stdin
+            .write_all(format!("{}\n", invalid_request).as_bytes())
+            .await
             .expect("Failed to write invalid request");
         stdin.flush().await.expect("Failed to flush stdin");
 
         // Read response
         response_line.clear();
-        let read_result = tokio::time::timeout(
-            Duration::from_secs(5),
-            reader.read_line(&mut response_line)
-        ).await;
+        let read_result =
+            tokio::time::timeout(Duration::from_secs(5), reader.read_line(&mut response_line))
+                .await;
 
-        assert!(read_result.is_ok(), "Timeout reading invalid method response");
+        assert!(
+            read_result.is_ok(),
+            "Timeout reading invalid method response"
+        );
 
         let response: serde_json::Value = serde_json::from_str(response_line.trim())
             .expect("Failed to parse invalid method response");

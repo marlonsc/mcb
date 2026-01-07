@@ -82,6 +82,25 @@ cargo run --bin adr-tool -- list
 cargo run --bin adr-tool -- search "security"
 ```
 
+## Archived Documents
+
+This directory also contains historical analysis and planning documents that have been superseded by formal ADRs:
+
+### Audit Reports
+
+| Document | Title | Date | Superseded By |
+|----------|-------|------|---------------|
+| [2025-01-07-code-audit-report-v0.0.4.md](2025-01-07-code-audit-report-v0.0.4.md) | Code Audit Report v0.0.4 (Portuguese) | 2025-01-07 | [ADR 006](../adr/006-code-audit-and-improvements-v0.0.4.md) |
+
+### Historical Planning Documents
+
+| Document | Title | Date | Status |
+|----------|-------|------|--------|
+| [2025-01-01-production-readiness-implementation.md](2025-01-01-production-readiness-implementation.md) | v0.0.3 Production Readiness Plan | 2025-01-01 | Completed |
+| [2025-01-07-documentation-automation-improvement.md](2025-01-07-documentation-automation-improvement.md) | Documentation Automation Improvements | 2025-01-07 | Superseded by ADR 005 |
+
+**Note**: These documents are preserved for historical reference but should not be used for current development decisions. Refer to the active ADRs in `docs/adr/` for current architectural guidance.
+
 ## Contributing
 
 When proposing architectural changes:

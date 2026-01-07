@@ -70,7 +70,7 @@ See [Contributing Guide](developer/CONTRIBUTING.md) for guidelines.
 1.  **Copy appropriate template**:
 
    ```bash
-   cp docs/templates/adr-template.md docs/architecture/adr/new-adr.md
+   cp docs/templates/adr-template.md docs/adr/new-adr.md
    ```
 
 1.  **Follow naming conventions**

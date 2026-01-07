@@ -1,23 +1,25 @@
 # MCP Context Browser - Organized Makefile v0.0.3
 
 # Include all modular makefiles in correct dependency order
-include Makefile.help.mk
-include Makefile.core.mk
-include Makefile.quality.mk
-include Makefile.development.mk
-include Makefile.release.mk
-include Makefile.documentation.mk
-include Makefile.maintenance.mk
-include Makefile.git.mk
-include Makefile.aliases.mk
+include make/Makefile.help.mk
+include make/Makefile.core.mk
+include make/Makefile.quality.mk
+include make/Makefile.development.mk
+include make/Makefile.release.mk
+include make/Makefile.documentation.mk
+include make/Makefile.maintenance.mk
+include make/Makefile.git.mk
+include make/Makefile.aliases.mk
 
-# Ensure all targets are properly declared
-.PHONY: help all build test test-quiet clean clean-target clean-docs clean-deep \
-        fmt lint lint-md fix-md fix fix-all fix-imports quality quality-gate \
-        coverage bench validate dev dev-metrics dev-sync setup check ci \
-        dev-cycle dev-ready dev-deploy release build-release package github-release \
-        version-bump version-tag version-push version-all docs adr-new adr-list \
-        diagrams update audit health maintain verify metrics metrics-test sync-test \
-        daemon-test dashboard env-check status v0.0.3 git-status git-add-all \
+# Garantir que todos os targets sejam declarados corretamente
+.PHONY: help all build build-release test test-quiet test-unit test-integration test-security test-cache test-metrics \
+        clean clean-target clean-docs clean-deep run check fmt fmt-check lint lint-md \
+        fix fix-imports quality quality-gate coverage bench validate dev dev-metrics dev-sync \
+        setup ci dev-cycle dev-ready dev-deploy docker-up docker-down docker-logs \
+        test-integration-docker test-docker-full docker-status release package github-release \
+        version-bump version-tag version-push version-all docs docs-auto docs-manual \
+        module-docs api-docs status-docs sync-docs sync-docs-update rust-docs index-docs \
+        adr-new adr-list diagrams update audit health maintain verify env-check status \
+        metrics metrics-test sync-test daemon-test dashboard v0.0.3 git-status git-add-all \
         git-commit-force git-push-force git-tag git-force-all sync force-commit \
         b t tq c f q r d v s m y z

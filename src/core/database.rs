@@ -57,9 +57,10 @@ impl DatabasePool {
         }
 
         let manager = PostgresConnectionManager::new(
-            config.url.parse().map_err(|e| {
-                Error::generic(format!("Invalid database URL: {}", e))
-            })?,
+            config
+                .url
+                .parse()
+                .map_err(|e| Error::generic(format!("Invalid database URL: {}", e)))?,
             NoTls,
         );
 
@@ -76,18 +77,19 @@ impl DatabasePool {
     }
 
     /// Get a connection from the pool
-    pub fn get_connection(&self) -> Result<r2d2::PooledConnection<PostgresConnectionManager<NoTls>>> {
-        self.pool.get().map_err(|e| {
-            Error::generic(format!("Failed to get database connection: {}", e))
-        })
+    pub fn get_connection(
+        &self,
+    ) -> Result<r2d2::PooledConnection<PostgresConnectionManager<NoTls>>> {
+        self.pool
+            .get()
+            .map_err(|e| Error::generic(format!("Failed to get database connection: {}", e)))
     }
 
     /// Execute a health check
     pub async fn health_check(&self) -> Result<()> {
         let mut conn = self.get_connection()?;
-        conn.execute("SELECT 1", &[]).map_err(|e| {
-            Error::generic(format!("Database health check failed: {}", e))
-        })?;
+        conn.execute("SELECT 1", &[])
+            .map_err(|e| Error::generic(format!("Database health check failed: {}", e)))?;
         Ok(())
     }
 
@@ -132,7 +134,8 @@ static DB_POOL: std::sync::OnceLock<DatabasePool> = std::sync::OnceLock::new();
 /// Initialize the global database pool
 pub fn init_global_database_pool(config: DatabaseConfig) -> Result<()> {
     let pool = DatabasePool::new(config)?;
-    DB_POOL.set(pool)
+    DB_POOL
+        .set(pool)
         .map_err(|_| "Database pool already initialized".into())
 }
 
@@ -152,7 +155,8 @@ pub fn get_or_create_global_database_pool() -> Result<&'static DatabasePool> {
             ..Default::default()
         };
         let pool = DatabasePool::new(config)?;
-        DB_POOL.set(pool)
+        DB_POOL
+            .set(pool)
             .map_err(|_| "Database pool already initialized")?;
         Ok(DB_POOL.get().unwrap())
     }

@@ -3,8 +3,8 @@
 //! This module defines the LanguageProcessor trait that provides a common interface
 //! for language-specific chunking logic.
 
-use crate::core::types::{CodeChunk, Language};
 use crate::chunking::config::LanguageConfig;
+use crate::core::types::{CodeChunk, Language};
 
 /// Trait for language-specific processing
 pub trait LanguageProcessor {
@@ -68,22 +68,30 @@ impl LanguageProcessor for BaseProcessor {
         let mut cursor = tree.walk();
 
         if cursor.goto_first_child() {
-            let traverser = crate::chunking::traverser::AstTraverser::new(&self.config().extraction_rules, language)
-                .with_max_chunks(75); // Limit chunks per file
+            let traverser = crate::chunking::traverser::AstTraverser::new(
+                &self.config().extraction_rules,
+                language,
+            )
+            .with_max_chunks(75); // Limit chunks per file
             traverser.traverse_and_extract(&mut cursor, content, file_name, 0, &mut chunks);
         }
 
         // Sort chunks by priority (highest first) and then by line number
         chunks.sort_by(|a, b| {
-            let a_priority = a.metadata.get("priority")
+            let a_priority = a
+                .metadata
+                .get("priority")
                 .and_then(|p| p.as_i64())
                 .unwrap_or(0);
-            let b_priority = b.metadata.get("priority")
+            let b_priority = b
+                .metadata
+                .get("priority")
                 .and_then(|p| p.as_i64())
                 .unwrap_or(0);
 
             // Sort by priority descending, then by start_line ascending
-            b_priority.cmp(&a_priority)
+            b_priority
+                .cmp(&a_priority)
                 .then(a.start_line.cmp(&b.start_line))
         });
 
@@ -134,15 +142,20 @@ macro_rules! impl_language_processor {
 
                 // Sort chunks by priority (highest first) and then by line number
                 chunks.sort_by(|a, b| {
-                    let a_priority = a.metadata.get("priority")
+                    let a_priority = a
+                        .metadata
+                        .get("priority")
                         .and_then(|p| p.as_i64())
                         .unwrap_or(0);
-                    let b_priority = b.metadata.get("priority")
+                    let b_priority = b
+                        .metadata
+                        .get("priority")
                         .and_then(|p| p.as_i64())
                         .unwrap_or(0);
 
                     // Sort by priority descending, then by start_line ascending
-                    b_priority.cmp(&a_priority)
+                    b_priority
+                        .cmp(&a_priority)
                         .then(a.start_line.cmp(&b.start_line))
                 });
 

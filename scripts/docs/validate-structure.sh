@@ -139,12 +139,12 @@ validate_structure() {
     check_file "$PROJECT_ROOT/docs/templates/adr-template.md" "ADR template"
 
     # Check architecture subdirectories
-    check_directory "$PROJECT_ROOT/docs/architecture/adr" "Architecture Decision Records"
-    check_directory "$PROJECT_ROOT/docs/architecture/diagrams" "Architecture diagrams"
+    check_directory "$PROJECT_ROOT/docs/adr" "Architecture Decision Records"
+    check_directory "$PROJECT_ROOT/docs/diagrams" "Architecture diagrams"
 
     # Validate ADR files
-    if [ -d "$PROJECT_ROOT/docs/architecture/adr" ]; then
-        for adr_file in "$PROJECT_ROOT/docs/architecture/adr"/*.md; do
+    if [ -d "$PROJECT_ROOT/docs/adr" ]; then
+        for adr_file in "$PROJECT_ROOT/docs/adr"/*.md; do
             if [ -f "$adr_file" ]; then
                 validate_adr "$adr_file"
             fi

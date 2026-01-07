@@ -30,7 +30,10 @@ impl UserRole {
                 permission,
                 Permission::IndexCodebase | Permission::SearchCodebase | Permission::ViewMetrics
             ),
-            UserRole::Viewer => matches!(permission, Permission::SearchCodebase | Permission::ViewMetrics),
+            UserRole::Viewer => matches!(
+                permission,
+                Permission::SearchCodebase | Permission::ViewMetrics
+            ),
             UserRole::Guest => matches!(permission, Permission::ViewMetrics),
         }
     }
@@ -160,7 +163,10 @@ impl AuthService {
 
         // Simplified authentication - in production, verify password hash
         if email == "admin@context.browser" && password == "admin" {
-            let user = self.config.users.get("admin")
+            let user = self
+                .config
+                .users
+                .get("admin")
                 .ok_or_else(|| Error::generic("User not found"))?;
 
             // Generate JWT token
@@ -208,7 +214,7 @@ impl AuthService {
 
     /// Simplified token encoding (for demo - use proper JWT library in production)
     fn encode_token(&self, claims: &Claims) -> Result<String> {
-        use base64::{Engine as _, engine::general_purpose};
+        use base64::{engine::general_purpose, Engine as _};
 
         let claims_json = serde_json::to_string(claims)?;
         let claims_b64 = general_purpose::URL_SAFE_NO_PAD.encode(claims_json.as_bytes());
@@ -227,7 +233,7 @@ impl AuthService {
 
     /// Simplified token decoding (for demo - use proper JWT library in production)
     fn decode_token(&self, token: &str) -> Result<Claims> {
-        use base64::{Engine as _, engine::general_purpose};
+        use base64::{engine::general_purpose, Engine as _};
 
         let parts: Vec<&str> = token.split('.').collect();
         if parts.len() != 3 {
@@ -292,7 +298,8 @@ pub mod middleware {
         }
 
         // Extract token from Authorization header
-        let auth_header = req.headers()
+        let auth_header = req
+            .headers()
             .get(header::AUTHORIZATION)
             .and_then(|h| h.to_str().ok());
 

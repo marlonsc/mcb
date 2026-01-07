@@ -46,11 +46,11 @@ Create a `config.toml` file in the project root:
 ```toml
 # Embedding provider configuration
 [embedding_provider]
-provider = "mock"  # Use "mock" for testing, will be extended later
+provider = "mock"  # Options: mock, openai, ollama, gemini, voyageai
 
 # Vector store configuration
 [vector_store]
-provider = "memory"  # Use "memory" for in-memory storage, will be extended later
+provider = "memory"  # Options: memory, milvus, filesystem, encrypted
 ```
 
 ### Configuration Options
@@ -337,7 +337,7 @@ spec:
 
 ### Architecture Overview
 
-```
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   AI Assistant  │◄──►│   Edge Node     │◄──►│  Cloud Service  │
 │   (Distributed) │    │   (Local AI)   │    │   (Heavy AI)    │

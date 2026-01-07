@@ -9,8 +9,8 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::sync::{RwLock, mpsc};
-use tracing::{debug, warn, info};
+use tokio::sync::{mpsc, RwLock};
+use tracing::{debug, info, warn};
 
 /// Circuit breaker states
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -133,7 +133,10 @@ impl CircuitBreaker {
 
         // Create directory if it doesn't exist
         if let Err(e) = fs::create_dir_all(&persistence_dir) {
-            warn!("Failed to create circuit breaker persistence directory: {}", e);
+            warn!(
+                "Failed to create circuit breaker persistence directory: {}",
+                e
+            );
         }
 
         // Create channel for background persistence
@@ -179,24 +182,19 @@ impl CircuitBreaker {
         let snapshot = self.create_snapshot();
         let file_path = self.persistence_dir.join(format!("{}.json", self.id));
 
-        let content = serde_json::to_string_pretty(&snapshot)
-            .map_err(|e| Error::internal(format!("Failed to serialize circuit breaker state: {}", e)))?;
+        let content = serde_json::to_string_pretty(&snapshot).map_err(|e| {
+            Error::internal(format!("Failed to serialize circuit breaker state: {}", e))
+        })?;
 
         // Use tokio::fs for async file operations
-        tokio::fs::write(&file_path, content).await
+        tokio::fs::write(&file_path, content)
+            .await
             .map_err(|e| Error::internal(format!("Failed to save circuit breaker state: {}", e)))?;
 
         debug!("Saved circuit breaker state for {}", self.id);
         Ok(())
     }
 
-    /// Save current state to disk (synchronous wrapper for compatibility)
-    fn save_state(&self) -> Result<()> {
-        // Use block_on carefully to avoid deadlocks
-        futures::executor::block_on(async {
-            self.save_state_async().await
-        })
-    }
 
     /// Load state from disk
     fn load_state(&mut self) -> Result<()> {
@@ -210,8 +208,12 @@ impl CircuitBreaker {
         let content = fs::read_to_string(&file_path)
             .map_err(|e| Error::internal(format!("Failed to read circuit breaker state: {}", e)))?;
 
-        let snapshot: CircuitBreakerSnapshot = serde_json::from_str(&content)
-            .map_err(|e| Error::internal(format!("Failed to deserialize circuit breaker state: {}", e)))?;
+        let snapshot: CircuitBreakerSnapshot = serde_json::from_str(&content).map_err(|e| {
+            Error::internal(format!(
+                "Failed to deserialize circuit breaker state: {}",
+                e
+            ))
+        })?;
 
         self.restore_from_snapshot(snapshot);
         debug!("Loaded circuit breaker state for {}", self.id);
@@ -223,7 +225,10 @@ impl CircuitBreaker {
         futures::executor::block_on(async {
             let state = *self.state.read().await;
             let metrics = self.metrics.read().await;
-            let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs();
 
             let state_str = match state {
                 CircuitBreakerState::Closed => "closed".to_string(),
@@ -502,7 +507,9 @@ mod tests {
 
         // Fail multiple times to open circuit
         for i in 0..3 {
-            let result = cb.call(|| async { Err::<u32, Error>(Error::generic("test error")) }).await;
+            let result = cb
+                .call(|| async { Err::<u32, Error>(Error::generic("test error")) })
+                .await;
             assert!(result.is_err());
 
             if i < 2 {
@@ -511,7 +518,10 @@ mod tests {
         }
 
         // Circuit should be open
-        assert!(matches!(cb.get_state().await, CircuitBreakerState::Open { .. }));
+        assert!(matches!(
+            cb.get_state().await,
+            CircuitBreakerState::Open { .. }
+        ));
         assert!(!cb.allows_requests().await);
     }
 
@@ -527,10 +537,15 @@ mod tests {
 
         // Fail to open circuit
         for _ in 0..2 {
-            let _ = cb.call(|| async { Err::<u32, Error>(Error::generic("test error")) }).await;
+            let _ = cb
+                .call(|| async { Err::<u32, Error>(Error::generic("test error")) })
+                .await;
         }
 
-        assert!(matches!(cb.get_state().await, CircuitBreakerState::Open { .. }));
+        assert!(matches!(
+            cb.get_state().await,
+            CircuitBreakerState::Open { .. }
+        ));
 
         // Wait for recovery timeout
         tokio::time::sleep(Duration::from_millis(150)).await;
@@ -552,10 +567,15 @@ mod tests {
 
         // Open circuit with failures
         for _ in 0..5 {
-            let _ = cb.call(|| async { Err::<u32, Error>(Error::generic("test error")) }).await;
+            let _ = cb
+                .call(|| async { Err::<u32, Error>(Error::generic("test error")) })
+                .await;
         }
 
-        assert!(matches!(cb.get_state().await, CircuitBreakerState::Open { .. }));
+        assert!(matches!(
+            cb.get_state().await,
+            CircuitBreakerState::Open { .. }
+        ));
 
         // Reset should close circuit
         cb.reset().await;

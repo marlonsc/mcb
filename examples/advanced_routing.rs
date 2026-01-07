@@ -3,13 +3,13 @@
 //! This example demonstrates how to use the basic provider routing system
 //! with health monitoring and failover capabilities.
 
-use mcp_context_browser::core::error::Result;
-use mcp_context_browser::providers::routing::{
-    ProviderRouter, ProviderContext, ContextualStrategy,
-};
 use mcp_context_browser::core::error::Error;
-use mcp_context_browser::registry::ProviderRegistry;
+use mcp_context_browser::core::error::Result;
+use mcp_context_browser::di::registry::ProviderRegistry;
 use mcp_context_browser::providers::embedding::NullEmbeddingProvider;
+use mcp_context_browser::providers::routing::{
+    ContextualStrategy, ProviderContext, ProviderRouter,
+};
 use std::sync::Arc;
 
 #[tokio::main]

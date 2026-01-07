@@ -20,9 +20,9 @@ pub mod traverser;
 pub use languages::*;
 
 // Language configurations registry
+use crate::core::types::Language;
 use std::collections::HashMap;
 use std::sync::LazyLock;
-use crate::core::types::Language;
 
 pub(crate) static LANGUAGE_CONFIGS: LazyLock<
     HashMap<Language, Box<dyn LanguageProcessor + Send + Sync>>,

@@ -20,9 +20,7 @@ impl MilvusVectorStoreProvider {
             .await
             .map_err(|e| Error::vector_db(format!("Failed to connect to Milvus: {}", e)))?;
 
-        Ok(Self {
-            client,
-        })
+        Ok(Self { client })
     }
 }
 
@@ -52,10 +50,9 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             .map_err(|e| Error::vector_db(format!("Failed to create collection: {}", e)))?;
 
         // Create index on the vector field for efficient search
-        let collection_instance = self.client
-            .get_collection(name)
-            .await
-            .map_err(|e| Error::vector_db(format!("Failed to get collection for indexing: {}", e)))?;
+        let collection_instance = self.client.get_collection(name).await.map_err(|e| {
+            Error::vector_db(format!("Failed to get collection for indexing: {}", e))
+        })?;
 
         use milvus::index::{IndexParams, IndexType, MetricType};
         use std::collections::HashMap;
@@ -98,14 +95,17 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
         if vectors.is_empty() {
-            return Err(Error::vector_db("No vectors provided for insertion".to_string()));
+            return Err(Error::vector_db(
+                "No vectors provided for insertion".to_string(),
+            ));
         }
 
         if vectors.len() != metadata.len() {
-            return Err(Error::vector_db(
-                format!("Vectors ({}) and metadata ({}) arrays must have the same length",
-                    vectors.len(), metadata.len())
-            ));
+            return Err(Error::vector_db(format!(
+                "Vectors ({}) and metadata ({}) arrays must have the same length",
+                vectors.len(),
+                metadata.len()
+            )));
         }
 
         // Validate all vectors have the same dimensions
@@ -120,16 +120,17 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             if vector.vector.len() != expected_dims {
                 return Err(Error::vector_db(format!(
                     "Vector at index {} has {} elements but should have {} (dimensions)",
-                    i, vector.vector.len(), expected_dims
+                    i,
+                    vector.vector.len(),
+                    expected_dims
                 )));
             }
         }
 
         // Get collection instance
-        let collection_instance = self.client
-            .get_collection(collection)
-            .await
-            .map_err(|e| Error::vector_db(format!("Failed to get collection '{}': {}", collection, e)))?;
+        let collection_instance = self.client.get_collection(collection).await.map_err(|e| {
+            Error::vector_db(format!("Failed to get collection '{}': {}", collection, e))
+        })?;
 
         // Prepare data for insertion
         let mut ids = Vec::new();
@@ -179,7 +180,6 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         // Create FieldColumns for insertion using schema fields
         use milvus::data::FieldColumn;
 
-
         let id_column = FieldColumn::new(
             schema.get_field("id").unwrap(), // Safe after validation above
             ids.clone(),
@@ -205,7 +205,13 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             contents,
         );
 
-        let columns = vec![id_column, vector_column, file_path_column, line_number_column, content_column];
+        let columns = vec![
+            id_column,
+            vector_column,
+            file_path_column,
+            line_number_column,
+            content_column,
+        ];
 
         // Insert using collection instance
         collection_instance
@@ -233,14 +239,14 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         }
 
         // Get collection instance
-        let collection_instance = self.client
-            .get_collection(collection)
-            .await
-            .map_err(|e| Error::vector_db(format!("Failed to get collection '{}': {}", collection, e)))?;
+        let collection_instance = self.client.get_collection(collection).await.map_err(|e| {
+            Error::vector_db(format!("Failed to get collection '{}': {}", collection, e))
+        })?;
 
         // Check if collection has data before attempting search
         let stats = self.get_stats(collection).await?;
-        let vector_count = stats.get("vectors_count")
+        let vector_count = stats
+            .get("vectors_count")
             .and_then(|v| v.as_i64())
             .unwrap_or(0);
 
@@ -249,10 +255,8 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             return Ok(Vec::new());
         }
 
-
         // Ensure collection is loaded
-        let load_percent = collection_instance.get_load_percent().await
-            .unwrap_or(0);
+        let load_percent = collection_instance.get_load_percent().await.unwrap_or(0);
 
         if load_percent < 100 {
             if let Err(_e) = collection_instance.load(1).await {
@@ -261,8 +265,8 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         }
 
         // Perform search using collection instance
-        use milvus::index::MetricType;
         use milvus::collection::SearchOption;
+        use milvus::index::MetricType;
         use milvus::value::Value;
 
         let search_option = SearchOption::new();
@@ -283,34 +287,59 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         for search_result in search_results {
             // Extract field columns from search result
-            let id_column = search_result.field.iter()
+            let id_column = search_result
+                .field
+                .iter()
                 .find(|fc| fc.name == "id")
-                .ok_or_else(|| Error::vector_db("id field not found in search result".to_string()))?;
+                .ok_or_else(|| {
+                    Error::vector_db("id field not found in search result".to_string())
+                })?;
 
-            let file_path_column = search_result.field.iter()
+            let file_path_column = search_result
+                .field
+                .iter()
                 .find(|fc| fc.name == "file_path")
-                .ok_or_else(|| Error::vector_db("file_path field not found in search result".to_string()))?;
+                .ok_or_else(|| {
+                    Error::vector_db("file_path field not found in search result".to_string())
+                })?;
 
-            let line_number_column = search_result.field.iter()
+            let line_number_column = search_result
+                .field
+                .iter()
                 .find(|fc| fc.name == "line_number")
-                .ok_or_else(|| Error::vector_db("line_number field not found in search result".to_string()))?;
+                .ok_or_else(|| {
+                    Error::vector_db("line_number field not found in search result".to_string())
+                })?;
 
-            let content_column = search_result.field.iter()
+            let content_column = search_result
+                .field
+                .iter()
                 .find(|fc| fc.name == "content")
-                .ok_or_else(|| Error::vector_db("content field not found in search result".to_string()))?;
+                .ok_or_else(|| {
+                    Error::vector_db("content field not found in search result".to_string())
+                })?;
 
             // Extract data from columns
-            let ids: Vec<i64> = id_column.value.clone().try_into()
+            let ids: Vec<i64> = id_column
+                .value
+                .clone()
+                .try_into()
                 .map_err(|e| Error::vector_db(format!("Failed to extract ids: {:?}", e)))?;
 
-            let file_paths: Vec<String> = file_path_column.value.clone().try_into()
-                .map_err(|e| Error::vector_db(format!("Failed to extract file_paths: {:?}", e)))?;
+            let file_paths: Vec<String> =
+                file_path_column.value.clone().try_into().map_err(|e| {
+                    Error::vector_db(format!("Failed to extract file_paths: {:?}", e))
+                })?;
 
-            let line_numbers: Vec<i64> = line_number_column.value.clone().try_into()
-                .map_err(|e| Error::vector_db(format!("Failed to extract line_numbers: {:?}", e)))?;
+            let line_numbers: Vec<i64> =
+                line_number_column.value.clone().try_into().map_err(|e| {
+                    Error::vector_db(format!("Failed to extract line_numbers: {:?}", e))
+                })?;
 
-            let contents: Vec<String> = content_column.value.clone().try_into()
-                .map_err(|e| Error::vector_db(format!("Failed to extract contents: {:?}", e)))?;
+            let contents: Vec<String> =
+                content_column.value.clone().try_into().map_err(|e| {
+                    Error::vector_db(format!("Failed to extract contents: {:?}", e))
+                })?;
 
             let scores = &search_result.score;
 
@@ -322,7 +351,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                 let score = (-distance).exp();
 
                 results.push(SearchResult {
-                    file_path: file_paths.get(i).cloned().unwrap_or_else(|| "unknown".to_string()),
+                    file_path: file_paths
+                        .get(i)
+                        .cloned()
+                        .unwrap_or_else(|| "unknown".to_string()),
                     line_number: line_numbers.get(i).copied().unwrap_or(0) as u32,
                     content: contents.get(i).cloned().unwrap_or_else(|| "".to_string()),
                     score,
@@ -340,16 +372,14 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
     async fn delete_vectors(&self, collection: &str, ids: &[String]) -> Result<()> {
         // Get collection instance
-        let collection_instance = self.client
+        let collection_instance = self
+            .client
             .get_collection(collection)
             .await
             .map_err(|e| Error::vector_db(format!("Failed to get collection: {}", e)))?;
 
         // Convert string IDs to i64 for Milvus
-        let id_numbers: Vec<i64> = ids
-            .iter()
-            .filter_map(|id| id.parse::<i64>().ok())
-            .collect();
+        let id_numbers: Vec<i64> = ids.iter().filter_map(|id| id.parse::<i64>().ok()).collect();
 
         if id_numbers.is_empty() {
             return Ok(()); // Nothing to delete
@@ -375,10 +405,9 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
     async fn get_stats(&self, collection: &str) -> Result<HashMap<String, serde_json::Value>> {
         // Get collection instance
-        let collection_instance = self.client
-            .get_collection(collection)
-            .await
-            .map_err(|e| Error::vector_db(format!("Failed to get collection '{}': {}", collection, e)))?;
+        let collection_instance = self.client.get_collection(collection).await.map_err(|e| {
+            Error::vector_db(format!("Failed to get collection '{}': {}", collection, e))
+        })?;
 
         // Count entities using the correct query signature from the official example
         // First ensure collection is loaded (required for queries)
@@ -388,7 +417,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         }
 
         // query::<_, [&str; 0]>(expr, []) - empty array for partition names means all partitions
-        let entity_count = match collection_instance.query::<_, [&str; 0]>("id >= 0", []).await {
+        let entity_count = match collection_instance
+            .query::<_, [&str; 0]>("id >= 0", [])
+            .await
+        {
             Ok(query_results) => query_results.first().map(|col| col.len()).unwrap_or(0),
             Err(_) => 0, // If query fails, collection might be empty or have issues
         };

@@ -25,7 +25,12 @@ impl OllamaEmbeddingProvider {
     /// Create a new Ollama embedding provider with custom timeout
     pub fn with_timeout(base_url: String, model: String, timeout: Duration) -> Result<Self> {
         let http_client = get_or_create_global_http_client()?;
-        Ok(Self { base_url, model, timeout, http_client })
+        Ok(Self {
+            base_url,
+            model,
+            timeout,
+            http_client,
+        })
     }
 
     /// Create a new Ollama embedding provider with custom HTTP client
@@ -35,7 +40,12 @@ impl OllamaEmbeddingProvider {
         timeout: Duration,
         http_client: Arc<HttpClientPool>,
     ) -> Self {
-        Self { base_url, model, timeout, http_client }
+        Self {
+            base_url,
+            model,
+            timeout,
+            http_client,
+        }
     }
 }
 

@@ -134,7 +134,10 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
 
         // Remove vectors by their generated IDs
         coll.retain(|(_embedding, metadata)| {
-            let generated_id = metadata.get("generated_id").and_then(|v| v.as_str()).unwrap_or("");
+            let generated_id = metadata
+                .get("generated_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
             !ids.contains(&generated_id.to_string())
         });
         Ok(())
@@ -151,7 +154,10 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
         stats.insert("collection".to_string(), serde_json::json!(collection));
         stats.insert("status".to_string(), serde_json::json!("active"));
         stats.insert("vectors_count".to_string(), serde_json::json!(count));
-        stats.insert("provider".to_string(), serde_json::json!(self.provider_name()));
+        stats.insert(
+            "provider".to_string(),
+            serde_json::json!(self.provider_name()),
+        );
         Ok(stats)
     }
 

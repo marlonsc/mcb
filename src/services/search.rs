@@ -1,8 +1,8 @@
 //! Search service for querying indexed code
 
-use crate::error::Result;
-use crate::services::context::ContextService;
+use crate::core::error::Result;
 use crate::core::types::SearchResult;
+use crate::services::context::ContextService;
 
 /// Simple search service for MVP
 pub struct SearchService {
@@ -16,7 +16,14 @@ impl SearchService {
     }
 
     /// Search for code similar to the query
-    pub async fn search(&self, collection: &str, query: &str, limit: usize) -> Result<Vec<SearchResult>> {
-        self.context_service.search_similar(collection, query, limit).await
+    pub async fn search(
+        &self,
+        collection: &str,
+        query: &str,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>> {
+        self.context_service
+            .search_similar(collection, query, limit)
+            .await
     }
 }

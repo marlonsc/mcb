@@ -122,7 +122,6 @@ pub struct CacheStats {
     pub avg_access_time_us: f64,
 }
 
-
 /// Cache operation result
 #[derive(Debug)]
 pub enum CacheResult<T> {
@@ -211,10 +210,14 @@ impl CacheManager {
 
     /// Test Redis connection
     async fn test_redis_connection(client: &redis::Client) -> Result<()> {
-        let mut conn = client.get_multiplexed_async_connection().await
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
             .map_err(|e| Error::generic(format!("Redis connection failed: {}", e)))?;
 
-        let _: String = redis::cmd("PING").query_async(&mut conn).await
+        let _: String = redis::cmd("PING")
+            .query_async(&mut conn)
+            .await
             .map_err(|e| Error::generic(format!("Redis PING failed: {}", e)))?;
 
         Ok(())
@@ -233,19 +236,17 @@ impl CacheManager {
         let full_key = format!("{}:{}", namespace, key);
 
         // Try Redis first if available
-        if let Some(ref client) = self.redis_client {
+        if self.redis_client.is_some() {
             match self.get_from_redis(&full_key).await {
-                Ok(Some(data)) => {
-                    match serde_json::from_value(data) {
-                        Ok(deserialized) => {
-                            self.update_stats(true, start_time.elapsed()).await;
-                            return CacheResult::Hit(deserialized);
-                        }
-                        Err(e) => {
-                            tracing::warn!("Failed to deserialize cached data: {}", e);
-                        }
+                Ok(Some(data)) => match serde_json::from_value(data) {
+                    Ok(deserialized) => {
+                        self.update_stats(true, start_time.elapsed()).await;
+                        return CacheResult::Hit(deserialized);
                     }
-                }
+                    Err(e) => {
+                        tracing::warn!("Failed to deserialize cached data: {}", e);
+                    }
+                },
                 Ok(None) => {} // Continue to local cache
                 Err(e) => {
                     tracing::warn!("Redis get failed: {}", e);
@@ -255,18 +256,19 @@ impl CacheManager {
 
         // Try local cache
         match self.get_from_local(&full_key).await {
-            Ok(Some(data)) => {
-                match serde_json::from_value(data) {
-                    Ok(deserialized) => {
-                        self.update_stats(true, start_time.elapsed()).await;
-                        CacheResult::Hit(deserialized)
-                    }
-                    Err(e) => {
-                        self.update_stats(false, start_time.elapsed()).await;
-                        CacheResult::Error(Error::generic(format!("Failed to deserialize cached data: {}", e)))
-                    }
+            Ok(Some(data)) => match serde_json::from_value(data) {
+                Ok(deserialized) => {
+                    self.update_stats(true, start_time.elapsed()).await;
+                    CacheResult::Hit(deserialized)
                 }
-            }
+                Err(e) => {
+                    self.update_stats(false, start_time.elapsed()).await;
+                    CacheResult::Error(Error::generic(format!(
+                        "Failed to deserialize cached data: {}",
+                        e
+                    )))
+                }
+            },
             Ok(None) => {
                 self.update_stats(false, start_time.elapsed()).await;
                 CacheResult::Miss
@@ -295,20 +297,24 @@ impl CacheManager {
         let data = serde_json::to_value(&value)
             .map_err(|e| Error::generic(format!("Serialization failed: {}", e)))?;
 
-        let size_bytes = serde_json::to_string(&data)
-            .map(|s| s.len())
-            .unwrap_or(0);
+        let size_bytes = serde_json::to_string(&data).map(|s| s.len()).unwrap_or(0);
 
         let entry = CacheEntry {
             data: data.clone(),
-            created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
-            accessed_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            accessed_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             access_count: 1,
             size_bytes,
         };
 
         // Store in Redis if available
-        if let Some(ref client) = self.redis_client {
+        if self.redis_client.is_some() {
             if let Err(e) = self.set_in_redis(&full_key, &entry, ttl).await {
                 tracing::warn!("Redis set failed: {}", e);
             }
@@ -329,7 +335,7 @@ impl CacheManager {
         let full_key = format!("{}:{}", namespace, key);
 
         // Delete from Redis
-        if let Some(ref client) = self.redis_client {
+        if self.redis_client.is_some() {
             if let Err(e) = self.delete_from_redis(&full_key).await {
                 tracing::warn!("Redis delete failed: {}", e);
             }
@@ -350,7 +356,7 @@ impl CacheManager {
         let pattern = format!("{}:*", namespace);
 
         // Clear from Redis
-        if let Some(ref client) = self.redis_client {
+        if self.redis_client.is_some() {
             if let Err(e) = self.clear_namespace_redis(&pattern).await {
                 tracing::warn!("Redis namespace clear failed: {}", e);
             }
@@ -402,11 +408,21 @@ impl CacheManager {
         Ok(None)
     }
 
-    async fn set_in_redis(&self, key: &str, entry: &CacheEntry<serde_json::Value>, ttl: u64) -> Result<()> {
+    async fn set_in_redis(
+        &self,
+        key: &str,
+        entry: &CacheEntry<serde_json::Value>,
+        ttl: u64,
+    ) -> Result<()> {
         if let Some(ref client) = self.redis_client {
             let mut conn = client.get_multiplexed_async_connection().await?;
             let json_str = serde_json::to_string(entry)?;
-            redis::cmd("SETEX").arg(key).arg(ttl).arg(json_str).query_async::<_, ()>(&mut conn).await?;
+            redis::cmd("SETEX")
+                .arg(key)
+                .arg(ttl)
+                .arg(json_str)
+                .query_async::<_, ()>(&mut conn)
+                .await?;
         }
         Ok(())
     }
@@ -414,7 +430,10 @@ impl CacheManager {
     async fn delete_from_redis(&self, key: &str) -> Result<()> {
         if let Some(ref client) = self.redis_client {
             let mut conn = client.get_multiplexed_async_connection().await?;
-            redis::cmd("DEL").arg(key).query_async::<_, ()>(&mut conn).await?;
+            redis::cmd("DEL")
+                .arg(key)
+                .query_async::<_, ()>(&mut conn)
+                .await?;
         }
         Ok(())
     }
@@ -422,9 +441,15 @@ impl CacheManager {
     async fn clear_namespace_redis(&self, pattern: &str) -> Result<()> {
         if let Some(ref client) = self.redis_client {
             let mut conn = client.get_multiplexed_async_connection().await?;
-            let keys: Vec<String> = redis::cmd("KEYS").arg(pattern).query_async(&mut conn).await?;
+            let keys: Vec<String> = redis::cmd("KEYS")
+                .arg(pattern)
+                .query_async(&mut conn)
+                .await?;
             if !keys.is_empty() {
-                redis::cmd("DEL").arg(keys).query_async::<_, ()>(&mut conn).await?;
+                redis::cmd("DEL")
+                    .arg(keys)
+                    .query_async::<_, ()>(&mut conn)
+                    .await?;
             }
         }
         Ok(())
@@ -433,7 +458,10 @@ impl CacheManager {
     async fn get_from_local(&self, key: &str) -> Result<Option<serde_json::Value>> {
         let mut cache = self.local_cache.write().await;
         if let Some(entry) = cache.get_mut(key) {
-            entry.accessed_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            entry.accessed_at = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
             entry.access_count += 1;
             return Ok(Some(entry.data.clone()));
         }
@@ -515,7 +543,10 @@ impl CacheManager {
     }
 
     async fn cleanup_expired_entries(&self) -> Result<()> {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
 
         let mut cache = self.local_cache.write().await;
         let mut to_remove = Vec::new();
@@ -544,7 +575,8 @@ static CACHE_MANAGER: std::sync::OnceLock<CacheManager> = std::sync::OnceLock::n
 /// Initialize global cache manager
 pub async fn init_global_cache_manager(config: CacheConfig) -> Result<()> {
     let manager = CacheManager::new(config).await?;
-    CACHE_MANAGER.set(manager)
+    CACHE_MANAGER
+        .set(manager)
         .map_err(|_| "Cache manager already initialized".into())
 }
 
@@ -592,7 +624,10 @@ mod tests {
         let manager = CacheManager::new(config).await.unwrap();
 
         // Test set and get
-        manager.set("test", "key1", "value1".to_string()).await.unwrap();
+        manager
+            .set("test", "key1", "value1".to_string())
+            .await
+            .unwrap();
 
         let result: CacheResult<String> = manager.get("test", "key1").await;
         assert!(result.is_hit());
@@ -609,7 +644,10 @@ mod tests {
 
         // Check stats
         let stats = manager.get_stats().await;
-        println!("Stats after test: hits={}, misses={}, ratio={}", stats.hits, stats.misses, stats.hit_ratio);
+        println!(
+            "Stats after test: hits={}, misses={}, ratio={}",
+            stats.hits, stats.misses, stats.hit_ratio
+        );
         assert_eq!(stats.hits, 1);
         assert_eq!(stats.misses, 2); // Should be 2 misses: nonexistent + deleted key
     }
@@ -625,8 +663,14 @@ mod tests {
         let manager = CacheManager::new(config).await.unwrap();
 
         // Set values in different namespaces
-        manager.set("ns1", "key1", "value1".to_string()).await.unwrap();
-        manager.set("ns2", "key1", "value2".to_string()).await.unwrap();
+        manager
+            .set("ns1", "key1", "value1".to_string())
+            .await
+            .unwrap();
+        manager
+            .set("ns2", "key1", "value2".to_string())
+            .await
+            .unwrap();
 
         // Get values
         let result1: CacheResult<String> = manager.get("ns1", "key1").await;

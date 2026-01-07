@@ -3,8 +3,8 @@
 //! This module provides regex-based chunking as a fallback when tree-sitter
 //! parsing is not available or fails.
 
-use crate::core::types::{CodeChunk, Language};
 use crate::chunking::config::LanguageConfig;
+use crate::core::types::{CodeChunk, Language};
 use regex;
 use std::collections::HashMap;
 

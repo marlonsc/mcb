@@ -1,7 +1,7 @@
 # MCP Context Browser - Documentation
 
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcp-context-browser/actions)
-[![Version](https://img.shields.io/badge/version-0.0.2--alpha-blue)](https://github.com/marlonsc/mcp-context-browser/releases)
+[![Version](https://img.shields.io/badge/version-0.0.3-blue)](https://github.com/marlonsc/mcp-context-browser/releases)
 [![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](docs/architecture/ARCHITECTURE.md)
 
 **Comprehensive documentation for the MCP Context Browser project**
@@ -29,14 +29,14 @@ Documentation for developers contributing to the project.
 Technical architecture documentation following C4 model principles.
 
 -   **[Architecture Overview](architecture/ARCHITECTURE.md)** - Comprehensive system architecture
--   **[Architecture Diagrams](architecture/diagrams/)** - Visual architecture documentation
-    -   [System Context](architecture/diagrams/generated/index.html) - System boundaries and external systems
-    -   [Container Architecture](architecture/diagrams/generated/index.html) - Service and deployment architecture
--   **[Architecture Decision Records](architecture/adr/)** - Historical architectural decisions
-    -   [ADR 001: Provider Pattern](architecture/adr/001-provider-pattern-architecture.md)
-    -   [ADR 002: Async-First Architecture](architecture/adr/002-async-first-architecture.md)
-    -   [ADR 003: C4 Model Documentation](architecture/adr/003-c4-model-documentation.md)
-    -   [ADR 004: Multi-Provider Strategy](architecture/adr/004-multi-provider-strategy.md)
+-   **[Architecture Diagrams](diagrams/)** - Visual architecture documentation
+    -   [System Context](diagrams/generated/index.html) - System boundaries and external systems
+    -   [Container Architecture](diagrams/generated/index.html) - Service and deployment architecture
+-   **[Architecture Decision Records](adr/)** - Historical architectural decisions
+    -   [ADR 001: Provider Pattern](adr/001-provider-pattern-architecture.md)
+    -   [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
+    -   [ADR 003: C4 Model Documentation](adr/003-c4-model-documentation.md)
+    -   [ADR 004: Multi-Provider Strategy](adr/004-multi-provider-strategy.md)
 
 ### 🚀 Operations
 

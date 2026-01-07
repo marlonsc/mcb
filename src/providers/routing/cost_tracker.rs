@@ -15,7 +15,7 @@ pub struct ProviderCost {
     pub provider_id: String,
     pub operation_type: String,
     pub cost_per_unit: f64,
-    pub unit_type: String,  // "token", "request", "GB", etc.
+    pub unit_type: String, // "token", "request", "GB", etc.
     pub free_tier_limit: Option<u64>,
     pub currency: String,
 }
@@ -37,11 +37,11 @@ impl ProviderCost {
     /// Calculate efficiency score (0.0 = expensive, 1.0 = cheap)
     pub fn efficiency_score(&self) -> f64 {
         let max_reasonable_cost = match self.unit_type.as_str() {
-            "token" => 0.0001,    // $0.0001 per token (reasonable max)
-            "request" => 1.0,     // $1 per request (reasonable max)
-            "GB" => 1.0,          // $1 per GB (reasonable max)
-            "second" => 0.1,      // $0.10 per second (reasonable max)
-            _ => 1.0,             // Default
+            "token" => 0.0001, // $0.0001 per token (reasonable max)
+            "request" => 1.0,  // $1 per request (reasonable max)
+            "GB" => 1.0,       // $1 per GB (reasonable max)
+            "second" => 0.1,   // $0.10 per second (reasonable max)
+            _ => 1.0,          // Default
         };
 
         (max_reasonable_cost - self.cost_per_unit.min(max_reasonable_cost)) / max_reasonable_cost
@@ -108,27 +108,44 @@ impl CostTracker {
     pub fn register_provider_cost(&self, cost: ProviderCost) {
         let key = format!("{}:{}", cost.provider_id, cost.operation_type);
         self.costs.insert(key, cost.clone());
-        info!("Registered cost for provider {} operation {}", cost.provider_id, cost.operation_type);
+        info!(
+            "Registered cost for provider {} operation {}",
+            cost.provider_id, cost.operation_type
+        );
     }
 
     /// Set budget limit for a provider
     pub fn set_budget(&self, provider_id: &str, budget: f64) {
         self.budgets.insert(provider_id.to_string(), budget);
-        info!("Set budget limit of {} for provider {}", budget, provider_id);
+        info!(
+            "Set budget limit of {} for provider {}",
+            budget, provider_id
+        );
     }
 
     /// Track operation usage and cost
-    pub fn track_operation(&self, provider_id: &str, operation_type: &str, units: u64) -> Result<f64> {
+    pub fn track_operation(
+        &self,
+        provider_id: &str,
+        operation_type: &str,
+        units: u64,
+    ) -> Result<f64> {
         let cost_key = format!("{}:{}", provider_id, operation_type);
-        let cost_info = self.costs.get(&cost_key)
-            .ok_or_else(|| Error::not_found(format!("Cost info for provider: {} operation: {}", provider_id, operation_type)))?;
+        let cost_info = self.costs.get(&cost_key).ok_or_else(|| {
+            Error::not_found(format!(
+                "Cost info for provider: {} operation: {}",
+                provider_id, operation_type
+            ))
+        })?;
 
         let cost = cost_info.calculate_cost(units);
 
         // Check budget limits if enabled
         if self.config.enable_budget_limits {
             if let Some(budget_limit) = self.budgets.get(provider_id) {
-                let current_metrics = self.usage_metrics.get(provider_id)
+                let current_metrics = self
+                    .usage_metrics
+                    .get(provider_id)
                     .map(|m| m.clone())
                     .unwrap_or_default();
                 let new_total_cost = current_metrics.current_period_cost + cost;
@@ -147,7 +164,8 @@ impl CostTracker {
         }
 
         // Update usage metrics
-        let mut metrics = self.usage_metrics
+        let mut metrics = self
+            .usage_metrics
             .entry(provider_id.to_string())
             .or_default();
 
@@ -177,7 +195,11 @@ impl CostTracker {
     }
 
     /// Get cost information for a provider operation
-    pub fn get_provider_cost(&self, provider_id: &str, operation_type: &str) -> Option<ProviderCost> {
+    pub fn get_provider_cost(
+        &self,
+        provider_id: &str,
+        operation_type: &str,
+    ) -> Option<ProviderCost> {
         let key = format!("{}:{}", provider_id, operation_type);
         self.costs.get(&key).map(|c| c.clone())
     }
@@ -189,7 +211,10 @@ impl CostTracker {
 
     /// Get current billing period cost across all providers
     pub fn get_current_period_cost(&self) -> f64 {
-        self.usage_metrics.iter().map(|m| m.current_period_cost).sum()
+        self.usage_metrics
+            .iter()
+            .map(|m| m.current_period_cost)
+            .sum()
     }
 
     /// Reset billing period for all providers
@@ -203,7 +228,8 @@ impl CostTracker {
 
     /// Get cost efficiency ranking of providers
     pub fn get_cost_efficiency_ranking(&self) -> Vec<(String, f64)> {
-        let mut rankings: Vec<(String, f64)> = self.costs
+        let mut rankings: Vec<(String, f64)> = self
+            .costs
             .iter()
             .map(|entry| {
                 let provider_id = entry.key().split(':').next().unwrap_or("").to_string();
@@ -313,10 +339,14 @@ mod tests {
         tracker.register_provider_cost(cost);
 
         // Track some usage
-        let cost1 = tracker.track_operation("test-provider", "embedding", 1000).unwrap();
+        let cost1 = tracker
+            .track_operation("test-provider", "embedding", 1000)
+            .unwrap();
         assert_eq!(cost1, 0.1); // 1000 * 0.0001
 
-        let cost2 = tracker.track_operation("test-provider", "embedding", 2000).unwrap();
+        let cost2 = tracker
+            .track_operation("test-provider", "embedding", 2000)
+            .unwrap();
         assert_eq!(cost2, 0.2);
 
         // Check metrics
@@ -394,7 +424,10 @@ mod tests {
         assert!(expensive_index.is_some());
 
         if let (Some(cheap_pos), Some(expensive_pos)) = (cheap_index, expensive_index) {
-            assert!(cheap_pos < expensive_pos, "Cheap provider should rank higher than expensive provider");
+            assert!(
+                cheap_pos < expensive_pos,
+                "Cheap provider should rank higher than expensive provider"
+            );
         }
     }
 

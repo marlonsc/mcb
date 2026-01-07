@@ -26,20 +26,29 @@ impl ProviderMetricsCollector {
     /// Record provider selection
     pub fn record_provider_selection(&self, provider_id: &str, strategy: &str) {
         counter!("mcp_provider_selections_total", "provider" => provider_id.to_string(), "strategy" => strategy.to_string()).increment(1);
-        debug!("Recorded provider selection: {} with strategy {}", provider_id, strategy);
+        debug!(
+            "Recorded provider selection: {} with strategy {}",
+            provider_id, strategy
+        );
     }
 
     /// Record response time for an operation
     pub fn record_response_time(&self, provider_id: &str, operation: &str, duration_seconds: f64) {
         histogram!("mcp_provider_response_time_seconds", "provider" => provider_id.to_string(), "operation" => operation.to_string()).record(duration_seconds);
         gauge!("mcp_provider_last_response_time", "provider" => provider_id.to_string(), "operation" => operation.to_string()).set(duration_seconds);
-        debug!("Recorded response time: {}s for {}:{}", duration_seconds, provider_id, operation);
+        debug!(
+            "Recorded response time: {}s for {}:{}",
+            duration_seconds, provider_id, operation
+        );
     }
 
     /// Record request outcome
     pub fn record_request(&self, provider_id: &str, operation: &str, status: &str) {
         counter!("mcp_provider_requests_total", "provider" => provider_id.to_string(), "operation" => operation.to_string(), "status" => status.to_string()).increment(1);
-        debug!("Recorded request: {}:{} status={}", provider_id, operation, status);
+        debug!(
+            "Recorded request: {}:{} status={}",
+            provider_id, operation, status
+        );
     }
 
     /// Record error
@@ -57,27 +66,36 @@ impl ProviderMetricsCollector {
 
     /// Update active connections
     pub fn update_active_connections(&self, provider_id: &str, count: i64) {
-        gauge!("mcp_provider_active_connections", "provider" => provider_id.to_string()).set(count as f64);
+        gauge!("mcp_provider_active_connections", "provider" => provider_id.to_string())
+            .set(count as f64);
         debug!("Updated active connections: {} for {}", count, provider_id);
     }
 
     /// Record circuit breaker state change
     pub fn record_circuit_breaker_state(&self, provider_id: &str, state: &str) {
         counter!("mcp_circuit_breaker_state_changes_total", "provider" => provider_id.to_string(), "state" => state.to_string()).increment(1);
-        gauge!("mcp_circuit_breaker_current_state", "provider" => provider_id.to_string()).set(match state {
-            "closed" => 0.0,
-            "open" => 1.0,
-            "half-open" => 0.5,
-            _ => -1.0,
-        });
-        debug!("Recorded circuit breaker state change: {} -> {}", provider_id, state);
+        gauge!("mcp_circuit_breaker_current_state", "provider" => provider_id.to_string()).set(
+            match state {
+                "closed" => 0.0,
+                "open" => 1.0,
+                "half-open" => 0.5,
+                _ => -1.0,
+            },
+        );
+        debug!(
+            "Recorded circuit breaker state change: {} -> {}",
+            provider_id, state
+        );
     }
 
     /// Record provider health status
     pub fn record_provider_health(&self, provider_id: &str, status: &str, score: f64) {
         gauge!("mcp_provider_health_score", "provider" => provider_id.to_string()).set(score);
         counter!("mcp_provider_health_checks_total", "provider" => provider_id.to_string(), "status" => status.to_string()).increment(1);
-        debug!("Recorded provider health: {} status={} score={}", provider_id, status, score);
+        debug!(
+            "Recorded provider health: {} status={} score={}",
+            provider_id, status, score
+        );
     }
 
     /// Add custom metric
@@ -120,7 +138,9 @@ impl ProviderMetricsCollector {
         let mut summary = MetricsSummary::default();
 
         for line in prometheus_output.lines() {
-            if line.starts_with("mcp_provider_requests_total") && line.contains("status=\"success\"") {
+            if line.starts_with("mcp_provider_requests_total")
+                && line.contains("status=\"success\"")
+            {
                 summary.total_successful_requests += 1;
             } else if line.starts_with("mcp_provider_errors_total") {
                 summary.total_errors += 1;
@@ -206,7 +226,10 @@ mod tests {
         // Add custom metrics
         collector.add_custom_metric("test_metric", serde_json::json!(42.0));
 
-        assert_eq!(collector.get_custom_metric("test_metric"), Some(&serde_json::json!(42.0)));
+        assert_eq!(
+            collector.get_custom_metric("test_metric"),
+            Some(&serde_json::json!(42.0))
+        );
         assert_eq!(collector.get_all_custom_metrics().len(), 1);
 
         let summary = collector.get_metrics_summary().unwrap();

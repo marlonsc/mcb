@@ -25,7 +25,12 @@ impl OpenAIEmbeddingProvider {
     }
 
     /// Create a new OpenAI embedding provider with custom timeout
-    pub fn with_timeout(api_key: String, base_url: Option<String>, model: String, timeout: Duration) -> Result<Self> {
+    pub fn with_timeout(
+        api_key: String,
+        base_url: Option<String>,
+        model: String,
+        timeout: Duration,
+    ) -> Result<Self> {
         let api_key = api_key.trim().to_string();
         let base_url = base_url.map(|url| url.trim().to_string());
         let http_client = get_or_create_global_http_client()?;
@@ -44,6 +49,21 @@ impl OpenAIEmbeddingProvider {
         self.base_url
             .as_deref()
             .unwrap_or("https://api.openai.com/v1")
+    }
+
+    /// Get the model name
+    pub fn model(&self) -> &str {
+        &self.model
+    }
+
+    /// Get the maximum tokens for this model
+    pub fn max_tokens(&self) -> usize {
+        match self.model.as_str() {
+            "text-embedding-3-small" => 8192,
+            "text-embedding-3-large" => 8192,
+            "text-embedding-ada-002" => 8192,
+            _ => 8192, // Default fallback
+        }
     }
 
     /// Fetch embeddings from OpenAI API
@@ -163,15 +183,19 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
         if let Some(cache_manager) = get_global_cache_manager() {
             for (i, text) in texts.iter().enumerate() {
                 let cache_key = self.generate_cache_key(text);
-                let cache_result: CacheResult<Vec<f32>> = cache_manager.get("embeddings", &cache_key).await;
+                let cache_result: CacheResult<Vec<f32>> =
+                    cache_manager.get("embeddings", &cache_key).await;
 
                 match cache_result {
                     CacheResult::Hit(embedding_data) => {
-                        cached_embeddings.push((i, Embedding {
-                            vector: embedding_data,
-                            model: self.model.clone(),
-                            dimensions: self.dimensions(),
-                        }));
+                        cached_embeddings.push((
+                            i,
+                            Embedding {
+                                vector: embedding_data,
+                                model: self.model.clone(),
+                                dimensions: self.dimensions(),
+                            },
+                        ));
                     }
                     _ => {
                         uncached_texts.push(text.clone());
@@ -195,7 +219,9 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
                 for (i, embedding) in new_embeddings.iter().enumerate() {
                     let text = &uncached_texts[i];
                     let cache_key = self.generate_cache_key(text);
-                    let _ = cache_manager.set("embeddings", &cache_key, embedding.vector.clone()).await;
+                    let _ = cache_manager
+                        .set("embeddings", &cache_key, embedding.vector.clone())
+                        .await;
                 }
             }
         }

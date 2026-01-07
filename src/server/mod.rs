@@ -11,21 +11,24 @@
 //! Based on the official rmcp SDK examples and best practices.
 
 pub mod rate_limit_middleware;
+pub mod security;
 
-use crate::services::{IndexingService, SearchService};
-use crate::core::rate_limit::RateLimiter;
-use crate::core::http_client::{init_global_http_client, HttpClientConfig};
 use crate::core::auth::{AuthService, Claims, Permission};
 use crate::core::cache::CacheManager;
 use crate::core::database::init_global_database_pool;
+use crate::core::http_client::{init_global_http_client, HttpClientConfig};
 use crate::core::limits::{init_global_resource_limits, ResourceLimits};
+use crate::core::rate_limit::RateLimiter;
 use crate::metrics::MetricsApiServer;
+use crate::services::{IndexingService, SearchService};
 use rmcp::{
-    ErrorData as McpError, ServerHandler, ServiceExt,
     handler::server::{router::tool::ToolRouter, wrapper::Parameters},
-    model::{ServerCapabilities, ServerInfo, CallToolResult, Content, ProtocolVersion, Implementation},
+    model::{
+        CallToolResult, Content, Implementation, ProtocolVersion, ServerCapabilities, ServerInfo,
+    },
     schemars, tool, tool_handler, tool_router,
     transport::stdio,
+    ErrorData as McpError, ServerHandler, ServiceExt,
 };
 use std::sync::Arc;
 use std::time::Instant;
@@ -36,7 +39,9 @@ use tracing_subscriber::{self, EnvFilter};
 #[schemars(description = "Parameters for indexing a codebase directory")]
 pub struct IndexCodebaseArgs {
     /// Path to the codebase directory to index
-    #[schemars(description = "Absolute or relative path to the directory containing code to index")]
+    #[schemars(
+        description = "Absolute or relative path to the directory containing code to index"
+    )]
     pub path: String,
     /// Optional JWT token for authentication
     #[schemars(description = "JWT token for authenticated requests")]
@@ -48,7 +53,9 @@ pub struct IndexCodebaseArgs {
 #[schemars(description = "Parameters for searching code using natural language")]
 pub struct SearchCodeArgs {
     /// Natural language query to search for
-    #[schemars(description = "The search query in natural language (e.g., 'find functions that handle authentication')")]
+    #[schemars(
+        description = "The search query in natural language (e.g., 'find functions that handle authentication')"
+    )]
     pub query: String,
     /// Maximum number of results to return (default: 10)
     #[schemars(description = "Maximum number of search results to return")]
@@ -57,25 +64,6 @@ pub struct SearchCodeArgs {
     /// Optional JWT token for authentication
     #[schemars(description = "JWT token for authenticated requests")]
     pub token: Option<String>,
-}
-
-/// Arguments for login
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-#[schemars(description = "Parameters for user authentication")]
-pub struct LoginArgs {
-    /// User email
-    pub email: String,
-    /// User password
-    pub password: String,
-}
-
-/// Login response
-#[derive(Debug, serde::Serialize, schemars::JsonSchema)]
-pub struct LoginResponse {
-    /// JWT token
-    pub token: String,
-    /// User information
-    pub user: crate::core::auth::User,
 }
 
 /// Arguments for getting indexing status
@@ -123,24 +111,80 @@ pub struct McpServer {
     resource_limits: Arc<ResourceLimits>,
     /// Advanced cache manager
     cache_manager: Arc<CacheManager>,
+    /// Provider router for intelligent provider selection
+    _provider_router: Arc<crate::providers::routing::ProviderRouter>,
+    /// Service provider for dependency injection
+    service_provider: Arc<crate::di::factory::ServiceProvider>,
     /// Tool router for handling tool calls
     tool_router: ToolRouter<Self>,
 }
 
 impl McpServer {
+    /// Register a new embedding provider at runtime
+    pub async fn register_embedding_provider(
+        &self,
+        name: &str,
+        config: &crate::core::types::EmbeddingConfig,
+    ) -> crate::core::error::Result<()> {
+        let provider = self.service_provider.get_embedding_provider(config).await?;
+        self.service_provider
+            .register_embedding_provider(name, provider)?;
+        Ok(())
+    }
+
+    /// Register a new vector store provider at runtime
+    pub async fn register_vector_store_provider(
+        &self,
+        name: &str,
+        config: &crate::core::types::VectorStoreConfig,
+    ) -> crate::core::error::Result<()> {
+        let provider = self
+            .service_provider
+            .get_vector_store_provider(config)
+            .await?;
+        self.service_provider
+            .register_vector_store_provider(name, provider)?;
+        Ok(())
+    }
+
+    /// List all registered providers
+    pub fn list_providers(&self) -> (Vec<String>, Vec<String>) {
+        self.service_provider.list_providers()
+    }
+
+    /// Get provider health status
+    pub async fn get_provider_health(
+        &self,
+    ) -> std::collections::HashMap<String, crate::providers::routing::health::ProviderHealth> {
+        // This would use the health monitor from the router
+        // For now, return empty map
+        std::collections::HashMap::new()
+    }
+
     /// Check authentication and permissions for a request
-    fn check_auth(&self, token: Option<&String>, required_permission: &Permission) -> crate::core::error::Result<Option<Claims>> {
+    fn check_auth(
+        &self,
+        token: Option<&String>,
+        required_permission: &Permission,
+    ) -> crate::core::error::Result<Option<Claims>> {
         if !self.auth_service.is_enabled() {
             return Ok(None); // Auth disabled, allow all requests
         }
 
         let Some(token) = token else {
-            return Err(crate::core::error::Error::generic("Authentication required"));
+            return Err(crate::core::error::Error::generic(
+                "Authentication required",
+            ));
         };
 
         let claims = self.auth_service.validate_token(token)?;
-        if !self.auth_service.check_permission(&claims, required_permission) {
-            return Err(crate::core::error::Error::generic("Insufficient permissions"));
+        if !self
+            .auth_service
+            .check_permission(&claims, required_permission)
+        {
+            return Err(crate::core::error::Error::generic(
+                "Insufficient permissions",
+            ));
         }
 
         Ok(Some(claims))
@@ -149,10 +193,11 @@ impl McpServer {
     /// Create a new MCP server instance
     ///
     /// Initializes all required services and configurations.
-    pub fn new(cache_manager: Option<Arc<CacheManager>>) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(
+        cache_manager: Option<Arc<CacheManager>>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         // Load configuration from environment
-        let config = crate::config::Config::from_env()
-            .expect("Failed to load configuration");
+        let config = crate::config::Config::from_env().expect("Failed to load configuration");
 
         // Create authentication service
         let auth_service = Arc::new(AuthService::new(config.auth.clone()));
@@ -161,12 +206,23 @@ impl McpServer {
         let resource_limits = Arc::new(ResourceLimits::new(config.resource_limits.clone()));
         init_global_resource_limits(config.resource_limits)?;
 
-        // Create context service with configured providers
-        let service_provider = crate::factory::ServiceProvider::new();
-        let context_service = Arc::new(crate::services::ContextService::new(&service_provider)?);
+        // Create provider registry and router
+        let registry = Arc::new(crate::di::registry::ProviderRegistry::new());
+        let provider_router = Arc::new(crate::providers::routing::ProviderRouter::with_defaults(
+            Arc::clone(&registry),
+        )?);
+        let service_provider = Arc::new(crate::di::factory::ServiceProvider::new());
+
+        // Create context service with configured providers (using defaults for now)
+        let embedding_provider = Arc::new(crate::providers::MockEmbeddingProvider::new());
+        let vector_store_provider = Arc::new(crate::providers::InMemoryVectorStoreProvider::new());
+        let context_service = Arc::new(crate::services::ContextService::new(
+            embedding_provider,
+            vector_store_provider,
+        ));
 
         // Create indexing service with sync coordination
-        let indexing_service = Arc::new(IndexingService::new(context_service.clone()));
+        let indexing_service = Arc::new(IndexingService::new(context_service.clone())?);
 
         // Create search service
         let search_service = Arc::new(SearchService::new(context_service));
@@ -176,10 +232,17 @@ impl McpServer {
             search_service,
             auth_service,
             resource_limits,
-            cache_manager: cache_manager.unwrap_or_else(|| Arc::new({
-                let config = crate::core::cache::CacheConfig { enabled: false, ..Default::default() };
-                futures::executor::block_on(CacheManager::new(config)).unwrap()
-            })),
+            cache_manager: cache_manager.unwrap_or_else(|| {
+                Arc::new({
+                    let config = crate::core::cache::CacheConfig {
+                        enabled: false,
+                        ..Default::default()
+                    };
+                    futures::executor::block_on(CacheManager::new(config)).unwrap()
+                })
+            }),
+            _provider_router: provider_router,
+            service_provider,
             tool_router: Self::tool_router(),
         })
     }
@@ -187,17 +250,6 @@ impl McpServer {
 
 #[tool_router]
 impl McpServer {
-    /// Authenticate user and return JWT token
-    async fn login(&self, args: LoginArgs) -> crate::core::error::Result<LoginResponse> {
-        let token = self.auth_service.authenticate(&args.email, &args.password)?;
-        let claims = self.auth_service.validate_token(&token)?;
-
-        let user = self.auth_service.get_user(&claims.sub)
-            .ok_or_else(|| crate::core::error::Error::generic("User not found"))?
-            .clone();
-
-        Ok(LoginResponse { token, user })
-    }
 
     /// Index a codebase directory for semantic search
     ///
@@ -213,31 +265,45 @@ impl McpServer {
 
         // Check authentication and permissions
         if let Err(e) = self.check_auth(token.as_ref(), &Permission::IndexCodebase) {
-            return Ok(CallToolResult::success(vec![Content::text(
-                format!("❌ Authentication/Authorization Error: {}", e)
-            )]));
+            return Ok(CallToolResult::success(vec![Content::text(format!(
+                "❌ Authentication/Authorization Error: {}",
+                e
+            ))]));
         }
 
         // Check resource limits for indexing operation
-        if let Err(e) = self.resource_limits.check_operation_allowed("indexing").await {
-            return Ok(CallToolResult::success(vec![Content::text(
-                format!("❌ Resource Limit Error: {}", e)
-            )]));
+        if let Err(e) = self
+            .resource_limits
+            .check_operation_allowed("indexing")
+            .await
+        {
+            return Ok(CallToolResult::success(vec![Content::text(format!(
+                "❌ Resource Limit Error: {}",
+                e
+            ))]));
         }
 
         // Acquire indexing permit
-        let _permit = match self.resource_limits.acquire_operation_permit("indexing").await {
+        let _permit = match self
+            .resource_limits
+            .acquire_operation_permit("indexing")
+            .await
+        {
             Ok(permit) => permit,
-            Err(e) => return Ok(CallToolResult::success(vec![Content::text(
-                format!("❌ Resource Limit Error: {}", e)
-            )])),
+            Err(e) => {
+                return Ok(CallToolResult::success(vec![Content::text(format!(
+                    "❌ Resource Limit Error: {}",
+                    e
+                ))]))
+            }
         };
 
         // Validate input path
         let path = std::path::Path::new(&path);
         if !path.exists() {
             return Ok(CallToolResult::success(vec![Content::text(
-                "❌ Error: Specified path does not exist. Please provide a valid directory path.".to_string()
+                "❌ Error: Specified path does not exist. Please provide a valid directory path."
+                    .to_string(),
             )]));
         }
 
@@ -254,8 +320,9 @@ impl McpServer {
         let indexing_future = self.indexing_service.index_directory(path, collection);
         let result = tokio::time::timeout(
             std::time::Duration::from_secs(300), // 5 minute timeout
-            indexing_future
-        ).await;
+            indexing_future,
+        )
+        .await;
 
         let duration = start_time.elapsed();
 
@@ -277,7 +344,11 @@ impl McpServer {
                     duration.as_secs_f64(),
                     chunk_count as f64 / duration.as_secs_f64()
                 );
-                tracing::info!("Indexing completed successfully: {} chunks in {:?}", chunk_count, duration);
+                tracing::info!(
+                    "Indexing completed successfully: {} chunks in {:?}",
+                    chunk_count,
+                    duration
+                );
                 Ok(CallToolResult::success(vec![Content::text(message)]))
             }
             Ok(Err(e)) => {
@@ -307,7 +378,8 @@ impl McpServer {
                     • Try indexing smaller subdirectories\n\
                     • Check system resources (CPU, memory, disk I/O)\n\
                     • Verify embedding provider connectivity\n\
-                    • Consider using a more powerful machine for large codebases".to_string();
+                    • Consider using a more powerful machine for large codebases"
+                    .to_string();
 
                 tracing::warn!("Indexing timed out for path: {}", path.display());
                 Ok(CallToolResult::success(vec![Content::text(message)]))
@@ -325,7 +397,10 @@ impl McpServer {
     ) -> Result<CallToolResult, McpError> {
         let mut message = format!("🔍 **Semantic Code Search Results**\n\n");
         message.push_str(&format!("**Query:** \"{}\" \n", query));
-        message.push_str(&format!("**Search completed in:** {:.2}s", duration.as_secs_f64()));
+        message.push_str(&format!(
+            "**Search completed in:** {:.2}s",
+            duration.as_secs_f64()
+        ));
         if from_cache {
             message.push_str(" (from cache)");
         }
@@ -338,7 +413,9 @@ impl McpServer {
             message.push_str("• Query terms not present in the codebase\n");
             message.push_str("• Try different keywords or more general terms\n\n");
             message.push_str("**💡 Search Tips:**\n");
-            message.push_str("• Use natural language: \"find error handling\", \"authentication logic\"\n");
+            message.push_str(
+                "• Use natural language: \"find error handling\", \"authentication logic\"\n",
+            );
             message.push_str("• Be specific: \"HTTP request middleware\" > \"middleware\"\n");
             message.push_str("• Include technologies: \"React component state management\"\n");
             message.push_str("• Try synonyms: \"validate\" instead of \"check\"\n");
@@ -356,7 +433,12 @@ impl McpServer {
                 // Add context lines around the match for better understanding
                 let lines: Vec<&str> = result.content.lines().collect();
                 let preview_lines = if lines.len() > 10 {
-                    lines.iter().take(10).cloned().collect::<Vec<_>>().join("\n")
+                    lines
+                        .iter()
+                        .take(10)
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join("\n")
                 } else {
                     result.content.clone()
                 };
@@ -390,8 +472,12 @@ impl McpServer {
             }
 
             // Add pagination hint if we hit the limit
-            if results.len() == 10 { // Assuming default limit
-                message.push_str(&format!("💡 **Showing top {} results.** For more results, try:\n", 10));
+            if results.len() == 10 {
+                // Assuming default limit
+                message.push_str(&format!(
+                    "💡 **Showing top {} results.** For more results, try:\n",
+                    10
+                ));
                 message.push_str("• More specific search terms\n");
                 message.push_str("• Different query formulations\n");
                 message.push_str("• Breaking complex queries into simpler ones\n");
@@ -399,12 +485,19 @@ impl McpServer {
 
             // Performance insights
             if duration.as_millis() > 1000 {
-                message.push_str(&format!("\n⚠️ **Performance Note:** Search took {:.2}s. \
-                    Consider using more specific queries for faster results.\n", duration.as_secs_f64()));
+                message.push_str(&format!(
+                    "\n⚠️ **Performance Note:** Search took {:.2}s. \
+                    Consider using more specific queries for faster results.\n",
+                    duration.as_secs_f64()
+                ));
             }
         }
 
-        tracing::info!("Search completed: found {} results in {:?}", results.len(), duration);
+        tracing::info!(
+            "Search completed: found {} results in {:?}",
+            results.len(),
+            duration
+        );
         Ok(CallToolResult::success(vec![Content::text(message)]))
     }
 
@@ -412,40 +505,56 @@ impl McpServer {
     ///
     /// Performs semantic search across the indexed codebase using vector similarity
     /// and returns the most relevant code snippets with context.
-    #[tool(description = "Search for code using natural language queries with semantic understanding")]
+    #[tool(
+        description = "Search for code using natural language queries with semantic understanding"
+    )]
     async fn search_code(
         &self,
-        Parameters(SearchCodeArgs { query, limit, token }): Parameters<SearchCodeArgs>,
+        Parameters(SearchCodeArgs {
+            query,
+            limit,
+            token,
+        }): Parameters<SearchCodeArgs>,
     ) -> Result<CallToolResult, McpError> {
         let start_time = Instant::now();
 
         // Check authentication and permissions
         if let Err(e) = self.check_auth(token.as_ref(), &Permission::SearchCodebase) {
-            return Ok(CallToolResult::success(vec![Content::text(
-                format!("❌ Authentication/Authorization Error: {}", e)
-            )]));
+            return Ok(CallToolResult::success(vec![Content::text(format!(
+                "❌ Authentication/Authorization Error: {}",
+                e
+            ))]));
         }
 
         // Check resource limits for search operation
         if let Err(e) = self.resource_limits.check_operation_allowed("search").await {
-            return Ok(CallToolResult::success(vec![Content::text(
-                format!("❌ Resource Limit Error: {}", e)
-            )]));
+            return Ok(CallToolResult::success(vec![Content::text(format!(
+                "❌ Resource Limit Error: {}",
+                e
+            ))]));
         }
 
         // Acquire search permit
-        let _permit = match self.resource_limits.acquire_operation_permit("search").await {
+        let _permit = match self
+            .resource_limits
+            .acquire_operation_permit("search")
+            .await
+        {
             Ok(permit) => permit,
-            Err(e) => return Ok(CallToolResult::success(vec![Content::text(
-                format!("❌ Resource Limit Error: {}", e)
-            )])),
+            Err(e) => {
+                return Ok(CallToolResult::success(vec![Content::text(format!(
+                    "❌ Resource Limit Error: {}",
+                    e
+                ))]))
+            }
         };
 
         // Validate query input
         let query = query.trim();
         if query.is_empty() {
             return Ok(CallToolResult::success(vec![Content::text(
-                "❌ Error: Search query cannot be empty. Please provide a natural language query.".to_string()
+                "❌ Error: Search query cannot be empty. Please provide a natural language query."
+                    .to_string(),
             )]));
         }
 
@@ -465,30 +574,56 @@ impl McpServer {
             self.cache_manager.get("search_results", &cache_key).await;
 
         if let crate::core::cache::CacheResult::Hit(cached_data) = cached_result {
-            if let Ok(search_results) = serde_json::from_value::<Vec<crate::core::types::SearchResult>>(cached_data) {
-                tracing::info!("✅ Search cache hit for query: '{}' (limit: {})", query, limit);
-                return self.format_search_response(query, &search_results, start_time.elapsed(), true);
+            if let Ok(search_results) =
+                serde_json::from_value::<Vec<crate::core::types::SearchResult>>(cached_data)
+            {
+                tracing::info!(
+                    "✅ Search cache hit for query: '{}' (limit: {})",
+                    query,
+                    limit
+                );
+                return self.format_search_response(
+                    query,
+                    &search_results,
+                    start_time.elapsed(),
+                    true,
+                );
             }
         }
 
-        tracing::info!("Performing semantic search for query: '{}' (limit: {})", query, limit);
+        tracing::info!(
+            "Performing semantic search for query: '{}' (limit: {})",
+            query,
+            limit
+        );
 
         // Add timeout for search operations
         let search_future = self.search_service.search(collection, query, limit);
         let result = tokio::time::timeout(
             std::time::Duration::from_secs(30), // 30 second timeout
-            search_future
-        ).await;
+            search_future,
+        )
+        .await;
 
         let duration = start_time.elapsed();
 
         match result {
             Ok(Ok(results)) => {
                 // Cache search results
-                let _ = self.cache_manager.set("search_results", &cache_key, serde_json::to_value(&results).unwrap_or_default()).await;
+                let _ = self
+                    .cache_manager
+                    .set(
+                        "search_results",
+                        &cache_key,
+                        serde_json::to_value(&results).unwrap_or_default(),
+                    )
+                    .await;
                 let mut message = format!("🔍 **Semantic Code Search Results**\n\n");
                 message.push_str(&format!("**Query:** \"{}\" \n", query));
-                message.push_str(&format!("**Search completed in:** {:.2}s\n", duration.as_secs_f64()));
+                message.push_str(&format!(
+                    "**Search completed in:** {:.2}s\n",
+                    duration.as_secs_f64()
+                ));
                 message.push_str(&format!("**Results found:** {}\n\n", results.len()));
 
                 if results.is_empty() {
@@ -499,8 +634,10 @@ impl McpServer {
                     message.push_str("• Try different keywords or more general terms\n\n");
                     message.push_str("**💡 Search Tips:**\n");
                     message.push_str("• Use natural language: \"find error handling\", \"authentication logic\"\n");
-                    message.push_str("• Be specific: \"HTTP request middleware\" > \"middleware\"\n");
-                    message.push_str("• Include technologies: \"React component state management\"\n");
+                    message
+                        .push_str("• Be specific: \"HTTP request middleware\" > \"middleware\"\n");
+                    message
+                        .push_str("• Include technologies: \"React component state management\"\n");
                     message.push_str("• Try synonyms: \"validate\" instead of \"check\"\n");
                 } else {
                     message.push_str("📊 **Search Results:**\n\n");
@@ -516,7 +653,12 @@ impl McpServer {
                         // Add context lines around the match for better understanding
                         let lines: Vec<&str> = result.content.lines().collect();
                         let preview_lines = if lines.len() > 10 {
-                            lines.iter().take(10).cloned().collect::<Vec<_>>().join("\n")
+                            lines
+                                .iter()
+                                .take(10)
+                                .cloned()
+                                .collect::<Vec<_>>()
+                                .join("\n")
                         } else {
                             result.content.clone()
                         };
@@ -543,15 +685,20 @@ impl McpServer {
                         if lang_hint.is_empty() {
                             message.push_str(&format!("```\n{}\n```\n", preview_lines));
                         } else {
-                            message.push_str(&format!("``` {}\n{}\n```\n", lang_hint, preview_lines));
+                            message
+                                .push_str(&format!("``` {}\n{}\n```\n", lang_hint, preview_lines));
                         }
 
-                        message.push_str(&format!("🎯 **Relevance Score:** {:.3}\n\n", result.score));
+                        message
+                            .push_str(&format!("🎯 **Relevance Score:** {:.3}\n\n", result.score));
                     }
 
                     // Add pagination hint if we hit the limit
                     if results.len() == limit {
-                        message.push_str(&format!("💡 **Showing top {} results.** For more results, try:\n", limit));
+                        message.push_str(&format!(
+                            "💡 **Showing top {} results.** For more results, try:\n",
+                            limit
+                        ));
                         message.push_str("• More specific search terms\n");
                         message.push_str("• Different query formulations\n");
                         message.push_str("• Breaking complex queries into simpler ones\n");
@@ -559,12 +706,19 @@ impl McpServer {
 
                     // Performance insights
                     if duration.as_millis() > 1000 {
-                        message.push_str(&format!("\n⚠️ **Performance Note:** Search took {:.2}s. \
-                            Consider using more specific queries for faster results.\n", duration.as_secs_f64()));
+                        message.push_str(&format!(
+                            "\n⚠️ **Performance Note:** Search took {:.2}s. \
+                            Consider using more specific queries for faster results.\n",
+                            duration.as_secs_f64()
+                        ));
                     }
                 }
 
-                tracing::info!("Search completed: found {} results in {:?}", results.len(), duration);
+                tracing::info!(
+                    "Search completed: found {} results in {:?}",
+                    results.len(),
+                    duration
+                );
                 Ok(CallToolResult::success(vec![Content::text(message)]))
             }
             Ok(Err(e)) => {
@@ -598,7 +752,8 @@ impl McpServer {
                     • Use more specific search terms\n\
                     • Reduce result limit\n\
                     • Try searching during off-peak hours\n\
-                    • Consider database performance tuning".to_string();
+                    • Consider database performance tuning"
+                    .to_string();
 
                 tracing::warn!("Search timed out for query: '{}'", query);
                 Ok(CallToolResult::success(vec![Content::text(message)]))
@@ -610,7 +765,9 @@ impl McpServer {
     ///
     /// Returns comprehensive information about the current state of indexed collections,
     /// system health, and available search capabilities.
-    #[tool(description = "Get comprehensive information about indexing status, system health, and available collections")]
+    #[tool(
+        description = "Get comprehensive information about indexing status, system health, and available collections"
+    )]
     async fn get_indexing_status(
         &self,
         Parameters(GetIndexingStatusArgs { collection }): Parameters<GetIndexingStatusArgs>,
@@ -622,8 +779,15 @@ impl McpServer {
         // System information
         message.push_str(&format!("🖥️ **System Information**\n"));
         message.push_str(&format!("• Version: {}\n", env!("CARGO_PKG_VERSION")));
-        message.push_str(&format!("• Platform: {} {}\n", std::env::consts::OS, std::env::consts::ARCH));
-        message.push_str(&format!("• Timestamp: {}\n\n", chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")));
+        message.push_str(&format!(
+            "• Platform: {} {}\n",
+            std::env::consts::OS,
+            std::env::consts::ARCH
+        ));
+        message.push_str(&format!(
+            "• Timestamp: {}\n\n",
+            chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+        ));
 
         // Collection status
         message.push_str(&format!("🗂️ **Collection Status**\n"));
@@ -671,7 +835,10 @@ impl McpServer {
         message.push_str("• Multi-Language Support: 8+ programming languages\n");
         message.push_str("• Vector Embeddings: Semantic understanding with high accuracy\n");
 
-        tracing::info!("Indexing status check completed for collection: {}", collection);
+        tracing::info!(
+            "Indexing status check completed for collection: {}",
+            collection
+        );
         Ok(CallToolResult::success(vec![Content::text(message)]))
     }
 
@@ -680,7 +847,9 @@ impl McpServer {
     /// Removes all indexed data for the specified collection.
     /// This operation is destructive and requires re-indexing afterwards.
     /// Use with caution in production environments.
-    #[tool(description = "Clear all indexed data for a collection (destructive operation - requires re-indexing)")]
+    #[tool(
+        description = "Clear all indexed data for a collection (destructive operation - requires re-indexing)"
+    )]
     async fn clear_index(
         &self,
         Parameters(ClearIndexArgs { collection }): Parameters<ClearIndexArgs>,
@@ -695,7 +864,8 @@ impl McpServer {
         // Prevent clearing critical collections accidentally
         if collection == "system" || collection == "admin" {
             return Ok(CallToolResult::success(vec![Content::text(
-                "❌ Error: Cannot clear system collections. These are reserved for internal use.".to_string()
+                "❌ Error: Cannot clear system collections. These are reserved for internal use."
+                    .to_string(),
             )]));
         }
 
@@ -705,7 +875,10 @@ impl McpServer {
 
         // Warning and confirmation
         message.push_str(&format!("⚠️ **WARNING: Destructive Operation**\n\n"));
-        message.push_str(&format!("You are about to clear collection: **`{}`**\n\n", collection));
+        message.push_str(&format!(
+            "You are about to clear collection: **`{}`**\n\n",
+            collection
+        ));
 
         message.push_str("**Consequences:**\n");
         message.push_str("• All indexed code chunks will be permanently removed\n");
@@ -732,7 +905,9 @@ impl McpServer {
         message.push_str("• 📝 Logging: Operation logged for audit trail\n\n");
 
         message.push_str("**Next Steps:**\n");
-        message.push_str("1. **Confirm Operation**: This is a simulation - no actual data was removed\n");
+        message.push_str(
+            "1. **Confirm Operation**: This is a simulation - no actual data was removed\n",
+        );
         message.push_str("2. **Re-index**: Run `index_codebase` to restore functionality\n");
         message.push_str("3. **Verify**: Use `get_indexing_status` to confirm system state\n\n");
 
@@ -741,7 +916,10 @@ impl McpServer {
         message.push_str("• SOC 2 compliance requires approval for destructive operations\n");
         message.push_str("• Consider backup strategies before production use\n");
 
-        tracing::info!("Index clearing operation completed (simulation) for collection: {}", collection);
+        tracing::info!(
+            "Index clearing operation completed (simulation) for collection: {}",
+            collection
+        );
         Ok(CallToolResult::success(vec![Content::text(message)]))
     }
 }
@@ -844,7 +1022,7 @@ fn init_tracing() -> Result<(), Box<dyn std::error::Error>> {
             EnvFilter::from_default_env()
                 .add_directive(tracing::Level::INFO.into())
                 .add_directive("mcp_context_browser=debug".parse()?)
-                .add_directive("rmcp=info".parse()?)
+                .add_directive("rmcp=info".parse()?),
         )
         .with_writer(std::io::stderr)
         .with_ansi(false) // Disable ANSI colors for better log parsing
@@ -877,17 +1055,26 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing first for proper error reporting
     init_tracing()?;
 
-    tracing::info!("🚀 Starting MCP Context Browser v{}", env!("CARGO_PKG_VERSION"));
-    tracing::info!("📋 System Info: {} {}", std::env::consts::OS, std::env::consts::ARCH);
+    tracing::info!(
+        "🚀 Starting MCP Context Browser v{}",
+        env!("CARGO_PKG_VERSION")
+    );
+    tracing::info!(
+        "📋 System Info: {} {}",
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    );
 
     // Load configuration
-    let config = crate::config::Config::from_env()
-        .expect("Failed to load configuration");
+    let config = crate::config::Config::from_env().expect("Failed to load configuration");
 
     // Initialize global HTTP client pool
     tracing::info!("🌐 Initializing HTTP client pool...");
     if let Err(e) = init_global_http_client(HttpClientConfig::default()) {
-        tracing::warn!("⚠️  Failed to initialize HTTP client pool: {}. Using default clients.", e);
+        tracing::warn!(
+            "⚠️  Failed to initialize HTTP client pool: {}. Using default clients.",
+            e
+        );
     } else {
         tracing::info!("✅ HTTP client pool initialized successfully");
     }
@@ -911,7 +1098,10 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("🔒 Initializing rate limiter...");
         let limiter = Arc::new(RateLimiter::new(config.metrics.rate_limiting.clone()));
         if let Err(e) = limiter.init().await {
-            tracing::warn!("⚠️  Failed to initialize Redis rate limiter: {}. Running without rate limiting.", e);
+            tracing::warn!(
+                "⚠️  Failed to initialize Redis rate limiter: {}. Running without rate limiting.",
+                e
+            );
             None
         } else {
             tracing::info!("✅ Rate limiter initialized successfully");
@@ -931,7 +1121,10 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
                 Some(Arc::new(manager))
             }
             Err(e) => {
-                tracing::warn!("⚠️  Failed to initialize cache manager: {}. Running without caching.", e);
+                tracing::warn!(
+                    "⚠️  Failed to initialize cache manager: {}. Running without caching.",
+                    e
+                );
                 None
             }
         }
@@ -955,7 +1148,8 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
 
     // Log server capabilities
     let capabilities = server.get_info().capabilities;
-    tracing::info!("🔧 Server capabilities: tools={}, prompts={}, resources={}",
+    tracing::info!(
+        "🔧 Server capabilities: tools={}, prompts={}, resources={}",
         capabilities.tools.is_some(),
         capabilities.prompts.is_some(),
         capabilities.resources.is_some()
@@ -963,7 +1157,10 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
 
     // Start HTTP metrics server if enabled
     let metrics_handle = if config.metrics.enabled {
-        tracing::info!("📊 Starting metrics HTTP server on port {}", config.metrics.port);
+        tracing::info!(
+            "📊 Starting metrics HTTP server on port {}",
+            config.metrics.port
+        );
         let metrics_server = MetricsApiServer::with_limits(
             config.metrics.port,
             rate_limiter.clone(),

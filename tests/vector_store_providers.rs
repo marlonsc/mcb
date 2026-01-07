@@ -18,7 +18,9 @@ mod test_utils {
         // This ensures search finds the expected results
         let base_value = id as f32 * 0.5;
         Embedding {
-            vector: (0..dimensions).map(|i| base_value + (i as f32) * 0.01).collect(),
+            vector: (0..dimensions)
+                .map(|i| base_value + (i as f32) * 0.01)
+                .collect(),
             model: "test-model".to_string(),
             dimensions,
         }
@@ -27,16 +29,25 @@ mod test_utils {
     pub fn create_test_metadata(id: usize) -> HashMap<String, serde_json::Value> {
         let mut metadata = HashMap::new();
         metadata.insert("id".to_string(), serde_json::json!(id.to_string()));
-        metadata.insert("file_path".to_string(), serde_json::json!(format!("test/file_{}.rs", id)));
+        metadata.insert(
+            "file_path".to_string(),
+            serde_json::json!(format!("test/file_{}.rs", id)),
+        );
         metadata.insert("line_number".to_string(), serde_json::json!(id * 10));
-        metadata.insert("content".to_string(), serde_json::json!(format!("Test content for item {}", id)));
+        metadata.insert(
+            "content".to_string(),
+            serde_json::json!(format!("Test content for item {}", id)),
+        );
         metadata
     }
 
     pub fn assert_search_result(result: &SearchResult, expected_id: usize, _collection: &str) {
         assert_eq!(result.file_path, format!("test/file_{}.rs", expected_id));
         assert_eq!(result.line_number, (expected_id * 10) as u32);
-        assert_eq!(result.content, format!("Test content for item {}", expected_id));
+        assert_eq!(
+            result.content,
+            format!("Test content for item {}", expected_id)
+        );
         assert!(result.score >= 0.0 && result.score <= 1.0);
         // Check that metadata contains the expected fields
         assert_eq!(result.metadata["id"], expected_id.to_string());
@@ -83,7 +94,10 @@ mod in_memory_provider_tests {
         let dimensions = 128;
 
         // Create collection
-        provider.create_collection(collection, dimensions).await.unwrap();
+        provider
+            .create_collection(collection, dimensions)
+            .await
+            .unwrap();
 
         // Create test data
         let embeddings = vec![
@@ -92,19 +106,24 @@ mod in_memory_provider_tests {
             test_utils::create_test_embedding(3, dimensions),
         ];
 
-        let metadata: Vec<HashMap<String, serde_json::Value>> = (1..=3)
-            .map(test_utils::create_test_metadata)
-            .collect();
+        let metadata: Vec<HashMap<String, serde_json::Value>> =
+            (1..=3).map(test_utils::create_test_metadata).collect();
 
         // Insert vectors
-        let ids = provider.insert_vectors(collection, &embeddings, metadata).await.unwrap();
+        let ids = provider
+            .insert_vectors(collection, &embeddings, metadata)
+            .await
+            .unwrap();
         assert_eq!(ids.len(), 3);
         // IDs should be unique and follow collection naming pattern
         assert!(ids.iter().all(|id| id.starts_with("test_search_")));
 
         // Search for similar vectors
         let query_vector = test_utils::create_test_embedding(1, dimensions).vector;
-        let results = provider.search_similar(collection, &query_vector, 5, None).await.unwrap();
+        let results = provider
+            .search_similar(collection, &query_vector, 5, None)
+            .await
+            .unwrap();
 
         // Should find at least the exact match
         assert!(!results.is_empty());
@@ -119,10 +138,16 @@ mod in_memory_provider_tests {
         let dimensions = 128;
 
         // Setup
-        provider.create_collection(collection, dimensions).await.unwrap();
+        provider
+            .create_collection(collection, dimensions)
+            .await
+            .unwrap();
         let embedding = test_utils::create_test_embedding(1, dimensions);
         let metadata = test_utils::create_test_metadata(1);
-        let ids = provider.insert_vectors(collection, &[embedding], vec![metadata]).await.unwrap();
+        let ids = provider
+            .insert_vectors(collection, &[embedding], vec![metadata])
+            .await
+            .unwrap();
 
         // Delete vectors
         let delete_result = provider.delete_vectors(collection, &ids).await;
@@ -130,7 +155,10 @@ mod in_memory_provider_tests {
 
         // Verify deletion by searching
         let query_vector = test_utils::create_test_embedding(1, dimensions).vector;
-        let results = provider.search_similar(collection, &query_vector, 5, None).await.unwrap();
+        let results = provider
+            .search_similar(collection, &query_vector, 5, None)
+            .await
+            .unwrap();
         assert!(results.is_empty());
     }
 
@@ -141,7 +169,10 @@ mod in_memory_provider_tests {
         let dimensions = 128;
 
         // Create collection
-        provider.create_collection(collection, dimensions).await.unwrap();
+        provider
+            .create_collection(collection, dimensions)
+            .await
+            .unwrap();
 
         // Check stats for empty collection
         let stats = provider.get_stats(collection).await.unwrap();
@@ -153,7 +184,10 @@ mod in_memory_provider_tests {
         // Add some data
         let embedding = test_utils::create_test_embedding(1, dimensions);
         let metadata = test_utils::create_test_metadata(1);
-        provider.insert_vectors(collection, &[embedding], vec![metadata]).await.unwrap();
+        provider
+            .insert_vectors(collection, &[embedding], vec![metadata])
+            .await
+            .unwrap();
 
         // Check stats again
         let stats = provider.get_stats(collection).await.unwrap();
@@ -168,7 +202,10 @@ mod in_memory_provider_tests {
         // Create multiple collections
         let collections = vec!["collection_1", "collection_2", "collection_3"];
         for collection in &collections {
-            provider.create_collection(collection, dimensions).await.unwrap();
+            provider
+                .create_collection(collection, dimensions)
+                .await
+                .unwrap();
         }
 
         // Verify all collections exist
@@ -180,7 +217,10 @@ mod in_memory_provider_tests {
         for (i, collection) in collections.iter().enumerate() {
             let embedding = test_utils::create_test_embedding(i + 1, dimensions);
             let metadata = test_utils::create_test_metadata(i + 1);
-            let ids = provider.insert_vectors(collection, &[embedding], vec![metadata]).await.unwrap();
+            let ids = provider
+                .insert_vectors(collection, &[embedding], vec![metadata])
+                .await
+                .unwrap();
             assert_eq!(ids.len(), 1);
         }
 
@@ -190,7 +230,10 @@ mod in_memory_provider_tests {
             assert_eq!(stats["vectors_count"], 1);
 
             let query_vector = test_utils::create_test_embedding(i + 1, dimensions).vector;
-            let results = provider.search_similar(collection, &query_vector, 5, None).await.unwrap();
+            let results = provider
+                .search_similar(collection, &query_vector, 5, None)
+                .await
+                .unwrap();
             assert_eq!(results.len(), 1);
             test_utils::assert_search_result(&results[0], i + 1, collection);
         }
@@ -202,24 +245,42 @@ mod in_memory_provider_tests {
         let collection = "test_limit";
         let dimensions = 128;
 
-        provider.create_collection(collection, dimensions).await.unwrap();
+        provider
+            .create_collection(collection, dimensions)
+            .await
+            .unwrap();
 
         // Add multiple vectors
-        let embeddings: Vec<Embedding> = (1..=10).map(|i| test_utils::create_test_embedding(i, dimensions)).collect();
-        let metadata: Vec<HashMap<String, serde_json::Value>> = (1..=10).map(test_utils::create_test_metadata).collect();
+        let embeddings: Vec<Embedding> = (1..=10)
+            .map(|i| test_utils::create_test_embedding(i, dimensions))
+            .collect();
+        let metadata: Vec<HashMap<String, serde_json::Value>> =
+            (1..=10).map(test_utils::create_test_metadata).collect();
 
-        provider.insert_vectors(collection, &embeddings, metadata).await.unwrap();
+        provider
+            .insert_vectors(collection, &embeddings, metadata)
+            .await
+            .unwrap();
 
         // Search with different limits
         let query_vector = test_utils::create_test_embedding(1, dimensions).vector;
 
-        let results_1 = provider.search_similar(collection, &query_vector, 1, None).await.unwrap();
+        let results_1 = provider
+            .search_similar(collection, &query_vector, 1, None)
+            .await
+            .unwrap();
         assert_eq!(results_1.len(), 1);
 
-        let results_3 = provider.search_similar(collection, &query_vector, 3, None).await.unwrap();
+        let results_3 = provider
+            .search_similar(collection, &query_vector, 3, None)
+            .await
+            .unwrap();
         assert_eq!(results_3.len(), 3);
 
-        let results_10 = provider.search_similar(collection, &query_vector, 10, None).await.unwrap();
+        let results_10 = provider
+            .search_similar(collection, &query_vector, 10, None)
+            .await
+            .unwrap();
         assert_eq!(results_10.len(), 10);
     }
 
@@ -229,11 +290,17 @@ mod in_memory_provider_tests {
         let collection = "test_empty";
         let dimensions = 128;
 
-        provider.create_collection(collection, dimensions).await.unwrap();
+        provider
+            .create_collection(collection, dimensions)
+            .await
+            .unwrap();
 
         // Search in empty collection
         let query_vector = test_utils::create_test_embedding(1, dimensions).vector;
-        let results = provider.search_similar(collection, &query_vector, 5, None).await.unwrap();
+        let results = provider
+            .search_similar(collection, &query_vector, 5, None)
+            .await
+            .unwrap();
         assert!(results.is_empty());
     }
 }
@@ -256,7 +323,10 @@ mod null_provider_tests {
         let dimensions = 128;
 
         // All operations should succeed but do nothing
-        assert!(provider.create_collection(collection, dimensions).await.is_ok());
+        assert!(provider
+            .create_collection(collection, dimensions)
+            .await
+            .is_ok());
         assert!(provider.collection_exists(collection).await.is_ok());
         assert!(provider.delete_collection(collection).await.is_ok());
     }
@@ -269,17 +339,23 @@ mod null_provider_tests {
         let metadata = test_utils::create_test_metadata(1);
 
         // All operations should succeed but return empty/default results
-        let insert_result = provider.insert_vectors(collection, &[embedding], vec![metadata]).await;
+        let insert_result = provider
+            .insert_vectors(collection, &[embedding], vec![metadata])
+            .await;
         assert!(insert_result.is_ok());
         let ids = insert_result.unwrap();
         assert_eq!(ids.len(), 1); // Should return one ID per vector
         assert_eq!(ids[0], ""); // Null provider returns empty string IDs
 
-        let search_result = provider.search_similar(collection, &vec![0.1; 128], 5, None).await;
+        let search_result = provider
+            .search_similar(collection, &vec![0.1; 128], 5, None)
+            .await;
         assert!(search_result.is_ok());
         assert!(search_result.unwrap().is_empty()); // Null provider returns empty results
 
-        let delete_result = provider.delete_vectors(collection, &["test_id".to_string()]).await;
+        let delete_result = provider
+            .delete_vectors(collection, &["test_id".to_string()])
+            .await;
         assert!(delete_result.is_ok()); // Should succeed doing nothing
     }
 
@@ -338,7 +414,9 @@ mod milvus_provider_tests {
             return;
         }
 
-        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None).await.unwrap();
+        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None)
+            .await
+            .unwrap();
         let collection = "test_milvus_basic";
         let dimensions = 128;
 
@@ -347,7 +425,11 @@ mod milvus_provider_tests {
 
         // Test collection creation
         let result = provider.create_collection(collection, dimensions).await;
-        assert!(result.is_ok(), "Failed to create collection: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "Failed to create collection: {:?}",
+            result.err()
+        );
 
         // Test collection existence
         let exists = provider.collection_exists(collection).await.unwrap();
@@ -370,7 +452,9 @@ mod milvus_provider_tests {
             return;
         }
 
-        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None).await.unwrap();
+        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None)
+            .await
+            .unwrap();
         let collection = "test_milvus_vectors";
         let dimensions = 128;
 
@@ -378,7 +462,10 @@ mod milvus_provider_tests {
         let _ = provider.delete_collection(collection).await;
 
         // Create collection
-        provider.create_collection(collection, dimensions).await.unwrap();
+        provider
+            .create_collection(collection, dimensions)
+            .await
+            .unwrap();
 
         // Create test data
         let embeddings = vec![
@@ -387,12 +474,14 @@ mod milvus_provider_tests {
             test_utils::create_test_embedding(3, dimensions),
         ];
 
-        let metadata: Vec<HashMap<String, serde_json::Value>> = (1..=3)
-            .map(test_utils::create_test_metadata)
-            .collect();
+        let metadata: Vec<HashMap<String, serde_json::Value>> =
+            (1..=3).map(test_utils::create_test_metadata).collect();
 
         // Insert vectors
-        let ids = provider.insert_vectors(collection, &embeddings, metadata).await.unwrap();
+        let ids = provider
+            .insert_vectors(collection, &embeddings, metadata)
+            .await
+            .unwrap();
         assert_eq!(ids.len(), 3, "Should return 3 IDs");
 
         // Wait a bit for indexing
@@ -403,15 +492,24 @@ mod milvus_provider_tests {
 
         // Search for similar vectors
         let query_vector = test_utils::create_test_embedding(1, dimensions).vector;
-        let results = provider.search_similar(collection, &query_vector, 5, None).await.unwrap();
+        let results = provider
+            .search_similar(collection, &query_vector, 5, None)
+            .await
+            .unwrap();
 
         // Should find results
         assert!(!results.is_empty(), "Should find at least one result");
-        assert!(results.len() <= 5, "Should not return more than requested limit");
+        assert!(
+            results.len() <= 5,
+            "Should not return more than requested limit"
+        );
 
         // The best match should be reasonably close to the query
         let best_match = &results[0];
-        assert!(best_match.score > 0.0, "Best match should have positive score");
+        assert!(
+            best_match.score > 0.0,
+            "Best match should have positive score"
+        );
 
         // Test deletion
         let delete_result = provider.delete_vectors(collection, &ids).await;
@@ -428,31 +526,51 @@ mod milvus_provider_tests {
             return;
         }
 
-        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None).await.unwrap();
+        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None)
+            .await
+            .unwrap();
         let collection = "test_milvus_limits";
         let dimensions = 128;
 
         // Clean up and setup
         let _ = provider.delete_collection(collection).await;
-        provider.create_collection(collection, dimensions).await.unwrap();
+        provider
+            .create_collection(collection, dimensions)
+            .await
+            .unwrap();
 
         // Add multiple vectors
-        let embeddings: Vec<Embedding> = (1..=10).map(|i| test_utils::create_test_embedding(i, dimensions)).collect();
-        let metadata: Vec<HashMap<String, serde_json::Value>> = (1..=10).map(test_utils::create_test_metadata).collect();
+        let embeddings: Vec<Embedding> = (1..=10)
+            .map(|i| test_utils::create_test_embedding(i, dimensions))
+            .collect();
+        let metadata: Vec<HashMap<String, serde_json::Value>> =
+            (1..=10).map(test_utils::create_test_metadata).collect();
 
-        provider.insert_vectors(collection, &embeddings, metadata).await.unwrap();
+        provider
+            .insert_vectors(collection, &embeddings, metadata)
+            .await
+            .unwrap();
         provider.flush(collection).await.unwrap();
 
         // Test different search limits
         let query_vector = test_utils::create_test_embedding(1, dimensions).vector;
 
-        let results_1 = provider.search_similar(collection, &query_vector, 1, None).await.unwrap();
+        let results_1 = provider
+            .search_similar(collection, &query_vector, 1, None)
+            .await
+            .unwrap();
         assert_eq!(results_1.len(), 1);
 
-        let results_3 = provider.search_similar(collection, &query_vector, 3, None).await.unwrap();
+        let results_3 = provider
+            .search_similar(collection, &query_vector, 3, None)
+            .await
+            .unwrap();
         assert_eq!(results_3.len(), 3);
 
-        let results_10 = provider.search_similar(collection, &query_vector, 10, None).await.unwrap();
+        let results_10 = provider
+            .search_similar(collection, &query_vector, 10, None)
+            .await
+            .unwrap();
         assert_eq!(results_10.len(), 10);
 
         // Clean up
@@ -466,7 +584,9 @@ mod milvus_provider_tests {
             return;
         }
 
-        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None).await.unwrap();
+        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None)
+            .await
+            .unwrap();
         let collection = "test_milvus_empty";
 
         // Clean up and setup
@@ -475,8 +595,14 @@ mod milvus_provider_tests {
 
         // Search in empty collection
         let query_vector = vec![0.1; 128];
-        let results = provider.search_similar(collection, &query_vector, 5, None).await.unwrap();
-        assert!(results.is_empty(), "Empty collection should return no results");
+        let results = provider
+            .search_similar(collection, &query_vector, 5, None)
+            .await
+            .unwrap();
+        assert!(
+            results.is_empty(),
+            "Empty collection should return no results"
+        );
 
         // Clean up
         let _ = provider.delete_collection(collection).await;
@@ -489,7 +615,9 @@ mod milvus_provider_tests {
             return;
         }
 
-        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None).await.unwrap();
+        let provider = MilvusVectorStoreProvider::new("http://localhost:19531".to_string(), None)
+            .await
+            .unwrap();
         let collections = vec!["test_milvus_multi_1", "test_milvus_multi_2"];
         let dimensions = 128;
 
@@ -500,7 +628,10 @@ mod milvus_provider_tests {
 
         // Create multiple collections
         for collection in &collections {
-            provider.create_collection(collection, dimensions).await.unwrap();
+            provider
+                .create_collection(collection, dimensions)
+                .await
+                .unwrap();
             assert!(provider.collection_exists(collection).await.unwrap());
         }
 
@@ -508,7 +639,10 @@ mod milvus_provider_tests {
         for (i, collection) in collections.iter().enumerate() {
             let embedding = test_utils::create_test_embedding(i + 1, dimensions);
             let metadata = test_utils::create_test_metadata(i + 1);
-            let ids = provider.insert_vectors(collection, &[embedding], vec![metadata]).await.unwrap();
+            let ids = provider
+                .insert_vectors(collection, &[embedding], vec![metadata])
+                .await
+                .unwrap();
             assert_eq!(ids.len(), 1);
 
             provider.flush(collection).await.unwrap();
@@ -517,7 +651,10 @@ mod milvus_provider_tests {
         // Verify data isolation
         for (i, collection) in collections.iter().enumerate() {
             let query_vector = test_utils::create_test_embedding(i + 1, dimensions).vector;
-            let results = provider.search_similar(collection, &query_vector, 5, None).await.unwrap();
+            let results = provider
+                .search_similar(collection, &query_vector, 5, None)
+                .await
+                .unwrap();
             assert!(!results.is_empty(), "Each collection should have its data");
 
             // Verify the result belongs to the correct collection
@@ -551,10 +688,14 @@ mod common_provider_tests {
         // Test with empty data
         let empty_embeddings: Vec<Embedding> = vec![];
         let empty_metadata: Vec<HashMap<String, serde_json::Value>> = vec![];
-        let _ = provider.insert_vectors(collection, &empty_embeddings, empty_metadata).await;
+        let _ = provider
+            .insert_vectors(collection, &empty_embeddings, empty_metadata)
+            .await;
 
         let query_vector = vec![0.0; dimensions];
-        let _ = provider.search_similar(collection, &query_vector, 1, None).await;
+        let _ = provider
+            .search_similar(collection, &query_vector, 1, None)
+            .await;
 
         let empty_ids: Vec<String> = vec![];
         let _ = provider.delete_vectors(collection, &empty_ids).await;
@@ -562,7 +703,8 @@ mod common_provider_tests {
 
     #[tokio::test]
     async fn test_in_memory_provider_compliance() {
-        let provider = mcp_context_browser::providers::vector_store::InMemoryVectorStoreProvider::new();
+        let provider =
+            mcp_context_browser::providers::vector_store::InMemoryVectorStoreProvider::new();
         test_provider_interface_compliance(provider).await;
     }
 

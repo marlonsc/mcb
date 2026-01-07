@@ -4,8 +4,8 @@
 //! following SOLID principles with proper separation of concerns.
 
 use crate::core::error::{Error, Result};
+use crate::di::registry::ProviderRegistry;
 use crate::providers::routing::health::HealthMonitor;
-use crate::registry::ProviderRegistry;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
@@ -50,6 +50,7 @@ impl Default for FailoverContext {
 }
 
 /// Priority-based failover strategy
+#[derive(Default)]
 pub struct PriorityBasedStrategy {
     /// Provider priorities (lower number = higher priority)
     priorities: HashMap<String, u32>,
@@ -58,9 +59,7 @@ pub struct PriorityBasedStrategy {
 impl PriorityBasedStrategy {
     /// Create a new priority-based strategy
     pub fn new() -> Self {
-        Self {
-            priorities: HashMap::new(),
-        }
+        Self::default()
     }
 
     /// Set priority for a provider (lower number = higher priority)
@@ -72,11 +71,11 @@ impl PriorityBasedStrategy {
     fn get_default_priority(&self, provider_id: &str) -> u32 {
         // Default priorities based on provider characteristics
         match provider_id {
-            id if id.contains("ollama") => 1, // Local, fast, free
-            id if id.contains("openai") => 2, // Cloud, reliable
+            id if id.contains("ollama") => 1,    // Local, fast, free
+            id if id.contains("openai") => 2,    // Cloud, reliable
             id if id.contains("anthropic") => 3, // Cloud, good quality
-            id if id.contains("gemini") => 4, // Cloud, good balance
-            _ => 100, // Default priority
+            id if id.contains("gemini") => 4,    // Cloud, good balance
+            _ => 100,                            // Default priority
         }
     }
 }
@@ -96,7 +95,8 @@ impl FailoverStrategy for PriorityBasedStrategy {
                 continue;
             }
 
-            let priority = self.priorities
+            let priority = self
+                .priorities
                 .get(candidate)
                 .copied()
                 .unwrap_or_else(|| self.get_default_priority(candidate));
@@ -112,8 +112,10 @@ impl FailoverStrategy for PriorityBasedStrategy {
         scored_providers.sort_by_key(|(_, priority)| *priority);
 
         let selected = scored_providers[0].0.clone();
-        debug!("Selected provider by priority: {} (priority: {})",
-               selected, scored_providers[0].1);
+        debug!(
+            "Selected provider by priority: {} (priority: {})",
+            selected, scored_providers[0].1
+        );
 
         Ok(selected)
     }
@@ -203,7 +205,10 @@ impl FailoverManager {
     }
 
     /// Create a new failover manager with custom strategy
-    pub fn with_strategy(health_monitor: Arc<HealthMonitor>, strategy: Box<dyn FailoverStrategy>) -> Self {
+    pub fn with_strategy(
+        health_monitor: Arc<HealthMonitor>,
+        strategy: Box<dyn FailoverStrategy>,
+    ) -> Self {
         Self {
             health_monitor,
             strategy,
@@ -212,12 +217,18 @@ impl FailoverManager {
     }
 
     /// Select the best available provider
-    pub async fn select_provider(&self, candidates: &[String], context: &FailoverContext) -> Result<String> {
+    pub async fn select_provider(
+        &self,
+        candidates: &[String],
+        context: &FailoverContext,
+    ) -> Result<String> {
         if candidates.is_empty() {
             return Err(Error::not_found("No provider candidates available"));
         }
 
-        self.strategy.select_provider(candidates, &self.health_monitor, context).await
+        self.strategy
+            .select_provider(candidates, &self.health_monitor, context)
+            .await
     }
 
     /// Execute operation with automatic failover
@@ -239,12 +250,18 @@ impl FailoverManager {
         while attempts < self.max_attempts {
             let mut failover_context = context.clone();
             failover_context.current_attempt = attempts;
-            failover_context.excluded_providers.extend(tried_providers.clone());
+            failover_context
+                .excluded_providers
+                .extend(tried_providers.clone());
 
             let provider = match self.select_provider(candidates, &failover_context).await {
                 Ok(provider) => provider,
                 Err(e) => {
-                    warn!("Failed to select provider on attempt {}: {}", attempts + 1, e);
+                    warn!(
+                        "Failed to select provider on attempt {}: {}",
+                        attempts + 1,
+                        e
+                    );
                     attempts += 1;
                     last_error = Some(e);
                     continue;
@@ -253,12 +270,20 @@ impl FailoverManager {
 
             tried_providers.push(provider.clone());
 
-            debug!("Attempting operation with provider: {} (attempt {})", provider, attempts + 1);
+            debug!(
+                "Attempting operation with provider: {} (attempt {})",
+                provider,
+                attempts + 1
+            );
 
             match operation(provider.clone()).await {
                 Ok(result) => {
                     if attempts > 0 {
-                        info!("Operation succeeded with provider {} after {} attempts", provider, attempts + 1);
+                        info!(
+                            "Operation succeeded with provider {} after {} attempts",
+                            provider,
+                            attempts + 1
+                        );
                     }
                     return Ok(result);
                 }
@@ -269,7 +294,10 @@ impl FailoverManager {
 
                     // Mark provider as potentially unhealthy
                     if let Err(health_err) = self.health_monitor.check_provider(&provider).await {
-                        debug!("Failed to update health status for {}: {}", provider, health_err);
+                        debug!(
+                            "Failed to update health status for {}: {}",
+                            provider, health_err
+                        );
                     }
                 }
             }
@@ -279,7 +307,11 @@ impl FailoverManager {
     }
 
     /// Get failover candidates excluding unhealthy providers
-    pub async fn get_failover_candidates(&self, all_providers: &[String], exclude: &[String]) -> Vec<String> {
+    pub async fn get_failover_candidates(
+        &self,
+        all_providers: &[String],
+        exclude: &[String],
+    ) -> Vec<String> {
         let mut candidates = Vec::new();
 
         for provider in all_providers {
@@ -314,7 +346,10 @@ impl FailoverManager {
         let mut new_strategy = PriorityBasedStrategy::new();
         new_strategy.priorities = priorities;
         self.strategy = Box::new(new_strategy);
-        info!("Provider priorities configured with {} entries", priority_count);
+        info!(
+            "Provider priorities configured with {} entries",
+            priority_count
+        );
     }
 }
 
@@ -334,7 +369,6 @@ impl Default for FailoverManager {
         Self::with_registry(registry)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -410,7 +444,9 @@ mod tests {
 
         let exclude = vec!["unhealthy".to_string()];
 
-        let candidates = manager.get_failover_candidates(&all_providers, &exclude).await;
+        let candidates = manager
+            .get_failover_candidates(&all_providers, &exclude)
+            .await;
         assert_eq!(candidates.len(), 0); // No providers are healthy
     }
 
@@ -429,7 +465,11 @@ mod tests {
         struct MockHealthChecker;
         #[async_trait::async_trait]
         impl ProviderHealthChecker for MockHealthChecker {
-            async fn check_health(&self, provider_id: &str) -> crate::core::error::Result<crate::providers::routing::health::HealthCheckResult> {
+            async fn check_health(
+                &self,
+                provider_id: &str,
+            ) -> crate::core::error::Result<crate::providers::routing::health::HealthCheckResult>
+            {
                 use crate::providers::routing::health::{HealthCheckResult, ProviderHealthStatus};
                 use std::time::Duration;
                 Ok(HealthCheckResult {
@@ -458,17 +498,15 @@ mod tests {
             ..Default::default()
         };
 
-        let result = manager.execute_with_failover(
-            &candidates,
-            &context,
-            |provider| async move {
+        let result = manager
+            .execute_with_failover(&candidates, &context, |provider| async move {
                 if provider == "failing" {
                     Err(Error::generic("Operation failed"))
                 } else {
                     Ok(format!("Success with {}", provider))
                 }
-            }
-        ).await;
+            })
+            .await;
 
         // Debug: print the error if it fails
         if let Err(e) = &result {

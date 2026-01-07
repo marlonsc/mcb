@@ -7,7 +7,7 @@ use axum::extract::ConnectInfo;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use crate::core::rate_limit::{RateLimiter, RateLimitKey};
+use crate::core::rate_limit::{RateLimitKey, RateLimiter};
 
 /// Simple rate limiting check function
 /// This can be used in route handlers directly

@@ -1,21 +1,43 @@
 # =============================================================================
-# CORE DEVELOPMENT - Basic build, test and clean operations
+# CORE - Operações básicas de build, teste e limpeza
 # =============================================================================
 
-.PHONY: build test clean clean-target clean-docs clean-deep
+.PHONY: build test clean run
 
-# Core build operations
+# Build
 build: ## Build project in debug mode
 	cargo build
 
-# Core testing
+build-release: ## Build project in release mode
+	cargo build --release
+
+# Tests
 test: ## Run all tests
 	cargo test
 
 test-quiet: ## Run tests quietly
 	cargo test --quiet
 
-# Core cleaning operations
+test-unit: ## Run only unit tests
+	cargo test --lib
+
+test-integration: ## Run only integration tests
+	cargo test --test '*'
+
+test-security: ## Run security tests
+	cargo test security
+
+test-cache: ## Run cache tests
+	cargo test cache
+
+test-metrics: ## Run metrics tests
+	cargo test metrics
+
+# Run
+run: ## Build and run the project
+	cargo run
+
+# Clean
 clean: ## Clean everything
 	cargo clean
 	rm -rf docs/architecture/diagrams/generated/

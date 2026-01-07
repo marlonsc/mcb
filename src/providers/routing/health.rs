@@ -4,7 +4,7 @@
 //! following SOLID principles with proper separation of concerns.
 
 use crate::core::error::{Error, Result};
-use crate::registry::ProviderRegistry;
+use crate::di::registry::ProviderRegistry;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -49,7 +49,6 @@ pub trait ProviderHealthChecker: Send + Sync {
     async fn check_health(&self, provider_id: &str) -> Result<HealthCheckResult>;
 }
 
-
 /// Real provider health checker that performs actual health checks
 pub struct RealProviderHealthChecker {
     registry: Arc<ProviderRegistry>,
@@ -81,7 +80,9 @@ impl RealProviderHealthChecker {
                 match tokio::time::timeout(self.timeout, async {
                     provider.dimensions();
                     Ok::<(), Error>(())
-                }).await {
+                })
+                .await
+                {
                     Ok(Ok(_)) => {
                         let response_time = start_time.elapsed();
                         Ok(HealthCheckResult {
@@ -133,7 +134,9 @@ impl RealProviderHealthChecker {
                 // This verifies the provider can connect and respond
                 match tokio::time::timeout(self.timeout, async {
                     provider.collection_exists("__health_check__").await
-                }).await {
+                })
+                .await
+                {
                     Ok(Ok(_)) => {
                         let response_time = start_time.elapsed();
                         Ok(HealthCheckResult {
@@ -147,9 +150,10 @@ impl RealProviderHealthChecker {
                         // Try alternative check - some providers might not have stats
                         // Fallback to a simple connectivity check
                         let response_time = start_time.elapsed();
-                        if e.to_string().contains("collection not found") ||
-                           e.to_string().contains("Collection not found") ||
-                           e.to_string().contains("does not exist") {
+                        if e.to_string().contains("collection not found")
+                            || e.to_string().contains("Collection not found")
+                            || e.to_string().contains("does not exist")
+                        {
                             // This is expected for test collection, provider is healthy
                             Ok(HealthCheckResult {
                                 provider_id: provider_id.to_string(),
@@ -234,7 +238,10 @@ impl HealthMonitor {
 
     /// Create a new health monitor with registry and custom timeout
     pub fn with_registry_and_timeout(registry: Arc<ProviderRegistry>, timeout: Duration) -> Self {
-        let checker = Arc::new(RealProviderHealthChecker::with_timeout(Arc::clone(&registry), timeout));
+        let checker = Arc::new(RealProviderHealthChecker::with_timeout(
+            Arc::clone(&registry),
+            timeout,
+        ));
         Self {
             health_data: Arc::new(RwLock::new(HashMap::new())),
             checker,
@@ -273,16 +280,16 @@ impl HealthMonitor {
         let check_result = self.checker.check_health(provider_id).await?;
 
         let mut health_data = self.health_data.write().await;
-        let health = health_data.entry(provider_id.to_string()).or_insert_with(|| {
-            ProviderHealth {
+        let health = health_data
+            .entry(provider_id.to_string())
+            .or_insert_with(|| ProviderHealth {
                 provider_id: provider_id.to_string(),
                 status: ProviderHealthStatus::Unknown,
                 last_check: Instant::now(),
                 consecutive_failures: 0,
                 total_checks: 0,
                 response_time: None,
-            }
-        });
+            });
 
         health.total_checks += 1;
         health.last_check = Instant::now();
@@ -297,10 +304,13 @@ impl HealthMonitor {
             ProviderHealthStatus::Unhealthy => {
                 health.consecutive_failures += 1;
                 // For unregistered providers or critical failures, mark unhealthy immediately
-                if check_result.error_message.as_ref()
+                if check_result
+                    .error_message
+                    .as_ref()
                     .map(|msg| msg.contains("Provider not registered"))
-                    .unwrap_or(false) ||
-                   health.consecutive_failures >= self.failure_threshold {
+                    .unwrap_or(false)
+                    || health.consecutive_failures >= self.failure_threshold
+                {
                     health.status = ProviderHealthStatus::Unhealthy;
                     warn!(
                         "Provider {} marked unhealthy after {} failures",
@@ -363,7 +373,7 @@ impl Default for HealthMonitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::registry::ProviderRegistry;
+    use crate::di::registry::ProviderRegistry;
 
     #[tokio::test]
     async fn test_health_monitor_creation() {
@@ -405,10 +415,7 @@ mod tests {
         let monitor = HealthMonitor::new(Arc::clone(&registry));
 
         // Test with empty registry
-        let providers = vec![
-            "provider1".to_string(),
-            "provider2".to_string(),
-        ];
+        let providers = vec!["provider1".to_string(), "provider2".to_string()];
 
         let healthy = monitor.get_healthy_providers(&providers).await;
         assert_eq!(healthy.len(), 0); // No providers registered

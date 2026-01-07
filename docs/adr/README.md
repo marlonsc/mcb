@@ -10,7 +10,7 @@ An ADR is a document that captures an important architectural decision made alon
 
 Each ADR follows this template:
 
-```
+```markdown
 # ADR {number}: {title}
 
 ## Status
@@ -51,6 +51,8 @@ Each ADR follows this template:
 | [002](002-async-first-architecture.md) | Async-First Architecture | Accepted | 2024-01-06 |
 | [003](003-c4-model-documentation.md) | C4 Model Documentation | Accepted | 2024-01-06 |
 | [004](004-multi-provider-strategy.md) | Multi-Provider Strategy | Accepted | 2024-01-06 |
+| [005](005-documentation-excellence-v0.0.4.md) | Documentation Excellence v0.0.4 | Accepted | 2025-01-07 |
+| [006](006-code-audit-and-improvements-v0.0.4.md) | Code Audit and Architecture Improvements v0.0.4 | Accepted | 2025-01-07 |
 
 ## Creating a New ADR
 
@@ -69,18 +71,45 @@ Each ADR follows this template:
 
 ## Tools and Automation
 
-The project includes tools for ADR management:
+### Current Tools (v0.0.3)
+
+The project currently uses custom bash scripts for ADR management:
 
 ```bash
-# Create a new ADR draft
-cargo run --bin adr-tool -- create "New Feature Decision"
+# Create a new ADR
+make adr-new
 
 # List all ADRs
-cargo run --bin adr-tool -- list
-
-# Search ADRs by keyword
-cargo run --bin adr-tool -- search "security"
+make adr-list
 ```
+
+### Planned Tools (v0.0.4 "Documentation Excellence")
+
+The v0.0.4 release will introduce professional ADR management with automated validation:
+
+```bash
+# Professional ADR management with adrs tool
+adrs new "New Architectural Decision"
+adrs list
+adrs show 005
+
+# Automated ADR compliance validation
+cargo run --bin adr-validator
+make adr-validate
+
+# ADR-driven development workflow
+make adr-check-compliance  # Validates implementation against ADRs
+```
+
+#### Tool Ecosystem (v0.0.4)
+
+-   **`adrs`**: Professional ADR lifecycle management and status tracking
+-   **`adr-validator`**: Automated compliance checking between ADRs and code
+-   **`cargo-modules`**: Advanced code analysis for ADR validation
+-   **`mdbook`**: Interactive documentation platform with ADR integration
+-   **CI/CD Integration**: Quality gates ensuring ADR compliance
+
+See [Documentation Automation Plan](../archive/2025-01-07-documentation-automation-improvement.md) for detailed implementation roadmap.
 
 ## Contributing
 

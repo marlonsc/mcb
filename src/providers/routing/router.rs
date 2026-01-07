@@ -4,19 +4,19 @@
 //! and dependency injection, following SOLID principles with proper separation of concerns.
 
 use crate::core::error::{Error, Result};
-use crate::providers::{EmbeddingProvider, VectorStoreProvider};
+use crate::di::registry::ProviderRegistry;
 use crate::providers::routing::circuit_breaker::CircuitBreakerConfig;
-use crate::registry::ProviderRegistry;
+use crate::providers::{EmbeddingProvider, VectorStoreProvider};
 use std::sync::Arc;
 use tracing::{debug, info, instrument};
 
 // Import types from modules
 use crate::providers::routing::{
-    health::HealthMonitor,
     circuit_breaker::CircuitBreaker,
-    metrics::ProviderMetricsCollector,
     cost_tracker::CostTracker,
-    failover::{FailoverManager, FailoverContext},
+    failover::{FailoverContext, FailoverManager},
+    health::HealthMonitor,
+    metrics::ProviderMetricsCollector,
 };
 
 /// Context for provider selection decisions
@@ -113,8 +113,12 @@ impl ContextualStrategy {
         latency_weight: f64,
         load_weight: f64,
     ) -> Self {
-        assert!((health_weight + cost_weight + quality_weight + latency_weight + load_weight - 1.0).abs() < f64::EPSILON,
-                "Weights must sum to 1.0");
+        assert!(
+            (health_weight + cost_weight + quality_weight + latency_weight + load_weight - 1.0)
+                .abs()
+                < f64::EPSILON,
+            "Weights must sum to 1.0"
+        );
 
         Self {
             health_weight,
@@ -142,7 +146,7 @@ impl ContextualStrategy {
             id if id.contains("ollama") => 0.9, // Local, fast
             id if id.contains("openai") => 0.7, // Cloud, variable
             id if id.contains("gemini") => 0.8, // Cloud, good
-            _ => 0.75, // Default latency score
+            _ => 0.75,                          // Default latency score
         }
     }
 
@@ -153,7 +157,7 @@ impl ContextualStrategy {
             LoadLevel::Medium => 0.9,
             LoadLevel::High => match provider_id {
                 id if id.contains("ollama") => 0.9, // Local handles high load well
-                _ => 0.6, // Cloud providers may have limits
+                _ => 0.6,                           // Cloud providers may have limits
             },
             LoadLevel::Critical => match provider_id {
                 id if id.contains("ollama") => 0.8,
@@ -191,7 +195,9 @@ impl ProviderSelectionStrategy for ContextualStrategy {
             score += self.health_weight;
 
             // Cost score - use actual cost tracking data
-            let cost_score = cost_tracker.get_efficiency_score(provider_id).unwrap_or(0.5);
+            let cost_score = cost_tracker
+                .get_efficiency_score(provider_id)
+                .unwrap_or(0.5);
             score += cost_score * context.cost_sensitivity * self.cost_weight;
 
             // Quality score
@@ -315,18 +321,31 @@ impl ProviderRouter {
             .collect();
 
         if candidates.is_empty() {
-            return Err(Error::not_found("No eligible embedding providers available"));
+            return Err(Error::not_found(
+                "No eligible embedding providers available",
+            ));
         }
 
         // Apply selection strategy
-        let selected = self.selection_strategy
-            .select_provider(&candidates, context, &self.deps.health_monitor, &self.deps.cost_tracker)
+        let selected = self
+            .selection_strategy
+            .select_provider(
+                &candidates,
+                context,
+                &self.deps.health_monitor,
+                &self.deps.cost_tracker,
+            )
             .await?;
 
         // Record selection metrics
-        self.deps.metrics.record_provider_selection(&selected, "contextual");
+        self.deps
+            .metrics
+            .record_provider_selection(&selected, "contextual");
 
-        debug!("Selected embedding provider: {} for operation: {}", selected, context.operation_type);
+        debug!(
+            "Selected embedding provider: {} for operation: {}",
+            selected, context.operation_type
+        );
 
         Ok(selected)
     }
@@ -347,24 +366,40 @@ impl ProviderRouter {
             .collect();
 
         if candidates.is_empty() {
-            return Err(Error::not_found("No eligible vector store providers available"));
+            return Err(Error::not_found(
+                "No eligible vector store providers available",
+            ));
         }
 
         // Apply selection strategy
-        let selected = self.selection_strategy
-            .select_provider(&candidates, context, &self.deps.health_monitor, &self.deps.cost_tracker)
+        let selected = self
+            .selection_strategy
+            .select_provider(
+                &candidates,
+                context,
+                &self.deps.health_monitor,
+                &self.deps.cost_tracker,
+            )
             .await?;
 
         // Record selection metrics
-        self.deps.metrics.record_provider_selection(&selected, "contextual");
+        self.deps
+            .metrics
+            .record_provider_selection(&selected, "contextual");
 
-        debug!("Selected vector store provider: {} for operation: {}", selected, context.operation_type);
+        debug!(
+            "Selected vector store provider: {} for operation: {}",
+            selected, context.operation_type
+        );
 
         Ok(selected)
     }
 
     /// Get an embedding provider with circuit breaker protection and failover
-    pub async fn get_embedding_provider(&self, context: &ProviderContext) -> Result<Arc<dyn EmbeddingProvider>> {
+    pub async fn get_embedding_provider(
+        &self,
+        context: &ProviderContext,
+    ) -> Result<Arc<dyn EmbeddingProvider>> {
         let candidates = self.deps.registry.list_embedding_providers();
 
         let failover_context = FailoverContext {
@@ -375,7 +410,8 @@ impl ProviderRouter {
             current_attempt: 0,
         };
 
-        self.deps.failover_manager
+        self.deps
+            .failover_manager
             .execute_with_failover(&candidates, &failover_context, |provider_id: String| {
                 let registry = Arc::clone(&self.deps.registry);
                 let metrics = Arc::clone(&self.deps.metrics);
@@ -395,7 +431,10 @@ impl ProviderRouter {
     }
 
     /// Get a vector store provider with circuit breaker protection and failover
-    pub async fn get_vector_store_provider(&self, context: &ProviderContext) -> Result<Arc<dyn VectorStoreProvider>> {
+    pub async fn get_vector_store_provider(
+        &self,
+        context: &ProviderContext,
+    ) -> Result<Arc<dyn VectorStoreProvider>> {
         let candidates = self.deps.registry.list_vector_store_providers();
 
         let failover_context = FailoverContext {
@@ -406,7 +445,8 @@ impl ProviderRouter {
             current_attempt: 0,
         };
 
-        self.deps.failover_manager
+        self.deps
+            .failover_manager
             .execute_with_failover(&candidates, &failover_context, |provider_id: String| {
                 let registry = Arc::clone(&self.deps.registry);
                 let metrics = Arc::clone(&self.deps.metrics);
@@ -427,16 +467,32 @@ impl ProviderRouter {
 
     /// Record successful operation
     pub async fn record_success(&self, provider_id: &str, response_time_ms: f64) {
-        self.deps.health_monitor.check_provider(provider_id).await.ok();
-        self.deps.metrics.record_response_time(provider_id, "operation", response_time_ms / 1000.0);
-        self.deps.metrics.record_request(provider_id, "operation", "success");
+        self.deps
+            .health_monitor
+            .check_provider(provider_id)
+            .await
+            .ok();
+        self.deps
+            .metrics
+            .record_response_time(provider_id, "operation", response_time_ms / 1000.0);
+        self.deps
+            .metrics
+            .record_request(provider_id, "operation", "success");
     }
 
     /// Record failed operation
     pub async fn record_failure(&self, provider_id: &str, error: &Error) {
-        self.deps.health_monitor.check_provider(provider_id).await.ok();
-        self.deps.metrics.record_request(provider_id, "operation", "error");
-        self.deps.metrics.record_error(provider_id, &error.to_string());
+        self.deps
+            .health_monitor
+            .check_provider(provider_id)
+            .await
+            .ok();
+        self.deps
+            .metrics
+            .record_request(provider_id, "operation", "error");
+        self.deps
+            .metrics
+            .record_error(provider_id, &error.to_string());
     }
 
     /// Get router statistics
@@ -445,13 +501,20 @@ impl ProviderRouter {
         let vector_store_providers = self.deps.registry.list_vector_store_providers().len();
         let total_providers = embedding_providers + vector_store_providers;
 
-        let all_provider_ids: Vec<String> = self.deps.registry.list_embedding_providers()
+        let all_provider_ids: Vec<String> = self
+            .deps
+            .registry
+            .list_embedding_providers()
             .into_iter()
             .chain(self.deps.registry.list_vector_store_providers())
             .collect();
 
-        let healthy_providers = self.deps.health_monitor
-            .get_healthy_providers(&all_provider_ids).await.len();
+        let healthy_providers = self
+            .deps
+            .health_monitor
+            .get_healthy_providers(&all_provider_ids)
+            .await
+            .len();
 
         let total_cost = self.deps.cost_tracker.get_total_cost();
         let current_period_cost = self.deps.cost_tracker.get_current_period_cost();
@@ -489,7 +552,7 @@ pub struct RouterStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::registry::ProviderRegistry;
+    use crate::di::registry::ProviderRegistry;
 
     #[tokio::test]
     async fn test_provider_router_creation() {
@@ -529,7 +592,9 @@ mod tests {
         };
 
         // Since providers are not registered, selection will fail
-        let result = strategy.select_provider(&candidates, &context, &health_monitor, &cost_tracker).await;
+        let result = strategy
+            .select_provider(&candidates, &context, &health_monitor, &cost_tracker)
+            .await;
         assert!(result.is_err()); // No healthy providers available
     }
 

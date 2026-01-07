@@ -99,14 +99,19 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
         filter: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
         // Search using the inner provider (vectors are unencrypted)
-        let mut results = self.inner.search_similar(collection, query_vector, limit, filter).await?;
+        let mut results = self
+            .inner
+            .search_similar(collection, query_vector, limit, filter)
+            .await?;
 
         // Decrypt the metadata for each result
         for result in &mut results {
             if let Some(encrypted_metadata) = result.metadata.get("encrypted_metadata") {
-                let metadata_envelope: EncryptedEnvelope = serde_json::from_value(encrypted_metadata.clone())?;
+                let metadata_envelope: EncryptedEnvelope =
+                    serde_json::from_value(encrypted_metadata.clone())?;
                 let metadata_json = self.crypto.decrypt(&metadata_envelope)?;
-                let original_metadata: HashMap<String, serde_json::Value> = serde_json::from_slice(&metadata_json)?;
+                let original_metadata: HashMap<String, serde_json::Value> =
+                    serde_json::from_slice(&metadata_json)?;
 
                 // Restore original metadata
                 result.metadata = serde_json::to_value(original_metadata)?;
@@ -138,7 +143,6 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
         "encrypted"
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -174,9 +178,15 @@ mod tests {
         let encrypted_store = EncryptedVectorStoreProvider::new(inner, config).unwrap();
 
         // Create collection
-        encrypted_store.create_collection("test", 128).await.unwrap();
+        encrypted_store
+            .create_collection("test", 128)
+            .await
+            .unwrap();
 
-        let results = encrypted_store.search_similar("test", &[1.0, 2.0, 3.0], 10, None).await.unwrap();
+        let results = encrypted_store
+            .search_similar("test", &[1.0, 2.0, 3.0], 10, None)
+            .await
+            .unwrap();
         assert!(results.is_empty());
     }
 }

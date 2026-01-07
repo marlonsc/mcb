@@ -89,7 +89,7 @@ C4 model provides excellent structure and scalability but requires discipline in
 
 #### Level 1: System Context
 
-```
+```text
 Purpose: Show how the system fits into the world
 Audience: Everyone (technical and non-technical)
 Content: System boundaries, users, external systems
@@ -98,7 +98,7 @@ Notation: Simple boxes and arrows
 
 #### Level 2: Container Architecture
 
-```
+```text
 Purpose: Show high-level technology choices
 Audience: Technical stakeholders
 Content: Containers, technologies, communication patterns
@@ -107,7 +107,7 @@ Notation: Containers with technology labels
 
 #### Level 3: Component Architecture
 
-```
+```text
 Purpose: Show component design and responsibilities
 Audience: Developers and architects
 Content: Components, interfaces, data flows
@@ -116,7 +116,7 @@ Notation: Detailed component relationships
 
 #### Level 4: Code Architecture
 
-```
+```text
 Purpose: Show implementation details
 Audience: Developers maintaining code
 Content: Classes, interfaces, implementation patterns
@@ -284,9 +284,38 @@ impl DocumentationTracker {
 }
 ```
 
+### Future Enhancements (v0.0.4 "Documentation Excellence")
+
+The v0.0.4 release will significantly enhance the C4 model documentation through automation and advanced tooling:
+
+#### 🤖 Automated Diagram Generation
+
+-   **Code Analysis Integration**: `cargo-modules` and `rust-code-analysis` for automatic component discovery
+-   **Dependency Graph Generation**: Interactive dependency graphs from source code analysis
+-   **Real-time Updates**: Diagrams automatically updated when code changes
+
+#### 📊 Advanced Visualization
+
+-   **Interactive Diagrams**: Web-based interactive C4 diagrams with drill-down capabilities
+-   **Cross-References**: Links between diagrams, code, and documentation
+-   **Search Integration**: Full-text search across all architectural documentation
+
+#### 🔍 Quality Assurance
+
+-   **Automated Validation**: ADR compliance checking against architectural diagrams
+-   **Consistency Checks**: Automated verification that diagrams match implementation
+-   **Change Tracking**: Automated detection of architectural drift
+
+#### 📈 Metrics and Analytics
+
+-   **Documentation Coverage**: Automated tracking of architectural documentation completeness
+-   **Quality Scoring**: A+ grade standards for architectural documentation
+-   **Maintenance Analytics**: Tracking documentation maintenance burden reduction
+
 ## References
 
 -   [C4 Model Website](https://c4model.com/)
 -   [PlantUML Documentation](https://plantuml.com/)
 -   [Structurizr - C4 Tooling](https://structurizr.com/)
 -   [The C4 model for visualising software architecture](https://www.infoq.com/articles/C4-architecture-model/)
+-   [Documentation Automation Plan (v0.0.4)](../archive/2025-01-07-documentation-automation-improvement.md)

@@ -4,12 +4,18 @@
 //! and processors for supported programming languages.
 
 use crate::chunking::config::{LanguageConfig, NodeExtractionRule};
-use crate::chunking::processor::{LanguageProcessor, BaseProcessor};
+use crate::chunking::processor::{BaseProcessor, LanguageProcessor};
 use crate::core::types::{CodeChunk, Language};
 
 // Rust processor
 pub struct RustProcessor {
     processor: BaseProcessor,
+}
+
+impl Default for RustProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RustProcessor {
@@ -47,10 +53,7 @@ impl RustProcessor {
                 },
                 // Low priority: Type aliases and use statements
                 NodeExtractionRule {
-                    node_types: vec![
-                        "type_item".to_string(),
-                        "use_declaration".to_string(),
-                    ],
+                    node_types: vec!["type_item".to_string(), "use_declaration".to_string()],
                     min_length: 15,
                     min_lines: 1,
                     max_depth: 2,
@@ -85,6 +88,12 @@ pub struct PythonProcessor {
     processor: BaseProcessor,
 }
 
+impl Default for PythonProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PythonProcessor {
     pub fn new() -> Self {
         let config = LanguageConfig::new(tree_sitter_python::language)
@@ -113,6 +122,12 @@ crate::chunking::processor::impl_language_processor!(PythonProcessor);
 // JavaScript/TypeScript processor
 pub struct JavaScriptProcessor {
     processor: BaseProcessor,
+}
+
+impl Default for JavaScriptProcessor {
+    fn default() -> Self {
+        Self::new(Language::JavaScript)
+    }
 }
 
 impl JavaScriptProcessor {
@@ -157,6 +172,12 @@ pub struct JavaProcessor {
     processor: BaseProcessor,
 }
 
+impl Default for JavaProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JavaProcessor {
     pub fn new() -> Self {
         let config = LanguageConfig::new(tree_sitter_java::language)
@@ -195,6 +216,12 @@ pub struct GoProcessor {
     processor: BaseProcessor,
 }
 
+impl Default for GoProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GoProcessor {
     pub fn new() -> Self {
         let config = LanguageConfig::new(tree_sitter_go::language)
@@ -211,10 +238,7 @@ impl GoProcessor {
                 priority: 8,
                 include_context: false,
             }])
-            .with_fallback_patterns(vec![
-                r"^func ".to_string(),
-                r"^type ".to_string(),
-            ])
+            .with_fallback_patterns(vec![r"^func ".to_string(), r"^type ".to_string()])
             .with_chunk_size(15);
 
         Self {
@@ -228,6 +252,12 @@ crate::chunking::processor::impl_language_processor!(GoProcessor);
 // C processor
 pub struct CProcessor {
     processor: BaseProcessor,
+}
+
+impl Default for CProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CProcessor {
@@ -266,6 +296,12 @@ pub struct CppProcessor {
     processor: BaseProcessor,
 }
 
+impl Default for CppProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CppProcessor {
     pub fn new() -> Self {
         let config = LanguageConfig::new(tree_sitter_cpp::language)
@@ -301,6 +337,12 @@ crate::chunking::processor::impl_language_processor!(CppProcessor);
 // C# processor
 pub struct CSharpProcessor {
     processor: BaseProcessor,
+}
+
+impl Default for CSharpProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CSharpProcessor {

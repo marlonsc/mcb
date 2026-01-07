@@ -1,14 +1,11 @@
 # =============================================================================
-# RELEASE COMMANDS - Release building, packaging, and publishing
+# RELEASE - Construção, empacotamento e publicação de releases
 # =============================================================================
 
-.PHONY: release build-release package github-release version-bump version-tag version-push version-all
+.PHONY: release package github-release version-bump version-tag version-push version-all
 
-# Release building
+# Release
 release: test build-release package ## Create release
-
-build-release: ## Build release binary
-	cargo build --release
 
 # Packaging
 package: ## Package release
@@ -29,7 +26,7 @@ github-release: release ## Create GitHub release
 	@echo "✅ GitHub release created successfully!"
 
 # =============================================================================
-# VERSION MANAGEMENT - Auto-managed versioning for v0.0.3
+# VERSION - Auto-managed versioning for v0.0.3
 # =============================================================================
 
 version-bump: ## Bump version to 0.0.3 in Cargo.toml

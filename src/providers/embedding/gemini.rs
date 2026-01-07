@@ -24,7 +24,12 @@ impl GeminiEmbeddingProvider {
     }
 
     /// Create a new Gemini embedding provider with custom timeout
-    pub fn with_timeout(api_key: String, base_url: Option<String>, model: String, timeout: Duration) -> Result<Self> {
+    pub fn with_timeout(
+        api_key: String,
+        base_url: Option<String>,
+        model: String,
+        timeout: Duration,
+    ) -> Result<Self> {
         let http_client = get_or_create_global_http_client()?;
         Ok(Self {
             api_key,
@@ -143,7 +148,9 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
             let embedding_vec = response_data["embedding"]["values"]
                 .as_array()
                 .ok_or_else(|| {
-                    Error::embedding("Invalid response format: missing embedding values".to_string())
+                    Error::embedding(
+                        "Invalid response format: missing embedding values".to_string(),
+                    )
                 })?
                 .iter()
                 .map(|v| v.as_f64().unwrap_or(0.0) as f32)
@@ -195,6 +202,8 @@ impl GeminiEmbeddingProvider {
 
     /// Get the base URL for this provider
     pub fn base_url(&self) -> &str {
-        self.base_url.as_deref().unwrap_or("https://generativelanguage.googleapis.com")
+        self.base_url
+            .as_deref()
+            .unwrap_or("https://generativelanguage.googleapis.com")
     }
 }

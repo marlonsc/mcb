@@ -27,7 +27,7 @@
 //!
 //! ```rust,no_run
 //! use mcp_context_browser::providers::routing::{ProviderRouter, ProviderContext};
-//! use mcp_context_browser::registry::ProviderRegistry;
+//! use mcp_context_browser::di::registry::ProviderRegistry;
 //! use std::sync::Arc;
 //!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
@@ -46,56 +46,32 @@
 //! # }
 //! ```
 
-pub mod health;
 pub mod circuit_breaker;
-pub mod metrics;
 pub mod cost_tracker;
 pub mod failover;
+pub mod health;
+pub mod metrics;
 pub mod router;
 
 // Re-export main types for convenience
 pub use router::{
-    ProviderRouter,
-    ProviderRouterDeps,
-    ProviderContext,
-    ProviderSelectionStrategy,
-    ContextualStrategy,
-    LoadLevel,
-    RouterStatistics,
+    ContextualStrategy, LoadLevel, ProviderContext, ProviderRouter, ProviderRouterDeps,
+    ProviderSelectionStrategy, RouterStatistics,
 };
 
 pub use health::{
-    HealthMonitor,
-    ProviderHealth,
-    ProviderHealthStatus,
-    ProviderHealthChecker,
+    HealthCheckResult, HealthMonitor, ProviderHealth, ProviderHealthChecker, ProviderHealthStatus,
     RealProviderHealthChecker,
-    HealthCheckResult,
 };
 
 pub use circuit_breaker::{
-    CircuitBreaker,
-    CircuitBreakerConfig,
-    CircuitBreakerState,
-    CircuitBreakerMetrics,
+    CircuitBreaker, CircuitBreakerConfig, CircuitBreakerMetrics, CircuitBreakerState,
 };
 
-pub use metrics::{
-    ProviderMetricsCollector,
-    MetricsSummary,
-};
+pub use metrics::{MetricsSummary, ProviderMetricsCollector};
 
-pub use cost_tracker::{
-    CostTracker,
-    ProviderCost,
-    UsageMetrics,
-    CostTrackerConfig,
-};
+pub use cost_tracker::{CostTracker, CostTrackerConfig, ProviderCost, UsageMetrics};
 
 pub use failover::{
-    FailoverManager,
-    FailoverStrategy,
-    PriorityBasedStrategy,
-    RoundRobinStrategy,
-    FailoverContext,
+    FailoverContext, FailoverManager, FailoverStrategy, PriorityBasedStrategy, RoundRobinStrategy,
 };

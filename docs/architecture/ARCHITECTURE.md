@@ -1,6 +1,6 @@
 # MCP Context Browser - Comprehensive Architecture Documentation
 
-[![Version](https://img.shields.io/badge/version-0.0.1--alpha-blue)](https://github.com/marlonsc/mcp-context-browser/releases)
+[![Version](https://img.shields.io/badge/version-0.0.3-blue)](https://github.com/marlonsc/mcp-context-browser/releases)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 
@@ -49,8 +49,9 @@ MCP Context Browser is a high-performance, extensible Model Context Protocol (MC
 
 ### Current Status
 
-**Version**: 0.0.1-alpha (Pre-production)
-**Architecture Maturity**: Core framework complete, provider integrations in progress
+**Version**: 0.0.3 (Stable Architecture)
+**Architecture Maturity**: ✅ **100% Complete DI Implementation**
+**DI Status**: ✅ Provider Registry, ✅ Service Factory, ✅ Provider Router, ✅ Runtime Configuration
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
 ---
@@ -476,6 +477,8 @@ pub trait EmbeddingProvider: Send + Sync {
 |----------|------------|------------|------------|--------|
 | **OpenAI** | text-embedding-3-small | 1536 | Pay-per-token | ✅ Production |
 | **Ollama** | nomic-embed-text | 768 | Self-hosted | ✅ Production |
+| **Gemini** | text-embedding-004 | 768 | Pay-per-token | ✅ Production |
+| **VoyageAI** | voyage-3-lite | 512 | Pay-per-token | ✅ Production |
 | **Anthropic** | N/A | N/A | Pay-per-token | 🚧 Planned |
 | **Mock** | Fixed vectors | 128 | Free | ✅ Development |
 
@@ -502,6 +505,208 @@ pub trait VectorStoreProvider: Send + Sync {
 | **Pinecone** | Cloud-native | HNSW | 1B+ vectors | 🚧 Planned |
 | **Qdrant** | Rust | HNSW | 10M+ vectors | 🚧 Planned |
 | **In-Memory** | Rust + DashMap | Brute force | <1M vectors | ✅ Development |
+
+---
+
+## Module Architecture
+
+### Core Modules
+
+The system is organized into specialized modules, each handling distinct responsibilities:
+
+#### 🔍 Chunking Module (`src/chunking/`)
+
+**Purpose**: Intelligent code chunking using AST-based parsing and language-aware splitting.
+
+**Key Components**:
+
+-   `IntelligentChunker`: AST-aware chunking with language-specific rules
+-   `LanguageProcessor`: Language detection and syntax-aware processing
+-   `ChunkProcessor`: Parallel processing with configurable chunk sizes
+
+**Features**:
+
+-   Multi-language support (Rust, Python, JavaScript, TypeScript, Java, Go, etc.)
+-   AST-based semantic boundary detection
+-   Configurable chunk sizes with overlap control
+-   Syntax-aware splitting preserving code structure
+
+#### ⚙️ Core Module (`src/core/`)
+
+**Purpose**: Core types, traits, and shared utilities used throughout the system.
+
+**Submodules**:
+
+-   `auth`: Authentication and authorization utilities
+-   `cache`: Advanced caching with TTL and size limits
+-   `crypto`: Encryption utilities for secure data handling
+-   `database`: Database connection pooling and utilities
+-   `error`: Comprehensive error types and handling
+-   `http_client`: Configurable HTTP client with retry logic
+-   `hybrid_search`: BM25 + semantic search combination
+-   `limits`: Resource limits and rate limiting
+-   `merkle`: Merkle tree implementation for integrity
+-   `rate_limit`: Rate limiting with multiple strategies
+-   `types`: Core data types and serialization
+
+#### 👻 Daemon Module (`src/daemon/`)
+
+**Purpose**: Background daemon for system maintenance and monitoring.
+
+**Features**:
+
+-   Automatic cleanup of stale lockfiles
+-   Continuous monitoring of sync operations
+-   Configurable cleanup and monitoring intervals
+-   Graceful shutdown handling
+-   Lock metadata tracking and reporting
+
+#### 🏭 Factory Module (`src/factory/`)
+
+**Purpose**: Dependency injection and provider factory patterns.
+
+**Key Components**:
+
+-   `ServiceProvider`: Main dependency injection container
+-   `ProviderFactory`: Runtime provider instantiation
+-   `ServiceRegistry`: Service registration and lookup
+
+#### 📊 Metrics Module (`src/metrics/`)
+
+**Purpose**: Comprehensive system monitoring and observability.
+
+**Components**:
+
+-   `SystemMetricsCollector`: CPU, memory, disk monitoring
+-   `PerformanceMetrics`: Query performance tracking
+-   `MetricsApiServer`: HTTP metrics endpoint (Prometheus-compatible)
+-   `CacheMetrics`: Cache hit/miss statistics
+
+#### 🔌 Providers Module (`src/providers/`)
+
+**Purpose**: Extensible provider system for AI and storage services.
+
+**Submodules**:
+
+-   `embedding/`: Text-to-vector conversion providers (OpenAI, Ollama, Gemini, VoyageAI)
+-   `vector_store/`: Vector storage providers (Milvus, In-Memory, Filesystem, Encrypted)
+-   `routing/`: Intelligent provider routing with circuit breakers and failover
+
+#### 📋 Registry Module (`src/registry/`)
+
+**Purpose**: Runtime provider registration and management.
+
+**Features**:
+
+-   Dynamic provider registration
+-   Health-aware provider selection
+-   Configuration-driven provider setup
+-   Thread-safe operations
+
+#### 🌐 Server Module (`src/server/`)
+
+**Purpose**: MCP protocol server and HTTP API endpoints.
+
+**Components**:
+
+-   MCP protocol handlers
+-   HTTP server with Axum
+-   WebSocket support for real-time updates
+-   Rate limiting middleware
+
+#### 🔧 Services Module (`src/services/`)
+
+**Purpose**: Business logic orchestration layer.
+
+**Services**:
+
+-   `ContextService`: Embedding and vector operations
+-   `IndexingService`: Codebase indexing and chunking
+-   `SearchService`: Semantic search operations
+
+#### 📸 Snapshot Module (`src/snapshot/`)
+
+**Purpose**: System state snapshots for debugging and recovery.
+
+#### 🔄 Sync Module (`src/sync/`)
+
+**Purpose**: Cross-process synchronization and coordination.
+
+**Components**:
+
+-   `lockfile`: File-based locking for process coordination
+-   `manager`: Sync operation management and statistics
+-   `CodebaseLockManager`: Lock lifecycle management
+
+### Advanced Features (v0.0.3)
+
+#### 🛡️ Provider Routing System (`src/providers/routing/`)
+
+**Purpose**: Intelligent provider management with resilience and optimization.
+
+**Submodules**:
+
+**Health Monitoring (`health/`)**:
+
+-   `HealthMonitor`: Continuous provider health checking
+-   `ProviderHealthChecker`: Automated health assessment
+-   `HealthCheckResult`: Structured health status reporting
+
+**Circuit Breaker (`circuit_breaker/`)**:
+
+-   `CircuitBreaker`: Failure detection and recovery
+-   `CircuitBreakerConfig`: Configurable failure thresholds
+-   `CircuitBreakerState`: State management for resilience
+
+**Metrics Collection (`metrics/`)**:
+
+-   `ProviderMetricsCollector`: Usage and performance tracking
+-   `MetricsSummary`: Aggregated metrics reporting
+
+**Cost Tracking (`cost_tracker/`)**:
+
+-   `CostTracker`: API usage and cost monitoring
+-   `UsageMetrics`: Detailed usage statistics
+-   `CostTrackerConfig`: Cost optimization settings
+
+**Failover Management (`failover/`)**:
+
+-   `FailoverManager`: Automatic provider switching
+-   `FailoverStrategy`: Priority-based and round-robin strategies
+-   `PriorityBasedStrategy`: Cost and performance-aware selection
+
+**Router Core (`router/`)**:
+
+-   `ProviderRouter`: Main routing orchestration
+-   `ProviderContext`: Contextual routing decisions
+-   `ProviderSelectionStrategy`: Pluggable selection algorithms
+
+**Key Features**:
+
+-   **Health-Aware Routing**: Automatic failover from unhealthy providers
+-   **Cost Optimization**: Intelligent selection based on cost efficiency
+-   **Circuit Breaker Protection**: Prevents cascade failures
+-   **Performance Balancing**: Load distribution across providers
+-   **Metrics-Driven Decisions**: Data-driven provider selection
+
+#### 🔍 Hybrid Search Engine (`src/core/hybrid_search.rs`)
+
+**Purpose**: Combines lexical and semantic search for improved relevance.
+
+**Algorithm**: BM25 (lexical) + Semantic Embeddings (contextual)
+
+**Components**:
+
+-   `BM25Scorer`: Term frequency-based ranking
+-   `BM25Params`: Configurable BM25 parameters (k1=1.2, b=0.75)
+-   `HybridSearchEngine`: Combined search orchestration
+-   `SearchResult`: Unified Result format
+
+**Benefits**:
+
+-   Better relevance through dual ranking
+-   Handles both keyword and semantic queries
+-   Configurable weighting between lexical and semantic scores
 
 ---
 
@@ -1477,7 +1682,7 @@ services:
 #### Production Deployment
 
 ```yaml
-# k8s/production-deployment.yaml
+# k8s/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1687,14 +1892,15 @@ impl BackupManager {
 -   In-memory vector storage with cosine similarity
 -   Core data structures and comprehensive error handling
 
-### Phase 2: Provider Ecosystem (In Progress 🚧)
+### Phase 2: Provider Ecosystem (Completed ✅)
 
-**Current Focus**:
+**Delivered**:
 
--   Real embedding provider integrations (OpenAI, Ollama)
--   Production vector database integration (Milvus)
--   Enhanced file processing with AST parsing
--   Performance optimization and caching
+-   ✅ Real embedding provider integrations (OpenAI, Ollama, Gemini, VoyageAI)
+-   ✅ Production vector database integration (Milvus, In-Memory, Filesystem)
+-   ✅ Enhanced file processing with AST parsing
+-   ✅ Performance optimization and caching
+-   ✅ Complete DI system with provider registry and routing
 
 **Upcoming Milestones**:
 
