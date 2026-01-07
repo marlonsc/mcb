@@ -1,0 +1,60 @@
+[package]
+name = "docs-interactive-platform"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Interactive Documentation Platform with mdbook for v0.0.4"
+homepage = "https://github.com/marlonsc/mcp-context-browser"
+documentation = "https://github.com/marlonsc/mcp-context-browser#readme"
+
+[[bin]]
+name = "interactive-docs"
+path = "src/main.rs"
+
+[dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+regex = "1.11"
+walkdir = "2.5"
+
+# Configuration
+config = "0.15"
+toml = "0.9"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI
+clap = { version = "4.0", features = ["derive"] }
+
+# HTTP server for interactive docs
+axum = "0.8"
+tower = { version = "0.5", features = ["load-shed", "limit", "load", "retry", "timeout", "util"] }
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+
+# Template engine
+handlebars = "5.0"
+tera = "1.20"
+
+# Markdown processing
+pulldown-cmark = "0.11"
+
+# File operations
+fs2 = "0.4"
+
+# Search functionality
+tantivy = "0.21"
+
+[dev-dependencies]
+tempfile = "3.10"
+assert_cmd = "2.0"
+predicates = "3.0"

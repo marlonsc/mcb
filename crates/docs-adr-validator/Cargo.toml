@@ -1,0 +1,55 @@
+[package]
+name = "docs-adr-validator"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "ADR Compliance Validation Framework for Documentation Excellence v0.0.4"
+homepage = "https://github.com/marlonsc/mcp-context-browser"
+documentation = "https://github.com/marlonsc/mcp-context-browser#readme"
+
+[[bin]]
+name = "adr-validator"
+path = "src/main.rs"
+
+[dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "2.0"
+tokio = { version = "1.0", features = ["full"] }
+regex = "1.11"
+walkdir = "2.5"
+
+# Configuration
+config = "0.15"
+toml = "0.9"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI
+clap = { version = "4.0", features = ["derive"] }
+
+# Code analysis for ADR compliance validation
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+quote = "1.0"
+
+# File operations
+fs2 = "0.4"
+
+# HTTP client for external validation
+reqwest = { version = "0.12", features = ["json", "__tls"] }
+
+# Git integration for ADR history
+git2 = "0.19"
+
+[dev-dependencies]
+tempfile = "3.10"
+assert_cmd = "2.0"
+predicates = "3.0"
