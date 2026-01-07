@@ -46,7 +46,7 @@ handlebars = "5.0"
 tera = "1.20"
 
 # Markdown processing
-pulldown-cmark = "0.11"
+pulldown-cmark = "0.13"
 
 # File operations
 fs2 = "0.4"
