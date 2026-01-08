@@ -17,8 +17,8 @@ use crate::providers::embedding::voyageai::VoyageAIEmbeddingProvider;
 use crate::providers::vector_store::InMemoryVectorStoreProvider;
 use crate::providers::vector_store::milvus::MilvusVectorStoreProvider;
 use async_trait::async_trait;
-use std::sync::Arc;
 use shaku::Component;
+use std::sync::Arc;
 
 /// Provider factory trait
 #[async_trait]
@@ -183,10 +183,24 @@ impl Default for DefaultProviderFactory {
 pub trait ServiceProviderInterface: shaku::Interface + Send + Sync {
     fn registry(&self) -> &ProviderRegistry;
     fn list_providers(&self) -> (Vec<String>, Vec<String>);
-    fn register_embedding_provider(&self, name: &str, provider: Arc<dyn EmbeddingProvider>) -> Result<()>;
-    fn register_vector_store_provider(&self, name: &str, provider: Arc<dyn VectorStoreProvider>) -> Result<()>;
-    async fn get_embedding_provider(&self, config: &EmbeddingConfig) -> Result<Arc<dyn EmbeddingProvider>>;
-    async fn get_vector_store_provider(&self, config: &VectorStoreConfig) -> Result<Arc<dyn VectorStoreProvider>>;
+    fn register_embedding_provider(
+        &self,
+        name: &str,
+        provider: Arc<dyn EmbeddingProvider>,
+    ) -> Result<()>;
+    fn register_vector_store_provider(
+        &self,
+        name: &str,
+        provider: Arc<dyn VectorStoreProvider>,
+    ) -> Result<()>;
+    async fn get_embedding_provider(
+        &self,
+        config: &EmbeddingConfig,
+    ) -> Result<Arc<dyn EmbeddingProvider>>;
+    async fn get_vector_store_provider(
+        &self,
+        config: &VectorStoreConfig,
+    ) -> Result<Arc<dyn VectorStoreProvider>>;
 }
 
 /// Service provider for dependency injection
@@ -212,12 +226,22 @@ impl ServiceProviderInterface for ServiceProvider {
         )
     }
 
-    fn register_embedding_provider(&self, name: &str, provider: Arc<dyn EmbeddingProvider>) -> Result<()> {
-        self.registry.register_embedding_provider(name.to_string(), provider)
+    fn register_embedding_provider(
+        &self,
+        name: &str,
+        provider: Arc<dyn EmbeddingProvider>,
+    ) -> Result<()> {
+        self.registry
+            .register_embedding_provider(name.to_string(), provider)
     }
 
-    fn register_vector_store_provider(&self, name: &str, provider: Arc<dyn VectorStoreProvider>) -> Result<()> {
-        self.registry.register_vector_store_provider(name.to_string(), provider)
+    fn register_vector_store_provider(
+        &self,
+        name: &str,
+        provider: Arc<dyn VectorStoreProvider>,
+    ) -> Result<()> {
+        self.registry
+            .register_vector_store_provider(name.to_string(), provider)
     }
 
     async fn get_embedding_provider(

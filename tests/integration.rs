@@ -396,7 +396,7 @@ mod tests {
             .await?;
 
         assert!(
-            status_result.content.len() > 0,
+            !status_result.content.is_empty(),
             "get_indexing_status should return content"
         );
 

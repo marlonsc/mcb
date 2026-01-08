@@ -1,3 +1,4 @@
+#![allow(clippy::assertions_on_constants)]
 //! Unit tests for individual components and modules
 //!
 //! This module contains focused unit tests for individual functions and methods

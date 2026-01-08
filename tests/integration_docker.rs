@@ -461,16 +461,13 @@ mod tests {
             let embedding_provider = service_provider
                 .get_embedding_provider(&config)
                 .await
-                .expect(&format!(
-                    "Failed to create Ollama provider for model {}",
-                    model
-                ));
+                .unwrap_or_else(|_| panic!("Failed to create Ollama provider for model {}", model));
 
             let test_text = &format!("Test text for model {}", model);
             let embedding = embedding_provider
                 .embed(test_text)
                 .await
-                .expect(&format!("Failed to get embedding for model {}", model));
+                .unwrap_or_else(|_| panic!("Failed to get embedding for model {}", model));
 
             assert_eq!(embedding.model, model);
             assert!(!embedding.vector.is_empty());

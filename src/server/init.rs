@@ -17,13 +17,15 @@ use rmcp::transport::stdio;
 use std::sync::Arc;
 use tracing_subscriber::{self, EnvFilter};
 
-use crate::core::logging::{create_shared_log_buffer, RingBufferLayer};
 use crate::core::events::create_shared_event_bus;
+use crate::core::logging::{RingBufferLayer, create_shared_log_buffer};
 use crate::server::McpServerBuilder;
 use tracing_subscriber::prelude::*;
 
 /// Initialize logging and tracing for the MCP server
-fn init_tracing(log_buffer: crate::core::logging::SharedLogBuffer) -> Result<(), Box<dyn std::error::Error>> {
+fn init_tracing(
+    log_buffer: crate::core::logging::SharedLogBuffer,
+) -> Result<(), Box<dyn std::error::Error>> {
     let env_filter = EnvFilter::from_default_env()
         .add_directive(tracing::Level::INFO.into())
         .add_directive("mcp_context_browser=debug".parse()?)
@@ -229,7 +231,8 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Initialize all server components
-    let (server, metrics_handle, _resource_limits) = initialize_server_components(None, log_buffer).await?;
+    let (server, metrics_handle, _resource_limits) =
+        initialize_server_components(None, log_buffer).await?;
 
     tracing::info!("📡 Starting MCP protocol server on stdio transport");
     tracing::info!("🎯 Ready to accept MCP client connections");

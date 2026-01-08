@@ -6,6 +6,8 @@ target/
 .idea/
 *.swp
 *.swo
+CLAUDE.md
+!./CLAUDE.md
 
 # OS files
 .DS_Store
@@ -34,6 +36,7 @@ Thumbs.db
 # Rust-specific temporary files
 *.rs.bak
 *.rs.backup
+*.bak.*/
 
 # Temporary files
 *.tmp

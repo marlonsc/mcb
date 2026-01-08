@@ -1,3 +1,4 @@
+#![allow(clippy::assertions_on_constants)]
 //! Unit tests for repository pattern implementations
 
 use mcp_context_browser::core::types::{CodeChunk, Language};

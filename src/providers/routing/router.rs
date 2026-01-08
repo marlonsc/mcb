@@ -549,6 +549,7 @@ pub struct RouterStatistics {
 mod tests {
     use super::*;
     use crate::di::registry::ProviderRegistry;
+    use crate::providers::routing::health::{HealthCheckResult, ProviderHealthStatus};
 
     #[tokio::test]
     async fn test_provider_router_creation() {
@@ -581,17 +582,26 @@ mod tests {
         let health_monitor = Arc::new(HealthMonitor::with_registry(Arc::clone(&registry)));
         let cost_tracker = Arc::new(CostTracker::new());
 
-        // Make providers healthy (they will be unhealthy since not registered)
-        let _ = health_monitor.check_provider("ollama").await;
-        let _ = health_monitor.check_provider("openai").await;
-
         let candidates = vec!["ollama".to_string(), "openai".to_string()];
+
+        // Register providers as healthy (unknown providers are now considered unhealthy)
+        for provider in &candidates {
+            health_monitor
+                .record_result(HealthCheckResult {
+                    provider_id: provider.clone(),
+                    status: ProviderHealthStatus::Healthy,
+                    response_time: std::time::Duration::from_millis(10),
+                    error_message: None,
+                })
+                .await;
+        }
+
         let context = ProviderContext {
             cost_sensitivity: 1.0, // High cost sensitivity
             ..Default::default()
         };
 
-        // Since providers are not registered, but considered healthy by default, selection will succeed
+        // Providers are registered as healthy, selection will succeed
         let result = strategy
             .select_provider(&candidates, &context, &health_monitor, &cost_tracker)
             .await;

@@ -5,6 +5,7 @@
 //! semantic search operations. The server orchestrates the complete business
 //! workflow from query understanding to result delivery.
 
+use arc_swap::ArcSwap;
 use dashmap::DashMap;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -13,12 +14,12 @@ use rmcp::model::{
     ServerCapabilities, ServerInfo, Tool,
 };
 use rmcp::{ServerHandler, tool};
+use shaku::{Component, Interface, ModuleBuildContext};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use shaku::{Component, Interface, ModuleBuildContext};
-use arc_swap::ArcSwap;
 
 use crate::core::cache::CacheManager;
+use crate::core::events::SharedEventBus;
 use crate::core::limits::ResourceLimits;
 use crate::di::factory::ServiceProviderInterface;
 use crate::server::args::{
@@ -29,7 +30,6 @@ use crate::server::handlers::{
     ClearIndexHandler, GetIndexingStatusHandler, IndexCodebaseHandler, SearchCodeHandler,
 };
 use crate::services::{IndexingService, SearchService};
-use crate::core::events::SharedEventBus;
 
 /// Type alias for provider tuple to reduce complexity
 type ProviderTuple = (
@@ -70,7 +70,10 @@ impl<M: shaku::Module> Component<M> for McpPerformanceMetrics {
     type Interface = dyn PerformanceMetricsInterface;
     type Parameters = ();
 
-    fn build(_context: &mut ModuleBuildContext<M>, _params: Self::Parameters) -> Box<Self::Interface> {
+    fn build(
+        _context: &mut ModuleBuildContext<M>,
+        _params: Self::Parameters,
+    ) -> Box<Self::Interface> {
         Box::new(Self::default())
     }
 }
@@ -89,7 +92,8 @@ impl PerformanceMetricsInterface for McpPerformanceMetrics {
             self.failed_queries.fetch_add(1, Ordering::Relaxed);
         }
 
-        self.response_time_sum.fetch_add(response_time_ms, Ordering::Relaxed);
+        self.response_time_sum
+            .fetch_add(response_time_ms, Ordering::Relaxed);
 
         if cache_hit {
             self.cache_hits.fetch_add(1, Ordering::Relaxed);
@@ -100,7 +104,8 @@ impl PerformanceMetricsInterface for McpPerformanceMetrics {
 
     fn update_active_connections(&self, delta: i64) {
         if delta > 0 {
-            self.active_connections.fetch_add(delta as u64, Ordering::Relaxed);
+            self.active_connections
+                .fetch_add(delta as u64, Ordering::Relaxed);
         } else {
             let current = self.active_connections.load(Ordering::Relaxed);
             let new_value = current.saturating_sub((-delta) as u64);
@@ -190,7 +195,10 @@ impl<M: shaku::Module> Component<M> for McpIndexingOperations {
     type Interface = dyn IndexingOperationsInterface;
     type Parameters = ();
 
-    fn build(_context: &mut ModuleBuildContext<M>, _params: Self::Parameters) -> Box<Self::Interface> {
+    fn build(
+        _context: &mut ModuleBuildContext<M>,
+        _params: Self::Parameters,
+    ) -> Box<Self::Interface> {
         Box::new(Self::default())
     }
 }
@@ -238,12 +246,27 @@ type InitializedHandlers = (
     Arc<ClearIndexHandler>,
 );
 
+/// Components required to initialize McpServer
+pub struct ServerComponents {
+    pub config: Arc<ArcSwap<crate::config::Config>>,
+    pub cache_manager: Arc<CacheManager>,
+    pub performance_metrics: Arc<dyn PerformanceMetricsInterface>,
+    pub indexing_operations: Arc<dyn IndexingOperationsInterface>,
+    pub admin_service: Arc<dyn crate::admin::service::AdminService>,
+    pub service_provider: Arc<dyn ServiceProviderInterface>,
+    pub resource_limits: Arc<ResourceLimits>,
+    pub event_bus: SharedEventBus,
+    pub log_buffer: crate::core::logging::SharedLogBuffer,
+    pub system_collector: Arc<dyn crate::metrics::system::SystemMetricsCollectorInterface>,
+}
+
 impl McpServer {
     /// Create providers based on configuration using service provider
     async fn create_providers(
         service_provider: &Arc<dyn ServiceProviderInterface>,
         config: &crate::config::Config,
     ) -> Result<ProviderTuple, Box<dyn std::error::Error>> {
+        // ... (rest of the code)
         // Use service provider to create configured providers
         let embedding_provider = service_provider
             .get_embedding_provider(&config.providers.embedding)
@@ -311,22 +334,14 @@ impl McpServer {
 
     /// Assemble McpServer from components using pure Constructor Injection
     pub async fn from_components(
-        config: Arc<ArcSwap<crate::config::Config>>,
-        cache_manager: Arc<CacheManager>,
-        performance_metrics: Arc<dyn PerformanceMetricsInterface>,
-        indexing_operations: Arc<dyn IndexingOperationsInterface>,
-        admin_service: Arc<dyn crate::admin::service::AdminService>,
-        service_provider: Arc<dyn ServiceProviderInterface>,
-        resource_limits: Arc<ResourceLimits>,
-        event_bus: SharedEventBus,
-        log_buffer: crate::core::logging::SharedLogBuffer,
-        system_collector: Arc<dyn crate::metrics::system::SystemMetricsCollectorInterface>,
+        components: ServerComponents,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let current_config = config.load();
+        let current_config = components.config.load();
 
         // Initialize core services
         let (auth_handler, indexing_service, search_service) =
-            Self::initialize_services(Arc::clone(&service_provider), &current_config).await?;
+            Self::initialize_services(Arc::clone(&components.service_provider), &current_config)
+                .await?;
 
         // Create handlers
         let (
@@ -335,32 +350,34 @@ impl McpServer {
             get_indexing_status_handler,
             clear_index_handler,
         ) = Self::initialize_handlers(
-            Arc::clone(&service_provider),
+            Arc::clone(&components.service_provider),
             Arc::clone(&indexing_service),
             search_service,
             Arc::clone(&auth_handler),
-            Arc::clone(&resource_limits),
-            Arc::clone(&cache_manager),
-            Arc::clone(&admin_service),
+            Arc::clone(&components.resource_limits),
+            Arc::clone(&components.cache_manager),
+            Arc::clone(&components.admin_service),
         )?;
 
         // Start event listeners
-        indexing_service.start_event_listener(event_bus.clone());
-        cache_manager.start_event_listener(event_bus.clone());
+        indexing_service.start_event_listener(components.event_bus.clone());
+        components
+            .cache_manager
+            .start_event_listener(components.event_bus.clone());
 
         Ok(Self {
             index_codebase_handler,
             search_code_handler,
             get_indexing_status_handler,
             clear_index_handler,
-            service_provider,
-            performance_metrics,
-            indexing_operations,
-            admin_service,
-            config,
-            event_bus,
-            log_buffer,
-            system_collector,
+            service_provider: components.service_provider,
+            performance_metrics: components.performance_metrics,
+            indexing_operations: components.indexing_operations,
+            admin_service: components.admin_service,
+            config: components.config,
+            event_bus: components.event_bus,
+            log_buffer: components.log_buffer,
+            system_collector: components.system_collector,
         })
     }
 
@@ -389,7 +406,9 @@ impl McpServer {
     }
 
     /// Get system metrics collector
-    pub fn system_collector(&self) -> Arc<dyn crate::metrics::system::SystemMetricsCollectorInterface> {
+    pub fn system_collector(
+        &self,
+    ) -> Arc<dyn crate::metrics::system::SystemMetricsCollectorInterface> {
         Arc::clone(&self.system_collector)
     }
 
@@ -432,23 +451,25 @@ impl McpServer {
         let mut providers = Vec::new();
 
         // Add embedding providers
+        // TODO: Integrate with health monitor to get actual provider status
         for name in embedding_providers {
             providers.push(crate::admin::service::ProviderInfo {
                 id: name.clone(),
                 name,
                 provider_type: "embedding".to_string(),
-                status: "active".to_string(), // Assume active for now
+                status: "unknown".to_string(), // Status unknown until health check verifies
                 config: serde_json::json!({ "type": "embedding" }),
             });
         }
 
         // Add vector store providers
+        // TODO: Integrate with health monitor to get actual provider status
         for name in vector_store_providers {
             providers.push(crate::admin::service::ProviderInfo {
                 id: name.clone(),
                 name,
                 provider_type: "vector_store".to_string(),
-                status: "active".to_string(), // Assume active for now
+                status: "unknown".to_string(), // Status unknown until health check verifies
                 config: serde_json::json!({ "type": "vector_store" }),
             });
         }
@@ -549,10 +570,7 @@ impl McpServer {
             };
 
         // Calculate totals across all operations
-        let total_documents: usize = ops_map
-            .iter()
-            .map(|entry| entry.value().total_files)
-            .sum();
+        let total_documents: usize = ops_map.iter().map(|entry| entry.value().total_files).sum();
         let indexed_documents: usize = ops_map
             .iter()
             .map(|entry| entry.value().processed_files)
@@ -603,7 +621,9 @@ impl McpServer {
             start_time: std::time::Instant::now(),
         };
 
-        self.indexing_operations.get_map().insert(operation_id, operation);
+        self.indexing_operations
+            .get_map()
+            .insert(operation_id, operation);
     }
 
     /// Update indexing operation progress

@@ -49,7 +49,10 @@ impl EventBus {
     }
 
     /// Publish an event to all subscribers
-    pub fn publish(&self, event: SystemEvent) -> Result<usize, broadcast::error::SendError<SystemEvent>> {
+    pub fn publish(
+        &self,
+        event: SystemEvent,
+    ) -> Result<usize, broadcast::error::SendError<SystemEvent>> {
         self.sender.send(event)
     }
 
@@ -81,7 +84,7 @@ pub fn create_shared_event_bus() -> SharedEventBus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio::time::{timeout, Duration};
+    use tokio::time::{Duration, timeout};
 
     #[tokio::test]
     async fn test_event_bus_publish_subscribe() {

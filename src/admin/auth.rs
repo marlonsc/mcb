@@ -100,24 +100,16 @@ impl AuthService {
 
         Ok(token_data.claims)
     }
-
-    /// Simple token validation for middleware (returns admin Claims)
-    pub fn validate_token_simple(&self, token: &str) -> Result<Claims, String> {
-        // For now, accept any non-empty token as admin
-        if token.is_empty() {
-            return Err("Empty token".to_string());
-        }
-
-        Ok(Claims {
-            sub: self.admin_username.clone(),
-            role: "admin".to_string(),
-            exp: 0, // TODO: Add proper expiration
-            iat: 0, // TODO: Add proper issued at
-        })
-    }
 }
 
+// Note: validate_token_simple was removed - it was a security vulnerability that accepted
+// any non-empty token. Use validate_token() for all JWT validation which properly verifies
+// the cryptographic signature and expiration.
+
 /// Authentication middleware
+///
+/// Validates JWT tokens using proper cryptographic signature verification.
+/// All requests must have a valid Bearer token in the Authorization header.
 pub async fn auth_middleware(
     State(state): State<crate::admin::models::AdminState>,
     mut req: Request<axum::body::Body>,
@@ -137,48 +129,35 @@ pub async fn auth_middleware(
         }
     };
 
-    // For now, skip validation in development
-    // TODO: Implement proper JWT validation
-    let claims = match state.admin_api.config().jwt_secret.as_str() {
-        "default-jwt-secret-change-in-production" => {
-            // Development mode - accept any token
-            Ok(crate::admin::auth::Claims {
-                sub: "admin".to_string(),
-                role: "admin".to_string(),
-                exp: 0,
-                iat: 0,
-            })
-        }
-        _ => {
-            // Production mode - use admin auth service
-            let auth_service = match AuthService::new(
-                state.admin_api.config().jwt_secret.clone(),
-                state.admin_api.config().jwt_expiration,
-                state.admin_api.config().username.clone(),
-                state.admin_api.config().password.clone(),
-            ) {
-                Ok(service) => service,
-                Err(e) => {
-                    return Ok((
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        format!("Auth service initialization failed: {}", e),
-                    )
-                        .into_response());
-                }
-            };
-
-            // For now, do basic validation - TODO: implement full JWT validation
-            auth_service.validate_token_simple(token)
+    // Create auth service with proper configuration
+    let auth_service = match AuthService::new(
+        state.admin_api.config().jwt_secret.clone(),
+        state.admin_api.config().jwt_expiration,
+        state.admin_api.config().username.clone(),
+        state.admin_api.config().password.clone(),
+    ) {
+        Ok(service) => service,
+        Err(e) => {
+            tracing::error!("Auth service initialization failed: {}", e);
+            return Ok((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Authentication service unavailable",
+            )
+                .into_response());
         }
     };
 
-    match claims {
+    // Validate token with proper cryptographic signature verification
+    match auth_service.validate_token(token) {
         Ok(claims) => {
             // Add user info to request extensions
             req.extensions_mut().insert(claims);
             Ok(next.run(req).await)
         }
-        Err(_) => Ok((StatusCode::UNAUTHORIZED, "Invalid authentication token").into_response()),
+        Err(e) => {
+            tracing::debug!("Token validation failed: {}", e);
+            Ok((StatusCode::UNAUTHORIZED, "Invalid authentication token").into_response())
+        }
     }
 }
 

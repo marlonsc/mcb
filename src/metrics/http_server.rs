@@ -15,8 +15,7 @@ use crate::core::rate_limit::RateLimiter;
 // Rate limiting middleware will be added later
 
 use crate::metrics::{
-    CpuMetrics, MemoryMetrics, CacheMetrics,
-    system::SystemMetricsCollectorInterface,
+    CacheMetrics, CpuMetrics, MemoryMetrics, system::SystemMetricsCollectorInterface,
 };
 use crate::server::server::PerformanceMetricsInterface;
 
@@ -165,7 +164,7 @@ impl MetricsApiServer {
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
         let performance_data = state.performance_metrics.get_performance_metrics();
-        
+
         // Convert to CacheMetrics for response compatibility
         let cache = CacheMetrics {
             hits: performance_data.successful_queries, // This is a bit of a stretch but we follow the data we have
@@ -294,9 +293,7 @@ impl MetricsApiServer {
     async fn query_metrics_handler(
         State(state): State<MetricsServerState>,
     ) -> Result<Json<crate::admin::service::PerformanceMetricsData>, StatusCode> {
-        Ok(Json(
-            state.performance_metrics.get_performance_metrics(),
-        ))
+        Ok(Json(state.performance_metrics.get_performance_metrics()))
     }
 
     async fn cache_metrics_handler(

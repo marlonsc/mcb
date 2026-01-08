@@ -413,6 +413,7 @@ impl Default for FailoverManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::providers::routing::health::{HealthCheckResult, ProviderHealthStatus};
 
     #[tokio::test]
     async fn test_priority_based_failover() {
@@ -437,10 +438,22 @@ mod tests {
             "tertiary".to_string(),
         ];
 
+        // Register providers as healthy (unknown providers are now considered unhealthy)
+        for provider in &candidates {
+            health_monitor
+                .record_result(HealthCheckResult {
+                    provider_id: provider.clone(),
+                    status: ProviderHealthStatus::Healthy,
+                    response_time: std::time::Duration::from_millis(10),
+                    error_message: None,
+                })
+                .await;
+        }
+
         let context = FailoverContext::default();
         let result = manager.select_provider(&candidates, &context).await;
 
-        // Should succeed since providers are considered healthy by default even if not registered
+        // Should succeed since providers are registered as healthy
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "primary");
     }
@@ -450,13 +463,26 @@ mod tests {
         let registry = Arc::new(ProviderRegistry::new());
         let health_monitor = Arc::new(HealthMonitor::with_registry(registry));
         let strategy = RoundRobinStrategy::new();
-        let manager = FailoverManager::with_strategy(health_monitor, Box::new(strategy));
+        let manager =
+            FailoverManager::with_strategy(Arc::clone(&health_monitor), Box::new(strategy));
 
         let candidates = vec![
             "provider1".to_string(),
             "provider2".to_string(),
             "provider3".to_string(),
         ];
+
+        // Register providers as healthy (unknown providers are now considered unhealthy)
+        for provider in &candidates {
+            health_monitor
+                .record_result(HealthCheckResult {
+                    provider_id: provider.clone(),
+                    status: ProviderHealthStatus::Healthy,
+                    response_time: std::time::Duration::from_millis(10),
+                    error_message: None,
+                })
+                .await;
+        }
 
         let context = FailoverContext::default();
         let result = manager.select_provider(&candidates, &context).await;
@@ -475,12 +501,32 @@ mod tests {
             "unhealthy".to_string(),
         ];
 
+        // Register healthy1 and healthy2 as healthy, unhealthy as unhealthy
+        for provider in &["healthy1", "healthy2"] {
+            health_monitor
+                .record_result(HealthCheckResult {
+                    provider_id: provider.to_string(),
+                    status: ProviderHealthStatus::Healthy,
+                    response_time: std::time::Duration::from_millis(10),
+                    error_message: None,
+                })
+                .await;
+        }
+        health_monitor
+            .record_result(HealthCheckResult {
+                provider_id: "unhealthy".to_string(),
+                status: ProviderHealthStatus::Unhealthy,
+                response_time: std::time::Duration::from_millis(10),
+                error_message: Some("test".to_string()),
+            })
+            .await;
+
         let exclude = vec!["unhealthy".to_string()];
 
         let candidates = manager
             .get_failover_candidates(&all_providers, &exclude)
             .await;
-        assert_eq!(candidates.len(), 2); // All providers are healthy by default
+        assert_eq!(candidates.len(), 2); // Only healthy providers returned
     }
 
     #[tokio::test]

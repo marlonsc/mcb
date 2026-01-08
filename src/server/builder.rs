@@ -1,15 +1,16 @@
-use std::sync::Arc;
-use arc_swap::ArcSwap;
 use crate::config::Config;
 use crate::core::cache::CacheManager;
 use crate::core::events::SharedEventBus;
+use crate::core::limits::ResourceLimits;
 use crate::core::logging::SharedLogBuffer;
-use crate::server::server::{McpServer, PerformanceMetricsInterface, IndexingOperationsInterface};
 use crate::di::factory::ServiceProviderInterface;
 use crate::metrics::system::SystemMetricsCollectorInterface;
-use crate::core::limits::ResourceLimits;
+use crate::server::server::{IndexingOperationsInterface, McpServer, PerformanceMetricsInterface};
+use arc_swap::ArcSwap;
+use std::sync::Arc;
 
 /// Builder for McpServer to handle complex dependency injection
+#[derive(Default)]
 pub struct McpServerBuilder {
     config: Option<Arc<ArcSwap<Config>>>,
     cache_manager: Option<Arc<CacheManager>>,
@@ -24,17 +25,7 @@ pub struct McpServerBuilder {
 
 impl McpServerBuilder {
     pub fn new() -> Self {
-        Self {
-            config: None,
-            cache_manager: None,
-            event_bus: None,
-            log_buffer: None,
-            performance_metrics: None,
-            indexing_operations: None,
-            service_provider: None,
-            system_collector: None,
-            resource_limits: None,
-        }
+        Self::default()
     }
 
     pub fn with_config(mut self, config: Arc<ArcSwap<Config>>) -> Self {
@@ -57,7 +48,10 @@ impl McpServerBuilder {
         self
     }
 
-    pub fn with_performance_metrics(mut self, metrics: Arc<dyn PerformanceMetricsInterface>) -> Self {
+    pub fn with_performance_metrics(
+        mut self,
+        metrics: Arc<dyn PerformanceMetricsInterface>,
+    ) -> Self {
         self.performance_metrics = Some(metrics);
         self
     }
@@ -72,7 +66,10 @@ impl McpServerBuilder {
         self
     }
 
-    pub fn with_system_collector(mut self, collector: Arc<dyn SystemMetricsCollectorInterface>) -> Self {
+    pub fn with_system_collector(
+        mut self,
+        collector: Arc<dyn SystemMetricsCollectorInterface>,
+    ) -> Self {
         self.system_collector = Some(collector);
         self
     }
@@ -94,24 +91,28 @@ impl McpServerBuilder {
             Arc::new(ArcSwap::from_pointee(config))
         };
 
-        let event_bus = self.event_bus.unwrap_or_else(|| Arc::new(crate::core::events::EventBus::default()));
-        let log_buffer = self.log_buffer.unwrap_or_else(|| crate::core::logging::create_shared_log_buffer(1000));
-        
-        let performance_metrics = self.performance_metrics.unwrap_or_else(|| {
-            Arc::new(crate::server::server::McpPerformanceMetrics::default())
-        });
-        
-        let indexing_operations = self.indexing_operations.unwrap_or_else(|| {
-            Arc::new(crate::server::server::McpIndexingOperations::default())
-        });
-        
-        let service_provider = self.service_provider.unwrap_or_else(|| {
-            Arc::new(crate::di::factory::ServiceProvider::new())
-        });
-        
-        let system_collector = self.system_collector.unwrap_or_else(|| {
-            Arc::new(crate::metrics::system::SystemMetricsCollector::new())
-        });
+        let event_bus = self
+            .event_bus
+            .unwrap_or_else(|| Arc::new(crate::core::events::EventBus::default()));
+        let log_buffer = self
+            .log_buffer
+            .unwrap_or_else(|| crate::core::logging::create_shared_log_buffer(1000));
+
+        let performance_metrics = self
+            .performance_metrics
+            .unwrap_or_else(|| Arc::new(crate::server::server::McpPerformanceMetrics::default()));
+
+        let indexing_operations = self
+            .indexing_operations
+            .unwrap_or_else(|| Arc::new(crate::server::server::McpIndexingOperations::default()));
+
+        let service_provider = self
+            .service_provider
+            .unwrap_or_else(|| Arc::new(crate::di::factory::ServiceProvider::new()));
+
+        let system_collector = self
+            .system_collector
+            .unwrap_or_else(|| Arc::new(crate::metrics::system::SystemMetricsCollector::new()));
 
         // Initialize resource limits from config if not provided
         let resource_limits = if let Some(rl) = self.resource_limits {
@@ -142,8 +143,8 @@ impl McpServerBuilder {
         )) as Arc<dyn crate::admin::service::AdminService>;
 
         // Use from_components to assemble the server
-        McpServer::from_components(
-            config_arc,
+        McpServer::from_components(crate::server::server::ServerComponents {
+            config: config_arc,
             cache_manager,
             performance_metrics,
             indexing_operations,
@@ -153,6 +154,7 @@ impl McpServerBuilder {
             event_bus,
             log_buffer,
             system_collector,
-        ).await
+        })
+        .await
     }
 }

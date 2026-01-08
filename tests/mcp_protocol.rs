@@ -270,8 +270,8 @@ mod tests {
 
         // Server creation succeeded - this is expected with mock/default providers
         assert!(
-            true,
-            "Server should initialize successfully with default providers"
+            _server.get_info().server_info.name == "MCP Context Browser",
+            "Server should initialize successfully with correct name"
         );
     }
 
@@ -314,7 +314,10 @@ mod tests {
 
         // The server should have a tool router (internal implementation detail)
         // We can't directly test the router, but we can verify the server structure
-        assert!(true, "Server with tool router initialized successfully");
+        assert!(
+            !_server.get_info().server_info.name.is_empty(),
+            "Server with tool router initialized successfully"
+        );
     }
 
     #[tokio::test]

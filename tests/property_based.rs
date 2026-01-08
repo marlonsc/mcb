@@ -178,7 +178,7 @@ mod property_tests {
                 prop_assert!(value.is_finite());
 
                 // Values should be within reasonable bounds for embeddings
-                prop_assert!(value >= -100.0 && value <= 100.0);
+                prop_assert!((-100.0..=100.0).contains(&value));
             }
 
             let embedding = Embedding {
@@ -261,11 +261,11 @@ mod integration_property_tests {
             for (op_type, value) in operations {
                 match op_type {
                     "set_line" => {
-                        if let Ok(line) = value.parse::<u32>() {
-                            if line > 0 {
-                                chunk.start_line = line;
-                                chunk.end_line = chunk.end_line.max(line);
-                            }
+                        if let Ok(line) = value.parse::<u32>()
+                            && line > 0
+                        {
+                            chunk.start_line = line;
+                            chunk.end_line = chunk.end_line.max(line);
                         }
                     },
                     "set_content" => {

@@ -218,6 +218,10 @@ struct OperationCounters {
     active_indexing: AtomicUsize,
     active_search: AtomicUsize,
     active_embedding: AtomicUsize,
+    /// Tracks operations waiting to acquire permits
+    queued_indexing: AtomicUsize,
+    queued_search: AtomicUsize,
+    queued_embedding: AtomicUsize,
 }
 
 impl ResourceLimits {
@@ -256,6 +260,9 @@ impl ResourceLimits {
     }
 
     /// Acquire a permit for an operation
+    ///
+    /// Tracks both queued and active operations. Operations are considered queued
+    /// while waiting for a semaphore permit, then transition to active once acquired.
     pub async fn acquire_operation_permit(
         &self,
         operation_type: &str,
@@ -270,27 +277,66 @@ impl ResourceLimits {
 
         let permit = match operation_type {
             "indexing" => {
-                let permit = self.indexing_semaphore.acquire().await.map_err(|e| {
+                // Track as queued while waiting
+                self.operation_counters
+                    .queued_indexing
+                    .fetch_add(1, Ordering::Relaxed);
+
+                let permit_result = self.indexing_semaphore.acquire().await;
+
+                // Remove from queue (whether success or failure)
+                self.operation_counters
+                    .queued_indexing
+                    .fetch_sub(1, Ordering::Relaxed);
+
+                let permit = permit_result.map_err(|e| {
                     Error::generic(format!("Failed to acquire indexing permit: {}", e))
                 })?;
+
                 self.operation_counters
                     .active_indexing
                     .fetch_add(1, Ordering::Relaxed);
                 Some(permit)
             }
             "search" => {
-                let permit = self.search_semaphore.acquire().await.map_err(|e| {
+                // Track as queued while waiting
+                self.operation_counters
+                    .queued_search
+                    .fetch_add(1, Ordering::Relaxed);
+
+                let permit_result = self.search_semaphore.acquire().await;
+
+                // Remove from queue (whether success or failure)
+                self.operation_counters
+                    .queued_search
+                    .fetch_sub(1, Ordering::Relaxed);
+
+                let permit = permit_result.map_err(|e| {
                     Error::generic(format!("Failed to acquire search permit: {}", e))
                 })?;
+
                 self.operation_counters
                     .active_search
                     .fetch_add(1, Ordering::Relaxed);
                 Some(permit)
             }
             "embedding" => {
-                let permit = self.embedding_semaphore.acquire().await.map_err(|e| {
+                // Track as queued while waiting
+                self.operation_counters
+                    .queued_embedding
+                    .fetch_add(1, Ordering::Relaxed);
+
+                let permit_result = self.embedding_semaphore.acquire().await;
+
+                // Remove from queue (whether success or failure)
+                self.operation_counters
+                    .queued_embedding
+                    .fetch_sub(1, Ordering::Relaxed);
+
+                let permit = permit_result.map_err(|e| {
                     Error::generic(format!("Failed to acquire embedding permit: {}", e))
                 })?;
+
                 self.operation_counters
                     .active_embedding
                     .fetch_add(1, Ordering::Relaxed);
@@ -412,117 +458,96 @@ impl ResourceLimits {
         Ok(())
     }
 
-    /// Get memory statistics
+    /// Get memory statistics (cross-platform using sysinfo)
     async fn get_memory_stats(&self) -> Result<MemoryStats> {
-        #[cfg(target_os = "linux")]
-        {
-            use sysinfo::{MemoryRefreshKind, RefreshKind, System};
+        use sysinfo::{MemoryRefreshKind, RefreshKind, System};
 
-            let mut system = System::new_with_specifics(
-                RefreshKind::everything().with_memory(MemoryRefreshKind::everything()),
-            );
-            system.refresh_memory();
+        let mut system = System::new_with_specifics(
+            RefreshKind::everything().with_memory(MemoryRefreshKind::everything()),
+        );
+        system.refresh_memory();
 
-            let total = system.total_memory();
-            let used = system.used_memory();
-            let available = total.saturating_sub(used);
-            let usage_percent = if total > 0 {
-                (used as f32 / total as f32) * 100.0
-            } else {
-                0.0
-            };
+        let total = system.total_memory();
+        let used = system.used_memory();
+        let available = total.saturating_sub(used);
+        let usage_percent = if total > 0 {
+            (used as f32 / total as f32) * 100.0
+        } else {
+            0.0
+        };
 
-            Ok(MemoryStats {
-                total,
-                used,
-                available,
-                usage_percent,
-            })
-        }
-
-        #[cfg(not(target_os = "linux"))]
-        {
-            // Fallback for non-Linux systems
-            Ok(MemoryStats {
-                total: 8 * 1024 * 1024 * 1024, // 8GB assumed
-                used: 4 * 1024 * 1024 * 1024,  // 4GB assumed
-                available: 4 * 1024 * 1024 * 1024,
-                usage_percent: 50.0,
-            })
-        }
+        Ok(MemoryStats {
+            total,
+            used,
+            available,
+            usage_percent,
+        })
     }
 
-    /// Get CPU statistics
+    /// Get CPU statistics (cross-platform using sysinfo)
     async fn get_cpu_stats(&self) -> Result<CpuStats> {
-        #[cfg(target_os = "linux")]
-        {
-            use sysinfo::{CpuRefreshKind, RefreshKind, System};
+        use sysinfo::{CpuRefreshKind, RefreshKind, System};
 
-            let mut system = System::new_with_specifics(
-                RefreshKind::everything().with_cpu(CpuRefreshKind::everything()),
-            );
-            system.refresh_cpu_all();
+        let mut system = System::new_with_specifics(
+            RefreshKind::everything().with_cpu(CpuRefreshKind::everything()),
+        );
+        system.refresh_cpu_all();
 
-            let cores = system.cpus().len();
-            let usage_percent =
-                system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f32>() / cores as f32;
+        let cores = system.cpus().len();
+        let usage_percent = if cores > 0 {
+            system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f32>() / cores as f32
+        } else {
+            0.0
+        };
 
-            Ok(CpuStats {
-                usage_percent,
-                cores,
-            })
-        }
-
-        #[cfg(not(target_os = "linux"))]
-        {
-            // Fallback for non-Linux systems
-            Ok(CpuStats {
-                usage_percent: 25.0,
-                cores: 4,
-            })
-        }
+        Ok(CpuStats {
+            usage_percent,
+            cores,
+        })
     }
 
-    /// Get disk statistics
+    /// Get disk statistics (cross-platform using sysinfo)
     async fn get_disk_stats(&self) -> Result<DiskStats> {
-        #[cfg(target_os = "linux")]
-        {
-            use std::path::Path;
+        use sysinfo::Disks;
 
-            let path = Path::new("/");
-            let statvfs = nix::sys::statvfs::statvfs(path)?;
+        let disks = Disks::new_with_refreshed_list();
 
-            let total = statvfs.blocks() * statvfs.fragment_size();
-            let available = statvfs.blocks_available() * statvfs.fragment_size();
-            let used = total.saturating_sub(available);
-            let usage_percent = if total > 0 {
-                ((total - available) as f32 / total as f32) * 100.0
-            } else {
-                0.0
-            };
+        // Sum up all disks' space (handles multiple disks/partitions)
+        let (total, available) = disks.iter().fold((0u64, 0u64), |(total, avail), disk| {
+            (total + disk.total_space(), avail + disk.available_space())
+        });
 
-            Ok(DiskStats {
-                total,
-                used,
-                available,
-                usage_percent,
-            })
-        }
+        let used = total.saturating_sub(available);
+        let usage_percent = if total > 0 {
+            (used as f32 / total as f32) * 100.0
+        } else {
+            0.0
+        };
 
-        #[cfg(not(target_os = "linux"))]
-        {
-            // Fallback for non-Linux systems
-            Ok(DiskStats {
-                total: 256 * 1024 * 1024 * 1024, // 256GB assumed
-                used: 128 * 1024 * 1024 * 1024,  // 128GB assumed
-                available: 128 * 1024 * 1024 * 1024,
-                usage_percent: 50.0,
-            })
-        }
+        Ok(DiskStats {
+            total,
+            used,
+            available,
+            usage_percent,
+        })
     }
 
     /// Get operation statistics
     async fn get_operation_stats(&self) -> Result<OperationStats> {
+        // Sum all queued operations across operation types
+        let queued_operations = self
+            .operation_counters
+            .queued_indexing
+            .load(Ordering::Relaxed)
+            + self
+                .operation_counters
+                .queued_search
+                .load(Ordering::Relaxed)
+            + self
+                .operation_counters
+                .queued_embedding
+                .load(Ordering::Relaxed);
+
         Ok(OperationStats {
             active_indexing: self
                 .operation_counters
@@ -536,7 +561,7 @@ impl ResourceLimits {
                 .operation_counters
                 .active_embedding
                 .load(Ordering::Relaxed),
-            queued_operations: 0, // TODO: Implement queue tracking
+            queued_operations,
         })
     }
 

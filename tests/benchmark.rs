@@ -519,7 +519,7 @@ pub fn bench_mcp_operations(c: &mut Criterion) {
         b.iter(|| {
             let result = black_box({
                 // Test real tool discovery performance - MCP tool enumeration
-                let tools = vec![
+                let tools = [
                     "search_code".to_string(),
                     "index_codebase".to_string(),
                     "get_indexing_status".to_string(),

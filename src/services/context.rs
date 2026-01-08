@@ -405,31 +405,39 @@ where
 }
 
 /// Repository-based context service using Repository pattern
-pub struct RepositoryContextService<C, S>
+pub struct RepositoryContextService<C, S, E>
 where
     C: crate::repository::ChunkRepository + Send + Sync,
     S: crate::repository::SearchRepository + Send + Sync,
+    E: EmbeddingProvider + Send + Sync,
 {
     chunk_repository: Arc<C>,
     search_repository: Arc<S>,
+    embedding_provider: Arc<E>,
 }
 
-impl<C, S> RepositoryContextService<C, S>
+impl<C, S, E> RepositoryContextService<C, S, E>
 where
     C: crate::repository::ChunkRepository + Send + Sync,
     S: crate::repository::SearchRepository + Send + Sync,
+    E: EmbeddingProvider + Send + Sync,
 {
     /// Create a new repository-based context service
-    pub fn new(chunk_repository: Arc<C>, search_repository: Arc<S>) -> Self {
+    pub fn new(
+        chunk_repository: Arc<C>,
+        search_repository: Arc<S>,
+        embedding_provider: Arc<E>,
+    ) -> Self {
         Self {
             chunk_repository,
             search_repository,
+            embedding_provider,
         }
     }
 
-    /// Generate embeddings for text using repository-based approach
-    pub async fn embed_text(&self, _text: &str) -> Result<Embedding> {
-        Err(Error::generic("Repository-based embedding not implemented"))
+    /// Generate embeddings for text
+    pub async fn embed_text(&self, text: &str) -> Result<Embedding> {
+        self.embedding_provider.embed(text).await
     }
 
     /// Store code chunks using the chunk repository

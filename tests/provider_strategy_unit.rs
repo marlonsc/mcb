@@ -1,3 +1,4 @@
+#![allow(clippy::assertions_on_constants)]
 //! Unit tests for provider strategy pattern implementations
 
 /// Test provider trait implementations

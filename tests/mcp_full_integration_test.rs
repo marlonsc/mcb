@@ -77,7 +77,10 @@ mod full_integration_tests {
 
         // Check that the system is still running and responsive
         let system_info = server.get_system_info();
-        assert!(system_info.version.len() > 0, "System should be responsive");
+        assert!(
+            !system_info.version.is_empty(),
+            "System should be responsive"
+        );
 
         println!("✅ Indexing process initiated successfully");
 
@@ -107,7 +110,7 @@ mod full_integration_tests {
             "Search should return some content"
         );
         assert!(
-            search_result.content.len() > 0,
+            !search_result.content.is_empty(),
             "Search should return at least one result"
         );
 

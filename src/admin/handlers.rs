@@ -1,7 +1,7 @@
 //! HTTP handlers for admin API endpoints
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     response::Json,
 };
@@ -130,7 +130,17 @@ pub async fn add_provider_handler(
         .add_provider(&provider_config.provider_type, provider_config.config)
         .await
     {
-        Ok(provider_info) => Ok(Json(ApiResponse::success(provider_info))),
+        Ok(svc_info) => {
+            // Convert service::ProviderInfo to models::ProviderInfo
+            let provider_info = ProviderInfo {
+                id: svc_info.id,
+                name: svc_info.name,
+                provider_type: svc_info.provider_type,
+                status: svc_info.status,
+                config: svc_info.config,
+            };
+            Ok(Json(ApiResponse::success(provider_info)))
+        }
         Err(e) => Ok(Json(ApiResponse::error(format!(
             "Failed to add provider: {}",
             e
@@ -331,10 +341,11 @@ pub async fn get_configuration_handler(
 /// Update system configuration
 pub async fn update_configuration_handler(
     State(state): State<AdminState>,
+    Extension(claims): Extension<crate::admin::auth::Claims>,
     Json(updates): Json<std::collections::HashMap<String, serde_json::Value>>,
 ) -> Result<Json<ApiResponse<crate::admin::service::ConfigurationUpdateResult>>, StatusCode> {
-    // Get user from request context (simplified - in real implementation, get from JWT)
-    let user = "admin";
+    // Extract authenticated user from JWT claims
+    let user = &claims.sub;
 
     let result = state
         .admin_service

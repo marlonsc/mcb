@@ -5,14 +5,14 @@
 //!
 //! Uses the Actor pattern with mpsc channels - NO LOCKS.
 
-use std::collections::VecDeque;
-use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
+use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
 use tracing::{Event, Level, Subscriber};
-use tracing_subscriber::layer::Context;
 use tracing_subscriber::Layer;
+use tracing_subscriber::layer::Context;
 
 /// A single log entry stored in the ring buffer
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,14 +96,20 @@ impl LogBuffer {
     /// Get the most recent N entries
     pub async fn get_recent(&self, count: usize) -> Vec<LogEntry> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.sender.send(LogBufferMessage::GetRecent(count, tx)).await;
+        let _ = self
+            .sender
+            .send(LogBufferMessage::GetRecent(count, tx))
+            .await;
         rx.await.unwrap_or_default()
     }
 
     /// Get entries filtered by level
     pub async fn get_by_level(&self, level: &str) -> Vec<LogEntry> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.sender.send(LogBufferMessage::GetByLevel(level.to_string(), tx)).await;
+        let _ = self
+            .sender
+            .send(LogBufferMessage::GetByLevel(level.to_string(), tx))
+            .await;
         rx.await.unwrap_or_default()
     }
 
@@ -155,7 +161,8 @@ impl LogBufferActor {
                     let _ = tx.send(entries);
                 }
                 LogBufferMessage::GetRecent(count, tx) => {
-                    let entries: Vec<LogEntry> = self.entries
+                    let entries: Vec<LogEntry> = self
+                        .entries
                         .iter()
                         .rev()
                         .take(count)
@@ -167,7 +174,8 @@ impl LogBufferActor {
                     let _ = tx.send(entries);
                 }
                 LogBufferMessage::GetByLevel(level, tx) => {
-                    let entries: Vec<LogEntry> = self.entries
+                    let entries: Vec<LogEntry> = self
+                        .entries
                         .iter()
                         .filter(|e| e.level == level)
                         .cloned()
@@ -244,12 +252,7 @@ where
             Some(fields.join(", "))
         };
 
-        let entry = LogEntry::new(
-            level,
-            metadata.target(),
-            message,
-            fields_str,
-        );
+        let entry = LogEntry::new(level, metadata.target(), message, fields_str);
 
         // Send to actor (non-blocking)
         self.buffer.push(entry);
@@ -312,7 +315,12 @@ mod tests {
     async fn test_get_recent() {
         let buffer = LogBuffer::new(10);
         for i in 1..=5 {
-            buffer.push(LogEntry::new(Level::INFO, "test", format!("msg{}", i), None));
+            buffer.push(LogEntry::new(
+                Level::INFO,
+                "test",
+                format!("msg{}", i),
+                None,
+            ));
         }
 
         tokio::time::sleep(Duration::from_millis(50)).await;
@@ -326,9 +334,24 @@ mod tests {
     #[tokio::test]
     async fn test_get_by_level() {
         let buffer = LogBuffer::new(10);
-        buffer.push(LogEntry::new(Level::INFO, "test", "info1".to_string(), None));
-        buffer.push(LogEntry::new(Level::ERROR, "test", "error1".to_string(), None));
-        buffer.push(LogEntry::new(Level::INFO, "test", "info2".to_string(), None));
+        buffer.push(LogEntry::new(
+            Level::INFO,
+            "test",
+            "info1".to_string(),
+            None,
+        ));
+        buffer.push(LogEntry::new(
+            Level::ERROR,
+            "test",
+            "error1".to_string(),
+            None,
+        ));
+        buffer.push(LogEntry::new(
+            Level::INFO,
+            "test",
+            "info2".to_string(),
+            None,
+        ));
 
         tokio::time::sleep(Duration::from_millis(50)).await;
 
@@ -341,7 +364,12 @@ mod tests {
     async fn test_shared_buffer() {
         let buffer = create_shared_log_buffer(100);
 
-        buffer.push(LogEntry::new(Level::INFO, "test", "test message".to_string(), None));
+        buffer.push(LogEntry::new(
+            Level::INFO,
+            "test",
+            "test message".to_string(),
+            None,
+        ));
 
         tokio::time::sleep(Duration::from_millis(50)).await;
 

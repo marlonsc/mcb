@@ -31,9 +31,9 @@ impl ConfigLoader {
             .try_deserialize()
             .map_err(|e| Error::config(format!("Failed to deserialize configuration: {}", e)))?;
 
-        config.validate().map_err(|e| {
-            Error::config(format!("Configuration validation failed: {}", e))
-        })?;
+        config
+            .validate()
+            .map_err(|e| Error::config(format!("Configuration validation failed: {}", e)))?;
 
         Ok(config)
     }
@@ -49,9 +49,9 @@ impl ConfigLoader {
             .try_deserialize()
             .map_err(|e| Error::config(format!("Failed to deserialize configuration: {}", e)))?;
 
-        config.validate().map_err(|e| {
-            Error::config(format!("Configuration validation failed: {}", e))
-        })?;
+        config
+            .validate()
+            .map_err(|e| Error::config(format!("Configuration validation failed: {}", e)))?;
 
         Ok(config)
     }

@@ -3,11 +3,11 @@
 //! Provides accurate system monitoring for CPU, memory, disk, network, and process metrics.
 
 use crate::core::error::{Error, Result};
-use serde::{Deserialize, Serialize};
-use sysinfo::{System, Disks, Networks, ProcessesToUpdate, Pid};
-use tokio::sync::{mpsc, oneshot};
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use shaku::Component;
+use sysinfo::{Disks, Networks, Pid, ProcessesToUpdate, System};
+use tokio::sync::{mpsc, oneshot};
 
 /// CPU usage metrics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -115,13 +115,18 @@ impl SystemMetricsCollectorInterface for SystemMetricsCollector {
     async fn collect_cpu_metrics(&self) -> Result<CpuMetrics> {
         let (tx, rx) = oneshot::channel();
         let _ = self.sender.send(SystemMetricsMessage::CollectCpu(tx)).await;
-        rx.await.unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+        rx.await
+            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
     async fn collect_memory_metrics(&self) -> Result<MemoryMetrics> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.sender.send(SystemMetricsMessage::CollectMemory(tx)).await;
-        rx.await.unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+        let _ = self
+            .sender
+            .send(SystemMetricsMessage::CollectMemory(tx))
+            .await;
+        rx.await
+            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
     async fn collect_disk_metrics(&self) -> Result<DiskMetrics> {
@@ -179,8 +184,12 @@ impl SystemMetricsCollectorInterface for SystemMetricsCollector {
 
     async fn collect_process_metrics(&self) -> Result<ProcessMetrics> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.sender.send(SystemMetricsMessage::CollectProcess(tx)).await;
-        rx.await.unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+        let _ = self
+            .sender
+            .send(SystemMetricsMessage::CollectProcess(tx))
+            .await;
+        rx.await
+            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
     async fn collect_all_metrics(
@@ -237,32 +246,63 @@ impl SystemMetricsActor {
                         let _ = tx.send(Err(Error::internal("No CPU information available")));
                         continue;
                     }
-                    let usage = cpus.iter().map(|cpu| cpu.cpu_usage()).sum::<f32>() / cpus.len() as f32;
+                    let usage =
+                        cpus.iter().map(|cpu| cpu.cpu_usage()).sum::<f32>() / cpus.len() as f32;
                     let cores = cpus.len();
                     let model = cpus[0].brand().to_string();
                     let speed = cpus[0].frequency();
-                    let _ = tx.send(Ok(CpuMetrics { usage, cores, model, speed }));
+                    let _ = tx.send(Ok(CpuMetrics {
+                        usage,
+                        cores,
+                        model,
+                        speed,
+                    }));
                 }
                 SystemMetricsMessage::CollectMemory(tx) => {
                     self.system.refresh_memory();
                     let total = self.system.total_memory();
                     let used = self.system.used_memory();
                     let free = self.system.free_memory();
-                    let usage_percent = if total > 0 { (used as f32 / total as f32) * 100.0 } else { 0.0 };
-                    let _ = tx.send(Ok(MemoryMetrics { total, used, free, usage_percent }));
+                    let usage_percent = if total > 0 {
+                        (used as f32 / total as f32) * 100.0
+                    } else {
+                        0.0
+                    };
+                    let _ = tx.send(Ok(MemoryMetrics {
+                        total,
+                        used,
+                        free,
+                        usage_percent,
+                    }));
                 }
                 SystemMetricsMessage::CollectProcess(tx) => {
                     let pid = std::process::id();
-                    self.system.refresh_processes(ProcessesToUpdate::Some(&[Pid::from(pid as usize)]), true);
+                    self.system.refresh_processes(
+                        ProcessesToUpdate::Some(&[Pid::from(pid as usize)]),
+                        true,
+                    );
                     if let Some(process) = self.system.process(Pid::from(pid as usize)) {
                         let memory = process.memory();
                         let cpu_percent = process.cpu_usage();
                         let uptime = process.run_time();
                         let total_memory = self.system.total_memory();
-                        let memory_percent = if total_memory > 0 { (memory as f32 / total_memory as f32) * 100.0 } else { 0.0 };
-                        let _ = tx.send(Ok(ProcessMetrics { pid, memory, memory_percent, cpu_percent, uptime }));
+                        let memory_percent = if total_memory > 0 {
+                            (memory as f32 / total_memory as f32) * 100.0
+                        } else {
+                            0.0
+                        };
+                        let _ = tx.send(Ok(ProcessMetrics {
+                            pid,
+                            memory,
+                            memory_percent,
+                            cpu_percent,
+                            uptime,
+                        }));
                     } else {
-                        let _ = tx.send(Err(Error::internal(format!("Process with PID {} not found", pid))));
+                        let _ = tx.send(Err(Error::internal(format!(
+                            "Process with PID {} not found",
+                            pid
+                        ))));
                     }
                 }
             }

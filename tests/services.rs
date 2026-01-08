@@ -1,3 +1,4 @@
+#![allow(clippy::assertions_on_constants)]
 //! Tests for service layer
 //!
 //! This module tests the business logic services including ContextService,

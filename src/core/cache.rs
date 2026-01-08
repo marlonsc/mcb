@@ -326,30 +326,27 @@ impl CacheManager {
 
         tokio::spawn(async move {
             while let Ok(event) = receiver.recv().await {
-                match event {
-                    SystemEvent::CacheClear { namespace } => {
-                        if let Some(ns) = namespace {
-                            tracing::info!("[CACHE] Clearing namespace: {}", ns);
-                            if let Err(e) = manager.clear_namespace(&ns).await {
+                if let SystemEvent::CacheClear { namespace } = event {
+                    if let Some(ns) = namespace {
+                        tracing::info!("[CACHE] Clearing namespace: {}", ns);
+                        if let Err(e) = manager.clear_namespace(&ns).await {
+                            tracing::error!("[CACHE] Failed to clear namespace {}: {}", ns, e);
+                        }
+                    } else {
+                        tracing::info!("[CACHE] Clearing all namespaces");
+                        let namespaces = [
+                            "embeddings",
+                            "search_results",
+                            "metadata",
+                            "provider_responses",
+                            "sync_batches",
+                        ];
+                        for ns in namespaces {
+                            if let Err(e) = manager.clear_namespace(ns).await {
                                 tracing::error!("[CACHE] Failed to clear namespace {}: {}", ns, e);
-                            }
-                        } else {
-                            tracing::info!("[CACHE] Clearing all namespaces");
-                            let namespaces = [
-                                "embeddings",
-                                "search_results",
-                                "metadata",
-                                "provider_responses",
-                                "sync_batches",
-                            ];
-                            for ns in namespaces {
-                                if let Err(e) = manager.clear_namespace(ns).await {
-                                    tracing::error!("[CACHE] Failed to clear namespace {}: {}", ns, e);
-                                }
                             }
                         }
                     }
-                    _ => {}
                 }
             }
         });
@@ -879,7 +876,10 @@ impl CacheManager {
 static CACHE_MANAGER: std::sync::OnceLock<CacheManager> = std::sync::OnceLock::new();
 
 /// Initialize global cache manager
-pub async fn init_global_cache_manager(config: CacheConfig, event_bus: Option<SharedEventBus>) -> Result<()> {
+pub async fn init_global_cache_manager(
+    config: CacheConfig,
+    event_bus: Option<SharedEventBus>,
+) -> Result<()> {
     let manager = CacheManager::new(config, event_bus).await?;
     CACHE_MANAGER
         .set(manager)

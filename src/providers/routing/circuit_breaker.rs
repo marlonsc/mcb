@@ -141,7 +141,8 @@ impl CircuitBreaker {
 
         // Try to load persisted state if enabled
         if config.persistence_enabled
-            && let Ok(Some(snapshot)) = actor.load_snapshot().await {
+            && let Ok(Some(snapshot)) = actor.load_snapshot().await
+        {
             actor.apply_snapshot(snapshot);
         }
 
@@ -324,7 +325,8 @@ impl CircuitBreakerActor {
 
     fn check_state_transition(&mut self) {
         if let CircuitBreakerState::Open { opened_at } = self.state
-            && opened_at.elapsed() >= self.config.recovery_timeout {
+            && opened_at.elapsed() >= self.config.recovery_timeout
+        {
             info!("Circuit breaker {} transitioning to Half-Open", self.id);
             self.state = CircuitBreakerState::HalfOpen;
             self.half_open_request_count = 0;

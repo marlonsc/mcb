@@ -157,6 +157,10 @@ enum EdgeVecMessage {
         collection: String,
         tx: oneshot::Sender<Result<HashMap<String, serde_json::Value>>>,
     },
+    CollectionExists {
+        name: String,
+        tx: oneshot::Sender<Result<bool>>,
+    },
 }
 
 /// EdgeVec vector store provider implementation using Actor pattern
@@ -218,10 +222,17 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
-    async fn collection_exists(&self, _name: &str) -> Result<bool> {
-        // Simple check - for now just return true if it's the current collection
-        // In a real implementation, the actor would track collections
-        Ok(true)
+    async fn collection_exists(&self, name: &str) -> Result<bool> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .sender
+            .send(EdgeVecMessage::CollectionExists {
+                name: name.to_string(),
+                tx,
+            })
+            .await;
+        rx.await
+            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
     async fn insert_vectors(
@@ -415,7 +426,8 @@ impl EdgeVecActor {
                                     });
 
                                     if let Some(ext_id) = external_id
-                                        && let Some(meta_val) = collection_metadata.get(&ext_id) {
+                                        && let Some(meta_val) = collection_metadata.get(&ext_id)
+                                    {
                                         let meta =
                                             meta_val.as_object().cloned().unwrap_or_default();
                                         final_results.push(SearchResult {
@@ -480,6 +492,10 @@ impl EdgeVecActor {
                         serde_json::json!(self.config.dimensions),
                     );
                     let _ = tx.send(Ok(stats));
+                }
+                EdgeVecMessage::CollectionExists { name, tx } => {
+                    let exists = self.metadata_store.contains_key(&name);
+                    let _ = tx.send(Ok(exists));
                 }
             }
         }

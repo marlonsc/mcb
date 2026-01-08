@@ -242,16 +242,32 @@ impl HealthMonitor {
             Err(Error::generic("No health checker configured"))
         }
     }
+
+    /// Mark a provider as healthy (for testing or manual override)
+    pub fn mark_healthy(&self, provider_id: &str) {
+        self.health_states.insert(
+            provider_id.to_string(),
+            ProviderHealth {
+                provider_id: provider_id.to_string(),
+                status: ProviderHealthStatus::Healthy,
+                last_check: std::time::Instant::now(),
+                consecutive_failures: 0,
+                total_checks: 1,
+                response_time: Some(std::time::Duration::from_millis(1)),
+            },
+        );
+    }
 }
 
 #[async_trait::async_trait]
 impl HealthMonitorTrait for HealthMonitor {
     /// Check if a provider is considered healthy
+    /// Returns false if provider is unknown (fail-safe: unknown providers don't receive traffic)
     async fn is_healthy(&self, provider_id: &str) -> bool {
         self.health_states
             .get(provider_id)
             .map(|h| h.status == ProviderHealthStatus::Healthy)
-            .unwrap_or(true) // Assume healthy if unknown
+            .unwrap_or(false) // Fail-safe: assume unhealthy if unknown
     }
 
     /// Get detailed health information for a provider
@@ -333,7 +349,8 @@ mod tests {
     #[tokio::test]
     async fn test_health_monitor_creation() {
         let monitor = HealthMonitor::new();
-        assert!(monitor.is_healthy("any").await);
+        // Unknown providers are considered unhealthy (fail-safe behavior)
+        assert!(!monitor.is_healthy("any").await);
     }
 
     #[tokio::test]

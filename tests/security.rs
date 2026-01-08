@@ -32,8 +32,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_request_size_limit() {
-        let mut config = SecurityConfig::default();
-        config.max_request_size = 100; // Very small limit
+        let config = SecurityConfig {
+            max_request_size: 100, // Very small limit
+            ..Default::default()
+        };
 
         // Test that config properly stores the limit
         assert_eq!(config.max_request_size, 100);
@@ -128,10 +130,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_hsts_header() {
-        let mut config = SecurityConfig::default();
-        config.hsts_enabled = true;
-        config.hsts_max_age = 86400; // 1 day
-        config.hsts_include_subdomains = true;
+        let config = SecurityConfig {
+            hsts_enabled: true,
+            hsts_max_age: 86400, // 1 day
+            hsts_include_subdomains: true,
+            ..Default::default()
+        };
 
         // Test that HSTS config is properly set
         assert!(config.hsts_enabled);
@@ -141,8 +145,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_content_security_policy() {
-        let mut config = SecurityConfig::default();
-        config.content_security_policy = Some("default-src 'self'".to_string());
+        let config = SecurityConfig {
+            content_security_policy: Some("default-src 'self'".to_string()),
+            ..Default::default()
+        };
 
         // Test that CSP config is properly set
         assert_eq!(

@@ -2,8 +2,8 @@
 
 use crate::chunking::IntelligentChunker;
 use crate::core::error::{Error, Result};
-use crate::core::types::CodeChunk;
 use crate::core::events::{SharedEventBus, SystemEvent};
+use crate::core::types::CodeChunk;
 use crate::services::context::ContextService;
 use crate::snapshot::SnapshotManager;
 use crate::sync::SyncManager;
@@ -47,17 +47,14 @@ impl IndexingService {
     /// Start listening for system events
     pub fn start_event_listener(&self, event_bus: SharedEventBus) {
         let mut receiver = event_bus.subscribe();
-        let _service = Arc::new(self.clone_service()); 
+        let _service = Arc::new(self.clone_service());
 
         tokio::spawn(async move {
             while let Ok(event) = receiver.recv().await {
-                match event {
-                    SystemEvent::IndexRebuild { collection } => {
-                        let coll = collection.unwrap_or_else(|| "default".to_string());
-                        tracing::info!("[INDEX] Rebuild requested for collection: {}", coll);
-                        // In a real implementation, we might trigger a full re-index of known paths
-                    }
-                    _ => {}
+                if let SystemEvent::IndexRebuild { collection } = event {
+                    let coll = collection.unwrap_or_else(|| "default".to_string());
+                    tracing::info!("[INDEX] Rebuild requested for collection: {}", coll);
+                    // In a real implementation, we might trigger a full re-index of known paths
                 }
             }
         });
@@ -67,7 +64,8 @@ impl IndexingService {
     fn clone_service(&self) -> Self {
         Self {
             context_service: Arc::clone(&self.context_service),
-            snapshot_manager: SnapshotManager::new().unwrap_or_else(|_| SnapshotManager::new_disabled()),
+            snapshot_manager: SnapshotManager::new()
+                .unwrap_or_else(|_| SnapshotManager::new_disabled()),
             sync_manager: self.sync_manager.clone(),
             chunker: IntelligentChunker::new(),
         }
