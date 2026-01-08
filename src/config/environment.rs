@@ -3,8 +3,10 @@
 //! This module provides comprehensive environment variable handling
 //! with priority-based configuration merging and validation.
 
-use crate::config::{Config, DaemonConfig, MetricsConfig, ServerConfig, SyncConfig};
+use crate::config::{Config, MetricsConfig, ServerConfig};
 use crate::core::error::{Error, Result};
+use crate::daemon::DaemonConfig;
+use crate::sync::SyncConfig;
 use std::collections::HashMap;
 use std::env;
 
@@ -79,10 +81,6 @@ impl EnvironmentLoader {
                 .get_var("SYNC_INTERVAL_MS")
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(900000), // 15 minutes default
-            enable_lockfile: self
-                .get_var("SYNC_ENABLE_LOCKFILE")
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(true),
             debounce_ms: self
                 .get_var("SYNC_DEBOUNCE_MS")
                 .and_then(|s| s.parse().ok())
@@ -136,11 +134,6 @@ impl EnvironmentLoader {
                 .parse()
                 .map(|interval| config.sync.interval_ms = interval);
         }
-        if let Some(enable_str) = self.get_var("SYNC_ENABLE_LOCKFILE") {
-            let _ = enable_str
-                .parse()
-                .map(|enable| config.sync.enable_lockfile = enable);
-        }
         if let Some(debounce_str) = self.get_var("SYNC_DEBOUNCE_MS")
             && let Ok(debounce) = debounce_str.parse()
         {
@@ -158,10 +151,10 @@ impl EnvironmentLoader {
         {
             config.daemon.monitoring_interval_secs = monitoring;
         }
-        if let Some(max_age_str) = self.get_var("DAEMON_MAX_LOCK_AGE_SECS") {
-            if let Ok(max_age) = max_age_str.parse() {
-                config.daemon.max_lock_age_secs = max_age;
-            }
+        if let Some(max_age_str) = self.get_var("DAEMON_MAX_LOCK_AGE_SECS")
+            && let Ok(max_age) = max_age_str.parse()
+        {
+            config.daemon.max_lock_age_secs = max_age;
         }
 
         Ok(config)

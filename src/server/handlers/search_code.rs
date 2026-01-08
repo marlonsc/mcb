@@ -133,22 +133,21 @@ impl SearchCodeHandler {
         let cached_result: CacheResult<serde_json::Value> =
             self.cache_manager.get("search_results", &cache_key).await;
 
-        if let CacheResult::Hit(cached_data) = cached_result {
-            if let Ok(search_results) =
+        if let CacheResult::Hit(cached_data) = cached_result
+            && let Ok(search_results) =
                 serde_json::from_value::<Vec<crate::core::types::SearchResult>>(cached_data)
-            {
-                tracing::info!(
-                    "✅ Search cache hit for query: '{}' (limit: {})",
-                    query,
-                    limit
-                );
-                return ResponseFormatter::format_search_response(
-                    &query,
-                    &search_results,
-                    start_time.elapsed(),
-                    true,
-                );
-            }
+        {
+            tracing::info!(
+                "✅ Search cache hit for query: '{}' (limit: {})",
+                query,
+                limit
+            );
+            return ResponseFormatter::format_search_response(
+                &query,
+                &search_results,
+                start_time.elapsed(),
+                true,
+            );
         }
 
         tracing::info!(

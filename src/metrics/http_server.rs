@@ -103,7 +103,7 @@ impl MetricsApiServer {
         let app = self.create_router();
 
         let addr = format!("0.0.0.0:{}", self.port);
-        println!("🚀 Starting Metrics API server on http://{}", addr);
+        tracing::info!("🚀 Starting Metrics API server on http://{}", addr);
 
         let listener = tokio::net::TcpListener::bind(&addr).await?;
         axum::serve(listener, app).await?;

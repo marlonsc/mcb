@@ -3,11 +3,15 @@
 //! This service provides a clean interface to access system data
 //! following SOLID principles and dependency injection.
 
+use crate::server::server::{
+    IndexingOperation as ServerIndexingOperation, PerformanceMetrics as ServerPerformanceMetrics,
+};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 
 // Data structures for admin service operations
 
@@ -352,13 +356,23 @@ pub trait AdminService: Send + Sync {
 
 /// Concrete implementation of AdminService
 pub struct AdminServiceImpl {
-    mcp_server: Arc<crate::server::McpServer>,
+    performance_metrics: Arc<ServerPerformanceMetrics>,
+    indexing_operations: Arc<RwLock<HashMap<String, ServerIndexingOperation>>>,
+    service_provider: Arc<crate::di::factory::ServiceProvider>,
 }
 
 impl AdminServiceImpl {
     /// Create new admin service with dependency injection
-    pub fn new(mcp_server: Arc<crate::server::McpServer>) -> Self {
-        Self { mcp_server }
+    pub fn new(
+        performance_metrics: Arc<ServerPerformanceMetrics>,
+        indexing_operations: Arc<RwLock<HashMap<String, ServerIndexingOperation>>>,
+        service_provider: Arc<crate::di::factory::ServiceProvider>,
+    ) -> Self {
+        Self {
+            performance_metrics,
+            indexing_operations,
+            service_provider,
+        }
     }
 
     /// Get current CPU usage percentage
@@ -397,39 +411,156 @@ impl AdminServiceImpl {
 #[async_trait]
 impl AdminService for AdminServiceImpl {
     async fn get_system_info(&self) -> Result<SystemInfo, AdminError> {
-        let info = self.mcp_server.get_system_info();
-        Ok(info)
+        let uptime_seconds = self.performance_metrics.start_time.elapsed().as_secs();
+        Ok(SystemInfo {
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            uptime: uptime_seconds,
+            pid: std::process::id(),
+        })
     }
 
     async fn get_providers(&self) -> Result<Vec<ProviderInfo>, AdminError> {
-        let providers = self.mcp_server.get_registered_providers();
-        Ok(providers
-            .into_iter()
-            .map(|p| ProviderInfo {
-                id: p.id,
-                name: p.name,
-                provider_type: p.provider_type,
-                status: p.status,
-                config: p.config,
-            })
-            .collect())
+        let (embedding_providers, vector_store_providers) = self.service_provider.list_providers();
+
+        let mut providers = Vec::new();
+
+        // Add embedding providers
+        for name in embedding_providers {
+            providers.push(ProviderInfo {
+                id: name.clone(),
+                name,
+                provider_type: "embedding".to_string(),
+                status: "active".to_string(), // Assume active for now
+                config: serde_json::json!({ "type": "embedding" }),
+            });
+        }
+
+        // Add vector store providers
+        for name in vector_store_providers {
+            providers.push(ProviderInfo {
+                id: name.clone(),
+                name,
+                provider_type: "vector_store".to_string(),
+                status: "active".to_string(), // Assume active for now
+                config: serde_json::json!({ "type": "vector_store" }),
+            });
+        }
+
+        Ok(providers)
     }
 
     async fn get_indexing_status(&self) -> Result<IndexingStatus, AdminError> {
-        let status = self.mcp_server.get_indexing_status_admin();
-        Ok(status.await)
+        let operations: tokio::sync::RwLockReadGuard<'_, HashMap<String, ServerIndexingOperation>> =
+            self.indexing_operations.read().await;
+
+        // Check if any indexing operations are active
+        let is_indexing = !operations.is_empty();
+
+        // Find the most recent operation for current status
+        let (current_file, start_time, _processed_files, _total_files): (
+            Option<String>,
+            Option<u64>,
+            usize,
+            usize,
+        ) = if let Some((_, operation)) = operations.iter().next() {
+            (
+                operation.current_file.clone(),
+                Some(operation.start_time.elapsed().as_secs()),
+                operation.processed_files,
+                operation.total_files,
+            )
+        } else {
+            (None, None, 0, 0)
+        };
+
+        // Calculate totals across all operations
+        let total_documents: usize = operations.values().map(|op| op.total_files).sum();
+        let indexed_documents: usize = operations.values().map(|op| op.processed_files).sum();
+
+        // For now, no failed documents tracking
+        let failed_documents = 0;
+
+        // Estimate completion based on progress
+        let estimated_completion = if is_indexing && total_documents > 0 {
+            let progress = indexed_documents as f64 / total_documents as f64;
+            if progress > 0.0 {
+                start_time.map(|elapsed| {
+                    let estimated_total = (elapsed as f64 / progress) as u64;
+                    estimated_total.saturating_sub(elapsed)
+                })
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        Ok(IndexingStatus {
+            is_indexing,
+            total_documents: total_documents as u64,
+            indexed_documents: indexed_documents as u64,
+            failed_documents: failed_documents as u64,
+            current_file,
+            start_time,
+            estimated_completion,
+        })
     }
 
     async fn get_performance_metrics(&self) -> Result<PerformanceMetrics, AdminError> {
-        let metrics = self.mcp_server.get_performance_metrics();
+        let total_queries = self
+            .performance_metrics
+            .total_queries
+            .load(std::sync::atomic::Ordering::Relaxed);
+        let successful_queries = self
+            .performance_metrics
+            .successful_queries
+            .load(std::sync::atomic::Ordering::Relaxed);
+        let failed_queries = self
+            .performance_metrics
+            .failed_queries
+            .load(std::sync::atomic::Ordering::Relaxed);
+        let response_time_sum = self
+            .performance_metrics
+            .response_time_sum
+            .load(std::sync::atomic::Ordering::Relaxed);
+        let cache_hits = self
+            .performance_metrics
+            .cache_hits
+            .load(std::sync::atomic::Ordering::Relaxed);
+        let cache_misses = self
+            .performance_metrics
+            .cache_misses
+            .load(std::sync::atomic::Ordering::Relaxed);
+
+        // Calculate average response time
+        let average_response_time_ms = if total_queries > 0 {
+            response_time_sum as f64 / total_queries as f64
+        } else {
+            0.0
+        };
+
+        // Calculate cache hit rate
+        let total_cache_requests = cache_hits + cache_misses;
+        let cache_hit_rate = if total_cache_requests > 0 {
+            cache_hits as f64 / total_cache_requests as f64
+        } else {
+            0.0
+        };
+
+        // Calculate uptime
+        let uptime_seconds = self.performance_metrics.start_time.elapsed().as_secs();
+
         Ok(PerformanceMetrics {
-            total_queries: metrics.total_queries,
-            successful_queries: metrics.successful_queries,
-            failed_queries: metrics.failed_queries,
-            average_response_time_ms: metrics.average_response_time_ms,
-            cache_hit_rate: metrics.cache_hit_rate,
-            active_connections: metrics.active_connections,
-            uptime_seconds: metrics.uptime_seconds,
+            total_queries,
+            successful_queries,
+            failed_queries,
+            average_response_time_ms,
+            cache_hit_rate,
+            active_connections: self
+                .performance_metrics
+                .active_connections
+                .load(std::sync::atomic::Ordering::Relaxed) as u32,
+            uptime_seconds,
         })
     }
 
@@ -458,7 +589,6 @@ impl AdminService for AdminServiceImpl {
     async fn get_configuration(&self) -> Result<ConfigurationData, AdminError> {
         // Build configuration from current system state
         let providers = self.get_providers().await?;
-        let _system_info = self.mcp_server.get_system_info();
 
         Ok(ConfigurationData {
             providers,
@@ -481,7 +611,7 @@ impl AdminService for AdminServiceImpl {
             },
             cache: CacheConfigData {
                 enabled: true,
-                max_size: 1024 * 1024 * 1024, // 1GB
+                max_size: 10000,
                 ttl_seconds: 3600,
             },
             database: DatabaseConfigData {
@@ -537,7 +667,9 @@ impl AdminService for AdminServiceImpl {
         for (path, value) in updates {
             match path.as_str() {
                 "metrics.collection_interval" => {
-                    if let Some(interval) = value.as_u64() && interval < 5 {
+                    if let Some(interval) = value.as_u64()
+                        && interval < 5
+                    {
                         warnings.push(
                             "Collection interval below 5 seconds may impact performance"
                                 .to_string(),
@@ -545,14 +677,17 @@ impl AdminService for AdminServiceImpl {
                     }
                 }
                 "cache.max_size" => {
-                    if let Some(size) = value.as_u64() && size > 10 * 1024 * 1024 * 1024 {
+                    if let Some(size) = value.as_u64()
+                        && size > 10 * 1024 * 1024 * 1024
+                    {
                         // 10GB
-                        warnings
-                            .push("Cache size above 10GB may cause memory issues".to_string());
+                        warnings.push("Cache size above 10GB may cause memory issues".to_string());
                     }
                 }
                 "database.pool_size" => {
-                    if let Some(pool_size) = value.as_u64() && pool_size > 100 {
+                    if let Some(pool_size) = value.as_u64()
+                        && pool_size > 100
+                    {
                         warnings.push(
                             "Database pool size above 100 may cause resource exhaustion"
                                 .to_string(),

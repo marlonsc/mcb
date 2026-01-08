@@ -4,6 +4,7 @@ use crate::core::{
     error::{Error, Result},
     types::{EmbeddingConfig, VectorStoreConfig},
 };
+use crate::di::registry::ProviderRegistryTrait;
 use crate::providers::{EmbeddingProvider, VectorStoreProvider};
 
 // Import individual providers that exist
@@ -48,7 +49,7 @@ impl ProviderFactory for DefaultProviderFactory {
         &self,
         config: &EmbeddingConfig,
     ) -> Result<Arc<dyn EmbeddingProvider>> {
-        match config.provider.as_str() {
+        match config.provider.to_lowercase().as_str() {
             "openai" => {
                 let api_key = config
                     .api_key
@@ -105,7 +106,7 @@ impl ProviderFactory for DefaultProviderFactory {
         &self,
         config: &VectorStoreConfig,
     ) -> Result<Arc<dyn VectorStoreProvider>> {
-        match config.provider.as_str() {
+        match config.provider.to_lowercase().as_str() {
             "in-memory" => Ok(Arc::new(InMemoryVectorStoreProvider::new())),
             "filesystem" => {
                 use crate::providers::vector_store::filesystem::{
@@ -134,7 +135,7 @@ impl ProviderFactory for DefaultProviderFactory {
             }
             "edgevec" => {
                 use crate::providers::vector_store::edgevec::{
-                    EdgeVecVectorStoreProvider, EdgeVecConfig,
+                    EdgeVecConfig, EdgeVecVectorStoreProvider,
                 };
                 let edgevec_config = EdgeVecConfig {
                     dimensions: config.dimensions.unwrap_or(1536),
@@ -202,7 +203,7 @@ impl ServiceProvider {
         // If not found, create via factory and register
         let provider = self.factory.create_embedding_provider(config).await?;
         self.registry
-            .register_embedding_provider(&config.provider, Arc::clone(&provider))?;
+            .register_embedding_provider(config.provider.clone(), Arc::clone(&provider))?;
 
         Ok(provider)
     }
@@ -219,7 +220,7 @@ impl ServiceProvider {
         // If not found, create via factory and register
         let provider = self.factory.create_vector_store_provider(config).await?;
         self.registry
-            .register_vector_store_provider(&config.provider, Arc::clone(&provider))?;
+            .register_vector_store_provider(config.provider.clone(), Arc::clone(&provider))?;
 
         Ok(provider)
     }
@@ -234,7 +235,8 @@ impl ServiceProvider {
         name: &str,
         provider: Arc<dyn EmbeddingProvider>,
     ) -> Result<()> {
-        self.registry.register_embedding_provider(name, provider)
+        self.registry
+            .register_embedding_provider(name.to_string(), provider)
     }
 
     /// Register a vector store provider directly
@@ -243,7 +245,8 @@ impl ServiceProvider {
         name: &str,
         provider: Arc<dyn VectorStoreProvider>,
     ) -> Result<()> {
-        self.registry.register_vector_store_provider(name, provider)
+        self.registry
+            .register_vector_store_provider(name.to_string(), provider)
     }
 
     /// List all registered providers

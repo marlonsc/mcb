@@ -1,16 +1,17 @@
 //! Background daemon for automatic lock cleanup and monitoring
 //!
 //! Provides continuous monitoring and maintenance services:
-//! - Automatic cleanup of stale lockfiles
+//! - Automatic cleanup of stale sync batches
 //! - Sync activity monitoring and reporting
 //! - Background health checks
 
-pub use crate::sync::lockfile::{CodebaseLockManager, LockMetadata};
 pub use crate::sync::manager::{SyncConfig, SyncManager, SyncStats};
 
 // DaemonConfig is defined in this module
 
+use crate::core::cache::get_global_cache_manager;
 use crate::core::error::{Error, Result};
+use crate::core::types::SyncBatch;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -112,16 +113,16 @@ impl ContextDaemon {
         *running = true;
         drop(running);
 
-        println!("[DAEMON] Starting background daemon...");
-        println!(
+        tracing::info!("[DAEMON] Starting background daemon...");
+        tracing::debug!(
             "[DAEMON] Cleanup interval: {}s",
             self.config.cleanup_interval_secs
         );
-        println!(
+        tracing::debug!(
             "[DAEMON] Monitoring interval: {}s",
             self.config.monitoring_interval_secs
         );
-        println!("[DAEMON] Max lock age: {}s", self.config.max_lock_age_secs);
+        tracing::debug!("[DAEMON] Max lock age: {}s", self.config.max_lock_age_secs);
 
         // Start cleanup task
         let cleanup_handle = {
@@ -143,7 +144,7 @@ impl ContextDaemon {
 
                     if let Err(e) = Self::run_cleanup_cycle(&stats, config.max_lock_age_secs).await
                     {
-                        eprintln!("[DAEMON] Cleanup cycle failed: {}", e);
+                        tracing::error!("[DAEMON] Cleanup cycle failed: {}", e);
                     }
                 }
             })
@@ -168,7 +169,7 @@ impl ContextDaemon {
                     }
 
                     if let Err(e) = Self::run_monitoring_cycle(&stats).await {
-                        eprintln!("[DAEMON] Monitoring cycle failed: {}", e);
+                        tracing::error!("[DAEMON] Monitoring cycle failed: {}", e);
                     }
                 }
             })
@@ -177,10 +178,10 @@ impl ContextDaemon {
         // Wait for both tasks (they run indefinitely until stopped)
         tokio::select! {
             _ = cleanup_handle => {
-                println!("[DAEMON] Cleanup task ended");
+                tracing::info!("[DAEMON] Cleanup task ended");
             }
             _ = monitoring_handle => {
-                println!("[DAEMON] Monitoring task ended");
+                tracing::info!("[DAEMON] Monitoring task ended");
             }
         }
 
@@ -191,7 +192,7 @@ impl ContextDaemon {
     pub async fn stop(&self) -> Result<()> {
         let mut running = self.running.lock().await;
         *running = false;
-        println!("[DAEMON] Stop signal sent to background daemon");
+        tracing::info!("[DAEMON] Stop signal sent to background daemon");
         Ok(())
     }
 
@@ -202,16 +203,35 @@ impl ContextDaemon {
     }
 
     /// Run a single cleanup cycle
-    async fn run_cleanup_cycle(stats: &Arc<Mutex<DaemonStats>>, _max_age_secs: u64) -> Result<()> {
-        let cleaned = CodebaseLockManager::cleanup_stale_locks().await?;
+    async fn run_cleanup_cycle(stats: &Arc<Mutex<DaemonStats>>, max_age_secs: u64) -> Result<()> {
+        let mut cleaned_count = 0;
+        if let Some(cache) = get_global_cache_manager()
+            && let Ok(queue) = cache.get_queue::<SyncBatch>("sync_batches", "queue").await
+        {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or(Duration::from_secs(0))
+                .as_secs();
+
+            for batch in queue {
+                if now.saturating_sub(batch.created_at) > max_age_secs
+                    && cache
+                        .remove_item("sync_batches", "queue", batch)
+                        .await
+                        .is_ok()
+                {
+                    cleaned_count += 1;
+                }
+            }
+        }
 
         let mut stats = stats.lock().await;
         stats.cleanup_cycles += 1;
-        stats.locks_cleaned += cleaned as u64;
+        stats.locks_cleaned += cleaned_count;
         stats.last_cleanup = Some(std::time::SystemTime::now());
 
-        if cleaned > 0 {
-            println!("[DAEMON] Cleaned up {} stale locks", cleaned);
+        if cleaned_count > 0 {
+            tracing::info!("[DAEMON] Cleaned up {} stale batches", cleaned_count);
         }
 
         Ok(())
@@ -219,31 +239,26 @@ impl ContextDaemon {
 
     /// Run a single monitoring cycle
     async fn run_monitoring_cycle(stats: &Arc<Mutex<DaemonStats>>) -> Result<()> {
-        let active_locks = CodebaseLockManager::get_active_locks().await?;
-        let lock_count = active_locks.len();
+        let mut queue_size = 0;
+        if let Some(cache) = get_global_cache_manager()
+            && let Ok(queue) = cache.get_queue::<SyncBatch>("sync_batches", "queue").await
+        {
+            queue_size = queue.len();
+        }
 
         let mut stats = stats.lock().await;
         stats.monitoring_cycles += 1;
-        stats.active_locks = lock_count;
+        stats.active_locks = queue_size;
         stats.last_monitoring = Some(std::time::SystemTime::now());
 
-        // Warn about high concurrency
-        if lock_count > 3 {
-            println!(
-                "[DAEMON] Warning: {} concurrent sync operations detected",
-                lock_count
-            );
+        // Warn about high backlog
+        if queue_size > 10 {
+            tracing::warn!("[DAEMON] Warning: {} pending sync batches", queue_size);
         }
 
-        // Log active locks for debugging (sanitized)
-        if lock_count > 0 {
-            println!("[DAEMON] Active sync operations: {}", lock_count);
-            for lock in &active_locks {
-                println!(
-                    "[DAEMON]   - {} (ID: {}, Since: {})",
-                    lock.codebase_path, lock.instance_id, lock.acquired_at
-                );
-            }
+        // Log active batches for debugging
+        if queue_size > 0 {
+            tracing::debug!("[DAEMON] Active sync batches: {}", queue_size);
         }
 
         Ok(())

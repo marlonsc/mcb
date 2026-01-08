@@ -9,7 +9,6 @@ use crate::repository::{SearchRepository, SearchStats};
 use async_trait::async_trait;
 use std::sync::Arc;
 
-
 /// Vector store backed search repository
 pub struct VectorStoreSearchRepository<V> {
     vector_store_provider: Arc<V>,
@@ -61,14 +60,20 @@ where
         let search_results: Vec<SearchResult> = results
             .into_iter()
             .map(|result| SearchResult {
-                file_path: result.metadata.get("file_path")
+                file_path: result
+                    .metadata
+                    .get("file_path")
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .to_string(),
-                line_number: result.metadata.get("start_line")
+                line_number: result
+                    .metadata
+                    .get("start_line")
                     .and_then(|v| v.as_u64())
                     .unwrap_or(0) as u32,
-                content: result.metadata.get("content")
+                content: result
+                    .metadata
+                    .get("content")
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .to_string(),

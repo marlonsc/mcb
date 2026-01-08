@@ -5,21 +5,21 @@
 //! - Configurable sync intervals
 //! - Debouncing to prevent excessive syncs
 
+use crate::core::cache::get_global_cache_manager;
 use crate::core::error::Result;
-use crate::sync::lockfile::CodebaseLockManager;
-use std::collections::HashMap;
+use crate::core::types::SyncBatch;
+use dashmap::DashMap;
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tokio::sync::Mutex;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
 
 /// Synchronization configuration
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SyncConfig {
     /// Sync interval in milliseconds (default: 15 minutes)
     pub interval_ms: u64,
-    /// Enable lockfile coordination (default: true)
-    pub enable_lockfile: bool,
     /// Minimum debounce interval between syncs per codebase (default: 60 seconds)
     pub debounce_ms: u64,
 }
@@ -28,8 +28,7 @@ impl Default for SyncConfig {
     fn default() -> Self {
         Self {
             interval_ms: 15 * 60 * 1000, // 15 minutes
-            enable_lockfile: true,
-            debounce_ms: 60 * 1000, // 60 seconds
+            debounce_ms: 60 * 1000,      // 60 seconds
         }
     }
 }
@@ -42,17 +41,13 @@ impl SyncConfig {
                 .unwrap_or_else(|_| "900000".to_string()) // 15 min default
                 .parse()
                 .unwrap_or(15 * 60 * 1000),
-            enable_lockfile: std::env::var("ENABLE_SYNC_LOCKFILE")
-                .unwrap_or_else(|_| "true".to_string())
-                .parse()
-                .unwrap_or(true),
             debounce_ms: 60 * 1000, // Fixed 60s debounce
         }
     }
 }
 
 /// Sync statistics for monitoring
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SyncStats {
     pub total_attempts: u64,
     pub successful: u64,
@@ -61,11 +56,48 @@ pub struct SyncStats {
     pub skipped_rate: f64,
 }
 
+/// Internal atomic statistics
+struct AtomicSyncStats {
+    total_attempts: AtomicU64,
+    successful: AtomicU64,
+    skipped: AtomicU64,
+    failed: AtomicU64,
+}
+
+impl AtomicSyncStats {
+    fn new() -> Self {
+        Self {
+            total_attempts: AtomicU64::new(0),
+            successful: AtomicU64::new(0),
+            skipped: AtomicU64::new(0),
+            failed: AtomicU64::new(0),
+        }
+    }
+
+    fn to_stats(&self) -> SyncStats {
+        let total = self.total_attempts.load(Ordering::Relaxed);
+        let skipped = self.skipped.load(Ordering::Relaxed);
+        let skipped_rate = if total > 0 {
+            (skipped as f64 / total as f64) * 100.0
+        } else {
+            0.0
+        };
+
+        SyncStats {
+            total_attempts: total,
+            successful: self.successful.load(Ordering::Relaxed),
+            skipped,
+            failed: self.failed.load(Ordering::Relaxed),
+            skipped_rate,
+        }
+    }
+}
+
 /// Synchronization manager with cross-process coordination
 pub struct SyncManager {
     config: SyncConfig,
-    last_sync_times: Arc<Mutex<HashMap<String, Instant>>>,
-    stats: Arc<Mutex<SyncStats>>,
+    last_sync_times: DashMap<String, Instant>,
+    stats: AtomicSyncStats,
 }
 
 impl Default for SyncManager {
@@ -84,28 +116,21 @@ impl SyncManager {
     pub fn with_config(config: SyncConfig) -> Self {
         Self {
             config,
-            last_sync_times: Arc::new(Mutex::new(HashMap::new())),
-            stats: Arc::new(Mutex::new(SyncStats {
-                total_attempts: 0,
-                successful: 0,
-                skipped: 0,
-                failed: 0,
-                skipped_rate: 0.0,
-            })),
+            last_sync_times: DashMap::new(),
+            stats: AtomicSyncStats::new(),
         }
     }
 
     /// Check if codebase should be debounced (synced too recently)
     pub async fn should_debounce(&self, codebase_path: &Path) -> Result<bool> {
         let path_key = codebase_path.to_string_lossy().to_string();
-        let last_sync_times = self.last_sync_times.lock().await;
 
-        if let Some(last_sync) = last_sync_times.get(&path_key) {
+        if let Some(last_sync) = self.last_sync_times.get(&path_key) {
             let elapsed = last_sync.elapsed();
             let debounce_duration = Duration::from_millis(self.config.debounce_ms);
 
             if elapsed < debounce_duration {
-                println!(
+                tracing::debug!(
                     "[SYNC] Debouncing {} - synced {}s ago (min {}s)",
                     codebase_path.display(),
                     elapsed.as_secs(),
@@ -119,44 +144,32 @@ impl SyncManager {
     }
 
     /// Update last sync time for a codebase
-    async fn update_last_sync(&self, codebase_path: &Path) {
+    pub async fn update_last_sync(&self, codebase_path: &Path) {
         let path_key = codebase_path.to_string_lossy().to_string();
-        let mut last_sync_times = self.last_sync_times.lock().await;
-        last_sync_times.insert(path_key, Instant::now());
+        self.last_sync_times.insert(path_key, Instant::now());
     }
 
-    /// Handle synchronization with lockfile coordination
+    /// Handle synchronization with batch queue coordination
     pub async fn sync_codebase(&self, codebase_path: &Path) -> Result<bool> {
-        let mut stats = self.stats.lock().await;
-        stats.total_attempts += 1;
+        self.stats.total_attempts.fetch_add(1, Ordering::Relaxed);
 
         // Check debounce
         if self.should_debounce(codebase_path).await? {
-            stats.skipped += 1;
-            self.update_stats(&mut stats);
+            self.stats.skipped.fetch_add(1, Ordering::Relaxed);
             return Ok(false);
         }
 
-        // Try to acquire lock if enabled
-        let lock_release = if self.config.enable_lockfile {
-            match CodebaseLockManager::acquire_lock(codebase_path).await? {
-                Some(release_fn) => Some(release_fn),
-                None => {
-                    println!(
-                        "[SYNC] Skipping {} - sync in progress by another instance",
-                        codebase_path.display()
-                    );
-                    stats.skipped += 1;
-                    self.update_stats(&mut stats);
-                    return Ok(false);
-                }
+        // Try to acquire sync slot
+        let batch = match self.acquire_sync_slot(codebase_path).await? {
+            Some(b) => b,
+            None => {
+                self.stats.skipped.fetch_add(1, Ordering::Relaxed);
+                return Ok(false);
             }
-        } else {
-            None
         };
 
         // Perform sync operation (placeholder for actual sync logic)
-        println!("[SYNC] Starting sync for {}", codebase_path.display());
+        tracing::info!("[SYNC] Starting sync for {}", codebase_path.display());
 
         // TODO: Implement actual sync logic here
         // For now, just simulate successful sync
@@ -165,31 +178,72 @@ impl SyncManager {
         // Update last sync time
         self.update_last_sync(codebase_path).await;
 
-        // Release lock if acquired
-        if let Some(release_fn) = lock_release {
-            if let Err(e) = release_fn() {
-                eprintln!("[SYNC] Failed to release lock: {}", e);
-            }
-        }
+        // Release sync slot
+        self.release_sync_slot(codebase_path, batch).await?;
 
-        stats.successful += 1;
-        self.update_stats(&mut stats);
+        self.stats.successful.fetch_add(1, Ordering::Relaxed);
 
-        println!("[SYNC] Completed sync for {}", codebase_path.display());
+        tracing::info!("[SYNC] Completed sync for {}", codebase_path.display());
         Ok(true)
     }
 
-    /// Update calculated statistics
-    fn update_stats(&self, stats: &mut SyncStats) {
-        if stats.total_attempts > 0 {
-            stats.skipped_rate = (stats.skipped as f64 / stats.total_attempts as f64) * 100.0;
+    /// Acquire a synchronization slot in the queue
+    pub async fn acquire_sync_slot(&self, codebase_path: &Path) -> Result<Option<SyncBatch>> {
+        // Create SyncBatch
+        let batch_id = Uuid::new_v4().to_string();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or(Duration::from_secs(0))
+            .as_secs();
+
+        let batch = SyncBatch {
+            id: batch_id.clone(),
+            path: codebase_path.to_string_lossy().to_string(),
+            created_at: now,
+        };
+
+        // Enqueue if cache is available
+        if let Some(cache) = get_global_cache_manager() {
+            cache
+                .enqueue_item("sync_batches", "queue", batch.clone())
+                .await?;
+
+            // Check if we are head of queue
+            let queue: Vec<SyncBatch> = cache.get_queue("sync_batches", "queue").await?;
+
+            // Filter queue for this path
+            let path_batches: Vec<&SyncBatch> =
+                queue.iter().filter(|b| b.path == batch.path).collect();
+
+            if let Some(first) = path_batches.first()
+                && first.id != batch.id {
+                    // We are not first, so skip
+                    tracing::info!("[SYNC] Queued behind batch {}", first.id);
+                    return Ok(None);
+            }
+            Ok(Some(batch))
+        } else {
+            tracing::warn!("[SYNC] Cache not available, proceeding without coordination");
+            Ok(Some(batch))
         }
+    }
+
+    /// Release a synchronization slot in the queue
+    pub async fn release_sync_slot(&self, _codebase_path: &Path, batch: SyncBatch) -> Result<()> {
+        if let Some(cache) = get_global_cache_manager()
+            && let Err(e) = cache
+                .remove_item("sync_batches", "queue", batch.clone())
+                .await
+            {
+                tracing::warn!("[SYNC] Failed to remove batch from queue: {}", e);
+                return Err(e);
+        }
+        Ok(())
     }
 
     /// Get current sync statistics
     pub async fn get_stats(&self) -> SyncStats {
-        let stats = self.stats.lock().await;
-        (*stats).clone()
+        self.stats.to_stats()
     }
 
     /// Get sync configuration
@@ -199,10 +253,31 @@ impl SyncManager {
 
     /// Clean old sync timestamps (older than max_age)
     pub async fn clean_old_timestamps(&self, max_age: Duration) {
-        let mut last_sync_times = self.last_sync_times.lock().await;
         let now = Instant::now();
 
-        last_sync_times.retain(|_path, timestamp| now.duration_since(*timestamp) < max_age);
+        self.last_sync_times.retain(|_path, timestamp| now.duration_since(*timestamp) < max_age);
+
+        // Also clean old batches
+        self.clean_old_batches(Duration::from_secs(86400)).await; // 24h
+    }
+
+    /// Clean old sync batches from queue
+    pub async fn clean_old_batches(&self, max_age: Duration) {
+        if let Some(cache) = get_global_cache_manager()
+            && let Ok(queue) = cache.get_queue::<SyncBatch>("sync_batches", "queue").await
+        {
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or(Duration::from_secs(0))
+                .as_secs();
+
+            for batch in queue {
+                if now.saturating_sub(batch.created_at) > max_age.as_secs() {
+                    tracing::info!("[SYNC] Removing stale batch {}", batch.id);
+                    let _ = cache.remove_item("sync_batches", "queue", batch).await;
+                }
+            }
+        }
     }
 
     /// Get sync interval as Duration
@@ -224,7 +299,6 @@ mod tests {
     #[tokio::test]
     async fn test_sync_manager_creation() {
         let manager = SyncManager::new();
-        assert!(manager.config().enable_lockfile);
         assert_eq!(manager.config().interval_ms, 15 * 60 * 1000); // 15 minutes
         assert_eq!(manager.config().debounce_ms, 60 * 1000); // 60 seconds
     }
@@ -233,7 +307,6 @@ mod tests {
     async fn test_sync_config_from_env() {
         // Test default config
         let config = SyncConfig::from_env();
-        assert!(config.enable_lockfile);
         assert_eq!(config.interval_ms, 15 * 60 * 1000);
         assert_eq!(config.debounce_ms, 60 * 1000);
     }
@@ -241,7 +314,6 @@ mod tests {
     #[test]
     fn test_sync_config_default() {
         let config = SyncConfig::default();
-        assert!(config.enable_lockfile);
         assert_eq!(config.interval_ms, 15 * 60 * 1000);
         assert_eq!(config.debounce_ms, 60 * 1000);
     }

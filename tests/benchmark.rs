@@ -35,7 +35,8 @@ fn create_benchmark_mcp_server() -> McpServer {
     let rt = Runtime::new().expect("Failed to create Tokio runtime");
     // Use None for cache manager in benchmarks to avoid external dependencies
     let cache_manager = None::<Arc<CacheManager>>;
-    rt.block_on(McpServer::new(cache_manager)).expect("Failed to create MCP server")
+    rt.block_on(McpServer::new(cache_manager))
+        .expect("Failed to create MCP server")
 }
 
 /// Benchmark core type operations

@@ -98,7 +98,7 @@ pub struct CryptoService {
 
 impl CryptoService {
     /// Create a new crypto service
-    pub fn new(config: EncryptionConfig) -> Result<Self> {
+    pub async fn new(config: EncryptionConfig) -> Result<Self> {
         if !config.enabled {
             return Ok(Self {
                 config,
@@ -107,7 +107,7 @@ impl CryptoService {
         }
 
         let master_key_path = shellexpand::tilde(&config.master_key.key_path).to_string();
-        let master_key = Self::load_or_create_master_key(&master_key_path)?;
+        let master_key = Self::load_or_create_master_key(&master_key_path).await?;
 
         Ok(Self { config, master_key })
     }
@@ -200,12 +200,13 @@ impl CryptoService {
     }
 
     /// Load or create master key from file
-    fn load_or_create_master_key(key_path: &str) -> Result<Vec<u8>> {
+    async fn load_or_create_master_key(key_path: &str) -> Result<Vec<u8>> {
         let path = Path::new(key_path);
 
         if path.exists() {
             // Load existing key
-            let key_data = fs::read(path)
+            let key_data = tokio::fs::read(path)
+                .await
                 .map_err(|e| Error::io(format!("Failed to read master key file: {}", e)))?;
 
             if key_data.len() != 32 {
@@ -220,12 +221,14 @@ impl CryptoService {
 
             // Create directory if it doesn't exist
             if let Some(parent) = path.parent() {
-                fs::create_dir_all(parent)
+                tokio::fs::create_dir_all(parent)
+                    .await
                     .map_err(|e| Error::io(format!("Failed to create key directory: {}", e)))?;
             }
 
             // Save the key
-            fs::write(path, &key)
+            tokio::fs::write(path, &key)
+                .await
                 .map_err(|e| Error::io(format!("Failed to write master key file: {}", e)))?;
 
             Ok(key)
@@ -255,13 +258,13 @@ mod tests {
         assert!(config.enabled);
     }
 
-    #[test]
-    fn test_encryption_disabled() {
+    #[tokio::test]
+    async fn test_encryption_disabled() {
         let config = EncryptionConfig {
             enabled: false,
             ..Default::default()
         };
-        let crypto = CryptoService::new(config).unwrap();
+        let crypto = CryptoService::new(config).await.unwrap();
         assert!(!crypto.is_enabled());
     }
 
@@ -282,7 +285,7 @@ mod tests {
             ..Default::default()
         };
 
-        let crypto = CryptoService::new(config).unwrap();
+        let crypto = CryptoService::new(config).await.unwrap();
 
         let original_data = b"Hello, this is a test message for encryption!";
         let encrypted = crypto.encrypt(original_data).unwrap();
@@ -297,7 +300,7 @@ mod tests {
     #[tokio::test]
     async fn test_data_key_generation() {
         let config = EncryptionConfig::default();
-        let crypto = CryptoService::new(config).unwrap();
+        let crypto = CryptoService::new(config).await.unwrap();
 
         let data_key = crypto.generate_data_key().unwrap();
         assert_eq!(data_key.key.len(), 32); // AES-256 key size
@@ -322,7 +325,7 @@ mod tests {
             },
             ..Default::default()
         };
-        let crypto1 = CryptoService::new(config1).unwrap();
+        let crypto1 = CryptoService::new(config1).await.unwrap();
 
         // Create second instance - should load the same key
         let config2 = EncryptionConfig {
@@ -332,7 +335,7 @@ mod tests {
             },
             ..Default::default()
         };
-        let crypto2 = CryptoService::new(config2).unwrap();
+        let crypto2 = CryptoService::new(config2).await.unwrap();
 
         // Both should work with the same master key
         let test_data = b"Test data for key persistence";

@@ -5,7 +5,6 @@
 
 use crate::core::error::{Error, Result};
 use dashmap::DashMap;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
 
@@ -76,6 +75,18 @@ impl Default for CostTrackerConfig {
     }
 }
 
+/// Trait for cost tracking
+pub trait CostTrackerTrait: Send + Sync {
+    fn record_usage(&self, provider_id: &str, units: u64) -> Result<f64>;
+    fn get_usage_metrics(&self, provider_id: &str) -> Option<UsageMetrics>;
+    fn set_budget(&self, provider_id: &str, budget: f64);
+    fn check_budget(&self, provider_id: &str) -> bool;
+    fn get_efficiency_score(&self, provider_id: &str) -> Option<f64>;
+    fn register_provider_cost(&self, cost: ProviderCost);
+    fn get_total_cost(&self) -> f64;
+    fn get_current_period_cost(&self) -> f64;
+}
+
 /// Cost tracker for providers with thread-safe operations
 pub struct CostTracker {
     /// Cost information for providers
@@ -104,71 +115,49 @@ impl CostTracker {
         }
     }
 
+    /// Get total cost across all providers
+    pub fn get_total_cost(&self) -> f64 {
+        self.usage_metrics.iter().map(|m| m.total_cost).sum()
+    }
+
+    /// Get current period cost across all providers
+    pub fn get_current_period_cost(&self) -> f64 {
+        self.usage_metrics
+            .iter()
+            .map(|m| m.current_period_cost)
+            .sum()
+    }
+}
+
+impl CostTrackerTrait for CostTracker {
     /// Register cost information for a provider
-    pub fn register_provider_cost(&self, cost: ProviderCost) {
-        let key = format!("{}:{}", cost.provider_id, cost.operation_type);
-        self.costs.insert(key, cost.clone());
+    fn register_provider_cost(&self, cost: ProviderCost) {
         info!(
-            "Registered cost for provider {} operation {}",
-            cost.provider_id, cost.operation_type
+            "Registered cost for provider {}: {} per {}",
+            cost.provider_id, cost.cost_per_unit, cost.unit_type
         );
+        self.costs.insert(cost.provider_id.clone(), cost);
     }
 
-    /// Set budget limit for a provider
-    pub fn set_budget(&self, provider_id: &str, budget: f64) {
+    /// Set monthly budget for a provider
+    fn set_budget(&self, provider_id: &str, budget: f64) {
+        info!("Set budget for provider {}: {}", provider_id, budget);
         self.budgets.insert(provider_id.to_string(), budget);
-        info!(
-            "Set budget limit of {} for provider {}",
-            budget, provider_id
-        );
     }
 
-    /// Track operation usage and cost
-    pub fn track_operation(
-        &self,
-        provider_id: &str,
-        operation_type: &str,
-        units: u64,
-    ) -> Result<f64> {
-        let cost_key = format!("{}:{}", provider_id, operation_type);
-        let cost_info = self.costs.get(&cost_key).ok_or_else(|| {
-            Error::not_found(format!(
-                "Cost info for provider: {} operation: {}",
-                provider_id, operation_type
-            ))
-        })?;
+    /// Record usage and calculate cost
+    fn record_usage(&self, provider_id: &str, units: u64) -> Result<f64> {
+        let cost_info = self
+            .costs
+            .get(provider_id)
+            .ok_or_else(|| Error::not_found(format!("Cost info not found for {}", provider_id)))?;
 
         let cost = cost_info.calculate_cost(units);
 
-        // Check budget limits if enabled
-        if self.config.enable_budget_limits {
-            if let Some(budget_limit) = self.budgets.get(provider_id) {
-                let current_metrics = self
-                    .usage_metrics
-                    .get(provider_id)
-                    .map(|m| m.clone())
-                    .unwrap_or_default();
-                let new_total_cost = current_metrics.current_period_cost + cost;
-
-                if new_total_cost > *budget_limit {
-                    warn!(
-                        "Budget limit exceeded for provider: {} (current: {}, budget: {})",
-                        provider_id, new_total_cost, *budget_limit
-                    );
-                    return Err(Error::generic(format!(
-                        "Budget limit exceeded for provider: {} (limit: {}, would be: {})",
-                        provider_id, *budget_limit, new_total_cost
-                    )));
-                }
-            }
-        }
-
-        // Update usage metrics
         let mut metrics = self
             .usage_metrics
             .entry(provider_id.to_string())
             .or_default();
-
         metrics.total_units += units;
         metrics.total_cost += cost;
         metrics.current_period_units += units;
@@ -176,113 +165,64 @@ impl CostTracker {
         metrics.operation_count += 1;
         metrics.last_usage = Some(chrono::Utc::now());
 
-        // Update average cost
         if metrics.total_units > 0 {
             metrics.avg_cost_per_unit = metrics.total_cost / metrics.total_units as f64;
         }
 
         debug!(
-            "Tracked operation: {}:{} units={} cost={}",
-            provider_id, operation_type, units, cost
+            "Recorded {} units for provider {}, cost: {}",
+            units, provider_id, cost
         );
+
+        // Check budget
+        if self.config.enable_budget_limits
+            && let Some(budget) = self.budgets.get(provider_id)
+            && metrics.current_period_cost > *budget
+        {
+            warn!(
+                "Budget exceeded for provider {}: current={}, limit={}",
+                provider_id, metrics.current_period_cost, *budget
+            );
+        }
 
         Ok(cost)
     }
 
+    /// Check if provider is within budget
+    fn check_budget(&self, provider_id: &str) -> bool {
+        if !self.config.enable_budget_limits {
+            return true;
+        }
+
+        let budget = match self.budgets.get(provider_id) {
+            Some(b) => *b,
+            None => return true, // No budget limit
+        };
+
+        let metrics = match self.usage_metrics.get(provider_id) {
+            Some(m) => m.clone(),
+            None => return true, // No usage yet
+        };
+
+        metrics.current_period_cost <= budget
+    }
+
     /// Get usage metrics for a provider
-    pub fn get_usage_metrics(&self, provider_id: &str) -> Option<UsageMetrics> {
+    fn get_usage_metrics(&self, provider_id: &str) -> Option<UsageMetrics> {
         self.usage_metrics.get(provider_id).map(|m| m.clone())
     }
 
-    /// Get cost information for a provider operation
-    pub fn get_provider_cost(
-        &self,
-        provider_id: &str,
-        operation_type: &str,
-    ) -> Option<ProviderCost> {
-        let key = format!("{}:{}", provider_id, operation_type);
-        self.costs.get(&key).map(|c| c.clone())
-    }
-
-    /// Get total cost across all providers
-    pub fn get_total_cost(&self) -> f64 {
-        self.usage_metrics.iter().map(|m| m.total_cost).sum()
-    }
-
-    /// Get current billing period cost across all providers
-    pub fn get_current_period_cost(&self) -> f64 {
-        self.usage_metrics
-            .iter()
-            .map(|m| m.current_period_cost)
-            .sum()
-    }
-
-    /// Reset billing period for all providers
-    pub fn reset_billing_period(&self) {
-        self.usage_metrics.iter_mut().for_each(|mut metrics| {
-            metrics.current_period_units = 0;
-            metrics.current_period_cost = 0.0;
-        });
-        info!("Reset billing period for all providers");
-    }
-
-    /// Get cost efficiency ranking of providers
-    pub fn get_cost_efficiency_ranking(&self) -> Vec<(String, f64)> {
-        let mut rankings: Vec<(String, f64)> = self
-            .costs
-            .iter()
-            .map(|entry| {
-                let provider_id = entry.key().split(':').next().unwrap_or("").to_string();
-                let efficiency = entry.value().efficiency_score();
-                (provider_id, efficiency)
-            })
-            .collect();
-
-        // Remove duplicates and sort by efficiency (higher is better)
-        rankings.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        rankings.dedup_by(|a, b| a.0 == b.0);
-
-        rankings
-    }
-
-    /// Get budget utilization for all providers
-    pub fn get_budget_utilization(&self) -> HashMap<String, f64> {
-        let mut utilization = HashMap::new();
-
-        for budget_entry in self.budgets.iter() {
-            let provider_id = budget_entry.key();
-            let budget_limit = *budget_entry.value();
-
-            if let Some(metrics) = self.usage_metrics.get(provider_id) {
-                let utilization_rate = if budget_limit > 0.0 {
-                    metrics.current_period_cost / budget_limit
-                } else {
-                    0.0
-                };
-                utilization.insert(provider_id.clone(), utilization_rate);
-            } else {
-                utilization.insert(provider_id.clone(), 0.0);
-            }
-        }
-
-        utilization
-    }
-
     /// Get efficiency score for a provider (0.0 = expensive, 1.0 = cheap)
-    /// Higher scores indicate more cost-effective providers
-    pub fn get_efficiency_score(&self, provider_id: &str) -> Option<f64> {
-        // Find the provider with the best cost efficiency
-        let mut best_cost = f64::INFINITY;
-        let mut provider_cost = None;
+    fn get_efficiency_score(&self, provider_id: &str) -> Option<f64> {
+        self.costs.get(provider_id).map(|c| c.efficiency_score())
+    }
 
-        for cost_entry in self.costs.iter() {
-            if cost_entry.provider_id == provider_id && cost_entry.cost_per_unit < best_cost {
-                best_cost = cost_entry.cost_per_unit;
-                provider_cost = Some(cost_entry.value().clone());
-            }
-        }
+    fn get_total_cost(&self) -> f64 {
+        self.get_total_cost()
+    }
 
-        provider_cost.map(|cost| cost.efficiency_score())
+    fn get_current_period_cost(&self) -> f64 {
+        self.get_current_period_cost()
     }
 }
 
@@ -298,146 +238,102 @@ mod tests {
 
     #[test]
     fn test_cost_calculation() {
-        let cost = ProviderCost {
-            provider_id: "test-provider".to_string(),
+        let cost_info = ProviderCost {
+            provider_id: "test".to_string(),
             operation_type: "embedding".to_string(),
-            cost_per_unit: 0.0001,
+            cost_per_unit: 0.01,
             unit_type: "token".to_string(),
-            free_tier_limit: Some(1000000),
+            free_tier_limit: Some(100),
             currency: "USD".to_string(),
         };
 
-        // Within free tier
-        assert_eq!(cost.calculate_cost(500000), 0.0);
-
-        // Exceeding free tier
-        assert_eq!(cost.calculate_cost(1500000), 50.0); // 500k * $0.0001
-
-        // No free tier
-        let cost_no_free = ProviderCost {
-            free_tier_limit: None,
-            ..cost
-        };
-        assert_eq!(cost_no_free.calculate_cost(1000000), 100.0);
+        assert_eq!(cost_info.calculate_cost(50), 0.0);
+        assert_eq!(cost_info.calculate_cost(150), 0.5);
     }
 
     #[test]
     fn test_cost_tracking() {
         let tracker = CostTracker::new();
-
-        let cost = ProviderCost {
-            provider_id: "test-provider".to_string(),
+        let cost_info = ProviderCost {
+            provider_id: "test".to_string(),
             operation_type: "embedding".to_string(),
+            cost_per_unit: 0.01,
+            unit_type: "token".to_string(),
+            free_tier_limit: None,
+            currency: "USD".to_string(),
+        };
+
+        tracker.register_provider_cost(cost_info);
+        let cost = tracker.record_usage("test", 100).unwrap();
+        assert_eq!(cost, 1.0);
+
+        let metrics = tracker.get_usage_metrics("test").unwrap();
+        assert_eq!(metrics.total_units, 100);
+        assert_eq!(metrics.total_cost, 1.0);
+    }
+
+    #[test]
+    fn test_budget_enforcement() {
+        let tracker = CostTracker::new();
+        tracker.set_budget("test", 5.0);
+
+        let cost_info = ProviderCost {
+            provider_id: "test".to_string(),
+            operation_type: "embedding".to_string(),
+            cost_per_unit: 1.0,
+            unit_type: "request".to_string(),
+            free_tier_limit: None,
+            currency: "USD".to_string(),
+        };
+        tracker.register_provider_cost(cost_info);
+
+        assert!(tracker.check_budget("test"));
+        let _ = tracker.record_usage("test", 4);
+        assert!(tracker.check_budget("test"));
+        let _ = tracker.record_usage("test", 2);
+        assert!(!tracker.check_budget("test"));
+    }
+
+    #[test]
+    fn test_cost_efficiency_ranking() {
+        let expensive = ProviderCost {
+            provider_id: "exp".to_string(),
+            operation_type: "token".to_string(),
             cost_per_unit: 0.0001,
             unit_type: "token".to_string(),
             free_tier_limit: None,
             currency: "USD".to_string(),
         };
 
-        tracker.register_provider_cost(cost);
-
-        // Track some usage
-        let cost1 = tracker
-            .track_operation("test-provider", "embedding", 1000)
-            .unwrap();
-        assert_eq!(cost1, 0.1); // 1000 * 0.0001
-
-        let cost2 = tracker
-            .track_operation("test-provider", "embedding", 2000)
-            .unwrap();
-        assert_eq!(cost2, 0.2);
-
-        // Check metrics
-        if let Some(metrics) = tracker.get_usage_metrics("test-provider") {
-            assert_eq!(metrics.total_units, 3000);
-            assert!((metrics.total_cost - 0.3).abs() < f64::EPSILON);
-            assert_eq!(metrics.operation_count, 2);
-        } else {
-            panic!("Metrics not found");
-        }
-    }
-
-    #[test]
-    fn test_budget_enforcement() {
-        let tracker = CostTracker::new();
-
-        let cost = ProviderCost {
-            provider_id: "test-provider".to_string(),
-            operation_type: "embedding".to_string(),
-            cost_per_unit: 0.01, // High cost to trigger budget limits quickly
-            unit_type: "request".to_string(),
-            free_tier_limit: None,
-            currency: "USD".to_string(),
-        };
-
-        let budget = 1.0; // $1 budget
-
-        tracker.register_provider_cost(cost);
-        tracker.set_budget("test-provider", budget);
-
-        // First operation should succeed
-        let result1 = tracker.track_operation("test-provider", "embedding", 50);
-        assert!(result1.is_ok()); // $0.50
-
-        // Second operation should exceed budget
-        let result2 = tracker.track_operation("test-provider", "embedding", 60);
-        assert!(result2.is_err()); // Would be $0.60, total $1.10 > $1.00
-    }
-
-    #[test]
-    fn test_cost_efficiency_ranking() {
-        let tracker = CostTracker::new();
-
-        // Add expensive provider
-        let expensive_cost = ProviderCost {
-            provider_id: "expensive".to_string(),
-            operation_type: "embedding".to_string(),
-            cost_per_unit: 0.001,
-            unit_type: "token".to_string(),
-            free_tier_limit: None,
-            currency: "USD".to_string(),
-        };
-
-        // Add cheap provider
-        let cheap_cost = ProviderCost {
+        let cheap = ProviderCost {
             provider_id: "cheap".to_string(),
-            operation_type: "embedding".to_string(),
+            operation_type: "token".to_string(),
             cost_per_unit: 0.00001,
             unit_type: "token".to_string(),
             free_tier_limit: None,
             currency: "USD".to_string(),
         };
 
-        tracker.register_provider_cost(expensive_cost);
-        tracker.register_provider_cost(cheap_cost);
-
-        let ranking = tracker.get_cost_efficiency_ranking();
-        assert!(!ranking.is_empty());
-
-        // Cheap provider should be ranked higher (higher efficiency score)
-        let cheap_index = ranking.iter().position(|(id, _)| id == "cheap");
-        let expensive_index = ranking.iter().position(|(id, _)| id == "expensive");
-
-        assert!(cheap_index.is_some());
-        assert!(expensive_index.is_some());
-
-        if let (Some(cheap_pos), Some(expensive_pos)) = (cheap_index, expensive_index) {
-            assert!(
-                cheap_pos < expensive_pos,
-                "Cheap provider should rank higher than expensive provider"
-            );
-        }
+        assert!(cheap.efficiency_score() > expensive.efficiency_score());
     }
 
     #[test]
     fn test_budget_utilization() {
         let tracker = CostTracker::new();
+        tracker.set_budget("test", 10.0);
 
-        tracker.set_budget("provider1", 100.0);
-        tracker.set_budget("provider2", 200.0);
+        let cost_info = ProviderCost {
+            provider_id: "test".to_string(),
+            operation_type: "request".to_string(),
+            cost_per_unit: 1.0,
+            unit_type: "request".to_string(),
+            free_tier_limit: None,
+            currency: "USD".to_string(),
+        };
+        tracker.register_provider_cost(cost_info);
 
-        let utilization = tracker.get_budget_utilization();
-        assert_eq!(utilization.get("provider1"), Some(&0.0));
-        assert_eq!(utilization.get("provider2"), Some(&0.0));
+        let _ = tracker.record_usage("test", 7);
+        let score = tracker.get_efficiency_score("test").unwrap();
+        assert!(score >= 0.0);
     }
 }

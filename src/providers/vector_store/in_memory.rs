@@ -3,22 +3,22 @@
 use crate::core::error::{Error, Result};
 use crate::core::types::{Embedding, SearchResult};
 use crate::providers::VectorStoreProvider;
-use crate::core::locks::lock_mutex;
 use async_trait::async_trait;
+use dashmap::DashMap;
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::Arc;
 
 /// In-memory vector store provider
 #[allow(clippy::type_complexity)]
 pub struct InMemoryVectorStoreProvider {
-    collections: Mutex<HashMap<String, Vec<(Embedding, HashMap<String, serde_json::Value>)>>>,
+    collections: Arc<DashMap<String, Vec<(Embedding, HashMap<String, serde_json::Value>)>>>,
 }
 
 impl InMemoryVectorStoreProvider {
     /// Create a new in-memory vector store provider
     pub fn new() -> Self {
         Self {
-            collections: Mutex::new(HashMap::new()),
+            collections: Arc::new(DashMap::new()),
         }
     }
 }
@@ -32,26 +32,23 @@ impl Default for InMemoryVectorStoreProvider {
 #[async_trait]
 impl VectorStoreProvider for InMemoryVectorStoreProvider {
     async fn create_collection(&self, name: &str, _dimensions: usize) -> Result<()> {
-        let mut collections = lock_mutex(&self.collections, "InMemoryVectorStoreProvider::create_collection")?;
-        if collections.contains_key(name) {
+        if self.collections.contains_key(name) {
             return Err(Error::vector_db(format!(
                 "Collection '{}' already exists",
                 name
             )));
         }
-        collections.insert(name.to_string(), Vec::new());
+        self.collections.insert(name.to_string(), Vec::new());
         Ok(())
     }
 
     async fn delete_collection(&self, name: &str) -> Result<()> {
-        let mut collections = lock_mutex(&self.collections, "InMemoryVectorStoreProvider::delete_collection")?;
-        collections.remove(name);
+        self.collections.remove(name);
         Ok(())
     }
 
     async fn collection_exists(&self, name: &str) -> Result<bool> {
-        let collections = lock_mutex(&self.collections, "InMemoryVectorStoreProvider::collection_exists")?;
-        Ok(collections.contains_key(name))
+        Ok(self.collections.contains_key(name))
     }
 
     async fn insert_vectors(
@@ -60,8 +57,7 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
-        let mut collections = lock_mutex(&self.collections, "InMemoryVectorStoreProvider::insert_vectors")?;
-        let coll = collections
+        let mut coll = self.collections
             .get_mut(collection)
             .ok_or_else(|| Error::vector_db(format!("Collection '{}' not found", collection)))?;
 
@@ -84,8 +80,7 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
         limit: usize,
         _filter: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
-        let collections = lock_mutex(&self.collections, "InMemoryVectorStoreProvider::search_similar")?;
-        let coll = collections
+        let coll = self.collections
             .get(collection)
             .ok_or_else(|| Error::vector_db(format!("Collection '{}' not found", collection)))?;
 
@@ -128,8 +123,7 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
     }
 
     async fn delete_vectors(&self, collection: &str, ids: &[String]) -> Result<()> {
-        let mut collections = lock_mutex(&self.collections, "InMemoryVectorStoreProvider::delete_vectors")?;
-        let coll = collections
+        let mut coll = self.collections
             .get_mut(collection)
             .ok_or_else(|| Error::vector_db(format!("Collection '{}' not found", collection)))?;
 
@@ -145,8 +139,7 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
     }
 
     async fn get_stats(&self, collection: &str) -> Result<HashMap<String, serde_json::Value>> {
-        let collections = lock_mutex(&self.collections, "InMemoryVectorStoreProvider::get_stats")?;
-        let count = collections
+        let count = self.collections
             .get(collection)
             .map(|data| data.len())
             .unwrap_or(0);

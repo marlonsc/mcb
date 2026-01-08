@@ -3,7 +3,7 @@
 //! This example shows how to create a FastEmbedProvider and use it
 //! to generate embeddings for text without external API dependencies.
 
-use mcp_context_browser::core::types::{Embedding, EmbeddingConfig};
+use mcp_context_browser::core::types::EmbeddingConfig;
 use mcp_context_browser::di::factory::{DefaultProviderFactory, ProviderFactory};
 
 #[tokio::main]

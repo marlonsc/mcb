@@ -7,7 +7,7 @@
 //!
 //! ## String Validation
 //! ```rust
-//! use mcp_context_browser::core::validation::StringValidator;
+//! use mcp_context_browser::core::validation::{StringValidator, StringValidatorTrait};
 //!
 //! let validator = StringValidator::not_empty()
 //!     .combine_with(StringValidator::min_length(3))
@@ -19,7 +19,7 @@
 //!
 //! ## Number Validation
 //! ```rust
-//! use mcp_context_browser::core::validation::NumberValidator;
+//! use mcp_context_browser::core::validation::{NumberValidator, NumberValidatorTrait};
 //!
 //! let validator = NumberValidator::range(18, 120);
 //! assert!(validator.validate(&25).is_ok());
@@ -127,12 +127,15 @@ pub trait NumberValidatorTrait {
     fn validate(&self, input: &i64) -> ValidationResult<i64>;
 }
 
+/// String validation rule type alias to reduce complexity
+type StringValidationRule = Box<dyn Fn(&str) -> ValidationResult<String> + Send + Sync>;
+
 /// String validator with composable validation rules
 ///
 /// Provides a fluent API for building complex string validation logic.
 /// Each validation rule is applied in sequence, and all must pass.
 pub struct StringValidator {
-    rules: Vec<Box<dyn Fn(&str) -> ValidationResult<String> + Send + Sync>>,
+    rules: Vec<StringValidationRule>,
 }
 
 impl StringValidator {
@@ -140,6 +143,7 @@ impl StringValidator {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{StringValidator, StringValidatorTrait};
     /// let validator = StringValidator::not_empty();
     /// assert!(validator.validate("hello").is_ok());
     /// assert!(validator.validate("").is_err());
@@ -198,6 +202,7 @@ impl StringValidator {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{StringValidator, StringValidatorTrait};
     /// let validator = StringValidator::contains("test");
     /// assert!(validator.validate("this is a test").is_ok());
     /// assert!(validator.validate("hello world").is_err());
@@ -220,6 +225,7 @@ impl StringValidator {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{StringValidator, StringValidatorTrait};
     /// let validator = StringValidator::starts_with("http");
     /// assert!(validator.validate("https://example.com").is_ok());
     /// assert!(validator.validate("ftp://example.com").is_err());
@@ -269,12 +275,15 @@ impl StringValidatorTrait for StringValidator {
     }
 }
 
+/// Number validation rule type alias to reduce complexity
+type NumberValidationRule = Box<dyn Fn(&i64) -> ValidationResult<i64> + Send + Sync>;
+
 /// Number validator for integers with composable validation rules
 ///
 /// Provides a fluent API for building complex numeric validation logic.
 /// Each validation rule is applied in sequence, and all must pass.
 pub struct NumberValidator {
-    rules: Vec<Box<dyn Fn(&i64) -> ValidationResult<i64> + Send + Sync>>,
+    rules: Vec<NumberValidationRule>,
 }
 
 impl NumberValidator {
@@ -282,6 +291,7 @@ impl NumberValidator {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{NumberValidator, NumberValidatorTrait};
     /// let validator = NumberValidator::range(10, 20);
     /// assert!(validator.validate(&15).is_ok());
     /// assert!(validator.validate(&5).is_err());
@@ -307,6 +317,7 @@ impl NumberValidator {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{NumberValidator, NumberValidatorTrait};
     /// let validator = NumberValidator::positive();
     /// assert!(validator.validate(&5).is_ok());
     /// assert!(validator.validate(&0).is_err());
@@ -319,6 +330,7 @@ impl NumberValidator {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{NumberValidator, NumberValidatorTrait};
     /// let validator = NumberValidator::non_negative();
     /// assert!(validator.validate(&0).is_ok());
     /// assert!(validator.validate(&5).is_ok());
@@ -332,6 +344,7 @@ impl NumberValidator {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{NumberValidator, NumberValidatorTrait};
     /// let validator = NumberValidator::negative();
     /// assert!(validator.validate(&-5).is_ok());
     /// assert!(validator.validate(&0).is_err());
@@ -374,6 +387,7 @@ pub mod common {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{common, StringValidatorTrait};
     /// let validator = common::username();
     /// assert!(validator.validate("john_doe123").is_ok());
     /// assert!(validator.validate("a").is_err()); // too short
@@ -390,6 +404,7 @@ pub mod common {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{common, StringValidatorTrait};
     /// let validator = common::email_like();
     /// assert!(validator.validate("user@domain.com").is_ok());
     /// assert!(validator.validate("invalid-email").is_err());
@@ -404,6 +419,7 @@ pub mod common {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{common, NumberValidatorTrait};
     /// let validator = common::port_number();
     /// assert!(validator.validate(&8080).is_ok());
     /// assert!(validator.validate(&0).is_err()); // invalid port
@@ -417,6 +433,7 @@ pub mod common {
     ///
     /// # Examples
     /// ```rust
+    /// use mcp_context_browser::core::validation::{common, NumberValidatorTrait};
     /// let validator = common::age();
     /// assert!(validator.validate(&25).is_ok());
     /// assert!(validator.validate(&-5).is_err()); // negative age

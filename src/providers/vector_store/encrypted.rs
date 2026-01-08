@@ -21,8 +21,8 @@ pub struct EncryptedVectorStoreProvider<P: VectorStoreProvider> {
 
 impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
     /// Create a new encrypted vector store provider
-    pub fn new(inner: P, crypto_config: EncryptionConfig) -> Result<Self> {
-        let crypto = Arc::new(CryptoService::new(crypto_config)?);
+    pub async fn new(inner: P, crypto_config: EncryptionConfig) -> Result<Self> {
+        let crypto = Arc::new(CryptoService::new(crypto_config).await?);
         Ok(Self { inner, crypto })
     }
 
@@ -154,7 +154,7 @@ mod tests {
         let inner = InMemoryVectorStoreProvider::new();
         let config = EncryptionConfig::default();
 
-        let encrypted_store = EncryptedVectorStoreProvider::new(inner, config).unwrap();
+        let encrypted_store = EncryptedVectorStoreProvider::new(inner, config).await.unwrap();
         assert_eq!(encrypted_store.provider_name(), "encrypted");
     }
 
@@ -166,7 +166,7 @@ mod tests {
             ..Default::default()
         };
 
-        let encrypted_store = EncryptedVectorStoreProvider::new(inner, config).unwrap();
+        let encrypted_store = EncryptedVectorStoreProvider::new(inner, config).await.unwrap();
         assert_eq!(encrypted_store.provider_name(), "encrypted");
     }
 
@@ -175,7 +175,7 @@ mod tests {
         // Test that encrypted search returns empty results (as implemented)
         let inner = InMemoryVectorStoreProvider::new();
         let config = EncryptionConfig::default();
-        let encrypted_store = EncryptedVectorStoreProvider::new(inner, config).unwrap();
+        let encrypted_store = EncryptedVectorStoreProvider::new(inner, config).await.unwrap();
 
         // Create collection
         encrypted_store

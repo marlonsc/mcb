@@ -4,7 +4,7 @@
 //! following SOLID principles with proper separation of concerns.
 
 use crate::core::error::{Error, Result};
-use crate::di::registry::ProviderRegistry;
+use crate::di::registry::{ProviderRegistry, ProviderRegistryTrait};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -49,15 +49,25 @@ pub trait ProviderHealthChecker: Send + Sync {
     async fn check_health(&self, provider_id: &str) -> Result<HealthCheckResult>;
 }
 
+/// Trait for health monitoring
+#[async_trait::async_trait]
+pub trait HealthMonitorTrait: Send + Sync {
+    async fn is_healthy(&self, provider_id: &str) -> bool;
+    async fn get_health(&self, provider_id: &str) -> Option<ProviderHealth>;
+    async fn record_result(&self, result: HealthCheckResult);
+    async fn list_healthy_providers(&self) -> Vec<String>;
+    async fn check_provider(&self, provider_id: &str) -> Result<()>;
+}
+
 /// Real provider health checker that performs actual health checks
 pub struct RealProviderHealthChecker {
-    registry: Arc<ProviderRegistry>,
+    registry: Arc<crate::di::registry::ProviderRegistry>,
     timeout: Duration,
 }
 
 impl RealProviderHealthChecker {
     /// Create a new real provider health checker
-    pub fn new(registry: Arc<ProviderRegistry>) -> Self {
+    pub fn new(registry: Arc<crate::di::registry::ProviderRegistry>) -> Self {
         Self {
             registry,
             timeout: Duration::from_secs(10), // Default timeout
@@ -65,7 +75,10 @@ impl RealProviderHealthChecker {
     }
 
     /// Create with custom timeout
-    pub fn with_timeout(registry: Arc<ProviderRegistry>, timeout: Duration) -> Self {
+    pub fn with_timeout(
+        registry: Arc<crate::di::registry::ProviderRegistry>,
+        timeout: Duration,
+    ) -> Self {
         Self { registry, timeout }
     }
 
@@ -78,7 +91,7 @@ impl RealProviderHealthChecker {
                 // Perform a lightweight health check - try to get dimensions
                 // This is a minimal operation that verifies the provider is accessible
                 match tokio::time::timeout(self.timeout, async {
-                    provider.dimensions();
+                    let _ = provider.dimensions();
                     Ok::<(), Error>(())
                 })
                 .await
@@ -98,29 +111,24 @@ impl RealProviderHealthChecker {
                             provider_id: provider_id.to_string(),
                             status: ProviderHealthStatus::Unhealthy,
                             response_time,
-                            error_message: Some(format!("Health check failed: {}", e)),
+                            error_message: Some(format!("Provider error: {}", e)),
                         })
                     }
                     Err(_) => {
-                        // Timeout
+                        let response_time = start_time.elapsed();
                         Ok(HealthCheckResult {
                             provider_id: provider_id.to_string(),
                             status: ProviderHealthStatus::Unhealthy,
-                            response_time: self.timeout,
+                            response_time,
                             error_message: Some("Health check timed out".to_string()),
                         })
                     }
                 }
             }
-            Err(_) => {
-                // Provider not found
-                Ok(HealthCheckResult {
-                    provider_id: provider_id.to_string(),
-                    status: ProviderHealthStatus::Unhealthy,
-                    response_time: Duration::from_millis(0),
-                    error_message: Some("Provider not registered".to_string()),
-                })
-            }
+            Err(e) => Err(Error::not_found(format!(
+                "Provider {} not found in registry: {}",
+                provider_id, e
+            ))),
         }
     }
 
@@ -130,11 +138,12 @@ impl RealProviderHealthChecker {
 
         match self.registry.get_vector_store_provider(provider_id) {
             Ok(provider) => {
-                // Perform a lightweight health check - try to get collection stats for a test collection
-                // This verifies the provider can connect and respond
-                match tokio::time::timeout(self.timeout, async {
-                    provider.collection_exists("__health_check__").await
-                })
+                // Perform a lightweight health check - check if a reserved collection name exists
+                // This is a safe operation that verifies connectivity
+                match tokio::time::timeout(
+                    self.timeout,
+                    provider.collection_exists("__health_check__"),
+                )
                 .await
                 {
                     Ok(Ok(_)) => {
@@ -147,49 +156,29 @@ impl RealProviderHealthChecker {
                         })
                     }
                     Ok(Err(e)) => {
-                        // Try alternative check - some providers might not have stats
-                        // Fallback to a simple connectivity check
                         let response_time = start_time.elapsed();
-                        if e.to_string().contains("collection not found")
-                            || e.to_string().contains("Collection not found")
-                            || e.to_string().contains("does not exist")
-                        {
-                            // This is expected for test collection, provider is healthy
-                            Ok(HealthCheckResult {
-                                provider_id: provider_id.to_string(),
-                                status: ProviderHealthStatus::Healthy,
-                                response_time,
-                                error_message: None,
-                            })
-                        } else {
-                            Ok(HealthCheckResult {
-                                provider_id: provider_id.to_string(),
-                                status: ProviderHealthStatus::Unhealthy,
-                                response_time,
-                                error_message: Some(format!("Health check failed: {}", e)),
-                            })
-                        }
-                    }
-                    Err(_) => {
-                        // Timeout
                         Ok(HealthCheckResult {
                             provider_id: provider_id.to_string(),
                             status: ProviderHealthStatus::Unhealthy,
-                            response_time: self.timeout,
+                            response_time,
+                            error_message: Some(format!("Vector store error: {}", e)),
+                        })
+                    }
+                    Err(_) => {
+                        let response_time = start_time.elapsed();
+                        Ok(HealthCheckResult {
+                            provider_id: provider_id.to_string(),
+                            status: ProviderHealthStatus::Unhealthy,
+                            response_time,
                             error_message: Some("Health check timed out".to_string()),
                         })
                     }
                 }
             }
-            Err(_) => {
-                // Provider not found
-                Ok(HealthCheckResult {
-                    provider_id: provider_id.to_string(),
-                    status: ProviderHealthStatus::Unhealthy,
-                    response_time: Duration::from_millis(0),
-                    error_message: Some("Provider not registered".to_string()),
-                })
-            }
+            Err(e) => Err(Error::not_found(format!(
+                "Provider {} not found in registry: {}",
+                provider_id, e
+            ))),
         }
     }
 }
@@ -197,93 +186,89 @@ impl RealProviderHealthChecker {
 #[async_trait::async_trait]
 impl ProviderHealthChecker for RealProviderHealthChecker {
     async fn check_health(&self, provider_id: &str) -> Result<HealthCheckResult> {
-        // Determine provider type and perform appropriate health check
-        let embedding_providers = self.registry.list_embedding_providers();
-        let vector_store_providers = self.registry.list_vector_store_providers();
-
-        if embedding_providers.contains(&provider_id.to_string()) {
-            self.check_embedding_provider(provider_id).await
-        } else if vector_store_providers.contains(&provider_id.to_string()) {
-            self.check_vector_store_provider(provider_id).await
-        } else {
-            // Provider not found in registry
-            Ok(HealthCheckResult {
-                provider_id: provider_id.to_string(),
-                status: ProviderHealthStatus::Unhealthy,
-                response_time: Duration::from_millis(0),
-                error_message: Some("Provider not registered".to_string()),
-            })
+        // Try embedding provider first, then vector store
+        if let Ok(result) = self.check_embedding_provider(provider_id).await {
+            return Ok(result);
         }
+
+        if let Ok(result) = self.check_vector_store_provider(provider_id).await {
+            return Ok(result);
+        }
+
+        Err(Error::not_found(format!(
+            "Provider {} not found in any registry",
+            provider_id
+        )))
     }
 }
 
-/// Health monitor that manages provider health states
+/// Health monitor coordinating health checks and tracking status
 pub struct HealthMonitor {
-    /// Health data for all providers
-    health_data: Arc<RwLock<HashMap<String, ProviderHealth>>>,
-    /// Health checker implementation
-    checker: Arc<dyn ProviderHealthChecker>,
-    /// Failure threshold for marking unhealthy
-    failure_threshold: u32,
-    /// Check interval (for future periodic health checks)
-    #[allow(dead_code)]
-    check_interval: Duration,
+    health_states: Arc<RwLock<HashMap<String, ProviderHealth>>>,
+    checker: Option<Arc<dyn ProviderHealthChecker>>,
 }
 
 impl HealthMonitor {
-    /// Create a new health monitor with registry
-    pub fn new(registry: Arc<ProviderRegistry>) -> Self {
-        Self::with_registry_and_timeout(registry, Duration::from_secs(10))
-    }
-
-    /// Create a new health monitor with registry and custom timeout
-    pub fn with_registry_and_timeout(registry: Arc<ProviderRegistry>, timeout: Duration) -> Self {
-        let checker = Arc::new(RealProviderHealthChecker::with_timeout(
-            Arc::clone(&registry),
-            timeout,
-        ));
+    /// Create a new health monitor
+    pub fn new() -> Self {
         Self {
-            health_data: Arc::new(RwLock::new(HashMap::new())),
-            checker,
-            failure_threshold: 3,
-            check_interval: Duration::from_secs(30),
+            health_states: Arc::new(RwLock::new(HashMap::new())),
+            checker: None,
         }
     }
 
-    /// Create a new health monitor with custom checker (advanced usage)
+    /// Create with a specific checker
     pub fn with_checker(checker: Arc<dyn ProviderHealthChecker>) -> Self {
         Self {
-            health_data: Arc::new(RwLock::new(HashMap::new())),
-            checker,
-            failure_threshold: 3,
-            check_interval: Duration::from_secs(30),
+            health_states: Arc::new(RwLock::new(HashMap::new())),
+            checker: Some(checker),
         }
     }
 
-    /// Check if a provider is healthy
-    pub async fn is_healthy(&self, provider_id: &str) -> bool {
-        let health_data = self.health_data.read().await;
-        matches!(
-            health_data.get(provider_id).map(|h| h.status),
-            Some(ProviderHealthStatus::Healthy)
-        )
+    /// Create with a registry (uses RealProviderHealthChecker)
+    pub fn with_registry(registry: Arc<ProviderRegistry>) -> Self {
+        let checker = Arc::new(RealProviderHealthChecker::new(registry));
+        Self::with_checker(checker)
     }
 
-    /// Get health information for a provider
-    pub async fn get_health(&self, provider_id: &str) -> Option<ProviderHealth> {
-        let health_data = self.health_data.read().await;
-        health_data.get(provider_id).cloned()
+    /// Trigger a health check for a provider
+    pub async fn check_provider(&self, provider_id: &str) -> Result<()> {
+        if let Some(checker) = &self.checker {
+            let result = checker.check_health(provider_id).await?;
+            self.record_result(result).await;
+            Ok(())
+        } else {
+            // If no checker, we can't really check, but we can return current status or unknown
+            // For now, let's return an error if no checker is configured but check is requested
+            Err(Error::generic("No health checker configured"))
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl HealthMonitorTrait for HealthMonitor {
+    /// Check if a provider is considered healthy
+    async fn is_healthy(&self, provider_id: &str) -> bool {
+        let states = self.health_states.read().await;
+        states
+            .get(provider_id)
+            .map(|h| h.status == ProviderHealthStatus::Healthy)
+            .unwrap_or(true) // Assume healthy if unknown
     }
 
-    /// Perform health check for a provider
-    pub async fn check_provider(&self, provider_id: &str) -> Result<ProviderHealth> {
-        let check_result = self.checker.check_health(provider_id).await?;
+    /// Get detailed health information for a provider
+    async fn get_health(&self, provider_id: &str) -> Option<ProviderHealth> {
+        let states = self.health_states.read().await;
+        states.get(provider_id).cloned()
+    }
 
-        let mut health_data = self.health_data.write().await;
-        let health = health_data
-            .entry(provider_id.to_string())
+    /// Record a health check result
+    async fn record_result(&self, result: HealthCheckResult) {
+        let mut states = self.health_states.write().await;
+        let health = states
+            .entry(result.provider_id.clone())
             .or_insert_with(|| ProviderHealth {
-                provider_id: provider_id.to_string(),
+                provider_id: result.provider_id.clone(),
                 status: ProviderHealthStatus::Unknown,
                 last_check: Instant::now(),
                 consecutive_failures: 0,
@@ -291,36 +276,23 @@ impl HealthMonitor {
                 response_time: None,
             });
 
-        health.total_checks += 1;
         health.last_check = Instant::now();
-        health.response_time = Some(check_result.response_time);
+        health.total_checks += 1;
+        health.response_time = Some(result.response_time);
 
-        match check_result.status {
+        match result.status {
             ProviderHealthStatus::Healthy => {
                 health.status = ProviderHealthStatus::Healthy;
                 health.consecutive_failures = 0;
-                debug!("Provider {} health check passed", provider_id);
+                debug!("Provider {} is healthy", result.provider_id);
             }
             ProviderHealthStatus::Unhealthy => {
                 health.consecutive_failures += 1;
-                // For unregistered providers or critical failures, mark unhealthy immediately
-                if check_result
-                    .error_message
-                    .as_ref()
-                    .map(|msg| msg.contains("Provider not registered"))
-                    .unwrap_or(false)
-                    || health.consecutive_failures >= self.failure_threshold
-                {
+                if health.consecutive_failures >= 3 {
                     health.status = ProviderHealthStatus::Unhealthy;
                     warn!(
-                        "Provider {} marked unhealthy after {} failures",
-                        provider_id, health.consecutive_failures
-                    );
-                } else {
-                    // Still healthy but incrementing failure count
-                    debug!(
-                        "Provider {} health check failed ({}/{})",
-                        provider_id, health.consecutive_failures, self.failure_threshold
+                        "Provider {} marked as unhealthy after {} failures",
+                        result.provider_id, health.consecutive_failures
                     );
                 }
             }
@@ -328,96 +300,83 @@ impl HealthMonitor {
                 health.status = ProviderHealthStatus::Unknown;
             }
         }
-
-        Ok(health.clone())
     }
 
-    /// Get all provider health statuses
-    pub async fn get_all_health(&self) -> HashMap<String, ProviderHealth> {
-        let health_data = self.health_data.read().await;
-        health_data.clone()
+    /// List all currently healthy provider IDs
+    async fn list_healthy_providers(&self) -> Vec<String> {
+        let states = self.health_states.read().await;
+        states
+            .iter()
+            .filter(|(_, h)| h.status == ProviderHealthStatus::Healthy)
+            .map(|(id, _)| id.clone())
+            .collect()
     }
 
-    /// Get healthy providers from a list
-    pub async fn get_healthy_providers(&self, providers: &[String]) -> Vec<String> {
-        let mut healthy = Vec::new();
-        for provider_id in providers {
-            if self.is_healthy(provider_id).await {
-                healthy.push(provider_id.clone());
-            }
-        }
-        healthy
-    }
-
-    /// Reset health status for a provider
-    pub async fn reset_provider(&self, provider_id: &str) {
-        let mut health_data = self.health_data.write().await;
-        if let Some(health) = health_data.get_mut(provider_id) {
-            health.status = ProviderHealthStatus::Unknown;
-            health.consecutive_failures = 0;
-            health.total_checks = 0;
-            health.response_time = None;
+    /// Perform a health check for a specific provider and record the result
+    async fn check_provider(&self, provider_id: &str) -> Result<()> {
+        if let Some(checker) = &self.checker {
+            let result = checker.check_health(provider_id).await?;
+            self.record_result(result).await;
+            Ok(())
+        } else {
+            Err(Error::generic("No health checker configured"))
         }
     }
 }
 
 impl Default for HealthMonitor {
     fn default() -> Self {
-        // Default implementation requires registry - use new() for real usage
-        // This is kept for compatibility but should not be used in production
-        let registry = Arc::new(ProviderRegistry::new());
-        Self::new(registry)
+        Self::new()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::di::registry::ProviderRegistry;
 
     #[tokio::test]
     async fn test_health_monitor_creation() {
-        let registry = Arc::new(ProviderRegistry::new());
-        let monitor = HealthMonitor::new(Arc::clone(&registry));
-        assert!(!monitor.is_healthy("test-provider").await);
+        let monitor = HealthMonitor::new();
+        assert!(monitor.is_healthy("any").await);
     }
 
     #[tokio::test]
     async fn test_provider_health_check_unregistered() {
-        let registry = Arc::new(ProviderRegistry::new());
-        let monitor = HealthMonitor::new(Arc::clone(&registry));
-
-        // Check unregistered provider
-        let result = monitor.check_provider("unregistered-provider").await;
-        assert!(result.is_ok());
-
-        // Should be unhealthy after check
-        assert!(!monitor.is_healthy("unregistered-provider").await);
-
-        let health = monitor.get_health("unregistered-provider").await.unwrap();
-        assert_eq!(health.status, ProviderHealthStatus::Unhealthy); // Should be Unhealthy after failed check
-    }
-
-    #[tokio::test]
-    async fn test_real_provider_health_checker() {
-        let registry = Arc::new(ProviderRegistry::new());
-        let checker = RealProviderHealthChecker::new(Arc::clone(&registry));
-
-        // Test with unregistered provider
-        let result = checker.check_health("nonexistent").await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().status, ProviderHealthStatus::Unhealthy);
+        let registry = Arc::new(crate::di::registry::ProviderRegistry::new());
+        let checker = RealProviderHealthChecker::new(registry);
+        let result = checker.check_health("non-existent").await;
+        assert!(result.is_err());
     }
 
     #[tokio::test]
     async fn test_get_healthy_providers() {
-        let registry = Arc::new(ProviderRegistry::new());
-        let monitor = HealthMonitor::new(Arc::clone(&registry));
+        let monitor = HealthMonitor::new();
+        monitor
+            .record_result(HealthCheckResult {
+                provider_id: "p1".to_string(),
+                status: ProviderHealthStatus::Healthy,
+                response_time: Duration::from_millis(10),
+                error_message: None,
+            })
+            .await;
 
-        // Test with empty registry
-        let providers = vec!["provider1".to_string(), "provider2".to_string()];
+        let healthy = monitor.list_healthy_providers().await;
+        assert_eq!(healthy.len(), 1);
+        assert_eq!(healthy[0], "p1");
+    }
 
-        let healthy = monitor.get_healthy_providers(&providers).await;
-        assert_eq!(healthy.len(), 0); // No providers registered
+    #[tokio::test]
+    async fn test_real_provider_health_checker() {
+        let registry = Arc::new(crate::di::registry::ProviderRegistry::new());
+        let mock_provider =
+            Arc::new(crate::providers::embedding::null::NullEmbeddingProvider::new());
+        registry
+            .register_embedding_provider("mock".to_string(), mock_provider)
+            .unwrap();
+
+        let checker = RealProviderHealthChecker::new(registry);
+        let result = checker.check_health("mock").await.unwrap();
+        assert_eq!(result.status, ProviderHealthStatus::Healthy);
+        assert_eq!(result.provider_id, "mock");
     }
 }

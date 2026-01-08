@@ -11,7 +11,6 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-
 /// Vector store backed chunk repository
 pub struct VectorStoreChunkRepository<E, V> {
     embedding_provider: Arc<E>,
@@ -51,7 +50,8 @@ where
         }
 
         // Use the first chunk's collection or default to "default"
-        let collection = chunks.first()
+        let collection = chunks
+            .first()
             .and_then(|chunk| chunk.metadata.get("collection"))
             .and_then(|c| c.as_str())
             .unwrap_or("default");
@@ -114,7 +114,8 @@ where
         // This is a simplified implementation - in practice you'd want to search by a meaningful query
         let query_vector = vec![0.0; self.embedding_provider.dimensions()]; // Zero vector for collection search
 
-        let results = self.vector_store_provider
+        let results = self
+            .vector_store_provider
             .search_similar(&collection_name, &query_vector, limit, None)
             .await?;
 

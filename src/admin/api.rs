@@ -3,10 +3,7 @@
 use axum::Router;
 use std::sync::Arc;
 
-use crate::admin::{
-    AdminApi, AdminConfig, models::AdminState, routes::create_admin_router,
-    service::AdminServiceImpl,
-};
+use crate::admin::{AdminApi, AdminConfig, models::AdminState, routes::create_admin_router};
 
 /// Admin API server
 pub struct AdminApiServer {
@@ -23,7 +20,7 @@ impl AdminApiServer {
     /// Create the admin router
     pub fn create_router(&self) -> Router {
         let admin_api = Arc::new(AdminApi::new(self.config.clone()));
-        let admin_service = Arc::new(AdminServiceImpl::new(Arc::clone(&self.mcp_server)));
+        let admin_service = self.mcp_server.admin_service();
         let state = AdminState {
             admin_api,
             admin_service,

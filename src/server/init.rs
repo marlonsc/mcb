@@ -3,6 +3,7 @@
 //! This module contains server initialization logic extracted from the main
 //! server implementation to improve code organization and testability.
 
+use crate::config::ConfigManager;
 use crate::core::cache::CacheManager;
 use crate::core::database::init_global_database_pool;
 use crate::core::http_client::{HttpClientConfig, init_global_http_client};
@@ -49,7 +50,11 @@ async fn initialize_server_components(
     Box<dyn std::error::Error>,
 > {
     // Load configuration from environment
-    let config = crate::config::Config::from_env()
+    let manager =
+        ConfigManager::new().map_err(|e| format!("Failed to create config manager: {}", e))?;
+    let config = manager
+        .load_config()
+        .await
         .map_err(|e| format!("Failed to load configuration: {}", e))?;
 
     // Initialize resource limits

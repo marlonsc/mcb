@@ -120,17 +120,14 @@ mod full_integration_tests {
 
         // Test 4: Verify system status
         let system_info = server.get_system_info();
-        assert!(system_info.version.len() > 0, "Version should be set");
-        assert!(system_info.uptime >= 0, "Uptime should be non-negative");
+        assert!(!system_info.version.is_empty(), "Version should be set");
+        assert!(system_info.uptime > 0, "Uptime should be non-negative");
 
         // Performance metrics tracking (optional for basic functionality)
         // Note: Performance metrics may not be fully implemented in this basic version
         let performance_metrics = server.get_performance_metrics();
         // Just verify the structure is valid
-        assert!(
-            performance_metrics.total_queries >= 0,
-            "Total queries should be non-negative"
-        );
+        let _ = performance_metrics.total_queries;
 
         println!("✅ System status verification completed");
 
@@ -272,7 +269,7 @@ pub fn validate_token(token: &str) -> Result<String, String> {
 
 use std::collections::HashMap;
 
-/// Database connection structure
+    /// Database connection structure
 pub struct DatabaseConnection {
     host: String,
     port: u16,
@@ -310,7 +307,7 @@ impl DatabaseConnection {
     }
 
     /// Execute query (mock)
-    pub fn query(&self, sql: &str) -> Result<Vec<HashMap<String, String>>, String> {
+    pub fn query(&self, _sql: &str) -> Result<Vec<HashMap<String, String>>, String> {
         if !self.connected {
             return Err("Not connected to database".to_string());
         }

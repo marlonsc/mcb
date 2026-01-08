@@ -66,6 +66,14 @@ impl MerkleTree {
         Ok(Self { root })
     }
 
+    /// Create a new Merkle tree from a directory asynchronously (offloads to blocking thread)
+    pub async fn from_directory_async(path: &std::path::Path) -> Result<Self> {
+        let path = path.to_path_buf();
+        tokio::task::spawn_blocking(move || Self::from_directory(&path))
+            .await
+            .map_err(|e| Error::generic(format!("Blocking task failed: {}", e)))?
+    }
+
     /// Get the root hash of the tree
     pub fn root_hash(&self) -> &str {
         self.root.hash()

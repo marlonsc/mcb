@@ -5,7 +5,7 @@
 
 use mcp_context_browser::core::error::Error;
 use mcp_context_browser::core::error::Result;
-use mcp_context_browser::di::registry::ProviderRegistry;
+use mcp_context_browser::di::registry::{ProviderRegistry, ProviderRegistryTrait};
 use mcp_context_browser::providers::embedding::NullEmbeddingProvider;
 use mcp_context_browser::providers::routing::{
     ContextualStrategy, ProviderContext, ProviderRouter,
@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
 
     // Register a mock embedding provider
     let mock_provider = Arc::new(NullEmbeddingProvider::new());
-    registry.register_embedding_provider("mock", mock_provider)?;
+    registry.register_embedding_provider("mock".to_string(), mock_provider)?;
 
     println!("  ✅ Registered mock embedding provider");
 

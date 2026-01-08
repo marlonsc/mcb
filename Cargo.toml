@@ -29,6 +29,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # Configuration
 config = "0.15"
 toml = "0.9"
+notify = "6.1"
+arc-swap = "1.7"
+shaku = "0.6"
 
 # HTTP client
 reqwest = { version = "0.13", features = ["json", "__tls"] }
@@ -38,7 +41,6 @@ clap = { version = "4.5.54", features = ["derive"] }
 
 # File operations
 walkdir = "2.5"
-fs2 = "0.4"
 
 # Regex
 regex = "1.12"
@@ -163,6 +165,7 @@ futures-util = "0.3.31"
 # Local embeddings without external services
 fastembed = { version = "4.4", default-features = false, features = ["default"] }
 criterion = "0.8.1"
+moka = { version = "0.12", features = ["future"] }
 
 [dev-dependencies]
 tempfile = "3.10"

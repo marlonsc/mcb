@@ -68,45 +68,37 @@ mod cache_error_handling_tests {
     async fn test_cache_manager_handles_connection_failures() {
         // Test with invalid Redis configuration
         let config = CacheConfig {
-            redis_url: Some("redis://invalid:6379".to_string()),
-            default_ttl: Duration::from_secs(300),
-            max_memory_mb: 100,
+            redis_url: "redis://invalid:6379".to_string(),
+            default_ttl_seconds: 300,
+            max_size: 100,
             enabled: true,
+            namespaces: Default::default(),
         };
 
-        // Should handle Redis connection failures gracefully
+        // In Exclusive mode, this should FAIL on creation
         let result = CacheManager::new(config).await;
-        // The implementation should either succeed with fallback or return a proper error
-        // We accept both outcomes as long as there's no panic
-        match result {
-            Ok(manager) => {
-                // If it succeeds, it should have fallen back to local cache
-                assert!(manager.is_enabled());
-            }
-            Err(e) => {
-                // If it fails, it should be a proper error, not a panic
-                assert!(matches!(e, Error::Redis { .. } | Error::Generic(_)));
-            }
-        }
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::Redis { .. } | Error::Generic(_)));
     }
 
     #[tokio::test]
     async fn test_cache_manager_handles_disabled_cache_operations() {
         let config = CacheConfig {
-            redis_url: None,
-            default_ttl: Duration::from_secs(300),
-            max_memory_mb: 0, // Disabled
+            redis_url: "".to_string(),
+            default_ttl_seconds: 300,
+            max_size: 0, // Disabled
             enabled: false,
+            namespaces: Default::default(),
         };
 
         let manager = CacheManager::new(config).await.unwrap();
 
         // Operations on disabled cache should not panic
         let set_result = manager.set("test", "key", "value".to_string()).await;
-        assert!(set_result.is_ok()); // Should succeed (no-op) or return proper error
+        assert!(set_result.is_ok()); // Should succeed (no-op)
 
-        let get_result: Result<Option<String>> = manager.get("test", "key").await;
-        assert!(get_result.is_ok()); // Should succeed (return None) or return proper error
+        let get_result: CacheResult<String> = manager.get("test", "key").await;
+        assert!(get_result.is_miss());
     }
 
     #[tokio::test]
@@ -121,8 +113,8 @@ mod cache_error_handling_tests {
         let delete_result = manager.delete("test_ns", "key").await;
         assert!(delete_result.is_ok());
 
-        let stats_result = manager.get_namespace_stats("test_ns").await;
-        assert!(stats_result.is_ok());
+        let stats = manager.get_stats().await;
+        assert_eq!(stats.total_entries, 0);
     }
 
     #[tokio::test]
@@ -136,12 +128,9 @@ mod cache_error_handling_tests {
         let set_result = manager.set("test", "large_key", large_data.clone()).await;
         assert!(set_result.is_ok());
 
-        let get_result: Result<Option<String>> = manager.get("test", "large_key").await;
-        assert!(get_result.is_ok());
-
-        if let Ok(Some(retrieved)) = get_result {
-            assert_eq!(retrieved, large_data);
-        }
+        let get_result: CacheResult<String> = manager.get("test", "large_key").await;
+        assert!(get_result.is_hit());
+        assert_eq!(get_result.data().unwrap(), large_data);
     }
 }
 

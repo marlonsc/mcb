@@ -154,9 +154,9 @@ pub fn get_or_create_global_database_pool() -> Result<&'static DatabasePool> {
             enabled: false,
             ..Default::default()
         };
-        let pool = DatabasePool::new(config)?;
+        let _pool = DatabasePool::new(config)?;
         DB_POOL
-            .set(pool)
+            .set(_pool)
             .map_err(|_| Error::internal("Database pool already initialized"))?;
         DB_POOL
             .get()

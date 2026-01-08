@@ -35,6 +35,7 @@ pub mod handlers;
 pub mod init;
 pub mod rate_limit_middleware;
 pub mod security;
+#[allow(clippy::module_inception)]
 pub mod server;
 
 // Re-exports for public API

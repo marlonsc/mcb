@@ -2,22 +2,34 @@
 //!
 //! Provides high-performance caching for embeddings, search results, and metadata
 //! with intelligent TTL management and cache invalidation strategies.
+//!
+//! # Architecture
+//!
+//! The cache system operates in one of two mutually exclusive modes:
+//! 1. **Local Mode (Moka)**: High-performance in-memory caching using `moka`. Used when Redis is not configured.
+//! 2. **Remote Mode (Redis)**: Distributed caching using Redis. Used when `redis_url` is configured.
+//!
+//! This split ensures predictable behavior:
+//! - Single instances use fast local caching.
+//! - Clustered/Distributed instances use Redis for consistency.
 
 use crate::core::error::{Error, Result};
+use moka::future::Cache;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::sync::RwLock;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 /// Cache configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheConfig {
     /// Redis connection URL
+    /// If provided and not empty, Redis (Remote) mode is used.
+    /// If empty, Moka (Local) mode is used.
     pub redis_url: String,
     /// Default TTL for cache entries (seconds)
     pub default_ttl_seconds: u64,
-    /// Maximum cache size (number of entries)
+    /// Maximum cache size (number of entries) - Applies to Local Moka cache
     pub max_size: usize,
     /// Whether caching is enabled
     pub enabled: bool,
@@ -28,7 +40,7 @@ pub struct CacheConfig {
 impl Default for CacheConfig {
     fn default() -> Self {
         Self {
-            redis_url: "redis://127.0.0.1:6379".to_string(),
+            redis_url: String::new(),  // Default to Local (Moka) mode
             default_ttl_seconds: 3600, // 1 hour
             max_size: 10000,
             enabled: true,
@@ -48,6 +60,8 @@ pub struct CacheNamespacesConfig {
     pub metadata: CacheNamespaceConfig,
     /// Provider responses cache settings
     pub provider_responses: CacheNamespaceConfig,
+    /// Sync batches cache settings
+    pub sync_batches: CacheNamespaceConfig,
 }
 
 impl Default for CacheNamespacesConfig {
@@ -73,6 +87,11 @@ impl Default for CacheNamespacesConfig {
                 max_entries: 3000,
                 compression: true,
             },
+            sync_batches: CacheNamespaceConfig {
+                ttl_seconds: 86400, // 24 hours
+                max_entries: 1000,
+                compression: false,
+            },
         }
     }
 }
@@ -89,6 +108,7 @@ pub struct CacheNamespaceConfig {
 }
 
 /// Cache entry with metadata
+/// Used primarily for Redis serialization to preserve metadata across instances
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheEntry<T> {
     /// The cached data
@@ -157,73 +177,166 @@ impl<T> CacheResult<T> {
 #[derive(Clone)]
 pub struct CacheManager {
     config: CacheConfig,
+    /// Redis client (Present if in Remote mode)
     redis_client: Option<redis::Client>,
-    local_cache: Arc<RwLock<HashMap<String, CacheEntry<serde_json::Value>>>>,
-    stats: Arc<RwLock<CacheStats>>,
+    /// Local Moka caches (Present/Used if in Local mode)
+    /// We keep these initialized but empty if in Redis mode to simplify struct
+    embeddings_cache: Cache<String, serde_json::Value>,
+    search_results_cache: Cache<String, serde_json::Value>,
+    metadata_cache: Cache<String, serde_json::Value>,
+    provider_responses_cache: Cache<String, serde_json::Value>,
+    sync_batches_cache: Cache<String, serde_json::Value>,
+
+    stats_hits: Arc<AtomicU64>,
+    stats_misses: Arc<AtomicU64>,
+    stats_evictions: Arc<AtomicU64>,
 }
 
 impl CacheManager {
     /// Create a new cache manager
     pub async fn new(config: CacheConfig) -> Result<Self> {
-        let redis_client = if config.enabled {
+        tracing::debug!("CacheManager::new started");
+
+        let mut redis_client = None;
+
+        if config.enabled && !config.redis_url.is_empty() {
+            tracing::debug!(
+                "Redis configured, attempting to connect to {}",
+                config.redis_url
+            );
             match redis::Client::open(config.redis_url.clone()) {
                 Ok(client) => {
+                    tracing::debug!("Redis Client open success");
                     // Test connection
+                    tracing::debug!("Testing redis connection...");
                     match Self::test_redis_connection(&client).await {
                         Ok(_) => {
-                            tracing::info!("✅ Redis cache connection established");
-                            Some(client)
+                            tracing::debug!("Redis connection established");
+                            tracing::info!("✅ Redis cache connection established (Remote Mode)");
+                            redis_client = Some(client);
                         }
                         Err(e) => {
-                            tracing::warn!(
-                                "⚠️  Redis cache connection failed, falling back to local cache: {}",
-                                e
-                            );
-                            None
+                            tracing::error!("Redis connection failed: {}", e);
+                            return Err(e); // Strict failure if Redis is configured
                         }
                     }
                 }
                 Err(e) => {
-                    tracing::warn!("⚠️  Redis client creation failed, using local cache: {}", e);
-                    None
+                    tracing::error!("Redis Client open failed: {}", e);
+                    return Err(Error::generic(format!("Redis client open failed: {}", e)));
                 }
             }
+        } else if config.enabled {
+            tracing::info!("ℹ️  Redis not configured, using Local Moka Cache (Local Mode)");
         } else {
             tracing::info!("ℹ️  Caching disabled");
-            None
-        };
-
-        let manager = Self {
-            config,
-            redis_client,
-            local_cache: Arc::new(RwLock::new(HashMap::new())),
-            stats: Arc::new(RwLock::new(CacheStats::default())),
-        };
-
-        // Start background cleanup task
-        if manager.config.enabled {
-            let manager_clone = manager.clone();
-            tokio::spawn(async move {
-                manager_clone.background_cleanup().await;
-            });
         }
 
-        Ok(manager)
+        // Initialize Moka caches (Used in Local Mode)
+        // We initialize them even in Redis mode to keep struct consistent, but they won't be used.
+        // This overhead is minimal (lazy allocation).
+
+        let stats_hits = Arc::new(AtomicU64::new(0));
+        let stats_misses = Arc::new(AtomicU64::new(0));
+        let stats_evictions = Arc::new(AtomicU64::new(0));
+
+        let evictions = stats_evictions.clone();
+        let embeddings_cache = Cache::builder()
+            .max_capacity(config.namespaces.embeddings.max_entries as u64)
+            .time_to_live(Duration::from_secs(
+                config.namespaces.embeddings.ttl_seconds,
+            ))
+            .eviction_listener(move |_k, _v, _cause| {
+                evictions.fetch_add(1, Ordering::Relaxed);
+            })
+            .support_invalidation_closures()
+            .build();
+
+        let evictions = stats_evictions.clone();
+        let search_results_cache = Cache::builder()
+            .max_capacity(config.namespaces.search_results.max_entries as u64)
+            .time_to_live(Duration::from_secs(
+                config.namespaces.search_results.ttl_seconds,
+            ))
+            .eviction_listener(move |_k, _v, _cause| {
+                evictions.fetch_add(1, Ordering::Relaxed);
+            })
+            .support_invalidation_closures()
+            .build();
+
+        let evictions = stats_evictions.clone();
+        let metadata_cache = Cache::builder()
+            .max_capacity(config.namespaces.metadata.max_entries as u64)
+            .time_to_live(Duration::from_secs(config.namespaces.metadata.ttl_seconds))
+            .eviction_listener(move |_k, _v, _cause| {
+                evictions.fetch_add(1, Ordering::Relaxed);
+            })
+            .support_invalidation_closures()
+            .build();
+
+        let evictions = stats_evictions.clone();
+        let provider_responses_cache = Cache::builder()
+            .max_capacity(config.namespaces.provider_responses.max_entries as u64)
+            .time_to_live(Duration::from_secs(
+                config.namespaces.provider_responses.ttl_seconds,
+            ))
+            .eviction_listener(move |_k, _v, _cause| {
+                evictions.fetch_add(1, Ordering::Relaxed);
+            })
+            .support_invalidation_closures()
+            .build();
+
+        let evictions = stats_evictions.clone();
+        let sync_batches_cache = Cache::builder()
+            .max_capacity(config.namespaces.sync_batches.max_entries as u64)
+            .time_to_live(Duration::from_secs(
+                config.namespaces.sync_batches.ttl_seconds,
+            ))
+            .eviction_listener(move |_k, _v, _cause| {
+                evictions.fetch_add(1, Ordering::Relaxed);
+            })
+            .support_invalidation_closures()
+            .build();
+
+        Ok(Self {
+            config,
+            redis_client,
+            embeddings_cache,
+            search_results_cache,
+            metadata_cache,
+            provider_responses_cache,
+            sync_batches_cache,
+            stats_hits,
+            stats_misses,
+            stats_evictions,
+        })
     }
 
     /// Test Redis connection
     async fn test_redis_connection(client: &redis::Client) -> Result<()> {
-        let mut conn = client
-            .get_multiplexed_async_connection()
-            .await
-            .map_err(|e| Error::generic(format!("Redis connection failed: {}", e)))?;
+        let timeout_duration = Duration::from_secs(2);
 
-        redis::cmd("PING")
-            .query_async::<()>(&mut conn)
-            .await
-            .map_err(|e| Error::generic(format!("Redis PING failed: {}", e)))?;
+        let mut conn =
+            match tokio::time::timeout(timeout_duration, client.get_multiplexed_async_connection())
+                .await
+            {
+                Ok(Ok(conn)) => conn,
+                Ok(Err(e)) => {
+                    return Err(Error::generic(format!("Redis connection failed: {}", e)));
+                }
+                Err(_) => return Err(Error::generic("Redis connection timed out")),
+            };
 
-        Ok(())
+        match tokio::time::timeout(
+            timeout_duration,
+            redis::cmd("PING").query_async::<()>(&mut conn),
+        )
+        .await
+        {
+            Ok(Ok(_)) => Ok(()),
+            Ok(Err(e)) => Err(Error::generic(format!("Redis PING failed: {}", e))),
+            Err(_) => Err(Error::generic("Redis PING timed out")),
+        }
     }
 
     /// Get a value from cache
@@ -235,49 +348,51 @@ impl CacheManager {
             return CacheResult::Miss;
         }
 
-        let start_time = Instant::now();
         let full_key = format!("{}:{}", namespace, key);
 
-        // Try Redis first if available
+        // Remote Mode (Redis)
         if self.redis_client.is_some() {
             match self.get_from_redis(&full_key).await {
                 Ok(Some(data)) => match serde_json::from_value(data) {
                     Ok(deserialized) => {
-                        self.update_stats(true, start_time.elapsed()).await;
+                        self.stats_hits.fetch_add(1, Ordering::Relaxed);
                         return CacheResult::Hit(deserialized);
                     }
                     Err(e) => {
-                        tracing::warn!("Failed to deserialize cached data: {}", e);
+                        tracing::warn!("Failed to deserialize cached data from Redis: {}", e);
                     }
                 },
-                Ok(None) => {} // Continue to local cache
+                Ok(None) => {} // Miss
                 Err(e) => {
                     tracing::warn!("Redis get failed: {}", e);
+                    // In Remote mode, we don't fallback to local to avoid inconsistency
                 }
             }
+            self.stats_misses.fetch_add(1, Ordering::Relaxed);
+            return CacheResult::Miss;
         }
 
-        // Try local cache
+        // Local Mode (Moka)
         match self.get_from_local(&full_key).await {
             Ok(Some(data)) => match serde_json::from_value(data) {
                 Ok(deserialized) => {
-                    self.update_stats(true, start_time.elapsed()).await;
+                    self.stats_hits.fetch_add(1, Ordering::Relaxed);
                     CacheResult::Hit(deserialized)
                 }
                 Err(e) => {
-                    self.update_stats(false, start_time.elapsed()).await;
+                    self.stats_misses.fetch_add(1, Ordering::Relaxed);
                     CacheResult::Error(Error::generic(format!(
-                        "Failed to deserialize cached data: {}",
+                        "Failed to deserialize local cached data: {}",
                         e
                     )))
                 }
             },
             Ok(None) => {
-                self.update_stats(false, start_time.elapsed()).await;
+                self.stats_misses.fetch_add(1, Ordering::Relaxed);
                 CacheResult::Miss
             }
             Err(e) => {
-                self.update_stats(false, start_time.elapsed()).await;
+                self.stats_misses.fetch_add(1, Ordering::Relaxed);
                 CacheResult::Error(e)
             }
         }
@@ -300,30 +415,30 @@ impl CacheManager {
         let data = serde_json::to_value(&value)
             .map_err(|e| Error::generic(format!("Serialization failed: {}", e)))?;
 
-        let size_bytes = serde_json::to_string(&data).map(|s| s.len()).unwrap_or(0);
+        // Remote Mode (Redis)
+        if self.redis_client.is_some() {
+            let size_bytes = serde_json::to_string(&data).map(|s| s.len()).unwrap_or(0);
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map_err(|e| Error::generic(format!("System time error: {}", e)))?
+                .as_secs();
 
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|e| Error::generic(format!("System time error: {}", e)))?
-            .as_secs();
+            let entry = CacheEntry {
+                data,
+                created_at: now,
+                accessed_at: now,
+                access_count: 1,
+                size_bytes,
+            };
 
-        let entry = CacheEntry {
-            data: data.clone(),
-            created_at: now,
-            accessed_at: now,
-            access_count: 1,
-            size_bytes,
-        };
-
-        // Store in Redis if available
-        if self.redis_client.is_some()
-            && let Err(e) = self.set_in_redis(&full_key, &entry, ttl).await
-        {
-            tracing::warn!("Redis set failed: {}", e);
+            if let Err(e) = self.set_in_redis(&full_key, &entry, ttl).await {
+                tracing::warn!("Redis set failed: {}", e);
+            }
+            return Ok(());
         }
 
-        // Store in local cache
-        self.set_in_local(&full_key, entry).await?;
+        // Local Mode (Moka)
+        self.set_in_local(&full_key, data).await?;
 
         Ok(())
     }
@@ -336,15 +451,120 @@ impl CacheManager {
 
         let full_key = format!("{}:{}", namespace, key);
 
-        // Delete from Redis
-        if self.redis_client.is_some()
-            && let Err(e) = self.delete_from_redis(&full_key).await
-        {
-            tracing::warn!("Redis delete failed: {}", e);
+        // Remote Mode (Redis)
+        if self.redis_client.is_some() {
+            if let Err(e) = self.delete_from_redis(&full_key).await {
+                tracing::warn!("Redis delete failed: {}", e);
+            }
+            return Ok(());
         }
 
-        // Delete from local cache
+        // Local Mode (Moka)
         self.delete_from_local(&full_key).await?;
+
+        Ok(())
+    }
+
+    /// Enqueue an item to a list in cache
+    pub async fn enqueue_item<T>(&self, namespace: &str, key: &str, value: T) -> Result<()>
+    where
+        T: serde::Serialize + Clone + Send + Sync + 'static,
+    {
+        if !self.config.enabled {
+            return Ok(());
+        }
+
+        let full_key = format!("{}:{}", namespace, key);
+
+        // Serialize data
+        let data = serde_json::to_value(&value)
+            .map_err(|e| Error::generic(format!("Serialization failed: {}", e)))?;
+
+        // Remote Mode (Redis)
+        if self.redis_client.is_some() {
+            if let Err(e) = self.enqueue_redis(&full_key, &data).await {
+                tracing::warn!("Redis enqueue failed: {}", e);
+            }
+            return Ok(());
+        }
+
+        // Local Mode (Moka)
+        self.enqueue_local(&full_key, data).await?;
+
+        Ok(())
+    }
+
+    /// Get all items from a queue in cache
+    pub async fn get_queue<T>(&self, namespace: &str, key: &str) -> Result<Vec<T>>
+    where
+        T: for<'de> serde::Deserialize<'de> + Clone + Send + Sync,
+    {
+        if !self.config.enabled {
+            return Ok(Vec::new());
+        }
+
+        let full_key = format!("{}:{}", namespace, key);
+
+        // Remote Mode (Redis)
+        if self.redis_client.is_some() {
+            match self.get_queue_redis(&full_key).await {
+                Ok(items) => {
+                    let mut result = Vec::new();
+                    for item in items {
+                        match serde_json::from_value(item) {
+                            Ok(deserialized) => result.push(deserialized),
+                            Err(e) => tracing::warn!("Failed to deserialize queue item: {}", e),
+                        }
+                    }
+                    return Ok(result);
+                }
+                Err(e) => {
+                    tracing::warn!("Redis get_queue failed: {}", e);
+                    return Ok(Vec::new()); // Return empty on error to avoid breaking flow?
+                }
+            }
+        }
+
+        // Local Mode (Moka)
+        if let Some(data_array) = self.get_from_local(&full_key).await?
+            && let Some(array) = data_array.as_array()
+        {
+            let mut result = Vec::new();
+            for item in array {
+                match serde_json::from_value(item.clone()) {
+                    Ok(deserialized) => result.push(deserialized),
+                    Err(e) => tracing::warn!("Failed to deserialize local queue item: {}", e),
+                }
+            }
+            return Ok(result);
+        }
+
+        Ok(Vec::new())
+    }
+
+    /// Remove an item from the queue
+    pub async fn remove_item<T>(&self, namespace: &str, key: &str, value: T) -> Result<()>
+    where
+        T: serde::Serialize + Clone + Send + Sync + 'static,
+    {
+        if !self.config.enabled {
+            return Ok(());
+        }
+
+        let full_key = format!("{}:{}", namespace, key);
+        let data = serde_json::to_value(&value)
+            .map_err(|e| Error::generic(format!("Serialization failed: {}", e)))?;
+
+        // Remote Mode (Redis)
+        if self.redis_client.is_some() {
+            if let Err(e) = self.remove_from_redis(&full_key, &data).await {
+                tracing::warn!("Redis remove_item failed: {}", e);
+            }
+            return Ok(());
+        }
+
+        // Local Mode (Moka)
+        self.remove_from_local(&full_key, &data).await?;
 
         Ok(())
     }
@@ -357,14 +577,15 @@ impl CacheManager {
 
         let pattern = format!("{}:*", namespace);
 
-        // Clear from Redis
-        if self.redis_client.is_some()
-            && let Err(e) = self.clear_namespace_redis(&pattern).await
-        {
-            tracing::warn!("Redis namespace clear failed: {}", e);
+        // Remote Mode (Redis)
+        if self.redis_client.is_some() {
+            if let Err(e) = self.clear_namespace_redis(&pattern).await {
+                tracing::warn!("Redis namespace clear failed: {}", e);
+            }
+            return Ok(());
         }
 
-        // Clear from local cache
+        // Local Mode (Moka)
         self.clear_namespace_local(namespace).await?;
 
         Ok(())
@@ -372,7 +593,33 @@ impl CacheManager {
 
     /// Get cache statistics
     pub async fn get_stats(&self) -> CacheStats {
-        self.stats.read().await.clone()
+        let mut stats = CacheStats::default();
+
+        // If in Redis mode, local caches are empty, stats will reflect that.
+        // We could potentially fetch Redis info, but that's expensive/complex.
+        // So stats will track local usage or be mostly empty for Redis mode (except hits/misses).
+
+        for cache in [
+            &self.embeddings_cache,
+            &self.search_results_cache,
+            &self.metadata_cache,
+            &self.provider_responses_cache,
+            &self.sync_batches_cache,
+        ] {
+            cache.run_pending_tasks().await;
+            stats.total_entries += cache.entry_count() as usize;
+        }
+
+        stats.hits = self.stats_hits.load(Ordering::Relaxed);
+        stats.misses = self.stats_misses.load(Ordering::Relaxed);
+        stats.evictions = self.stats_evictions.load(Ordering::Relaxed);
+
+        let total_requests = stats.hits + stats.misses;
+        if total_requests > 0 {
+            stats.hit_ratio = stats.hits as f64 / total_requests as f64;
+        }
+
+        stats
     }
 
     /// Check if cache is enabled
@@ -393,8 +640,95 @@ impl CacheManager {
             "search_results" => &self.config.namespaces.search_results,
             "metadata" => &self.config.namespaces.metadata,
             "provider_responses" => &self.config.namespaces.provider_responses,
+            "sync_batches" => &self.config.namespaces.sync_batches,
             _ => &self.config.namespaces.metadata, // Default to metadata config
         }
+    }
+
+    async fn enqueue_redis(&self, key: &str, value: &serde_json::Value) -> Result<()> {
+        if let Some(ref client) = self.redis_client {
+            let mut conn = client.get_multiplexed_async_connection().await?;
+            let json_str = serde_json::to_string(value)?;
+            redis::cmd("RPUSH")
+                .arg(key)
+                .arg(json_str)
+                .query_async::<()>(&mut conn)
+                .await?;
+        }
+        Ok(())
+    }
+
+    async fn get_queue_redis(&self, key: &str) -> Result<Vec<serde_json::Value>> {
+        if let Some(ref client) = self.redis_client {
+            let mut conn = client.get_multiplexed_async_connection().await?;
+            let items: Vec<String> = redis::cmd("LRANGE")
+                .arg(key)
+                .arg(0)
+                .arg(-1)
+                .query_async(&mut conn)
+                .await?;
+
+            let mut result = Vec::new();
+            for item in items {
+                let val: serde_json::Value = serde_json::from_str(&item)?;
+                result.push(val);
+            }
+            return Ok(result);
+        }
+        Ok(Vec::new())
+    }
+
+    async fn remove_from_redis(&self, key: &str, value: &serde_json::Value) -> Result<()> {
+        if let Some(ref client) = self.redis_client {
+            let mut conn = client.get_multiplexed_async_connection().await?;
+            let json_str = serde_json::to_string(value)?;
+            // LREM key count value (count 0 means remove all occurrences)
+            redis::cmd("LREM")
+                .arg(key)
+                .arg(0)
+                .arg(json_str)
+                .query_async::<()>(&mut conn)
+                .await?;
+        }
+        Ok(())
+    }
+
+    async fn enqueue_local(&self, full_key: &str, value: serde_json::Value) -> Result<()> {
+        let namespace = full_key.split(':').next().unwrap_or("");
+        let cache = self.get_cache(namespace);
+
+        let mut current_list = if let Some(existing) = cache.get(full_key).await {
+            if let Some(arr) = existing.as_array() {
+                arr.clone()
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        };
+
+        current_list.push(value);
+        cache
+            .insert(full_key.to_string(), serde_json::Value::Array(current_list))
+            .await;
+        Ok(())
+    }
+
+    async fn remove_from_local(&self, full_key: &str, value: &serde_json::Value) -> Result<()> {
+        let namespace = full_key.split(':').next().unwrap_or("");
+        let cache = self.get_cache(namespace);
+
+        if let Some(existing) = cache.get(full_key).await
+            && let Some(arr) = existing.as_array()
+        {
+            // Remove all occurrences that match
+            let new_list: Vec<serde_json::Value> =
+                arr.iter().filter(|v| *v != value).cloned().collect();
+            cache
+                .insert(full_key.to_string(), serde_json::Value::Array(new_list))
+                .await;
+        }
+        Ok(())
     }
 
     async fn get_from_redis(&self, key: &str) -> Result<Option<serde_json::Value>> {
@@ -457,118 +791,43 @@ impl CacheManager {
         Ok(())
     }
 
-    async fn get_from_local(&self, key: &str) -> Result<Option<serde_json::Value>> {
-        let mut cache = self.local_cache.write().await;
-        if let Some(entry) = cache.get_mut(key) {
-            entry.accessed_at = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .map_err(|e| Error::generic(format!("System time error: {}", e)))?
-                .as_secs();
-            entry.access_count += 1;
-            return Ok(Some(entry.data.clone()));
+    fn get_cache(&self, namespace: &str) -> &Cache<String, serde_json::Value> {
+        match namespace {
+            "embeddings" => &self.embeddings_cache,
+            "search_results" => &self.search_results_cache,
+            "metadata" => &self.metadata_cache,
+            "provider_responses" => &self.provider_responses_cache,
+            "sync_batches" => &self.sync_batches_cache,
+            _ => &self.metadata_cache,
         }
-        Ok(None)
     }
 
-    async fn set_in_local(&self, key: &str, entry: CacheEntry<serde_json::Value>) -> Result<()> {
-        let mut cache = self.local_cache.write().await;
+    async fn get_from_local(&self, full_key: &str) -> Result<Option<serde_json::Value>> {
+        let namespace = full_key.split(':').next().unwrap_or("");
+        let cache = self.get_cache(namespace);
+        Ok(cache.get(full_key).await)
+    }
 
-        // Check size limits
-        if cache.len() >= self.config.max_size {
-            self.evict_entries(&mut cache).await;
-        }
-
-        cache.insert(key.to_string(), entry);
+    async fn set_in_local(&self, full_key: &str, value: serde_json::Value) -> Result<()> {
+        let namespace = full_key.split(':').next().unwrap_or("");
+        let cache = self.get_cache(namespace);
+        cache.insert(full_key.to_string(), value).await;
         Ok(())
     }
 
-    async fn delete_from_local(&self, key: &str) -> Result<()> {
-        let mut cache = self.local_cache.write().await;
-        cache.remove(key);
+    async fn delete_from_local(&self, full_key: &str) -> Result<()> {
+        let namespace = full_key.split(':').next().unwrap_or("");
+        let cache = self.get_cache(namespace);
+        cache.invalidate(full_key).await;
         Ok(())
     }
 
     async fn clear_namespace_local(&self, namespace: &str) -> Result<()> {
-        let mut cache = self.local_cache.write().await;
+        let cache = self.get_cache(namespace);
         let prefix = format!("{}:", namespace);
-        cache.retain(|key, _| !key.starts_with(&prefix));
-        Ok(())
-    }
-
-    async fn evict_entries(&self, cache: &mut HashMap<String, CacheEntry<serde_json::Value>>) {
-        // Simple LRU eviction: remove least recently accessed entries
-        let mut entries: Vec<String> = cache.keys().cloned().collect();
-        entries.sort_by_key(|key| {
-            cache.get(key).map(|entry| entry.accessed_at).unwrap_or(0) // Fallback to 0 if key not found (shouldn't happen)
-        });
-
-        // Remove oldest 10% of entries
-        let to_remove = (cache.len() / 10).max(1);
-        for key in entries.into_iter().take(to_remove) {
-            cache.remove(&key);
+        if let Err(e) = cache.invalidate_entries_if(move |k, _v| k.starts_with(&prefix)) {
+            tracing::warn!("Failed to invalidate entries: {}", e);
         }
-
-        let mut stats = self.stats.write().await;
-        stats.evictions += to_remove as u64;
-    }
-
-    async fn update_stats(&self, is_hit: bool, duration: Duration) {
-        let mut stats = self.stats.write().await;
-        if is_hit {
-            stats.hits += 1;
-        } else {
-            stats.misses += 1;
-        }
-
-        let total_requests = stats.hits + stats.misses;
-        if total_requests > 0 {
-            stats.hit_ratio = stats.hits as f64 / total_requests as f64;
-        }
-
-        // Update average access time (exponential moving average)
-        let access_time_us = duration.as_micros() as f64;
-        if stats.hits + stats.misses == 1 {
-            stats.avg_access_time_us = access_time_us;
-        } else {
-            stats.avg_access_time_us = 0.9 * stats.avg_access_time_us + 0.1 * access_time_us;
-        }
-    }
-
-    async fn background_cleanup(&self) {
-        let mut interval = tokio::time::interval(Duration::from_secs(300)); // Every 5 minutes
-
-        loop {
-            interval.tick().await;
-
-            if let Err(e) = self.cleanup_expired_entries().await {
-                tracing::warn!("Cache cleanup failed: {}", e);
-            }
-        }
-    }
-
-    async fn cleanup_expired_entries(&self) -> Result<()> {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|e| Error::generic(format!("System time error: {}", e)))?
-            .as_secs();
-
-        let mut cache = self.local_cache.write().await;
-        let mut to_remove = Vec::new();
-
-        for (key, entry) in cache.iter() {
-            let namespace = key.split(':').next().unwrap_or("");
-            let namespace_config = self.get_namespace_config(namespace);
-            let ttl = namespace_config.ttl_seconds;
-
-            if now.saturating_sub(entry.created_at) > ttl {
-                to_remove.push(key.clone());
-            }
-        }
-
-        for key in to_remove {
-            cache.remove(&key);
-        }
-
         Ok(())
     }
 }
@@ -599,6 +858,7 @@ mod tests {
         assert!(config.enabled);
         assert_eq!(config.default_ttl_seconds, 3600);
         assert_eq!(config.max_size, 10000);
+        assert!(config.redis_url.is_empty()); // Default to Local mode
     }
 
     #[tokio::test]
@@ -621,7 +881,7 @@ mod tests {
     async fn test_local_cache_operations() {
         let config = CacheConfig {
             enabled: true,
-            redis_url: "redis://nonexistent:6379".to_string(), // Force local cache
+            redis_url: "".to_string(), // Explicitly empty for Local mode
             ..Default::default()
         };
 
@@ -660,7 +920,7 @@ mod tests {
     async fn test_namespace_operations() {
         let config = CacheConfig {
             enabled: true,
-            redis_url: "redis://nonexistent:6379".to_string(),
+            redis_url: "".to_string(),
             ..Default::default()
         };
 
@@ -688,6 +948,8 @@ mod tests {
         // Clear namespace
         manager.clear_namespace("ns1").await.unwrap();
 
+        manager.get_stats().await;
+
         let result1: CacheResult<String> = manager.get("ns1", "key1").await;
         let result2: CacheResult<String> = manager.get("ns2", "key1").await;
 
@@ -696,8 +958,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_cache_manager_handles_connection_failures() {
+    async fn test_cache_manager_fail_invalid_redis() {
         // Test with invalid Redis configuration
+        // In the new Exclusive mode, this should FAIL on creation
         let config = CacheConfig {
             redis_url: "redis://invalid:6379".to_string(),
             default_ttl_seconds: 300,
@@ -706,23 +969,8 @@ mod tests {
             namespaces: CacheNamespacesConfig::default(),
         };
 
-        // Should handle Redis connection failures gracefully
         let result = CacheManager::new(config).await;
-        // The implementation should either succeed with fallback or return a proper error
-        // We accept both outcomes as long as there's no panic
-        match result {
-            Ok(manager) => {
-                // If it succeeds, it should have fallen back to local cache
-                assert!(manager.is_enabled());
-            }
-            Err(e) => {
-                // If it fails, it should be a proper error, not a panic
-                assert!(matches!(
-                    e,
-                    crate::core::error::Error::Redis { .. } | crate::core::error::Error::Generic(_)
-                ));
-            }
-        }
+        assert!(result.is_err()); // Strict failure
     }
 
     #[tokio::test]
@@ -739,45 +987,55 @@ mod tests {
 
         // Operations on disabled cache should not panic
         let set_result = manager.set("test", "key", "value".to_string()).await;
-        assert!(set_result.is_ok()); // Should succeed (no-op) or return proper error
+        assert!(set_result.is_ok());
 
         let get_result: CacheResult<String> = manager.get("test", "key").await;
-        // CacheResult doesn't have is_ok, check it's not an error
         assert!(!matches!(get_result, CacheResult::Error(_)));
     }
 
     #[tokio::test]
-    async fn test_cache_manager_handles_namespace_operations() {
-        let config = CacheConfig::default();
-        let manager = CacheManager::new(config).await.unwrap();
-
-        // These operations should not panic
-        let clear_result = manager.clear_namespace("test_ns").await;
-        assert!(clear_result.is_ok());
-
-        let delete_result = manager.delete("test_ns", "key").await;
-        assert!(delete_result.is_ok());
-
-        // Note: get_namespace_stats doesn't exist, skip that test
-    }
-
-    #[tokio::test]
     async fn test_cache_manager_handles_large_data_operations() {
-        let config = CacheConfig::default();
+        let config = CacheConfig::default(); // Local mode
         let manager = CacheManager::new(config).await.unwrap();
 
-        // Test with large data that might cause issues
+        // Test with large data
         let large_data = "x".repeat(1024 * 1024); // 1MB string
 
         let set_result = manager.set("test", "large_key", large_data.clone()).await;
         assert!(set_result.is_ok());
 
         let get_result: CacheResult<String> = manager.get("test", "large_key").await;
-        // Check it's not an error and contains the data
         match get_result {
             CacheResult::Hit(data) => assert_eq!(data, large_data),
             CacheResult::Miss => panic!("Expected cache hit"),
             CacheResult::Error(_) => panic!("Expected no error"),
         }
+    }
+
+    #[tokio::test]
+    async fn test_namespace_limits() {
+        let mut config = CacheConfig {
+            enabled: true,
+            redis_url: "".to_string(),
+            ..Default::default()
+        };
+        // Configure metadata namespace with small limit
+        config.namespaces.metadata.max_entries = 2;
+
+        let manager = CacheManager::new(config).await.unwrap();
+
+        // Add 3 items to metadata namespace
+        manager.set("meta", "k1", "v1".to_string()).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+
+        manager.set("meta", "k2", "v2".to_string()).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+
+        manager.set("meta", "k3", "v3".to_string()).await.unwrap();
+
+        // Stats should show total entries <= 2 (might be 2)
+        let stats = manager.get_stats().await;
+        assert_eq!(stats.total_entries, 2);
+        assert!(stats.evictions >= 1);
     }
 }

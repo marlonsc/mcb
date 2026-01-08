@@ -6,7 +6,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Json, Response},
 };
-use bcrypt::{hash, verify, DEFAULT_COST};
+use bcrypt::{DEFAULT_COST, hash, verify};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -158,7 +158,13 @@ pub async fn auth_middleware(
                 state.admin_api.config().password.clone(),
             ) {
                 Ok(service) => service,
-                Err(e) => return Ok((StatusCode::INTERNAL_SERVER_ERROR, format!("Auth service initialization failed: {}", e)).into_response()),
+                Err(e) => {
+                    return Ok((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        format!("Auth service initialization failed: {}", e),
+                    )
+                        .into_response());
+                }
             };
 
             // For now, do basic validation - TODO: implement full JWT validation
@@ -188,8 +194,12 @@ pub async fn login_handler(
         state.admin_api.config().password.clone(),
     ) {
         Ok(service) => service,
-        Err(e) => return Ok(Json(ApiResponse::error(format!(
-            "Auth service initialization failed: {}", e)))),
+        Err(e) => {
+            return Ok(Json(ApiResponse::error(format!(
+                "Auth service initialization failed: {}",
+                e
+            ))));
+        }
     };
 
     match auth_service.authenticate(&login_req.username, &login_req.password) {
@@ -210,7 +220,9 @@ pub async fn login_handler(
                 Ok(Json(ApiResponse::success(response)))
             }
             Err(e) => Ok(Json(ApiResponse::error(format!(
-                "Token generation failed: {}", e)))),
+                "Token generation failed: {}",
+                e
+            )))),
         },
         Err(e) => Ok(Json(ApiResponse::error(e))),
     }

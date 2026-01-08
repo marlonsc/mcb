@@ -3,7 +3,12 @@
 //! This module provides comprehensive management for AI and vector store providers
 //! including health checking, configuration validation, and provider selection logic.
 
-use crate::config::EmbeddingProviderConfig;
+pub mod embedding;
+pub mod vector_store;
+
+pub use embedding::EmbeddingProviderConfig;
+pub use vector_store::VectorStoreProviderConfig;
+
 use crate::core::error::Result;
 
 /// Health status of a provider
@@ -106,21 +111,17 @@ impl ProviderConfigManager {
                 max_tokens,
                 ..
             } => {
-                if let Some(req_dims) = requirements.min_dimensions {
-                    if let Some(cfg_dims) = dimensions {
-                        if *cfg_dims < req_dims {
-                            return false;
-                        }
-                    } else {
-                        return false; // Dimensions required but not specified
-                    }
+                if let Some(req_dims) = requirements.min_dimensions
+                    && let Some(cfg_dims) = dimensions
+                    && *cfg_dims < req_dims
+                {
+                    return false;
                 }
-                if let Some(req_tokens) = requirements.max_tokens {
-                    if let Some(cfg_tokens) = max_tokens {
-                        if *cfg_tokens < req_tokens {
-                            return false;
-                        }
-                    }
+                if let Some(req_tokens) = requirements.max_tokens
+                    && let Some(cfg_tokens) = max_tokens
+                    && *cfg_tokens < req_tokens
+                {
+                    return false;
                 }
                 true
             }
@@ -130,19 +131,17 @@ impl ProviderConfigManager {
                 ..
             } => {
                 // Similar checks for Ollama
-                if let Some(req_dims) = requirements.min_dimensions {
-                    if let Some(cfg_dims) = dimensions {
-                        if *cfg_dims < req_dims {
-                            return false;
-                        }
-                    }
+                if let Some(req_dims) = requirements.min_dimensions
+                    && let Some(cfg_dims) = dimensions
+                    && *cfg_dims < req_dims
+                {
+                    return false;
                 }
-                if let Some(req_tokens) = requirements.max_tokens {
-                    if let Some(cfg_tokens) = max_tokens {
-                        if *cfg_tokens < req_tokens {
-                            return false;
-                        }
-                    }
+                if let Some(req_tokens) = requirements.max_tokens
+                    && let Some(cfg_tokens) = max_tokens
+                    && *cfg_tokens < req_tokens
+                {
+                    return false;
                 }
                 true
             }
@@ -151,19 +150,17 @@ impl ProviderConfigManager {
                 max_tokens,
                 ..
             } => {
-                if let Some(req_dims) = requirements.min_dimensions {
-                    if let Some(cfg_dims) = dimensions {
-                        if *cfg_dims < req_dims {
-                            return false;
-                        }
-                    }
+                if let Some(req_dims) = requirements.min_dimensions
+                    && let Some(cfg_dims) = dimensions
+                    && *cfg_dims < req_dims
+                {
+                    return false;
                 }
-                if let Some(req_tokens) = requirements.max_tokens {
-                    if let Some(cfg_tokens) = max_tokens {
-                        if *cfg_tokens < req_tokens {
-                            return false;
-                        }
-                    }
+                if let Some(req_tokens) = requirements.max_tokens
+                    && let Some(cfg_tokens) = max_tokens
+                    && *cfg_tokens < req_tokens
+                {
+                    return false;
                 }
                 true
             }
@@ -172,19 +169,17 @@ impl ProviderConfigManager {
                 max_tokens,
                 ..
             } => {
-                if let Some(req_dims) = requirements.min_dimensions {
-                    if let Some(cfg_dims) = dimensions {
-                        if *cfg_dims < req_dims {
-                            return false;
-                        }
-                    }
+                if let Some(req_dims) = requirements.min_dimensions
+                    && let Some(cfg_dims) = dimensions
+                    && *cfg_dims < req_dims
+                {
+                    return false;
                 }
-                if let Some(req_tokens) = requirements.max_tokens {
-                    if let Some(cfg_tokens) = max_tokens {
-                        if *cfg_tokens < req_tokens {
-                            return false;
-                        }
-                    }
+                if let Some(req_tokens) = requirements.max_tokens
+                    && let Some(cfg_tokens) = max_tokens
+                    && *cfg_tokens < req_tokens
+                {
+                    return false;
                 }
                 true
             }

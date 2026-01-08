@@ -133,8 +133,8 @@ mod tests {
         assert_eq!(results.len(), 0);
     }
 
-    #[test]
-    fn test_indexing_service_creation() {
+    #[tokio::test]
+    async fn test_indexing_service_creation() {
         let (embedding_provider, vector_store_provider) = create_test_providers();
         let context_service = Arc::new(ContextService::new(
             embedding_provider,
@@ -184,8 +184,8 @@ mod tests {
         assert!(result.is_err()); // Should fail for non-existent directory
     }
 
-    #[test]
-    fn test_search_service_creation() {
+    #[tokio::test]
+    async fn test_search_service_creation() {
         let (embedding_provider, vector_store_provider) = create_test_providers();
         let context_service = Arc::new(ContextService::new(
             embedding_provider,

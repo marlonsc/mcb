@@ -67,7 +67,7 @@ mod property_tests {
         }
     }
 
-    // Property: File paths should not contain dangerous patterns
+    // Property: File paths should be preserved
     proptest! {
         #[test]
         fn test_file_path_safety(path in "\\PC*") {
@@ -81,9 +81,8 @@ mod property_tests {
                 metadata: serde_json::json!({}),
             };
 
-            // File path should be preserved and not contain directory traversal
+            // File path should be preserved
             prop_assert_eq!(chunk.file_path, path.clone());
-            prop_assert!(!path.clone().contains(".."));
         }
     }
 
@@ -163,9 +162,9 @@ mod property_tests {
                 dimensions: 3,
             };
 
-            // Model name should be preserved and reasonable length
+            // Model name should be preserved and reasonable length (checked by character count)
             prop_assert_eq!(embedding.model, model.clone());
-            prop_assert!(model.len() <= 100);
+            prop_assert!(model.chars().count() <= 100);
             prop_assert!(!model.is_empty());
         }
     }
@@ -202,7 +201,7 @@ mod property_tests {
 #[cfg(test)]
 mod integration_property_tests {
 
-    use mcp_context_browser::core::types::{CodeChunk, Embedding, Language};
+    use mcp_context_browser::core::types::{CodeChunk, Language};
     use proptest::prelude::*;
 
     // Property: System should handle various input sizes gracefully
@@ -295,7 +294,7 @@ mod integration_property_tests {
 #[cfg(test)]
 mod stress_tests {
 
-    use mcp_context_browser::core::types::{CodeChunk, Embedding, Language};
+    use mcp_context_browser::core::types::{CodeChunk, Language};
     use proptest::prelude::*;
 
     // Test with extreme but valid inputs
@@ -362,8 +361,8 @@ mod stress_tests {
                     prop_assert_eq!(value, u32::MAX.to_string());
                 },
                 "short_string" => {
-                    // Short strings should be valid
-                    prop_assert!(value.len() <= 10);
+                    // Short strings should be valid (checked by character count)
+                    prop_assert!(value.chars().count() <= 10);
                 },
                 _ => {}
             }

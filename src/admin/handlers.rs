@@ -25,13 +25,17 @@ pub async fn get_config_handler(
 
     // Convert to admin models
     let config = SystemConfig {
-        providers: config_data.providers.into_iter().map(|p| ProviderInfo {
-            id: p.id,
-            name: p.name,
-            provider_type: p.provider_type,
-            status: p.status,
-            config: p.config,
-        }).collect(),
+        providers: config_data
+            .providers
+            .into_iter()
+            .map(|p| ProviderInfo {
+                id: p.id,
+                name: p.name,
+                provider_type: p.provider_type,
+                status: p.status,
+                config: p.config,
+            })
+            .collect(),
         indexing: crate::admin::models::IndexingConfig {
             chunk_size: config_data.indexing.chunk_size,
             chunk_overlap: config_data.indexing.chunk_overlap,

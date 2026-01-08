@@ -168,3 +168,14 @@ pub struct VectorStoreConfig {
     pub collection: Option<String>,
     pub dimensions: Option<usize>,
 }
+
+/// Sync batch for queue processing
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SyncBatch {
+    /// Unique identifier for this batch
+    pub id: String,
+    /// Path to the codebase being synced
+    pub path: String,
+    /// Timestamp when the batch was created
+    pub created_at: u64,
+}

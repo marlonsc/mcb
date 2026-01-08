@@ -63,12 +63,25 @@ impl SnapshotManager {
 
     /// Create snapshot for a codebase
     pub async fn create_snapshot(&self, root_path: &Path) -> Result<CodebaseSnapshot> {
-        let mut files = HashMap::new();
-        let mut total_size = 0u64;
+        let root_path_buf = root_path.to_path_buf();
         let root_path_str = root_path.to_string_lossy().to_string();
+        let snapshot_manager = Self {
+            snapshot_dir: self.snapshot_dir.clone(),
+        };
 
-        self.walk_directory(root_path, root_path, &mut files, &mut total_size)
-            .await?;
+        let (files, total_size) = tokio::task::spawn_blocking(move || {
+            let mut files = HashMap::new();
+            let mut total_size = 0u64;
+            snapshot_manager.walk_directory_sync(
+                &root_path_buf,
+                &root_path_buf,
+                &mut files,
+                &mut total_size,
+            )?;
+            Ok::<_, Error>((files, total_size))
+        })
+        .await
+        .map_err(|e| Error::internal(format!("Blocking task failed: {}", e)))??;
 
         let file_count = files.len();
         let snapshot = CodebaseSnapshot {
@@ -168,7 +181,7 @@ impl SnapshotManager {
     }
 
     /// Walk directory recursively and collect file snapshots
-    async fn walk_directory(
+    fn walk_directory_sync(
         &self,
         root_path: &Path,
         current_path: &Path,
@@ -196,7 +209,7 @@ impl SnapshotManager {
 
             if metadata.is_dir() {
                 // Recurse into subdirectories
-                Box::pin(self.walk_directory(root_path, &path, files, total_size)).await?;
+                self.walk_directory_sync(root_path, &path, files, total_size)?;
             } else if metadata.is_file() {
                 // Process file
                 let relative_path = path
@@ -210,9 +223,7 @@ impl SnapshotManager {
                     continue;
                 }
 
-                let snapshot = self
-                    .create_file_snapshot(&path, &relative_path, &metadata)
-                    .await?;
+                let snapshot = self.create_file_snapshot_sync(&path, &relative_path, &metadata)?;
                 *total_size += snapshot.size;
                 files.insert(relative_path, snapshot);
             }
@@ -222,7 +233,7 @@ impl SnapshotManager {
     }
 
     /// Create snapshot for a single file
-    async fn create_file_snapshot(
+    fn create_file_snapshot_sync(
         &self,
         file_path: &Path,
         relative_path: &str,

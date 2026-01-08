@@ -7,6 +7,7 @@
 //! - config.rs: Core configuration struct
 
 use mcp_context_browser::config::Config;
+use mcp_context_browser::config::ConfigBuilder;
 use mcp_context_browser::config::environment::EnvironmentLoader;
 use mcp_context_browser::config::providers::ProviderConfigManager;
 use mcp_context_browser::config::providers::ProviderHealth;
@@ -208,7 +209,7 @@ mod core_config_tests {
 
     #[test]
     fn test_config_builder_pattern() {
-        let config = Config::builder()
+        let config = ConfigBuilder::new()
             .server_host("localhost".to_string())
             .server_port(8080)
             .build()
@@ -250,7 +251,7 @@ mod integration_tests {
     #[test]
     fn test_full_config_workflow() {
         // Create config via builder
-        let config = Config::builder()
+        let config = ConfigBuilder::new()
             .server_host("0.0.0.0".to_string())
             .server_port(3001)
             .embedding_provider(mcp_context_browser::core::types::EmbeddingConfig {

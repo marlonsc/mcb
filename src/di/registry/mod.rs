@@ -1,10 +1,30 @@
 //! Provider registry for dependency injection
 
 use crate::core::error::{Error, Result};
-use crate::providers::{EmbeddingProvider, VectorStoreProvider};
 use crate::core::locks::{lock_rwlock_read, lock_rwlock_write};
+use crate::providers::{EmbeddingProvider, VectorStoreProvider};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+
+/// Trait for provider registry
+pub trait ProviderRegistryTrait: Send + Sync {
+    fn register_embedding_provider(
+        &self,
+        name: String,
+        provider: Arc<dyn EmbeddingProvider>,
+    ) -> Result<()>;
+
+    fn register_vector_store_provider(
+        &self,
+        name: String,
+        provider: Arc<dyn VectorStoreProvider>,
+    ) -> Result<()>;
+
+    fn get_embedding_provider(&self, name: &str) -> Result<Arc<dyn EmbeddingProvider>>;
+    fn get_vector_store_provider(&self, name: &str) -> Result<Arc<dyn VectorStoreProvider>>;
+    fn list_embedding_providers(&self) -> Vec<String>;
+    fn list_vector_store_providers(&self) -> Vec<String>;
+}
 
 /// Thread-safe provider registry
 #[derive(Clone)]
@@ -21,15 +41,19 @@ impl ProviderRegistry {
             vector_store_providers: Arc::new(RwLock::new(HashMap::new())),
         }
     }
+}
 
+impl ProviderRegistryTrait for ProviderRegistry {
     /// Register an embedding provider
-    pub fn register_embedding_provider(
+    fn register_embedding_provider(
         &self,
-        name: impl Into<String>,
+        name: String,
         provider: Arc<dyn EmbeddingProvider>,
     ) -> Result<()> {
-        let name = name.into();
-        let mut providers = lock_rwlock_write(&self.embedding_providers, "ProviderRegistry::register_embedding_provider")?;
+        let mut providers = lock_rwlock_write(
+            &self.embedding_providers,
+            "ProviderRegistry::register_embedding_provider",
+        )?;
 
         if providers.contains_key(&name) {
             return Err(Error::generic(format!(
@@ -43,13 +67,15 @@ impl ProviderRegistry {
     }
 
     /// Register a vector store provider
-    pub fn register_vector_store_provider(
+    fn register_vector_store_provider(
         &self,
-        name: impl Into<String>,
+        name: String,
         provider: Arc<dyn VectorStoreProvider>,
     ) -> Result<()> {
-        let name = name.into();
-        let mut providers = lock_rwlock_write(&self.vector_store_providers, "ProviderRegistry::register_vector_store_provider")?;
+        let mut providers = lock_rwlock_write(
+            &self.vector_store_providers,
+            "ProviderRegistry::register_vector_store_provider",
+        )?;
 
         if providers.contains_key(&name) {
             return Err(Error::generic(format!(
@@ -63,8 +89,11 @@ impl ProviderRegistry {
     }
 
     /// Get an embedding provider by name
-    pub fn get_embedding_provider(&self, name: &str) -> Result<Arc<dyn EmbeddingProvider>> {
-        let providers = lock_rwlock_read(&self.embedding_providers, "ProviderRegistry::get_embedding_provider")?;
+    fn get_embedding_provider(&self, name: &str) -> Result<Arc<dyn EmbeddingProvider>> {
+        let providers = lock_rwlock_read(
+            &self.embedding_providers,
+            "ProviderRegistry::get_embedding_provider",
+        )?;
         providers
             .get(name)
             .cloned()
@@ -72,8 +101,11 @@ impl ProviderRegistry {
     }
 
     /// Get a vector store provider by name
-    pub fn get_vector_store_provider(&self, name: &str) -> Result<Arc<dyn VectorStoreProvider>> {
-        let providers = lock_rwlock_read(&self.vector_store_providers, "ProviderRegistry::get_vector_store_provider")?;
+    fn get_vector_store_provider(&self, name: &str) -> Result<Arc<dyn VectorStoreProvider>> {
+        let providers = lock_rwlock_read(
+            &self.vector_store_providers,
+            "ProviderRegistry::get_vector_store_provider",
+        )?;
         providers
             .get(name)
             .cloned()
@@ -81,8 +113,11 @@ impl ProviderRegistry {
     }
 
     /// List all registered embedding providers
-    pub fn list_embedding_providers(&self) -> Vec<String> {
-        let providers = match lock_rwlock_read(&self.embedding_providers, "ProviderRegistry::list_embedding_providers") {
+    fn list_embedding_providers(&self) -> Vec<String> {
+        let providers = match lock_rwlock_read(
+            &self.embedding_providers,
+            "ProviderRegistry::list_embedding_providers",
+        ) {
             Ok(p) => p,
             Err(_) => return vec![],
         };
@@ -90,8 +125,11 @@ impl ProviderRegistry {
     }
 
     /// List all registered vector store providers
-    pub fn list_vector_store_providers(&self) -> Vec<String> {
-        let providers = match lock_rwlock_read(&self.vector_store_providers, "ProviderRegistry::list_vector_store_providers") {
+    fn list_vector_store_providers(&self) -> Vec<String> {
+        let providers = match lock_rwlock_read(
+            &self.vector_store_providers,
+            "ProviderRegistry::list_vector_store_providers",
+        ) {
             Ok(p) => p,
             Err(_) => return vec![],
         };

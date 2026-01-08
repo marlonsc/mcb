@@ -17,6 +17,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::RwLock;
 
+use crate::config::ConfigManager;
 use crate::core::cache::CacheManager;
 use crate::core::limits::ResourceLimits;
 use crate::di::factory::ServiceProvider;
@@ -59,6 +60,8 @@ pub struct McpServer {
     performance_metrics: Arc<PerformanceMetrics>,
     /// Ongoing indexing operations tracking
     indexing_operations: Arc<RwLock<HashMap<String, IndexingOperation>>>,
+    /// Admin service
+    admin_service: Arc<dyn crate::admin::service::AdminService>,
 }
 
 /// Real-time performance metrics tracking
@@ -114,6 +117,14 @@ pub struct IndexingOperation {
     pub start_time: std::time::Instant,
 }
 
+/// Type alias for initialized handlers tuple
+type InitializedHandlers = (
+    Arc<IndexCodebaseHandler>,
+    Arc<SearchCodeHandler>,
+    Arc<GetIndexingStatusHandler>,
+    Arc<ClearIndexHandler>,
+);
+
 impl McpServer {
     /// Create providers based on configuration using service provider
     async fn create_providers(
@@ -159,7 +170,7 @@ impl McpServer {
     }
 
     /// Initialize cache manager with fallback to disabled cache
-    fn initialize_cache_manager(
+    async fn initialize_cache_manager(
         cache_manager: Option<Arc<CacheManager>>,
     ) -> crate::core::error::Result<Arc<CacheManager>> {
         let cache_manager = match cache_manager {
@@ -169,9 +180,13 @@ impl McpServer {
                     enabled: false,
                     ..Default::default()
                 };
-                // For disabled cache, we can create synchronously since no Redis connection needed
-                let cm = futures::executor::block_on(CacheManager::new(config))
-                    .map_err(|e| crate::core::error::Error::internal(format!("Failed to create disabled cache manager: {}", e)))?;
+                // For disabled cache, we can create safely
+                let cm = CacheManager::new(config).await.map_err(|e| {
+                    crate::core::error::Error::internal(format!(
+                        "Failed to create disabled cache manager: {}",
+                        e
+                    ))
+                })?;
                 Arc::new(cm)
             }
         };
@@ -186,17 +201,8 @@ impl McpServer {
         auth_handler: Arc<AuthHandler>,
         resource_limits: Arc<ResourceLimits>,
         cache_manager: Arc<CacheManager>,
-        performance_metrics: Arc<PerformanceMetrics>,
-        indexing_operations: Arc<RwLock<HashMap<String, IndexingOperation>>>,
-    ) -> Result<
-        (
-            Arc<IndexCodebaseHandler>,
-            Arc<SearchCodeHandler>,
-            Arc<GetIndexingStatusHandler>,
-            Arc<ClearIndexHandler>,
-        ),
-        Box<dyn std::error::Error>,
-    > {
+        admin_service: Arc<dyn crate::admin::service::AdminService>,
+    ) -> Result<InitializedHandlers, Box<dyn std::error::Error>> {
         Ok((
             Arc::new(IndexCodebaseHandler::new(
                 indexing_service,
@@ -209,10 +215,7 @@ impl McpServer {
                 Arc::clone(&resource_limits),
                 cache_manager,
             )),
-            Arc::new(GetIndexingStatusHandler::new(
-                performance_metrics,
-                indexing_operations,
-            )),
+            Arc::new(GetIndexingStatusHandler::new(admin_service)),
             Arc::new(ClearIndexHandler::new()),
         ))
     }
@@ -224,7 +227,10 @@ impl McpServer {
         cache_manager: Option<Arc<CacheManager>>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         // Load configuration from environment
-        let config = crate::config::Config::from_env()
+        let manager =
+            ConfigManager::new().map_err(|e| format!("Failed to create config manager: {}", e))?;
+        let config = manager
+            .load_config()
             .map_err(|e| format!("Failed to load configuration: {}", e))?;
 
         // Initialize resource limits
@@ -234,7 +240,7 @@ impl McpServer {
 
         // Create provider registry and router
         let registry = Arc::new(crate::di::registry::ProviderRegistry::new());
-        let _provider_router = Arc::new(ProviderRouter::with_defaults(Arc::clone(&registry))?);
+        let _provider_router = Arc::new(ProviderRouter::with_defaults(Arc::clone(&registry)).await?);
         let service_provider = Arc::new(ServiceProvider::new());
 
         // Initialize core services
@@ -242,11 +248,18 @@ impl McpServer {
             Self::initialize_services(Arc::clone(&service_provider), &config).await?;
 
         // Create cache manager
-        let cache_manager = Self::initialize_cache_manager(cache_manager)?;
+        let cache_manager = Self::initialize_cache_manager(cache_manager).await?;
 
         // Initialize shared state
         let performance_metrics = Arc::new(PerformanceMetrics::default());
         let indexing_operations = Arc::new(RwLock::new(HashMap::new()));
+
+        // Create admin service
+        let admin_service = Arc::new(crate::admin::service::AdminServiceImpl::new(
+            Arc::clone(&performance_metrics),
+            Arc::clone(&indexing_operations),
+            Arc::clone(&service_provider),
+        )) as Arc<dyn crate::admin::service::AdminService>;
 
         // Create handlers
         let (
@@ -261,8 +274,7 @@ impl McpServer {
             Arc::clone(&auth_handler),
             Arc::clone(&resource_limits),
             cache_manager,
-            Arc::clone(&performance_metrics),
-            Arc::clone(&indexing_operations),
+            Arc::clone(&admin_service),
         )?;
 
         Ok(Self {
@@ -273,7 +285,13 @@ impl McpServer {
             service_provider,
             performance_metrics,
             indexing_operations,
+            admin_service,
         })
+    }
+
+    /// Get the admin service
+    pub fn admin_service(&self) -> Arc<dyn crate::admin::service::AdminService> {
+        Arc::clone(&self.admin_service)
     }
 
     /// Register a new embedding provider at runtime
@@ -703,11 +721,15 @@ impl ServerHandler for McpServer {
     ) -> Result<ListToolsResult, McpError> {
         use std::borrow::Cow;
 
-        let serialize_schema = |schema: schemars::schema::RootSchema, tool_name: &str| {
-            serde_json::to_value(schema)
-                .map_err(|e| McpError::internal(format!("Failed to serialize schema for {}: {}", tool_name, e), None))?
+        let serialize_schema = |schema_value: serde_json::Value, tool_name: &str| {
+            schema_value
                 .as_object()
-                .ok_or_else(|| McpError::internal(format!("Schema for {} is not an object", tool_name), None))
+                .ok_or_else(|| {
+                    McpError::internal_error(
+                        format!("Schema for {} is not an object", tool_name),
+                        None,
+                    )
+                })
                 .cloned()
         };
 
@@ -718,7 +740,10 @@ impl ServerHandler for McpServer {
                 description: Some(Cow::Borrowed(
                     "Index a codebase directory for semantic search using vector embeddings",
                 )),
-                input_schema: Arc::new(serialize_schema(schemars::schema_for!(IndexCodebaseArgs), "index_codebase")?),
+                input_schema: Arc::new(serialize_schema(
+                    serde_json::to_value(schemars::schema_for!(IndexCodebaseArgs)).unwrap(),
+                    "index_codebase",
+                )?),
                 output_schema: None,
                 annotations: None,
                 icons: None,
@@ -730,7 +755,10 @@ impl ServerHandler for McpServer {
                 description: Some(Cow::Borrowed(
                     "Search for code using natural language queries",
                 )),
-                input_schema: Arc::new(serialize_schema(schemars::schema_for!(SearchCodeArgs), "search_code")?),
+                input_schema: Arc::new(serialize_schema(
+                    serde_json::to_value(schemars::schema_for!(SearchCodeArgs)).unwrap(),
+                    "search_code",
+                )?),
                 output_schema: None,
                 annotations: None,
                 icons: None,
@@ -742,7 +770,10 @@ impl ServerHandler for McpServer {
                 description: Some(Cow::Borrowed(
                     "Get the current indexing status and statistics",
                 )),
-                input_schema: Arc::new(serialize_schema(schemars::schema_for!(GetIndexingStatusArgs), "get_indexing_status")?),
+                input_schema: Arc::new(serialize_schema(
+                    serde_json::to_value(schemars::schema_for!(GetIndexingStatusArgs)).unwrap(),
+                    "get_indexing_status",
+                )?),
                 output_schema: None,
                 annotations: None,
                 icons: None,
@@ -752,7 +783,10 @@ impl ServerHandler for McpServer {
                 name: Cow::Borrowed("clear_index"),
                 title: None,
                 description: Some(Cow::Borrowed("Clear the search index for a collection")),
-                input_schema: Arc::new(serialize_schema(schemars::schema_for!(ClearIndexArgs), "clear_index")?),
+                input_schema: Arc::new(serialize_schema(
+                    serde_json::to_value(schemars::schema_for!(ClearIndexArgs)).unwrap(),
+                    "clear_index",
+                )?),
                 output_schema: None,
                 annotations: None,
                 icons: None,

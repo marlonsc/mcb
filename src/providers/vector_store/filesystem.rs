@@ -7,13 +7,13 @@ use crate::core::error::Result;
 use crate::core::types::{Embedding, SearchResult};
 use crate::providers::VectorStoreProvider;
 use async_trait::async_trait;
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::{BufReader, BufWriter, Read, Seek, Write};
+use std::io::{Read, Seek, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 /// Filesystem vector store configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,28 +77,29 @@ struct IndexEntry {
 #[derive(Clone)]
 pub struct FilesystemVectorStore {
     config: FilesystemVectorStoreConfig,
-    /// Global index cache (ID -> IndexEntry)
-    index_cache: Arc<RwLock<HashMap<String, IndexEntry>>>,
-    /// Shard metadata cache
-    shard_cache: Arc<RwLock<HashMap<u32, ShardMetadata>>>,
-    /// Next shard ID to use
-    next_shard_id: Arc<RwLock<u32>>,
-    /// Current collection name
-    current_collection: Arc<RwLock<String>>,
+    /// Global index cache ((collection, ID) -> IndexEntry)
+    index_cache: Arc<DashMap<(String, String), IndexEntry>>,
+    /// Shard metadata cache ((collection, shard_id) -> ShardMetadata)
+    shard_cache: Arc<DashMap<(String, u32), ShardMetadata>>,
+    /// Next shard ID to use per collection
+    next_shard_ids: Arc<DashMap<String, Arc<AtomicU32>>>,
 }
 
 impl FilesystemVectorStore {
     /// Create a new filesystem vector store
     pub async fn new(config: FilesystemVectorStoreConfig) -> Result<Self> {
         // Ensure base directory exists
-        fs::create_dir_all(&config.base_path)?;
+        tokio::fs::create_dir_all(&config.base_path)
+            .await
+            .map_err(|e| {
+                crate::core::error::Error::io(format!("Failed to create base directory: {}", e))
+            })?;
 
         let store = Self {
             config,
-            index_cache: Arc::new(RwLock::new(HashMap::new())),
-            shard_cache: Arc::new(RwLock::new(HashMap::new())),
-            next_shard_id: Arc::new(RwLock::new(0)),
-            current_collection: Arc::new(RwLock::new("default".to_string())),
+            index_cache: Arc::new(DashMap::new()),
+            shard_cache: Arc::new(DashMap::new()),
+            next_shard_ids: Arc::new(DashMap::new()),
         };
 
         Ok(store)
@@ -112,26 +113,43 @@ impl FilesystemVectorStore {
             .base_path
             .join(format!("{}_index.json", collection));
         if index_path.exists() {
-            let file = File::open(index_path)?;
-            let reader = BufReader::new(file);
-            let index: HashMap<String, IndexEntry> = serde_json::from_reader(reader)?;
-            let mut cache = self.index_cache.write().await;
-            cache.clear();
-            cache.extend(index);
+            let content = tokio::fs::read(&index_path).await.map_err(|e| {
+                crate::core::error::Error::io(format!("Failed to read index file: {}", e))
+            })?;
+            let index: HashMap<String, IndexEntry> =
+                serde_json::from_slice(&content).map_err(|e| {
+                    crate::core::error::Error::internal(format!("Failed to parse index: {}", e))
+                })?;
+
+            for (id, entry) in index {
+                self.index_cache.insert((collection.to_string(), id), entry);
+            }
         }
 
         // Load shard metadata
         let shards_path = self.config.base_path.join(format!("{}_shards", collection));
         if shards_path.exists() {
-            for entry in fs::read_dir(&shards_path)? {
-                let entry = entry?;
+            let mut entries = tokio::fs::read_dir(&shards_path).await.map_err(|e| {
+                crate::core::error::Error::io(format!("Failed to read shards directory: {}", e))
+            })?;
+
+            while let Some(entry) = entries.next_entry().await.map_err(|e| {
+                crate::core::error::Error::io(format!("Failed to read directory entry: {}", e))
+            })? {
                 let path = entry.path();
                 if path.extension().and_then(|s| s.to_str()) == Some("meta") {
-                    let file = File::open(&path)?;
-                    let reader = BufReader::new(file);
-                    let metadata: ShardMetadata = serde_json::from_reader(reader)?;
-                    let mut cache = self.shard_cache.write().await;
-                    cache.insert(metadata.shard_id, metadata);
+                    let content = tokio::fs::read(&path).await.map_err(|e| {
+                        crate::core::error::Error::io(format!("Failed to read shard meta: {}", e))
+                    })?;
+                    let metadata: ShardMetadata =
+                        serde_json::from_slice(&content).map_err(|e| {
+                            crate::core::error::Error::internal(format!(
+                                "Failed to parse shard meta: {}",
+                                e
+                            ))
+                        })?;
+                    self.shard_cache
+                        .insert((collection.to_string(), metadata.shard_id), metadata);
                 }
             }
         }
@@ -139,53 +157,71 @@ impl FilesystemVectorStore {
         // Find next shard ID
         let max_shard_id = self
             .shard_cache
-            .read()
-            .await
-            .keys()
+            .iter()
+            .filter(|r| r.key().0 == collection)
+            .map(|r| r.value().shard_id)
             .max()
-            .copied()
             .unwrap_or(0);
-        *self.next_shard_id.write().await = max_shard_id + 1;
+
+        self.next_shard_ids.insert(
+            collection.to_string(),
+            Arc::new(AtomicU32::new(max_shard_id + 1)),
+        );
 
         Ok(())
     }
 
-    /// Save state to disk for current collection
-    async fn save_collection_state(&self) -> Result<()> {
-        let collection = self.current_collection.read().await.clone();
-
+    /// Save state to disk for a collection
+    async fn save_collection_state(&self, collection: &str) -> Result<()> {
         // Save global index
         let index_path = self
             .config
             .base_path
             .join(format!("{}_index.json", collection));
-        let index = self.index_cache.read().await;
-        let file = File::create(index_path)?;
-        let writer = BufWriter::new(file);
-        serde_json::to_writer(writer, &*index)?;
+
+        let index: HashMap<String, IndexEntry> = self
+            .index_cache
+            .iter()
+            .filter(|r| r.key().0 == collection)
+            .map(|r| (r.key().1.clone(), r.value().clone()))
+            .collect();
+
+        let content = serde_json::to_vec_pretty(&index).map_err(|e| {
+            crate::core::error::Error::internal(format!("Failed to serialize index: {}", e))
+        })?;
+
+        tokio::fs::write(index_path, content).await.map_err(|e| {
+            crate::core::error::Error::io(format!("Failed to write index file: {}", e))
+        })?;
 
         // Save shard metadata
         let shards_path = self.config.base_path.join(format!("{}_shards", collection));
-        fs::create_dir_all(&shards_path)?;
+        tokio::fs::create_dir_all(&shards_path).await.map_err(|e| {
+            crate::core::error::Error::io(format!("Failed to create shards directory: {}", e))
+        })?;
 
-        let shards = self.shard_cache.read().await;
-        for (shard_id, metadata) in shards.iter() {
-            let meta_path = shards_path.join(format!("shard_{}.meta", shard_id));
-            let file = File::create(meta_path)?;
-            let writer = BufWriter::new(file);
-            serde_json::to_writer(writer, metadata)?;
+        for r in self.shard_cache.iter() {
+            let (c, shard_id) = r.key();
+            if c == collection {
+                let metadata = r.value();
+                let meta_path = shards_path.join(format!("shard_{}.meta", shard_id));
+                let content = serde_json::to_vec(metadata).map_err(|e| {
+                    crate::core::error::Error::internal(format!(
+                        "Failed to serialize shard meta: {}",
+                        e
+                    ))
+                })?;
+                tokio::fs::write(meta_path, content).await.map_err(|e| {
+                    crate::core::error::Error::io(format!("Failed to write shard meta: {}", e))
+                })?;
+            }
         }
 
         Ok(())
     }
 
-    /// Get shard file path for current collection
-    fn get_shard_path(&self, shard_id: u32) -> PathBuf {
-        let collection = self
-            .current_collection
-            .try_read()
-            .map(|c| c.clone())
-            .unwrap_or_else(|_| "default".to_string());
+    /// Get shard file path for a collection
+    fn get_shard_path(&self, collection: &str, shard_id: u32) -> PathBuf {
         self.config
             .base_path
             .join(format!("{}_shards", collection))
@@ -193,24 +229,32 @@ impl FilesystemVectorStore {
     }
 
     /// Allocate next shard ID
-    async fn allocate_shard_id(&self) -> u32 {
-        let mut next_id = self.next_shard_id.write().await;
-        let id = *next_id;
-        *next_id += 1;
-        id
+    fn allocate_shard_id(&self, collection: &str) -> u32 {
+        let entry = self
+            .next_shard_ids
+            .entry(collection.to_string())
+            .or_insert_with(|| Arc::new(AtomicU32::new(0)));
+        entry.value().fetch_add(1, Ordering::SeqCst)
     }
 
     /// Create new shard if needed
-    async fn ensure_shard_capacity(&self, shard_id: u32) -> Result<()> {
-        let shard_path = self.get_shard_path(shard_id);
+    async fn ensure_shard_capacity(&self, collection: &str, shard_id: u32) -> Result<()> {
+        let shard_path = self.get_shard_path(collection, shard_id);
 
         if !shard_path.exists() {
             // Create parent directory if it doesn't exist
             if let Some(parent) = shard_path.parent() {
-                fs::create_dir_all(parent)?;
+                tokio::fs::create_dir_all(parent).await.map_err(|e| {
+                    crate::core::error::Error::io(format!(
+                        "Failed to create shard parent dir: {}",
+                        e
+                    ))
+                })?;
             }
             // Create new shard file
-            File::create(&shard_path)?;
+            tokio::fs::File::create(&shard_path).await.map_err(|e| {
+                crate::core::error::Error::io(format!("Failed to create shard file: {}", e))
+            })?;
 
             let metadata = ShardMetadata {
                 shard_id,
@@ -223,8 +267,8 @@ impl FilesystemVectorStore {
                     .as_secs(),
             };
 
-            let mut cache = self.shard_cache.write().await;
-            cache.insert(shard_id, metadata);
+            self.shard_cache
+                .insert((collection.to_string(), shard_id), metadata);
         }
 
         Ok(())
@@ -233,37 +277,48 @@ impl FilesystemVectorStore {
     /// Write vector to shard
     async fn write_vector_to_shard(
         &self,
+        collection: &str,
         shard_id: u32,
         _id: &str,
         vector: &[f32],
         metadata: &HashMap<String, serde_json::Value>,
     ) -> Result<u64> {
-        self.ensure_shard_capacity(shard_id).await?;
+        self.ensure_shard_capacity(collection, shard_id).await?;
 
-        let shard_path = self.get_shard_path(shard_id);
-        let mut file = std::fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&shard_path)?;
+        let shard_path = self.get_shard_path(collection, shard_id);
 
-        // Get current file size as offset
-        let offset = file.metadata()?.len();
-
-        // Write vector data
         let vector_bytes = self.vector_to_bytes(vector);
-        file.write_all(&vector_bytes)?;
-
-        // Write metadata
-        let metadata_bytes = serde_json::to_vec(metadata)?;
+        let metadata_bytes = serde_json::to_vec(metadata).map_err(|e| {
+            crate::core::error::Error::internal(format!("Failed to serialize metadata: {}", e))
+        })?;
         let metadata_len = metadata_bytes.len() as u32;
-        file.write_all(&metadata_len.to_le_bytes())?;
-        file.write_all(&metadata_bytes)?;
+
+        let (offset, total_shard_size) = tokio::task::spawn_blocking(move || {
+            let mut file = std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(&shard_path)?;
+
+            let offset = file.metadata()?.len();
+            file.seek(std::io::SeekFrom::End(0))?;
+            file.write_all(&vector_bytes)?;
+            file.write_all(&metadata_len.to_le_bytes())?;
+            file.write_all(&metadata_bytes)?;
+
+            let total_size = file.metadata()?.len();
+            Ok::<_, std::io::Error>((offset, total_size))
+        })
+        .await
+        .map_err(|e| crate::core::error::Error::internal(format!("Blocking task failed: {}", e)))?
+        .map_err(|e| crate::core::error::Error::io(format!("Failed to write to shard: {}", e)))?;
 
         // Update shard metadata
-        let mut cache = self.shard_cache.write().await;
-        if let Some(shard_meta) = cache.get_mut(&shard_id) {
+        if let Some(mut shard_meta) = self
+            .shard_cache
+            .get_mut(&(collection.to_string(), shard_id))
+        {
             shard_meta.vector_count += 1;
-            shard_meta.vectors_size = offset + vector_bytes.len() as u64 + 4 + metadata_len as u64;
+            shard_meta.vectors_size = total_shard_size;
         }
 
         Ok(offset)
@@ -272,68 +327,94 @@ impl FilesystemVectorStore {
     /// Read vector from shard
     async fn read_vector_from_shard(
         &self,
+        collection: &str,
         shard_id: u32,
         offset: u64,
     ) -> Result<(Vec<f32>, HashMap<String, serde_json::Value>)> {
-        let shard_path = self.get_shard_path(shard_id);
-        let mut file = File::open(&shard_path)?;
+        let shard_path = self.get_shard_path(collection, shard_id);
+        let dimensions = self.config.dimensions;
 
-        // Seek to vector data
-        file.seek(std::io::SeekFrom::Start(offset))?;
+        tokio::task::spawn_blocking(move || {
+            let mut file = std::fs::File::open(&shard_path)?;
+            file.seek(std::io::SeekFrom::Start(offset))?;
 
-        // Read vector data
-        let vector = self.read_vector_bytes(&mut file)?;
+            // Read vector data
+            let mut bytes = vec![0u8; dimensions * 4];
+            file.read_exact(&mut bytes)?;
+            let mut vector = Vec::with_capacity(dimensions);
+            for chunk in bytes.chunks_exact(4) {
+                let value = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+                vector.push(value);
+            }
 
-        // Read metadata length
-        let mut metadata_len_bytes = [0u8; 4];
-        file.read_exact(&mut metadata_len_bytes)?;
-        let metadata_len = u32::from_le_bytes(metadata_len_bytes);
+            // Read metadata length
+            let mut metadata_len_bytes = [0u8; 4];
+            file.read_exact(&mut metadata_len_bytes)?;
+            let metadata_len = u32::from_le_bytes(metadata_len_bytes);
 
-        // Read metadata
-        let mut metadata_bytes = vec![0u8; metadata_len as usize];
-        file.read_exact(&mut metadata_bytes)?;
-        let metadata: HashMap<String, serde_json::Value> = serde_json::from_slice(&metadata_bytes)?;
+            // Read metadata
+            let mut metadata_bytes = vec![0u8; metadata_len as usize];
+            file.read_exact(&mut metadata_bytes)?;
+            let metadata: HashMap<String, serde_json::Value> =
+                serde_json::from_slice(&metadata_bytes)
+                    .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
-        Ok((vector, metadata))
+            Ok((vector, metadata))
+        })
+        .await
+        .map_err(|e| crate::core::error::Error::internal(format!("Blocking task failed: {}", e)))?
+        .map_err(|e: std::io::Error| {
+            crate::core::error::Error::io(format!("Failed to read from shard: {}", e))
+        })
     }
 
     /// Find optimal shard for new vector
-    async fn find_optimal_shard(&self) -> Result<u32> {
-        let shards = self.shard_cache.read().await;
-
+    fn find_optimal_shard(&self, collection: &str) -> u32 {
         // Find shard with most available capacity
         let mut best_shard = None;
         let mut min_vectors = usize::MAX;
 
-        for (shard_id, metadata) in shards.iter() {
-            if metadata.vector_count < self.config.max_vectors_per_shard
-                && metadata.vector_count < min_vectors
-            {
-                min_vectors = metadata.vector_count;
-                best_shard = Some(*shard_id);
+        for r in self.shard_cache.iter() {
+            let (c, shard_id) = r.key();
+            if c == collection {
+                let metadata = r.value();
+                if metadata.vector_count < self.config.max_vectors_per_shard
+                    && metadata.vector_count < min_vectors
+                {
+                    min_vectors = metadata.vector_count;
+                    best_shard = Some(*shard_id);
+                }
             }
         }
 
         if let Some(shard_id) = best_shard {
-            Ok(shard_id)
+            shard_id
         } else {
             // Allocate new shard
-            Ok(self.allocate_shard_id().await)
+            self.allocate_shard_id(collection)
         }
     }
 
     /// Perform similarity search using brute force
     async fn brute_force_search(
         &self,
+        collection: &str,
         query_vector: &[f32],
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
         let mut results = Vec::new();
-        let index = self.index_cache.read().await;
 
-        for (_id, entry) in index.iter() {
+        // Collect index entries first to avoid holding DashMap iterator across await points
+        let entries: Vec<IndexEntry> = self
+            .index_cache
+            .iter()
+            .filter(|r| r.key().0 == collection)
+            .map(|r| r.value().clone())
+            .collect();
+
+        for entry in entries {
             if let Ok((vector, metadata)) = self
-                .read_vector_from_shard(entry.shard_id, entry.offset)
+                .read_vector_from_shard(collection, entry.shard_id, entry.offset)
                 .await
             {
                 let similarity = self.cosine_similarity(query_vector, &vector);
@@ -404,38 +485,17 @@ impl FilesystemVectorStore {
         }
         bytes
     }
-
-    /// Read vector bytes from file
-    fn read_vector_bytes(&self, file: &mut File) -> Result<Vec<f32>> {
-        let mut bytes = vec![0u8; self.config.dimensions * 4];
-        file.read_exact(&mut bytes)?;
-
-        let mut vector = Vec::with_capacity(self.config.dimensions);
-        for chunk in bytes.chunks_exact(4) {
-            let value = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
-            vector.push(value);
-        }
-
-        Ok(vector)
-    }
 }
 
 #[async_trait]
 impl VectorStoreProvider for FilesystemVectorStore {
     async fn create_collection(&self, name: &str, _dimensions: usize) -> Result<()> {
-        *self.current_collection.write().await = name.to_string();
-
         // Try to load existing collection, if it doesn't exist, create it
-        if self.load_collection_state(name).await.is_err() {
+        if !self.collection_exists(name).await? {
             // Collection doesn't exist, save initial empty state
-            self.save_collection_state().await?;
-        }
-
-        // Ensure the index file exists after creation
-        let index_path = self.config.base_path.join(format!("{}_index.json", name));
-        if !index_path.exists() {
-            // Force save if file doesn't exist
-            self.save_collection_state().await?;
+            self.save_collection_state(name).await?;
+        } else {
+            self.load_collection_state(name).await?;
         }
 
         Ok(())
@@ -445,23 +505,27 @@ impl VectorStoreProvider for FilesystemVectorStore {
         // Remove all files for this collection
         let collection_path = self.config.base_path.join(format!("{}_shards", name));
         if collection_path.exists() {
-            fs::remove_dir_all(&collection_path)?;
+            tokio::fs::remove_dir_all(&collection_path)
+                .await
+                .map_err(|e| {
+                    crate::core::error::Error::io(format!(
+                        "Failed to delete collection shards: {}",
+                        e
+                    ))
+                })?;
         }
 
         let index_path = self.config.base_path.join(format!("{}_index.json", name));
         if index_path.exists() {
-            fs::remove_file(index_path)?;
+            tokio::fs::remove_file(index_path).await.map_err(|e| {
+                crate::core::error::Error::io(format!("Failed to delete collection index: {}", e))
+            })?;
         }
 
-        // Clear caches if this is the current collection
-        let current = self.current_collection.read().await;
-        if *current == name {
-            let mut index = self.index_cache.write().await;
-            index.clear();
-            let mut shards = self.shard_cache.write().await;
-            shards.clear();
-            *self.next_shard_id.write().await = 0;
-        }
+        // Clear caches
+        self.index_cache.retain(|k, _| k.0 != name);
+        self.shard_cache.retain(|k, _| k.0 != name);
+        self.next_shard_ids.remove(name);
 
         Ok(())
     }
@@ -477,21 +541,26 @@ impl VectorStoreProvider for FilesystemVectorStore {
         vectors: &[Embedding],
         metadata: Vec<std::collections::HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
-        // Switch to collection if different
-        let current = self.current_collection.read().await;
-        if *current != collection {
-            drop(current);
-            *self.current_collection.write().await = collection.to_string();
+        // Ensure state is loaded
+        if !self.next_shard_ids.contains_key(collection) {
             self.load_collection_state(collection).await?;
         }
 
         let mut ids = Vec::new();
 
         for (i, (vector, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
-            let id = format!("{}_{}", collection, i); // Simple ID generation
-            let shard_id = self.find_optimal_shard().await?;
+            let id = format!(
+                "{}_{}_{}",
+                collection,
+                i,
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            );
+            let shard_id = self.find_optimal_shard(collection);
             let offset = self
-                .write_vector_to_shard(shard_id, &id, &vector.vector, meta)
+                .write_vector_to_shard(collection, shard_id, &id, &vector.vector, meta)
                 .await?;
 
             let index_entry = IndexEntry {
@@ -501,15 +570,13 @@ impl VectorStoreProvider for FilesystemVectorStore {
                 metadata: meta.clone(),
             };
 
-            let mut index = self.index_cache.write().await;
-            index.insert(id.clone(), index_entry);
+            self.index_cache
+                .insert((collection.to_string(), id.clone()), index_entry);
             ids.push(id);
         }
 
-        // Save state periodically
-        if ids.len() % 1000 == 0 {
-            self.save_collection_state().await?;
-        }
+        // Save state
+        self.save_collection_state(collection).await?;
 
         Ok(ids)
     }
@@ -521,36 +588,29 @@ impl VectorStoreProvider for FilesystemVectorStore {
         limit: usize,
         _filter: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
-        // Switch to collection if different
-        let current = self.current_collection.read().await;
-        if *current != collection {
-            drop(current);
-            *self.current_collection.write().await = collection.to_string();
+        // Ensure state is loaded
+        if !self.next_shard_ids.contains_key(collection) {
             self.load_collection_state(collection).await?;
         }
 
-        self.brute_force_search(query_vector, limit).await
+        self.brute_force_search(collection, query_vector, limit)
+            .await
     }
 
     async fn delete_vectors(&self, collection: &str, ids: &[String]) -> Result<()> {
-        // Switch to collection if different
-        let current = self.current_collection.read().await;
-        if *current != collection {
-            drop(current);
-            *self.current_collection.write().await = collection.to_string();
+        // Ensure state is loaded
+        if !self.next_shard_ids.contains_key(collection) {
             self.load_collection_state(collection).await?;
         }
 
         // Remove from index
-        {
-            let mut index = self.index_cache.write().await;
-            for id in ids {
-                index.remove(id);
-            }
-        } // Lock is released here
+        for id in ids {
+            self.index_cache
+                .remove(&(collection.to_string(), id.clone()));
+        }
 
-        // Save state after releasing the lock
-        self.save_collection_state().await?;
+        // Save state
+        self.save_collection_state(collection).await?;
         Ok(())
     }
 
@@ -558,19 +618,43 @@ impl VectorStoreProvider for FilesystemVectorStore {
         &self,
         collection: &str,
     ) -> Result<std::collections::HashMap<String, serde_json::Value>> {
-        let index = self.index_cache.read().await;
-        let shards = self.shard_cache.read().await;
+        // Ensure state is loaded
+        if !self.next_shard_ids.contains_key(collection) {
+            self.load_collection_state(collection).await?;
+        }
 
         let mut stats = HashMap::new();
         stats.insert("collection".to_string(), serde_json::json!(collection));
-        stats.insert("total_vectors".to_string(), serde_json::json!(index.len()));
-        stats.insert("total_shards".to_string(), serde_json::json!(shards.len()));
+
+        let total_vectors = self
+            .index_cache
+            .iter()
+            .filter(|r| r.key().0 == collection)
+            .count();
+        stats.insert(
+            "total_vectors".to_string(),
+            serde_json::json!(total_vectors),
+        );
+
+        let total_shards = self
+            .shard_cache
+            .iter()
+            .filter(|r| r.key().0 == collection)
+            .count();
+        stats.insert("total_shards".to_string(), serde_json::json!(total_shards));
+
         stats.insert(
             "dimensions".to_string(),
             serde_json::json!(self.config.dimensions),
         );
 
-        let total_size: u64 = shards.values().map(|s| s.vectors_size).sum();
+        let total_size: u64 = self
+            .shard_cache
+            .iter()
+            .filter(|r| r.key().0 == collection)
+            .map(|r| r.value().vectors_size)
+            .sum();
+
         stats.insert(
             "total_size_bytes".to_string(),
             serde_json::json!(total_size),
@@ -579,8 +663,8 @@ impl VectorStoreProvider for FilesystemVectorStore {
         Ok(stats)
     }
 
-    async fn flush(&self, _collection: &str) -> Result<()> {
-        self.save_collection_state().await
+    async fn flush(&self, collection: &str) -> Result<()> {
+        self.save_collection_state(collection).await
     }
 
     fn provider_name(&self) -> &str {
@@ -595,77 +679,53 @@ mod tests {
 
     #[tokio::test]
     async fn test_filesystem_vector_store() {
-        // Set a timeout for the test to prevent hanging
-        let timeout_duration = std::time::Duration::from_secs(10);
+        let temp_dir = TempDir::new().unwrap();
+        let config = FilesystemVectorStoreConfig {
+            base_path: temp_dir.path().to_path_buf(),
+            dimensions: 3,
+            ..Default::default()
+        };
 
-        let result = tokio::time::timeout(timeout_duration, async {
-            let temp_dir = TempDir::new().unwrap();
-            let config = FilesystemVectorStoreConfig {
-                base_path: temp_dir.path().to_path_buf(),
-                dimensions: 3,
-                ..Default::default()
-            };
+        let store = FilesystemVectorStore::new(config).await.unwrap();
+        store.create_collection("test", 3).await.unwrap();
 
-            println!("Creating filesystem vector store...");
-            let store = FilesystemVectorStore::new(config).await.unwrap();
+        // Insert vectors
+        let vectors = vec![Embedding {
+            vector: vec![1.0, 2.0, 3.0],
+            model: "test".to_string(),
+            dimensions: 3,
+        }];
 
-            println!("Creating collection...");
-            store.create_collection("test", 3).await.unwrap();
+        let metadata = vec![{
+            let mut meta = HashMap::new();
+            meta.insert("file_path".to_string(), serde_json::json!("test.rs"));
+            meta.insert("line_number".to_string(), serde_json::json!(42));
+            meta.insert("content".to_string(), serde_json::json!("test content"));
+            meta
+        }];
 
-            // Insert vectors
-            println!("Inserting vectors...");
-            let vectors = vec![Embedding {
-                vector: vec![1.0, 2.0, 3.0],
-                model: "test".to_string(),
-                dimensions: 3,
-            }];
+        let ids = store
+            .insert_vectors("test", &vectors, metadata)
+            .await
+            .unwrap();
+        assert_eq!(ids.len(), 1);
 
-            let metadata = vec![{
-                let mut meta = HashMap::new();
-                meta.insert("file_path".to_string(), serde_json::json!("test.rs"));
-                meta.insert("line_number".to_string(), serde_json::json!(42));
-                meta.insert("content".to_string(), serde_json::json!("test content"));
-                meta
-            }];
+        // Search similar
+        let query = vec![1.0, 0.0, 0.0];
+        let results = store.search_similar("test", &query, 5, None).await.unwrap();
+        assert!(!results.is_empty());
+        assert_eq!(results[0].file_path, "test.rs");
 
-            let ids = store
-                .insert_vectors("test", &vectors, metadata)
-                .await
-                .unwrap();
-            assert_eq!(ids.len(), 1);
+        // Check stats
+        let stats = store.get_stats("test").await.unwrap();
+        assert_eq!(stats.get("total_vectors").unwrap().as_u64().unwrap(), 1);
 
-            println!("Searching similar vectors...");
-            // Search similar
-            let query = vec![1.0, 0.0, 0.0];
-            let results = store.search_similar("test", &query, 5, None).await.unwrap();
-            assert!(!results.is_empty());
-            assert_eq!(results[0].file_path, "test.rs");
+        // Delete vectors
+        store.delete_vectors("test", &ids).await.unwrap();
 
-            println!("Getting stats...");
-            // Check stats
-            let stats = store.get_stats("test").await.unwrap();
-            assert_eq!(stats.get("total_vectors").unwrap().as_u64().unwrap(), 1);
-
-            println!("Deleting vectors...");
-            // Delete vectors
-            store.delete_vectors("test", &ids).await.unwrap();
-
-            println!("Getting stats after deletion...");
-            // Check stats after deletion
-            let stats = store.get_stats("test").await.unwrap();
-            assert_eq!(stats.get("total_vectors").unwrap().as_u64().unwrap(), 0);
-
-            println!("Test completed successfully!");
-        })
-        .await;
-
-        match result {
-            Ok(_) => {}
-            Err(_) => panic!(
-                "Test timed out after {} seconds",
-                timeout_duration.as_secs()
-            ),
-        }
+        // Check stats after deletion
+        let stats = store.get_stats("test").await.unwrap();
+        assert_eq!(stats.get("total_vectors").unwrap().as_u64().unwrap(), 0);
     }
 
     #[tokio::test]

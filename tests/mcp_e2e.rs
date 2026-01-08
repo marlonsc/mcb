@@ -3,11 +3,10 @@
 //! These tests simulate real MCP client interactions using stdio transport.
 
 use mcp_context_browser::server::McpServer;
-use rmcp::{RoleServer, ServerHandler};
+use rmcp::ServerHandler;
 use tempfile::tempdir;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
 use tokio::process::Command;
-use tokio_util::sync::CancellationToken;
 
 /// Test utilities for MCP end-to-end tests
 mod test_utils {
@@ -33,7 +32,7 @@ mod test_utils {
         }
 
         // Create test codebase
-        let temp_dir = create_test_codebase().await?;
+        let _temp_dir = create_test_codebase().await?;
 
         // Start the MCP server process
         let mut child = Command::new(&binary_path)

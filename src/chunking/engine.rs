@@ -48,6 +48,21 @@ impl IntelligentChunker {
         self.chunk_generic(content, file_name, language)
     }
 
+    /// Chunk code asynchronously (offloads to blocking thread)
+    pub async fn chunk_code_async(
+        &self,
+        content: String,
+        file_name: String,
+        language: Language,
+    ) -> Vec<CodeChunk> {
+        tokio::task::spawn_blocking(move || {
+            let chunker = Self::new();
+            chunker.chunk_code(&content, &file_name, language)
+        })
+        .await
+        .unwrap_or_default()
+    }
+
     /// Generic chunking for unsupported languages
     fn chunk_generic(&self, content: &str, file_name: &str, language: Language) -> Vec<CodeChunk> {
         let lines: Vec<&str> = content.lines().collect();

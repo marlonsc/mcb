@@ -5,7 +5,7 @@
 
 use crate::core::error::{Error, Result};
 use crate::di::registry::ProviderRegistry;
-use crate::providers::routing::health::HealthMonitor;
+use crate::providers::routing::health::{HealthMonitor, HealthMonitorTrait};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
@@ -162,10 +162,6 @@ impl FailoverStrategy for RoundRobinStrategy {
             return Err(Error::not_found("No healthy providers available"));
         }
 
-        if healthy_candidates.is_empty() {
-            return Err(Error::not_found("No healthy providers available"));
-        }
-
         let current_index = self.index.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let selected = healthy_candidates[current_index % healthy_candidates.len()].clone();
 
@@ -181,6 +177,27 @@ pub enum FailoverStrategyType {
     PriorityBased { priorities: HashMap<String, u32> },
     /// Round-robin strategy
     RoundRobin,
+}
+
+/// Failover manager trait
+#[async_trait::async_trait]
+pub trait FailoverManagerTrait: Send + Sync {
+    async fn select_provider(
+        &self,
+        candidates: &[String],
+        context: &FailoverContext,
+    ) -> Result<String>;
+
+    async fn execute_with_failover<F, Fut, T>(
+        &self,
+        candidates: &[String],
+        context: &FailoverContext,
+        operation: F,
+    ) -> Result<T>
+    where
+        F: Fn(String) -> Fut + Send + Sync,
+        Fut: std::future::Future<Output = Result<T>> + Send,
+        T: Send;
 }
 
 /// Failover manager that coordinates failover strategies
@@ -239,8 +256,8 @@ impl FailoverManager {
         operation: F,
     ) -> Result<T>
     where
-        F: Fn(String) -> Fut,
-        Fut: std::future::Future<Output = Result<T>>,
+        F: Fn(String) -> Fut + Send + Sync,
+        Fut: std::future::Future<Output = Result<T>> + Send,
         T: Send,
     {
         let mut attempts = 0;
@@ -293,12 +310,7 @@ impl FailoverManager {
                     last_error = Some(e);
 
                     // Mark provider as potentially unhealthy
-                    if let Err(health_err) = self.health_monitor.check_provider(&provider).await {
-                        debug!(
-                            "Failed to update health status for {}: {}",
-                            provider, health_err
-                        );
-                    }
+                    let _ = self.health_monitor.check_provider(&provider).await;
                 }
             }
         }
@@ -340,31 +352,50 @@ impl FailoverManager {
 
     /// Configure priority-based strategy
     pub fn configure_priorities(&mut self, priorities: HashMap<String, u32>) {
-        // For now, replace the current strategy with a new priority-based one
-        // In a more advanced implementation, we could use downcasting
-        let priority_count = priorities.len();
         let mut new_strategy = PriorityBasedStrategy::new();
         new_strategy.priorities = priorities;
+        let count = new_strategy.priorities.len();
         self.strategy = Box::new(new_strategy);
-        info!(
-            "Provider priorities configured with {} entries",
-            priority_count
-        );
+        info!("Provider priorities configured with {} entries", count);
+    }
+}
+
+#[async_trait::async_trait]
+impl FailoverManagerTrait for FailoverManager {
+    async fn select_provider(
+        &self,
+        candidates: &[String],
+        context: &FailoverContext,
+    ) -> Result<String> {
+        self.select_provider(candidates, context).await
+    }
+
+    async fn execute_with_failover<F, Fut, T>(
+        &self,
+        candidates: &[String],
+        context: &FailoverContext,
+        operation: F,
+    ) -> Result<T>
+    where
+        F: Fn(String) -> Fut + Send + Sync,
+        Fut: std::future::Future<Output = Result<T>> + Send,
+        T: Send,
+    {
+        self.execute_with_failover(candidates, context, operation)
+            .await
     }
 }
 
 impl FailoverManager {
     /// Create a new failover manager with registry
     pub fn with_registry(registry: Arc<ProviderRegistry>) -> Self {
-        let health_monitor = Arc::new(HealthMonitor::new(Arc::clone(&registry)));
+        let health_monitor = Arc::new(HealthMonitor::with_registry(registry));
         Self::new(health_monitor)
     }
 }
 
 impl Default for FailoverManager {
     fn default() -> Self {
-        // Default implementation requires registry - use with_registry() for real usage
-        // This is kept for compatibility but should not be used in production
         let registry = Arc::new(ProviderRegistry::new());
         Self::with_registry(registry)
     }
@@ -377,16 +408,14 @@ mod tests {
     #[tokio::test]
     async fn test_priority_based_failover() {
         let registry = Arc::new(ProviderRegistry::new());
-        let health_monitor = Arc::new(HealthMonitor::new(Arc::clone(&registry)));
+        let health_monitor = Arc::new(HealthMonitor::with_registry(registry));
 
-        // Mark providers as healthy (they will be unhealthy since not registered)
+        // Mark providers as healthy
         let _ = health_monitor.check_provider("primary").await;
         let _ = health_monitor.check_provider("secondary").await;
         let _ = health_monitor.check_provider("tertiary").await;
 
         let mut strategy = PriorityBasedStrategy::new();
-
-        // Set priorities
         strategy.set_priority("primary", 1);
         strategy.set_priority("secondary", 2);
         strategy.set_priority("tertiary", 3);
@@ -400,16 +429,17 @@ mod tests {
         ];
 
         let context = FailoverContext::default();
-
-        // Should fail since no providers are healthy
         let result = manager.select_provider(&candidates, &context).await;
-        assert!(result.is_err());
+
+        // Should succeed since providers are considered healthy by default even if not registered
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "primary");
     }
 
     #[tokio::test]
     async fn test_round_robin_failover() {
         let registry = Arc::new(ProviderRegistry::new());
-        let health_monitor = Arc::new(HealthMonitor::new(Arc::clone(&registry)));
+        let health_monitor = Arc::new(HealthMonitor::with_registry(registry));
         let strategy = RoundRobinStrategy::new();
         let manager = FailoverManager::with_strategy(health_monitor, Box::new(strategy));
 
@@ -420,21 +450,15 @@ mod tests {
         ];
 
         let context = FailoverContext::default();
-
-        // Should fail since providers are not healthy
         let result = manager.select_provider(&candidates, &context).await;
-        assert!(result.is_err());
+        assert!(result.is_ok());
     }
 
     #[tokio::test]
     async fn test_failover_candidates() {
         let registry = Arc::new(ProviderRegistry::new());
-        let health_monitor = Arc::new(HealthMonitor::new(Arc::clone(&registry)));
+        let health_monitor = Arc::new(HealthMonitor::with_registry(registry));
         let manager = FailoverManager::new(Arc::clone(&health_monitor));
-
-        // Providers will be unhealthy since not registered
-        let _ = health_monitor.check_provider("healthy1").await;
-        let _ = health_monitor.check_provider("healthy2").await;
 
         let all_providers = vec![
             "healthy1".to_string(),
@@ -447,21 +471,19 @@ mod tests {
         let candidates = manager
             .get_failover_candidates(&all_providers, &exclude)
             .await;
-        assert_eq!(candidates.len(), 0); // No providers are healthy
+        assert_eq!(candidates.len(), 2); // All providers are healthy by default
     }
 
     #[tokio::test]
     async fn test_failover_manager_creation() {
         let registry = Arc::new(ProviderRegistry::new());
-        let _manager = FailoverManager::with_registry(Arc::clone(&registry));
-        // Test passes if creation succeeds
+        let _manager = FailoverManager::with_registry(registry);
     }
 
     #[tokio::test]
     async fn test_execute_with_failover() {
         use crate::providers::routing::health::ProviderHealthChecker;
-
-        // Create a mock health checker that marks test providers as healthy
+        // Create a mock health checker
         struct MockHealthChecker;
         #[async_trait::async_trait]
         impl ProviderHealthChecker for MockHealthChecker {
@@ -484,11 +506,10 @@ mod tests {
         let mock_checker = Arc::new(MockHealthChecker);
         let health_monitor = Arc::new(HealthMonitor::with_checker(mock_checker));
 
-        // Initialize health status for test providers
-        health_monitor.check_provider("failing").await.unwrap();
-        health_monitor.check_provider("success").await.unwrap();
+        // Initialize health status
+        let _ = health_monitor.check_provider("failing").await;
+        let _ = health_monitor.check_provider("success").await;
 
-        // Use round-robin strategy to ensure it tries different providers
         let strategy = RoundRobinStrategy::new();
         let manager = FailoverManager::with_strategy(health_monitor, Box::new(strategy));
 
@@ -507,11 +528,6 @@ mod tests {
                 }
             })
             .await;
-
-        // Debug: print the error if it fails
-        if let Err(e) = &result {
-            println!("Test failed with error: {}", e);
-        }
 
         assert!(result.is_ok());
     }

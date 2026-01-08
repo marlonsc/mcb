@@ -3,16 +3,83 @@
 //! Tracks query latency, cache hit/miss ratios, and other performance indicators.
 
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
-use std::sync::Mutex;
+use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
+use tokio::sync::{mpsc, oneshot};
 
-/// Global performance metrics instance
-pub static PERFORMANCE_METRICS: once_cell::sync::Lazy<Mutex<PerformanceMetrics>> =
-    once_cell::sync::Lazy::new(|| Mutex::new(PerformanceMetrics::new()));
+/// Global performance metrics sender
+pub static PERFORMANCE_METRICS: once_cell::sync::Lazy<PerformanceMetricsSender> =
+    once_cell::sync::Lazy::new(PerformanceMetricsSender::new);
+
+/// Performance metrics messages
+pub enum PerformanceMessage {
+    RecordQuery {
+        latency: Duration,
+        success: bool,
+    },
+    RecordCacheHit,
+    RecordCacheMiss,
+    UpdateCacheSize(u64),
+    GetQueryPerformance(oneshot::Sender<QueryPerformanceMetrics>),
+    GetCacheMetrics(oneshot::Sender<CacheMetrics>),
+    Reset,
+    CleanOldRecords(Duration),
+}
+
+/// Sender for performance metrics actor
+pub struct PerformanceMetricsSender {
+    sender: mpsc::Sender<PerformanceMessage>,
+}
+
+impl PerformanceMetricsSender {
+    fn new() -> Self {
+        let (tx, rx) = mpsc::channel(1000);
+        let mut actor = PerformanceMetricsActor::new(rx);
+        tokio::spawn(async move {
+            actor.run().await;
+        });
+        Self { sender: tx }
+    }
+
+    pub fn record_query(&self, latency: Duration, success: bool) {
+        let _ = self.sender.try_send(PerformanceMessage::RecordQuery { latency, success });
+    }
+
+    pub fn record_cache_hit(&self) {
+        let _ = self.sender.try_send(PerformanceMessage::RecordCacheHit);
+    }
+
+    pub fn record_cache_miss(&self) {
+        let _ = self.sender.try_send(PerformanceMessage::RecordCacheMiss);
+    }
+
+    pub fn update_cache_size(&self, size_bytes: u64) {
+        let _ = self.sender.try_send(PerformanceMessage::UpdateCacheSize(size_bytes));
+    }
+
+    pub async fn get_query_performance(&self) -> QueryPerformanceMetrics {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.sender.send(PerformanceMessage::GetQueryPerformance(tx)).await;
+        rx.await.unwrap_or_default()
+    }
+
+    pub async fn get_cache_metrics(&self) -> CacheMetrics {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.sender.send(PerformanceMessage::GetCacheMetrics(tx)).await;
+        rx.await.unwrap_or_default()
+    }
+
+    pub fn reset(&self) {
+        let _ = self.sender.try_send(PerformanceMessage::Reset);
+    }
+
+    pub fn clean_old_records(&self, max_age: Duration) {
+        let _ = self.sender.try_send(PerformanceMessage::CleanOldRecords(max_age));
+    }
+}
 
 /// Query performance metrics
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct QueryPerformanceMetrics {
     /// Total number of queries processed
     pub total_queries: u64,
@@ -25,7 +92,7 @@ pub struct QueryPerformanceMetrics {
 }
 
 /// Cache performance metrics
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CacheMetrics {
     /// Total cache hits
     pub hits: u64,
@@ -45,8 +112,9 @@ struct QueryRecord {
     timestamp: Instant,
 }
 
-/// Performance metrics collector
-pub struct PerformanceMetrics {
+/// Performance metrics collector actor
+struct PerformanceMetricsActor {
+    receiver: mpsc::Receiver<PerformanceMessage>,
     query_records: VecDeque<QueryRecord>,
     cache_hits: u64,
     cache_misses: u64,
@@ -54,71 +122,73 @@ pub struct PerformanceMetrics {
     max_history: usize,
 }
 
-impl PerformanceMetrics {
-    /// Create a new performance metrics collector
-    pub fn new() -> Self {
+impl PerformanceMetricsActor {
+    fn new(receiver: mpsc::Receiver<PerformanceMessage>) -> Self {
         Self {
+            receiver,
             query_records: VecDeque::new(),
             cache_hits: 0,
             cache_misses: 0,
             cache_size: 0,
-            max_history: 1000, // Keep last 1000 queries
+            max_history: 1000,
         }
     }
 
-    /// Record a query execution
-    pub fn record_query(&mut self, latency: Duration, success: bool) {
-        let record = QueryRecord {
-            latency_ms: latency.as_millis() as f64,
-            success,
-            timestamp: Instant::now(),
-        };
-
-        self.query_records.push_back(record);
-
-        // Maintain max history size
-        while self.query_records.len() > self.max_history {
-            self.query_records.pop_front();
+    async fn run(&mut self) {
+        while let Some(msg) = self.receiver.recv().await {
+            match msg {
+                PerformanceMessage::RecordQuery { latency, success } => {
+                    let record = QueryRecord {
+                        latency_ms: latency.as_millis() as f64,
+                        success,
+                        timestamp: Instant::now(),
+                    };
+                    self.query_records.push_back(record);
+                    while self.query_records.len() > self.max_history {
+                        self.query_records.pop_front();
+                    }
+                }
+                PerformanceMessage::RecordCacheHit => {
+                    self.cache_hits = self.cache_hits.saturating_add(1);
+                }
+                PerformanceMessage::RecordCacheMiss => {
+                    self.cache_misses = self.cache_misses.saturating_add(1);
+                }
+                PerformanceMessage::UpdateCacheSize(size) => {
+                    self.cache_size = size;
+                }
+                PerformanceMessage::GetQueryPerformance(tx) => {
+                    let _ = tx.send(self.calculate_query_performance());
+                }
+                PerformanceMessage::GetCacheMetrics(tx) => {
+                    let _ = tx.send(self.calculate_cache_metrics());
+                }
+                PerformanceMessage::Reset => {
+                    self.query_records.clear();
+                    self.cache_hits = 0;
+                    self.cache_misses = 0;
+                    self.cache_size = 0;
+                }
+                PerformanceMessage::CleanOldRecords(max_age) => {
+                    let now = Instant::now();
+                    self.query_records.retain(|r| now.duration_since(r.timestamp) < max_age);
+                }
+            }
         }
     }
 
-    /// Record a cache hit
-    pub fn record_cache_hit(&mut self) {
-        self.cache_hits = self.cache_hits.saturating_add(1);
-    }
-
-    /// Record a cache miss
-    pub fn record_cache_miss(&mut self) {
-        self.cache_misses = self.cache_misses.saturating_add(1);
-    }
-
-    /// Update current cache size
-    pub fn update_cache_size(&mut self, size_bytes: u64) {
-        self.cache_size = size_bytes;
-    }
-
-    /// Get query performance metrics
-    pub fn get_query_performance(&self) -> QueryPerformanceMetrics {
+    fn calculate_query_performance(&self) -> QueryPerformanceMetrics {
         let total_queries = self.query_records.len() as u64;
-
         if total_queries == 0 {
-            return QueryPerformanceMetrics {
-                total_queries: 0,
-                average_latency: 0.0,
-                p99_latency: 0.0,
-                success_rate: 0.0,
-            };
+            return QueryPerformanceMetrics::default();
         }
 
-        // Calculate average latency
         let total_latency: f64 = self.query_records.iter().map(|r| r.latency_ms).sum();
         let average_latency = total_latency / total_queries as f64;
 
-        // Calculate success rate
         let successful_queries = self.query_records.iter().filter(|r| r.success).count() as f64;
         let success_rate = (successful_queries / total_queries as f64) * 100.0;
 
-        // Calculate P99 latency (99th percentile)
         let mut latencies: Vec<f64> = self.query_records.iter().map(|r| r.latency_ms).collect();
         latencies.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
@@ -134,8 +204,7 @@ impl PerformanceMetrics {
         }
     }
 
-    /// Get cache performance metrics
-    pub fn get_cache_metrics(&self) -> CacheMetrics {
+    fn calculate_cache_metrics(&self) -> CacheMetrics {
         let total_operations = self.cache_hits + self.cache_misses;
         let hit_rate = if total_operations > 0 {
             (self.cache_hits as f64 / total_operations as f64) * 100.0
@@ -150,32 +219,6 @@ impl PerformanceMetrics {
             size: self.cache_size,
         }
     }
-
-    /// Reset all metrics
-    pub fn reset(&mut self) {
-        self.query_records.clear();
-        self.cache_hits = 0;
-        self.cache_misses = 0;
-        self.cache_size = 0;
-    }
-
-    /// Get total number of queries in history
-    pub fn query_count(&self) -> usize {
-        self.query_records.len()
-    }
-
-    /// Clean old records (older than specified duration)
-    pub fn clean_old_records(&mut self, max_age: Duration) {
-        let now = Instant::now();
-        self.query_records
-            .retain(|record| now.duration_since(record.timestamp) < max_age);
-    }
-}
-
-impl Default for PerformanceMetrics {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 #[cfg(test)]
@@ -183,75 +226,79 @@ mod tests {
     use super::*;
     use std::time::Duration;
 
-    #[test]
-    fn test_new_performance_metrics() {
-        let metrics = PerformanceMetrics::new();
-        assert_eq!(metrics.query_count(), 0);
-        assert_eq!(metrics.cache_hits, 0);
-        assert_eq!(metrics.cache_misses, 0);
-        assert_eq!(metrics.cache_size, 0);
-    }
+    #[tokio::test]
+    async fn test_record_query() {
+        PERFORMANCE_METRICS.reset();
+        
+        PERFORMANCE_METRICS.record_query(Duration::from_millis(100), true);
+        PERFORMANCE_METRICS.record_query(Duration::from_millis(200), false);
 
-    #[test]
-    fn test_record_query() {
-        let mut metrics = PerformanceMetrics::new();
+        // Give some time for the actor to process
+        tokio::time::sleep(Duration::from_millis(50)).await;
 
-        metrics.record_query(Duration::from_millis(100), true);
-        metrics.record_query(Duration::from_millis(200), false);
-
-        assert_eq!(metrics.query_count(), 2);
-
-        let perf = metrics.get_query_performance();
+        let perf = PERFORMANCE_METRICS.get_query_performance().await;
         assert_eq!(perf.total_queries, 2);
         assert_eq!(perf.average_latency, 150.0); // (100 + 200) / 2
         assert_eq!(perf.success_rate, 50.0); // 1/2 * 100
     }
 
-    #[test]
-    fn test_cache_metrics() {
-        let mut metrics = PerformanceMetrics::new();
+    #[tokio::test]
+    async fn test_cache_metrics() {
+        PERFORMANCE_METRICS.reset();
 
-        metrics.record_cache_hit();
-        metrics.record_cache_hit();
-        metrics.record_cache_miss();
-        metrics.update_cache_size(1024);
+        PERFORMANCE_METRICS.record_cache_hit();
+        PERFORMANCE_METRICS.record_cache_hit();
+        PERFORMANCE_METRICS.record_cache_miss();
+        PERFORMANCE_METRICS.update_cache_size(1024);
 
-        let cache = metrics.get_cache_metrics();
+        // Give some time for the actor to process
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let cache = PERFORMANCE_METRICS.get_cache_metrics().await;
         assert_eq!(cache.hits, 2);
         assert_eq!(cache.misses, 1);
         assert_eq!(cache.hit_rate, 66.66666666666666); // 2/3 * 100
         assert_eq!(cache.size, 1024);
     }
 
-    #[test]
-    fn test_empty_metrics() {
-        let metrics = PerformanceMetrics::new();
+    #[tokio::test]
+    async fn test_empty_metrics() {
+        PERFORMANCE_METRICS.reset();
 
-        let perf = metrics.get_query_performance();
+        // Give some time for the actor to process
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let perf = PERFORMANCE_METRICS.get_query_performance().await;
         assert_eq!(perf.total_queries, 0);
         assert_eq!(perf.average_latency, 0.0);
         assert_eq!(perf.p99_latency, 0.0);
         assert_eq!(perf.success_rate, 0.0);
 
-        let cache = metrics.get_cache_metrics();
+        let cache = PERFORMANCE_METRICS.get_cache_metrics().await;
         assert_eq!(cache.hits, 0);
         assert_eq!(cache.misses, 0);
         assert_eq!(cache.hit_rate, 0.0);
         assert_eq!(cache.size, 0);
     }
 
-    #[test]
-    fn test_reset() {
-        let mut metrics = PerformanceMetrics::new();
+    #[tokio::test]
+    async fn test_reset() {
+        PERFORMANCE_METRICS.reset();
 
-        metrics.record_query(Duration::from_millis(100), true);
-        metrics.record_cache_hit();
-        metrics.update_cache_size(1024);
+        PERFORMANCE_METRICS.record_query(Duration::from_millis(100), true);
+        PERFORMANCE_METRICS.record_cache_hit();
+        PERFORMANCE_METRICS.update_cache_size(1024);
 
-        metrics.reset();
+        PERFORMANCE_METRICS.reset();
 
-        assert_eq!(metrics.query_count(), 0);
-        assert_eq!(metrics.cache_hits, 0);
-        assert_eq!(metrics.cache_size, 0);
+        // Give some time for the actor to process
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let perf = PERFORMANCE_METRICS.get_query_performance().await;
+        assert_eq!(perf.total_queries, 0);
+        
+        let cache = PERFORMANCE_METRICS.get_cache_metrics().await;
+        assert_eq!(cache.hits, 0);
+        assert_eq!(cache.size, 0);
     }
 }

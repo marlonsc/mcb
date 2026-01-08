@@ -25,8 +25,10 @@ impl MilvusVectorStoreProvider {
             address
         };
 
-        let client = Client::new(endpoint)
+        let timeout_duration = std::time::Duration::from_secs(2);
+        let client = tokio::time::timeout(timeout_duration, Client::new(endpoint))
             .await
+            .map_err(|_| Error::vector_db("Milvus connection timed out".to_string()))?
             .map_err(|e| Error::vector_db(format!("Failed to connect to Milvus: {}", e)))?;
 
         Ok(Self { client })

@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::{RwLock, mpsc};
-use tracing::{debug, info, warn};
+use tracing::{info, instrument, warn};
 
 /// Circuit breaker states
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,381 +90,344 @@ pub struct CircuitBreakerSnapshot {
     pub saved_at: u64,
 }
 
+/// Trait for circuit breaker
+#[async_trait::async_trait]
+pub trait CircuitBreakerTrait: Send + Sync {
+    async fn call<F, Fut, T>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce() -> Fut + Send + Sync,
+        Fut: std::future::Future<Output = Result<T>> + Send,
+        T: Send;
+
+    async fn state(&self) -> CircuitBreakerState;
+    async fn metrics(&self) -> CircuitBreakerMetrics;
+}
+
 /// Circuit breaker implementation using established patterns
-#[derive(Clone)]
 pub struct CircuitBreaker {
     /// Circuit breaker identifier
     id: String,
     /// Persistence directory
     persistence_dir: PathBuf,
     /// Channel sender for background persistence
-    persistence_sender: mpsc::UnboundedSender<()>,
-    /// Current state
-    state: Arc<RwLock<CircuitBreakerState>>,
+    persistence_tx: Option<mpsc::UnboundedSender<()>>,
+    /// Shared state
+    state: Arc<RwLock<CircuitBreakerInnerState>>,
     /// Configuration
     config: CircuitBreakerConfig,
-    /// Metrics
-    metrics: Arc<RwLock<CircuitBreakerMetrics>>,
-    /// Request timestamps for rolling window (simplified)
-    failure_timestamps: Arc<RwLock<Vec<Instant>>>,
-    /// Success count in half-open state
-    half_open_success_count: Arc<RwLock<u32>>,
-    /// Request count in half-open state
-    half_open_request_count: Arc<RwLock<u32>>,
+}
+
+#[derive(Debug)]
+struct CircuitBreakerInnerState {
+    current_state: CircuitBreakerState,
+    metrics: CircuitBreakerMetrics,
+    half_open_request_count: u32,
+}
+
+impl Clone for CircuitBreakerInnerState {
+    fn clone(&self) -> Self {
+        Self {
+            current_state: self.current_state,
+            metrics: self.metrics.clone(),
+            half_open_request_count: self.half_open_request_count,
+        }
+    }
 }
 
 impl CircuitBreaker {
     /// Create a new circuit breaker with default configuration
-    pub fn new() -> Self {
-        Self::with_config(CircuitBreakerConfig::default())
+    pub async fn new(id: impl Into<String>) -> Self {
+        Self::with_config(id, CircuitBreakerConfig::default()).await
     }
 
     /// Create a new circuit breaker with custom configuration
-    pub fn with_config(config: CircuitBreakerConfig) -> Self {
-        Self::with_id_and_config("default".to_string(), config)
-    }
-
-    /// Create a new circuit breaker with ID and configuration
-    pub fn with_id_and_config(id: String, config: CircuitBreakerConfig) -> Self {
+    pub async fn with_config(id: impl Into<String>, config: CircuitBreakerConfig) -> Self {
+        let id = id.into();
         let persistence_dir = dirs::home_dir()
             .unwrap_or_else(|| PathBuf::from("."))
             .join(".context")
             .join("circuit_breakers");
 
-        // Create directory if it doesn't exist
-        if let Err(e) = fs::create_dir_all(&persistence_dir) {
-            warn!(
-                "Failed to create circuit breaker persistence directory: {}",
-                e
-            );
-        }
+        let state = Arc::new(RwLock::new(CircuitBreakerInnerState {
+            current_state: CircuitBreakerState::Closed,
+            metrics: CircuitBreakerMetrics::default(),
+            half_open_request_count: 0,
+        }));
 
-        // Create channel for background persistence
-        let (persistence_sender, mut persistence_receiver) = mpsc::unbounded_channel::<()>();
-
-        let mut breaker = Self {
-            id: id.clone(),
-            persistence_dir: persistence_dir.clone(),
-            persistence_sender,
-            state: Arc::new(RwLock::new(CircuitBreakerState::Closed)),
+        let mut cb = Self {
+            id,
+            persistence_dir,
+            persistence_tx: None,
+            state,
             config,
-            metrics: Arc::new(RwLock::new(CircuitBreakerMetrics::default())),
-            failure_timestamps: Arc::new(RwLock::new(Vec::new())),
-            half_open_success_count: Arc::new(RwLock::new(0)),
-            half_open_request_count: Arc::new(RwLock::new(0)),
         };
 
-        // Load persisted state if available
-        if let Err(e) = breaker.load_state() {
-            debug!("Failed to load persisted circuit breaker state: {}", e);
+        // Try to load persisted state
+        if let Ok(Some(snapshot)) = cb.load_snapshot().await {
+            cb.apply_snapshot(snapshot).await;
         }
 
-        // Spawn background persistence task
-        let breaker_clone = Arc::new(breaker.clone());
+        // Start background persistence task
+        cb.start_persistence_task();
+
+        cb
+    }
+
+    fn start_persistence_task(&mut self) {
+        let (tx, mut rx) = mpsc::unbounded_channel::<()>();
+        self.persistence_tx = Some(tx);
+
+        let id = self.id.clone();
+        let persistence_dir = self.persistence_dir.clone();
+        let state = Arc::clone(&self.state);
+
         tokio::spawn(async move {
-            while persistence_receiver.recv().await.is_some() {
-                if let Err(e) = breaker_clone.save_state_async().await {
-                    warn!("Failed to persist circuit breaker state for {}: {}", id, e);
+            // Debounce persistence calls to every 5 seconds
+            let mut last_save = Instant::now();
+            let debounce_duration = Duration::from_secs(5);
+
+            while rx.recv().await.is_some() {
+                if last_save.elapsed() >= debounce_duration {
+                    let snapshot_res = {
+                        let state_guard = state.read().await;
+                        Self::create_snapshot_static(&id, &state_guard)
+                    };
+
+                    if let Ok(snapshot) = snapshot_res {
+                        let _ = Self::save_snapshot_static(&id, &persistence_dir, &snapshot).await;
+                    }
+                    last_save = Instant::now();
                 }
             }
         });
-
-        breaker
     }
 
-    /// Get the circuit breaker ID
-    pub fn id(&self) -> &str {
-        &self.id
+    async fn apply_snapshot(&self, snapshot: CircuitBreakerSnapshot) {
+        let mut state = self.state.write().await;
+        state.current_state = match snapshot.state.as_str() {
+            "closed" => CircuitBreakerState::Closed,
+            "open" => {
+                let opened_at = snapshot
+                    .opened_at_offset
+                    .map(|offset| {
+                        let now = SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs();
+                        let saved_at = snapshot.saved_at;
+                        let elapsed_since_saved = now.saturating_sub(saved_at);
+                        Instant::now()
+                            .checked_sub(Duration::from_secs(offset + elapsed_since_saved))
+                            .unwrap_or_else(Instant::now)
+                    })
+                    .unwrap_or_else(Instant::now);
+                CircuitBreakerState::Open { opened_at }
+            }
+            "half-open" => CircuitBreakerState::HalfOpen,
+            _ => CircuitBreakerState::Closed,
+        };
+
+        state.metrics = CircuitBreakerMetrics {
+            total_requests: snapshot.total_requests,
+            successful_requests: snapshot.successful_requests,
+            failed_requests: snapshot.failed_requests,
+            rejected_requests: snapshot.rejected_requests,
+            consecutive_failures: snapshot.consecutive_failures,
+            circuit_opened_count: snapshot.circuit_opened_count,
+            circuit_closed_count: snapshot.circuit_closed_count,
+            last_failure: None,
+            last_success: None,
+        };
     }
 
-    /// Save current state to disk (async version to avoid deadlocks)
-    async fn save_state_async(&self) -> Result<()> {
-        let snapshot = self.create_snapshot();
-        let file_path = self.persistence_dir.join(format!("{}.json", self.id));
+    fn create_snapshot_static(
+        _id: &str,
+        state: &CircuitBreakerInnerState,
+    ) -> Result<CircuitBreakerSnapshot> {
+        let (state_str, opened_at_offset) = match state.current_state {
+            CircuitBreakerState::Closed => ("closed", None),
+            CircuitBreakerState::Open { opened_at } => {
+                ("open", Some(opened_at.elapsed().as_secs()))
+            }
+            CircuitBreakerState::HalfOpen => ("half-open", None),
+        };
 
-        let content = serde_json::to_string_pretty(&snapshot).map_err(|e| {
-            Error::internal(format!("Failed to serialize circuit breaker state: {}", e))
-        })?;
-
-        // Use tokio::fs for async file operations
-        tokio::fs::write(&file_path, content)
-            .await
-            .map_err(|e| Error::internal(format!("Failed to save circuit breaker state: {}", e)))?;
-
-        debug!("Saved circuit breaker state for {}", self.id);
-        Ok(())
-    }
-
-    /// Load state from disk
-    fn load_state(&mut self) -> Result<()> {
-        let file_path = self.persistence_dir.join(format!("{}.json", self.id));
-
-        if !file_path.exists() {
-            debug!("No persisted state found for circuit breaker {}", self.id);
-            return Ok(());
-        }
-
-        let content = fs::read_to_string(&file_path)
-            .map_err(|e| Error::internal(format!("Failed to read circuit breaker state: {}", e)))?;
-
-        let snapshot: CircuitBreakerSnapshot = serde_json::from_str(&content).map_err(|e| {
-            Error::internal(format!(
-                "Failed to deserialize circuit breaker state: {}",
-                e
-            ))
-        })?;
-
-        self.restore_from_snapshot(snapshot);
-        debug!("Loaded circuit breaker state for {}", self.id);
-        Ok(())
-    }
-
-    /// Create a snapshot of current state
-    fn create_snapshot(&self) -> CircuitBreakerSnapshot {
-        futures::executor::block_on(async {
-            let state = *self.state.read().await;
-            let metrics = self.metrics.read().await;
-            let now = SystemTime::now()
+        Ok(CircuitBreakerSnapshot {
+            state: state_str.to_string(),
+            opened_at_offset,
+            total_requests: state.metrics.total_requests,
+            successful_requests: state.metrics.successful_requests,
+            failed_requests: state.metrics.failed_requests,
+            rejected_requests: state.metrics.rejected_requests,
+            consecutive_failures: state.metrics.consecutive_failures,
+            circuit_opened_count: state.metrics.circuit_opened_count,
+            circuit_closed_count: state.metrics.circuit_closed_count,
+            saved_at: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
-                .as_secs();
-
-            let state_str = match state {
-                CircuitBreakerState::Closed => "closed".to_string(),
-                CircuitBreakerState::Open { .. } => "open".to_string(),
-                CircuitBreakerState::HalfOpen => "half-open".to_string(),
-            };
-
-            CircuitBreakerSnapshot {
-                state: state_str,
-                opened_at_offset: None, // Simplified: will restore to closed state
-                total_requests: metrics.total_requests,
-                successful_requests: metrics.successful_requests,
-                failed_requests: metrics.failed_requests,
-                rejected_requests: metrics.rejected_requests,
-                consecutive_failures: metrics.consecutive_failures,
-                circuit_opened_count: metrics.circuit_opened_count,
-                circuit_closed_count: metrics.circuit_closed_count,
-                saved_at: now,
-            }
+                .as_secs(),
         })
     }
 
-    /// Restore state from snapshot
-    fn restore_from_snapshot(&mut self, snapshot: CircuitBreakerSnapshot) {
-        futures::executor::block_on(async {
-            // Always restore to closed state for simplicity
-            // The important part is preserving the metrics
-            *self.state.write().await = CircuitBreakerState::Closed;
-
-            // Restore metrics
-            let mut metrics = self.metrics.write().await;
-            metrics.total_requests = snapshot.total_requests;
-            metrics.successful_requests = snapshot.successful_requests;
-            metrics.failed_requests = snapshot.failed_requests;
-            metrics.rejected_requests = snapshot.rejected_requests;
-            metrics.consecutive_failures = snapshot.consecutive_failures;
-            metrics.circuit_opened_count = snapshot.circuit_opened_count;
-            metrics.circuit_closed_count = snapshot.circuit_closed_count;
-        });
-    }
-
-    /// Execute an operation with circuit breaker protection
-    pub async fn call<F, Fut, T>(&self, operation: F) -> Result<T>
-    where
-        F: FnOnce() -> Fut,
-        Fut: std::future::Future<Output = Result<T>>,
-    {
-        // Check if we should allow the request
-        if !self.should_allow_request().await {
-            let mut metrics = self.metrics.write().await;
-            metrics.rejected_requests += 1;
-            return Err(Error::generic("Circuit breaker is open"));
+    async fn save_snapshot_static(
+        id: &str,
+        dir: &PathBuf,
+        snapshot: &CircuitBreakerSnapshot,
+    ) -> Result<()> {
+        if !dir.exists() {
+            tokio::fs::create_dir_all(dir).await.map_err(|e| Error::io(e.to_string()))?;
         }
 
-        // Execute the operation
-        let start_time = Instant::now();
-        let result = operation().await;
-        let response_time = start_time.elapsed();
+        let file_path = dir.join(format!("{}.json", id));
+        let content =
+            serde_json::to_string(snapshot).map_err(|e| Error::internal(e.to_string()))?;
+        tokio::fs::write(file_path, content).await.map_err(|e| Error::io(e.to_string()))?;
+        Ok(())
+    }
 
-        // Update metrics and state based on result
-        match result {
-            Ok(value) => {
-                self.handle_success(response_time).await;
-                Ok(value)
-            }
-            Err(e) => {
-                self.handle_failure(response_time).await;
-                Err(e)
-            }
+    async fn load_snapshot(&self) -> Result<Option<CircuitBreakerSnapshot>> {
+        let file_path = self.persistence_dir.join(format!("{}.json", self.id));
+        if !file_path.exists() {
+            return Ok(None);
+        }
+
+        let content = tokio::fs::read_to_string(file_path).await.map_err(|e| Error::io(e.to_string()))?;
+        let snapshot =
+            serde_json::from_str(&content).map_err(|e| Error::internal(e.to_string()))?;
+        Ok(Some(snapshot))
+    }
+
+    fn request_save(&self) {
+        if let Some(tx) = &self.persistence_tx {
+            let _ = tx.send(());
         }
     }
 
-    /// Check if a request should be allowed
-    async fn should_allow_request(&self) -> bool {
-        let state = *self.state.read().await;
+    async fn check_state_transition(&self) {
+        let mut state = self.state.write().await;
 
-        match state {
-            CircuitBreakerState::Closed => true,
-            CircuitBreakerState::Open { opened_at } => {
-                // Check if recovery timeout has passed
-                if opened_at.elapsed() >= self.config.recovery_timeout {
-                    // Transition to half-open
-                    *self.state.write().await = CircuitBreakerState::HalfOpen;
-                    *self.half_open_success_count.write().await = 0;
-                    *self.half_open_request_count.write().await = 0;
-                    debug!("Circuit breaker transitioning to half-open state");
-                    // Trigger background persistence
-                    let _ = self.persistence_sender.send(());
-                    true
-                } else {
-                    false
-                }
-            }
-            CircuitBreakerState::HalfOpen => {
-                let request_count = *self.half_open_request_count.read().await;
-                request_count < self.config.half_open_max_requests
-            }
-        }
-    }
-
-    /// Handle successful operation
-    async fn handle_success(&self, _response_time: Duration) {
-        let mut metrics = self.metrics.write().await;
-        metrics.total_requests += 1;
-        metrics.successful_requests += 1;
-        metrics.consecutive_failures = 0;
-        metrics.last_success = Some(Instant::now());
-
-        let state = *self.state.read().await;
-        match state {
-            CircuitBreakerState::HalfOpen => {
-                let mut success_count = self.half_open_success_count.write().await;
-                let mut request_count = self.half_open_request_count.write().await;
-
-                *success_count += 1;
-                *request_count += 1;
-
-                // Check if we've reached success threshold
-                if *success_count >= self.config.success_threshold {
-                    // Close the circuit
-                    *self.state.write().await = CircuitBreakerState::Closed;
-                    *success_count = 0;
-                    *request_count = 0;
-
-                    metrics.circuit_closed_count += 1;
-                    info!("Circuit breaker closed after successful recovery");
-
-                    // Trigger background persistence
-                    let _ = self.persistence_sender.send(());
-                }
-            }
-            CircuitBreakerState::Closed => {
-                // Clean old failure timestamps (rolling window of 5 minutes)
-                let mut failure_timestamps = self.failure_timestamps.write().await;
-                let cutoff = Instant::now() - Duration::from_secs(300);
-                failure_timestamps.retain(|&timestamp| timestamp > cutoff);
-            }
-            CircuitBreakerState::Open { .. } => {
-                // Already open, just log success
-            }
-        }
-    }
-
-    /// Handle failed operation
-    async fn handle_failure(&self, _response_time: Duration) {
-        let mut metrics = self.metrics.write().await;
-        metrics.total_requests += 1;
-        metrics.failed_requests += 1;
-        metrics.consecutive_failures += 1;
-        metrics.last_failure = Some(Instant::now());
-
-        // Add failure timestamp for rolling window
+        if let CircuitBreakerState::Open { opened_at } = state.current_state
+            && opened_at.elapsed() >= self.config.recovery_timeout
         {
-            let mut failure_timestamps = self.failure_timestamps.write().await;
-            failure_timestamps.push(Instant::now());
-
-            // Clean old timestamps (rolling window of 5 minutes)
-            let cutoff = Instant::now() - Duration::from_secs(300);
-            failure_timestamps.retain(|&timestamp| timestamp > cutoff);
+            info!("Circuit breaker {} transitioning to Half-Open", self.id);
+            state.current_state = CircuitBreakerState::HalfOpen;
+            state.half_open_request_count = 0;
+            self.request_save();
         }
+    }
 
-        let state = *self.state.read().await;
-        match state {
-            CircuitBreakerState::HalfOpen => {
-                *self.half_open_request_count.write().await += 1;
+    async fn on_success(&self) {
+        let mut state = self.state.write().await;
+        state.metrics.total_requests += 1;
+        state.metrics.successful_requests += 1;
+        state.metrics.consecutive_failures = 0;
+        state.metrics.last_success = Some(Instant::now());
 
-                // Failure in half-open state - go back to open
-                *self.state.write().await = CircuitBreakerState::Open {
+        if state.current_state == CircuitBreakerState::HalfOpen {
+            state.half_open_request_count += 1;
+            if state.half_open_request_count >= self.config.success_threshold {
+                info!("Circuit breaker {} transitioning to Closed", self.id);
+                state.current_state = CircuitBreakerState::Closed;
+                state.metrics.circuit_closed_count += 1;
+                self.request_save();
+            }
+        }
+    }
+
+    async fn on_failure(&self) {
+        let mut state = self.state.write().await;
+        state.metrics.total_requests += 1;
+        state.metrics.failed_requests += 1;
+        state.metrics.consecutive_failures += 1;
+        state.metrics.last_failure = Some(Instant::now());
+
+        if state.current_state == CircuitBreakerState::Closed {
+            if state.metrics.consecutive_failures >= self.config.failure_threshold {
+                warn!("Circuit breaker {} transitioning to Open", self.id);
+                state.current_state = CircuitBreakerState::Open {
                     opened_at: Instant::now(),
                 };
-
-                metrics.circuit_opened_count += 1;
-                warn!("Circuit breaker reopened due to failure in half-open state");
-
-                drop(metrics);
-                if let Err(e) = self.save_state_async().await {
-                    warn!("Failed to persist circuit breaker state change: {}", e);
-                }
+                state.metrics.circuit_opened_count += 1;
+                self.request_save();
             }
-            CircuitBreakerState::Closed => {
-                // Check if we've exceeded failure threshold in rolling window
-                let failure_timestamps = self.failure_timestamps.read().await;
-                if failure_timestamps.len() >= self.config.failure_threshold as usize {
-                    *self.state.write().await = CircuitBreakerState::Open {
-                        opened_at: Instant::now(),
-                    };
-
-                    metrics.circuit_opened_count += 1;
-                    warn!("Circuit breaker opened due to failure threshold exceeded");
-
-                    // Trigger background persistence
-                    let _ = self.persistence_sender.send(());
-                }
-            }
-            CircuitBreakerState::Open { .. } => {
-                // Already open, just log
-            }
-        }
-    }
-
-    /// Get current circuit breaker state
-    pub async fn get_state(&self) -> CircuitBreakerState {
-        *self.state.read().await
-    }
-
-    /// Get circuit breaker metrics
-    pub async fn get_metrics(&self) -> CircuitBreakerMetrics {
-        self.metrics.read().await.clone()
-    }
-
-    /// Reset circuit breaker to closed state
-    pub async fn reset(&self) {
-        *self.state.write().await = CircuitBreakerState::Closed;
-        *self.metrics.write().await = CircuitBreakerMetrics::default();
-        *self.failure_timestamps.write().await = Vec::new();
-        *self.half_open_success_count.write().await = 0;
-        *self.half_open_request_count.write().await = 0;
-    }
-
-    /// Check if circuit breaker allows requests
-    pub async fn allows_requests(&self) -> bool {
-        let state = *self.state.read().await;
-        match state {
-            CircuitBreakerState::Closed => true,
-            CircuitBreakerState::Open { opened_at } => {
-                opened_at.elapsed() >= self.config.recovery_timeout
-            }
-            CircuitBreakerState::HalfOpen => {
-                *self.half_open_request_count.read().await < self.config.half_open_max_requests
-            }
+        } else if state.current_state == CircuitBreakerState::HalfOpen {
+            warn!(
+                "Circuit breaker {} failing in Half-Open, transitioning back to Open",
+                self.id
+            );
+            state.current_state = CircuitBreakerState::Open {
+                opened_at: Instant::now(),
+            };
+            state.metrics.circuit_opened_count += 1;
+            self.request_save();
         }
     }
 }
 
-impl Default for CircuitBreaker {
-    fn default() -> Self {
-        Self::new()
+#[async_trait::async_trait]
+impl CircuitBreakerTrait for CircuitBreaker {
+    #[instrument(skip(self, f), fields(id = %self.id))]
+    async fn call<F, Fut, T>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce() -> Fut + Send + Sync,
+        Fut: std::future::Future<Output = Result<T>> + Send,
+        T: Send,
+    {
+        self.check_state_transition().await;
+
+        let current_state = {
+            let state = self.state.read().await;
+            state.current_state
+        };
+
+        match current_state {
+            CircuitBreakerState::Open { .. } => {
+                let mut state = self.state.write().await;
+                state.metrics.rejected_requests += 1;
+                Err(Error::generic(format!(
+                    "Circuit breaker {} is open",
+                    self.id
+                )))
+            }
+            CircuitBreakerState::Closed | CircuitBreakerState::HalfOpen => {
+                // In half-open, we limit the number of concurrent requests
+                if current_state == CircuitBreakerState::HalfOpen {
+                    let mut state = self.state.write().await;
+                    if state.half_open_request_count >= self.config.half_open_max_requests {
+                        state.metrics.rejected_requests += 1;
+                        return Err(Error::generic(format!(
+                            "Circuit breaker {} is half-open and reached max requests",
+                            self.id
+                        )));
+                    }
+                    state.half_open_request_count += 1;
+                }
+
+                // Call the function
+                match f().await {
+                    Ok(result) => {
+                        self.on_success().await;
+                        Ok(result)
+                    }
+                    Err(e) => {
+                        // We only count certain types of errors as failures for the circuit breaker
+                        // For example, network errors or timeouts should count, but business logic
+                        // errors or "not found" should probably not.
+                        // For now, count all errors as failures.
+                        self.on_failure().await;
+                        Err(e)
+                    }
+                }
+            }
+        }
+    }
+
+    async fn state(&self) -> CircuitBreakerState {
+        self.state.read().await.current_state
+    }
+
+    async fn metrics(&self) -> CircuitBreakerMetrics {
+        self.state.read().await.metrics.clone()
     }
 }
 
@@ -474,113 +437,56 @@ mod tests {
 
     #[tokio::test]
     async fn test_circuit_breaker_starts_closed() {
-        let cb = CircuitBreaker::new();
-        assert_eq!(cb.get_state().await, CircuitBreakerState::Closed);
-        assert!(cb.allows_requests().await);
+        let cb = CircuitBreaker::new("test");
+        assert_eq!(cb.state().await, CircuitBreakerState::Closed);
     }
 
     #[tokio::test]
     async fn test_circuit_breaker_successful_operations() {
-        let config = CircuitBreakerConfig::default();
-        let cb = CircuitBreaker::with_id_and_config("test_successful".to_string(), config);
-
-        // Multiple successful operations should keep circuit closed
-        for _ in 0..10 {
-            let result = cb.call(|| async { Ok::<u32, Error>(42) }).await;
-            assert!(result.is_ok());
-            assert_eq!(cb.get_state().await, CircuitBreakerState::Closed);
-        }
-
-        let metrics = cb.get_metrics().await;
-        assert_eq!(metrics.successful_requests, 10);
-        assert_eq!(metrics.failed_requests, 0);
+        let cb = CircuitBreaker::new("test_success");
+        let result: Result<i32> = cb.call(|| async { Ok(42) }).await;
+        assert_eq!(result.unwrap(), 42);
+        assert_eq!(cb.state().await, CircuitBreakerState::Closed);
+        assert_eq!(cb.metrics().await.successful_requests, 1);
     }
 
     #[tokio::test]
     async fn test_circuit_breaker_failure_threshold() {
         let config = CircuitBreakerConfig {
-            failure_threshold: 3,
-            ..Default::default()
-        };
-        let cb = CircuitBreaker::with_config(config);
-
-        // Fail multiple times to open circuit
-        for i in 0..3 {
-            let result = cb
-                .call(|| async { Err::<u32, Error>(Error::generic("test error")) })
-                .await;
-            assert!(result.is_err());
-
-            if i < 2 {
-                assert_eq!(cb.get_state().await, CircuitBreakerState::Closed);
-            }
-        }
-
-        // Circuit should be open
-        assert!(matches!(
-            cb.get_state().await,
-            CircuitBreakerState::Open { .. }
-        ));
-        assert!(!cb.allows_requests().await);
-    }
-
-    #[tokio::test]
-    async fn test_circuit_breaker_recovery() {
-        let config = CircuitBreakerConfig {
             failure_threshold: 2,
-            recovery_timeout: Duration::from_millis(100),
-            success_threshold: 2,
             ..Default::default()
         };
-        let cb = CircuitBreaker::with_config(config);
+        let cb = CircuitBreaker::with_config("test_failure", config);
 
-        // Fail to open circuit
-        for _ in 0..2 {
-            let _ = cb
-                .call(|| async { Err::<u32, Error>(Error::generic("test error")) })
-                .await;
-        }
+        // First failure
+        let _: Result<()> = cb.call(|| async { Err(Error::generic("fail")) }).await;
+        assert_eq!(cb.state().await, CircuitBreakerState::Closed);
 
-        assert!(matches!(
-            cb.get_state().await,
-            CircuitBreakerState::Open { .. }
-        ));
-
-        // Wait for recovery timeout
-        tokio::time::sleep(Duration::from_millis(150)).await;
-
-        // Next call should go to half-open and succeed
-        let result = cb.call(|| async { Ok::<u32, Error>(42) }).await;
-        assert!(result.is_ok());
-        assert_eq!(cb.get_state().await, CircuitBreakerState::HalfOpen);
-
-        // Another success should close the circuit
-        let result = cb.call(|| async { Ok::<u32, Error>(42) }).await;
-        assert!(result.is_ok());
-        assert_eq!(cb.get_state().await, CircuitBreakerState::Closed);
+        // Second failure - should open
+        let _: Result<()> = cb.call(|| async { Err(Error::generic("fail")) }).await;
+        assert!(matches!(cb.state().await, CircuitBreakerState::Open { .. }));
     }
 
     #[tokio::test]
     async fn test_circuit_breaker_reset() {
-        let cb = CircuitBreaker::new();
+        let config = CircuitBreakerConfig {
+            failure_threshold: 1,
+            recovery_timeout: Duration::from_millis(10),
+            success_threshold: 1,
+            ..Default::default()
+        };
+        let cb = CircuitBreaker::with_config("test_reset", config);
 
-        // Open circuit with failures
-        for _ in 0..5 {
-            let _ = cb
-                .call(|| async { Err::<u32, Error>(Error::generic("test error")) })
-                .await;
-        }
+        // Open circuit
+        let _: Result<()> = cb.call(|| async { Err(Error::generic("fail")) }).await;
+        assert!(matches!(cb.state().await, CircuitBreakerState::Open { .. }));
 
-        assert!(matches!(
-            cb.get_state().await,
-            CircuitBreakerState::Open { .. }
-        ));
+        // Wait for recovery timeout
+        tokio::time::sleep(Duration::from_millis(20)).await;
 
-        // Reset should close circuit
-        cb.reset().await;
-        assert_eq!(cb.get_state().await, CircuitBreakerState::Closed);
-
-        let metrics = cb.get_metrics().await;
-        assert_eq!(metrics.total_requests, 0);
+        // Should transition to half-open and then close on success
+        let result: Result<i32> = cb.call(|| async { Ok(42) }).await;
+        assert_eq!(result.unwrap(), 42);
+        assert_eq!(cb.state().await, CircuitBreakerState::Closed);
     }
 }

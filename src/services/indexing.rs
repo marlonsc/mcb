@@ -55,25 +55,39 @@ impl IndexingService {
             .map_err(|e| Error::io(format!("Failed to canonicalize path: {}", e)))?;
 
         // Check if sync is needed (if sync manager is available)
-        if let Some(sync_mgr) = &self.sync_manager {
+        let batch = if let Some(sync_mgr) = &self.sync_manager {
             if sync_mgr.should_debounce(&canonical_path).await? {
-                println!("[INDEX] Skipping {} - debounced", canonical_path.display());
+                tracing::info!("[INDEX] Skipping {} - debounced", canonical_path.display());
                 return Ok(0);
             }
-        }
+
+            match sync_mgr.acquire_sync_slot(&canonical_path).await? {
+                Some(b) => Some(b),
+                None => {
+                    tracing::info!("[INDEX] Sync deferred for {}", canonical_path.display());
+                    return Ok(0);
+                }
+            }
+        } else {
+            None
+        };
 
         // Get changed files using snapshots
         let changed_files = self
             .snapshot_manager
             .get_changed_files(&canonical_path)
             .await?;
-        println!(
+        tracing::info!(
             "[INDEX] Found {} changed files in {}",
             changed_files.len(),
             canonical_path.display()
         );
 
         if changed_files.is_empty() {
+            // Release slot if we acquired one but have no work
+            if let (Some(sync_mgr), Some(b)) = (&self.sync_manager, batch) {
+                sync_mgr.release_sync_slot(&canonical_path, b).await?;
+            }
             return Ok(0);
         }
 
@@ -82,13 +96,14 @@ impl IndexingService {
             .process_files_parallel(&canonical_path, &changed_files, collection)
             .await;
 
-        // Update sync timestamp if sync manager is available
-        // TODO: Add public method to update sync timestamp when available
-        // if let Some(sync_mgr) = &self.sync_manager {
-        //     sync_mgr.update_last_sync(&canonical_path).await;
-        // }
+        // Release slot and update timestamp
+        if let (Some(sync_mgr), Some(b)) = (&self.sync_manager, batch) {
+            sync_mgr.release_sync_slot(&canonical_path, b).await?;
+            // Update last sync time
+            sync_mgr.update_last_sync(&canonical_path).await;
+        }
 
-        println!(
+        tracing::info!(
             "[INDEX] Completed indexing {} files with {} total chunks",
             changed_files.len(),
             total_chunks
@@ -109,8 +124,11 @@ impl IndexingService {
         let file_name = path.display().to_string();
         let language = self.detect_language(path)?;
 
-        // Use intelligent tree-sitter based chunking
-        let mut chunks = self.chunker.chunk_code(&content, &file_name, language);
+        // Use intelligent tree-sitter based chunking (offloaded to blocking thread)
+        let mut chunks = self
+            .chunker
+            .chunk_code_async(content, file_name, language)
+            .await;
 
         // Filter out chunks that are too small
         chunks.retain(|chunk| chunk.content.len() >= 25 && chunk.content.lines().count() >= 2);
@@ -172,7 +190,7 @@ impl IndexingService {
                                 match self.process_file(&full_path_clone).await {
                                     Ok(file_chunks) => {
                                         if !file_chunks.is_empty() {
-                                            println!(
+                                            tracing::debug!(
                                                 "[INDEX] Processed {} chunks from {}",
                                                 file_chunks.len(),
                                                 file_path_clone
@@ -183,9 +201,10 @@ impl IndexingService {
                                         }
                                     }
                                     Err(e) => {
-                                        eprintln!(
+                                        tracing::warn!(
                                             "[INDEX] Failed to process {}: {}",
-                                            file_path_clone, e
+                                            file_path_clone,
+                                            e
                                         );
                                         None
                                     }
@@ -210,7 +229,7 @@ impl IndexingService {
                         total_chunks += chunks.len();
                     }
                     Err(e) => {
-                        eprintln!("[INDEX] Failed to store batch of chunks: {}", e);
+                        tracing::error!("[INDEX] Failed to store batch of chunks: {}", e);
                         // Continue with other batches
                     }
                 }

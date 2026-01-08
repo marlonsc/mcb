@@ -1,248 +1,9 @@
-//! Configuration Management System
-//!
-//! Enterprise-grade configuration system with validation and environment support.
-//! Provides type-safe configuration management similar to convict.js.
-//!
-//! ## Features
-//!
-//! - **Schema Validation**: Type-safe configuration with validation
-//! - **Environment Variables**: Support for .env files and environment variables
-//! - **Provider Configuration**: AI and vector store provider settings
-//! - **Runtime Validation**: Configuration validation at startup
-//! - **Documentation**: Comprehensive configuration documentation
-//!
-//! ## Configuration Sources (in priority order)
-//!
-//! 1. Environment variables (highest priority)
-//! 2. Configuration files (~/.mcp-context-browser/config.toml)
-//! 3. Default values (lowest priority)
-
-use crate::core::auth::AuthConfig;
-use crate::core::cache::CacheConfig;
-use crate::core::database::DatabaseConfig;
 use crate::core::error::{Error, Result};
-use crate::core::hybrid_search::HybridSearchConfig;
-use crate::core::limits::ResourceLimitsConfig;
-use crate::core::rate_limit::RateLimitConfig;
-use crate::daemon::DaemonConfig;
-use crate::sync::SyncConfig;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
 use std::path::PathBuf;
 
-// Module declarations
-pub mod environment;
-pub mod providers;
-pub mod validation;
-
-/// Embedding provider configuration types (similar to Claude Context)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "provider")]
-pub enum EmbeddingProviderConfig {
-    #[serde(rename = "openai")]
-    OpenAI {
-        model: String,
-        api_key: String,
-        #[serde(default)]
-        base_url: Option<String>,
-        #[serde(default)]
-        dimensions: Option<usize>,
-        #[serde(default)]
-        max_tokens: Option<usize>,
-    },
-    #[serde(rename = "ollama")]
-    Ollama {
-        model: String,
-        #[serde(default)]
-        host: Option<String>,
-        #[serde(default)]
-        dimensions: Option<usize>,
-        #[serde(default)]
-        max_tokens: Option<usize>,
-    },
-    #[serde(rename = "voyageai")]
-    VoyageAI {
-        model: String,
-        api_key: String,
-        #[serde(default)]
-        dimensions: Option<usize>,
-        #[serde(default)]
-        max_tokens: Option<usize>,
-    },
-    #[serde(rename = "gemini")]
-    Gemini {
-        model: String,
-        api_key: String,
-        #[serde(default)]
-        base_url: Option<String>,
-        #[serde(default)]
-        dimensions: Option<usize>,
-        #[serde(default)]
-        max_tokens: Option<usize>,
-    },
-    #[serde(rename = "mock")]
-    Mock {
-        #[serde(default)]
-        dimensions: Option<usize>,
-        #[serde(default)]
-        max_tokens: Option<usize>,
-    },
-    #[serde(rename = "fastembed")]
-    FastEmbed {
-        #[serde(default)]
-        model: Option<String>,
-        #[serde(default)]
-        dimensions: Option<usize>,
-        #[serde(default)]
-        max_tokens: Option<usize>,
-    },
-}
-
-/// Vector store provider configuration types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "provider")]
-pub enum VectorStoreProviderConfig {
-    #[serde(rename = "edgevec")]
-    EdgeVec {
-        #[serde(default)]
-        max_vectors: Option<usize>,
-        #[serde(default)]
-        collection: Option<String>,
-        #[serde(default)]
-        hnsw_m: Option<usize>,
-        #[serde(default)]
-        hnsw_ef_construction: Option<usize>,
-        #[serde(default)]
-        distance_metric: Option<String>,
-        #[serde(default)]
-        use_quantization: Option<bool>,
-    },
-    #[serde(rename = "milvus")]
-    Milvus {
-        address: String,
-        #[serde(default)]
-        token: Option<String>,
-        #[serde(default)]
-        collection: Option<String>,
-        #[serde(default)]
-        dimensions: Option<usize>,
-    },
-    #[serde(rename = "pinecone")]
-    Pinecone {
-        api_key: String,
-        environment: String,
-        index_name: String,
-        #[serde(default)]
-        dimensions: Option<usize>,
-    },
-    #[serde(rename = "qdrant")]
-    Qdrant {
-        url: String,
-        #[serde(default)]
-        api_key: Option<String>,
-        #[serde(default)]
-        collection: Option<String>,
-        #[serde(default)]
-        dimensions: Option<usize>,
-    },
-    #[serde(rename = "in-memory")]
-    InMemory {
-        #[serde(default)]
-        dimensions: Option<usize>,
-    },
-    #[serde(rename = "filesystem")]
-    Filesystem {
-        #[serde(default)]
-        base_path: Option<String>,
-        #[serde(default)]
-        max_vectors_per_shard: Option<usize>,
-        #[serde(default)]
-        dimensions: Option<usize>,
-        #[serde(default)]
-        compression_enabled: Option<bool>,
-        #[serde(default)]
-        index_cache_size: Option<usize>,
-        #[serde(default)]
-        memory_mapping_enabled: Option<bool>,
-    },
-}
-
-/// Global configuration file structure (similar to ~/.context/.env in Claude Context)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GlobalConfig {
-    /// Server configuration
-    #[serde(default)]
-    pub server: ServerConfig,
-    /// Provider configurations
-    pub providers: GlobalProviderConfig,
-    /// Metrics configuration
-    #[serde(default)]
-    pub metrics: MetricsConfig,
-    /// Sync configuration
-    #[serde(default)]
-    pub sync: SyncConfig,
-    /// Daemon configuration
-    #[serde(default)]
-    pub daemon: DaemonConfig,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GlobalProviderConfig {
-    pub embedding: EmbeddingProviderConfig,
-    pub vector_store: VectorStoreProviderConfig,
-}
-
-/// Main application configuration
-///
-/// Central configuration structure containing all settings for the MCP Context Browser.
-/// Supports hierarchical configuration with validation and environment variable overrides.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Config {
-    /// Application name
-    pub name: String,
-    /// Application version
-    pub version: String,
-    /// Server configuration (host, port, etc.)
-    pub server: ServerConfig,
-    /// AI and vector store provider configurations
-    pub providers: ProviderConfig,
-    /// Metrics and monitoring configuration
-    pub metrics: MetricsConfig,
-    /// Authentication and authorization settings
-    #[serde(default)]
-    pub auth: AuthConfig,
-
-    /// Database configuration
-    #[serde(default)]
-    pub database: DatabaseConfig,
-    /// Sync coordination configuration
-    pub sync: SyncConfig,
-    /// Background daemon configuration
-    pub daemon: DaemonConfig,
-
-    /// Resource limits configuration
-    #[serde(default)]
-    pub resource_limits: ResourceLimitsConfig,
-
-    /// Advanced caching configuration
-    #[serde(default)]
-    pub cache: CacheConfig,
-    pub hybrid_search: HybridSearchConfig,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServerConfig {
-    pub host: String,
-    pub port: u16,
-}
-
-/// Legacy provider config (maintained for backward compatibility)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProviderConfig {
-    pub embedding: crate::core::types::EmbeddingConfig,
-    pub vector_store: crate::core::types::VectorStoreConfig,
-}
+use super::providers::{EmbeddingProviderConfig, VectorStoreProviderConfig};
+use super::types::{Config, GlobalConfig, ProviderConfig};
 
 /// Configuration manager with schema validation (equivalent to Claude Context's convict.js)
 pub struct ConfigManager {
@@ -263,12 +24,12 @@ impl ConfigManager {
     }
 
     /// Load configuration with priority: Global file -> Environment -> Defaults
-    pub fn load_config(&self) -> Result<Config> {
+    pub async fn load_config(&self) -> Result<Config> {
         // Start with defaults
         let mut config = Config::default();
 
         // Override with global config file if exists
-        if let Ok(global_config) = self.load_global_config() {
+        if let Ok(global_config) = self.load_global_config().await {
             self.merge_global_config(&mut config, global_config);
         }
 
@@ -282,12 +43,13 @@ impl ConfigManager {
     }
 
     /// Load global configuration file (~/.context/config.toml)
-    fn load_global_config(&self) -> Result<GlobalConfig> {
+    async fn load_global_config(&self) -> Result<GlobalConfig> {
         if !self.global_config_path.exists() {
             return Err(Error::config("Global config file not found"));
         }
 
-        let content = fs::read_to_string(&self.global_config_path)
+        let content = tokio::fs::read_to_string(&self.global_config_path)
+            .await
             .map_err(|e| Error::config(format!("Failed to read global config: {}", e)))?;
 
         toml::from_str(&content)
@@ -616,7 +378,9 @@ impl ConfigManager {
         // Check required fields based on provider
         match config.provider.to_lowercase().as_str() {
             "openai" => {
-                let api_key = config.api_key.as_ref()
+                let api_key = config
+                    .api_key
+                    .as_ref()
                     .ok_or_else(|| Error::config("OpenAI API key is required"))?;
                 if api_key.is_empty() {
                     return Err(Error::config("OpenAI API key cannot be empty"));
@@ -631,7 +395,9 @@ impl ConfigManager {
                 }
             }
             "voyageai" => {
-                let api_key = config.api_key.as_ref()
+                let api_key = config
+                    .api_key
+                    .as_ref()
                     .ok_or_else(|| Error::config("VoyageAI API key is required"))?;
                 if api_key.is_empty() {
                     return Err(Error::config("VoyageAI API key cannot be empty"));
@@ -641,7 +407,9 @@ impl ConfigManager {
                 }
             }
             "gemini" => {
-                let api_key = config.api_key.as_ref()
+                let api_key = config
+                    .api_key
+                    .as_ref()
                     .ok_or_else(|| Error::config("Gemini API key is required"))?;
                 if api_key.is_empty() {
                     return Err(Error::config("Gemini API key cannot be empty"));
@@ -683,26 +451,34 @@ impl ConfigManager {
     ) -> Result<()> {
         match config.provider.to_lowercase().as_str() {
             "milvus" => {
-                let address = config.address.as_ref()
+                let address = config
+                    .address
+                    .as_ref()
                     .ok_or_else(|| Error::config("Milvus address is required"))?;
                 if address.is_empty() {
                     return Err(Error::config("Milvus address cannot be empty"));
                 }
             }
             "pinecone" => {
-                let token = config.token.as_ref()
+                let token = config
+                    .token
+                    .as_ref()
                     .ok_or_else(|| Error::config("Pinecone API key is required"))?;
                 if token.is_empty() {
                     return Err(Error::config("Pinecone API key cannot be empty"));
                 }
-                let collection = config.collection.as_ref()
+                let collection = config
+                    .collection
+                    .as_ref()
                     .ok_or_else(|| Error::config("Pinecone index name is required"))?;
                 if collection.is_empty() {
                     return Err(Error::config("Pinecone index name cannot be empty"));
                 }
             }
             "qdrant" => {
-                let address = config.address.as_ref()
+                let address = config
+                    .address
+                    .as_ref()
                     .ok_or_else(|| Error::config("Qdrant URL is required"))?;
                 if address.is_empty() {
                     return Err(Error::config("Qdrant URL cannot be empty"));
@@ -728,14 +504,15 @@ impl ConfigManager {
     }
 
     /// Create example configuration file at ~/.context/config.toml
-    pub fn create_example_config(&self) -> Result<()> {
+    pub async fn create_example_config(&self) -> Result<()> {
         let config_dir = self
             .global_config_path
             .parent()
             .ok_or_else(|| Error::config("Cannot determine config directory"))?;
 
         // Create ~/.context directory if it doesn't exist
-        fs::create_dir_all(config_dir)
+        tokio::fs::create_dir_all(config_dir)
+            .await
             .map_err(|e| Error::config(format!("Failed to create config directory: {}", e)))?;
 
         // Create example configuration
@@ -853,7 +630,8 @@ cleanup_interval_secs = 300    # 5 minutes
 monitoring_interval_secs = 60  # 1 minute
 "#;
 
-        fs::write(&self.global_config_path, example_config)
+        tokio::fs::write(&self.global_config_path, example_config)
+            .await
             .map_err(|e| Error::config(format!("Failed to write example config: {}", e)))?;
 
         println!(
@@ -943,337 +721,6 @@ monitoring_interval_secs = 60  # 1 minute
         println!("  📚 Documentation: https://github.com/marlonsc/mcp-context-browser");
         println!("  🐙 GitHub: https://github.com/marlonsc/mcp-context-browser");
         println!("  🎯 Claude Context Reference: https://github.com/zilliztech/claude-context");
-    }
-}
-
-/// Metrics API configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MetricsConfig {
-    /// Port for metrics HTTP API
-    pub port: u16,
-    /// Enable metrics collection
-    pub enabled: bool,
-    /// Rate limiting configuration
-    #[serde(default)]
-    pub rate_limiting: RateLimitConfig,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            name: "MCP Context Browser".to_string(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
-            server: ServerConfig::default(),
-            providers: ProviderConfig::default(),
-            metrics: MetricsConfig::default(),
-            auth: AuthConfig::default(),
-            database: DatabaseConfig::default(),
-            sync: SyncConfig::default(),
-            daemon: DaemonConfig::default(),
-            resource_limits: ResourceLimitsConfig::default(),
-            cache: CacheConfig::default(),
-            hybrid_search: HybridSearchConfig::default(),
-        }
-    }
-}
-
-impl Default for ServerConfig {
-    fn default() -> Self {
-        Self {
-            host: "127.0.0.1".to_string(),
-            port: 3000,
-        }
-    }
-}
-
-impl Default for ProviderConfig {
-    fn default() -> Self {
-        Self {
-            embedding: crate::core::types::EmbeddingConfig {
-                provider: "ollama".to_string(),
-                model: "nomic-embed-text".to_string(),
-                api_key: None,
-                base_url: Some("http://localhost:11434".to_string()),
-                dimensions: Some(768),
-                max_tokens: Some(8192),
-            },
-            vector_store: crate::core::types::VectorStoreConfig {
-                provider: "in-memory".to_string(),
-                address: None,
-                token: None,
-                collection: None,
-                dimensions: Some(768),
-            },
-        }
-    }
-}
-
-impl Default for MetricsConfig {
-    fn default() -> Self {
-        Self {
-            port: 3001,
-            enabled: true,
-            rate_limiting: RateLimitConfig::default(),
-        }
-    }
-}
-
-impl Config {
-    /// Load configuration using ConfigManager (professional approach like Claude Context)
-    pub fn from_env() -> Result<Self> {
-        let manager = ConfigManager::new()?;
-        manager.load_config()
-    }
-
-    /// Legacy method for backward compatibility - DEPRECATED
-    /// Use ConfigManager::new()?.load_config() instead
-    #[deprecated(
-        note = "Use ConfigManager::new()?.load_config() for professional configuration management"
-    )]
-    pub fn from_env_legacy() -> Result<Self> {
-        Ok(Self {
-            name: std::env::var("MCP_NAME").unwrap_or_else(|_| "MCP Context Browser".to_string()),
-            version: env!("CARGO_PKG_VERSION").to_string(),
-            server: ServerConfig {
-                host: std::env::var("MCP_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
-                port: std::env::var("MCP_PORT")
-                    .unwrap_or_else(|_| "3000".to_string())
-                    .parse()
-                    .unwrap_or(3000),
-            },
-            providers: ProviderConfig::default(),
-            metrics: MetricsConfig {
-                port: std::env::var("CONTEXT_METRICS_PORT")
-                    .unwrap_or_else(|_| "3001".to_string())
-                    .parse()
-                    .unwrap_or(3001),
-                enabled: std::env::var("CONTEXT_METRICS_ENABLED")
-                    .unwrap_or_else(|_| "true".to_string())
-                    .parse()
-                    .unwrap_or(true),
-                rate_limiting: RateLimitConfig::default(),
-            },
-            auth: AuthConfig::default(),
-            database: DatabaseConfig::default(),
-            sync: SyncConfig::from_env(),
-            daemon: DaemonConfig::from_env(),
-            resource_limits: ResourceLimitsConfig::default(),
-            cache: CacheConfig::default(),
-            hybrid_search: HybridSearchConfig::default(),
-        })
-    }
-
-    /// Validate configuration
-    pub fn validate(&self) -> Result<()> {
-        // Basic validation
-        if self.name.is_empty() {
-            return Err(Error::invalid_argument("Name cannot be empty"));
-        }
-
-        if self.version.is_empty() {
-            return Err(Error::invalid_argument("Version cannot be empty"));
-        }
-
-        // Validate metrics port
-        if self.metrics.port == 0 {
-            return Err(Error::invalid_argument("Metrics port cannot be zero"));
-        }
-
-        // Validate sync configuration
-        if self.sync.interval_ms == 0 {
-            return Err(Error::invalid_argument("Sync interval cannot be zero"));
-        }
-
-        // Validate daemon configuration
-        if self.daemon.cleanup_interval_secs == 0 || self.daemon.monitoring_interval_secs == 0 {
-            return Err(Error::invalid_argument("Daemon intervals cannot be zero"));
-        }
-
-        Ok(())
-    }
-
-    /// Get metrics port
-    pub fn metrics_port(&self) -> u16 {
-        self.metrics.port
-    }
-
-    /// Check if metrics are enabled
-    pub fn metrics_enabled(&self) -> bool {
-        self.metrics.enabled
-    }
-
-    /// Get server address string
-    pub fn server_addr(&self) -> String {
-        format!("{}:{}", self.server.host, self.server.port)
-    }
-
-    /// Get metrics server address string
-    pub fn metrics_addr(&self) -> String {
-        format!("0.0.0.0:{}", self.metrics.port)
-    }
-
-    /// Print detailed configuration summary (like Claude Context)
-    pub fn print_summary(&self) {
-        println!("🔧 MCP Context Browser - Configuration Summary");
-        println!("=============================================");
-        println!("📡 Server: {}:{}", self.server.host, self.server.port);
-        println!(
-            "📊 Metrics: {} (enabled: {})",
-            self.metrics_addr(),
-            self.metrics.enabled
-        );
-        println!(
-            "🔄 Sync: {}ms (lockfile: {})",
-            self.sync.interval_ms, self.sync.enable_lockfile
-        );
-        println!(
-            "🤖 Daemon: cleanup={}s, monitoring={}s",
-            self.daemon.cleanup_interval_secs, self.daemon.monitoring_interval_secs
-        );
-
-        // Provider information (similar to Claude Context logging)
-        println!();
-        println!(
-            "🧠 Embedding Provider: {}",
-            self.providers.embedding.provider
-        );
-        println!("   Model: {}", self.providers.embedding.model);
-
-        match self.providers.embedding.provider.as_str() {
-            "openai" => {
-                println!(
-                    "   API Key: {}",
-                    self.providers
-                        .embedding
-                        .api_key
-                        .as_ref()
-                        .map(|_| "✅ Configured")
-                        .unwrap_or("❌ Missing")
-                );
-                if let Some(base_url) = &self.providers.embedding.base_url {
-                    println!("   Base URL: {}", base_url);
-                }
-            }
-            "ollama" => {
-                println!(
-                    "   Host: {}",
-                    self.providers
-                        .embedding
-                        .base_url
-                        .as_ref()
-                        .unwrap_or(&"http://127.0.0.1:11434".to_string())
-                );
-            }
-            "voyageai" => {
-                println!(
-                    "   API Key: {}",
-                    self.providers
-                        .embedding
-                        .api_key
-                        .as_ref()
-                        .map(|_| "✅ Configured")
-                        .unwrap_or("❌ Missing")
-                );
-            }
-            "gemini" => {
-                println!(
-                    "   API Key: {}",
-                    self.providers
-                        .embedding
-                        .api_key
-                        .as_ref()
-                        .map(|_| "✅ Configured")
-                        .unwrap_or("❌ Missing")
-                );
-                if let Some(base_url) = &self.providers.embedding.base_url {
-                    println!("   Base URL: {}", base_url);
-                }
-            }
-            "mock" => println!("   Status: Development mode"),
-            _ => println!("   Status: Unknown provider"),
-        }
-
-        if let Some(dim) = self.providers.embedding.dimensions {
-            println!("   Dimensions: {}", dim);
-        }
-        if let Some(tokens) = self.providers.embedding.max_tokens {
-            println!("   Max Tokens: {}", tokens);
-        }
-
-        println!();
-        println!("🗄️  Vector Store: {}", self.providers.vector_store.provider);
-
-        match self.providers.vector_store.provider.as_str() {
-            "milvus" => {
-                println!(
-                    "   Address: {}",
-                    self.providers
-                        .vector_store
-                        .address
-                        .as_ref()
-                        .unwrap_or(&"Not configured".to_string())
-                );
-                println!(
-                    "   Token: {}",
-                    self.providers
-                        .vector_store
-                        .token
-                        .as_ref()
-                        .map(|_| "✅ Configured")
-                        .unwrap_or("❌ Missing")
-                );
-            }
-            "pinecone" => {
-                println!(
-                    "   API Key: {}",
-                    self.providers
-                        .vector_store
-                        .token
-                        .as_ref()
-                        .map(|_| "✅ Configured")
-                        .unwrap_or("❌ Missing")
-                );
-            }
-            "qdrant" => {
-                println!(
-                    "   URL: {}",
-                    self.providers
-                        .vector_store
-                        .address
-                        .as_ref()
-                        .unwrap_or(&"Not configured".to_string())
-                );
-                println!(
-                    "   API Key: {}",
-                    self.providers
-                        .vector_store
-                        .token
-                        .as_ref()
-                        .map(|_| "✅ Configured")
-                        .unwrap_or("Optional")
-                );
-            }
-            "in-memory" => println!("   Status: Development mode"),
-            _ => println!("   Status: Unknown provider"),
-        }
-
-        if let Some(collection) = &self.providers.vector_store.collection {
-            println!("   Collection: {}", collection);
-        }
-        if let Some(dim) = self.providers.vector_store.dimensions {
-            println!("   Dimensions: {}", dim);
-        }
-
-        println!();
-        println!("✅ Configuration validated successfully");
-    }
-}
-
-/// Builder pattern implementation for Config
-impl Config {
-    /// Create a new configuration builder
-    pub fn builder() -> ConfigBuilder {
-        ConfigBuilder::new()
     }
 }
 

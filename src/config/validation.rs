@@ -6,6 +6,8 @@
 use crate::config::{Config, EmbeddingProviderConfig};
 use crate::core::error::{Error, Result};
 use crate::core::types::{EmbeddingConfig, VectorStoreConfig};
+use crate::daemon::DaemonConfig;
+use crate::sync::SyncConfig;
 
 /// Configuration validator with comprehensive validation rules
 pub struct ConfigValidator {
@@ -224,7 +226,7 @@ impl ConfigValidator {
     }
 
     /// Validate sync configuration
-    pub fn validate_sync_config(&self, sync: &crate::config::SyncConfig) -> Result<()> {
+    pub fn validate_sync_config(&self, sync: &SyncConfig) -> Result<()> {
         if sync.interval_ms == 0 {
             return Err(Error::config("Sync interval cannot be zero"));
         }
@@ -239,7 +241,7 @@ impl ConfigValidator {
     }
 
     /// Validate daemon configuration
-    pub fn validate_daemon_config(&self, daemon: &crate::config::DaemonConfig) -> Result<()> {
+    pub fn validate_daemon_config(&self, daemon: &DaemonConfig) -> Result<()> {
         if daemon.cleanup_interval_secs == 0 {
             return Err(Error::config("Daemon cleanup interval cannot be zero"));
         }
