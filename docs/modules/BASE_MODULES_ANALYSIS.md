@@ -305,18 +305,20 @@ Gerenciamento de configuração com suporte a TOML/YAML, variáveis de ambiente 
 
 **Severidade**: Alta (para feature FastEmbed)
 
-**Descrição**: A dependência `ort-sys` (ONNX Runtime) falha ao compilar devido a requisitos de rede para download de binários.
+**Descrição**: A dependência transitiva `ort-sys` (ONNX Runtime), usada pelo FastEmbed, falha ao compilar devido a requisitos de rede para download de binários pré-compilados.
+
+**Cadeia de dependências**: `fastembed` → `ort` → `ort-sys`
 
 ```
 Failed to GET `https://parcel.pyke.io/...`: Dns Failed
 ```
 
-**Impacto**: Feature FastEmbed não pode ser compilada em ambientes restritos.
+**Impacto**: Feature FastEmbed não pode ser compilada em ambientes restritos de rede.
 
 **Recomendação**: 
 - Tornar feature opcional com feature flag
 - Documentar requisitos de build
-- Considerar pre-download de binários
+- Considerar pre-download de binários ou uso de ORT_LIB_LOCATION
 
 ---
 
@@ -324,7 +326,7 @@ Failed to GET `https://parcel.pyke.io/...`: Dns Failed
 
 | Métrica | Valor | Status |
 |---------|-------|--------|
-| Total de `unwrap()`/`expect()` em src/ | ~157 | ⚠️ Alto |
+| Total de `unwrap()`/`expect()` em módulos principais | 156 | ⚠️ Alto |
 | Arquivos >500 linhas | 12 | ⚠️ Violação de convenção |
 | Maior arquivo | 1311 linhas (admin/service.rs) | ⚠️ |
 | Cobertura de testes | ~214 testes | ✅ |
@@ -355,5 +357,8 @@ Failed to GET `https://parcel.pyke.io/...`: Dns Failed
 
 - [ADR-001: Strategy Pattern Implementation](/docs/architecture/adr/001-strategy-pattern-implementation.md)
 - [ADR-002: Comprehensive Validation System](/docs/architecture/adr/002-comprehensive-validation-system.md)
+- [ADR-003: Comprehensive Testing Strategy](/docs/architecture/adr/003-comprehensive-testing-strategy.md)
+- [ADR-004: Repository Pattern Implementation](/docs/architecture/adr/004-repository-pattern-implementation.md)
+- [ADR-005: Automated Documentation System](/docs/architecture/adr/005-automated-documentation-system.md)
 - [Architecture Documentation](/docs/architecture/ARCHITECTURE.md)
 - [CLAUDE.md](/CLAUDE.md) - Guia do projeto
