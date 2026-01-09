@@ -1,11 +1,13 @@
 //! Unit tests for embedding providers
 
 use mcp_context_browser::core::error::Error;
+use mcp_context_browser::core::http_client::HttpClientPool;
 use mcp_context_browser::providers::EmbeddingProvider;
 use mcp_context_browser::providers::embedding::{
     GeminiEmbeddingProvider, OllamaEmbeddingProvider, OpenAIEmbeddingProvider,
     VoyageAIEmbeddingProvider,
 };
+use std::sync::Arc;
 
 // Note: MockHttpServer removed as it was unused and causing warnings
 
@@ -195,7 +197,7 @@ mod voyageai_tests {
             "test-key".to_string(),
             Some("https://api.voyageai.com/v1".to_string()),
             "voyage-code-3".to_string(),
-        );
+        ).expect("Failed to create VoyageAI provider");
 
         assert_eq!(provider.provider_name(), "voyageai");
         assert_eq!(provider.model(), "voyage-code-3");
@@ -213,7 +215,8 @@ mod voyageai_tests {
 
         for (model, expected_dims) in models_and_dims {
             let provider =
-                VoyageAIEmbeddingProvider::new("test-key".to_string(), None, model.to_string());
+                VoyageAIEmbeddingProvider::new("test-key".to_string(), None, model.to_string())
+                    .expect("Failed to create VoyageAI provider");
             assert_eq!(
                 provider.dimensions(),
                 expected_dims,
@@ -230,14 +233,14 @@ mod voyageai_tests {
             "test-key".to_string(),
             None,
             "voyage-code-3".to_string(),
-        );
+        ).expect("Failed to create VoyageAI provider");
         assert_eq!(provider_no_url.base_url(), "https://api.voyageai.com/v1");
 
         let provider_with_url = VoyageAIEmbeddingProvider::new(
             "test-key".to_string(),
             Some("https://custom.voyageai.com/v1".to_string()),
             "voyage-code-3".to_string(),
-        );
+        ).expect("Failed to create VoyageAI provider");
         assert_eq!(
             provider_with_url.base_url(),
             "https://custom.voyageai.com/v1"
@@ -386,7 +389,7 @@ mod provider_trait_tests {
             "test-key".to_string(),
             None,
             "voyage-code-3".to_string(),
-        );
+        ).unwrap();
         let ollama_provider = OllamaEmbeddingProvider::new(
             "http://localhost:11434".to_string(),
             "nomic-embed-text".to_string(),
@@ -476,14 +479,14 @@ mod provider_trait_tests {
             "test-key".to_string(),
             None,
             "voyage-code-3".to_string(),
-        );
+        ).unwrap();
         assert_eq!(voyageai_default.base_url(), "https://api.voyageai.com/v1");
 
         let voyageai_custom = VoyageAIEmbeddingProvider::new(
             "test-key".to_string(),
             Some("https://custom.voyageai.com".to_string()),
             "voyage-code-3".to_string(),
-        );
+        ).unwrap();
         assert_eq!(voyageai_custom.base_url(), "https://custom.voyageai.com");
     }
 
@@ -594,7 +597,7 @@ mod provider_trait_tests {
             "test-key".to_string(),
             None,
             "voyage-code-3".to_string(),
-        );
+        ).unwrap();
         assert_eq!(voyageai_provider.max_tokens(), 16000);
 
         // Ollama
@@ -701,7 +704,7 @@ mod provider_trait_tests {
             "test-key".to_string(),
             None,
             "voyage-code-3".to_string(),
-        );
+        ).unwrap();
         let _ollama_provider = OllamaEmbeddingProvider::new(
             "http://localhost:11434".to_string(),
             "nomic-embed-text".to_string(),
@@ -861,7 +864,7 @@ mod provider_trait_tests {
                 println!("Running VoyageAI integration test with real API...");
 
                 let provider =
-                    VoyageAIEmbeddingProvider::new(api_key, None, "voyage-code-3".to_string());
+                    VoyageAIEmbeddingProvider::new(api_key, None, "voyage-code-3".to_string()).unwrap();
 
                 let runtime = tokio::runtime::Runtime::new().unwrap();
 
@@ -1025,6 +1028,10 @@ mod factory_tests {
     use mcp_context_browser::core::types::EmbeddingConfig;
     use mcp_context_browser::di::factory::{DefaultProviderFactory, ProviderFactory};
 
+    fn get_test_http_client() -> Arc<dyn mcp_context_browser::core::http_client::HttpClientProvider> {
+        Arc::new(HttpClientPool::new().unwrap())
+    }
+
     #[test]
     fn test_supported_providers() {
         let factory = DefaultProviderFactory::new();
@@ -1051,7 +1058,7 @@ mod factory_tests {
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(factory.create_embedding_provider(&config));
+            .block_on(factory.create_embedding_provider(&config, get_test_http_client()));
 
         assert!(result.is_ok());
         let provider = result.unwrap();
@@ -1072,7 +1079,7 @@ mod factory_tests {
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(factory.create_embedding_provider(&config));
+            .block_on(factory.create_embedding_provider(&config, get_test_http_client()));
 
         assert!(result.is_ok());
         let provider = result.unwrap();
@@ -1093,7 +1100,7 @@ mod factory_tests {
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(factory.create_embedding_provider(&config));
+            .block_on(factory.create_embedding_provider(&config, get_test_http_client()));
 
         assert!(result.is_ok());
         let provider = result.unwrap();
@@ -1114,7 +1121,7 @@ mod factory_tests {
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(factory.create_embedding_provider(&config));
+            .block_on(factory.create_embedding_provider(&config, get_test_http_client()));
 
         assert!(result.is_ok());
         let provider = result.unwrap();
@@ -1135,7 +1142,7 @@ mod factory_tests {
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(factory.create_embedding_provider(&config));
+            .block_on(factory.create_embedding_provider(&config, get_test_http_client()));
 
         assert!(result.is_err());
         match result {
@@ -1160,7 +1167,7 @@ mod factory_tests {
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(factory.create_embedding_provider(&config));
+            .block_on(factory.create_embedding_provider(&config, get_test_http_client()));
 
         assert!(result.is_err());
         match result {

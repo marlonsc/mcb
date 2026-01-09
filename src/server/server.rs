@@ -223,6 +223,8 @@ pub struct McpServer {
     clear_index_handler: Arc<ClearIndexHandler>,
     /// Service provider for dependency injection
     service_provider: Arc<dyn ServiceProviderInterface>,
+    /// HTTP client pool for providers
+    http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     /// Real-time performance metrics
     pub performance_metrics: Arc<dyn PerformanceMetricsInterface>,
     /// Ongoing indexing operations tracking
@@ -256,6 +258,7 @@ pub struct ServerComponents {
     pub admin_service: Arc<dyn crate::admin::service::AdminService>,
     pub service_provider: Arc<dyn ServiceProviderInterface>,
     pub resource_limits: Arc<ResourceLimits>,
+    pub http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     pub event_bus: SharedEventBus,
     pub log_buffer: crate::core::logging::SharedLogBuffer,
     pub system_collector: Arc<dyn crate::metrics::system::SystemMetricsCollectorInterface>,
@@ -266,11 +269,12 @@ impl McpServer {
     async fn create_providers(
         service_provider: &Arc<dyn ServiceProviderInterface>,
         config: &crate::config::Config,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     ) -> Result<ProviderTuple, Box<dyn std::error::Error>> {
         // ... (rest of the code)
         // Use service provider to create configured providers
         let embedding_provider = service_provider
-            .get_embedding_provider(&config.providers.embedding)
+            .get_embedding_provider(&config.providers.embedding, http_client)
             .await?;
         let vector_store_provider = service_provider
             .get_vector_store_provider(&config.providers.vector_store)
@@ -283,6 +287,7 @@ impl McpServer {
     async fn initialize_services(
         service_provider: Arc<dyn ServiceProviderInterface>,
         config: &crate::config::Config,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     ) -> Result<
         (Arc<AuthHandler>, Arc<IndexingService>, Arc<SearchService>),
         Box<dyn std::error::Error>,
@@ -293,7 +298,7 @@ impl McpServer {
 
         // Create context service with configured providers
         let (embedding_provider, vector_store_provider) =
-            Self::create_providers(&service_provider, config).await?;
+            Self::create_providers(&service_provider, config, http_client).await?;
         let context_service = Arc::new(crate::services::ContextService::new(
             embedding_provider,
             vector_store_provider,
@@ -340,9 +345,12 @@ impl McpServer {
         let current_config = components.config.load();
 
         // Initialize core services
-        let (auth_handler, indexing_service, search_service) =
-            Self::initialize_services(Arc::clone(&components.service_provider), &current_config)
-                .await?;
+        let (auth_handler, indexing_service, search_service) = Self::initialize_services(
+            Arc::clone(&components.service_provider),
+            &current_config,
+            Arc::clone(&components.http_client),
+        )
+        .await?;
 
         // Create handlers
         let (
@@ -372,6 +380,7 @@ impl McpServer {
             get_indexing_status_handler,
             clear_index_handler,
             service_provider: components.service_provider,
+            http_client: components.http_client,
             performance_metrics: components.performance_metrics,
             indexing_operations: components.indexing_operations,
             admin_service: components.admin_service,
@@ -419,7 +428,10 @@ impl McpServer {
         name: &str,
         config: &crate::core::types::EmbeddingConfig,
     ) -> crate::core::error::Result<()> {
-        let provider = self.service_provider.get_embedding_provider(config).await?;
+        let provider = self
+            .service_provider
+            .get_embedding_provider(config, Arc::clone(&self.http_client))
+            .await?;
         self.service_provider
             .register_embedding_provider(name, provider)?;
         Ok(())

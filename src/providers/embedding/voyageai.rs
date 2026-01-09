@@ -1,25 +1,43 @@
 //! VoyageAI embedding provider implementation
 
 use crate::core::error::{Error, Result};
-use crate::core::http_client::get_global_http_client;
 use crate::core::types::Embedding;
 use crate::providers::EmbeddingProvider;
 use async_trait::async_trait;
+use std::sync::Arc;
 
 /// VoyageAI embedding provider
 pub struct VoyageAIEmbeddingProvider {
     api_key: String,
     base_url: Option<String>,
     model: String,
+    http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
 }
 
 impl VoyageAIEmbeddingProvider {
     /// Create a new VoyageAI embedding provider
-    pub fn new(api_key: String, base_url: Option<String>, model: String) -> Self {
+    pub fn new(api_key: String, base_url: Option<String>, model: String) -> Result<Self> {
+        let http_client = Arc::new(crate::core::http_client::HttpClientPool::new()?);
+        Ok(Self {
+            api_key,
+            base_url,
+            model,
+            http_client,
+        })
+    }
+
+    /// Create a new VoyageAI embedding provider with custom HTTP client
+    pub fn with_http_client(
+        api_key: String,
+        base_url: Option<String>,
+        model: String,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
+    ) -> Self {
         Self {
             api_key,
             base_url,
             model,
+            http_client,
         }
     }
 
@@ -52,12 +70,10 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
             "model": self.model
         });
 
-        // Use global HTTP client for connection pooling and performance
-        let client = get_global_http_client()
-            .ok_or_else(|| Error::internal("Global HTTP client not initialized"))?;
+        // Use pooled HTTP client for connection pooling and performance
+        let client = self.http_client.client();
 
         let response = client
-            .client()
             .post(format!("{}/embeddings", self.effective_base_url()))
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")

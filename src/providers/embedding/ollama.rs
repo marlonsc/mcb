@@ -1,7 +1,6 @@
 //! Ollama embedding provider implementation
 
 use crate::core::error::{Error, Result};
-use crate::core::http_client::{HttpClientPool, get_or_create_global_http_client};
 use crate::core::types::Embedding;
 use crate::providers::EmbeddingProvider;
 use async_trait::async_trait;
@@ -13,7 +12,7 @@ pub struct OllamaEmbeddingProvider {
     base_url: String,
     model: String,
     timeout: Duration,
-    http_client: Arc<HttpClientPool>,
+    http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
 }
 
 impl OllamaEmbeddingProvider {
@@ -24,7 +23,7 @@ impl OllamaEmbeddingProvider {
 
     /// Create a new Ollama embedding provider with custom timeout
     pub fn with_timeout(base_url: String, model: String, timeout: Duration) -> Result<Self> {
-        let http_client = get_or_create_global_http_client()?;
+        let http_client = Arc::new(crate::core::http_client::HttpClientPool::new()?);
         Ok(Self {
             base_url,
             model,
@@ -38,7 +37,7 @@ impl OllamaEmbeddingProvider {
         base_url: String,
         model: String,
         timeout: Duration,
-        http_client: Arc<HttpClientPool>,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     ) -> Self {
         Self {
             base_url,

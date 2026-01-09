@@ -2,7 +2,6 @@
 
 use crate::core::cache::{CacheResult, get_global_cache_manager};
 use crate::core::error::{Error, Result};
-use crate::core::http_client::{HttpClientPool, get_or_create_global_http_client};
 use crate::core::types::Embedding;
 use crate::providers::EmbeddingProvider;
 use async_trait::async_trait;
@@ -15,7 +14,7 @@ pub struct OpenAIEmbeddingProvider {
     base_url: Option<String>,
     model: String,
     timeout: Duration,
-    http_client: Arc<HttpClientPool>,
+    http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
 }
 
 impl OpenAIEmbeddingProvider {
@@ -33,7 +32,7 @@ impl OpenAIEmbeddingProvider {
     ) -> Result<Self> {
         let api_key = api_key.trim().to_string();
         let base_url = base_url.map(|url| url.trim().to_string());
-        let http_client = get_or_create_global_http_client()?;
+        let http_client = Arc::new(crate::core::http_client::HttpClientPool::new()?);
 
         Ok(Self {
             api_key,
@@ -42,6 +41,26 @@ impl OpenAIEmbeddingProvider {
             timeout,
             http_client,
         })
+    }
+
+    /// Create a new OpenAI embedding provider with custom HTTP client
+    pub fn with_http_client(
+        api_key: String,
+        base_url: Option<String>,
+        model: String,
+        timeout: Duration,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
+    ) -> Self {
+        let api_key = api_key.trim().to_string();
+        let base_url = base_url.map(|url| url.trim().to_string());
+
+        Self {
+            api_key,
+            base_url,
+            model,
+            timeout,
+            http_client,
+        }
     }
 
     /// Get the effective base URL

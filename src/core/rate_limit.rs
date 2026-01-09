@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use tokio::task::spawn_blocking;
+use tokio::time::timeout;
 
 /// Rate limit configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,6 +28,9 @@ pub struct RateLimitConfig {
     pub burst_allowance: u32,
     /// Whether rate limiting is enabled
     pub enabled: bool,
+    /// Connection timeout in seconds for Redis operations
+    #[serde(default = "default_redis_timeout")]
+    pub redis_timeout_seconds: u64,
 }
 
 /// Rate limiting backend types
@@ -51,6 +56,10 @@ fn default_memory_max_entries() -> usize {
     10000
 }
 
+fn default_redis_timeout() -> u64 {
+    5 // 5 seconds default timeout
+}
+
 impl Default for RateLimitConfig {
     fn default() -> Self {
         Self {
@@ -61,6 +70,7 @@ impl Default for RateLimitConfig {
             max_requests_per_window: 100,
             burst_allowance: 20,
             enabled: true,
+            redis_timeout_seconds: default_redis_timeout(),
         }
     }
 }
@@ -171,14 +181,59 @@ impl RateLimiter {
                     Error::internal(format!("Failed to create Redis client: {}", e))
                 })?;
 
-                // Test connection
-                let mut conn = redis_client
-                    .get_connection()
-                    .map_err(|e| Error::internal(format!("Failed to connect to Redis: {}", e)))?;
+                // Test connection with timeout using blocking task
+                let timeout_duration = Duration::from_secs(self.config.redis_timeout_seconds);
+                let client_clone = redis_client.clone();
 
-                let _: String = redis::cmd("PING")
-                    .query(&mut conn)
-                    .map_err(|e| Error::internal(format!("Redis PING failed: {}", e)))?;
+                let conn_result = timeout(
+                    timeout_duration,
+                    spawn_blocking(move || client_clone.get_connection()),
+                )
+                .await;
+
+                let mut conn = match conn_result {
+                    Ok(Ok(Ok(conn))) => conn,
+                    Ok(Ok(Err(e))) => {
+                        return Err(Error::internal(format!(
+                            "Failed to connect to Redis: {}",
+                            e
+                        )));
+                    }
+                    Ok(Err(join_err)) => {
+                        return Err(Error::internal(format!(
+                            "Connection task panicked: {}",
+                            join_err
+                        )));
+                    }
+                    Err(_) => {
+                        return Err(Error::internal(format!(
+                            "Redis connection timeout after {} seconds",
+                            self.config.redis_timeout_seconds
+                        )));
+                    }
+                };
+
+                let ping_result = timeout(
+                    timeout_duration,
+                    spawn_blocking(move || redis::cmd("PING").query::<String>(&mut conn)),
+                )
+                .await;
+
+                match ping_result {
+                    Ok(Ok(Ok(_))) => {} // PING successful
+                    Ok(Ok(Err(e))) => {
+                        return Err(Error::internal(format!("Redis PING failed: {}", e)));
+                    }
+                    Ok(Err(join_err)) => {
+                        return Err(Error::internal(format!("PING task panicked: {}", join_err)));
+                    }
+                    Err(_) => {
+                        return Err(Error::internal(format!(
+                            "Redis PING timeout after {} seconds",
+                            self.config.redis_timeout_seconds
+                        )));
+                    }
+                }
 
                 client.store(Some(Arc::new(redis_client)));
                 Ok(())
@@ -309,9 +364,34 @@ impl RateLimiter {
             .as_ref()
             .ok_or_else(|| Error::internal("Redis client not initialized"))?;
 
-        let mut conn = redis_client
-            .get_connection()
-            .map_err(|e| Error::internal(format!("Redis connection failed: {}", e)))?;
+        // Get connection with timeout using blocking task
+        let timeout_duration = Duration::from_secs(self.config.redis_timeout_seconds);
+        let client_clone = redis_client.clone();
+
+        let conn_result = timeout(
+            timeout_duration,
+            spawn_blocking(move || client_clone.get_connection()),
+        )
+        .await;
+
+        let mut conn = match conn_result {
+            Ok(Ok(Ok(conn))) => conn,
+            Ok(Ok(Err(e))) => {
+                return Err(Error::internal(format!("Redis connection failed: {}", e)));
+            }
+            Ok(Err(join_err)) => {
+                return Err(Error::internal(format!(
+                    "Connection task panicked: {}",
+                    join_err
+                )));
+            }
+            Err(_) => {
+                return Err(Error::internal(format!(
+                    "Redis connection timeout after {} seconds",
+                    self.config.redis_timeout_seconds
+                )));
+            }
+        };
 
         let redis_key = format!("ratelimit:{}", key);
         let now = SystemTime::now()
@@ -460,6 +540,7 @@ mod tests {
             max_requests_per_window: 10,
             burst_allowance: 2,
             enabled: true,
+            redis_timeout_seconds: default_redis_timeout(),
         };
         let limiter = RateLimiter::new(config);
         limiter.init().await.unwrap();
@@ -494,6 +575,7 @@ mod tests {
             backend: RateLimitBackend::Redis {
                 url: "redis://localhost:6379".to_string(),
             },
+            redis_timeout_seconds: 5,
             ..Default::default()
         };
         let redis_limiter = RateLimiter::new(redis_config);
@@ -524,5 +606,6 @@ mod tests {
         assert_eq!(config.max_requests_per_window, 100);
         assert_eq!(config.burst_allowance, 20);
         assert!(config.enabled);
+        assert_eq!(config.redis_timeout_seconds, 5);
     }
 }

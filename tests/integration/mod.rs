@@ -1,6 +1,7 @@
 //! Integration tests
 
 mod docker;
+#[allow(clippy::module_inception)]
 mod integration;
 mod integration_docker;
 mod integration_unit;

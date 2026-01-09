@@ -21,6 +21,7 @@ pub struct McpServerBuilder {
     service_provider: Option<Arc<dyn ServiceProviderInterface>>,
     system_collector: Option<Arc<dyn SystemMetricsCollectorInterface>>,
     resource_limits: Option<Arc<ResourceLimits>>,
+    http_client: Option<Arc<dyn crate::core::http_client::HttpClientProvider>>,
 }
 
 impl McpServerBuilder {
@@ -79,6 +80,14 @@ impl McpServerBuilder {
         self
     }
 
+    pub fn with_http_client(
+        mut self,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
+    ) -> Self {
+        self.http_client = Some(http_client);
+        self
+    }
+
     pub async fn build(self) -> Result<McpServer, Box<dyn std::error::Error>> {
         // Load configuration if not provided
         let config_arc = if let Some(c) = self.config {
@@ -122,6 +131,11 @@ impl McpServerBuilder {
             Arc::new(ResourceLimits::new(config.resource_limits.clone()))
         };
 
+        // Initialize HTTP client if not provided
+        let http_client = self
+            .http_client
+            .unwrap_or_else(|| Arc::new(crate::core::http_client::HttpClientPool::new().unwrap()));
+
         // Initialize cache manager if not provided
         let cache_manager = match self.cache_manager {
             Some(cm) => cm,
@@ -151,6 +165,7 @@ impl McpServerBuilder {
             admin_service,
             service_provider,
             resource_limits,
+            http_client,
             event_bus,
             log_buffer,
             system_collector,

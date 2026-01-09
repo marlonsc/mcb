@@ -26,6 +26,7 @@ pub trait ProviderFactory: Send + Sync {
     async fn create_embedding_provider(
         &self,
         config: &EmbeddingConfig,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     ) -> Result<Arc<dyn EmbeddingProvider>>;
     async fn create_vector_store_provider(
         &self,
@@ -49,6 +50,7 @@ impl ProviderFactory for DefaultProviderFactory {
     async fn create_embedding_provider(
         &self,
         config: &EmbeddingConfig,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     ) -> Result<Arc<dyn EmbeddingProvider>> {
         match config.provider.to_lowercase().as_str() {
             "openai" => {
@@ -56,30 +58,33 @@ impl ProviderFactory for DefaultProviderFactory {
                     .api_key
                     .as_ref()
                     .ok_or_else(|| Error::config("OpenAI API key required"))?;
-                Ok(Arc::new(OpenAIEmbeddingProvider::with_timeout(
+                Ok(Arc::new(OpenAIEmbeddingProvider::with_http_client(
                     api_key.clone(),
                     config.base_url.clone(),
                     config.model.clone(),
                     std::time::Duration::from_secs(30),
-                )?))
+                    http_client,
+                )))
             }
-            "ollama" => Ok(Arc::new(OllamaEmbeddingProvider::with_timeout(
+            "ollama" => Ok(Arc::new(OllamaEmbeddingProvider::with_http_client(
                 config
                     .base_url
                     .clone()
                     .unwrap_or_else(|| "http://localhost:11434".to_string()),
                 config.model.clone(),
                 std::time::Duration::from_secs(30),
-            )?)),
+                http_client,
+            ))),
             "voyageai" => {
                 let api_key = config
                     .api_key
                     .as_ref()
                     .ok_or_else(|| Error::config("VoyageAI API key required"))?;
-                Ok(Arc::new(VoyageAIEmbeddingProvider::new(
+                Ok(Arc::new(VoyageAIEmbeddingProvider::with_http_client(
                     api_key.clone(),
                     config.base_url.clone(),
                     config.model.clone(),
+                    http_client,
                 )))
             }
             "gemini" => {
@@ -87,12 +92,13 @@ impl ProviderFactory for DefaultProviderFactory {
                     .api_key
                     .as_ref()
                     .ok_or_else(|| Error::config("Gemini API key required"))?;
-                Ok(Arc::new(GeminiEmbeddingProvider::with_timeout(
+                Ok(Arc::new(GeminiEmbeddingProvider::with_http_client(
                     api_key.clone(),
                     config.base_url.clone(),
                     config.model.clone(),
                     std::time::Duration::from_secs(30),
-                )?))
+                    http_client,
+                )))
             }
             "fastembed" => Ok(Arc::new(FastEmbedProvider::new()?)),
             "mock" => Ok(Arc::new(NullEmbeddingProvider::new())),
@@ -196,6 +202,7 @@ pub trait ServiceProviderInterface: shaku::Interface + Send + Sync {
     async fn get_embedding_provider(
         &self,
         config: &EmbeddingConfig,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     ) -> Result<Arc<dyn EmbeddingProvider>>;
     async fn get_vector_store_provider(
         &self,
@@ -247,6 +254,7 @@ impl ServiceProviderInterface for ServiceProvider {
     async fn get_embedding_provider(
         &self,
         config: &EmbeddingConfig,
+        http_client: Arc<dyn crate::core::http_client::HttpClientProvider>,
     ) -> Result<Arc<dyn EmbeddingProvider>> {
         // First try to get from registry
         if let Ok(provider) = self.registry.get_embedding_provider(&config.provider) {
@@ -254,7 +262,10 @@ impl ServiceProviderInterface for ServiceProvider {
         }
 
         // If not found, create via factory and register
-        let provider = self.factory.create_embedding_provider(config).await?;
+        let provider = self
+            .factory
+            .create_embedding_provider(config, http_client)
+            .await?;
         self.registry
             .register_embedding_provider(config.provider.clone(), Arc::clone(&provider))?;
 

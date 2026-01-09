@@ -8,7 +8,7 @@ This test suite provides comprehensive coverage for the MCP Context Browser, imp
 
 Tests are organized in a structure that mirrors the source code modules:
 
-```
+```text
 testes/
 ├── admin/              # Admin module tests
 ├── benchmark/          # Performance benchmarks
@@ -166,7 +166,7 @@ PROPTEST_CASES=1000 cargo test unit::property_based
 
 Tests follow a hierarchical structure matching source modules:
 
-```
+```text
 testes/
 ├── mod.rs                 # Root test module declaration
 ├── admin/

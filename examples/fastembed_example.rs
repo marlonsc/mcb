@@ -3,8 +3,10 @@
 //! This example shows how to create a FastEmbedProvider and use it
 //! to generate embeddings for text without external API dependencies.
 
+use mcp_context_browser::core::http_client::HttpClientPool;
 use mcp_context_browser::core::types::EmbeddingConfig;
 use mcp_context_browser::di::factory::{DefaultProviderFactory, ProviderFactory};
+use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -26,12 +28,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Model: {}", config.model);
     println!("   Dimensions: {:?}", config.dimensions);
 
-    // Create the provider factory
+    // Create the provider factory and HTTP client
     let factory = DefaultProviderFactory::new();
+    let http_client = Arc::new(HttpClientPool::new().expect("Failed to create HTTP client"));
 
     println!("\n🏭 Creating FastEmbedProvider...");
 
-    match factory.create_embedding_provider(&config).await {
+    match factory
+        .create_embedding_provider(&config, http_client)
+        .await
+    {
         Ok(provider) => {
             println!("✅ FastEmbedProvider created successfully!");
             println!("   Provider name: {}", provider.provider_name());

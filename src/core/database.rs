@@ -334,12 +334,16 @@ mod tests {
     }
 
     #[test]
-    fn test_get_or_create_global_database_pool() {
-        // This should not fail even if not initialized
-        let pool_result = get_or_create_global_database_pool();
+    fn test_database_pool_disabled_creation() {
+        // Test creating a disabled database pool (new pattern)
+        let config = DatabaseConfig {
+            enabled: false,
+            ..Default::default()
+        };
+        let pool_result = DatabasePool::new(config);
         assert!(
             pool_result.is_ok(),
-            "Fallback initialization failed: {:?}",
+            "Disabled pool creation failed: {:?}",
             pool_result.err()
         );
         let pool = pool_result.unwrap();

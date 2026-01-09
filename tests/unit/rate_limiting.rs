@@ -21,6 +21,7 @@ mod tests {
             max_requests_per_window: 100,
             burst_allowance: 20,
             enabled: true,
+            redis_timeout_seconds: 5,
         };
 
         let limiter = RateLimiter::new(config.clone());
@@ -71,6 +72,7 @@ mod tests {
         assert_eq!(config.max_requests_per_window, 100);
         assert_eq!(config.burst_allowance, 20);
         assert!(config.enabled);
+        assert_eq!(config.redis_timeout_seconds, 5);
     }
 
     #[tokio::test]
@@ -78,12 +80,13 @@ mod tests {
         // This test verifies the limiter handles Redis connection failure gracefully
         let config = RateLimitConfig {
             backend: RateLimitBackend::Redis {
-                url: "redis://nonexistent:6379".to_string(),
+                url: "redis://127.0.0.1:99999".to_string(), // Use invalid port for faster failure
             },
             window_seconds: 60,
             max_requests_per_window: 10,
             burst_allowance: 5,
             enabled: true,
+            redis_timeout_seconds: 1, // Fast timeout for test (1 second total)
         };
 
         let limiter = RateLimiter::new(config);

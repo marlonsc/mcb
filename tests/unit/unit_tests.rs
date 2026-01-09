@@ -106,7 +106,7 @@ mod validation_unit_tests {
 
         assert!(short_string.len() < 5);
         assert!(long_string.len() > 20);
-        assert!(normal_string.len() >= 1 && normal_string.len() <= 10);
+        assert!(!normal_string.is_empty() && normal_string.len() <= 10);
     }
 
     #[test]
@@ -371,13 +371,13 @@ mod utility_unit_tests {
         let empty: Vec<i32> = vec![];
         assert!(empty.is_empty());
 
-        let data = vec![1, 2, 3];
+        let data = [1, 2, 3];
         assert!(!data.is_empty());
     }
 
     #[test]
     fn test_safe_slice_access() {
-        let data = vec![10, 20, 30];
+        let data = [10, 20, 30];
 
         // Valid index
         assert_eq!(data.get(1).cloned(), Some(20));

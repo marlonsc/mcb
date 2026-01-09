@@ -5,8 +5,7 @@
 
 use crate::config::ConfigLoader;
 use crate::core::cache::CacheManager;
-use crate::core::database::init_global_database_pool;
-use crate::core::http_client::{HttpClientConfig, init_global_http_client};
+use crate::core::http_client::{HttpClientConfig, HttpClientPool};
 use crate::core::limits::ResourceLimits;
 use crate::core::rate_limit::RateLimiter;
 use crate::metrics::MetricsApiServer;
@@ -57,6 +56,7 @@ async fn initialize_server_components(
         McpServer,
         Option<tokio::task::JoinHandle<()>>,
         Arc<ResourceLimits>,
+        Arc<dyn crate::core::http_client::HttpClientProvider>,
     ),
     Box<dyn std::error::Error>,
 > {
@@ -73,31 +73,29 @@ async fn initialize_server_components(
     let resource_limits = Arc::new(crate::core::limits::ResourceLimits::new(
         config.resource_limits.clone(),
     ));
-    crate::core::limits::init_global_resource_limits(config.resource_limits.clone())?;
 
-    // Initialize global HTTP client pool
+    // Initialize HTTP client pool
     tracing::info!("🌐 Initializing HTTP client pool...");
-    if let Err(e) = init_global_http_client(HttpClientConfig::default()) {
-        tracing::warn!(
-            "⚠️  Failed to initialize HTTP client pool: {}. Using default clients.",
-            e
-        );
-    } else {
-        tracing::info!("✅ HTTP client pool initialized successfully");
-    }
-
-    // Initialize global database pool
-    if config.database.enabled {
-        tracing::info!("🗄️  Initializing database connection pool...");
-        match init_global_database_pool(config.database.clone()) {
-            Ok(_) => tracing::info!("✅ Database connection pool initialized successfully"),
-            Err(e) => {
-                tracing::error!("💥 Failed to initialize database connection pool: {}", e);
-                return Err(e.into());
-            }
+    let http_client = match HttpClientPool::with_config(HttpClientConfig::default()) {
+        Ok(pool) => {
+            tracing::info!("✅ HTTP client pool initialized successfully");
+            Arc::new(pool) as Arc<dyn crate::core::http_client::HttpClientProvider>
         }
+        Err(e) => {
+            tracing::warn!(
+                "⚠️  Failed to initialize HTTP client pool: {}. Using null client.",
+                e
+            );
+            Arc::new(crate::core::http_client::NullHttpClientPool::new())
+                as Arc<dyn crate::core::http_client::HttpClientProvider>
+        }
+    };
+
+    // Initialize database pool (not used directly, but available for DI)
+    if config.database.enabled {
+        tracing::info!("🗄️  Database configuration loaded (used via dependency injection)");
     } else {
-        tracing::info!("ℹ️  Database connection pool disabled");
+        tracing::info!("ℹ️  Database disabled");
     }
 
     // Initialize rate limiter for HTTP API
@@ -144,7 +142,8 @@ async fn initialize_server_components(
     let mut builder = McpServerBuilder::new()
         .with_log_buffer(log_buffer)
         .with_event_bus(event_bus)
-        .with_resource_limits(resource_limits.clone());
+        .with_resource_limits(resource_limits.clone())
+        .with_http_client(Arc::clone(&http_client));
 
     if let Some(cm) = cache_manager {
         builder = builder.with_cache(cm);
@@ -194,7 +193,7 @@ async fn initialize_server_components(
         None
     };
 
-    Ok((server, metrics_handle, resource_limits))
+    Ok((server, metrics_handle, resource_limits, http_client))
 }
 
 /// Run the MCP Context Browser server
@@ -231,7 +230,7 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Initialize all server components
-    let (server, metrics_handle, _resource_limits) =
+    let (server, metrics_handle, _resource_limits, _http_client) =
         initialize_server_components(None, log_buffer).await?;
 
     tracing::info!("📡 Starting MCP protocol server on stdio transport");

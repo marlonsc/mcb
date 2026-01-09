@@ -4,12 +4,18 @@
 //! Run with: make test-integration-docker
 
 use mcp_context_browser::core::types::EmbeddingConfig;
+use mcp_context_browser::core::http_client::HttpClientPool;
 use std::env;
+use std::sync::Arc;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use mcp_context_browser::di::factory::ServiceProviderInterface;
+
+    fn get_test_http_client() -> Arc<dyn mcp_context_browser::core::http_client::HttpClientProvider> {
+        Arc::new(HttpClientPool::new().unwrap())
+    }
 
     fn get_ollama_config() -> EmbeddingConfig {
         EmbeddingConfig {
@@ -39,9 +45,10 @@ mod tests {
             max_tokens: Some(8192),
         };
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&config)
+            .get_embedding_provider(&config, http_client.clone())
             .await
             .expect("Failed to create mock embedding provider");
 
@@ -68,9 +75,10 @@ mod tests {
             max_tokens: Some(8192),
         };
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&config)
+            .get_embedding_provider(&config, http_client.clone())
             .await
             .expect("Failed to create mock embedding provider");
 
@@ -97,9 +105,10 @@ mod tests {
     async fn test_ollama_embedding() {
         let config = get_ollama_config();
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&config)
+            .get_embedding_provider(&config, http_client.clone())
             .await
             .expect("Failed to create Ollama embedding provider");
 
@@ -124,6 +133,7 @@ mod tests {
             dimensions: Some(768),
         };
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let vector_store_provider = service_provider
             .get_vector_store_provider(&config)
@@ -149,7 +159,7 @@ mod tests {
         // Test embedding provider for sample data
         let embedding_config = get_ollama_config();
         let embedding_provider = service_provider
-            .get_embedding_provider(&embedding_config)
+            .get_embedding_provider(&embedding_config, http_client.clone())
             .await
             .expect("Failed to create embedding provider");
 
@@ -256,9 +266,10 @@ mod tests {
             dimensions: Some(384),
         };
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&embedding_config)
+            .get_embedding_provider(&embedding_config, http_client.clone())
             .await
             .expect("Failed to create mock embedding provider");
 
@@ -356,9 +367,10 @@ mod tests {
         };
 
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let result = service_provider
-            .get_embedding_provider(&invalid_config)
+            .get_embedding_provider(&invalid_config, http_client.clone())
             .await;
         assert!(result.is_ok()); // Provider creation should succeed
 
@@ -371,9 +383,10 @@ mod tests {
     async fn test_ollama_real_provider_integration() {
         let config = get_ollama_config();
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&config)
+            .get_embedding_provider(&config, http_client.clone())
             .await
             .expect("Failed to create Ollama embedding provider");
 
@@ -399,9 +412,10 @@ mod tests {
     async fn test_ollama_real_batch_embedding_integration() {
         let config = get_ollama_config();
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&config)
+            .get_embedding_provider(&config, http_client.clone())
             .await
             .expect("Failed to create Ollama embedding provider");
 
@@ -458,8 +472,9 @@ mod tests {
             };
 
             let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
             let embedding_provider = service_provider
-                .get_embedding_provider(&config)
+                .get_embedding_provider(&config, http_client.clone())
                 .await
                 .unwrap_or_else(|_| panic!("Failed to create Ollama provider for model {}", model));
 
@@ -485,9 +500,10 @@ mod tests {
     async fn test_ollama_real_empty_batch() {
         let config = get_ollama_config();
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&config)
+            .get_embedding_provider(&config, http_client.clone())
             .await
             .expect("Failed to create Ollama embedding provider");
 
@@ -513,8 +529,9 @@ mod tests {
         };
 
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
         let embedding_provider = service_provider
-            .get_embedding_provider(&invalid_config)
+            .get_embedding_provider(&invalid_config, http_client.clone())
             .await
             .expect("Provider creation should succeed");
 
@@ -526,9 +543,10 @@ mod tests {
     async fn test_ollama_real_large_text() {
         let config = get_ollama_config();
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&config)
+            .get_embedding_provider(&config, http_client.clone())
             .await
             .expect("Failed to create Ollama embedding provider");
 
@@ -549,9 +567,10 @@ mod tests {
     async fn test_ollama_real_provider_metadata() {
         let config = get_ollama_config();
         let service_provider = mcp_context_browser::di::factory::ServiceProvider::new();
+        let http_client = get_test_http_client();
 
         let embedding_provider = service_provider
-            .get_embedding_provider(&config)
+            .get_embedding_provider(&config, http_client.clone())
             .await
             .expect("Failed to create Ollama embedding provider");
 
