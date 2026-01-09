@@ -23,7 +23,11 @@ impl ConfigLoader {
         let builder = ConfigBuilder::builder()
             .add_source(File::with_name("config/default").required(false))
             .add_source(File::with_name("config/local").required(false))
-            .add_source(Environment::with_prefix("MCP").separator("__"))
+            .add_source(
+                Environment::with_prefix("MCP")
+                    .separator("__")
+                    .try_parsing(true),
+            )
             .build()
             .map_err(|e| Error::config(format!("Failed to build configuration: {}", e)))?;
 
@@ -41,7 +45,11 @@ impl ConfigLoader {
     pub async fn load_with_file(&self, path: &Path) -> Result<Config> {
         let builder = ConfigBuilder::builder()
             .add_source(File::from(path).required(false))
-            .add_source(Environment::with_prefix("MCP").separator("__"))
+            .add_source(
+                Environment::with_prefix("MCP")
+                    .separator("__")
+                    .try_parsing(true),
+            )
             .build()
             .map_err(|e| Error::config(format!("Failed to build configuration: {}", e)))?;
 

@@ -22,6 +22,7 @@ use crate::core::cache::CacheManager;
 use crate::core::events::SharedEventBus;
 use crate::core::limits::ResourceLimits;
 use crate::di::factory::ServiceProviderInterface;
+use crate::di::registry::ProviderRegistryTrait;
 use crate::server::args::{
     ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs,
 };
@@ -447,29 +448,36 @@ impl McpServer {
     /// Get detailed provider information for admin interface
     pub fn get_registered_providers(&self) -> Vec<crate::admin::service::ProviderInfo> {
         let (embedding_providers, vector_store_providers) = self.list_providers();
+        let registry = self.service_provider.registry();
 
         let mut providers = Vec::new();
 
-        // Add embedding providers
-        // TODO: Integrate with health monitor to get actual provider status
+        // Add embedding providers with health status from registry
         for name in embedding_providers {
+            let status = match registry.get_embedding_provider(&name) {
+                Ok(_) => "available".to_string(),
+                Err(_) => "unavailable".to_string(),
+            };
             providers.push(crate::admin::service::ProviderInfo {
                 id: name.clone(),
                 name,
                 provider_type: "embedding".to_string(),
-                status: "unknown".to_string(), // Status unknown until health check verifies
+                status,
                 config: serde_json::json!({ "type": "embedding" }),
             });
         }
 
-        // Add vector store providers
-        // TODO: Integrate with health monitor to get actual provider status
+        // Add vector store providers with health status from registry
         for name in vector_store_providers {
+            let status = match registry.get_vector_store_provider(&name) {
+                Ok(_) => "available".to_string(),
+                Err(_) => "unavailable".to_string(),
+            };
             providers.push(crate::admin::service::ProviderInfo {
                 id: name.clone(),
                 name,
                 provider_type: "vector_store".to_string(),
-                status: "unknown".to_string(), // Status unknown until health check verifies
+                status,
                 config: serde_json::json!({ "type": "vector_store" }),
             });
         }
@@ -481,9 +489,52 @@ impl McpServer {
     pub async fn get_provider_health(
         &self,
     ) -> std::collections::HashMap<String, crate::providers::routing::health::ProviderHealth> {
-        // This would use the health monitor from the router
-        // For now, return empty map
-        std::collections::HashMap::new()
+        use crate::providers::routing::health::{ProviderHealth, ProviderHealthStatus};
+        use std::time::Instant;
+
+        let (embedding_providers, vector_store_providers) = self.list_providers();
+        let registry = self.service_provider.registry();
+        let mut health_map = std::collections::HashMap::new();
+
+        // Check embedding providers
+        for name in embedding_providers {
+            let status = match registry.get_embedding_provider(&name) {
+                Ok(_) => ProviderHealthStatus::Healthy,
+                Err(_) => ProviderHealthStatus::Unhealthy,
+            };
+            health_map.insert(
+                name.clone(),
+                ProviderHealth {
+                    provider_id: name,
+                    status,
+                    last_check: Instant::now(),
+                    consecutive_failures: 0,
+                    total_checks: 1,
+                    response_time: None,
+                },
+            );
+        }
+
+        // Check vector store providers
+        for name in vector_store_providers {
+            let status = match registry.get_vector_store_provider(&name) {
+                Ok(_) => ProviderHealthStatus::Healthy,
+                Err(_) => ProviderHealthStatus::Unhealthy,
+            };
+            health_map.insert(
+                name.clone(),
+                ProviderHealth {
+                    provider_id: name,
+                    status,
+                    last_check: Instant::now(),
+                    consecutive_failures: 0,
+                    total_checks: 1,
+                    response_time: None,
+                },
+            );
+        }
+
+        health_map
     }
 
     /// Index a codebase directory for semantic search

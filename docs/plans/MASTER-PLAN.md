@@ -215,9 +215,12 @@ A: Tier 3 features can remain stubs. Tier 1/2 cannot.
 | Task 2: Search Repository | COMPLETE | [x] |
 | Task 3: Sync Manager | COMPLETE | [x] |
 | Task 4: Split service.rs | COMPLETE | [x] |
-| Task 5: Fix unwraps | PENDING | [ ] |
+| Task 5: Fix unwraps | COMPLETE | [x] |
 | Task 6: Health Integration | PENDING | [ ] |
 
 ---
 
-**Next Step:** Begin with Task 5 (Fix unwrap/expect calls) to improve reliability.
+**Task 5 Notes:** Production code unwraps fixed in server, Milvus provider, router,
+rate_limit_middleware, and filesystem modules. Test code unwraps remain (acceptable).
+
+**Next Step:** Begin with Task 6 (Integrate Health Monitor).

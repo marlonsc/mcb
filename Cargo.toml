@@ -171,7 +171,3 @@ moka = { version = "0.12", features = ["future"] }
 tempfile = "3.10"
 mockito = "1.4"
 proptest = "1.0"
-
-[[test]]
-name = "testes"
-path = "testes/mod.rs"

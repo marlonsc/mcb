@@ -31,7 +31,6 @@ fn create_benchmark_context_service() -> ContextService {
 }
 
 /// Create a benchmark MCP server
-#[allow(dead_code)]
 fn create_benchmark_mcp_server() -> McpServer {
     let rt = Runtime::new().expect("Failed to create Tokio runtime");
     // Use None for cache manager in benchmarks to avoid external dependencies
@@ -41,7 +40,6 @@ fn create_benchmark_mcp_server() -> McpServer {
 }
 
 /// Benchmark core type operations
-#[allow(dead_code)]
 pub fn bench_core_types(c: &mut Criterion) {
     c.bench_function("create_code_chunk", |b| {
         b.iter(|| {
@@ -109,7 +107,6 @@ pub fn bench_core_types(c: &mut Criterion) {
 }
 
 /// Benchmark validation operations
-#[allow(dead_code)]
 pub fn bench_validation(c: &mut Criterion) {
     c.bench_function("validate_code_chunk_basic", |b| {
         let chunk = CodeChunk {
@@ -152,7 +149,6 @@ pub fn bench_validation(c: &mut Criterion) {
 }
 
 /// Benchmark repository operations (real implementations)
-#[allow(dead_code)]
 pub fn bench_repository_operations(c: &mut Criterion) {
     // Note: Using in-memory implementations for benchmarking as they provide real functionality
     // without external dependencies. In production, these would use actual database implementations.
@@ -285,7 +281,6 @@ pub fn bench_repository_operations(c: &mut Criterion) {
 }
 
 /// Benchmark provider operations (real implementations)
-#[allow(dead_code)]
 pub fn bench_provider_operations(c: &mut Criterion) {
     let rt = Runtime::new().expect("Failed to create Tokio runtime");
     let (embedding_provider, vector_store_provider) = create_benchmark_providers();
@@ -348,7 +343,6 @@ pub fn bench_provider_operations(c: &mut Criterion) {
 }
 
 /// Benchmark service operations (real implementations)
-#[allow(dead_code)]
 pub fn bench_service_operations(c: &mut Criterion) {
     let rt = Runtime::new().expect("Failed to create Tokio runtime");
     let context_service = create_benchmark_context_service();

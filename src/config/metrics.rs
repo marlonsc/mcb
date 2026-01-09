@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 /// Metrics API configuration
-#[derive(Debug, Clone, Serialize, Deserialize, Validate, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
 pub struct MetricsConfig {
     /// Port for metrics HTTP API
@@ -15,6 +15,16 @@ pub struct MetricsConfig {
     /// Rate limiting configuration
     #[serde(default)]
     pub rate_limiting: RateLimitConfig,
+}
+
+impl Default for MetricsConfig {
+    fn default() -> Self {
+        Self {
+            port: default_metrics_port(),
+            enabled: default_metrics_enabled(),
+            rate_limiting: RateLimitConfig::default(),
+        }
+    }
 }
 
 fn default_metrics_port() -> u16 {

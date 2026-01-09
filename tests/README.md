@@ -104,21 +104,21 @@ All new features follow TDD principles:
 
 ```bash
 # Run all tests (organized by module)
-cargo test --test testes
+cargo test
 
 # Run tests for specific module
-cargo test --test testes chunking
-cargo test --test testes config
-cargo test --test testes core
+cargo test chunking
+cargo test config
+cargo test core
 
 # Run integration tests
-cargo test --test testes integration
+cargo test integration
 
 # Run benchmark tests
-cargo test --test testes benchmark
+cargo test benchmark
 
 # Run unit tests
-cargo test --test testes unit
+cargo test unit
 
 # Run with coverage
 cargo tarpaulin --out Html
@@ -131,33 +131,33 @@ cargo bench
 
 ```bash
 # Test individual modules
-cargo test --test testes providers::embedding_providers
-cargo test --test testes core::core_types
-cargo test --test testes validation
+cargo test providers::embedding_providers
+cargo test core::core_types
+cargo test validation
 
 # Test specific functionality
-cargo test --test testes chunking::chunking::tests::test_rust_chunking_with_tree_sitter
+cargo test chunking::chunking::tests::test_rust_chunking_with_tree_sitter
 ```
 
 ### Integration Testing
 
 ```bash
 # Run all integration tests
-cargo test --test testes integration
+cargo test integration
 
 # Run specific integration tests
-cargo test --test testes integration::mcp_protocol
-cargo test --test testes integration::docker
+cargo test integration::mcp_protocol
+cargo test integration::docker
 ```
 
 ### Property-Based Testing
 
 ```bash
 # Run property tests
-cargo test --test testes unit::property_based
+cargo test unit::property_based
 
 # Run with more test cases
-PROPTEST_CASES=1000 cargo test --test testes unit::property_based
+PROPTEST_CASES=1000 cargo test unit::property_based
 ```
 
 ## Test Organization

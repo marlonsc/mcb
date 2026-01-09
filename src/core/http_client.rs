@@ -267,7 +267,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_http_client_pool_creation() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_http_client_pool_creation() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    {
         let config = HttpClientConfig {
             max_idle_per_host: 5,
             idle_timeout: Duration::from_secs(60),
@@ -303,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    fn test_http_client_provider_trait() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_http_client_provider_trait() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let pool = HttpClientPool::new()?;
         let provider: &dyn HttpClientProvider = &pool;
         assert!(provider.is_enabled());
