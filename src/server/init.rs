@@ -4,12 +4,15 @@
 //! server implementation to improve code organization and testability.
 
 use crate::adapters::http_client::{HttpClientConfig, HttpClientPool};
+use crate::adapters::providers::routing::health::HealthMonitor;
 use crate::daemon::types::RecoveryConfig;
 use crate::infrastructure::cache::CacheManager;
 use crate::infrastructure::config::ConfigLoader;
 use crate::infrastructure::connection_tracker::{ConnectionTracker, ConnectionTrackerConfig};
+use crate::infrastructure::health::ActiveHealthMonitor;
 use crate::infrastructure::limits::ResourceLimits;
 use crate::infrastructure::metrics::MetricsApiServer;
+use crate::infrastructure::provider_lifecycle::ProviderLifecycleManager;
 use crate::infrastructure::rate_limit::RateLimiter;
 use crate::infrastructure::recovery::{RecoveryManager, SharedRecoveryManager};
 use crate::server::transport::{
@@ -155,8 +158,9 @@ async fn initialize_server_components(
         cache_manager
     };
 
-    // Clone event_bus for recovery manager before passing to builder
+    // Clone event_bus for recovery manager and health monitor before passing to builder
     let event_bus_for_recovery = event_bus.clone();
+    let event_bus_for_health = event_bus.clone();
 
     // Create server instance using builder
     let mut builder = McpServerBuilder::new()
@@ -194,7 +198,7 @@ async fn initialize_server_components(
     let recovery_config = RecoveryConfig::default();
     let recovery_manager: SharedRecoveryManager = Arc::new(RecoveryManager::new(
         recovery_config,
-        event_bus_for_recovery,
+        event_bus_for_recovery.clone(),
     ));
 
     // Start the recovery manager background task
@@ -206,6 +210,48 @@ async fn initialize_server_components(
     } else {
         tracing::info!("✅ Recovery Manager started successfully");
     }
+
+    // Initialize Active Health Monitor for proactive provider health checking
+    tracing::info!("🏥 Initializing Active Health Monitor...");
+
+    // Get registry from service provider and wrap in Arc
+    let registry_for_health: Arc<crate::infrastructure::di::registry::ProviderRegistry> =
+        Arc::new(server.service_provider.registry().clone());
+
+    // Create health monitor with the registry (automatically creates RealProviderHealthChecker)
+    let health_monitor = Arc::new(HealthMonitor::with_registry(registry_for_health.clone()));
+
+    // Create registry trait object for ActiveHealthMonitor
+    let registry_trait: Arc<dyn crate::infrastructure::di::registry::ProviderRegistryTrait> =
+        registry_for_health;
+
+    // Create active health monitor with default configuration
+    let active_monitor = Arc::new(ActiveHealthMonitor::with_defaults(
+        health_monitor,
+        registry_trait,
+        event_bus_for_health,
+    ));
+
+    // Start the health monitoring loop
+    active_monitor.start();
+    tracing::info!("✅ Active Health Monitor started successfully");
+
+    // Initialize Provider Lifecycle Manager for handling provider restarts
+    tracing::info!("🔄 Initializing Provider Lifecycle Manager...");
+
+    // Reuse the actual registry from the server (same registry used by health monitor and rest of system)
+    let registry_for_lifecycle: Arc<crate::infrastructure::di::registry::ProviderRegistry> =
+        Arc::new(server.service_provider.registry().clone());
+    let registry_trait_for_lifecycle: Arc<dyn crate::infrastructure::di::registry::ProviderRegistryTrait> =
+        registry_for_lifecycle;
+
+    let lifecycle_manager = ProviderLifecycleManager::new(
+        Arc::clone(&server.service_provider),
+        registry_trait_for_lifecycle,
+        event_bus_for_recovery.clone(),
+    );
+    lifecycle_manager.start();
+    tracing::info!("✅ Provider Lifecycle Manager started successfully");
 
     // Initialize HTTP transport components for unified port architecture
     let transport_config = TransportConfig::default();

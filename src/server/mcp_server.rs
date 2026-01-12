@@ -49,7 +49,7 @@ pub struct McpServer {
     /// Handler for index clearing operations
     clear_index_handler: Arc<ClearIndexHandler>,
     /// Service provider for dependency injection
-    service_provider: Arc<dyn ServiceProviderInterface>,
+    pub service_provider: Arc<dyn ServiceProviderInterface>,
     /// HTTP client pool for providers
     http_client: Arc<dyn crate::adapters::http_client::HttpClientProvider>,
     /// Real-time performance metrics
