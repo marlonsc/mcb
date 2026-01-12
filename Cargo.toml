@@ -15,16 +15,20 @@ homepage = "https://github.com/marlonsc/mcp-context-browser"
 [features]
 default = ["fastembed", "filesystem-store", "milvus"]
 
+# NOTE: Feature flags currently serve as capability markers for documentation/selection.
+# Dependencies are always compiled; conditional compilation (#[cfg(feature)]) not yet implemented.
+# TODO: Add optional deps and #[cfg] guards to enable true feature-gated compilation.
+
 # Embedding providers
-fastembed = []  # Local embeddings via FastEmbed
+fastembed = []  # Local embeddings via FastEmbed (always compiled)
 
 # Vector stores
-filesystem-store = []  # Local filesystem storage
-milvus = ["dep:milvus-sdk-rust"]  # Milvus vector database
-edgevec = []  # EdgeVec in-memory store
+filesystem-store = []  # Local filesystem storage (always compiled)
+milvus = ["dep:milvus-sdk-rust"]  # Milvus vector database (optional dep)
+edgevec = []  # EdgeVec in-memory store (always compiled)
 
 # Optional infrastructure
-redis-cache = []  # Redis distributed caching
+redis-cache = []  # Redis distributed caching (always compiled)
 
 # Full feature set for development/testing
 full = ["fastembed", "filesystem-store", "milvus", "edgevec", "redis-cache"]
