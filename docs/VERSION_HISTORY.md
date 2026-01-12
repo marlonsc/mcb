@@ -84,7 +84,7 @@ Infrastructure for future HTTP/SSE transport support:
 | Source Files | 100+ |
 | LOC | ~25K |
 
-### Breaking Changes from v0.0.4
+### Breaking Changes from v0.1.0
 
 - None - fully backward compatible
 
@@ -98,7 +98,7 @@ See [Migration Guide](migration/FROM_CLAUDE_CONTEXT.md) for detailed instruction
 
 ---
 
-## v0.0.4 "Documentation Excellence" - 2026-01-08 RELEASED
+## v0.1.0 "Documentation Excellence" - 2026-01-08 RELEASED
 
 **Status**: Production-Ready | **Achievement**: Documentation Excellence Implementation
 
@@ -266,7 +266,7 @@ Delivered working MCP server with core semantic search capabilities.
 | v0.0.1 | 2026-01-06 | Released | MCP Protocol Foundation | 100% |
 | v0.0.2 | 2026-01-06 | Released | Infrastructure and Documentation | 100% |
 | v0.0.3 | 2026-01-07 | Released | Production Foundation | 100% |
-| v0.0.4 | 2026-01-08 | Released | Documentation Excellence | 100% |
+| v0.1.0 | 2026-01-08 | Released | Documentation Excellence | 100% |
 | v0.1.0 | 2026-01-11 | **Released** | First Stable Release | 100% |
 | v0.2.0 | Planned | **Planned** | Git-Aware Semantic Indexing | 0% |
 
@@ -305,7 +305,7 @@ Full enterprise-grade MCP server
 └── Hybrid search capabilities
 ```
 
-### v0.0.4: Documentation Excellence
+### v0.1.0: Documentation Excellence
 
 ```text
 Self-documenting, ADR-driven development
@@ -365,7 +365,7 @@ Git-aware semantic search platform
 -   Monitoring: 100% (Prometheus + Grafana)
 -   Production deployment: 100%
 
-### v0.0.4: Documentation Excellence
+### v0.1.0: Documentation Excellence
 
 -   Auto-generated docs: 95%+
 -   ADR compliance validation: 100%
@@ -385,7 +385,7 @@ Git-aware semantic search platform
 
 ## Project Evolution Metrics
 
-| Metric | v0.0.1 | v0.0.2 | v0.0.3 | v0.0.4 | v0.1.0 |
+| Metric | v0.0.1 | v0.0.2 | v0.0.3 | v0.1.0 | v0.1.0 |
 |--------|--------|--------|--------|--------|--------|
 | Lines of Code | ~2K | ~10K | ~16K | ~18K | ~25K |
 | Test Coverage | 60% | 80% | 90%+ | 95%+ | 95%+ |
@@ -405,13 +405,13 @@ Git-aware semantic search platform
 -   **Migration Required**: Environment variables standardization
 -   **Benefits**: Enterprise security, performance, scalability
 
-### From v0.0.3 to v0.0.4
+### From v0.0.3 to v0.1.0
 
 -   **Breaking Changes**: None
 -   **Migration Required**: Documentation tooling adoption
 -   **Benefits**: Zero maintenance documentation, ADR automation
 
-### From v0.0.4 to v0.1.0
+### From v0.1.0 to v0.1.0
 
 -   **Breaking Changes**: None
 -   **Migration Required**: None (fully backward compatible)

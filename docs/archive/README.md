@@ -90,7 +90,7 @@ This directory also contains historical analysis and planning documents that hav
 
 | Document | Title | Date | Superseded By |
 |----------|-------|------|---------------|
-| [2025-01-07-code-audit-report-v0.0.4.md](2025-01-07-code-audit-report-v0.0.4.md) | Code Audit Report v0.0.4 (Portuguese) | 2025-01-07 | [ADR 006](../adr/006-code-audit-and-improvements-v0.0.4.md) |
+| [2025-01-07-code-audit-report-v0.1.0.md](2025-01-07-code-audit-report-v0.1.0.md) | Code Audit Report v0.1.0 (Portuguese) | 2025-01-07 | [ADR 006](../adr/006-code-audit-and-improvements-v0.1.0.md) |
 
 ### Historical Planning Documents
 

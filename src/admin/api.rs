@@ -18,13 +18,12 @@ impl AdminApiServer {
     }
 
     /// Create the admin router
-    pub fn create_router(&self) -> Router {
+    pub fn create_router(&self) -> Result<Router, Box<dyn std::error::Error>> {
         let admin_api = Arc::new(AdminApi::new(self.config.clone()));
         let admin_service = self.mcp_server.admin_service();
-        
+
         // Initialize web interface and templates
-        let web_interface = crate::admin::web::WebInterface::new()
-            .expect("Failed to initialize web interface templates");
+        let web_interface = crate::admin::web::WebInterface::new()?;
         let templates = web_interface.templates();
 
         let state = AdminState {
@@ -37,9 +36,7 @@ impl AdminApiServer {
         let api_router = create_admin_router(state.clone());
         let web_router = web_interface.routes(state);
 
-        Router::new()
-            .merge(api_router)
-            .merge(web_router)
+        Ok(Router::new().merge(api_router).merge(web_router))
     }
 
     /// Get admin configuration

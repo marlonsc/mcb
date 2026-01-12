@@ -70,17 +70,17 @@ async fn test_edgevec_vector_operations() -> std::result::Result<(), Box<dyn std
     let metadata = vec![
         HashMap::from([
             ("file_path".to_string(), serde_json::json!("test.rs")),
-            ("line_number".to_string(), serde_json::json!(1)),
+            ("start_line".to_string(), serde_json::json!(1)),
             ("content".to_string(), serde_json::json!("vec1")),
         ]),
         HashMap::from([
             ("file_path".to_string(), serde_json::json!("test.rs")),
-            ("line_number".to_string(), serde_json::json!(2)),
+            ("start_line".to_string(), serde_json::json!(2)),
             ("content".to_string(), serde_json::json!("vec2")),
         ]),
         HashMap::from([
             ("file_path".to_string(), serde_json::json!("test.rs")),
-            ("line_number".to_string(), serde_json::json!(3)),
+            ("start_line".to_string(), serde_json::json!(3)),
             ("content".to_string(), serde_json::json!("vec3")),
         ]),
     ];

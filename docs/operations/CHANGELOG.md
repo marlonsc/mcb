@@ -86,11 +86,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.0.4] - 2026-01-08
+## [0.1.0] - 2026-01-08
 
 ### What This Release Is
 
-**MCP Context Browser v0.0.4** establishes the project as a reference implementation for documentation excellence in Rust projects. This release transforms documentation from an afterthought into a core engineering discipline.
+**MCP Context Browser v0.1.0** establishes the project as a reference implementation for documentation excellence in Rust projects. This release transforms documentation from an afterthought into a core engineering discipline.
 
 ### Added
 

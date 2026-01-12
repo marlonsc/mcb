@@ -65,7 +65,7 @@ mod tests {
         let result = SearchResult {
             id: "test-id".to_string(),
             file_path: "src/main.rs".to_string(),
-            line_number: 42,
+            start_line: 42,
             content: "println!(\"Hello, world!\");".to_string(),
             score: 0.95,
             metadata: serde_json::json!({"context": "main function"}),
@@ -73,7 +73,7 @@ mod tests {
 
         assert_eq!(result.id, "test-id");
         assert_eq!(result.file_path, "src/main.rs");
-        assert_eq!(result.line_number, 42);
+        assert_eq!(result.start_line, 42);
         assert_eq!(result.content, "println!(\"Hello, world!\");");
         assert_eq!(result.score, 0.95);
         assert_eq!(result.metadata["context"], "main function");
@@ -140,7 +140,7 @@ mod tests {
         let result = SearchResult {
             id: "test-id".to_string(),
             file_path: "src/main.rs".to_string(),
-            line_number: 42,
+            start_line: 42,
             content: "println!(\"Hello, world!\");".to_string(),
             score: 0.95,
             metadata: serde_json::json!({"context": "main function"}),
@@ -151,7 +151,7 @@ mod tests {
 
         assert_eq!(result.id, deserialized.id);
         assert_eq!(result.file_path, deserialized.file_path);
-        assert_eq!(result.line_number, deserialized.line_number);
+        assert_eq!(result.start_line, deserialized.start_line);
         assert_eq!(result.content, deserialized.content);
         assert_eq!(result.score, deserialized.score);
         assert_eq!(result.metadata, deserialized.metadata);
@@ -221,7 +221,7 @@ mod tests {
         let result = SearchResult {
             id: "zero-id".to_string(),
             file_path: "src/main.rs".to_string(),
-            line_number: 1,
+            start_line: 1,
             content: "use std::io;".to_string(),
             score: 0.0,
             metadata: serde_json::json!({}),
@@ -235,7 +235,7 @@ mod tests {
         let result = SearchResult {
             id: "perfect-id".to_string(),
             file_path: "src/main.rs".to_string(),
-            line_number: 1,
+            start_line: 1,
             content: "fn main() {}".to_string(),
             score: 1.0,
             metadata: serde_json::json!({}),

@@ -157,6 +157,7 @@ impl McpServerBuilder {
             Arc::clone(&indexing_operations),
             Arc::clone(&service_provider),
             Arc::clone(&system_collector),
+            Arc::clone(&http_client),
             event_bus.clone(),
             log_buffer.clone(),
             Arc::clone(&config_arc),

@@ -34,5 +34,8 @@ fn default_metrics_port() -> u16 {
 }
 
 fn default_metrics_enabled() -> bool {
-    true
+    // Allow disabling metrics via environment variable for testing
+    std::env::var("MCP_METRICS_ENABLED")
+        .map(|v| !v.eq_ignore_ascii_case("false") && v != "0")
+        .unwrap_or(true)
 }

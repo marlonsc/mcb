@@ -107,7 +107,7 @@ impl IndexingService {
         };
 
         // Get changed files using snapshots
-        let changed_files = self
+        let changed_files: Vec<String> = self
             .snapshot_manager
             .get_changed_files(&canonical_path)
             .await?;
@@ -180,22 +180,9 @@ impl IndexingService {
         let ext = path
             .extension()
             .and_then(|e| e.to_str())
-            .unwrap_or("")
-            .to_lowercase();
-
-        match ext.as_str() {
-            "rs" => Ok(crate::domain::types::Language::Rust),
-            "py" => Ok(crate::domain::types::Language::Python),
-            "js" => Ok(crate::domain::types::Language::JavaScript),
-            "ts" => Ok(crate::domain::types::Language::TypeScript),
-            "java" => Ok(crate::domain::types::Language::Java),
-            "cpp" | "cc" | "cxx" => Ok(crate::domain::types::Language::Cpp),
-            "c" => Ok(crate::domain::types::Language::C),
-            "go" => Ok(crate::domain::types::Language::Go),
-            "php" => Ok(crate::domain::types::Language::Php),
-            "rb" => Ok(crate::domain::types::Language::Ruby),
-            _ => Ok(crate::domain::types::Language::Unknown),
-        }
+            .unwrap_or("");
+            
+        Ok(crate::domain::types::Language::from_extension(ext))
     }
 
     /// Process files in parallel batches for better performance
@@ -275,45 +262,8 @@ impl IndexingService {
 
     /// Check if file type is supported for indexing
     fn is_supported_file_type(&self, ext: &str) -> bool {
-        matches!(
-            ext.to_lowercase().as_str(),
-            "rs" | "py"
-                | "js"
-                | "ts"
-                | "java"
-                | "cpp"
-                | "cc"
-                | "cxx"
-                | "c"
-                | "go"
-                | "php"
-                | "rb"
-                | "scala"
-                | "kt"
-                | "swift"
-                | "cs"
-                | "fs"
-                | "vb"
-                | "pl"
-                | "pm"
-                | "sh"
-                | "bash"
-                | "zsh"
-                | "fish"
-                | "ps1"
-                | "sql"
-                | "html"
-                | "xml"
-                | "json"
-                | "yaml"
-                | "yml"
-                | "toml"
-                | "ini"
-                | "cfg"
-                | "md"
-                | "txt"
-                | "rst"
-        )
+        let lang = crate::domain::types::Language::from_extension(ext);
+        !matches!(lang, crate::domain::types::Language::Unknown)
     }
 
     /// Clear all indexed data from a collection

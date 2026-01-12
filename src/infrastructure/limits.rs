@@ -11,9 +11,7 @@ mod types;
 pub use config::{CpuLimits, DiskLimits, MemoryLimits, OperationLimits, ResourceLimitsConfig};
 
 // Re-export implementations
-pub use enforcer::{
-    NullResourceLimits, OperationPermit, ResourceLimits, ResourceLimitsProvider,
-};
+pub use enforcer::{NullResourceLimits, OperationPermit, ResourceLimits, ResourceLimitsProvider};
 
 // Re-export types
 pub use types::{

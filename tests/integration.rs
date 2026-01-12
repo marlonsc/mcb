@@ -5,6 +5,19 @@
 //! IMPORTANT: Tests that spawn the server binary must use `#[serial(mcp_binary)]`
 //! because the server binds to fixed ports (3001, 3002).
 
+#[path = "integration/docker.rs"]
+mod docker;
+#[path = "integration/integration_docker.rs"]
+mod integration_docker;
+#[path = "integration/mcp_e2e.rs"]
+mod mcp_e2e;
+#[path = "integration/mcp_full_integration_test.rs"]
+mod mcp_full_integration_test;
+#[path = "integration/mcp_protocol.rs"]
+mod mcp_protocol;
+#[path = "integration/ollama_integration.rs"]
+mod ollama_integration;
+
 use serde_json::json;
 use serial_test::serial;
 
@@ -449,7 +462,7 @@ mod tests {
         // Start MCP server process using rmcp client infrastructure
         let cmd = {
             let mut c = Command::new("./target/debug/mcp-context-browser");
-            c.env("CONTEXT_METRICS_ENABLED", "false");
+            c.env("MCP_METRICS_ENABLED", "false");
             c.env("RUST_LOG", "off");
             c
         };

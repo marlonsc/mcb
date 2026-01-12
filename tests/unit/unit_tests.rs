@@ -342,7 +342,7 @@ mod service_unit_tests {
         let hybrid_search = Arc::new(mcp_context_browser::adapters::HybridSearchAdapter::new(
             sender,
         ));
-        let service = ContextService::new(embedding_provider, vector_store, hybrid_search);
+        let service = ContextService::new_with_providers(embedding_provider, vector_store, hybrid_search);
 
         // NullEmbeddingProvider returns dimension=1 for minimal test vectors
         assert_eq!(service.embedding_dimensions(), 1);
@@ -371,7 +371,7 @@ mod service_unit_tests {
         let hybrid_search = Arc::new(mcp_context_browser::adapters::HybridSearchAdapter::new(
             sender,
         ));
-        let service = ContextService::new(embedding_provider, vector_store, hybrid_search);
+        let service = ContextService::new_with_providers(embedding_provider, vector_store, hybrid_search);
 
         let embedding = service.embed_text("test query").await?;
         // NullEmbeddingProvider returns dimension=1 for minimal test vectors

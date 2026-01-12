@@ -206,3 +206,10 @@ pub async fn login_handler(
         Err(e) => Ok(Json(ApiResponse::error(e))),
     }
 }
+
+/// Logout handler
+pub async fn logout_handler() -> impl IntoResponse {
+    // For JWT, logout is primarily client-side (deleting the token)
+    // Here we just return success
+    Json(ApiResponse::success("Logged out successfully".to_string()))
+}

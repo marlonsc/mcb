@@ -418,6 +418,62 @@ pub async fn get_status_handler(
     Ok(Json(ApiResponse::success(status)))
 }
 
+/// Get dashboard metrics for the web interface
+pub async fn get_dashboard_metrics_handler(
+    State(state): State<AdminState>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let indexing_status = state
+        .admin_service
+        .get_indexing_status()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let performance = state
+        .admin_service
+        .get_performance_metrics()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let providers = state
+        .admin_service
+        .get_providers()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let active_providers = providers.iter().filter(|p| p.status == "available").count();
+
+    // Get real system metrics
+    let cpu = state.mcp_server.system_collector.collect_cpu_metrics().await
+        .map(|m| m.usage)
+        .unwrap_or(0.0);
+    let memory = state.mcp_server.system_collector.collect_memory_metrics().await
+        .map(|m| m.usage_percent)
+        .unwrap_or(0.0);
+
+    // Get system information
+    let system_info = state
+        .admin_service
+        .get_system_info()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let metrics = serde_json::json!({
+        "active_providers": active_providers,
+        "total_providers": providers.len(),
+        "active_indexes": if indexing_status.is_indexing { 0 } else { 1 },
+        "total_documents": indexing_status.total_documents,
+        "cpu_usage": cpu,
+        "memory_usage": memory,
+        "queries": performance.total_queries,
+        "avg_latency": performance.average_response_time_ms,
+        "health": {
+            "status": "healthy",
+            "uptime": system_info.uptime,
+            "pid": system_info.pid
+        }
+    });
+
+    Ok(Json(ApiResponse::success(metrics)))
+}
+
 /// Query parameters for search
 #[derive(Deserialize)]
 pub struct SearchQuery {

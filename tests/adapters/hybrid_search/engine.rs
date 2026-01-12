@@ -24,7 +24,7 @@ fn test_hybrid_search_engine() -> std::result::Result<(), Box<dyn std::error::Er
     let semantic_results = vec![SearchResult {
         id: "test-id".to_string(),
         file_path: "test.rs".to_string(),
-        line_number: 1,
+        start_line: 1,
         content: "This is a test document about programming".to_string(),
         score: 0.8,
         metadata: Default::default(),

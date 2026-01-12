@@ -4,12 +4,12 @@
 //! including health checking, configuration validation, and provider selection logic.
 
 pub mod embedding;
-pub mod vector_store;
 mod manager;
+pub mod vector_store;
 
 pub use embedding::EmbeddingProviderConfig;
-pub use vector_store::VectorStoreProviderConfig;
 pub use manager::ProviderConfigManager;
+pub use vector_store::VectorStoreProviderConfig;
 
 /// Health status of a provider
 #[derive(Debug, Clone, PartialEq)]

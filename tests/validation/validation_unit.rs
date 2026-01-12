@@ -91,7 +91,7 @@ mod business_rule_tests {
     use super::*;
 
     #[test]
-    fn test_chunk_line_number_consistency() {
+    fn test_chunk_start_line_consistency() {
         // Test that line numbers are consistent
         let valid_ranges = vec![
             (1, 1),   // Single line
@@ -306,7 +306,7 @@ mod edge_case_tests {
     }
 
     #[test]
-    fn test_extremely_large_line_numbers() {
+    fn test_extremely_large_start_lines() {
         // Test with very large line numbers
         let large_line_chunk = CodeChunk {
             id: "large_lines".to_string(),

@@ -19,6 +19,11 @@ pub enum SystemEvent {
         /// Target path for backup
         path: String,
     },
+    /// Request to restore a backup
+    BackupRestore {
+        /// Path to backup to restore
+        path: String,
+    },
     /// Request to rebuild the index
     IndexRebuild {
         /// Collection to rebuild (None = all)

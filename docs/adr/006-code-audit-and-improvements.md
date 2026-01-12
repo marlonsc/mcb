@@ -238,7 +238,7 @@ config = "0.13"
 
 ## Success Metrics
 
-| Metric | Before | Target v0.0.4 | Measurement |
+| Metric | Before | Target v0.1.0 | Measurement |
 |--------|--------|----------------|-------------|
 | Lines per file | >1000 | <500 | Static analysis |
 | unwrap/expect count | 157 | 0 | Code search |

@@ -4,6 +4,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub use crate::admin::models::{ProviderInfo, IndexingConfig, SecurityConfig};
+
 /// Configuration data structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigurationData {
@@ -13,24 +15,6 @@ pub struct ConfigurationData {
     pub metrics: MetricsConfigData,
     pub cache: CacheConfigData,
     pub database: DatabaseConfigData,
-}
-
-/// Indexing configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IndexingConfig {
-    pub chunk_size: usize,
-    pub chunk_overlap: usize,
-    pub max_file_size: u64,
-    pub supported_extensions: Vec<String>,
-    pub exclude_patterns: Vec<String>,
-}
-
-/// Security configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SecurityConfig {
-    pub enable_auth: bool,
-    pub rate_limiting: bool,
-    pub max_requests_per_minute: u32,
 }
 
 /// Metrics configuration data
@@ -253,16 +237,6 @@ pub struct SystemInfo {
     pub pid: u32,
 }
 
-/// Provider information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProviderInfo {
-    pub id: String,
-    pub name: String,
-    pub provider_type: String,
-    pub status: String,
-    pub config: serde_json::Value,
-}
-
 /// Indexing status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexingStatus {
@@ -332,6 +306,9 @@ pub enum AdminError {
 
     #[error("Network error: {0}")]
     NetworkError(String),
+
+    #[error("Internal error: {0}")]
+    InternalError(String),
 }
 
 impl From<crate::domain::error::Error> for AdminError {

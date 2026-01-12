@@ -1,4 +1,4 @@
-# Documentation Automation Improvement Plan - v0.0.4 "Documentation Excellence"
+# Documentation Automation Improvement Plan - v0.1.0 "Documentation Excellence"
 
 > **IMPORTANT:** Start with fresh context. Run `/clear` before `/implement`.
 
@@ -13,21 +13,21 @@ Status: PENDING
 
 ## Summary
 
-**Goal:** Transform MCP Context Browser into a **documentation-driven development** project with v0.0.4 as the "Documentation Excellence" release.
+**Goal:** Transform MCP Context Browser into a **documentation-driven development** project with v0.1.0 as the "Documentation Excellence" release.
 
 **Current State (v0.0.3):** Production-ready MCP server with advanced reliability features, but documentation remains manually maintained with custom scripts.
 
-**Target State (v0.0.4):** **Self-documenting codebase** with ADR-driven development, automated validation, and comprehensive tooling that serves as a reference implementation for documentation excellence in Rust projects.
+**Target State (v0.1.0):** **Self-documenting codebase** with ADR-driven development, automated validation, and comprehensive tooling that serves as a reference implementation for documentation excellence in Rust projects.
 
 **Architecture:** Complete replacement of custom documentation scripts with established open-source tools, implementing ADR validation framework, and establishing documentation as a first-class engineering practice.
 
 **Tech Stack:** `adrs`, `cargo-modules`, `cargo-spellcheck`, `cargo-deadlinks`, `mdbook`, `rust-code-analysis`, `adr-validator` (custom framework).
 
-## Release Vision: v0.0.4 "Documentation Excellence"
+## Release Vision: v0.1.0 "Documentation Excellence"
 
 ### 🎯 What This Release Represents
 
-**MCP Context Browser v0.0.4** establishes the project as a **reference implementation** for documentation excellence in Rust projects. This release transforms documentation from an afterthought into a **core engineering discipline** that drives development quality and maintainability.
+**MCP Context Browser v0.1.0** establishes the project as a **reference implementation** for documentation excellence in Rust projects. This release transforms documentation from an afterthought into a **core engineering discipline** that drives development quality and maintainability.
 
 ### 🏆 Key Achievements
 
@@ -47,7 +47,7 @@ Status: PENDING
 
 ## Scope
 
-### In Scope (v0.0.4 Deliverables)
+### In Scope (v0.1.0 Deliverables)
 
 -   **Complete ADR Toolchain**: Professional ADR management with `adrs` tool and validation framework
 -   **Automated Documentation Generation**: 95%+ of docs auto-generated using `cargo-modules` and `rust-code-analysis`
@@ -300,7 +300,7 @@ Status: PENDING
 
 ## Expected Outcomes and Impact
 
-### 🎯 v0.0.4 Success Metrics
+### 🎯 v0.1.0 Success Metrics
 
 **Documentation Excellence:**
 
@@ -325,7 +325,7 @@ Status: PENDING
 
 ### 📊 Quantitative Improvements
 
-| Metric | v0.0.3 Baseline | v0.0.4 Target | Improvement |
+| Metric | v0.0.3 Baseline | v0.1.0 Target | Improvement |
 |--------|----------------|---------------|-------------|
 | Auto-generated docs | 30% | 95%+ | +216% |
 | ADR compliance validation | Manual | 100% automated | ∞ |
@@ -363,7 +363,7 @@ Status: PENDING
 
 ### 🌟 Foundation for v0.1.0+ Features
 
-**The documentation excellence established in v0.0.4 directly enables:**
+**The documentation excellence established in v0.1.0 directly enables:**
 
 -   **ADR-Driven Feature Development**: New features start with validated ADRs
 -   **Automated Compliance Checking**: Architecture decisions enforced in code
@@ -372,7 +372,7 @@ Status: PENDING
 
 ### 🔄 Continuous Improvement Pipeline
 
-**v0.0.4 establishes the foundation for:**
+**v0.1.0 establishes the foundation for:**
 
 -   **Documentation Analytics**: Track usage and improvement opportunities
 -   **ADR Evolution Tracking**: Monitor architectural decision lifecycle
@@ -381,7 +381,7 @@ Status: PENDING
 
 ### 📚 Industry Leadership
 
-**MCP Context Browser v0.0.4 positions the project as:**
+**MCP Context Browser v0.1.0 positions the project as:**
 
 -   **Documentation Excellence Reference**: Example for Rust ecosystem
 -   **ADR Best Practices**: Model for architectural decision management

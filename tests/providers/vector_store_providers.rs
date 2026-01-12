@@ -33,7 +33,7 @@ mod test_utils {
             "file_path".to_string(),
             serde_json::json!(format!("test/file_{}.rs", id)),
         );
-        metadata.insert("line_number".to_string(), serde_json::json!(id * 10));
+        metadata.insert("start_line".to_string(), serde_json::json!(id * 10));
         metadata.insert(
             "content".to_string(),
             serde_json::json!(format!("Test content for item {}", id)),
@@ -43,7 +43,7 @@ mod test_utils {
 
     pub fn assert_search_result(result: &SearchResult, expected_id: usize, _collection: &str) {
         assert_eq!(result.file_path, format!("test/file_{}.rs", expected_id));
-        assert_eq!(result.line_number, (expected_id * 10) as u32);
+        assert_eq!(result.start_line, (expected_id * 10) as u32);
         assert_eq!(
             result.content,
             format!("Test content for item {}", expected_id)
@@ -52,7 +52,7 @@ mod test_utils {
         // Check that metadata contains the expected fields
         assert_eq!(result.metadata["id"], expected_id.to_string());
         assert!(result.metadata.get("file_path").is_some());
-        assert!(result.metadata.get("line_number").is_some());
+        assert!(result.metadata.get("start_line").is_some());
         assert!(result.metadata.get("content").is_some());
     }
 }

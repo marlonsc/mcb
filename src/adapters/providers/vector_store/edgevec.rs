@@ -157,6 +157,16 @@ enum EdgeVecMessage {
         collection: String,
         tx: oneshot::Sender<Result<HashMap<String, serde_json::Value>>>,
     },
+    ListVectors {
+        collection: String,
+        limit: usize,
+        tx: oneshot::Sender<Result<Vec<SearchResult>>>,
+    },
+    GetVectorsByIds {
+        collection: String,
+        ids: Vec<String>,
+        tx: oneshot::Sender<Result<Vec<SearchResult>>>,
+    },
     CollectionExists {
         name: String,
         tx: oneshot::Sender<Result<bool>>,
@@ -290,6 +300,38 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
+    async fn get_vectors_by_ids(
+        &self,
+        collection: &str,
+        ids: &[String],
+    ) -> Result<Vec<SearchResult>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .sender
+            .send(EdgeVecMessage::GetVectorsByIds {
+                collection: collection.to_string(),
+                ids: ids.to_vec(),
+                tx,
+            })
+            .await;
+        rx.await
+            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+    }
+
+    async fn list_vectors(&self, collection: &str, limit: usize) -> Result<Vec<SearchResult>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .sender
+            .send(EdgeVecMessage::ListVectors {
+                collection: collection.to_string(),
+                limit,
+                tx,
+            })
+            .await;
+        rx.await
+            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+    }
+
     async fn get_stats(&self, collection: &str) -> Result<HashMap<String, serde_json::Value>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
@@ -416,7 +458,6 @@ impl EdgeVecActor {
                             if let Some(collection_metadata) = self.metadata_store.get(&collection)
                             {
                                 for res in results {
-                                    // Slow search for external ID, but this is a simplified actor
                                     let external_id = self.id_map.iter().find_map(|entry| {
                                         if *entry.value() == res.vector_id {
                                             Some(entry.key().clone())
@@ -436,8 +477,9 @@ impl EdgeVecActor {
                                                     .and_then(|v| v.as_str())
                                                     .unwrap_or("unknown")
                                                     .to_string(),
-                                                line_number: meta
-                                                    .get("line_number")
+                                                start_line: meta
+                                                    .get("start_line")
+                                                    .or_else(|| meta.get("line_number"))
                                                     .and_then(|v| v.as_u64())
                                                     .unwrap_or(0)
                                                     as u32,
@@ -493,6 +535,75 @@ impl EdgeVecActor {
                         serde_json::json!(self.config.dimensions),
                     );
                     let _ = tx.send(Ok(stats));
+                }
+                EdgeVecMessage::ListVectors {
+                    collection,
+                    limit,
+                    tx,
+                } => {
+                    let mut final_results = Vec::new();
+                    if let Some(collection_metadata) = self.metadata_store.get(&collection) {
+                        for (ext_id, meta_val) in collection_metadata.iter().take(limit) {
+                            let meta = meta_val.as_object().cloned().unwrap_or_default();
+
+                            final_results.push(SearchResult {
+                                id: ext_id.clone(),
+                                file_path: meta
+                                    .get("file_path")
+                                    .and_then(|v: &serde_json::Value| v.as_str())
+                                    .unwrap_or("unknown")
+                                    .to_string(),
+                                start_line: meta
+                                    .get("start_line")
+                                    .or_else(|| meta.get("line_number"))
+                                    .and_then(|v: &serde_json::Value| v.as_u64())
+                                    .unwrap_or(0) as u32,
+                                content: meta
+                                    .get("content")
+                                    .and_then(|v: &serde_json::Value| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string(),
+                                score: 1.0,
+                                metadata: serde_json::json!(meta),
+                            });
+                        }
+                    }
+                    let _ = tx.send(Ok(final_results));
+                }
+                EdgeVecMessage::GetVectorsByIds {
+                    collection,
+                    ids,
+                    tx,
+                } => {
+                    let mut final_results = Vec::new();
+                    if let Some(collection_metadata) = self.metadata_store.get(&collection) {
+                        for id in ids {
+                            if let Some(meta_val) = collection_metadata.get(&id) {
+                                let meta = meta_val.as_object().cloned().unwrap_or_default();
+                                final_results.push(SearchResult {
+                                    id: id.clone(),
+                                    file_path: meta
+                                        .get("file_path")
+                                        .and_then(|v: &serde_json::Value| v.as_str())
+                                        .unwrap_or("unknown")
+                                        .to_string(),
+                                    start_line: meta
+                                        .get("start_line")
+                                        .or_else(|| meta.get("line_number"))
+                                        .and_then(|v: &serde_json::Value| v.as_u64())
+                                        .unwrap_or(0) as u32,
+                                    content: meta
+                                        .get("content")
+                                        .and_then(|v: &serde_json::Value| v.as_str())
+                                        .unwrap_or("")
+                                        .to_string(),
+                                    score: 1.0,
+                                    metadata: serde_json::json!(meta),
+                                });
+                            }
+                        }
+                    }
+                    let _ = tx.send(Ok(final_results));
                 }
                 EdgeVecMessage::CollectionExists { name, tx } => {
                     let exists = self.metadata_store.contains_key(&name);

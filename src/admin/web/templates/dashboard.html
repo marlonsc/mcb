@@ -276,6 +276,14 @@ function dashboard() {
         total_documents: '0',
         cpu_usage: '0',
         memory_usage: '0',
+        loading: false,
+        isOnline: true,
+        autoRefresh: true,
+        health: {
+            status: 'loading...',
+            uptime: 0,
+            pid: 0
+        },
         activities: [
             { id: 1, message: 'System initialized successfully', timestamp: '2 minutes ago', color: 'bg-green-400' },
             { id: 2, message: 'Provider connection established', timestamp: '5 minutes ago', color: 'bg-blue-400' },
@@ -285,9 +293,17 @@ function dashboard() {
         async init() {
             await this.refresh();
             this.initCharts();
+            
+            // Auto-refresh interval
+            setInterval(() => {
+                if (this.autoRefresh && !this.loading) {
+                    this.refresh();
+                }
+            }, 10000);
         },
 
         async refresh() {
+            this.loading = true;
             try {
                 // Fetch real metrics from API
                 const response = await fetch('/admin/dashboard/metrics');
@@ -301,10 +317,27 @@ function dashboard() {
                     this.total_documents = data.data.total_documents.toString();
                     this.cpu_usage = data.data.cpu_usage.toFixed(1);
                     this.memory_usage = data.data.memory_usage.toFixed(1);
+                    this.health = data.data.health;
+                    this.isOnline = true;
                 }
             } catch (error) {
                 console.error('Failed to refresh dashboard:', error);
+                this.isOnline = false;
+            } finally {
+                this.loading = false;
             }
+        },
+
+        formatDuration(seconds) {
+            if (!seconds) return '0s';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${h}h ${m}m ${s}s`;
+        },
+
+        formatNumber(num) {
+            return new Intl.NumberFormat().format(num);
         },
 
         async refreshActivity() {

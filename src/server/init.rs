@@ -183,10 +183,8 @@ async fn initialize_server_components(
         );
 
         // Initialize admin API server
-        let admin_api_server = crate::admin::api::AdminApiServer::new(
-            config.admin.clone(),
-            Arc::clone(&server),
-        );
+        let admin_api_server =
+            crate::admin::api::AdminApiServer::new(config.admin.clone(), Arc::clone(&server));
 
         let mut metrics_server = MetricsApiServer::with_limits(
             config.metrics.port,
@@ -198,7 +196,14 @@ async fn initialize_server_components(
         );
 
         // Merge admin router into metrics server
-        metrics_server = metrics_server.with_external_router(admin_api_server.create_router());
+        match admin_api_server.create_router() {
+            Ok(router) => {
+                metrics_server = metrics_server.with_external_router(router);
+            }
+            Err(e) => {
+                tracing::error!("💥 Failed to create admin router: {}", e);
+            }
+        }
 
         Some(tokio::spawn(async move {
             if let Err(e) = metrics_server.start().await {
@@ -270,6 +275,7 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
     let http_handle = match transport_config.mode {
         TransportMode::Http | TransportMode::Hybrid => {
             let http_state = HttpTransportState {
+                server: Arc::clone(&server),
                 session_manager: Arc::clone(&session_manager),
                 version_checker: Arc::clone(&version_checker),
                 connection_tracker: Arc::clone(&connection_tracker),
@@ -328,8 +334,8 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
             tracing::info!("📡 Starting MCP protocol server on stdio transport");
             tracing::info!("🎯 Ready to accept MCP client connections");
 
-        // Start the MCP service with stdio transport
-        let service_future = (*server).clone().serve(stdio());
+            // Start the MCP service with stdio transport
+            let service_future = (*server).clone().serve(stdio());
 
             tokio::select! {
                 result = service_future => {

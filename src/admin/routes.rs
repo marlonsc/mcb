@@ -12,12 +12,13 @@ use crate::admin::{
     handlers::{
         add_provider_handler, cleanup_data_handler, clear_cache_handler, create_backup_handler,
         export_logs_handler, get_config_handler, get_configuration_handler,
-        get_configuration_history_handler, get_log_stats_handler, get_logs_handler,
-        get_status_handler, health_check_handler, index_operation_handler, list_backups_handler,
-        list_indexes_handler, list_providers_handler, performance_test_handler,
-        rebuild_index_handler, remove_provider_handler, restart_provider_handler,
-        restore_backup_handler, search_handler, test_connectivity_handler, update_config_handler,
-        update_configuration_handler, validate_configuration_handler,
+        get_configuration_history_handler, get_dashboard_metrics_handler, get_log_stats_handler,
+        get_logs_handler, get_status_handler, health_check_handler, index_operation_handler,
+        list_backups_handler, list_indexes_handler, list_providers_handler,
+        performance_test_handler, rebuild_index_handler, remove_provider_handler,
+        restart_provider_handler, restore_backup_handler, search_handler,
+        test_connectivity_handler, update_config_handler, update_configuration_handler,
+        validate_configuration_handler,
     },
     models::AdminState,
 };
@@ -27,7 +28,12 @@ pub fn create_admin_router(state: AdminState) -> Router {
     Router::new()
         // Public routes (no auth required)
         .route("/admin/auth/login", post(login_handler))
+        .route("/admin/auth/logout", post(crate::admin::auth::logout_handler))
         .route("/admin/status", get(get_status_handler))
+        .route(
+            "/admin/dashboard/metrics",
+            get(get_dashboard_metrics_handler),
+        )
         // Protected routes (auth required)
         .route("/admin/config", get(get_config_handler))
         .route("/admin/config", put(update_config_handler))

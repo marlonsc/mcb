@@ -21,6 +21,8 @@ pub trait ProviderRegistryTrait: Send + Sync {
 
     fn get_embedding_provider(&self, name: &str) -> Result<Arc<dyn EmbeddingProvider>>;
     fn get_vector_store_provider(&self, name: &str) -> Result<Arc<dyn VectorStoreProvider>>;
+    fn remove_embedding_provider(&self, name: &str) -> Result<()>;
+    fn remove_vector_store_provider(&self, name: &str) -> Result<()>;
     fn list_embedding_providers(&self) -> Vec<String>;
     fn list_vector_store_providers(&self) -> Vec<String>;
 }
@@ -91,6 +93,24 @@ impl ProviderRegistryTrait for ProviderRegistry {
             .get(name)
             .map(|p| Arc::clone(p.value()))
             .ok_or_else(|| Error::not_found(format!("Vector store provider '{}' not found", name)))
+    }
+
+    /// Remove an embedding provider
+    fn remove_embedding_provider(&self, name: &str) -> Result<()> {
+        if self.embedding_providers.remove(name).is_some() {
+            Ok(())
+        } else {
+            Err(Error::not_found(format!("Embedding provider '{}' not found", name)))
+        }
+    }
+
+    /// Remove a vector store provider
+    fn remove_vector_store_provider(&self, name: &str) -> Result<()> {
+        if self.vector_store_providers.remove(name).is_some() {
+            Ok(())
+        } else {
+            Err(Error::not_found(format!("Vector store provider '{}' not found", name)))
+        }
     }
 
     /// List all registered embedding providers

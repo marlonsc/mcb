@@ -68,7 +68,7 @@ mod tests {
     async fn test_context_service_creation() {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let service = ContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -84,7 +84,7 @@ mod tests {
         let (_ep, _vs, _hsp) = create_test_providers();
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let service = ContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -106,7 +106,7 @@ mod tests {
         let (_ep, _vs, _hsp) = create_test_providers();
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let service = ContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -126,7 +126,7 @@ mod tests {
         let (_ep, _vs, _hsp) = create_test_providers();
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let service = ContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -144,7 +144,7 @@ mod tests {
         let (_ep, _vs, _hsp) = create_test_providers();
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let service = ContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -162,7 +162,7 @@ mod tests {
         let (_ep, _vs, _hsp) = create_test_providers();
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let service = ContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -186,7 +186,7 @@ mod tests {
         let (_ep, _vs, _hsp) = create_test_providers();
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let service = ContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -208,7 +208,7 @@ mod tests {
     async fn test_indexing_service_creation() -> Result<(), Box<dyn std::error::Error>> {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let context_service = Arc::new(ContextService::new(
+        let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -223,7 +223,7 @@ mod tests {
     async fn test_indexing_service_index_directory() -> Result<(), Box<dyn std::error::Error>> {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let context_service = Arc::new(ContextService::new(
+        let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -248,7 +248,7 @@ mod tests {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let context_service = Arc::new(ContextService::new(
+        let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -269,7 +269,7 @@ mod tests {
     async fn test_search_service_creation() {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let context_service = Arc::new(ContextService::new(
+        let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -283,7 +283,7 @@ mod tests {
     async fn test_search_service_search() -> Result<(), Box<dyn std::error::Error>> {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let context_service = Arc::new(ContextService::new(
+        let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -306,7 +306,7 @@ mod tests {
     async fn test_search_service_search_empty_query() -> Result<(), Box<dyn std::error::Error>> {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let context_service = Arc::new(ContextService::new(
+        let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -329,7 +329,7 @@ mod tests {
     async fn test_search_service_search_zero_limit() -> Result<(), Box<dyn std::error::Error>> {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let context_service = Arc::new(ContextService::new(
+        let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -353,7 +353,7 @@ mod tests {
         let (_ep, _vs, _hsp) = create_test_providers();
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let service = ContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,
@@ -376,7 +376,7 @@ mod tests {
         // Test the full integration of services
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
             create_test_providers();
-        let context_service = Arc::new(ContextService::new(
+        let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             hybrid_search_provider,

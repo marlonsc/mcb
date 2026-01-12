@@ -79,8 +79,8 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
             if let Some(file_path) = meta.get("file_path") {
                 processed_meta.insert("file_path".to_string(), file_path.clone());
             }
-            if let Some(line_number) = meta.get("line_number") {
-                processed_meta.insert("line_number".to_string(), line_number.clone());
+            if let Some(start_line) = meta.get("start_line").or_else(|| meta.get("line_number")) {
+                processed_meta.insert("start_line".to_string(), start_line.clone());
             }
 
             processed_metadata.push(processed_meta);
@@ -123,6 +123,50 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
 
     async fn delete_vectors(&self, collection: &str, ids: &[String]) -> Result<()> {
         self.inner.delete_vectors(collection, ids).await
+    }
+
+    async fn get_vectors_by_ids(
+        &self,
+        collection: &str,
+        ids: &[String],
+    ) -> Result<Vec<SearchResult>> {
+        let mut results = self.inner.get_vectors_by_ids(collection, ids).await?;
+
+        // Decrypt the metadata for each result
+        for result in &mut results {
+            if let Some(encrypted_metadata) = result.metadata.get("encrypted_metadata") {
+                let metadata_envelope: EncryptedEnvelope =
+                    serde_json::from_value(encrypted_metadata.clone())?;
+                let metadata_json = self.crypto.decrypt(&metadata_envelope)?;
+                let original_metadata: HashMap<String, serde_json::Value> =
+                    serde_json::from_slice(&metadata_json)?;
+
+                // Restore original metadata
+                result.metadata = serde_json::to_value(original_metadata)?;
+            }
+        }
+
+        Ok(results)
+    }
+
+    async fn list_vectors(&self, collection: &str, limit: usize) -> Result<Vec<SearchResult>> {
+        let mut results = self.inner.list_vectors(collection, limit).await?;
+
+        // Decrypt the metadata for each result
+        for result in &mut results {
+            if let Some(encrypted_metadata) = result.metadata.get("encrypted_metadata") {
+                let metadata_envelope: EncryptedEnvelope =
+                    serde_json::from_value(encrypted_metadata.clone())?;
+                let metadata_json = self.crypto.decrypt(&metadata_envelope)?;
+                let original_metadata: HashMap<String, serde_json::Value> =
+                    serde_json::from_slice(&metadata_json)?;
+
+                // Restore original metadata
+                result.metadata = serde_json::to_value(original_metadata)?;
+            }
+        }
+
+        Ok(results)
     }
 
     async fn get_stats(&self, collection: &str) -> Result<HashMap<String, serde_json::Value>> {

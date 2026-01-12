@@ -1,10 +1,10 @@
 //! Factory implementations for creating providers
 
 use crate::domain::ports::{EmbeddingProvider, VectorStoreProvider};
-use crate::infrastructure::di::registry::ProviderRegistryTrait;
-use crate::{EmbeddingConfig, Error, Result, VectorStoreConfig};
 use crate::infrastructure::di::factory::traits::{ProviderFactory, ServiceProviderInterface};
 use crate::infrastructure::di::registry::ProviderRegistry;
+use crate::infrastructure::di::registry::ProviderRegistryTrait;
+use crate::{EmbeddingConfig, Error, Result, VectorStoreConfig};
 
 // Import individual providers that exist
 use crate::adapters::providers::embedding::fastembed::FastEmbedProvider;
@@ -226,6 +226,14 @@ impl ServiceProviderInterface for ServiceProvider {
     ) -> Result<()> {
         self.registry
             .register_vector_store_provider(name.to_string(), provider)
+    }
+
+    fn remove_embedding_provider(&self, name: &str) -> Result<()> {
+        self.registry.remove_embedding_provider(name)
+    }
+
+    fn remove_vector_store_provider(&self, name: &str) -> Result<()> {
+        self.registry.remove_vector_store_provider(name)
     }
 
     async fn get_embedding_provider(

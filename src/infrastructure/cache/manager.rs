@@ -1,12 +1,12 @@
 //! Advanced distributed cache manager implementation
 
+use super::config::CacheConfig;
 use crate::domain::error::{Error, Result};
 use crate::infrastructure::events::{SharedEventBus, SystemEvent};
 use moka::future::Cache;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use super::config::CacheConfig;
 
 /// Advanced distributed cache manager
 #[derive(Clone)]

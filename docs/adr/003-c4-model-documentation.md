@@ -284,9 +284,9 @@ impl DocumentationTracker {
 }
 ```
 
-### Future Enhancements (v0.0.4 "Documentation Excellence")
+### Future Enhancements (v0.1.0 "Documentation Excellence")
 
-The v0.0.4 release will significantly enhance the C4 model documentation through automation and advanced tooling:
+The v0.1.0 release will significantly enhance the C4 model documentation through automation and advanced tooling:
 
 #### 🤖 Automated Diagram Generation
 
@@ -318,4 +318,4 @@ The v0.0.4 release will significantly enhance the C4 model documentation through
 -   [PlantUML Documentation](https://plantuml.com/)
 -   [Structurizr - C4 Tooling](https://structurizr.com/)
 -   [The C4 model for visualising software architecture](https://www.infoq.com/articles/C4-architecture-model/)
--   [Documentation Automation Plan (v0.0.4)](../archive/2025-01-07-documentation-automation-improvement.md)
+-   [Documentation Automation Plan (v0.1.0)](../archive/2025-01-07-documentation-automation-improvement.md)

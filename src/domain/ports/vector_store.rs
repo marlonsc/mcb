@@ -29,6 +29,12 @@ pub trait VectorStoreProvider: Send + Sync {
         filter: Option<&str>,
     ) -> Result<Vec<SearchResult>>;
     async fn delete_vectors(&self, collection: &str, ids: &[String]) -> Result<()>;
+    async fn get_vectors_by_ids(
+        &self,
+        collection: &str,
+        ids: &[String],
+    ) -> Result<Vec<SearchResult>>;
+    async fn list_vectors(&self, collection: &str, limit: usize) -> Result<Vec<SearchResult>>;
     async fn get_stats(&self, collection: &str) -> Result<HashMap<String, Value>>;
     async fn flush(&self, collection: &str) -> Result<()>;
     fn provider_name(&self) -> &str;

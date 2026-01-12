@@ -29,7 +29,7 @@ async fn test_auth_service_creation() {
 
     // Default is disabled for local/MCP usage
     assert!(!auth.is_enabled());
-    assert!(auth.get_user("admin").is_some());
+    assert!(auth.get_user("admin@context.browser").is_some());
 }
 
 #[tokio::test]
@@ -41,7 +41,7 @@ async fn test_auth_service_creation_with_enabled() {
     let auth = AuthService::new(config);
 
     assert!(auth.is_enabled());
-    assert!(auth.get_user("admin").is_some());
+    assert!(auth.get_user("admin@context.browser").is_some());
 }
 
 /// Helper to create an auth service with auth explicitly enabled (for testing)
@@ -146,7 +146,8 @@ fn test_auth_service_handles_token_validation_errors(
     assert!(result.is_err()); // Should return some kind of error for invalid tokens
     let err_msg = result.err().ok_or("Expected error")?.to_string();
     assert!(
-        err_msg.contains("Invalid token format")
+        err_msg.contains("Invalid token")
+            || err_msg.contains("InvalidToken")
             || err_msg.contains("Base64 decode error")
             || err_msg.contains("JSON parsing error")
     );

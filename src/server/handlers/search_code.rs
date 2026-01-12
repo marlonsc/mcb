@@ -225,7 +225,7 @@ impl SearchCodeHandler {
                     "**{}.** 📁 `{}` (line {})\n",
                     i + 1,
                     result.file_path,
-                    result.line_number
+                    result.start_line
                 ));
 
                 // Add context lines around the match for better understanding

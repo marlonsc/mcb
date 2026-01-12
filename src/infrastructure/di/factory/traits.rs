@@ -37,6 +37,8 @@ pub trait ServiceProviderInterface: shaku::Interface + Send + Sync {
         name: &str,
         provider: Arc<dyn VectorStoreProvider>,
     ) -> Result<()>;
+    fn remove_embedding_provider(&self, name: &str) -> Result<()>;
+    fn remove_vector_store_provider(&self, name: &str) -> Result<()>;
     async fn get_embedding_provider(
         &self,
         config: &EmbeddingConfig,

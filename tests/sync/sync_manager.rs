@@ -30,10 +30,13 @@ fn create_test_directory() -> Result<TempDir, Box<dyn std::error::Error>> {
 async fn test_sync_detects_new_files() -> Result<(), Box<dyn std::error::Error>> {
     // Given: A sync manager and a directory with files
     let temp_dir = create_test_directory()?;
-    let manager = SyncManager::with_config(SyncConfig {
-        interval_ms: 1000,
-        debounce_ms: 0, // Disable debounce for testing
-    }, None);
+    let manager = SyncManager::with_config(
+        SyncConfig {
+            interval_ms: 1000,
+            debounce_ms: 0, // Disable debounce for testing
+        },
+        None,
+    );
 
     // When: We sync the first time
     let result = manager.sync_codebase(temp_dir.path()).await;
@@ -52,10 +55,13 @@ async fn test_sync_detects_new_files() -> Result<(), Box<dyn std::error::Error>>
 async fn test_sync_detects_file_modifications() -> Result<(), Box<dyn std::error::Error>> {
     // Given: A synced directory
     let temp_dir = create_test_directory()?;
-    let manager = SyncManager::with_config(SyncConfig {
-        interval_ms: 1000,
-        debounce_ms: 0,
-    }, None);
+    let manager = SyncManager::with_config(
+        SyncConfig {
+            interval_ms: 1000,
+            debounce_ms: 0,
+        },
+        None,
+    );
 
     // First sync to establish baseline
     let _ = manager.sync_codebase(temp_dir.path()).await;
@@ -83,10 +89,13 @@ async fn test_sync_detects_file_modifications() -> Result<(), Box<dyn std::error
 async fn test_sync_tracks_modification_times() -> Result<(), Box<dyn std::error::Error>> {
     // Given: A sync manager
     let temp_dir = create_test_directory()?;
-    let manager = SyncManager::with_config(SyncConfig {
-        interval_ms: 1000,
-        debounce_ms: 0,
-    }, None);
+    let manager = SyncManager::with_config(
+        SyncConfig {
+            interval_ms: 1000,
+            debounce_ms: 0,
+        },
+        None,
+    );
 
     // When: We sync
     let _ = manager.sync_codebase(temp_dir.path()).await;
@@ -101,10 +110,13 @@ async fn test_sync_tracks_modification_times() -> Result<(), Box<dyn std::error:
 async fn test_sync_returns_changed_files() -> Result<(), Box<dyn std::error::Error>> {
     // Given: A synced directory with modifications
     let temp_dir = create_test_directory()?;
-    let manager = SyncManager::with_config(SyncConfig {
-        interval_ms: 1000,
-        debounce_ms: 0,
-    }, None);
+    let manager = SyncManager::with_config(
+        SyncConfig {
+            interval_ms: 1000,
+            debounce_ms: 0,
+        },
+        None,
+    );
 
     // First sync
     let _ = manager.sync_codebase(temp_dir.path()).await;
@@ -174,10 +186,13 @@ async fn test_sync_with_event_bus_publishes_event() -> Result<(), Box<dyn std::e
 async fn test_sync_handles_empty_directory() -> Result<(), Box<dyn std::error::Error>> {
     // Given: An empty directory
     let temp_dir = TempDir::new()?;
-    let manager = SyncManager::with_config(SyncConfig {
-        interval_ms: 1000,
-        debounce_ms: 0,
-    }, None);
+    let manager = SyncManager::with_config(
+        SyncConfig {
+            interval_ms: 1000,
+            debounce_ms: 0,
+        },
+        None,
+    );
 
     // When: We sync an empty directory
     let result = manager.sync_codebase(temp_dir.path()).await;
@@ -208,10 +223,13 @@ async fn test_sync_filters_by_extension() -> Result<(), Box<dyn std::error::Erro
     fs::write(temp_dir.path().join("readme.md"), "# Readme")?;
     fs::write(temp_dir.path().join("data.json"), "{}")?;
 
-    let manager = SyncManager::with_config(SyncConfig {
-        interval_ms: 1000,
-        debounce_ms: 0,
-    }, None);
+    let manager = SyncManager::with_config(
+        SyncConfig {
+            interval_ms: 1000,
+            debounce_ms: 0,
+        },
+        None,
+    );
 
     // When: We get changed files (should only track code files)
     let _ = manager.sync_codebase(temp_dir.path()).await;

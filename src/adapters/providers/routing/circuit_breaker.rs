@@ -98,8 +98,6 @@ pub(crate) enum CBMessage {
     OnFailure,
     GetState(oneshot::Sender<CircuitBreakerState>),
     GetMetrics(oneshot::Sender<CircuitBreakerMetrics>),
-    #[allow(dead_code)]
-    ApplySnapshot(CircuitBreakerSnapshot),
 }
 
 /// Trait for circuit breaker
@@ -315,9 +313,6 @@ impl CircuitBreakerActor {
                 }
                 CBMessage::GetMetrics(tx) => {
                     let _ = tx.send(self.metrics.clone());
-                }
-                CBMessage::ApplySnapshot(snapshot) => {
-                    self.apply_snapshot(snapshot);
                 }
             }
         }

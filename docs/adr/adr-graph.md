@@ -9,9 +9,9 @@ digraph {
 	_2 -> _3 [style="dotted", weight=1];
 	_4 [label="ADR 004: Multi-Provider Strategy"; URL="004-multi-provider-strategy.html"];
 	_3 -> _4 [style="dotted", weight=1];
-	_5 [label="ADR 005: Documentation Excellence v0.0.4"; URL="005-documentation-excellence-v0.0.4.html"];
+	_5 [label="ADR 005: Documentation Excellence v0.1.0"; URL="005-documentation-excellence-v0.1.0.html"];
 	_4 -> _5 [style="dotted", weight=1];
-	_6 [label="ADR 006: Code Audit and Architecture Improvements v0.0.4"; URL="006-code-audit-and-improvements-v0.0.4.html"];
+	_6 [label="ADR 006: Code Audit and Architecture Improvements v0.1.0"; URL="006-code-audit-and-improvements-v0.1.0.html"];
 	_5 -> _6 [style="dotted", weight=1];
   }
 }

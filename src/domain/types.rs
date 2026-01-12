@@ -4,30 +4,11 @@
 //! platform. These types represent the core business concepts of code intelligence,
 //! from semantic embeddings that capture code meaning to search results that deliver
 //! business value to development teams.
-//!
-//! ## Business Domain Overview
-//!
-//! - **Embeddings**: AI-generated semantic representations of code meaning
-//! - **Code Chunks**: Intelligently processed code segments with context
-//! - **Search Results**: Ranked, relevant code discoveries for developers
-//! - **Languages**: Supported programming languages with specialized processing
-//!
-//! ## Enterprise Value
-//!
-//! These domain types enable the transformation of raw code repositories into
-//! searchable business intelligence, making complex codebases accessible through
-//! natural language queries and accelerating development team productivity.
 
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 /// AI Semantic Understanding Representation
-///
-/// An Embedding captures the semantic meaning of code or text through AI analysis.
-/// This business entity transforms human-readable code into mathematical representations
-/// that enable semantic similarity comparisons, powering the "find code by meaning"
-/// capability that accelerates development teams from hours of searching to seconds
-/// of discovery.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, Validate)]
 pub struct Embedding {
     /// The embedding vector values
@@ -42,11 +23,6 @@ pub struct Embedding {
 }
 
 /// Intelligent Code Segment with Business Context
-///
-/// A CodeChunk represents a semantically meaningful segment of code that has been
-/// processed for enterprise search. This business entity combines the actual code
-/// content with rich metadata that enables precise, contextually relevant search
-/// results for development teams seeking specific functionality or patterns.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Validate)]
 pub struct CodeChunk {
     /// Unique identifier for this code chunk
@@ -75,9 +51,6 @@ pub struct CodeChunk {
 }
 
 /// Supported programming languages
-///
-/// Defines the programming languages that the system can process.
-/// Language detection is based on file extensions and syntax analysis.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Language {
     Rust,
@@ -95,6 +68,15 @@ pub enum Language {
     Kotlin,
     Scala,
     Haskell,
+    Shell,
+    SQL,
+    HTML,
+    XML,
+    JSON,
+    YAML,
+    TOML,
+    Markdown,
+    PlainText,
     Unknown,
 }
 
@@ -111,26 +93,18 @@ pub enum OperationType {
 /// Query performance metrics tracking
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct QueryPerformanceMetrics {
-    /// Total number of queries processed
     pub total_queries: u64,
-    /// Average query latency in milliseconds
     pub average_latency: f64,
-    /// 99th percentile latency in milliseconds
     pub p99_latency: f64,
-    /// Query success rate (0-100)
     pub success_rate: f64,
 }
 
 /// Cache performance metrics tracking
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct CacheMetrics {
-    /// Total cache hits
     pub hits: u64,
-    /// Total cache misses
     pub misses: u64,
-    /// Cache hit rate percentage (0-100)
     pub hit_rate: f64,
-    /// Current cache size in bytes
     pub size: u64,
 }
 
@@ -176,28 +150,98 @@ impl Language {
             "kt" => Language::Kotlin,
             "scala" => Language::Scala,
             "hs" => Language::Haskell,
+            "sh" | "bash" | "zsh" | "fish" => Language::Shell,
+            "sql" => Language::SQL,
+            "html" => Language::HTML,
+            "xml" => Language::XML,
+            "json" => Language::JSON,
+            "yaml" | "yml" => Language::YAML,
+            "toml" => Language::TOML,
+            "md" | "markdown" => Language::Markdown,
+            "txt" | "text" => Language::PlainText,
             _ => Language::Unknown,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Language::Rust => "Rust",
+            Language::Python => "Python",
+            Language::JavaScript => "JavaScript",
+            Language::TypeScript => "TypeScript",
+            Language::Go => "Go",
+            Language::Java => "Java",
+            Language::C => "C",
+            Language::Cpp => "Cpp",
+            Language::CSharp => "CSharp",
+            Language::Php => "Php",
+            Language::Ruby => "Ruby",
+            Language::Swift => "Swift",
+            Language::Kotlin => "Kotlin",
+            Language::Scala => "Scala",
+            Language::Haskell => "Haskell",
+            Language::Shell => "Shell",
+            Language::SQL => "SQL",
+            Language::HTML => "HTML",
+            Language::XML => "XML",
+            Language::JSON => "JSON",
+            Language::YAML => "YAML",
+            Language::TOML => "TOML",
+            Language::Markdown => "Markdown",
+            Language::PlainText => "PlainText",
+            Language::Unknown => "Unknown",
+        }
+    }
+}
+
+impl std::fmt::Display for Language {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl std::str::FromStr for Language {
+    type Err = ();
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "Rust" => Ok(Language::Rust),
+            "Python" => Ok(Language::Python),
+            "JavaScript" => Ok(Language::JavaScript),
+            "TypeScript" => Ok(Language::TypeScript),
+            "Go" => Ok(Language::Go),
+            "Java" => Ok(Language::Java),
+            "C" => Ok(Language::C),
+            "Cpp" => Ok(Language::Cpp),
+            "CSharp" => Ok(Language::CSharp),
+            "Php" => Ok(Language::Php),
+            "Ruby" => Ok(Language::Ruby),
+            "Swift" => Ok(Language::Swift),
+            "Kotlin" => Ok(Language::Kotlin),
+            "Scala" => Ok(Language::Scala),
+            "Haskell" => Ok(Language::Haskell),
+            "Shell" => Ok(Language::Shell),
+            "SQL" => Ok(Language::SQL),
+            "HTML" => Ok(Language::HTML),
+            "XML" => Ok(Language::XML),
+            "JSON" => Ok(Language::JSON),
+            "YAML" => Ok(Language::YAML),
+            "TOML" => Ok(Language::TOML),
+            "Markdown" => Ok(Language::Markdown),
+            "PlainText" => Ok(Language::PlainText),
+            _ => Ok(Language::Unknown),
         }
     }
 }
 
 /// Semantic search result
-///
-/// Represents a single result from a semantic code search operation.
-/// Contains the matched code snippet with relevance scoring and metadata.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SearchResult {
-    /// Unique identifier from the vector store
     pub id: String,
-    /// Path to the file containing the match
     pub file_path: String,
-    /// Line number where the match starts
-    pub line_number: u32,
-    /// The actual code content that matched
+    pub start_line: u32,
     pub content: String,
-    /// Relevance score (higher = more relevant)
     pub score: f32,
-    /// Additional metadata about the match
     pub metadata: serde_json::Value,
 }
 
@@ -232,17 +276,70 @@ pub struct VectorStoreConfig {
     pub token: Option<String>,
     pub collection: Option<String>,
     pub dimensions: Option<usize>,
-    /// Connection timeout in seconds (default: 10)
     pub timeout_secs: Option<u64>,
 }
 
 /// Sync batch for queue processing
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SyncBatch {
-    /// Unique identifier for this batch
     pub id: String,
-    /// Path to the codebase being synced
     pub path: String,
-    /// Timestamp when the batch was created
     pub created_at: u64,
+}
+
+/// Statistics for repository operations
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct RepositoryStats {
+    pub total_chunks: u64,
+    pub total_collections: u64,
+    pub storage_size_bytes: u64,
+    pub avg_chunk_size_bytes: f64,
+}
+
+/// Statistics for search operations
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct SearchStats {
+    pub total_queries: u64,
+    pub avg_response_time_ms: f64,
+    pub cache_hit_rate: f64,
+    pub indexed_documents: u64,
+}
+
+/// File snapshot with metadata
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FileSnapshot {
+    pub path: String,
+    pub size: u64,
+    pub modified: u64,
+    pub hash: String,
+    pub extension: String,
+}
+
+/// Codebase snapshot with all files
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CodebaseSnapshot {
+    pub root_path: String,
+    pub created_at: u64,
+    pub files: std::collections::HashMap<String, FileSnapshot>,
+    pub file_count: usize,
+    pub total_size: u64,
+}
+
+/// Changes between snapshots
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SnapshotChanges {
+    pub added: Vec<String>,
+    pub modified: Vec<String>,
+    pub removed: Vec<String>,
+    pub unchanged: Vec<String>,
+}
+
+impl SnapshotChanges {
+    pub fn has_changes(&self) -> bool {
+        !self.added.is_empty() || !self.modified.is_empty() || !self.removed.is_empty()
+    }
+
+    pub fn total_changes(&self) -> usize {
+        self.added.len() + self.modified.len() + self.removed.len()
+    }
 }

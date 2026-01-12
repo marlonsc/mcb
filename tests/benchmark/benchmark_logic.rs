@@ -44,7 +44,7 @@ fn create_benchmark_providers() -> (
 fn create_benchmark_context_service() -> ContextService {
     let (embedding_provider, vector_store_provider, hybrid_search_provider) =
         create_benchmark_providers();
-    ContextService::new(
+    ContextService::new_with_providers(
         embedding_provider,
         vector_store_provider,
         hybrid_search_provider,
@@ -586,7 +586,7 @@ pub fn bench_mcp_operations(c: &mut Criterion) {
                 let search_result = SearchResult {
                     id: "bench-test-1".to_string(),
                     file_path: "auth.rs".to_string(),
-                    line_number: 1,
+                    start_line: 1,
                     content: "fn authenticate_user() {}".to_string(),
                     score: 0.95,
                     metadata: serde_json::json!({"tool": "search_code"}),

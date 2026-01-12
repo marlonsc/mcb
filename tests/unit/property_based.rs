@@ -31,7 +31,7 @@ mod property_tests {
     // Property: Line numbers should maintain their relative ordering
     proptest! {
         #[test]
-        fn test_line_number_ordering(
+        fn test_start_line_ordering(
             start in 1..10000u32,
             end_offset in 0..1000u32
         ) {

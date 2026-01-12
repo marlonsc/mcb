@@ -73,7 +73,7 @@ impl ResponseFormatter {
                 "**{}.** 📁 `{}` (line {})\n",
                 i + 1,
                 result.file_path,
-                result.line_number
+                result.start_line
             ));
 
             Self::format_code_preview(message, result);

@@ -109,6 +109,12 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .to_string();
+                let start_line = metadata
+                    .get("start_line")
+                    .or_else(|| metadata.get("line_number"))
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0) as u32;
+
                 SearchResult {
                     id,
                     file_path: metadata
@@ -116,10 +122,7 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
                         .and_then(|v| v.as_str())
                         .unwrap_or("")
                         .to_string(),
-                    line_number: metadata
-                        .get("line_number")
-                        .and_then(|v| v.as_u64())
-                        .unwrap_or(0) as u32,
+                    start_line,
                     content: metadata
                         .get("content")
                         .and_then(|v| v.as_str())
@@ -149,6 +152,102 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
             !ids.contains(&generated_id.to_string())
         });
         Ok(())
+    }
+
+    async fn get_vectors_by_ids(
+        &self,
+        collection: &str,
+        ids: &[String],
+    ) -> Result<Vec<SearchResult>> {
+        let coll = self
+            .collections
+            .get(collection)
+            .ok_or_else(|| Error::vector_db(format!("Collection '{}' not found", collection)))?;
+
+        let results = coll
+            .iter()
+            .filter(|(_embedding, metadata)| {
+                let generated_id = metadata
+                    .get("generated_id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                ids.contains(&generated_id.to_string())
+            })
+            .map(|(_embedding, metadata)| {
+                let id = metadata
+                    .get("generated_id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let start_line = metadata
+                    .get("start_line")
+                    .or_else(|| metadata.get("line_number"))
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0) as u32;
+
+                SearchResult {
+                    id,
+                    file_path: metadata
+                        .get("file_path")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    start_line,
+                    content: metadata
+                        .get("content")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    score: 1.0, // Exact match
+                    metadata: serde_json::to_value(metadata).unwrap_or(serde_json::json!({})),
+                }
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    async fn list_vectors(&self, collection: &str, limit: usize) -> Result<Vec<SearchResult>> {
+        let coll = self
+            .collections
+            .get(collection)
+            .ok_or_else(|| Error::vector_db(format!("Collection '{}' not found", collection)))?;
+
+        let results = coll
+            .iter()
+            .take(limit)
+            .map(|(_embedding, metadata)| {
+                let id = metadata
+                    .get("generated_id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let start_line = metadata
+                    .get("start_line")
+                    .or_else(|| metadata.get("line_number"))
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0) as u32;
+
+                SearchResult {
+                    id,
+                    file_path: metadata
+                        .get("file_path")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    start_line,
+                    content: metadata
+                        .get("content")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    score: 1.0,
+                    metadata: serde_json::to_value(metadata).unwrap_or(serde_json::json!({})),
+                }
+            })
+            .collect();
+
+        Ok(results)
     }
 
     async fn get_stats(&self, collection: &str) -> Result<HashMap<String, serde_json::Value>> {

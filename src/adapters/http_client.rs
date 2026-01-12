@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 /// Trait for HTTP client pool operations (enables DI and testing)
-pub trait HttpClientProvider: Send + Sync {
+pub trait HttpClientProvider: shaku::Interface + Send + Sync {
     /// Get a reference to the underlying reqwest Client
     fn client(&self) -> &Client;
 
@@ -63,9 +63,12 @@ impl Default for HttpClientConfig {
 }
 
 /// Thread-safe HTTP client pool
-#[derive(Clone)]
+#[derive(Clone, shaku::Component)]
+#[shaku(interface = HttpClientProvider)]
 pub struct HttpClientPool {
+    #[shaku(default = Client::new())] // This is just for shaku, will be overwritten in new() or used defaults
     client: Client,
+    #[shaku(default = HttpClientConfig::default())]
     config: HttpClientConfig,
 }
 

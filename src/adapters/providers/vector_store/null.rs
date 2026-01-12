@@ -2,19 +2,20 @@
 
 use crate::domain::error::{Error, Result};
 use crate::domain::ports::VectorStoreProvider;
-use crate::domain::types::Embedding;
+use crate::domain::types::{Embedding, SearchResult};
 use async_trait::async_trait;
 use dashmap::DashMap;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// Null storage entry type
+type CollectionEntry = (Embedding, HashMap<String, serde_json::Value>);
+
 /// Null vector store provider for testing
-#[allow(clippy::type_complexity)]
 pub struct NullVectorStoreProvider {
-    collections: Arc<DashMap<String, Vec<(Embedding, HashMap<String, serde_json::Value>)>>>,
+    collections: Arc<DashMap<String, Vec<CollectionEntry>>>,
 }
 
-#[allow(dead_code, clippy::needless_borrows_for_generic_args)]
 impl NullVectorStoreProvider {
     /// Create a new null vector store provider
     pub fn new() -> Self {
@@ -68,7 +69,7 @@ impl VectorStoreProvider for NullVectorStoreProvider {
         _query_vector: &[f32],
         _limit: usize,
         _filter: Option<&str>,
-    ) -> Result<Vec<crate::domain::types::SearchResult>> {
+    ) -> Result<Vec<SearchResult>> {
         // Null provider always returns empty results
         Ok(Vec::new())
     }
@@ -76,6 +77,19 @@ impl VectorStoreProvider for NullVectorStoreProvider {
     async fn delete_vectors(&self, _collection: &str, _ids: &[String]) -> Result<()> {
         Ok(())
     }
+
+    async fn get_vectors_by_ids(
+        &self,
+        _collection: &str,
+        _ids: &[String],
+    ) -> Result<Vec<SearchResult>> {
+        Ok(Vec::new())
+    }
+
+    async fn list_vectors(&self, _collection: &str, _limit: usize) -> Result<Vec<SearchResult>> {
+        Ok(Vec::new())
+    }
+
 
     async fn get_stats(
         &self,

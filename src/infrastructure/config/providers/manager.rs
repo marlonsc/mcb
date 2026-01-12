@@ -1,8 +1,8 @@
 //! Provider configuration manager implementation
 
+use super::{EmbeddingProviderConfig, ProviderHealth, ProviderRequirements};
 use crate::domain::error::{Error, Result};
 use dashmap::DashMap;
-use super::{EmbeddingProviderConfig, ProviderHealth, ProviderRequirements};
 
 /// Provider configuration manager
 pub struct ProviderConfigManager {

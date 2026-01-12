@@ -58,7 +58,10 @@
     </div>
 
     <!-- Providers Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" x-show="providers.length > 0" x-transition>
+    <div id="providers-grid" 
+         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+         x-show="providers.length > 0" 
+         x-transition>
         <template x-for="provider in providers" :key="provider.id">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
                 <div class="flex items-start justify-between">
@@ -249,10 +252,11 @@ function providers() {
 
                 const data = await response.json();
                 if (data.success) {
-                    // Refresh providers list via HTMX
-                    htmx.trigger('#providers-grid', 'refresh');
+                    // Refresh providers list
+                    await this.loadProviders();
                     this.$store.modals.addProvider = false;
                     this.resetNewProvider();
+                    toast.success('Provider added successfully');
                 } else {
                     toast.error(data.error || 'Failed to add provider', 'Provider Error');
                 }
@@ -278,7 +282,7 @@ function providers() {
 
                     const data = await response.json();
                     if (data.success) {
-                        htmx.trigger('#providers-grid', 'refresh');
+                        await this.loadProviders();
                         toast.success(`Provider "${provider.name}" deleted successfully`, 'Provider Removed');
                     } else {
                         toast.error(data.error || 'Failed to delete provider', 'Deletion Failed');

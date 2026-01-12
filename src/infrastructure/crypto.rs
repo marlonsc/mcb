@@ -3,8 +3,6 @@
 //! Provides AES-256-GCM encryption for sensitive data stored on disk.
 //! Implements envelope encryption with data keys and master keys.
 
-
-
 use crate::domain::error::{Error, Result};
 use aes_gcm::{
     aead::{Aead, KeyInit},

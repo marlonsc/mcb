@@ -32,7 +32,7 @@ async fn test_filesystem_vector_store() -> std::result::Result<(), Box<dyn std::
     let metadata = vec![{
         let mut meta = HashMap::new();
         meta.insert("file_path".to_string(), serde_json::json!("test.rs"));
-        meta.insert("line_number".to_string(), serde_json::json!(42));
+        meta.insert("start_line".to_string(), serde_json::json!(42));
         meta.insert("content".to_string(), serde_json::json!("test content"));
         meta
     }];

@@ -419,15 +419,15 @@ impl FilesystemVectorStore {
             {
                 let similarity = self.cosine_similarity(query_vector, &vector);
 
-                // Extract file path and line number from metadata
                 let file_path = metadata
                     .get("file_path")
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown")
                     .to_string();
 
-                let line_number = metadata
-                    .get("line_number")
+                let start_line = metadata
+                    .get("start_line")
+                    .or_else(|| metadata.get("line_number"))
                     .and_then(|v| v.as_u64())
                     .unwrap_or(0) as u32;
 
@@ -440,7 +440,7 @@ impl FilesystemVectorStore {
                 results.push(SearchResult {
                     id: entry.id.clone(),
                     file_path,
-                    line_number,
+                    start_line,
                     content,
                     score: similarity,
                     metadata: serde_json::to_value(&metadata).unwrap_or_default(),
@@ -610,6 +610,105 @@ impl VectorStoreProvider for FilesystemVectorStore {
         // Save state
         self.save_collection_state(collection).await?;
         Ok(())
+    }
+
+    async fn get_vectors_by_ids(
+        &self,
+        collection: &str,
+        ids: &[String],
+    ) -> Result<Vec<SearchResult>> {
+        // Ensure state is loaded
+        if !self.next_shard_ids.contains_key(collection) {
+            self.load_collection_state(collection).await?;
+        }
+
+        let mut results = Vec::new();
+        for id in ids {
+            if let Some(entry) = self.index_cache.get(&(collection.to_string(), id.clone())) {
+                if let Ok((_, metadata)) = self
+                    .read_vector_from_shard(collection, entry.shard_id, entry.offset)
+                    .await
+                {
+                    let file_path = metadata
+                        .get("file_path")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+
+                    let start_line = metadata
+                        .get("start_line")
+                        .or_else(|| metadata.get("line_number"))
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(0) as u32;
+
+                    let content = metadata
+                        .get("content")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string();
+
+                    results.push(SearchResult {
+                        id: id.clone(),
+                        file_path,
+                        start_line,
+                        content,
+                        score: 1.0,
+                        metadata: serde_json::to_value(&metadata).unwrap_or_default(),
+                    });
+                }
+            }
+        }
+        Ok(results)
+    }
+
+    async fn list_vectors(&self, collection: &str, limit: usize) -> Result<Vec<SearchResult>> {
+        // Ensure state is loaded
+        if !self.next_shard_ids.contains_key(collection) {
+            self.load_collection_state(collection).await?;
+        }
+
+        let mut results = Vec::new();
+        let entries: Vec<_> = self.index_cache
+            .iter()
+            .filter(|r| r.key().0 == collection)
+            .take(limit)
+            .map(|r| (r.key().1.clone(), r.value().clone()))
+            .collect();
+
+        for (id, entry) in entries {
+            if let Ok((_vector, metadata)) = self
+                .read_vector_from_shard(collection, entry.shard_id, entry.offset)
+                .await
+            {
+                let file_path = metadata
+                    .get("file_path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                let start_line = metadata
+                    .get("start_line")
+                    .or_else(|| metadata.get("line_number"))
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0) as u32;
+
+                let content = metadata
+                    .get("content")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+
+                results.push(SearchResult {
+                    id,
+                    file_path,
+                    start_line,
+                    content,
+                    score: 1.0,
+                    metadata: serde_json::to_value(&metadata).unwrap_or_default(),
+                });
+            }
+        }
+        Ok(results)
     }
 
     async fn get_stats(

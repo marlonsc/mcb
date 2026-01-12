@@ -78,9 +78,7 @@ async fn providers_handler(State(state): State<AdminState>) -> impl IntoResponse
 async fn indexes_handler(State(state): State<AdminState>) -> impl IntoResponse {
     let mut context = Context::new();
     context.insert("page", "indexes");
-    // "indexes.html" was not in the list but "indexes_list.html" was in htmx/
-    // Let's assume there is a top-level page or we use dashboard
-    render_template(&state.templates, "dashboard.html", &context)
+    render_template(&state.templates, "indexes.html", &context)
 }
 
 async fn configuration_handler(State(state): State<AdminState>) -> impl IntoResponse {
@@ -123,7 +121,10 @@ async fn css_handler() -> impl IntoResponse {
     Response::builder()
         .header("Content-Type", "text/css")
         .body(css.to_string())
-        .unwrap()
+        .map_err(|e| {
+            tracing::error!("Failed to build CSS response: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })
 }
 
 // --- HTMX Handlers ---

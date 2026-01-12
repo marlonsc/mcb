@@ -134,22 +134,19 @@ impl McpServer {
         let (embedding_provider, vector_store_provider) =
             Self::create_providers(&service_provider, config, http_client).await?;
 
-        // Initialize hybrid search
-        let (sender, receiver) = tokio::sync::mpsc::channel(100);
-        let actor = crate::adapters::HybridSearchActor::new(
-            receiver,
-            config.hybrid_search.bm25_weight,
-            config.hybrid_search.semantic_weight,
-        );
-        tokio::spawn(async move {
-            actor.run().await;
-        });
-        let hybrid_search_provider = Arc::new(crate::adapters::HybridSearchAdapter::new(sender));
+        // Create repositories
+        let chunk_repository = Arc::new(crate::adapters::repository::VectorStoreChunkRepository::new(
+            Arc::clone(&embedding_provider),
+            Arc::clone(&vector_store_provider),
+        ));
+        let search_repository = Arc::new(crate::adapters::repository::VectorStoreSearchRepository::new(
+            Arc::clone(&vector_store_provider),
+        ));
 
         let context_service = Arc::new(crate::application::ContextService::new(
+            chunk_repository,
+            search_repository,
             embedding_provider,
-            vector_store_provider,
-            hybrid_search_provider,
         ));
 
         // Create sync manager if cache is available
@@ -159,9 +156,16 @@ impl McpServer {
             Some(cache_manager),
         ));
 
+        // Initialize context service with default data
+        if let Err(e) = context_service.initialize("default").await {
+            tracing::warn!("[SERVER] Failed to initialize context service: {}", e);
+        }
+
         // Create services
-        let indexing_service =
-            Arc::new(IndexingService::new(context_service.clone(), Some(sync_manager))?);
+        let indexing_service = Arc::new(IndexingService::new(
+            context_service.clone(),
+            Some(sync_manager),
+        )?);
         let search_service = Arc::new(SearchService::new(context_service));
 
         Ok((auth_handler, indexing_service, search_service))
@@ -456,7 +460,8 @@ impl McpServer {
     /// Removes all indexed data for the specified collection.
     /// This operation is destructive and requires re-indexing afterwards.
     /// Use with caution in production environments.
-    async fn clear_index(
+    /// Clear the search index
+    pub async fn clear_index(
         &self,
         parameters: Parameters<ClearIndexArgs>,
     ) -> Result<CallToolResult, McpError> {

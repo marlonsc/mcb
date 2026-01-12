@@ -1,12 +1,12 @@
 //! Context daemon implementation
 
+use super::{DaemonConfig, DaemonStats};
 use crate::domain::error::{Error, Result};
 use crate::domain::types::SyncBatch;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time;
-use super::{DaemonConfig, DaemonStats};
 
 /// Internal atomic statistics
 pub(crate) struct AtomicDaemonStats {

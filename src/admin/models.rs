@@ -59,7 +59,7 @@ pub struct IndexOperationRequest {
 }
 
 /// System configuration
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SystemConfig {
     pub providers: Vec<ProviderInfo>,
     pub indexing: IndexingConfig,
@@ -68,7 +68,7 @@ pub struct SystemConfig {
 }
 
 /// Indexing configuration
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct IndexingConfig {
     pub chunk_size: usize,
     pub chunk_overlap: usize,
@@ -78,7 +78,7 @@ pub struct IndexingConfig {
 }
 
 /// Security configuration
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SecurityConfig {
     pub enable_auth: bool,
     pub rate_limiting: bool,
@@ -86,7 +86,7 @@ pub struct SecurityConfig {
 }
 
 /// Metrics configuration
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MetricsConfig {
     pub enabled: bool,
     pub collection_interval: u64,

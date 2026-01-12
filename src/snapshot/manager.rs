@@ -1,12 +1,12 @@
 //! Snapshot manager for incremental codebase tracking
 
+use super::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 use crate::domain::error::{Error, Result};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use super::{FileSnapshot, CodebaseSnapshot, SnapshotChanges};
 
 /// Snapshot manager for incremental tracking
 pub struct SnapshotManager {

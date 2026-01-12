@@ -4,7 +4,7 @@
 //! instead of dynamic dispatch, implementing the Strategy pattern.
 
 use mcp_context_browser::domain::ports::{EmbeddingProvider, VectorStoreProvider};
-use mcp_context_browser::application::context::{ContextService, GenericContextService};
+use mcp_context_browser::application::context::ContextService;
 use mcp_context_browser::domain::error::Result;
 use mcp_context_browser::{CodeChunk, Embedding, SearchResult};
 use std::sync::Arc;
@@ -33,7 +33,7 @@ mod generic_context_service_tests {
         let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
 
         // Create generic context service with compile-time strategy types
-        let context_service = GenericContextService::new(
+        let context_service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             dummy_hybrid_search(),
@@ -47,7 +47,7 @@ mod generic_context_service_tests {
         let embedding_provider = Arc::new(MockEmbeddingProvider::new());
         let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
 
-        let context_service = GenericContextService::new(
+        let context_service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             dummy_hybrid_search(),
@@ -72,7 +72,7 @@ mod generic_context_service_tests {
         let embedding_provider = Arc::new(MockEmbeddingProvider::new());
         let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
 
-        let context_service = GenericContextService::new(
+        let context_service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             dummy_hybrid_search(),
@@ -109,7 +109,7 @@ mod strategy_pattern_tests {
         let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
 
         // Create a service that composes these strategies
-        let service = GenericContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             dummy_hybrid_search(),
@@ -129,7 +129,7 @@ mod strategy_pattern_tests {
         let embedding_provider = Arc::new(MockEmbeddingProvider::new());
         let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
 
-        let service = GenericContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider.clone(),
             vector_store_provider.clone(),
             dummy_hybrid_search(),
@@ -183,7 +183,7 @@ mod integration_tests {
         let embedding_provider = Arc::new(MockEmbeddingProvider::new());
         let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
 
-        let context_service = GenericContextService::new(
+        let context_service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             dummy_hybrid_search(),
@@ -208,7 +208,7 @@ mod integration_tests {
         let embedding_provider = Arc::new(MockEmbeddingProvider::new());
         let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
 
-        let service = GenericContextService::new(
+        let service = ContextService::new_with_providers(
             embedding_provider,
             vector_store_provider,
             dummy_hybrid_search(),

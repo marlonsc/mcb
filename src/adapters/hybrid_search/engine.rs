@@ -51,10 +51,21 @@ impl HybridSearchEngine {
         }
     }
 
-    /// Index documents for BM25 scoring
-    pub fn index_documents(&mut self, documents: Vec<CodeChunk>) {
-        self.documents = documents;
+    /// Add documents for BM25 scoring
+    pub fn add_documents(&mut self, new_documents: Vec<CodeChunk>) {
+        // Simple deduplication based on ID
+        for doc in new_documents {
+            if !self.documents.iter().any(|d| d.id == doc.id) {
+                self.documents.push(doc);
+            }
+        }
         self.bm25_scorer = Some(BM25Scorer::new(&self.documents, BM25Params::default()));
+    }
+
+    /// Clear all documents and reset BM25 index
+    pub fn clear(&mut self) {
+        self.documents.clear();
+        self.bm25_scorer = None;
     }
 
     /// Perform hybrid search combining BM25 and semantic similarity
@@ -96,7 +107,7 @@ impl HybridSearchEngine {
             .map(|semantic_result| {
                 let doc_key = format!(
                     "{}:{}",
-                    semantic_result.file_path, semantic_result.line_number
+                    semantic_result.file_path, semantic_result.start_line
                 );
                 let semantic_score = semantic_result.score;
 

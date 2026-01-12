@@ -64,7 +64,7 @@ impl HybridSearchActor {
                     // Rebuild BM25 index with all documents
                     let all_docs: Vec<CodeChunk> =
                         self.indexed_docs.values().flatten().cloned().collect();
-                    self.engine.index_documents(all_docs);
+                    self.engine.add_documents(all_docs);
                 }
                 HybridSearchMessage::Search {
                     query,
@@ -79,7 +79,7 @@ impl HybridSearchActor {
                     self.indexed_docs.remove(&collection);
                     let all_docs: Vec<CodeChunk> =
                         self.indexed_docs.values().flatten().cloned().collect();
-                    self.engine.index_documents(all_docs);
+                    self.engine.add_documents(all_docs);
                 }
                 HybridSearchMessage::GetStats { respond_to } => {
                     let mut stats = HashMap::new();

@@ -3,18 +3,17 @@
 //! This module provides search functionality over indexed code chunks.
 
 use crate::adapters::hybrid_search::HybridSearchEngine;
-use crate::adapters::repository::{SearchRepository, SearchStats};
 use crate::domain::error::Result;
-use crate::domain::ports::VectorStoreProvider;
-use crate::domain::types::{CodeChunk, SearchResult};
+use crate::domain::ports::{SearchRepository, VectorStoreProvider};
+use crate::domain::types::{CodeChunk, SearchResult, SearchStats};
 use async_trait::async_trait;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// Vector store backed search repository with hybrid search support
-pub struct VectorStoreSearchRepository<V> {
-    vector_store_provider: Arc<V>,
+pub struct VectorStoreSearchRepository {
+    vector_store_provider: Arc<dyn VectorStoreProvider>,
     hybrid_engine: Arc<RwLock<HybridSearchEngine>>,
     stats: SearchStatsTracker,
 }
@@ -38,8 +37,8 @@ impl Default for SearchStatsTracker {
     }
 }
 
-impl<V> VectorStoreSearchRepository<V> {
-    pub fn new(vector_store_provider: Arc<V>) -> Self {
+impl VectorStoreSearchRepository {
+    pub fn new(vector_store_provider: Arc<dyn VectorStoreProvider>) -> Self {
         Self {
             vector_store_provider,
             hybrid_engine: Arc::new(RwLock::new(HybridSearchEngine::new(0.3, 0.7))),
@@ -52,12 +51,8 @@ impl<V> VectorStoreSearchRepository<V> {
     }
 }
 
-// Additional implementation methods
 #[async_trait]
-impl<V> SearchRepository for VectorStoreSearchRepository<V>
-where
-    V: VectorStoreProvider + Send + Sync,
-{
+impl SearchRepository for VectorStoreSearchRepository {
     async fn semantic_search(
         &self,
         collection: &str,
@@ -67,7 +62,6 @@ where
     ) -> Result<Vec<SearchResult>> {
         let collection_name = self.collection_name(collection);
 
-        // Check if collection exists
         if !self
             .vector_store_provider
             .collection_exists(&collection_name)
@@ -76,49 +70,17 @@ where
             return Ok(vec![]);
         }
 
-        // Perform semantic search using vector similarity
-        let results = self
-            .vector_store_provider
+        self.vector_store_provider
             .search_similar(&collection_name, query_vector, limit, filter)
-            .await?;
-
-        // Convert to SearchResult format
-        let search_results: Vec<SearchResult> = results
-            .into_iter()
-            .map(|result| SearchResult {
-                id: result.id.clone(),
-                file_path: result
-                    .metadata
-                    .get("file_path")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
-                line_number: result
-                    .metadata
-                    .get("start_line")
-                    .and_then(|v| v.as_u64())
-                    .unwrap_or(0) as u32,
-                content: result
-                    .metadata
-                    .get("content")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
-                score: result.score,
-                metadata: result.metadata,
-            })
-            .collect();
-
-        Ok(search_results)
+            .await
     }
 
     async fn index_for_hybrid_search(&self, chunks: &[CodeChunk]) -> Result<()> {
-        // Index documents for BM25 scoring in the hybrid engine
         let mut engine = self.hybrid_engine.write().await;
-        engine.index_documents(chunks.to_vec());
+        engine.add_documents(chunks.to_vec());
         self.stats
             .indexed_documents
-            .store(chunks.len() as u64, Ordering::Relaxed);
+            .store(engine.documents.len() as u64, Ordering::Relaxed);
         Ok(())
     }
 
@@ -132,27 +94,22 @@ where
         let start = std::time::Instant::now();
         self.stats.total_queries.fetch_add(1, Ordering::Relaxed);
 
-        // Get semantic search results from vector store
         let semantic_results = self
             .semantic_search(collection, query_vector, limit * 2, None)
             .await?;
 
-        // Apply hybrid search (BM25 + semantic) using the engine
         let engine = self.hybrid_engine.read().await;
         let hybrid_results = engine.hybrid_search(query, semantic_results, limit)?;
 
-        // Track response time
         let elapsed = start.elapsed().as_millis() as u64;
         self.stats
             .total_response_time_ms
             .fetch_add(elapsed, Ordering::Relaxed);
 
-        // Convert HybridSearchResult to SearchResult
         Ok(hybrid_results.into_iter().map(|hr| hr.result).collect())
     }
 
     async fn clear_index(&self, collection: &str) -> Result<()> {
-        // Clear the collection from vector store
         let collection_name = self.collection_name(collection);
         if self
             .vector_store_provider
@@ -164,7 +121,6 @@ where
                 .await?;
         }
 
-        // Reset hybrid engine
         let mut engine = self.hybrid_engine.write().await;
         *engine = HybridSearchEngine::new(0.3, 0.7);
         self.stats.indexed_documents.store(0, Ordering::Relaxed);

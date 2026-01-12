@@ -139,7 +139,7 @@ Transform MCP Context Browser from a filesystem-based indexer to a git-aware sem
 | v0.0.1 | Released | Initial prototype |
 | v0.0.2 | Released | Core architecture |
 | v0.0.3 | Released | Production foundation |
-| v0.0.4 | Released | Documentation excellence, clean architecture |
+| v0.1.0 | Released | Documentation excellence, clean architecture |
 | v0.1.0 | **Released** | First stable release, claude-context replacement |
 | v0.2.0 | **Planned** | Git-aware semantic indexing |
 | v0.3.0 | Future | Advanced code intelligence |
