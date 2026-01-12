@@ -14,7 +14,9 @@
 //! # Example
 //!
 //! ```rust,no_run
-//! use mcp_context_browser::infrastructure::recovery::RecoveryManager;
+//! use std::sync::Arc;
+//! use mcp_context_browser::infrastructure::recovery::{RecoveryManager, RecoveryManagerInterface};
+//! use mcp_context_browser::infrastructure::events::EventBus;
 //! use mcp_context_browser::daemon::types::RecoveryConfig;
 //!
 //! async fn example() {

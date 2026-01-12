@@ -389,6 +389,10 @@ impl McpServer {
                     consecutive_failures: 0,
                     total_checks: 1,
                     response_time: None,
+                    history: std::collections::VecDeque::with_capacity(10),
+                    trend: crate::adapters::providers::routing::health::HealthTrend::Unknown,
+                    avg_response_time: std::time::Duration::ZERO,
+                    success_rate: if matches!(status, crate::adapters::providers::routing::health::ProviderHealthStatus::Healthy) { 1.0 } else { 0.0 },
                 },
             );
         }
@@ -408,6 +412,10 @@ impl McpServer {
                     consecutive_failures: 0,
                     total_checks: 1,
                     response_time: None,
+                    history: std::collections::VecDeque::with_capacity(10),
+                    trend: crate::adapters::providers::routing::health::HealthTrend::Unknown,
+                    avg_response_time: std::time::Duration::ZERO,
+                    success_rate: if matches!(status, crate::adapters::providers::routing::health::ProviderHealthStatus::Healthy) { 1.0 } else { 0.0 },
                 },
             );
         }

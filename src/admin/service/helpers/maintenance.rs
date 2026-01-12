@@ -101,47 +101,6 @@ pub fn restart_provider(
     })
 }
 
-/// Restart all providers of a specific type or all providers
-pub fn restart_all_providers(
-    event_bus: &SharedEventBus,
-    provider_names: &[(String, String)], // Vec of (type, id)
-) -> Result<MaintenanceResult, AdminError> {
-    let start_time = std::time::Instant::now();
-    let mut restarted = 0;
-
-    for (provider_type, provider_id) in provider_names {
-        if let Err(e) = event_bus.publish(crate::infrastructure::events::SystemEvent::ProviderRestart {
-            provider_type: provider_type.clone(),
-            provider_id: provider_id.clone(),
-        }) {
-            tracing::warn!(
-                "[ADMIN] Failed to publish restart for {}:{}: {}",
-                provider_type,
-                provider_id,
-                e
-            );
-        } else {
-            restarted += 1;
-        }
-    }
-
-    tracing::info!(
-        "[ADMIN] Requested restart for {} providers",
-        restarted
-    );
-
-    Ok(MaintenanceResult {
-        success: true,
-        operation: "restart_all_providers".to_string(),
-        message: format!(
-            "Restart signals sent for {} providers. \
-             The RecoveryManager will handle restarts asynchronously.",
-            restarted
-        ),
-        affected_items: restarted,
-        execution_time_ms: start_time.elapsed().as_millis() as u64,
-    })
-}
 
 /// Request index rebuild
 pub fn rebuild_index(

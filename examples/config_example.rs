@@ -620,3 +620,8 @@ pub async fn demonstrate_professional_config() -> Result<(), Box<dyn std::error:
 
     Ok(())
 }
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    demonstrate_professional_config().await
+}

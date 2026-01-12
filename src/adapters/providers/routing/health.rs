@@ -522,6 +522,10 @@ impl HealthMonitorTrait for HealthMonitor {
                 consecutive_failures: 0,
                 total_checks: 0,
                 response_time: None,
+                history: VecDeque::with_capacity(MAX_HEALTH_HISTORY),
+                trend: HealthTrend::Unknown,
+                avg_response_time: Duration::ZERO,
+                success_rate: 0.0,
             });
 
         health.last_check = Instant::now();

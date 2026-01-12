@@ -246,7 +246,6 @@ async fn test_expired_token_rejected() {
 
 #[tokio::test]
 async fn test_token_expiration_time() {
-    use jsonwebtoken::{decode, DecodingKey, Validation};
 
     let jwt_expiration: u64 = 3600;
     let auth_service = AuthService::new(

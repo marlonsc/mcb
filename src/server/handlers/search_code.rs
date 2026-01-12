@@ -5,7 +5,7 @@
 //! the search process with proper error handling and timeouts.
 
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use rmcp::ErrorData as McpError;
 use serde_json;
 use std::sync::Arc;
@@ -179,8 +179,8 @@ impl SearchCodeHandler {
                     )
                     .await;
 
-                // Use the simplified response formatting that was moved to the search method
-                Self::format_search_response_with_cache(&query, &results, duration)
+                // Use the response formatter
+                ResponseFormatter::format_search_response(&query, &results, duration, false)
             }
             Ok(Err(e)) => Ok(ResponseFormatter::format_search_error(
                 &e.to_string(),
@@ -190,111 +190,4 @@ impl SearchCodeHandler {
         }
     }
 
-    /// Format search response (extracted from the original implementation)
-    fn format_search_response_with_cache(
-        query: &str,
-        results: &[crate::domain::types::SearchResult],
-        duration: std::time::Duration,
-    ) -> Result<CallToolResult, McpError> {
-        let mut message = "🔍 **Semantic Code Search Results**\n\n".to_string();
-        message.push_str(&format!("**Query:** \"{}\" \n", query));
-        message.push_str(&format!(
-            "**Search completed in:** {:.2}s\n",
-            duration.as_secs_f64()
-        ));
-        message.push_str(&format!("**Results found:** {}\n\n", results.len()));
-
-        if results.is_empty() {
-            message.push_str("❌ **No Results Found**\n\n");
-            message.push_str("**Possible Reasons:**\n");
-            message.push_str("• Codebase not indexed yet (run `index_codebase` first)\n");
-            message.push_str("• Query terms not present in the codebase\n");
-            message.push_str("• Try different keywords or more general terms\n\n");
-            message.push_str("**💡 Search Tips:**\n");
-            message.push_str(
-                "• Use natural language: \"find error handling\", \"authentication logic\"\n",
-            );
-            message.push_str("• Be specific: \"HTTP request middleware\" > \"middleware\"\n");
-            message.push_str("• Include technologies: \"React component state management\"\n");
-            message.push_str("• Try synonyms: \"validate\" instead of \"check\"\n");
-        } else {
-            message.push_str("📊 **Search Results:**\n\n");
-
-            for (i, result) in results.iter().enumerate() {
-                message.push_str(&format!(
-                    "**{}.** 📁 `{}` (line {})\n",
-                    i + 1,
-                    result.file_path,
-                    result.start_line
-                ));
-
-                // Add context lines around the match for better understanding
-                let lines: Vec<&str> = result.content.lines().collect();
-                let preview_lines = if lines.len() > 10 {
-                    lines
-                        .iter()
-                        .take(10)
-                        .cloned()
-                        .collect::<Vec<_>>()
-                        .join("\n")
-                } else {
-                    result.content.clone()
-                };
-
-                // Detect language for syntax highlighting
-                let file_ext = std::path::Path::new(&result.file_path)
-                    .extension()
-                    .and_then(|ext| ext.to_str())
-                    .unwrap_or("");
-
-                let lang_hint = match file_ext {
-                    "rs" => "rust",
-                    "py" => "python",
-                    "js" => "javascript",
-                    "ts" => "typescript",
-                    "go" => "go",
-                    "java" => "java",
-                    "cpp" | "cc" | "cxx" => "cpp",
-                    "c" => "c",
-                    "cs" => "csharp",
-                    _ => "",
-                };
-
-                if lang_hint.is_empty() {
-                    message.push_str(&format!("```\n{}\n```\n", preview_lines));
-                } else {
-                    message.push_str(&format!("``` {}\n{}\n```\n", lang_hint, preview_lines));
-                }
-
-                message.push_str(&format!("🎯 **Relevance Score:** {:.3}\n\n", result.score));
-            }
-
-            // Add pagination hint if we hit the limit
-            if results.len() == 10 {
-                message.push_str(&format!(
-                    "💡 **Showing top {} results.** For more results, try:\n",
-                    10
-                ));
-                message.push_str("• More specific search terms\n");
-                message.push_str("• Different query formulations\n");
-                message.push_str("• Breaking complex queries into simpler ones\n");
-            }
-
-            // Performance insights
-            if duration.as_millis() > 1000 {
-                message.push_str(&format!(
-                    "\n⚠️ **Performance Note:** Search took {:.2}s. \
-                    Consider using more specific queries for faster results.\n",
-                    duration.as_secs_f64()
-                ));
-            }
-        }
-
-        tracing::info!(
-            "Search completed: found {} results in {:?}",
-            results.len(),
-            duration
-        );
-        Ok(CallToolResult::success(vec![Content::text(message)]))
-    }
 }

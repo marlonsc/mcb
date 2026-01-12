@@ -51,7 +51,6 @@ pub mod adapters;
 pub mod admin;
 pub mod application;
 pub mod chunking;
-pub mod config_example;
 pub mod daemon;
 pub mod domain;
 pub mod infrastructure;

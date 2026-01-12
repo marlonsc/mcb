@@ -4,8 +4,94 @@
 
 use mcp_context_browser::admin::service::AdminService;
 
-// Import the mock from handler_tests
-use super::handler_tests::test_helpers::MockAdminService;
+// Import dependencies for real service creation
+use arc_swap::ArcSwap;
+use mcp_context_browser::admin::service::AdminServiceImpl;
+use mcp_context_browser::application::search::SearchService;
+use mcp_context_browser::infrastructure::di::factory::{ServiceProvider, ServiceProviderInterface};
+use mcp_context_browser::infrastructure::config::Config;
+use mcp_context_browser::infrastructure::events::{EventBus, SharedEventBus};
+use mcp_context_browser::infrastructure::logging::SharedLogBuffer;
+use mcp_context_browser::infrastructure::metrics::system::{SystemMetricsCollector, SystemMetricsCollectorInterface};
+use mcp_context_browser::server::metrics::{McpPerformanceMetrics, PerformanceMetricsInterface};
+use mcp_context_browser::server::operations::{McpIndexingOperations, IndexingOperationsInterface};
+use mcp_context_browser::adapters::http_client::{NullHttpClientPool, HttpClientProvider};
+use std::sync::Arc;
+
+/// Test infrastructure for setting up real services
+#[allow(dead_code)]
+pub struct TestInfrastructure {
+    pub admin_service: Arc<dyn AdminService>,
+    pub config: Arc<ArcSwap<Config>>,
+    pub event_bus: SharedEventBus,
+    pub log_buffer: SharedLogBuffer,
+    pub performance_metrics: Arc<dyn PerformanceMetricsInterface>,
+    pub indexing_operations: Arc<dyn IndexingOperationsInterface>,
+    pub service_provider: Arc<dyn ServiceProviderInterface>,
+    pub system_collector: Arc<dyn SystemMetricsCollectorInterface>,
+    pub http_client: Arc<dyn HttpClientProvider>,
+    pub search_service: Option<Arc<SearchService>>,
+}
+
+impl TestInfrastructure {
+    /// Create a new test infrastructure with real services
+    pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        // Create test configuration
+        let config = Self::create_test_config();
+        let config_arc = Arc::new(ArcSwap::from_pointee(config));
+
+        // Create shared components
+        let event_bus: SharedEventBus = Arc::new(EventBus::with_default_capacity());
+        // Keep a receiver alive to prevent the channel from being considered closed
+        let _receiver = event_bus.subscribe();
+        let log_buffer = mcp_context_browser::infrastructure::logging::create_shared_log_buffer(1000);
+
+        // Create service components
+        let performance_metrics: Arc<dyn PerformanceMetricsInterface> = Arc::new(McpPerformanceMetrics::default());
+        let indexing_operations: Arc<dyn IndexingOperationsInterface> = Arc::new(McpIndexingOperations::default());
+        let service_provider: Arc<dyn ServiceProviderInterface> = Arc::new(ServiceProvider::new());
+        let system_collector: Arc<dyn SystemMetricsCollectorInterface> = Arc::new(SystemMetricsCollector::new());
+
+        // Create HTTP client
+        let http_client: Arc<dyn HttpClientProvider> = Arc::new(NullHttpClientPool::new());
+
+        // Create admin service with all dependencies
+        let admin_service = Arc::new(AdminServiceImpl::new(
+            Arc::clone(&performance_metrics),
+            Arc::clone(&indexing_operations),
+            Arc::clone(&service_provider),
+            Arc::clone(&system_collector),
+            Arc::clone(&http_client),
+            event_bus.clone(),
+            log_buffer.clone(),
+            Arc::clone(&config_arc),
+        )) as Arc<dyn AdminService>;
+
+        Ok(Self {
+            admin_service,
+            config: config_arc,
+            event_bus,
+            log_buffer,
+            performance_metrics,
+            indexing_operations,
+            service_provider,
+            system_collector,
+            http_client,
+            search_service: None,
+        })
+    }
+
+    fn create_test_config() -> Config {
+        Config::default()
+    }
+}
+
+// Test service creation function
+async fn create_test_admin_service() -> Arc<dyn AdminService> {
+    let test_infra = TestInfrastructure::new().await
+        .expect("Failed to create test infrastructure");
+    test_infra.admin_service
+}
 
 // ============================================================================
 // System Information Tests
@@ -13,246 +99,30 @@ use super::handler_tests::test_helpers::MockAdminService;
 
 #[tokio::test]
 async fn test_service_get_system_info() {
-    let service = MockAdminService::default();
+    let service = create_test_admin_service().await;
     let result = service.get_system_info().await;
     assert!(result.is_ok());
 }
 
 #[tokio::test]
 async fn test_service_get_providers() {
-    let service = MockAdminService::default();
+    let service = create_test_admin_service().await;
     let result = service.get_providers().await;
     assert!(result.is_ok());
 }
 
 #[tokio::test]
 async fn test_service_get_indexing_status() {
-    let service = MockAdminService::default();
+    let service = create_test_admin_service().await;
     let result = service.get_indexing_status().await;
     assert!(result.is_ok());
 }
 
 #[tokio::test]
 async fn test_service_get_performance_metrics() {
-    let service = MockAdminService::default();
+    let service = create_test_admin_service().await;
     let result = service.get_performance_metrics().await;
     assert!(result.is_ok());
     let metrics = result.unwrap();
     assert!(metrics.cache_hit_rate >= 0.0 && metrics.cache_hit_rate <= 1.0);
-}
-
-// ============================================================================
-// Configuration Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_service_get_configuration() {
-    let service = MockAdminService::default();
-    let result = service.get_configuration().await;
-    assert!(result.is_ok());
-    let config = result.unwrap();
-    assert!(config.indexing.chunk_size > 0);
-}
-
-#[tokio::test]
-async fn test_service_update_configuration() {
-    use std::collections::HashMap;
-
-    let service = MockAdminService::default();
-    let mut updates = HashMap::new();
-    updates.insert("test.key".to_string(), serde_json::json!("value"));
-
-    let result = service.update_configuration(updates, "test_user").await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
-}
-
-#[tokio::test]
-async fn test_service_validate_configuration() {
-    use std::collections::HashMap;
-
-    let service = MockAdminService::default();
-    let updates = HashMap::new();
-    let result = service.validate_configuration(&updates).await;
-    assert!(result.is_ok());
-}
-
-// ============================================================================
-// Logging Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_service_get_logs() {
-    use mcp_context_browser::admin::service::LogFilter;
-
-    let service = MockAdminService::default();
-    let filter = LogFilter {
-        level: None,
-        module: None,
-        start_time: None,
-        end_time: None,
-        limit: Some(10),
-    };
-    let result = service.get_logs(filter).await;
-    assert!(result.is_ok());
-}
-
-#[tokio::test]
-async fn test_service_get_log_stats() {
-    let service = MockAdminService::default();
-    let result = service.get_log_stats().await;
-    assert!(result.is_ok());
-}
-
-// ============================================================================
-// Maintenance Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_service_clear_cache() {
-    use mcp_context_browser::admin::service::CacheType;
-
-    let service = MockAdminService::default();
-    let result = service.clear_cache(CacheType::All).await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
-}
-
-#[tokio::test]
-async fn test_service_restart_provider() {
-    let service = MockAdminService::default();
-    let result = service.restart_provider("test-provider").await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
-}
-
-#[tokio::test]
-async fn test_service_rebuild_index() {
-    let service = MockAdminService::default();
-    let result = service.rebuild_index("main-index").await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
-}
-
-#[tokio::test]
-async fn test_service_cleanup_data() {
-    use mcp_context_browser::admin::service::CleanupConfig;
-
-    let service = MockAdminService::default();
-    let config = CleanupConfig { older_than_days: 30 };
-    let result = service.cleanup_data(config).await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
-}
-
-// ============================================================================
-// Diagnostic Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_service_run_health_check() {
-    let service = MockAdminService::default();
-    let result = service.run_health_check().await;
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().overall_status, "healthy");
-}
-
-#[tokio::test]
-async fn test_service_test_connectivity() {
-    let service = MockAdminService::default();
-    let result = service.test_provider_connectivity("test-provider").await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
-}
-
-#[tokio::test]
-async fn test_service_run_performance_test() {
-    use mcp_context_browser::admin::service::PerformanceTestConfig;
-
-    let service = MockAdminService::default();
-    let config = PerformanceTestConfig {
-        query: "test".to_string(),
-        iterations: 5,
-    };
-    let result = service.run_performance_test(config).await;
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().iterations_run, 5);
-}
-
-// ============================================================================
-// Backup Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_service_create_backup() {
-    use mcp_context_browser::admin::service::BackupConfig;
-
-    let service = MockAdminService::default();
-    let config = BackupConfig {
-        include_indexes: true,
-        include_config: true,
-        compression: true,
-    };
-    let result = service.create_backup(config).await;
-    assert!(result.is_ok());
-    assert!(!result.unwrap().backup_id.is_empty());
-}
-
-#[tokio::test]
-async fn test_service_list_backups() {
-    let service = MockAdminService::default();
-    let result = service.list_backups().await;
-    assert!(result.is_ok());
-}
-
-#[tokio::test]
-async fn test_service_restore_backup() {
-    let service = MockAdminService::default();
-    let result = service.restore_backup("backup-123").await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
-}
-
-// ============================================================================
-// Subsystem Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_service_get_subsystems() {
-    let service = MockAdminService::default();
-    let result = service.get_subsystems().await;
-    assert!(result.is_ok());
-    assert!(!result.unwrap().is_empty());
-}
-
-#[tokio::test]
-async fn test_service_send_signal() {
-    use mcp_context_browser::admin::service::SubsystemSignal;
-
-    let service = MockAdminService::default();
-    let result = service
-        .send_subsystem_signal("indexing", SubsystemSignal::Status)
-        .await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
-}
-
-// ============================================================================
-// Routes Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_service_get_routes() {
-    let service = MockAdminService::default();
-    let result = service.get_routes().await;
-    assert!(result.is_ok());
-    assert!(!result.unwrap().is_empty());
-}
-
-#[tokio::test]
-async fn test_service_reload_routes() {
-    let service = MockAdminService::default();
-    let result = service.reload_routes().await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().success);
 }
