@@ -14,7 +14,7 @@ use std::time::Instant;
 use crate::application::SearchService;
 use crate::domain::validation::{StringValidator, StringValidatorTrait, ValidationError};
 use crate::infrastructure::auth::Permission;
-use crate::infrastructure::cache::{CacheManager, CacheResult};
+use crate::infrastructure::cache::SharedCacheProvider;
 use crate::infrastructure::limits::ResourceLimits;
 use crate::server::args::SearchCodeArgs;
 use crate::server::auth::AuthHandler;
@@ -25,7 +25,7 @@ pub struct SearchCodeHandler {
     search_service: Arc<SearchService>,
     auth_handler: Arc<AuthHandler>,
     resource_limits: Arc<ResourceLimits>,
-    cache_manager: Arc<CacheManager>,
+    cache_provider: Option<SharedCacheProvider>,
 }
 
 impl SearchCodeHandler {
@@ -34,13 +34,13 @@ impl SearchCodeHandler {
         search_service: Arc<SearchService>,
         auth_handler: Arc<AuthHandler>,
         resource_limits: Arc<ResourceLimits>,
-        cache_manager: Arc<CacheManager>,
+        cache_provider: Option<SharedCacheProvider>,
     ) -> Self {
         Self {
             search_service,
             auth_handler,
             resource_limits,
-            cache_manager,
+            cache_provider,
         }
     }
 
@@ -128,26 +128,25 @@ impl SearchCodeHandler {
         let limit = limit.clamp(1, 50); // Reasonable bounds for performance
         let collection = "default";
 
-        // Check cache for search results
+        // Check cache for search results (if cache is enabled)
         let cache_key = format!("{}:{}:{}", collection, query, limit);
-        let cached_result: CacheResult<serde_json::Value> =
-            self.cache_manager.get("search_results", &cache_key).await;
-
-        if let CacheResult::Hit(cached_data) = cached_result {
-            if let Ok(search_results) =
-                serde_json::from_value::<Vec<crate::domain::types::SearchResult>>(cached_data)
-            {
-                tracing::info!(
-                    "✅ Search cache hit for query: '{}' (limit: {})",
-                    query,
-                    limit
-                );
-                return ResponseFormatter::format_search_response(
-                    &query,
-                    &search_results,
-                    start_time.elapsed(),
-                    true,
-                );
+        if let Some(ref cache) = self.cache_provider {
+            if let Ok(Some(cached_bytes)) = cache.get("search_results", &cache_key).await {
+                if let Ok(search_results) =
+                    serde_json::from_slice::<Vec<crate::domain::types::SearchResult>>(&cached_bytes)
+                {
+                    tracing::info!(
+                        "✅ Search cache hit for query: '{}' (limit: {})",
+                        query,
+                        limit
+                    );
+                    return ResponseFormatter::format_search_response(
+                        &query,
+                        &search_results,
+                        start_time.elapsed(),
+                        true,
+                    );
+                }
             }
         }
 
@@ -169,15 +168,19 @@ impl SearchCodeHandler {
 
         match result {
             Ok(Ok(results)) => {
-                // Cache search results
-                let _ = self
-                    .cache_manager
-                    .set(
-                        "search_results",
-                        &cache_key,
-                        serde_json::to_value(&results).unwrap_or_default(),
-                    )
-                    .await;
+                // Cache search results (if cache is enabled)
+                if let Some(ref cache) = self.cache_provider {
+                    if let Ok(serialized) = serde_json::to_vec(&results) {
+                        let _ = cache
+                            .set(
+                                "search_results",
+                                &cache_key,
+                                serialized,
+                                std::time::Duration::from_secs(1800), // 30 minutes
+                            )
+                            .await;
+                    }
+                }
 
                 // Use the response formatter
                 ResponseFormatter::format_search_response(&query, &results, duration, false)

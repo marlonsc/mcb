@@ -3,6 +3,7 @@
 use super::{DaemonConfig, DaemonStats};
 use crate::domain::error::{Error, Result};
 use crate::domain::types::SyncBatch;
+use crate::infrastructure::cache::{SharedCacheProvider, CacheProviderQueue};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -56,7 +57,7 @@ impl AtomicDaemonStats {
 /// Background daemon for maintenance tasks
 pub struct ContextDaemon {
     config: DaemonConfig,
-    cache_manager: Option<Arc<crate::infrastructure::cache::CacheManager>>,
+    cache_manager: Option<SharedCacheProvider>,
     stats: Arc<AtomicDaemonStats>,
     running: Arc<AtomicBool>,
 }
@@ -70,7 +71,7 @@ impl ContextDaemon {
     /// Create a new daemon with custom config
     pub fn with_config(
         config: DaemonConfig,
-        cache_manager: Option<Arc<crate::infrastructure::cache::CacheManager>>,
+        cache_manager: Option<SharedCacheProvider>,
     ) -> Self {
         Self {
             config,
@@ -179,7 +180,7 @@ impl ContextDaemon {
     async fn run_cleanup_cycle(
         stats: &Arc<AtomicDaemonStats>,
         max_age_secs: u64,
-        cache_manager: &Option<Arc<crate::infrastructure::cache::CacheManager>>,
+        cache_manager: &Option<SharedCacheProvider>,
     ) -> Result<()> {
         let mut cleaned_count = 0;
         if let Some(cache) = cache_manager {
@@ -222,7 +223,7 @@ impl ContextDaemon {
     /// Run a single monitoring cycle
     async fn run_monitoring_cycle(
         stats: &Arc<AtomicDaemonStats>,
-        cache_manager: &Option<Arc<crate::infrastructure::cache::CacheManager>>,
+        cache_manager: &Option<SharedCacheProvider>,
     ) -> Result<()> {
         let mut queue_size = 0;
         if let Some(cache) = cache_manager {

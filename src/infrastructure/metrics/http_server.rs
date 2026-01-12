@@ -9,7 +9,7 @@ use axum::{extract::State, http::StatusCode, response::Json, routing::get, Route
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::infrastructure::cache::{CacheManager, CacheStats};
+use crate::infrastructure::cache::{SharedCacheProvider, CacheStats};
 use crate::infrastructure::limits::ResourceLimits;
 use crate::infrastructure::rate_limit::RateLimiter;
 // Rate limiting middleware will be added later
@@ -52,7 +52,7 @@ pub struct MetricsApiServer {
     start_time: std::time::Instant,
     _rate_limiter: Option<Arc<RateLimiter>>,
     resource_limits: Option<Arc<ResourceLimits>>,
-    cache_manager: Option<Arc<CacheManager>>,
+    cache_provider: Option<SharedCacheProvider>,
     external_router: Option<Router>,
     /// MCP protocol router (merged under /mcp/* path)
     mcp_router: Option<Router>,
@@ -82,7 +82,7 @@ impl MetricsApiServer {
         performance_metrics: Arc<dyn PerformanceMetricsInterface>,
         rate_limiter: Option<Arc<RateLimiter>>,
         resource_limits: Option<Arc<ResourceLimits>>,
-        cache_manager: Option<Arc<CacheManager>>,
+        cache_provider: Option<SharedCacheProvider>,
     ) -> Self {
         Self {
             port,
@@ -91,7 +91,7 @@ impl MetricsApiServer {
             start_time: std::time::Instant::now(),
             _rate_limiter: rate_limiter,
             resource_limits,
-            cache_manager,
+            cache_provider,
             external_router: None,
             mcp_router: None,
         }
@@ -133,7 +133,7 @@ impl MetricsApiServer {
             start_time: self.start_time,
             _rate_limiter: self._rate_limiter.clone(),
             resource_limits: self.resource_limits.clone(),
-            cache_manager: self.cache_manager.clone(),
+            cache_provider: self.cache_provider.clone(),
         };
 
         let mut router = Router::new()
@@ -230,8 +230,8 @@ impl MetricsApiServer {
         };
 
         // Get cache stats if available
-        let cache_stats = if let Some(ref cache_manager) = state.cache_manager {
-            Some(cache_manager.get_stats().await)
+        let cache_stats = if let Some(ref cache_provider) = state.cache_provider {
+            cache_provider.get_stats("metadata").await.ok()
         } else {
             None
         };
@@ -360,5 +360,5 @@ struct MetricsServerState {
     start_time: std::time::Instant,
     _rate_limiter: Option<Arc<RateLimiter>>,
     resource_limits: Option<Arc<ResourceLimits>>,
-    cache_manager: Option<Arc<CacheManager>>,
+    cache_provider: Option<SharedCacheProvider>,
 }

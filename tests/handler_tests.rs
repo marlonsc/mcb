@@ -30,7 +30,9 @@ async fn create_test_admin_service() -> std::sync::Arc<dyn AdminService> {
     let http_client = Arc::new(NullHttpClientPool::new());
 
     // Create event bus with a dummy subscriber to prevent channel closure
-    let event_bus: std::sync::Arc<dyn mcp_context_browser::infrastructure::events::EventBusProvider> = Arc::new(EventBus::with_default_capacity());
+    let event_bus: std::sync::Arc<
+        dyn mcp_context_browser::infrastructure::events::EventBusProvider,
+    > = Arc::new(EventBus::with_default_capacity());
     // Keep a receiver alive to prevent the channel from being considered closed
     let _receiver = event_bus.subscribe().await;
     let log_buffer = logging::create_shared_log_buffer(1000);

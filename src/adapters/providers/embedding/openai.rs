@@ -3,7 +3,7 @@
 use crate::domain::error::{Error, Result};
 use crate::domain::ports::EmbeddingProvider;
 use crate::domain::types::Embedding;
-use crate::infrastructure::cache::{CacheManager, CacheResult};
+use crate::infrastructure::cache::SharedCacheProvider;
 use async_trait::async_trait;
 use std::sync::Arc;
 use std::time::Duration;
@@ -15,7 +15,7 @@ pub struct OpenAIEmbeddingProvider {
     model: String,
     timeout: Duration,
     http_client: Arc<dyn crate::adapters::http_client::HttpClientProvider>,
-    cache_manager: Option<Arc<CacheManager>>,
+    cache_provider: Option<SharedCacheProvider>,
 }
 
 impl OpenAIEmbeddingProvider {
@@ -41,7 +41,7 @@ impl OpenAIEmbeddingProvider {
             model,
             timeout,
             http_client,
-            cache_manager: None,
+            cache_provider: None,
         })
     }
 
@@ -62,13 +62,13 @@ impl OpenAIEmbeddingProvider {
             model,
             timeout,
             http_client,
-            cache_manager: None,
+            cache_provider: None,
         }
     }
 
-    /// Set the cache manager for this provider
-    pub fn with_cache(mut self, cache_manager: Arc<CacheManager>) -> Self {
-        self.cache_manager = Some(cache_manager);
+    /// Set the cache provider for this provider
+    pub fn with_cache(mut self, cache_provider: SharedCacheProvider) -> Self {
+        self.cache_provider = Some(cache_provider);
         self
     }
 
@@ -208,14 +208,13 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
         let mut uncached_texts = Vec::new();
         let mut uncached_indices = Vec::new();
 
-        if let Some(cache_manager) = &self.cache_manager {
+        if let Some(cache_provider) = &self.cache_provider {
             for (i, text) in texts.iter().enumerate() {
                 let cache_key = self.generate_cache_key(text);
-                let cache_result: CacheResult<Vec<f32>> =
-                    cache_manager.get("embeddings", &cache_key).await;
 
-                match cache_result {
-                    CacheResult::Hit(embedding_data) => {
+                if let Ok(Some(cached_bytes)) = cache_provider.get("embeddings", &cache_key).await {
+                    // Try to deserialize the cached embedding
+                    if let Ok(embedding_data) = serde_json::from_slice::<Vec<f32>>(&cached_bytes) {
                         cached_embeddings.push((
                             i,
                             Embedding {
@@ -224,12 +223,13 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
                                 dimensions: self.dimensions(),
                             },
                         ));
-                    }
-                    _ => {
-                        uncached_texts.push(text.clone());
-                        uncached_indices.push(i);
+                        continue;
                     }
                 }
+
+                // Cache miss or deserialization error
+                uncached_texts.push(text.clone());
+                uncached_indices.push(i);
             }
         } else {
             // No cache available, process all texts
@@ -243,13 +243,15 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
             new_embeddings = self.fetch_embeddings_from_api(&uncached_texts).await?;
 
             // Cache the new embeddings
-            if let Some(cache_manager) = &self.cache_manager {
+            if let Some(cache_provider) = &self.cache_provider {
                 for (i, embedding) in new_embeddings.iter().enumerate() {
                     let text = &uncached_texts[i];
                     let cache_key = self.generate_cache_key(text);
-                    let _ = cache_manager
-                        .set("embeddings", &cache_key, embedding.vector.clone())
-                        .await;
+                    if let Ok(serialized) = serde_json::to_vec(&embedding.vector) {
+                        let _ = cache_provider
+                            .set("embeddings", &cache_key, serialized, Duration::from_secs(7200))
+                            .await;
+                    }
                 }
             }
         }

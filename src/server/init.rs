@@ -6,7 +6,7 @@
 use crate::adapters::http_client::{HttpClientConfig, HttpClientPool};
 use crate::adapters::providers::routing::health::HealthMonitor;
 use crate::daemon::types::RecoveryConfig;
-use crate::infrastructure::cache::CacheManager;
+use crate::infrastructure::cache::{create_cache_provider, SharedCacheProvider};
 use crate::infrastructure::config::ConfigLoader;
 use crate::infrastructure::connection_tracker::{ConnectionTracker, ConnectionTrackerConfig};
 use crate::infrastructure::health::ActiveHealthMonitor;
@@ -67,7 +67,6 @@ fn init_tracing(
 /// - Connection tracker for graceful shutdown
 /// - Recovery manager for automatic component restart
 async fn initialize_server_components(
-    cache_manager: Option<Arc<CacheManager>>,
     log_buffer: crate::infrastructure::logging::SharedLogBuffer,
 ) -> Result<
     (
@@ -77,6 +76,7 @@ async fn initialize_server_components(
         Arc<dyn crate::adapters::http_client::HttpClientProvider>,
         Arc<ConnectionTracker>,
         SharedRecoveryManager,
+        Option<SharedCacheProvider>,
     ),
     Box<dyn std::error::Error>,
 > {
@@ -137,25 +137,25 @@ async fn initialize_server_components(
         None
     };
 
-    // Initialize cache manager
-    let cache_manager = if config.cache.enabled {
-        tracing::info!("🗄️  Initializing cache manager...");
-        match CacheManager::new(config.cache.clone(), Some(event_bus.clone())).await {
-            Ok(manager) => {
-                tracing::info!("✅ Cache manager initialized successfully");
-                Some(Arc::new(manager))
+    // Initialize cache provider
+    let cache_provider = if config.cache.enabled {
+        tracing::info!("🗄️  Initializing cache provider...");
+        match create_cache_provider(&config.cache).await {
+            Ok(provider) => {
+                tracing::info!("✅ Cache provider initialized successfully");
+                Some(provider)
             }
             Err(e) => {
                 tracing::warn!(
-                    "⚠️  Failed to initialize cache manager: {}. Running without caching.",
+                    "⚠️  Failed to initialize cache provider: {}. Running without caching.",
                     e
                 );
-                cache_manager // Use provided cache manager if available
+                None
             }
         }
     } else {
         tracing::info!("ℹ️  Caching disabled");
-        cache_manager
+        None
     };
 
     // Clone event_bus for recovery manager and health monitor before passing to builder
@@ -169,9 +169,7 @@ async fn initialize_server_components(
         .with_resource_limits(resource_limits.clone())
         .with_http_client(Arc::clone(&http_client));
 
-    if let Some(ref cm) = cache_manager {
-        builder = builder.with_cache(Arc::clone(cm));
-    }
+    builder = builder.with_cache_provider(cache_provider.clone());
 
     let server = match builder.build().await {
         Ok(server) => {
@@ -272,7 +270,7 @@ async fn initialize_server_components(
             server.performance_metrics(),
             rate_limiter.clone(),
             Some(resource_limits.clone()),
-            cache_manager.clone(),
+            cache_provider.clone(),
         );
 
         // Initialize admin API server (optional - only if credentials configured)
@@ -330,6 +328,7 @@ async fn initialize_server_components(
         http_client,
         connection_tracker,
         recovery_manager,
+        cache_provider,
     ))
 }
 
@@ -381,7 +380,8 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
         _http_client,
         connection_tracker,
         _recovery_manager,
-    ) = initialize_server_components(None, log_buffer).await?;
+        _cache_provider,
+    ) = initialize_server_components(log_buffer).await?;
 
     // Get transport mode from environment variable or default
     let transport_config = {

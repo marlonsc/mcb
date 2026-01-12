@@ -130,7 +130,6 @@ pub struct Config {
 
     /// Advanced caching configuration
     #[serde(default)]
-    #[validate(nested)]
     pub cache: CacheConfig,
     #[serde(default)]
     #[validate(nested)]

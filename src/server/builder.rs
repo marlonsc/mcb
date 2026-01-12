@@ -1,4 +1,4 @@
-use crate::infrastructure::cache::CacheManager;
+use crate::infrastructure::cache::{create_cache_provider, SharedCacheProvider};
 use crate::infrastructure::config::Config;
 use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::events::SharedEventBusProvider;
@@ -15,7 +15,7 @@ use std::sync::Arc;
 #[derive(Default)]
 pub struct McpServerBuilder {
     config: Option<Arc<ArcSwap<Config>>>,
-    cache_manager: Option<Arc<CacheManager>>,
+    cache_provider: Option<SharedCacheProvider>,
     event_bus: Option<SharedEventBusProvider>,
     log_buffer: Option<SharedLogBuffer>,
     performance_metrics: Option<Arc<dyn PerformanceMetricsInterface>>,
@@ -36,8 +36,8 @@ impl McpServerBuilder {
         self
     }
 
-    pub fn with_cache(mut self, cache_manager: Arc<CacheManager>) -> Self {
-        self.cache_manager = Some(cache_manager);
+    pub fn with_cache_provider(mut self, cache_provider: Option<SharedCacheProvider>) -> Self {
+        self.cache_provider = cache_provider;
         self
     }
 
@@ -142,12 +142,12 @@ impl McpServerBuilder {
             ),
         };
 
-        // Initialize cache manager if not provided
-        let cache_manager = match self.cache_manager {
-            Some(cm) => cm,
+        // Initialize cache provider if not provided
+        let cache_provider = match self.cache_provider {
+            Some(cp) => cp,
             None => {
                 let config = config_arc.load().cache.clone();
-                Arc::new(CacheManager::new(config, Some(event_bus.clone())).await?)
+                create_cache_provider(&config).await?
             }
         };
 
@@ -168,7 +168,7 @@ impl McpServerBuilder {
         // Use from_components to assemble the server
         McpServer::from_components(crate::server::mcp_server::ServerComponents {
             config: config_arc,
-            cache_manager,
+            cache_provider: Some(cache_provider),
             performance_metrics,
             indexing_operations,
             admin_service,

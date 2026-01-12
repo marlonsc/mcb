@@ -1,0 +1,124 @@
+# MCP Context Browser - Default Configuration
+# Only essential parameters are specified here.
+# All other parameters use sensible defaults from the code.
+# See docs/CONFIGURATION_DEFAULTS.md for complete reference.
+#
+# Last Updated: 2026-01-12
+
+# ============================================================================
+# SERVER - Core Network Settings
+# ============================================================================
+[server]
+host = "0.0.0.0"          # Listen on all interfaces
+port = 3000               # MCP server port
+
+# ============================================================================
+# METRICS & MONITORING - HTTP Server for Admin Dashboard
+# ============================================================================
+[metrics]
+enabled = true            # Enable metrics/admin HTTP server
+port = 3001               # HTTP server port (dashboard, metrics, health)
+
+# ============================================================================
+# ADMIN INTERFACE - Dashboard & Web UI
+# ============================================================================
+[admin]
+enabled = true            # Enable admin dashboard
+username = "admin"        # Admin username
+password = "admin"        # Admin password (change in production!)
+jwt_secret = "default-jwt-secret-change-in-production"  # JWT signing secret
+jwt_expiration = 3600     # Token expiration in seconds (1 hour)
+
+# ============================================================================
+# EMBEDDING PROVIDERS - AI Model for Semantic Search
+# ============================================================================
+[providers.embedding]
+provider = "ollama"       # Use Ollama for embeddings
+model = "nomic-embed-text" # Default embedding model
+# Additional optional parameters (use code defaults if not specified):
+# host = "localhost:11434"
+# dimensions = 768
+# max_tokens = 8192
+
+# ============================================================================
+# VECTOR STORE - Where Embeddings are Stored
+# ============================================================================
+[providers.vector_store]
+provider = "milvus"                    # Use Milvus for vector storage
+address = "http://localhost:19531"     # Milvus server address
+dimensions = 768                        # Vector dimensions (must match embedding)
+collection = "code_embeddings"         # Collection name in Milvus
+
+# ============================================================================
+# HYBRID SEARCH - Combined BM25 + Vector Search
+# ============================================================================
+[hybrid_search]
+enabled = true            # Enable hybrid search
+bm25_weight = 0.4         # Weight for BM25 text search (0-1)
+semantic_weight = 0.6     # Weight for vector similarity search (0-1)
+bm25_k1 = 1.2             # BM25 k1 parameter (affects term saturation)
+bm25_b = 0.75             # BM25 b parameter (field length normalization)
+
+# ============================================================================
+# CACHE - Performance Caching Layer
+# ============================================================================
+[cache]
+enabled = true                    # Enable caching
+redis_url = ""                    # Empty = use local Moka cache (recommended)
+                                  # Set to "redis://localhost:6379/0" for Redis
+# Additional optional parameters (use code defaults if not specified):
+# default_ttl_seconds = 3600
+# max_size = 10000
+
+# ============================================================================
+# DAEMON - Background Process Configuration
+# ============================================================================
+[daemon]
+cleanup_interval_secs = 30        # How often to clean up locks (seconds)
+monitoring_interval_secs = 30     # How often to monitor health (seconds)
+max_lock_age_secs = 300           # Max age of lock before cleanup (seconds)
+
+# ============================================================================
+# SYNCHRONIZATION - File Watching & Indexing
+# ============================================================================
+[sync]
+interval_ms = 900000              # Full sync interval (15 minutes)
+debounce_ms = 60000               # Debounce for file watches (60 seconds)
+
+# ============================================================================
+# BELOW: ALL PARAMETERS USE CODE DEFAULTS
+# ============================================================================
+# Uncomment and modify only if you need custom values:
+
+# [database]
+# enabled = false
+# url = ""                                    # Leave empty to disable
+# max_connections = 20
+# min_idle = 5
+# max_lifetime = 1800                        # seconds
+# idle_timeout = 600                         # seconds
+# connection_timeout = 30                    # seconds
+
+# [auth]
+# enabled = false
+# jwt_expiration = 86400                     # 24 hours
+# jwt_issuer = "mcp-context-browser"
+
+# [resource_limits]
+# enabled = true
+# [resource_limits.memory]
+# max_usage_percent = 85.0
+# max_per_operation = 536870912             # 512MB
+# warning_threshold = 75.0
+# [resource_limits.cpu]
+# max_usage_percent = 80.0
+# warning_threshold = 70.0
+# [resource_limits.disk]
+# max_usage_percent = 90.0
+# min_free_space = 1073741824               # 1GB
+# warning_threshold = 80.0
+# [resource_limits.operations]
+# max_concurrent_indexing = 3
+# max_concurrent_search = 10
+# max_concurrent_embedding = 5
+# max_queue_size = 100

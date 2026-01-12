@@ -166,7 +166,8 @@ async fn test_sync_with_event_bus_publishes_event() -> Result<(), Box<dyn std::e
 
     // Then: An event should be published
     // Use timeout to avoid hanging if event not published
-    let event: Result<Result<SystemEvent, _>, _> = tokio::time::timeout(std::time::Duration::from_millis(500), receiver.recv()).await;
+    let event: Result<Result<SystemEvent, _>, _> =
+        tokio::time::timeout(std::time::Duration::from_millis(500), receiver.recv()).await;
 
     assert!(event.is_ok(), "Should receive event within timeout");
     match event? {

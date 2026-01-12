@@ -407,8 +407,14 @@ impl AdminService for AdminServiceImpl {
             },
             cache: CacheConfigData {
                 enabled: config.cache.enabled,
-                max_size: config.cache.max_size as u64,
-                ttl_seconds: config.cache.default_ttl_seconds,
+                max_size: match &config.cache.backend {
+                    crate::infrastructure::cache::CacheBackendConfig::Local {
+                        max_entries,
+                        ..
+                    } => *max_entries as u64,
+                    crate::infrastructure::cache::CacheBackendConfig::Redis { .. } => 0,
+                },
+                ttl_seconds: config.cache.backend.default_ttl().as_secs(),
             },
             database: DatabaseConfigData {
                 url: config.database.url.clone(),
@@ -1005,7 +1011,14 @@ impl AdminService for AdminServiceImpl {
             },
             config: serde_json::json!({
                 "enabled": cache_enabled,
-                "max_size": self.config.load().cache.max_size,
+                "backend": match &self.config.load().cache.backend {
+                    crate::infrastructure::cache::CacheBackendConfig::Local { max_entries, .. } => {
+                        serde_json::json!({ "type": "local", "max_entries": max_entries })
+                    }
+                    crate::infrastructure::cache::CacheBackendConfig::Redis { url, .. } => {
+                        serde_json::json!({ "type": "redis", "url": url })
+                    }
+                },
             }),
             metrics: SubsystemMetrics {
                 cpu_percent: if cache_enabled {

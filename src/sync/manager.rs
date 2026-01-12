@@ -7,11 +7,11 @@
 
 use crate::domain::error::Result;
 use crate::domain::types::SyncBatch;
+use crate::infrastructure::cache::{SharedCacheProvider, CacheProviderQueue};
 use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
 use dashmap::DashMap;
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 use validator::Validate;
@@ -100,7 +100,7 @@ impl AtomicSyncStats {
 /// Synchronization manager with cross-process coordination
 pub struct SyncManager {
     config: SyncConfig,
-    cache_manager: Option<Arc<crate::infrastructure::cache::CacheManager>>,
+    cache_manager: Option<SharedCacheProvider>,
     last_sync_times: DashMap<String, Instant>,
     file_mod_times: DashMap<String, u64>,
     stats: AtomicSyncStats,
@@ -122,7 +122,7 @@ impl SyncManager {
     /// Create a new sync manager with custom config
     pub fn with_config(
         config: SyncConfig,
-        cache_manager: Option<Arc<crate::infrastructure::cache::CacheManager>>,
+        cache_manager: Option<SharedCacheProvider>,
     ) -> Self {
         Self {
             config,
@@ -138,7 +138,7 @@ impl SyncManager {
     pub fn with_event_bus(
         config: SyncConfig,
         event_bus: SharedEventBusProvider,
-        cache_manager: Option<Arc<crate::infrastructure::cache::CacheManager>>,
+        cache_manager: Option<SharedCacheProvider>,
     ) -> Self {
         Self {
             config,

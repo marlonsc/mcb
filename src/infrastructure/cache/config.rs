@@ -1,27 +1,176 @@
 //! Cache configuration types
 //!
-//! Defines configuration structures for the caching system including
-//! namespace-specific settings, TTLs, and cache entry metadata.
+//! Defines configuration structures for the caching system including:
+//! - Backend selection (Local Moka or Remote Redis)
+//! - Namespace-specific TTL and size settings
+//! - Cache entry metadata structures
+//!
+//! ## Backend Selection
+//!
+//! Use environment variables to select cache backend:
+//! ```bash
+//! # Local mode (default)
+//! export MCP_CACHE__BACKEND=local
+//! export MCP_CACHE__TTL_SECONDS=3600
+//!
+//! # Remote mode
+//! export MCP_CACHE__BACKEND=redis
+//! export MCP_REDIS_URL=redis://localhost:6379
+//! export MCP_CACHE__TTL_SECONDS=3600
+//! ```
+//!
+//! Or use TOML configuration:
+//! ```toml
+//! [cache]
+//! enabled = true
+//! backend = "local"  # or "redis"
+//! default_ttl_seconds = 3600
+//!
+//! [cache.backends.redis]
+//! url = "redis://localhost:6379"
+//! pool_size = 10
+//! ```
 
 use crate::domain::error::Error;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 use validator::Validate;
 
+/// Cache backend type with configuration
+///
+/// Supports pluggable backends for different deployment scenarios:
+/// - Local: In-memory Moka cache (single-node, default)
+/// - Redis: Distributed cache (cluster deployments)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "config")]
+pub enum CacheBackendConfig {
+    /// Local in-memory Moka cache
+    #[serde(rename = "local")]
+    Local {
+        /// Maximum entries for local cache
+        max_entries: usize,
+        /// Default TTL in seconds
+        default_ttl_seconds: u64,
+    },
+    /// Remote Redis cache
+    #[serde(rename = "redis")]
+    Redis {
+        /// Redis connection URL
+        url: String,
+        /// Connection pool size
+        pool_size: usize,
+        /// Default TTL in seconds
+        default_ttl_seconds: u64,
+    },
+}
+
+impl CacheBackendConfig {
+    /// Load cache backend configuration from environment variables
+    ///
+    /// Respects:
+    /// - `MCP_CACHE__BACKEND` - "local" or "redis" (default: "local")
+    /// - `MCP_CACHE__TTL_SECONDS` - Default TTL (default: 3600)
+    /// - `MCP_REDIS_URL` - Redis URL (default: "redis://localhost:6379")
+    /// - `MCP_REDIS_POOL_SIZE` - Pool size (default: 10)
+    ///
+    /// # Examples
+    ///
+    /// ```bash
+    /// # Use local cache
+    /// export MCP_CACHE__BACKEND=local
+    /// export MCP_CACHE__TTL_SECONDS=7200
+    ///
+    /// # Use Redis
+    /// export MCP_CACHE__BACKEND=redis
+    /// export MCP_REDIS_URL=redis://cache-server:6379
+    /// export MCP_REDIS_POOL_SIZE=20
+    /// ```
+    pub fn from_env() -> Self {
+        let backend_type = std::env::var("MCP_CACHE__BACKEND")
+            .unwrap_or_else(|_| "local".to_string());
+
+        let default_ttl_seconds = std::env::var("MCP_CACHE__TTL_SECONDS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(3600);
+
+        match backend_type.to_lowercase().as_str() {
+            "redis" => {
+                let url = std::env::var("MCP_REDIS_URL")
+                    .unwrap_or_else(|_| "redis://localhost:6379".to_string());
+                let pool_size = std::env::var("MCP_REDIS_POOL_SIZE")
+                    .ok()
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(10);
+
+                CacheBackendConfig::Redis {
+                    url,
+                    pool_size,
+                    default_ttl_seconds,
+                }
+            }
+            _ => CacheBackendConfig::Local {
+                max_entries: 10000,
+                default_ttl_seconds,
+            },
+        }
+    }
+
+    /// Get the default TTL as a Duration
+    pub fn default_ttl(&self) -> Duration {
+        let secs = match self {
+            CacheBackendConfig::Local {
+                default_ttl_seconds,
+                ..
+            } => *default_ttl_seconds,
+            CacheBackendConfig::Redis {
+                default_ttl_seconds,
+                ..
+            } => *default_ttl_seconds,
+        };
+        Duration::from_secs(secs)
+    }
+
+    /// Check if this is local backend
+    pub fn is_local(&self) -> bool {
+        matches!(self, CacheBackendConfig::Local { .. })
+    }
+
+    /// Check if this is Redis backend
+    pub fn is_redis(&self) -> bool {
+        matches!(self, CacheBackendConfig::Redis { .. })
+    }
+
+    /// Get backend type name for logging
+    pub fn backend_type(&self) -> &'static str {
+        match self {
+            CacheBackendConfig::Local { .. } => "local",
+            CacheBackendConfig::Redis { .. } => "redis",
+        }
+    }
+}
+
+impl Default for CacheBackendConfig {
+    fn default() -> Self {
+        CacheBackendConfig::Local {
+            max_entries: 10000,
+            default_ttl_seconds: 3600,
+        }
+    }
+}
+
 /// Cache configuration
+///
+/// Main cache system configuration supporting multiple backends.
+/// All configuration uses the new CacheBackendConfig enum - legacy fields removed.
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct CacheConfig {
-    /// Redis connection URL
-    /// If provided and not empty, Redis (Remote) mode is used.
-    /// If empty, Moka (Local) mode is used.
-    pub redis_url: String,
-    /// Default TTL for cache entries (seconds)
-    #[validate(range(min = 1))]
-    pub default_ttl_seconds: u64,
-    /// Maximum cache size (number of entries) - Applies to Local Moka cache
-    #[validate(range(min = 1))]
-    pub max_size: usize,
     /// Whether caching is enabled
     pub enabled: bool,
+
+    /// Cache backend configuration (Moka or Redis)
+    pub backend: CacheBackendConfig,
+
     /// Cache namespaces configuration
     #[validate(nested)]
     pub namespaces: CacheNamespacesConfig,
@@ -30,14 +179,13 @@ pub struct CacheConfig {
 impl Default for CacheConfig {
     fn default() -> Self {
         Self {
-            redis_url: String::new(),  // Default to Local (Moka) mode
-            default_ttl_seconds: 3600, // 1 hour
-            max_size: 10000,
             enabled: true,
+            backend: CacheBackendConfig::default(),
             namespaces: CacheNamespacesConfig::default(),
         }
     }
 }
+
 
 /// Configuration for different cache namespaces
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -120,24 +268,6 @@ pub struct CacheEntry<T> {
     pub size_bytes: usize,
 }
 
-/// Cache statistics
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct CacheStats {
-    /// Total number of entries
-    pub total_entries: usize,
-    /// Total cache size in bytes
-    pub total_size_bytes: usize,
-    /// Cache hit count
-    pub hits: u64,
-    /// Cache miss count
-    pub misses: u64,
-    /// Cache hit ratio (0.0 to 1.0)
-    pub hit_ratio: f64,
-    /// Number of evictions
-    pub evictions: u64,
-    /// Average access time in microseconds
-    pub avg_access_time_us: f64,
-}
 
 /// Cache operation result
 #[derive(Debug)]

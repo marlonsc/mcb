@@ -11,18 +11,23 @@ use validator::Validate;
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct ResourceLimitsConfig {
     /// Memory limits
+    #[serde(default)]
     #[validate(nested)]
     pub memory: MemoryLimits,
     /// CPU limits
+    #[serde(default)]
     #[validate(nested)]
     pub cpu: CpuLimits,
     /// Disk limits
+    #[serde(default)]
     #[validate(nested)]
     pub disk: DiskLimits,
     /// Operation concurrency limits
+    #[serde(default)]
     #[validate(nested)]
     pub operations: OperationLimits,
     /// Whether resource limits are enabled
+    #[serde(default)]
     pub enabled: bool,
 }
 
@@ -42,12 +47,15 @@ impl Default for ResourceLimitsConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct MemoryLimits {
     /// Maximum memory usage percentage (0-100)
+    #[serde(default)]
     #[validate(range(min = 0.0, max = 100.0))]
     pub max_usage_percent: f32,
     /// Maximum memory per operation (bytes)
+    #[serde(default)]
     #[validate(range(min = 1))]
     pub max_per_operation: u64,
     /// Warning threshold percentage
+    #[serde(default)]
     #[validate(range(min = 0.0, max = 100.0))]
     pub warning_threshold: f32,
 }
@@ -66,11 +74,14 @@ impl Default for MemoryLimits {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct CpuLimits {
     /// Maximum CPU usage percentage (0-100)
+    #[serde(default)]
     #[validate(range(min = 0.0, max = 100.0))]
     pub max_usage_percent: f32,
     /// Maximum CPU time per operation (seconds)
+    #[serde(default)]
     pub max_time_per_operation: Duration,
     /// Warning threshold percentage
+    #[serde(default)]
     #[validate(range(min = 0.0, max = 100.0))]
     pub warning_threshold: f32,
 }
@@ -89,12 +100,15 @@ impl Default for CpuLimits {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct DiskLimits {
     /// Maximum disk usage percentage (0-100)
+    #[serde(default)]
     #[validate(range(min = 0.0, max = 100.0))]
     pub max_usage_percent: f32,
     /// Minimum free space required (bytes)
+    #[serde(default)]
     #[validate(range(min = 1))]
     pub min_free_space: u64,
     /// Warning threshold percentage
+    #[serde(default)]
     #[validate(range(min = 0.0, max = 100.0))]
     pub warning_threshold: f32,
 }
@@ -113,15 +127,19 @@ impl Default for DiskLimits {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct OperationLimits {
     /// Maximum concurrent indexing operations
+    #[serde(default)]
     #[validate(range(min = 1))]
     pub max_concurrent_indexing: usize,
     /// Maximum concurrent search operations
+    #[serde(default)]
     #[validate(range(min = 1))]
     pub max_concurrent_search: usize,
     /// Maximum concurrent embedding operations
+    #[serde(default)]
     #[validate(range(min = 1))]
     pub max_concurrent_embedding: usize,
     /// Maximum queue size for operations
+    #[serde(default)]
     #[validate(range(min = 1))]
     pub max_queue_size: usize,
 }

@@ -16,7 +16,7 @@ use rmcp::{tool, ServerHandler};
 use std::sync::Arc;
 
 use crate::application::{IndexingService, SearchService};
-use crate::infrastructure::cache::CacheManager;
+use crate::infrastructure::cache::SharedCacheProvider;
 use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::di::registry::ProviderRegistryTrait;
 use crate::infrastructure::events::SharedEventBusProvider;
@@ -80,7 +80,7 @@ type InitializedHandlers = (
 /// Components required to initialize McpServer
 pub struct ServerComponents {
     pub config: Arc<ArcSwap<crate::infrastructure::config::Config>>,
-    pub cache_manager: Arc<CacheManager>,
+    pub cache_provider: Option<SharedCacheProvider>,
     pub performance_metrics: Arc<dyn PerformanceMetricsInterface>,
     pub indexing_operations: Arc<dyn IndexingOperationsInterface>,
     pub admin_service: Arc<dyn crate::admin::service::AdminService>,
@@ -117,7 +117,7 @@ impl McpServer {
         service_provider: Arc<dyn ServiceProviderInterface>,
         config: &crate::infrastructure::config::Config,
         http_client: Arc<dyn crate::adapters::http_client::HttpClientProvider>,
-        cache_manager: Arc<CacheManager>,
+        cache_provider: Option<SharedCacheProvider>,
         event_bus: SharedEventBusProvider,
     ) -> Result<
         (Arc<AuthHandler>, Arc<IndexingService>, Arc<SearchService>),
@@ -150,11 +150,11 @@ impl McpServer {
             embedding_provider,
         ));
 
-        // Create sync manager if cache is available
+        // Create sync manager with cache support
         let sync_manager = Arc::new(crate::sync::SyncManager::with_event_bus(
             config.sync.clone(),
             event_bus,
-            Some(cache_manager),
+            cache_provider,
         ));
 
         // Initialize context service with default data
@@ -179,7 +179,7 @@ impl McpServer {
         search_service: Arc<SearchService>,
         auth_handler: Arc<AuthHandler>,
         resource_limits: Arc<ResourceLimits>,
-        cache_manager: Arc<CacheManager>,
+        cache_provider: Option<SharedCacheProvider>,
         admin_service: Arc<dyn crate::admin::service::AdminService>,
     ) -> Result<InitializedHandlers, Box<dyn std::error::Error>> {
         Ok((
@@ -192,7 +192,7 @@ impl McpServer {
                 search_service,
                 Arc::clone(&auth_handler),
                 Arc::clone(&resource_limits),
-                cache_manager,
+                cache_provider,
             )),
             Arc::new(GetIndexingStatusHandler::new(admin_service)),
             Arc::new(ClearIndexHandler::new(indexing_service)),
@@ -210,7 +210,7 @@ impl McpServer {
             Arc::clone(&components.service_provider),
             &current_config,
             Arc::clone(&components.http_client),
-            Arc::clone(&components.cache_manager),
+            components.cache_provider.clone(),
             components.event_bus.clone(),
         )
         .await?;
@@ -227,15 +227,12 @@ impl McpServer {
             search_service,
             Arc::clone(&auth_handler),
             Arc::clone(&components.resource_limits),
-            Arc::clone(&components.cache_manager),
+            components.cache_provider.clone(),
             Arc::clone(&components.admin_service),
         )?;
 
         // Start event listeners
         indexing_service.start_event_listener(components.event_bus.clone());
-        components
-            .cache_manager
-            .start_event_listener(components.event_bus.clone());
 
         Ok(Self {
             index_codebase_handler,
@@ -257,14 +254,9 @@ impl McpServer {
     /// Create a new MCP server instance
     ///
     /// Initializes all required services and configurations.
-    pub async fn new(
-        cache_manager: Option<Arc<CacheManager>>,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
         // Use builder for consistency
-        let mut builder = crate::server::McpServerBuilder::new();
-        if let Some(cm) = cache_manager {
-            builder = builder.with_cache(cm);
-        }
+        let builder = crate::server::McpServerBuilder::new();
         builder.build().await
     }
 

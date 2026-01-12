@@ -44,19 +44,26 @@ pub type SharedDatabasePool = Arc<dyn DatabasePoolProvider>;
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct DatabaseConfig {
     /// PostgreSQL connection URL (empty when database disabled)
+    #[serde(default)]
     pub url: String,
     /// Maximum number of connections in the pool
+    #[serde(default)]
     #[validate(range(min = 1))]
     pub max_connections: u32,
     /// Minimum number of idle connections
+    #[serde(default)]
     pub min_idle: u32,
     /// Maximum lifetime of a connection
+    #[serde(default)]
     pub max_lifetime: Duration,
     /// Maximum idle time for a connection
+    #[serde(default)]
     pub idle_timeout: Duration,
     /// Connection timeout
+    #[serde(default)]
     pub connection_timeout: Duration,
     /// Whether database is enabled
+    #[serde(default)]
     pub enabled: bool,
 }
 
