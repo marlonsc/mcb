@@ -109,8 +109,8 @@ mod tests {
         let bus = EventBus::new(10);
         let mut receiver = bus.sender.subscribe();
 
-        let event = SystemEvent::Reload;
-        let _ = bus.sender.send(event.clone());
+        // Send event directly without unnecessary clone
+        let _ = bus.sender.send(SystemEvent::Reload);
 
         let received = receiver.recv().await.unwrap();
         assert!(matches!(received, SystemEvent::Reload));

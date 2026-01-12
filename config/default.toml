@@ -19,6 +19,17 @@ port = 3000               # MCP server port
 enabled = true            # Enable metrics/admin HTTP server
 port = 3001               # HTTP server port (dashboard, metrics, health)
 
+# Rate limiting configuration
+[metrics.rate_limiting]
+enabled = false           # Disable rate limiting by default
+window_seconds = 60       # Rate limit window
+max_requests_per_window = 1000  # Requests per window
+burst_allowance = 100     # Burst allowance
+
+# Rate limiting backend (in-memory or redis)
+[metrics.rate_limiting.backend]
+type = "memory"           # Use in-memory backend for rate limiting
+
 # ============================================================================
 # ADMIN INTERFACE - Dashboard & Web UI
 # ============================================================================
@@ -32,22 +43,22 @@ jwt_expiration = 3600     # Token expiration in seconds (1 hour)
 # ============================================================================
 # EMBEDDING PROVIDERS - AI Model for Semantic Search
 # ============================================================================
+# DEFAULT: fastembed (lightweight, works offline, no external service needed)
+# FastEmbed is the default because it's self-contained and always available
 [providers.embedding]
-provider = "ollama"       # Use Ollama for embeddings
-model = "nomic-embed-text" # Default embedding model
-# Additional optional parameters (use code defaults if not specified):
-# host = "localhost:11434"
-# dimensions = 768
-# max_tokens = 8192
+provider = "fastembed"    # Use FastEmbed by default (lightweight, local)
+model = "BAAI/bge-small-en-v1.5"  # FastEmbed default model
+# Optional parameters:
+# dimensions = 384                   # FastEmbed default dimensions (defaults to 384)
 
 # ============================================================================
 # VECTOR STORE - Where Embeddings are Stored
 # ============================================================================
+# DEFAULT: filesystem (lightweight, works offline, no external service needed)
+# Filesystem is the default because it's self-contained and always available
 [providers.vector_store]
-provider = "milvus"                    # Use Milvus for vector storage
-address = "http://localhost:19531"     # Milvus server address
-dimensions = 768                        # Vector dimensions (must match embedding)
-collection = "code_embeddings"         # Collection name in Milvus
+provider = "filesystem"               # Use filesystem for vector storage (local, no external service)
+# address = "./data/vectors"         # Default filesystem path (relative to working directory)
 
 # ============================================================================
 # HYBRID SEARCH - Combined BM25 + Vector Search
@@ -124,6 +135,32 @@ max_lock_age_secs = 300           # Max age of lock before cleanup (seconds)
 [sync]
 interval_ms = 900000              # Full sync interval (15 minutes)
 debounce_ms = 60000               # Debounce for file watches (60 seconds)
+
+# ============================================================================
+# RESOURCE LIMITS - Protect against resource exhaustion
+# ============================================================================
+[resource_limits]
+enabled = true
+
+[resource_limits.memory]
+max_usage_percent = 85.0
+max_per_operation = 536870912  # 512MB
+warning_threshold = 75.0
+
+[resource_limits.cpu]
+max_usage_percent = 80.0
+warning_threshold = 70.0
+
+[resource_limits.disk]
+max_usage_percent = 90.0
+min_free_space = 1073741824  # 1GB
+warning_threshold = 80.0
+
+[resource_limits.operations]
+max_concurrent_indexing = 4
+max_concurrent_search = 10
+max_concurrent_embedding = 5
+max_queue_size = 100
 
 # ============================================================================
 # BELOW: ALL PARAMETERS USE CODE DEFAULTS
