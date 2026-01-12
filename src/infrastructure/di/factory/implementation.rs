@@ -7,6 +7,41 @@ use crate::infrastructure::di::registry::ProviderRegistry;
 use crate::infrastructure::di::registry::ProviderRegistryTrait;
 use crate::{EmbeddingConfig, Error, Result, VectorStoreConfig};
 
+/// Type-safe enum for embedding provider types
+///
+/// This enum replaces string-based provider selection with compile-time type safety.
+/// Prevents typos and provides exhaustive pattern matching in the factory.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum EmbeddingProviderType {
+    OpenAI,
+    Ollama,
+    VoyageAI,
+    Gemini,
+    FastEmbed,
+    Null,
+}
+
+impl EmbeddingProviderType {
+    /// Parse a provider string into the enum variant
+    ///
+    /// Returns an error if the provider name is not recognized.
+    fn from_config_string(provider: &str) -> Result<Self> {
+        match provider.to_lowercase().as_str() {
+            "openai" => Ok(Self::OpenAI),
+            "ollama" => Ok(Self::Ollama),
+            "voyageai" => Ok(Self::VoyageAI),
+            "gemini" => Ok(Self::Gemini),
+            "fastembed" => Ok(Self::FastEmbed),
+            "null" | "mock" => Ok(Self::Null),
+            _ => Err(Error::config(format!(
+                "Unsupported embedding provider: {}. \
+                 Supported providers: openai, ollama, voyageai, gemini, fastembed, null",
+                provider
+            ))),
+        }
+    }
+}
+
 // Import individual providers that exist
 use crate::adapters::providers::embedding::fastembed::FastEmbedProvider;
 use crate::adapters::providers::embedding::gemini::GeminiEmbeddingProvider;
@@ -37,8 +72,12 @@ impl ProviderFactory for DefaultProviderFactory {
         config: &EmbeddingConfig,
         http_client: Arc<dyn crate::adapters::http_client::HttpClientProvider>,
     ) -> Result<Arc<dyn EmbeddingProvider>> {
-        match config.provider.to_lowercase().as_str() {
-            "openai" => {
+        // Convert string provider to type-safe enum
+        let provider_type = EmbeddingProviderType::from_config_string(&config.provider)?;
+
+        // Use exhaustive pattern matching on the enum
+        match provider_type {
+            EmbeddingProviderType::OpenAI => {
                 let api_key = config
                     .api_key
                     .as_ref()
@@ -51,15 +90,17 @@ impl ProviderFactory for DefaultProviderFactory {
                     http_client,
                 )) as Arc<dyn EmbeddingProvider>)
             }
-            "ollama" => Ok(Arc::new(OllamaEmbeddingProvider::with_http_client(
-                config.base_url.clone().unwrap_or_else(|| {
-                    crate::infrastructure::constants::OLLAMA_DEFAULT_URL.to_string()
-                }),
-                config.model.clone(),
-                HTTP_REQUEST_TIMEOUT,
-                http_client,
-            )) as Arc<dyn EmbeddingProvider>),
-            "voyageai" => {
+            EmbeddingProviderType::Ollama => {
+                Ok(Arc::new(OllamaEmbeddingProvider::with_http_client(
+                    config.base_url.clone().unwrap_or_else(|| {
+                        crate::infrastructure::constants::OLLAMA_DEFAULT_URL.to_string()
+                    }),
+                    config.model.clone(),
+                    HTTP_REQUEST_TIMEOUT,
+                    http_client,
+                )) as Arc<dyn EmbeddingProvider>)
+            }
+            EmbeddingProviderType::VoyageAI => {
                 let api_key = config
                     .api_key
                     .as_ref()
@@ -71,7 +112,7 @@ impl ProviderFactory for DefaultProviderFactory {
                     http_client,
                 )) as Arc<dyn EmbeddingProvider>)
             }
-            "gemini" => {
+            EmbeddingProviderType::Gemini => {
                 let api_key = config
                     .api_key
                     .as_ref()
@@ -84,19 +125,16 @@ impl ProviderFactory for DefaultProviderFactory {
                     http_client,
                 )) as Arc<dyn EmbeddingProvider>)
             }
-            "fastembed" => Ok(Arc::new(FastEmbedProvider::new()?) as Arc<dyn EmbeddingProvider>),
-            // "null" provider returns empty embeddings - use for testing/development only
-            "null" | "mock" => {
+            EmbeddingProviderType::FastEmbed => {
+                Ok(Arc::new(FastEmbedProvider::new()?) as Arc<dyn EmbeddingProvider>)
+            }
+            EmbeddingProviderType::Null => {
                 tracing::warn!(
                     "Using NullEmbeddingProvider: returns empty embeddings. \
                      Not suitable for production semantic search."
                 );
                 Ok(Arc::new(NullEmbeddingProvider::new()) as Arc<dyn EmbeddingProvider>)
             }
-            _ => Err(Error::config(format!(
-                "Unsupported embedding provider: {}",
-                config.provider
-            ))),
         }
     }
 
