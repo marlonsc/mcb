@@ -120,10 +120,12 @@ mod tests {
     async fn test_event_bus_provider_trait() {
         let bus: Arc<dyn EventBusProvider> = Arc::new(EventBus::new(10));
 
+        // Subscribe BEFORE publishing to avoid race condition
+        let mut receiver = bus.subscribe().await.unwrap();
+
         let event = SystemEvent::Shutdown;
         let _ = bus.publish(event).await;
 
-        let mut receiver = bus.subscribe().await.unwrap();
         let received = receiver.recv().await.unwrap();
         assert!(matches!(received, SystemEvent::Shutdown));
     }

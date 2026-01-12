@@ -3,6 +3,7 @@
 //! Provides persistence for configuration changes, enabling audit trails
 //! and history viewing in the admin interface.
 
+use crate::admin::service::helpers::admin_defaults;
 use crate::admin::service::types::{AdminError, ConfigurationChange};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -11,9 +12,6 @@ use std::path::PathBuf;
 use tokio::fs;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-
-/// Maximum number of history entries to keep
-const MAX_HISTORY_ENTRIES: usize = 1000;
 
 /// Get the path to the configuration history file
 fn history_file_path() -> PathBuf {
@@ -64,8 +62,8 @@ impl ConfigHistoryManager {
         history.entries.insert(0, change.clone());
 
         // Trim to max entries
-        if history.entries.len() > MAX_HISTORY_ENTRIES {
-            history.entries.truncate(MAX_HISTORY_ENTRIES);
+        if history.entries.len() > admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES {
+            history.entries.truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
         }
 
         // Persist to disk (fire and forget, don't block)
@@ -116,8 +114,8 @@ impl ConfigHistoryManager {
             }
 
             // Trim to max entries
-            if history.entries.len() > MAX_HISTORY_ENTRIES {
-                history.entries.truncate(MAX_HISTORY_ENTRIES);
+            if history.entries.len() > admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES {
+                history.entries.truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
             }
 
             // Persist
@@ -223,8 +221,8 @@ pub async fn record_configuration_change(
     history.entries.insert(0, change.clone());
 
     // Trim to max entries
-    if history.entries.len() > MAX_HISTORY_ENTRIES {
-        history.entries.truncate(MAX_HISTORY_ENTRIES);
+    if history.entries.len() > admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES {
+        history.entries.truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
     }
 
     save_history(&history).await?;
@@ -264,8 +262,8 @@ pub async fn record_batch_changes(
     }
 
     // Trim to max entries
-    if history.entries.len() > MAX_HISTORY_ENTRIES {
-        history.entries.truncate(MAX_HISTORY_ENTRIES);
+    if history.entries.len() > admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES {
+        history.entries.truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
     }
 
     save_history(&history).await?;
