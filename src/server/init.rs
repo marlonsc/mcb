@@ -266,10 +266,6 @@ async fn initialize_server_components(
             config.metrics.port
         );
 
-        // Initialize admin API server
-        let admin_api_server =
-            crate::admin::api::AdminApiServer::new(config.admin.clone(), Arc::clone(&server));
-
         let mut metrics_server = MetricsApiServer::with_limits(
             config.metrics.port,
             server.system_collector(),
@@ -279,14 +275,23 @@ async fn initialize_server_components(
             cache_manager.clone(),
         );
 
-        // Merge admin router into metrics server
-        match admin_api_server.create_router() {
-            Ok(router) => {
-                metrics_server = metrics_server.with_external_router(router);
+        // Initialize admin API server (optional - only if credentials configured)
+        if let Some(admin_config) = config.admin.clone() {
+            let admin_api_server =
+                crate::admin::api::AdminApiServer::new(admin_config, Arc::clone(&server));
+
+            // Merge admin router into metrics server
+            match admin_api_server.create_router() {
+                Ok(router) => {
+                    metrics_server = metrics_server.with_external_router(router);
+                    tracing::info!("✅ Admin interface enabled");
+                }
+                Err(e) => {
+                    tracing::error!("💥 Failed to create admin router: {}", e);
+                }
             }
-            Err(e) => {
-                tracing::error!("💥 Failed to create admin router: {}", e);
-            }
+        } else {
+            tracing::info!("ℹ️  Admin interface disabled (no credentials configured)");
         }
 
         // Create and merge MCP router for unified port architecture

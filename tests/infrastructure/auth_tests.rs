@@ -2,7 +2,55 @@
 //!
 //! Tests migrated from src/infrastructure/auth.rs
 
-use mcp_context_browser::infrastructure::auth::{AuthConfig, AuthService, Permission, UserRole};
+use mcp_context_browser::infrastructure::auth::{
+    AuthConfig, AuthService, HashVersion, Permission, User, UserRole,
+};
+use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+/// Test helper: Create an AuthConfig with a known test admin user
+///
+/// For testing purposes, creates a config with:
+/// - enabled: true
+/// - jwt_secret: test secret (32+ chars)
+/// - admin user: email="admin@context.browser", password hash for "admin" password
+fn create_test_auth_config(enabled: bool) -> AuthConfig {
+    use mcp_context_browser::infrastructure::auth::password;
+
+    let jwt_secret = "test-jwt-secret-that-is-long-enough".to_string();
+
+    // Create admin user with hashed "admin" password (only for tests)
+    let admin_password_hash = password::hash_password("admin")
+        .expect("Failed to hash test password");
+
+    let admin_user = User {
+        id: "admin".to_string(),
+        email: "admin@context.browser".to_string(),
+        role: UserRole::Admin,
+        password_hash: admin_password_hash,
+        hash_version: HashVersion::Argon2id,
+        created_at: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs(),
+        last_active: 0,
+    };
+
+    let mut users = HashMap::new();
+    users.insert("admin@context.browser".to_string(), admin_user);
+
+    AuthConfig {
+        enabled,
+        jwt_secret,
+        jwt_expiration: 3600,
+        jwt_issuer: "mcp-context-browser".to_string(),
+        bypass_paths: vec![
+            "/api/health".to_string(),
+            "/api/context/metrics".to_string(),
+        ],
+        users,
+    }
+}
 
 #[test]
 fn test_user_roles() {
@@ -29,15 +77,11 @@ async fn test_auth_service_creation() {
 
     // Default is disabled for local/MCP usage
     assert!(!auth.is_enabled());
-    assert!(auth.get_user("admin@context.browser").is_some());
 }
 
 #[tokio::test]
 async fn test_auth_service_creation_with_enabled() {
-    let config = AuthConfig {
-        enabled: true,
-        ..Default::default()
-    };
+    let config = create_test_auth_config(true);
     let auth = AuthService::new(config);
 
     assert!(auth.is_enabled());
@@ -46,10 +90,7 @@ async fn test_auth_service_creation_with_enabled() {
 
 /// Helper to create an auth service with auth explicitly enabled (for testing)
 fn enabled_auth_service() -> AuthService {
-    AuthService::new(AuthConfig {
-        enabled: true,
-        ..Default::default()
-    })
+    AuthService::new(create_test_auth_config(true))
 }
 
 #[tokio::test]

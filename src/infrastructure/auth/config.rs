@@ -19,8 +19,7 @@ pub const DEFAULT_JWT_EXPIRATION: u64 = 86400;
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
 pub struct AuthConfig {
-    /// JWT secret key (minimum 32 bytes recommended)
-    #[validate(length(min = 1))]
+    /// JWT secret key (empty when auth disabled, 32+ bytes when enabled)
     pub jwt_secret: String,
     /// JWT expiration time in seconds
     #[validate(range(min = 1))]
@@ -40,73 +39,89 @@ pub struct AuthConfig {
 
 impl Default for AuthConfig {
     fn default() -> Self {
-        let mut users = HashMap::new();
-
-        // Create default admin user
-        // In production, ADMIN_PASSWORD environment variable should be set
-        let admin_password = std::env::var("ADMIN_PASSWORD").unwrap_or_else(|_| {
-            // Always log warning when using default password
-            tracing::warn!(
-                "ADMIN_PASSWORD not set. Using default password 'admin'. \
-                 Set ADMIN_PASSWORD environment variable for production use."
-            );
-            "admin".to_string()
-        });
-
-        // Hash password - fail loudly on error, no silent fallbacks
-        let password_hash = match super::password::hash_password(&admin_password) {
-            Ok(hash) => hash,
-            Err(e) => {
-                tracing::error!(
-                    "Failed to hash admin password: {}. Authentication will be disabled.",
-                    e
-                );
-                // Return empty hash - auth will fail if enabled
-                String::new()
-            }
-        };
-
-        let admin_user = User {
-            id: "admin".to_string(),
-            email: "admin@context.browser".to_string(),
-            role: UserRole::Admin,
-            password_hash,
-            hash_version: HashVersion::Argon2id,
-            created_at: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
-            last_active: 0,
-        };
-        users.insert("admin@context.browser".to_string(), admin_user);
-
-        // JWT secret - required for secure token generation
-        let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-            // Always log warning for default JWT secret
-            tracing::warn!(
-                "JWT_SECRET not set. Using insecure default. \
-                 Set JWT_SECRET environment variable for production use."
-            );
-            "local-development-secret-change-this-in-production".to_string()
-        });
-
+        // Default: disabled for local/MCP stdio usage with EMPTY credentials
+        // This prevents accidental use of weak defaults
         Self {
-            jwt_secret,
+            jwt_secret: String::new(),
             jwt_expiration: DEFAULT_JWT_EXPIRATION,
             jwt_issuer: "mcp-context-browser".to_string(),
-            // Default: disabled for local/MCP stdio usage
-            // Enable explicitly in config for production/HTTP deployments
             enabled: false,
             bypass_paths: vec![
                 "/api/health".to_string(),
                 "/api/context/metrics".to_string(),
             ],
-            users,
+            users: HashMap::new(),
         }
     }
 }
 
 impl AuthConfig {
+    /// Load auth config from environment variables (PRODUCTION)
+    ///
+    /// # Environment Variables
+    /// - `ADMIN_PASSWORD` - Admin password (required if auth enabled)
+    /// - `JWT_SECRET` - JWT signing secret (required if auth enabled, min 32 chars)
+    ///
+    /// # Security
+    /// - If auth is disabled, credentials are NOT required
+    /// - If auth is enabled, both variables MUST be set and valid
+    /// - Fails immediately on invalid configuration
+    pub fn from_env() -> Result<Self, String> {
+        let jwt_secret = std::env::var("JWT_SECRET")
+            .unwrap_or_else(|_| String::new());
+
+        let admin_password = std::env::var("ADMIN_PASSWORD")
+            .unwrap_or_else(|_| String::new());
+
+        // Check if credentials are provided (indicates intent to enable auth)
+        let enable_auth = !jwt_secret.is_empty() && !admin_password.is_empty();
+
+        if enable_auth {
+            // Validate credentials
+            if jwt_secret.len() < MIN_JWT_SECRET_LENGTH {
+                return Err(format!(
+                    "JWT_SECRET must be at least {} characters",
+                    MIN_JWT_SECRET_LENGTH
+                ));
+            }
+
+            // Hash admin password
+            let password_hash = super::password::hash_password(&admin_password)
+                .map_err(|e| format!("Failed to hash admin password: {}", e))?;
+
+            let admin_user = User {
+                id: "admin".to_string(),
+                email: "admin@context.browser".to_string(),
+                role: UserRole::Admin,
+                password_hash,
+                hash_version: HashVersion::Argon2id,
+                created_at: SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs(),
+                last_active: 0,
+            };
+
+            let mut users = HashMap::new();
+            users.insert("admin@context.browser".to_string(), admin_user);
+
+            Ok(Self {
+                jwt_secret,
+                jwt_expiration: DEFAULT_JWT_EXPIRATION,
+                jwt_issuer: "mcp-context-browser".to_string(),
+                enabled: true,
+                bypass_paths: vec![
+                    "/api/health".to_string(),
+                    "/api/context/metrics".to_string(),
+                ],
+                users,
+            })
+        } else {
+            // Auth disabled (no credentials provided)
+            Ok(Self::default())
+        }
+    }
+
     /// Create a new auth config with explicit values
     pub fn new(jwt_secret: String, jwt_expiration: u64, enabled: bool) -> Self {
         Self {

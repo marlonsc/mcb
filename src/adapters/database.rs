@@ -43,8 +43,7 @@ pub type SharedDatabasePool = Arc<dyn DatabasePoolProvider>;
 /// Database connection configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct DatabaseConfig {
-    /// PostgreSQL connection URL
-    #[validate(length(min = 1))]
+    /// PostgreSQL connection URL (empty when database disabled)
     pub url: String,
     /// Maximum number of connections in the pool
     #[validate(range(min = 1))]
@@ -64,13 +63,69 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: "postgresql://user:password@localhost:5432/mcp_context".to_string(),
+            url: String::new(), // Empty - must load from environment
             max_connections: 20,
             min_idle: 5,
             max_lifetime: Duration::from_secs(1800), // 30 minutes
             idle_timeout: Duration::from_secs(600),  // 10 minutes
             connection_timeout: Duration::from_secs(30),
-            enabled: false, // Disabled by default
+            enabled: false, // Disabled by default - enable via DATABASE_URL
+        }
+    }
+}
+
+impl DatabaseConfig {
+    /// Load database configuration from environment variables
+    ///
+    /// # Environment Variables
+    /// - `DATABASE_URL` - PostgreSQL connection string (required if database enabled)
+    /// - `DATABASE_MAX_CONNECTIONS` - Max pool size (default: 20)
+    /// - `DATABASE_MIN_IDLE` - Min idle connections (default: 5)
+    /// - `DATABASE_MAX_LIFETIME_SECS` - Max connection lifetime in seconds (default: 1800)
+    /// - `DATABASE_IDLE_TIMEOUT_SECS` - Idle timeout in seconds (default: 600)
+    /// - `DATABASE_CONNECTION_TIMEOUT_SECS` - Connection timeout in seconds (default: 30)
+    ///
+    /// # Returns
+    /// - If DATABASE_URL is set: Enabled config with connection parameters
+    /// - If DATABASE_URL is not set: Disabled config (graceful degradation)
+    pub fn from_env() -> Self {
+        let url = std::env::var("DATABASE_URL").unwrap_or_default();
+        let enabled = !url.is_empty();
+
+        let max_connections = std::env::var("DATABASE_MAX_CONNECTIONS")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(20)
+            .max(1); // Ensure at least 1 connection
+
+        let min_idle = std::env::var("DATABASE_MIN_IDLE")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(5);
+
+        let max_lifetime_secs = std::env::var("DATABASE_MAX_LIFETIME_SECS")
+            .ok()
+            .and_then(|v| v.parse::<u64>().ok())
+            .unwrap_or(1800);
+
+        let idle_timeout_secs = std::env::var("DATABASE_IDLE_TIMEOUT_SECS")
+            .ok()
+            .and_then(|v| v.parse::<u64>().ok())
+            .unwrap_or(600);
+
+        let connection_timeout_secs = std::env::var("DATABASE_CONNECTION_TIMEOUT_SECS")
+            .ok()
+            .and_then(|v| v.parse::<u64>().ok())
+            .unwrap_or(30);
+
+        Self {
+            url,
+            max_connections,
+            min_idle,
+            max_lifetime: Duration::from_secs(max_lifetime_secs),
+            idle_timeout: Duration::from_secs(idle_timeout_secs),
+            connection_timeout: Duration::from_secs(connection_timeout_secs),
+            enabled,
         }
     }
 }
