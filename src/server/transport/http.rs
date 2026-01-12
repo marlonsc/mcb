@@ -133,11 +133,30 @@ async fn handle_mcp_get(
         return Err(McpError::SessionTerminated);
     }
 
-    // SSE streaming for server-to-client messages
-    // TODO: Implement proper Server-Sent Events streaming
-    // For now, return 501 Not Implemented instead of misleading 200 OK
+    // Server-Sent Events (SSE) streaming for server-to-client messages
+    //
+    // DECISION: Deferred to v0.2.0 (see docs/adr/011-http-transport-request-response-pattern.md)
+    //
+    // v0.1.0 uses request-response pattern (POST /mcp) which is:
+    // - Functionally complete for all core operations
+    // - Simpler and more reliable than SSE streaming
+    // - Easier to test and debug
+    //
+    // Infrastructure for SSE is already in place:
+    // - Session management and message buffering
+    // - Event ID tracking for resumption
+    // - No breaking changes needed when SSE is added
+    //
+    // v0.2.0 will implement SSE for real-time server-pushed updates.
+    // In the meantime, clients can:
+    // 1. Use POST request-response pattern for operations
+    // 2. Implement polling for continuous updates if needed
+    // 3. Use event bus pub/sub for async notifications
     Err(McpError::NotImplemented(
-        "SSE streaming not yet implemented. Use POST for request-response communication."
+        "Server-Sent Events (SSE) streaming is not yet implemented in v0.1.0. \
+         Use POST /mcp for request-response communication. \
+         SSE streaming is planned for v0.2.0. \
+         See docs/adr/011-http-transport-request-response-pattern.md for details."
             .to_string(),
     ))
 }
