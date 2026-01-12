@@ -74,11 +74,6 @@ impl OpenAIEmbeddingProvider {
         self
     }
 
-    /// Get the effective base URL
-    fn effective_base_url(&self) -> String {
-        constructor::get_effective_url(self.base_url.as_deref(), "https://api.openai.com/v1")
-    }
-
     /// Get the base URL for this provider
     pub fn base_url(&self) -> &str {
         self.base_url
