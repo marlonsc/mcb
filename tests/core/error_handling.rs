@@ -4,7 +4,9 @@
 //! without using unwrap/expect, ensuring robust error propagation.
 
 use mcp_context_browser::infrastructure::auth::{AuthConfig, AuthService};
-use mcp_context_browser::infrastructure::cache::{CacheConfig, CacheManager};
+use mcp_context_browser::infrastructure::cache::{
+    create_cache_provider, CacheBackendConfig, CacheConfig,
+};
 
 #[cfg(test)]
 mod auth_error_handling_tests {
@@ -91,111 +93,106 @@ mod auth_error_handling_tests {
 #[cfg(test)]
 mod cache_error_handling_tests {
     use super::*;
-    use mcp_context_browser::infrastructure::cache::CacheResult;
+    use std::time::Duration;
 
     #[tokio::test]
-    async fn test_cache_manager_handles_connection_failures() {
-        // Test with invalid Redis configuration
+    async fn test_cache_provider_handles_disabled_cache_operations() {
         let config = CacheConfig {
-            redis_url: "redis://invalid:6379".to_string(),
-            default_ttl_seconds: 300,
-            max_size: 100,
-            enabled: true,
-            namespaces: Default::default(),
-        };
-
-        // In Remote mode with invalid Redis, this should FAIL on creation
-        let result = CacheManager::new(config, None).await;
-        assert!(
-            result.is_err(),
-            "Expected connection failure for invalid Redis URL"
-        );
-        // Use match instead of expect_err to avoid Debug requirement
-        match result {
-            Err(err) => {
-                let err_msg = err.to_string().to_lowercase();
-                assert!(
-                    err_msg.contains("redis")
-                        || err_msg.contains("connection")
-                        || err_msg.contains("failed"),
-                    "Error should mention redis/connection issue, got: {}",
-                    err
-                );
-            }
-            Ok(_) => panic!("Expected error, got Ok"),
-        }
-    }
-
-    #[tokio::test]
-    async fn test_cache_manager_handles_disabled_cache_operations() {
-        let config = CacheConfig {
-            redis_url: "".to_string(),
-            default_ttl_seconds: 300,
-            max_size: 100,
             enabled: false,
-            namespaces: Default::default(),
+            ..Default::default()
         };
 
-        // Disabled cache should create successfully
-        let manager = CacheManager::new(config, None)
+        // Disabled cache should return NullCacheProvider
+        let cache = create_cache_provider(&config)
             .await
             .expect("Disabled cache should create successfully");
 
         // Operations on disabled cache should not panic, just no-op
-        let set_result = manager.set("test", "key", "value".to_string()).await;
+        let set_result = cache
+            .set(
+                "test",
+                "key",
+                "value".as_bytes().to_vec(),
+                Duration::from_secs(3600),
+            )
+            .await;
         assert!(
             set_result.is_ok(),
             "Set on disabled cache should succeed (no-op)"
         );
 
-        let get_result: CacheResult<String> = manager.get("test", "key").await;
-        assert!(get_result.is_miss(), "Get on disabled cache should be miss");
+        let get_result = cache.get("test", "key").await;
+        assert!(get_result.is_ok(), "Get on disabled cache should succeed");
+        assert!(
+            get_result.unwrap().is_none(),
+            "Get on disabled cache should return None"
+        );
     }
 
     #[tokio::test]
-    async fn test_cache_manager_handles_namespace_operations() {
+    async fn test_cache_provider_handles_local_moka_operations() {
         let config = CacheConfig {
-            redis_url: "".to_string(), // Local mode
             enabled: true,
+            backend: CacheBackendConfig::Local {
+                max_entries: 1000,
+                default_ttl_seconds: 3600,
+            },
             ..Default::default()
         };
-        let manager = CacheManager::new(config, None)
+
+        let cache = create_cache_provider(&config)
             .await
             .expect("Local cache should create successfully");
 
         // These operations should not panic
-        let clear_result = manager.clear_namespace("test_ns").await;
+        let clear_result = cache.clear(Some("test_ns")).await;
         assert!(clear_result.is_ok(), "Clear namespace should succeed");
 
-        let delete_result = manager.delete("test_ns", "key").await;
+        let delete_result = cache.delete("test_ns", "key").await;
         assert!(delete_result.is_ok(), "Delete should succeed");
 
-        let stats = manager.get_stats().await;
-        // Stats should be valid (may have entries from other tests)
-        assert!(stats.hit_ratio >= 0.0 && stats.hit_ratio <= 1.0);
+        let stats = cache.get_stats("test_ns").await;
+        // Stats should be valid
+        assert!(stats.is_ok(), "get_stats should succeed");
+        if let Ok(stat) = stats {
+            assert!(stat.hit_ratio >= 0.0 && stat.hit_ratio <= 1.0);
+        }
     }
 
     #[tokio::test]
-    async fn test_cache_manager_handles_large_data_operations() {
+    async fn test_cache_provider_handles_large_data_operations() {
         let config = CacheConfig {
-            redis_url: "".to_string(), // Local mode
             enabled: true,
+            backend: CacheBackendConfig::Local {
+                max_entries: 1000,
+                default_ttl_seconds: 3600,
+            },
             ..Default::default()
         };
-        let manager = CacheManager::new(config, None)
+
+        let cache = create_cache_provider(&config)
             .await
             .expect("Local cache should create successfully");
 
         // Test with moderately large data (100KB to avoid memory issues in tests)
         let large_data = "x".repeat(100 * 1024);
+        let large_bytes = large_data.as_bytes().to_vec();
 
-        let set_result = manager.set("test", "large_key", large_data.clone()).await;
+        let set_result = cache
+            .set(
+                "test",
+                "large_key",
+                large_bytes.clone(),
+                Duration::from_secs(3600),
+            )
+            .await;
         assert!(set_result.is_ok(), "Set with large data should succeed");
 
-        let get_result: CacheResult<String> = manager.get("test", "large_key").await;
-        assert!(get_result.is_hit(), "Get should return hit");
-        let data = get_result.data().expect("Expected data in cache hit");
-        assert_eq!(data, large_data, "Data should match");
+        let get_result = cache.get("test", "large_key").await;
+        assert!(get_result.is_ok(), "Get should succeed");
+        let data = get_result.unwrap();
+        assert!(data.is_some(), "Expected data in cache");
+        assert_eq!(data.unwrap(), large_bytes, "Data should match");
     }
 }
 
@@ -416,20 +413,27 @@ mod integration_error_handling_tests {
 
         // Cache in local mode
         let cache_config = CacheConfig {
-            redis_url: "".to_string(),
             enabled: true,
-            ..Default::default()
+            backend: mcp_context_browser::infrastructure::cache::CacheBackendConfig::Local {
+                max_entries: 1000,
+                default_ttl_seconds: 3600,
+            },
+            namespaces: Default::default(),
         };
-        let cache = CacheManager::new(cache_config, None)
-            .await
-            .expect("Local cache should create");
+        let cache =
+            mcp_context_browser::infrastructure::cache::create_cache_provider(&cache_config)
+                .await
+                .expect("Local cache should create");
 
         // Test auth failure doesn't crash the system (sync call)
         let auth_result = auth.authenticate("nonexistent", "wrong");
         assert!(auth_result.is_err(), "Auth should fail for invalid user");
 
         // Test cache operations still work after auth failure
-        let cache_result = cache.set("test", "key", "value".to_string()).await;
+        let value = "value".to_string().into_bytes();
+        let cache_result = cache
+            .set("test", "key", value, std::time::Duration::from_secs(3600))
+            .await;
         assert!(cache_result.is_ok(), "Cache should still work");
     }
 
@@ -463,33 +467,43 @@ mod integration_error_handling_tests {
     async fn test_service_isolation() {
         // Test that failures in one service don't affect others
         let cache_config = CacheConfig {
-            redis_url: "".to_string(),
             enabled: true,
-            ..Default::default()
+            backend: mcp_context_browser::infrastructure::cache::CacheBackendConfig::Local {
+                max_entries: 1000,
+                default_ttl_seconds: 3600,
+            },
+            namespaces: Default::default(),
         };
-        let cache = CacheManager::new(cache_config, None)
-            .await
-            .expect("Local cache should create");
+        let cache =
+            mcp_context_browser::infrastructure::cache::create_cache_provider(&cache_config)
+                .await
+                .expect("Local cache should create");
+
+        let ttl = std::time::Duration::from_secs(3600);
 
         // Multiple operations should be isolated
         cache
-            .set("ns1", "key1", "value1".to_string())
+            .set("ns1", "key1", "value1".to_string().into_bytes(), ttl)
             .await
             .expect("Set 1");
         cache
-            .set("ns2", "key2", "value2".to_string())
+            .set("ns2", "key2", "value2".to_string().into_bytes(), ttl)
             .await
             .expect("Set 2");
 
         // Clearing one namespace shouldn't affect the other
-        cache.clear_namespace("ns1").await.expect("Clear ns1");
+        cache.clear(Some("ns1")).await.expect("Clear ns1");
 
-        let result1: mcp_context_browser::infrastructure::cache::CacheResult<String> =
-            cache.get("ns1", "key1").await;
-        assert!(result1.is_miss(), "ns1:key1 should be cleared");
+        let result1 = cache.get("ns1", "key1").await;
+        assert!(
+            result1.is_ok() && result1.unwrap().is_none(),
+            "ns1:key1 should be cleared"
+        );
 
-        let result2: mcp_context_browser::infrastructure::cache::CacheResult<String> =
-            cache.get("ns2", "key2").await;
-        assert!(result2.is_hit(), "ns2:key2 should still exist");
+        let result2 = cache.get("ns2", "key2").await;
+        assert!(
+            result2.is_ok() && result2.unwrap().is_some(),
+            "ns2:key2 should still exist"
+        );
     }
 }

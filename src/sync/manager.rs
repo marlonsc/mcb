@@ -7,7 +7,7 @@
 
 use crate::domain::error::Result;
 use crate::domain::types::SyncBatch;
-use crate::infrastructure::cache::{SharedCacheProvider, CacheProviderQueue};
+use crate::infrastructure::cache::{CacheProviderQueue, SharedCacheProvider};
 use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
 use dashmap::DashMap;
 use std::path::Path;
@@ -120,10 +120,7 @@ impl SyncManager {
     }
 
     /// Create a new sync manager with custom config
-    pub fn with_config(
-        config: SyncConfig,
-        cache_manager: Option<SharedCacheProvider>,
-    ) -> Self {
+    pub fn with_config(config: SyncConfig, cache_manager: Option<SharedCacheProvider>) -> Self {
         Self {
             config,
             cache_manager,
@@ -248,10 +245,13 @@ impl SyncManager {
         if let Some(ref event_bus) = self.event_bus {
             let path = codebase_path.to_string_lossy().to_string();
             let files_changed = changed_files.len() as i32;
-            if let Err(e) = event_bus.publish(SystemEvent::SyncCompleted {
-                path,
-                files_changed,
-            }).await {
+            if let Err(e) = event_bus
+                .publish(SystemEvent::SyncCompleted {
+                    path,
+                    files_changed,
+                })
+                .await
+            {
                 tracing::warn!("[SYNC] Failed to publish SyncCompleted event: {}", e);
             }
         }

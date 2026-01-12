@@ -3,8 +3,8 @@
 //! Provides dynamic configuration values from the running system,
 //! eliminating hardcoded values by reading from actual subsystems.
 
-use crate::admin::service::types::AdminError;
 use super::defaults::*;
+use crate::admin::service::types::AdminError;
 
 /// Runtime configuration values loaded from actual subsystems
 #[derive(Debug, Clone)]
@@ -49,15 +49,42 @@ pub struct HealthThresholds {
 impl Default for HealthThresholds {
     fn default() -> Self {
         Self {
-            cpu_unhealthy_percent: get_env_f64("HEALTH_CPU_UNHEALTHY", DEFAULT_HEALTH_CPU_UNHEALTHY_PERCENT),
-            cpu_degraded_percent: get_env_f64("HEALTH_CPU_DEGRADED", DEFAULT_HEALTH_CPU_DEGRADED_PERCENT),
-            memory_unhealthy_percent: get_env_f64("HEALTH_MEMORY_UNHEALTHY", DEFAULT_HEALTH_MEMORY_UNHEALTHY_PERCENT),
-            memory_degraded_percent: get_env_f64("HEALTH_MEMORY_DEGRADED", DEFAULT_HEALTH_MEMORY_DEGRADED_PERCENT),
-            disk_unhealthy_percent: get_env_f64("HEALTH_DISK_UNHEALTHY", DEFAULT_HEALTH_DISK_UNHEALTHY_PERCENT),
-            disk_degraded_percent: get_env_f64("HEALTH_DISK_DEGRADED", DEFAULT_HEALTH_DISK_DEGRADED_PERCENT),
-            db_pool_unhealthy_percent: get_env_f64("HEALTH_DB_POOL_UNHEALTHY", DEFAULT_HEALTH_DB_POOL_UNHEALTHY_PERCENT),
-            db_pool_degraded_percent: get_env_f64("HEALTH_DB_POOL_DEGRADED", DEFAULT_HEALTH_DB_POOL_DEGRADED_PERCENT),
-            cache_hit_rate_degraded: get_env_f64("HEALTH_CACHE_HIT_RATE_DEGRADED", DEFAULT_HEALTH_CACHE_HIT_RATE_DEGRADED),
+            cpu_unhealthy_percent: get_env_f64(
+                "HEALTH_CPU_UNHEALTHY",
+                DEFAULT_HEALTH_CPU_UNHEALTHY_PERCENT,
+            ),
+            cpu_degraded_percent: get_env_f64(
+                "HEALTH_CPU_DEGRADED",
+                DEFAULT_HEALTH_CPU_DEGRADED_PERCENT,
+            ),
+            memory_unhealthy_percent: get_env_f64(
+                "HEALTH_MEMORY_UNHEALTHY",
+                DEFAULT_HEALTH_MEMORY_UNHEALTHY_PERCENT,
+            ),
+            memory_degraded_percent: get_env_f64(
+                "HEALTH_MEMORY_DEGRADED",
+                DEFAULT_HEALTH_MEMORY_DEGRADED_PERCENT,
+            ),
+            disk_unhealthy_percent: get_env_f64(
+                "HEALTH_DISK_UNHEALTHY",
+                DEFAULT_HEALTH_DISK_UNHEALTHY_PERCENT,
+            ),
+            disk_degraded_percent: get_env_f64(
+                "HEALTH_DISK_DEGRADED",
+                DEFAULT_HEALTH_DISK_DEGRADED_PERCENT,
+            ),
+            db_pool_unhealthy_percent: get_env_f64(
+                "HEALTH_DB_POOL_UNHEALTHY",
+                DEFAULT_HEALTH_DB_POOL_UNHEALTHY_PERCENT,
+            ),
+            db_pool_degraded_percent: get_env_f64(
+                "HEALTH_DB_POOL_DEGRADED",
+                DEFAULT_HEALTH_DB_POOL_DEGRADED_PERCENT,
+            ),
+            cache_hit_rate_degraded: get_env_f64(
+                "HEALTH_CACHE_HIT_RATE_DEGRADED",
+                DEFAULT_HEALTH_CACHE_HIT_RATE_DEGRADED,
+            ),
             perf_p95_multiplier: get_env_f64("PERF_P95_MULTIPLIER", DEFAULT_PERF_P95_MULTIPLIER),
             perf_p99_multiplier: get_env_f64("PERF_P99_MULTIPLIER", DEFAULT_PERF_P99_MULTIPLIER),
         }
@@ -175,7 +202,10 @@ impl RuntimeConfig {
     async fn get_pending_operations() -> u64 {
         // Query indexing service for pending operations
         // For now, return value from environment if available
-        get_env_u64("INDEXING_PENDING_OPERATIONS", DEFAULT_INDEXING_PENDING_OPERATIONS)
+        get_env_u64(
+            "INDEXING_PENDING_OPERATIONS",
+            DEFAULT_INDEXING_PENDING_OPERATIONS,
+        )
     }
 
     async fn get_last_index_time() -> chrono::DateTime<chrono::Utc> {

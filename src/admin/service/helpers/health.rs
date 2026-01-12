@@ -2,6 +2,7 @@
 //!
 //! Provides functions for health checks, connectivity tests, and performance testing.
 
+use super::runtime_config::RuntimeConfig;
 use crate::admin::service::types::{
     AdminError, ConnectivityTestResult, HealthCheck, HealthCheckResult, PerformanceTestConfig,
     PerformanceTestResult, ProviderInfo, SearchResults,
@@ -10,7 +11,6 @@ use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::metrics::system::SystemMetricsCollectorInterface;
 use std::future::Future;
 use std::sync::Arc;
-use super::runtime_config::RuntimeConfig;
 
 /// Run comprehensive health check
 pub async fn run_health_check(
@@ -75,14 +75,15 @@ pub async fn run_health_check(
     });
 
     // Determine memory health status based on dynamic thresholds
-    let memory_status = if memory_metrics.usage_percent > thresholds.memory_unhealthy_percent as f32 {
-        "unhealthy"
-    } else if memory_metrics.usage_percent > thresholds.memory_degraded_percent as f32 {
-        "degraded"
-    } else {
-        "healthy"
-    }
-    .to_string();
+    let memory_status =
+        if memory_metrics.usage_percent > thresholds.memory_unhealthy_percent as f32 {
+            "unhealthy"
+        } else if memory_metrics.usage_percent > thresholds.memory_degraded_percent as f32 {
+            "degraded"
+        } else {
+            "healthy"
+        }
+        .to_string();
 
     checks.push(HealthCheck {
         name: "memory".to_string(),
@@ -300,10 +301,7 @@ pub fn test_provider_connectivity(
             provider_id: provider_id.to_string(),
             success: false,
             response_time_ms: Some(start_time.elapsed().as_millis() as u64),
-            error_message: Some(format!(
-                "Provider '{}' not found in registry",
-                provider_id
-            )),
+            error_message: Some(format!("Provider '{}' not found in registry", provider_id)),
             details: serde_json::json!({
                 "test_type": "connectivity",
                 "available_embedding_providers": embedding_providers,

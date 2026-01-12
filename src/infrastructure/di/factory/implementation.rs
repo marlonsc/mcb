@@ -1,6 +1,7 @@
 //! Factory implementations for creating providers
 
 use crate::domain::ports::{EmbeddingProvider, VectorStoreProvider};
+use crate::infrastructure::constants::HTTP_REQUEST_TIMEOUT;
 use crate::infrastructure::di::factory::traits::{ProviderFactory, ServiceProviderInterface};
 use crate::infrastructure::di::registry::ProviderRegistry;
 use crate::infrastructure::di::registry::ProviderRegistryTrait;
@@ -46,17 +47,16 @@ impl ProviderFactory for DefaultProviderFactory {
                     api_key.clone(),
                     config.base_url.clone(),
                     config.model.clone(),
-                    std::time::Duration::from_secs(30),
+                    HTTP_REQUEST_TIMEOUT,
                     http_client,
                 )) as Arc<dyn EmbeddingProvider>)
             }
             "ollama" => Ok(Arc::new(OllamaEmbeddingProvider::with_http_client(
-                config
-                    .base_url
-                    .clone()
-                    .unwrap_or_else(|| "http://localhost:11434".to_string()),
+                config.base_url.clone().unwrap_or_else(|| {
+                    crate::infrastructure::constants::OLLAMA_DEFAULT_URL.to_string()
+                }),
                 config.model.clone(),
-                std::time::Duration::from_secs(30),
+                HTTP_REQUEST_TIMEOUT,
                 http_client,
             )) as Arc<dyn EmbeddingProvider>),
             "voyageai" => {
@@ -80,7 +80,7 @@ impl ProviderFactory for DefaultProviderFactory {
                     api_key.clone(),
                     config.base_url.clone(),
                     config.model.clone(),
-                    std::time::Duration::from_secs(30),
+                    HTTP_REQUEST_TIMEOUT,
                     http_client,
                 )) as Arc<dyn EmbeddingProvider>)
             }

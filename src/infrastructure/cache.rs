@@ -31,8 +31,7 @@ pub use config::{
 
 // Re-export provider trait and implementations
 pub use provider::{
-    CacheProvider, CacheStats, HealthStatus, NullCacheProvider,
-    SharedCacheProvider,
+    CacheProvider, CacheStats, HealthStatus, NullCacheProvider, SharedCacheProvider,
 };
 pub use providers::moka::MokaCacheProvider;
 pub use providers::redis::RedisCacheProvider;

@@ -9,7 +9,7 @@ use axum::{extract::State, http::StatusCode, response::Json, routing::get, Route
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::infrastructure::cache::{SharedCacheProvider, CacheStats};
+use crate::infrastructure::cache::{CacheStats, SharedCacheProvider};
 use crate::infrastructure::limits::ResourceLimits;
 use crate::infrastructure::rate_limit::RateLimiter;
 // Rate limiting middleware will be added later

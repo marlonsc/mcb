@@ -84,7 +84,10 @@ impl ActiveHealthMonitor {
 
         let monitor = self.clone();
         tokio::spawn(async move {
-            info!("[HEALTH] Starting active health monitor (interval: {}s)", monitor.config.probe_interval_secs);
+            info!(
+                "[HEALTH] Starting active health monitor (interval: {}s)",
+                monitor.config.probe_interval_secs
+            );
             monitor.run_monitoring_loop().await;
         });
     }
@@ -151,16 +154,24 @@ impl ActiveHealthMonitor {
                         }
                     }
                     Ok(Err(e)) => {
-                        warn!("[HEALTH] Embedding provider '{}' health check failed: {}", provider_id, e);
+                        warn!(
+                            "[HEALTH] Embedding provider '{}' health check failed: {}",
+                            provider_id, e
+                        );
                     }
                     Err(_) => {
-                        warn!("[HEALTH] Embedding provider '{}' health check timed out after {}s",
-                            provider_id, self.config.probe_timeout_secs);
+                        warn!(
+                            "[HEALTH] Embedding provider '{}' health check timed out after {}s",
+                            provider_id, self.config.probe_timeout_secs
+                        );
                     }
                 }
             }
             Err(e) => {
-                debug!("[HEALTH] Embedding provider '{}' not found: {}", provider_id, e);
+                debug!(
+                    "[HEALTH] Embedding provider '{}' not found: {}",
+                    provider_id, e
+                );
             }
         }
     }
@@ -173,7 +184,10 @@ impl ActiveHealthMonitor {
             Ok(provider) => {
                 match tokio::time::timeout(timeout, provider.health_check()).await {
                     Ok(Ok(())) => {
-                        debug!("[HEALTH] Vector store provider '{}' is healthy", provider_id);
+                        debug!(
+                            "[HEALTH] Vector store provider '{}' is healthy",
+                            provider_id
+                        );
                         // Publish success to event bus for recovery manager
                         if let Err(e) = self
                             .event_bus
@@ -186,16 +200,24 @@ impl ActiveHealthMonitor {
                         }
                     }
                     Ok(Err(e)) => {
-                        warn!("[HEALTH] Vector store provider '{}' health check failed: {}", provider_id, e);
+                        warn!(
+                            "[HEALTH] Vector store provider '{}' health check failed: {}",
+                            provider_id, e
+                        );
                     }
                     Err(_) => {
-                        warn!("[HEALTH] Vector store provider '{}' health check timed out after {}s",
-                            provider_id, self.config.probe_timeout_secs);
+                        warn!(
+                            "[HEALTH] Vector store provider '{}' health check timed out after {}s",
+                            provider_id, self.config.probe_timeout_secs
+                        );
                     }
                 }
             }
             Err(e) => {
-                debug!("[HEALTH] Vector store provider '{}' not found: {}", provider_id, e);
+                debug!(
+                    "[HEALTH] Vector store provider '{}' not found: {}",
+                    provider_id, e
+                );
             }
         }
     }

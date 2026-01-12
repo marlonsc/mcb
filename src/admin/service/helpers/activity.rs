@@ -52,7 +52,10 @@ impl ActivityLogger {
     }
 
     /// Start listening to events from the event bus
-    pub fn start_listening(&self, event_bus: crate::infrastructure::events::SharedEventBusProvider) {
+    pub fn start_listening(
+        &self,
+        event_bus: crate::infrastructure::events::SharedEventBusProvider,
+    ) {
         let activities = Arc::clone(&self.activities);
 
         tokio::spawn(async move {
@@ -128,7 +131,12 @@ impl Default for ActivityLogger {
 
 /// Convert a SystemEvent to an Activity entry
 fn event_to_activity(event: &SystemEvent) -> Option<Activity> {
-    let (level, category, message, details): (ActivityLevel, &str, String, Option<serde_json::Value>) = match event {
+    let (level, category, message, details): (
+        ActivityLevel,
+        &str,
+        String,
+        Option<serde_json::Value>,
+    ) = match event {
         SystemEvent::CacheClear { namespace } => {
             let msg = match namespace {
                 Some(ns) => format!("Cache cleared: {}", ns),

@@ -12,6 +12,7 @@ use std::time::Instant;
 
 use crate::application::IndexingService;
 use crate::infrastructure::auth::Permission;
+use crate::infrastructure::constants::INDEXING_OPERATION_TIMEOUT;
 use crate::infrastructure::limits::ResourceLimits;
 use crate::server::args::IndexCodebaseArgs;
 use crate::server::auth::AuthHandler;
@@ -103,11 +104,7 @@ impl IndexCodebaseHandler {
 
         // Add timeout for long-running indexing operations
         let indexing_future = self.indexing_service.index_directory(path, collection);
-        let result = tokio::time::timeout(
-            std::time::Duration::from_secs(300), // 5 minute timeout
-            indexing_future,
-        )
-        .await;
+        let result = tokio::time::timeout(INDEXING_OPERATION_TIMEOUT, indexing_future).await;
 
         let duration = start_time.elapsed();
 

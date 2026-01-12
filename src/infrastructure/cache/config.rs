@@ -86,8 +86,8 @@ impl CacheBackendConfig {
     /// export MCP_REDIS_POOL_SIZE=20
     /// ```
     pub fn from_env() -> Self {
-        let backend_type = std::env::var("MCP_CACHE__BACKEND")
-            .unwrap_or_else(|_| "local".to_string());
+        let backend_type =
+            std::env::var("MCP_CACHE__BACKEND").unwrap_or_else(|_| "local".to_string());
 
         let default_ttl_seconds = std::env::var("MCP_CACHE__TTL_SECONDS")
             .ok()
@@ -186,7 +186,6 @@ impl Default for CacheConfig {
     }
 }
 
-
 /// Configuration for different cache namespaces
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct CacheNamespacesConfig {
@@ -267,7 +266,6 @@ pub struct CacheEntry<T> {
     /// Size of the entry in bytes
     pub size_bytes: usize,
 }
-
 
 /// Cache operation result
 #[derive(Debug)]

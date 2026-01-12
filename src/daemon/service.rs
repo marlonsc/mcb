@@ -3,7 +3,7 @@
 use super::{DaemonConfig, DaemonStats};
 use crate::domain::error::{Error, Result};
 use crate::domain::types::SyncBatch;
-use crate::infrastructure::cache::{SharedCacheProvider, CacheProviderQueue};
+use crate::infrastructure::cache::{CacheProviderQueue, SharedCacheProvider};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -69,10 +69,7 @@ impl ContextDaemon {
     }
 
     /// Create a new daemon with custom config
-    pub fn with_config(
-        config: DaemonConfig,
-        cache_manager: Option<SharedCacheProvider>,
-    ) -> Self {
+    pub fn with_config(config: DaemonConfig, cache_manager: Option<SharedCacheProvider>) -> Self {
         Self {
             config,
             cache_manager,

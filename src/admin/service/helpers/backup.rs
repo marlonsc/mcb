@@ -14,7 +14,11 @@ pub async fn create_backup(
     backup_config: BackupConfig,
 ) -> Result<BackupResult, AdminError> {
     let backup_id = format!("backup_{}", chrono::Utc::now().format("%Y%m%d_%H%M%S"));
-    let path = format!("{}/{}.tar.gz", admin_defaults::DEFAULT_BACKUPS_DIR, backup_config.name);
+    let path = format!(
+        "{}/{}.tar.gz",
+        admin_defaults::DEFAULT_BACKUPS_DIR,
+        backup_config.name
+    );
 
     // Publish backup event - actual backup created asynchronously by BackupManager
     // Use list_backups() to check completion status and get actual file size
@@ -157,11 +161,16 @@ pub async fn restore_backup(
     match extract_backup(&backup_path, admin_defaults::DEFAULT_DATA_DIR) {
         Ok(_) => {
             // Publish restore event
-            let _ = event_bus.publish(crate::infrastructure::events::SystemEvent::BackupRestore {
-                path: backup_path.to_string_lossy().to_string(),
-            }).await;
+            let _ = event_bus
+                .publish(crate::infrastructure::events::SystemEvent::BackupRestore {
+                    path: backup_path.to_string_lossy().to_string(),
+                })
+                .await;
 
-            tracing::info!("[ADMIN] Backup restore completed successfully: {}", backup_id);
+            tracing::info!(
+                "[ADMIN] Backup restore completed successfully: {}",
+                backup_id
+            );
 
             Ok(RestoreResult {
                 success: true,
@@ -178,10 +187,7 @@ pub async fn restore_backup(
             })
         }
         Err(e) => {
-            tracing::error!(
-                "[ADMIN] Backup restore failed for {}: {}",
-                backup_id, e
-            );
+            tracing::error!("[ADMIN] Backup restore failed for {}: {}", backup_id, e);
 
             // Attempt to restore from rollback if restore failed
             if rollback_path.exists() {
@@ -223,11 +229,12 @@ pub async fn restore_backup(
 /// Helper function to extract backup archive
 fn extract_backup(backup_path: &std::path::Path, target_dir: &str) -> Result<(), String> {
     // Ensure target directory exists
-    std::fs::create_dir_all(target_dir).map_err(|e| format!("Cannot create target directory: {}", e))?;
+    std::fs::create_dir_all(target_dir)
+        .map_err(|e| format!("Cannot create target directory: {}", e))?;
 
     // Extract tar.gz file
-    let file = std::fs::File::open(backup_path)
-        .map_err(|e| format!("Cannot open backup file: {}", e))?;
+    let file =
+        std::fs::File::open(backup_path).map_err(|e| format!("Cannot open backup file: {}", e))?;
 
     let decoder = flate2::read::GzDecoder::new(file);
     let mut archive = tar::Archive::new(decoder);

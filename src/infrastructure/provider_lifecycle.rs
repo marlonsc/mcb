@@ -218,11 +218,7 @@ mod tests {
         let service_provider = Arc::new(crate::infrastructure::di::factory::ServiceProvider::new());
         let event_bus = Arc::new(crate::infrastructure::events::EventBus::new(10));
 
-        let lifecycle = ProviderLifecycleManager::new(
-            service_provider,
-            registry,
-            event_bus,
-        );
+        let lifecycle = ProviderLifecycleManager::new(service_provider, registry, event_bus);
 
         // Verify it has a connection tracker
         let _tracker = lifecycle.connection_tracker();

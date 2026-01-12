@@ -19,5 +19,5 @@ pub mod defaults;
 pub mod health;
 pub mod logging;
 pub mod maintenance;
-pub mod runtime_config;
 pub mod route_discovery;
+pub mod runtime_config;

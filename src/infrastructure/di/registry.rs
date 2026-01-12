@@ -60,162 +60,173 @@ impl ProviderRegistry {
             if let Ok(mut receiver) = event_bus.subscribe().await {
                 tracing::info!("[REGISTRY] Event listener started");
                 while let Ok(event) = receiver.recv().await {
-                match event {
-                    SystemEvent::ProviderRestart {
-                        provider_type,
-                        provider_id,
-                    } => {
-                        tracing::info!(
-                            "[REGISTRY] Provider restart requested: {}:{}",
+                    match event {
+                        SystemEvent::ProviderRestart {
                             provider_type,
-                            provider_id
-                        );
-                        // For stateless API clients, "restart" means verifying health
-                        // and potentially resetting any connection pools or cached state
-                        match provider_type.as_str() {
-                            "embedding" => {
-                                // Clone provider Arc out of DashMap to avoid lifetime issues
-                                let provider_opt: Option<Arc<dyn EmbeddingProvider + 'static>> =
-                                    registry
-                                        .embedding_providers
-                                        .get(&provider_id)
-                                        .map(|p| Arc::clone(p.value()));
-                                if let Some(provider) = provider_opt {
-                                    match provider.health_check().await {
-                                        Ok(()) => {
-                                            tracing::info!(
+                            provider_id,
+                        } => {
+                            tracing::info!(
+                                "[REGISTRY] Provider restart requested: {}:{}",
+                                provider_type,
+                                provider_id
+                            );
+                            // For stateless API clients, "restart" means verifying health
+                            // and potentially resetting any connection pools or cached state
+                            match provider_type.as_str() {
+                                "embedding" => {
+                                    // Clone provider Arc out of DashMap to avoid lifetime issues
+                                    let provider_opt: Option<Arc<dyn EmbeddingProvider + 'static>> =
+                                        registry
+                                            .embedding_providers
+                                            .get(&provider_id)
+                                            .map(|p| Arc::clone(p.value()));
+                                    if let Some(provider) = provider_opt {
+                                        match provider.health_check().await {
+                                            Ok(()) => {
+                                                tracing::info!(
                                                 "[REGISTRY] Embedding provider '{}' health check passed",
                                                 provider_id
                                             );
-                                        }
-                                        Err(e) => {
-                                            tracing::error!(
+                                            }
+                                            Err(e) => {
+                                                tracing::error!(
                                                 "[REGISTRY] Embedding provider '{}' health check failed: {}",
                                                 provider_id,
                                                 e
                                             );
+                                            }
                                         }
-                                    }
-                                } else {
-                                    tracing::warn!(
+                                    } else {
+                                        tracing::warn!(
                                         "[REGISTRY] Embedding provider '{}' not found for restart",
                                         provider_id
                                     );
+                                    }
                                 }
-                            }
-                            "vector_store" => {
-                                // Clone provider Arc out of DashMap to avoid lifetime issues
-                                let provider_opt: Option<Arc<dyn VectorStoreProvider + 'static>> =
-                                    registry
+                                "vector_store" => {
+                                    // Clone provider Arc out of DashMap to avoid lifetime issues
+                                    let provider_opt: Option<
+                                        Arc<dyn VectorStoreProvider + 'static>,
+                                    > = registry
                                         .vector_store_providers
                                         .get(&provider_id)
                                         .map(|p| Arc::clone(p.value()));
-                                if let Some(provider) = provider_opt {
-                                    match provider.health_check().await {
-                                        Ok(()) => {
-                                            tracing::info!(
+                                    if let Some(provider) = provider_opt {
+                                        match provider.health_check().await {
+                                            Ok(()) => {
+                                                tracing::info!(
                                                 "[REGISTRY] Vector store provider '{}' health check passed",
                                                 provider_id
                                             );
-                                        }
-                                        Err(e) => {
-                                            tracing::error!(
+                                            }
+                                            Err(e) => {
+                                                tracing::error!(
                                                 "[REGISTRY] Vector store provider '{}' health check failed: {}",
                                                 provider_id,
                                                 e
                                             );
+                                            }
                                         }
-                                    }
-                                } else {
-                                    tracing::warn!(
+                                    } else {
+                                        tracing::warn!(
                                         "[REGISTRY] Vector store provider '{}' not found for restart",
                                         provider_id
                                     );
+                                    }
+                                }
+                                _ => {
+                                    tracing::warn!(
+                                        "[REGISTRY] Unknown provider type: {}",
+                                        provider_type
+                                    );
                                 }
                             }
-                            _ => {
-                                tracing::warn!(
-                                    "[REGISTRY] Unknown provider type: {}",
-                                    provider_type
-                                );
-                            }
                         }
-                    }
-                    SystemEvent::ProviderReconfigure {
-                        provider_type,
-                        config: _,
-                    } => {
-                        // Reconfiguration requires factory pattern to recreate provider
-                        // For now, log the request - full implementation would require
-                        // passing the ProviderFactory to the registry
-                        tracing::warn!(
+                        SystemEvent::ProviderReconfigure {
+                            provider_type,
+                            config: _,
+                        } => {
+                            // Reconfiguration requires factory pattern to recreate provider
+                            // For now, log the request - full implementation would require
+                            // passing the ProviderFactory to the registry
+                            tracing::warn!(
                             "[REGISTRY] Provider reconfigure requested for '{}' - not yet implemented",
                             provider_type
                         );
-                    }
-                    SystemEvent::SubsystemHealthCheck { subsystem_id } => {
-                        // Run health checks on all providers if subsystem matches
-                        if subsystem_id.starts_with("embedding") || subsystem_id == "providers" {
-                            tracing::info!(
-                                "[REGISTRY] Running health checks on embedding providers"
-                            );
-                            // Collect providers first to avoid lifetime issues with async
-                            let providers: Vec<(String, Arc<dyn EmbeddingProvider + 'static>)> =
-                                registry
-                                    .embedding_providers
-                                    .iter()
-                                    .map(|entry| (entry.key().clone(), Arc::clone(entry.value())))
-                                    .collect();
-                            for (name, provider) in providers {
-                                match provider.health_check().await {
-                                    Ok(()) => {
-                                        tracing::info!("[REGISTRY] Embedding '{}': healthy", name);
-                                    }
-                                    Err(e) => {
-                                        tracing::error!(
-                                            "[REGISTRY] Embedding '{}': unhealthy - {}",
-                                            name,
-                                            e
-                                        );
+                        }
+                        SystemEvent::SubsystemHealthCheck { subsystem_id } => {
+                            // Run health checks on all providers if subsystem matches
+                            if subsystem_id.starts_with("embedding") || subsystem_id == "providers"
+                            {
+                                tracing::info!(
+                                    "[REGISTRY] Running health checks on embedding providers"
+                                );
+                                // Collect providers first to avoid lifetime issues with async
+                                let providers: Vec<(String, Arc<dyn EmbeddingProvider + 'static>)> =
+                                    registry
+                                        .embedding_providers
+                                        .iter()
+                                        .map(|entry| {
+                                            (entry.key().clone(), Arc::clone(entry.value()))
+                                        })
+                                        .collect();
+                                for (name, provider) in providers {
+                                    match provider.health_check().await {
+                                        Ok(()) => {
+                                            tracing::info!(
+                                                "[REGISTRY] Embedding '{}': healthy",
+                                                name
+                                            );
+                                        }
+                                        Err(e) => {
+                                            tracing::error!(
+                                                "[REGISTRY] Embedding '{}': unhealthy - {}",
+                                                name,
+                                                e
+                                            );
+                                        }
                                     }
                                 }
                             }
-                        }
-                        if subsystem_id.starts_with("vector_store") || subsystem_id == "providers" {
-                            tracing::info!(
-                                "[REGISTRY] Running health checks on vector store providers"
-                            );
-                            // Collect providers first to avoid lifetime issues with async
-                            let providers: Vec<(String, Arc<dyn VectorStoreProvider + 'static>)> =
-                                registry
+                            if subsystem_id.starts_with("vector_store")
+                                || subsystem_id == "providers"
+                            {
+                                tracing::info!(
+                                    "[REGISTRY] Running health checks on vector store providers"
+                                );
+                                // Collect providers first to avoid lifetime issues with async
+                                let providers: Vec<(
+                                    String,
+                                    Arc<dyn VectorStoreProvider + 'static>,
+                                )> = registry
                                     .vector_store_providers
                                     .iter()
                                     .map(|entry| (entry.key().clone(), Arc::clone(entry.value())))
                                     .collect();
-                            for (name, provider) in providers {
-                                match provider.health_check().await {
-                                    Ok(()) => {
-                                        tracing::info!(
-                                            "[REGISTRY] Vector store '{}': healthy",
-                                            name
-                                        );
-                                    }
-                                    Err(e) => {
-                                        tracing::error!(
-                                            "[REGISTRY] Vector store '{}': unhealthy - {}",
-                                            name,
-                                            e
-                                        );
+                                for (name, provider) in providers {
+                                    match provider.health_check().await {
+                                        Ok(()) => {
+                                            tracing::info!(
+                                                "[REGISTRY] Vector store '{}': healthy",
+                                                name
+                                            );
+                                        }
+                                        Err(e) => {
+                                            tracing::error!(
+                                                "[REGISTRY] Vector store '{}': unhealthy - {}",
+                                                name,
+                                                e
+                                            );
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    _ => {
-                        // Ignore other events
+                        _ => {
+                            // Ignore other events
+                        }
                     }
                 }
-            }
                 tracing::warn!("[REGISTRY] Event listener stopped");
             }
         });

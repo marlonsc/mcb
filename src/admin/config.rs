@@ -67,7 +67,7 @@ fn default_jwt_secret() -> String {
 }
 
 fn default_jwt_expiration() -> u64 {
-    3600  // 1 hour
+    3600 // 1 hour
 }
 
 /// Configuration errors
@@ -91,7 +91,13 @@ pub enum ConfigError {
 
 impl AdminConfig {
     /// Create with explicit values
-    pub fn new(enabled: bool, username: String, password: String, jwt_secret: String, jwt_expiration: u64) -> Result<Self, ConfigError> {
+    pub fn new(
+        enabled: bool,
+        username: String,
+        password: String,
+        jwt_secret: String,
+        jwt_expiration: u64,
+    ) -> Result<Self, ConfigError> {
         let config = Self {
             enabled,
             username,
@@ -99,14 +105,19 @@ impl AdminConfig {
             jwt_secret,
             jwt_expiration,
         };
-        config.validate()
+        config
+            .validate()
             .map_err(|e| ConfigError::ConfigError(format!("Validation failed: {}", e)))?;
         Ok(config)
     }
 
     /// Create for testing ONLY
     #[cfg(test)]
-    pub fn for_testing(username: &str, password: &str, jwt_secret: &str) -> Result<Self, ConfigError> {
+    pub fn for_testing(
+        username: &str,
+        password: &str,
+        jwt_secret: &str,
+    ) -> Result<Self, ConfigError> {
         let config = Self {
             enabled: true,
             username: username.to_string(),
@@ -114,7 +125,8 @@ impl AdminConfig {
             jwt_secret: jwt_secret.to_string(),
             jwt_expiration: 3600,
         };
-        config.validate()
+        config
+            .validate()
             .map_err(|e| ConfigError::ConfigError(format!("Validation failed: {}", e)))?;
         Ok(config)
     }

@@ -243,8 +243,9 @@ async fn initialize_server_components(
     // Reuse the actual registry from the server (same registry used by health monitor and rest of system)
     let registry_for_lifecycle: Arc<crate::infrastructure::di::registry::ProviderRegistry> =
         Arc::new(server.service_provider.registry().clone());
-    let registry_trait_for_lifecycle: Arc<dyn crate::infrastructure::di::registry::ProviderRegistryTrait> =
-        registry_for_lifecycle;
+    let registry_trait_for_lifecycle: Arc<
+        dyn crate::infrastructure::di::registry::ProviderRegistryTrait,
+    > = registry_for_lifecycle;
 
     let lifecycle_manager = ProviderLifecycleManager::new(
         Arc::clone(&server.service_provider),

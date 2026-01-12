@@ -64,11 +64,51 @@ bm25_b = 0.75             # BM25 b parameter (field length normalization)
 # ============================================================================
 [cache]
 enabled = true                    # Enable caching
-redis_url = ""                    # Empty = use local Moka cache (recommended)
-                                  # Set to "redis://localhost:6379/0" for Redis
-# Additional optional parameters (use code defaults if not specified):
+
+# Cache backend configuration
+[cache.backend]
+type = "local"                    # Use local Moka cache (default, recommended)
+                                  # Change to "redis" for distributed caching
+
+# Local cache settings (used when type = "local")
+[cache.backend.config]
+max_entries = 10000               # Maximum number of entries
+default_ttl_seconds = 3600        # Default time-to-live (1 hour)
+
+# Redis cache settings (used when type = "redis")
+# Uncomment and set URL when using Redis backend:
+# [cache.backend]
+# type = "redis"
+# [cache.backend.config]
+# url = "redis://localhost:6379"
+# pool_size = 10
 # default_ttl_seconds = 3600
-# max_size = 10000
+
+# Cache namespace-specific settings (all use code defaults if not specified)
+[cache.namespaces.embeddings]
+ttl_seconds = 7200              # Cache embeddings for 2 hours
+max_entries = 5000
+compression = true
+
+[cache.namespaces.search_results]
+ttl_seconds = 1800              # Cache search results for 30 minutes
+max_entries = 2000
+compression = false
+
+[cache.namespaces.metadata]
+ttl_seconds = 3600              # Cache metadata for 1 hour
+max_entries = 1000
+compression = false
+
+[cache.namespaces.provider_responses]
+ttl_seconds = 300               # Cache provider responses for 5 minutes
+max_entries = 3000
+compression = true
+
+[cache.namespaces.sync_batches]
+ttl_seconds = 86400             # Keep sync batches for 24 hours
+max_entries = 1000
+compression = false
 
 # ============================================================================
 # DAEMON - Background Process Configuration

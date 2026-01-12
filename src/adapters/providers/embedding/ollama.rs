@@ -3,6 +3,7 @@
 use crate::domain::error::{Error, Result};
 use crate::domain::ports::EmbeddingProvider;
 use crate::domain::types::Embedding;
+use crate::infrastructure::constants::HTTP_REQUEST_TIMEOUT;
 use async_trait::async_trait;
 use std::sync::Arc;
 use std::time::Duration;
@@ -18,7 +19,7 @@ pub struct OllamaEmbeddingProvider {
 impl OllamaEmbeddingProvider {
     /// Create a new Ollama embedding provider
     pub fn new(base_url: String, model: String) -> Result<Self> {
-        Self::with_timeout(base_url, model, Duration::from_secs(30))
+        Self::with_timeout(base_url, model, HTTP_REQUEST_TIMEOUT)
     }
 
     /// Create a new Ollama embedding provider with custom timeout

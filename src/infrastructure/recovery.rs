@@ -28,7 +28,7 @@
 //! ```
 
 use crate::daemon::types::{RecoveryConfig, RecoveryState, RecoveryStatus, RecoveryStrategy};
-use crate::infrastructure::events::{SystemEvent, SharedEventBusProvider};
+use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
 use dashmap::DashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -347,7 +347,9 @@ impl RecoveryManager {
     }
 
     /// Get event receiver for external health check integration
-    pub async fn subscribe(&self) -> crate::domain::error::Result<Box<dyn crate::infrastructure::events::EventReceiver>> {
+    pub async fn subscribe(
+        &self,
+    ) -> crate::domain::error::Result<Box<dyn crate::infrastructure::events::EventReceiver>> {
         self.event_bus.subscribe().await
     }
 }

@@ -349,7 +349,7 @@ impl AdminService for AdminServiceImpl {
         // Validate that configuration is properly loaded - never use fake defaults
         if config.name.is_empty() {
             return Err(AdminError::ConfigError(
-                "Configuration not properly loaded".to_string()
+                "Configuration not properly loaded".to_string(),
             ));
         }
 
@@ -358,23 +358,23 @@ impl AdminService for AdminServiceImpl {
         // Load supported extensions from all available language processors
         // These 12 languages are supported: Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin
         let supported_extensions = vec![
-            ".rs".to_string(),      // Rust
-            ".py".to_string(),      // Python
-            ".js".to_string(),      // JavaScript
-            ".ts".to_string(),      // TypeScript
-            ".go".to_string(),      // Go
-            ".java".to_string(),    // Java
-            ".c".to_string(),       // C
-            ".cpp".to_string(),     // C++
-            ".cc".to_string(),      // C++ (alternative)
-            ".cxx".to_string(),     // C++ (alternative)
-            ".cs".to_string(),      // C#
-            ".rb".to_string(),      // Ruby
-            ".php".to_string(),     // PHP
-            ".swift".to_string(),   // Swift
-            ".kt".to_string(),      // Kotlin
-            ".h".to_string(),       // C/C++ header
-            ".hpp".to_string(),     // C++ header
+            ".rs".to_string(),    // Rust
+            ".py".to_string(),    // Python
+            ".js".to_string(),    // JavaScript
+            ".ts".to_string(),    // TypeScript
+            ".go".to_string(),    // Go
+            ".java".to_string(),  // Java
+            ".c".to_string(),     // C
+            ".cpp".to_string(),   // C++
+            ".cc".to_string(),    // C++ (alternative)
+            ".cxx".to_string(),   // C++ (alternative)
+            ".cs".to_string(),    // C#
+            ".rb".to_string(),    // Ruby
+            ".php".to_string(),   // PHP
+            ".swift".to_string(), // Swift
+            ".kt".to_string(),    // Kotlin
+            ".h".to_string(),     // C/C++ header
+            ".hpp".to_string(),   // C++ header
         ];
 
         Ok(ConfigurationData {
@@ -409,8 +409,7 @@ impl AdminService for AdminServiceImpl {
                 enabled: config.cache.enabled,
                 max_size: match &config.cache.backend {
                     crate::infrastructure::cache::CacheBackendConfig::Local {
-                        max_entries,
-                        ..
+                        max_entries, ..
                     } => *max_entries as u64,
                     crate::infrastructure::cache::CacheBackendConfig::Redis { .. } => 0,
                 },
@@ -1094,10 +1093,13 @@ impl AdminService for AdminServiceImpl {
         match signal {
             SubsystemSignal::Restart => {
                 if subsystem_type == "embedding" || subsystem_type == "vector_store" {
-                    let _ = self.event_bus.publish(SystemEvent::ProviderRestart {
-                        provider_type: subsystem_type.to_string(),
-                        provider_id: provider_id.to_string(),
-                    }).await;
+                    let _ = self
+                        .event_bus
+                        .publish(SystemEvent::ProviderRestart {
+                            provider_type: subsystem_type.to_string(),
+                            provider_id: provider_id.to_string(),
+                        })
+                        .await;
                 } else if subsystem_id == "cache" {
                     let _ = self
                         .event_bus
@@ -1115,10 +1117,13 @@ impl AdminService for AdminServiceImpl {
             }
             SubsystemSignal::Configure(config) => {
                 if subsystem_type == "embedding" || subsystem_type == "vector_store" {
-                    let _ = self.event_bus.publish(SystemEvent::ProviderReconfigure {
-                        provider_type: subsystem_type.to_string(),
-                        config,
-                    }).await;
+                    let _ = self
+                        .event_bus
+                        .publish(SystemEvent::ProviderReconfigure {
+                            provider_type: subsystem_type.to_string(),
+                            config,
+                        })
+                        .await;
                 }
             }
             SubsystemSignal::Pause | SubsystemSignal::Resume => {

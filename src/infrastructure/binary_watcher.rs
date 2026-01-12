@@ -3,7 +3,7 @@
 //! Monitors the server's executable file for updates and triggers
 //! respawn events when a new version is detected.
 
-use crate::infrastructure::events::{SystemEvent, SharedEventBusProvider};
+use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
 use anyhow::{Context, Result};
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::PathBuf;

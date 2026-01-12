@@ -428,7 +428,9 @@ mod index_codebase_tests {
 
 mod search_code_tests {
     use super::*;
-    use mcp_context_browser::infrastructure::cache::{CacheConfig, CacheManager};
+    use mcp_context_browser::infrastructure::cache::{
+        create_cache_provider, CacheBackendConfig, CacheConfig, SharedCacheProvider,
+    };
 
     async fn create_search_service() -> Arc<SearchService> {
         let (embedding_provider, vector_store_provider, hybrid_search_provider) =
@@ -441,9 +443,16 @@ mod search_code_tests {
         Arc::new(SearchService::new(context_service))
     }
 
-    async fn create_cache_manager() -> Arc<CacheManager> {
-        let config = CacheConfig::default();
-        Arc::new(CacheManager::new(config, None).await.unwrap())
+    async fn create_cache_provider_test() -> SharedCacheProvider {
+        let config = CacheConfig {
+            enabled: true,
+            backend: CacheBackendConfig::Local {
+                max_entries: 1000,
+                default_ttl_seconds: 3600,
+            },
+            namespaces: Default::default(),
+        };
+        Arc::new(create_cache_provider(&config).await.unwrap())
     }
 
     #[tokio::test]
@@ -451,9 +460,13 @@ mod search_code_tests {
         let search_service = create_search_service().await;
         let auth_handler = Arc::new(create_auth_handler_disabled());
         let resource_limits = Arc::new(create_resource_limits_disabled());
-        let cache_manager = create_cache_manager().await;
-        let handler =
-            SearchCodeHandler::new(search_service, auth_handler, resource_limits, cache_manager);
+        let cache_provider = Some(create_cache_provider_test().await);
+        let handler = SearchCodeHandler::new(
+            search_service,
+            auth_handler,
+            resource_limits,
+            cache_provider,
+        );
 
         let args = SearchCodeArgs {
             query: "   ".to_string(), // Empty after trim
@@ -479,9 +492,13 @@ mod search_code_tests {
         let search_service = create_search_service().await;
         let auth_handler = Arc::new(create_auth_handler_disabled());
         let resource_limits = Arc::new(create_resource_limits_disabled());
-        let cache_manager = create_cache_manager().await;
-        let handler =
-            SearchCodeHandler::new(search_service, auth_handler, resource_limits, cache_manager);
+        let cache_provider = Some(create_cache_provider_test().await);
+        let handler = SearchCodeHandler::new(
+            search_service,
+            auth_handler,
+            resource_limits,
+            cache_provider,
+        );
 
         let args = SearchCodeArgs {
             query: "ab".to_string(), // Less than 3 characters
@@ -507,9 +524,13 @@ mod search_code_tests {
         let search_service = create_search_service().await;
         let auth_handler = Arc::new(create_auth_handler_disabled());
         let resource_limits = Arc::new(create_resource_limits_disabled());
-        let cache_manager = create_cache_manager().await;
-        let handler =
-            SearchCodeHandler::new(search_service, auth_handler, resource_limits, cache_manager);
+        let cache_provider = Some(create_cache_provider_test().await);
+        let handler = SearchCodeHandler::new(
+            search_service,
+            auth_handler,
+            resource_limits,
+            cache_provider,
+        );
 
         let args = SearchCodeArgs {
             query: "find error handling functions".to_string(),
@@ -539,9 +560,13 @@ mod search_code_tests {
         let search_service = create_search_service().await;
         let auth_handler = Arc::new(create_auth_handler_disabled());
         let resource_limits = Arc::new(create_resource_limits_disabled());
-        let cache_manager = create_cache_manager().await;
-        let handler =
-            SearchCodeHandler::new(search_service, auth_handler, resource_limits, cache_manager);
+        let cache_provider = Some(create_cache_provider_test().await);
+        let handler = SearchCodeHandler::new(
+            search_service,
+            auth_handler,
+            resource_limits,
+            cache_provider,
+        );
 
         // Test with limit above maximum (should be clamped to 50)
         let args = SearchCodeArgs {
@@ -564,9 +589,13 @@ mod search_code_tests {
         let search_service = create_search_service().await;
         let auth_handler = Arc::new(create_auth_handler_disabled());
         let resource_limits = Arc::new(create_resource_limits_disabled());
-        let cache_manager = create_cache_manager().await;
-        let handler =
-            SearchCodeHandler::new(search_service, auth_handler, resource_limits, cache_manager);
+        let cache_provider = Some(create_cache_provider_test().await);
+        let handler = SearchCodeHandler::new(
+            search_service,
+            auth_handler,
+            resource_limits,
+            cache_provider,
+        );
 
         // Create a query longer than 1000 characters
         let long_query = "a".repeat(1001);

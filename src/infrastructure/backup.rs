@@ -5,11 +5,11 @@
 
 use crate::domain::error::{Error, Result};
 use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
-use std::sync::Arc;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use std::fs::{self, File};
 use std::path::Path;
+use std::sync::Arc;
 use tar::Builder;
 use tokio::sync::mpsc;
 
@@ -42,7 +42,11 @@ pub struct BackupManager {
 
 impl BackupManager {
     /// Create a new backup manager
-    pub fn new(backup_dir: &str, data_dir: &str, event_bus: Option<SharedEventBusProvider>) -> Self {
+    pub fn new(
+        backup_dir: &str,
+        data_dir: &str,
+        event_bus: Option<SharedEventBusProvider>,
+    ) -> Self {
         let (tx, rx) = mpsc::channel(100);
         let backup_dir_owned = backup_dir.to_string();
         let data_dir_owned = data_dir.to_string();
@@ -91,7 +95,11 @@ impl BackupManager {
                                 );
                             }
                             Ok(Err(e)) => {
-                                tracing::error!("[BACKUP] Failed to create backup at {}: {}", path, e);
+                                tracing::error!(
+                                    "[BACKUP] Failed to create backup at {}: {}",
+                                    path,
+                                    e
+                                );
                             }
                             Err(e) => {
                                 tracing::error!("[BACKUP] Backup task panicked: {}", e);

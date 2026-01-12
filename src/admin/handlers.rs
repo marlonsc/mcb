@@ -315,9 +315,13 @@ pub async fn index_operation_handler(
     match operation.operation.as_str() {
         "clear" => {
             // Clear the index by publishing IndexClear event
-            if let Err(e) = state.event_bus.publish(SystemEvent::IndexClear {
-                collection: Some(index_id.clone()),
-            }).await {
+            if let Err(e) = state
+                .event_bus
+                .publish(SystemEvent::IndexClear {
+                    collection: Some(index_id.clone()),
+                })
+                .await
+            {
                 tracing::error!("Failed to publish IndexClear event: {}", e);
                 return Ok(Json(ApiResponse::error(format!(
                     "Failed to clear index: {}",
@@ -326,9 +330,13 @@ pub async fn index_operation_handler(
             }
 
             // Also clear the index cache
-            if let Err(e) = state.event_bus.publish(SystemEvent::CacheClear {
-                namespace: Some("indexes".to_string()),
-            }).await {
+            if let Err(e) = state
+                .event_bus
+                .publish(SystemEvent::CacheClear {
+                    namespace: Some("indexes".to_string()),
+                })
+                .await
+            {
                 tracing::warn!("Failed to clear index cache: {}", e);
             }
 
@@ -340,9 +348,13 @@ pub async fn index_operation_handler(
         }
         "rebuild" => {
             // Trigger index rebuild via event bus
-            if let Err(e) = state.event_bus.publish(SystemEvent::IndexRebuild {
-                collection: Some(index_id.clone()),
-            }).await {
+            if let Err(e) = state
+                .event_bus
+                .publish(SystemEvent::IndexRebuild {
+                    collection: Some(index_id.clone()),
+                })
+                .await
+            {
                 tracing::error!("Failed to publish IndexRebuild event: {}", e);
                 return Ok(Json(ApiResponse::error(format!(
                     "Failed to start index rebuild: {}",
@@ -358,9 +370,13 @@ pub async fn index_operation_handler(
         }
         "optimize" => {
             // Trigger index optimization
-            if let Err(e) = state.event_bus.publish(SystemEvent::IndexOptimize {
-                collection: Some(index_id.clone()),
-            }).await {
+            if let Err(e) = state
+                .event_bus
+                .publish(SystemEvent::IndexOptimize {
+                    collection: Some(index_id.clone()),
+                })
+                .await
+            {
                 tracing::error!("Failed to publish IndexOptimize event: {}", e);
                 return Ok(Json(ApiResponse::error(format!(
                     "Failed to optimize index: {}",
@@ -1034,7 +1050,9 @@ pub async fn api_restart_all_providers_handler(
     match crate::admin::service::helpers::maintenance::restart_all_providers(
         &state.event_bus,
         &provider_list,
-    ).await {
+    )
+    .await
+    {
         Ok(result) => axum::response::Html(format!(
             r#"<div class="text-green-600 dark:text-green-400 mt-2">{}</div>"#,
             result.message
@@ -1077,7 +1095,9 @@ pub async fn api_restart_providers_by_type_handler(
     match crate::admin::service::helpers::maintenance::restart_all_providers(
         &state.event_bus,
         &provider_list,
-    ).await {
+    )
+    .await
+    {
         Ok(result) => axum::response::Html(format!(
             r#"<div class="text-green-600 dark:text-green-400 mt-2">{}</div>"#,
             result.message

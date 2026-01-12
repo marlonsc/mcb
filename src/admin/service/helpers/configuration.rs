@@ -63,7 +63,9 @@ impl ConfigHistoryManager {
 
         // Trim to max entries
         if history.entries.len() > admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES {
-            history.entries.truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
+            history
+                .entries
+                .truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
         }
 
         // Persist to disk (fire and forget, don't block)
@@ -115,7 +117,9 @@ impl ConfigHistoryManager {
 
             // Trim to max entries
             if history.entries.len() > admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES {
-                history.entries.truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
+                history
+                    .entries
+                    .truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
             }
 
             // Persist
@@ -222,7 +226,9 @@ pub async fn record_configuration_change(
 
     // Trim to max entries
     if history.entries.len() > admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES {
-        history.entries.truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
+        history
+            .entries
+            .truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
     }
 
     save_history(&history).await?;
@@ -263,7 +269,9 @@ pub async fn record_batch_changes(
 
     // Trim to max entries
     if history.entries.len() > admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES {
-        history.entries.truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
+        history
+            .entries
+            .truncate(admin_defaults::DEFAULT_MAX_HISTORY_ENTRIES);
     }
 
     save_history(&history).await?;

@@ -86,20 +86,20 @@ pub const DEFAULT_BACKUP_COMPRESSION_LEVEL: u32 = 6;
 pub const DEFAULT_MAX_BACKUPS: usize = 10;
 
 // Route Discovery Configuration
-pub const DEFAULT_ROUTE_RATE_LIMIT_HEALTH: u32 = 100;      // requests per minute
-pub const DEFAULT_ROUTE_RATE_LIMIT_ADMIN: u32 = 100;       // requests per minute
-pub const DEFAULT_ROUTE_RATE_LIMIT_INDEXING: u32 = 10;     // requests per minute
-pub const DEFAULT_ROUTE_RATE_LIMIT_SEARCH: u32 = 10;       // requests per minute
-pub const DEFAULT_ROUTE_RATE_LIMIT_SHUTDOWN: u32 = 60;     // seconds cooldown
-pub const DEFAULT_ROUTE_RATE_LIMIT_RELOAD: u32 = 30;       // seconds cooldown
-pub const DEFAULT_ROUTE_RATE_LIMIT_BACKUP: u32 = 60;       // seconds cooldown
-pub const DEFAULT_ROUTE_RATE_LIMIT_RESTORE: u32 = 10;      // requests per minute
+pub const DEFAULT_ROUTE_RATE_LIMIT_HEALTH: u32 = 100; // requests per minute
+pub const DEFAULT_ROUTE_RATE_LIMIT_ADMIN: u32 = 100; // requests per minute
+pub const DEFAULT_ROUTE_RATE_LIMIT_INDEXING: u32 = 10; // requests per minute
+pub const DEFAULT_ROUTE_RATE_LIMIT_SEARCH: u32 = 10; // requests per minute
+pub const DEFAULT_ROUTE_RATE_LIMIT_SHUTDOWN: u32 = 60; // seconds cooldown
+pub const DEFAULT_ROUTE_RATE_LIMIT_RELOAD: u32 = 30; // seconds cooldown
+pub const DEFAULT_ROUTE_RATE_LIMIT_BACKUP: u32 = 60; // seconds cooldown
+pub const DEFAULT_ROUTE_RATE_LIMIT_RESTORE: u32 = 10; // requests per minute
 
 // Maintenance Operations
 pub const DEFAULT_CLEANUP_BATCH_SIZE: usize = 100;
 pub const DEFAULT_CLEANUP_RETENTION_DAYS: u32 = 30;
-pub const DEFAULT_INDEX_REBUILD_TIMEOUT_SECS: u64 = 3600;  // 1 hour
-pub const DEFAULT_CACHE_CLEAR_TIMEOUT_SECS: u64 = 300;     // 5 minutes
+pub const DEFAULT_INDEX_REBUILD_TIMEOUT_SECS: u64 = 3600; // 1 hour
+pub const DEFAULT_CACHE_CLEAR_TIMEOUT_SECS: u64 = 300; // 5 minutes
 
 // Performance Testing
 pub const DEFAULT_PERF_TEST_DURATION_SECS: u32 = 30;

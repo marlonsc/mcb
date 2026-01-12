@@ -67,11 +67,9 @@ impl AuthConfig {
     /// - If auth is enabled, both variables MUST be set and valid
     /// - Fails immediately on invalid configuration
     pub fn from_env() -> Result<Self, String> {
-        let jwt_secret = std::env::var("JWT_SECRET")
-            .unwrap_or_else(|_| String::new());
+        let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| String::new());
 
-        let admin_password = std::env::var("ADMIN_PASSWORD")
-            .unwrap_or_else(|_| String::new());
+        let admin_password = std::env::var("ADMIN_PASSWORD").unwrap_or_else(|_| String::new());
 
         // Check if credentials are provided (indicates intent to enable auth)
         let enable_auth = !jwt_secret.is_empty() && !admin_password.is_empty();

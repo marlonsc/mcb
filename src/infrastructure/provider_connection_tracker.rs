@@ -62,7 +62,11 @@ impl ProviderConnectionTracker {
     fn decrement(&self, provider_id: &str) {
         if let Some(entry) = self.active_connections.get(provider_id) {
             let count = entry.fetch_sub(1, Ordering::SeqCst);
-            debug!("[TRACKER] Connection ended for {} (remaining: {})", provider_id, count - 1);
+            debug!(
+                "[TRACKER] Connection ended for {} (remaining: {})",
+                provider_id,
+                count - 1
+            );
         }
     }
 
@@ -75,11 +79,7 @@ impl ProviderConnectionTracker {
     }
 
     /// Wait for all connections to drain with optional timeout
-    pub async fn wait_for_drain(
-        &self,
-        provider_id: &str,
-        timeout: Duration,
-    ) -> bool {
+    pub async fn wait_for_drain(&self, provider_id: &str, timeout: Duration) -> bool {
         let start = std::time::Instant::now();
         let check_interval = Duration::from_millis(100);
 
@@ -107,7 +107,10 @@ impl ProviderConnectionTracker {
         if let Some(entry) = self.active_connections.get_mut(provider_id) {
             entry.store(0, Ordering::SeqCst);
         }
-        debug!("[TRACKER] Forced close of all connections for {}", provider_id);
+        debug!(
+            "[TRACKER] Forced close of all connections for {}",
+            provider_id
+        );
     }
 }
 

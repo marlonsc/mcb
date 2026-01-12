@@ -4,6 +4,7 @@ pub mod binary_watcher;
 pub mod cache;
 pub mod config;
 pub mod connection_tracker;
+pub mod constants;
 pub mod crypto;
 pub mod di;
 pub mod events;

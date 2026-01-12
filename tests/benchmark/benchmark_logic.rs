@@ -8,7 +8,6 @@ use mcp_context_browser::adapters::repository::{RepositoryStats, SearchStats};
 use mcp_context_browser::application::ContextService;
 use mcp_context_browser::domain::ports::{EmbeddingProvider, VectorStoreProvider};
 use mcp_context_browser::domain::types::{CodeChunk, Embedding, Language, SearchResult};
-use mcp_context_browser::infrastructure::cache::CacheManager;
 use mcp_context_browser::server::McpServer;
 use std::hint::black_box;
 use std::sync::Arc;
@@ -58,9 +57,8 @@ fn create_benchmark_context_service() -> ContextService {
 #[allow(dead_code)]
 fn create_benchmark_mcp_server() -> McpServer {
     let rt = Runtime::new().expect("Benchmark requires Tokio runtime");
-    // Use None for cache manager in benchmarks to avoid external dependencies
-    let cache_manager = None::<Arc<CacheManager>>;
-    rt.block_on(McpServer::new(cache_manager))
+    // Uses builder pattern with cache provider factory internally
+    rt.block_on(McpServer::new())
         .expect("Benchmark requires valid MCP server")
 }
 

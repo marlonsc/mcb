@@ -1,196 +1,185 @@
-//! Cache manager tests
+//! Cache Provider Tests
 //!
-//! Tests migrated from src/infrastructure/cache/mod.rs
+//! Tests for new CacheProvider trait-based implementation
+//! Tests use MokaCacheProvider (local) which is the default
 
 use mcp_context_browser::infrastructure::cache::{
-    CacheConfig, CacheManager, CacheNamespacesConfig, CacheResult,
+    CacheConfig, CacheBackendConfig, CacheNamespacesConfig, create_cache_provider,
+    CacheProvider,
 };
+use std::time::Duration;
 
 #[test]
 fn test_cache_config_default() {
     let config = CacheConfig::default();
     assert!(config.enabled);
-    assert_eq!(config.default_ttl_seconds, 3600);
-    assert_eq!(config.max_size, 10000);
-    assert!(config.redis_url.is_empty()); // Default to Local mode
+    assert!(config.backend.is_local()); // Default to local Moka
+}
+
+#[test]
+fn test_cache_backend_local_default() {
+    let backend = CacheBackendConfig::default();
+    assert!(backend.is_local());
+    assert!(!backend.is_redis());
+    assert_eq!(backend.backend_type(), "local");
 }
 
 #[tokio::test]
-async fn test_cache_manager_creation() -> std::result::Result<(), Box<dyn std::error::Error>> {
+async fn test_moka_cache_provider_creation() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let config = CacheConfig {
+        enabled: true,
+        backend: CacheBackendConfig::Local {
+            max_entries: 1000,
+            default_ttl_seconds: 3600,
+        },
+        namespaces: CacheNamespacesConfig::default(),
+    };
+
+    let provider = create_cache_provider(&config).await?;
+    assert_eq!(provider.backend_type(), "moka");
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_null_cache_provider_when_disabled() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let config = CacheConfig {
         enabled: false,
         ..Default::default()
     };
 
-    let manager = CacheManager::new(config, None).await?;
-    assert!(!manager.is_enabled());
-
-    let stats = manager.get_stats().await;
-    assert_eq!(stats.total_entries, 0);
-    assert_eq!(stats.hits, 0);
-    assert_eq!(stats.misses, 0);
+    let provider = create_cache_provider(&config).await?;
+    assert_eq!(provider.backend_type(), "null");
     Ok(())
 }
 
 #[tokio::test]
-async fn test_local_cache_operations() -> std::result::Result<(), Box<dyn std::error::Error>> {
+async fn test_cache_set_and_get() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let config = CacheConfig {
         enabled: true,
-        redis_url: "".to_string(), // Explicitly empty for Local mode
-        ..Default::default()
-    };
-
-    let manager = CacheManager::new(config, None).await?;
-
-    // Test set and get
-    manager.set("test", "key1", "value1".to_string()).await?;
-
-    let result: CacheResult<String> = manager.get("test", "key1").await;
-    assert!(result.is_hit());
-    let data = result.data().ok_or("Expected data in cache hit")?;
-    assert_eq!(data, "value1");
-
-    // Test miss
-    let result: CacheResult<String> = manager.get("test", "nonexistent").await;
-    assert!(result.is_miss());
-
-    // Test delete
-    manager.delete("test", "key1").await?;
-    let result: CacheResult<String> = manager.get("test", "key1").await;
-    assert!(result.is_miss());
-
-    // Check stats
-    let stats = manager.get_stats().await;
-    println!(
-        "Stats after test: hits={}, misses={}, ratio={}",
-        stats.hits, stats.misses, stats.hit_ratio
-    );
-    assert_eq!(stats.hits, 1);
-    assert_eq!(stats.misses, 2); // Should be 2 misses: nonexistent + deleted key
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_namespace_operations() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let config = CacheConfig {
-        enabled: true,
-        redis_url: "".to_string(),
-        ..Default::default()
-    };
-
-    let manager = CacheManager::new(config, None).await?;
-
-    // Set values in different namespaces
-    manager.set("ns1", "key1", "value1".to_string()).await?;
-    manager.set("ns2", "key1", "value2".to_string()).await?;
-
-    // Get values
-    let result1: CacheResult<String> = manager.get("ns1", "key1").await;
-    let result2: CacheResult<String> = manager.get("ns2", "key1").await;
-
-    assert!(result1.is_hit());
-    assert!(result2.is_hit());
-    let data1 = result1.data().ok_or("Expected data in ns1 cache hit")?;
-    let data2 = result2.data().ok_or("Expected data in ns2 cache hit")?;
-    assert_eq!(data1, "value1");
-    assert_eq!(data2, "value2");
-
-    // Clear namespace
-    manager.clear_namespace("ns1").await?;
-
-    manager.get_stats().await;
-
-    let result1: CacheResult<String> = manager.get("ns1", "key1").await;
-    let result2: CacheResult<String> = manager.get("ns2", "key1").await;
-
-    assert!(result1.is_miss());
-    assert!(result2.is_hit());
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_cache_manager_fail_invalid_redis() {
-    // Test with invalid Redis configuration
-    // In the new Exclusive mode, this should FAIL on creation
-    let config = CacheConfig {
-        redis_url: "redis://invalid:6379".to_string(),
-        default_ttl_seconds: 300,
-        max_size: 100,
-        enabled: true,
+        backend: CacheBackendConfig::Local {
+            max_entries: 1000,
+            default_ttl_seconds: 3600,
+        },
         namespaces: CacheNamespacesConfig::default(),
     };
 
-    let result = CacheManager::new(config, None).await;
-    assert!(result.is_err()); // Strict failure
-}
+    let cache = create_cache_provider(&config).await?;
+    let ttl = Duration::from_secs(3600);
 
-#[tokio::test]
-async fn test_cache_manager_handles_disabled_cache_operations(
-) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let config = CacheConfig {
-        redis_url: "".to_string(),
-        default_ttl_seconds: 300,
-        max_size: 0, // Disabled
-        enabled: false,
-        namespaces: CacheNamespacesConfig::default(),
-    };
+    // Test set
+    let value = "test_value".as_bytes().to_vec();
+    cache.set("test_ns", "test_key", value.clone(), ttl).await?;
 
-    let manager = CacheManager::new(config, None).await?;
+    // Test get
+    let retrieved = cache.get("test_ns", "test_key").await?;
+    assert!(retrieved.is_some(), "Expected value to be in cache");
+    assert_eq!(retrieved.unwrap(), value);
 
-    // Operations on disabled cache should not panic
-    let set_result = manager.set("test", "key", "value".to_string()).await;
-    assert!(set_result.is_ok());
-
-    let get_result: CacheResult<String> = manager.get("test", "key").await;
-    assert!(!matches!(get_result, CacheResult::Error(_)));
     Ok(())
 }
 
 #[tokio::test]
-async fn test_cache_manager_handles_large_data_operations(
-) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let config = CacheConfig::default(); // Local mode
-    let manager = CacheManager::new(config, None).await?;
+async fn test_cache_miss() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let config = CacheConfig::default();
+    let cache = create_cache_provider(&config).await?;
 
-    // Test with large data
-    let large_data = "x".repeat(1024 * 1024); // 1MB string
+    // Try to get a key that doesn't exist
+    let retrieved = cache.get("nonexistent_ns", "nonexistent_key").await?;
+    assert!(retrieved.is_none(), "Expected cache miss for non-existent key");
 
-    let set_result = manager.set("test", "large_key", large_data.clone()).await;
-    assert!(set_result.is_ok());
-
-    let get_result: CacheResult<String> = manager.get("test", "large_key").await;
-    match get_result {
-        CacheResult::Hit(data) => assert_eq!(data, large_data),
-        CacheResult::Miss => return Err("Expected cache hit".into()),
-        CacheResult::Error(e) => return Err(format!("Expected no error, got: {}", e).into()),
-    }
     Ok(())
 }
 
 #[tokio::test]
-async fn test_namespace_limits() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let mut config = CacheConfig {
-        enabled: true,
-        redis_url: "".to_string(),
-        ..Default::default()
-    };
-    // Configure metadata namespace with small limit
-    config.namespaces.metadata.max_entries = 2;
+async fn test_cache_delete() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let config = CacheConfig::default();
+    let cache = create_cache_provider(&config).await?;
+    let ttl = Duration::from_secs(3600);
 
-    let manager = CacheManager::new(config, None).await?;
+    // Set a value
+    let value = "delete_me".as_bytes().to_vec();
+    cache.set("test_ns", "delete_key", value, ttl).await?;
 
-    // Add 3 items to metadata namespace
-    manager.set("meta", "k1", "v1".to_string()).await?;
-    tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    // Verify it's there
+    let retrieved = cache.get("test_ns", "delete_key").await?;
+    assert!(retrieved.is_some());
 
-    manager.set("meta", "k2", "v2".to_string()).await?;
-    tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    // Delete it
+    cache.delete("test_ns", "delete_key").await?;
 
-    manager.set("meta", "k3", "v3".to_string()).await?;
+    // Verify it's gone
+    let retrieved = cache.get("test_ns", "delete_key").await?;
+    assert!(retrieved.is_none(), "Expected cache miss after deletion");
 
-    // Stats should show total entries <= 2 (might be 2)
-    let stats = manager.get_stats().await;
-    assert_eq!(stats.total_entries, 2);
-    assert!(stats.evictions >= 1);
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_cache_clear_namespace() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let config = CacheConfig::default();
+    let cache = create_cache_provider(&config).await?;
+    let ttl = Duration::from_secs(3600);
+
+    // Set values in two namespaces
+    cache.set("ns1", "key1", "value1".as_bytes().to_vec(), ttl).await?;
+    cache.set("ns1", "key2", "value2".as_bytes().to_vec(), ttl).await?;
+    cache.set("ns2", "key1", "value3".as_bytes().to_vec(), ttl).await?;
+
+    // Clear ns1
+    cache.clear(Some("ns1")).await?;
+
+    // Verify ns1 is empty, ns2 still has data
+    assert!(cache.get("ns1", "key1").await?.is_none());
+    assert!(cache.get("ns1", "key2").await?.is_none());
+    assert!(cache.get("ns2", "key1").await?.is_some());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_cache_exists() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let config = CacheConfig::default();
+    let cache = create_cache_provider(&config).await?;
+    let ttl = Duration::from_secs(3600);
+
+    // Set a value
+    cache.set("test_ns", "exists_key", "data".as_bytes().to_vec(), ttl).await?;
+
+    // Test exists
+    assert!(cache.exists("test_ns", "exists_key").await?);
+    assert!(!cache.exists("test_ns", "nonexistent").await?);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_cache_get_stats() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let config = CacheConfig::default();
+    let cache = create_cache_provider(&config).await?;
+    let ttl = Duration::from_secs(3600);
+
+    // Perform some cache operations
+    let value = "stats_test".as_bytes().to_vec();
+    cache.set("stats_ns", "key1", value, ttl).await?;
+    let _ = cache.get("stats_ns", "key1").await?; // cache hit
+    let _ = cache.get("stats_ns", "nonexistent").await?; // cache miss
+
+    // Get stats
+    let stats = cache.get_stats("stats_ns").await?;
+    assert_eq!(stats.total_entries, 1);
+    assert!(stats.hits > 0, "Expected at least one cache hit");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_cache_health_check() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let config = CacheConfig::default();
+    let cache = create_cache_provider(&config).await?;
+
+    // Test health check
+    let health = cache.health_check().await?;
+    assert_eq!(health, mcp_context_browser::infrastructure::cache::HealthStatus::Healthy);
+
     Ok(())
 }

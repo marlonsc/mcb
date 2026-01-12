@@ -272,7 +272,9 @@ pub async fn cleanup_data(
                                 let age = std::time::SystemTime::now()
                                     .duration_since(created)
                                     .unwrap_or_default();
-                                if age.as_secs() > (cleanup_config.older_than_days as u64 * admin_defaults::SECONDS_PER_DAY)
+                                if age.as_secs()
+                                    > (cleanup_config.older_than_days as u64
+                                        * admin_defaults::SECONDS_PER_DAY)
                                     && std::fs::remove_file(entry.path()).is_ok()
                                 {
                                     affected_items += 1;

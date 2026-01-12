@@ -152,7 +152,7 @@ impl Default for Config {
             server: ServerConfig::default(),
             providers: ProviderConfig::default(),
             metrics: MetricsConfig::default(),
-            admin: None,  // Admin is optional - loaded only if credentials provided
+            admin: None, // Admin is optional - loaded only if credentials provided
             auth: AuthConfig::default(),
             database: DatabaseConfig::default(),
             sync: SyncConfig::default(),

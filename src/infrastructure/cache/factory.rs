@@ -5,9 +5,9 @@
 //! are instantiated - application code depends only on CacheProvider trait.
 
 use super::config::CacheBackendConfig;
+use super::provider::NullCacheProvider;
 use super::providers::moka::MokaCacheProvider;
 use super::providers::redis::RedisCacheProvider;
-use super::provider::NullCacheProvider;
 use super::{CacheConfig, SharedCacheProvider};
 use crate::domain::error::Result;
 use std::sync::Arc;

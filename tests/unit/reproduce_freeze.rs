@@ -1,34 +1,38 @@
 #[cfg(test)]
 mod reproduction_test {
     use mcp_context_browser::infrastructure::cache::{
-        CacheConfig, CacheManager, CacheNamespacesConfig,
+        CacheBackendConfig, CacheConfig, CacheNamespacesConfig, create_cache_provider,
     };
     use std::sync::Arc;
-    use tokio::time::{timeout, Duration};
+    use std::time::Duration;
+    use tokio::time::timeout;
 
     #[tokio::test]
     async fn test_concurrent_access_freeze() -> Result<(), Box<dyn std::error::Error>> {
         let config = CacheConfig {
             enabled: true,
-            redis_url: "".to_string(), // Local only
-            default_ttl_seconds: 60,
-            max_size: 1000,
+            backend: CacheBackendConfig::Local {
+                max_entries: 1000,
+                default_ttl_seconds: 60,
+            },
             namespaces: CacheNamespacesConfig::default(),
         };
 
-        let manager = Arc::new(CacheManager::new(config, None).await?);
+        let cache = Arc::new(create_cache_provider(&config).await?);
         let mut handles = vec![];
+        let ttl = Duration::from_secs(60);
 
         // Spawn 100 concurrent readers/writers
         for _i in 0..100 {
-            let m = manager.clone();
+            let c = cache.clone();
             handles.push(tokio::spawn(async move {
                 for j in 0..1000 {
                     let key = format!("key-{}", j % 100);
                     if j % 10 == 0 {
-                        let _ = m.set("test", &key, "value".to_string()).await;
+                        let value = "value".to_string().into_bytes();
+                        let _ = c.set("test", &key, value, ttl).await;
                     } else {
-                        let _ = m.get::<String>("test", &key).await;
+                        let _ = c.get("test", &key).await;
                     }
                 }
             }));

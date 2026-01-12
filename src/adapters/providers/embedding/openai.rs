@@ -4,6 +4,7 @@ use crate::domain::error::{Error, Result};
 use crate::domain::ports::EmbeddingProvider;
 use crate::domain::types::Embedding;
 use crate::infrastructure::cache::SharedCacheProvider;
+use crate::infrastructure::constants::HTTP_REQUEST_TIMEOUT;
 use async_trait::async_trait;
 use std::sync::Arc;
 use std::time::Duration;
@@ -21,7 +22,7 @@ pub struct OpenAIEmbeddingProvider {
 impl OpenAIEmbeddingProvider {
     /// Create a new OpenAI embedding provider
     pub fn new(api_key: String, base_url: Option<String>, model: String) -> Result<Self> {
-        Self::with_timeout(api_key, base_url, model, Duration::from_secs(30))
+        Self::with_timeout(api_key, base_url, model, HTTP_REQUEST_TIMEOUT)
     }
 
     /// Create a new OpenAI embedding provider with custom timeout
@@ -249,7 +250,12 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
                     let cache_key = self.generate_cache_key(text);
                     if let Ok(serialized) = serde_json::to_vec(&embedding.vector) {
                         let _ = cache_provider
-                            .set("embeddings", &cache_key, serialized, Duration::from_secs(7200))
+                            .set(
+                                "embeddings",
+                                &cache_key,
+                                serialized,
+                                Duration::from_secs(7200),
+                            )
                             .await;
                     }
                 }

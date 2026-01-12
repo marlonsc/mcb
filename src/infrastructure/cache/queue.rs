@@ -20,10 +20,16 @@ pub trait CacheProviderQueue: CacheProvider {
         queue_name: &str,
         item: T,
     ) -> Result<()> {
-        let serialized = serde_json::to_vec(&item)
-            .map_err(|e| crate::domain::error::Error::generic(format!("Failed to serialize item: {}", e)))?;
-        self.set(namespace, queue_name, serialized, Duration::from_secs(86400))
-            .await
+        let serialized = serde_json::to_vec(&item).map_err(|e| {
+            crate::domain::error::Error::generic(format!("Failed to serialize item: {}", e))
+        })?;
+        self.set(
+            namespace,
+            queue_name,
+            serialized,
+            Duration::from_secs(86400),
+        )
+        .await
     }
 
     /// Get all items from a queue
@@ -33,8 +39,9 @@ pub trait CacheProviderQueue: CacheProvider {
         queue_name: &str,
     ) -> Result<Vec<T>> {
         match self.get(namespace, queue_name).await? {
-            Some(bytes) => serde_json::from_slice(&bytes)
-                .map_err(|e| crate::domain::error::Error::generic(format!("Failed to deserialize queue: {}", e))),
+            Some(bytes) => serde_json::from_slice(&bytes).map_err(|e| {
+                crate::domain::error::Error::generic(format!("Failed to deserialize queue: {}", e))
+            }),
             None => Ok(Vec::new()),
         }
     }
@@ -48,10 +55,16 @@ pub trait CacheProviderQueue: CacheProvider {
     ) -> Result<()> {
         let mut queue: Vec<T> = self.get_queue(namespace, queue_name).await?;
         queue.retain(|q| q != &item);
-        let serialized = serde_json::to_vec(&queue)
-            .map_err(|e| crate::domain::error::Error::generic(format!("Failed to serialize queue: {}", e)))?;
-        self.set(namespace, queue_name, serialized, Duration::from_secs(86400))
-            .await
+        let serialized = serde_json::to_vec(&queue).map_err(|e| {
+            crate::domain::error::Error::generic(format!("Failed to serialize queue: {}", e))
+        })?;
+        self.set(
+            namespace,
+            queue_name,
+            serialized,
+            Duration::from_secs(86400),
+        )
+        .await
     }
 }
 
