@@ -2,6 +2,7 @@
 //!
 //! Provides functions for log retrieval, filtering, export, and statistics.
 
+use crate::admin::service::helpers::admin_defaults;
 use crate::admin::service::types::{
     AdminError, LogEntries, LogEntry, LogExportFormat, LogFilter, LogStats,
 };
@@ -72,7 +73,7 @@ pub async fn export_logs(
         LogExportFormat::PlainText => "log",
     };
 
-    let export_dir = std::path::PathBuf::from("./exports");
+    let export_dir = std::path::PathBuf::from(admin_defaults::DEFAULT_EXPORTS_DIR);
     std::fs::create_dir_all(&export_dir).map_err(|e| {
         AdminError::ConfigError(format!("Failed to create exports directory: {}", e))
     })?;

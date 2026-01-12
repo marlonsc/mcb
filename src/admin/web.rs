@@ -178,8 +178,12 @@ async fn css_handler() -> impl IntoResponse {
 // --- HTMX Handlers ---
 
 async fn htmx_dashboard_metrics_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let context = Context::new();
-    // In a real app, we'd fetch actual metrics here
+    let mut context = Context::new();
+
+    // Fetch real activities from ActivityLogger (which is created and started listening in AdminApiServer)
+    let activities = state.activity_logger.get_activities(Some(10)).await;
+    context.insert("activities", &activities);
+
     render_template(&state.templates, "htmx/dashboard_metrics.html", &context)
 }
 

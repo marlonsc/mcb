@@ -2,6 +2,7 @@
 //!
 //! Provides functions for cache management, provider restart, index rebuilding, and data cleanup.
 
+use crate::admin::service::helpers::admin_defaults;
 use crate::admin::service::types::{AdminError, CacheType, CleanupConfig, MaintenanceResult};
 use crate::infrastructure::events::SharedEventBusProvider;
 use crate::infrastructure::logging::SharedLogBuffer;
@@ -261,7 +262,7 @@ pub async fn cleanup_data(
                 tracing::info!("[ADMIN] Cleared {} log entries from buffer", count);
             }
             "exports" => {
-                let export_dir = std::path::PathBuf::from("./exports");
+                let export_dir = std::path::PathBuf::from(admin_defaults::DEFAULT_EXPORTS_DIR);
                 if export_dir.exists() {
                     if let Ok(entries) = std::fs::read_dir(export_dir) {
                         for entry in entries.flatten() {
@@ -271,7 +272,7 @@ pub async fn cleanup_data(
                                 let age = std::time::SystemTime::now()
                                     .duration_since(created)
                                     .unwrap_or_default();
-                                if age.as_secs() > (cleanup_config.older_than_days * 86400) as u64
+                                if age.as_secs() > (cleanup_config.older_than_days as u64 * admin_defaults::SECONDS_PER_DAY)
                                     && std::fs::remove_file(entry.path()).is_ok()
                                 {
                                     affected_items += 1;

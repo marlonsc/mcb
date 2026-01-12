@@ -3,6 +3,7 @@
 //! Provides dynamic route registration and discovery for the admin API.
 //! This allows routes to be registered at runtime and discovered via the API.
 
+use crate::admin::service::helpers::admin_defaults;
 use crate::admin::service::types::RouteInfo;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -199,7 +200,7 @@ pub async fn build_standard_routes() -> SharedRouteRegistry {
             method: "POST".to_string(),
             handler: "search_handler".to_string(),
             auth_required: false,
-            rate_limit: Some(100),
+            rate_limit: Some(admin_defaults::DEFAULT_ROUTE_RATE_LIMIT_SEARCH),
         },
         RouteInfo {
             id: "route_5".to_string(),
@@ -207,7 +208,7 @@ pub async fn build_standard_routes() -> SharedRouteRegistry {
             method: "POST".to_string(),
             handler: "index_handler".to_string(),
             auth_required: false,
-            rate_limit: Some(10),
+            rate_limit: Some(admin_defaults::DEFAULT_ROUTE_RATE_LIMIT_INDEXING),
         },
         RouteInfo {
             id: "route_6".to_string(),
@@ -224,7 +225,7 @@ pub async fn build_standard_routes() -> SharedRouteRegistry {
             method: "POST".to_string(),
             handler: "login_handler".to_string(),
             auth_required: false,
-            rate_limit: Some(10),
+            rate_limit: Some(admin_defaults::DEFAULT_ROUTE_RATE_LIMIT_INDEXING),
         },
         RouteInfo {
             id: "route_8".to_string(),
@@ -264,7 +265,7 @@ pub async fn build_standard_routes() -> SharedRouteRegistry {
             method: "GET".to_string(),
             handler: "get_config_handler".to_string(),
             auth_required: true,
-            rate_limit: Some(60),
+            rate_limit: Some(admin_defaults::DEFAULT_ROUTE_RATE_LIMIT_ADMIN),
         },
         RouteInfo {
             id: "route_13".to_string(),
@@ -272,7 +273,7 @@ pub async fn build_standard_routes() -> SharedRouteRegistry {
             method: "PUT".to_string(),
             handler: "update_config_handler".to_string(),
             auth_required: true,
-            rate_limit: Some(30),
+            rate_limit: Some(admin_defaults::DEFAULT_ROUTE_RATE_LIMIT_RELOAD),
         },
         RouteInfo {
             id: "route_14".to_string(),
@@ -280,7 +281,7 @@ pub async fn build_standard_routes() -> SharedRouteRegistry {
             method: "GET".to_string(),
             handler: "get_routes_handler".to_string(),
             auth_required: true,
-            rate_limit: Some(60),
+            rate_limit: Some(admin_defaults::DEFAULT_ROUTE_RATE_LIMIT_ADMIN),
         },
         RouteInfo {
             id: "route_15".to_string(),
@@ -288,7 +289,7 @@ pub async fn build_standard_routes() -> SharedRouteRegistry {
             method: "POST".to_string(),
             handler: "mcp_message_handler".to_string(),
             auth_required: false,
-            rate_limit: Some(100),
+            rate_limit: Some(admin_defaults::DEFAULT_ROUTE_RATE_LIMIT_HEALTH),
         },
         RouteInfo {
             id: "route_16".to_string(),
@@ -296,7 +297,7 @@ pub async fn build_standard_routes() -> SharedRouteRegistry {
             method: "GET".to_string(),
             handler: "mcp_sse_handler".to_string(),
             auth_required: false,
-            rate_limit: Some(10),
+            rate_limit: Some(admin_defaults::DEFAULT_ROUTE_RATE_LIMIT_INDEXING),
         },
     ];
 

@@ -20,6 +20,19 @@ pub async fn run_health_check(
     let start_time = std::time::Instant::now();
     let mut checks = Vec::new();
 
+    // Load runtime configuration with dynamic thresholds
+    let runtime_cfg = RuntimeConfig::load()
+        .await
+        .unwrap_or_else(|_| RuntimeConfig {
+            indexing: Default::default(),
+            cache: Default::default(),
+            database: Default::default(),
+            thresholds: Default::default(),
+        });
+
+    // Get system thresholds from runtime config
+    let thresholds = &runtime_cfg.thresholds;
+
     // Collect system metrics
     let cpu_metrics = system_collector
         .collect_cpu_metrics()
@@ -38,10 +51,10 @@ pub async fn run_health_check(
         .await
         .unwrap_or_default();
 
-    // Determine CPU health status
-    let cpu_status = if cpu_metrics.usage > 90.0 {
+    // Determine CPU health status based on dynamic thresholds
+    let cpu_status = if cpu_metrics.usage > thresholds.cpu_unhealthy_percent as f32 {
         "unhealthy"
-    } else if cpu_metrics.usage > 75.0 {
+    } else if cpu_metrics.usage > thresholds.cpu_degraded_percent as f32 {
         "degraded"
     } else {
         "healthy"
@@ -61,10 +74,10 @@ pub async fn run_health_check(
         })),
     });
 
-    // Determine memory health status
-    let memory_status = if memory_metrics.usage_percent > 90.0 {
+    // Determine memory health status based on dynamic thresholds
+    let memory_status = if memory_metrics.usage_percent > thresholds.memory_unhealthy_percent as f32 {
         "unhealthy"
-    } else if memory_metrics.usage_percent > 80.0 {
+    } else if memory_metrics.usage_percent > thresholds.memory_degraded_percent as f32 {
         "degraded"
     } else {
         "healthy"
@@ -89,10 +102,10 @@ pub async fn run_health_check(
         })),
     });
 
-    // Determine disk health status
-    let disk_status = if disk_metrics.usage_percent > 90.0 {
+    // Determine disk health status based on dynamic thresholds
+    let disk_status = if disk_metrics.usage_percent > thresholds.disk_unhealthy_percent as f32 {
         "unhealthy"
-    } else if disk_metrics.usage_percent > 80.0 {
+    } else if disk_metrics.usage_percent > thresholds.disk_degraded_percent as f32 {
         "degraded"
     } else {
         "healthy"
@@ -157,15 +170,6 @@ pub async fn run_health_check(
         });
     }
 
-    // Load runtime configuration from actual subsystems
-    let runtime_cfg = RuntimeConfig::load()
-        .await
-        .unwrap_or_else(|_| RuntimeConfig {
-            indexing: Default::default(),
-            cache: Default::default(),
-            database: Default::default(),
-        });
-
     // Subsystem health checks with real runtime values
     let indexing_start = std::time::Instant::now();
     checks.push(HealthCheck {
@@ -194,14 +198,20 @@ pub async fn run_health_check(
     });
 
     let cache_start = std::time::Instant::now();
-    checks.push(HealthCheck {
-        name: "cache".to_string(),
-        status: if runtime_cfg.cache.enabled {
+    let cache_status = if runtime_cfg.cache.enabled {
+        if runtime_cfg.cache.hit_rate >= thresholds.cache_hit_rate_degraded as f64 {
             "healthy"
         } else {
             "degraded"
         }
-        .to_string(),
+    } else {
+        "degraded"
+    }
+    .to_string();
+
+    checks.push(HealthCheck {
+        name: "cache".to_string(),
+        status: cache_status,
         message: format!(
             "Cache subsystem operational: {} entries, {:.1}% hit rate",
             runtime_cfg.cache.entries_count,
@@ -218,20 +228,30 @@ pub async fn run_health_check(
     });
 
     let database_start = std::time::Instant::now();
-    let db_status = if runtime_cfg.database.connected {
-        "healthy"
-    } else {
+    let db_utilization = (runtime_cfg.database.active_connections as f64
+        / runtime_cfg.database.total_pool_size as f64)
+        * 100.0;
+
+    let db_status = if !runtime_cfg.database.connected
+        || db_utilization > thresholds.db_pool_unhealthy_percent as f64
+    {
         "unhealthy"
+    } else if db_utilization > thresholds.db_pool_degraded_percent as f64 {
+        "degraded"
+    } else {
+        "healthy"
     }
     .to_string();
+
     checks.push(HealthCheck {
         name: "database".to_string(),
         status: db_status,
         message: format!(
-            "Database connection pool: {} active, {} idle of {} total",
+            "Database connection pool: {} active, {} idle of {} total (utilization: {:.1}%)",
             runtime_cfg.database.active_connections,
             runtime_cfg.database.idle_connections,
-            runtime_cfg.database.total_pool_size
+            runtime_cfg.database.total_pool_size,
+            db_utilization
         ),
         duration_ms: database_start.elapsed().as_millis() as u64,
         details: Some(serde_json::json!({
@@ -239,7 +259,7 @@ pub async fn run_health_check(
             "active_connections": runtime_cfg.database.active_connections,
             "idle_connections": runtime_cfg.database.idle_connections,
             "total_pool_size": runtime_cfg.database.total_pool_size,
-            "utilization": (runtime_cfg.database.active_connections as f64 / runtime_cfg.database.total_pool_size as f64) * 100.0
+            "utilization_percent": db_utilization
         })),
     });
 
@@ -280,7 +300,10 @@ pub fn test_provider_connectivity(
             provider_id: provider_id.to_string(),
             success: false,
             response_time_ms: Some(start_time.elapsed().as_millis() as u64),
-            error_message: Some(format!("Provider '{}' not found in registry", provider_id)),
+            error_message: Some(format!(
+                "Provider '{}' not found in registry",
+                provider_id
+            )),
             details: serde_json::json!({
                 "test_type": "connectivity",
                 "available_embedding_providers": embedding_providers,
@@ -334,6 +357,16 @@ where
         test_config.queries.clone()
     };
 
+    // Load runtime configuration for dynamic performance test thresholds
+    let runtime_cfg = RuntimeConfig::load()
+        .await
+        .unwrap_or_else(|_| RuntimeConfig {
+            indexing: Default::default(),
+            cache: Default::default(),
+            database: Default::default(),
+            thresholds: Default::default(),
+        });
+
     for _ in 0..test_config.concurrency.max(1) {
         for query in &queries {
             let q_start = std::time::Instant::now();
@@ -363,6 +396,10 @@ where
         0.0
     };
 
+    // Use dynamic multipliers from runtime configuration thresholds
+    let p95_latency = avg_latency * runtime_cfg.thresholds.perf_p95_multiplier;
+    let p99_latency = avg_latency * runtime_cfg.thresholds.perf_p99_multiplier;
+
     Ok(PerformanceTestResult {
         test_id: format!("perf_test_{}", chrono::Utc::now().timestamp()),
         test_type: test_config.test_type,
@@ -371,8 +408,8 @@ where
         successful_requests,
         failed_requests,
         average_response_time_ms: avg_latency,
-        p95_response_time_ms: avg_latency * 1.2,
-        p99_response_time_ms: avg_latency * 1.5,
+        p95_response_time_ms: p95_latency,
+        p99_response_time_ms: p99_latency,
         throughput_rps: total_requests as f64 / start.elapsed().as_secs_f64().max(1.0),
     })
 }

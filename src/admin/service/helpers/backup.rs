@@ -2,6 +2,7 @@
 //!
 //! Provides functions for backup creation, listing, and restoration.
 
+use crate::admin::service::helpers::admin_defaults;
 use crate::admin::service::types::{
     AdminError, BackupConfig, BackupInfo, BackupResult, RestoreResult,
 };
@@ -13,7 +14,7 @@ pub async fn create_backup(
     backup_config: BackupConfig,
 ) -> Result<BackupResult, AdminError> {
     let backup_id = format!("backup_{}", chrono::Utc::now().format("%Y%m%d_%H%M%S"));
-    let path = format!("./backups/{}.tar.gz", backup_config.name);
+    let path = format!("{}/{}.tar.gz", admin_defaults::DEFAULT_BACKUPS_DIR, backup_config.name);
 
     // Publish backup event - actual backup created asynchronously by BackupManager
     // Use list_backups() to check completion status and get actual file size
@@ -43,7 +44,7 @@ pub async fn create_backup(
 
 /// List all available backups
 pub fn list_backups() -> Result<Vec<BackupInfo>, AdminError> {
-    let backups_dir = std::path::PathBuf::from("./backups");
+    let backups_dir = std::path::PathBuf::from(admin_defaults::DEFAULT_BACKUPS_DIR);
     if !backups_dir.exists() {
         return Ok(Vec::new());
     }
@@ -85,7 +86,7 @@ pub async fn restore_backup(
     backup_id: &str,
 ) -> Result<RestoreResult, AdminError> {
     let start_time = std::time::Instant::now();
-    let backups_dir = std::path::PathBuf::from("./backups");
+    let backups_dir = std::path::PathBuf::from(admin_defaults::DEFAULT_BACKUPS_DIR);
     let backup_path = backups_dir.join(format!("{}.tar.gz", backup_id));
 
     // Validate backup exists
@@ -124,7 +125,7 @@ pub async fn restore_backup(
     );
 
     // Attempt to create a rollback backup of current data
-    if let Ok(data_dir) = std::fs::read_dir("./data") {
+    if let Ok(data_dir) = std::fs::read_dir(admin_defaults::DEFAULT_DATA_DIR) {
         let mut found_files = false;
         for entry in data_dir.flatten() {
             if entry.path().is_file() {
@@ -148,11 +149,12 @@ pub async fn restore_backup(
 
     // Perform the restore
     tracing::info!(
-        "[ADMIN] Starting restore from backup: {} -> ./data",
-        backup_id
+        "[ADMIN] Starting restore from backup: {} -> {}",
+        backup_id,
+        admin_defaults::DEFAULT_DATA_DIR
     );
 
-    match extract_backup(&backup_path, "./data") {
+    match extract_backup(&backup_path, admin_defaults::DEFAULT_DATA_DIR) {
         Ok(_) => {
             // Publish restore event
             let _ = event_bus.publish(crate::infrastructure::events::SystemEvent::BackupRestore {
@@ -165,7 +167,7 @@ pub async fn restore_backup(
                 success: true,
                 backup_id: backup_id.to_string(),
                 restored_at: chrono::Utc::now(),
-                items_restored: count_restored_files("./data"),
+                items_restored: count_restored_files(admin_defaults::DEFAULT_DATA_DIR),
                 rollback_id: Some(rollback_id.clone()),
                 message: format!(
                     "Backup '{}' restored successfully. \
@@ -184,7 +186,7 @@ pub async fn restore_backup(
             // Attempt to restore from rollback if restore failed
             if rollback_path.exists() {
                 tracing::warn!("[ADMIN] Attempting rollback restoration");
-                match extract_backup(&rollback_path, "./data") {
+                match extract_backup(&rollback_path, admin_defaults::DEFAULT_DATA_DIR) {
                     Ok(_) => {
                         tracing::info!("[ADMIN] Rollback restoration completed");
                         return Ok(RestoreResult {
@@ -246,7 +248,7 @@ fn create_rollback_backup(backup_path: &std::path::Path) -> Result<(), String> {
     let mut archive = tar::Builder::new(encoder);
 
     archive
-        .append_dir_all("data", "./data")
+        .append_dir_all("data", admin_defaults::DEFAULT_DATA_DIR)
         .map_err(|e| format!("Cannot archive directory: {}", e))?;
 
     archive

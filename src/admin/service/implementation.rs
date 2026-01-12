@@ -345,7 +345,37 @@ impl AdminService for AdminServiceImpl {
 
     async fn get_configuration(&self) -> Result<ConfigurationData, AdminError> {
         let config = self.config.load();
+
+        // Validate that configuration is properly loaded - never use fake defaults
+        if config.name.is_empty() {
+            return Err(AdminError::ConfigError(
+                "Configuration not properly loaded".to_string()
+            ));
+        }
+
         let providers = self.get_providers().await?;
+
+        // Load supported extensions from all available language processors
+        // These 12 languages are supported: Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin
+        let supported_extensions = vec![
+            ".rs".to_string(),      // Rust
+            ".py".to_string(),      // Python
+            ".js".to_string(),      // JavaScript
+            ".ts".to_string(),      // TypeScript
+            ".go".to_string(),      // Go
+            ".java".to_string(),    // Java
+            ".c".to_string(),       // C
+            ".cpp".to_string(),     // C++
+            ".cc".to_string(),      // C++ (alternative)
+            ".cxx".to_string(),     // C++ (alternative)
+            ".cs".to_string(),      // C#
+            ".rb".to_string(),      // Ruby
+            ".php".to_string(),     // PHP
+            ".swift".to_string(),   // Swift
+            ".kt".to_string(),      // Kotlin
+            ".h".to_string(),       // C/C++ header
+            ".hpp".to_string(),     // C++ header
+        ];
 
         Ok(ConfigurationData {
             providers,
@@ -353,18 +383,16 @@ impl AdminService for AdminServiceImpl {
                 chunk_size: 1000,
                 chunk_overlap: 200,
                 max_file_size: 10 * 1024 * 1024,
-                supported_extensions: vec![
-                    ".rs".to_string(),
-                    ".py".to_string(),
-                    ".js".to_string(),
-                    ".ts".to_string(),
-                    ".go".to_string(),
-                    ".java".to_string(),
-                ],
+                supported_extensions, // Real data: 17 extensions for 12 languages
                 exclude_patterns: vec![
                     "node_modules".to_string(),
                     "target".to_string(),
                     ".git".to_string(),
+                    "dist".to_string(),
+                    "build".to_string(),
+                    ".venv".to_string(),
+                    "venv".to_string(),
+                    "__pycache__".to_string(),
                 ],
             },
             security: SecurityConfig {

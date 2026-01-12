@@ -3,15 +3,13 @@
 //! Converts SystemEvents into human-readable activity log entries
 //! for display in the admin dashboard.
 
+use crate::admin::service::helpers::admin_defaults;
 use crate::admin::service::types::AdminError;
 use crate::infrastructure::events::SystemEvent;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-
-/// Maximum number of activities to keep in memory
-const MAX_ACTIVITIES: usize = 100;
 
 /// Activity level/severity
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -71,8 +69,8 @@ impl ActivityLogger {
                         if let Some(activity) = event_to_activity(&event) {
                             let mut activities = activities.write().await;
                             activities.insert(0, activity);
-                            if activities.len() > MAX_ACTIVITIES {
-                                activities.truncate(MAX_ACTIVITIES);
+                            if activities.len() > admin_defaults::DEFAULT_MAX_ACTIVITIES {
+                                activities.truncate(admin_defaults::DEFAULT_MAX_ACTIVITIES);
                             }
                         }
                     }
@@ -88,7 +86,7 @@ impl ActivityLogger {
     /// Get recent activities with optional limit
     pub async fn get_activities(&self, limit: Option<usize>) -> Vec<Activity> {
         let activities = self.activities.read().await;
-        let limit = limit.unwrap_or(MAX_ACTIVITIES);
+        let limit = limit.unwrap_or(admin_defaults::DEFAULT_MAX_ACTIVITIES);
         activities.iter().take(limit).cloned().collect()
     }
 
@@ -116,8 +114,8 @@ impl ActivityLogger {
 
         let mut activities = self.activities.write().await;
         activities.insert(0, activity);
-        if activities.len() > MAX_ACTIVITIES {
-            activities.truncate(MAX_ACTIVITIES);
+        if activities.len() > admin_defaults::DEFAULT_MAX_ACTIVITIES {
+            activities.truncate(admin_defaults::DEFAULT_MAX_ACTIVITIES);
         }
     }
 }

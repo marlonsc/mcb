@@ -7,12 +7,15 @@
 //! - `backup` - Backup creation, listing, and restoration
 //! - `configuration` - Configuration history tracking and persistence
 //! - `activity` - Activity feed tracking from EventBus
+//! - `admin_defaults` - Default configuration values for admin operations
 //! - `runtime_config` - Dynamic configuration values from running subsystems
 //! - `route_discovery` - Dynamic route registration and discovery
 
 pub mod activity;
+pub mod admin_defaults;
 pub mod backup;
 pub mod configuration;
+pub mod defaults;
 pub mod health;
 pub mod logging;
 pub mod maintenance;
