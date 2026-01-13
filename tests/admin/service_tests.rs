@@ -38,8 +38,9 @@ pub struct TestInfrastructure {
 impl TestInfrastructure {
     /// Create a new test infrastructure with real services
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        // Create test configuration
-        let config = Self::create_test_config();
+        // Load configuration from embedded config/default.toml
+        let loader = mcp_context_browser::infrastructure::config::ConfigLoader::new();
+        let config = loader.load().await?;
         let config_arc = Arc::new(ArcSwap::from_pointee(config));
 
         // Create shared components
@@ -86,10 +87,6 @@ impl TestInfrastructure {
             http_client,
             search_service: None,
         })
-    }
-
-    fn create_test_config() -> Config {
-        Config::default()
     }
 }
 

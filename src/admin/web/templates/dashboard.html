@@ -26,7 +26,8 @@
 {% block title %}Dashboard - MCP Context Browser{% endblock %}
 
 {% block content %}
-<div x-data="dashboard()"
+<!-- Initialize Alpine with server-rendered data for instant display -->
+<div x-data="dashboard({{ vm_json | safe }})"
      x-init="init()"
      class="space-y-8"
      @keydown.ctrl.r.prevent="refresh()"
@@ -315,29 +316,43 @@ function showSuccess(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-function dashboard() {
+function dashboard(serverData) {
+    // Server provides initial data for instant display
+    const vm = serverData || {};
+    const metrics = vm.metrics || {};
+    const providers = vm.providers || {};
+    const indexes = vm.indexes || {};
+    const health = vm.system_health || {};
+    const activities = vm.activities || [];
+
     return {
-        active_providers: '0',
-        total_providers: '0',
-        active_indexes: '0',
-        total_documents: '0',
-        cpu_usage: '0',
-        memory_usage: '0',
+        // Initialize with server-rendered values for instant display (no loading state)
+        active_providers: String(providers.active_count || 0),
+        total_providers: String(providers.total_count || 0),
+        active_indexes: String(indexes.active_count || 0),
+        total_documents: String(indexes.total_documents || 0),
+        cpu_usage: metrics.cpu_usage_formatted || '0%',
+        memory_usage: metrics.memory_usage_formatted || '0%',
         loading: false,
         isOnline: true,
         autoRefresh: true,
         health: {
-            status: 'loading...',
-            uptime: 0,
-            pid: 0
+            status: health.status || 'healthy',
+            uptime: health.uptime_seconds || 0,
+            pid: health.pid || 0
         },
-        activities: [],  // Will be loaded from API
+        activities: activities.map(a => ({
+            id: a.id,
+            message: a.message,
+            timestamp: a.timestamp_relative || a.timestamp,
+            color: a.indicator_class || 'bg-blue-400'
+        })),
 
         async init() {
-            await this.refresh();
+            // Data already rendered by server - just set up auto-refresh
             this.initCharts();
-            
-            // Auto-refresh interval
+
+            // Auto-refresh interval for live updates
             setInterval(() => {
                 if (this.autoRefresh && !this.loading) {
                     this.refresh();

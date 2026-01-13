@@ -1,64 +1,81 @@
-{% for index in indexes %}
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-    <div class="flex items-start justify-between">
-        <div class="flex-1">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ index.name }}</h3>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                           {% if index.status == 'active' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300{% else %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300{% endif %}">
-                    {{ index.status|title }}
-                </span>
-            </div>
+{% if indexes | length > 0 %}
+    {% for index in indexes %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ index.name }}</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ index.status_class }}">
+                        {{ index.status_display }}
+                        {% if index.is_indexing %}
+                        <svg class="ml-1 w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        {% endif %}
+                    </span>
+                </div>
 
-            <div class="mt-4 grid grid-cols-3 gap-4">
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-blue-600">{{ index.document_count|number_format }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Documents</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-green-600">{{ (index.created_at / 86400)|round }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Days Old</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-purple-600">{{ (index.updated_at / 3600)|round }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Hours Active</div>
+                <div class="mt-4 grid grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600">{{ index.document_count_formatted }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Documents</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600">{{ index.age_display }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Created</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600">{{ index.id }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Index ID</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="mt-6 flex justify-end space-x-3">
-        <button hx-post="/admin/indexes/{{ index.id }}/operations"
-                hx-vals='{ "operation": "status" }'
-                hx-target="#index-status-{{ index.id }}"
-                hx-swap="innerHTML"
-                class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-            </svg>
-            View Details
-        </button>
-        <button hx-post="/admin/indexes/{{ index.id }}/operations"
-                hx-vals='{ "operation": "rebuild" }'
-                hx-target="#index-status-{{ index.id }}"
-                hx-swap="innerHTML"
-                class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-            Rebuild
-        </button>
-        <button hx-post="/admin/indexes/{{ index.id }}/operations"
-                hx-vals='{ "operation": "clear" }'
-                hx-target="#index-status-{{ index.id }}"
-                hx-swap="innerHTML"
-                class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
-            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-            Clear
-        </button>
+        <div class="mt-6 flex justify-end space-x-3">
+            <button hx-post="/admin/indexes/{{ index.id }}/operations"
+                    hx-vals='{ "operation": "status" }'
+                    hx-target="#index-status-{{ index.id }}"
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                View Details
+            </button>
+            <button hx-post="/admin/indexes/{{ index.id }}/operations"
+                    hx-vals='{ "operation": "rebuild" }'
+                    hx-target="#index-status-{{ index.id }}"
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Rebuild
+            </button>
+            <button hx-post="/admin/indexes/{{ index.id }}/operations"
+                    hx-vals='{ "operation": "clear" }'
+                    hx-target="#index-status-{{ index.id }}"
+                    hx-swap="innerHTML"
+                    hx-confirm="Are you sure you want to clear this index? This action cannot be undone."
+                    class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Clear
+            </button>
+        </div>
+        <div id="index-status-{{ index.id }}" class="mt-2 text-sm text-gray-600 dark:text-gray-400"></div>
     </div>
-    <div id="index-status-{{ index.id }}" class="mt-2 text-sm text-gray-600 dark:text-gray-400"></div>
-</div>
-{% endfor %}
+    {% endfor %}
+{% else %}
+    <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No indexes created</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by indexing a codebase.</p>
+    </div>
+{% endif %}

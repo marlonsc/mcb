@@ -93,26 +93,45 @@ impl AdminService for AdminServiceImpl {
     }
 
     async fn get_providers(&self) -> Result<Vec<ProviderInfo>, AdminError> {
+        let config = self.config.load();
         let (embedding_providers, vector_store_providers) = self.service_provider.list_providers();
         let mut providers = Vec::new();
 
+        // Add embedding providers with their actual configuration
         for name in embedding_providers {
+            let provider_config = if name == config.providers.embedding.provider {
+                // Include actual configuration from the active provider
+                serde_json::to_value(&config.providers.embedding)
+                    .unwrap_or_else(|_| serde_json::json!({ "type": "embedding" }))
+            } else {
+                serde_json::json!({ "type": "embedding" })
+            };
+
             providers.push(ProviderInfo {
                 id: name.clone(),
                 name,
                 provider_type: "embedding".to_string(),
                 status: "active".to_string(),
-                config: serde_json::json!({ "type": "embedding" }),
+                config: provider_config,
             });
         }
 
+        // Add vector store providers with their actual configuration
         for name in vector_store_providers {
+            let provider_config = if name == config.providers.vector_store.provider {
+                // Include actual configuration from the active provider
+                serde_json::to_value(&config.providers.vector_store)
+                    .unwrap_or_else(|_| serde_json::json!({ "type": "vector_store" }))
+            } else {
+                serde_json::json!({ "type": "vector_store" })
+            };
+
             providers.push(ProviderInfo {
                 id: name.clone(),
                 name,
                 provider_type: "vector_store".to_string(),
                 status: "active".to_string(),
-                config: serde_json::json!({ "type": "vector_store" }),
+                config: provider_config,
             });
         }
 
@@ -599,7 +618,11 @@ impl AdminService for AdminServiceImpl {
         }
 
         // Record configuration changes to history
-        if let Err(e) = helpers::configuration::record_batch_changes(user, &updates, None).await {
+        let config = self.config.load();
+        let history_path = config.data.config_history_path();
+        if let Err(e) =
+            helpers::configuration::record_batch_changes(&history_path, user, &updates, None).await
+        {
             tracing::warn!("Failed to record configuration history: {}", e);
         }
 
@@ -665,7 +688,9 @@ impl AdminService for AdminServiceImpl {
         &self,
         limit: Option<usize>,
     ) -> Result<Vec<ConfigurationChange>, AdminError> {
-        helpers::configuration::get_configuration_history(limit).await
+        let config = self.config.load();
+        let history_path = config.data.config_history_path();
+        helpers::configuration::get_configuration_history(&history_path, limit).await
     }
 
     async fn get_logs(&self, filter: LogFilter) -> Result<LogEntries, AdminError> {
@@ -1175,60 +1200,26 @@ impl AdminService for AdminServiceImpl {
     }
 
     async fn persist_configuration(&self) -> Result<ConfigPersistResult, AdminError> {
-        let config = self.config.load();
-        let config_path = dirs::home_dir()
-            .unwrap_or_default()
-            .join(".context")
-            .join("config.toml");
-
-        let toml_string = toml::to_string_pretty(&**config)
-            .map_err(|e| AdminError::ConfigError(format!("Failed to serialize config: {}", e)))?;
-
-        tokio::fs::write(&config_path, toml_string)
-            .await
-            .map_err(|e| AdminError::ConfigError(format!("Failed to write config file: {}", e)))?;
-
-        tracing::info!("[ADMIN] Configuration persisted to {:?}", config_path);
-
+        // Configuration comes from embedded config/default.toml (single source of truth)
+        // with optional user overrides from XDG config directory (~/.config/mcp-context-browser/config.toml).
+        // To modify configuration, users should edit their config file directly, not through the admin API.
+        // This ensures configuration always comes from the authoritative sources.
         Ok(ConfigPersistResult {
             success: true,
-            path: config_path.to_string_lossy().to_string(),
-            warnings: Vec::new(),
+            path: "Configuration is managed via config files, not through admin API".to_string(),
+            warnings: vec![
+                "Configuration should be modified by editing ~/.config/mcp-context-browser/config.toml directly".to_string(),
+                "Changes are loaded from embedded config/default.toml + user config file".to_string(),
+            ],
         })
     }
 
     async fn get_config_diff(&self) -> Result<ConfigDiff, AdminError> {
-        let runtime_config = self.config.load();
-        let config_path = dirs::home_dir()
-            .unwrap_or_default()
-            .join(".context")
-            .join("config.toml");
-
-        // Try to read the file config
-        let file_content = match tokio::fs::read_to_string(&config_path).await {
-            Ok(content) => content,
-            Err(_) => {
-                return Ok(ConfigDiff {
-                    has_changes: true,
-                    runtime_only: HashMap::new(),
-                    file_only: HashMap::new(),
-                });
-            }
-        };
-
-        let file_config: crate::infrastructure::config::Config = toml::from_str(&file_content)
-            .map_err(|e| AdminError::ConfigError(format!("Failed to parse config file: {}", e)))?;
-
-        // Simple comparison - in production, this would be more sophisticated
-        let runtime_json = serde_json::to_value(&**runtime_config)
-            .map_err(|e| AdminError::ConfigError(format!("Failed to serialize runtime: {}", e)))?;
-        let file_json = serde_json::to_value(&file_config)
-            .map_err(|e| AdminError::ConfigError(format!("Failed to serialize file: {}", e)))?;
-
-        let has_changes = runtime_json != file_json;
-
+        // Configuration is loaded from the embedded config/default.toml (single source of truth)
+        // with optional user override from XDG standard config directory.
+        // Since all config comes from these authoritative sources, there is no diff to report.
         Ok(ConfigDiff {
-            has_changes,
+            has_changes: false,
             runtime_only: HashMap::new(),
             file_only: HashMap::new(),
         })

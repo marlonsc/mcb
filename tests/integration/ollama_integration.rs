@@ -50,16 +50,23 @@ fn dummy_hybrid_search() -> Arc<dyn mcp_context_browser::domain::ports::HybridSe
 /// Test utilities for Ollama integration tests
 mod test_utils {
     use super::*;
+    use mcp_context_browser::adapters::http_client::HttpClientPool;
+    use mcp_context_browser::infrastructure::constants::HTTP_REQUEST_TIMEOUT;
 
     pub async fn create_ollama_provider() -> Option<Arc<dyn EmbeddingProvider>> {
         // Try to create Ollama provider - return None if Ollama is not available
-        match mcp_context_browser::adapters::providers::OllamaEmbeddingProvider::new(
+        let http_client = match HttpClientPool::new() {
+            Ok(pool) => Arc::new(pool) as Arc<dyn mcp_context_browser::adapters::http_client::HttpClientProvider>,
+            Err(_) => return None,
+        };
+
+        let provider = mcp_context_browser::adapters::providers::OllamaEmbeddingProvider::new(
             "http://localhost:11434".to_string(),
             "nomic-embed-text".to_string(),
-        ) {
-            Ok(provider) => Some(Arc::new(provider)),
-            Err(_) => None, // Ollama not available, skip test
-        }
+            HTTP_REQUEST_TIMEOUT,
+            http_client,
+        );
+        Some(Arc::new(provider) as Arc<dyn EmbeddingProvider>)
     }
 
     #[allow(dead_code)]

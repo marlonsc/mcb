@@ -37,10 +37,11 @@ pub struct FailoverContext {
     pub current_attempt: usize,
 }
 
-impl Default for FailoverContext {
-    fn default() -> Self {
+impl FailoverContext {
+    /// Create a new failover context with explicit operation type
+    pub fn new(operation_type: impl Into<String>) -> Self {
         Self {
-            operation_type: "general".to_string(),
+            operation_type: operation_type.into(),
             preferred_providers: Vec::new(),
             excluded_providers: Vec::new(),
             max_attempts: 3,
@@ -55,11 +56,6 @@ pub struct PriorityBasedStrategy {
     priorities: dashmap::DashMap<String, u32>,
 }
 
-impl Default for PriorityBasedStrategy {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl PriorityBasedStrategy {
     /// Create a new priority-based strategy
@@ -143,11 +139,6 @@ impl RoundRobinStrategy {
     }
 }
 
-impl Default for RoundRobinStrategy {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 #[async_trait::async_trait]
 impl FailoverStrategy for RoundRobinStrategy {
@@ -403,9 +394,3 @@ impl FailoverManager {
     }
 }
 
-impl Default for FailoverManager {
-    fn default() -> Self {
-        let registry = Arc::new(ProviderRegistry::new());
-        Self::with_registry(registry)
-    }
-}

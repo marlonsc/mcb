@@ -575,8 +575,3 @@ impl HealthMonitorTrait for HealthMonitor {
     }
 }
 
-impl Default for HealthMonitor {
-    fn default() -> Self {
-        Self::new()
-    }
-}

@@ -12,7 +12,7 @@ pub mod test_helpers {
     pub async fn create_test_admin_service() -> std::sync::Arc<dyn AdminService> {
         use arc_swap::ArcSwap;
         use mcp_context_browser::admin::service::AdminServiceImpl;
-        use mcp_context_browser::infrastructure::config::Config;
+        use mcp_context_browser::infrastructure::config::ConfigLoader;
         use mcp_context_browser::infrastructure::di::factory::ServiceProvider;
         use mcp_context_browser::infrastructure::events::EventBus;
         use mcp_context_browser::infrastructure::logging;
@@ -32,8 +32,10 @@ pub mod test_helpers {
         let event_bus = Arc::new(EventBus::with_default_capacity());
         let log_buffer = logging::create_shared_log_buffer(1000);
 
-        // Create minimal test config
-        let config = Arc::new(ArcSwap::from_pointee(Config::default()));
+        // Load config from file instead of using Config::default()
+        let loader = ConfigLoader::new();
+        let loaded_config = loader.load().await.expect("Failed to load config for tests");
+        let config = Arc::new(ArcSwap::from_pointee(loaded_config));
 
         // Create the real admin service
         let admin_service = AdminServiceImpl::new(

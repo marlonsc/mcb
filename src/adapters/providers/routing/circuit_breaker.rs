@@ -46,8 +46,26 @@ pub struct CircuitBreakerConfig {
     pub persistence_enabled: bool,
 }
 
-impl Default for CircuitBreakerConfig {
-    fn default() -> Self {
+impl CircuitBreakerConfig {
+    /// Create a new circuit breaker configuration with explicit values
+    pub fn new(
+        failure_threshold: u32,
+        recovery_timeout: Duration,
+        success_threshold: u32,
+        half_open_max_requests: u32,
+        persistence_enabled: bool,
+    ) -> Self {
+        Self {
+            failure_threshold,
+            recovery_timeout,
+            success_threshold,
+            half_open_max_requests,
+            persistence_enabled,
+        }
+    }
+
+    /// Create a standard production configuration
+    pub fn production() -> Self {
         Self {
             failure_threshold: 5,
             recovery_timeout: Duration::from_secs(60),
@@ -120,20 +138,19 @@ pub struct CircuitBreaker {
 }
 
 impl CircuitBreaker {
-    /// Create a new circuit breaker with default configuration
-    pub async fn new(id: impl Into<String>) -> Self {
-        Self::with_config(id, CircuitBreakerConfig::default()).await
+    /// Create a new circuit breaker with production configuration and persistence directory
+    pub async fn new(id: impl Into<String>, persistence_dir: PathBuf) -> Self {
+        Self::with_config_and_path(id, CircuitBreakerConfig::production(), persistence_dir).await
     }
 
-    /// Create a new circuit breaker with custom configuration
-    pub async fn with_config(id: impl Into<String>, config: CircuitBreakerConfig) -> Self {
+    /// Create a new circuit breaker with custom configuration and persistence directory (canonical constructor)
+    pub async fn with_config_and_path(
+        id: impl Into<String>,
+        config: CircuitBreakerConfig,
+        persistence_dir: PathBuf,
+    ) -> Self {
         let id = id.into();
         let (tx, rx) = mpsc::channel(100);
-
-        let persistence_dir = dirs::home_dir()
-            .unwrap_or_else(|| PathBuf::from("."))
-            .join(".context")
-            .join("circuit_breakers");
 
         let mut actor = CircuitBreakerActor::new(id.clone(), rx, config.clone(), persistence_dir);
 

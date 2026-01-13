@@ -3,7 +3,6 @@
 //! This module provides intelligent provider routing using established patterns
 //! and dependency injection, following SOLID principles with proper separation of concerns.
 
-use crate::adapters::providers::routing::circuit_breaker::CircuitBreakerConfig;
 use crate::domain::error::{Error, Result};
 use crate::domain::ports::{EmbeddingProvider, VectorStoreProvider};
 use crate::infrastructure::di::registry::{ProviderRegistry, ProviderRegistryTrait};
@@ -44,10 +43,11 @@ pub struct ProviderContext {
     pub region: Option<String>,
 }
 
-impl Default for ProviderContext {
-    fn default() -> Self {
+impl ProviderContext {
+    /// Create a new provider context with explicit operation type
+    pub fn new(operation_type: impl Into<String>) -> Self {
         Self {
-            operation_type: "general".to_string(),
+            operation_type: operation_type.into(),
             expected_load: LoadLevel::Medium,
             cost_sensitivity: 0.5,
             quality_requirement: 0.5,
@@ -167,11 +167,6 @@ impl ContextualStrategy {
     }
 }
 
-impl Default for ContextualStrategy {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 #[async_trait::async_trait]
 impl ProviderSelectionStrategy for ContextualStrategy {
@@ -254,23 +249,23 @@ pub struct ProviderRouterDeps {
 }
 
 impl ProviderRouterDeps {
-    /// Create dependencies with default implementations
-    pub async fn with_defaults(registry: Arc<ProviderRegistry>) -> Result<Self> {
-        let health_monitor = Arc::new(HealthMonitor::with_registry(Arc::clone(&registry)));
-        let circuit_breaker =
-            Arc::new(CircuitBreaker::with_config("global", CircuitBreakerConfig::default()).await);
-        let metrics = Arc::new(ProviderMetricsCollector::new()?);
-        let cost_tracker = Arc::new(CostTracker::new());
-        let failover_manager = Arc::new(FailoverManager::new(Arc::clone(&health_monitor)));
-
-        Ok(Self {
+    /// Create dependencies with all components injected (proper DI)
+    pub fn new(
+        registry: Arc<ProviderRegistry>,
+        health_monitor: Arc<HealthMonitor>,
+        circuit_breaker: Arc<CircuitBreaker>,
+        metrics: Arc<ProviderMetricsCollector>,
+        cost_tracker: Arc<CostTracker>,
+        failover_manager: Arc<FailoverManager>,
+    ) -> Self {
+        Self {
             registry,
             health_monitor,
             circuit_breaker,
             metrics,
             cost_tracker,
             failover_manager,
-        })
+        }
     }
 }
 
@@ -291,10 +286,12 @@ impl ProviderRouter {
         }
     }
 
-    /// Create a new provider router with default dependencies
-    pub async fn with_defaults(registry: Arc<ProviderRegistry>) -> Result<Self> {
-        let deps = ProviderRouterDeps::with_defaults(registry).await?;
-        Ok(Self::new(deps))
+    /// Create a new provider router with custom selection strategy
+    pub fn with_strategy(deps: ProviderRouterDeps, strategy: Box<dyn ProviderSelectionStrategy>) -> Self {
+        Self {
+            deps,
+            selection_strategy: strategy,
+        }
     }
 
     /// Set the provider selection strategy

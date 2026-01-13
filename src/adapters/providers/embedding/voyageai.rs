@@ -16,21 +16,14 @@ pub struct VoyageAIEmbeddingProvider {
 }
 
 impl VoyageAIEmbeddingProvider {
-    /// Create a new VoyageAI embedding provider
-    pub fn new(api_key: String, base_url: Option<String>, model: String) -> Result<Self> {
-        let api_key = constructor::validate_api_key(&api_key);
-        let base_url = constructor::validate_url(base_url);
-        let http_client = Arc::new(crate::adapters::http_client::HttpClientPool::new()?);
-        Ok(Self {
-            api_key,
-            base_url,
-            model,
-            http_client,
-        })
-    }
-
-    /// Create a new VoyageAI embedding provider with custom HTTP client
-    pub fn with_http_client(
+    /// Create a new VoyageAI embedding provider with injected HTTP client
+    ///
+    /// # Arguments
+    /// * `api_key` - VoyageAI API key
+    /// * `base_url` - Optional custom base URL (defaults to VoyageAI API)
+    /// * `model` - Model name (e.g., "voyage-code-3")
+    /// * `http_client` - Injected HTTP client (required for DI compliance)
+    pub fn new(
         api_key: String,
         base_url: Option<String>,
         model: String,

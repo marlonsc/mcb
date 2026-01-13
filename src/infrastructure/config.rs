@@ -1,3 +1,4 @@
+pub mod data;
 pub mod loader;
 pub mod metrics;
 pub mod providers;
@@ -6,6 +7,7 @@ pub mod types;
 pub mod watcher;
 
 // Re-export types
+pub use data::DataConfig;
 pub use loader::ConfigLoader;
 pub use metrics::MetricsConfig;
 pub use providers::{EmbeddingProviderConfig, VectorStoreProviderConfig};

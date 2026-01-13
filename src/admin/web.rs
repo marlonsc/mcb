@@ -1,4 +1,11 @@
 //! Basic web interface for admin operations
+//!
+//! This module provides the web UI for the admin dashboard.
+//! It uses server-side rendering with Tera templates, composing
+//! data from AdminService via ViewModelBuilder.
+
+pub mod builders;
+pub mod view_models;
 
 use axum::{
     extract::State,
@@ -13,6 +20,8 @@ use tera::{Context, Tera};
 
 use crate::admin::auth::web_auth_middleware;
 use crate::admin::models::AdminState;
+
+use self::builders::ViewModelBuilder;
 
 // Embed all templates at compile time so binary is self-contained
 const TPL_BASE: &str = include_str!("web/templates/base.html");
@@ -31,6 +40,7 @@ const TPL_HTMX_PROVIDERS_LIST: &str = include_str!("web/templates/htmx/providers
 const TPL_HTMX_INDEXES_LIST: &str = include_str!("web/templates/htmx/indexes_list.html");
 const TPL_HTMX_SUBSYSTEMS_LIST: &str = include_str!("web/templates/htmx/subsystems_list.html");
 const TPL_HTMX_CONFIG_DIFF: &str = include_str!("web/templates/htmx/config_diff.html");
+const TPL_ERROR: &str = include_str!("web/templates/error.html");
 
 /// Web interface manager
 pub struct WebInterface {
@@ -60,6 +70,7 @@ impl WebInterface {
         tera.add_raw_template("htmx/indexes_list.html", TPL_HTMX_INDEXES_LIST)?;
         tera.add_raw_template("htmx/subsystems_list.html", TPL_HTMX_SUBSYSTEMS_LIST)?;
         tera.add_raw_template("htmx/config_diff.html", TPL_HTMX_CONFIG_DIFF)?;
+        tera.add_raw_template("error.html", TPL_ERROR)?;
 
         Ok(Self {
             templates: Arc::new(tera),
@@ -112,33 +123,86 @@ impl WebInterface {
 // --- Handlers ---
 
 async fn dashboard_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let mut context = Context::new();
-    context.insert("page", "dashboard");
-    render_template(&state.templates, "dashboard.html", &context)
+    let builder = ViewModelBuilder::new(&state);
+
+    match builder.build_dashboard().await {
+        Ok(view_model) => {
+            // Pre-serialize to JSON for Alpine.js initialization
+            let vm_json = serde_json::to_string(&view_model).unwrap_or_else(|_| "{}".to_string());
+            let mut context = Context::new();
+            context.insert("vm", &view_model);
+            context.insert("vm_json", &vm_json);
+            render_template(&state.templates, "dashboard.html", &context)
+        }
+        Err(e) => {
+            tracing::error!("Failed to build dashboard view model: {}", e);
+            render_error_page(&state.templates, "Dashboard Error", &e.to_string())
+        }
+    }
 }
 
 async fn providers_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let mut context = Context::new();
-    context.insert("page", "providers");
-    render_template(&state.templates, "providers.html", &context)
+    let builder = ViewModelBuilder::new(&state);
+
+    match builder.build_providers_page().await {
+        Ok(view_model) => {
+            let mut context = Context::new();
+            context.insert("vm", &view_model);
+            render_template(&state.templates, "providers.html", &context)
+        }
+        Err(e) => {
+            tracing::error!("Failed to build providers view model: {}", e);
+            render_error_page(&state.templates, "Providers Error", &e.to_string())
+        }
+    }
 }
 
 async fn indexes_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let mut context = Context::new();
-    context.insert("page", "indexes");
-    render_template(&state.templates, "indexes.html", &context)
+    let builder = ViewModelBuilder::new(&state);
+
+    match builder.build_indexes_page().await {
+        Ok(view_model) => {
+            let mut context = Context::new();
+            context.insert("vm", &view_model);
+            render_template(&state.templates, "indexes.html", &context)
+        }
+        Err(e) => {
+            tracing::error!("Failed to build indexes view model: {}", e);
+            render_error_page(&state.templates, "Indexes Error", &e.to_string())
+        }
+    }
 }
 
 async fn configuration_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let mut context = Context::new();
-    context.insert("page", "config");
-    render_template(&state.templates, "configuration.html", &context)
+    let builder = ViewModelBuilder::new(&state);
+
+    match builder.build_configuration_page().await {
+        Ok(view_model) => {
+            let mut context = Context::new();
+            context.insert("vm", &view_model);
+            render_template(&state.templates, "configuration.html", &context)
+        }
+        Err(e) => {
+            tracing::error!("Failed to build configuration view model: {}", e);
+            render_error_page(&state.templates, "Configuration Error", &e.to_string())
+        }
+    }
 }
 
 async fn logs_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let mut context = Context::new();
-    context.insert("page", "logs");
-    render_template(&state.templates, "logs.html", &context)
+    let builder = ViewModelBuilder::new(&state);
+
+    match builder.build_logs_page().await {
+        Ok(view_model) => {
+            let mut context = Context::new();
+            context.insert("vm", &view_model);
+            render_template(&state.templates, "logs.html", &context)
+        }
+        Err(e) => {
+            tracing::error!("Failed to build logs view model: {}", e);
+            render_error_page(&state.templates, "Logs Error", &e.to_string())
+        }
+    }
 }
 
 async fn maintenance_handler(State(state): State<AdminState>) -> impl IntoResponse {
@@ -178,23 +242,45 @@ async fn css_handler() -> impl IntoResponse {
 // --- HTMX Handlers ---
 
 async fn htmx_dashboard_metrics_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let mut context = Context::new();
+    let builder = ViewModelBuilder::new(&state);
 
-    // Fetch real activities from ActivityLogger (which is created and started listening in AdminApiServer)
-    let activities = state.activity_logger.get_activities(Some(10)).await;
-    context.insert("activities", &activities);
-
-    render_template(&state.templates, "htmx/dashboard_metrics.html", &context)
+    match builder.build_dashboard().await {
+        Ok(view_model) => {
+            let mut context = Context::new();
+            context.insert("vm", &view_model);
+            render_template(&state.templates, "htmx/dashboard_metrics.html", &context)
+        }
+        Err(_) => Html("<div class='text-red-500'>Failed to load metrics</div>".to_string())
+            .into_response(),
+    }
 }
 
 async fn htmx_providers_list_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let context = Context::new();
-    render_template(&state.templates, "htmx/providers_list.html", &context)
+    let builder = ViewModelBuilder::new(&state);
+
+    match builder.build_providers_page().await {
+        Ok(view_model) => {
+            let mut context = Context::new();
+            context.insert("providers", &view_model.providers);
+            render_template(&state.templates, "htmx/providers_list.html", &context)
+        }
+        Err(_) => Html("<div class='text-red-500'>Failed to load providers</div>".to_string())
+            .into_response(),
+    }
 }
 
 async fn htmx_indexes_list_handler(State(state): State<AdminState>) -> impl IntoResponse {
-    let context = Context::new();
-    render_template(&state.templates, "htmx/indexes_list.html", &context)
+    let builder = ViewModelBuilder::new(&state);
+
+    match builder.build_indexes_page().await {
+        Ok(view_model) => {
+            let mut context = Context::new();
+            context.insert("indexes", &view_model.indexes);
+            render_template(&state.templates, "htmx/indexes_list.html", &context)
+        }
+        Err(_) => Html("<div class='text-red-500'>Failed to load indexes</div>".to_string())
+            .into_response(),
+    }
 }
 
 // --- Helper ---
@@ -210,5 +296,20 @@ fn render_template(tera: &Tera, name: &str, context: &Context) -> Response {
             )
                 .into_response()
         }
+    }
+}
+
+fn render_error_page(tera: &Tera, title: &str, message: &str) -> Response {
+    let error_vm = ViewModelBuilder::build_error(title, message, None);
+    let mut context = Context::new();
+    context.insert("error", &error_vm);
+
+    match tera.render("error.html", &context) {
+        Ok(html) => Html(html).into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("{}: {}", title, message),
+        )
+            .into_response(),
     }
 }

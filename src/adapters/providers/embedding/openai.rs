@@ -5,7 +5,6 @@ use crate::domain::error::{Error, Result};
 use crate::domain::ports::EmbeddingProvider;
 use crate::domain::types::Embedding;
 use crate::infrastructure::cache::SharedCacheProvider;
-use crate::infrastructure::constants::HTTP_REQUEST_TIMEOUT;
 use async_trait::async_trait;
 use std::sync::Arc;
 use std::time::Duration;
@@ -21,34 +20,15 @@ pub struct OpenAIEmbeddingProvider {
 }
 
 impl OpenAIEmbeddingProvider {
-    /// Create a new OpenAI embedding provider
-    pub fn new(api_key: String, base_url: Option<String>, model: String) -> Result<Self> {
-        Self::with_timeout(api_key, base_url, model, HTTP_REQUEST_TIMEOUT)
-    }
-
-    /// Create a new OpenAI embedding provider with custom timeout
-    pub fn with_timeout(
-        api_key: String,
-        base_url: Option<String>,
-        model: String,
-        timeout: Duration,
-    ) -> Result<Self> {
-        let api_key = constructor::validate_api_key(&api_key);
-        let base_url = constructor::validate_url(base_url);
-        let http_client = Arc::new(crate::adapters::http_client::HttpClientPool::new()?);
-
-        Ok(Self {
-            api_key,
-            base_url,
-            model,
-            timeout,
-            http_client,
-            cache_provider: None,
-        })
-    }
-
-    /// Create a new OpenAI embedding provider with custom HTTP client
-    pub fn with_http_client(
+    /// Create a new OpenAI embedding provider with injected HTTP client
+    ///
+    /// # Arguments
+    /// * `api_key` - OpenAI API key
+    /// * `base_url` - Optional custom base URL (defaults to OpenAI API)
+    /// * `model` - Model name (e.g., "text-embedding-3-small")
+    /// * `timeout` - Request timeout duration
+    /// * `http_client` - Injected HTTP client (required for DI compliance)
+    pub fn new(
         api_key: String,
         base_url: Option<String>,
         model: String,

@@ -6,6 +6,12 @@
 # Last Updated: 2026-01-12
 
 # ============================================================================
+# APPLICATION - Metadata
+# ============================================================================
+name = "MCP Context Browser"
+version = "0.1.0"
+
+# ============================================================================
 # SERVER - Core Network Settings
 # ============================================================================
 [server]
@@ -29,6 +35,28 @@ burst_allowance = 100     # Burst allowance
 # Rate limiting backend (in-memory or redis)
 [metrics.rate_limiting.backend]
 type = "memory"           # Use in-memory backend for rate limiting
+
+# ============================================================================
+# DATABASE - Optional SQL Database Configuration
+# ============================================================================
+[database]
+enabled = false           # Enable database integration
+url = ""                  # Database connection URL (PostgreSQL recommended)
+max_connections = 20      # Maximum connection pool size
+min_idle = 5              # Minimum idle connections
+max_lifetime = 1800       # Maximum connection lifetime (seconds, default: 1800 = 30 minutes)
+idle_timeout = 600        # Idle timeout before closing (seconds, default: 600 = 10 minutes)
+connection_timeout = 30   # Connection timeout (seconds, default: 30)
+
+# ============================================================================
+# AUTHENTICATION - API Access Control
+# ============================================================================
+[auth]
+enabled = false           # Enable authentication (JWT)
+jwt_secret = ""           # JWT signing secret (empty when disabled)
+jwt_expiration = 86400    # Token expiration in seconds (24 hours)
+jwt_issuer = "mcp-context-browser"  # JWT issuer claim
+bypass_paths = ["/health", "/metrics"]  # Paths that bypass authentication
 
 # ============================================================================
 # ADMIN INTERFACE - Dashboard & Web UI
@@ -128,6 +156,24 @@ compression = false
 cleanup_interval_secs = 30        # How often to clean up locks (seconds)
 monitoring_interval_secs = 30     # How often to monitor health (seconds)
 max_lock_age_secs = 300           # Max age of lock before cleanup (seconds)
+
+# ============================================================================
+# DATA DIRECTORIES - XDG Standard Locations
+# ============================================================================
+# All data (snapshots, history, encryption keys, circuit breakers, etc.)
+# Default: ~/.local/share/mcp-context-browser/ (XDG_DATA_HOME standard)
+# These are the base directories where all application state is stored
+[data]
+# Base data directory - all application state stored here
+# Uses XDG standard: ~/.local/share/mcp-context-browser/
+# Can override with environment variable: MCP__DATA__BASE_DIR
+base_dir = "~/.local/share/mcp-context-browser"
+
+# Optional: Override individual subdirectories (uncomment to customize)
+# snapshots_dir = "~/.local/share/mcp-context-browser/snapshots"
+# config_history_dir = "~/.local/share/mcp-context-browser/config-history"
+# encryption_keys_dir = "~/.local/share/mcp-context-browser/encryption"
+# circuit_breakers_dir = "~/.local/share/mcp-context-browser/circuit-breakers"
 
 # ============================================================================
 # SYNCHRONIZATION - File Watching & Indexing

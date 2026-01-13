@@ -5,11 +5,13 @@
 
 use mcp_context_browser::adapters::providers::embedding::NullEmbeddingProvider;
 use mcp_context_browser::adapters::providers::routing::{
-    ContextualStrategy, ProviderContext, ProviderRouter,
+    CircuitBreaker, ContextualStrategy, CostTracker, CostTrackerConfig, FailoverManager,
+    HealthMonitor, ProviderContext, ProviderMetricsCollector, ProviderRouter, ProviderRouterDeps,
 };
 use mcp_context_browser::domain::error::Error;
 use mcp_context_browser::domain::error::Result;
 use mcp_context_browser::infrastructure::di::registry::{ProviderRegistry, ProviderRegistryTrait};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 #[tokio::main]
@@ -20,8 +22,24 @@ async fn main() -> Result<()> {
     // Initialize core components
     let registry = Arc::new(ProviderRegistry::new());
 
-    // Create provider router
-    let mut router = ProviderRouter::with_defaults(Arc::clone(&registry)).await?;
+    // Create all dependencies for proper DI
+    let health_monitor = Arc::new(HealthMonitor::with_registry(Arc::clone(&registry)));
+    let persistence_dir = std::env::temp_dir().join("mcp-example");
+    let circuit_breaker = Arc::new(CircuitBreaker::new("example", persistence_dir).await);
+    let metrics = Arc::new(ProviderMetricsCollector::new()?);
+    let cost_tracker = Arc::new(CostTracker::new(CostTrackerConfig::production()));
+    let failover_manager = Arc::new(FailoverManager::new(Arc::clone(&health_monitor)));
+
+    // Create provider router with explicit dependencies (proper DI pattern)
+    let deps = ProviderRouterDeps::new(
+        Arc::clone(&registry),
+        Arc::clone(&health_monitor),
+        circuit_breaker,
+        metrics,
+        cost_tracker,
+        failover_manager,
+    );
+    let mut router = ProviderRouter::new(deps);
 
     // Set selection strategy
     let strategy = ContextualStrategy::new();
@@ -37,7 +55,7 @@ async fn main() -> Result<()> {
 
     println!("\n🎯 Testing Provider Selection...");
 
-    let context = ProviderContext::default();
+    let context = ProviderContext::new("embedding");
 
     // Test provider selection
     match router.select_embedding_provider(&context).await {
@@ -67,7 +85,7 @@ async fn main() -> Result<()> {
 
     println!("\n✅ Multi-Provider Strategy Demo Complete!");
     println!("\nKey Features Demonstrated:");
-    println!("  • Basic provider routing with registry integration");
+    println!("  • Provider routing with explicit dependency injection");
     println!("  • Health monitoring with success/failure tracking");
     println!("  • Multiple selection strategies");
     println!("  • Integration with existing project patterns");

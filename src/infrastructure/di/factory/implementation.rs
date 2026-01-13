@@ -18,7 +18,6 @@ enum EmbeddingProviderType {
     VoyageAI,
     Gemini,
     FastEmbed,
-    Null,
 }
 
 impl EmbeddingProviderType {
@@ -32,10 +31,9 @@ impl EmbeddingProviderType {
             "voyageai" => Ok(Self::VoyageAI),
             "gemini" => Ok(Self::Gemini),
             "fastembed" => Ok(Self::FastEmbed),
-            "null" | "mock" => Ok(Self::Null),
             _ => Err(Error::config(format!(
                 "Unsupported embedding provider: {}. \
-                 Supported providers: openai, ollama, voyageai, gemini, fastembed, null",
+                 Supported providers: openai, ollama, voyageai, gemini, fastembed",
                 provider
             ))),
         }
@@ -45,7 +43,7 @@ impl EmbeddingProviderType {
 // Import individual providers that exist
 use crate::adapters::providers::embedding::fastembed::FastEmbedProvider;
 use crate::adapters::providers::embedding::gemini::GeminiEmbeddingProvider;
-use crate::adapters::providers::embedding::null::NullEmbeddingProvider;
+// NullEmbeddingProvider removed from production code paths - use a real provider
 use crate::adapters::providers::embedding::ollama::OllamaEmbeddingProvider;
 use crate::adapters::providers::embedding::openai::OpenAIEmbeddingProvider;
 use crate::adapters::providers::embedding::voyageai::VoyageAIEmbeddingProvider;
@@ -82,7 +80,7 @@ impl ProviderFactory for DefaultProviderFactory {
                     .api_key
                     .as_ref()
                     .ok_or_else(|| Error::config("OpenAI API key required"))?;
-                Ok(Arc::new(OpenAIEmbeddingProvider::with_http_client(
+                Ok(Arc::new(OpenAIEmbeddingProvider::new(
                     api_key.clone(),
                     config.base_url.clone(),
                     config.model.clone(),
@@ -91,7 +89,7 @@ impl ProviderFactory for DefaultProviderFactory {
                 )) as Arc<dyn EmbeddingProvider>)
             }
             EmbeddingProviderType::Ollama => {
-                Ok(Arc::new(OllamaEmbeddingProvider::with_http_client(
+                Ok(Arc::new(OllamaEmbeddingProvider::new(
                     config.base_url.clone().unwrap_or_else(|| {
                         crate::infrastructure::constants::OLLAMA_DEFAULT_URL.to_string()
                     }),
@@ -105,7 +103,7 @@ impl ProviderFactory for DefaultProviderFactory {
                     .api_key
                     .as_ref()
                     .ok_or_else(|| Error::config("VoyageAI API key required"))?;
-                Ok(Arc::new(VoyageAIEmbeddingProvider::with_http_client(
+                Ok(Arc::new(VoyageAIEmbeddingProvider::new(
                     api_key.clone(),
                     config.base_url.clone(),
                     config.model.clone(),
@@ -117,7 +115,7 @@ impl ProviderFactory for DefaultProviderFactory {
                     .api_key
                     .as_ref()
                     .ok_or_else(|| Error::config("Gemini API key required"))?;
-                Ok(Arc::new(GeminiEmbeddingProvider::with_http_client(
+                Ok(Arc::new(GeminiEmbeddingProvider::new(
                     api_key.clone(),
                     config.base_url.clone(),
                     config.model.clone(),
@@ -127,13 +125,6 @@ impl ProviderFactory for DefaultProviderFactory {
             }
             EmbeddingProviderType::FastEmbed => {
                 Ok(Arc::new(FastEmbedProvider::new()?) as Arc<dyn EmbeddingProvider>)
-            }
-            EmbeddingProviderType::Null => {
-                tracing::warn!(
-                    "Using NullEmbeddingProvider: returns empty embeddings. \
-                     Not suitable for production semantic search."
-                );
-                Ok(Arc::new(NullEmbeddingProvider::new()) as Arc<dyn EmbeddingProvider>)
             }
         }
     }
@@ -209,7 +200,6 @@ impl ProviderFactory for DefaultProviderFactory {
             "voyageai".to_string(),
             "gemini".to_string(),
             "fastembed".to_string(),
-            "null".to_string(), // Returns empty embeddings (testing/development)
         ]
     }
 
@@ -306,6 +296,13 @@ impl ServiceProviderInterface for ServiceProvider {
         &self,
         config: &VectorStoreConfig,
     ) -> Result<Arc<dyn VectorStoreProvider>> {
+        // DIAGNOSTIC: Log provider creation for debugging
+        tracing::debug!("=== Factory Creating Vector Store ===");
+        tracing::debug!("Provider requested: {}", config.provider);
+        tracing::debug!("Address: {:?}", config.address);
+        tracing::debug!("Collection: {:?}", config.collection);
+        tracing::debug!("====================================");
+
         // First try to get from registry
         if let Ok(provider) = self.registry.get_vector_store_provider(&config.provider) {
             return Ok(provider);

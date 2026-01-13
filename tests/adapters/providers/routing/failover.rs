@@ -49,7 +49,7 @@ async fn test_priority_based_failover() -> std::result::Result<(), Box<dyn std::
             .await;
     }
 
-    let context = FailoverContext::default();
+    let context = FailoverContext::new("test");
     let result = manager.select_provider(&candidates, &context).await?;
 
     // Should succeed since providers are registered as healthy
@@ -82,7 +82,7 @@ async fn test_round_robin_failover() {
             .await;
     }
 
-    let context = FailoverContext::default();
+    let context = FailoverContext::new("test");
     let result = manager.select_provider(&candidates, &context).await;
     assert!(result.is_ok());
 }
@@ -160,10 +160,8 @@ async fn test_execute_with_failover() {
     let manager = FailoverManager::with_strategy(health_monitor, Box::new(strategy));
 
     let candidates = vec!["failing".to_string(), "success".to_string()];
-    let context = FailoverContext {
-        max_attempts: 2,
-        ..Default::default()
-    };
+    let mut context = FailoverContext::new("test");
+    context.max_attempts = 2;
 
     let result = manager
         .execute_with_failover(&candidates, &context, |provider| async move {

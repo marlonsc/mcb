@@ -3,7 +3,6 @@
 use crate::domain::error::{Error, Result};
 use crate::domain::ports::EmbeddingProvider;
 use crate::domain::types::Embedding;
-use crate::infrastructure::constants::HTTP_REQUEST_TIMEOUT;
 use async_trait::async_trait;
 use std::sync::Arc;
 use std::time::Duration;
@@ -17,24 +16,14 @@ pub struct OllamaEmbeddingProvider {
 }
 
 impl OllamaEmbeddingProvider {
-    /// Create a new Ollama embedding provider
-    pub fn new(base_url: String, model: String) -> Result<Self> {
-        Self::with_timeout(base_url, model, HTTP_REQUEST_TIMEOUT)
-    }
-
-    /// Create a new Ollama embedding provider with custom timeout
-    pub fn with_timeout(base_url: String, model: String, timeout: Duration) -> Result<Self> {
-        let http_client = Arc::new(crate::adapters::http_client::HttpClientPool::new()?);
-        Ok(Self {
-            base_url,
-            model,
-            timeout,
-            http_client,
-        })
-    }
-
-    /// Create a new Ollama embedding provider with custom HTTP client
-    pub fn with_http_client(
+    /// Create a new Ollama embedding provider with injected HTTP client
+    ///
+    /// # Arguments
+    /// * `base_url` - Ollama server URL (e.g., "http://localhost:11434")
+    /// * `model` - Model name (e.g., "nomic-embed-text")
+    /// * `timeout` - Request timeout duration
+    /// * `http_client` - Injected HTTP client (required for DI compliance)
+    pub fn new(
         base_url: String,
         model: String,
         timeout: Duration,

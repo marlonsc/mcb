@@ -3,7 +3,7 @@
 //! Tests for cost tracking capabilities with thread-safe operations.
 
 use mcp_context_browser::adapters::providers::routing::cost_tracker::{
-    CostTracker, CostTrackerTrait, ProviderCost,
+    CostTracker, CostTrackerConfig, CostTrackerTrait, ProviderCost,
 };
 
 #[test]
@@ -23,7 +23,7 @@ fn test_cost_calculation() {
 
 #[test]
 fn test_cost_tracking() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let tracker = CostTracker::new();
+    let tracker = CostTracker::new(CostTrackerConfig::production());
     let cost_info = ProviderCost {
         provider_id: "test".to_string(),
         operation_type: "embedding".to_string(),
@@ -47,7 +47,7 @@ fn test_cost_tracking() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn test_budget_enforcement() {
-    let tracker = CostTracker::new();
+    let tracker = CostTracker::new(CostTrackerConfig::production());
     tracker.set_budget("test", 5.0);
 
     let cost_info = ProviderCost {
@@ -92,7 +92,7 @@ fn test_cost_efficiency_ranking() {
 
 #[test]
 fn test_budget_utilization() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let tracker = CostTracker::new();
+    let tracker = CostTracker::new(CostTrackerConfig::production());
     tracker.set_budget("test", 10.0);
 
     let cost_info = ProviderCost {

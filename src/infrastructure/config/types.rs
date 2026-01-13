@@ -11,6 +11,7 @@ use crate::sync::SyncConfig;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+use super::data::DataConfig;
 use super::metrics::MetricsConfig;
 use super::providers::{EmbeddingProviderConfig, VectorStoreProviderConfig};
 use super::server::ServerConfig;
@@ -55,29 +56,6 @@ pub struct ProviderConfig {
     pub vector_store: crate::domain::types::VectorStoreConfig,
 }
 
-impl Default for ProviderConfig {
-    fn default() -> Self {
-        Self {
-            embedding: crate::domain::types::EmbeddingConfig {
-                provider: "ollama".to_string(),
-                model: "nomic-embed-text".to_string(),
-                api_key: None,
-                base_url: Some("http://localhost:11434".to_string()),
-                dimensions: Some(768),
-                max_tokens: Some(8192),
-            },
-            vector_store: crate::domain::types::VectorStoreConfig {
-                provider: "in-memory".to_string(),
-                address: None,
-                token: None,
-                collection: None,
-                dimensions: Some(768),
-                timeout_secs: None, // Default: 10 seconds (set in provider)
-            },
-        }
-    }
-}
-
 /// Main application configuration
 ///
 /// Central configuration structure containing all settings for the MCP Context Browser.
@@ -85,82 +63,51 @@ impl Default for ProviderConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct Config {
     /// Application name
-    #[serde(default = "default_name")]
     pub name: String,
     /// Application version
-    #[serde(default = "default_version")]
     pub version: String,
     /// Server configuration (host, port, etc.)
-    #[serde(default)]
     #[validate(nested)]
     pub server: ServerConfig,
     /// AI and vector store provider configurations
-    #[serde(default)]
     #[validate(nested)]
     pub providers: ProviderConfig,
     /// Metrics and monitoring configuration
-    #[serde(default)]
     #[validate(nested)]
     pub metrics: MetricsConfig,
     /// Admin interface configuration (optional - only if credentials provided)
-    #[serde(default)]
     pub admin: Option<crate::admin::AdminConfig>,
     /// Authentication and authorization settings
-    #[serde(default)]
     #[validate(nested)]
     pub auth: AuthConfig,
 
     /// Database configuration
-    #[serde(default)]
     #[validate(nested)]
     pub database: DatabaseConfig,
     /// Sync coordination configuration
-    #[serde(default)]
     #[validate(nested)]
     pub sync: SyncConfig,
     /// Background daemon configuration
-    #[serde(default)]
     #[validate(nested)]
     pub daemon: DaemonConfig,
 
     /// Resource limits configuration
-    #[serde(default)]
     #[validate(nested)]
     pub resource_limits: ResourceLimitsConfig,
 
     /// Advanced caching configuration
-    #[serde(default)]
     pub cache: CacheConfig,
-    #[serde(default)]
     #[validate(nested)]
     pub hybrid_search: HybridSearchConfig,
-}
 
-fn default_name() -> String {
-    "MCP Context Browser".to_string()
-}
-
-fn default_version() -> String {
-    env!("CARGO_PKG_VERSION").to_string()
+    /// Data directory configuration (XDG standard locations)
+    #[validate(nested)]
+    pub data: DataConfig,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Self {
-            name: "MCP Context Browser".to_string(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
-            server: ServerConfig::default(),
-            providers: ProviderConfig::default(),
-            metrics: MetricsConfig::default(),
-            admin: None, // Admin is optional - loaded only if credentials provided
-            auth: AuthConfig::default(),
-            database: DatabaseConfig::default(),
-            sync: SyncConfig::default(),
-            daemon: DaemonConfig::default(),
-            resource_limits: ResourceLimitsConfig::default(),
-            cache: CacheConfig::default(),
-            hybrid_search: HybridSearchConfig::default(),
-        }
+        panic!("[FATAL CONFIG ERROR] Config missing from config/default.toml - this field is REQUIRED and must come from the embedded configuration")
     }
 }
 

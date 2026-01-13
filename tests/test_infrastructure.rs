@@ -89,7 +89,7 @@ impl TestInfrastructure {
     /// Create a test configuration
     fn create_test_config() -> Config {
         use mcp_context_browser::domain::types::{EmbeddingConfig, VectorStoreConfig};
-        use mcp_context_browser::infrastructure::config::ProviderConfig;
+        use mcp_context_browser::infrastructure::config::{DataConfig, ProviderConfig};
 
         Config {
             name: "Test MCP Context Browser".to_string(),
@@ -122,6 +122,13 @@ impl TestInfrastructure {
             resource_limits: Default::default(),
             cache: Default::default(),
             hybrid_search: Default::default(),
+            data: DataConfig {
+                base_dir: "~/.local/share/mcp-context-browser".to_string(),
+                snapshots_dir: None,
+                config_history_dir: None,
+                encryption_keys_dir: None,
+                circuit_breakers_dir: None,
+            },
         }
     }
 

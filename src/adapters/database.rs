@@ -18,6 +18,30 @@ use std::sync::Arc;
 use std::time::Duration;
 use validator::Validate;
 
+/// Helper module for Duration serialization/deserialization
+/// Converts between Duration and integer seconds in TOML
+mod duration_secs {
+    use serde::{Deserialize, Deserializer, Serializer};
+    use std::time::Duration;
+
+    /// Serialize Duration as integer seconds
+    pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u64(duration.as_secs())
+    }
+
+    /// Deserialize Duration from integer seconds
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let secs = u64::deserialize(deserializer)?;
+        Ok(Duration::from_secs(secs))
+    }
+}
+
 /// Trait for database pool operations (enables DI and testing)
 #[async_trait]
 pub trait DatabasePoolProvider: Send + Sync {
@@ -53,14 +77,14 @@ pub struct DatabaseConfig {
     /// Minimum number of idle connections
     #[serde(default)]
     pub min_idle: u32,
-    /// Maximum lifetime of a connection
-    #[serde(default)]
+    /// Maximum lifetime of a connection (in seconds)
+    #[serde(default, with = "duration_secs")]
     pub max_lifetime: Duration,
-    /// Maximum idle time for a connection
-    #[serde(default)]
+    /// Maximum idle time for a connection (in seconds)
+    #[serde(default, with = "duration_secs")]
     pub idle_timeout: Duration,
-    /// Connection timeout
-    #[serde(default)]
+    /// Connection timeout (in seconds)
+    #[serde(default, with = "duration_secs")]
     pub connection_timeout: Duration,
     /// Whether database is enabled
     #[serde(default)]

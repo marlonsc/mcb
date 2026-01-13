@@ -66,8 +66,17 @@ pub struct CostTrackerConfig {
     pub default_currency: String,
 }
 
-impl Default for CostTrackerConfig {
-    fn default() -> Self {
+impl CostTrackerConfig {
+    /// Create a new cost tracker configuration with explicit values
+    pub fn new(enable_budget_limits: bool, default_currency: impl Into<String>) -> Self {
+        Self {
+            enable_budget_limits,
+            default_currency: default_currency.into(),
+        }
+    }
+
+    /// Create a standard production configuration
+    pub fn production() -> Self {
         Self {
             enable_budget_limits: true,
             default_currency: "USD".to_string(),
@@ -100,13 +109,8 @@ pub struct CostTracker {
 }
 
 impl CostTracker {
-    /// Create a new cost tracker with default configuration
-    pub fn new() -> Self {
-        Self::with_config(CostTrackerConfig::default())
-    }
-
-    /// Create a new cost tracker with custom configuration
-    pub fn with_config(config: CostTrackerConfig) -> Self {
+    /// Create a new cost tracker with custom configuration (canonical constructor)
+    pub fn new(config: CostTrackerConfig) -> Self {
         Self {
             costs: Arc::new(DashMap::new()),
             usage_metrics: Arc::new(DashMap::new()),
@@ -227,8 +231,3 @@ impl CostTrackerTrait for CostTracker {
     }
 }
 
-impl Default for CostTracker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
