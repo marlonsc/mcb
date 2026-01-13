@@ -137,16 +137,8 @@ impl FilesystemVectorStore {
             })? {
                 let path = entry.path();
                 if path.extension().and_then(|s| s.to_str()) == Some("meta") {
-                    let content = tokio::fs::read(&path).await.map_err(|e| {
-                        crate::domain::error::Error::io(format!("Failed to read shard meta: {}", e))
-                    })?;
                     let metadata: ShardMetadata =
-                        serde_json::from_slice(&content).map_err(|e| {
-                            crate::domain::error::Error::internal(format!(
-                                "Failed to parse shard meta: {}",
-                                e
-                            ))
-                        })?;
+                        FileUtils::read_json(&path, "shard metadata").await?;
                     self.shard_cache
                         .insert((collection.to_string(), metadata.shard_id), metadata);
                 }
