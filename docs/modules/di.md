@@ -1,6 +1,6 @@
 # di Module
 
-**Source**: `src/di/`
+**Source**: `src/infrastructure/di/`
 **Files**: 3
 **Lines of Code**: 358
 **Traits**: 0

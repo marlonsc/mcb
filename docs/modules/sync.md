@@ -1,6 +1,6 @@
 # sync Module
 
-**Source**: `src/sync/`
+**Source**: `src/infrastructure/sync/`
 **Files**: 1
 **Lines of Code**: 430
 **Traits**: 0

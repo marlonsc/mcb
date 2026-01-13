@@ -1,12 +1,15 @@
 # Core Module
 
-**Source**: `src/core/`
+**Source**: `src/domain/` (types, ports) and `src/infrastructure/` (utilities)
 
 Foundational types, traits, and utilities used throughout the system.
 
 ## Overview
 
-The core module establishes fundamental domain types and shared utilities that form the foundation of all operations. It defines essential types, error handling, and infrastructure utilities.
+The core module functionality is now split across Clean Architecture layers:
+- **Domain types** (`src/domain/types.rs`): Embedding, CodeChunk, SearchResult, Language
+- **Port traits** (`src/domain/ports/`): EmbeddingProvider, VectorStoreProvider, etc.
+- **Infrastructure utilities** (`src/infrastructure/`): auth, cache, crypto, rate_limit
 
 ## Submodules
 
@@ -81,22 +84,21 @@ pub use rate_limit::RateLimiter;
 pub use hybrid_search::HybridSearchEngine;
 ```
 
-## File Structure
+## File Structure (Clean Architecture)
 
 ```text
-src/core/
-├── auth.rs          # JWT authentication
+src/domain/
+├── types.rs         # Domain types (Embedding, CodeChunk, etc.)
+├── error.rs         # Domain error types
+├── validation.rs    # Input validation rules
+└── ports/           # Port traits (interfaces)
+
+src/infrastructure/
+├── auth/            # JWT authentication
 ├── cache.rs         # Multi-level caching
-├── crypto.rs        # Encryption utilities
-├── database.rs      # Database connectivity
-├── error.rs         # Error types
-├── http_client.rs   # HTTP client
-├── hybrid_search.rs # BM25 + semantic search
-├── limits.rs        # Resource quotas
-├── merkle.rs        # Data integrity
-├── mod.rs           # Module exports
+├── crypto/          # Encryption utilities
 ├── rate_limit.rs    # Request throttling
-└── types.rs         # Domain types
+└── ...              # Other infrastructure
 ```
 
 ## Testing

@@ -31,19 +31,19 @@ Per-language file organization with modular architecture:
 
 | Language | File | Status |
 |----------|------|--------|
-| Rust | `src/chunking/languages/rust.rs` | ✅ Complete |
-| Python | `src/chunking/languages/python.rs` | ✅ Complete |
-| JavaScript | `src/chunking/languages/javascript.rs` | ✅ Complete |
-| TypeScript | `src/chunking/languages/javascript.rs` | ✅ Complete |
-| Go | `src/chunking/languages/go.rs` | ✅ Complete |
-| Java | `src/chunking/languages/java.rs` | ✅ Complete |
-| C | `src/chunking/languages/c.rs` | ✅ Complete |
-| C++ | `src/chunking/languages/cpp.rs` | ✅ Complete |
-| C# | `src/chunking/languages/csharp.rs` | ✅ Complete |
-| Ruby | `src/chunking/languages/ruby.rs` | ✅ Complete |
-| PHP | `src/chunking/languages/php.rs` | ✅ Complete |
-| Swift | `src/chunking/languages/swift.rs` | ✅ Complete |
-| Kotlin | `src/chunking/languages/kotlin.rs` | ✅ Complete |
+| Rust | `src/domain/chunking/languages/rust.rs` | ✅ Complete |
+| Python | `src/domain/chunking/languages/python.rs` | ✅ Complete |
+| JavaScript | `src/domain/chunking/languages/javascript.rs` | ✅ Complete |
+| TypeScript | `src/domain/chunking/languages/javascript.rs` | ✅ Complete |
+| Go | `src/domain/chunking/languages/go.rs` | ✅ Complete |
+| Java | `src/domain/chunking/languages/java.rs` | ✅ Complete |
+| C | `src/domain/chunking/languages/c.rs` | ✅ Complete |
+| C++ | `src/domain/chunking/languages/cpp.rs` | ✅ Complete |
+| C# | `src/domain/chunking/languages/csharp.rs` | ✅ Complete |
+| Ruby | `src/domain/chunking/languages/ruby.rs` | ✅ Complete |
+| PHP | `src/domain/chunking/languages/php.rs` | ✅ Complete |
+| Swift | `src/domain/chunking/languages/swift.rs` | ✅ Complete |
+| Kotlin | `src/domain/chunking/languages/kotlin.rs` | ✅ Complete |
 
 #### HTTP Transport Foundation
 
@@ -319,7 +319,7 @@ Self-documenting, ADR-driven development
 
 ```text
 Complete drop-in claude-context replacement
-├── 12 languages processors (modular)
+├── 0 languages processors (modular)
 ├── HTTP transport foundation
 ├── Binary auto-respawn
 ├── Systemd integration
@@ -383,7 +383,7 @@ Comprehensive development platform
 ### v0.1.0: First Stable Release
 
 \1-   Claude-context compatibility: 100%
-\1-   Language processors: 12 languages
+\1-   Language processors: 0 languages
 \1-   Test coverage: 493 tests
 \1-   HTTP transport foundation: Complete
 \1-   Systemd integration: Complete

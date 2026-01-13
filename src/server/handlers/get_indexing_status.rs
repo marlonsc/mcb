@@ -174,7 +174,7 @@ impl GetIndexingStatusHandler {
         message.push_str("• Async-First Design: Tokio runtime for high concurrency\n");
         message.push_str("• Provider Pattern: Extensible AI and storage providers\n");
         message.push_str("• Enterprise Security: SOC 2 compliant with encryption\n");
-        message.push_str("• Multi-Language Support: 8+ programming languages\n");
+        message.push_str("• Multi-Language Support: 12 programming languages\n");
         message.push_str("• Vector Embeddings: Semantic understanding with high accuracy\n");
 
         tracing::info!(

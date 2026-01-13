@@ -1,6 +1,6 @@
 # daemon Module
 
-**Source**: `src/daemon/`
+**Source**: `src/infrastructure/daemon/`
 **Files**: 2
 **Lines of Code**: 334
 **Traits**: 0

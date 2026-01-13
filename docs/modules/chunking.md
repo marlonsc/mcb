@@ -1,6 +1,6 @@
 # chunking Module
 
-**Source**: `src/chunking/`
+**Source**: `src/domain/chunking/`
 **Files**: 18
 **Lines of Code**: 1518
 **Traits**: 1

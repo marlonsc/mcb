@@ -1,6 +1,6 @@
 # admin Module
 
-**Source**: `src/admin/`
+**Source**: `src/server/admin/`
 **Files**: 16
 **Lines of Code**: 3690
 **Traits**: 0

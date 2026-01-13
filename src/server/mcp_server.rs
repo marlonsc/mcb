@@ -616,7 +616,7 @@ impl ServerHandler for McpServer {
                  ## 🚀 **Core Capabilities**\n\n\
                  • **🔍 Semantic Search**: AI-powered code understanding and retrieval\n\
                  • **📊 Smart Ranking**: Results ranked by contextual relevance\n\
-                 • **🔧 Multi-Language**: Supports 8+ programming languages with AST parsing\n\
+                 • **🔧 Multi-Language**: Supports 12 programming languages with AST parsing\n\
                  • **⚡ High Performance**: Sub-500ms query responses, 1000+ concurrent users\n\
                  • **🛡️ Enterprise Ready**: SOC 2 compliant with comprehensive security\n\n\
                  ## 🔧 **Available Tools**\n\n\

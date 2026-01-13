@@ -4,7 +4,7 @@
 
 **In Progress**(v0.1.0 → v0.2.0)
 
-> Backend infrastructure implemented in `src/admin/`:
+> Backend infrastructure implemented in `src/server/admin/`:
 >
 > -   AdminService trait with 32 methods (traits.rs)
 > -   AdminServiceImpl with full implementation (implementation.rs, helpers/)
@@ -114,7 +114,7 @@ The interface will be implemented using:
 
 ### Architecture Integration
 
-The web interface will extend the existing `MetricsApiServer` in `src/metrics/http_server.rs`:
+The web interface will extend the existing `MetricsApiServer` in `src/infrastructure/metrics/http_server.rs`:
 
 ```rust
 pub struct AdminApiServer {
@@ -143,7 +143,7 @@ New REST endpoints under `/admin/` prefix:
 Templates are**embedded at compile time**using `include_str!` macro, making the binary self-contained:
 
 ```
-src/admin/web/templates/
+src/server/admin/web/templates/
 ├── base.html              # Master layout (Tailwind + Alpine.js + HTMX)
 ├── dashboard.html         # Main dashboard
 ├── providers.html         # Provider management
@@ -163,7 +163,7 @@ src/admin/web/templates/
     └── config_diff.html
 ```
 
-**Key implementation detail**: All templates are loaded via `include_str!` in `src/admin/web.rs` and added to Tera at compile time, eliminating runtime filesystem access.
+**Key implementation detail**: All templates are loaded via `include_str!` in `src/server/admin/web.rs` and added to Tera at compile time, eliminating runtime filesystem access.
 
 ### Security Implementation
 
@@ -288,7 +288,7 @@ pub enum SystemEvent {
 
 ### New AdminService Methods
 
-Added to `src/admin/service/traits.rs`:
+Added to `src/server/admin/service/traits.rs`:
 
 ```rust
 #[async_trait]
@@ -307,7 +307,7 @@ pub trait AdminService: Interface + Send + Sync {
 
 ### Subsystem Types
 
-Defined in `src/admin/service/types.rs`:
+Defined in `src/server/admin/service/types.rs`:
 
 ```rust
 pub enum SubsystemType {
@@ -386,7 +386,7 @@ pub async fn get_config_diff(&self) -> Result<ConfigDiff, AdminError>;
 
 ## Template Organization
 
-Templates located in `src/admin/web/templates/`:
+Templates located in `src/server/admin/web/templates/`:
 
 ```
 templates/
@@ -413,4 +413,4 @@ templates/
 \1-   [ADR 008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md)
 \1-   [Existing HTTP Server](../../src/infrastructure/metrics/http_server.rs)
 \1-   [Server Initialization](../../src/server/init.rs)
-\1-   [Admin Service](../../src/admin/service/)
+\1-   [Admin Service](../../src/server/admin/service/)

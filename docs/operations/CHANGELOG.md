@@ -50,18 +50,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Language Processor Refactoring
 
 \1-  **12 Programming Languages**: Complete modular language processor implementation with AST parsing
-\1-   Rust (`src/chunking/languages/rust.rs`)
-\1-   Python (`src/chunking/languages/python.rs`)
-\1-   JavaScript/TypeScript (`src/chunking/languages/javascript.rs`)
-\1-   Go (`src/chunking/languages/go.rs`)
-\1-   Java (`src/chunking/languages/java.rs`)
-\1-   C (`src/chunking/languages/c.rs`)
-\1-   C++ (`src/chunking/languages/cpp.rs`)
-\1-   C# (`src/chunking/languages/csharp.rs`)
-\1-   Ruby (`src/chunking/languages/ruby.rs`)
-\1-   PHP (`src/chunking/languages/php.rs`)
-\1-   Swift (`src/chunking/languages/swift.rs`)
-\1-   Kotlin (`src/chunking/languages/kotlin.rs`)
+\1-   Rust (`src/domain/chunking/languages/rust.rs`)
+\1-   Python (`src/domain/chunking/languages/python.rs`)
+\1-   JavaScript/TypeScript (`src/domain/chunking/languages/javascript.rs`)
+\1-   Go (`src/domain/chunking/languages/go.rs`)
+\1-   Java (`src/domain/chunking/languages/java.rs`)
+\1-   C (`src/domain/chunking/languages/c.rs`)
+\1-   C++ (`src/domain/chunking/languages/cpp.rs`)
+\1-   C# (`src/domain/chunking/languages/csharp.rs`)
+\1-   Ruby (`src/domain/chunking/languages/ruby.rs`)
+\1-   PHP (`src/domain/chunking/languages/php.rs`)
+\1-   Swift (`src/domain/chunking/languages/swift.rs`)
+\1-   Kotlin (`src/domain/chunking/languages/kotlin.rs`)
 
 #### HTTP Transport Foundation
 
@@ -121,8 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 \1-  **Startup Time**: Instant (from npm/npx overhead)
 \1-  **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
-\1-  **Provider Support**: 6 embedding providers, 6 vector stores
-\1-  **Language Support**: 12 languages with AST parsing (from 13)
+\1-  **Provider Support**: 7 embedding providers, 6 vector stores
+\1-  **Language Support**: 0 languages with AST parsing (from 13)
 \1-  **Test Coverage**: 564 tests (from 150+)
 
 ---

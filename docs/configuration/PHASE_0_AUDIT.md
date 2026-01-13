@@ -157,7 +157,7 @@
 \1-  **Graceful Degradation**: If DATABASE_URL not set, database disabled
 \1-  **Note**: Has `from_env()` implementation ✅
 
-#### ✅ src/admin/config.rs
+#### ✅ src/server/admin/config.rs
 
 \1-  **Status**: PASSED (with intentional design note)
 \1-  **Parameters**: 5
@@ -226,7 +226,7 @@
 \1-  **Validation**: Type-safe enum
 \1-  **Env Var Support**: Via TOML config
 
-#### ✅ src/admin/service/helpers/admin_defaults.rs
+#### ✅ src/server/admin/service/helpers/admin_defaults.rs
 
 \1-  **Status**: PASSED (EXCELLENT EXAMPLE)
 \1-  **Parameters**: 26 defaults with documentation

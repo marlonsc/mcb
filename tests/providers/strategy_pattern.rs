@@ -3,18 +3,16 @@
 //! This module tests the generic provider services that use trait bounds
 //! instead of dynamic dispatch, implementing the Strategy pattern.
 
-use mcp_context_browser::domain::ports::{EmbeddingProvider, VectorStoreProvider};
+use mcp_context_browser::adapters::providers::embedding::null::NullEmbeddingProvider;
+use mcp_context_browser::adapters::providers::InMemoryVectorStoreProvider;
 use mcp_context_browser::application::context::ContextService;
-use mcp_context_browser::domain::error::Result;
-use mcp_context_browser::{CodeChunk, Embedding, SearchResult};
+use mcp_context_browser::domain::ports::{EmbeddingProvider, VectorStoreProvider};
 use std::sync::Arc;
 
 /// Test generic context service with strategy pattern
 #[cfg(test)]
 mod generic_context_service_tests {
     use super::*;
-    use mcp_context_browser::adapters::providers::InMemoryVectorStoreProvider;
-    use mcp_context_browser::adapters::providers::embedding::null::NullEmbeddingProvider;
 
     #[test]
     fn test_generic_context_service_creation() {
@@ -32,7 +30,7 @@ mod generic_context_service_tests {
     }
 
     #[test]
-    fn test_generic_context_service_operations() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_generic_context_service_operations() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let embedding_provider = Arc::new(NullEmbeddingProvider::new());
         let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
 
@@ -81,8 +79,8 @@ mod strategy_pattern_tests {
         fn accepts_embedding_provider<E: EmbeddingProvider>(_provider: Arc<E>) {}
         fn accepts_vector_store_provider<V: VectorStoreProvider>(_provider: Arc<V>) {}
 
-        let embedding_provider = Arc::new(NullEmbeddingProvider::new());
-        let vector_store_provider = Arc::new(InMemoryVectorStoreProvider::new());
+        let embedding_provider: Arc<NullEmbeddingProvider> = Arc::new(NullEmbeddingProvider::new());
+        let vector_store_provider: Arc<InMemoryVectorStoreProvider> = Arc::new(InMemoryVectorStoreProvider::new());
 
         // These should compile without trait bound errors
         accepts_embedding_provider(embedding_provider);
@@ -129,6 +127,7 @@ mod strategy_pattern_tests {
 /// Test provider validation with strategy pattern
 #[cfg(test)]
 mod provider_validation_tests {
+    #[allow(unused_imports)]
     use super::*;
     use mcp_context_browser::infrastructure::config::providers::ProviderConfigManager;
 
@@ -158,7 +157,7 @@ mod integration_tests {
     use super::*;
 
     #[test]
-    fn test_full_strategy_pattern_workflow() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_full_strategy_pattern_workflow() -> std::result::Result<(), Box<dyn std::error::Error>> {
         // Test a complete workflow using the strategy pattern:
         // 1. Create providers (strategies)
         // 2. Compose them into a service

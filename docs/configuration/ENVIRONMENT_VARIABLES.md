@@ -380,7 +380,7 @@ export MCP_PROVIDERS__VECTOR_STORE__DIMENSIONS=768
 
 ## Admin Defaults
 
-See [admin_defaults.rs](../../src/admin/service/helpers/admin_defaults.rs) for operational defaults:
+See [admin_defaults.rs](../../src/server/admin/service/helpers/admin_defaults.rs) for operational defaults:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -588,5 +588,5 @@ redis-cli ping  # Should respond with PONG
 ## See Also
 
 \1-   [Configuration Types](../../src/infrastructure/config/) - Source code
-\1-   [Admin Defaults](../../src/admin/service/helpers/admin_defaults.rs) - Operational settings
+\1-   [Admin Defaults](../../src/server/admin/service/helpers/admin_defaults.rs) - Operational settings
 \1-   [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide

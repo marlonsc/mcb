@@ -1,6 +1,6 @@
 # Metrics Module
 
-**Source**: `src/metrics/`
+**Source**: `src/infrastructure/metrics/`
 
 System monitoring, performance tracking, and HTTP metrics API.
 
@@ -51,7 +51,7 @@ Cache performance tracking.
 ## File Structure
 
 ```text
-src/metrics/
+src/infrastructure/metrics/
 ├── http_server.rs   # REST API server
 ├── mod.rs           # Module exports
 ├── performance.rs   # Query performance tracking

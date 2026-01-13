@@ -77,7 +77,7 @@ Processes codebases and creates searchable vector indexes.
 3.   Incremental indexing with change detection
 4.   Chunk generation and metadata extraction
 
-**Related**: [chunking module](../../src/chunking/), [core/types](./core.md)
+**Related**: [chunking module](../../src/domain/chunking/), [core/types](./core.md)
 
 ### SearchService
 

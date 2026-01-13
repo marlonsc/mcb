@@ -1,6 +1,6 @@
 # repository Module
 
-**Source**: `src/repository/`
+**Source**: `src/adapters/repository/`
 **Files**: 3
 **Lines of Code**: 329
 **Traits**: 4

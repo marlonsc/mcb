@@ -1,6 +1,6 @@
 # snapshot Module
 
-**Source**: `src/snapshot/`
+**Source**: `src/infrastructure/snapshot/`
 **Files**: 2
 **Lines of Code**: 325
 **Traits**: 0

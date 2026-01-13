@@ -1,6 +1,6 @@
 # Providers Module
 
-**Source**: `src/providers/`
+**Source**: `src/adapters/providers/`
 
 Extensible provider system for AI embedding and vector storage services.
 
@@ -72,7 +72,7 @@ Intelligent provider selection and management.
 ## File Structure
 
 ```text
-src/providers/
+src/adapters/providers/
 ├── embedding/
 │   ├── fastembed.rs    # Local embeddings
 │   ├── gemini.rs       # Google Gemini

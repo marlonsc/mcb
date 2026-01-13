@@ -3,7 +3,7 @@
 //! This module contains server initialization logic extracted from the main
 //! server implementation to improve code organization and testability.
 
-use crate::adapters::http_client::{HttpClientConfig, HttpClientPool};
+use crate::infrastructure::di::DiContainer;
 use crate::adapters::providers::routing::health::HealthMonitor;
 use crate::infrastructure::cache::{create_cache_provider, SharedCacheProvider};
 use crate::infrastructure::config::ConfigLoader;
@@ -106,13 +106,16 @@ async fn initialize_server_components(
         config.resource_limits.clone(),
     ));
 
-    // Initialize HTTP client pool (DI: failures propagate, no fallback)
-    tracing::info!("🌐 Initializing HTTP client pool...");
-    let http_client = HttpClientPool::with_config(HttpClientConfig::default())
-        .map_err(|e| format!("Failed to initialize HTTP client pool: {}", e))?;
-    tracing::info!("✅ HTTP client pool initialized successfully");
+    // Build DI container for component resolution
+    tracing::info!("🔧 Building DI container...");
+    let container = DiContainer::build()
+        .map_err(|e| format!("Failed to build DI container: {}", e))?;
+
+    // Resolve HTTP client from DI container
+    tracing::info!("🌐 Resolving HTTP client pool from DI container...");
     let http_client: Arc<dyn crate::adapters::http_client::HttpClientProvider> =
-        Arc::new(http_client);
+        container.resolve();
+    tracing::info!("✅ HTTP client pool resolved successfully");
 
     // Initialize database pool (not used directly, but available for DI)
     if config.database.enabled {

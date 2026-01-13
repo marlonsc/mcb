@@ -58,9 +58,10 @@ cargo run
 
 ```text
 src/
-├── core/           # Core types and error handling
-├── providers/      # External service integrations
-├── services/       # Business logic
+├── domain/         # Domain types, validation, errors, port traits
+├── application/    # Business services (indexing, search, context)
+├── adapters/       # Provider implementations, repositories
+├── infrastructure/ # Shared systems (cache, auth, config, metrics)
 ├── server/         # MCP protocol implementation
 └── main.rs         # Application entry point
 ```

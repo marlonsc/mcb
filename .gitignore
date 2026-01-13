@@ -35,6 +35,7 @@ Thumbs.db
 *.backup*
 *.disabled
 *.archive/
+*.obsolete
 archive/
 *.new
 *.old

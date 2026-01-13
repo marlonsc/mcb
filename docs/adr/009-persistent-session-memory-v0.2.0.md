@@ -1206,7 +1206,7 @@ fn default_max_tokens() -> usize { 8000 }
 
 ### Phase 10: Admin UI Integration
 
-**Modify**: `src/admin/web/templates/` - Add memory dashboard
+**Modify**: `src/server/admin/web/templates/` - Add memory dashboard
 
 ```html
 <!-- memory.html -->
@@ -1273,7 +1273,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 | `src/application/context_injection.rs` | Context generation |
 | `src/server/handlers/memory_tools.rs` | MCP tool handlers |
 | `src/infrastructure/config/memory.rs` | Memory configuration |
-| `src/admin/web/templates/memory.html` | Admin dashboard |
+| `src/server/admin/web/templates/memory.html` | Admin dashboard |
 
 ## Files to Modify
 
@@ -1287,7 +1287,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 | `src/server/mcp_server.rs` | Register memory tools |
 | `src/infrastructure/config/mod.rs` | Export memory config |
 | `src/infrastructure/di/factory/implementation.rs` | Wire memory services |
-| `src/admin/routes.rs` | Add memory dashboard route |
+| `src/server/admin/routes.rs` | Add memory dashboard route |
 
 ## Integration with ADR-008 (Git)
 

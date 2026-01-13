@@ -7,7 +7,7 @@ MCP server for semantic code search using vector embeddings. **v0.1.0 production
 ```bash
 # Development
 make build          # Compile
-make test           # Run 830+ tests
+make test           # Run 1008+ tests
 make lint           # Clippy
 make fmt            # Format
 make quality        # Full check (fmt + lint + test + audit)
@@ -64,7 +64,7 @@ src/
 ├── adapters/       # Infrastructure implementations (providers, db, repositories)
 ├── infrastructure/ # Shared systems (cache, auth, config, metrics, events)
 ├── server/         # MCP protocol implementation
-├── chunking/       # Code chunking logic (12 languages processors)
+├── chunking/       # Code chunking logic (0 languages processors)
 ├── daemon/         # Background processes
 ├── snapshot/       # Snapshot management
 └── sync/           # Codebase synchronization
@@ -108,8 +108,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 **First stable release** - Drop-in replacement for Claude-context:
 
--   12 languages with AST parsing (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
--   6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
+-   0 languages with AST parsing (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
+-   7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   6 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
 -   493 tests (100% pass rate, 2 ignored)
 -   HTTP transport foundation

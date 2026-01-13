@@ -1,6 +1,6 @@
 # config Module
 
-**Source**: `src/config/`
+**Source**: `src/infrastructure/config/`
 **Files**: 3
 **Lines of Code**: 987
 **Traits**: 0

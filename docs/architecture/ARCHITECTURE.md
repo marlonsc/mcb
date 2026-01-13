@@ -133,7 +133,7 @@ MCP Context Browser serves as a semantic code intelligence layer between AI assi
 \1-  **Search Accuracy**: >90% relevant results for natural language queries
 \1-  **Indexing Speed**: <5 seconds for 1000 files (<1MB each)
 \1-  **Query Latency**: <500ms average response time
-\1-  **Language Support**: 8+ programming languages with AST parsing
+\1-  **Language Support**: 12 programming languages with AST parsing
 \1-  **Provider Compatibility**: 4+ embedding providers, 3+ vector stores
 
 #### Non-Functional Requirements
@@ -532,137 +532,72 @@ All 14 domain port traits extend `shaku::Interface` for DI container integration
 
 ## Module Architecture
 
-### Core Modules
+### Core Modules (Clean Architecture)
 
-The system is organized into specialized modules, each handling distinct responsibilities:
+The system follows Clean Architecture principles with 5 top-level layers:
 
-#### 🔍 Chunking Module (`src/chunking/`)
+#### 📦 Domain Layer (`src/domain/`)
 
-**Purpose**: Intelligent code chunking using AST-based parsing and language-aware splitting.
-
-**Key Components**:
-
-\1-   `IntelligentChunker`: AST-aware chunking with language-specific rules
-\1-   `LanguageProcessor`: Language detection and syntax-aware processing
-\1-   `ChunkProcessor`: Parallel processing with configurable chunk sizes
-
-**Features**:
-
-\1-   Multi-language support (Rust, Python, JavaScript, TypeScript, Java, Go, etc.)
-\1-   AST-based semantic boundary detection
-\1-   Configurable chunk sizes with overlap control
-\1-   Syntax-aware splitting preserving code structure
-
-#### ⚙️ Core Module (`src/core/`)
-
-**Purpose**: Core types, traits, and shared utilities used throughout the system.
-
-**Submodules**:
-
-\1-   `auth`: Authentication and authorization utilities
-\1-   `cache`: Advanced caching with TTL and size limits
-\1-   `crypto`: Encryption utilities for secure data handling
-\1-   `database`: Database connection pooling and utilities
-\1-   `error`: Comprehensive error types and handling
-\1-   `http_client`: Configurable HTTP client with retry logic
-\1-   `hybrid_search`: BM25 + semantic search combination
-\1-   `limits`: Resource limits and rate limiting
-\1-   `merkle`: Merkle tree implementation for integrity
-\1-   `rate_limit`: Rate limiting with multiple strategies
-\1-   `types`: Core data types and serialization
-
-#### 👻 Daemon Module (`src/daemon/`)
-
-**Purpose**: Background daemon for system maintenance and monitoring.
-
-**Features**:
-
-\1-   Automatic cleanup of stale lockfiles
-\1-   Continuous monitoring of sync operations
-\1-   Configurable cleanup and monitoring intervals
-\1-   Graceful shutdown handling
-\1-   Lock metadata tracking and reporting
-
-#### 🏭 Factory Module (`src/factory/`)
-
-**Purpose**: Dependency injection and provider factory patterns.
+**Purpose**: Core business entities, port traits (interfaces), and validation rules.
 
 **Key Components**:
 
-\1-   `ServiceProvider`: Main dependency injection container
-\1-   `ProviderFactory`: Runtime provider instantiation
-\1-   `ServiceRegistry`: Service registration and lookup
+\1-   `ports/`: 14 port traits defining system boundaries (see Domain Ports section)
+\1-   `chunking/`: Code chunking with 12 language processors
+\1-   `types.rs`: Core domain types (CodeChunk, Embedding, SearchResult)
+\1-   `error.rs`: Domain error types
+\1-   `validation.rs`: Input validation rules
 
-#### 📊 Metrics Module (`src/metrics/`)
+#### 🔧 Application Layer (`src/application/`)
 
-**Purpose**: Comprehensive system monitoring and observability.
-
-**Components**:
-
-\1-   `SystemMetricsCollector`: CPU, memory, disk monitoring
-\1-   `PerformanceMetrics`: Query performance tracking
-\1-   `MetricsApiServer`: HTTP metrics endpoint (Prometheus-compatible)
-\1-   `CacheMetrics`: Cache hit/miss statistics
-
-#### 🔌 Providers Module (`src/providers/`)
-
-**Purpose**: Extensible provider system for AI and storage services.
-
-**Submodules**:
-
-\1-   `embedding/`: Text-to-vector conversion providers (OpenAI, Ollama, Gemini, VoyageAI)
-\1-   `vector_store/`: Vector storage providers (Milvus, In-Memory, Filesystem, Encrypted)
-\1-   `routing/`: Intelligent provider routing with circuit breakers and failover
-
-#### 📋 Registry Module (`src/registry/`)
-
-**Purpose**: Runtime provider registration and management.
-
-**Features**:
-
-\1-   Dynamic provider registration
-\1-   Health-aware provider selection
-\1-   Configuration-driven provider setup
-\1-   Thread-safe operations
-
-#### 🌐 Server Module (`src/server/`)
-
-**Purpose**: MCP protocol server and HTTP API endpoints.
-
-**Components**:
-
-\1-   MCP protocol handlers
-\1-   HTTP server with Axum
-\1-   WebSocket support for real-time updates
-\1-   Rate limiting middleware
-
-#### 🔧 Services Module (`src/services/`)
-
-**Purpose**: Business logic orchestration layer.
+**Purpose**: Business logic orchestration and use case implementations.
 
 **Services**:
 
-\1-   `ContextService`: Embedding and vector operations
-\1-   `IndexingService`: Codebase indexing and chunking
+\1-   `ContextService`: Embedding generation and vector storage coordination
+\1-   `IndexingService`: Codebase indexing workflow
 \1-   `SearchService`: Semantic search operations
+\1-   `ChunkingOrchestrator`: Batch chunking coordination
 
-#### 📸 Snapshot Module (`src/snapshot/`)
+#### 🔌 Adapters Layer (`src/adapters/`)
 
-**Purpose**: System state snapshots for debugging and recovery.
+**Purpose**: External service integrations implementing domain ports.
 
-#### 🔄 Sync Module (`src/sync/`)
+**Submodules**:
 
-**Purpose**: Cross-process synchronization and coordination.
+\1-   `providers/embedding/`: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null
+\1-   `providers/vector_store/`: Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null
+\1-   `providers/routing/`: Circuit breakers, health monitoring, failover
+\1-   `hybrid_search/`: BM25 + semantic search adapter
+\1-   `repository/`: Chunk and search repository implementations
+
+#### 🏗️ Infrastructure Layer (`src/infrastructure/`)
+
+**Purpose**: Shared technical services and cross-cutting concerns.
+
+**Key Components**:
+
+\1-   `di/`: Shaku-based dependency injection with hierarchical modules
+\1-   `auth/`: JWT authentication, rate limiting, password handling
+\1-   `cache/`: TTL-based caching with size limits
+\1-   `events/`: Domain event bus (Tokio channels, NATS)
+\1-   `sync/`: File synchronization with debouncing
+\1-   `snapshot/`: Codebase snapshot management
+\1-   `metrics/`: System and performance metrics
+
+#### 🌐 Server Layer (`src/server/`)
+
+**Purpose**: MCP protocol implementation and HTTP API.
 
 **Components**:
 
-\1-   `lockfile`: File-based locking for process coordination
-\1-   `manager`: Sync operation management and statistics
-\1-   `CodebaseLockManager`: Lock lifecycle management
+\1-   `mcp_server.rs`: MCP protocol server
+\1-   `handlers/`: Tool handlers (index, search, clear, status)
+\1-   `admin/`: Admin service with health checks
 
 ### Advanced Features
 
-#### 🛡️ Provider Routing System (`src/providers/routing/`)
+#### 🛡️ Provider Routing System (`src/adapters/providers/routing/`)
 
 **Purpose**: Intelligent provider management with resilience and optimization.
 
@@ -711,7 +646,7 @@ The system is organized into specialized modules, each handling distinct respons
 \1-  **Performance Balancing**: Load distribution across providers
 \1-  **Metrics-Driven Decisions**: Data-driven provider selection
 
-#### 🔍 Hybrid Search Engine (`src/core/hybrid_search.rs`)
+#### 🔍 Hybrid Search Engine (`src/adapters/hybrid_search/`)
 
 **Purpose**: Combines lexical and semantic search for improved relevance.
 
