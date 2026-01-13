@@ -166,7 +166,7 @@ pub async fn run_health_check(
     }
 
     // Subsystem health checks with real runtime values
-    let indexing_start = std::time::Instant::now();
+    let indexing_timer = TimedOperation::start();
     checks.push(HealthCheck {
         name: "indexing".to_string(),
         status: if runtime_cfg.indexing.enabled {
@@ -183,7 +183,7 @@ pub async fn run_health_check(
             },
             runtime_cfg.indexing.pending_operations
         ),
-        duration_ms: indexing_start.elapsed().as_millis() as u64,
+        duration_ms: indexing_timer.elapsed_ms(),
         details: Some(serde_json::json!({
             "status": if runtime_cfg.indexing.enabled { "operational" } else { "disabled" },
             "pending_operations": runtime_cfg.indexing.pending_operations,
@@ -191,7 +191,7 @@ pub async fn run_health_check(
         })),
     });
 
-    let cache_start = std::time::Instant::now();
+    let cache_timer = TimedOperation::start();
     let cache_status = if runtime_cfg.cache.enabled {
         if runtime_cfg.cache.hit_rate >= thresholds.cache_hit_rate_degraded as f64 {
             status::HEALTHY.to_string()
@@ -210,7 +210,7 @@ pub async fn run_health_check(
             runtime_cfg.cache.entries_count,
             runtime_cfg.cache.hit_rate * 100.0
         ),
-        duration_ms: cache_start.elapsed().as_millis() as u64,
+        duration_ms: cache_timer.elapsed_ms(),
         details: Some(serde_json::json!({
             "status": if runtime_cfg.cache.enabled { "operational" } else { "disabled" },
             "entries": runtime_cfg.cache.entries_count,
@@ -220,7 +220,7 @@ pub async fn run_health_check(
         })),
     });
 
-    let database_start = std::time::Instant::now();
+    let database_timer = TimedOperation::start();
     let db_utilization = (runtime_cfg.database.active_connections as f64
         / runtime_cfg.database.total_pool_size as f64)
         * 100.0;
@@ -245,7 +245,7 @@ pub async fn run_health_check(
             runtime_cfg.database.total_pool_size,
             db_utilization
         ),
-        duration_ms: database_start.elapsed().as_millis() as u64,
+        duration_ms: database_timer.elapsed_ms(),
         details: Some(serde_json::json!({
             "status": if runtime_cfg.database.connected { "connected" } else { "disconnected" },
             "active_connections": runtime_cfg.database.active_connections,
@@ -281,7 +281,7 @@ pub fn test_provider_connectivity(
     service_provider: &Arc<dyn ServiceProviderInterface>,
     provider_id: &str,
 ) -> Result<ConnectivityTestResult, AdminError> {
-    let start_time = std::time::Instant::now();
+    let timer = TimedOperation::start();
     let (embedding_providers, vector_store_providers) = service_provider.list_providers();
 
     let is_embedding = embedding_providers.iter().any(|p| p == provider_id);
@@ -291,7 +291,7 @@ pub fn test_provider_connectivity(
         return Ok(ConnectivityTestResult {
             provider_id: provider_id.to_string(),
             success: false,
-            response_time_ms: Some(start_time.elapsed().as_millis() as u64),
+            response_time_ms: Some(timer.elapsed_ms()),
             error_message: Some(format!("Provider '{}' not found in registry", provider_id)),
             details: serde_json::json!({
                 "test_type": "connectivity",
@@ -306,7 +306,7 @@ pub fn test_provider_connectivity(
     } else {
         "vector_store"
     };
-    let response_time = start_time.elapsed().as_millis() as u64;
+    let response_time = timer.elapsed_ms();
 
     Ok(ConnectivityTestResult {
         provider_id: provider_id.to_string(),

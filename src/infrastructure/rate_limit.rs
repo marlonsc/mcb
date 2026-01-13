@@ -5,12 +5,12 @@
 //! rate limiting for production security.
 
 use crate::domain::error::{Error, Result};
-use crate::infrastructure::ErrorContext;
 use crate::infrastructure::constants::{
     RATE_LIMIT_BURST_ALLOWANCE, RATE_LIMIT_CACHE_MAX_ENTRIES, RATE_LIMIT_DEFAULT_MAX_REQUESTS,
     RATE_LIMIT_WINDOW_SECONDS,
 };
 use crate::infrastructure::utils::TimeUtils;
+use crate::infrastructure::ErrorContext;
 use arc_swap::ArcSwapOption;
 use dashmap::DashMap;
 use redis::Client;

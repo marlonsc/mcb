@@ -130,14 +130,15 @@ macro_rules! impl_language_processor {
                 file_name: &str,
                 language: &$crate::domain::types::Language,
             ) -> Vec<$crate::domain::types::CodeChunk> {
-                use crate::chunking::traverser::AstTraverser;
-
                 let mut chunks = Vec::new();
                 let mut cursor = tree.walk();
 
                 if cursor.goto_first_child() {
-                    let traverser = AstTraverser::new(&self.config().extraction_rules, language)
-                        .with_max_chunks(75); // Limit chunks per file
+                    let traverser = $crate::chunking::traverser::AstTraverser::new(
+                        &self.config().extraction_rules,
+                        language,
+                    )
+                    .with_max_chunks(75); // Limit chunks per file
                     traverser.traverse_and_extract(&mut cursor, content, file_name, 0, &mut chunks);
                 }
 
@@ -174,7 +175,7 @@ macro_rules! impl_language_processor {
                 file_name: &str,
                 language: &$crate::domain::types::Language,
             ) -> Vec<$crate::domain::types::CodeChunk> {
-                crate::chunking::fallback::GenericFallbackChunker::new(self.config())
+                $crate::chunking::fallback::GenericFallbackChunker::new(self.config())
                     .chunk_with_patterns(content, file_name, language)
             }
         }
@@ -275,5 +276,73 @@ macro_rules! define_language_processor {
 
         // Apply the trait implementation
         $crate::impl_language_processor!($processor_name);
+    };
+}
+
+/// Generates complete language processor with language parameter support (for dual-language processors like JavaScript/TypeScript)
+#[macro_export]
+macro_rules! define_language_processor_with_param {
+    (
+        $processor_name:ident,
+        language_fn: $language_fn:expr,
+        chunk_size: $chunk_size:expr,
+        doc: $doc:literal,
+        rules: [
+            $(
+                {
+                    node_types: [$($node_type:literal),* $(,)?],
+                    min_length: $min_length:expr,
+                    min_lines: $min_lines:expr,
+                    max_depth: $max_depth:expr,
+                    priority: $priority:expr,
+                    include_context: $include_context:expr,
+                }
+            ),* $(,)?
+        ],
+        fallback_patterns: [$($pattern:literal),* $(,)?],
+    ) => {
+        #[doc = $doc]
+        pub struct $processor_name {
+            processor: $crate::chunking::processor::BaseProcessor,
+        }
+
+        impl $processor_name {
+            /// Create new processor with language parameter
+            pub fn new(language: $crate::domain::types::Language) -> Self {
+                use $crate::chunking::config::{LanguageConfig, NodeExtractionRule};
+
+                let language_instance = $language_fn(language);
+
+                let config = LanguageConfig::new(language_instance)
+                    .with_rules(vec![
+                        $(
+                            NodeExtractionRule {
+                                node_types: vec![$($node_type.to_string()),*],
+                                min_length: $min_length,
+                                min_lines: $min_lines,
+                                max_depth: $max_depth,
+                                priority: $priority,
+                                include_context: $include_context,
+                            },
+                        )*
+                    ])
+                    .with_fallback_patterns(vec![
+                        $($pattern.to_string()),*
+                    ])
+                    .with_chunk_size($chunk_size);
+
+                Self {
+                    processor: $crate::chunking::processor::BaseProcessor::new(config),
+                }
+            }
+        }
+
+        impl Default for $processor_name {
+            fn default() -> Self {
+                Self::new($crate::domain::types::Language::JavaScript)
+            }
+        }
+
+        $crate::chunking::processor::impl_language_processor!($processor_name);
     };
 }

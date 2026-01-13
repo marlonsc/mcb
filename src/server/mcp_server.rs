@@ -21,6 +21,7 @@ use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::di::registry::ProviderRegistryTrait;
 use crate::infrastructure::events::SharedEventBusProvider;
 use crate::infrastructure::limits::ResourceLimits;
+use crate::infrastructure::service_helpers::UptimeTracker;
 use crate::server::args::{
     ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs,
 };
@@ -470,7 +471,7 @@ impl McpServer {
 
     /// Get system information for admin interface
     pub fn get_system_info(&self) -> crate::admin::service::SystemInfo {
-        let uptime_seconds = self.performance_metrics.start_time().elapsed().as_secs();
+        let uptime_seconds = self.performance_metrics.uptime_secs();
         crate::admin::service::SystemInfo {
             version: env!("CARGO_PKG_VERSION").to_string(),
             uptime: uptime_seconds,
@@ -490,7 +491,7 @@ impl McpServer {
                 let operation = entry.value();
                 (
                     operation.current_file.clone(),
-                    Some(operation.start_time.elapsed().as_secs()),
+                    Some(operation.start_time.elapsed_secs()),
                     operation.processed_files,
                     operation.total_files,
                 )
@@ -547,7 +548,7 @@ impl McpServer {
             current_file: None,
             total_files,
             processed_files: 0,
-            start_time: std::time::Instant::now(),
+            start_time: UptimeTracker::start(),
         };
 
         self.indexing_operations

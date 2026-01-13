@@ -3,12 +3,14 @@
 //! Provides interfaces and implementations for tracking server performance
 //! metrics including queries, response times, cache hits, and active connections.
 
+use crate::infrastructure::service_helpers::UptimeTracker;
 use shaku::{Component, Interface, ModuleBuildContext};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Real-time performance metrics tracking interface
 pub trait PerformanceMetricsInterface: Interface + Send + Sync {
-    fn start_time(&self) -> std::time::Instant;
+    /// Get server uptime in seconds
+    fn uptime_secs(&self) -> u64;
     fn record_query(&self, response_time_ms: u64, success: bool, cache_hit: bool);
     fn update_active_connections(&self, delta: i64);
     fn get_performance_metrics(&self) -> crate::admin::service::PerformanceMetricsData;
@@ -31,8 +33,8 @@ pub struct McpPerformanceMetrics {
     pub cache_misses: AtomicU64,
     /// Active connections
     pub active_connections: AtomicU64,
-    /// Server start time
-    pub start_time: std::time::Instant,
+    /// Server uptime tracker
+    pub uptime: UptimeTracker,
 }
 
 impl<M: shaku::Module> Component<M> for McpPerformanceMetrics {
@@ -48,8 +50,8 @@ impl<M: shaku::Module> Component<M> for McpPerformanceMetrics {
 }
 
 impl PerformanceMetricsInterface for McpPerformanceMetrics {
-    fn start_time(&self) -> std::time::Instant {
-        self.start_time
+    fn uptime_secs(&self) -> u64 {
+        self.uptime.elapsed_secs()
     }
 
     fn record_query(&self, response_time_ms: u64, success: bool, cache_hit: bool) {
@@ -103,7 +105,7 @@ impl PerformanceMetricsInterface for McpPerformanceMetrics {
             0.0
         };
 
-        let uptime_seconds = self.start_time.elapsed().as_secs();
+        let uptime_seconds = self.uptime.elapsed_secs();
 
         crate::admin::service::PerformanceMetricsData {
             total_queries,
@@ -127,7 +129,7 @@ impl Default for McpPerformanceMetrics {
             cache_hits: AtomicU64::new(0),
             cache_misses: AtomicU64::new(0),
             active_connections: AtomicU64::new(0),
-            start_time: std::time::Instant::now(),
+            uptime: UptimeTracker::start(),
         }
     }
 }

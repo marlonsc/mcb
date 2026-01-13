@@ -145,7 +145,7 @@ pub async fn api_restart_all_providers_handler(State(state): State<AdminState>) 
     .await
     {
         Ok(result) => html_success(&result.message),
-        Err(e) => html_error(&format!("Error: {}", e)),
+        Err(e) => html_error(format!("Error: {}", e)),
     }
 }
 

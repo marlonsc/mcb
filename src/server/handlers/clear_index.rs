@@ -8,9 +8,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
 use rmcp::ErrorData as McpError;
 use std::sync::Arc;
-use std::time::Instant;
 
 use crate::application::IndexingService;
+use crate::infrastructure::service_helpers::TimedOperation;
 use crate::server::args::ClearIndexArgs;
 use crate::server::formatter::ResponseFormatter;
 
@@ -30,7 +30,7 @@ impl ClearIndexHandler {
         &self,
         Parameters(ClearIndexArgs { collection }): Parameters<ClearIndexArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let start_time = Instant::now();
+        let timer = TimedOperation::start();
 
         // Validate collection name
         if collection.trim().is_empty() {
@@ -51,7 +51,7 @@ impl ClearIndexHandler {
         // Perform the actual clearing operation
         match self.indexing_service.clear_collection(&collection).await {
             Ok(()) => {
-                let duration = start_time.elapsed();
+                let duration = timer.elapsed();
                 let message = format_clear_success(&collection, duration);
                 tracing::info!(
                     "Index clearing completed successfully for collection: {} in {:?}",

@@ -17,6 +17,7 @@ use crate::infrastructure::constants::{
     PROVIDER_ROUTING_LOAD_WEIGHT, PROVIDER_ROUTING_QUALITY_WEIGHT,
 };
 use crate::infrastructure::di::registry::{ProviderRegistry, ProviderRegistryTrait};
+use crate::infrastructure::service_helpers::TimedOperation;
 use std::sync::Arc;
 use tracing::{debug, info, instrument};
 
@@ -431,10 +432,10 @@ impl ProviderRouter {
                 let metrics = Arc::clone(&self.deps.metrics);
 
                 async move {
-                    let start_time = std::time::Instant::now();
+                    let timer = TimedOperation::start();
                     let provider = registry.get_embedding_provider(&provider_id)?;
 
-                    let response_time = start_time.elapsed().as_secs_f64();
+                    let response_time = timer.elapsed_secs();
                     metrics.record_response_time(&provider_id, "get_provider", response_time);
                     metrics.record_request(&provider_id, "get_provider", "success");
 
@@ -466,10 +467,10 @@ impl ProviderRouter {
                 let metrics = Arc::clone(&self.deps.metrics);
 
                 async move {
-                    let start_time = std::time::Instant::now();
+                    let timer = TimedOperation::start();
                     let provider = registry.get_vector_store_provider(&provider_id)?;
 
-                    let response_time = start_time.elapsed().as_secs_f64();
+                    let response_time = timer.elapsed_secs();
                     metrics.record_response_time(&provider_id, "get_provider", response_time);
                     metrics.record_request(&provider_id, "get_provider", "success");
 

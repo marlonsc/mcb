@@ -8,6 +8,39 @@
 //! - Configuration validation
 //!
 //! Goal: Reduce 300+ lines of duplicated code across services
+//!
+//! # Migration Examples
+//!
+//! ## TimedOperation - Replace Manual Timing
+//!
+//! **Before:**
+//! ```ignore
+//! let start = std::time::Instant::now();
+//! perform_operation().await?;
+//! let elapsed_ms = start.elapsed().as_millis() as u64;
+//! ```
+//!
+//! **After:**
+//! ```ignore
+//! let timer = TimedOperation::start();
+//! perform_operation().await?;
+//! let elapsed_ms = timer.elapsed_ms();
+//! ```
+//!
+//! ## SafeMetrics - Replace unwrap_or_default Patterns
+//!
+//! **Before:**
+//! ```ignore
+//! let cpu = system_collector.collect_cpu_metrics().await.unwrap_or_default();
+//! ```
+//!
+//! **After:**
+//! ```ignore
+//! let cpu = SafeMetrics::collect(
+//!     system_collector.collect_cpu_metrics(),
+//!     CpuMetrics::default()
+//! ).await;
+//! ```
 
 use anyhow::{Context, Result};
 use std::time::Duration;
@@ -45,9 +78,71 @@ impl TimedOperation {
         self.start.elapsed().as_secs_f64()
     }
 
+    /// Get elapsed time as Duration (for formatting with {:?})
+    pub fn elapsed(&self) -> Duration {
+        self.start.elapsed()
+    }
+
     /// Get remaining time before deadline (returns None if already exceeded)
     pub fn remaining(&self, deadline: Duration) -> Option<Duration> {
         deadline.checked_sub(self.start.elapsed())
+    }
+}
+
+/// Uptime tracker for server/service lifetime tracking
+///
+/// Unlike `TimedOperation` which measures a single operation's duration,
+/// `UptimeTracker` is designed to be stored as a struct field and provides
+/// uptime calculations throughout the lifetime of a service.
+///
+/// # Example
+/// ```ignore
+/// struct Server {
+///     uptime: UptimeTracker,
+/// }
+///
+/// impl Server {
+///     fn new() -> Self {
+///         Self { uptime: UptimeTracker::start() }
+///     }
+///
+///     fn get_uptime_secs(&self) -> u64 {
+///         self.uptime.elapsed_secs()
+///     }
+/// }
+/// ```
+#[derive(Debug, Clone, Copy)]
+pub struct UptimeTracker {
+    start: Instant,
+}
+
+impl UptimeTracker {
+    /// Start tracking uptime from now
+    pub fn start() -> Self {
+        Self {
+            start: Instant::now(),
+        }
+    }
+
+    /// Get uptime in seconds (u64 for API compatibility)
+    pub fn elapsed_secs(&self) -> u64 {
+        self.start.elapsed().as_secs()
+    }
+
+    /// Get uptime in milliseconds
+    pub fn elapsed_ms(&self) -> u64 {
+        self.start.elapsed().as_millis() as u64
+    }
+
+    /// Get uptime as Duration for flexible formatting
+    pub fn elapsed(&self) -> Duration {
+        self.start.elapsed()
+    }
+}
+
+impl Default for UptimeTracker {
+    fn default() -> Self {
+        Self::start()
     }
 }
 

@@ -1,8 +1,7 @@
 //! Test the new define_language_processor! macro
 
+#[allow(unused_imports)]
 use mcp_context_browser::chunking::LanguageProcessor;
-use mcp_context_browser::chunking::config::LanguageConfig;
-use mcp_context_browser::domain::types::{CodeChunk, Language};
 
 mcp_context_browser::define_language_processor! {
     TestProcessorSimple,
@@ -81,7 +80,7 @@ fn test_macro_generates_complex_processor() {
 
     // Verify second rule
     assert_eq!(config.extraction_rules[1].priority, 4);
-    assert_eq!(config.extraction_rules[1].include_context, false);
+    assert!(!config.extraction_rules[1].include_context);
 }
 
 #[test]

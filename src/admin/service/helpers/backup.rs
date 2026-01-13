@@ -7,6 +7,7 @@ use crate::admin::service::types::{
     AdminError, BackupConfig, BackupInfo, BackupResult, RestoreResult,
 };
 use crate::infrastructure::events::SharedEventBusProvider;
+use crate::infrastructure::service_helpers::TimedOperation;
 
 /// Create a new backup
 pub async fn create_backup(
@@ -89,7 +90,7 @@ pub async fn restore_backup(
     event_bus: &SharedEventBusProvider,
     backup_id: &str,
 ) -> Result<RestoreResult, AdminError> {
-    let start_time = std::time::Instant::now();
+    let timer = TimedOperation::start();
     let backups_dir = std::path::PathBuf::from(admin_defaults::DEFAULT_BACKUPS_DIR);
     let backup_path = backups_dir.join(format!("{}.tar.gz", backup_id));
 
@@ -183,7 +184,7 @@ pub async fn restore_backup(
                      Rollback backup saved as '{}'",
                     backup_id, rollback_id
                 ),
-                execution_time_ms: start_time.elapsed().as_millis() as u64,
+                execution_time_ms: timer.elapsed_ms(),
             })
         }
         Err(e) => {
@@ -206,7 +207,7 @@ pub async fn restore_backup(
                                  Rolled back to previous state.",
                                 backup_id, e
                             ),
-                            execution_time_ms: start_time.elapsed().as_millis() as u64,
+                            execution_time_ms: timer.elapsed_ms(),
                         });
                     }
                     Err(rollback_err) => {

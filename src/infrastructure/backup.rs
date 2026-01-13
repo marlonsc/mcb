@@ -209,13 +209,11 @@ impl BackupActor {
         // Ensure backup directory exists
         let backup_dir = Path::new(backup_dir_path);
         if !backup_dir.exists() {
-            fs::create_dir_all(backup_dir)
-                .internal_context("Failed to create backup dir")?;
+            fs::create_dir_all(backup_dir).internal_context("Failed to create backup dir")?;
         }
 
         // Create the tar.gz file
-        let file = File::create(target_path)
-            .internal_context("Failed to create backup file")?;
+        let file = File::create(target_path).internal_context("Failed to create backup file")?;
 
         let encoder = GzEncoder::new(file, Compression::default());
         let mut archive = Builder::new(encoder);
@@ -237,8 +235,8 @@ impl BackupActor {
             .internal_context("Failed to finish compression")?;
 
         // Get file size
-        let metadata = fs::metadata(target_path)
-            .internal_context("Failed to get backup metadata")?;
+        let metadata =
+            fs::metadata(target_path).internal_context("Failed to get backup metadata")?;
 
         Ok(BackupInfo {
             path: target_path.to_string(),
@@ -254,8 +252,7 @@ impl BackupActor {
         }
 
         let mut backups = Vec::new();
-        let entries = fs::read_dir(backup_dir)
-            .internal_context("Failed to read backup dir")?;
+        let entries = fs::read_dir(backup_dir).internal_context("Failed to read backup dir")?;
 
         for entry in entries.flatten() {
             let path = entry.path();

@@ -34,8 +34,7 @@ impl RedisCacheProvider {
     pub async fn new(url: &str, _default_ttl: Duration) -> Result<Self> {
         tracing::info!("[CACHE] Initializing Redis provider (remote mode): {}", url);
 
-        let client = Client::open(url)
-            .context("failed to create redis client")?;
+        let client = Client::open(url).context("failed to create redis client")?;
 
         // Test connection
         let mut conn = client
@@ -279,23 +278,20 @@ mod tests {
     // Run with: docker run -d -p 6379:6379 redis:latest
 
     #[tokio::test]
-    #[ignore] // Ignore by default - requires Redis
     async fn test_redis_provider_new() {
         let result =
             RedisCacheProvider::new("redis://localhost:6379", Duration::from_secs(60)).await;
-        // Will fail if Redis not running, which is expected
-        let _ = result;
+        assert!(result.is_ok(), "Redis connection failed - is Redis running?");
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_redis_provider_set_and_get() {
         let provider = RedisCacheProvider::new("redis://localhost:6379", Duration::from_secs(60))
             .await
-            .unwrap();
+            .expect("Redis connection failed");
 
         let namespace = "test";
-        let key = "test_key";
+        let key = "test_key_set_get";
         let value = vec![1, 2, 3, 4, 5];
 
         provider
@@ -305,17 +301,19 @@ mod tests {
 
         let retrieved = provider.get(namespace, key).await.unwrap();
         assert_eq!(retrieved, Some(value));
+
+        // Cleanup
+        let _ = provider.delete(namespace, key).await;
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_redis_provider_delete() {
         let provider = RedisCacheProvider::new("redis://localhost:6379", Duration::from_secs(60))
             .await
-            .unwrap();
+            .expect("Redis connection failed");
 
         let namespace = "test";
-        let key = "test_key";
+        let key = "test_key_delete";
         let value = vec![1, 2, 3];
 
         provider
@@ -330,22 +328,20 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_redis_provider_health_check() {
         let provider = RedisCacheProvider::new("redis://localhost:6379", Duration::from_secs(60))
             .await
-            .unwrap();
+            .expect("Redis connection failed");
 
         let health = provider.health_check().await.unwrap();
         assert_eq!(health, HealthStatus::Healthy);
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_redis_provider_backend_type() {
         let provider = RedisCacheProvider::new("redis://localhost:6379", Duration::from_secs(60))
             .await
-            .unwrap();
+            .expect("Redis connection failed");
         assert_eq!(provider.backend_type(), "redis".to_string());
     }
 }

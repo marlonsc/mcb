@@ -9,9 +9,9 @@ use rmcp::model::CallToolResult;
 use rmcp::ErrorData as McpError;
 use serde_json;
 use std::sync::Arc;
-use std::time::Instant;
 
 use crate::application::SearchService;
+use crate::infrastructure::service_helpers::TimedOperation;
 use crate::domain::validation::{StringValidator, StringValidatorTrait, ValidationError};
 use crate::infrastructure::auth::Permission;
 use crate::infrastructure::cache::SharedCacheProvider;
@@ -91,7 +91,7 @@ impl SearchCodeHandler {
             ..
         }): Parameters<SearchCodeArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let start_time = Instant::now();
+        let timer = TimedOperation::start();
 
         // Check authentication and permissions
         if let Err(e) = self
@@ -147,7 +147,7 @@ impl SearchCodeHandler {
                     return ResponseFormatter::format_search_response(
                         &query,
                         &search_results,
-                        start_time.elapsed(),
+                        timer.elapsed(),
                         true,
                     );
                 }
@@ -164,7 +164,7 @@ impl SearchCodeHandler {
         let search_future = self.search_service.search(collection, &query, limit);
         let result = tokio::time::timeout(HTTP_REQUEST_TIMEOUT, search_future).await;
 
-        let duration = start_time.elapsed();
+        let duration = timer.elapsed();
 
         match result {
             Ok(Ok(results)) => {

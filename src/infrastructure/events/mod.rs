@@ -256,6 +256,7 @@ pub async fn create_event_bus(config: &EventBusConfig) -> Result<SharedEventBusP
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_event_bus_config_default() {
@@ -267,9 +268,18 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_event_bus_config_from_env_tokio() {
+        // Clean environment before test
+        std::env::remove_var("MCP_EVENT_BUS_TYPE");
+        std::env::remove_var("MCP_NATS_URL");
+
         std::env::set_var("MCP_EVENT_BUS_TYPE", "tokio");
         let config = EventBusConfig::from_env();
+
+        // Clean up after test
+        std::env::remove_var("MCP_EVENT_BUS_TYPE");
+
         match config {
             EventBusConfig::Tokio { capacity } => assert!(capacity > 0),
             _ => panic!("Expected Tokio config"),
@@ -277,10 +287,20 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_event_bus_config_from_env_nats() {
+        // Clean environment before test
+        std::env::remove_var("MCP_EVENT_BUS_TYPE");
+        std::env::remove_var("MCP_NATS_URL");
+
         std::env::set_var("MCP_EVENT_BUS_TYPE", "nats");
         std::env::set_var("MCP_NATS_URL", "nats://test:4222");
         let config = EventBusConfig::from_env();
+
+        // Clean up after test
+        std::env::remove_var("MCP_EVENT_BUS_TYPE");
+        std::env::remove_var("MCP_NATS_URL");
+
         match config {
             EventBusConfig::Nats { url, .. } => assert_eq!(url, "nats://test:4222"),
             _ => panic!("Expected NATS config"),

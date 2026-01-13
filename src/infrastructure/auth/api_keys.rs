@@ -46,7 +46,7 @@ use super::claims::{Claims, User};
 use super::password;
 use super::roles::UserRole;
 use crate::domain::error::{Error, Result};
-use crate::infrastructure::utils::TimeUtils;
+use crate::infrastructure::utils::{RwLockExt, TimeUtils};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::RwLock;
@@ -173,10 +173,7 @@ impl ApiKeyStore {
 
         // Find and validate the key - collect necessary data first
         let matched_key: Option<(String, String, UserRole)> = {
-            let keys = self
-                .keys
-                .read()
-                .map_err(|_| Error::generic("Lock poisoned"))?;
+            let keys = self.keys.read_guard()?;
 
             let mut found = None;
             for api_key in keys.values() {
@@ -221,10 +218,7 @@ impl ApiKeyStore {
 
     /// Revoke an API key
     pub fn revoke_key(&self, key_id: &str) -> Result<()> {
-        let mut keys = self
-            .keys
-            .write()
-            .map_err(|_| Error::generic("Lock poisoned"))?;
+        let mut keys = self.keys.write_guard()?;
 
         if let Some(key) = keys.get_mut(key_id) {
             key.active = false;
@@ -249,10 +243,7 @@ impl ApiKeyStore {
 
     /// Delete an API key permanently
     pub fn delete_key(&self, key_id: &str) -> Result<()> {
-        let mut keys = self
-            .keys
-            .write()
-            .map_err(|_| Error::generic("Lock poisoned"))?;
+        let mut keys = self.keys.write_guard()?;
 
         if keys.remove(key_id).is_some() {
             Ok(())

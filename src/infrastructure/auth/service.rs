@@ -7,6 +7,7 @@ use super::config::AuthConfig;
 use super::password::{migrate_hash, needs_migration, verify_password};
 use super::roles::Permission;
 use crate::domain::error::{Error, Result};
+use crate::infrastructure::utils::RwLockExt;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use std::sync::RwLock;
 
@@ -58,10 +59,7 @@ impl AuthService {
     /// Performs user authentication and returns a JWT token on success.
     /// Automatically migrates bcrypt hashes to Argon2id on successful login.
     pub fn authenticate(&self, email: &str, password: &str) -> Result<String> {
-        let config = self
-            .config
-            .read()
-            .map_err(|_| Error::generic("Lock poisoned"))?;
+        let config = self.config.read_guard()?;
 
         if !config.enabled {
             return Err(Error::generic("Authentication is disabled"));
@@ -110,10 +108,7 @@ impl AuthService {
     /// Parses and validates a JWT token using HMAC-SHA256, checking its signature,
     /// expiration, and extracting the claims payload.
     pub fn validate_token(&self, token: &str) -> Result<Claims> {
-        let config = self
-            .config
-            .read()
-            .map_err(|_| Error::generic("Lock poisoned"))?;
+        let config = self.config.read_guard()?;
 
         if !config.enabled {
             return Err(Error::generic("Authentication is disabled"));
@@ -157,10 +152,7 @@ impl AuthService {
 
     /// Generate a new token for existing claims (refresh)
     pub fn refresh_token(&self, claims: &Claims) -> Result<String> {
-        let config = self
-            .config
-            .read()
-            .map_err(|_| Error::generic("Lock poisoned"))?;
+        let config = self.config.read_guard()?;
 
         if !config.enabled {
             return Err(Error::generic("Authentication is disabled"));

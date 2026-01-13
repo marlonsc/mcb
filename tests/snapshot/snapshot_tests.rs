@@ -145,6 +145,9 @@ async fn test_snapshot_respects_gitignore() -> Result<(), Box<dyn std::error::Er
     let temp_dir = TempDir::new()?;
     let manager = SnapshotManager::new()?;
 
+    // Initialize a git repository (required for ignore crate to respect .gitignore)
+    std::fs::create_dir(temp_dir.path().join(".git"))?;
+
     // Create a .gitignore that excludes .log files
     std::fs::write(temp_dir.path().join(".gitignore"), "*.log\n")?;
 

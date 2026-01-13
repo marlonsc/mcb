@@ -6,6 +6,7 @@ use crate::adapters::hybrid_search::HybridSearchEngine;
 use crate::domain::error::Result;
 use crate::domain::ports::{SearchRepository, VectorStoreProvider};
 use crate::domain::types::{CodeChunk, SearchResult, SearchStats};
+use crate::infrastructure::service_helpers::TimedOperation;
 use async_trait::async_trait;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -91,7 +92,7 @@ impl SearchRepository for VectorStoreSearchRepository {
         query_vector: &[f32],
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
-        let start = std::time::Instant::now();
+        let timer = TimedOperation::start();
         self.stats.total_queries.fetch_add(1, Ordering::Relaxed);
 
         let semantic_results = self
@@ -101,10 +102,9 @@ impl SearchRepository for VectorStoreSearchRepository {
         let engine = self.hybrid_engine.read().await;
         let hybrid_results = engine.hybrid_search(query, semantic_results, limit)?;
 
-        let elapsed = start.elapsed().as_millis() as u64;
         self.stats
             .total_response_time_ms
-            .fetch_add(elapsed, Ordering::Relaxed);
+            .fetch_add(timer.elapsed_ms(), Ordering::Relaxed);
 
         Ok(hybrid_results.into_iter().map(|hr| hr.result).collect())
     }

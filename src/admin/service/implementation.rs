@@ -17,7 +17,7 @@ use super::types::{
 use crate::application::search::SearchService;
 use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::metrics::system::SystemMetricsCollectorInterface;
-use crate::infrastructure::service_helpers::{ValidationBuilder, TimedOperation};
+use crate::infrastructure::service_helpers::{TimedOperation, ValidationBuilder};
 use crate::server::metrics::PerformanceMetricsInterface;
 use crate::server::operations::IndexingOperationsInterface;
 use arc_swap::ArcSwap;
@@ -89,7 +89,7 @@ impl AdminServiceImpl {
 #[async_trait]
 impl AdminService for AdminServiceImpl {
     async fn get_system_info(&self) -> Result<SystemInfo, AdminError> {
-        let uptime_seconds = self.performance_metrics.start_time().elapsed().as_secs();
+        let uptime_seconds = self.performance_metrics.uptime_secs();
         Ok(SystemInfo {
             version: env!("CARGO_PKG_VERSION").to_string(),
             uptime: uptime_seconds,
@@ -621,14 +621,14 @@ impl AdminService for AdminServiceImpl {
         Ok(PerformanceTestResult {
             test_id: format!("perf_test_{}", chrono::Utc::now().timestamp()),
             test_type: test_config.test_type,
-            duration_seconds: start.elapsed().as_secs() as u32,
+            duration_seconds: (timer.elapsed_ms() / 1000) as u32,
             total_requests,
             successful_requests,
             failed_requests,
             average_response_time_ms: avg_latency,
             p95_response_time_ms: avg_latency * 1.2,
             p99_response_time_ms: avg_latency * 1.5,
-            throughput_rps: total_requests as f64 / start.elapsed().as_secs_f64().max(1.0),
+            throughput_rps: total_requests as f64 / timer.elapsed_ms() as f64 * 1000.0,
         })
     }
 

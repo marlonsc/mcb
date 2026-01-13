@@ -216,8 +216,8 @@ impl CryptoService {
                 let path_clone = path.clone();
                 tokio::task::spawn_blocking(move || {
                     use std::os::unix::fs::PermissionsExt;
-                    let metadata = std::fs::metadata(&path_clone)
-                        .io_context("Failed to get key metadata")?;
+                    let metadata =
+                        std::fs::metadata(&path_clone).io_context("Failed to get key metadata")?;
                     let mode = metadata.permissions().mode();
                     if mode & 0o077 != 0 {
                         // Permissions are too open, try to fix them

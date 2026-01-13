@@ -3,6 +3,7 @@
 //! Provides interfaces and implementations for tracking ongoing
 //! indexing operations in the MCP server.
 
+use crate::infrastructure::service_helpers::UptimeTracker;
 use dashmap::DashMap;
 use shaku::{Component, Interface, ModuleBuildContext};
 
@@ -24,8 +25,8 @@ pub struct IndexingOperation {
     pub total_files: usize,
     /// Files processed so far
     pub processed_files: usize,
-    /// Start time
-    pub start_time: std::time::Instant,
+    /// Operation start time tracker
+    pub start_time: UptimeTracker,
 }
 
 /// Concrete implementation of indexing operations tracking

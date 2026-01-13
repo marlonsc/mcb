@@ -12,6 +12,7 @@ use std::sync::Arc;
 use crate::infrastructure::cache::{CacheStats, SharedCacheProvider};
 use crate::infrastructure::limits::ResourceLimits;
 use crate::infrastructure::rate_limit::RateLimiter;
+use crate::infrastructure::service_helpers::UptimeTracker;
 use crate::infrastructure::utils::TimeUtils;
 // Rate limiting middleware will be added later
 
@@ -50,7 +51,7 @@ pub struct MetricsApiServer {
     port: u16,
     system_collector: Arc<dyn SystemMetricsCollectorInterface>,
     performance_metrics: Arc<dyn PerformanceMetricsInterface>,
-    start_time: std::time::Instant,
+    uptime: UptimeTracker,
     _rate_limiter: Option<Arc<RateLimiter>>,
     resource_limits: Option<Arc<ResourceLimits>>,
     cache_provider: Option<SharedCacheProvider>,
@@ -89,7 +90,7 @@ impl MetricsApiServer {
             port,
             system_collector,
             performance_metrics,
-            start_time: std::time::Instant::now(),
+            uptime: UptimeTracker::start(),
             _rate_limiter: rate_limiter,
             resource_limits,
             cache_provider,
@@ -131,7 +132,7 @@ impl MetricsApiServer {
         let state = MetricsServerState {
             system_collector: Arc::clone(&self.system_collector),
             performance_metrics: Arc::clone(&self.performance_metrics),
-            start_time: self.start_time,
+            uptime: self.uptime,
             _rate_limiter: self._rate_limiter.clone(),
             resource_limits: self.resource_limits.clone(),
             cache_provider: self.cache_provider.clone(),
@@ -176,7 +177,7 @@ impl MetricsApiServer {
 
     /// Health check endpoint
     async fn health_handler(State(state): State<MetricsServerState>) -> Json<HealthResponse> {
-        let uptime = state.start_time.elapsed().as_secs();
+        let uptime = state.uptime.elapsed_secs();
         let pid = std::process::id();
 
         Json(HealthResponse {
@@ -262,7 +263,7 @@ impl MetricsApiServer {
 
         let performance = state.performance_metrics.get_performance_metrics();
 
-        let uptime = state.start_time.elapsed().as_secs();
+        let uptime = state.uptime.elapsed_secs();
 
         // Health thresholds
         let cpu_health = if cpu.usage < 80.0 {
@@ -349,7 +350,7 @@ impl MetricsApiServer {
 struct MetricsServerState {
     system_collector: Arc<dyn SystemMetricsCollectorInterface>,
     performance_metrics: Arc<dyn PerformanceMetricsInterface>,
-    start_time: std::time::Instant,
+    uptime: UptimeTracker,
     _rate_limiter: Option<Arc<RateLimiter>>,
     resource_limits: Option<Arc<ResourceLimits>>,
     cache_provider: Option<SharedCacheProvider>,
