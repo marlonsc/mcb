@@ -55,7 +55,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # Configuration
 config = "0.15"
 toml = "0.9"
-notify = "6.1"
+notify = "8.2"
 arc-swap = "1.7"
 shaku = "0.6"
 
