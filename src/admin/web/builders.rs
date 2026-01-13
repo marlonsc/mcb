@@ -22,6 +22,7 @@ use anyhow::{Context, Result};
 use super::view_models::*;
 use crate::admin::models::AdminState;
 use crate::admin::service::helpers::activity::ActivityLevel;
+use crate::infrastructure::utils::{activity_level, css, FormattingUtils, HealthUtils};
 
 /// Builds view models from AdminService data
 ///
@@ -128,7 +129,7 @@ impl<'a> ViewModelBuilder<'a> {
         Ok(IndexesSummaryViewModel {
             active_count: if status.is_indexing { 0 } else { 1 },
             total_documents: status.total_documents,
-            total_documents_formatted: format_number(status.total_documents),
+            total_documents_formatted: FormattingUtils::format_number(status.total_documents),
             is_indexing: status.is_indexing,
         })
     }
@@ -141,10 +142,10 @@ impl<'a> ViewModelBuilder<'a> {
             .into_iter()
             .map(|a| {
                 let level_str = match a.level {
-                    ActivityLevel::Success => "success",
-                    ActivityLevel::Warning => "warning",
-                    ActivityLevel::Error => "error",
-                    ActivityLevel::Info => "info",
+                    ActivityLevel::Success => activity_level::SUCCESS,
+                    ActivityLevel::Warning => activity_level::WARNING,
+                    ActivityLevel::Error => activity_level::ERROR,
+                    ActivityLevel::Info => activity_level::INFO,
                 };
                 ActivityViewModel::new(a.id, a.message, a.timestamp, level_str, a.category)
             })
@@ -177,11 +178,7 @@ impl<'a> ViewModelBuilder<'a> {
             .await
             .context("Failed to collect memory metrics for health check")?;
 
-        let status = match (cpu.usage < 85.0, memory.usage_percent < 85.0) {
-            (true, true) => "healthy",
-            (false, false) => "critical",
-            _ => "degraded",
-        };
+        let status = HealthUtils::compute_status(cpu.usage as f64, memory.usage_percent as f64);
 
         Ok(HealthViewModel::new(
             status,
@@ -277,7 +274,7 @@ impl<'a> ViewModelBuilder<'a> {
                     key: "indexing.max_file_size".to_string(),
                     label: "Max File Size".to_string(),
                     value: serde_json::json!(config.indexing.max_file_size),
-                    value_display: format_bytes(config.indexing.max_file_size),
+                    value_display: FormattingUtils::format_bytes(config.indexing.max_file_size),
                     setting_type: "number",
                     description: "Maximum file size to index".to_string(),
                     editable: true,
@@ -410,15 +407,7 @@ impl<'a> ViewModelBuilder<'a> {
             .entries
             .into_iter()
             .map(|entry| {
-                let level_class = match entry.level.to_lowercase().as_str() {
-                    "error" => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-                    "warn" | "warning" => {
-                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                    }
-                    "info" => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-                    "debug" => "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
-                    _ => "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
-                };
+                let level_class = css::badge_for_level(&entry.level);
 
                 LogEntryViewModel {
                     timestamp: entry.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -464,61 +453,10 @@ impl<'a> ViewModelBuilder<'a> {
     }
 }
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/// Format a number with thousands separator
-fn format_number(n: u64) -> String {
-    let s = n.to_string();
-    let mut result = String::new();
-    for (i, c) in s.chars().rev().enumerate() {
-        if i > 0 && i % 3 == 0 {
-            result.insert(0, ',');
-        }
-        result.insert(0, c);
-    }
-    result
-}
-
-/// Format bytes in human-readable form
-fn format_bytes(bytes: u64) -> String {
-    const KB: u64 = 1024;
-    const MB: u64 = KB * 1024;
-    const GB: u64 = MB * 1024;
-
-    if bytes >= GB {
-        format!("{:.1} GB", bytes as f64 / GB as f64)
-    } else if bytes >= MB {
-        format!("{:.1} MB", bytes as f64 / MB as f64)
-    } else if bytes >= KB {
-        format!("{:.1} KB", bytes as f64 / KB as f64)
-    } else {
-        format!("{} B", bytes)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use tera::{Context, Tera};
-
-    #[test]
-    fn test_format_number() {
-        assert_eq!(format_number(0), "0");
-        assert_eq!(format_number(123), "123");
-        assert_eq!(format_number(1234), "1,234");
-        assert_eq!(format_number(1234567), "1,234,567");
-    }
-
-    #[test]
-    fn test_format_bytes() {
-        assert_eq!(format_bytes(500), "500 B");
-        assert_eq!(format_bytes(1024), "1.0 KB");
-        assert_eq!(format_bytes(1536), "1.5 KB");
-        assert_eq!(format_bytes(1048576), "1.0 MB");
-        assert_eq!(format_bytes(1073741824), "1.0 GB");
-    }
 
     #[test]
     fn test_error_view_model() {
@@ -744,7 +682,7 @@ mod tests {
             entries: vec![LogEntryViewModel {
                 timestamp: "2024-01-01 12:00:00".to_string(),
                 level: "INFO".to_string(),
-                level_class: "bg-blue-100 text-blue-800",
+                level_class: css::badge::INFO,
                 message: "Server started".to_string(),
                 source: "main".to_string(),
             }],

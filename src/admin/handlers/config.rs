@@ -2,16 +2,14 @@
 
 use super::common::*;
 use super::HistoryQuery;
+use crate::admin::config_keys;
+use crate::infrastructure::utils::IntoStatusCode;
 
 /// Get system configuration (legacy endpoint)
 pub async fn get_config_handler(
     State(state): State<AdminState>,
 ) -> Result<Json<ApiResponse<SystemConfig>>, StatusCode> {
-    let config_data = state
-        .admin_service
-        .get_configuration()
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let config_data = state.admin_service.get_configuration().await.to_500()?;
 
     let config = SystemConfig {
         providers: config_data
@@ -56,51 +54,51 @@ pub async fn update_config_handler(
 
     // Indexing settings
     updates.insert(
-        "indexing.chunk_size".to_string(),
+        config_keys::indexing::CHUNK_SIZE.to_string(),
         serde_json::json!(config.indexing.chunk_size),
     );
     updates.insert(
-        "indexing.chunk_overlap".to_string(),
+        config_keys::indexing::CHUNK_OVERLAP.to_string(),
         serde_json::json!(config.indexing.chunk_overlap),
     );
     updates.insert(
-        "indexing.max_file_size".to_string(),
+        config_keys::indexing::MAX_FILE_SIZE.to_string(),
         serde_json::json!(config.indexing.max_file_size),
     );
     updates.insert(
-        "indexing.supported_extensions".to_string(),
+        config_keys::indexing::SUPPORTED_EXTENSIONS.to_string(),
         serde_json::json!(config.indexing.supported_extensions),
     );
     updates.insert(
-        "indexing.exclude_patterns".to_string(),
+        config_keys::indexing::EXCLUDE_PATTERNS.to_string(),
         serde_json::json!(config.indexing.exclude_patterns),
     );
 
     // Security settings
     updates.insert(
-        "security.enable_auth".to_string(),
+        config_keys::security::ENABLE_AUTH.to_string(),
         serde_json::json!(config.security.enable_auth),
     );
     updates.insert(
-        "security.rate_limiting".to_string(),
+        config_keys::security::RATE_LIMITING.to_string(),
         serde_json::json!(config.security.rate_limiting),
     );
     updates.insert(
-        "security.max_requests_per_minute".to_string(),
+        config_keys::security::MAX_REQUESTS_PER_MINUTE.to_string(),
         serde_json::json!(config.security.max_requests_per_minute),
     );
 
     // Metrics settings
     updates.insert(
-        "metrics.enabled".to_string(),
+        config_keys::metrics::ENABLED.to_string(),
         serde_json::json!(config.metrics.enabled),
     );
     updates.insert(
-        "metrics.collection_interval".to_string(),
+        config_keys::metrics::COLLECTION_INTERVAL.to_string(),
         serde_json::json!(config.metrics.collection_interval),
     );
     updates.insert(
-        "metrics.retention_days".to_string(),
+        config_keys::metrics::RETENTION_DAYS.to_string(),
         serde_json::json!(config.metrics.retention_days),
     );
 
@@ -110,11 +108,7 @@ pub async fn update_config_handler(
         .await
     {
         Ok(_result) => {
-            let updated_config = state
-                .admin_service
-                .get_configuration()
-                .await
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            let updated_config = state.admin_service.get_configuration().await.to_500()?;
 
             let response_config = SystemConfig {
                 providers: updated_config
@@ -160,11 +154,7 @@ pub async fn update_config_handler(
 pub async fn get_configuration_handler(
     State(state): State<AdminState>,
 ) -> Result<Json<ApiResponse<crate::admin::service::ConfigurationData>>, StatusCode> {
-    let config = state
-        .admin_service
-        .get_configuration()
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let config = state.admin_service.get_configuration().await.to_500()?;
 
     Ok(Json(ApiResponse::success(config)))
 }
@@ -181,7 +171,7 @@ pub async fn update_configuration_handler(
         .admin_service
         .update_configuration(updates, user)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .to_500()?;
 
     Ok(Json(ApiResponse::success(result)))
 }
@@ -195,7 +185,7 @@ pub async fn validate_configuration_handler(
         .admin_service
         .validate_configuration(&updates)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .to_500()?;
 
     Ok(Json(ApiResponse::success(warnings)))
 }
@@ -209,7 +199,7 @@ pub async fn get_configuration_history_handler(
         .admin_service
         .get_configuration_history(params.limit)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .to_500()?;
 
     Ok(Json(ApiResponse::success(history)))
 }
@@ -218,11 +208,7 @@ pub async fn get_configuration_history_handler(
 pub async fn persist_configuration_handler(
     State(state): State<AdminState>,
 ) -> Result<Json<ApiResponse<crate::admin::service::ConfigPersistResult>>, StatusCode> {
-    let result = state
-        .admin_service
-        .persist_configuration()
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let result = state.admin_service.persist_configuration().await.to_500()?;
 
     Ok(Json(ApiResponse::success(result)))
 }
@@ -231,11 +217,7 @@ pub async fn persist_configuration_handler(
 pub async fn get_config_diff_handler(
     State(state): State<AdminState>,
 ) -> Result<Json<ApiResponse<crate::admin::service::ConfigDiff>>, StatusCode> {
-    let diff = state
-        .admin_service
-        .get_config_diff()
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let diff = state.admin_service.get_config_diff().await.to_500()?;
 
     Ok(Json(ApiResponse::success(diff)))
 }
