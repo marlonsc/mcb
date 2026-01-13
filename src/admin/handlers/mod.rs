@@ -14,6 +14,7 @@
 mod config;
 mod data;
 mod diagnostics;
+mod helpers;
 mod htmx;
 mod indexes;
 mod maintenance;
@@ -25,6 +26,7 @@ mod system;
 pub use config::*;
 pub use data::*;
 pub use diagnostics::*;
+pub use helpers::*;
 pub use htmx::*;
 pub use indexes::*;
 pub use maintenance::*;
