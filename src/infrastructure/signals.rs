@@ -5,13 +5,15 @@
 //! - SIGTERM: Graceful shutdown
 //! - SIGUSR1: Trigger binary respawn
 //! - SIGINT (Ctrl+C): Graceful shutdown
+//!
+//! Uses `CancellationToken` for async-native shutdown signaling.
 
 use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
 use anyhow::Result;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::signal::unix::{signal, SignalKind};
-use tracing::{info, warn};
+use tokio_util::sync::CancellationToken;
+use tracing::{debug, info, warn};
 
 /// Signal handler configuration
 #[derive(Debug, Clone)]
@@ -35,10 +37,12 @@ impl Default for SignalConfig {
 }
 
 /// Signal handler that publishes events to the event bus
+///
+/// Uses `CancellationToken` for async-native shutdown signaling.
 pub struct SignalHandler {
     event_bus: SharedEventBusProvider,
     config: SignalConfig,
-    running: Arc<AtomicBool>,
+    cancel_token: CancellationToken,
 }
 
 impl SignalHandler {
@@ -47,7 +51,7 @@ impl SignalHandler {
         Self {
             event_bus,
             config,
-            running: Arc::new(AtomicBool::new(false)),
+            cancel_token: CancellationToken::new(),
         }
     }
 
@@ -58,7 +62,7 @@ impl SignalHandler {
 
     /// Check if the handler is running
     pub fn is_running(&self) -> bool {
-        self.running.load(Ordering::SeqCst)
+        !self.cancel_token.is_cancelled()
     }
 
     /// Start listening for signals
@@ -66,17 +70,17 @@ impl SignalHandler {
     /// This function spawns an async task that listens for Unix signals
     /// and publishes appropriate events to the event bus.
     pub async fn start(&self) -> Result<()> {
-        if self.running.swap(true, Ordering::SeqCst) {
-            warn!("Signal handler already running");
+        if self.cancel_token.is_cancelled() {
+            warn!("Signal handler was stopped and cannot be restarted");
             return Ok(());
         }
 
         let event_bus = Arc::clone(&self.event_bus);
         let config = self.config.clone();
-        let running = Arc::clone(&self.running);
+        let cancel_token = self.cancel_token.clone();
 
         tokio::spawn(async move {
-            if let Err(e) = run_signal_loop(event_bus, config, running).await {
+            if let Err(e) = run_signal_loop(event_bus, config, cancel_token).await {
                 warn!("Signal handler error: {}", e);
             }
         });
@@ -87,7 +91,7 @@ impl SignalHandler {
 
     /// Stop the signal handler
     pub fn stop(&self) {
-        self.running.store(false, Ordering::SeqCst);
+        self.cancel_token.cancel();
         info!("Signal handler stopped");
     }
 }
@@ -96,7 +100,7 @@ impl SignalHandler {
 async fn run_signal_loop(
     event_bus: SharedEventBusProvider,
     config: SignalConfig,
-    running: Arc<AtomicBool>,
+    cancel_token: CancellationToken,
 ) -> Result<()> {
     // Create signal streams
     let mut sighup = if config.handle_sighup {
@@ -117,8 +121,16 @@ async fn run_signal_loop(
         None
     };
 
-    while running.load(Ordering::SeqCst) {
+    loop {
         tokio::select! {
+            biased;
+
+            // Check for cancellation first
+            _ = cancel_token.cancelled() => {
+                debug!("Signal handler received cancellation signal");
+                break;
+            }
+
             // Handle SIGHUP - Reload configuration
             Some(_) = async {
                 match &mut sighup {
@@ -156,13 +168,6 @@ async fn run_signal_loop(
                 info!("Received SIGUSR1, triggering binary respawn");
                 if let Err(e) = event_bus.publish(SystemEvent::Respawn).await {
                     warn!("Failed to publish Respawn event: {}", e);
-                }
-            }
-
-            // Check if we should stop
-            _ = tokio::time::sleep(tokio::time::Duration::from_secs(1)) => {
-                if !running.load(Ordering::SeqCst) {
-                    break;
                 }
             }
         }

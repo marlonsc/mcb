@@ -7,10 +7,10 @@ use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
 use anyhow::{Context, Result};
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, info, warn};
 
 /// Configuration for binary watching
@@ -35,10 +35,12 @@ impl Default for BinaryWatcherConfig {
 }
 
 /// Watches the server binary for updates and triggers respawn events
+///
+/// Uses `CancellationToken` for async-native shutdown signaling.
 pub struct BinaryWatcher {
     config: BinaryWatcherConfig,
     event_bus: SharedEventBusProvider,
-    running: Arc<AtomicBool>,
+    cancel_token: CancellationToken,
     binary_path: PathBuf,
 }
 
@@ -57,7 +59,7 @@ impl BinaryWatcher {
         Ok(Self {
             config,
             event_bus,
-            running: Arc::new(AtomicBool::new(false)),
+            cancel_token: CancellationToken::new(),
             binary_path,
         })
     }
@@ -74,25 +76,25 @@ impl BinaryWatcher {
 
     /// Check if the watcher is running
     pub fn is_running(&self) -> bool {
-        self.running.load(Ordering::SeqCst)
+        !self.cancel_token.is_cancelled()
     }
 
     /// Start watching the binary file
     pub async fn start(&self) -> Result<()> {
-        if self.running.swap(true, Ordering::SeqCst) {
-            warn!("Binary watcher already running");
+        if self.cancel_token.is_cancelled() {
+            warn!("Binary watcher was stopped and cannot be restarted");
             return Ok(());
         }
 
         let binary_path = self.binary_path.clone();
         let event_bus = Arc::clone(&self.event_bus);
-        let running = Arc::clone(&self.running);
+        let cancel_token = self.cancel_token.clone();
         let debounce = self.config.debounce_duration;
         let auto_respawn = self.config.auto_respawn;
 
         tokio::spawn(async move {
             if let Err(e) =
-                run_watcher_loop(binary_path, event_bus, running, debounce, auto_respawn).await
+                run_watcher_loop(binary_path, event_bus, cancel_token, debounce, auto_respawn).await
             {
                 warn!("Binary watcher error: {}", e);
             }
@@ -107,7 +109,7 @@ impl BinaryWatcher {
 
     /// Stop the binary watcher
     pub fn stop(&self) {
-        self.running.store(false, Ordering::SeqCst);
+        self.cancel_token.cancel();
         info!("Binary watcher stopped");
     }
 }
@@ -116,7 +118,7 @@ impl BinaryWatcher {
 async fn run_watcher_loop(
     binary_path: PathBuf,
     event_bus: SharedEventBusProvider,
-    running: Arc<AtomicBool>,
+    cancel_token: CancellationToken,
     debounce: Duration,
     auto_respawn: bool,
 ) -> Result<()> {
@@ -141,8 +143,16 @@ async fn run_watcher_loop(
     let mut last_event_time: Option<Instant> = None;
     let mut pending_respawn = false;
 
-    while running.load(Ordering::SeqCst) {
+    loop {
         tokio::select! {
+            biased;
+
+            // Check for cancellation first
+            _ = cancel_token.cancelled() => {
+                debug!("Binary watcher received cancellation signal");
+                break;
+            }
+
             Some(event) = rx.recv() => {
                 // Check if event is for our binary
                 let is_our_binary = event.paths.iter().any(|p| {
@@ -188,11 +198,6 @@ async fn run_watcher_loop(
                             }
                         }
                     }
-                }
-
-                // Check if we should stop
-                if !running.load(Ordering::SeqCst) {
-                    break;
                 }
             }
         }

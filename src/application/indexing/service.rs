@@ -7,29 +7,26 @@
 //! cache invalidation and UI updates without tight coupling. This is an acceptable
 //! deviation from strict Clean Architecture layering per ADR-002 (Async-First Design).
 
+use super::chunking_orchestrator::ChunkingOrchestrator;
 use crate::application::context::ContextService;
-use crate::chunking::IntelligentChunker;
 use crate::domain::error::{Error, Result};
 use crate::domain::types::CodeChunk;
 // Cross-cutting concern: Event bus for decoupled notifications
-use crate::infrastructure::constants::{
-    INDEXING_BATCH_SIZE, INDEXING_CHUNKS_MAX_PER_FILE, INDEXING_CHUNK_MIN_LENGTH,
-    INDEXING_CHUNK_MIN_LINES,
-};
+use crate::infrastructure::constants::INDEXING_BATCH_SIZE;
 use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
 use crate::snapshot::SnapshotManager;
 use crate::sync::SyncManager;
 use futures::future::join_all;
 use std::path::Path;
 use std::sync::Arc;
-use tokio::fs;
 
 /// Advanced indexing service with snapshot-based incremental processing
 pub struct IndexingService {
     context_service: Arc<ContextService>,
     snapshot_manager: SnapshotManager,
     sync_manager: Option<Arc<SyncManager>>,
-    chunker: IntelligentChunker,
+    /// Chunking orchestrator service for code chunking
+    chunking_orchestrator: Arc<ChunkingOrchestrator>,
 }
 
 impl IndexingService {
@@ -42,7 +39,7 @@ impl IndexingService {
             context_service,
             snapshot_manager: SnapshotManager::new()?,
             sync_manager,
-            chunker: IntelligentChunker::new(),
+            chunking_orchestrator: Arc::new(ChunkingOrchestrator::default()),
         })
     }
 
@@ -70,7 +67,7 @@ impl IndexingService {
             snapshot_manager: SnapshotManager::new()
                 .unwrap_or_else(|_| SnapshotManager::new_disabled()),
             sync_manager: self.sync_manager.clone(),
-            chunker: IntelligentChunker::new(),
+            chunking_orchestrator: Arc::clone(&self.chunking_orchestrator),
         }
     }
 
@@ -143,43 +140,17 @@ impl IndexingService {
     }
 
     /// Process a single file into intelligent chunks using tree-sitter
+    ///
+    /// Delegates to `ChunkingOrchestrator` for the actual chunking logic.
     async fn process_file(&self, path: &Path) -> Result<Vec<CodeChunk>> {
-        let content = fs::read_to_string(path)
-            .await
-            .map_err(|e| Error::io(format!("Failed to read file {}: {}", path.display(), e)))?;
-
-        if content.trim().is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let file_name = path.display().to_string();
-        let language = self.detect_language(path)?;
-
-        // Use intelligent tree-sitter based chunking (offloaded to blocking thread)
-        let mut chunks = self
-            .chunker
-            .chunk_code_async(content, file_name, language)
-            .await;
-
-        // Filter out chunks that are too small
-        chunks.retain(|chunk| {
-            chunk.content.len() >= INDEXING_CHUNK_MIN_LENGTH
-                && chunk.content.lines().count() >= INDEXING_CHUNK_MIN_LINES
-        });
-
-        // Limit chunks per file to avoid explosion
-        if chunks.len() > INDEXING_CHUNKS_MAX_PER_FILE {
-            chunks.truncate(INDEXING_CHUNKS_MAX_PER_FILE);
-        }
-
-        Ok(chunks)
+        // Delegate to ChunkingOrchestrator service
+        self.chunking_orchestrator.chunk_file(path).await
     }
 
     /// Detect programming language from file extension
-    fn detect_language(&self, path: &Path) -> Result<crate::domain::types::Language> {
+    fn detect_language(&self, path: &Path) -> crate::domain::types::Language {
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-
-        Ok(crate::domain::types::Language::from_extension(ext))
+        crate::domain::types::Language::from_extension(ext)
     }
 
     /// Process files in parallel batches for better performance

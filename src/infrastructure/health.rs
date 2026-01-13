@@ -5,13 +5,15 @@
 //! - Detects provider degradation via trend analysis
 //! - Publishes health events for recovery coordination
 //! - Integrates with RecoveryManager for automatic restarts
+//!
+//! Uses `CancellationToken` for async-native shutdown signaling.
 
 use crate::adapters::providers::routing::health::HealthMonitor;
 use crate::infrastructure::di::registry::ProviderRegistryTrait;
 use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, info, warn};
 
 /// Configuration for active health monitoring
@@ -36,12 +38,14 @@ impl Default for ActiveHealthConfig {
 }
 
 /// Active health monitor that proactively probes providers
+///
+/// Uses `CancellationToken` for async-native shutdown signaling.
 pub struct ActiveHealthMonitor {
     health_monitor: Arc<HealthMonitor>,
     registry: Arc<dyn ProviderRegistryTrait>,
     event_bus: SharedEventBusProvider,
     config: ActiveHealthConfig,
-    running: Arc<AtomicBool>,
+    cancel_token: CancellationToken,
 }
 
 impl ActiveHealthMonitor {
@@ -57,7 +61,7 @@ impl ActiveHealthMonitor {
             registry,
             event_bus,
             config,
-            running: Arc::new(AtomicBool::new(false)),
+            cancel_token: CancellationToken::new(),
         }
     }
 
@@ -77,8 +81,8 @@ impl ActiveHealthMonitor {
 
     /// Start the health monitoring loop (spawns background task)
     pub fn start(&self) {
-        if self.running.swap(true, Ordering::SeqCst) {
-            warn!("[HEALTH] Active monitor already running");
+        if self.cancel_token.is_cancelled() {
+            warn!("[HEALTH] Active monitor was stopped and cannot be restarted");
             return;
         }
 
@@ -94,25 +98,35 @@ impl ActiveHealthMonitor {
 
     /// Stop the health monitoring loop
     pub fn stop(&self) {
-        self.running.store(false, Ordering::SeqCst);
+        self.cancel_token.cancel();
         info!("[HEALTH] Health monitor stopped");
     }
 
     /// Check if monitor is running
     pub fn is_running(&self) -> bool {
-        self.running.load(Ordering::SeqCst)
+        !self.cancel_token.is_cancelled()
     }
 
     /// Main monitoring loop - runs periodically
     async fn run_monitoring_loop(&self) {
         let interval = Duration::from_secs(self.config.probe_interval_secs);
 
-        while self.running.load(Ordering::SeqCst) {
-            debug!("[HEALTH] Starting health probe cycle");
-            self.probe_all_providers().await;
+        loop {
+            tokio::select! {
+                biased;
 
-            // Sleep until next cycle
-            tokio::time::sleep(interval).await;
+                // Check for cancellation first
+                _ = self.cancel_token.cancelled() => {
+                    debug!("[HEALTH] Health monitor received cancellation signal");
+                    break;
+                }
+
+                // Periodic health probe
+                _ = tokio::time::sleep(interval) => {
+                    debug!("[HEALTH] Starting health probe cycle");
+                    self.probe_all_providers().await;
+                }
+            }
         }
 
         info!("[HEALTH] Health monitoring loop ended");
@@ -230,7 +244,7 @@ impl Clone for ActiveHealthMonitor {
             registry: Arc::clone(&self.registry),
             event_bus: Arc::clone(&self.event_bus),
             config: self.config.clone(),
-            running: Arc::clone(&self.running),
+            cancel_token: self.cancel_token.clone(),
         }
     }
 }
@@ -258,13 +272,11 @@ mod tests {
             Arc::new(crate::infrastructure::events::EventBus::new(10)),
         );
 
-        assert!(!monitor.is_running());
-
-        // Note: We can't easily test start() since it spawns a tokio task
-        // But we can test the flag is set correctly
-        monitor.running.store(true, Ordering::SeqCst);
+        // CancellationToken starts not cancelled, so is_running() returns true
+        // (monitor is ready to run, not yet cancelled)
         assert!(monitor.is_running());
 
+        // After stop(), is_running() returns false
         monitor.stop();
         assert!(!monitor.is_running());
     }

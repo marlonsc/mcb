@@ -36,6 +36,8 @@ pub mod rate_limit;
 pub mod recovery;
 pub mod respawn;
 pub mod service_helpers;
+pub mod shutdown;
+pub mod signals;
 pub mod utils;
 
 // Re-export commonly used traits and types

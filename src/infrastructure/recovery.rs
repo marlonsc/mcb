@@ -108,10 +108,10 @@ impl RecoveryManager {
         let config = self.config.clone();
         let event_bus = Arc::clone(&self.event_bus);
         let recovery_states = Arc::clone(&self.recovery_states);
-        let running = Arc::clone(&self.running);
+        let cancel_token = self.cancel_token.clone();
 
         let handle = tokio::spawn(async move {
-            Self::recovery_loop(config, event_bus, recovery_states, running).await;
+            Self::recovery_loop(config, event_bus, recovery_states, cancel_token).await;
         });
 
         let mut task_guard = self.task_handle.lock().await;
@@ -123,7 +123,7 @@ impl RecoveryManager {
         config: RecoveryConfig,
         event_bus: SharedEventBusProvider,
         recovery_states: Arc<DashMap<String, RecoveryState>>,
-        running: Arc<AtomicBool>,
+        cancel_token: CancellationToken,
     ) {
         let interval = Duration::from_secs(config.health_check_interval_secs);
         let mut event_receiver = match event_bus.subscribe().await {
@@ -139,8 +139,16 @@ impl RecoveryManager {
             config.health_check_interval_secs
         );
 
-        while running.load(Ordering::SeqCst) {
+        loop {
             tokio::select! {
+                biased;
+
+                // Check for cancellation first
+                _ = cancel_token.cancelled() => {
+                    tracing::debug!("[RECOVERY] Recovery loop received cancellation signal");
+                    break;
+                }
+
                 // Handle incoming events
                 event = event_receiver.recv() => {
                     if let Ok(event) = event {
@@ -359,34 +367,41 @@ impl RecoveryManager {
 #[async_trait::async_trait]
 impl RecoveryManagerInterface for RecoveryManager {
     async fn start(&self) -> crate::domain::error::Result<()> {
-        if self.running.load(Ordering::SeqCst) {
+        // Check if already cancelled (stop was called on this instance)
+        if self.cancel_token.is_cancelled() {
             return Ok(());
         }
 
-        self.running.store(true, Ordering::SeqCst);
         self.spawn_recovery_loop().await;
 
         Ok(())
     }
 
     async fn stop(&self) -> crate::domain::error::Result<()> {
-        if !self.running.load(Ordering::SeqCst) {
+        if self.cancel_token.is_cancelled() {
             return Ok(());
         }
 
-        self.running.store(false, Ordering::SeqCst);
+        // Signal cancellation to the recovery loop
+        self.cancel_token.cancel();
 
-        // Wait for the task to complete
+        // Wait for the task to complete gracefully
         let mut task_guard = self.task_handle.lock().await;
         if let Some(handle) = task_guard.take() {
-            handle.abort();
+            // Give it a moment to stop cleanly, then abort if needed
+            tokio::select! {
+                _ = handle => {}
+                _ = tokio::time::sleep(Duration::from_secs(1)) => {
+                    tracing::warn!("[RECOVERY] Recovery loop did not stop in time, aborting");
+                }
+            }
         }
 
         Ok(())
     }
 
     fn is_running(&self) -> bool {
-        self.running.load(Ordering::SeqCst)
+        !self.cancel_token.is_cancelled()
     }
 
     fn get_recovery_states(&self) -> Vec<RecoveryState> {
@@ -535,7 +550,9 @@ mod tests {
         let event_bus = Arc::new(EventBus::default());
         let manager = RecoveryManager::new(config, event_bus);
 
-        assert!(!manager.is_running());
+        // With CancellationToken, is_running() means "not yet cancelled"
+        // A fresh manager is not cancelled, so is_running() returns true
+        assert!(manager.is_running());
 
         manager.start().await.unwrap();
         assert!(manager.is_running());
@@ -543,6 +560,7 @@ mod tests {
         manager.stop().await.unwrap();
         // Give a moment for the task to stop
         tokio::time::sleep(Duration::from_millis(50)).await;
+        // After stop(), the cancellation token is cancelled
         assert!(!manager.is_running());
     }
 

@@ -1,60 +1,25 @@
 //! Factory implementations for creating providers
+//!
+//! This module provides the factory pattern for creating embedding and vector store
+//! providers. The actual provider creation logic is centralized in the dispatch module.
 
 use crate::domain::ports::{EmbeddingProvider, VectorStoreProvider};
-use crate::infrastructure::constants::HTTP_REQUEST_TIMEOUT;
+use crate::domain::types::{EmbeddingProviderKind, VectorStoreProviderKind};
+use crate::infrastructure::di::dispatch::{
+    create_embedding_provider_from_config, create_vector_store_provider_from_config,
+};
 use crate::infrastructure::di::factory::traits::{ProviderFactory, ServiceProviderInterface};
 use crate::infrastructure::di::registry::ProviderRegistry;
 use crate::infrastructure::di::registry::ProviderRegistryTrait;
-use crate::{EmbeddingConfig, Error, Result, VectorStoreConfig};
-
-/// Type-safe enum for embedding provider types
-///
-/// This enum replaces string-based provider selection with compile-time type safety.
-/// Prevents typos and provides exhaustive pattern matching in the factory.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum EmbeddingProviderType {
-    OpenAI,
-    Ollama,
-    VoyageAI,
-    Gemini,
-    FastEmbed,
-}
-
-impl EmbeddingProviderType {
-    /// Parse a provider string into the enum variant
-    ///
-    /// Returns an error if the provider name is not recognized.
-    fn from_config_string(provider: &str) -> Result<Self> {
-        match provider.to_lowercase().as_str() {
-            "openai" => Ok(Self::OpenAI),
-            "ollama" => Ok(Self::Ollama),
-            "voyageai" => Ok(Self::VoyageAI),
-            "gemini" => Ok(Self::Gemini),
-            "fastembed" => Ok(Self::FastEmbed),
-            _ => Err(Error::config(format!(
-                "Unsupported embedding provider: {}. \
-                 Supported providers: openai, ollama, voyageai, gemini, fastembed",
-                provider
-            ))),
-        }
-    }
-}
-
-// Import individual providers that exist
-use crate::adapters::providers::embedding::fastembed::FastEmbedProvider;
-use crate::adapters::providers::embedding::gemini::GeminiEmbeddingProvider;
-// NullEmbeddingProvider removed from production code paths - use a real provider
-use crate::adapters::providers::embedding::ollama::OllamaEmbeddingProvider;
-use crate::adapters::providers::embedding::openai::OpenAIEmbeddingProvider;
-use crate::adapters::providers::embedding::voyageai::VoyageAIEmbeddingProvider;
-#[cfg(feature = "milvus")]
-use crate::adapters::providers::vector_store::milvus::MilvusVectorStoreProvider;
-use crate::adapters::providers::vector_store::InMemoryVectorStoreProvider;
+use crate::{EmbeddingConfig, Result, VectorStoreConfig};
 use async_trait::async_trait;
 use shaku::Component;
 use std::sync::Arc;
 
 /// Default provider factory implementation
+///
+/// Delegates to the centralized dispatch module for provider creation.
+/// This ensures single source of truth for all provider instantiation logic.
 pub struct DefaultProviderFactory;
 
 impl DefaultProviderFactory {
@@ -70,147 +35,30 @@ impl ProviderFactory for DefaultProviderFactory {
         config: &EmbeddingConfig,
         http_client: Arc<dyn crate::adapters::http_client::HttpClientProvider>,
     ) -> Result<Arc<dyn EmbeddingProvider>> {
-        // Convert string provider to type-safe enum
-        let provider_type = EmbeddingProviderType::from_config_string(&config.provider)?;
-
-        // Use exhaustive pattern matching on the enum
-        match provider_type {
-            EmbeddingProviderType::OpenAI => {
-                let api_key = config
-                    .api_key
-                    .as_ref()
-                    .ok_or_else(|| Error::config("OpenAI API key required"))?;
-                Ok(Arc::new(OpenAIEmbeddingProvider::new(
-                    api_key.clone(),
-                    config.base_url.clone(),
-                    config.model.clone(),
-                    HTTP_REQUEST_TIMEOUT,
-                    http_client,
-                )) as Arc<dyn EmbeddingProvider>)
-            }
-            EmbeddingProviderType::Ollama => Ok(Arc::new(OllamaEmbeddingProvider::new(
-                config.base_url.clone().unwrap_or_else(|| {
-                    crate::infrastructure::constants::OLLAMA_DEFAULT_URL.to_string()
-                }),
-                config.model.clone(),
-                HTTP_REQUEST_TIMEOUT,
-                http_client,
-            )) as Arc<dyn EmbeddingProvider>),
-            EmbeddingProviderType::VoyageAI => {
-                let api_key = config
-                    .api_key
-                    .as_ref()
-                    .ok_or_else(|| Error::config("VoyageAI API key required"))?;
-                Ok(Arc::new(VoyageAIEmbeddingProvider::new(
-                    api_key.clone(),
-                    config.base_url.clone(),
-                    config.model.clone(),
-                    http_client,
-                )) as Arc<dyn EmbeddingProvider>)
-            }
-            EmbeddingProviderType::Gemini => {
-                let api_key = config
-                    .api_key
-                    .as_ref()
-                    .ok_or_else(|| Error::config("Gemini API key required"))?;
-                Ok(Arc::new(GeminiEmbeddingProvider::new(
-                    api_key.clone(),
-                    config.base_url.clone(),
-                    config.model.clone(),
-                    HTTP_REQUEST_TIMEOUT,
-                    http_client,
-                )) as Arc<dyn EmbeddingProvider>)
-            }
-            EmbeddingProviderType::FastEmbed => {
-                Ok(Arc::new(FastEmbedProvider::new()?) as Arc<dyn EmbeddingProvider>)
-            }
-        }
+        // Delegate to centralized dispatch
+        create_embedding_provider_from_config(config, http_client).await
     }
 
     async fn create_vector_store_provider(
         &self,
         config: &VectorStoreConfig,
     ) -> Result<Arc<dyn VectorStoreProvider>> {
-        match config.provider.to_lowercase().as_str() {
-            "in-memory" => {
-                Ok(Arc::new(InMemoryVectorStoreProvider::new()) as Arc<dyn VectorStoreProvider>)
-            }
-            "filesystem" => {
-                use crate::adapters::providers::vector_store::filesystem::{
-                    FilesystemVectorStore, FilesystemVectorStoreConfig,
-                };
-                let base_path = config
-                    .address
-                    .as_ref()
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or_else(|| std::path::PathBuf::from("./data/vectors"));
-                let fs_config = FilesystemVectorStoreConfig {
-                    base_path,
-                    dimensions: config.dimensions.unwrap_or(1536),
-                    ..Default::default()
-                };
-                Ok(Arc::new(FilesystemVectorStore::new(fs_config).await?)
-                    as Arc<dyn VectorStoreProvider>)
-            }
-            "milvus" => {
-                #[cfg(feature = "milvus")]
-                {
-                    let address = config
-                        .address
-                        .as_ref()
-                        .ok_or_else(|| Error::config("Milvus address required"))?;
-                    Ok(Arc::new(
-                        MilvusVectorStoreProvider::new(
-                            address.clone(),
-                            config.token.clone(),
-                            config.timeout_secs,
-                        )
-                        .await?,
-                    ) as Arc<dyn VectorStoreProvider>)
-                }
-                #[cfg(not(feature = "milvus"))]
-                {
-                    Err(Error::config("Milvus provider requested but the 'milvus' feature is not enabled. Recompile with --features milvus."))
-                }
-            }
-            "edgevec" => {
-                use crate::adapters::providers::vector_store::edgevec::{
-                    EdgeVecConfig, EdgeVecVectorStoreProvider,
-                };
-                let edgevec_config = EdgeVecConfig {
-                    dimensions: config.dimensions.unwrap_or(1536),
-                    ..Default::default()
-                };
-                Ok(Arc::new(EdgeVecVectorStoreProvider::new(edgevec_config)?)
-                    as Arc<dyn VectorStoreProvider>)
-            }
-            _ => Err(Error::config(format!(
-                "Unsupported vector store provider: {}",
-                config.provider
-            ))),
-        }
+        // Delegate to centralized dispatch
+        create_vector_store_provider_from_config(config).await
     }
 
     fn supported_embedding_providers(&self) -> Vec<String> {
-        vec![
-            "openai".to_string(),
-            "ollama".to_string(),
-            "voyageai".to_string(),
-            "gemini".to_string(),
-            "fastembed".to_string(),
-        ]
+        EmbeddingProviderKind::supported_providers()
+            .iter()
+            .map(|s| s.to_string())
+            .collect()
     }
 
     fn supported_vector_store_providers(&self) -> Vec<String> {
-        let mut providers = vec![
-            "in-memory".to_string(),
-            "filesystem".to_string(),
-            "edgevec".to_string(),
-        ];
-        if cfg!(feature = "milvus") {
-            providers.push("milvus".to_string());
-        }
-        providers
+        VectorStoreProviderKind::supported_providers()
+            .iter()
+            .map(|s| s.to_string())
+            .collect()
     }
 }
 

@@ -7,20 +7,24 @@
 //! - Global gitignore from git config
 //! - Hidden files and directories
 
-use super::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
+use super::{CodebaseSnapshot, FileSnapshot, HashCalculator, SnapshotChanges, SnapshotComparator};
 use crate::domain::error::{Error, Result};
 use crate::infrastructure::utils::FileUtils;
 use ignore::WalkBuilder;
-use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::SystemTime;
 
 /// Snapshot manager for incremental tracking
 pub struct SnapshotManager {
     /// Base directory for storing snapshots
     snapshot_dir: PathBuf,
+    /// Hash calculator service
+    hash_calculator: Arc<HashCalculator>,
+    /// Snapshot comparator service
+    comparator: Arc<SnapshotComparator>,
 }
 
 impl SnapshotManager {
@@ -34,13 +38,19 @@ impl SnapshotManager {
         fs::create_dir_all(&snapshot_dir)
             .map_err(|e| Error::internal(format!("Failed to create snapshot directory: {}", e)))?;
 
-        Ok(Self { snapshot_dir })
+        Ok(Self {
+            snapshot_dir,
+            hash_calculator: Arc::new(HashCalculator::new()),
+            comparator: Arc::new(SnapshotComparator::new()),
+        })
     }
 
     /// Create a disabled snapshot manager (uses temporary directory)
     pub fn new_disabled() -> Self {
         Self {
             snapshot_dir: std::env::temp_dir().join("mcp_disabled_snapshots"),
+            hash_calculator: Arc::new(HashCalculator::new()),
+            comparator: Arc::new(SnapshotComparator::new()),
         }
     }
 
@@ -50,6 +60,8 @@ impl SnapshotManager {
         let root_path_str = root_path.to_string_lossy().to_string();
         let snapshot_manager = Self {
             snapshot_dir: self.snapshot_dir.clone(),
+            hash_calculator: Arc::clone(&self.hash_calculator),
+            comparator: Arc::clone(&self.comparator),
         };
 
         let (files, total_size) = tokio::task::spawn_blocking(move || {
@@ -87,42 +99,15 @@ impl SnapshotManager {
     }
 
     /// Compare snapshots to find changes
+    ///
+    /// Delegates to `SnapshotComparator` service for the actual comparison logic.
     pub async fn compare_snapshots(
         &self,
         old_snapshot: &CodebaseSnapshot,
         new_snapshot: &CodebaseSnapshot,
     ) -> Result<SnapshotChanges> {
-        let mut added = Vec::new();
-        let mut modified = Vec::new();
-        let mut removed = Vec::new();
-        let mut unchanged = Vec::new();
-
-        // Find added and modified files
-        for (path, new_file) in &new_snapshot.files {
-            if let Some(old_file) = old_snapshot.files.get(path) {
-                if old_file.hash != new_file.hash {
-                    modified.push(path.clone());
-                } else {
-                    unchanged.push(path.clone());
-                }
-            } else {
-                added.push(path.clone());
-            }
-        }
-
-        // Find removed files
-        for path in old_snapshot.files.keys() {
-            if !new_snapshot.files.contains_key(path) {
-                removed.push(path.clone());
-            }
-        }
-
-        Ok(SnapshotChanges {
-            added,
-            modified,
-            removed,
-            unchanged,
-        })
+        // Delegate to focused SnapshotComparator service
+        Ok(self.comparator.compare(old_snapshot, new_snapshot))
     }
 
     /// Get files that need processing (added or modified)
@@ -273,11 +258,10 @@ impl SnapshotManager {
     }
 
     /// Calculate SHA256 hash of content (for change detection)
+    ///
+    /// Delegates to `HashCalculator` service for the actual hashing.
     fn calculate_hash(&self, content: &[u8]) -> String {
-        let mut hasher = Sha256::new();
-        hasher.update(content);
-        let result = hasher.finalize();
-        format!("{:x}", result)
+        self.hash_calculator.hash_bytes(content)
     }
 
     /// Get snapshot file path for a codebase

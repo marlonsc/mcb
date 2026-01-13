@@ -4,17 +4,33 @@
 //! - Health checks
 //! - System metrics (CPU, memory, disk, network)
 //! - Performance metrics (queries, cache)
+//!
+//! Includes production middleware stack:
+//! - Panic recovery (prevents handler panics from crashing server)
+//! - Request IDs (trace requests across logs)
+//! - Structured request/response logging
+//! - Global request timeout
+//! - Request body size limits (DoS prevention)
+//! - Response compression
 
 use axum::{extract::State, http::StatusCode, response::Json, routing::get, Router};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::time::Duration;
+use tower_http::{
+    catch_panic::CatchPanicLayer,
+    compression::CompressionLayer,
+    limit::RequestBodyLimitLayer,
+    request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer},
+    timeout::TimeoutLayer,
+    trace::TraceLayer,
+};
 
 use crate::infrastructure::cache::{CacheStats, SharedCacheProvider};
 use crate::infrastructure::limits::ResourceLimits;
 use crate::infrastructure::rate_limit::RateLimiter;
 use crate::infrastructure::service_helpers::UptimeTracker;
 use crate::infrastructure::utils::TimeUtils;
-// Rate limiting middleware will be added later
 
 use crate::infrastructure::metrics::{
     system::SystemMetricsCollectorInterface, CacheMetrics, CpuMetrics, MemoryMetrics,
@@ -138,6 +154,17 @@ impl MetricsApiServer {
             cache_provider: self.cache_provider.clone(),
         };
 
+        // Production middleware stack
+        // Layer order (outermost to innermost):
+        // 1. CatchPanic - prevent handler panics from crashing server
+        // 2. RequestId - trace requests across logs
+        // 3. Trace - structured request/response logging
+        // 4. Timeout - global request timeout
+        // 5. BodyLimit - prevent DoS via large payloads
+        // 6. Compression - reduce bandwidth
+        // 7. CORS - cross-origin requests
+        //
+        // Note: Layers are applied in reverse order (last .layer() is innermost)
         let mut router = Router::new()
             .route("/api/health", get(Self::health_handler))
             .route(
@@ -158,9 +185,16 @@ impl MetricsApiServer {
                 get(Self::cache_metrics_handler),
             )
             .route("/api/context/status", get(Self::status_handler))
-            // .layer(axum::middleware::from_fn(request_validation_middleware))
+            .with_state(state)
+            // Apply layers (last is innermost, first is outermost)
             .layer(tower_http::cors::CorsLayer::permissive())
-            .with_state(state);
+            .layer(CompressionLayer::new())
+            .layer(RequestBodyLimitLayer::new(10 * 1024 * 1024))
+            .layer(TimeoutLayer::with_status_code(StatusCode::REQUEST_TIMEOUT, Duration::from_secs(30)))
+            .layer(TraceLayer::new_for_http())
+            .layer(PropagateRequestIdLayer::x_request_id())
+            .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
+            .layer(CatchPanicLayer::new());
 
         // Merge external router (typically admin routes under /admin/*)
         if let Some(external) = self.external_router.clone() {

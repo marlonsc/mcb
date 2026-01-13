@@ -3,8 +3,11 @@
 //! Manages codebase synchronization with:
 //! - Cross-process lockfile coordination
 //! - Configurable sync intervals
-//! - Debouncing to prevent excessive syncs
+//! - Debouncing to prevent excessive syncs (delegated to DebounceService)
+//! - Statistics collection (delegated to SyncStatsCollector)
 
+use super::debounce::{DebounceConfig, DebounceService};
+use super::stats::SyncStatsCollector;
 use crate::domain::error::Result;
 use crate::domain::types::SyncBatch;
 use crate::infrastructure::cache::{CacheProviderQueue, SharedCacheProvider};
@@ -12,8 +15,8 @@ use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
 use crate::infrastructure::utils::TimeUtils;
 use dashmap::DashMap;
 use std::path::Path;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{Duration, Instant, UNIX_EPOCH};
+use std::sync::Arc;
+use std::time::{Duration, UNIX_EPOCH};
 use uuid::Uuid;
 use validator::Validate;
 use walkdir::WalkDir;
@@ -51,60 +54,19 @@ impl SyncConfig {
     }
 }
 
-/// Sync statistics for monitoring
-#[derive(Debug, Clone, Default)]
-pub struct SyncStats {
-    pub total_attempts: u64,
-    pub successful: u64,
-    pub skipped: u64,
-    pub failed: u64,
-    pub skipped_rate: f64,
-}
-
-/// Internal atomic statistics
-struct AtomicSyncStats {
-    total_attempts: AtomicU64,
-    successful: AtomicU64,
-    skipped: AtomicU64,
-    failed: AtomicU64,
-}
-
-impl AtomicSyncStats {
-    fn new() -> Self {
-        Self {
-            total_attempts: AtomicU64::new(0),
-            successful: AtomicU64::new(0),
-            skipped: AtomicU64::new(0),
-            failed: AtomicU64::new(0),
-        }
-    }
-
-    fn to_stats(&self) -> SyncStats {
-        let total = self.total_attempts.load(Ordering::Relaxed);
-        let skipped = self.skipped.load(Ordering::Relaxed);
-        let skipped_rate = if total > 0 {
-            (skipped as f64 / total as f64) * 100.0
-        } else {
-            0.0
-        };
-
-        SyncStats {
-            total_attempts: total,
-            successful: self.successful.load(Ordering::Relaxed),
-            skipped,
-            failed: self.failed.load(Ordering::Relaxed),
-            skipped_rate,
-        }
-    }
-}
+// SyncStats is re-exported from stats module
+pub use super::stats::SyncStats;
 
 /// Synchronization manager with cross-process coordination
 pub struct SyncManager {
     config: SyncConfig,
     cache_manager: Option<SharedCacheProvider>,
-    last_sync_times: DashMap<String, Instant>,
+    /// Debounce service for rate limiting syncs
+    debounce: Arc<DebounceService>,
+    /// File modification times for change detection
     file_mod_times: DashMap<String, u64>,
-    stats: AtomicSyncStats,
+    /// Statistics collector service
+    stats: Arc<SyncStatsCollector>,
     event_bus: Option<SharedEventBusProvider>,
 }
 
@@ -122,12 +84,15 @@ impl SyncManager {
 
     /// Create a new sync manager with custom config
     pub fn with_config(config: SyncConfig, cache_manager: Option<SharedCacheProvider>) -> Self {
+        let debounce_config = DebounceConfig {
+            debounce_ms: config.debounce_ms,
+        };
         Self {
             config,
             cache_manager,
-            last_sync_times: DashMap::new(),
+            debounce: Arc::new(DebounceService::new(debounce_config)),
             file_mod_times: DashMap::new(),
-            stats: AtomicSyncStats::new(),
+            stats: Arc::new(SyncStatsCollector::new()),
             event_bus: None,
         }
     }
@@ -138,42 +103,31 @@ impl SyncManager {
         event_bus: SharedEventBusProvider,
         cache_manager: Option<SharedCacheProvider>,
     ) -> Self {
+        let debounce_config = DebounceConfig {
+            debounce_ms: config.debounce_ms,
+        };
         Self {
             config,
             cache_manager,
-            last_sync_times: DashMap::new(),
+            debounce: Arc::new(DebounceService::new(debounce_config)),
             file_mod_times: DashMap::new(),
-            stats: AtomicSyncStats::new(),
+            stats: Arc::new(SyncStatsCollector::new()),
             event_bus: Some(event_bus),
         }
     }
 
     /// Check if codebase should be debounced (synced too recently)
+    ///
+    /// Delegates to `DebounceService` for the actual debounce logic.
     pub async fn should_debounce(&self, codebase_path: &Path) -> Result<bool> {
-        let path_key = codebase_path.to_string_lossy().to_string();
-
-        if let Some(last_sync) = self.last_sync_times.get(&path_key) {
-            let elapsed = last_sync.elapsed();
-            let debounce_duration = Duration::from_millis(self.config.debounce_ms);
-
-            if elapsed < debounce_duration {
-                tracing::debug!(
-                    "[SYNC] Debouncing {} - synced {}s ago (min {}s)",
-                    codebase_path.display(),
-                    elapsed.as_secs(),
-                    debounce_duration.as_secs()
-                );
-                return Ok(true);
-            }
-        }
-
-        Ok(false)
+        Ok(self.debounce.should_debounce(codebase_path))
     }
 
     /// Update last sync time for a codebase
+    ///
+    /// Delegates to `DebounceService` for recording sync time.
     pub async fn update_last_sync(&self, codebase_path: &Path) {
-        let path_key = codebase_path.to_string_lossy().to_string();
-        self.last_sync_times.insert(path_key, Instant::now());
+        self.debounce.record_sync(codebase_path);
     }
 
     /// Handle synchronization with batch queue coordination
@@ -188,11 +142,12 @@ impl SyncManager {
             });
         }
 
-        self.stats.total_attempts.fetch_add(1, Ordering::Relaxed);
+        // Record attempt via stats collector service
+        self.stats.record_attempt();
 
-        // Check debounce
+        // Check debounce (delegated to DebounceService)
         if self.should_debounce(codebase_path).await? {
-            self.stats.skipped.fetch_add(1, Ordering::Relaxed);
+            self.stats.record_skip();
             return Ok(false);
         }
 
@@ -200,7 +155,7 @@ impl SyncManager {
         let batch = match self.acquire_sync_slot(codebase_path).await? {
             Some(b) => b,
             None => {
-                self.stats.skipped.fetch_add(1, Ordering::Relaxed);
+                self.stats.record_skip();
                 return Ok(false);
             }
         };
@@ -240,7 +195,8 @@ impl SyncManager {
         // Release sync slot
         self.release_sync_slot(codebase_path, batch).await?;
 
-        self.stats.successful.fetch_add(1, Ordering::Relaxed);
+        // Record success via stats collector service
+        self.stats.record_success();
 
         // Publish SyncCompleted event if event bus is available
         if let Some(ref event_bus) = self.event_bus {
@@ -313,8 +269,10 @@ impl SyncManager {
     }
 
     /// Get current sync statistics
+    ///
+    /// Delegates to `SyncStatsCollector` for the statistics snapshot.
     pub fn get_stats(&self) -> SyncStats {
-        self.stats.to_stats()
+        self.stats.snapshot()
     }
 
     /// Get the count of tracked files
@@ -333,11 +291,11 @@ impl SyncManager {
     }
 
     /// Clean old sync timestamps (older than max_age)
+    ///
+    /// Delegates to `DebounceService` for timestamp cleanup.
     pub async fn clean_old_timestamps(&self, max_age: Duration) {
-        let now = Instant::now();
-
-        self.last_sync_times
-            .retain(|_path, timestamp| now.duration_since(*timestamp) < max_age);
+        // Delegate to DebounceService
+        self.debounce.clean_older_than(max_age);
 
         // Also clean old batches
         self.clean_old_batches(Duration::from_secs(86400)).await; // 24h
