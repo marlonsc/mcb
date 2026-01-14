@@ -14,7 +14,7 @@ pub enum PerformanceMessage {
         /// Query execution time
         latency: Duration,
         /// Whether the query was successful
-        success: bool
+        success: bool,
     },
     /// Record a cache hit
     RecordCacheHit,

@@ -2,12 +2,12 @@
 //!
 //! Provides functions for log retrieval, filtering, export, and statistics.
 
-use crate::infrastructure::logging::SharedLogBuffer;
-use crate::infrastructure::service_helpers::IteratorHelpers;
-use crate::server::admin::service::helpers::admin_defaults;
-use crate::server::admin::service::types::{
+use crate::application::admin::helpers::admin_defaults;
+use crate::application::admin::types::{
     AdminError, LogEntries, LogEntry, LogExportFormat, LogFilter, LogStats,
 };
+use crate::infrastructure::logging::SharedLogBuffer;
+use crate::infrastructure::service_helpers::IteratorHelpers;
 use std::collections::HashMap;
 
 /// Get filtered log entries from the log buffer

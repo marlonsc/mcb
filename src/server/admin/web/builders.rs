@@ -300,7 +300,7 @@ impl<'a> ViewModelBuilder<'a> {
     /// Build logs page view model
     pub async fn build_logs_page(&self) -> Result<LogsViewModel> {
         // Create filter manually as LogFilter doesn't impl Default
-        let filter = crate::server::admin::service::LogFilter {
+        let filter = crate::application::admin::types::LogFilter {
             level: None,
             module: None,
             message_contains: None,

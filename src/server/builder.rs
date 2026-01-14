@@ -3,6 +3,7 @@
 //! Fluent builder pattern for configuring and constructing the MCP server.
 //! Provides a type-safe way to configure all server components before startup.
 
+use crate::application::admin::traits::AdminService;
 use crate::domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use crate::infrastructure::cache::{create_cache_provider, SharedCacheProvider};
 use crate::infrastructure::config::Config;
@@ -12,7 +13,6 @@ use crate::infrastructure::events::SharedEventBusProvider;
 use crate::infrastructure::limits::ResourceLimits;
 use crate::infrastructure::logging::SharedLogBuffer;
 use crate::infrastructure::metrics::system::SystemMetricsCollectorInterface;
-use crate::server::admin::service::AdminService;
 use crate::server::mcp_server::McpServer;
 use arc_swap::ArcSwap;
 use std::sync::Arc;

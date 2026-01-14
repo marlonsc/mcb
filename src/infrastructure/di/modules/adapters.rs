@@ -1,4 +1,6 @@
 //! Adapters DI Module Implementation
+
+#![allow(missing_docs)]
 //!
 //! Contains HTTP client, external provider adapters, and repositories.
 //!

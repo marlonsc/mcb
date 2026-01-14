@@ -26,7 +26,10 @@ const DEFAULT_TIMEOUT_SECS: u64 = 10;
 
 impl MilvusVectorStoreProvider {
     /// Helper method to convert Milvus errors to domain errors
-    fn map_milvus_error<T, E: std::fmt::Display>(result: std::result::Result<T, E>, operation: &str) -> crate::domain::error::Result<T> {
+    fn map_milvus_error<T, E: std::fmt::Display>(
+        result: std::result::Result<T, E>,
+        operation: &str,
+    ) -> crate::domain::error::Result<T> {
         result.map_err(|e| Error::vector_db(format!("Failed to {}: {}", operation, e)))
     }
 
@@ -101,7 +104,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         Self::map_milvus_error(
             self.client.create_collection(schema, None).await,
-            "create collection"
+            "create collection",
         )?;
 
         // Wait for Milvus to sync collection metadata before index creation
@@ -164,19 +167,13 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
     }
 
     async fn delete_collection(&self, name: &str) -> Result<()> {
-        Self::map_milvus_error(
-            self.client.drop_collection(name).await,
-            "delete collection"
-        )?;
+        Self::map_milvus_error(self.client.drop_collection(name).await, "delete collection")?;
 
         Ok(())
     }
 
     async fn collection_exists(&self, name: &str) -> Result<bool> {
-        Self::map_milvus_error(
-            self.client.has_collection(name).await,
-            "check collection"
-        )
+        Self::map_milvus_error(self.client.has_collection(name).await, "check collection")
     }
 
     async fn insert_vectors(
@@ -278,7 +275,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         // Insert directly using client
         let res = Self::map_milvus_error(
             self.client.insert(collection, columns, None).await,
-            "insert vectors"
+            "insert vectors",
         )?;
 
         // Return IDs as strings from the result
@@ -447,7 +444,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         // Delete using client
         Self::map_milvus_error(
             self.client.delete(collection, &options).await,
-            "delete vectors"
+            "delete vectors",
         )?;
 
         Ok(())
@@ -484,7 +481,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         let query_results = Self::map_milvus_error(
             self.client.query(collection, &expr, &query_options).await,
-            "query by IDs"
+            "query by IDs",
         )?;
 
         // Convert results to our format
@@ -582,7 +579,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         let query_results = Self::map_milvus_error(
             self.client.query(collection, &expr, &query_options).await,
-            "list vectors"
+            "list vectors",
         )?;
 
         // Convert results to our format

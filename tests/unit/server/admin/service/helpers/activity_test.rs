@@ -2,7 +2,7 @@
 //!
 //! Tests for converting SystemEvents into human-readable activity log entries.
 
-use mcp_context_browser::server::admin::service::helpers::activity::{
+use mcp_context_browser::application::admin::helpers::activity::{
     ActivityLevel, ActivityLogger,
 };
 

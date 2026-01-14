@@ -15,8 +15,10 @@ pub mod config_keys;
 pub mod handlers;
 pub mod models;
 pub mod routes;
-pub mod service;
 pub mod web;
+
+// Re-export admin service from application layer for backward compatibility
+pub use crate::application::admin as service;
 
 // Re-export commonly used types
 pub use config::{AdminApi, AdminConfig};

@@ -1,4 +1,6 @@
 //! DI Module Organization - Hierarchical by Domain
+
+#![allow(missing_docs)]
 //!
 //! This module organizes DI components by domain following Clean Architecture:
 //!
@@ -63,6 +65,7 @@ pub use traits::QualityModule;
 use shaku::module;
 
 use crate::adapters::http_client::HttpClientProvider;
+use crate::application::admin::AdminService;
 use crate::domain::ports::{
     ChunkRepository, ChunkingOrchestratorInterface, CodeChunker, ContextServiceInterface,
     EmbeddingProvider, IndexingOperationsInterface, IndexingServiceInterface,
@@ -73,7 +76,6 @@ use crate::infrastructure::auth::AuthServiceInterface;
 use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::events::EventBusProvider;
 use crate::infrastructure::metrics::system::SystemMetricsCollectorInterface;
-use crate::server::admin::service::AdminService;
 
 // Root dependency injection module for the MCP Context Browser.
 // This module composes all domain modules (adapters, infrastructure, application, server, admin)

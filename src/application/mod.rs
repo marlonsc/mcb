@@ -54,6 +54,7 @@
 //! }
 //! ```
 
+pub mod admin;
 pub mod context;
 pub mod indexing;
 pub mod search;

@@ -2,12 +2,12 @@
 //!
 //! Provides functions for backup creation, listing, and restoration.
 
-use crate::infrastructure::events::SharedEventBusProvider;
-use crate::infrastructure::service_helpers::TimedOperation;
-use crate::server::admin::service::helpers::admin_defaults;
-use crate::server::admin::service::types::{
+use crate::application::admin::helpers::admin_defaults;
+use crate::application::admin::types::{
     AdminError, BackupConfig, BackupInfo, BackupResult, RestoreResult,
 };
+use crate::infrastructure::events::SharedEventBusProvider;
+use crate::infrastructure::service_helpers::TimedOperation;
 
 /// Create a new backup
 pub async fn create_backup(

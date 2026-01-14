@@ -233,6 +233,7 @@ predicates = "3.0"
 mockito = "1.4"
 proptest = "1.0"
 serial_test = "3.2"
+http-body-util = "0.1"
 
 [lints.rust]
 missing_docs = "warn"

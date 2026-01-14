@@ -248,11 +248,11 @@ pub enum FirstRunStatus {
         /// Generated password (plaintext for first login)
         password: String,
         /// Generated email address
-        email: String
+        email: String,
     },
     /// First run - credentials were provided by user
     Provided {
         /// User-provided email address
-        email: String
+        email: String,
     },
 }

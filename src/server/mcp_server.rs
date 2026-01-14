@@ -61,7 +61,7 @@ pub struct McpServer {
     /// Ongoing indexing operations tracking
     pub indexing_operations: Arc<dyn IndexingOperationsInterface>,
     /// Admin service
-    pub admin_service: Arc<dyn crate::server::admin::service::AdminService>,
+    pub admin_service: Arc<dyn crate::application::admin::traits::AdminService>,
     /// Configuration state
     pub config: Arc<ArcSwap<crate::infrastructure::config::Config>>,
     /// Event bus for decoupled communication
@@ -173,7 +173,7 @@ impl McpServer {
         auth_handler: Arc<AuthHandler>,
         resource_limits: Arc<ResourceLimits>,
         cache_provider: Option<SharedCacheProvider>,
-        admin_service: Arc<dyn crate::server::admin::service::AdminService>,
+        admin_service: Arc<dyn crate::application::admin::traits::AdminService>,
     ) -> Result<InitializedHandlers, Box<dyn std::error::Error>> {
         Ok((
             Arc::new(IndexCodebaseHandler::new(
@@ -287,7 +287,7 @@ impl McpServer {
     }
 
     /// Get the admin service
-    pub fn admin_service(&self) -> Arc<dyn crate::server::admin::service::AdminService> {
+    pub fn admin_service(&self) -> Arc<dyn crate::application::admin::traits::AdminService> {
         Arc::clone(&self.admin_service)
     }
 
@@ -297,7 +297,9 @@ impl McpServer {
     }
 
     /// Create auth service by resolving from DI container
-    fn create_auth_service(container: &crate::infrastructure::di::bootstrap::DiContainer) -> Arc<dyn crate::infrastructure::auth::AuthServiceInterface> {
+    fn create_auth_service(
+        container: &crate::infrastructure::di::bootstrap::DiContainer,
+    ) -> Arc<dyn crate::infrastructure::auth::AuthServiceInterface> {
         // Resolve AuthService from the DI container
         container.infrastructure_module.resolve()
     }
@@ -350,7 +352,7 @@ impl McpServer {
     }
 
     /// Get detailed provider information for admin interface
-    pub fn get_registered_providers(&self) -> Vec<crate::server::admin::service::ProviderInfo> {
+    pub fn get_registered_providers(&self) -> Vec<crate::server::admin::models::ProviderInfo> {
         let (embedding_providers, vector_store_providers) = self.list_providers();
         let registry = self.service_provider.registry();
 
@@ -362,7 +364,7 @@ impl McpServer {
                 Ok(_) => "available".to_string(),
                 Err(_) => "unavailable".to_string(),
             };
-            providers.push(crate::server::admin::service::ProviderInfo {
+            providers.push(crate::server::admin::models::ProviderInfo {
                 id: name.clone(),
                 name,
                 provider_type: "embedding".to_string(),
@@ -377,7 +379,7 @@ impl McpServer {
                 Ok(_) => "available".to_string(),
                 Err(_) => "unavailable".to_string(),
             };
-            providers.push(crate::server::admin::service::ProviderInfo {
+            providers.push(crate::server::admin::models::ProviderInfo {
                 id: name.clone(),
                 name,
                 provider_type: "vector_store".to_string(),
@@ -506,9 +508,9 @@ impl McpServer {
     }
 
     /// Get system information for admin interface
-    pub fn get_system_info(&self) -> crate::server::admin::service::SystemInfo {
+    pub fn get_system_info(&self) -> crate::application::admin::types::SystemInfo {
         let uptime_seconds = self.performance_metrics.uptime_secs();
-        crate::server::admin::service::SystemInfo {
+        crate::application::admin::types::SystemInfo {
             version: env!("CARGO_PKG_VERSION").to_string(),
             uptime: uptime_seconds,
             pid: std::process::id(),
@@ -516,7 +518,9 @@ impl McpServer {
     }
 
     /// Get real indexing status for admin interface
-    pub async fn get_indexing_status_admin(&self) -> crate::server::admin::service::IndexingStatus {
+    pub async fn get_indexing_status_admin(
+        &self,
+    ) -> crate::application::admin::types::IndexingStatus {
         // Check if any indexing operations are active
         let ops_map = self.indexing_operations.get_map();
         let is_indexing = !ops_map.is_empty();
@@ -560,7 +564,7 @@ impl McpServer {
             None
         };
 
-        crate::server::admin::service::IndexingStatus {
+        crate::application::admin::types::IndexingStatus {
             is_indexing,
             total_documents: total_documents as u64,
             indexed_documents: indexed_documents as u64,

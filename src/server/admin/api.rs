@@ -18,12 +18,16 @@ impl AdminApiServer {
     }
 
     /// Create the admin router with auth handler access
-    pub fn create_router_with_auth(&self, auth_handler: Arc<crate::server::auth::AuthHandler>) -> Result<Router, Box<dyn std::error::Error>> {
+    pub fn create_router_with_auth(
+        &self,
+        auth_handler: Arc<crate::server::auth::AuthHandler>,
+    ) -> Result<Router, Box<dyn std::error::Error>> {
         let admin_api = Arc::new(AdminApi::new(self.config.clone()));
         let admin_service = self.mcp_server.admin_service();
 
         // Use the AuthService from the auth handler (already configured)
-        let auth_service: Arc<dyn crate::infrastructure::auth::AuthServiceInterface> = auth_handler.auth_service();
+        let auth_service: Arc<dyn crate::infrastructure::auth::AuthServiceInterface> =
+            auth_handler.auth_service();
 
         // Initialize web interface and templates
         let web_interface = super::web::WebInterface::new()?;

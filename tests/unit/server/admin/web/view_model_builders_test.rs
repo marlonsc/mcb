@@ -2,7 +2,7 @@
 //!
 //! Tests for helpers that reduce duplication in ViewModelBuilder.
 
-use mcp_context_browser::server::admin::service::helpers::activity::ActivityLevel;
+use mcp_context_browser::application::admin::helpers::activity::ActivityLevel;
 use mcp_context_browser::server::admin::web::view_model_builders::{
     ActivityLevelFormatter, ConfigCategoryBuilder, ConfigSettingBuilder,
 };

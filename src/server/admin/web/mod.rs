@@ -26,9 +26,11 @@ use std::sync::Arc;
 use tera::{Context, Tera};
 
 use crate::server::admin::auth::web_auth_middleware;
-use crate::server::admin::handlers::htmx::{htmx_maintenance_history_handler, htmx_recovery_status_handler};
+use crate::server::admin::handlers::htmx::{
+    htmx_maintenance_history_handler, htmx_recovery_status_handler,
+};
 use crate::server::admin::models::AdminState;
-use crate::server::admin::web::html_helpers::htmx_error;
+use self::html_helpers::htmx_error;
 
 use self::builders::ViewModelBuilder;
 
@@ -121,7 +123,10 @@ impl WebInterface {
             .route("/htmx/providers-list", get(htmx_providers_list_handler))
             .route("/htmx/indexes-list", get(htmx_indexes_list_handler))
             .route("/htmx/recovery-status", get(htmx_recovery_status_handler))
-            .route("/htmx/maintenance-history", get(htmx_maintenance_history_handler))
+            .route(
+                "/htmx/maintenance-history",
+                get(htmx_maintenance_history_handler),
+            )
             .layer(middleware::from_fn_with_state(
                 state.clone(),
                 web_auth_middleware,

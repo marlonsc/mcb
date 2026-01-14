@@ -2,10 +2,10 @@
 //!
 //! Tests for dynamic route registration and discovery for the admin API.
 
-use mcp_context_browser::server::admin::service::helpers::route_discovery::{
+use mcp_context_browser::application::admin::helpers::route_discovery::{
     build_standard_routes, RouteRegistry,
 };
-use mcp_context_browser::server::admin::service::types::RouteInfo;
+use mcp_context_browser::application::admin::types::RouteInfo;
 use std::sync::Arc;
 
 #[tokio::test]

@@ -5,28 +5,37 @@
 use rmcp::handler::server::wrapper::Parameters;
 use std::sync::Arc;
 
-use mcp_context_browser::server::admin::service::AdminService;
+use mcp_context_browser::application::admin::traits::AdminService;
 
 // Test service creation function (copied from admin tests)
 async fn create_test_admin_service() -> std::sync::Arc<dyn AdminService> {
     use arc_swap::ArcSwap;
     use mcp_context_browser::adapters::http_client::test_utils::NullHttpClientPool;
+    use mcp_context_browser::application::admin::{AdminServiceDependencies, AdminServiceImpl};
     use mcp_context_browser::infrastructure::config::ConfigLoader;
     use mcp_context_browser::infrastructure::di::factory::ServiceProvider;
     use mcp_context_browser::infrastructure::events::EventBus;
     use mcp_context_browser::infrastructure::logging;
     use mcp_context_browser::infrastructure::metrics::system::SystemMetricsCollector;
     use mcp_context_browser::infrastructure::operations::McpIndexingOperations;
-    use mcp_context_browser::server::admin::service::{AdminServiceDependencies, AdminServiceImpl};
     use mcp_context_browser::server::metrics::McpPerformanceMetrics;
     use std::sync::Arc;
 
     // Create minimal test dependencies
-    let performance_metrics: Arc<dyn mcp_context_browser::server::metrics::PerformanceMetricsInterface> = Arc::new(McpPerformanceMetrics::default());
-    let indexing_operations: Arc<dyn mcp_context_browser::infrastructure::operations::IndexingOperationsInterface> = Arc::new(McpIndexingOperations::default());
-    let service_provider: Arc<dyn mcp_context_browser::infrastructure::di::factory::ServiceProviderInterface> = Arc::new(ServiceProvider::new());
-    let system_collector: Arc<dyn mcp_context_browser::infrastructure::metrics::system::SystemMetricsCollectorInterface> = Arc::new(SystemMetricsCollector::new());
-    let http_client: Arc<dyn mcp_context_browser::adapters::http_client::HttpClientProvider> = Arc::new(NullHttpClientPool::new());
+    let performance_metrics: Arc<
+        dyn mcp_context_browser::server::metrics::PerformanceMetricsInterface,
+    > = Arc::new(McpPerformanceMetrics::default());
+    let indexing_operations: Arc<
+        dyn mcp_context_browser::infrastructure::operations::IndexingOperationsInterface,
+    > = Arc::new(McpIndexingOperations::default());
+    let service_provider: Arc<
+        dyn mcp_context_browser::infrastructure::di::factory::ServiceProviderInterface,
+    > = Arc::new(ServiceProvider::new());
+    let system_collector: Arc<
+        dyn mcp_context_browser::infrastructure::metrics::system::SystemMetricsCollectorInterface,
+    > = Arc::new(SystemMetricsCollector::new());
+    let http_client: Arc<dyn mcp_context_browser::adapters::http_client::HttpClientProvider> =
+        Arc::new(NullHttpClientPool::new());
 
     // Create event bus with a dummy subscriber to prevent channel closure
     let event_bus: std::sync::Arc<
@@ -77,9 +86,12 @@ use mcp_context_browser::server::handlers::{
 // Test Provider Setup
 // ============================================================================
 
-async fn create_indexing_service() -> Arc<dyn mcp_context_browser::domain::ports::services::IndexingServiceInterface> {
+async fn create_indexing_service(
+) -> Arc<dyn mcp_context_browser::domain::ports::services::IndexingServiceInterface> {
     let (embedding_provider, vector_store_provider) = create_test_providers();
-    let context_service: Arc<dyn mcp_context_browser::domain::ports::services::ContextServiceInterface> = Arc::new(ContextService::new_with_providers(
+    let context_service: Arc<
+        dyn mcp_context_browser::domain::ports::services::ContextServiceInterface,
+    > = Arc::new(ContextService::new_with_providers(
         embedding_provider,
         vector_store_provider,
     ));
@@ -411,7 +423,8 @@ mod search_code_tests {
         create_cache_provider, CacheBackendConfig, CacheConfig, SharedCacheProvider,
     };
 
-    async fn create_search_service() -> Arc<dyn mcp_context_browser::domain::ports::services::SearchServiceInterface> {
+    async fn create_search_service(
+    ) -> Arc<dyn mcp_context_browser::domain::ports::services::SearchServiceInterface> {
         let (embedding_provider, vector_store_provider) = create_test_providers();
         let context_service = Arc::new(ContextService::new_with_providers(
             embedding_provider,

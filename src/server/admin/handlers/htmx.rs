@@ -123,16 +123,16 @@ pub async fn htmx_maintenance_history_handler(State(state): State<AdminState>) -
 
     for activity in activities {
         let level_class = match activity.level {
-            crate::server::admin::service::helpers::activity::ActivityLevel::Info => {
+            crate::application::admin::helpers::activity::ActivityLevel::Info => {
                 css::badge::INFO
             }
-            crate::server::admin::service::helpers::activity::ActivityLevel::Warning => {
+            crate::application::admin::helpers::activity::ActivityLevel::Warning => {
                 css::badge::WARNING
             }
-            crate::server::admin::service::helpers::activity::ActivityLevel::Error => {
+            crate::application::admin::helpers::activity::ActivityLevel::Error => {
                 css::badge::ERROR
             }
-            crate::server::admin::service::helpers::activity::ActivityLevel::Success => {
+            crate::application::admin::helpers::activity::ActivityLevel::Success => {
                 css::badge::SUCCESS
             }
         };

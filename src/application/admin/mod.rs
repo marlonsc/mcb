@@ -11,7 +11,7 @@
 
 pub mod helpers;
 mod implementation;
-mod traits;
+pub mod traits;
 pub mod types;
 
 pub use implementation::{AdminServiceDependencies, AdminServiceImpl};

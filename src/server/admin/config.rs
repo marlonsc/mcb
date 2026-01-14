@@ -18,7 +18,6 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use validator::Validate;
 
-
 /// Minimum allowed password length for admin accounts
 pub const MIN_PASSWORD_LENGTH: usize = 8;
 /// Minimum allowed JWT secret length for security
@@ -394,7 +393,8 @@ impl AdminConfig {
 
         // Priority 3: First run - use development defaults if in development mode
         // Check if we should use development defaults (when no env vars are set)
-        let use_dev_defaults = username_env.is_none() && password_env.is_none() && jwt_secret_env.is_none();
+        let use_dev_defaults =
+            username_env.is_none() && password_env.is_none() && jwt_secret_env.is_none();
 
         let (store, generated_password) = if use_dev_defaults {
             // Use development defaults for easier local development
@@ -403,8 +403,10 @@ impl AdminConfig {
             let dev_password = "adminpass123".to_string();
             let dev_jwt_secret = "mcp-context-browser-jwt-secret-key-32chars".to_string();
 
-            let dev_password_hash = crate::infrastructure::auth::password::hash_password(&dev_password)
-                .map_err(|e| ConfigError::ConfigError(format!("Failed to hash dev password: {}", e)))?;
+            let dev_password_hash = crate::infrastructure::auth::password::hash_password(
+                &dev_password,
+            )
+            .map_err(|e| ConfigError::ConfigError(format!("Failed to hash dev password: {}", e)))?;
 
             let store = UserStore {
                 users: vec![crate::infrastructure::auth::user_store::StoredUser {

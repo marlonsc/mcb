@@ -2,7 +2,7 @@
 //!
 //! Tests for centralized default values for admin service operations.
 
-use mcp_context_browser::server::admin::service::helpers::admin_defaults::{
+use mcp_context_browser::application::admin::helpers::admin_defaults::{
     get_env_u32, get_env_u64, get_env_usize, BYTES_PER_GIGABYTE, BYTES_PER_KILOBYTE,
     BYTES_PER_MEGABYTE,
 };

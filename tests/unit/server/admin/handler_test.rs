@@ -3,7 +3,7 @@
 //! Tests for all HTTP handlers in src/admin/handlers.rs
 
 use mcp_context_browser::adapters::http_client::HttpClientPool;
-use mcp_context_browser::server::admin::service::AdminService;
+use mcp_context_browser::application::admin::AdminService;
 
 pub mod test_helpers {
     use super::*;
@@ -11,15 +11,13 @@ pub mod test_helpers {
     /// Create a real AdminService for testing with minimal dependencies
     pub async fn create_test_admin_service() -> std::sync::Arc<dyn AdminService> {
         use arc_swap::ArcSwap;
+        use mcp_context_browser::application::admin::{AdminServiceDependencies, AdminServiceImpl};
         use mcp_context_browser::infrastructure::config::ConfigLoader;
         use mcp_context_browser::infrastructure::di::factory::ServiceProvider;
         use mcp_context_browser::infrastructure::events::EventBus;
         use mcp_context_browser::infrastructure::logging;
         use mcp_context_browser::infrastructure::metrics::system::SystemMetricsCollector;
         use mcp_context_browser::infrastructure::operations::McpIndexingOperations;
-        use mcp_context_browser::server::admin::service::{
-            AdminServiceDependencies, AdminServiceImpl,
-        };
         use mcp_context_browser::server::metrics::McpPerformanceMetrics;
         use std::sync::Arc;
 
@@ -242,7 +240,7 @@ mod auth_tests {
 //
 // #[tokio::test]
 // async fn test_admin_service_cache_operations() {
-//     use mcp_context_browser::server::admin::service::CacheType;
+//     use mcp_context_browser::application::admin::types::CacheType;
 //
 //     let test_infra = test_infrastructure::TestInfrastructure::new().await
 //         .expect("Failed to create test infrastructure");
@@ -256,7 +254,7 @@ mod auth_tests {
 //
 // #[tokio::test]
 // async fn test_admin_service_backup() {
-//     use mcp_context_browser::server::admin::service::BackupConfig;
+//     use mcp_context_browser::application::admin::types::BackupConfig;
 //
 //     let test_infra = test_infrastructure::TestInfrastructure::new().await
 //         .expect("Failed to create test infrastructure");

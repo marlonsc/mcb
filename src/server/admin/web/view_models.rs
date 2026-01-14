@@ -494,7 +494,7 @@ impl BackupViewModel {
     ///
     /// Transforms a BackupInfo service struct into a view model with
     /// pre-formatted display values for the template.
-    pub fn from_backup_info(backup: &crate::server::admin::service::BackupInfo) -> Self {
+    pub fn from_backup_info(backup: &crate::application::admin::types::BackupInfo) -> Self {
         Self {
             id: backup.id.clone(),
             name: backup.name.clone(),
@@ -507,7 +507,8 @@ impl BackupViewModel {
                 "failed" => "badge-error",
                 "in_progress" => "badge-warning",
                 _ => "badge-info",
-            }.to_string(),
+            }
+            .to_string(),
         }
     }
 }

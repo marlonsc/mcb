@@ -15,7 +15,7 @@ use mcp_context_browser::infrastructure::logging::SharedLogBuffer;
 use mcp_context_browser::infrastructure::metrics::system::{
     SystemMetricsCollector, SystemMetricsCollectorInterface,
 };
-use mcp_context_browser::server::admin::service::{
+use mcp_context_browser::application::admin::{
     AdminService, AdminServiceDependencies, AdminServiceImpl,
 };
 use mcp_context_browser::infrastructure::metrics::{McpPerformanceMetrics, PerformanceMetricsInterface};

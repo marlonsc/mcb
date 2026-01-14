@@ -95,7 +95,6 @@ impl AdminServiceImpl {
             cache_provider: deps.cache_provider,
         }
     }
-
 }
 
 #[async_trait]
@@ -703,7 +702,7 @@ impl AdminService for AdminServiceImpl {
     async fn get_routes(&self) -> Result<Vec<RouteInfo>, AdminError> {
         // Use dynamic route discovery instead of hardcoded routes
         // This allows routes to be registered at runtime and automatically discovered
-        use crate::server::admin::service::helpers::route_discovery::build_standard_routes;
+        use crate::application::admin::helpers::route_discovery::build_standard_routes;
 
         let route_registry = build_standard_routes().await;
         Ok(route_registry.get_all().await)

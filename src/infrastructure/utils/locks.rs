@@ -28,9 +28,12 @@ pub trait RwLockExt<T> {
     /// use std::sync::RwLock;
     /// use mcp_context_browser::infrastructure::utils::locks::RwLockExt;
     ///
-    /// let lock = RwLock::new("hello".to_string());
-    /// let value: String = lock.extract(|data| data.clone()).unwrap();
-    /// assert_eq!(value, "hello");
+    /// fn example() -> mcp_context_browser::domain::error::Result<()> {
+    ///     let lock = RwLock::new("hello".to_string());
+    ///     let value: String = lock.extract(|data| data.clone())?;
+    ///     assert_eq!(value, "hello");
+    ///     Ok(())
+    /// }
     /// ```
     fn extract<F, R>(&self, extractor: F) -> Result<R>
     where
@@ -44,9 +47,12 @@ pub trait RwLockExt<T> {
     /// use std::sync::RwLock;
     /// use mcp_context_browser::infrastructure::utils::locks::RwLockExt;
     ///
-    /// let lock = RwLock::new(vec![1, 2, 3]);
-    /// let count: usize = lock.extract_map(|data| data.len()).unwrap();
-    /// assert_eq!(count, 3);
+    /// fn example() -> mcp_context_browser::domain::error::Result<()> {
+    ///     let lock = RwLock::new(vec![1, 2, 3]);
+    ///     let count: usize = lock.extract_map(|data| data.len())?;
+    ///     assert_eq!(count, 3);
+    ///     Ok(())
+    /// }
     /// ```
     fn extract_map<F, R>(&self, mapper: F) -> Result<R>
     where

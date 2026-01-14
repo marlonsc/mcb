@@ -68,8 +68,10 @@ pub use super::stats::SyncStats;
 #[derive(shaku::Component)]
 #[shaku(interface = SyncProvider)]
 pub struct SyncManager {
+    /// Synchronization configuration
     #[shaku(default = SyncConfig::default())]
     config: SyncConfig,
+    /// Optional cache provider for cached operations
     #[shaku(default)]
     cache_manager: Option<SharedCacheProvider>,
     /// Debounce service for rate limiting syncs
@@ -81,6 +83,7 @@ pub struct SyncManager {
     /// Statistics collector service
     #[shaku(default = Arc::new(SyncStatsCollector::new()))]
     stats: Arc<SyncStatsCollector>,
+    /// Optional event bus for publishing sync events
     #[shaku(default)]
     event_bus: Option<SharedEventBusProvider>,
 }

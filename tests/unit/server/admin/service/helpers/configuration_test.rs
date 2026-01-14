@@ -2,7 +2,7 @@
 //!
 //! Tests for persistence of configuration changes and audit trails.
 
-use mcp_context_browser::server::admin::service::helpers::configuration::ConfigHistoryManager;
+use mcp_context_browser::application::admin::helpers::configuration::ConfigHistoryManager;
 
 #[tokio::test]
 async fn test_record_and_get_history() {

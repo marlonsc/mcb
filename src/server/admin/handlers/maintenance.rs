@@ -138,7 +138,7 @@ pub async fn api_restart_all_providers_handler(State(state): State<AdminState>) 
         .map(|p| (p.provider_type, p.id))
         .collect();
 
-    match crate::server::admin::service::helpers::maintenance::restart_all_providers(
+    match crate::application::admin::helpers::maintenance::restart_all_providers(
         &state.event_bus,
         &provider_list,
     )
@@ -169,7 +169,7 @@ pub async fn api_restart_providers_by_type_handler(
         return html_warning(format!("No {} providers found", provider_type));
     }
 
-    match crate::server::admin::service::helpers::maintenance::restart_all_providers(
+    match crate::application::admin::helpers::maintenance::restart_all_providers(
         &state.event_bus,
         &provider_list,
     )

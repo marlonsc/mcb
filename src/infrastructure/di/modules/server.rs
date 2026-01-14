@@ -2,6 +2,8 @@
 //!
 //! Contains MCP server metrics and indexing operations.
 
+#![allow(missing_docs)]
+
 use shaku::module;
 
 use super::traits::ServerModule;

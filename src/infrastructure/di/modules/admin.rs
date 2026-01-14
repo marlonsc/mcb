@@ -2,15 +2,19 @@
 //!
 //! Contains admin service with dependencies on infrastructure and server modules.
 
+#![allow(missing_docs)]
+
 use shaku::module;
 
-use super::traits::{AdaptersModule, AdminModule, ApplicationModule, InfrastructureModule, ServerModule};
+use super::traits::{
+    AdaptersModule, AdminModule, ApplicationModule, InfrastructureModule, ServerModule,
+};
 use crate::adapters::http_client::HttpClientProvider;
+use crate::application::admin::AdminServiceImpl;
 use crate::domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::events::EventBusProvider;
 use crate::infrastructure::metrics::system::SystemMetricsCollectorInterface;
-use crate::server::admin::service::AdminServiceImpl;
 
 // Implementation of the AdminModule trait providing administrative services.
 // This module provides the main admin service with dependencies on infrastructure components.

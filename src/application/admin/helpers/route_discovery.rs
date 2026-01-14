@@ -3,8 +3,8 @@
 //! Provides dynamic route registration and discovery for the admin API.
 //! This allows routes to be registered at runtime and discovered via the API.
 
-use crate::server::admin::service::helpers::admin_defaults;
-use crate::server::admin::service::types::RouteInfo;
+use crate::application::admin::helpers::admin_defaults;
+use crate::application::admin::types::RouteInfo;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;

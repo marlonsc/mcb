@@ -3175,6 +3175,7 @@ dependencies = [
  "handlebars",
  "health",
  "hostname",
+ "http-body-util",
  "humantime",
  "ignore",
  "itertools 0.13.0",

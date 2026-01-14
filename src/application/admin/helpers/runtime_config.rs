@@ -4,9 +4,9 @@
 //! eliminating hardcoded values by reading from actual subsystems.
 
 use super::defaults::*;
+use crate::application::admin::types::AdminError;
 use crate::domain::ports::IndexingOperationsInterface;
 use crate::infrastructure::cache::SharedCacheProvider;
-use crate::server::admin::service::types::AdminError;
 use std::sync::Arc;
 
 /// Runtime configuration values loaded from actual subsystems

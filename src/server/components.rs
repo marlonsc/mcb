@@ -7,6 +7,7 @@ use arc_swap::ArcSwap;
 use std::sync::Arc;
 
 use crate::adapters::http_client::HttpClientProvider;
+use crate::application::admin::traits::AdminService;
 use crate::domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use crate::domain::ports::{IndexingServiceInterface, SearchServiceInterface};
 use crate::infrastructure::cache::SharedCacheProvider;
@@ -15,7 +16,6 @@ use crate::infrastructure::events::SharedEventBusProvider;
 use crate::infrastructure::limits::ResourceLimits;
 use crate::infrastructure::logging::SharedLogBuffer;
 use crate::infrastructure::metrics::system::SystemMetricsCollectorInterface;
-use crate::server::admin::service::AdminService;
 
 /// Components required to initialize McpServer
 ///

@@ -115,7 +115,7 @@ pub async fn get_dashboard_metrics_handler(
 pub async fn search_handler(
     State(state): State<AdminState>,
     Query(params): Query<SearchQuery>,
-) -> Result<Json<ApiResponse<crate::server::admin::service::SearchResults>>, StatusCode> {
+) -> Result<Json<ApiResponse<crate::application::admin::types::SearchResults>>, StatusCode> {
     match state
         .admin_service
         .search(&params.q, None, params.limit)
@@ -131,7 +131,7 @@ pub async fn get_activities_handler(
     State(state): State<AdminState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Result<
-    Json<ApiResponse<Vec<crate::server::admin::service::helpers::activity::Activity>>>,
+    Json<ApiResponse<Vec<crate::application::admin::helpers::activity::Activity>>>,
     StatusCode,
 > {
     let limit = params

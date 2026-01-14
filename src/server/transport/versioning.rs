@@ -15,12 +15,12 @@ pub enum CompatibilityResult {
     /// Versions differ but within tolerance (warning)
     Warning {
         /// Warning message explaining the version difference
-        message: String
+        message: String,
     },
     /// Versions are incompatible
     Incompatible {
         /// Error message explaining why versions are incompatible
-        message: String
+        message: String,
     },
 }
 

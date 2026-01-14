@@ -2,13 +2,13 @@
 //!
 //! Builds SubsystemInfo structures from runtime data.
 
+use crate::application::admin::types::{
+    HealthCheck, ProviderInfo, SubsystemInfo, SubsystemMetrics, SubsystemStatus, SubsystemType,
+};
 use crate::domain::ports::admin::PerformanceMetricsData;
 use crate::infrastructure::cache::CacheBackendConfig;
 use crate::infrastructure::config::Config;
 use crate::infrastructure::metrics::ProcessMetrics;
-use crate::server::admin::service::types::{
-    HealthCheck, ProviderInfo, SubsystemInfo, SubsystemMetrics, SubsystemStatus, SubsystemType,
-};
 
 /// Build subsystem info from providers and metrics
 pub fn build_subsystem_list(
@@ -359,8 +359,8 @@ impl SubsystemType {
 // Signal dispatch helpers
 // ============================================================================
 
+use crate::application::admin::types::{SignalResult, SubsystemSignal};
 use crate::infrastructure::events::{SharedEventBusProvider, SystemEvent};
-use crate::server::admin::service::types::{SignalResult, SubsystemSignal};
 
 /// Get the string name for a signal
 pub fn signal_name(signal: &SubsystemSignal) -> &'static str {

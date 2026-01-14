@@ -274,8 +274,8 @@ impl ComponentResolver<dyn crate::domain::ports::IndexingServiceInterface> for D
     }
 }
 
-impl ComponentResolver<dyn crate::server::admin::service::AdminService> for DiContainer {
-    fn resolve(&self) -> Arc<dyn crate::server::admin::service::AdminService> {
+impl ComponentResolver<dyn crate::application::admin::AdminService> for DiContainer {
+    fn resolve(&self) -> Arc<dyn crate::application::admin::AdminService> {
         self.admin_module.resolve()
     }
 }

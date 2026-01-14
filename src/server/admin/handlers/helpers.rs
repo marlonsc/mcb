@@ -58,6 +58,7 @@ pub fn ok_json<T: Serialize>(data: T) -> Result<Json<ApiResponse<T>>, StatusCode
     success(data)
 }
 
+/// Deprecated error response wrapper - use `error()` instead
 #[deprecated(since = "0.1.0", note = "use `error()` instead")]
 pub fn err_json<T: Serialize + Default>(
     message: impl AsRef<str>,

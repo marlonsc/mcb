@@ -6,7 +6,7 @@
 use super::view_models::*;
 use crate::infrastructure::utils::{activity_level, FormattingUtils};
 use crate::server::admin::models::AdminState;
-use crate::server::admin::service::helpers::activity::ActivityLevel;
+use crate::application::admin::helpers::activity::ActivityLevel;
 use anyhow::{Context, Result};
 
 /// Helper for building configuration settings efficiently

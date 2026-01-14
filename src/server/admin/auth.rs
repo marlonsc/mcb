@@ -193,7 +193,10 @@ pub async fn login_handler(
     Json(login_req): Json<LoginRequest>,
 ) -> Response {
     // Use the real AuthService from DI container
-    match state.auth_service.authenticate(&login_req.username, &login_req.password) {
+    match state
+        .auth_service
+        .authenticate(&login_req.username, &login_req.password)
+    {
         Ok(token) => {
             // For backward compatibility, create a UserInfo from the token claims
             // This is needed because the response format expects UserInfo
