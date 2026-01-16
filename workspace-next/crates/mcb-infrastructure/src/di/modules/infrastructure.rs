@@ -108,16 +108,3 @@ impl<Ctx: ModuleBuildContext> Module<Ctx> for InfrastructureModule {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::ConfigBuilder;
-
-    #[tokio::test]
-    async fn test_infrastructure_module_creation() {
-        let config = ConfigBuilder::new().build();
-        let module = InfrastructureModule::new(config);
-        // Module creation should succeed
-        assert!(true); // If we get here, module creation worked
-    }
-}

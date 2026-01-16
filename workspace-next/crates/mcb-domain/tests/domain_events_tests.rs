@@ -2,8 +2,8 @@
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::{DomainEvent, EventPublisher};
     use async_trait::async_trait;
+    use mcb_domain::{DomainEvent, EventPublisher};
     use std::sync::Mutex;
 
     // Mock event for testing

@@ -8,6 +8,12 @@ pub struct ServerComponents {
     // Placeholder for shared server components
 }
 
+impl Default for ServerComponents {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ServerComponents {
     /// Create new server components
     pub fn new() -> Self {

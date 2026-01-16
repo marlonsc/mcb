@@ -131,6 +131,6 @@ pub mod utils;
 // pub mod utils;
 
 // Re-export commonly used traits and types
-pub use error_ext::ErrorContext;
 pub use adapters::repository::{VectorStoreChunkRepository, VectorStoreSearchRepository};
+pub use error_ext::ErrorContext;
 pub use utils::TimedOperation;

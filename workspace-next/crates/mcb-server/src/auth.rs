@@ -8,6 +8,12 @@ pub struct AuthHandler {
     // Will be implemented with infrastructure auth integration
 }
 
+impl Default for AuthHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AuthHandler {
     /// Create a new auth handler
     pub fn new() -> Self {

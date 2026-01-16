@@ -17,6 +17,12 @@ pub struct MokaCacheProvider {
     max_size: usize,
 }
 
+impl Default for MokaCacheProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MokaCacheProvider {
     /// Create a new Moka cache provider with default settings
     pub fn new() -> Self {
@@ -25,9 +31,7 @@ impl MokaCacheProvider {
 
     /// Create a new Moka cache provider with specified capacity
     pub fn with_capacity(max_size: usize) -> Self {
-        let cache = Cache::builder()
-            .max_capacity(max_size as u64)
-            .build();
+        let cache = Cache::builder().max_capacity(max_size as u64).build();
 
         Self { cache, max_size }
     }
@@ -63,8 +67,8 @@ impl MokaCacheProvider {
 impl CacheProvider for MokaCacheProvider {
     async fn get_json(&self, key: &str) -> Result<Option<String>> {
         if let Some(bytes) = self.cache.get(key).await {
-            let json = String::from_utf8(bytes)
-                .map_err(|e| mcb_domain::error::Error::Infrastructure {
+            let json =
+                String::from_utf8(bytes).map_err(|e| mcb_domain::error::Error::Infrastructure {
                     message: format!("Invalid UTF-8 in cached value: {}", e),
                     source: Some(Box::new(e)),
                 })?;
@@ -114,11 +118,11 @@ impl CacheProvider for MokaCacheProvider {
         let entries = self.cache.entry_count();
 
         Ok(CacheStats {
-            hits: 0,    // Moka doesn't track hits/misses
-            misses: 0,  // Moka doesn't track hits/misses
+            hits: 0,   // Moka doesn't track hits/misses
+            misses: 0, // Moka doesn't track hits/misses
             entries,
             hit_rate: 0.0, // Unknown
-            bytes_used: 0,  // Unknown
+            bytes_used: 0, // Unknown
         })
     }
 
@@ -157,7 +161,10 @@ mod tests {
         };
 
         // Test set and get
-        provider.set("test_key", &value, CacheEntryConfig::default()).await.unwrap();
+        provider
+            .set("test_key", &value, CacheEntryConfig::default())
+            .await
+            .unwrap();
 
         let retrieved: Option<TestValue> = provider.get("test_key").await.unwrap();
         assert_eq!(retrieved, Some(value));
@@ -190,8 +197,14 @@ mod tests {
         let provider = MokaCacheProvider::new();
 
         // Add some entries
-        provider.set("key1", "value1", CacheEntryConfig::default()).await.unwrap();
-        provider.set("key2", "value2", CacheEntryConfig::default()).await.unwrap();
+        provider
+            .set("key1", "value1", CacheEntryConfig::default())
+            .await
+            .unwrap();
+        provider
+            .set("key2", "value2", CacheEntryConfig::default())
+            .await
+            .unwrap();
 
         assert_eq!(provider.size().await.unwrap(), 2);
 
@@ -207,8 +220,14 @@ mod tests {
     async fn test_moka_provider_stats() {
         let provider = MokaCacheProvider::new();
 
-        provider.set("key1", "value1", CacheEntryConfig::default()).await.unwrap();
-        provider.set("key2", "value2", CacheEntryConfig::default()).await.unwrap();
+        provider
+            .set("key1", "value1", CacheEntryConfig::default())
+            .await
+            .unwrap();
+        provider
+            .set("key2", "value2", CacheEntryConfig::default())
+            .await
+            .unwrap();
 
         let stats = provider.stats().await.unwrap();
         assert_eq!(stats.entries, 2);

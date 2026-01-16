@@ -41,8 +41,9 @@
 //! - `server` - MCP protocol server and API endpoints
 
 /// Domain layer - core business logic and types
+///
+/// Re-exports from the domain crate for convenience
 pub mod domain {
-    //! Re-exports from the domain crate for convenience
     pub use mcb_domain::*;
 }
 

@@ -8,9 +8,7 @@ use rmcp::ErrorData as McpError;
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::args::{
-    ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs,
-};
+use crate::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
 
 /// Tool definitions for MCP protocol
 pub struct ToolDefinitions;

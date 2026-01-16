@@ -17,7 +17,9 @@ impl CacheProviderFactory {
         use crate::cache::provider::CacheProviderType;
 
         if !config.enabled {
-            return Ok(SharedCacheProvider::new(CacheProviderType::Null(NullCacheProvider::new())));
+            return Ok(SharedCacheProvider::new(CacheProviderType::Null(
+                NullCacheProvider::new(),
+            )));
         }
 
         let provider = match config.provider {
@@ -25,7 +27,9 @@ impl CacheProviderFactory {
                 CacheProviderType::Moka(MokaCacheProvider::with_capacity(config.max_size))
             }
             crate::config::data::CacheProvider::Redis => {
-                let redis_url = config.redis_url.as_deref()
+                let redis_url = config
+                    .redis_url
+                    .as_deref()
                     .unwrap_or("redis://localhost:6379");
                 CacheProviderType::Redis(RedisCacheProvider::new(redis_url)?)
             }
@@ -40,7 +44,9 @@ impl CacheProviderFactory {
     /// Create a Moka cache provider
     pub fn create_moka(max_size: usize) -> SharedCacheProvider {
         use crate::cache::provider::CacheProviderType;
-        SharedCacheProvider::new(CacheProviderType::Moka(MokaCacheProvider::with_capacity(max_size)))
+        SharedCacheProvider::new(CacheProviderType::Moka(MokaCacheProvider::with_capacity(
+            max_size,
+        )))
     }
 
     /// Create a Redis cache provider
@@ -57,7 +63,10 @@ impl CacheProviderFactory {
     }
 
     /// Create a cache provider with specific namespace
-    pub fn with_namespace(mut provider: SharedCacheProvider, namespace: &str) -> SharedCacheProvider {
+    pub fn with_namespace(
+        mut provider: SharedCacheProvider,
+        namespace: &str,
+    ) -> SharedCacheProvider {
         provider.set_namespace(namespace);
         provider
     }
@@ -72,7 +81,10 @@ mod tests {
         let provider = CacheProviderFactory::create_null();
 
         // Test basic operations
-        assert!(provider.set("test", "value", CacheEntryConfig::default()).await.is_ok());
+        assert!(provider
+            .set("test", "value", CacheEntryConfig::default())
+            .await
+            .is_ok());
         let result: Option<String> = provider.get("test").await.unwrap();
         assert!(result.is_none()); // Null provider always returns None
     }
@@ -82,7 +94,10 @@ mod tests {
         let provider = CacheProviderFactory::create_moka(1024 * 1024); // 1MB
 
         // Test basic operations
-        assert!(provider.set("test", "value", CacheEntryConfig::default()).await.is_ok());
+        assert!(provider
+            .set("test", "value", CacheEntryConfig::default())
+            .await
+            .is_ok());
         let result: Option<String> = provider.get("test").await.unwrap();
         assert_eq!(result, Some("value".to_string()));
     }
@@ -90,10 +105,15 @@ mod tests {
     #[tokio::test]
     #[ignore] // Requires Redis server
     async fn test_factory_redis_provider() {
-        let provider = CacheProviderFactory::create_redis("redis://localhost:6379").await.unwrap();
+        let provider = CacheProviderFactory::create_redis("redis://localhost:6379")
+            .await
+            .unwrap();
 
         // Test basic operations
-        assert!(provider.set("test", "value", CacheEntryConfig::default()).await.is_ok());
+        assert!(provider
+            .set("test", "value", CacheEntryConfig::default())
+            .await
+            .is_ok());
         let result: Option<String> = provider.get("test").await.unwrap();
         assert_eq!(result, Some("value".to_string()));
     }
@@ -105,7 +125,9 @@ mod tests {
             ..Default::default()
         };
 
-        let provider = CacheProviderFactory::create_from_config(&config).await.unwrap();
+        let provider = CacheProviderFactory::create_from_config(&config)
+            .await
+            .unwrap();
 
         // Should be null provider when disabled
         let result: Option<String> = provider.get("test").await.unwrap();
@@ -122,10 +144,15 @@ mod tests {
             ..Default::default()
         };
 
-        let provider = CacheProviderFactory::create_from_config(&config).await.unwrap();
+        let provider = CacheProviderFactory::create_from_config(&config)
+            .await
+            .unwrap();
 
         // Test that it works and has namespace
-        assert!(provider.set("key", "value", CacheEntryConfig::default()).await.is_ok());
+        assert!(provider
+            .set("key", "value", CacheEntryConfig::default())
+            .await
+            .is_ok());
         let result: Option<String> = provider.get("key").await.unwrap();
         assert_eq!(result, Some("value".to_string()));
     }

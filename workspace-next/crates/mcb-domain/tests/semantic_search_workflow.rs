@@ -3,9 +3,9 @@
 #[cfg(test)]
 mod tests {
     use mcb_domain::{
-        CodeChunk, Embedding, SearchResult, Language,
         entities::{CodebaseSnapshot, FileSnapshot},
         value_objects::{config::SyncBatch, types::OperationType},
+        CodeChunk, Embedding, Language, SearchResult,
     };
     use std::collections::HashMap;
 
@@ -53,7 +53,9 @@ mod tests {
 
         // Verify search results
         assert!(!search_results.is_empty());
-        assert!(search_results.iter().all(|r| r.score >= 0.0 && r.score <= 1.0));
+        assert!(search_results
+            .iter()
+            .all(|r| r.score >= 0.0 && r.score <= 1.0));
         assert!(search_results.iter().all(|r| !r.content.is_empty()));
 
         // Phase 5: Result Ranking and Filtering
@@ -115,13 +117,15 @@ mod tests {
 
         // Group chunks by file
         for chunk in chunks {
-            let file_entry = files.entry(chunk.file_path.clone()).or_insert_with(|| FileSnapshot {
-                path: chunk.file_path.clone(),
-                modified_at: 1640995200,
-                size: 0,
-                hash: format!("hash-{}", chunk.file_path),
-                language: chunk.language.clone(),
-            });
+            let file_entry = files
+                .entry(chunk.file_path.clone())
+                .or_insert_with(|| FileSnapshot {
+                    path: chunk.file_path.clone(),
+                    modified_at: 1640995200,
+                    size: 0,
+                    hash: format!("hash-{}", chunk.file_path),
+                    language: chunk.language.clone(),
+                });
             file_entry.size += chunk.content.len() as u64;
         }
 
@@ -138,26 +142,41 @@ mod tests {
     }
 
     fn create_chunk_embeddings(chunks: &[CodeChunk]) -> Vec<Embedding> {
-        chunks.iter().enumerate().map(|(i, _)| Embedding {
-            vector: vec![0.1 * (i + 1) as f32; 384],
-            model: "text-embedding-ada-002".to_string(),
-            dimensions: 384,
-        }).collect()
+        chunks
+            .iter()
+            .enumerate()
+            .map(|(i, _)| Embedding {
+                vector: vec![0.1 * (i + 1) as f32; 384],
+                model: "text-embedding-ada-002".to_string(),
+                dimensions: 384,
+            })
+            .collect()
     }
 
-    fn perform_semantic_search(chunks: &[CodeChunk], _query_embedding: &Embedding) -> Vec<SearchResult> {
-        chunks.iter().enumerate().map(|(i, chunk)| SearchResult {
-            id: chunk.id.clone(),
-            file_path: chunk.file_path.clone(),
-            start_line: chunk.start_line,
-            content: chunk.content.clone(),
-            score: 0.9 - (i as f64 * 0.1), // Decreasing scores for simulation
-            language: chunk.language.clone(),
-        }).collect()
+    fn perform_semantic_search(
+        chunks: &[CodeChunk],
+        _query_embedding: &Embedding,
+    ) -> Vec<SearchResult> {
+        chunks
+            .iter()
+            .enumerate()
+            .map(|(i, chunk)| SearchResult {
+                id: chunk.id.clone(),
+                file_path: chunk.file_path.clone(),
+                start_line: chunk.start_line,
+                content: chunk.content.clone(),
+                score: 0.9 - (i as f64 * 0.1), // Decreasing scores for simulation
+                language: chunk.language.clone(),
+            })
+            .collect()
     }
 
     fn sort_results_by_score(mut results: Vec<SearchResult>) -> Vec<SearchResult> {
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         results
     }
 
@@ -178,8 +197,8 @@ mod tests {
 
         // Empty chunk content should be invalid
         let invalid_chunk = CodeChunk {
-            id: "".to_string(), // Empty ID
-            content: "".to_string(), // Empty content
+            id: "".to_string(),        // Empty ID
+            content: "".to_string(),   // Empty content
             file_path: "".to_string(), // Empty path
             start_line: 0,
             end_line: 0,
@@ -198,25 +217,29 @@ mod tests {
     #[test]
     fn test_workflow_performance_characteristics() {
         // Create a larger dataset to test performance characteristics
-        let large_chunks: Vec<CodeChunk> = (0..100).map(|i| CodeChunk {
-            id: format!("chunk-{}", i),
-            content: format!("fn function_{}() {{ println!(\"Function {}\"); }}", i, i),
-            file_path: format!("src/file{}.rs", i % 10),
-            start_line: (i % 50 + 1) as u32,
-            end_line: (i % 50 + 3) as u32,
-            language: "rust".to_string(),
-            metadata: serde_json::json!({"index": i}),
-        }).collect();
+        let large_chunks: Vec<CodeChunk> = (0..100)
+            .map(|i| CodeChunk {
+                id: format!("chunk-{}", i),
+                content: format!("fn function_{}() {{ println!(\"Function {}\"); }}", i, i),
+                file_path: format!("src/file{}.rs", i % 10),
+                start_line: (i % 50 + 1) as u32,
+                end_line: (i % 50 + 3) as u32,
+                language: "rust".to_string(),
+                metadata: serde_json::json!({"index": i}),
+            })
+            .collect();
 
         // Test that we can handle larger datasets
         assert_eq!(large_chunks.len(), 100);
 
         // Test embeddings for larger dataset
-        let large_embeddings: Vec<Embedding> = (0..100).map(|_| Embedding {
-            vector: vec![0.0; 384],
-            model: "test-model".to_string(),
-            dimensions: 384,
-        }).collect();
+        let large_embeddings: Vec<Embedding> = (0..100)
+            .map(|_| Embedding {
+                vector: vec![0.0; 384],
+                model: "test-model".to_string(),
+                dimensions: 384,
+            })
+            .collect();
 
         assert_eq!(large_embeddings.len(), 100);
         assert!(large_embeddings.iter().all(|e| e.dimensions == 384));

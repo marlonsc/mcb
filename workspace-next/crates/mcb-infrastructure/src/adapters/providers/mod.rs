@@ -19,4 +19,7 @@
 pub mod embedding;
 
 // Re-export embedding providers
-pub use embedding::NullEmbeddingProvider;
+pub use embedding::{
+    FastEmbedProvider, GeminiEmbeddingProvider, NullEmbeddingProvider, OllamaEmbeddingProvider,
+    OpenAIEmbeddingProvider, VoyageAIEmbeddingProvider,
+};

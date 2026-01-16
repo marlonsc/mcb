@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Main application configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppConfig {
     /// Server configuration
     pub server: ServerConfig,
@@ -53,27 +53,6 @@ pub struct AppConfig {
 
     /// Operations configuration
     pub operations: OperationsConfig,
-}
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            server: ServerConfig::default(),
-            embedding: HashMap::new(),
-            vector_store: HashMap::new(),
-            logging: LoggingConfig::default(),
-            auth: AuthConfig::default(),
-            cache: CacheConfig::default(),
-            metrics: MetricsConfig::default(),
-            resilience: ResilienceConfig::default(),
-            limits: LimitsConfig::default(),
-            daemon: DaemonConfig::default(),
-            backup: BackupConfig::default(),
-            snapshot: SnapshotConfig::default(),
-            sync: SyncConfig::default(),
-            operations: OperationsConfig::default(),
-        }
-    }
 }
 
 /// Server configuration

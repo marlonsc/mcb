@@ -168,11 +168,12 @@ impl SharedCacheProvider {
         let namespaced_key = self.namespaced_key(key);
         match self.provider.get_json(&namespaced_key).await? {
             Some(json) => {
-                let value: T = serde_json::from_str(&json)
-                    .map_err(|e| mcb_domain::error::Error::Infrastructure {
+                let value: T = serde_json::from_str(&json).map_err(|e| {
+                    mcb_domain::error::Error::Infrastructure {
                         message: format!("Failed to deserialize cached value: {}", e),
                         source: Some(Box::new(e)),
-                    })?;
+                    }
+                })?;
                 Ok(Some(value))
             }
             None => Ok(None),
@@ -185,8 +186,8 @@ impl SharedCacheProvider {
         T: serde::Serialize + Send + Sync,
     {
         let namespaced_key = self.namespaced_key(key);
-        let json = serde_json::to_string(value)
-            .map_err(|e| mcb_domain::error::Error::Infrastructure {
+        let json =
+            serde_json::to_string(value).map_err(|e| mcb_domain::error::Error::Infrastructure {
                 message: format!("Failed to serialize value for cache: {}", e),
                 source: Some(Box::new(e)),
             })?;
@@ -226,7 +227,6 @@ impl SharedCacheProvider {
         self.provider.size().await
     }
 
-
     /// Create a namespaced view of this cache provider
     pub fn namespaced<S: Into<String>>(&self, namespace: S) -> NamespacedCacheProvider {
         NamespacedCacheProvider {
@@ -262,11 +262,12 @@ impl NamespacedCacheProvider {
         let namespaced_key = format!("{}:{}", self.namespace, key);
         match self.provider.get_json(&namespaced_key).await? {
             Some(json) => {
-                let value: T = serde_json::from_str(&json)
-                    .map_err(|e| mcb_domain::error::Error::Infrastructure {
+                let value: T = serde_json::from_str(&json).map_err(|e| {
+                    mcb_domain::error::Error::Infrastructure {
                         message: format!("Failed to deserialize cached value: {}", e),
                         source: Some(Box::new(e)),
-                    })?;
+                    }
+                })?;
                 Ok(Some(value))
             }
             None => Ok(None),
@@ -279,8 +280,8 @@ impl NamespacedCacheProvider {
         T: serde::Serialize + Send + Sync,
     {
         let namespaced_key = format!("{}:{}", self.namespace, key);
-        let json = serde_json::to_string(value)
-            .map_err(|e| mcb_domain::error::Error::Infrastructure {
+        let json =
+            serde_json::to_string(value).map_err(|e| mcb_domain::error::Error::Infrastructure {
                 message: format!("Failed to serialize value for cache: {}", e),
                 source: Some(Box::new(e)),
             })?;
@@ -311,7 +312,10 @@ mod tests {
 
         // Test basic operations (NullCacheProvider always returns None/Ok)
         assert_eq!(provider.get::<_, String>("test").await.unwrap(), None);
-        assert!(provider.set("test", "value", CacheEntryConfig::default()).await.is_ok());
+        assert!(provider
+            .set("test", "value", CacheEntryConfig::default())
+            .await
+            .is_ok());
         assert_eq!(provider.exists("test").await.unwrap(), false);
         assert_eq!(provider.delete("test").await.unwrap(), false);
         assert!(provider.clear().await.is_ok());
@@ -325,7 +329,10 @@ mod tests {
         let namespaced = provider.namespaced("test_ns");
 
         assert_eq!(namespaced.get::<_, String>("key").await.unwrap(), None);
-        assert!(namespaced.set("key", "value", CacheEntryConfig::default()).await.is_ok());
+        assert!(namespaced
+            .set("key", "value", CacheEntryConfig::default())
+            .await
+            .is_ok());
         assert_eq!(namespaced.exists("key").await.unwrap(), false);
     }
 

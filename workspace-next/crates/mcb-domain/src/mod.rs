@@ -52,27 +52,32 @@
 //! };
 //! ```
 
-/// Core business entities with identity
-pub mod entities;
-/// Immutable value objects
-pub mod value_objects;
+/// Domain-level constants
+pub mod constants;
 /// Domain service interfaces
 pub mod domain_services;
-/// Repository interfaces for data persistence
-pub mod repositories;
+/// Core business entities with identity
+pub mod entities;
+/// Domain error types
+pub mod error;
 /// Domain event interfaces
 pub mod events;
 /// External system port interfaces
 pub mod ports;
-/// Domain-level constants
-pub mod constants;
-/// Domain error types
-pub mod error;
+/// Repository interfaces for data persistence
+pub mod repositories;
+/// Immutable value objects
+pub mod value_objects;
 
 // Re-export commonly used types for convenience
+pub use domain_services::{
+    CodeChunker, ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
+};
 pub use entities::*;
-pub use value_objects::{Embedding, SearchResult, EmbeddingConfig, VectorStoreConfig, Language, OperationType, EmbeddingProviderKind, VectorStoreProviderKind};
-pub use domain_services::{CodeChunker, ContextServiceInterface, SearchServiceInterface, IndexingServiceInterface};
-pub use repositories::{ChunkRepository, SearchRepository};
-pub use events::{DomainEvent, EventPublisher};
 pub use error::{Error, Result};
+pub use events::{DomainEvent, EventPublisher};
+pub use repositories::{ChunkRepository, SearchRepository};
+pub use value_objects::{
+    Embedding, EmbeddingConfig, EmbeddingProviderKind, Language, OperationType, SearchResult,
+    VectorStoreConfig, VectorStoreProviderKind,
+};

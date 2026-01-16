@@ -28,13 +28,16 @@ mod tests {
     #[test]
     fn test_codebase_snapshot_creation() {
         let mut files = HashMap::new();
-        files.insert("src/main.rs".to_string(), FileSnapshot {
-            path: "src/main.rs".to_string(),
-            modified_at: 1640995200,
-            size: 1024,
-            hash: "abc123".to_string(),
-            language: "rust".to_string(),
-        });
+        files.insert(
+            "src/main.rs".to_string(),
+            FileSnapshot {
+                path: "src/main.rs".to_string(),
+                modified_at: 1640995200,
+                size: 1024,
+                hash: "abc123".to_string(),
+                language: "rust".to_string(),
+            },
+        );
 
         let snapshot = CodebaseSnapshot {
             id: "snapshot-001".to_string(),
@@ -58,29 +61,38 @@ mod tests {
     fn test_codebase_snapshot_multiple_files() {
         let mut files = HashMap::new();
 
-        files.insert("src/main.rs".to_string(), FileSnapshot {
-            path: "src/main.rs".to_string(),
-            modified_at: 1640995200,
-            size: 1024,
-            hash: "abc123".to_string(),
-            language: "rust".to_string(),
-        });
+        files.insert(
+            "src/main.rs".to_string(),
+            FileSnapshot {
+                path: "src/main.rs".to_string(),
+                modified_at: 1640995200,
+                size: 1024,
+                hash: "abc123".to_string(),
+                language: "rust".to_string(),
+            },
+        );
 
-        files.insert("src/lib.rs".to_string(), FileSnapshot {
-            path: "src/lib.rs".to_string(),
-            modified_at: 1641081600,
-            size: 2048,
-            hash: "def456".to_string(),
-            language: "rust".to_string(),
-        });
+        files.insert(
+            "src/lib.rs".to_string(),
+            FileSnapshot {
+                path: "src/lib.rs".to_string(),
+                modified_at: 1641081600,
+                size: 2048,
+                hash: "def456".to_string(),
+                language: "rust".to_string(),
+            },
+        );
 
-        files.insert("Cargo.toml".to_string(), FileSnapshot {
-            path: "Cargo.toml".to_string(),
-            modified_at: 1640995200,
-            size: 512,
-            hash: "toml123".to_string(),
-            language: "toml".to_string(),
-        });
+        files.insert(
+            "Cargo.toml".to_string(),
+            FileSnapshot {
+                path: "Cargo.toml".to_string(),
+                modified_at: 1640995200,
+                size: 512,
+                hash: "toml123".to_string(),
+                language: "toml".to_string(),
+            },
+        );
 
         let snapshot = CodebaseSnapshot {
             id: "multi-file-snapshot".to_string(),
@@ -145,7 +157,11 @@ mod tests {
     fn test_snapshot_changes_only_modifications() {
         let changes = SnapshotChanges {
             added: vec![],
-            modified: vec!["modified1.rs".to_string(), "modified2.rs".to_string(), "modified3.rs".to_string()],
+            modified: vec![
+                "modified1.rs".to_string(),
+                "modified2.rs".to_string(),
+                "modified3.rs".to_string(),
+            ],
             removed: vec![],
         };
 

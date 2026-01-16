@@ -56,17 +56,16 @@ impl IndexCodebaseHandler {
         let collection = args.collection.as_deref().unwrap_or("default");
         let timer = Instant::now();
 
-        match self
-            .indexing_service
-            .index_codebase(path, collection)
-            .await
-        {
+        match self.indexing_service.index_codebase(path, collection).await {
             Ok(result) => Ok(ResponseFormatter::format_indexing_success(
                 &result,
                 path,
                 timer.elapsed(),
             )),
-            Err(e) => Ok(ResponseFormatter::format_indexing_error(&e.to_string(), path)),
+            Err(e) => Ok(ResponseFormatter::format_indexing_error(
+                &e.to_string(),
+                path,
+            )),
         }
     }
 }

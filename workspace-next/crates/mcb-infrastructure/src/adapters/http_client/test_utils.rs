@@ -61,19 +61,3 @@ impl HttpClientProvider for NullHttpClientPool {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_null_pool_not_enabled() {
-        let pool = NullHttpClientPool::new();
-        assert!(!pool.is_enabled());
-    }
-
-    #[test]
-    fn test_null_pool_default() {
-        let pool = NullHttpClientPool::default();
-        assert!(!pool.is_enabled());
-    }
-}

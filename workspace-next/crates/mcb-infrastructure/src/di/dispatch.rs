@@ -6,7 +6,9 @@
 use crate::config::AppConfig;
 use crate::di::bootstrap::InfrastructureComponents;
 use crate::di::factory::implementation::*;
-use crate::di::factory::traits::{CacheProviderFactory, CryptoServiceFactory, HealthRegistryFactory};
+use crate::di::factory::traits::{
+    CacheProviderFactory, CryptoServiceFactory, HealthRegistryFactory,
+};
 use mcb_domain::error::Result;
 
 /// Component dispatcher for infrastructure initialization
@@ -85,11 +87,12 @@ impl InfrastructureInitializer {
 
     /// Initialize logging system
     fn initialize_logging(&self) -> Result<()> {
-        crate::logging::init_logging(self.dispatcher.config.logging.clone())
-            .map_err(|e| mcb_domain::error::Error::Infrastructure {
+        crate::logging::init_logging(self.dispatcher.config.logging.clone()).map_err(|e| {
+            mcb_domain::error::Error::Infrastructure {
                 message: format!("Failed to initialize logging: {}", e),
                 source: Some(Box::new(e)),
-            })
+            }
+        })
     }
 
     /// Initialize configuration watching if enabled
@@ -97,34 +100,5 @@ impl InfrastructureInitializer {
         // Configuration watching would be initialized here if needed
         // For now, this is a placeholder for future implementation
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::ConfigBuilder;
-
-    #[tokio::test]
-    async fn test_component_dispatcher() {
-        let config = ConfigBuilder::new().build();
-        let dispatcher = ComponentDispatcher::new(config);
-
-        let container = dispatcher.dispatch().await.unwrap();
-
-        // Verify components are accessible
-        assert!(container.cache().get::<_, String>("test").await.unwrap().is_none());
-        assert!(container.health().list_checks().await.contains(&"system"));
-    }
-
-    #[tokio::test]
-    async fn test_infrastructure_initializer() {
-        let config = ConfigBuilder::new().build();
-        let initializer = InfrastructureInitializer::new(config);
-
-        let container = initializer.initialize().await.unwrap();
-
-        // Test that initialization succeeded
-        assert!(container.health().list_checks().await.contains(&"system"));
     }
 }

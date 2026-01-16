@@ -217,20 +217,14 @@ impl ConfigProfile {
                     "logging.json_format".to_string(),
                     serde_json::Value::Bool(true),
                 );
-                overrides.insert(
-                    "metrics.enabled".to_string(),
-                    serde_json::Value::Bool(true),
-                );
+                overrides.insert("metrics.enabled".to_string(), serde_json::Value::Bool(true));
             }
             Self::Testing => {
                 overrides.insert(
                     "logging.level".to_string(),
                     serde_json::Value::String("warn".to_string()),
                 );
-                overrides.insert(
-                    "cache.enabled".to_string(),
-                    serde_json::Value::Bool(false),
-                );
+                overrides.insert("cache.enabled".to_string(), serde_json::Value::Bool(false));
             }
             Self::Custom(_) => {
                 // No default overrides for custom profiles
@@ -254,7 +248,7 @@ impl ConfigMigration {
                 let default_config = AppConfig::default();
 
                 // Migrate server config
-                if config.server.cors_enabled == false && config.server.cors_origins.is_empty() {
+                if !config.server.cors_enabled && config.server.cors_origins.is_empty() {
                     config.server.cors_origins = default_config.server.cors_origins;
                 }
             }
@@ -292,8 +286,8 @@ mod tests {
         assert!(valid.is_valid);
         assert!(!valid.has_errors());
 
-        let invalid = ValidationResult::invalid(vec!["error1".to_string()])
-            .with_warning("warning1");
+        let invalid =
+            ValidationResult::invalid(vec!["error1".to_string()]).with_warning("warning1");
         assert!(!invalid.is_valid);
         assert!(invalid.has_errors());
         assert!(invalid.has_warnings());

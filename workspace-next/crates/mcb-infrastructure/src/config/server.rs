@@ -57,7 +57,10 @@ impl ServerConfigUtils {
 
         if !cert_path.exists() {
             return Err(Error::Configuration {
-                message: format!("SSL certificate file does not exist: {}", cert_path.display()),
+                message: format!(
+                    "SSL certificate file does not exist: {}",
+                    cert_path.display()
+                ),
                 source: None,
             });
         }
@@ -126,11 +129,7 @@ impl ServerConfigBuilder {
     }
 
     /// Set SSL certificate and key paths
-    pub fn ssl_paths<P: Into<std::path::PathBuf>>(
-        mut self,
-        cert_path: P,
-        key_path: P,
-    ) -> Self {
+    pub fn ssl_paths<P: Into<std::path::PathBuf>>(mut self, cert_path: P, key_path: P) -> Self {
         self.config.ssl_cert_path = Some(cert_path.into());
         self.config.ssl_key_path = Some(key_path.into());
         self
@@ -185,7 +184,10 @@ impl ServerConfigPresets {
             .https(false)
             .request_timeout(60)
             .connection_timeout(10)
-            .cors(true, vec!["http://localhost:3000".to_string(), "*".to_string()])
+            .cors(
+                true,
+                vec!["http://localhost:3000".to_string(), "*".to_string()],
+            )
             .build()
     }
 

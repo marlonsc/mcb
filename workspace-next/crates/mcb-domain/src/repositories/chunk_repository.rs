@@ -6,8 +6,8 @@
 //! different storage backends (database, filesystem, cloud storage) without
 //! changing the application code.
 
-use crate::error::Result;
 use crate::entities::CodeChunk;
+use crate::error::Result;
 use async_trait::async_trait;
 use shaku::Interface;
 

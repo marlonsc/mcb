@@ -35,10 +35,7 @@ impl Default for HttpClientConfig {
             idle_timeout: Duration::from_secs(HTTP_CLIENT_IDLE_TIMEOUT_SECS),
             keepalive: Duration::from_secs(HTTP_KEEPALIVE_SECS),
             timeout: Duration::from_secs(HTTP_REQUEST_TIMEOUT_SECS),
-            user_agent: format!(
-                "MCP-Context-Browser/{}",
-                env!("CARGO_PKG_VERSION")
-            ),
+            user_agent: format!("MCP-Context-Browser/{}", env!("CARGO_PKG_VERSION")),
         }
     }
 }

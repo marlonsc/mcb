@@ -4,8 +4,8 @@
 //! by the application layer. These are cross-cutting concerns that support
 //! business logic operations.
 
-use crate::error::Result;
 use crate::entities::codebase::{CodebaseSnapshot, SnapshotChanges};
+use crate::error::Result;
 use crate::value_objects::config::SyncBatch;
 use async_trait::async_trait;
 use shaku::Interface;

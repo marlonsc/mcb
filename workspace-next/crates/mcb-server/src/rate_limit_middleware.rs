@@ -8,6 +8,12 @@ pub struct RateLimitMiddleware {
     // Placeholder for rate limiting
 }
 
+impl Default for RateLimitMiddleware {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RateLimitMiddleware {
     /// Create new rate limit middleware
     pub fn new() -> Self {

@@ -69,6 +69,6 @@ pub mod tools;
 pub mod transport;
 
 // Re-export core types for public API
-pub use mcp_server::McpServer;
 pub use builder::McpServerBuilder;
 pub use init::run_server;
+pub use mcp_server::McpServer;

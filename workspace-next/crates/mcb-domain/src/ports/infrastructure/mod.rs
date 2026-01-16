@@ -11,11 +11,11 @@
 //! | [`SyncProvider`] | File system synchronization services |
 //! | [`SnapshotProvider`] | Codebase snapshot management |
 
-/// File synchronization infrastructure port
-pub mod sync;
 /// Snapshot management infrastructure port
 pub mod snapshot;
+/// File synchronization infrastructure port
+pub mod sync;
 
 // Re-export infrastructure ports
-pub use snapshot::SyncProvider;
 pub use snapshot::SnapshotProvider;
+pub use snapshot::SyncProvider;

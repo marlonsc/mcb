@@ -3,10 +3,8 @@
 #[cfg(test)]
 mod tests {
     use mcb_domain::{
-        INDEXING_BATCH_SIZE,
-        INDEXING_CHUNK_MIN_LENGTH,
+        INDEXING_BATCH_SIZE, INDEXING_CHUNKS_MAX_PER_FILE, INDEXING_CHUNK_MIN_LENGTH,
         INDEXING_CHUNK_MIN_LINES,
-        INDEXING_CHUNKS_MAX_PER_FILE
     };
 
     #[test]

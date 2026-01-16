@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::{CodeChunker, CodeChunk, Language};
+    use mcb_domain::{CodeChunk, CodeChunker, Language};
 
     // Mock implementation for testing
     struct MockCodeChunker;
@@ -15,17 +15,15 @@ mod tests {
             _file_path: &str,
             _language: &Language,
         ) -> mcb_domain::Result<Vec<CodeChunk>> {
-            Ok(vec![
-                CodeChunk {
-                    id: "chunk-1".to_string(),
-                    content: "fn main() {}".to_string(),
-                    file_path: "test.rs".to_string(),
-                    start_line: 1,
-                    end_line: 1,
-                    language: "rust".to_string(),
-                    metadata: serde_json::json!({"type": "function"}),
-                }
-            ])
+            Ok(vec![CodeChunk {
+                id: "chunk-1".to_string(),
+                content: "fn main() {}".to_string(),
+                file_path: "test.rs".to_string(),
+                start_line: 1,
+                end_line: 1,
+                language: "rust".to_string(),
+                metadata: serde_json::json!({"type": "function"}),
+            }])
         }
 
         fn supported_languages(&self) -> Vec<Language> {

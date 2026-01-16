@@ -14,12 +14,12 @@
 
 /// Embedding provider port
 pub mod embedding;
-/// Vector store provider port
-pub mod vector_store;
 /// Hybrid search provider port
 pub mod hybrid_search;
+/// Vector store provider port
+pub mod vector_store;
 
 // Re-export provider ports
 pub use embedding::EmbeddingProvider;
-pub use vector_store::VectorStoreProvider;
 pub use hybrid_search::HybridSearchProvider;
+pub use vector_store::VectorStoreProvider;

@@ -6,18 +6,16 @@
 use crate::config::data::LoggingConfig;
 use mcb_domain::error::{Error, Result};
 use std::path::PathBuf;
-use tracing::{info, warn, error, debug, Level};
-use tracing_subscriber::{
-    fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry,
-};
+use tracing::{debug, error, info, warn, Level};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
 
 /// Initialize logging with the provided configuration
 pub fn init_logging(config: LoggingConfig) -> Result<()> {
     let level = parse_log_level(&config.level)?;
 
     // Create environment filter
-    let filter = EnvFilter::try_from_env("MCB_LOG")
-        .unwrap_or_else(|_| EnvFilter::new(&config.level));
+    let filter =
+        EnvFilter::try_from_env("MCB_LOG").unwrap_or_else(|_| EnvFilter::new(&config.level));
 
     // Initialize differently based on json_format since the layer types differ
     if config.json_format {
@@ -45,8 +43,12 @@ fn init_json_logging(filter: EnvFilter, file_output: Option<PathBuf>) -> Result<
 
     if let Some(file_path) = file_output {
         let file_appender = tracing_appender::rolling::daily(
-            file_path.parent().unwrap_or_else(|| std::path::Path::new(".")),
-            file_path.file_stem().unwrap_or_else(|| std::ffi::OsStr::new("mcb")),
+            file_path
+                .parent()
+                .unwrap_or_else(|| std::path::Path::new(".")),
+            file_path
+                .file_stem()
+                .unwrap_or_else(|| std::ffi::OsStr::new("mcb")),
         );
 
         let file_layer = fmt::layer()
@@ -55,14 +57,9 @@ fn init_json_logging(filter: EnvFilter, file_output: Option<PathBuf>) -> Result<
             .with_ansi(false)
             .with_target(true);
 
-        registry
-            .with(stdout_layer)
-            .with(file_layer)
-            .init();
+        registry.with(stdout_layer).with(file_layer).init();
     } else {
-        registry
-            .with(stdout_layer)
-            .init();
+        registry.with(stdout_layer).init();
     }
 
     Ok(())
@@ -81,8 +78,12 @@ fn init_text_logging(filter: EnvFilter, file_output: Option<PathBuf>) -> Result<
 
     if let Some(file_path) = file_output {
         let file_appender = tracing_appender::rolling::daily(
-            file_path.parent().unwrap_or_else(|| std::path::Path::new(".")),
-            file_path.file_stem().unwrap_or_else(|| std::ffi::OsStr::new("mcb")),
+            file_path
+                .parent()
+                .unwrap_or_else(|| std::path::Path::new(".")),
+            file_path
+                .file_stem()
+                .unwrap_or_else(|| std::ffi::OsStr::new("mcb")),
         );
 
         let file_layer = fmt::layer()
@@ -90,14 +91,9 @@ fn init_text_logging(filter: EnvFilter, file_output: Option<PathBuf>) -> Result<
             .with_ansi(false)
             .with_target(true);
 
-        registry
-            .with(stdout_layer)
-            .with(file_layer)
-            .init();
+        registry.with(stdout_layer).with(file_layer).init();
     } else {
-        registry
-            .with(stdout_layer)
-            .init();
+        registry.with(stdout_layer).init();
     }
 
     Ok(())
@@ -112,7 +108,10 @@ fn parse_log_level(level: &str) -> Result<Level> {
         "warn" | "warning" => Ok(Level::WARN),
         "error" => Ok(Level::ERROR),
         _ => Err(Error::Configuration {
-            message: format!("Invalid log level: {}. Use trace, debug, info, warn, or error", level),
+            message: format!(
+                "Invalid log level: {}. Use trace, debug, info, warn, or error",
+                level
+            ),
             source: None,
         }),
     }
@@ -129,7 +128,10 @@ where
     match operation() {
         Ok(result) => {
             let duration = start.elapsed();
-            info!("Operation '{}' completed successfully in {:?}", operation_name, duration);
+            info!(
+                "Operation '{}' completed successfully in {:?}",
+                operation_name, duration
+            );
             Ok(result)
         }
         Err(err) => {
@@ -184,9 +186,15 @@ pub fn log_health_check(component: &str, healthy: bool, details: Option<&str>) {
 /// Log configuration loading
 pub fn log_config_loaded(config_path: &std::path::Path, success: bool) {
     if success {
-        info!("Configuration loaded successfully from {}", config_path.display());
+        info!(
+            "Configuration loaded successfully from {}",
+            config_path.display()
+        );
     } else {
-        warn!("Failed to load configuration from {}", config_path.display());
+        warn!(
+            "Failed to load configuration from {}",
+            config_path.display()
+        );
     }
 }
 

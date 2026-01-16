@@ -193,7 +193,10 @@ impl Error {
     }
 
     /// Create an I/O error with source
-    pub fn io_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+    pub fn io_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
         Self::Io {
             message: message.into(),
             source: Some(Box::new(source)),
@@ -216,7 +219,13 @@ impl Error {
     }
 
     /// Create a configuration error with source
-    pub fn configuration_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+    pub fn configuration_with_source<
+        S: Into<String>,
+        E: std::error::Error + Send + Sync + 'static,
+    >(
+        message: S,
+        source: E,
+    ) -> Self {
         Self::Configuration {
             message: message.into(),
             source: Some(Box::new(source)),
@@ -232,7 +241,13 @@ impl Error {
     }
 
     /// Create an authentication error with source
-    pub fn authentication_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+    pub fn authentication_with_source<
+        S: Into<String>,
+        E: std::error::Error + Send + Sync + 'static,
+    >(
+        message: S,
+        source: E,
+    ) -> Self {
         Self::Authentication {
             message: message.into(),
             source: Some(Box::new(source)),
@@ -248,7 +263,10 @@ impl Error {
     }
 
     /// Create a network error with source
-    pub fn network_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+    pub fn network_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
         Self::Network {
             message: message.into(),
             source: Some(Box::new(source)),
@@ -264,7 +282,10 @@ impl Error {
     }
 
     /// Create a database error with source
-    pub fn database_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+    pub fn database_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
         Self::Database {
             message: message.into(),
             source: Some(Box::new(source)),
@@ -294,7 +315,13 @@ impl Error {
     }
 
     /// Create an infrastructure error with source
-    pub fn infrastructure_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+    pub fn infrastructure_with_source<
+        S: Into<String>,
+        E: std::error::Error + Send + Sync + 'static,
+    >(
+        message: S,
+        source: E,
+    ) -> Self {
         Self::Infrastructure {
             message: message.into(),
             source: Some(Box::new(source)),

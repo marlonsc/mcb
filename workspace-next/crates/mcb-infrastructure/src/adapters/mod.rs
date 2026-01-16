@@ -27,6 +27,11 @@ pub mod repository;
 // Re-export HTTP client infrastructure
 pub use http_client::{HttpClientConfig, HttpClientPool, HttpClientProvider, SharedHttpClient};
 
-// Re-export commonly used adapter implementations
-pub use providers::NullEmbeddingProvider;
+// Re-export embedding providers
+pub use providers::{
+    FastEmbedProvider, GeminiEmbeddingProvider, NullEmbeddingProvider, OllamaEmbeddingProvider,
+    OpenAIEmbeddingProvider, VoyageAIEmbeddingProvider,
+};
+
+// Re-export repository implementations
 pub use repository::{VectorStoreChunkRepository, VectorStoreSearchRepository};

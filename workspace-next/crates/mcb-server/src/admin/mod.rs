@@ -18,6 +18,12 @@ pub struct AdminApiServer {
     // Will be implemented when admin ports are defined in domain layer
 }
 
+impl Default for AdminApiServer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AdminApiServer {
     /// Create a new admin API server
     pub fn new() -> Self {

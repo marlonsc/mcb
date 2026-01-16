@@ -54,7 +54,8 @@ mod tests {
     fn test_code_chunk_with_complex_metadata() {
         let chunk = CodeChunk {
             id: "complex-chunk".to_string(),
-            content: "class User {\n  constructor(name) {\n    this.name = name;\n  }\n}".to_string(),
+            content: "class User {\n  constructor(name) {\n    this.name = name;\n  }\n}"
+                .to_string(),
             file_path: "src/User.js".to_string(),
             start_line: 1,
             end_line: 5,

@@ -117,6 +117,12 @@ pub struct HealthResponse {
     pub system: SystemInfo,
 }
 
+impl Default for HealthResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HealthResponse {
     /// Create a new health response
     pub fn new() -> Self {
@@ -265,7 +271,6 @@ pub mod checkers {
     }
 
     #[async_trait::async_trait]
-    #[async_trait::async_trait]
     impl<F> HealthChecker for DatabaseHealthChecker<F>
     where
         F: Fn() -> Result<()> + Send + Sync,
@@ -300,7 +305,6 @@ pub mod checkers {
     }
 
     #[async_trait::async_trait]
-    #[async_trait::async_trait]
     impl<F> HealthChecker for ServiceHealthChecker<F>
     where
         F: Fn() -> Result<()> + Send + Sync,
@@ -319,13 +323,18 @@ pub mod checkers {
     /// System resource health checker
     pub struct SystemHealthChecker;
 
+    impl Default for SystemHealthChecker {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl SystemHealthChecker {
         pub fn new() -> Self {
             Self
         }
     }
 
-    #[async_trait::async_trait]
     #[async_trait::async_trait]
     impl HealthChecker for SystemHealthChecker {
         async fn check_health(&self) -> HealthCheck {
@@ -339,7 +348,7 @@ pub mod checkers {
                 HealthStatus::Degraded
             };
 
-            let check = HealthCheck {
+            HealthCheck {
                 name: "system".to_string(),
                 status,
                 timestamp: chrono::Utc::now(),
@@ -349,9 +358,7 @@ pub mod checkers {
                     "cpu_usage": 45.2,
                     "memory_usage": 1024 * 1024 * 512, // 512MB
                 })),
-            };
-
-            check
+            }
         }
     }
 

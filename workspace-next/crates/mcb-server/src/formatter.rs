@@ -9,8 +9,8 @@ use rmcp::ErrorData as McpError;
 use std::path::Path;
 use std::time::Duration;
 
-use mcb_domain::SearchResult;
 use mcb_domain::domain_services::search::{IndexingResult, IndexingStatus};
+use mcb_domain::SearchResult;
 
 /// Response formatter for MCP server tools
 pub struct ResponseFormatter;
@@ -102,7 +102,12 @@ impl ResponseFormatter {
     fn format_code_preview(message: &mut String, result: &SearchResult) {
         let lines: Vec<&str> = result.content.lines().collect();
         let preview_lines = if lines.len() > 10 {
-            lines.iter().take(10).cloned().collect::<Vec<_>>().join("\n")
+            lines
+                .iter()
+                .take(10)
+                .cloned()
+                .collect::<Vec<_>>()
+                .join("\n")
         } else {
             result.content.clone()
         };
@@ -163,7 +168,10 @@ impl ResponseFormatter {
         );
 
         if !result.errors.is_empty() {
-            message.push_str(&format!("\n⚠️ **Errors encountered:** {}\n", result.errors.len()));
+            message.push_str(&format!(
+                "\n⚠️ **Errors encountered:** {}\n",
+                result.errors.len()
+            ));
             for error in &result.errors {
                 message.push_str(&format!("• {}\n", error));
             }
@@ -206,10 +214,7 @@ impl ResponseFormatter {
 
         if status.is_indexing {
             message.push_str("🔄 **Indexing Status: In Progress**\n");
-            message.push_str(&format!(
-                "Progress: {:.1}%\n",
-                status.progress * 100.0
-            ));
+            message.push_str(&format!("Progress: {:.1}%\n", status.progress * 100.0));
             if let Some(current_file) = &status.current_file {
                 message.push_str(&format!("Current file: `{}`\n", current_file));
             }

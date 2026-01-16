@@ -31,11 +31,19 @@ mod tests {
             Ok("generated-id".to_string())
         }
 
-        async fn save_batch(&self, _collection: &str, chunks: &[CodeChunk]) -> mcb_domain::Result<Vec<String>> {
+        async fn save_batch(
+            &self,
+            _collection: &str,
+            chunks: &[CodeChunk],
+        ) -> mcb_domain::Result<Vec<String>> {
             Ok((0..chunks.len()).map(|i| format!("id-{}", i)).collect())
         }
 
-        async fn find_by_id(&self, _collection: &str, _id: &str) -> mcb_domain::Result<Option<CodeChunk>> {
+        async fn find_by_id(
+            &self,
+            _collection: &str,
+            _id: &str,
+        ) -> mcb_domain::Result<Option<CodeChunk>> {
             Ok(Some(CodeChunk {
                 id: "test-chunk".to_string(),
                 content: "test content".to_string(),
@@ -47,16 +55,22 @@ mod tests {
             }))
         }
 
-        async fn find_by_collection(&self, _collection: &str, limit: usize) -> mcb_domain::Result<Vec<CodeChunk>> {
-            let chunks = (0..limit.min(3)).map(|i| CodeChunk {
-                id: format!("chunk-{}", i),
-                content: format!("content {}", i),
-                file_path: format!("file{}.rs", i),
-                start_line: (i * 10 + 1) as u32,
-                end_line: ((i + 1) * 10) as u32,
-                language: "rust".to_string(),
-                metadata: serde_json::json!({"index": i}),
-            }).collect();
+        async fn find_by_collection(
+            &self,
+            _collection: &str,
+            limit: usize,
+        ) -> mcb_domain::Result<Vec<CodeChunk>> {
+            let chunks = (0..limit.min(3))
+                .map(|i| CodeChunk {
+                    id: format!("chunk-{}", i),
+                    content: format!("content {}", i),
+                    file_path: format!("file{}.rs", i),
+                    start_line: (i * 10 + 1) as u32,
+                    end_line: ((i + 1) * 10) as u32,
+                    language: "rust".to_string(),
+                    metadata: serde_json::json!({"index": i}),
+                })
+                .collect();
             Ok(chunks)
         }
 

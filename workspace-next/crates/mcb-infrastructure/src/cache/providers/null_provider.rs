@@ -89,7 +89,10 @@ mod tests {
             data: "test".to_string(),
             number: 42,
         };
-        assert!(provider.set("test_key", value, CacheEntryConfig::default()).await.is_ok());
+        assert!(provider
+            .set("test_key", value, CacheEntryConfig::default())
+            .await
+            .is_ok());
 
         // Test exists (should always return false)
         assert_eq!(provider.exists("test_key").await.unwrap(), false);

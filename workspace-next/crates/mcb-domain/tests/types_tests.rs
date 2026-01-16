@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::{Language, OperationType, EmbeddingProviderKind, VectorStoreProviderKind};
+    use mcb_domain::{EmbeddingProviderKind, Language, OperationType, VectorStoreProviderKind};
 
     #[test]
     fn test_language_type_alias() {

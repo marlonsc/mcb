@@ -51,9 +51,8 @@ impl McpServer {
     ) -> Self {
         let index_codebase_handler = Arc::new(IndexCodebaseHandler::new(indexing_service.clone()));
         let search_code_handler = Arc::new(SearchCodeHandler::new(search_service.clone()));
-        let get_indexing_status_handler = Arc::new(GetIndexingStatusHandler::new(
-            indexing_service.clone(),
-        ));
+        let get_indexing_status_handler =
+            Arc::new(GetIndexingStatusHandler::new(indexing_service.clone()));
         let clear_index_handler = Arc::new(ClearIndexHandler::new(indexing_service.clone()));
 
         Self {

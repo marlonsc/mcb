@@ -27,22 +27,22 @@ impl ProviderConfigManager {
 
     /// Get embedding provider configuration by name
     pub fn get_embedding_config(&self, name: &str) -> Result<&EmbeddingConfig> {
-        self.embedding_configs.get(name).ok_or_else(|| {
-            Error::Configuration {
+        self.embedding_configs
+            .get(name)
+            .ok_or_else(|| Error::Configuration {
                 message: format!("Embedding provider '{}' not found", name),
                 source: None,
-            }
-        })
+            })
     }
 
     /// Get vector store provider configuration by name
     pub fn get_vector_store_config(&self, name: &str) -> Result<&VectorStoreConfig> {
-        self.vector_store_configs.get(name).ok_or_else(|| {
-            Error::Configuration {
+        self.vector_store_configs
+            .get(name)
+            .ok_or_else(|| Error::Configuration {
                 message: format!("Vector store provider '{}' not found", name),
                 source: None,
-            }
-        })
+            })
     }
 
     /// List all embedding provider names
@@ -129,7 +129,10 @@ impl ProviderConfigManager {
         if let Some(ref collection) = config.collection {
             if collection.trim().is_empty() {
                 return Err(Error::Configuration {
-                    message: format!("Vector store provider '{}': collection cannot be empty", name),
+                    message: format!(
+                        "Vector store provider '{}': collection cannot be empty",
+                        name
+                    ),
                     source: None,
                 });
             }
@@ -275,18 +278,17 @@ mod tests {
 
     #[test]
     fn test_config_validation() {
-        let builder = ProviderConfigBuilder::new()
-            .with_embedding_provider(
-                "invalid",
-                EmbeddingConfig {
-                    provider: "openai".to_string(),
-                    model: "".to_string(), // Invalid: empty model
-                    api_key: None,
-                    base_url: None,
-                    dimensions: Some(0), // Invalid: zero dimensions
-                    max_tokens: None,
-                },
-            );
+        let builder = ProviderConfigBuilder::new().with_embedding_provider(
+            "invalid",
+            EmbeddingConfig {
+                provider: "openai".to_string(),
+                model: "".to_string(), // Invalid: empty model
+                api_key: None,
+                base_url: None,
+                dimensions: Some(0), // Invalid: zero dimensions
+                max_tokens: None,
+            },
+        );
 
         let manager = builder.build();
         assert!(manager.validate().is_err());

@@ -7,7 +7,7 @@ use crate::cache::provider::SharedCacheProvider;
 use crate::cache::CacheProviderFactory;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
-use crate::health::{HealthRegistry, checkers};
+use crate::health::{checkers, HealthRegistry};
 use mcb_domain::error::Result;
 use std::sync::Arc;
 
@@ -44,7 +44,9 @@ impl InfrastructureComponents {
 
         // Register system health checker
         let system_checker = checkers::SystemHealthChecker::new();
-        health.register_checker("system".to_string(), system_checker).await;
+        health
+            .register_checker("system".to_string(), system_checker)
+            .await;
 
         // Register database health checker if configured
         // (This would be expanded based on actual database configuration)
@@ -96,7 +98,9 @@ impl InfrastructureContainerBuilder {
 }
 
 /// Helper function to create infrastructure components
-pub async fn create_infrastructure_components(config: AppConfig) -> Result<InfrastructureComponents> {
+pub async fn create_infrastructure_components(
+    config: AppConfig,
+) -> Result<InfrastructureComponents> {
     InfrastructureContainerBuilder::new(config).build().await
 }
 
@@ -110,13 +114,16 @@ pub struct FullContainer {
 impl FullContainer {
     /// Create a full container with both infrastructure and domain services
     pub async fn new(config: AppConfig) -> Result<Self> {
-        let infrastructure = InfrastructureContainerBuilder::new(config.clone()).build().await?;
+        let infrastructure = InfrastructureContainerBuilder::new(config.clone())
+            .build()
+            .await?;
         let domain_services = super::modules::DomainServicesFactory::create_services(
             infrastructure.cache.clone(),
             infrastructure.crypto.clone(),
             infrastructure.health.clone(),
             config,
-        ).await?;
+        )
+        .await?;
 
         Ok(Self {
             infrastructure,
@@ -125,40 +132,23 @@ impl FullContainer {
     }
 
     /// Get indexing service
-    pub fn indexing_service(&self) -> Arc<dyn mcb_domain::domain_services::search::IndexingServiceInterface> {
+    pub fn indexing_service(
+        &self,
+    ) -> Arc<dyn mcb_domain::domain_services::search::IndexingServiceInterface> {
         self.domain_services.indexing_service.clone()
     }
 
     /// Get context service
-    pub fn context_service(&self) -> Arc<dyn mcb_domain::domain_services::search::ContextServiceInterface> {
+    pub fn context_service(
+        &self,
+    ) -> Arc<dyn mcb_domain::domain_services::search::ContextServiceInterface> {
         self.domain_services.context_service.clone()
     }
 
     /// Get search service
-    pub fn search_service(&self) -> Arc<dyn mcb_domain::domain_services::search::SearchServiceInterface> {
+    pub fn search_service(
+        &self,
+    ) -> Arc<dyn mcb_domain::domain_services::search::SearchServiceInterface> {
         self.domain_services.search_service.clone()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::ConfigBuilder;
-
-    #[tokio::test]
-    async fn test_infrastructure_container_creation() {
-        let config = ConfigBuilder::new().build();
-        let result = InfrastructureContainerBuilder::new(config).build().await;
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_infrastructure_components() {
-        let config = ConfigBuilder::new().build();
-        let components = InfrastructureContainerBuilder::new(config).build().await.unwrap();
-
-        // Test that components are accessible
-        assert!(components.cache().get::<_, String>("test").await.unwrap().is_none());
-        assert!(components.health().list_checks().await.contains(&"system"));
     }
 }

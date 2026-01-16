@@ -3,11 +3,9 @@
 //! Builder pattern for constructing MCP servers with dependency injection.
 //! Ensures all required dependencies are provided before server construction.
 
-use std::sync::Arc;
-use mcb_domain::{
-    IndexingServiceInterface, ContextServiceInterface, SearchServiceInterface,
-};
 use crate::McpServer;
+use mcb_domain::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
+use std::sync::Arc;
 
 /// Builder for MCP Server with dependency injection
 ///
@@ -30,10 +28,7 @@ impl McpServerBuilder {
     ///
     /// # Arguments
     /// * `service` - Implementation of the indexing service port
-    pub fn with_indexing_service(
-        mut self,
-        service: Arc<dyn IndexingServiceInterface>,
-    ) -> Self {
+    pub fn with_indexing_service(mut self, service: Arc<dyn IndexingServiceInterface>) -> Self {
         self.indexing_service = Some(service);
         self
     }
@@ -42,10 +37,7 @@ impl McpServerBuilder {
     ///
     /// # Arguments
     /// * `service` - Implementation of the context service port
-    pub fn with_context_service(
-        mut self,
-        service: Arc<dyn ContextServiceInterface>,
-    ) -> Self {
+    pub fn with_context_service(mut self, service: Arc<dyn ContextServiceInterface>) -> Self {
         self.context_service = Some(service);
         self
     }
@@ -54,10 +46,7 @@ impl McpServerBuilder {
     ///
     /// # Arguments
     /// * `service` - Implementation of the search service port
-    pub fn with_search_service(
-        mut self,
-        service: Arc<dyn SearchServiceInterface>,
-    ) -> Self {
+    pub fn with_search_service(mut self, service: Arc<dyn SearchServiceInterface>) -> Self {
         self.search_service = Some(service);
         self
     }
@@ -70,11 +59,14 @@ impl McpServerBuilder {
     /// # Panics
     /// Panics if any required dependencies are missing
     pub fn build(self) -> McpServer {
-        let indexing_service = self.indexing_service
+        let indexing_service = self
+            .indexing_service
             .expect("Indexing service must be provided");
-        let context_service = self.context_service
+        let context_service = self
+            .context_service
             .expect("Context service must be provided");
-        let search_service = self.search_service
+        let search_service = self
+            .search_service
             .expect("Search service must be provided");
 
         McpServer::new(indexing_service, context_service, search_service)
@@ -85,14 +77,21 @@ impl McpServerBuilder {
     /// # Returns
     /// A Result containing the McpServer or an error if dependencies are missing
     pub fn try_build(self) -> Result<McpServer, BuilderError> {
-        let indexing_service = self.indexing_service
+        let indexing_service = self
+            .indexing_service
             .ok_or(BuilderError::MissingDependency("indexing service"))?;
-        let context_service = self.context_service
+        let context_service = self
+            .context_service
             .ok_or(BuilderError::MissingDependency("context service"))?;
-        let search_service = self.search_service
+        let search_service = self
+            .search_service
             .ok_or(BuilderError::MissingDependency("search service"))?;
 
-        Ok(McpServer::new(indexing_service, context_service, search_service))
+        Ok(McpServer::new(
+            indexing_service,
+            context_service,
+            search_service,
+        ))
     }
 }
 

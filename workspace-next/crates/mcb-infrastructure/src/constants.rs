@@ -246,7 +246,7 @@ pub const SYNC_TIMEOUT_SECS: u64 = 300;
 // ============================================================================
 
 /// Default memory limit in bytes (1GB)
-pub const DEFAULT_MEMORY_LIMIT: usize = 1 * 1024 * 1024 * 1024;
+pub const DEFAULT_MEMORY_LIMIT: usize = 1024 * 1024 * 1024;
 
 /// Default CPU limit (number of cores)
 pub const DEFAULT_CPU_LIMIT: usize = 4;

@@ -37,24 +37,24 @@ impl DomainServicesFactory {
         config: AppConfig,
     ) -> Result<DomainServicesContainer> {
         // Create context service implementation
-        let context_service: Arc<dyn ContextServiceInterface> = Arc::new(
-            ContextServiceImpl::new(cache.clone(), crypto.clone(), config.clone())
-        );
+        let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(
+            cache.clone(),
+            crypto.clone(),
+            config.clone(),
+        ));
 
         // Create search service implementation
-        let search_service: Arc<dyn SearchServiceInterface> = Arc::new(
-            SearchServiceImpl::new(cache.clone(), config.clone())
-        );
+        let search_service: Arc<dyn SearchServiceInterface> =
+            Arc::new(SearchServiceImpl::new(cache.clone(), config.clone()));
 
         // Create indexing service implementation (needs context_service)
-        let indexing_service: Arc<dyn IndexingServiceInterface> = Arc::new(
-            IndexingServiceImpl::new(
+        let indexing_service: Arc<dyn IndexingServiceInterface> =
+            Arc::new(IndexingServiceImpl::new(
                 cache.clone(),
                 crypto.clone(),
                 config.clone(),
                 context_service.clone(),
-            )
-        );
+            ));
 
         Ok(DomainServicesContainer {
             context_service,
@@ -75,7 +75,11 @@ pub struct ContextServiceImpl {
 
 impl ContextServiceImpl {
     pub fn new(cache: SharedCacheProvider, crypto: CryptoService, config: AppConfig) -> Self {
-        Self { cache, crypto, config }
+        Self {
+            cache,
+            crypto,
+            config,
+        }
     }
 }
 
@@ -85,7 +89,13 @@ impl ContextServiceInterface for ContextServiceImpl {
         // Initialize collection-specific resources
         // For now, just ensure the collection key exists in cache
         let collection_key = format!("collection:{}", collection);
-        self.cache.set_json(&collection_key, "\"initialized\"", crate::cache::config::CacheEntryConfig::default()).await?;
+        self.cache
+            .set_json(
+                &collection_key,
+                "\"initialized\"",
+                crate::cache::config::CacheEntryConfig::default(),
+            )
+            .await?;
         Ok(())
     }
 
@@ -93,13 +103,25 @@ impl ContextServiceInterface for ContextServiceImpl {
         // Store chunks in cache with collection prefix
         for chunk in chunks {
             let key = format!("chunk:{}:{}", collection, chunk.id);
-            self.cache.set(&key, chunk, crate::cache::config::CacheEntryConfig::default()).await?;
+            self.cache
+                .set(
+                    &key,
+                    chunk,
+                    crate::cache::config::CacheEntryConfig::default(),
+                )
+                .await?;
         }
 
         // Update collection metadata
         let meta_key = format!("collection:{}:meta", collection);
         let chunk_count = chunks.len();
-        self.cache.set(&meta_key, &chunk_count, crate::cache::config::CacheEntryConfig::default()).await?;
+        self.cache
+            .set(
+                &meta_key,
+                &chunk_count,
+                crate::cache::config::CacheEntryConfig::default(),
+            )
+            .await?;
 
         Ok(())
     }
@@ -226,7 +248,12 @@ impl IndexingServiceImpl {
         config: AppConfig,
         context_service: Arc<dyn ContextServiceInterface>,
     ) -> Self {
-        Self { cache, crypto, config, context_service }
+        Self {
+            cache,
+            crypto,
+            config,
+            context_service,
+        }
     }
 }
 
@@ -254,7 +281,11 @@ impl IndexingServiceInterface for IndexingServiceImpl {
             let mut entries = match fs::read_dir(&dir_path).await {
                 Ok(entries) => entries,
                 Err(e) => {
-                    errors.push(format!("Failed to read directory {}: {}", dir_path.display(), e));
+                    errors.push(format!(
+                        "Failed to read directory {}: {}",
+                        dir_path.display(),
+                        e
+                    ));
                     continue;
                 }
             };
@@ -264,14 +295,20 @@ impl IndexingServiceInterface for IndexingServiceImpl {
 
                 if path.is_dir() {
                     // Skip common directories
-                    if !path.ends_with(".git") && !path.ends_with("node_modules") &&
-                       !path.ends_with("target") && !path.ends_with("__pycache__") {
+                    if !path.ends_with(".git")
+                        && !path.ends_with("node_modules")
+                        && !path.ends_with("target")
+                        && !path.ends_with("__pycache__")
+                    {
                         dirs_to_visit.push(path);
                     }
                 } else if let Some(ext) = path.extension() {
                     // Process supported file types
                     let ext_str = ext.to_string_lossy().to_lowercase();
-                    if matches!(ext_str.as_str(), "rs" | "py" | "js" | "ts" | "java" | "cpp" | "c" | "go") {
+                    if matches!(
+                        ext_str.as_str(),
+                        "rs" | "py" | "js" | "ts" | "java" | "cpp" | "c" | "go"
+                    ) {
                         files_to_process.push(path);
                     }
                 }
@@ -284,7 +321,11 @@ impl IndexingServiceInterface for IndexingServiceImpl {
                 Ok(content) => {
                     let chunks = self.chunk_file_content(&content, &file_path);
                     if let Err(e) = self.context_service.store_chunks(collection, &chunks).await {
-                        errors.push(format!("Failed to store chunks for {}: {}", file_path.display(), e));
+                        errors.push(format!(
+                            "Failed to store chunks for {}: {}",
+                            file_path.display(),
+                            e
+                        ));
                     } else {
                         files_processed += 1;
                         chunks_created += chunks.len();
@@ -326,7 +367,8 @@ impl IndexingServiceImpl {
         let lines: Vec<&str> = content.lines().collect();
         let chunk_size = 50; // lines per chunk
 
-        lines.chunks(chunk_size)
+        lines
+            .chunks(chunk_size)
             .enumerate()
             .map(|(i, chunk_lines)| {
                 let start_line = (i * chunk_size + 1) as u32;
@@ -339,7 +381,8 @@ impl IndexingServiceImpl {
                     content,
                     start_line,
                     end_line,
-                    language: path.extension()
+                    language: path
+                        .extension()
                         .and_then(|ext| ext.to_str())
                         .unwrap_or("unknown")
                         .to_string(),

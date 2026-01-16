@@ -8,6 +8,12 @@ pub struct MetricsCollector {
     // Placeholder for metrics collection
 }
 
+impl Default for MetricsCollector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MetricsCollector {
     /// Create a new metrics collector
     pub fn new() -> Self {

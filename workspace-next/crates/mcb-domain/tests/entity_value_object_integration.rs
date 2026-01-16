@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::{CodeChunk, Embedding, SearchResult, Language};
+    use mcb_domain::{CodeChunk, Embedding, Language, SearchResult};
 
     #[test]
     fn test_code_chunk_with_embedding_integration() {
@@ -85,7 +85,9 @@ mod tests {
 
         let python_chunk = CodeChunk {
             id: "python-func".to_string(),
-            content: "def calculate_mean(data: List[float]) -> float:\n    return sum(data) / len(data)".to_string(),
+            content:
+                "def calculate_mean(data: List[float]) -> float:\n    return sum(data) / len(data)"
+                    .to_string(),
             file_path: "src/stats.py".to_string(),
             start_line: 8,
             end_line: 9,
@@ -110,8 +112,7 @@ mod tests {
         // Test integration of embedding properties
         let embedding = Embedding {
             vector: vec![
-                0.123, -0.456, 0.789, 0.012, -0.345,
-                0.678, -0.901, 0.234, -0.567, 0.890
+                0.123, -0.456, 0.789, 0.012, -0.345, 0.678, -0.901, 0.234, -0.567, 0.890,
             ],
             model: "text-embedding-ada-002".to_string(),
             dimensions: 10,
@@ -129,8 +130,11 @@ mod tests {
 
         // Test that all values are reasonable (between -1 and 1 for normalized embeddings)
         for &value in &embedding.vector {
-            assert!(value >= -1.0 && value <= 1.0,
-                   "Embedding value {} is out of expected range [-1, 1]", value);
+            assert!(
+                value >= -1.0 && value <= 1.0,
+                "Embedding value {} is out of expected range [-1, 1]",
+                value
+            );
         }
     }
 
@@ -174,15 +178,18 @@ mod tests {
 
         // Integration: Results should be properly ranked by score
         for i in 0..results.len() - 1 {
-            assert!(results[i].score >= results[i + 1].score,
-                   "Results should be ordered by decreasing score: {} >= {}",
-                   results[i].score, results[i + 1].score);
+            assert!(
+                results[i].score >= results[i + 1].score,
+                "Results should be ordered by decreasing score: {} >= {}",
+                results[i].score,
+                results[i + 1].score
+            );
         }
 
         // Test score ranges
         assert_eq!(results[0].score, 1.0); // Perfect match
-        assert!(results[1].score > 0.8);   // High match
-        assert!(results[2].score > 0.6);   // Medium match
-        assert!(results[3].score < 0.3);   // Low match
+        assert!(results[1].score > 0.8); // High match
+        assert!(results[2].score > 0.6); // Medium match
+        assert!(results[3].score < 0.3); // Low match
     }
 }

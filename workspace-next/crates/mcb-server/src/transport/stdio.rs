@@ -19,11 +19,15 @@ impl StdioServerExt for McpServer {
     async fn serve_stdio(self) -> Result<(), Box<dyn std::error::Error>> {
         info!("📡 Starting MCP protocol server on stdio transport");
 
-        let service = self.serve(stdio()).await
+        let service = self
+            .serve(stdio())
+            .await
             .map_err(|e| format!("Failed to start MCP service: {:?}", e))?;
 
         info!("🎉 MCP server started successfully, waiting for connections...");
-        service.waiting().await
+        service
+            .waiting()
+            .await
             .map_err(|e| format!("MCP service error: {:?}", e))?;
 
         info!("👋 MCP server shutdown complete");

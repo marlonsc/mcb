@@ -8,9 +8,7 @@ use rmcp::model::{CallToolRequestParam, CallToolResult};
 use rmcp::ErrorData as McpError;
 use std::sync::Arc;
 
-use crate::args::{
-    ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs,
-};
+use crate::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
 use crate::handlers::{
     ClearIndexHandler, GetIndexingStatusHandler, IndexCodebaseHandler, SearchCodeHandler,
 };

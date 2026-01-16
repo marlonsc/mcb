@@ -39,12 +39,15 @@ impl CacheEntryConfig {
 
     /// Get the effective TTL, falling back to default
     pub fn effective_ttl(&self) -> Duration {
-        self.ttl.unwrap_or(Duration::from_secs(CACHE_DEFAULT_TTL_SECS))
+        self.ttl
+            .unwrap_or(Duration::from_secs(CACHE_DEFAULT_TTL_SECS))
     }
 
     /// Get the effective namespace, falling back to default
     pub fn effective_namespace(&self) -> String {
-        self.namespace.clone().unwrap_or_else(|| "default".to_string())
+        self.namespace
+            .clone()
+            .unwrap_or_else(|| "default".to_string())
     }
 }
 
@@ -131,7 +134,7 @@ impl CacheKey {
 
     /// Extract the key part from a namespaced key
     pub fn extract_key(key: &str) -> &str {
-        key.splitn(2, ':').nth(1).unwrap_or(key)
+        key.split_once(':').map(|x| x.1).unwrap_or(key)
     }
 
     /// Validate cache key format
@@ -151,7 +154,10 @@ impl CacheKey {
         }
 
         // Check for invalid characters
-        if key.chars().any(|c| c.is_control() || c == '\n' || c == '\r') {
+        if key
+            .chars()
+            .any(|c| c.is_control() || c == '\n' || c == '\r')
+        {
             return Err(Error::Configuration {
                 message: "Cache key contains invalid characters".to_string(),
                 source: None,
@@ -164,7 +170,13 @@ impl CacheKey {
     /// Sanitize a cache key by removing/replacing invalid characters
     pub fn sanitize_key(key: &str) -> String {
         key.chars()
-            .map(|c| if c.is_control() || c == '\n' || c == '\r' { '_' } else { c })
+            .map(|c| {
+                if c.is_control() || c == '\n' || c == '\r' {
+                    '_'
+                } else {
+                    c
+                }
+            })
             .take(250)
             .collect()
     }
@@ -178,9 +190,7 @@ impl CacheValue {
     pub fn estimate_size<T: serde::Serialize>(value: &T) -> usize {
         // Simple estimation: serialize to JSON and get byte length
         // In production, you might want more sophisticated size estimation
-        serde_json::to_string(value)
-            .map(|s| s.len())
-            .unwrap_or(0)
+        serde_json::to_string(value).map(|s| s.len()).unwrap_or(0)
     }
 
     /// Check if a value exceeds the maximum cache entry size

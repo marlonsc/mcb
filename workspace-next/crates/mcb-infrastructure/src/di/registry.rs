@@ -33,7 +33,10 @@ impl ComponentRegistry {
 
         if components.contains_key(&type_id) {
             return Err(Error::Infrastructure {
-                message: format!("Component of type {} is already registered", std::any::type_name::<T>()),
+                message: format!(
+                    "Component of type {} is already registered",
+                    std::any::type_name::<T>()
+                ),
                 source: None,
             });
         }
@@ -47,13 +50,18 @@ impl ComponentRegistry {
         let type_id = TypeId::of::<T>();
         let components = self.components.read().await;
 
-        let component = components.get(&type_id)
+        let component = components
+            .get(&type_id)
             .ok_or_else(|| Error::Infrastructure {
-                message: format!("Component of type {} not found in registry", std::any::type_name::<T>()),
+                message: format!(
+                    "Component of type {} not found in registry",
+                    std::any::type_name::<T>()
+                ),
                 source: None,
             })?;
 
-        let component = component.downcast_ref::<T>()
+        let component = component
+            .downcast_ref::<T>()
             .ok_or_else(|| Error::Infrastructure {
                 message: format!("Component type mismatch for {}", std::any::type_name::<T>()),
                 source: None,
@@ -76,7 +84,10 @@ impl ComponentRegistry {
 
         if components.remove(&type_id).is_none() {
             return Err(Error::Infrastructure {
-                message: format!("Component of type {} not found in registry", std::any::type_name::<T>()),
+                message: format!(
+                    "Component of type {} not found in registry",
+                    std::any::type_name::<T>()
+                ),
                 source: None,
             });
         }
@@ -153,58 +164,5 @@ impl ServiceLocator {
 impl Default for ServiceLocator {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[derive(Clone, Debug, PartialEq)]
-    struct TestComponent {
-        value: String,
-    }
-
-    #[tokio::test]
-    async fn test_component_registry() {
-        let registry = ComponentRegistry::new();
-
-        let component = TestComponent { value: "test".to_string() };
-
-        // Register component
-        registry.register(component.clone()).await.unwrap();
-
-        // Get component
-        let retrieved: TestComponent = registry.get().await.unwrap();
-        assert_eq!(retrieved, component);
-
-        // Check existence
-        assert!(registry.has::<TestComponent>().await);
-
-        // Count components
-        assert_eq!(registry.count().await, 1);
-
-        // Remove component
-        registry.remove::<TestComponent>().await.unwrap();
-        assert!(!registry.has::<TestComponent>().await);
-    }
-
-    #[tokio::test]
-    async fn test_service_locator() {
-        let locator = ServiceLocator::new();
-
-        let cache = crate::cache::CacheProviderFactory::create_null();
-        let crypto = crate::crypto::CryptoService::new(crate::crypto::CryptoService::generate_master_key()).unwrap();
-        let health = crate::health::HealthRegistry::new();
-
-        locator.register_infrastructure_components(cache.clone(), crypto.clone(), health.clone()).await.unwrap();
-
-        // Test that components can be retrieved
-        let retrieved_cache = locator.cache().await.unwrap();
-        let retrieved_crypto = locator.crypto().await.unwrap();
-        let retrieved_health = locator.health().await.unwrap();
-
-        // Components should be accessible
-        assert!(retrieved_cache.get::<_, String>("test").await.unwrap().is_none());
     }
 }

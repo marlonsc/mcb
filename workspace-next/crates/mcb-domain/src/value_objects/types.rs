@@ -3,7 +3,6 @@
 //! Type aliases and basic type definitions for dynamic domain concepts.
 //! These allow the domain to be extended without changing core types.
 
-
 /// Programming language identifier
 ///
 /// A string-based identifier for programming languages that allows dynamic

@@ -4,10 +4,10 @@
 //! These traits are implemented by the application services and
 //! used by the presentation layer (handlers).
 
-use crate::error::Result;
 use crate::entities::CodeChunk;
-use crate::value_objects::{Embedding, SearchResult};
+use crate::error::Result;
 use crate::repositories::{chunk_repository::RepositoryStats, search_repository::SearchStats};
+use crate::value_objects::{Embedding, SearchResult};
 use async_trait::async_trait;
 use shaku::Interface;
 use std::path::Path;

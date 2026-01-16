@@ -4,8 +4,8 @@
 //! enables services to chunk code files without coupling to specific AST parsing
 //! or language-specific implementations.
 
-use crate::error::Result;
 use crate::entities::CodeChunk;
+use crate::error::Result;
 use crate::value_objects::Language;
 use async_trait::async_trait;
 use shaku::Interface;

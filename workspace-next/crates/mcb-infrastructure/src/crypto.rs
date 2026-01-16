@@ -5,12 +5,15 @@
 
 use crate::constants::*;
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore},
+    aead::{rand_core::RngCore as AeadRngCore, Aead, AeadCore, KeyInit, OsRng as AeadOsRng},
     Aes256Gcm, Key, Nonce,
 };
-use argon2::{Argon2, PasswordHasher, password_hash::{rand_core::OsRng as ArgonOsRng, SaltString, PasswordHash, PasswordVerifier}};
+use argon2::{
+    password_hash::{rand_core::OsRng as ArgonOsRng, PasswordHash, PasswordVerifier, SaltString},
+    Argon2, PasswordHasher,
+};
 use mcb_domain::error::{Error, Result};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 use std::fmt;
 
 /// Encryption/decryption service
@@ -154,11 +157,10 @@ impl PasswordService {
 
     /// Verify a password against its hash
     pub fn verify_password(&self, password: &str, hash: &str) -> Result<bool> {
-        let parsed_hash = PasswordHash::new(hash)
-            .map_err(|e| Error::Authentication {
-                message: format!("Invalid password hash format: {}", e),
-                source: None,
-            })?;
+        let parsed_hash = PasswordHash::new(hash).map_err(|e| Error::Authentication {
+            message: format!("Invalid password hash format: {}", e),
+            source: None,
+        })?;
 
         Ok(self
             .argon2
@@ -188,7 +190,7 @@ impl TokenGenerator {
     pub fn generate_url_safe_token(length: usize) -> String {
         let mut bytes = vec![0u8; length];
         AeadOsRng.fill_bytes(&mut bytes);
-        use base64::{Engine as _, engine::general_purpose};
+        use base64::{engine::general_purpose, Engine as _};
         general_purpose::URL_SAFE_NO_PAD.encode(bytes)
     }
 
@@ -254,8 +256,8 @@ impl HashUtils {
     pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Vec<u8> {
         use hmac::{Hmac, Mac};
         type HmacSha256 = Hmac<Sha256>;
-        let mut mac = <HmacSha256 as Mac>::new_from_slice(key)
-            .expect("HMAC key size should be valid");
+        let mut mac =
+            <HmacSha256 as Mac>::new_from_slice(key).expect("HMAC key size should be valid");
         mac.update(data);
         mac.finalize().into_bytes().to_vec()
     }

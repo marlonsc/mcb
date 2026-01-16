@@ -7,10 +7,10 @@ use crate::config::data::AppConfig;
 use crate::constants::*;
 use crate::error_ext::ErrorContext;
 use crate::logging::log_config_loaded;
-use mcb_domain::error::{Error, Result};
 use config::{Config, Environment, File};
-use std::path::{Path, PathBuf};
+use mcb_domain::error::{Error, Result};
 use std::env;
+use std::path::{Path, PathBuf};
 
 /// Configuration loader service
 #[derive(Clone)]
@@ -83,9 +83,7 @@ impl ConfigLoader {
         );
 
         // Build and deserialize configuration
-        let config = builder
-            .build()
-            .context("Failed to build configuration")?;
+        let config = builder.build().context("Failed to build configuration")?;
 
         let app_config: AppConfig = config
             .try_deserialize()
@@ -104,11 +102,10 @@ impl ConfigLoader {
 
     /// Save configuration to file
     pub fn save_to_file<P: AsRef<Path>>(&self, config: &AppConfig, path: P) -> Result<()> {
-        let toml_string = toml::to_string_pretty(config)
-            .context("Failed to serialize config to TOML")?;
+        let toml_string =
+            toml::to_string_pretty(config).context("Failed to serialize config to TOML")?;
 
-        std::fs::write(path.as_ref(), toml_string)
-            .context("Failed to write config file")?;
+        std::fs::write(path.as_ref(), toml_string).context("Failed to write config file")?;
 
         Ok(())
     }
@@ -125,12 +122,17 @@ impl ConfigLoader {
         // Try various common config file locations
         let candidates = vec![
             current_dir.join(DEFAULT_CONFIG_FILENAME),
-            current_dir.join(DEFAULT_CONFIG_DIR).join(DEFAULT_CONFIG_FILENAME),
+            current_dir
+                .join(DEFAULT_CONFIG_DIR)
+                .join(DEFAULT_CONFIG_FILENAME),
             dirs::config_dir()
                 .map(|d| d.join(DEFAULT_CONFIG_DIR).join(DEFAULT_CONFIG_FILENAME))
                 .unwrap_or_default(),
             dirs::home_dir()
-                .map(|d| d.join(format!(".{}", DEFAULT_CONFIG_DIR)).join(DEFAULT_CONFIG_FILENAME))
+                .map(|d| {
+                    d.join(format!(".{}", DEFAULT_CONFIG_DIR))
+                        .join(DEFAULT_CONFIG_FILENAME)
+                })
                 .unwrap_or_default(),
         ];
 
@@ -147,20 +149,22 @@ impl ConfigLoader {
             });
         }
 
-        if config.server.https {
-            if config.server.ssl_cert_path.is_none() || config.server.ssl_key_path.is_none() {
-                return Err(Error::Configuration {
-                    message: "SSL certificate and key paths are required when HTTPS is enabled".to_string(),
-                    source: None,
-                });
-            }
+        if config.server.https
+            && (config.server.ssl_cert_path.is_none() || config.server.ssl_key_path.is_none())
+        {
+            return Err(Error::Configuration {
+                message: "SSL certificate and key paths are required when HTTPS is enabled"
+                    .to_string(),
+                source: None,
+            });
         }
 
         // Validate auth configuration
         if config.auth.enabled {
             if config.auth.jwt_secret.is_empty() {
                 return Err(Error::Configuration {
-                    message: "JWT secret cannot be empty when authentication is enabled".to_string(),
+                    message: "JWT secret cannot be empty when authentication is enabled"
+                        .to_string(),
                     source: None,
                 });
             }
@@ -216,14 +220,16 @@ impl ConfigLoader {
         if config.operations.tracking_enabled {
             if config.operations.cleanup_interval_secs == 0 {
                 return Err(Error::Configuration {
-                    message: "Operations cleanup interval cannot be 0 when tracking is enabled".to_string(),
+                    message: "Operations cleanup interval cannot be 0 when tracking is enabled"
+                        .to_string(),
                     source: None,
                 });
             }
 
             if config.operations.retention_secs == 0 {
                 return Err(Error::Configuration {
-                    message: "Operations retention period cannot be 0 when tracking is enabled".to_string(),
+                    message: "Operations retention period cannot be 0 when tracking is enabled"
+                        .to_string(),
                     source: None,
                 });
             }

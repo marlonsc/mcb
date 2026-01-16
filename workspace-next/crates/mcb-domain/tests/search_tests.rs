@@ -18,7 +18,10 @@ mod tests {
         assert_eq!(result.id, "chunk-123");
         assert_eq!(result.file_path, "src/search.rs");
         assert_eq!(result.start_line, 42);
-        assert_eq!(result.content, "impl SearchService for DefaultSearch { ... }");
+        assert_eq!(
+            result.content,
+            "impl SearchService for DefaultSearch { ... }"
+        );
         assert_eq!(result.score, 0.87);
         assert_eq!(result.language, "rust");
     }

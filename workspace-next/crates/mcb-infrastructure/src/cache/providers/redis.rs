@@ -18,11 +18,10 @@ pub struct RedisCacheProvider {
 impl RedisCacheProvider {
     /// Create a new Redis cache provider with connection string
     pub fn new(connection_string: &str) -> Result<Self> {
-        let client = Client::open(connection_string)
-            .map_err(|e| Error::Infrastructure {
-                message: format!("Failed to create Redis client: {}", e),
-                source: Some(Box::new(e)),
-            })?;
+        let client = Client::open(connection_string).map_err(|e| Error::Infrastructure {
+            message: format!("Failed to create Redis client: {}", e),
+            source: Some(Box::new(e)),
+        })?;
 
         Ok(Self {
             client,
@@ -171,16 +170,18 @@ impl CacheProvider for RedisCacheProvider {
         let mut conn = self.get_connection().await?;
 
         // Get basic Redis stats using DBSIZE command
-        let dbsize: redis::RedisResult<usize> = redis::cmd("DBSIZE")
-            .query_async(&mut conn)
-            .await;
+        let dbsize: redis::RedisResult<usize> = redis::cmd("DBSIZE").query_async(&mut conn).await;
         let dbsize = dbsize.unwrap_or(0);
 
         // Get our internal stats
-        let mut internal_stats = self.stats.read().map_err(|_| Error::Infrastructure {
-            message: "Failed to read cache stats".to_string(),
-            source: None,
-        })?.clone();
+        let mut internal_stats = self
+            .stats
+            .read()
+            .map_err(|_| Error::Infrastructure {
+                message: "Failed to read cache stats".to_string(),
+                source: None,
+            })?
+            .clone();
 
         internal_stats.entries = dbsize as u64;
 
@@ -190,9 +191,7 @@ impl CacheProvider for RedisCacheProvider {
     async fn size(&self) -> Result<usize> {
         let mut conn = self.get_connection().await?;
 
-        let dbsize: redis::RedisResult<usize> = redis::cmd("DBSIZE")
-            .query_async(&mut conn)
-            .await;
+        let dbsize: redis::RedisResult<usize> = redis::cmd("DBSIZE").query_async(&mut conn).await;
         dbsize.map_err(|e| Error::Infrastructure {
             message: format!("Redis DBSIZE failed: {}", e),
             source: Some(Box::new(e)),
@@ -234,7 +233,10 @@ mod tests {
         };
 
         // Test set and get
-        provider.set("test_key", &value, CacheEntryConfig::default()).await.unwrap();
+        provider
+            .set("test_key", &value, CacheEntryConfig::default())
+            .await
+            .unwrap();
 
         let retrieved: Option<TestValue> = provider.get("test_key").await.unwrap();
         assert_eq!(retrieved, Some(value));

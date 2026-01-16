@@ -18,11 +18,14 @@ pub enum CacheOperation<K, V> {
     Delete(K),
 }
 
+/// Type alias for the operations queue to reduce complexity
+type OperationsQueue = Arc<RwLock<Vec<CacheOperation<String, Vec<u8>>>>>;
+
 /// Batch cache operations
 #[derive(Clone)]
 pub struct CacheBatchProcessor {
     provider: SharedCacheProvider,
-    operations: Arc<RwLock<Vec<CacheOperation<String, Vec<u8>>>>>,
+    operations: OperationsQueue,
     max_batch_size: usize,
 }
 
@@ -43,11 +46,10 @@ impl CacheBatchProcessor {
         V: Serialize,
     {
         let key_str = key.into();
-        let value_bytes = serde_json::to_vec(&value).map_err(|e| {
-            mcb_domain::error::Error::Cache {
+        let value_bytes =
+            serde_json::to_vec(&value).map_err(|e| mcb_domain::error::Error::Cache {
                 message: format!("Failed to serialize value for batch operation: {}", e),
-            }
-        })?;
+            })?;
 
         let mut operations = self.operations.write().await;
         operations.push(CacheOperation::Set(key_str, value_bytes, config));
@@ -129,8 +131,8 @@ impl CacheBatchProcessor {
 
         // Process sets
         for (key, (value, config)) in sets {
-            let json_str = String::from_utf8(value)
-                .map_err(|e| mcb_domain::error::Error::Infrastructure {
+            let json_str =
+                String::from_utf8(value).map_err(|e| mcb_domain::error::Error::Infrastructure {
                     message: format!("Invalid UTF-8 in cached value: {}", e),
                     source: Some(Box::new(e)),
                 })?;
@@ -189,7 +191,10 @@ impl CacheAsideHelper {
         let computed_value = compute_fn().await?;
 
         // Cache the result (with default config)
-        let _ = self.cache.set(key, &computed_value, CacheEntryConfig::default()).await;
+        let _ = self
+            .cache
+            .set(key, &computed_value, CacheEntryConfig::default())
+            .await;
 
         Ok(CacheOperationResult {
             value: computed_value,
@@ -212,7 +217,9 @@ impl CacheAsideHelper {
         V: Serialize + Clone + Send + Sync,
     {
         let value = compute_fn().await?;
-        self.cache.set(key, &value, CacheEntryConfig::default()).await?;
+        self.cache
+            .set(key, &value, CacheEntryConfig::default())
+            .await?;
         Ok(value)
     }
 }
@@ -228,7 +235,10 @@ mod tests {
         let processor = CacheBatchProcessor::new(provider, 10);
 
         // Queue operations
-        processor.queue_set("key1", "value1", CacheEntryConfig::default()).await.unwrap();
+        processor
+            .queue_set("key1", "value1", CacheEntryConfig::default())
+            .await
+            .unwrap();
         processor.queue_delete("key2").await.unwrap();
 
         assert_eq!(processor.queued_count().await, 2);
@@ -244,10 +254,16 @@ mod tests {
         let processor = CacheBatchProcessor::new(provider, 2); // Small batch size
 
         // Add operations that should trigger auto-flush
-        processor.queue_set("key1", "value1", CacheEntryConfig::default()).await.unwrap();
+        processor
+            .queue_set("key1", "value1", CacheEntryConfig::default())
+            .await
+            .unwrap();
         assert_eq!(processor.queued_count().await, 1);
 
-        processor.queue_set("key2", "value2", CacheEntryConfig::default()).await.unwrap();
+        processor
+            .queue_set("key2", "value2", CacheEntryConfig::default())
+            .await
+            .unwrap();
         // Should have auto-flushed, so queue should be empty
         assert_eq!(processor.queued_count().await, 0);
     }

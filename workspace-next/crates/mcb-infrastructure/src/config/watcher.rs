@@ -17,7 +17,7 @@ use tokio::sync::RwLock;
 #[derive(Debug, Clone)]
 pub enum ConfigWatchEvent {
     /// Configuration reloaded successfully
-    Reloaded(AppConfig),
+    Reloaded(Box<AppConfig>),
     /// Configuration reload failed
     ReloadFailed(String),
     /// Watcher started
@@ -83,7 +83,9 @@ impl ConfigWatcher {
         *self.current_config.write().await = new_config.clone();
 
         // Send reload event
-        let _ = self.event_sender.send(ConfigWatchEvent::Reloaded(new_config.clone()));
+        let _ = self
+            .event_sender
+            .send(ConfigWatchEvent::Reloaded(Box::new(new_config.clone())));
 
         log_config_loaded(&self.config_path, true);
 
@@ -125,9 +127,10 @@ impl ConfigWatcher {
                             }
                         }
                         Err(e) => {
-                            let _ = event_sender.send(ConfigWatchEvent::ReloadFailed(
-                                format!("File watch error: {}", e),
-                            ));
+                            let _ = event_sender.send(ConfigWatchEvent::ReloadFailed(format!(
+                                "File watch error: {}",
+                                e
+                            )));
                         }
                     }
                 });
@@ -166,7 +169,7 @@ impl ConfigWatcher {
                 *current_config.write().await = new_config.clone();
 
                 // Send reload event
-                let _ = event_sender.send(ConfigWatchEvent::Reloaded(new_config));
+                let _ = event_sender.send(ConfigWatchEvent::Reloaded(Box::new(new_config)));
 
                 log_config_loaded(&config_path, true);
             }
@@ -267,7 +270,9 @@ mod tests {
         let loader = ConfigLoader::new();
         loader.save_to_file(&initial_config, &config_path).unwrap();
 
-        let watcher = ConfigWatcher::new(config_path, initial_config).await.unwrap();
+        let watcher = ConfigWatcher::new(config_path, initial_config)
+            .await
+            .unwrap();
         let config = watcher.get_config().await;
 
         assert_eq!(config.server.port, DEFAULT_HTTP_PORT);
@@ -319,7 +324,10 @@ mod tests {
 
     #[test]
     fn test_should_reload_config() {
-        use notify::{Event, EventKind, event::{ModifyKind, DataChange}};
+        use notify::{
+            event::{DataChange, ModifyKind},
+            Event, EventKind,
+        };
 
         // Should reload on data modification
         let modify_event = Event::new(EventKind::Modify(ModifyKind::Data(DataChange::Any)));

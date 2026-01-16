@@ -35,5 +35,5 @@ pub use provider::HttpClientProvider;
 /// Type alias for shared HTTP client provider
 pub type SharedHttpClient = std::sync::Arc<dyn HttpClientProvider>;
 
-#[cfg(test)]
+/// Test utilities for HTTP client (null implementations for testing)
 pub mod test_utils;

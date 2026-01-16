@@ -22,8 +22,8 @@ mod tests {
     fn test_embedding_with_realistic_data() {
         // Simulate a real embedding vector (truncated for test)
         let vector = vec![
-            0.123456, -0.789012, 0.456789, 0.012345, -0.678901,
-            0.234567, -0.890123, 0.567890, -0.123456, 0.789012
+            0.123456, -0.789012, 0.456789, 0.012345, -0.678901, 0.234567, -0.890123, 0.567890,
+            -0.123456, 0.789012,
         ];
 
         let embedding = Embedding {

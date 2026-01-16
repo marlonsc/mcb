@@ -56,7 +56,7 @@ mod tests {
             Error::Io { source: _ } => {
                 // We can't easily test the exact source, but we can verify it's an Io error
                 assert!(true);
-            },
+            }
             _ => panic!("Expected Io error"),
         }
     }
@@ -127,7 +127,7 @@ mod tests {
             (Error::Generic(msg1), Error::Generic(msg2), Error::Generic(msg3)) => {
                 assert_eq!(msg1, msg2);
                 assert_ne!(msg1, msg3);
-            },
+            }
             _ => panic!("Unexpected error types"),
         }
     }

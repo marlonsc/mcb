@@ -10,12 +10,12 @@
 //! - **infrastructure/** - Infrastructure services (sync, snapshots)
 //! - **admin.rs** - Administrative interfaces for system management
 
-/// External service provider ports
-pub mod providers;
-/// Infrastructure service ports
-pub mod infrastructure;
 /// Administrative interfaces for system management and monitoring
 pub mod admin;
+/// Infrastructure service ports
+pub mod infrastructure;
+/// External service provider ports
+pub mod providers;
 
 // Re-export commonly used port traits for convenience
 pub use admin::{
@@ -23,6 +23,4 @@ pub use admin::{
     PerformanceMetricsInterface,
 };
 pub use infrastructure::{SnapshotProvider, SyncProvider};
-pub use providers::{
-    EmbeddingProvider, HybridSearchProvider, VectorStoreProvider,
-};
+pub use providers::{EmbeddingProvider, HybridSearchProvider, VectorStoreProvider};
