@@ -3,7 +3,6 @@
 //! Provides centralized logging configuration and utilities using the tracing ecosystem.
 //! This module configures structured logging with JSON output, log levels, and file rotation.
 
-use crate::config::data::LoggingConfig;
 use mcb_domain::error::{Error, Result};
 
 // Re-export LoggingConfig for convenience

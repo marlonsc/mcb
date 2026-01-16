@@ -1,8 +1,7 @@
 //! Provider Configuration Tests
 
-use mcb_infrastructure::config::providers::{
-    EmbeddingConfig, ProviderConfigBuilder, ProviderConfigManager, VectorStoreConfig,
-};
+use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
+use mcb_infrastructure::config::providers::{ProviderConfigBuilder, ProviderConfigManager};
 use std::collections::HashMap;
 
 #[test]

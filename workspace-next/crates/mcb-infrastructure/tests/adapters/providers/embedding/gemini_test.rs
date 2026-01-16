@@ -1,5 +1,6 @@
 //! Gemini Embedding Provider Tests
 
+use mcb_domain::ports::EmbeddingProvider;
 use mcb_infrastructure::adapters::http_client::test_utils::NullHttpClientPool;
 use mcb_infrastructure::adapters::providers::GeminiEmbeddingProvider;
 use mcb_infrastructure::constants::EMBEDDING_DIMENSION_GEMINI;

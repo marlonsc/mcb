@@ -38,7 +38,7 @@ fn test_log_operation_success() {
 fn test_log_operation_failure() {
     init_test_logging();
 
-    let result = log_operation("test_operation", || {
+    let result: mcb_domain::Result<()> = log_operation("test_operation", || {
         Err(Error::Infrastructure {
             message: "test error".to_string(),
             source: None,

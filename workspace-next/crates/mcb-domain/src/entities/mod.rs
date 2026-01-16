@@ -19,4 +19,4 @@ pub mod codebase;
 
 // Re-export commonly used entities
 pub use code_chunk::CodeChunk;
-pub use codebase::{CodebaseSnapshot, FileSnapshot};
+pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};

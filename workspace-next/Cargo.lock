@@ -2938,6 +2938,7 @@ dependencies = [
  "shellexpand",
  "sysinfo",
  "tar",
+ "tempfile",
  "tera",
  "thiserror 2.0.17",
  "tokio",

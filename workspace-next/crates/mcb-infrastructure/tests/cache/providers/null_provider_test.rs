@@ -3,29 +3,19 @@
 use mcb_infrastructure::cache::config::CacheEntryConfig;
 use mcb_infrastructure::cache::providers::NullCacheProvider;
 use mcb_infrastructure::cache::CacheProvider;
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-struct TestValue {
-    data: String,
-    number: i32,
-}
 
 #[tokio::test]
 async fn test_null_provider_operations() {
     let provider = NullCacheProvider::new();
 
-    // Test get (should always return None)
-    let result: Option<TestValue> = provider.get("test_key").await.unwrap();
+    // Test get_json (should always return None)
+    let result = provider.get_json("test_key").await.unwrap();
     assert!(result.is_none());
 
-    // Test set (should succeed)
-    let value = TestValue {
-        data: "test".to_string(),
-        number: 42,
-    };
+    // Test set_json (should succeed)
+    let value_json = "\"test_value\"";
     assert!(provider
-        .set("test_key", value, CacheEntryConfig::default())
+        .set_json("test_key", value_json, CacheEntryConfig::default())
         .await
         .is_ok());
 
@@ -50,7 +40,6 @@ async fn test_null_provider_operations() {
 
 #[test]
 fn test_null_provider_default() {
-    let provider = NullCacheProvider::default();
-    // Just verify it creates successfully
-    assert!(true); // If we get here, Default works
+    let _provider = NullCacheProvider::default();
+    // Just verify it creates successfully via Default trait
 }

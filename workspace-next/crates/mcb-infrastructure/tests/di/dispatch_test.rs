@@ -15,11 +15,15 @@ async fn test_component_dispatcher() {
     // Verify components are accessible
     assert!(container
         .cache()
-        .get::<_, String>("test")
+        .get::<String>("test")
         .await
         .unwrap()
         .is_none());
-    assert!(container.health().list_checks().await.contains(&"system"));
+    assert!(container
+        .health()
+        .list_checks()
+        .await
+        .contains(&"system".to_string()));
 }
 
 #[tokio::test]
@@ -30,5 +34,9 @@ async fn test_infrastructure_initializer() {
     let container = initializer.initialize().await.unwrap();
 
     // Test that initialization succeeded
-    assert!(container.health().list_checks().await.contains(&"system"));
+    assert!(container
+        .health()
+        .list_checks()
+        .await
+        .contains(&"system".to_string()));
 }

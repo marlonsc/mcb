@@ -25,11 +25,8 @@ impl ServerConfigUtils {
     /// Get the server URL for the given configuration
     pub fn get_server_url(config: &ServerConfig) -> String {
         let protocol = if config.https { "https" } else { "http" };
-        let address = Self::parse_address(config).unwrap_or_else(|_| {
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), DEFAULT_HTTP_PORT)
-        });
-
-        format!("{}://{}", protocol, address)
+        // Use host:port directly - works for both IP addresses and domain names
+        format!("{}://{}:{}", protocol, config.host, config.port)
     }
 
     /// Validate SSL configuration

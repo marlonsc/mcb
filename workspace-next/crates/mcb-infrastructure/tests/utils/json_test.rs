@@ -1,6 +1,6 @@
 //! JSON Utility Tests
 
-use mcb_infrastructure::utils::json::{HashMapExt, JsonValueExt, OptionalValueExt};
+use mcb_infrastructure::utils::JsonExt;
 use serde_json::json;
 use std::collections::HashMap;
 

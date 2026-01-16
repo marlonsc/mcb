@@ -1,0 +1,43 @@
+[package]
+name = "mcb-validate"
+version = "0.1.0"
+edition = "2021"
+description = "Architecture validation for MCP Context Browser workspace"
+license = "MIT"
+
+[dependencies]
+# Rust AST parsing
+syn = { version = "2.0", features = ["full", "parsing", "visit"] }
+proc-macro2 = "1.0"
+
+# File traversal
+walkdir.workspace = true
+glob.workspace = true
+
+# Pattern matching
+regex.workspace = true
+
+# Serialization
+serde = { workspace = true }
+serde_json.workspace = true
+
+# TOML parsing for Cargo.toml
+toml.workspace = true
+
+# Error handling
+thiserror.workspace = true
+anyhow.workspace = true
+
+# CLI (optional)
+clap = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile = "3.14"
+
+[features]
+default = []
+cli = ["clap"]
+
+[[bin]]
+name = "mcb-validate"
+required-features = ["cli"]

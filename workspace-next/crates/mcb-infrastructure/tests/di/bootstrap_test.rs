@@ -23,9 +23,13 @@ async fn test_infrastructure_components() {
     // Test that components are accessible
     assert!(components
         .cache()
-        .get::<_, String>("test")
+        .get::<String>("test")
         .await
         .unwrap()
         .is_none());
-    assert!(components.health().list_checks().await.contains(&"system"));
+    assert!(components
+        .health()
+        .list_checks()
+        .await
+        .contains(&"system".to_string()));
 }

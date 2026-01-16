@@ -20,13 +20,16 @@ async fn test_moka_provider_basic_operations() {
         number: 42,
     };
 
-    // Test set and get
+    // Test set_json and get_json
+    let json = serde_json::to_string(&value).unwrap();
     provider
-        .set("test_key", &value, CacheEntryConfig::default())
+        .set_json("test_key", &json, CacheEntryConfig::default())
         .await
         .unwrap();
 
-    let retrieved: Option<TestValue> = provider.get("test_key").await.unwrap();
+    let retrieved_json = provider.get_json("test_key").await.unwrap();
+    let retrieved: Option<TestValue> =
+        retrieved_json.map(|j| serde_json::from_str(&j).unwrap());
     assert_eq!(retrieved, Some(value));
 
     // Test exists
@@ -36,16 +39,16 @@ async fn test_moka_provider_basic_operations() {
     assert!(provider.delete("test_key").await.unwrap());
     assert!(!provider.exists("test_key").await.unwrap());
 
-    // Test get after delete
-    let retrieved: Option<TestValue> = provider.get("test_key").await.unwrap();
-    assert!(retrieved.is_none());
+    // Test get_json after delete
+    let retrieved_json = provider.get_json("test_key").await.unwrap();
+    assert!(retrieved_json.is_none());
 }
 
 #[tokio::test]
 async fn test_moka_provider_nonexistent_key() {
     let provider = MokaCacheProvider::new();
 
-    let retrieved: Option<TestValue> = provider.get("nonexistent").await.unwrap();
+    let retrieved = provider.get_json("nonexistent").await.unwrap();
     assert!(retrieved.is_none());
 
     assert!(!provider.exists("nonexistent").await.unwrap());
@@ -58,11 +61,11 @@ async fn test_moka_provider_clear() {
 
     // Add some entries
     provider
-        .set("key1", "value1", CacheEntryConfig::default())
+        .set_json("key1", "\"value1\"", CacheEntryConfig::default())
         .await
         .unwrap();
     provider
-        .set("key2", "value2", CacheEntryConfig::default())
+        .set_json("key2", "\"value2\"", CacheEntryConfig::default())
         .await
         .unwrap();
 
@@ -81,11 +84,11 @@ async fn test_moka_provider_stats() {
     let provider = MokaCacheProvider::new();
 
     provider
-        .set("key1", "value1", CacheEntryConfig::default())
+        .set_json("key1", "\"value1\"", CacheEntryConfig::default())
         .await
         .unwrap();
     provider
-        .set("key2", "value2", CacheEntryConfig::default())
+        .set_json("key2", "\"value2\"", CacheEntryConfig::default())
         .await
         .unwrap();
 

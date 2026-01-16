@@ -3,18 +3,18 @@
 //! Tests for SharedCacheProvider and namespacing.
 
 use mcb_infrastructure::cache::config::CacheEntryConfig;
-use mcb_infrastructure::cache::provider::SharedCacheProvider;
+use mcb_infrastructure::cache::provider::{CacheProviderType, SharedCacheProvider};
 use mcb_infrastructure::cache::providers::NullCacheProvider;
 use std::time::Duration;
 
 #[tokio::test]
 async fn test_shared_cache_provider_basic_operations() {
-    let provider = SharedCacheProvider::new(NullCacheProvider::new());
+    let provider = SharedCacheProvider::new(CacheProviderType::Null(NullCacheProvider::new()));
 
     // Test basic operations (NullCacheProvider always returns None/Ok)
-    assert_eq!(provider.get::<_, String>("test").await.unwrap(), None);
+    assert_eq!(provider.get::<String>("test").await.unwrap(), None);
     assert!(provider
-        .set("test", "value", CacheEntryConfig::default())
+        .set("test", &"value".to_string(), CacheEntryConfig::default())
         .await
         .is_ok());
     assert!(!provider.exists("test").await.unwrap());
@@ -24,14 +24,14 @@ async fn test_shared_cache_provider_basic_operations() {
 
 #[tokio::test]
 async fn test_shared_cache_provider_namespacing() {
-    let provider = SharedCacheProvider::new(NullCacheProvider::new());
+    let provider = SharedCacheProvider::new(CacheProviderType::Null(NullCacheProvider::new()));
 
     // Test namespaced operations
     let namespaced = provider.namespaced("test_ns");
 
-    assert_eq!(namespaced.get::<_, String>("key").await.unwrap(), None);
+    assert_eq!(namespaced.get::<String>("key").await.unwrap(), None);
     assert!(namespaced
-        .set("key", "value", CacheEntryConfig::default())
+        .set("key", &"value".to_string(), CacheEntryConfig::default())
         .await
         .is_ok());
     assert!(!namespaced.exists("key").await.unwrap());

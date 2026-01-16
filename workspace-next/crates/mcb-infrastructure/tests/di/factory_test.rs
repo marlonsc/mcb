@@ -40,7 +40,7 @@ async fn test_health_registry_factory() {
     let registry = factory.create_health_registry().await.unwrap();
 
     let checks = registry.list_checks().await;
-    assert!(checks.contains(&"system"));
+    assert!(checks.contains(&"system".to_string()));
 }
 
 #[tokio::test]
@@ -50,5 +50,5 @@ async fn test_health_registry_factory_default() {
 
     // Verify that system health checker is registered
     let checks = registry.list_checks().await;
-    assert!(checks.contains(&"system"));
+    assert!(checks.contains(&"system".to_string()));
 }

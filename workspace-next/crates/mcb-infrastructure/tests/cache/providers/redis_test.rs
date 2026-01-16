@@ -23,13 +23,16 @@ async fn test_redis_provider_basic_operations() {
         number: 42,
     };
 
-    // Test set and get
+    // Test set_json and get_json
+    let json = serde_json::to_string(&value).unwrap();
     provider
-        .set("test_key", &value, CacheEntryConfig::default())
+        .set_json("test_key", &json, CacheEntryConfig::default())
         .await
         .unwrap();
 
-    let retrieved: Option<TestValue> = provider.get("test_key").await.unwrap();
+    let retrieved_json = provider.get_json("test_key").await.unwrap();
+    let retrieved: Option<TestValue> =
+        retrieved_json.map(|j| serde_json::from_str(&j).unwrap());
     assert_eq!(retrieved, Some(value));
 
     // Test exists

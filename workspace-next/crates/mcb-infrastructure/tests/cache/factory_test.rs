@@ -9,8 +9,9 @@ async fn test_factory_null_provider() {
     let provider = CacheProviderFactory::create_null();
 
     // Test basic operations
+    let value = "value".to_string();
     assert!(provider
-        .set("test", "value", CacheEntryConfig::default())
+        .set("test", &value, CacheEntryConfig::default())
         .await
         .is_ok());
     let result: Option<String> = provider.get("test").await.unwrap();
@@ -22,8 +23,9 @@ async fn test_factory_moka_provider() {
     let provider = CacheProviderFactory::create_moka(1024 * 1024); // 1MB
 
     // Test basic operations
+    let value = "value".to_string();
     assert!(provider
-        .set("test", "value", CacheEntryConfig::default())
+        .set("test", &value, CacheEntryConfig::default())
         .await
         .is_ok());
     let result: Option<String> = provider.get("test").await.unwrap();
@@ -38,8 +40,9 @@ async fn test_factory_redis_provider() {
         .unwrap();
 
     // Test basic operations
+    let value = "value".to_string();
     assert!(provider
-        .set("test", "value", CacheEntryConfig::default())
+        .set("test", &value, CacheEntryConfig::default())
         .await
         .is_ok());
     let result: Option<String> = provider.get("test").await.unwrap();
@@ -77,8 +80,9 @@ async fn test_factory_from_config_moka() {
         .unwrap();
 
     // Test that it works and has namespace
+    let value = "value".to_string();
     assert!(provider
-        .set("key", "value", CacheEntryConfig::default())
+        .set("key", &value, CacheEntryConfig::default())
         .await
         .is_ok());
     let result: Option<String> = provider.get("key").await.unwrap();

@@ -90,7 +90,7 @@ async fn test_service_locator() {
 
     // Components should be accessible
     assert!(retrieved_cache
-        .get::<_, String>("test")
+        .get::<String>("test")
         .await
         .unwrap()
         .is_none());
