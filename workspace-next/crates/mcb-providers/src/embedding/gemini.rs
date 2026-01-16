@@ -2,10 +2,10 @@
 //!
 //! Implements the EmbeddingProvider port using Google's Gemini embedding API.
 
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use reqwest::Client;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::EmbeddingProvider;
@@ -13,28 +13,31 @@ use mcb_domain::value_objects::Embedding;
 
 use crate::constants::{CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_GEMINI};
 use crate::embedding::helpers::constructor;
-use crate::http::{HttpClientProvider, HttpResponseUtils};
+use crate::utils::HttpResponseUtils;
 
 /// Gemini embedding provider
 ///
 /// Implements the `EmbeddingProvider` domain port using Google's Gemini embedding API.
-/// Receives HTTP client via constructor injection for DI compliance.
+/// Receives HTTP client via constructor injection.
 ///
 /// ## Example
 ///
 /// ```rust,no_run
 /// use mcb_providers::embedding::GeminiEmbeddingProvider;
-/// use mcb_providers::http::HttpClientProvider;
-/// use std::sync::Arc;
+/// use reqwest::Client;
 /// use std::time::Duration;
 ///
-/// fn example(http_client: Arc<dyn HttpClientProvider>) {
+/// fn example() {
+///     let client = Client::builder()
+///         .timeout(Duration::from_secs(30))
+///         .build()
+///         .unwrap();
 ///     let provider = GeminiEmbeddingProvider::new(
 ///         "AIza-your-api-key".to_string(),
 ///         None,
 ///         "text-embedding-004".to_string(),
 ///         Duration::from_secs(30),
-///         http_client,
+///         client,
 ///     );
 /// }
 /// ```
@@ -43,7 +46,7 @@ pub struct GeminiEmbeddingProvider {
     base_url: Option<String>,
     model: String,
     timeout: Duration,
-    http_client: Arc<dyn HttpClientProvider>,
+    http_client: Client,
 }
 
 impl GeminiEmbeddingProvider {
@@ -54,13 +57,13 @@ impl GeminiEmbeddingProvider {
     /// * `base_url` - Optional custom base URL (defaults to Google AI API)
     /// * `model` - Model name (e.g., "text-embedding-004")
     /// * `timeout` - Request timeout duration
-    /// * `http_client` - Injected HTTP client (required for DI compliance)
+    /// * `http_client` - Reqwest HTTP client for making API requests
     pub fn new(
         api_key: String,
         base_url: Option<String>,
         model: String,
         timeout: Duration,
-        http_client: Arc<dyn HttpClientProvider>,
+        http_client: Client,
     ) -> Self {
         let api_key = constructor::validate_api_key(&api_key);
         let base_url = constructor::validate_url(base_url);
@@ -132,14 +135,6 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
                 }
             });
 
-            let client = if self.timeout != self.http_client.config().timeout {
-                self.http_client
-                    .client_with_timeout(self.timeout)
-                    .map_err(|e| Error::embedding(format!("Failed to create HTTP client: {}", e)))?
-            } else {
-                self.http_client.client().clone()
-            };
-
             let base_url = self.effective_base_url();
             let url = format!(
                 "{}/v1beta/models/{}:embedContent?key={}",
@@ -148,9 +143,11 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
                 self.api_key
             );
 
-            let response = client
+            let response = self
+                .http_client
                 .post(&url)
                 .header("Content-Type", CONTENT_TYPE_JSON)
+                .timeout(self.timeout)
                 .json(&payload)
                 .send()
                 .await

@@ -14,12 +14,12 @@
 //!
 //! ```ignore
 //! use mcb_providers::vector_store::EncryptedVectorStoreProvider;
-//! use mcb_providers::crypto::CryptoProvider;
+//! use mcb_domain::ports::providers::CryptoProvider;
 //!
 //! let encrypted = EncryptedVectorStoreProvider::new(inner_provider, crypto_service);
 //! ```
 
-use crate::crypto::{CryptoProvider, EncryptedData};
+use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreProvider};

@@ -1,28 +1,30 @@
-//! Cryptographic provider trait and types
+//! Cryptographic Provider Port
 //!
 //! Defines the interface for cryptographic operations used by providers
 //! that need encryption capabilities (e.g., EncryptedVectorStoreProvider).
 //!
-//! ## Architecture
+//! ## Usage
 //!
-//! This follows Dependency Inversion Principle:
-//! - The trait is defined here (mcb-providers)
-//! - The implementation lives in mcb-infrastructure (CryptoService)
+//! This port follows the Dependency Inversion Principle:
+//! - The trait is defined here (mcb-domain)
+//! - Implementations live in mcb-infrastructure (CryptoService)
 //! - Providers depend on the abstraction, not the concrete implementation
 
-use mcb_domain::error::Result;
+use crate::error::Result;
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use shaku::Interface;
 use std::fmt;
 
-/// Cryptographic provider trait
+/// Cryptographic provider port
 ///
-/// Defines the interface for encryption/decryption operations.
-/// Implementations provide the actual cryptographic primitives.
+/// Defines the contract for encryption/decryption operations.
+/// Implementations provide the actual cryptographic primitives (e.g., AES-256-GCM).
 ///
 /// # Example
 ///
 /// ```ignore
-/// use mcb_providers::crypto::CryptoProvider;
+/// use mcb_domain::ports::providers::CryptoProvider;
 ///
 /// async fn encrypt_metadata(
 ///     crypto: &dyn CryptoProvider,
@@ -31,7 +33,8 @@ use std::fmt;
 ///     crypto.encrypt(data)
 /// }
 /// ```
-pub trait CryptoProvider: Send + Sync {
+#[async_trait]
+pub trait CryptoProvider: Interface + Send + Sync {
     /// Encrypt plaintext data
     ///
     /// # Arguments
@@ -53,6 +56,9 @@ pub trait CryptoProvider: Send + Sync {
     ///
     /// The decrypted plaintext
     fn decrypt(&self, encrypted_data: &EncryptedData) -> Result<Vec<u8>>;
+
+    /// Get the name/identifier of this provider implementation
+    fn provider_name(&self) -> &str;
 }
 
 /// Encrypted data container

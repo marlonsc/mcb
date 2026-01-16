@@ -31,6 +31,10 @@ pub mod routes;
 
 // Re-export main types
 pub use api::{AdminApi, AdminApiConfig};
+pub use config::{
+    ConfigReloadResponse, ConfigResponse, ConfigSectionUpdateRequest, ConfigSectionUpdateResponse,
+    SanitizedConfig,
+};
 pub use handlers::AdminState;
 pub use models::{AdminActionResponse, CollectionStats, ServerInfo};
 pub use routes::{admin_router, admin_router_with_prefix};

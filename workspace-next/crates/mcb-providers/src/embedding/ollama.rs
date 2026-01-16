@@ -3,10 +3,10 @@
 //! Implements the EmbeddingProvider port using Ollama's local embedding API.
 //! Supports various local embedding models like nomic-embed-text, all-minilm, etc.
 
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use reqwest::Client;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::EmbeddingProvider;
@@ -17,27 +17,30 @@ use crate::constants::{
     EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
     EMBEDDING_DIMENSION_OLLAMA_NOMIC,
 };
-use crate::http::{HttpClientProvider, HttpResponseUtils};
+use crate::utils::HttpResponseUtils;
 
 /// Ollama embedding provider
 ///
 /// Implements the `EmbeddingProvider` domain port using Ollama's local embedding API.
-/// Receives HTTP client via constructor injection for DI compliance.
+/// Receives HTTP client via constructor injection.
 ///
 /// ## Example
 ///
 /// ```rust,no_run
 /// use mcb_providers::embedding::OllamaEmbeddingProvider;
-/// use mcb_providers::http::HttpClientProvider;
-/// use std::sync::Arc;
+/// use reqwest::Client;
 /// use std::time::Duration;
 ///
-/// fn example(http_client: Arc<dyn HttpClientProvider>) {
+/// fn example() {
+///     let client = Client::builder()
+///         .timeout(Duration::from_secs(30))
+///         .build()
+///         .unwrap();
 ///     let provider = OllamaEmbeddingProvider::new(
 ///         "http://localhost:11434".to_string(),
 ///         "nomic-embed-text".to_string(),
 ///         Duration::from_secs(30),
-///         http_client,
+///         client,
 ///     );
 /// }
 /// ```
@@ -45,7 +48,7 @@ pub struct OllamaEmbeddingProvider {
     base_url: String,
     model: String,
     timeout: Duration,
-    http_client: Arc<dyn HttpClientProvider>,
+    http_client: Client,
 }
 
 impl OllamaEmbeddingProvider {
@@ -55,12 +58,12 @@ impl OllamaEmbeddingProvider {
     /// * `base_url` - Ollama server URL (e.g., "http://localhost:11434")
     /// * `model` - Model name (e.g., "nomic-embed-text")
     /// * `timeout` - Request timeout duration
-    /// * `http_client` - Injected HTTP client (required for DI compliance)
+    /// * `http_client` - Reqwest HTTP client for making API requests
     pub fn new(
         base_url: String,
         model: String,
         timeout: Duration,
-        http_client: Arc<dyn HttpClientProvider>,
+        http_client: Client,
     ) -> Self {
         Self {
             base_url,
@@ -104,20 +107,14 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
                 "stream": false
             });
 
-            let client = if self.timeout != self.http_client.config().timeout {
-                self.http_client
-                    .client_with_timeout(self.timeout)
-                    .map_err(|e| Error::embedding(format!("Failed to create HTTP client: {}", e)))?
-            } else {
-                self.http_client.client().clone()
-            };
-
-            let response = client
+            let response = self
+                .http_client
                 .post(format!(
                     "{}/api/embeddings",
                     self.base_url.trim_end_matches('/')
                 ))
                 .header("Content-Type", CONTENT_TYPE_JSON)
+                .timeout(self.timeout)
                 .json(&payload)
                 .send()
                 .await

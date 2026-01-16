@@ -406,6 +406,9 @@ pub const AST_NODE_CLASS_DECLARATION: &str = "class_declaration";
 /// Interface declaration AST node type
 pub const AST_NODE_INTERFACE_DECLARATION: &str = "interface_declaration";
 
+/// Struct specifier AST node type (C/C++)
+pub const AST_NODE_STRUCT_SPECIFIER: &str = "struct_specifier";
+
 // ============================================================================
 // METADATA KEY CONSTANTS
 // ============================================================================

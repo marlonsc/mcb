@@ -1,27 +1,22 @@
-//! HTTP Client Module
+//! HTTP Client Abstractions
 //!
-//! Provides HTTP client abstractions for API-based providers. This module defines
-//! the interface (trait) that embedding and other providers depend on.
+//! Defines the HTTP client traits and utilities used by API-based providers.
+//! The actual HTTP client implementation is provided by mcb-infrastructure.
 //!
-//! ## Clean Architecture
+//! ## Design Rationale
 //!
-//! Following Dependency Inversion Principle:
-//! - **Interface** (`HttpClientProvider` trait): Defined here in mcb-providers
-//! - **Implementation** (`HttpClientPool`): Provided by mcb-infrastructure
+//! This module follows Clean Architecture by defining interfaces (traits) that
+//! provider implementations depend on. The concrete HTTP client implementation
+//! is injected via dependency injection from the infrastructure layer.
 //!
-//! This allows providers to declare their HTTP requirements without depending
-//! on concrete implementations, enabling testing with mocks.
+//! ## Contents
 //!
-//! ## Components
-//!
-//! - [`HttpClientProvider`]: Trait for HTTP client operations
-//! - [`HttpClientConfig`]: Configuration for HTTP client behavior
-//! - [`HttpResponseUtils`]: Utilities for parsing API responses
+//! - `HttpClientProvider` - Trait for HTTP client operations
+//! - `HttpClientConfig` - Configuration for HTTP client settings
+//! - `HttpResponseUtils` - Utilities for handling HTTP responses (re-exported from utils)
 
-mod config;
-mod provider;
-mod response;
+pub mod provider;
 
-pub use config::HttpClientConfig;
-pub use provider::HttpClientProvider;
-pub use response::HttpResponseUtils;
+pub use provider::{HttpClientConfig, HttpClientProvider};
+// Re-export HttpResponseUtils from utils for backward compatibility
+pub use crate::utils::HttpResponseUtils;

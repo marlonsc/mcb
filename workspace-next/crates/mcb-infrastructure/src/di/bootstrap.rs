@@ -16,30 +16,73 @@ use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use std::sync::Arc;
 use tracing::info;
 
+/// Storage and caching components
+#[derive(Clone)]
+pub struct StorageComponents {
+    pub cache: SharedCacheProvider,
+    pub crypto: CryptoService,
+}
+
+/// Provider components for AI services
+#[derive(Clone)]
+pub struct ProviderComponents {
+    pub embedding_provider: Arc<dyn EmbeddingProvider>,
+    pub vector_store_provider: Arc<dyn VectorStoreProvider>,
+}
+
+/// Administrative service components
+#[derive(Clone)]
+pub struct AdminComponents {
+    pub performance_metrics: Arc<dyn PerformanceMetricsInterface>,
+    pub indexing_operations: Arc<dyn IndexingOperationsInterface>,
+}
+
 /// Core infrastructure components container
 #[derive(Clone)]
 pub struct InfrastructureComponents {
-    pub cache: SharedCacheProvider,
-    pub crypto: CryptoService,
+    pub storage: StorageComponents,
+    pub providers: ProviderComponents,
+    pub admin: AdminComponents,
     pub health: HealthRegistry,
     pub config: AppConfig,
-    pub embedding_provider: Arc<dyn EmbeddingProvider>,
-    pub vector_store_provider: Arc<dyn VectorStoreProvider>,
-    pub performance_metrics: Arc<dyn PerformanceMetricsInterface>,
-    pub indexing_operations: Arc<dyn IndexingOperationsInterface>,
 }
 
 impl InfrastructureComponents {
     /// Create a new infrastructure components container
     pub async fn new(config: AppConfig) -> Result<Self> {
-        // Create cache provider based on configuration
-        let cache = if config.cache.enabled {
-            CacheProviderFactory::create_from_config(&config.cache).await?
-        } else {
-            CacheProviderFactory::create_null()
-        };
+        let cache = Self::create_cache_provider(&config).await?;
+        let crypto = Self::create_crypto_service(&config)?;
+        let health = Self::create_health_registry().await?;
+        let embedding_provider = Self::create_embedding_provider(&config)?;
+        let vector_store_provider = Self::create_vector_store_provider(&config, &crypto)?;
+        let (performance_metrics, indexing_operations) = Self::create_admin_services();
 
-        // Create crypto service with master key from config or generate one
+        Ok(Self {
+            storage: StorageComponents { cache, crypto },
+            providers: ProviderComponents {
+                embedding_provider,
+                vector_store_provider,
+            },
+            admin: AdminComponents {
+                performance_metrics,
+                indexing_operations,
+            },
+            health,
+            config,
+        })
+    }
+
+    /// Create cache provider from configuration
+    async fn create_cache_provider(config: &AppConfig) -> Result<SharedCacheProvider> {
+        if config.cache.enabled {
+            CacheProviderFactory::create_from_config(&config.cache).await
+        } else {
+            Ok(CacheProviderFactory::create_null())
+        }
+    }
+
+    /// Create crypto service from configuration
+    fn create_crypto_service(config: &AppConfig) -> Result<CryptoService> {
         // AES-GCM requires exactly 32 bytes for the key
         let master_key = if config.auth.jwt_secret.len() >= 32 {
             // Use first 32 bytes of the JWT secret as the master key
@@ -48,9 +91,11 @@ impl InfrastructureComponents {
             CryptoService::generate_master_key()
         };
 
-        let crypto = CryptoService::new(master_key)?;
+        CryptoService::new(master_key)
+    }
 
-        // Create health registry and register built-in checkers
+    /// Create and configure health registry
+    async fn create_health_registry() -> Result<HealthRegistry> {
         let health = HealthRegistry::new();
 
         // Register system health checker
@@ -62,45 +107,45 @@ impl InfrastructureComponents {
         // Register database health checker if configured
         // (This would be expanded based on actual database configuration)
 
-        // Create embedding provider based on configuration
-        let embedding_provider: Arc<dyn EmbeddingProvider> =
-            if let Some((name, embedding_config)) = config.embedding.iter().next() {
-                info!(provider = name, "Creating embedding provider from config");
-                EmbeddingProviderFactory::create(embedding_config, None)?
-            } else {
-                info!("No embedding provider configured, using null provider");
-                EmbeddingProviderFactory::create_null()
-            };
+        Ok(health)
+    }
 
-        // Create vector store provider based on configuration
-        let vector_store_provider: Arc<dyn VectorStoreProvider> =
-            if let Some((name, vector_config)) = config.vector_store.iter().next() {
-                info!(
-                    provider = name,
-                    "Creating vector store provider from config"
-                );
-                VectorStoreProviderFactory::create(vector_config, Some(&crypto))?
-            } else {
-                info!("No vector store provider configured, using in-memory provider");
-                VectorStoreProviderFactory::create_in_memory()
-            };
+    /// Create embedding provider from configuration
+    fn create_embedding_provider(config: &AppConfig) -> Result<Arc<dyn EmbeddingProvider>> {
+        if let Some((name, embedding_config)) = config.embedding.iter().next() {
+            info!(provider = name, "Creating embedding provider from config");
+            EmbeddingProviderFactory::create(embedding_config, None)
+        } else {
+            info!("No embedding provider configured, using null provider");
+            Ok(EmbeddingProviderFactory::create_null())
+        }
+    }
 
-        // Create admin service implementations
+    /// Create vector store provider from configuration
+    fn create_vector_store_provider(
+        config: &AppConfig,
+        crypto: &CryptoService,
+    ) -> Result<Arc<dyn VectorStoreProvider>> {
+        if let Some((name, vector_config)) = config.vector_store.iter().next() {
+            info!(
+                provider = name,
+                "Creating vector store provider from config"
+            );
+            VectorStoreProviderFactory::create(vector_config, Some(crypto))
+        } else {
+            info!("No vector store provider configured, using in-memory provider");
+            Ok(VectorStoreProviderFactory::create_in_memory())
+        }
+    }
+
+    /// Create admin service implementations
+    fn create_admin_services() -> (Arc<dyn PerformanceMetricsInterface>, Arc<dyn IndexingOperationsInterface>) {
         let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
             Arc::new(AtomicPerformanceMetrics::new());
         let indexing_operations: Arc<dyn IndexingOperationsInterface> =
             Arc::new(DefaultIndexingOperations::new());
 
-        Ok(Self {
-            cache,
-            crypto,
-            health,
-            config,
-            embedding_provider,
-            vector_store_provider,
-            performance_metrics,
-            indexing_operations,
-        })
+        (performance_metrics, indexing_operations)
     }
 
     /// Get the cache provider
@@ -116,6 +161,26 @@ impl InfrastructureComponents {
     /// Get the health registry
     pub fn health(&self) -> &HealthRegistry {
         &self.health
+    }
+
+    /// Get the embedding provider
+    pub fn embedding_provider(&self) -> &Arc<dyn EmbeddingProvider> {
+        &self.providers.embedding_provider
+    }
+
+    /// Get the vector store provider
+    pub fn vector_store_provider(&self) -> &Arc<dyn VectorStoreProvider> {
+        &self.providers.vector_store_provider
+    }
+
+    /// Get the performance metrics service
+    pub fn performance_metrics(&self) -> &Arc<dyn PerformanceMetricsInterface> {
+        &self.admin.performance_metrics
+    }
+
+    /// Get the indexing operations service
+    pub fn indexing_operations(&self) -> &Arc<dyn IndexingOperationsInterface> {
+        &self.admin.indexing_operations
     }
 
     /// Get the configuration

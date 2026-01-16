@@ -7,8 +7,8 @@
 
 use crate::{
     DependencyViolation, DocumentationViolation, KissViolation, NamingViolation,
-    OrganizationViolation, PatternViolation, QualityViolation, Severity, ShakuViolation,
-    SolidViolation, TestViolation,
+    OrganizationViolation, PatternViolation, QualityViolation, RefactoringViolation, Severity,
+    ShakuViolation, SolidViolation, TestViolation,
 };
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -42,6 +42,8 @@ pub struct ValidationReport {
     pub kiss_violations: Vec<KissViolation>,
     /// DI/Shaku violations
     pub shaku_violations: Vec<ShakuViolation>,
+    /// Refactoring completeness violations
+    pub refactoring_violations: Vec<RefactoringViolation>,
 }
 
 /// Summary of validation results
@@ -69,6 +71,8 @@ pub struct ValidationSummary {
     pub kiss_count: usize,
     /// Number of DI/Shaku violations
     pub shaku_count: usize,
+    /// Number of refactoring completeness violations
+    pub refactoring_count: usize,
     /// Whether validation passed (no error-level violations)
     pub passed: bool,
 }
@@ -138,6 +142,10 @@ impl Reporter {
         output.push_str(&format!(
             "  DI/Shaku:       {}\n",
             report.summary.shaku_count
+        ));
+        output.push_str(&format!(
+            "  Refactoring:    {}\n",
+            report.summary.refactoring_count
         ));
         output.push('\n');
 
@@ -238,6 +246,15 @@ impl Reporter {
             output.push('\n');
         }
 
+        // Refactoring violations
+        if !report.refactoring_violations.is_empty() {
+            output.push_str("--- Refactoring Violations ---\n");
+            for v in &report.refactoring_violations {
+                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
+            }
+            output.push('\n');
+        }
+
         output
     }
 
@@ -279,6 +296,10 @@ impl Reporter {
         ));
         output.push_str(&format!("| KISS | {} |\n", report.summary.kiss_count));
         output.push_str(&format!("| DI/Shaku | {} |\n", report.summary.shaku_count));
+        output.push_str(&format!(
+            "| Refactoring | {} |\n",
+            report.summary.refactoring_count
+        ));
         output.push_str(&format!(
             "| **Total** | **{}** |\n",
             report.summary.total_violations
@@ -348,6 +369,12 @@ impl Reporter {
             }
         }
 
+        for v in &report.refactoring_violations {
+            if v.severity() == Severity::Error {
+                errors.push(format!("::error ::{}", v));
+            }
+        }
+
         if !errors.is_empty() {
             output.push_str("\n### Errors\n\n");
             for e in errors {
@@ -412,6 +439,11 @@ impl Reporter {
             .iter()
             .filter(|v| v.severity() == Severity::Error)
             .count();
+        count += report
+            .refactoring_violations
+            .iter()
+            .filter(|v| v.severity() == Severity::Error)
+            .count();
 
         count
     }
@@ -470,6 +502,11 @@ impl Reporter {
             .iter()
             .filter(|v| v.severity() == Severity::Warning)
             .count();
+        count += report
+            .refactoring_violations
+            .iter()
+            .filter(|v| v.severity() == Severity::Warning)
+            .count();
 
         count
     }
@@ -495,6 +532,7 @@ mod tests {
                 organization_count: 0,
                 kiss_count: 0,
                 shaku_count: 0,
+                refactoring_count: 0,
                 passed: true,
             },
             dependency_violations: vec![],
@@ -507,6 +545,7 @@ mod tests {
             organization_violations: vec![],
             kiss_violations: vec![],
             shaku_violations: vec![],
+            refactoring_violations: vec![],
         }
     }
 

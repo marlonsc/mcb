@@ -32,6 +32,7 @@ pub mod naming;
 pub mod organization;
 pub mod patterns;
 pub mod quality;
+pub mod refactoring;
 pub mod reporter;
 pub mod shaku;
 pub mod solid;
@@ -50,6 +51,7 @@ pub use quality::{QualityValidator, QualityViolation};
 pub use reporter::{Reporter, ValidationReport, ValidationSummary};
 pub use shaku::{ShakuValidator, ShakuViolation};
 pub use solid::{SolidValidator, SolidViolation};
+pub use refactoring::{RefactoringValidator, RefactoringViolation};
 pub use tests_org::{TestValidator, TestViolation};
 
 // Re-export ValidationConfig for multi-directory support
@@ -251,6 +253,7 @@ pub struct ArchitectureValidator {
     organization: OrganizationValidator,
     kiss: KissValidator,
     shaku: ShakuValidator,
+    refactoring: RefactoringValidator,
 }
 
 impl ArchitectureValidator {
@@ -288,6 +291,7 @@ impl ArchitectureValidator {
             organization: OrganizationValidator::with_config(config.clone()),
             kiss: KissValidator::with_config(config.clone()),
             shaku: ShakuValidator::with_config(config.clone()),
+            refactoring: RefactoringValidator::with_config(config.clone()),
             config: ValidationConfig {
                 workspace_root: root,
                 ..config
@@ -317,6 +321,7 @@ impl ArchitectureValidator {
         let organization_violations = self.organization.validate_all()?;
         let kiss_violations = self.kiss.validate_all()?;
         let shaku_violations = self.shaku.validate_all()?;
+        let refactoring_violations = self.refactoring.validate_all()?;
 
         let total = dependency_violations.len()
             + quality_violations.len()
@@ -327,7 +332,8 @@ impl ArchitectureValidator {
             + solid_violations.len()
             + organization_violations.len()
             + kiss_violations.len()
-            + shaku_violations.len();
+            + shaku_violations.len()
+            + refactoring_violations.len();
 
         let summary = ValidationSummary {
             total_violations: total,
@@ -341,6 +347,7 @@ impl ArchitectureValidator {
             organization_count: organization_violations.len(),
             kiss_count: kiss_violations.len(),
             shaku_count: shaku_violations.len(),
+            refactoring_count: refactoring_violations.len(),
             passed: total == 0,
         };
 
@@ -358,6 +365,7 @@ impl ArchitectureValidator {
             organization_violations,
             kiss_violations,
             shaku_violations,
+            refactoring_violations,
         })
     }
 
@@ -409,6 +417,11 @@ impl ArchitectureValidator {
     /// Run only DI/Shaku validation
     pub fn validate_shaku(&mut self) -> Result<Vec<ShakuViolation>> {
         self.shaku.validate_all()
+    }
+
+    /// Run only refactoring completeness validation
+    pub fn validate_refactoring(&mut self) -> Result<Vec<RefactoringViolation>> {
+        self.refactoring.validate_all()
     }
 }
 

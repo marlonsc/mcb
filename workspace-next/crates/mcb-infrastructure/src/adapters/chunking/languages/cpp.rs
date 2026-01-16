@@ -3,7 +3,7 @@
 use crate::adapters::chunking::config::{LanguageConfig, NodeExtractionRule};
 use crate::adapters::chunking::constants::CHUNK_SIZE_CPP;
 use crate::adapters::chunking::processor::{BaseProcessor, LanguageProcessor};
-use crate::constants::TS_NODE_FUNCTION_DEFINITION;
+use crate::constants::{AST_NODE_STRUCT_SPECIFIER, TS_NODE_FUNCTION_DEFINITION};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 
@@ -25,7 +25,7 @@ impl CppProcessor {
                 node_types: vec![
                     TS_NODE_FUNCTION_DEFINITION.to_string(),
                     "class_specifier".to_string(),
-                    "struct_specifier".to_string(),
+                    AST_NODE_STRUCT_SPECIFIER.to_string(),
                 ],
                 min_length: 30,
                 min_lines: 2,

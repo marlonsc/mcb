@@ -4,7 +4,7 @@
 .PHONY: build test lint fmt clean check verify release
 .PHONY: validate validate-report validate-summary validate-arch
 .PHONY: validate-deps validate-quality validate-patterns validate-tests validate-docs validate-naming validate-solid validate-org
-.PHONY: validate-kiss validate-shaku
+.PHONY: validate-kiss validate-shaku validate-refactor
 .PHONY: validate-all validate-legacy validate-config
 .PHONY: check-full ci
 
@@ -50,8 +50,8 @@ validate:
 	@echo "║           mcb-validate Architecture Report                   ║"
 	@echo "╚══════════════════════════════════════════════════════════════╝"
 	@cargo test --package mcb-validate test_full_validation_report -- --nocapture 2>&1 | \
-		grep -E "(Total Violations:|Dependency:|Quality:|Patterns:|Tests:|Documentation:|Naming:|SOLID:|Organization:|KISS:|DI/Shaku:|Status:|\[Error\]|\[Warning\])" | \
-		head -25
+		grep -E "(Total Violations:|Dependency:|Quality:|Patterns:|Tests:|Documentation:|Naming:|SOLID:|Organization:|KISS:|DI/Shaku:|Refactoring:|Status:|\[Error\]|\[Warning\])" | \
+		head -30
 	@echo ""
 	@echo "Run 'make validate-report' for full details"
 
@@ -120,8 +120,8 @@ validate-all:
 	@echo "║     mcb-validate: Workspace + Legacy Source Validation       ║"
 	@echo "╚══════════════════════════════════════════════════════════════╝"
 	@cargo test --package mcb-validate test_validation_with_legacy -- --nocapture 2>&1 | \
-		grep -E "(Total Violations:|Dependency:|Quality:|Patterns:|Tests:|Documentation:|Naming:|SOLID:|Organization:|KISS:|DI/Shaku:|Status:|\[Error\]|\[Warning\]|\[Info\])" | \
-		head -35
+		grep -E "(Total Violations:|Dependency:|Quality:|Patterns:|Tests:|Documentation:|Naming:|SOLID:|Organization:|KISS:|DI/Shaku:|Refactoring:|Status:|\[Error\]|\[Warning\]|\[Info\])" | \
+		head -40
 	@echo ""
 	@echo "Note: Legacy paths use Info severity level"
 
@@ -131,8 +131,8 @@ validate-legacy:
 	@echo "║          mcb-validate: Legacy Source Only                     ║"
 	@echo "╚══════════════════════════════════════════════════════════════╝"
 	@cargo test --package mcb-validate test_legacy_only -- --nocapture 2>&1 | \
-		grep -E "(Total Violations:|Dependency:|Quality:|Patterns:|Tests:|Documentation:|Naming:|SOLID:|Organization:|KISS:|DI/Shaku:|Status:|\[Error\]|\[Warning\]|\[Info\])" | \
-		head -35
+		grep -E "(Total Violations:|Dependency:|Quality:|Patterns:|Tests:|Documentation:|Naming:|SOLID:|Organization:|KISS:|DI/Shaku:|Refactoring:|Status:|\[Error\]|\[Warning\]|\[Info\])" | \
+		head -40
 
 # Show current validation configuration
 validate-config:
@@ -164,4 +164,10 @@ validate-kiss:
 validate-shaku:
 	@echo "=== DI/Shaku Violations ==="
 	@cargo test --package mcb-validate test_validate_workspace_shaku -- --nocapture 2>&1 | \
+		grep -v "^running\|^test \|Compiling\|Finished"
+
+validate-refactor:
+	@echo "=== Refactoring Completeness Violations ==="
+	@echo "Detects: orphan imports, duplicate definitions, missing tests, stale re-exports"
+	@cargo test --package mcb-validate test_validate_workspace_refactoring -- --nocapture 2>&1 | \
 		grep -v "^running\|^test \|Compiling\|Finished"

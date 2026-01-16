@@ -28,7 +28,7 @@
 //! ```ignore
 //! use mcb_providers::embedding::OllamaEmbeddingProvider;
 //! use mcb_providers::cache::MokaCacheProvider;
-//! use mcb_providers::language::RustLanguageProvider;
+//! use mcb_providers::language::RustProcessor;
 //! ```
 
 // Re-export mcb-domain types commonly used with providers
@@ -37,24 +37,15 @@ pub use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 
+// Re-export CryptoProvider from domain (for encrypted vector store)
+#[cfg(feature = "vectorstore-encrypted")]
+pub use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
+
 /// Provider-specific constants
 pub mod constants;
 
 /// Shared utilities for provider implementations
 pub mod utils;
-
-/// HTTP client abstractions for API-based providers
-///
-/// Defines the `HttpClientProvider` trait that embedding and other API providers
-/// depend on. The implementation is provided by mcb-infrastructure.
-pub mod http;
-
-/// Cryptographic provider trait and types
-///
-/// Defines the `CryptoProvider` trait used by encrypted providers.
-/// The implementation is provided by mcb-infrastructure.
-#[cfg(feature = "vectorstore-encrypted")]
-pub mod crypto;
 
 /// Embedding provider implementations
 ///

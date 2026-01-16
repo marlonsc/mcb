@@ -2,9 +2,30 @@
 //!
 //! Implements MCP protocol over HTTP using Server-Sent Events (SSE).
 //! This transport allows web clients to connect to the MCP server.
+//!
+//! # Supported Methods
+//!
+//! | Method | Description |
+//! |--------|-------------|
+//! | `initialize` | Initialize the MCP session |
+//! | `tools/list` | List available tools |
+//! | `tools/call` | Call a tool with arguments |
+//! | `ping` | Health check |
+//!
+//! # Example
+//!
+//! ```ignore
+//! // POST /mcp with JSON-RPC request
+//! {
+//!     "jsonrpc": "2.0",
+//!     "method": "tools/list",
+//!     "id": 1
+//! }
+//! ```
 
 use super::types::{McpRequest, McpResponse};
-use crate::constants::JSONRPC_METHOD_NOT_FOUND;
+use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
+use crate::tools::{create_tool_list, route_tool_call, ToolHandlers};
 use crate::McpServer;
 use axum::{
     extract::State,
@@ -13,12 +34,14 @@ use axum::{
     Json, Router,
 };
 use futures::stream::Stream;
+use rmcp::model::CallToolRequestParam;
+use rmcp::ServerHandler;
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::broadcast;
-use tracing::info;
+use tracing::{error, info};
 
 /// HTTP transport configuration
 #[derive(Debug, Clone)]
@@ -65,8 +88,7 @@ pub struct HttpTransportState {
     /// Broadcast channel for SSE events
     pub event_tx: broadcast::Sender<String>,
     /// MCP server reference (for handling requests)
-    #[allow(dead_code)]
-    server: Arc<McpServer>,
+    pub server: Arc<McpServer>,
 }
 
 /// HTTP transport server
@@ -140,19 +162,166 @@ impl HttpTransport {
 }
 
 /// Handle MCP request via HTTP POST
+///
+/// Routes MCP JSON-RPC requests to the appropriate handlers based on method name.
+///
+/// # Supported Methods
+///
+/// - `initialize`: Returns server info and capabilities
+/// - `tools/list`: Returns list of available tools
+/// - `tools/call`: Executes a tool with provided arguments
+/// - `ping`: Returns empty success response for health checks
 async fn handle_mcp_request(
-    State(_state): State<HttpTransportState>,
+    State(state): State<HttpTransportState>,
     Json(request): Json<McpRequest>,
 ) -> impl IntoResponse {
-    // NOTE: HTTP routing is a placeholder pending full MCP protocol implementation
-    // For now, return method not found for unimplemented methods
-    let response = McpResponse::error(
-        request.id,
-        JSONRPC_METHOD_NOT_FOUND,
-        format!("Method '{}' not yet implemented over HTTP", request.method),
-    );
+    let response = match request.method.as_str() {
+        "initialize" => handle_initialize(&state, &request).await,
+        "tools/list" => handle_tools_list(&state, &request).await,
+        "tools/call" => handle_tools_call(&state, &request).await,
+        "ping" => McpResponse::success(request.id.clone(), serde_json::json!({})),
+        _ => McpResponse::error(
+            request.id.clone(),
+            JSONRPC_METHOD_NOT_FOUND,
+            format!("Unknown method: {}", request.method),
+        ),
+    };
 
     Json(response)
+}
+
+/// Handle the `initialize` method
+///
+/// Returns server information and capabilities.
+async fn handle_initialize(state: &HttpTransportState, request: &McpRequest) -> McpResponse {
+    let server_info = state.server.get_info();
+
+    let result = serde_json::json!({
+        "protocolVersion": format!("{:?}", server_info.protocol_version),
+        "capabilities": {
+            "tools": {}
+        },
+        "serverInfo": {
+            "name": server_info.server_info.name,
+            "version": server_info.server_info.version
+        },
+        "instructions": server_info.instructions
+    });
+
+    McpResponse::success(request.id.clone(), result)
+}
+
+/// Handle the `tools/list` method
+///
+/// Returns all available tools with their schemas.
+async fn handle_tools_list(_state: &HttpTransportState, request: &McpRequest) -> McpResponse {
+    match create_tool_list() {
+        Ok(tools) => {
+            let tools_json: Vec<serde_json::Value> = tools
+                .into_iter()
+                .map(|tool| {
+                    serde_json::json!({
+                        "name": tool.name,
+                        "description": tool.description,
+                        "inputSchema": tool.input_schema.as_ref()
+                    })
+                })
+                .collect();
+
+            McpResponse::success(request.id.clone(), serde_json::json!({ "tools": tools_json }))
+        }
+        Err(e) => {
+            error!(error = ?e, "Failed to list tools");
+            McpResponse::error(
+                request.id.clone(),
+                JSONRPC_INTERNAL_ERROR,
+                format!("Failed to list tools: {:?}", e),
+            )
+        }
+    }
+}
+
+/// Handle the `tools/call` method
+///
+/// Executes the specified tool with the provided arguments.
+async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> McpResponse {
+    // Parse the tool call parameters from request params
+    let params = match &request.params {
+        Some(params) => params,
+        None => {
+            return McpResponse::error(
+                request.id.clone(),
+                JSONRPC_INVALID_PARAMS,
+                "Missing params for tools/call",
+            );
+        }
+    };
+
+    // Extract tool name
+    let tool_name = match params.get("name").and_then(|v| v.as_str()) {
+        Some(name) => name.to_string(),
+        None => {
+            return McpResponse::error(
+                request.id.clone(),
+                JSONRPC_INVALID_PARAMS,
+                "Missing 'name' parameter for tools/call",
+            );
+        }
+    };
+
+    // Extract arguments (optional, defaults to empty object)
+    // CallToolRequestParam expects Option<serde_json::Map<String, Value>>
+    let arguments: Option<serde_json::Map<String, serde_json::Value>> = params
+        .get("arguments")
+        .and_then(|v| v.as_object().cloned());
+
+    // Create the CallToolRequestParam
+    let call_request = CallToolRequestParam {
+        name: tool_name.into(),
+        arguments,
+    };
+
+    // Create tool handlers from the server's handlers
+    let handlers = ToolHandlers {
+        index_codebase: state.server.index_codebase_handler(),
+        search_code: state.server.search_code_handler(),
+        get_indexing_status: state.server.get_indexing_status_handler(),
+        clear_index: state.server.clear_index_handler(),
+    };
+
+    // Route the tool call
+    match route_tool_call(call_request, &handlers).await {
+        Ok(result) => {
+            // Convert CallToolResult to JSON
+            let content_json: Vec<serde_json::Value> = result
+                .content
+                .iter()
+                .map(|content| {
+                    // Serialize the content properly
+                    serde_json::to_value(content).unwrap_or(serde_json::json!({
+                        "type": "text",
+                        "text": "Error serializing content"
+                    }))
+                })
+                .collect();
+
+            McpResponse::success(
+                request.id.clone(),
+                serde_json::json!({
+                    "content": content_json,
+                    "isError": result.is_error.unwrap_or(false)
+                }),
+            )
+        }
+        Err(e) => {
+            error!(error = ?e, "Tool call failed");
+            McpResponse::error(
+                request.id.clone(),
+                JSONRPC_INTERNAL_ERROR,
+                format!("Tool call failed: {:?}", e),
+            )
+        }
+    }
 }
 
 /// Handle SSE connection for server-to-client events

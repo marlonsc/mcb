@@ -3,9 +3,8 @@
 //! Implements the EmbeddingProvider port using VoyageAI's embedding API.
 //! Optimized for code embeddings with voyage-code-3 model.
 
-use std::sync::Arc;
-
 use async_trait::async_trait;
+use reqwest::Client;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::EmbeddingProvider;
@@ -16,26 +15,26 @@ use crate::constants::{
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
 use crate::embedding::helpers::constructor;
-use crate::http::{HttpClientProvider, HttpResponseUtils};
+use crate::utils::HttpResponseUtils;
 
 /// VoyageAI embedding provider
 ///
 /// Implements the `EmbeddingProvider` domain port using VoyageAI's embedding API.
-/// Receives HTTP client via constructor injection for DI compliance.
+/// Receives HTTP client via constructor injection.
 ///
 /// ## Example
 ///
 /// ```rust,no_run
 /// use mcb_providers::embedding::VoyageAIEmbeddingProvider;
-/// use mcb_providers::http::HttpClientProvider;
-/// use std::sync::Arc;
+/// use reqwest::Client;
 ///
-/// fn example(http_client: Arc<dyn HttpClientProvider>) {
+/// fn example() {
+///     let client = Client::new();
 ///     let provider = VoyageAIEmbeddingProvider::new(
 ///         "voyage-your-api-key".to_string(),
 ///         None,
 ///         "voyage-code-3".to_string(),
-///         http_client,
+///         client,
 ///     );
 /// }
 /// ```
@@ -43,7 +42,7 @@ pub struct VoyageAIEmbeddingProvider {
     api_key: String,
     base_url: Option<String>,
     model: String,
-    http_client: Arc<dyn HttpClientProvider>,
+    http_client: Client,
 }
 
 impl VoyageAIEmbeddingProvider {
@@ -53,12 +52,12 @@ impl VoyageAIEmbeddingProvider {
     /// * `api_key` - VoyageAI API key
     /// * `base_url` - Optional custom base URL (defaults to VoyageAI API)
     /// * `model` - Model name (e.g., "voyage-code-3")
-    /// * `http_client` - Injected HTTP client (required for DI compliance)
+    /// * `http_client` - Reqwest HTTP client for making API requests
     pub fn new(
         api_key: String,
         base_url: Option<String>,
         model: String,
-        http_client: Arc<dyn HttpClientProvider>,
+        http_client: Client,
     ) -> Self {
         let api_key = constructor::validate_api_key(&api_key);
         let base_url = constructor::validate_url(base_url);
@@ -109,10 +108,10 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
             "model": self.model
         });
 
-        let client = self.http_client.client();
         let base_url = self.effective_base_url();
 
-        let response = client
+        let response = self
+            .http_client
             .post(format!("{}/embeddings", base_url))
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", CONTENT_TYPE_JSON)

@@ -80,6 +80,26 @@ impl McpServer {
     pub fn search_service(&self) -> Arc<dyn SearchServiceInterface> {
         Arc::clone(&self.search_service)
     }
+
+    /// Access to index codebase handler (for HTTP transport)
+    pub fn index_codebase_handler(&self) -> Arc<IndexCodebaseHandler> {
+        Arc::clone(&self.index_codebase_handler)
+    }
+
+    /// Access to search code handler (for HTTP transport)
+    pub fn search_code_handler(&self) -> Arc<SearchCodeHandler> {
+        Arc::clone(&self.search_code_handler)
+    }
+
+    /// Access to get indexing status handler (for HTTP transport)
+    pub fn get_indexing_status_handler(&self) -> Arc<GetIndexingStatusHandler> {
+        Arc::clone(&self.get_indexing_status_handler)
+    }
+
+    /// Access to clear index handler (for HTTP transport)
+    pub fn clear_index_handler(&self) -> Arc<ClearIndexHandler> {
+        Arc::clone(&self.clear_index_handler)
+    }
 }
 
 impl ServerHandler for McpServer {

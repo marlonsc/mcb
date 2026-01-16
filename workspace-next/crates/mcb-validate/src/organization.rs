@@ -1120,18 +1120,16 @@ impl OrganizationValidator {
                     }
 
                     // Check: Application layer importing from server
-                    if is_application_layer || is_infrastructure_layer {
-                        if server_import_pattern.is_match(line) {
-                            // Skip mod.rs re-export statements
-                            if !trimmed.contains("pub use") {
-                                violations.push(OrganizationViolation::ApplicationImportsServer {
-                                    file: path.to_path_buf(),
-                                    line: line_num + 1,
-                                    import_statement: trimmed.to_string(),
-                                    severity: Severity::Warning,
-                                });
-                            }
-                        }
+                    if (is_application_layer || is_infrastructure_layer)
+                        && server_import_pattern.is_match(line)
+                        && !trimmed.contains("pub use")
+                    {
+                        violations.push(OrganizationViolation::ApplicationImportsServer {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            import_statement: trimmed.to_string(),
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }

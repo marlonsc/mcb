@@ -158,6 +158,12 @@ pub const TS_NODE_METHOD_DECLARATION: &str = "method_declaration";
 /// Tree-sitter node type: class declaration (JS, Java, C#, PHP, Swift, Kotlin)
 pub const TS_NODE_CLASS_DECLARATION: &str = "class_declaration";
 
+/// Tree-sitter node type: interface declaration (JS, Java, C#, Swift, Kotlin)
+pub const AST_NODE_INTERFACE_DECLARATION: &str = "interface_declaration";
+
+/// Tree-sitter node type: struct specifier (C/C++)
+pub const AST_NODE_STRUCT_SPECIFIER: &str = "struct_specifier";
+
 // ============================================================================
 // LANGUAGE IDENTIFIERS
 // ============================================================================

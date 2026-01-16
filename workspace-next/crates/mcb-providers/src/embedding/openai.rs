@@ -3,10 +3,10 @@
 //! Implements the EmbeddingProvider port using OpenAI's embedding API.
 //! Supports text-embedding-3-small, text-embedding-3-large, and ada-002.
 
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use reqwest::Client;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::EmbeddingProvider;
@@ -17,28 +17,31 @@ use crate::constants::{
     EMBEDDING_DIMENSION_OPENAI_SMALL,
 };
 use crate::embedding::helpers::constructor;
-use crate::http::{HttpClientProvider, HttpResponseUtils};
+use crate::utils::HttpResponseUtils;
 
 /// OpenAI embedding provider
 ///
 /// Implements the `EmbeddingProvider` domain port using OpenAI's embedding API.
-/// Receives HTTP client via constructor injection for DI compliance.
+/// Receives HTTP client via constructor injection.
 ///
 /// ## Example
 ///
 /// ```rust,no_run
 /// use mcb_providers::embedding::OpenAIEmbeddingProvider;
-/// use mcb_providers::http::HttpClientProvider;
-/// use std::sync::Arc;
+/// use reqwest::Client;
 /// use std::time::Duration;
 ///
-/// fn example(http_client: Arc<dyn HttpClientProvider>) {
+/// fn example() {
+///     let client = Client::builder()
+///         .timeout(Duration::from_secs(30))
+///         .build()
+///         .unwrap();
 ///     let provider = OpenAIEmbeddingProvider::new(
 ///         "sk-your-api-key".to_string(),
 ///         None,
 ///         "text-embedding-3-small".to_string(),
 ///         Duration::from_secs(30),
-///         http_client,
+///         client,
 ///     );
 /// }
 /// ```
@@ -47,7 +50,7 @@ pub struct OpenAIEmbeddingProvider {
     base_url: Option<String>,
     model: String,
     timeout: Duration,
-    http_client: Arc<dyn HttpClientProvider>,
+    http_client: Client,
 }
 
 impl OpenAIEmbeddingProvider {
@@ -58,13 +61,13 @@ impl OpenAIEmbeddingProvider {
     /// * `base_url` - Optional custom base URL (defaults to OpenAI API)
     /// * `model` - Model name (e.g., "text-embedding-3-small")
     /// * `timeout` - Request timeout duration
-    /// * `http_client` - Injected HTTP client (required for DI compliance)
+    /// * `http_client` - Reqwest HTTP client for making API requests
     pub fn new(
         api_key: String,
         base_url: Option<String>,
         model: String,
         timeout: Duration,
-        http_client: Arc<dyn HttpClientProvider>,
+        http_client: Client,
     ) -> Self {
         let api_key = constructor::validate_api_key(&api_key);
         let base_url = constructor::validate_url(base_url);
@@ -114,18 +117,12 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
             "encoding_format": "float"
         });
 
-        let client = if self.timeout != self.http_client.config().timeout {
-            self.http_client
-                .client_with_timeout(self.timeout)
-                .map_err(|e| Error::embedding(format!("Failed to create HTTP client: {}", e)))?
-        } else {
-            self.http_client.client().clone()
-        };
-
-        let response = client
+        let response = self
+            .http_client
             .post(format!("{}/embeddings", self.base_url()))
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", CONTENT_TYPE_JSON)
+            .timeout(self.timeout)
             .json(&payload)
             .send()
             .await

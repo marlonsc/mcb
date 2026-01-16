@@ -2,7 +2,7 @@
 //!
 //! Ports for external services and providers that the domain depends on.
 //! These interfaces define contracts for embedding providers, vector stores,
-//! language chunking, caching, and other external services.
+//! language chunking, caching, cryptography, and other external services.
 //!
 //! ## Provider Ports
 //!
@@ -13,7 +13,12 @@
 //! | [`HybridSearchProvider`] | Combined semantic and keyword search |
 //! | [`LanguageChunkingProvider`] | Language-specific code chunking |
 //! | [`CacheProvider`] | Caching backend services |
+//! | [`CryptoProvider`] | Encryption/decryption services |
 
+/// Cache provider port
+pub mod cache;
+/// Crypto provider port
+pub mod crypto;
 /// Embedding provider port
 pub mod embedding;
 /// Hybrid search provider port
@@ -22,11 +27,10 @@ pub mod hybrid_search;
 pub mod language_chunking;
 /// Vector store provider port
 pub mod vector_store;
-/// Cache provider port
-pub mod cache;
 
 // Re-export provider ports
 pub use cache::CacheProvider;
+pub use crypto::{CryptoProvider, EncryptedData};
 pub use embedding::EmbeddingProvider;
 pub use hybrid_search::HybridSearchProvider;
 pub use language_chunking::LanguageChunkingProvider;

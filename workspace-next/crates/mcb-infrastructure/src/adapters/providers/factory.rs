@@ -2,6 +2,7 @@
 //!
 //! Factory for creating embedding and vector store providers based on configuration.
 //! Follows the Factory pattern to abstract provider instantiation.
+//! Uses DI container for dependency resolution instead of direct instantiation.
 
 use std::sync::Arc;
 use std::time::Duration;

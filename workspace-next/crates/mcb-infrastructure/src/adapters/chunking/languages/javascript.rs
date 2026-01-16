@@ -3,7 +3,7 @@
 use crate::adapters::chunking::config::{LanguageConfig, NodeExtractionRule};
 use crate::adapters::chunking::constants::CHUNK_SIZE_JAVASCRIPT;
 use crate::adapters::chunking::processor::{BaseProcessor, LanguageProcessor};
-use crate::constants::{TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION};
+use crate::constants::{AST_NODE_INTERFACE_DECLARATION, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 
@@ -34,7 +34,7 @@ impl JavaScriptProcessor {
                     TS_NODE_CLASS_DECLARATION.to_string(),
                     "method_definition".to_string(),
                     "arrow_function".to_string(),
-                    "interface_declaration".to_string(),
+                    AST_NODE_INTERFACE_DECLARATION.to_string(),
                     "type_alias_declaration".to_string(),
                 ],
                 min_length: 30,

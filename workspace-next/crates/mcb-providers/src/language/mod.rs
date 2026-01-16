@@ -4,16 +4,49 @@
 //!
 //! ## Available Providers
 //!
-//! - Rust
-//! - Python
-//! - JavaScript/TypeScript
-//! - Go
-//! - Java
-//! - C/C++
-//! - C#
-//! - Ruby
-//! - PHP
-//! - Swift
-//! - Kotlin
+//! | Provider | Language | Status |
+//! |----------|----------|--------|
+//! | [`RustProcessor`] | Rust | Complete |
+//! | [`PythonProcessor`] | Python | Complete |
+//! | [`JavaScriptProcessor`] | JavaScript/TypeScript | Complete |
+//! | [`GoProcessor`] | Go | Complete |
+//! | [`JavaProcessor`] | Java | Complete |
+//! | [`CProcessor`] | C | Complete |
+//! | [`CppProcessor`] | C++ | Complete |
+//! | [`CSharpProcessor`] | C# | Complete |
+//! | [`RubyProcessor`] | Ruby | Complete |
+//! | [`PhpProcessor`] | PHP | Complete |
+//! | [`SwiftProcessor`] | Swift | Complete |
+//! | [`KotlinProcessor`] | Kotlin | Complete |
 
-// Placeholder - implementations will be moved here
+/// Common utilities and base types for language processors
+pub mod common;
+
+// Language-specific processors
+pub mod c;
+pub mod cpp;
+pub mod csharp;
+pub mod go;
+pub mod java;
+pub mod javascript;
+pub mod kotlin;
+pub mod php;
+pub mod python;
+pub mod ruby;
+pub mod rust;
+pub mod swift;
+
+// Re-export processors for convenience
+pub use c::CProcessor;
+pub use common::{BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule};
+pub use cpp::CppProcessor;
+pub use csharp::CSharpProcessor;
+pub use go::GoProcessor;
+pub use java::JavaProcessor;
+pub use javascript::JavaScriptProcessor;
+pub use kotlin::KotlinProcessor;
+pub use php::PhpProcessor;
+pub use python::PythonProcessor;
+pub use ruby::RubyProcessor;
+pub use rust::RustProcessor;
+pub use swift::SwiftProcessor;
