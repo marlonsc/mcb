@@ -2985,6 +2985,7 @@ dependencies = [
  "health",
  "jsonwebtoken",
  "mcb-domain",
+ "mcb-infrastructure",
  "metrics",
  "metrics-exporter-prometheus",
  "notify",
@@ -3006,6 +3007,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+ "validator",
 ]
 
 [[package]]

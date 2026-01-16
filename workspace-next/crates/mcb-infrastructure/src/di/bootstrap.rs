@@ -25,18 +25,14 @@ impl InfrastructureComponents {
     pub async fn new(config: AppConfig) -> Result<Self> {
         // Create cache provider based on configuration
         let cache = if config.cache.enabled {
-            CacheProviderFactory::create_from_config(&config.cache)?
+            CacheProviderFactory::create_from_config(&config.cache).await?
         } else {
             CacheProviderFactory::create_null()
         };
 
         // Create crypto service with master key from config or generate one
-        let master_key = if let Some(key) = &config.auth.jwt_secret {
-            if key.len() >= 32 {
-                key.clone().into_bytes()
-            } else {
-                CryptoService::generate_master_key()
-            }
+        let master_key = if config.auth.jwt_secret.len() >= 32 {
+            config.auth.jwt_secret.clone().into_bytes()
         } else {
             CryptoService::generate_master_key()
         };

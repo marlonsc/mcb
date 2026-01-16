@@ -129,7 +129,12 @@ impl CacheBatchProcessor {
 
         // Process sets
         for (key, (value, config)) in sets {
-            self.provider.set_json(&key, &value, config).await?;
+            let json_str = String::from_utf8(value)
+                .map_err(|e| mcb_domain::error::Error::Infrastructure {
+                    message: format!("Invalid UTF-8 in cached value: {}", e),
+                    source: Some(Box::new(e)),
+                })?;
+            self.provider.set_json(&key, &json_str, config).await?;
         }
 
         Ok(())
@@ -167,7 +172,7 @@ impl CacheAsideHelper {
     where
         F: FnOnce() -> Fut,
         Fut: std::future::Future<Output = Result<V>>,
-        V: Serialize + DeserializeOwned + Clone,
+        V: Serialize + DeserializeOwned + Clone + Send + Sync,
     {
         let start_time = std::time::Instant::now();
 
@@ -204,7 +209,7 @@ impl CacheAsideHelper {
     where
         F: FnOnce() -> Fut,
         Fut: std::future::Future<Output = Result<V>>,
-        V: Serialize + Clone,
+        V: Serialize + Clone + Send + Sync,
     {
         let value = compute_fn().await?;
         self.cache.set(key, &value, CacheEntryConfig::default()).await?;

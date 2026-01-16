@@ -58,8 +58,9 @@ impl CacheProviderFactory {
     }
 
     /// Create a cache provider with specific namespace
-    pub fn with_namespace(provider: SharedCacheProvider, namespace: &str) -> SharedCacheProvider {
-        provider.namespaced(namespace)
+    pub fn with_namespace(mut provider: SharedCacheProvider, namespace: &str) -> SharedCacheProvider {
+        provider.set_namespace(namespace);
+        provider
     }
 }
 

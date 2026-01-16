@@ -3,6 +3,7 @@
 //! Provides centralized logging configuration and utilities using the tracing ecosystem.
 //! This module configures structured logging with JSON output, log levels, and file rotation.
 
+use crate::config::data::LoggingConfig;
 use crate::constants::*;
 use mcb_domain::error::{Error, Result};
 use std::path::PathBuf;
@@ -11,64 +12,75 @@ use tracing_subscriber::{
     fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry,
 };
 
-/// Logging configuration
-#[derive(Debug, Clone)]
-pub struct LoggingConfig {
-    /// Log level (trace, debug, info, warn, error)
-    pub level: String,
-    /// Enable JSON output format
-    pub json_format: bool,
-    /// Log to file in addition to stdout
-    pub file_output: Option<PathBuf>,
-    /// Maximum file size before rotation (bytes)
-    pub max_file_size: u64,
-    /// Maximum number of rotated files to keep
-    pub max_files: usize,
-}
-
-impl Default for LoggingConfig {
-    fn default() -> Self {
-        Self {
-            level: DEFAULT_LOG_LEVEL.to_string(),
-            json_format: false,
-            file_output: None,
-            max_file_size: LOG_ROTATION_SIZE,
-            max_files: LOG_MAX_FILES,
-        }
-    }
-}
-
 /// Initialize logging with the provided configuration
 pub fn init_logging(config: LoggingConfig) -> Result<()> {
     let level = parse_log_level(&config.level)?;
 
     // Create environment filter
     let filter = EnvFilter::try_from_env("MCB_LOG")
-        .unwrap_or_else(|_| EnvFilter::new(config.level));
+        .unwrap_or_else(|_| EnvFilter::new(&config.level));
 
-    // Create stdout layer
-    let stdout_layer = if config.json_format {
-        fmt::layer()
-            .json()
-            .with_target(true)
-            .with_thread_ids(true)
-            .with_thread_names(true)
-            .with_file(true)
-            .with_line_number(true)
+    // Initialize differently based on json_format since the layer types differ
+    if config.json_format {
+        init_json_logging(filter, config.file_output)?;
     } else {
-        fmt::layer()
-            .with_target(true)
-            .with_thread_ids(true)
-            .with_thread_names(true)
-            .with_file(true)
-            .with_line_number(true)
-    };
+        init_text_logging(filter, config.file_output)?;
+    }
 
-    let registry = Registry::default()
-        .with(filter);
+    info!("Logging initialized with level: {}", level);
 
-    // Add file layer if configured
-    if let Some(file_path) = config.file_output {
+    Ok(())
+}
+
+/// Initialize JSON format logging
+fn init_json_logging(filter: EnvFilter, file_output: Option<PathBuf>) -> Result<()> {
+    let stdout_layer = fmt::layer()
+        .json()
+        .with_target(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .with_file(true)
+        .with_line_number(true);
+
+    let registry = Registry::default().with(filter);
+
+    if let Some(file_path) = file_output {
+        let file_appender = tracing_appender::rolling::daily(
+            file_path.parent().unwrap_or_else(|| std::path::Path::new(".")),
+            file_path.file_stem().unwrap_or_else(|| std::ffi::OsStr::new("mcb")),
+        );
+
+        let file_layer = fmt::layer()
+            .json()
+            .with_writer(file_appender)
+            .with_ansi(false)
+            .with_target(true);
+
+        registry
+            .with(stdout_layer)
+            .with(file_layer)
+            .init();
+    } else {
+        registry
+            .with(stdout_layer)
+            .init();
+    }
+
+    Ok(())
+}
+
+/// Initialize text format logging
+fn init_text_logging(filter: EnvFilter, file_output: Option<PathBuf>) -> Result<()> {
+    let stdout_layer = fmt::layer()
+        .with_target(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .with_file(true)
+        .with_line_number(true);
+
+    let registry = Registry::default().with(filter);
+
+    if let Some(file_path) = file_output {
         let file_appender = tracing_appender::rolling::daily(
             file_path.parent().unwrap_or_else(|| std::path::Path::new(".")),
             file_path.file_stem().unwrap_or_else(|| std::ffi::OsStr::new("mcb")),
@@ -88,8 +100,6 @@ pub fn init_logging(config: LoggingConfig) -> Result<()> {
             .with(stdout_layer)
             .init();
     }
-
-    info!("Logging initialized with level: {}", level);
 
     Ok(())
 }

@@ -197,10 +197,8 @@ impl ProviderConfigBuilder {
 
     /// Add a default OpenAI embedding provider
     pub fn with_openai_embedding<S: Into<String>>(self, name: S, api_key: S) -> Self {
-        use mcb_domain::value_objects::EmbeddingProviderKind;
-
         let config = EmbeddingConfig {
-            provider: EmbeddingProviderKind::OpenAI,
+            provider: "openai".to_string(),
             model: "text-embedding-ada-002".to_string(),
             api_key: Some(api_key.into()),
             base_url: None,
@@ -213,10 +211,8 @@ impl ProviderConfigBuilder {
 
     /// Add a default filesystem vector store
     pub fn with_filesystem_vector_store<S: Into<String>>(self, name: S) -> Self {
-        use mcb_domain::value_objects::VectorStoreProviderKind;
-
         let config = VectorStoreConfig {
-            provider: VectorStoreProviderKind::Filesystem,
+            provider: "filesystem".to_string(),
             address: None,
             token: None,
             collection: Some("mcb_vectors".to_string()),
@@ -242,7 +238,6 @@ impl Default for ProviderConfigBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mcb_domain::value_objects::{EmbeddingProviderKind, VectorStoreProviderKind};
 
     #[test]
     fn test_provider_config_manager() {
@@ -250,7 +245,7 @@ mod tests {
         embedding_configs.insert(
             "openai".to_string(),
             EmbeddingConfig {
-                provider: EmbeddingProviderKind::OpenAI,
+                provider: "openai".to_string(),
                 model: "text-embedding-ada-002".to_string(),
                 api_key: Some("test-key".to_string()),
                 base_url: None,
@@ -263,7 +258,7 @@ mod tests {
         vector_store_configs.insert(
             "filesystem".to_string(),
             VectorStoreConfig {
-                provider: VectorStoreProviderKind::Filesystem,
+                provider: "filesystem".to_string(),
                 address: None,
                 token: None,
                 collection: Some("test".to_string()),
@@ -285,7 +280,7 @@ mod tests {
             .with_embedding_provider(
                 "invalid",
                 EmbeddingConfig {
-                    provider: EmbeddingProviderKind::OpenAI,
+                    provider: "openai".to_string(),
                     model: "".to_string(), // Invalid: empty model
                     api_key: None,
                     base_url: None,

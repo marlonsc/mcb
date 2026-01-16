@@ -46,7 +46,7 @@ impl DefaultCacheProviderFactory {
 #[async_trait]
 impl CacheProviderFactory for DefaultCacheProviderFactory {
     async fn create_cache_provider(&self) -> Result<crate::cache::provider::SharedCacheProvider> {
-        CacheFactory::create_from_config(&self.config)
+        CacheFactory::create_from_config(&self.config).await
     }
 }
 

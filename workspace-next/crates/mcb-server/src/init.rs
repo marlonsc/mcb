@@ -8,7 +8,7 @@ use std::path::Path;
 use tracing::info;
 
 use crate::transport::stdio::StdioServerExt;
-use crate::{McpServerBuilder};
+use crate::McpServerBuilder;
 
 /// Run the MCP Context Browser server
 ///
@@ -21,7 +21,7 @@ pub async fn run_server(config_path: Option<&Path>) -> Result<(), Box<dyn std::e
     };
 
     let config = loader.load()?;
-    mcb_infrastructure::logging::init_logging(map_logging_config(&config.logging))?;
+    mcb_infrastructure::logging::init_logging(config.logging.clone())?;
 
     info!("Starting MCP Context Browser server");
 
@@ -35,16 +35,4 @@ pub async fn run_server(config_path: Option<&Path>) -> Result<(), Box<dyn std::e
 
     info!("MCP server initialized successfully");
     server.serve_stdio().await
-}
-
-fn map_logging_config(
-    config: &mcb_infrastructure::config::data::LoggingConfig,
-) -> mcb_infrastructure::logging::LoggingConfig {
-    mcb_infrastructure::logging::LoggingConfig {
-        level: config.level.clone(),
-        json_format: config.json_format,
-        file_output: config.file_output.clone(),
-        max_file_size: config.max_file_size,
-        max_files: config.max_files,
-    }
 }

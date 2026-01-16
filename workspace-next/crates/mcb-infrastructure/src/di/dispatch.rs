@@ -6,6 +6,7 @@
 use crate::config::AppConfig;
 use crate::di::bootstrap::InfrastructureComponents;
 use crate::di::factory::implementation::*;
+use crate::di::factory::traits::{CacheProviderFactory, CryptoServiceFactory, HealthRegistryFactory};
 use mcb_domain::error::Result;
 
 /// Component dispatcher for infrastructure initialization
@@ -32,12 +33,8 @@ impl ComponentDispatcher {
 
     /// Create crypto service
     async fn create_crypto_service(&self) -> Result<crate::crypto::CryptoService> {
-        let master_key = if let Some(secret) = &self.config.auth.jwt_secret {
-            if secret.len() >= 32 {
-                secret.clone().into_bytes()
-            } else {
-                crate::crypto::CryptoService::generate_master_key()
-            }
+        let master_key = if self.config.auth.jwt_secret.len() >= 32 {
+            self.config.auth.jwt_secret.clone().into_bytes()
         } else {
             crate::crypto::CryptoService::generate_master_key()
         };

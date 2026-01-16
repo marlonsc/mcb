@@ -4,12 +4,10 @@
 //! for unified cache access across the application.
 
 use crate::cache::config::{CacheEntryConfig, CacheStats};
-use async_trait::async_trait;
+use crate::cache::providers::{MokaCacheProvider, NullCacheProvider, RedisCacheProvider};
 use mcb_domain::error::Result;
-use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
 use std::sync::Arc;
-use std::time::Duration;
 
 /// Cache provider types
 #[derive(Clone)]

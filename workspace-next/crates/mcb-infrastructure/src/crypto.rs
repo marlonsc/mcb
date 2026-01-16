@@ -4,14 +4,12 @@
 //! for securing sensitive data at rest and in transit.
 
 use crate::constants::*;
-use crate::error_ext::ErrorContext;
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit, OsRng},
+    aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore},
     Aes256Gcm, Key, Nonce,
 };
-use argon2::{Argon2, PasswordHasher, password_hash::{SaltString, PasswordHash, PasswordVerifier}};
+use argon2::{Argon2, PasswordHasher, password_hash::{rand_core::OsRng as ArgonOsRng, SaltString, PasswordHash, PasswordVerifier}};
 use mcb_domain::error::{Error, Result};
-use rand::RngCore;
 use sha2::{Sha256, Digest};
 use std::fmt;
 
@@ -42,7 +40,7 @@ impl CryptoService {
     /// Generate a random master key
     pub fn generate_master_key() -> Vec<u8> {
         let mut key = vec![0u8; AES_GCM_KEY_SIZE];
-        OsRng.fill_bytes(&mut key);
+        AeadOsRng.fill_bytes(&mut key);
         key
     }
 
@@ -50,13 +48,13 @@ impl CryptoService {
     pub fn encrypt(&self, plaintext: &[u8]) -> Result<EncryptedData> {
         let key = Key::<Aes256Gcm>::from_slice(&self.master_key);
         let cipher = Aes256Gcm::new(key);
-        let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+        let nonce = Aes256Gcm::generate_nonce(&mut AeadOsRng);
 
         let ciphertext = cipher
             .encrypt(&nonce, plaintext)
             .map_err(|e| Error::Infrastructure {
                 message: format!("Encryption failed: {}", e),
-                source: Some(Box::new(e)),
+                source: None,
             })?;
 
         Ok(EncryptedData {
@@ -75,14 +73,14 @@ impl CryptoService {
             .decrypt(nonce, encrypted_data.ciphertext.as_ref())
             .map_err(|e| Error::Infrastructure {
                 message: format!("Decryption failed: {}", e),
-                source: Some(Box::new(e)),
+                source: None,
             })
     }
 
     /// Generate a secure random nonce
     pub fn generate_nonce() -> Vec<u8> {
         let mut nonce = vec![0u8; AES_GCM_NONCE_SIZE];
-        OsRng.fill_bytes(&mut nonce);
+        AeadOsRng.fill_bytes(&mut nonce);
         nonce
     }
 
@@ -95,8 +93,13 @@ impl CryptoService {
 
     /// Compute SHA-256 hash of data as hex string
     pub fn sha256_hex(data: &[u8]) -> String {
-        hex::encode(Self::sha256(data))
+        bytes_to_hex(&Self::sha256(data))
     }
+}
+
+/// Convert bytes to hex string (avoid external hex crate)
+fn bytes_to_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{:02x}", b)).collect()
 }
 
 /// Encrypted data container
@@ -136,14 +139,14 @@ impl PasswordService {
 
     /// Hash a password using Argon2
     pub fn hash_password(&self, password: &str) -> Result<String> {
-        let salt = SaltString::generate(&mut OsRng);
+        let salt = SaltString::generate(&mut ArgonOsRng);
 
         let password_hash = self
             .argon2
             .hash_password(password.as_bytes(), &salt)
             .map_err(|e| Error::Infrastructure {
                 message: format!("Password hashing failed: {}", e),
-                source: Some(Box::new(e)),
+                source: None,
             })?;
 
         Ok(password_hash.to_string())
@@ -154,7 +157,7 @@ impl PasswordService {
         let parsed_hash = PasswordHash::new(hash)
             .map_err(|e| Error::Authentication {
                 message: format!("Invalid password hash format: {}", e),
-                source: Some(Box::new(e)),
+                source: None,
             })?;
 
         Ok(self
@@ -177,14 +180,14 @@ impl TokenGenerator {
     /// Generate a cryptographically secure random token
     pub fn generate_secure_token(length: usize) -> String {
         let mut bytes = vec![0u8; length];
-        OsRng.fill_bytes(&mut bytes);
-        hex::encode(bytes)
+        AeadOsRng.fill_bytes(&mut bytes);
+        bytes_to_hex(&bytes)
     }
 
     /// Generate a URL-safe secure token
     pub fn generate_url_safe_token(length: usize) -> String {
         let mut bytes = vec![0u8; length];
-        OsRng.fill_bytes(&mut bytes);
+        AeadOsRng.fill_bytes(&mut bytes);
         use base64::{Engine as _, engine::general_purpose};
         general_purpose::URL_SAFE_NO_PAD.encode(bytes)
     }
@@ -201,18 +204,17 @@ pub struct KeyDerivation;
 impl KeyDerivation {
     /// Derive a key from password using PBKDF2
     pub fn pbkdf2(password: &str, salt: &[u8], iterations: u32, key_len: usize) -> Vec<u8> {
-        use pbkdf2::pbkdf2;
-        use sha2::Sha256;
+        use pbkdf2::pbkdf2_hmac;
 
         let mut key = vec![0u8; key_len];
-        pbkdf2::<Sha256>(password.as_bytes(), salt, iterations, &mut key);
+        pbkdf2_hmac::<Sha256>(password.as_bytes(), salt, iterations, &mut key);
         key
     }
 
     /// Generate a random salt
     pub fn generate_salt(length: usize) -> Vec<u8> {
         let mut salt = vec![0u8; length];
-        OsRng.fill_bytes(&mut salt);
+        AeadOsRng.fill_bytes(&mut salt);
         salt
     }
 }
@@ -229,7 +231,7 @@ impl SecureErasure {
     /// Overwrite data with random bytes then zeros (secure erase)
     pub fn secure_erase(data: &mut [u8]) {
         // Overwrite with random data
-        OsRng.fill_bytes(data);
+        AeadOsRng.fill_bytes(data);
         // Overwrite with zeros
         Self::zeroize(data);
     }
@@ -251,7 +253,8 @@ impl HashUtils {
     /// Compute HMAC-SHA256
     pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Vec<u8> {
         use hmac::{Hmac, Mac};
-        let mut mac = Hmac::<Sha256>::new_from_slice(key)
+        type HmacSha256 = Hmac<Sha256>;
+        let mut mac = <HmacSha256 as Mac>::new_from_slice(key)
             .expect("HMAC key size should be valid");
         mac.update(data);
         mac.finalize().into_bytes().to_vec()

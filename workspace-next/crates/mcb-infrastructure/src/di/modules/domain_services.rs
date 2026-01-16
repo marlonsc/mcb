@@ -7,13 +7,13 @@ use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
 use crate::health::HealthRegistry;
-use mcb_domain::domain_services::chunking::CodeChunker;
-use mcb_domain::domain_services::search::IndexingServiceInterface;
-use mcb_domain::domain_services::search::{ContextServiceInterface, SearchServiceInterface};
+use mcb_domain::domain_services::search::{
+    ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
+};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::repositories::{chunk_repository::RepositoryStats, search_repository::SearchStats};
-use mcb_domain::value_objects::{Embedding, SearchResult, config::SyncBatch, types::OperationType};
+use mcb_domain::value_objects::{Embedding, SearchResult};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -33,22 +33,33 @@ impl DomainServicesFactory {
     pub async fn create_services(
         cache: SharedCacheProvider,
         crypto: CryptoService,
-        health: HealthRegistry,
+        _health: HealthRegistry,
         config: AppConfig,
     ) -> Result<DomainServicesContainer> {
         // Create context service implementation
-        let context_service = ContextServiceImpl::new(cache.clone(), crypto.clone(), config.clone());
+        let context_service: Arc<dyn ContextServiceInterface> = Arc::new(
+            ContextServiceImpl::new(cache.clone(), crypto.clone(), config.clone())
+        );
 
         // Create search service implementation
-        let search_service = SearchServiceImpl::new(cache.clone(), config.clone());
+        let search_service: Arc<dyn SearchServiceInterface> = Arc::new(
+            SearchServiceImpl::new(cache.clone(), config.clone())
+        );
 
-        // Create indexing service implementation
-        let indexing_service = IndexingServiceImpl::new(cache.clone(), crypto.clone(), config.clone());
+        // Create indexing service implementation (needs context_service)
+        let indexing_service: Arc<dyn IndexingServiceInterface> = Arc::new(
+            IndexingServiceImpl::new(
+                cache.clone(),
+                crypto.clone(),
+                config.clone(),
+                context_service.clone(),
+            )
+        );
 
         Ok(DomainServicesContainer {
-            context_service: Arc::new(context_service),
-            search_service: Arc::new(search_service),
-            indexing_service: Arc::new(indexing_service),
+            context_service,
+            search_service,
+            indexing_service,
         })
     }
 }
@@ -72,7 +83,7 @@ impl ContextServiceInterface for ContextServiceImpl {
         // Initialize collection-specific resources
         // For now, just ensure the collection key exists in cache
         let collection_key = format!("collection:{}", collection);
-        self.cache.set(&collection_key, "initialized", crate::cache::config::CacheEntryConfig::default()).await?;
+        self.cache.set_json(&collection_key, "\"initialized\"", crate::cache::config::CacheEntryConfig::default()).await?;
         Ok(())
     }
 
@@ -86,7 +97,7 @@ impl ContextServiceInterface for ContextServiceImpl {
         // Update collection metadata
         let meta_key = format!("collection:{}:meta", collection);
         let chunk_count = chunks.len();
-        self.cache.set(&meta_key, chunk_count, crate::cache::config::CacheEntryConfig::default()).await?;
+        self.cache.set(&meta_key, &chunk_count, crate::cache::config::CacheEntryConfig::default()).await?;
 
         Ok(())
     }
@@ -110,7 +121,7 @@ impl ContextServiceInterface for ContextServiceImpl {
     async fn embed_text(&self, text: &str) -> Result<Embedding> {
         // Generate a simple hash-based embedding for demonstration
         // In a real implementation, this would use configured embedding providers
-        let hash = self.crypto.sha256(text.as_bytes());
+        let hash = CryptoService::sha256(text.as_bytes());
         let dimensions = 384; // Standard embedding dimension
 
         // Convert hash bytes to f32 values for embedding
@@ -121,8 +132,9 @@ impl ContextServiceInterface for ContextServiceImpl {
         }
 
         Ok(Embedding {
-            values,
+            vector: values,
             model: "simple-hash".to_string(),
+            dimensions,
         })
     }
 
@@ -139,14 +151,15 @@ impl ContextServiceInterface for ContextServiceImpl {
         let repo_stats = RepositoryStats {
             total_chunks: 0,
             total_collections: 0,
-            avg_chunk_size: 0.0,
-            last_updated: None,
+            storage_size_bytes: 0,
+            avg_chunk_size_bytes: 0.0,
         };
 
         let search_stats = SearchStats {
-            total_searches: 0,
-            avg_search_time_ms: 0.0,
+            total_queries: 0,
+            avg_response_time_ms: 0.0,
             cache_hit_rate: 0.0,
+            indexed_documents: 0,
         };
 
         Ok((repo_stats, search_stats))
@@ -197,11 +210,17 @@ pub struct IndexingServiceImpl {
     cache: SharedCacheProvider,
     crypto: CryptoService,
     config: AppConfig,
+    context_service: Arc<dyn ContextServiceInterface>,
 }
 
 impl IndexingServiceImpl {
-    pub fn new(cache: SharedCacheProvider, crypto: CryptoService, config: AppConfig) -> Self {
-        Self { cache, crypto, config }
+    pub fn new(
+        cache: SharedCacheProvider,
+        crypto: CryptoService,
+        config: AppConfig,
+        context_service: Arc<dyn ContextServiceInterface>,
+    ) -> Self {
+        Self { cache, crypto, config, context_service }
     }
 }
 
@@ -256,38 +275,21 @@ impl IndexingServiceInterface for IndexingServiceImpl {
             }
         }
 
-        // Process files in batches
-        const BATCH_SIZE: usize = 10;
-        for batch in files_to_process.chunks(BATCH_SIZE) {
-            let batch_futures = batch.iter().map(|file_path| {
-                async {
-                    match fs::read_to_string(file_path).await {
-                        Ok(content) => {
-                            // Create simple chunks
-                            let chunks = self.chunk_file_content(&content, file_path).await;
-                            Ok((file_path.clone(), chunks))
-                        }
-                        Err(e) => Err((file_path.clone(), e.to_string())),
+        // Process files sequentially (simpler, avoids async borrowing issues)
+        for file_path in files_to_process {
+            match fs::read_to_string(&file_path).await {
+                Ok(content) => {
+                    let chunks = self.chunk_file_content(&content, &file_path);
+                    if let Err(e) = self.context_service.store_chunks(collection, &chunks).await {
+                        errors.push(format!("Failed to store chunks for {}: {}", file_path.display(), e));
+                    } else {
+                        files_processed += 1;
+                        chunks_created += chunks.len();
                     }
                 }
-            });
-
-            let batch_results = join_all(batch_futures).await;
-
-            for result in batch_results {
-                match result {
-                    Ok((file_path, chunks)) => {
-                        if let Err(e) = self.context_service.store_chunks(collection, &chunks).await {
-                            errors.push(format!("Failed to store chunks for {}: {}", file_path.display(), e));
-                        } else {
-                            files_processed += 1;
-                            chunks_created += chunks.len();
-                        }
-                    }
-                    Err((file_path, error)) => {
-                        errors.push(format!("Failed to read {}: {}", file_path.display(), error));
-                        files_skipped += 1;
-                    }
+                Err(e) => {
+                    errors.push(format!("Failed to read {}: {}", file_path.display(), e));
+                    files_skipped += 1;
                 }
             }
         }
@@ -316,7 +318,7 @@ impl IndexingServiceInterface for IndexingServiceImpl {
 }
 
 impl IndexingServiceImpl {
-    async fn chunk_file_content(&self, content: &str, path: &Path) -> Vec<CodeChunk> {
+    fn chunk_file_content(&self, content: &str, path: &Path) -> Vec<CodeChunk> {
         // Simple chunking strategy - split by lines and create chunks
         let lines: Vec<&str> = content.lines().collect();
         let chunk_size = 50; // lines per chunk
@@ -324,7 +326,8 @@ impl IndexingServiceImpl {
         lines.chunks(chunk_size)
             .enumerate()
             .map(|(i, chunk_lines)| {
-                let start_line = i * chunk_size + 1;
+                let start_line = (i * chunk_size + 1) as u32;
+                let end_line = (start_line as usize + chunk_lines.len() - 1) as u32;
                 let content = chunk_lines.join("\n");
 
                 CodeChunk {
@@ -332,7 +335,7 @@ impl IndexingServiceImpl {
                     file_path: path.to_string_lossy().to_string(),
                     content,
                     start_line,
-                    end_line: start_line + chunk_lines.len() - 1,
+                    end_line,
                     language: path.extension()
                         .and_then(|ext| ext.to_str())
                         .unwrap_or("unknown")

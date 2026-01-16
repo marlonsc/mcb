@@ -222,13 +222,13 @@ impl HealthRegistry {
     /// Perform all registered health checks
     pub async fn perform_health_checks(&self) -> HealthResponse {
         let start_time = Instant::now();
-        let checkers = self.checkers.read().await.clone();
+        let checkers = self.checkers.read().await;
 
         let mut response = HealthResponse::new();
 
-        for (name, checker) in checkers {
+        for (name, checker) in checkers.iter() {
             let check = checker.check_health().await;
-            log_health_check(&name, check.status.is_healthy(), check.error.as_deref());
+            log_health_check(name, check.status.is_healthy(), check.error.as_deref());
             response = response.add_check(check);
         }
 

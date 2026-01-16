@@ -8,12 +8,22 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Main error type for the MCP Context Browser
 #[derive(Error, Debug)]
 pub enum Error {
-    /// I/O operation error
+    /// I/O operation error (simple form)
     #[error("I/O error: {source}")]
-    Io {
+    IoSimple {
         /// The underlying I/O error
         #[from]
         source: std::io::Error,
+    },
+
+    /// I/O operation error (with context)
+    #[error("I/O error: {message}")]
+    Io {
+        /// Description of the I/O error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
 
     /// JSON parsing or serialization error
@@ -68,11 +78,51 @@ pub enum Error {
         message: String,
     },
 
-    /// Configuration-related error
+    /// Configuration-related error (simple form)
     #[error("Configuration error: {message}")]
     Config {
         /// Description of the configuration error
         message: String,
+    },
+
+    /// Configuration-related error (with source)
+    #[error("Configuration error: {message}")]
+    Configuration {
+        /// Description of the configuration error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+
+    /// Authentication-related error
+    #[error("Authentication error: {message}")]
+    Authentication {
+        /// Description of the authentication error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+
+    /// Network-related error
+    #[error("Network error: {message}")]
+    Network {
+        /// Description of the network error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+
+    /// Database-related error
+    #[error("Database error: {message}")]
+    Database {
+        /// Description of the database error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
 
     /// Internal system error
@@ -137,14 +187,87 @@ impl Error {
     /// Create an I/O error
     pub fn io<S: Into<String>>(message: S) -> Self {
         Self::Io {
-            source: std::io::Error::other(message.into()),
+            message: message.into(),
+            source: None,
         }
     }
 
-    /// Create a configuration error
+    /// Create an I/O error with source
+    pub fn io_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+        Self::Io {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a configuration error (simple)
     pub fn config<S: Into<String>>(message: S) -> Self {
         Self::Config {
             message: message.into(),
+        }
+    }
+
+    /// Create a configuration error (with source)
+    pub fn configuration<S: Into<String>>(message: S) -> Self {
+        Self::Configuration {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// Create a configuration error with source
+    pub fn configuration_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+        Self::Configuration {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create an authentication error
+    pub fn authentication<S: Into<String>>(message: S) -> Self {
+        Self::Authentication {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// Create an authentication error with source
+    pub fn authentication_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+        Self::Authentication {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a network error
+    pub fn network<S: Into<String>>(message: S) -> Self {
+        Self::Network {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// Create a network error with source
+    pub fn network_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+        Self::Network {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a database error
+    pub fn database<S: Into<String>>(message: S) -> Self {
+        Self::Database {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// Create a database error with source
+    pub fn database_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(message: S, source: E) -> Self {
+        Self::Database {
+            message: message.into(),
+            source: Some(Box::new(source)),
         }
     }
 

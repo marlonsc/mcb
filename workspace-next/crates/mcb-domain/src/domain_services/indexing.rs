@@ -10,12 +10,17 @@ use async_trait::async_trait;
 use shaku::Interface;
 use std::path::Path;
 
-/// Domain Service: Code Indexing Operations
+/// Domain Service: Advanced Batch Indexing Operations
 ///
-/// Defines the interface for indexing services that handle the ingestion,
-/// processing, and indexing of code into the semantic search system.
+/// Defines an extended interface for batch indexing services that handle
+/// incremental updates, rebuilds, and detailed statistics. This is an
+/// alternative to the simpler IndexingServiceInterface in search.rs.
+///
+/// NOTE: The primary interface is `IndexingServiceInterface` in search.rs
+/// which matches the main src/ API. This interface provides additional
+/// capabilities for advanced use cases.
 #[async_trait]
-pub trait IndexingServiceInterface: Interface + Send + Sync {
+pub trait BatchIndexingServiceInterface: Interface + Send + Sync {
     /// Index a batch of code chunks
     ///
     /// Processes and stores code chunks in the vector database,
