@@ -35,7 +35,6 @@ use crate::crypto::CryptoService;
 use mcb_domain::error::Result;
 use std::sync::Arc;
 use tracing::info;
-use shaku::HasComponent;
 
 // Import module implementations
 use super::modules::{
@@ -285,8 +284,6 @@ impl InfrastructureContainerBuilder {
 // Clean Architecture App Module (Hierarchical Composition)
 // ============================================================================
 
-use shaku::module;
-
 /// Application container using Clean Architecture modules
 pub struct AppContainer {
     pub cache: CacheModuleImpl,
@@ -305,7 +302,7 @@ pub struct AppContainer {
 ///
 /// This replaces the old FullContainer approach with pure Shaku DI.
 /// Uses hierarchical modules following the Clean Architecture pattern.
-pub async fn init_app(config: AppConfig) -> Result<AppContainer> {
+pub async fn init_app(_config: AppConfig) -> Result<AppContainer> {
     info!("Initializing Clean Architecture application modules");
 
     // Build context modules with production overrides

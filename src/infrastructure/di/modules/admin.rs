@@ -2,7 +2,6 @@
 //!
 //! Contains admin service with dependencies on infrastructure and server modules.
 
-
 use shaku::module;
 
 use super::traits::{

@@ -2,7 +2,6 @@
 //!
 //! Contains system metrics, service providers, event bus, auth, and core infrastructure.
 
-
 use shaku::module;
 
 use super::traits::InfrastructureModule;

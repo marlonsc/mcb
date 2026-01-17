@@ -2,7 +2,6 @@
 //!
 //! Contains MCP server metrics and indexing operations.
 
-
 use shaku::module;
 
 use super::traits::ServerModule;

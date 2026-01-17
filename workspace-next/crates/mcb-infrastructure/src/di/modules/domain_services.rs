@@ -75,7 +75,7 @@ impl DomainServicesFactory {
     /// Create indexing service from app container
     pub async fn create_indexing_service(app_container: &AppContainer) -> Result<Arc<dyn IndexingServiceInterface>> {
         // Get dependencies from modules
-        let cache_provider = app_container.cache.resolve();
+        let _cache_provider = app_container.cache.resolve();
         let language_chunker = app_container.language.resolve();
 
         // Create context service first (dependency)
