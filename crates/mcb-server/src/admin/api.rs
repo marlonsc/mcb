@@ -5,7 +5,6 @@
 use mcb_application::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_application::ports::infrastructure::EventBusProvider;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
-use mcb_infrastructure::infrastructure::{ServiceManager, NullEventBus};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -61,6 +60,7 @@ impl AdminApi {
         config: AdminApiConfig,
         metrics: Arc<dyn PerformanceMetricsInterface>,
         indexing: Arc<dyn IndexingOperationsInterface>,
+        event_bus: Arc<dyn EventBusProvider>,
     ) -> Self {
         Self {
             config,
@@ -71,8 +71,9 @@ impl AdminApi {
                 config_path: None,
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
-                event_bus: Arc::new(NullEventBus::new()),
+                event_bus,
                 service_manager: None,
+                cache: None,
             },
         }
     }
@@ -84,6 +85,7 @@ impl AdminApi {
         indexing: Arc<dyn IndexingOperationsInterface>,
         config_watcher: Arc<ConfigWatcher>,
         config_path: PathBuf,
+        event_bus: Arc<dyn EventBusProvider>,
     ) -> Self {
         Self {
             config,
@@ -94,8 +96,9 @@ impl AdminApi {
                 config_path: Some(config_path),
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
-                event_bus: Arc::new(NullEventBus::new()),
+                event_bus,
                 service_manager: None,
+                cache: None,
             },
         }
     }

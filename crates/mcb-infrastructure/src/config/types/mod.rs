@@ -5,6 +5,7 @@ pub mod auth;
 pub mod backup;
 pub mod cache;
 pub mod daemon;
+pub mod event_bus;
 pub mod limits;
 pub mod logging;
 pub mod metrics;

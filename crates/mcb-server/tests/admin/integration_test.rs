@@ -3,13 +3,43 @@
 //! Complete end-to-end test that starts the admin server, hits all endpoints,
 //! and verifies the full stack works together.
 
+use async_trait::async_trait;
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use mcb_application::ports::admin::PerformanceMetricsInterface;
+use mcb_application::ports::infrastructure::{DomainEventStream, EventBusProvider};
+use mcb_domain::error::Result;
+use mcb_domain::events::DomainEvent;
 use mcb_providers::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use mcb_server::admin::{handlers::AdminState, routes::admin_router};
 use std::sync::Arc;
 use tower::ServiceExt;
+
+/// Null EventBus for testing
+struct TestEventBus;
+
+#[async_trait]
+impl EventBusProvider for TestEventBus {
+    async fn publish_event(&self, _event: DomainEvent) -> Result<()> {
+        Ok(())
+    }
+
+    async fn subscribe_events(&self) -> Result<DomainEventStream> {
+        Ok(Box::pin(futures::stream::empty()))
+    }
+
+    fn has_subscribers(&self) -> bool {
+        false
+    }
+
+    async fn publish(&self, _topic: &str, _payload: &[u8]) -> Result<()> {
+        Ok(())
+    }
+
+    async fn subscribe(&self, _topic: &str) -> Result<String> {
+        Ok("test-subscription".to_string())
+    }
+}
 
 /// Helper to create test admin state with shared references
 fn create_shared_test_state() -> (
@@ -26,6 +56,9 @@ fn create_shared_test_state() -> (
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,
+        event_bus: Arc::new(TestEventBus),
+        service_manager: None,
+        cache: None,
     };
     (state, metrics, indexing)
 }

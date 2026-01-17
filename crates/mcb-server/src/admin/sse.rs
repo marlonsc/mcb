@@ -31,9 +31,8 @@ use axum::{
     response::sse::{Event, KeepAlive, Sse},
 };
 use futures::stream::Stream;
-use mcb_application::ports::infrastructure::EventBusProvider;
 use mcb_domain::events::DomainEvent;
-use std::{convert::Infallible, sync::Arc, time::Duration};
+use std::{convert::Infallible, time::Duration};
 use tracing::{debug, warn};
 
 use super::handlers::AdminState;

@@ -9,21 +9,31 @@ use test_utils::create_test_crate;
 #[test]
 fn test_duplicate_definition_detection() {
     let temp = TempDir::new().unwrap();
+    // Validator checks for duplicate struct/trait/enum definitions across files
+    // Create two crates with same type name to trigger detection
     create_test_crate(
         &temp,
-        "mcb-test",
+        "mcb-first",
         r#"
-pub fn duplicate_fn() -> i32 { 1 }
-
-// Later in the same file
-pub fn duplicate_fn() -> i32 { 2 }
+pub struct DuplicateType {
+    pub value: i32,
+}
+"#,
+    );
+    create_test_crate(
+        &temp,
+        "mcb-second",
+        r#"
+pub struct DuplicateType {
+    pub value: String,
+}
 "#,
     );
 
     let validator = RefactoringValidator::new(temp.path());
     let violations = validator.validate_duplicate_definitions().unwrap();
 
-    assert!(!violations.is_empty(), "Should detect duplicate definitions");
+    assert!(!violations.is_empty(), "Should detect duplicate type definitions across crates");
 }
 
 #[test]

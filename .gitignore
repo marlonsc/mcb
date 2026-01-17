@@ -100,3 +100,5 @@ fuzz/corpus/
 
 # Benchmark results
 benchmark_results/.cleanup-dead-code/
+# Reference legacy code (extracted from git history, not for commit)
+reference/

@@ -10,6 +10,7 @@ use mcb_application::ports::admin::{
     ShutdownCoordinator,
 };
 use mcb_application::ports::infrastructure::EventBusProvider;
+use mcb_application::ports::providers::CacheProvider;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use mcb_infrastructure::infrastructure::ServiceManager;
 use serde::Serialize;
@@ -37,6 +38,8 @@ pub struct AdminState {
     pub event_bus: Arc<dyn EventBusProvider>,
     /// Service manager for lifecycle control
     pub service_manager: Option<Arc<ServiceManager>>,
+    /// Cache provider for stats
+    pub cache: Option<Arc<dyn CacheProvider>>,
 }
 
 /// Health check response for admin API
@@ -374,5 +377,35 @@ fn calculate_overall_health(dependencies: &[DependencyHealthCheck]) -> Dependenc
         DependencyHealth::Degraded
     } else {
         DependencyHealth::Healthy
+    }
+}
+
+// ============================================================================
+// Cache Stats Endpoint
+// ============================================================================
+
+/// Get cache statistics
+///
+/// Returns cache hit/miss rates, entry counts, and other metrics.
+pub async fn get_cache_stats(State(state): State<AdminState>) -> impl IntoResponse {
+    let Some(cache) = &state.cache else {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "Cache provider not available"
+            })),
+        )
+            .into_response();
+    };
+
+    match cache.stats().await {
+        Ok(stats) => Json(stats).into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "error": e.to_string()
+            })),
+        )
+            .into_response(),
     }
 }

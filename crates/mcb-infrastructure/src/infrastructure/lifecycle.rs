@@ -382,7 +382,7 @@ impl ShutdownCoordinator for DefaultShutdownCoordinator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::NullEventBus;
+    use crate::infrastructure::events::NullEventBus;
 
     #[test]
     fn test_shutdown_coordinator_initial_state() {

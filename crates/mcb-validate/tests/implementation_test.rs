@@ -10,6 +10,7 @@ use test_utils::create_test_crate;
 #[test]
 fn test_empty_method_detection() {
     let temp = TempDir::new().unwrap();
+    // Use single-line format that the validator pattern matches
     create_test_crate(
         &temp,
         "mcb-test",
@@ -17,9 +18,7 @@ fn test_empty_method_detection() {
 pub struct MyService;
 
 impl MyService {
-    pub fn do_nothing(&self) -> Result<(), Error> {
-        Ok(())
-    }
+    pub fn do_nothing(&self) -> Result<(), Error> { Ok(()) }
 }
 "#,
     );

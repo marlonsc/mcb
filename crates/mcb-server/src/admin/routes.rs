@@ -9,8 +9,8 @@ use axum::{
 
 use super::config_handlers::{get_config, reload_config, update_config_section};
 use super::handlers::{
-    extended_health_check, get_indexing_status, get_metrics, health_check, liveness_check,
-    readiness_check, shutdown, AdminState,
+    extended_health_check, get_cache_stats, get_indexing_status, get_metrics, health_check,
+    liveness_check, readiness_check, shutdown, AdminState,
 };
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
@@ -36,6 +36,7 @@ use super::sse::events_stream;
 /// - POST /services/:name/start - Start a service
 /// - POST /services/:name/stop - Stop a service
 /// - POST /services/:name/restart - Restart a service
+/// - GET /cache/stats - Cache statistics
 pub fn admin_router(state: AdminState) -> Router {
     Router::new()
         // Health and monitoring
@@ -59,5 +60,7 @@ pub fn admin_router(state: AdminState) -> Router {
         .route("/services/{name}/start", post(start_service))
         .route("/services/{name}/stop", post(stop_service))
         .route("/services/{name}/restart", post(restart_service))
+        // Cache management
+        .route("/cache/stats", get(get_cache_stats))
         .with_state(state)
 }

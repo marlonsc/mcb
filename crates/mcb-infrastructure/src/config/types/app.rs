@@ -10,6 +10,7 @@ pub use super::{
     backup::BackupConfig,
     cache::{CacheConfig, CacheProvider},
     daemon::DaemonConfig,
+    event_bus::{EventBusConfig, EventBusProvider},
     limits::LimitsConfig,
     logging::LoggingConfig,
     metrics::MetricsConfig,
@@ -33,11 +34,14 @@ pub struct ProvidersConfig {
     pub vector_store: HashMap<String, VectorStoreConfig>,
 }
 
-/// Infrastructure configurations (cache, metrics, resilience, limits)
+/// Infrastructure configurations (cache, event_bus, metrics, resilience, limits)
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct InfrastructureConfig {
     /// Cache configuration
     pub cache: CacheConfig,
+
+    /// EventBus configuration
+    pub event_bus: EventBusConfig,
 
     /// Metrics configuration
     pub metrics: MetricsConfig,

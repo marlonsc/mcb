@@ -126,10 +126,11 @@ impl BM25Scorer {
             let df = self.document_freq.get(query_term).copied().unwrap_or(0) as f32;
 
             if df > 0.0 && tf > 0.0 {
-                // IDF calculation
+                // IDF calculation using Lucene/Elasticsearch variant that ensures positive IDF
+                // This avoids zero/negative IDF when terms appear in half or more documents
                 let idf = if self.total_docs > 1 {
-                    // Standard BM25 IDF for multiple documents
-                    ((self.total_docs as f32 - df + 0.5) / (df + 0.5)).ln()
+                    // Lucene BM25 IDF: ln(1 + (N - n + 0.5) / (n + 0.5))
+                    (1.0 + (self.total_docs as f32 - df + 0.5) / (df + 0.5)).ln()
                 } else {
                     // Simplified IDF for single document (always positive)
                     1.0
@@ -163,11 +164,12 @@ impl BM25Scorer {
 
     /// Tokenize text into terms
     ///
-    /// Performs lowercase normalization and splits on whitespace and punctuation.
+    /// Performs lowercase normalization and splits on whitespace, punctuation,
+    /// and underscores (for snake_case identifiers).
     /// Filters out tokens shorter than `BM25_TOKEN_MIN_LENGTH`.
     pub fn tokenize(text: &str) -> Vec<String> {
         text.to_lowercase()
-            .split(|c: char| !c.is_alphanumeric() && c != '_')
+            .split(|c: char| !c.is_alphanumeric())
             .filter(|s| !s.is_empty() && s.len() > BM25_TOKEN_MIN_LENGTH)
             .map(|s| s.to_string())
             .collect()
