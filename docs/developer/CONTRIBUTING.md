@@ -160,11 +160,12 @@ The project includes several examples demonstrating different usage patterns:
 
 ### Configuration Examples
 
-**Basic Configuration**(`examples/config_demo.rs`):
+**Basic Configuration** (`examples/config_demo.rs`):
 
 ```rust
 // Demonstrates TOML configuration loading and validation
-use mcp_context_browser::config::Config;
+// v0.1.1: Use mcb facade crate for public API
+use mcb::infrastructure::config::Config;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -175,22 +176,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-**Advanced Routing**(`examples/advanced_routing.rs`):
+**Using DI Container** (`examples/di_demo.rs`):
 
 ```rust
-// Demonstrates provider routing with circuit breakers and failover
-use mcp_context_browser::routing::{Router, CircuitBreakerConfig};
+// Demonstrates v0.1.1 Two-Layer DI Strategy (ADR-012)
+use mcb::infrastructure::di::{DiContainerBuilder, AppContainer};
+use mcb::application::ports::providers::EmbeddingProvider;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Configure routing with multiple providers and circuit breakers
-    let router = Router::new()
-        .with_circuit_breaker(CircuitBreakerConfig::default())
-        .with_failover_providers(vec!["openai", "ollama", "gemini"]);
+    // Build container with Shaku modules (null providers for testing)
+    let container = DiContainerBuilder::new().build().await?;
 
-    // Route requests intelligently based on health and performance
-    let result = router.route_embedding_request(query).await?;
-    println!("Routed through: {}", result.provider_used);
+    // Resolve providers from container
+    let embedding: Arc<dyn EmbeddingProvider> = container.resolve();
+    println!("Embedding provider resolved: {:?}", embedding);
     Ok(())
 }
 ```
@@ -223,8 +223,15 @@ Be respectful and constructive in all interactions. Focus on improving the proje
 
 ## Cross-References
 
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+### Architecture (v0.1.1)
+
+-   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) - System overview
+-   **ADR-012**: [Two-Layer DI Strategy](../adr/012-di-strategy-two-layer-approach.md) - Shaku + factories
+-   **ADR-013**: [Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md) - Seven-crate structure
+-   **Module Documentation**: [docs/modules/](../modules/) - Per-crate documentation
+
+### Operations
+
 -   **Deployment**: [DEPLOYMENT.md](../operations/DEPLOYMENT.md)
 -   **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
 -   **Roadmap**: [ROADMAP.md](./ROADMAP.md)
--   **Module Documentation**: [docs/modules/](../modules/)

@@ -396,10 +396,11 @@ export CACHE_TTL_SECONDS="1800"
 
 ## Related Documentation
 
--   [Architecture Overview](./architecture/ARCHITECTURE.md)
--   [Security Guide](./security/SECURITY.md)
--   [Admin API Reference](./api/admin-api.md)
--   [Deployment Guide](./deployment/DEPLOYMENT.md)
+-   [Architecture Overview](./architecture/ARCHITECTURE.md) - v0.1.1 Seven-Crate Structure
+-   [ADR-012: Two-Layer DI Strategy](./adr/012-di-strategy-two-layer-approach.md) - Configuration-driven provider factories
+-   [ADR-013: Clean Architecture Crate Separation](./adr/013-clean-architecture-crate-separation.md) - Crate organization
+-   [Deployment Guide](./operations/DEPLOYMENT.md) - Production deployment
+-   [Module: Infrastructure](./modules/infrastructure.md) - Configuration management in `mcb-infrastructure`
 
 ---
 
