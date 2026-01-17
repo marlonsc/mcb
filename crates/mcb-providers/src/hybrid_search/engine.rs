@@ -278,28 +278,27 @@ impl HybridSearchProvider for HybridSearchEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mcb_domain::value_objects::types::Language;
 
-    fn create_test_chunk(content: &str, file_path: &str, start_line: usize) -> CodeChunk {
+    fn create_test_chunk(content: &str, file_path: &str, start_line: u32) -> CodeChunk {
         CodeChunk {
             id: format!("{}:{}", file_path, start_line),
             content: content.to_string(),
             file_path: file_path.to_string(),
             start_line,
-            end_line: start_line + content.lines().count(),
-            language: Language::Rust,
+            end_line: start_line + content.lines().count() as u32,
+            language: "Rust".to_string(),
             metadata: serde_json::json!({}),
         }
     }
 
-    fn create_test_search_result(file_path: &str, start_line: usize, score: f32) -> SearchResult {
+    fn create_test_search_result(file_path: &str, start_line: u32, score: f64) -> SearchResult {
         SearchResult {
             id: format!("{}:{}", file_path, start_line),
             content: format!("Content of {}:{}", file_path, start_line),
             file_path: file_path.to_string(),
             start_line,
             score,
-            metadata: serde_json::json!({}),
+            language: "Rust".to_string(),
         }
     }
 

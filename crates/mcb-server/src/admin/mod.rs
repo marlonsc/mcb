@@ -32,9 +32,11 @@ pub mod auth;
 pub mod config;
 pub mod config_handlers;
 pub mod handlers;
+pub mod lifecycle_handlers;
 pub mod models;
 pub mod propagation;
 pub mod routes;
+pub mod sse;
 pub mod web;
 
 // Re-export main types

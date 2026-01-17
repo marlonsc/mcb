@@ -12,6 +12,10 @@ use super::handlers::{
     extended_health_check, get_indexing_status, get_metrics, health_check, liveness_check,
     readiness_check, shutdown, AdminState,
 };
+use super::lifecycle_handlers::{
+    list_services, restart_service, services_health, start_service, stop_service,
+};
+use super::sse::events_stream;
 
 /// Create the admin API router
 ///
@@ -26,6 +30,12 @@ use super::handlers::{
 /// - GET /config - View current configuration (sanitized)
 /// - POST /config/reload - Trigger configuration reload
 /// - PATCH /config/:section - Update configuration section
+/// - GET /events - SSE event stream for real-time updates
+/// - GET /services - List registered services
+/// - GET /services/health - Health check all services
+/// - POST /services/:name/start - Start a service
+/// - POST /services/:name/stop - Stop a service
+/// - POST /services/:name/restart - Restart a service
 pub fn admin_router(state: AdminState) -> Router {
     Router::new()
         // Health and monitoring
@@ -41,5 +51,13 @@ pub fn admin_router(state: AdminState) -> Router {
         .route("/config", get(get_config))
         .route("/config/reload", post(reload_config))
         .route("/config/{section}", patch(update_config_section))
+        // SSE event stream
+        .route("/events", get(events_stream))
+        // Service lifecycle management
+        .route("/services", get(list_services))
+        .route("/services/health", get(services_health))
+        .route("/services/{name}/start", post(start_service))
+        .route("/services/{name}/stop", post(stop_service))
+        .route("/services/{name}/restart", post(restart_service))
         .with_state(state)
 }

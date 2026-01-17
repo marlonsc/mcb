@@ -51,3 +51,7 @@ pub use utils::TimedOperation;
 
 // Re-export Shaku traits for DI resolution (used by mcb-server)
 pub use shaku::HasComponent;
+
+// Internal tests module (can access pub(crate) items)
+#[cfg(test)]
+mod tests;

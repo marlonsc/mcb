@@ -36,9 +36,5 @@ pub(crate) use metrics::NullSystemMetricsCollector;
 pub(crate) use snapshot::NullSnapshotProvider;
 pub(crate) use sync::NullSyncProvider;
 
-// NullEventBus is exported for tests and override scenarios within crate
-#[cfg(test)]
-pub(crate) use events::NullEventBus;
-
 // Public data types (NOT implementations) - these are pure DTOs
-pub use lifecycle::{ServiceInfo, ServiceManagerError};
+pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};

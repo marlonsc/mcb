@@ -3,7 +3,9 @@
 //! HTTP server for the admin API running on a separate port.
 
 use mcb_application::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
+use mcb_application::ports::infrastructure::EventBusProvider;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
+use mcb_infrastructure::infrastructure::{ServiceManager, NullEventBus};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -69,6 +71,8 @@ impl AdminApi {
                 config_path: None,
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
+                event_bus: Arc::new(NullEventBus::new()),
+                service_manager: None,
             },
         }
     }
@@ -90,6 +94,8 @@ impl AdminApi {
                 config_path: Some(config_path),
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
+                event_bus: Arc::new(NullEventBus::new()),
+                service_manager: None,
             },
         }
     }

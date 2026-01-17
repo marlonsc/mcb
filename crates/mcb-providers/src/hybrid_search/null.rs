@@ -70,28 +70,27 @@ impl HybridSearchProvider for NullHybridSearchProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mcb_domain::value_objects::types::Language;
 
-    fn create_test_chunk(content: &str, file_path: &str, start_line: usize) -> CodeChunk {
+    fn create_test_chunk(content: &str, file_path: &str, start_line: u32) -> CodeChunk {
         CodeChunk {
             id: format!("{}:{}", file_path, start_line),
             content: content.to_string(),
             file_path: file_path.to_string(),
             start_line,
             end_line: start_line + 1,
-            language: Language::Rust,
+            language: "Rust".to_string(),
             metadata: serde_json::json!({}),
         }
     }
 
-    fn create_test_search_result(file_path: &str, score: f32) -> SearchResult {
+    fn create_test_search_result(file_path: &str, score: f64) -> SearchResult {
         SearchResult {
             id: format!("{}:1", file_path),
             content: "test content".to_string(),
             file_path: file_path.to_string(),
             start_line: 1,
             score,
-            metadata: serde_json::json!({}),
+            language: "Rust".to_string(),
         }
     }
 
@@ -122,7 +121,7 @@ mod tests {
         // Should return first 2 results unchanged
         assert_eq!(results.len(), 2);
         assert_eq!(results[0].file_path, "a.rs");
-        assert!((results[0].score - 0.9).abs() < f32::EPSILON);
+        assert!((results[0].score - 0.9).abs() < f64::EPSILON);
         assert_eq!(results[1].file_path, "b.rs");
     }
 

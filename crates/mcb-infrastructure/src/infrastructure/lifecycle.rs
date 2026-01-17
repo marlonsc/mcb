@@ -234,10 +234,16 @@ impl ServiceManager {
 
     /// Perform health checks on all registered services
     pub async fn health_check_all(&self) -> Vec<DependencyHealthCheck> {
-        let mut checks = Vec::with_capacity(self.services.len());
+        // Clone the Arc pointers to avoid holding DashMap references across await points
+        let services: Vec<Arc<dyn LifecycleManaged>> = self
+            .services
+            .iter()
+            .map(|entry| Arc::clone(entry.value()))
+            .collect();
 
-        for entry in self.services.iter() {
-            let check = entry.value().health_check().await;
+        let mut checks = Vec::with_capacity(services.len());
+        for service in services {
+            let check = service.health_check().await;
             checks.push(check);
         }
 

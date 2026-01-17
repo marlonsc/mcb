@@ -9,7 +9,9 @@ use mcb_application::ports::admin::{
     IndexingOperationsInterface, PerformanceMetricsData, PerformanceMetricsInterface,
     ShutdownCoordinator,
 };
+use mcb_application::ports::infrastructure::EventBusProvider;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
+use mcb_infrastructure::infrastructure::ServiceManager;
 use serde::Serialize;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -31,6 +33,10 @@ pub struct AdminState {
     pub shutdown_coordinator: Option<Arc<dyn ShutdownCoordinator>>,
     /// Default shutdown timeout in seconds
     pub shutdown_timeout_secs: u64,
+    /// Event bus for SSE streaming
+    pub event_bus: Arc<dyn EventBusProvider>,
+    /// Service manager for lifecycle control
+    pub service_manager: Option<Arc<ServiceManager>>,
 }
 
 /// Health check response for admin API
