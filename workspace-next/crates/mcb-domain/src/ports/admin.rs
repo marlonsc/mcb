@@ -197,7 +197,7 @@ impl Default for ServiceState {
 /// service.stop().await;
 /// ```
 #[async_trait::async_trait]
-pub trait LifecycleManaged: Send + Sync {
+pub trait LifecycleManaged: Interface + Send + Sync {
     /// Get the service name
     fn name(&self) -> &str;
 
@@ -242,7 +242,7 @@ pub trait LifecycleManaged: Send + Sync {
 /// // To trigger shutdown (e.g., from admin API)
 /// coordinator.signal_shutdown();
 /// ```
-pub trait ShutdownCoordinator: Send + Sync {
+pub trait ShutdownCoordinator: Interface + Send + Sync {
     /// Signal all components to begin shutdown
     fn signal_shutdown(&self);
 

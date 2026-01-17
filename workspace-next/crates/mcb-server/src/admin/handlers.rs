@@ -10,8 +10,9 @@ use axum::{
     Json,
 };
 use mcb_domain::ports::admin::{
-    DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse,
-    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
+    DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
+    IndexingOperationsInterface, PerformanceMetricsData, PerformanceMetricsInterface,
+    ShutdownCoordinator,
 };
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use serde::Serialize;
@@ -171,6 +172,16 @@ pub struct ShutdownResponse {
     pub timeout_secs: u64,
 }
 
+impl ShutdownResponse {
+    fn error(message: impl Into<String>, timeout: u64) -> Self {
+        Self { initiated: false, message: message.into(), timeout_secs: timeout }
+    }
+
+    fn success(message: impl Into<String>, timeout: u64) -> Self {
+        Self { initiated: true, message: message.into(), timeout_secs: timeout }
+    }
+}
+
 /// Initiate graceful server shutdown
 ///
 /// Signals all components to begin shutdown. The server will attempt
@@ -185,26 +196,11 @@ pub async fn shutdown(
     Json(request): Json<ShutdownRequest>,
 ) -> impl IntoResponse {
     let Some(coordinator) = &state.shutdown_coordinator else {
-        return (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(ShutdownResponse {
-                initiated: false,
-                message: "Shutdown coordinator not available".to_string(),
-                timeout_secs: 0,
-            }),
-        );
+        return (StatusCode::SERVICE_UNAVAILABLE, Json(ShutdownResponse::error("Shutdown coordinator not available", 0)));
     };
 
-    // Check if already shutting down
     if coordinator.is_shutting_down() {
-        return (
-            StatusCode::CONFLICT,
-            Json(ShutdownResponse {
-                initiated: false,
-                message: "Shutdown already in progress".to_string(),
-                timeout_secs: state.shutdown_timeout_secs,
-            }),
-        );
+        return (StatusCode::CONFLICT, Json(ShutdownResponse::error("Shutdown already in progress", state.shutdown_timeout_secs)));
     }
 
     let timeout_secs = request.timeout_secs.unwrap_or(state.shutdown_timeout_secs);
@@ -212,37 +208,21 @@ pub async fn shutdown(
     if request.immediate {
         info!("Immediate shutdown requested");
         coordinator.signal_shutdown();
-        return (
-            StatusCode::OK,
-            Json(ShutdownResponse {
-                initiated: true,
-                message: "Immediate shutdown initiated".to_string(),
-                timeout_secs: 0,
-            }),
-        );
+        return (StatusCode::OK, Json(ShutdownResponse::success("Immediate shutdown initiated", 0)));
     }
 
     info!(timeout_secs = timeout_secs, "Graceful shutdown requested");
+    spawn_graceful_shutdown(Arc::clone(coordinator), timeout_secs);
 
-    // Spawn shutdown task to handle the graceful shutdown process
-    let coord = Arc::clone(coordinator);
+    let msg = format!("Graceful shutdown initiated, server will stop in {} seconds", timeout_secs);
+    (StatusCode::OK, Json(ShutdownResponse::success(msg, timeout_secs)))
+}
+
+fn spawn_graceful_shutdown(coord: Arc<dyn ShutdownCoordinator>, timeout: u64) {
     tokio::spawn(async move {
-        // Wait for graceful period
-        tokio::time::sleep(Duration::from_secs(timeout_secs)).await;
+        tokio::time::sleep(Duration::from_secs(timeout)).await;
         coord.signal_shutdown();
     });
-
-    (
-        StatusCode::OK,
-        Json(ShutdownResponse {
-            initiated: true,
-            message: format!(
-                "Graceful shutdown initiated, server will stop in {} seconds",
-                timeout_secs
-            ),
-            timeout_secs,
-        }),
-    )
 }
 
 /// Extended health check with dependency status
@@ -252,58 +232,9 @@ pub async fn shutdown(
 pub async fn extended_health_check(State(state): State<AdminState>) -> impl IntoResponse {
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
+    let now = current_timestamp();
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-
-    // Build dependency health checks
-    // Note: In a full implementation, these would actually ping the services
-    // For now, we report based on whether the system is functioning
-    let mut dependencies = Vec::new();
-
-    // Embedding provider health (inferred from metrics)
-    dependencies.push(DependencyHealthCheck {
-        name: "embedding_provider".to_string(),
-        status: if metrics.total_queries > 0 && metrics.failed_queries == 0 {
-            DependencyHealth::Healthy
-        } else if metrics.failed_queries > 0 {
-            DependencyHealth::Degraded
-        } else {
-            DependencyHealth::Unknown
-        },
-        message: Some(format!(
-            "Total queries: {}, Failed: {}",
-            metrics.total_queries, metrics.failed_queries
-        )),
-        latency_ms: Some(metrics.average_response_time_ms as u64),
-        last_check: now,
-    });
-
-    // Vector store health (inferred from operations)
-    dependencies.push(DependencyHealthCheck {
-        name: "vector_store".to_string(),
-        status: DependencyHealth::Healthy, // Assume healthy if server is running
-        message: Some(format!("Active indexing operations: {}", operations.len())),
-        latency_ms: None,
-        last_check: now,
-    });
-
-    // Cache health (inferred from cache hit rate)
-    dependencies.push(DependencyHealthCheck {
-        name: "cache".to_string(),
-        status: if metrics.cache_hit_rate > 0.0 {
-            DependencyHealth::Healthy
-        } else {
-            DependencyHealth::Unknown
-        },
-        message: Some(format!("Cache hit rate: {:.1}%", metrics.cache_hit_rate * 100.0)),
-        latency_ms: None,
-        last_check: now,
-    });
-
-    // Calculate overall dependencies status
+    let dependencies = build_dependency_checks(&metrics, &operations, now);
     let dependencies_status = calculate_overall_health(&dependencies);
 
     let response = ExtendedHealthResponse {
@@ -321,6 +252,74 @@ pub async fn extended_health_check(State(state): State<AdminState>) -> impl Into
     Json(response)
 }
 
+/// Get current timestamp in seconds since UNIX epoch
+fn current_timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
+/// Build dependency health checks from metrics and operations
+fn build_dependency_checks(
+    metrics: &PerformanceMetricsData,
+    operations: &std::collections::HashMap<String, IndexingOperation>,
+    now: u64,
+) -> Vec<DependencyHealthCheck> {
+    vec![
+        build_embedding_health(metrics, now),
+        build_vector_store_health(operations, now),
+        build_cache_health(metrics, now),
+    ]
+}
+
+/// Build embedding provider health check
+fn build_embedding_health(metrics: &PerformanceMetricsData, now: u64) -> DependencyHealthCheck {
+    DependencyHealthCheck {
+        name: "embedding_provider".to_string(),
+        status: match (metrics.total_queries, metrics.failed_queries) {
+            (total, 0) if total > 0 => DependencyHealth::Healthy,
+            (_, failed) if failed > 0 => DependencyHealth::Degraded,
+            _ => DependencyHealth::Unknown,
+        },
+        message: Some(format!(
+            "Total queries: {}, Failed: {}",
+            metrics.total_queries, metrics.failed_queries
+        )),
+        latency_ms: Some(metrics.average_response_time_ms as u64),
+        last_check: now,
+    }
+}
+
+/// Build vector store health check
+fn build_vector_store_health(
+    operations: &std::collections::HashMap<String, IndexingOperation>,
+    now: u64,
+) -> DependencyHealthCheck {
+    DependencyHealthCheck {
+        name: "vector_store".to_string(),
+        status: DependencyHealth::Healthy,
+        message: Some(format!("Active indexing operations: {}", operations.len())),
+        latency_ms: None,
+        last_check: now,
+    }
+}
+
+/// Build cache health check
+fn build_cache_health(metrics: &PerformanceMetricsData, now: u64) -> DependencyHealthCheck {
+    DependencyHealthCheck {
+        name: "cache".to_string(),
+        status: if metrics.cache_hit_rate > 0.0 {
+            DependencyHealth::Healthy
+        } else {
+            DependencyHealth::Unknown
+        },
+        message: Some(format!("Cache hit rate: {:.1}%", metrics.cache_hit_rate * 100.0)),
+        latency_ms: None,
+        last_check: now,
+    }
+}
+
 /// Calculate overall health status from individual dependency checks
 fn calculate_overall_health(dependencies: &[DependencyHealthCheck]) -> DependencyHealth {
     let mut unhealthy_count = 0;
@@ -330,7 +329,9 @@ fn calculate_overall_health(dependencies: &[DependencyHealthCheck]) -> Dependenc
         match dep.status {
             DependencyHealth::Unhealthy => unhealthy_count += 1,
             DependencyHealth::Degraded => degraded_count += 1,
-            _ => {}
+            DependencyHealth::Healthy | DependencyHealth::Unknown => {
+                // Healthy/Unknown dependencies don't need counting
+            }
         }
     }
 

@@ -241,11 +241,47 @@ async fn handle_tools_list(_state: &HttpTransportState, request: &McpRequest) ->
     }
 }
 
+/// Parse tool call parameters from the request
+fn parse_tool_call_params(
+    params: &serde_json::Value,
+) -> Result<CallToolRequestParam, (i32, &'static str)> {
+    let tool_name = params
+        .get("name")
+        .and_then(|v| v.as_str())
+        .ok_or((JSONRPC_INVALID_PARAMS, "Missing 'name' parameter for tools/call"))?
+        .to_string();
+
+    let arguments = params.get("arguments").and_then(|v| v.as_object().cloned());
+
+    Ok(CallToolRequestParam {
+        name: tool_name.into(),
+        arguments,
+    })
+}
+
+/// Convert tool call result to JSON response
+fn tool_result_to_json(result: rmcp::model::CallToolResult) -> serde_json::Value {
+    let content_json: Vec<serde_json::Value> = result
+        .content
+        .iter()
+        .map(|content| {
+            serde_json::to_value(content).unwrap_or(serde_json::json!({
+                "type": "text",
+                "text": "Error serializing content"
+            }))
+        })
+        .collect();
+
+    serde_json::json!({
+        "content": content_json,
+        "isError": result.is_error.unwrap_or(false)
+    })
+}
+
 /// Handle the `tools/call` method
 ///
 /// Executes the specified tool with the provided arguments.
 async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> McpResponse {
-    // Parse the tool call parameters from request params
     let params = match &request.params {
         Some(params) => params,
         None => {
@@ -257,31 +293,11 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         }
     };
 
-    // Extract tool name
-    let tool_name = match params.get("name").and_then(|v| v.as_str()) {
-        Some(name) => name.to_string(),
-        None => {
-            return McpResponse::error(
-                request.id.clone(),
-                JSONRPC_INVALID_PARAMS,
-                "Missing 'name' parameter for tools/call",
-            );
-        }
+    let call_request = match parse_tool_call_params(params) {
+        Ok(req) => req,
+        Err((code, msg)) => return McpResponse::error(request.id.clone(), code, msg),
     };
 
-    // Extract arguments (optional, defaults to empty object)
-    // CallToolRequestParam expects Option<serde_json::Map<String, Value>>
-    let arguments: Option<serde_json::Map<String, serde_json::Value>> = params
-        .get("arguments")
-        .and_then(|v| v.as_object().cloned());
-
-    // Create the CallToolRequestParam
-    let call_request = CallToolRequestParam {
-        name: tool_name.into(),
-        arguments,
-    };
-
-    // Create tool handlers from the server's handlers
     let handlers = ToolHandlers {
         index_codebase: state.server.index_codebase_handler(),
         search_code: state.server.search_code_handler(),
@@ -289,30 +305,8 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         clear_index: state.server.clear_index_handler(),
     };
 
-    // Route the tool call
     match route_tool_call(call_request, &handlers).await {
-        Ok(result) => {
-            // Convert CallToolResult to JSON
-            let content_json: Vec<serde_json::Value> = result
-                .content
-                .iter()
-                .map(|content| {
-                    // Serialize the content properly
-                    serde_json::to_value(content).unwrap_or(serde_json::json!({
-                        "type": "text",
-                        "text": "Error serializing content"
-                    }))
-                })
-                .collect();
-
-            McpResponse::success(
-                request.id.clone(),
-                serde_json::json!({
-                    "content": content_json,
-                    "isError": result.is_error.unwrap_or(false)
-                }),
-            )
-        }
+        Ok(result) => McpResponse::success(request.id.clone(), tool_result_to_json(result)),
         Err(e) => {
             error!(error = ?e, "Tool call failed");
             McpResponse::error(

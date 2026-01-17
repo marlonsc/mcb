@@ -25,6 +25,44 @@ pub struct NodeExtractionRule {
     pub include_context: bool,
 }
 
+impl NodeExtractionRule {
+    /// Primary nodes (functions, structs, classes) - high priority, context included
+    pub fn primary(types: &[&str]) -> Self {
+        Self {
+            node_types: types.iter().map(|s| s.to_string()).collect(),
+            min_length: 40,
+            min_lines: 2,
+            max_depth: 4,
+            priority: 10,
+            include_context: true,
+        }
+    }
+
+    /// Secondary nodes (modules, macros, constants) - medium priority
+    pub fn secondary(types: &[&str]) -> Self {
+        Self {
+            node_types: types.iter().map(|s| s.to_string()).collect(),
+            min_length: 25,
+            min_lines: 1,
+            max_depth: 3,
+            priority: 5,
+            include_context: false,
+        }
+    }
+
+    /// Tertiary nodes (types, imports) - low priority
+    pub fn tertiary(types: &[&str]) -> Self {
+        Self {
+            node_types: types.iter().map(|s| s.to_string()).collect(),
+            min_length: 15,
+            min_lines: 1,
+            max_depth: 2,
+            priority: 1,
+            include_context: false,
+        }
+    }
+}
+
 /// Language-specific configuration for chunking
 #[derive(Debug)]
 pub struct LanguageConfig {

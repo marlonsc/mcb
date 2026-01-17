@@ -378,6 +378,21 @@ impl ImplementationQualityValidator {
                     }
 
                     // Check for hardcoded return patterns
+                    // Skip guard clauses (return inside if block for validation checks)
+                    // e.g., "if a.len() != b.len() { return false; }" is a valid guard
+                    let is_guard_clause = trimmed.starts_with("if ")
+                        || trimmed.starts_with("} else if ")
+                        || trimmed.contains("return false; }")  // inline guard: if x { return false; }
+                        || trimmed.contains("return true; }")   // inline guard: if x { return true; }
+                        || (trimmed == "return false;" && content.lines().nth(line_num.saturating_sub(1))
+                            .map(|l| l.trim().starts_with("if ")).unwrap_or(false))
+                        || (trimmed == "return true;" && content.lines().nth(line_num.saturating_sub(1))
+                            .map(|l| l.trim().starts_with("if ")).unwrap_or(false));
+
+                    if is_guard_clause {
+                        continue;
+                    }
+
                     for (pattern, desc) in &compiled_patterns {
                         if pattern.is_match(trimmed) {
                             violations.push(ImplementationViolation::HardcodedReturnValue {

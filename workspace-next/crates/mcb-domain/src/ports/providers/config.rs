@@ -4,13 +4,14 @@
 
 use crate::error::Result;
 use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
+use shaku::Interface;
 
 /// Provider configuration manager interface
 ///
 /// This port defines the contract for managing provider configurations
 /// including embedding and vector store providers.
 #[async_trait::async_trait]
-pub trait ProviderConfigManagerInterface: Send + Sync {
+pub trait ProviderConfigManagerInterface: Interface + Send + Sync {
     /// Get embedding provider configuration by name
     fn get_embedding_config(&self, name: &str) -> Result<&EmbeddingConfig>;
 

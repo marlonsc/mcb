@@ -6,9 +6,8 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{CryptoProvider, EncryptedData as DomainEncryptedData};
+use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 use sha2::{Digest, Sha256};
-use std::fmt;
 
 use super::utils::bytes_to_hex;
 
@@ -58,10 +57,7 @@ impl CryptoService {
                 source: None,
             })?;
 
-        Ok(EncryptedData {
-            ciphertext,
-            nonce: nonce.to_vec(),
-        })
+        Ok(EncryptedData::new(ciphertext, nonce.to_vec()))
     }
 
     /// Decrypt data using AES-GCM
@@ -98,54 +94,16 @@ impl CryptoService {
     }
 }
 
-/// Encrypted data container
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct EncryptedData {
-    /// The encrypted ciphertext
-    pub ciphertext: Vec<u8>,
-    /// The nonce used for encryption
-    pub nonce: Vec<u8>,
-}
-
-impl fmt::Display for EncryptedData {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "EncryptedData {{ ciphertext: {} bytes, nonce: {} bytes }}",
-            self.ciphertext.len(),
-            self.nonce.len()
-        )
-    }
-}
-
 // Implement the CryptoProvider port from mcb-domain
 impl CryptoProvider for CryptoService {
-    fn encrypt(&self, plaintext: &[u8]) -> Result<DomainEncryptedData> {
-        let key = Key::<Aes256Gcm>::from_slice(&self.master_key);
-        let cipher = Aes256Gcm::new(key);
-        let nonce = Aes256Gcm::generate_nonce(&mut AeadOsRng);
-
-        let ciphertext = cipher
-            .encrypt(&nonce, plaintext)
-            .map_err(|e| Error::Infrastructure {
-                message: format!("Encryption failed: {}", e),
-                source: None,
-            })?;
-
-        Ok(DomainEncryptedData::new(ciphertext, nonce.to_vec()))
+    fn encrypt(&self, plaintext: &[u8]) -> Result<EncryptedData> {
+        // Delegate to inherent method
+        CryptoService::encrypt(self, plaintext)
     }
 
-    fn decrypt(&self, encrypted_data: &DomainEncryptedData) -> Result<Vec<u8>> {
-        let key = Key::<Aes256Gcm>::from_slice(&self.master_key);
-        let cipher = Aes256Gcm::new(key);
-        let nonce = Nonce::from_slice(&encrypted_data.nonce);
-
-        cipher
-            .decrypt(nonce, encrypted_data.ciphertext.as_ref())
-            .map_err(|e| Error::Infrastructure {
-                message: format!("Decryption failed: {}", e),
-                source: None,
-            })
+    fn decrypt(&self, encrypted_data: &EncryptedData) -> Result<Vec<u8>> {
+        // Delegate to inherent method
+        CryptoService::decrypt(self, encrypted_data)
     }
 
     fn provider_name(&self) -> &str {

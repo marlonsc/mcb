@@ -21,60 +21,32 @@ impl RustProcessor {
     /// Create a new Rust language processor
     pub fn new() -> Self {
         let config = LanguageConfig::new(tree_sitter_rust::LANGUAGE.into())
-            .with_rules(vec![
-                NodeExtractionRule {
-                    node_types: vec![
-                        "function_item".to_string(),
-                        "struct_item".to_string(),
-                        "enum_item".to_string(),
-                        "impl_item".to_string(),
-                        "trait_item".to_string(),
-                    ],
-                    min_length: 40,
-                    min_lines: 2,
-                    max_depth: 4,
-                    priority: 10,
-                    include_context: true,
-                },
-                NodeExtractionRule {
-                    node_types: vec![
-                        "mod_item".to_string(),
-                        "macro_definition".to_string(),
-                        "const_item".to_string(),
-                        "static_item".to_string(),
-                    ],
-                    min_length: 25,
-                    min_lines: 1,
-                    max_depth: 3,
-                    priority: 5,
-                    include_context: false,
-                },
-                NodeExtractionRule {
-                    node_types: vec!["type_item".to_string(), "use_declaration".to_string()],
-                    min_length: 15,
-                    min_lines: 1,
-                    max_depth: 2,
-                    priority: 1,
-                    include_context: false,
-                },
-            ])
-            .with_fallback_patterns(vec![
-                r"^fn ".to_string(),
-                r"^struct ".to_string(),
-                r"^impl ".to_string(),
-                r"^pub fn ".to_string(),
-                r"^pub struct ".to_string(),
-                r"^enum ".to_string(),
-                r"^trait ".to_string(),
-                r"^mod ".to_string(),
-                r"^const ".to_string(),
-                r"^static ".to_string(),
-            ])
+            .with_rules(Self::extraction_rules())
+            .with_fallback_patterns(Self::fallback_patterns())
             .with_chunk_size(CHUNK_SIZE_RUST);
 
         Self {
             processor: BaseProcessor::new(config),
         }
+    }
+
+    fn extraction_rules() -> Vec<NodeExtractionRule> {
+        vec![
+            NodeExtractionRule::primary(&[
+                "function_item", "struct_item", "enum_item", "impl_item", "trait_item",
+            ]),
+            NodeExtractionRule::secondary(&[
+                "mod_item", "macro_definition", "const_item", "static_item",
+            ]),
+            NodeExtractionRule::tertiary(&["type_item", "use_declaration"]),
+        ]
+    }
+
+    fn fallback_patterns() -> Vec<String> {
+        ["fn ", "struct ", "impl ", "pub fn ", "pub struct ", "enum ", "trait ", "mod ", "const ", "static "]
+            .iter()
+            .map(|p| format!("^{}", p))
+            .collect()
     }
 }
 

@@ -31,7 +31,6 @@
 //! | [`logging`] | Structured logging with tracing |
 
 // Core infrastructure modules
-pub mod adapters;
 pub mod cache;
 pub mod config;
 pub mod constants;

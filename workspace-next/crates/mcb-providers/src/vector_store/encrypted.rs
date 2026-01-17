@@ -71,6 +71,38 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
     pub fn crypto(&self) -> &Arc<dyn CryptoProvider> {
         &self.crypto
     }
+
+    /// Encrypt metadata while preserving searchable fields
+    fn encrypt_metadata(&self, meta: &HashMap<String, Value>) -> Result<HashMap<String, Value>> {
+        // Serialize and encrypt sensitive metadata
+        let metadata_json = serde_json::to_string(meta).map_err(|e| Error::Infrastructure {
+            message: format!("Failed to serialize metadata: {}", e),
+            source: Some(Box::new(e)),
+        })?;
+
+        let encrypted_data = self.crypto.encrypt(metadata_json.as_bytes())?;
+
+        let mut processed = HashMap::new();
+        processed.insert(
+            "encrypted_metadata".to_string(),
+            serde_json::to_value(&encrypted_data).map_err(|e| Error::Infrastructure {
+                message: format!("Failed to serialize encrypted data: {}", e),
+                source: Some(Box::new(e)),
+            })?,
+        );
+
+        // Preserve unencrypted fields for filtering and SearchResult construction
+        for key in ["content", "file_path", "language"] {
+            if let Some(val) = meta.get(key) {
+                processed.insert(key.to_string(), val.clone());
+            }
+        }
+        if let Some(val) = meta.get("start_line").or_else(|| meta.get("line_number")) {
+            processed.insert("start_line".to_string(), val.clone());
+        }
+
+        Ok(processed)
+    }
 }
 
 #[async_trait]
@@ -120,45 +152,11 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
             ));
         }
 
-        // Keep vectors unencrypted for searchability, encrypt only sensitive metadata
-        let mut processed_metadata = Vec::new();
-
-        for meta in metadata {
-            // Serialize sensitive metadata for encryption
-            let metadata_json =
-                serde_json::to_string(&meta).map_err(|e| Error::Infrastructure {
-                    message: format!("Failed to serialize metadata: {}", e),
-                    source: Some(Box::new(e)),
-                })?;
-
-            let encrypted_data = self.crypto.encrypt(metadata_json.as_bytes())?;
-
-            // Create metadata with encryption info
-            let mut processed_meta = HashMap::new();
-            processed_meta.insert(
-                "encrypted_metadata".to_string(),
-                serde_json::to_value(&encrypted_data).map_err(|e| Error::Infrastructure {
-                    message: format!("Failed to serialize encrypted data: {}", e),
-                    source: Some(Box::new(e)),
-                })?,
-            );
-
-            // Keep non-sensitive metadata unencrypted for filtering and SearchResult construction
-            if let Some(content) = meta.get("content") {
-                processed_meta.insert("content".to_string(), content.clone());
-            }
-            if let Some(file_path) = meta.get("file_path") {
-                processed_meta.insert("file_path".to_string(), file_path.clone());
-            }
-            if let Some(start_line) = meta.get("start_line").or_else(|| meta.get("line_number")) {
-                processed_meta.insert("start_line".to_string(), start_line.clone());
-            }
-            if let Some(language) = meta.get("language") {
-                processed_meta.insert("language".to_string(), language.clone());
-            }
-
-            processed_metadata.push(processed_meta);
-        }
+        // Encrypt metadata while keeping vectors unencrypted for searchability
+        let processed_metadata: Vec<_> = metadata
+            .iter()
+            .map(|meta| self.encrypt_metadata(meta))
+            .collect::<Result<Vec<_>>>()?;
 
         self.inner
             .insert_vectors(collection, vectors, processed_metadata)

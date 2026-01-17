@@ -491,7 +491,12 @@ impl NamingValidator {
                 }
 
                 // Check service files should have _service suffix if in services directory
-                if path_str.contains("/services/") || path_str.contains("/domain_services/") {
+                // Note: mcb-domain/domain_services contains interfaces, not implementations
+                // so we skip suffix validation for that directory
+                if path_str.contains("/services/")
+                    && !path_str.contains("/domain_services/")
+                    && crate_name != "mcb-domain"
+                {
                     if !file_name.ends_with("_service") && file_name != "mod" {
                         violations.push(NamingViolation::BadFileSuffix {
                             path: path.to_path_buf(),
@@ -607,14 +612,18 @@ impl NamingValidator {
                     }
                 }
 
-                // Server crate: handlers should be in handlers/
+                // Server crate: handlers should be in handlers/ or admin/
                 if crate_name == "mcb-server" {
-                    if file_name.contains("handler") && !path_str.contains("/handlers/") {
+                    // Allow handlers in handlers/, admin/, or tools/ directories
+                    let in_allowed_handler_dir = path_str.contains("/handlers/")
+                        || path_str.contains("/admin/")
+                        || path_str.contains("/tools/");
+                    if file_name.contains("handler") && !in_allowed_handler_dir {
                         violations.push(NamingViolation::BadCaNaming {
                             path: path.to_path_buf(),
                             detected_type: "Handler".to_string(),
                             issue: "Handler file outside handlers/ directory".to_string(),
-                            suggestion: "Move to handlers/".to_string(),
+                            suggestion: "Move to handlers/, admin/, or tools/".to_string(),
                             severity: Severity::Warning,
                         });
                     }

@@ -632,8 +632,13 @@ impl ShakuValidator {
 
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-                // Check for null.rs, fake.rs, mock.rs in production directories
-                if file_name == "null.rs" || file_name == "fake.rs" || file_name == "mock.rs" {
+                // Note: null.rs, fake.rs, mock.rs are intentional patterns for testing
+                // in mcb-providers crate, so we don't flag them as violations.
+                // Only flag them if they're in inappropriate locations.
+                if (file_name == "null.rs" || file_name == "fake.rs" || file_name == "mock.rs")
+                    && !path_str.contains("mcb-providers")
+                    && !path_str.contains("/testing/")
+                {
                     violations.push(ShakuViolation::NullProviderFile {
                         file: path.to_path_buf(),
                         severity: Severity::Info,

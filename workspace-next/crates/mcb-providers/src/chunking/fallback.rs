@@ -60,43 +60,26 @@ impl<'a> GenericFallbackChunker<'a> {
         let mut block_start = 0;
 
         for (i, line) in lines.iter().enumerate() {
-            let trimmed = line.trim();
+            let is_block_start = self.is_pattern_match(line.trim());
 
-            let is_block_start = self
-                .compiled_patterns
-                .iter()
-                .any(|regex| regex.is_match(trimmed));
+            if is_block_start && !current_block.is_empty() {
+                let params = ChunkCreationParams {
+                    lines: &current_block, start_line: block_start, end_line: i - 1, file_name, language,
+                };
+                self.create_chunk(&params, &mut chunks);
+                current_block.clear();
+            }
 
             if is_block_start {
-                if !current_block.is_empty() {
-                    self.create_chunk(
-                        &ChunkCreationParams {
-                            lines: &current_block,
-                            start_line: block_start,
-                            end_line: i - 1,
-                            file_name,
-                            language,
-                        },
-                        &mut chunks,
-                    );
-                    current_block.clear();
-                }
                 current_block.push(line.to_string());
                 block_start = i;
             } else if !current_block.is_empty() {
                 current_block.push(line.to_string());
-
                 if self.is_block_complete(&current_block) {
-                    self.create_chunk(
-                        &ChunkCreationParams {
-                            lines: &current_block,
-                            start_line: block_start,
-                            end_line: i,
-                            file_name,
-                            language,
-                        },
-                        &mut chunks,
-                    );
+                    let params = ChunkCreationParams {
+                        lines: &current_block, start_line: block_start, end_line: i, file_name, language,
+                    };
+                    self.create_chunk(&params, &mut chunks);
                     current_block.clear();
                     block_start = i + 1;
                 }
@@ -104,19 +87,17 @@ impl<'a> GenericFallbackChunker<'a> {
         }
 
         if !current_block.is_empty() {
-            self.create_chunk(
-                &ChunkCreationParams {
-                    lines: &current_block,
-                    start_line: block_start,
-                    end_line: lines.len() - 1,
-                    file_name,
-                    language,
-                },
-                &mut chunks,
-            );
+            let params = ChunkCreationParams {
+                lines: &current_block, start_line: block_start, end_line: lines.len() - 1, file_name, language,
+            };
+            self.create_chunk(&params, &mut chunks);
         }
 
         chunks
+    }
+
+    fn is_pattern_match(&self, line: &str) -> bool {
+        self.compiled_patterns.iter().any(|regex| regex.is_match(line))
     }
 
     fn is_block_complete(&self, block: &[String]) -> bool {

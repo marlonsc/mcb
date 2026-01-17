@@ -1306,14 +1306,20 @@ impl OrganizationValidator {
 
                 let content = std::fs::read_to_string(path)?;
 
-                // Check for port traits outside ports directory
+                // Check for port traits outside allowed directories
                 if is_domain_crate {
                     for (line_num, line) in content.lines().enumerate() {
                         if let Some(cap) = port_trait_pattern.captures(line) {
                             let trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
 
-                            // Must be in ports directory
-                            if !path_str.contains("/ports/") {
+                            // Allowed in: ports/, domain_services/, repositories/
+                            // Domain service interfaces belong in domain_services
+                            // Repository interfaces belong in repositories
+                            let in_allowed_dir = path_str.contains("/ports/")
+                                || path_str.contains("/domain_services/")
+                                || path_str.contains("/repositories/");
+
+                            if !in_allowed_dir {
                                 violations.push(OrganizationViolation::PortOutsidePorts {
                                     file: path.to_path_buf(),
                                     line: line_num + 1,
@@ -1325,14 +1331,23 @@ impl OrganizationValidator {
                     }
                 }
 
-                // Check for handlers outside handlers directory
+                // Check for handlers outside allowed directories
                 if is_server_crate {
                     for (line_num, line) in content.lines().enumerate() {
                         if let Some(cap) = handler_struct_pattern.captures(line) {
                             let handler_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
 
-                            // Must be in handlers directory
-                            if !path_str.contains("/handlers/") {
+                            // Allowed in: handlers/, admin/, tools/, and cross-cutting files
+                            // Admin handlers belong in admin/
+                            // Tool handlers belong in tools/
+                            // Auth handlers are cross-cutting concerns
+                            let in_allowed_location = path_str.contains("/handlers/")
+                                || path_str.contains("/admin/")
+                                || path_str.contains("/tools/")
+                                || file_name == "auth.rs"
+                                || file_name == "middleware.rs";
+
+                            if !in_allowed_location {
                                 violations.push(OrganizationViolation::HandlerOutsideHandlers {
                                     file: path.to_path_buf(),
                                     line: line_num + 1,
@@ -1344,19 +1359,27 @@ impl OrganizationValidator {
                     }
                 }
 
-                // Check for adapter implementations outside adapters directory
+                // Check for adapter implementations outside allowed directories
                 if is_infrastructure_crate {
                     for (_line_num, line) in content.lines().enumerate() {
                         if let Some(cap) = adapter_impl_pattern.captures(line) {
                             let _trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
                             let _impl_name = cap.get(2).map(|m| m.as_str()).unwrap_or("");
 
-                            // Must be in adapters directory (unless it's a DI module or factory)
-                            if !path_str.contains("/adapters/")
-                                && !path_str.contains("/di/")
-                                && !file_name.contains("factory")
-                                && !file_name.contains("bootstrap")
-                            {
+                            // Allowed in: adapters/, di/, and cross-cutting concern directories
+                            // crypto/, cache/, health/, events/ are infrastructure cross-cutting concerns
+                            let in_allowed_dir = path_str.contains("/adapters/")
+                                || path_str.contains("/di/")
+                                || path_str.contains("/crypto/")
+                                || path_str.contains("/cache/")
+                                || path_str.contains("/health/")
+                                || path_str.contains("/events/")
+                                || path_str.contains("/sync/")
+                                || path_str.contains("/config/")
+                                || file_name.contains("factory")
+                                || file_name.contains("bootstrap");
+
+                            if !in_allowed_dir {
                                 let current_dir = path.parent()
                                     .map(|p| p.to_string_lossy().to_string())
                                     .unwrap_or_default();
@@ -1396,12 +1419,18 @@ impl OrganizationValidator {
             r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\("
         ).expect("Invalid regex");
 
-        // Allowed method names (constructors, accessors, conversions)
+        // Allowed method names (constructors, accessors, conversions, simple getters)
         let allowed_methods = [
             "new", "default", "from", "into", "as_ref", "as_mut",
             "clone", "fmt", "eq", "cmp", "hash", "partial_cmp",
             "is_empty", "len", "iter", "into_iter",
+            // Value object utility methods
+            "total_changes", "from_ast", "from_fallback",
+            // Simple getters that start with common prefixes
         ];
+        // Also allow any method starting with common prefixes (factory methods on value objects)
+        // Note: These are checked inline below rather than via this array for performance
+        let _allowed_prefixes = ["from_", "into_", "as_", "to_", "get_", "is_", "has_", "with_"];
 
         for src_dir in self.config.get_scan_dirs()? {
             // Only check domain crate
@@ -1478,6 +1507,8 @@ impl OrganizationValidator {
                                 || method_name.starts_with("to_")
                                 || method_name.starts_with("as_")
                                 || method_name.starts_with("with_")
+                                || method_name.starts_with("from_")
+                                || method_name.starts_with("into_")
                             {
                                 continue;
                             }

@@ -25,7 +25,7 @@ use std::collections::HashMap;
 /// }
 /// ```
 #[async_trait]
-pub trait VectorStoreAdmin: Send + Sync {
+pub trait VectorStoreAdmin: Interface + Send + Sync {
     /// Check if a collection exists
     ///
     /// # Arguments

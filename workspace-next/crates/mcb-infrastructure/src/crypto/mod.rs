@@ -11,7 +11,8 @@ mod password;
 mod token;
 mod utils;
 
-pub use encryption::{CryptoService, EncryptedData};
+pub use encryption::CryptoService;
+// EncryptedData is in mcb-domain - use mcb_domain::ports::providers::EncryptedData
 pub use password::PasswordService;
 pub use token::TokenGenerator;
 pub use utils::{bytes_to_hex, HashUtils, KeyDerivation, SecureErasure};
