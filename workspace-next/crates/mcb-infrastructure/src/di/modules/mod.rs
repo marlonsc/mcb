@@ -49,15 +49,15 @@ pub mod usecase_module;
 
 /// Legacy modules (compatibility)
 /// Infrastructure module implementation (core infrastructure)
-mod infrastructure;
+pub mod infrastructure;
 /// Server module implementation (MCP server components)
-mod server;
+pub mod server;
 /// Adapters module implementation (external integrations)
-mod adapters;
+pub mod adapters;
 /// Application module implementation (business logic)
-mod application;
+pub mod application;
 /// Admin module implementation (admin services)
-mod admin;
+pub mod admin;
 
 /// Domain services factory (runtime service creation)
 pub mod domain_services;

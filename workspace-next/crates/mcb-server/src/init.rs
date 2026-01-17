@@ -70,12 +70,17 @@ pub async fn run_server(config_path: Option<&Path>) -> Result<(), Box<dyn std::e
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let container = mcb_infrastructure::di::bootstrap::FullContainer::new(config).await?;
+    let app_container = mcb_infrastructure::di::bootstrap::init_app(config).await?;
+
+    // Resolve use cases directly from the DI container
+    let indexing_service = mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_indexing_service(&app_container).await?;
+    let context_service = mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_context_service(&app_container).await?;
+    let search_service = mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_search_service(&app_container).await?;
 
     let server = McpServerBuilder::new()
-        .with_indexing_service(container.indexing_service())
-        .with_context_service(container.context_service())
-        .with_search_service(container.search_service())
+        .with_indexing_service(indexing_service)
+        .with_context_service(context_service)
+        .with_search_service(search_service)
         .try_build()?;
 
     info!("MCP server initialized successfully");

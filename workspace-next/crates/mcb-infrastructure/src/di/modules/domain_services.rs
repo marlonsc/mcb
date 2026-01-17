@@ -18,7 +18,9 @@ use mcb_application::domain_services::search::{
 };
 use mcb_domain::error::Result;
 use mcb_application::ports::providers::{EmbeddingProvider, VectorStoreProvider};
+use shaku::HasComponent;
 use std::sync::Arc;
+use super::super::bootstrap::AppContainer;
 
 /// Domain services container
 #[derive(Clone)]
@@ -68,6 +70,43 @@ impl DomainServicesFactory {
             search_service,
             indexing_service,
         })
+    }
+
+    /// Create indexing service from app container
+    pub async fn create_indexing_service(app_container: &AppContainer) -> Result<Arc<dyn IndexingServiceInterface>> {
+        // Get dependencies from modules
+        let cache_provider = app_container.cache.resolve();
+        let language_chunker = app_container.language.resolve();
+
+        // Create context service first (dependency)
+        let context_service = Self::create_context_service(app_container).await?;
+
+        Ok(Arc::new(IndexingServiceImpl::new(
+            context_service,
+            language_chunker,
+        )))
+    }
+
+    /// Create context service from app container
+    pub async fn create_context_service(app_container: &AppContainer) -> Result<Arc<dyn ContextServiceInterface>> {
+        // Get dependencies from modules
+        let cache_provider = app_container.cache.resolve();
+        let embedding_provider = app_container.embedding.resolve();
+        let vector_store_provider = app_container.data.resolve();
+
+        Ok(Arc::new(ContextServiceImpl::new(
+            cache_provider,
+            embedding_provider,
+            vector_store_provider,
+        )))
+    }
+
+    /// Create search service from app container
+    pub async fn create_search_service(app_container: &AppContainer) -> Result<Arc<dyn SearchServiceInterface>> {
+        // Create context service first (dependency)
+        let context_service = Self::create_context_service(app_container).await?;
+
+        Ok(Arc::new(SearchServiceImpl::new(context_service)))
     }
 }
 

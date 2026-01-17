@@ -15,16 +15,12 @@ use crate::di::modules::traits::UseCaseModule;
 /// - SearchServiceInterface: Semantic search operations
 /// - IndexingServiceInterface: Code indexing operations
 ///
-/// ## Dependencies
-/// - CacheModule: For caching operations
-/// - EmbeddingModule: For text embeddings
-/// - DataModule: For vector storage
-/// - LanguageModule: For code chunking
+/// ## Implementation
+/// Use cases are created at runtime via DomainServicesFactory with proper dependencies.
 module! {
     pub UseCaseModuleImpl: UseCaseModule {
         components = [
-            // Application use cases are created at runtime via DomainServicesFactory
-            // with proper dependency injection from context modules
+            // Use cases created at runtime with dependencies
         ],
         providers = []
     }

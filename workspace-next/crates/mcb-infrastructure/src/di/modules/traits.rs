@@ -68,7 +68,7 @@ pub trait LanguageModule:
 /// Use case module trait - application business logic.
 ///
 /// Note: Use cases are created at runtime via DomainServicesFactory
-/// with proper dependency injection, not registered as Shaku components.
+/// with proper dependency injection from context modules.
 pub trait UseCaseModule: Send + Sync {}
 
 // ============================================================================
