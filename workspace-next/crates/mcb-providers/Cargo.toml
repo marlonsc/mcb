@@ -60,6 +60,8 @@ full = ["embedding-all", "vectorstore-all", "cache-all", "lang-all"]
 [dependencies]
 # Domain layer
 mcb-domain = { path = "../mcb-domain" }
+# Application layer - for port interfaces
+mcb-application = { path = "../mcb-application" }
 
 # Core async runtime
 tokio = { workspace = true }

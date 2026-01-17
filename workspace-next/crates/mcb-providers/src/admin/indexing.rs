@@ -4,7 +4,7 @@
 //! Implements the `IndexingOperationsInterface` port from mcb-domain.
 
 use dashmap::DashMap;
-use mcb_domain::ports::admin::{IndexingOperation, IndexingOperationsInterface};
+use mcb_application::ports::admin::{IndexingOperation, IndexingOperationsInterface};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -16,7 +16,7 @@ use uuid::Uuid;
 ///
 /// **Note**: This type can be used in Shaku DI modules.
 #[derive(shaku::Component)]
-#[shaku(interface = mcb_domain::ports::admin::IndexingOperationsInterface)]
+#[shaku(interface = mcb_application::ports::admin::IndexingOperationsInterface)]
 pub struct DefaultIndexingOperations {
     /// Active indexing operations by ID
     operations: Arc<DashMap<String, IndexingOperation>>,

@@ -7,7 +7,7 @@
 //! No enum wrapper - new cache providers can be added without modification.
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
+use mcb_application::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
 use std::fmt;
 use std::sync::Arc;
 

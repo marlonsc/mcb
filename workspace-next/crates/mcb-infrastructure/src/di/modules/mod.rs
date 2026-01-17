@@ -77,7 +77,7 @@ use shaku::Interface;
 use std::sync::Arc;
 
 // Import provider traits from mcb-domain
-use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
+use mcb_application::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 
 // TODO: Implement AppModule for clean composition
 // Currently using McpModule for compatibility

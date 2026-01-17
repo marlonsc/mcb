@@ -3,15 +3,15 @@
 //! Application service for semantic search operations.
 //! Orchestrates search functionality using context service for semantic understanding.
 
-use mcb_domain::domain_services::search::{ContextServiceInterface, SearchServiceInterface};
+use crate::domain_services::search::{ContextServiceInterface, SearchServiceInterface};
 use mcb_domain::error::Result;
 use mcb_domain::value_objects::SearchResult;
 use shaku::Component;
 use std::sync::Arc;
 
 /// Search service implementation - delegates to context service
-#[derive(Component)]
-#[shaku(interface = SearchServiceInterface)]
+#[derive(shaku::Component)]
+#[shaku(interface = crate::domain_services::search::SearchServiceInterface)]
 pub struct SearchServiceImpl {
     #[shaku(inject)]
     context_service: Arc<dyn ContextServiceInterface>,

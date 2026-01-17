@@ -14,15 +14,15 @@
 //!
 //! ```ignore
 //! use mcb_providers::vector_store::EncryptedVectorStoreProvider;
-//! use mcb_domain::ports::providers::CryptoProvider;
+//! use mcb_application::ports::providers::CryptoProvider;
 //!
 //! let encrypted = EncryptedVectorStoreProvider::new(inner_provider, crypto_service);
 //! ```
 
-use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
+use mcb_application::ports::providers::{CryptoProvider, EncryptedData};
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreProvider};
+use mcb_application::ports::providers::{VectorStoreAdmin, VectorStoreProvider};
 use mcb_domain::value_objects::{Embedding, SearchResult};
 use serde_json::Value;
 use std::collections::HashMap;

@@ -43,8 +43,8 @@ pub trait ServerModule:
 
 /// Adapters module trait - external service integrations.
 pub trait AdaptersModule:
-    HasComponent<dyn mcb_domain::ports::providers::EmbeddingProvider>
-    + HasComponent<dyn mcb_domain::ports::providers::VectorStoreProvider>
+    HasComponent<dyn mcb_application::ports::providers::EmbeddingProvider>
+    + HasComponent<dyn mcb_application::ports::providers::VectorStoreProvider>
 {
 }
 

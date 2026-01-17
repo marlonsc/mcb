@@ -12,7 +12,7 @@ mod token;
 mod utils;
 
 pub use encryption::CryptoService;
-// EncryptedData is in mcb-domain - use mcb_domain::ports::providers::EncryptedData
+// EncryptedData is in mcb-domain - use mcb_application::ports::providers::EncryptedData
 pub use password::PasswordService;
 pub use token::TokenGenerator;
 pub use utils::{bytes_to_hex, HashUtils, KeyDerivation, SecureErasure};

@@ -4,7 +4,7 @@
 //! Components can subscribe to shutdown signals and be notified
 //! when the server is shutting down.
 
-use mcb_domain::ports::admin::ShutdownCoordinator;
+use mcb_application::ports::admin::ShutdownCoordinator;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::broadcast;

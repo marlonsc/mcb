@@ -30,4 +30,4 @@ pub use null::NullCacheProvider;
 pub use redis::RedisCacheProvider;
 
 // Re-export domain types used by cache providers
-pub use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheStats};
+pub use mcb_application::ports::providers::cache::{CacheEntryConfig, CacheStats};

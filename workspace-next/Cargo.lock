@@ -3030,6 +3030,7 @@ dependencies = [
  "base64 0.22.1",
  "dashmap",
  "fastembed",
+ "mcb-application",
  "mcb-domain",
  "moka",
  "redis",

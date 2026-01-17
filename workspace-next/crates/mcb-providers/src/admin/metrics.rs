@@ -3,7 +3,7 @@
 //! Atomic counter-based performance metrics tracking for the MCP server.
 //! Implements the `PerformanceMetricsInterface` port from mcb-domain.
 
-use mcb_domain::ports::admin::{PerformanceMetricsData, PerformanceMetricsInterface};
+use mcb_application::ports::admin::{PerformanceMetricsData, PerformanceMetricsInterface};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -15,7 +15,7 @@ use std::time::Instant;
 ///
 /// **Note**: This type can be used in Shaku DI modules.
 #[derive(shaku::Component)]
-#[shaku(interface = mcb_domain::ports::admin::PerformanceMetricsInterface)]
+#[shaku(interface = mcb_application::ports::admin::PerformanceMetricsInterface)]
 pub struct AtomicPerformanceMetrics {
     /// Server start time for uptime calculation
     start_time: Instant,

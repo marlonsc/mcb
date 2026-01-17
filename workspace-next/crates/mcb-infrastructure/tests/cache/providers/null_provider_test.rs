@@ -1,8 +1,8 @@
 //! Null Cache Provider Tests
 
-use mcb_domain::ports::providers::cache::CacheEntryConfig;
+use mcb_application::ports::providers::cache::CacheEntryConfig;
 use mcb_providers::cache::NullCacheProvider;
-use mcb_domain::ports::providers::cache::CacheProvider;
+use mcb_application::ports::providers::cache::CacheProvider;
 
 #[tokio::test]
 async fn test_null_provider_operations() {

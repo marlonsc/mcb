@@ -70,7 +70,7 @@ pub struct ProviderOverrides;
 
 impl ProviderOverrides {
     /// Create embedding provider from configuration
-    pub fn create_embedding_provider(config: &AppConfig) -> Result<Arc<dyn mcb_domain::ports::providers::EmbeddingProvider>> {
+    pub fn create_embedding_provider(config: &AppConfig) -> Result<Arc<dyn mcb_application::ports::providers::EmbeddingProvider>> {
         if let Some((name, embedding_config)) = config.providers.embedding.iter().next() {
             info!(provider = name, "Creating embedding provider from config");
             EmbeddingProviderFactory::create(embedding_config, None)
@@ -84,14 +84,14 @@ impl ProviderOverrides {
     pub fn create_vector_store_provider(
         config: &AppConfig,
         crypto: &CryptoService,
-    ) -> Result<Arc<dyn mcb_domain::ports::providers::VectorStoreProvider>> {
+    ) -> Result<Arc<dyn mcb_application::ports::providers::VectorStoreProvider>> {
         if let Some((name, vector_config)) = config.providers.vector_store.iter().next() {
             info!(
                 provider = name,
                 "Creating vector store provider from config"
             );
             // Wrap CryptoService as Arc<dyn CryptoProvider> for DI
-            let crypto_provider: Arc<dyn mcb_domain::ports::providers::CryptoProvider> = Arc::new(crypto.clone());
+            let crypto_provider: Arc<dyn mcb_application::ports::providers::CryptoProvider> = Arc::new(crypto.clone());
             VectorStoreProviderFactory::create(vector_config, Some(crypto_provider))
         } else {
             info!("No vector store provider configured, using in-memory provider");
@@ -108,9 +108,9 @@ pub struct DiContainerBuilder {
     #[allow(dead_code)]
     config: Option<AppConfig>,
     #[allow(dead_code)]
-    embedding_override: Option<Arc<dyn mcb_domain::ports::providers::EmbeddingProvider>>,
+    embedding_override: Option<Arc<dyn mcb_application::ports::providers::EmbeddingProvider>>,
     #[allow(dead_code)]
-    vector_store_override: Option<Arc<dyn mcb_domain::ports::providers::VectorStoreProvider>>,
+    vector_store_override: Option<Arc<dyn mcb_application::ports::providers::VectorStoreProvider>>,
 }
 
 impl DiContainerBuilder {
@@ -135,7 +135,7 @@ impl DiContainerBuilder {
     /// Override the embedding provider (for production configuration)
     pub fn with_embedding_provider(
         mut self,
-        provider: Arc<dyn mcb_domain::ports::providers::EmbeddingProvider>,
+        provider: Arc<dyn mcb_application::ports::providers::EmbeddingProvider>,
     ) -> Self {
         self.embedding_override = Some(provider);
         self
@@ -144,7 +144,7 @@ impl DiContainerBuilder {
     /// Override the vector store provider (for production configuration)
     pub fn with_vector_store_provider(
         mut self,
-        provider: Arc<dyn mcb_domain::ports::providers::VectorStoreProvider>,
+        provider: Arc<dyn mcb_application::ports::providers::VectorStoreProvider>,
     ) -> Self {
         self.vector_store_override = Some(provider);
         self

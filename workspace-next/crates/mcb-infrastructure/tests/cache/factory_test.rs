@@ -1,6 +1,6 @@
 //! Cache Factory Tests
 
-use mcb_domain::ports::providers::cache::CacheEntryConfig;
+use mcb_application::ports::providers::cache::CacheEntryConfig;
 use mcb_infrastructure::cache::factory::CacheProviderFactory;
 use mcb_infrastructure::config::data::CacheConfig;
 

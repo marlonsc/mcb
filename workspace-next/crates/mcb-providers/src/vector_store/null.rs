@@ -6,7 +6,7 @@
 use async_trait::async_trait;
 use dashmap::DashMap;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreProvider};
+use mcb_application::ports::providers::{VectorStoreAdmin, VectorStoreProvider};
 use mcb_domain::value_objects::{Embedding, SearchResult};
 use serde_json::Value;
 use std::collections::HashMap;

@@ -17,7 +17,7 @@ use mcb_domain::domain_services::search::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
+use mcb_application::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use std::sync::Arc;
 
 /// Domain services container
@@ -39,7 +39,7 @@ impl DomainServicesFactory {
         _config: AppConfig,
         embedding_provider: Arc<dyn EmbeddingProvider>,
         vector_store_provider: Arc<dyn VectorStoreProvider>,
-        language_chunker: Arc<dyn mcb_domain::ports::providers::LanguageChunkingProvider>,
+        language_chunker: Arc<dyn mcb_application::ports::providers::LanguageChunkingProvider>,
     ) -> Result<DomainServicesContainer> {
         // Create context service with dependencies
         let context_service: Arc<dyn ContextServiceInterface> = Arc::new(

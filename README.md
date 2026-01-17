@@ -7,6 +7,26 @@
 
 **High-performance MCP server for semantic code search** - AI-powered code analysis using vector embeddings. Provides intelligent, natural language code discovery with AST-based parsing for 12+ languages, supporting Claude Desktop and other AI assistants through the Model Context Protocol.
 
+## 🏗️ Architecture
+
+This project follows **Clean Architecture** principles with **Shaku dependency injection**:
+
+```
+📦 mcb-domain/        # Domain layer (entities, ports, business rules)
+📦 mcb-application/   # Application layer (use cases, orchestration)
+📦 mcb-providers/     # Adapters (external integrations, implementations)
+📦 mcb-infrastructure/ # Infrastructure (DI, composition, cross-cutting)
+📦 mcb-server/        # Server layer (MCP protocol, HTTP handlers)
+📦 mcb-validate/      # Development tools (architecture validation)
+```
+
+### Clean Architecture Benefits
+
+- **Dependency Inversion**: Business logic doesn't depend on infrastructure
+- **Testability**: Easy mocking with DI and interface-based design
+- **Maintainability**: Clear separation of concerns and responsibilities
+- **Scalability**: Easy to add new providers or change implementations
+
 ## Why Switch from Claude-context?
 
 | | Claude-context | MCP-context-browser |

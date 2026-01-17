@@ -5,7 +5,7 @@
 
 use async_trait::async_trait;
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
+use mcb_application::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
 
 /// Null cache provider that doesn't store anything
 ///

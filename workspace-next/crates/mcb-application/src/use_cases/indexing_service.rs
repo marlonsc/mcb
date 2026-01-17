@@ -3,17 +3,17 @@
 //! Application service for code indexing and ingestion operations.
 //! Orchestrates file discovery, chunking, and storage of code embeddings.
 
-use mcb_domain::domain_services::search::{ContextServiceInterface, IndexingServiceInterface};
+use crate::domain_services::search::{ContextServiceInterface, IndexingServiceInterface};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::LanguageChunkingProvider;
+use crate::ports::providers::LanguageChunkingProvider;
 use shaku::Component;
 use std::path::Path;
 use std::sync::Arc;
 
 /// Indexing service implementation - orchestrates file discovery and chunking
-#[derive(Component)]
-#[shaku(interface = IndexingServiceInterface)]
+#[derive(shaku::Component)]
+#[shaku(interface = crate::domain_services::search::IndexingServiceInterface)]
 pub struct IndexingServiceImpl {
     #[shaku(inject)]
     context_service: Arc<dyn ContextServiceInterface>,

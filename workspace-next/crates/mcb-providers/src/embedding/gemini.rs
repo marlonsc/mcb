@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use reqwest::Client;
 
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::EmbeddingProvider;
+use mcb_application::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 
 use crate::constants::{CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_GEMINI};

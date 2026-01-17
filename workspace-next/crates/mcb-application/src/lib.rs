@@ -19,12 +19,22 @@
 //! - Context management
 //! - Admin operations
 //!
+//! ## Ports (Interfaces)
+//!
+//! Defines contracts for external dependencies:
+//! - `ports::providers::*`: Provider interfaces (Embedding, VectorStore, Cache, etc.)
+//! - `domain_services::*`: Use case interfaces
+//!
 //! ## Dependencies
 //!
 //! This crate depends only on:
 //! - `mcb-domain`: For domain entities, value objects, and core business rules
 //! - Pure Rust libraries for async, serialization, etc.
 
+pub mod domain_services;
+pub mod ports;
 pub mod use_cases;
 
+pub use domain_services::*;
+pub use ports::*;
 pub use use_cases::*;

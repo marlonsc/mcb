@@ -2,9 +2,9 @@
 //!
 //! Note: These tests require a Redis server to be running.
 
-use mcb_domain::ports::providers::cache::CacheEntryConfig;
+use mcb_application::ports::providers::cache::CacheEntryConfig;
 use mcb_providers::cache::RedisCacheProvider;
-use mcb_domain::ports::providers::cache::CacheProvider;
+use mcb_application::ports::providers::cache::CacheProvider;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
