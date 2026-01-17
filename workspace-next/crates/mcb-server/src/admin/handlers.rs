@@ -9,7 +9,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use mcb_domain::ports::admin::{
+use mcb_application::ports::admin::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
     IndexingOperationsInterface, PerformanceMetricsData, PerformanceMetricsInterface,
     ShutdownCoordinator,

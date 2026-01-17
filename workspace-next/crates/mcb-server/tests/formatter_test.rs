@@ -1,6 +1,6 @@
 //! Tests for ResponseFormatter
 
-use mcb_domain::domain_services::search::{IndexingResult, IndexingStatus};
+use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use std::path::Path;
 use std::time::Duration;

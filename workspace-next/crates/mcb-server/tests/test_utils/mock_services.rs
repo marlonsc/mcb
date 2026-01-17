@@ -1,7 +1,7 @@
 //! Mock implementations of domain service interfaces for testing
 
 use async_trait::async_trait;
-use mcb_domain::domain_services::search::{
+use mcb_application::domain_services::search::{
     ContextServiceInterface, IndexingResult, IndexingServiceInterface, IndexingStatus,
     SearchServiceInterface,
 };

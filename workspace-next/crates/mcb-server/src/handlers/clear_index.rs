@@ -8,7 +8,7 @@ use rmcp::ErrorData as McpError;
 use std::sync::Arc;
 use validator::Validate;
 
-use mcb_domain::domain_services::search::IndexingServiceInterface;
+use mcb_application::domain_services::search::IndexingServiceInterface;
 
 use crate::args::ClearIndexArgs;
 use crate::formatter::ResponseFormatter;

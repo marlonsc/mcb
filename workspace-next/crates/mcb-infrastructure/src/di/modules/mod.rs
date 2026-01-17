@@ -127,11 +127,11 @@ module! {
         // Infrastructure services (COMPLETE - all with Component derive)
         use dyn InfrastructureModule {
             components = [
-                dyn mcb_domain::ports::infrastructure::AuthServiceInterface,
-                dyn mcb_domain::ports::infrastructure::EventBusProvider,
-                dyn mcb_domain::ports::infrastructure::SystemMetricsCollectorInterface,
-                dyn mcb_domain::ports::infrastructure::SnapshotProvider,
-                dyn mcb_domain::ports::infrastructure::SyncProvider
+                dyn mcb_application::ports::infrastructure::AuthServiceInterface,
+                dyn mcb_application::ports::infrastructure::EventBusProvider,
+                dyn mcb_application::ports::infrastructure::SystemMetricsCollectorInterface,
+                dyn mcb_application::ports::infrastructure::SnapshotProvider,
+                dyn mcb_application::ports::infrastructure::SyncProvider
             ],
             providers = []
         },
@@ -139,8 +139,8 @@ module! {
         // Server components (COMPLETE - all with Component derive)
         use dyn ServerModule {
             components = [
-                dyn mcb_domain::ports::admin::PerformanceMetricsInterface,
-                dyn mcb_domain::ports::admin::IndexingOperationsInterface
+                dyn mcb_application::ports::admin::PerformanceMetricsInterface,
+                dyn mcb_application::ports::admin::IndexingOperationsInterface
             ],
             providers = []
         },

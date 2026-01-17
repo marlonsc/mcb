@@ -1,10 +1,11 @@
 //! Dependency Graph Validation
 //!
 //! Validates Clean Architecture layer boundaries:
-//! - mcb-domain: No internal dependencies (pure domain)
-//! - mcb-providers: Only mcb-domain (adapter implementations)
-//! - mcb-infrastructure: mcb-domain and mcb-providers (DI composition root)
-//! - mcb-server: mcb-domain, mcb-infrastructure, and mcb-providers
+//! - mcb-domain: No internal dependencies (pure domain entities)
+//! - mcb-application: Only mcb-domain (use cases and ports)
+//! - mcb-providers: mcb-domain and mcb-application (adapter implementations)
+//! - mcb-infrastructure: mcb-domain, mcb-application, and mcb-providers (DI composition root)
+//! - mcb-server: mcb-domain, mcb-application, and mcb-infrastructure (transport layer)
 //! - mcb: All crates (facade that re-exports entire public API)
 
 use crate::{Result, Severity, ValidationConfig};
@@ -17,9 +18,9 @@ use walkdir::WalkDir;
 /// Allowed dependencies for each crate in Clean Architecture
 ///
 /// Architecture layers:
-/// - mcb-domain: Pure domain layer (ports, entities, value objects) - no internal deps
-/// - mcb-application: Use cases and business logic orchestration - depends on mcb-domain
-/// - mcb-providers: Adapter implementations of domain ports - depends on mcb-domain
+/// - mcb-domain: Pure domain layer (entities, value objects, events) - no internal deps
+/// - mcb-application: Use cases and business logic orchestration (ports included) - depends on mcb-domain
+/// - mcb-providers: Adapter implementations of application ports - depends on mcb-domain and mcb-application
 /// - mcb-infrastructure: DI composition root and cross-cutting concerns - depends on mcb-domain, mcb-application, and mcb-providers
 /// - mcb-server: Transport layer - depends on mcb-domain, mcb-application, and mcb-infrastructure
 /// - mcb: Facade crate that re-exports the entire public API
@@ -27,7 +28,7 @@ use walkdir::WalkDir;
 const ALLOWED_DEPS: &[(&str, &[&str])] = &[
     ("mcb-domain", &[]),
     ("mcb-application", &["mcb-domain"]),
-    ("mcb-providers", &["mcb-domain"]),
+    ("mcb-providers", &["mcb-domain", "mcb-application"]),
     ("mcb-infrastructure", &["mcb-domain", "mcb-application", "mcb-providers"]),
     ("mcb-server", &["mcb-domain", "mcb-application", "mcb-infrastructure"]),
     ("mcb", &["mcb-domain", "mcb-application", "mcb-infrastructure", "mcb-server", "mcb-providers"]),

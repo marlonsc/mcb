@@ -5,7 +5,7 @@
 //! - Component lifecycle management
 //! - Cross-component interactions
 
-use mcb_domain::domain_services::search::{
+use mcb_application::domain_services::search::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
 use mcb_domain::ports::providers::cache::CacheEntryConfig;

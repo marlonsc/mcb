@@ -49,6 +49,8 @@ pub mod constants;
 pub mod entities;
 /// Domain error types
 pub mod error;
+/// Domain event interfaces
+pub mod events;
 /// Immutable value objects
 pub mod value_objects;
 
@@ -56,4 +58,5 @@ pub mod value_objects;
 pub use constants::*;
 pub use entities::*;
 pub use error::{Error, Result};
+pub use events::{DomainEvent, EventPublisher};
 pub use value_objects::*;

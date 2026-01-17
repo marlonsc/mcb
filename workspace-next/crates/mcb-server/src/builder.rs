@@ -4,7 +4,7 @@
 //! Ensures all required dependencies are provided before server construction.
 
 use crate::McpServer;
-use mcb_domain::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
+use mcb_application::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
 use std::sync::Arc;
 
 /// Builder for MCP Server with dependency injection

@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use validator::Validate;
 
-use mcb_domain::domain_services::search::SearchServiceInterface;
+use mcb_application::domain_services::search::SearchServiceInterface;
 
 use crate::args::SearchCodeArgs;
 use crate::formatter::ResponseFormatter;

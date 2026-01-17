@@ -9,7 +9,7 @@ use rmcp::ErrorData as McpError;
 use std::path::Path;
 use std::time::Duration;
 
-use mcb_domain::domain_services::search::{IndexingResult, IndexingStatus};
+use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_domain::SearchResult;
 
 /// Response formatter for MCP server tools

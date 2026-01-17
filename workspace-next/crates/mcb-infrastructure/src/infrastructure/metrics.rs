@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use mcb_domain::error::Result;
-use mcb_domain::ports::infrastructure::{SystemMetrics, SystemMetricsCollectorInterface};
+use mcb_application::ports::infrastructure::{SystemMetrics, SystemMetricsCollectorInterface};
 
 /// Null implementation for testing
 #[derive(shaku::Component)]

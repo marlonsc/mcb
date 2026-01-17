@@ -5,7 +5,7 @@
 use async_trait::async_trait;
 use mcb_domain::entities::codebase::{CodebaseSnapshot, SnapshotChanges};
 use mcb_domain::error::Result;
-use mcb_domain::ports::infrastructure::{SnapshotProvider, StateStoreProvider};
+use mcb_application::ports::infrastructure::{SnapshotProvider, StateStoreProvider};
 use std::collections::HashMap;
 use std::path::Path;
 

@@ -5,7 +5,7 @@
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
+use mcb_application::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_providers::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use mcb_server::admin::{handlers::AdminState, routes::admin_router};
 use std::sync::Arc;

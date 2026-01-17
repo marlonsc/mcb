@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use mcb_domain::error::Result;
-use mcb_domain::ports::infrastructure::{LockGuard, LockProvider, SyncProvider};
+use mcb_application::ports::infrastructure::{LockGuard, LockProvider, SyncProvider};
 use mcb_domain::value_objects::config::SyncBatch;
 use std::path::Path;
 use std::time::Duration;

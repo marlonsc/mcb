@@ -13,7 +13,7 @@ use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
 use mcb_application::use_cases::{ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl};
-use mcb_domain::domain_services::search::{
+use mcb_application::domain_services::search::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
 use mcb_domain::error::Result;

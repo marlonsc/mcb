@@ -2,7 +2,7 @@
 //!
 //! HTTP server for the admin API running on a separate port.
 
-use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
+use mcb_application::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use std::net::SocketAddr;
 use std::path::PathBuf;

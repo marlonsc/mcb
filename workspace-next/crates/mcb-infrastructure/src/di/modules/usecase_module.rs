@@ -5,9 +5,6 @@
 
 use shaku::module;
 
-// Import use cases
-use mcb_application::use_cases::{ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl};
-
 // Import traits
 use crate::di::modules::traits::UseCaseModule;
 
@@ -26,10 +23,8 @@ use crate::di::modules::traits::UseCaseModule;
 module! {
     pub UseCaseModuleImpl: UseCaseModule {
         components = [
-            // Application use cases
-            ContextServiceImpl,
-            SearchServiceImpl,
-            IndexingServiceImpl
+            // Application use cases are created at runtime via DomainServicesFactory
+            // with proper dependency injection from context modules
         ],
         providers = []
     }

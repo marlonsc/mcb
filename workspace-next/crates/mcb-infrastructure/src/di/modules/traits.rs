@@ -18,11 +18,11 @@ use shaku::HasComponent;
 ///
 /// Provides fundamental infrastructure services with Shaku Component implementation.
 pub trait InfrastructureModule:
-    HasComponent<dyn mcb_domain::ports::infrastructure::AuthServiceInterface>
-    + HasComponent<dyn mcb_domain::ports::infrastructure::EventBusProvider>
-    + HasComponent<dyn mcb_domain::ports::infrastructure::SystemMetricsCollectorInterface>
-    + HasComponent<dyn mcb_domain::ports::infrastructure::SnapshotProvider>
-    + HasComponent<dyn mcb_domain::ports::infrastructure::SyncProvider>
+    HasComponent<dyn mcb_application::ports::infrastructure::AuthServiceInterface>
+    + HasComponent<dyn mcb_application::ports::infrastructure::EventBusProvider>
+    + HasComponent<dyn mcb_application::ports::infrastructure::SystemMetricsCollectorInterface>
+    + HasComponent<dyn mcb_application::ports::infrastructure::SnapshotProvider>
+    + HasComponent<dyn mcb_application::ports::infrastructure::SyncProvider>
 {}
 
 // ============================================================================
@@ -33,8 +33,8 @@ pub trait InfrastructureModule:
 ///
 /// Provides MCP server services with Shaku Component implementation.
 pub trait ServerModule:
-    HasComponent<dyn mcb_domain::ports::admin::PerformanceMetricsInterface>
-    + HasComponent<dyn mcb_domain::ports::admin::IndexingOperationsInterface>
+    HasComponent<dyn mcb_application::ports::admin::PerformanceMetricsInterface>
+    + HasComponent<dyn mcb_application::ports::admin::IndexingOperationsInterface>
 {}
 
 // ============================================================================
@@ -66,12 +66,10 @@ pub trait LanguageModule:
 }
 
 /// Use case module trait - application business logic.
-pub trait UseCaseModule:
-    HasComponent<dyn mcb_application::domain_services::search::ContextServiceInterface>
-    + HasComponent<dyn mcb_application::domain_services::search::SearchServiceInterface>
-    + HasComponent<dyn mcb_application::domain_services::search::IndexingServiceInterface>
-{
-}
+///
+/// Note: Use cases are created at runtime via DomainServicesFactory
+/// with proper dependency injection, not registered as Shaku components.
+pub trait UseCaseModule: Send + Sync {}
 
 // ============================================================================
 // Legacy Modules (Compatibility)

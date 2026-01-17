@@ -12,7 +12,7 @@ use rmcp::model::{
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 
-use mcb_domain::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
+use mcb_application::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
 
 use crate::handlers::{
     ClearIndexHandler, GetIndexingStatusHandler, IndexCodebaseHandler, SearchCodeHandler,

@@ -289,7 +289,7 @@ impl InfrastructureContainerBuilder {
 
 use super::modules::DomainServicesContainer;
 use super::modules::DomainServicesFactory;
-use mcb_domain::domain_services::search::{
+use mcb_application::domain_services::search::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
 

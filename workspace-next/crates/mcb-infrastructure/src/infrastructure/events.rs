@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use mcb_domain::error::Result;
-use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_application::ports::infrastructure::EventBusProvider;
 
 /// Null implementation for testing
 #[derive(shaku::Component)]

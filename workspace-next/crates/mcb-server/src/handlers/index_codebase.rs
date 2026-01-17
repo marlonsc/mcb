@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use validator::Validate;
 
-use mcb_domain::domain_services::search::IndexingServiceInterface;
+use mcb_application::domain_services::search::IndexingServiceInterface;
 
 use crate::args::IndexCodebaseArgs;
 use crate::formatter::ResponseFormatter;
