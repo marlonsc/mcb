@@ -2,10 +2,11 @@
 //!
 //! Defines the cache provider trait and shared cache provider implementation
 //! for unified cache access across the application.
+//! Uses cache provider implementations from mcb-providers crate.
 
 use crate::cache::config::{CacheEntryConfig, CacheStats};
-use crate::cache::providers::{MokaCacheProvider, NullCacheProvider, RedisCacheProvider};
 use mcb_domain::error::Result;
+use mcb_providers::cache::{MokaCacheProvider, NullCacheProvider, RedisCacheProvider};
 use std::fmt;
 use std::sync::Arc;
 

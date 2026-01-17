@@ -5,7 +5,7 @@
 //! that resolves dependencies and creates the application container.
 //!
 //! **ARCHITECTURE**: This module contains ONLY wiring logic.
-//! Admin service implementations live here as infrastructure concerns.
+//! Admin service implementations live in crate::di::admin.
 //! Provider adapters are in mcb-providers crate.
 
 pub mod admin;

@@ -5,7 +5,7 @@
 //!
 //! **ARCHITECTURE**:
 //! - Provider implementations: mcb-providers (SOURCE OF TRUTH)
-//! - Admin adapters: crate::adapters::admin
+//! - Admin services: crate::di::admin (infrastructure concerns)
 //! - This module: ONLY wiring logic via Shaku DI
 
 use crate::cache::provider::SharedCacheProvider;

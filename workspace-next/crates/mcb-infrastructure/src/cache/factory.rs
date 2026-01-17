@@ -1,11 +1,12 @@
 //! Cache provider factory
 //!
 //! Factory for creating cache provider instances based on configuration.
+//! Uses cache provider implementations from mcb-providers crate.
 
 use crate::cache::provider::SharedCacheProvider;
-use crate::cache::providers::*;
 use crate::config::data::*;
 use mcb_domain::error::Result;
+use mcb_providers::cache::{MokaCacheProvider, NullCacheProvider, RedisCacheProvider};
 
 /// Cache provider factory
 #[derive(Clone)]
