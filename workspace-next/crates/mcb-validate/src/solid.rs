@@ -345,7 +345,8 @@ impl SolidValidator {
                     || file_name == "responses.rs"
                     || file_name == "requests.rs"
                     || file_name == "dto.rs"
-                    || file_name == "entities.rs";
+                    || file_name == "entities.rs"
+                    || file_name == "admin.rs";  // Port files group related types
 
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();

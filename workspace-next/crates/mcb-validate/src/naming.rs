@@ -461,17 +461,17 @@ impl NamingValidator {
                 let path_str = path.to_string_lossy();
 
                 // Check repository files should have _repository suffix
-                if path_str.contains("/repositories/") || path_str.contains("/adapters/repository/")
+                if (path_str.contains("/repositories/") || path_str.contains("/adapters/repository/"))
+                    && !file_name.ends_with("_repository")
+                    && file_name != "mod"
                 {
-                    if !file_name.ends_with("_repository") && file_name != "mod" {
-                        violations.push(NamingViolation::BadFileSuffix {
-                            path: path.to_path_buf(),
-                            component_type: "Repository".to_string(),
-                            current_suffix: self.get_suffix(file_name).to_string(),
-                            expected_suffix: "_repository".to_string(),
-                            severity: Severity::Warning,
-                        });
-                    }
+                    violations.push(NamingViolation::BadFileSuffix {
+                        path: path.to_path_buf(),
+                        component_type: "Repository".to_string(),
+                        current_suffix: self.get_suffix(file_name).to_string(),
+                        expected_suffix: "_repository".to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
 
                 // Check handler files in server crate
@@ -496,20 +496,24 @@ impl NamingValidator {
                 if path_str.contains("/services/")
                     && !path_str.contains("/domain_services/")
                     && crate_name != "mcb-domain"
+                    && !file_name.ends_with("_service")
+                    && file_name != "mod"
                 {
-                    if !file_name.ends_with("_service") && file_name != "mod" {
-                        violations.push(NamingViolation::BadFileSuffix {
-                            path: path.to_path_buf(),
-                            component_type: "Service".to_string(),
-                            current_suffix: self.get_suffix(file_name).to_string(),
-                            expected_suffix: "_service".to_string(),
-                            severity: Severity::Info,
-                        });
-                    }
+                    violations.push(NamingViolation::BadFileSuffix {
+                        path: path.to_path_buf(),
+                        component_type: "Service".to_string(),
+                        current_suffix: self.get_suffix(file_name).to_string(),
+                        expected_suffix: "_service".to_string(),
+                        severity: Severity::Info,
+                    });
                 }
 
-                // Check factory files
-                if file_name.contains("factory") && !file_name.ends_with("_factory") {
+                // Check factory files - allow both 'factory.rs' and '*_factory.rs'
+                // A file named exactly "factory.rs" is valid (e.g., provider_factory module)
+                if file_name.contains("factory")
+                    && !file_name.ends_with("_factory")
+                    && file_name != "factory"
+                {
                     violations.push(NamingViolation::BadFileSuffix {
                         path: path.to_path_buf(),
                         component_type: "Factory".to_string(),

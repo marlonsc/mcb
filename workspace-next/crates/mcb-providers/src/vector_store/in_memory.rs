@@ -106,11 +106,11 @@ impl VectorStoreProvider for InMemoryVectorStoreProvider {
             .get_mut(collection)
             .ok_or_else(|| Error::vector_db(format!("Collection '{}' not found", collection)))?;
 
-        let mut ids = Vec::new();
+        let mut ids = Vec::with_capacity(vectors.len());
         for (vector, mut meta) in vectors.iter().zip(metadata) {
             let id = format!("{}_{}", collection, coll.len());
             // Store the generated ID in metadata for deletion
-            meta.insert("generated_id".to_string(), serde_json::json!(id.clone()));
+            meta.insert("generated_id".to_string(), serde_json::json!(&id));
             coll.push((vector.clone(), meta));
             ids.push(id);
         }

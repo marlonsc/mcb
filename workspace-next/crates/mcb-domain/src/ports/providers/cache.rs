@@ -213,6 +213,19 @@ pub trait CacheProvider: Interface + Send + Sync + std::fmt::Debug {
 ///
 /// This port defines the contract for creating cache providers from configuration.
 /// Used by the dependency injection container to create cache provider instances.
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_domain::ports::providers::CacheProviderFactoryInterface;
+///
+/// // Create cache provider from configuration
+/// let cache = factory.create_from_config(&cache_config).await?;
+/// cache.set("key", &my_value, None).await?;
+///
+/// // Create null cache for testing
+/// let test_cache = factory.create_null();
+/// ```
 #[async_trait]
 pub trait CacheProviderFactoryInterface: Interface + Send + Sync {
     /// Create a cache provider from configuration

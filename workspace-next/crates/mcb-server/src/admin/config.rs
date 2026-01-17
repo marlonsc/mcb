@@ -19,7 +19,9 @@
 //! - Database passwords
 //! - Encryption keys
 
+use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use mcb_infrastructure::config::data::AppConfig;
+use mcb_infrastructure::config::types::{CacheConfig, LimitsConfig, MetricsConfig};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -62,66 +64,56 @@ impl SanitizedConfig {
     /// Create a sanitized config from AppConfig, removing sensitive fields
     pub fn from_app_config(config: &AppConfig) -> Self {
         Self {
-            server: ServerConfigView {
-                host: config.server.network.host.clone(),
-                port: config.server.network.port,
-                transport_mode: format!("{:?}", config.server.transport_mode),
-                admin_port: config.server.network.admin_port,
-                https: config.server.ssl.https,
-            },
-            embedding: config
-                .providers
-                .embedding
-                .iter()
-                .map(|(k, v)| {
-                    (
-                        k.clone(),
-                        EmbeddingConfigView {
-                            provider: format!("{:?}", v.provider),
-                            model: v.model.clone(),
-                            dimensions: v.dimensions,
-                            has_api_key: v.api_key.is_some(),
-                        },
-                    )
-                })
-                .collect(),
-            vector_store: config
-                .providers
-                .vector_store
-                .iter()
-                .map(|(k, v)| {
-                    (
-                        k.clone(),
-                        VectorStoreConfigView {
-                            provider: format!("{:?}", v.provider),
-                            dimensions: v.dimensions,
-                            collection: v.collection.clone(),
-                            has_address: v.address.is_some(),
-                        },
-                    )
-                })
-                .collect(),
-            logging: LoggingConfigView {
-                level: config.logging.level.clone(),
-                json_format: config.logging.json_format,
-                file_output: config.logging.file_output.as_ref().map(|p| p.display().to_string()),
-            },
-            cache: CacheConfigView {
-                enabled: config.system.infrastructure.cache.enabled,
-                provider: format!("{:?}", config.system.infrastructure.cache.provider),
-                default_ttl_secs: config.system.infrastructure.cache.default_ttl_secs,
-                max_size: config.system.infrastructure.cache.max_size,
-            },
-            metrics: MetricsConfigView {
-                enabled: config.system.infrastructure.metrics.enabled,
-                collection_interval_secs: config.system.infrastructure.metrics.collection_interval_secs,
-            },
-            limits: LimitsConfigView {
-                memory_limit: config.system.infrastructure.limits.memory_limit,
-                cpu_limit: config.system.infrastructure.limits.cpu_limit,
-                max_connections: config.system.infrastructure.limits.max_connections,
-            },
+            server: Self::server_view(config),
+            embedding: Self::embedding_views(&config.providers.embedding),
+            vector_store: Self::vector_store_views(&config.providers.vector_store),
+            logging: Self::logging_view(config),
+            cache: Self::cache_view(&config.system.infrastructure.cache),
+            metrics: Self::metrics_view(&config.system.infrastructure.metrics),
+            limits: Self::limits_view(&config.system.infrastructure.limits),
         }
+    }
+
+    fn server_view(config: &AppConfig) -> ServerConfigView {
+        ServerConfigView {
+            host: config.server.network.host.clone(),
+            port: config.server.network.port,
+            transport_mode: format!("{:?}", config.server.transport_mode),
+            admin_port: config.server.network.admin_port,
+            https: config.server.ssl.https,
+        }
+    }
+
+    fn embedding_views(cfg: &HashMap<String, EmbeddingConfig>) -> HashMap<String, EmbeddingConfigView> {
+        cfg.iter().map(|(k, v)| (k.clone(), EmbeddingConfigView {
+            provider: format!("{:?}", v.provider), model: v.model.clone(), dimensions: v.dimensions, has_api_key: v.api_key.is_some(),
+        })).collect()
+    }
+
+    fn vector_store_views(cfg: &HashMap<String, VectorStoreConfig>) -> HashMap<String, VectorStoreConfigView> {
+        cfg.iter().map(|(k, v)| (k.clone(), VectorStoreConfigView {
+            provider: format!("{:?}", v.provider), dimensions: v.dimensions, collection: v.collection.clone(), has_address: v.address.is_some(),
+        })).collect()
+    }
+
+    fn logging_view(config: &AppConfig) -> LoggingConfigView {
+        LoggingConfigView {
+            level: config.logging.level.clone(),
+            json_format: config.logging.json_format,
+            file_output: config.logging.file_output.as_ref().map(|p| p.display().to_string()),
+        }
+    }
+
+    fn cache_view(c: &CacheConfig) -> CacheConfigView {
+        CacheConfigView { enabled: c.enabled, provider: format!("{:?}", c.provider), default_ttl_secs: c.default_ttl_secs, max_size: c.max_size }
+    }
+
+    fn metrics_view(m: &MetricsConfig) -> MetricsConfigView {
+        MetricsConfigView { enabled: m.enabled, collection_interval_secs: m.collection_interval_secs }
+    }
+
+    fn limits_view(l: &LimitsConfig) -> LimitsConfigView {
+        LimitsConfigView { memory_limit: l.memory_limit, cpu_limit: l.cpu_limit, max_connections: l.max_connections }
     }
 }
 

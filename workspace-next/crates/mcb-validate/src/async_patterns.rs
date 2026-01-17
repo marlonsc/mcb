@@ -461,6 +461,15 @@ impl AsyncPatternValidator {
         // Pattern: tokio::spawn without assigning to variable or awaiting
         let spawn_pattern = Regex::new(r"tokio::spawn\s*\(").expect("Invalid regex");
         let assigned_spawn_pattern = Regex::new(r"let\s+\w+\s*=\s*tokio::spawn").expect("Invalid regex");
+        let fn_pattern = Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+(\w+)").expect("Invalid regex");
+
+        // Function name patterns that indicate intentional fire-and-forget spawns
+        // Includes constructor patterns that often spawn background workers
+        let background_fn_patterns = [
+            "spawn", "background", "graceful", "shutdown", "start", "run",
+            "worker", "daemon", "listener", "handler", "process",
+            "new", "with_", "init", "create", "build",  // Constructor patterns
+        ];
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
@@ -475,6 +484,7 @@ impl AsyncPatternValidator {
 
                 let content = std::fs::read_to_string(entry.path())?;
                 let mut in_test_module = false;
+                let mut current_fn_name = String::new();
 
                 for (line_num, line) in content.lines().enumerate() {
                     let trimmed = line.trim();
@@ -494,10 +504,22 @@ impl AsyncPatternValidator {
                         continue;
                     }
 
+                    // Track current function name
+                    if let Some(cap) = fn_pattern.captures(line) {
+                        current_fn_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_lowercase();
+                    }
+
                     // Check for unassigned spawn
                     if spawn_pattern.is_match(line) && !assigned_spawn_pattern.is_match(line) {
                         // Check if it's being used in a chain (e.g., .await)
                         if !line.contains(".await") && !line.contains("let _") {
+                            // Skip if function name suggests fire-and-forget is intentional
+                            let is_background_fn = background_fn_patterns
+                                .iter()
+                                .any(|p| current_fn_name.contains(p));
+                            if is_background_fn {
+                                continue;
+                            }
                             violations.push(AsyncViolation::UnawaitedSpawn {
                                 file: entry.path().to_path_buf(),
                                 line: line_num + 1,

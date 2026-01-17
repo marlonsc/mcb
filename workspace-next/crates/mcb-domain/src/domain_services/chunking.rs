@@ -13,7 +13,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 /// Options for chunking operations
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ChunkingOptions {
     /// Maximum size of a single chunk in characters
     pub max_chunk_size: usize,

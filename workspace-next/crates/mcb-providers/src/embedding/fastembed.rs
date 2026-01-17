@@ -150,14 +150,20 @@ impl FastEmbedActor {
                     let text_refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
                     let embeddings_result = self.model.embed(text_refs, None);
                     let result = match embeddings_result {
-                        Ok(res) => Ok(res
-                            .into_iter()
-                            .map(|v| Embedding {
-                                vector: v.clone(),
-                                model: self.model_name.clone(),
-                                dimensions: v.len(),
-                            })
-                            .collect()),
+                        Ok(res) => {
+                            let model_name = self.model_name.clone();
+                            Ok(res
+                                .into_iter()
+                                .map(|v| {
+                                    let dimensions = v.len();
+                                    Embedding {
+                                        vector: v,
+                                        model: model_name.clone(),
+                                        dimensions,
+                                    }
+                                })
+                                .collect())
+                        }
                         Err(e) => Err(Error::embedding(format!(
                             "FastEmbed embedding failed: {}",
                             e

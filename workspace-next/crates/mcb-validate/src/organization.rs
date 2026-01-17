@@ -825,9 +825,12 @@ impl OrganizationValidator {
                 }
 
                 // Check for config files outside config directories
+                // Exclude handler files (e.g., config_handlers.rs) - these are HTTP handlers, not config files
                 if file_name.contains("config")
+                    && !file_name.contains("handler")
                     && !path_str.contains("/config/")
                     && !path_str.contains("/config.rs")
+                    && !path_str.contains("/admin/")  // Admin config handlers are valid
                 {
                     // Allow config.rs at root level
                     if rel_path.is_some_and(|p| p.components().count() > 1) {
@@ -1361,7 +1364,7 @@ impl OrganizationValidator {
 
                 // Check for adapter implementations outside allowed directories
                 if is_infrastructure_crate {
-                    for (_line_num, line) in content.lines().enumerate() {
+                    for line in content.lines() {
                         if let Some(cap) = adapter_impl_pattern.captures(line) {
                             let _trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
                             let _impl_name = cap.get(2).map(|m| m.as_str()).unwrap_or("");

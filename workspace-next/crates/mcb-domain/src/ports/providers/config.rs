@@ -10,6 +10,26 @@ use shaku::Interface;
 ///
 /// This port defines the contract for managing provider configurations
 /// including embedding and vector store providers.
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_domain::ports::providers::ProviderConfigManagerInterface;
+///
+/// // List available embedding providers
+/// let providers = config_manager.list_embedding_providers();
+/// for name in providers {
+///     if let Ok(config) = config_manager.get_embedding_config(&name) {
+///         println!("{}: model={}", name, config.model);
+///     }
+/// }
+///
+/// // Check if a specific provider exists
+/// if config_manager.has_embedding_provider("openai") {
+///     let config = config_manager.get_embedding_config("openai")?;
+///     // Use config...
+/// }
+/// ```
 #[async_trait::async_trait]
 pub trait ProviderConfigManagerInterface: Interface + Send + Sync {
     /// Get embedding provider configuration by name

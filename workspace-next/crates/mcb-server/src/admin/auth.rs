@@ -89,6 +89,50 @@ pub struct AuthErrorResponse {
     pub message: String,
 }
 
+impl AuthErrorResponse {
+    fn not_configured() -> Response {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(Self {
+                error: "auth_not_configured",
+                message: "Admin authentication is enabled but no API key is configured. \
+                         Set MCB_ADMIN_API_KEY environment variable or auth.admin.key in config."
+                    .to_string(),
+            }),
+        )
+            .into_response()
+    }
+
+    fn invalid_key() -> Response {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(Self {
+                error: "invalid_api_key",
+                message: "Invalid admin API key".to_string(),
+            }),
+        )
+            .into_response()
+    }
+
+    fn missing_key(header_name: &str) -> Response {
+        (
+            StatusCode::UNAUTHORIZED,
+            [(
+                "WWW-Authenticate",
+                HeaderValue::from_static("ApiKey realm=\"admin\""),
+            )],
+            Json(Self {
+                error: "missing_api_key",
+                message: format!(
+                    "Admin API key required. Provide it in the '{}' header.",
+                    header_name
+                ),
+            }),
+        )
+            .into_response()
+    }
+}
+
 /// Admin authentication middleware
 ///
 /// Verifies the API key in the configured header.
@@ -99,69 +143,24 @@ pub async fn admin_auth_middleware(
     request: Request<Body>,
     next: Next,
 ) -> Response {
-    // Skip authentication for liveness and readiness probes
     let path = request.uri().path();
-    if is_unauthenticated_route(path) {
+    if is_unauthenticated_route(path) || !auth_config.enabled {
         return next.run(request).await;
     }
 
-    // If authentication is not enabled, allow all requests
-    if !auth_config.enabled {
-        return next.run(request).await;
-    }
-
-    // If auth is enabled but no key is configured, return 503
     if !auth_config.is_configured() {
-        return (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(AuthErrorResponse {
-                error: "auth_not_configured",
-                message: "Admin authentication is enabled but no API key is configured. Set MCB_ADMIN_API_KEY environment variable or auth.admin.key in config.".to_string(),
-            }),
-        )
-            .into_response();
+        return AuthErrorResponse::not_configured();
     }
 
-    // Get the API key from the request header
     let api_key = request
         .headers()
         .get(&auth_config.header_name)
         .and_then(|v| v.to_str().ok());
 
     match api_key {
-        Some(key) if auth_config.validate_key(key) => {
-            // Authentication successful
-            next.run(request).await
-        }
-        Some(_) => {
-            // Invalid API key
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(AuthErrorResponse {
-                    error: "invalid_api_key",
-                    message: "Invalid admin API key".to_string(),
-                }),
-            )
-                .into_response()
-        }
-        None => {
-            // Missing API key
-            (
-                StatusCode::UNAUTHORIZED,
-                [(
-                    "WWW-Authenticate",
-                    HeaderValue::from_static("ApiKey realm=\"admin\""),
-                )],
-                Json(AuthErrorResponse {
-                    error: "missing_api_key",
-                    message: format!(
-                        "Admin API key required. Provide it in the '{}' header.",
-                        auth_config.header_name
-                    ),
-                }),
-            )
-                .into_response()
-        }
+        Some(key) if auth_config.validate_key(key) => next.run(request).await,
+        Some(_) => AuthErrorResponse::invalid_key(),
+        None => AuthErrorResponse::missing_key(&auth_config.header_name),
     }
 }
 

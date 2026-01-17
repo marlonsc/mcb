@@ -26,24 +26,82 @@ use super::factory::{EmbeddingProviderFactory, VectorStoreProviderFactory};
 use mcb_providers::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 
 /// Trait for accessing storage components (cache, crypto)
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::bootstrap::StorageComponentsAccess;
+///
+/// // Access cache from component container
+/// let cache = container.cache();
+/// cache.get::<MyValue>("key").await?;
+///
+/// // Access crypto for encryption
+/// let crypto = container.crypto();
+/// let encrypted = crypto.encrypt(data)?;
+/// ```
 pub trait StorageComponentsAccess {
     fn cache(&self) -> &SharedCacheProvider;
     fn crypto(&self) -> &CryptoService;
 }
 
 /// Trait for accessing provider components (embedding, vector store)
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::bootstrap::ProviderComponentsAccess;
+///
+/// // Get embedding for text
+/// let embedder = container.embedding_provider();
+/// let embedding = embedder.embed("search query").await?;
+///
+/// // Store vectors
+/// let store = container.vector_store_provider();
+/// store.insert(embedding.vector, metadata).await?;
+/// ```
 pub trait ProviderComponentsAccess {
     fn embedding_provider(&self) -> &Arc<dyn EmbeddingProvider>;
     fn vector_store_provider(&self) -> &Arc<dyn VectorStoreProvider>;
 }
 
 /// Trait for accessing admin components (metrics, operations)
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::bootstrap::AdminComponentsAccess;
+///
+/// // Record query metrics
+/// let metrics = container.performance_metrics();
+/// metrics.record_query(50, true, false);
+///
+/// // Check active indexing operations
+/// let ops = container.indexing_operations();
+/// let active = ops.get_operations();
+/// println!("{} operations running", active.len());
+/// ```
 pub trait AdminComponentsAccess {
     fn performance_metrics(&self) -> &Arc<dyn PerformanceMetricsInterface>;
     fn indexing_operations(&self) -> &Arc<dyn IndexingOperationsInterface>;
 }
 
 /// Trait for accessing configuration and health
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::bootstrap::ConfigHealthAccess;
+///
+/// // Access configuration
+/// let config = container.config();
+/// println!("Server port: {}", config.server.network.port);
+///
+/// // Access health registry
+/// let health = container.health();
+/// let report = health.check_all().await;
+/// println!("Health status: {:?}", report.status);
+/// ```
 pub trait ConfigHealthAccess {
     fn config(&self) -> &AppConfig;
     fn health(&self) -> &HealthRegistry;

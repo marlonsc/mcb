@@ -139,6 +139,9 @@ impl IntelligentChunker {
         let lines: Vec<&str> = content.lines().collect();
         let mut chunks = Vec::new();
         let chunk_size = CHUNK_SIZE_GENERIC;
+        // Clone language once before loop to avoid repeated allocations
+        let lang = language.clone();
+        let file = file_name.to_string();
 
         for (chunk_idx, chunk_lines) in lines.chunks(chunk_size).enumerate() {
             let start_line = chunk_idx * chunk_size;
@@ -149,22 +152,19 @@ impl IntelligentChunker {
                 continue;
             }
 
-            let chunk = CodeChunk {
+            chunks.push(CodeChunk {
                 id: format!("{}_{}", file_name, chunk_idx),
                 content,
-                file_path: file_name.to_string(),
+                file_path: file.clone(),
                 start_line: start_line as u32,
                 end_line: end_line as u32,
-                language: language.clone(),
-                metadata: {
-                    let mut meta = HashMap::new();
-                    meta.insert("file".to_string(), serde_json::json!(file_name));
-                    meta.insert("chunk_index".to_string(), serde_json::json!(chunk_idx));
-                    meta.insert("chunk_type".to_string(), serde_json::json!("generic"));
-                    serde_json::to_value(meta).unwrap_or(serde_json::json!({}))
-                },
-            };
-            chunks.push(chunk);
+                language: lang.clone(),
+                metadata: serde_json::json!({
+                    "file": file_name,
+                    "chunk_index": chunk_idx,
+                    "chunk_type": "generic"
+                }),
+            });
         }
 
         chunks
@@ -233,7 +233,7 @@ impl CodeChunker for IntelligentChunker {
     ) -> Result<Vec<ChunkingResult>> {
         let mut results = Vec::with_capacity(file_paths.len());
         for path in file_paths {
-            results.push(self.chunk_file(path, options.clone()).await?);
+            results.push(self.chunk_file(path, options).await?);
         }
         Ok(results)
     }

@@ -165,15 +165,19 @@ fn read_update_config(
 
 /// Merge new values into a config section
 fn merge_section(table: &mut toml::map::Map<String, toml::Value>, section: &str, new_value: toml::Value) {
-    if let Some(existing) = table.get_mut(section) {
-        if let (Some(existing_table), Some(new_table)) = (existing.as_table_mut(), new_value.as_table()) {
-            for (key, value) in new_table {
-                existing_table.insert(key.clone(), value.clone());
-            }
-            return;
-        }
+    let toml::Value::Table(new_table) = new_value else {
+        table.insert(section.to_string(), new_value);
+        return;
+    };
+
+    let Some(existing) = table.get_mut(section).and_then(|v| v.as_table_mut()) else {
+        table.insert(section.to_string(), toml::Value::Table(new_table));
+        return;
+    };
+
+    for (key, value) in new_table {
+        existing.insert(key, value);
     }
-    table.insert(section.to_string(), new_value);
 }
 
 /// Write config to file and reload
