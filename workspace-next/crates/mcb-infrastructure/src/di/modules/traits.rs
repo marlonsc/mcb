@@ -22,8 +22,8 @@ pub trait InfrastructureModule:
     + HasComponent<dyn mcb_domain::ports::infrastructure::AuthServiceInterface>
     + HasComponent<dyn mcb_domain::ports::infrastructure::EventBusProvider>
     + HasComponent<dyn mcb_domain::ports::infrastructure::SystemMetricsCollectorInterface>
-    + HasComponent<dyn mcb_domain::ports::infrastructure::StateStoreProvider>
-    + HasComponent<dyn mcb_domain::ports::infrastructure::LockProvider>
+    + HasComponent<dyn mcb_domain::ports::infrastructure::SnapshotProvider>
+    + HasComponent<dyn mcb_domain::ports::infrastructure::SyncProvider>
 {}
 
 // ============================================================================
