@@ -48,5 +48,5 @@ pub mod value_objects;
 pub use constants::*;
 pub use entities::*;
 pub use error::{Error, Result};
-pub use events::{DomainEvent, EventPublisher};
+pub use events::{DomainEvent, EventPublisher, ServiceState};
 pub use value_objects::*;

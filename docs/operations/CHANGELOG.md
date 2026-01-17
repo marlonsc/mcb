@@ -278,7 +278,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Provider Framework
 
--   Provider Traits: 14 port traits for complete dependency injection (EmbeddingProvider, VectorStoreProvider, HybridSearchProvider, CodeChunker, EventPublisher, etc.)
+-   Provider Traits: 20+ port traits in mcb-application for complete dependency injection (EmbeddingProvider, VectorStoreProvider, HybridSearchProvider, LanguageChunkingProvider, EventBusProvider, etc.)
 -   Mock Implementation: MockEmbeddingProvider generating fixed 128-dimension vectors
 -   In-Memory Storage: InMemoryVectorStoreProvider with cosine similarity search
 -   Registry System: Thread-safe ProviderRegistry for provider management

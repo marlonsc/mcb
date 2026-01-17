@@ -35,8 +35,8 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Deliverables**:
 
--   [x] mcb-domain: 14 port traits with shaku::Interface
--   [x] mcb-application: Context, Search, Indexing services
+-   [x] mcb-domain: Core entities, repositories, events, value objects
+-   [x] mcb-application: Port traits (~20+) + Context, Search, Indexing services
 -   [x] mcb-providers: 6 embedding + 3 vector store providers
 -   [x] mcb-infrastructure: Shaku DI + config management
 -   [x] mcb-server: MCP protocol + Admin API

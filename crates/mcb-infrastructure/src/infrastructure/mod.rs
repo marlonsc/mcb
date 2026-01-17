@@ -1,7 +1,17 @@
 //! Infrastructure Services
 //!
-//! Null implementations of infrastructure port traits for testing.
-//! The actual port traits are defined in mcb-domain/ports/infrastructure.
+//! Infrastructure service implementations for production and testing.
+//! The actual port traits are defined in mcb-application/ports/infrastructure.
+//!
+//! ## Production Defaults
+//!
+//! | Service | Default | Alternative |
+//! |---------|---------|-------------|
+//! | EventBus | `TokioBroadcastEventBus` | `NullEventBus` (testing) |
+//!
+//! ## Testing Defaults
+//!
+//! All `Null*` implementations are no-op stubs for unit testing.
 
 pub mod admin;
 pub mod auth;
@@ -10,7 +20,10 @@ pub mod metrics;
 pub mod snapshot;
 pub mod sync;
 
-// Re-export Null implementations
+// Re-export production implementations
+pub use events::TokioBroadcastEventBus;
+
+// Re-export Null implementations (testing)
 pub use admin::{NullIndexingOperations, NullPerformanceMetrics};
 pub use auth::NullAuthService;
 pub use events::NullEventBus;

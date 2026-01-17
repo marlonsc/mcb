@@ -412,10 +412,10 @@ The multi-provider strategy has been generalized to support additional provider 
 
 ### Extended Provider Types
 
-**Current (v0.1.0)**:
+**Current (v0.1.1)**:
 
--   Embedding Providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   Vector Store Providers (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
+-   Embedding Providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) - 6 total
+-   Vector Store Providers (In-Memory, Encrypted, Null) - 3 total
 
 **Future (v0.3.0+)**:
 

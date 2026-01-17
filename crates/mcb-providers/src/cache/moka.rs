@@ -154,3 +154,14 @@ impl std::fmt::Debug for MokaCacheProvider {
             .finish()
     }
 }
+
+// Shaku Component implementation for DI container
+// This allows MokaCacheProvider to be used as a default in Shaku modules
+impl<M: shaku::Module> shaku::Component<M> for MokaCacheProvider {
+    type Interface = dyn CacheProvider;
+    type Parameters = ();
+
+    fn build(_: &mut shaku::ModuleBuildContext<M>, _: Self::Parameters) -> Box<Self::Interface> {
+        Box::new(MokaCacheProvider::new())
+    }
+}

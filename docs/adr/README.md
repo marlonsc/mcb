@@ -23,12 +23,17 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 -   [ADR 009: Persistent Session Memory v0.2.0](009-persistent-session-memory-v0.2.0.md)
 -   [ADR 010: Hooks Subsystem with Agent-Backed Processing](010-hooks-subsystem-agent-backed.md)
 
-### Legacy Architecture (Pre-v0.1.1)
+### Foundation Architecture (Complementary to Core)
 
--   [ADR 002: Async-First Architecture](002-async-first-architecture.md)
--   [ADR 003: C4 Model Documentation](003-c4-model-documentation.md)
--   [ADR 004: Multi-Provider Strategy](004-multi-provider-strategy.md)
--   [ADR 005: Documentation Excellence](005-documentation-excellence.md)
+> Note: These ADRs use numbers 002-005 for historical reasons but cover DIFFERENT topics than the Core Architecture ADRs above. Both sets are valid and complementary.
+
+-   [ADR 002: Async-First Architecture](002-async-first-architecture.md) - Tokio async patterns
+-   [ADR 003: C4 Model Documentation](003-c4-model-documentation.md) - Architecture visualization
+-   [ADR 004: Multi-Provider Strategy](004-multi-provider-strategy.md) - Provider routing and failover
+-   [ADR 005: Documentation Excellence](005-documentation-excellence.md) - Documentation standards
+
+### Infrastructure ADRs (v0.1.1)
+
 -   [ADR 011: HTTP Transport Request/Response Pattern](011-http-transport-request-response-pattern.md)
 -   [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku modules + runtime factories
 -   [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate workspace organization

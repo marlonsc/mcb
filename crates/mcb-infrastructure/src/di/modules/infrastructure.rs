@@ -1,28 +1,36 @@
-//! Infrastructure Module Implementation - COMPLETE: All Services with Component Derive
+//! Infrastructure Module Implementation - Production Defaults with DI
 //!
-//! This module provides ALL core infrastructure services with #[derive(Component)].
-//! No placeholders - all services are null implementations for testing.
+//! This module provides core infrastructure services with production-ready defaults.
+//! Use `with_component_override` to substitute implementations for testing.
 //!
-//! ## Services Provided:
+//! ## Services Provided (Production Defaults):
 //!
-//! - NullCacheProvider (from mcb-providers) -> implements CacheProvider ✓
-//! - NullAuthService (from infrastructure) -> implements AuthServiceInterface ✓
-//! - NullEventBus (from infrastructure) -> implements EventBusProvider ✓
-//! - NullSystemMetricsCollector (from infrastructure) -> implements SystemMetricsCollectorInterface ✓
-//! - NullSnapshotProvider (from infrastructure) -> implements SnapshotProvider ✓
-//! - NullSyncProvider (from infrastructure) -> implements SyncProvider ✓
+//! | Service | Default | Use Case |
+//! |---------|---------|----------|
+//! | EventBus | `TokioBroadcastEventBus` | High-performance in-process events |
+//! | Auth | `NullAuthService` | Override with real auth in production |
+//! | Metrics | `NullSystemMetricsCollector` | Override for monitoring |
+//! | Snapshot | `NullSnapshotProvider` | Override for persistence |
+//! | Sync | `NullSyncProvider` | Override for distributed sync |
 //!
-//! ## Note on Production:
+//! ## Testing Override Example:
 //!
-//! Real providers are created at runtime via DomainServicesFactory, not through Shaku.
+//! ```ignore
+//! use mcb_infrastructure::infrastructure::NullEventBus;
+//!
+//! let module = InfrastructureModuleImpl::builder()
+//!     .with_component_override::<dyn EventBusProvider>(Box::new(NullEventBus::new()))
+//!     .build();
+//! ```
 
 use shaku::module;
 
-// Import implementations with Component derive
-// Using infrastructure null implementations for Shaku DI defaults
+// Import production implementations
+use crate::infrastructure::TokioBroadcastEventBus;
+
+// Import null implementations for services without production defaults yet
 use crate::infrastructure::{
-    NullAuthService, NullEventBus, NullSnapshotProvider, NullSyncProvider,
-    NullSystemMetricsCollector,
+    NullAuthService, NullSnapshotProvider, NullSyncProvider, NullSystemMetricsCollector,
 };
 
 // Import traits
@@ -31,9 +39,10 @@ use super::traits::InfrastructureModule;
 module! {
     pub InfrastructureModuleImpl: InfrastructureModule {
         components = [
-            // Infrastructure null implementations with Component derive
+            // Production defaults
+            TokioBroadcastEventBus,  // Real event bus for SSE/events
+            // Testing defaults (override in production config)
             NullAuthService,
-            NullEventBus,
             NullSystemMetricsCollector,
             NullSnapshotProvider,
             NullSyncProvider

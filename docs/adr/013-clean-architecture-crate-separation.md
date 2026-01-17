@@ -37,14 +37,12 @@ We organize the codebase into **seven Cargo workspace crates** following Clean A
 
 ```
 mcb-domain/src/
-├── entities/           # Domain entities (CodeChunk, Repository)
-├── value_objects/      # Value objects (Embedding, Language)
-├── ports/
-│   ├── providers/      # Provider port traits (embedding, vector_store, cache)
-│   ├── infrastructure/ # Infrastructure ports (sync, snapshot, events)
-│   └── admin.rs        # Admin service ports
-├── error.rs            # Domain error types
-└── types.rs            # Core domain types
+├── entities/           # Domain entities (CodeChunk, Codebase)
+├── events/             # Domain events (DomainEvent, EventPublisher)
+├── repositories/       # Repository port traits (ChunkRepository, SearchRepository)
+├── value_objects/      # Value objects (Embedding, Config, Search, Types)
+├── constants.rs        # Domain constants
+└── error.rs            # Domain error types
 ```
 
 **Dependencies**: None (except trait utilities)
@@ -100,9 +98,8 @@ mcb-providers/src/
 │   ├── gemini.rs
 │   ├── fastembed.rs
 │   └── null.rs
-├── vector_store/       # 6 vector store providers
-│   ├── memory.rs
-│   ├── milvus.rs
+├── vector_store/       # 3 vector store providers
+│   ├── in_memory.rs
 │   ├── encrypted.rs
 │   └── null.rs
 ├── cache/              # Cache providers

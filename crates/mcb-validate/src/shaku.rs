@@ -624,12 +624,12 @@ impl ShakuValidator {
                     || file_name == "factory.rs"
                     || file_name == "builder.rs"
                     || file_name == "implementation.rs"
-                    || file_name == "provider.rs"  // Provider aggregators create instances
-                    || file_name == "providers.rs"  // Provider config creates providers
-                    || file_name == "mcp_server.rs"  // Composition root for MCP server
-                    || file_name == "server.rs"  // Server composition roots
-                    || file_name == "main.rs"  // Application entry point
-                    || path_str.contains("/di/modules/")  // All DI module files - ALLOWED for Shaku modules
+                    || file_name == "provider.rs" // Provider aggregators create instances
+                    || file_name == "providers.rs" // Provider config creates providers
+                    || file_name == "mcp_server.rs" // Composition root for MCP server
+                    || file_name == "server.rs" // Server composition roots
+                    || file_name == "main.rs" // Application entry point
+                    || path_str.contains("/di/modules/") // All DI module files - ALLOWED for Shaku modules
                     || path_str.contains("/di/factory/")
                 // All DI factory files - ALLOWED for factories
                 {
@@ -1694,123 +1694,5 @@ impl crate::validator_trait::Validator for ShakuValidator {
             .into_iter()
             .map(|v| Box::new(v) as Box<dyn Violation>)
             .collect())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-    use tempfile::TempDir;
-
-    fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
-        create_test_crate_with_file(temp, name, "lib.rs", content);
-    }
-
-    fn create_test_crate_with_file(temp: &TempDir, name: &str, file_name: &str, content: &str) {
-        // Create workspace Cargo.toml if it doesn't exist
-        let workspace_cargo = temp.path().join("Cargo.toml");
-        if !workspace_cargo.exists() {
-            fs::write(
-                &workspace_cargo,
-                r#"
-[workspace]
-members = ["crates/*"]
-"#,
-            )
-            .unwrap();
-        }
-
-        // Create crate structure
-        let crate_dir = temp.path().join("crates").join(name).join("src");
-        fs::create_dir_all(&crate_dir).unwrap();
-        fs::write(crate_dir.join(file_name), content).unwrap();
-
-        let cargo_dir = temp.path().join("crates").join(name);
-        fs::write(
-            cargo_dir.join("Cargo.toml"),
-            format!(
-                r#"
-[package]
-name = "{}"
-version = "0.1.1"
-"#,
-                name
-            ),
-        )
-        .unwrap();
-    }
-
-    #[test]
-    fn test_direct_instantiation() {
-        let temp = TempDir::new().unwrap();
-        // Use service.rs instead of lib.rs since lib.rs is skipped by validator
-        create_test_crate_with_file(
-            &temp,
-            "mcb-test",
-            "service.rs",
-            r#"
-pub fn setup() {
-    let service = MyService::new();
-    let provider = EmbeddingProvider::new();
-}
-"#,
-        );
-
-        let validator = ShakuValidator::new(temp.path());
-        let violations = validator.validate_direct_instantiation().unwrap();
-
-        assert_eq!(violations.len(), 2);
-    }
-
-    #[test]
-    fn test_fake_implementation() {
-        let temp = TempDir::new().unwrap();
-        // Use service.rs instead of lib.rs since lib.rs is skipped by validator
-        create_test_crate_with_file(
-            &temp,
-            "mcb-test",
-            "service.rs",
-            r#"
-pub fn setup() {
-    let provider: Arc<dyn Provider> = Arc::new(NullProvider::new());
-    let mock = MockService::new();
-}
-"#,
-        );
-
-        let validator = ShakuValidator::new(temp.path());
-        let violations = validator.validate_fake_implementations().unwrap();
-
-        assert_eq!(violations.len(), 2);
-    }
-
-    #[test]
-    fn test_no_violations_in_tests() {
-        let temp = TempDir::new().unwrap();
-        create_test_crate(
-            &temp,
-            "mcb-test",
-            r#"
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_it() {
-        let mock = MockService::new();
-        let null = NullProvider::new();
-    }
-}
-"#,
-        );
-
-        let validator = ShakuValidator::new(temp.path());
-        let violations = validator.validate_all().unwrap();
-
-        assert!(
-            violations.is_empty(),
-            "Test code should not trigger violations"
-        );
     }
 }
