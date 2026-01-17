@@ -16,9 +16,9 @@ In v0.1.1, background daemon functionality is handled by:
 
 The standalone daemon service has been replaced with:
 
-1. Systemd service integration for production deployments
-2. Built-in graceful shutdown in mcb-server
-3. Health check endpoints for monitoring
+1.  Systemd service integration for production deployments
+2.  Built-in graceful shutdown in mcb-server
+3.  Health check endpoints for monitoring
 
 ## Related Documentation
 

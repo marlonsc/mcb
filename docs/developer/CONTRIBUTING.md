@@ -6,8 +6,8 @@ Thank you for your interest in contributing! This guide helps you get started wi
 
 ### Prerequisites
 
-\1-  **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
-\1-  **Git**: Version control system
+-   **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
+-   **Git**: Version control system
 
 ### Setup Development Environment
 
@@ -49,10 +49,10 @@ cargo run
 
 ### Rust Guidelines
 
-\1-   Follow [The Rust Programming Language](https://doc.rust-lang.org/book/) conventions
-\1-   Use `rustfmt` for formatting: `cargo fmt`
-\1-   Follow `clippy` suggestions: `cargo clippy`
-\1-   Write idiomatic Rust code
+-    Follow [The Rust Programming Language](https://doc.rust-lang.org/book/) conventions
+-    Use `rustfmt` for formatting: `cargo fmt`
+-    Follow `clippy` suggestions: `cargo clippy`
+-    Write idiomatic Rust code
 
 ### Code Structure (v0.1.1 Modular Crates)
 
@@ -112,20 +112,20 @@ mod tests {
 
 ### Before Submitting
 
-\1-   [ ] Tests pass: `cargo test`
-\1-   [ ] Code formats correctly: `cargo fmt --check`
-\1-   [ ] No linting errors: `cargo clippy -- -D warnings`
-\1-   [ ] CI checks pass: `make ci`
-\1-   [ ] Documentation updated if needed
+-    [ ] Tests pass: `cargo test`
+-    [ ] Code formats correctly: `cargo fmt --check`
+-    [ ] No linting errors: `cargo clippy -- -D warnings`
+-    [ ] CI checks pass: `make ci`
+-    [ ] Documentation updated if needed
 
 ### PR Description
 
 Include:
 
-\1-   What changes were made
-\1-   Why the changes were needed
-\1-   How to test the changes
-\1-   Any breaking changes
+-    What changes were made
+-    Why the changes were needed
+-    How to test the changes
+-    Any breaking changes
 
 ### Review Process
 
@@ -140,19 +140,19 @@ Include:
 
 **Include:**
 
-\1-   Steps to reproduce
-\1-   Expected vs actual behavior
-\1-   Environment details (Rust version, OS)
-\1-   Error messages/logs
+-    Steps to reproduce
+-    Expected vs actual behavior
+-    Environment details (Rust version, OS)
+-    Error messages/logs
 
 ### Feature Requests
 
 **Include:**
 
-\1-   Problem description
-\1-   Proposed solution
-\1-   Use cases
-\1-   Alternative approaches considered
+-    Problem description
+-    Proposed solution
+-    Use cases
+-    Alternative approaches considered
 
 ## 🚀 Examples
 
@@ -211,9 +211,9 @@ cargo run --bin mcp-context-browser -- --help
 
 ## 📞 Getting Help
 
-\1-  **Issues**: Use GitHub Issues for bugs and features
-\1-  **Discussions**: Use GitHub Discussions for questions
-\1-  **Documentation**: Check docs/architecture/ARCHITECTURE.md for technical details
+-   **Issues**: Use GitHub Issues for bugs and features
+-   **Discussions**: Use GitHub Discussions for questions
+-   **Documentation**: Check docs/architecture/ARCHITECTURE.md for technical details
 
 ## Code of Conduct
 
@@ -223,8 +223,8 @@ Be respectful and constructive in all interactions. Focus on improving the proje
 
 ## Cross-References
 
-\1-  **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
-\1-  **Deployment**: [DEPLOYMENT.md](../operations/DEPLOYMENT.md)
-\1-  **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
-\1-  **Roadmap**: [ROADMAP.md](./ROADMAP.md)
-\1-  **Module Documentation**: [docs/modules/](../modules/)
+-   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+-   **Deployment**: [DEPLOYMENT.md](../operations/DEPLOYMENT.md)
+-   **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
+-   **Roadmap**: [ROADMAP.md](./ROADMAP.md)
+-   **Module Documentation**: [docs/modules/](../modules/)

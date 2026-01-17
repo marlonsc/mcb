@@ -4,10 +4,10 @@ Generated on: 2026-01-12 13:18:35 UTC
 
 ## Summary
 
-\1-  **Total Checks**: 6
-\1-  **Passed**: 6
-\1-  **Violations**: 0
-\1-  **Compliance Rate**: 100%
+-   **Total Checks**: 6
+-   **Passed**: 6
+-   **Violations**: 0
+-   **Compliance Rate**: 100%
 
 ## Detailed Results
 
@@ -49,6 +49,6 @@ Generated on: 2026-01-12 13:18:35 UTC
 
 ## Recommendations
 
-\1-  **Documentation**: Ensure all ADRs have automated validation rules
+-   **Documentation**: Ensure all ADRs have automated validation rules
 
 ## Overall Assessment: ✅ COMPLIANT

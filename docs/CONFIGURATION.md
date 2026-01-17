@@ -56,14 +56,14 @@ cargo run --release
 | `JWT_EXPIRATION` | u64 | 1+ | 3600 | Token expiration in seconds |
 
 **Behavior:**
-\1-   If ALL THREE (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET`) are set and valid:
-\1-   ✅ Admin interface ENABLED
-\1-   Admin user created automatically
-\1-   Credentials stored securely
-\1-   If ANY are missing or invalid:
-\1-   ✅ Server starts normally
-\1-   ❌ Admin interface DISABLED
-\1-  **No error or crash**- graceful degradation
+-    If ALL THREE (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET`) are set and valid:
+-    ✅ Admin interface ENABLED
+-    Admin user created automatically
+-    Credentials stored securely
+-    If ANY are missing or invalid:
+-    ✅ Server starts normally
+-    ❌ Admin interface DISABLED
+-   **No error or crash**- graceful degradation
 
 **Example:**
 
@@ -84,14 +84,14 @@ export JWT_EXPIRATION="86400"  # 24 hours
 | `ADMIN_PASSWORD` | String | 8 chars | Empty | Admin password (also used for admin) |
 
 **Behavior:**
-\1-   If BOTH `JWT_SECRET` AND `ADMIN_PASSWORD` are set and valid:
-\1-   ✅ Authentication ENABLED
-\1-   Admin user created with hashed password
-\1-   JWT tokens required for API access
-\1-   If either is missing:
-\1-   ✅ Authentication DISABLED
-\1-   API endpoints accessible without auth
-\1-  **No error or crash**- graceful degradation
+-    If BOTH `JWT_SECRET` AND `ADMIN_PASSWORD` are set and valid:
+-    ✅ Authentication ENABLED
+-    Admin user created with hashed password
+-    JWT tokens required for API access
+-    If either is missing:
+-    ✅ Authentication DISABLED
+-    API endpoints accessible without auth
+-   **No error or crash**- graceful degradation
 
 **Example:**
 
@@ -114,14 +114,14 @@ export ADMIN_PASSWORD="min-8-char-password"
 | `DATABASE_CONNECTION_TIMEOUT_SECS` | u64 | 0 | 30 | Connection timeout (seconds) |
 
 **Behavior:**
-\1-   If `DATABASE_URL` is set and valid:
-\1-   ✅ Database ENABLED
-\1-   Connection pool created with specified parameters
-\1-   Health checks performed at startup
-\1-   If `DATABASE_URL` is empty or missing:
-\1-   ✅ Database DISABLED
-\1-   All database operations use in-memory fallbacks
-\1-  **No error or crash**- graceful degradation
+-    If `DATABASE_URL` is set and valid:
+-    ✅ Database ENABLED
+-    Connection pool created with specified parameters
+-    Health checks performed at startup
+-    If `DATABASE_URL` is empty or missing:
+-    ✅ Database DISABLED
+-    All database operations use in-memory fallbacks
+-   **No error or crash**- graceful degradation
 
 **Example:**
 
@@ -233,41 +233,41 @@ At server startup, the following security validations occur:
 
 ```
 ✅ If all credentials present and valid:
-\1-   Admin username: validated (non-empty)
-\1-   Admin password: validated (8+ chars)
-\1-   JWT secret: validated (32+ chars)
-\1-   Password: hashed with Argon2id
+-    Admin username: validated (non-empty)
+-    Admin password: validated (8+ chars)
+-    JWT secret: validated (32+ chars)
+-    Password: hashed with Argon2id
    → Admin interface ENABLED
 
 ❌ If any credential invalid:
-\1-   Error logged and ADMIN DISABLED
-\1-   Server continues normally
+-    Error logged and ADMIN DISABLED
+-    Server continues normally
 ```
 
 ### Authentication Configuration
 
 ```
 ✅ If JWT secret and admin password valid:
-\1-   JWT secret length: validated (32+ chars)
-\1-   Auth ENABLED for API endpoints
+-    JWT secret length: validated (32+ chars)
+-    Auth ENABLED for API endpoints
 
 ❌ If invalid:
-\1-   Auth DISABLED
-\1-   API endpoints accessible without auth
+-    Auth DISABLED
+-    API endpoints accessible without auth
 ```
 
 ### Database Configuration
 
 ```
 ✅ If DATABASE_URL is set:
-\1-   Connection string validated
-\1-   Pool created with configured parameters
-\1-   Health check performed
-\1-   Database ENABLED
+-    Connection string validated
+-    Pool created with configured parameters
+-    Health check performed
+-    Database ENABLED
 
 ❌ If DATABASE_URL is empty:
-\1-   Database DISABLED
-\1-   In-memory fallback used
+-    Database DISABLED
+-    In-memory fallback used
 ```
 
 ## Security Warnings
@@ -297,38 +297,38 @@ The server logs security issues at startup. Common warnings:
 
 ## Production Deployment Checklist
 
-\1-   [ ]**Admin Credentials**
-\1-   [ ] Set `ADMIN_USERNAME` (non-empty)
-\1-   [ ] Set `ADMIN_PASSWORD` (8+ chars, complex)
-\1-   [ ] Set `JWT_SECRET` (32+ chars, random)
-\1-   [ ] Verify admin interface starts with `✅ Admin interface enabled`
+-    [ ]**Admin Credentials**
+-    [ ] Set `ADMIN_USERNAME` (non-empty)
+-    [ ] Set `ADMIN_PASSWORD` (8+ chars, complex)
+-    [ ] Set `JWT_SECRET` (32+ chars, random)
+-    [ ] Verify admin interface starts with `✅ Admin interface enabled`
 
-\1-   [ ]**Authentication**
-\1-   [ ] JWT tokens working for API access
-\1-   [ ] Token expiration set appropriately
-\1-   [ ] Revocation working (if needed)
+-    [ ]**Authentication**
+-    [ ] JWT tokens working for API access
+-    [ ] Token expiration set appropriately
+-    [ ] Revocation working (if needed)
 
-\1-   [ ]**Database**(if using PostgreSQL)
-\1-   [ ] Set `DATABASE_URL` with production credentials
-\1-   [ ] Connection pool parameters tuned
-\1-   [ ] Health checks passing
-\1-   [ ] Backups configured
+-    [ ]**Database**(if using PostgreSQL)
+-    [ ] Set `DATABASE_URL` with production credentials
+-    [ ] Connection pool parameters tuned
+-    [ ] Health checks passing
+-    [ ] Backups configured
 
-\1-   [ ]**Embedding & Vector Stores**
-\1-   [ ] Embedding provider configured
-\1-   [ ] Vector store accessible
-\1-   [ ] Indexing working
+-    [ ]**Embedding & Vector Stores**
+-    [ ] Embedding provider configured
+-    [ ] Vector store accessible
+-    [ ] Indexing working
 
-\1-   [ ]**Monitoring**
-\1-   [ ] Metrics endpoint accessible
-\1-   [ ] Logs configured
-\1-   [ ] Alerts set up
+-    [ ]**Monitoring**
+-    [ ] Metrics endpoint accessible
+-    [ ] Logs configured
+-    [ ] Alerts set up
 
-\1-   [ ]**Security**
-\1-   [ ] No hardcoded credentials in code
-\1-   [ ] Environment variables validated
-\1-   [ ] Secrets stored securely
-\1-   [ ] HTTPS enabled (if exposed publicly)
+-    [ ]**Security**
+-    [ ] No hardcoded credentials in code
+-    [ ] Environment variables validated
+-    [ ] Secrets stored securely
+-    [ ] HTTPS enabled (if exposed publicly)
 
 ## Troubleshooting
 
@@ -396,10 +396,10 @@ export CACHE_TTL_SECONDS="1800"
 
 ## Related Documentation
 
-\1-   [Architecture Overview](./architecture/ARCHITECTURE.md)
-\1-   [Security Guide](./security/SECURITY.md)
-\1-   [Admin API Reference](./api/admin-api.md)
-\1-   [Deployment Guide](./deployment/DEPLOYMENT.md)
+-    [Architecture Overview](./architecture/ARCHITECTURE.md)
+-    [Security Guide](./security/SECURITY.md)
+-    [Admin API Reference](./api/admin-api.md)
+-    [Deployment Guide](./deployment/DEPLOYMENT.md)
 
 ---
 

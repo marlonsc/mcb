@@ -61,8 +61,8 @@ export MCP_PORT=9001
 | `MCP_CACHE__MAX_SIZE` | `10000` | Integer | Max cache entries (for local Moka mode) |
 
 **Current Architecture Note**:
-\1-   If `REDIS_URL` is**empty**→ Uses Moka (local in-memory cache)
-\1-   If `REDIS_URL` is**non-empty**→ Uses Redis (distributed cache)
+-    If `REDIS_URL` is**empty**→ Uses Moka (local in-memory cache)
+-    If `REDIS_URL` is**non-empty**→ Uses Redis (distributed cache)
 
 **Migration Path**(Phase 2):
 This will be replaced with:
@@ -174,8 +174,8 @@ export MCP_NATS_RETENTION_HOURS=24
 | `ADMIN_PASSWORD` | `` (empty) | String | Admin account password (min 8 chars) |
 
 **Security Model**:
-\1-   If**both**`JWT_SECRET` and `ADMIN_PASSWORD` are set → Auth**enabled**
-\1-   If**either**is empty → Auth**disabled**(graceful degradation)
+-    If**both**`JWT_SECRET` and `ADMIN_PASSWORD` are set → Auth**enabled**
+-    If**either**is empty → Auth**disabled**(graceful degradation)
 
 **Production Setup**:
 
@@ -216,8 +216,8 @@ export JWT_EXPIRATION="3600"  # 1 hour
 | `DATABASE_CONNECTION_TIMEOUT_SECS` | `30` | Integer | Connection establishment timeout |
 
 **Security Model**:
-\1-   If `DATABASE_URL` is empty → Database**disabled**(no storage)
-\1-   If `DATABASE_URL` is set → Database**enabled**with connection pooling
+-    If `DATABASE_URL` is empty → Database**disabled**(no storage)
+-    If `DATABASE_URL` is set → Database**enabled**with connection pooling
 
 **Production Setup**:
 
@@ -545,9 +545,9 @@ pub enum CacheBackendConfig {
 ```
 
 This will replace:
-\1-   `MCP_CACHE__REDIS_URL` with `MCP_CACHE__BACKEND=local|redis`
-\1-   `MCP_EVENT_BUS_TYPE` will be moved to `EventBusConfig::from_env()`
-\1-   All config enums will support environment variable overrides
+-    `MCP_CACHE__REDIS_URL` with `MCP_CACHE__BACKEND=local|redis`
+-    `MCP_EVENT_BUS_TYPE` will be moved to `EventBusConfig::from_env()`
+-    All config enums will support environment variable overrides
 
 ---
 
@@ -587,6 +587,6 @@ redis-cli ping  # Should respond with PONG
 
 ## See Also
 
-\1-   [Configuration Types](../../src/infrastructure/config/) - Source code
-\1-   [Admin Defaults](../../src/server/admin/service/helpers/admin_defaults.rs) - Operational settings
-\1-   [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide
+-    [Configuration Types](../../src/infrastructure/config/) - Source code
+-    [Admin Defaults](../../src/server/admin/service/helpers/admin_defaults.rs) - Operational settings
+-    [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide

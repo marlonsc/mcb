@@ -19,12 +19,14 @@ The domain module defines the core business entities and port interfaces followi
 All traits extend `shaku::Interface` for DI compatibility:
 
 **Provider Ports (`ports/providers/`):**
+
 -   `EmbeddingProvider` - Text-to-vector conversion
 -   `VectorStoreProvider` - Vector storage and retrieval
 -   `CacheProvider` - Caching operations
 -   `CryptoProvider` - Encryption and hashing
 
 **Infrastructure Ports (`ports/infrastructure/`):**
+
 -   `SyncProvider` - Low-level sync operations
 -   `SnapshotProvider` - Codebase snapshot management
 -   `StateStoreProvider` - State persistence
@@ -32,26 +34,31 @@ All traits extend `shaku::Interface` for DI compatibility:
 -   `EventPublisher` - Domain event publishing
 
 **Admin Ports (`ports/admin.rs`):**
+
 -   `PerformanceMetricsInterface` - Performance metrics tracking
 -   `IndexingOperationsInterface` - Indexing operations
 
 **Repository Ports (`repositories/`):**
+
 -   `ChunkRepository` - Code chunk persistence
 -   `SearchRepository` - Search operations
 
 **Service Ports (in `mcb-application`):**
+
 -   `ContextServiceInterface` - High-level code intelligence
 -   `SearchServiceInterface` - Semantic search
 -   `IndexingServiceInterface` - Codebase indexing
 -   `ChunkingOrchestratorInterface` - Batch chunking coordination
 
 ### Core Types
+
 -   `CodeChunk` - Semantic code unit
 -   `Embedding` - Vector representation
--   `SearchResult` - Search result with score
+-   `SearchResult` - Search Result with score
 -   `Language` - Programming language enum
 
 ### Events
+
 -   `DomainEvent` - Domain-level events (IndexRebuild, SyncCompleted, etc.)
 
 ## File Structure

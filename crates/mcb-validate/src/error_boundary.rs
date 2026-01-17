@@ -143,7 +143,9 @@ impl Violation for ErrorBoundaryViolation {
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::MissingErrorContext { suggestion, .. } => Some(suggestion.clone()),
-            Self::WrongLayerError { error_type, layer, .. } => Some(format!(
+            Self::WrongLayerError {
+                error_type, layer, ..
+            } => Some(format!(
                 "Wrap {} in a domain error type instead of using it directly in {}",
                 error_type, layer
             )),

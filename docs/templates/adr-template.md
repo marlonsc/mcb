@@ -22,23 +22,23 @@
 
 {Consider impacts on:
 
-\1-   Development velocity
-\1-   System performance
-\1-   Maintainability
-\1-   Testability
-\1-   Deployment complexity
-\1-   Operational overhead
-\1-   Security implications
-\1-   Cost implications
+-    Development velocity
+-    System performance
+-    Maintainability
+-    Testability
+-    Deployment complexity
+-    Operational overhead
+-    Security implications
+-    Cost implications
 }
 
 ### Positive Consequences
 
-\1-   {List benefits and advantages}
+-    {List benefits and advantages}
 
 ### Negative Consequences
 
-\1-   {List drawbacks and trade-offs}
+-    {List drawbacks and trade-offs}
 
 ## Alternatives Considered
 
@@ -46,20 +46,20 @@
 
 {For each alternative:
 
-\1-   Describe the Option
-\1-   Explain why it was not chosen
-\1-   Note any circumstances where it might be reconsidered}
+-    Describe the Option
+-    Explain why it was not chosen
+-    Note any circumstances where it might be reconsidered}
 
 ### Alternative 1: {Name}
 
-\1-  **Description**: {Brief description}
-\1-  **Pros**: {Advantages}
-\1-  **Cons**: {Disadvantages}
-\1-  **Rejection Reason**: {Why this wasn't chosen}
+-   **Description**: {Brief description}
+-   **Pros**: {Advantages}
+-   **Cons**: {Disadvantages}
+-   **Rejection Reason**: {Why this wasn't chosen}
 
 ### Alternative 2: {Name}
 
-\1-   {Similar structure as Alternative 1}
+-    {Similar structure as Alternative 1}
 
 ## Implementation Notes
 
@@ -67,20 +67,20 @@
 
 {Include:
 
-\1-   Code changes required
-\1-   Migration path
-\1-   Testing strategy
-\1-   Rollback plan
-\1-   Performance considerations
-\1-   Security considerations
+-    Code changes required
+-    Migration path
+-    Testing strategy
+-    Rollback plan
+-    Performance considerations
+-    Security considerations
 }
 
 ## References
 
 {Links to related documents, issues, or discussions}
 
-\1-   [Issue/PR Link](URL)
-\1-   [Related ADR](relative/path/to/adr.md)
-\1-   [External Documentation](URL)
-\1-   [RFC/Discussion](URL)
+-    [Issue/PR Link](URL)
+-    [Related ADR](relative/path/to/adr.md)
+-    [External Documentation](URL)
+-    [RFC/Discussion](URL)
 

@@ -141,24 +141,24 @@ impl ValidatorRegistry {
         use crate::shaku::ShakuValidator;
 
         // Quality validators
-        use crate::quality::QualityValidator;
-        use crate::solid::SolidValidator;
+        use crate::documentation::DocumentationValidator;
         use crate::naming::NamingValidator;
         use crate::patterns::PatternValidator;
-        use crate::documentation::DocumentationValidator;
+        use crate::quality::QualityValidator;
+        use crate::solid::SolidValidator;
         use crate::tests_org::TestValidator;
 
         // Performance validators
-        use crate::performance::PerformanceValidator;
         use crate::async_patterns::AsyncPatternValidator;
         use crate::kiss::KissValidator;
+        use crate::performance::PerformanceValidator;
         use crate::pmat::PmatValidator;
 
         // Organization validators
-        use crate::organization::OrganizationValidator;
-        use crate::implementation::ImplementationQualityValidator;
-        use crate::refactoring::RefactoringValidator;
         use crate::error_boundary::ErrorBoundaryValidator;
+        use crate::implementation::ImplementationQualityValidator;
+        use crate::organization::OrganizationValidator;
+        use crate::refactoring::RefactoringValidator;
 
         let root = workspace_root.into();
 

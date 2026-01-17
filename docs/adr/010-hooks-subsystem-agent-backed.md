@@ -17,30 +17,30 @@ Claude Code provides a hooks system for extending AI assistant behavior at lifec
 
 **Current limitations:**
 
-\1-   Hooks are shell scripts with hardcoded rules
-\1-   No semantic understanding of context
-\1-   No integration with code search or session memory
-\1-   Each hook operates in isolation
-\1-   Complex decisions require manual rule maintenance
+-    Hooks are shell scripts with hardcoded rules
+-    No semantic understanding of context
+-    No integration with code search or session memory
+-    Each hook operates in isolation
+-    Complex decisions require manual rule maintenance
 
 **Opportunity for integration:**
 
 MCP Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
 
-\1-  **Semantic code search**- understand code context
-\1-  **Session memory**- recall past decisions and observations
-\1-  **Hybrid search**- combine BM25 + vector similarity
-\1-  **Event bus**- decoupled component communication
-\1-  **Provider pattern**- pluggable implementations
-\1-  **Actor pattern**- async message-based processing
+-   **Semantic code search**- understand code context
+-   **Session memory**- recall past decisions and observations
+-   **Hybrid search**- combine BM25 + vector similarity
+-   **Event bus**- decoupled component communication
+-   **Provider pattern**- pluggable implementations
+-   **Actor pattern**- async message-based processing
 
 **User demand:**
 
-\1-   Intelligent hook processing with semantic context
-\1-   Agent-backed decisions using Claude models
-\1-   Integration with existing code search and memory
-\1-   Policy-based filtering with semantic fallback
-\1-   Zero-config for basic use, full customization available
+-    Intelligent hook processing with semantic context
+-    Agent-backed decisions using Claude models
+-    Integration with existing code search and memory
+-    Policy-based filtering with semantic fallback
+-    Zero-config for basic use, full customization available
 
 ## Decision
 
@@ -108,31 +108,31 @@ Claude Code Session
 
 ### Positive
 
-\1-  **Minimal new code**: ~1500 LOC vs ~4000 LOC if built from scratch
-\1-  **Consistent patterns**: Same DI, error handling, event patterns
-\1-  **Unified platform**: Hooks integrate naturally with search + memory
-\1-  **Tested infrastructure**: Reuses battle-tested components
-\1-  **Easy maintenance**: Single codebase, shared improvements
+-   **Minimal new code**: ~1500 LOC vs ~4000 LOC if built from scratch
+-   **Consistent patterns**: Same DI, error handling, event patterns
+-   **Unified platform**: Hooks integrate naturally with search + memory
+-   **Tested infrastructure**: Reuses battle-tested components
+-   **Easy maintenance**: Single codebase, shared improvements
 
 ### Negative
 
-\1-  **Coupling**: Hooks depend on ADR 009 memory infrastructure
-\1-  **Latency**: Agent calls add 500-2000ms for complex decisions
-\1-  **API cost**: Claude API calls for agent processing
+-   **Coupling**: Hooks depend on ADR 009 memory infrastructure
+-   **Latency**: Agent calls add 500-2000ms for complex decisions
+-   **API cost**: Claude API calls for agent processing
 
 ## Alternatives Considered
 
 ### Alternative 1: Standalone hooks service
 
-\1-  **Pros**: Independent, no dependencies
-\1-  **Cons**: Duplicates 80% of existing infrastructure
-\1-  **Rejected**: Misses integration opportunity
+-   **Pros**: Independent, no dependencies
+-   **Cons**: Duplicates 80% of existing infrastructure
+-   **Rejected**: Misses integration opportunity
 
 ### Alternative 2: Simple MCP tools only (no agent)
 
-\1-  **Pros**: Fast, no API cost
-\1-  **Cons**: Limited to rule-based decisions
-\1-  **Rejected**: Doesn't meet semantic understanding requirement
+-   **Pros**: Fast, no API cost
+-   **Cons**: Limited to rule-based decisions
+-   **Rejected**: Doesn't meet semantic understanding requirement
 
 ## Implementation Notes
 
@@ -1137,9 +1137,9 @@ if let Some(git) = &self.git_provider {
 
 ## References
 
-\1-   [ADR 001: Provider Pattern Architecture](001-provider-pattern-architecture.md)
-\1-   [ADR 002: Async-First Architecture](002-async-first-architecture.md)
-\1-   [ADR 008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md)
-\1-   [ADR 009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md)
-\1-   [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
-\1-   Existing patterns: `src/infrastructure/events.rs`, `src/infrastructure/di/registry.rs`, `src/application/context.rs`
+-    [ADR 001: Provider Pattern Architecture](001-provider-pattern-architecture.md)
+-    [ADR 002: Async-First Architecture](002-async-first-architecture.md)
+-    [ADR 008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md)
+-    [ADR 009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md)
+-    [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
+-    Existing patterns: `src/infrastructure/events.rs`, `src/infrastructure/di/registry.rs`, `src/application/context.rs`

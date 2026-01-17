@@ -9,8 +9,8 @@
 
 The adapters layer has been split into two crates in v0.1.1:
 
-1. **mcb-providers** - External service integrations (embedding, vector store, cache, language processors)
-2. **mcb-infrastructure** - Null adapters for testing and DI
+1.  **mcb-providers** - External service integrations (embedding, vector store, cache, language processors)
+2.  **mcb-infrastructure** - Null adapters for testing and DI
 
 ## Migration Mapping
 

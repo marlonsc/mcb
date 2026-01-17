@@ -2,20 +2,20 @@
 
 ## Status
 
-**In Progress**(v0.1.0 → v0.2.0)
+**In Progress** (v0.1.1 → v0.2.0)
 
-> Backend infrastructure implemented in `src/server/admin/`:
+> Backend infrastructure implemented in `crates/mcb-server/src/admin/`:
 >
 > -   AdminService trait with 32 methods (traits.rs)
 > -   AdminServiceImpl with full implementation (implementation.rs, helpers/)
 > -   REST API routes for config, health, backup, maintenance (routes.rs, handlers.rs)
 > -   JWT authentication integration
-> -**New (v0.2.0)**:
+> - **New (v0.2.0)**:
 >     -   Unified port architecture (MCP + Admin + Metrics on port 3001)
 >     -   Subsystem control via EventBus (6 new AdminService methods)
 >     -   Configuration persistence with explicit save pattern
 >     -   14 SystemEvent variants for inter-subsystem communication
-> -**Pending**: Frontend HTML/CSS/JS refinement, WebSocket real-time updates
+> - **Pending**: Frontend HTML/CSS/JS refinement, WebSocket real-time updates
 
 ## Context
 
@@ -28,18 +28,18 @@ MCP Context Browser provides comprehensive system monitoring and metrics through
 
 This creates barriers for non-technical users and makes it difficult to:
 
-\1-   Monitor system health in real-time
-\1-   Configure providers dynamically
-\1-   Manage indexes and search operations
-\1-   Troubleshoot issues without technical expertise
-\1-   Visualize performance metrics and trends
+-    Monitor system health in real-time
+-    Configure providers dynamically
+-    Manage indexes and search operations
+-    Troubleshoot issues without technical expertise
+-    Visualize performance metrics and trends
 
 The existing infrastructure already includes:
 
-\1-   HTTP metrics server on port 3001
-\1-   Comprehensive metrics collection
-\1-   Provider management capabilities
-\1-   Configuration system
+-    HTTP metrics server on port 3001
+-    Comprehensive metrics collection
+-    Provider management capabilities
+-    Configuration system
 
 ## Decision
 
@@ -54,67 +54,67 @@ We will implement an integrated web administration interface that runs on the sa
 
 The interface will be implemented using:
 
-\1-  **Backend**: Extend existing Axum HTTP server with new REST endpoints
-\1-  **Frontend**: Modern HTML/CSS/JavaScript with responsive design
-\1-  **Authentication**: JWT-based authentication for admin access
-\1-  **Real-time**: WebSocket support for live metrics updates
-\1-  **API**: RESTful JSON API for all administrative operations
+-   **Backend**: Extend existing Axum HTTP server with new REST endpoints
+-   **Frontend**: Modern HTML/CSS/JavaScript with responsive design
+-   **Authentication**: JWT-based authentication for admin access
+-   **Real-time**: WebSocket support for live metrics updates
+-   **API**: RESTful JSON API for all administrative operations
 
 ## Consequences
 
 ### Positive Consequences
 
-\1-  **Improved User Experience**: Non-technical users can manage the system through a web interface
-\1-  **Real-time Monitoring**: Live dashboards with interactive charts and alerts
-\1-  **Operational Efficiency**: Faster troubleshooting and configuration changes
-\1-  **Security Enhancement**: Authentication and authorization for administrative access
-\1-  **Unified Interface**: Single port (3001) serves both metrics API and admin interface
-\1-  **Extensibility**: Foundation for future web-based features
-\1-  **Developer Productivity**: Easier testing and development workflows
+-   **Improved User Experience**: Non-technical users can manage the system through a web interface
+-   **Real-time Monitoring**: Live dashboards with interactive charts and alerts
+-   **Operational Efficiency**: Faster troubleshooting and configuration changes
+-   **Security Enhancement**: Authentication and authorization for administrative access
+-   **Unified Interface**: Single port (3001) serves both metrics API and admin interface
+-   **Extensibility**: Foundation for future web-based features
+-   **Developer Productivity**: Easier testing and development workflows
 
 ### Negative Consequences
 
-\1-  **Increased Complexity**: Additional code and maintenance overhead
-\1-  **Security Surface**: Web interface introduces new attack vectors
-\1-  **Resource Usage**: Additional memory/CPU for serving static assets and WebSocket connections
-\1-  **Deployment Complexity**: Web assets need to be bundled and served
-\1-  **Browser Dependencies**: Interface requires modern browsers with JavaScript enabled
+-   **Increased Complexity**: Additional code and maintenance overhead
+-   **Security Surface**: Web interface introduces new attack vectors
+-   **Resource Usage**: Additional memory/CPU for serving static assets and WebSocket connections
+-   **Deployment Complexity**: Web assets need to be bundled and served
+-   **Browser Dependencies**: Interface requires modern browsers with JavaScript enabled
 
 ## Alternatives Considered
 
 ### Alternative 1: Separate Administration Service
 
-\1-  **Description**: Create a standalone web service on a different port for administration
-\1-  **Pros**: Clean separation, independent scaling, dedicated resources
-\1-  **Cons**: Additional port management, deployment complexity, CORS issues
-\1-  **Rejection Reason**: Increases operational complexity and goes against the requirement to run on the same port
+-   **Description**: Create a standalone web service on a different port for administration
+-   **Pros**: Clean separation, independent scaling, dedicated resources
+-   **Cons**: Additional port management, deployment complexity, CORS issues
+-   **Rejection Reason**: Increases operational complexity and goes against the requirement to run on the same port
 
 ### Alternative 2: Terminal-based Administration Only
 
-\1-  **Description**: Enhance CLI tools and keep all administration terminal-based
-\1-  **Pros**: Lower resource usage, simpler architecture, no web dependencies
-\1-  **Cons**: Poor user experience, limited visualization, accessibility issues
-\1-  **Rejection Reason**: Doesn't address the need for web-based administration and visualization
+-   **Description**: Enhance CLI tools and keep all administration terminal-based
+-   **Pros**: Lower resource usage, simpler architecture, no web dependencies
+-   **Cons**: Poor user experience, limited visualization, accessibility issues
+-   **Rejection Reason**: Doesn't address the need for web-based administration and visualization
 
 ### Alternative 3: Third-party Admin Interface
 
-\1-  **Description**: Use existing tools like Grafana or custom dashboards
-\1-  **Pros**: Leverage existing ecosystems, faster implementation
-\1-  **Cons**: External dependencies, integration complexity, customization limitations
-\1-  **Rejection Reason**: Doesn't provide integrated experience and requires additional setup
+-   **Description**: Use existing tools like Grafana or custom dashboards
+-   **Pros**: Leverage existing ecosystems, faster implementation
+-   **Cons**: External dependencies, integration complexity, customization limitations
+-   **Rejection Reason**: Doesn't provide integrated experience and requires additional setup
 
 ### Alternative 4: Desktop Application
 
-\1-  **Description**: Native desktop app for administration
-\1-  **Pros**: Better performance, native integrations
-\1-  **Cons**: Platform-specific development, deployment challenges, additional maintenance
-\1-  **Rejection Reason**: Web-based requirement and cross-platform needs
+-   **Description**: Native desktop app for administration
+-   **Pros**: Better performance, native integrations
+-   **Cons**: Platform-specific development, deployment challenges, additional maintenance
+-   **Rejection Reason**: Web-based requirement and cross-platform needs
 
 ## Implementation Notes
 
 ### Architecture Integration
 
-The web interface will extend the existing `MetricsApiServer` in `src/infrastructure/metrics/http_server.rs`:
+The web interface will extend the existing `MetricsApiServer` in `crates/mcb-infrastructure/src/metrics/http_server.rs`:
 
 ```rust
 pub struct AdminApiServer {
@@ -128,22 +128,22 @@ pub struct AdminApiServer {
 
 New REST endpoints under `/admin/` prefix:
 
-\1-   `GET /admin/` - Serve main admin interface
-\1-   `GET /admin/config` - Get current configuration
-\1-   `PUT /admin/config` - Update configuration
-\1-   `GET /admin/providers` - List providers
-\1-   `POST /admin/providers` - Add provider
-\1-   `DELETE /admin/providers/{id}` - Remove provider
-\1-   `GET /admin/indexes` - List indexes
-\1-   `POST /admin/indexes/{id}/clear` - Clear index
-\1-   `POST /admin/auth/login` - Authentication
+-    `GET /admin/` - Serve main admin interface
+-    `GET /admin/config` - Get current configuration
+-    `PUT /admin/config` - Update configuration
+-    `GET /admin/providers` - List providers
+-    `POST /admin/providers` - Add provider
+-    `DELETE /admin/providers/{id}` - Remove provider
+-    `GET /admin/indexes` - List indexes
+-    `POST /admin/indexes/{id}/clear` - Clear index
+-    `POST /admin/auth/login` - Authentication
 
 ### Frontend Structure
 
-Templates are**embedded at compile time**using `include_str!` macro, making the binary self-contained:
+Templates are **embedded at compile time** using `include_str!` macro, making the binary self-contained:
 
 ```
-src/server/admin/web/templates/
+crates/mcb-server/src/admin/web/templates/
 ├── base.html              # Master layout (Tailwind + Alpine.js + HTMX)
 ├── dashboard.html         # Main dashboard
 ├── providers.html         # Provider management
@@ -163,22 +163,22 @@ src/server/admin/web/templates/
     └── config_diff.html
 ```
 
-**Key implementation detail**: All templates are loaded via `include_str!` in `src/server/admin/web.rs` and added to Tera at compile time, eliminating runtime filesystem access.
+**Key implementation detail**: All templates are loaded via `include_str!` in `crates/mcb-server/src/admin/web.rs` and added to Tera at compile time, eliminating runtime filesystem access.
 
 ### Security Implementation
 
-\1-   JWT authentication with configurable expiration
-\1-   Role-based access (admin vs read-only)
-\1-   CSRF protection for state-changing operations
-\1-   HTTPS enforcement in production
-\1-   Rate limiting for API endpoints
+-    JWT authentication with configurable expiration
+-    Role-based access (admin vs read-only)
+-    CSRF protection for state-changing operations
+-    HTTPS enforcement in production
+-    Rate limiting for API endpoints
 
 ### Testing Strategy
 
-\1-   Unit tests for new API endpoints
-\1-   Integration tests for web interface functionality
-\1-   E2E tests for critical admin workflows
-\1-   Security testing for authentication and authorization
+-    Unit tests for new API endpoints
+-    Integration tests for web interface functionality
+-    E2E tests for critical admin workflows
+-    Security testing for authentication and authorization
 
 ### Migration Path
 
@@ -190,17 +190,17 @@ src/server/admin/web/templates/
 
 ### Performance Considerations
 
-\1-   Static asset compression and caching
-\1-   Lazy loading for JavaScript modules
-\1-   Efficient WebSocket connection management
-\1-   Minimal impact on existing metrics endpoints
+-    Static asset compression and caching
+-    Lazy loading for JavaScript modules
+-    Efficient WebSocket connection management
+-    Minimal impact on existing metrics endpoints
 
 ### Rollback Plan
 
-\1-   Feature flag to disable admin interface
-\1-   Separate admin routes can be easily removed
-\1-   Database migrations (if any) are reversible
-\1-   Static assets can be excluded from builds
+-    Feature flag to disable admin interface
+-    Separate admin routes can be easily removed
+-    Database migrations (if any) are reversible
+-    Static assets can be excluded from builds
 
 ## Unified Port Architecture (v0.2.0)
 
@@ -242,14 +242,14 @@ Port 3001 (Unified: Admin + Metrics + MCP HTTP)
 The `MetricsApiServer` now accepts multiple routers via builder pattern:
 
 ```rust
-// src/infrastructure/metrics/http_server.rs
+// crates/mcb-infrastructure/src/metrics/http_server.rs
 impl MetricsApiServer {
     pub fn with_external_router(mut self, router: Router) -> Self;
     pub fn with_mcp_router(mut self, router: Router) -> Self;
 }
 ```
 
-Initialization in `src/server/init.rs`:
+Initialization in `crates/mcb-server/src/init.rs`:
 
 ```rust
 let metrics_server = MetricsApiServer::with_limits(...)
@@ -259,10 +259,10 @@ let metrics_server = MetricsApiServer::with_limits(...)
 
 ### Benefits
 
-\1-   Single port simplifies firewall/proxy configuration
-\1-   Eliminates port 3002 (previously MCP HTTP transport)
-\1-   Unified graceful shutdown via ConnectionTracker
-\1-   Consistent rate limiting and CORS across all endpoints
+-    Single port simplifies firewall/proxy configuration
+-    Eliminates port 3002 (previously MCP HTTP transport)
+-    Unified graceful shutdown via ConnectionTracker
+-    Consistent rate limiting and CORS across all endpoints
 
 ## Subsystem Control Protocol (v0.2.0)
 
@@ -270,7 +270,7 @@ Web admin can monitor and control all MCP subsystems via EventBus.
 
 ### New SystemEvent Variants
 
-Added to `src/infrastructure/events.rs`:
+Added to `crates/mcb-infrastructure/src/events/mod.rs`:
 
 ```rust
 pub enum SystemEvent {
@@ -288,7 +288,7 @@ pub enum SystemEvent {
 
 ### New AdminService Methods
 
-Added to `src/server/admin/service/traits.rs`:
+Added to `crates/mcb-server/src/admin/service/traits.rs`:
 
 ```rust
 #[async_trait]
@@ -307,7 +307,7 @@ pub trait AdminService: Interface + Send + Sync {
 
 ### Subsystem Types
 
-Defined in `src/server/admin/service/types.rs`:
+Defined in `crates/mcb-server/src/admin/service/types.rs`:
 
 ```rust
 pub enum SubsystemType {
@@ -355,9 +355,9 @@ Implements explicit save pattern for configuration changes.
 
 ### Runtime vs Persisted Configuration
 
-\1-  **Runtime**: Changes via `update_configuration()` apply immediately (ArcSwap)
-\1-  **Persisted**: `persist_configuration()` writes to `~/.context/config.toml`
-\1-  **Diff**: `get_config_diff()` shows runtime vs file differences
+-   **Runtime**: Changes via `update_configuration()` apply immediately (ArcSwap)
+-   **Persisted**: `persist_configuration()` writes to `~/.context/config.toml`
+-   **Diff**: `get_config_diff()` shows runtime vs file differences
 
 ### API Flow
 
@@ -386,7 +386,7 @@ pub async fn get_config_diff(&self) -> Result<ConfigDiff, AdminError>;
 
 ## Template Organization
 
-Templates located in `src/server/admin/web/templates/`:
+Templates located in `crates/mcb-server/src/admin/web/templates/`:
 
 ```
 templates/
@@ -407,10 +407,18 @@ templates/
     └── indexes_list.html
 ```
 
+## Related ADRs
+
+-   [ADR-001: Provider Pattern Architecture](001-provider-pattern-architecture.md) - Provider pattern for admin services
+-   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async handlers
+-   [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Code quality standards
+-   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git integration for admin UI
+-   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for admin services
+-   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+
 ## References
 
-\1-   [ADR 006: Code Audit and Improvements](006-code-audit-and-improvements.md)
-\1-   [ADR 008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md)
-\1-   [Existing HTTP Server](../../src/infrastructure/metrics/http_server.rs)
-\1-   [Server Initialization](../../src/server/init.rs)
-\1-   [Admin Service](../../src/server/admin/service/)
+-   [Existing HTTP Server](../../crates/mcb-infrastructure/src/metrics/http_server.rs)
+-   [Server Initialization](../../crates/mcb-server/src/init.rs)
+-   [Admin Service](../../crates/mcb-server/src/admin/service/)
+-   [Shaku Documentation](https://docs.rs/shaku)

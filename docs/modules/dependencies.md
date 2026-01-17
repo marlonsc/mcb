@@ -79,10 +79,10 @@ digraph {
 
 ## Key Dependency Patterns
 
-1. **Domain is dependency-free**: `mcb-domain` has no internal crate dependencies
-2. **Clean Architecture layers**: Dependencies flow inward toward domain
-3. **Facade aggregates**: `mcb` crate re-exports from all other crates
-4. **Validation is isolated**: `mcb-validate` only depends on domain
+1.  **Domain is dependency-free**: `mcb-domain` has no internal crate dependencies
+2.  **Clean Architecture layers**: Dependencies flow inward toward domain
+3.  **Facade aggregates**: `mcb` crate re-exports from all other crates
+4.  **Validation is isolated**: `mcb-validate` only depends on domain
 
 ## External Dependencies
 

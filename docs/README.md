@@ -14,42 +14,42 @@ This documentation is organized into focused sections for different audiences an
 
 User-facing documentation for installation, usage, and features.
 
-\1-  **[README](user-guide/README.md)**- Project overview, quick start, and basic usage
-\1-  **[Features](user-guide/README.md#current-capabilities-v001)**- Current capabilities and features
+-   **[README](user-guide/README.md)**- Project overview, quick start, and basic usage
+-   **[Features](user-guide/README.md#current-capabilities-v001)**- Current capabilities and features
 
 ### 🛠️ Developer Guide
 
 Documentation for developers contributing to the project.
 
-\1-  **[Contributing](developer/CONTRIBUTING.md)**- Development setup and contribution guidelines
-\1-  **[Roadmap](developer/ROADMAP.md)**- Development roadmap and milestones
+-   **[Contributing](developer/CONTRIBUTING.md)**- Development setup and contribution guidelines
+-   **[Roadmap](developer/ROADMAP.md)**- Development roadmap and milestones
 
 ### 🏗️ Architecture
 
 Technical architecture documentation following C4 model principles.
 
-\1-  **[Architecture Overview](architecture/ARCHITECTURE.md)**- Comprehensive system architecture
-\1-  **[Architecture Diagrams](diagrams/)**- Visual architecture documentation
-\1-   [System Context](diagrams/generated/index.html) - System boundaries and external systems
-\1-   [Container Architecture](diagrams/generated/index.html) - Service and deployment architecture
-\1-  **[Architecture Decision Records](adr/)**- Historical architectural decisions
-\1-   [ADR 001: Provider Pattern](adr/001-provider-pattern-architecture.md)
-\1-   [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
-\1-   [ADR 003: C4 Model Documentation](adr/003-c4-model-documentation.md)
-\1-   [ADR 004: Multi-Provider Strategy](adr/004-multi-provider-strategy.md)
+-   **[Architecture Overview](architecture/ARCHITECTURE.md)**- Comprehensive system architecture
+-   **[Architecture Diagrams](diagrams/)**- Visual architecture documentation
+-    [System Context](diagrams/generated/index.html) - System boundaries and external systems
+-    [Container Architecture](diagrams/generated/index.html) - Service and deployment architecture
+-   **[Architecture Decision Records](adr/)**- Historical architectural decisions
+-    [ADR 001: Provider Pattern](adr/001-provider-pattern-architecture.md)
+-    [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
+-    [ADR 003: C4 Model Documentation](adr/003-c4-model-documentation.md)
+-    [ADR 004: Multi-Provider Strategy](adr/004-multi-provider-strategy.md)
 
 ### 🚀 Operations
 
 Operational documentation for deployment and maintenance.
 
-\1-  **[Deployment Guide](operations/DEPLOYMENT.md)**- Deployment configurations and environments
-\1-  **[Changelog](operations/CHANGELOG.md)**- Version history and release notes
+-   **[Deployment Guide](operations/DEPLOYMENT.md)**- Deployment configurations and environments
+-   **[Changelog](operations/CHANGELOG.md)**- Version history and release notes
 
 ### 📋 Templates
 
 Documentation templates and standards.
 
-\1-  **[ADR Template](templates/adr-template.md)**- Template for new Architecture Decision Records
+-   **[ADR Template](templates/adr-template.md)**- Template for new Architecture Decision Records
 
 ## 🔧 Documentation Automation
 
@@ -93,10 +93,10 @@ make docs-ci
 
 ## 📈 Documentation Metrics
 
-\1-  **Coverage**: All major components documented
-\1-  **Freshness**: Updated automatically with code changes
-\1-  **Accessibility**: Clear navigation and search-friendly
-\1-  **Maintainability**: Automated generation reduces maintenance burden
+-   **Coverage**: All major components documented
+-   **Freshness**: Updated automatically with code changes
+-   **Accessibility**: Clear navigation and search-friendly
+-   **Maintainability**: Automated generation reduces maintenance burden
 
 ## 🤝 Contributing to Documentation
 
@@ -110,10 +110,10 @@ When contributing to documentation:
 
 ## 🔍 Finding Information
 
-\1-  **New to the project?**Start with [User Guide](user-guide/README.md)
-\1-  **Want to contribute?**Read [Contributing Guide](developer/CONTRIBUTING.md)
-\1-  **Need technical details?**See [Architecture Overview](architecture/ARCHITECTURE.md)
-\1-  **Planning deployment?**Check [Deployment Guide](operations/DEPLOYMENT.md)
+-   **New to the project?**Start with [User Guide](user-guide/README.md)
+-   **Want to contribute?**Read [Contributing Guide](developer/CONTRIBUTING.md)
+-   **Need technical details?**See [Architecture Overview](architecture/ARCHITECTURE.md)
+-   **Planning deployment?**Check [Deployment Guide](operations/DEPLOYMENT.md)
 
 ---
 

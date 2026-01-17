@@ -17,12 +17,12 @@ The MCP Context Browser project has established a SOLID technical foundation wit
 
 Current documentation challenges:
 
-\1-  **Manual Maintenance Burden**: 4-6 hours/week spent on documentation updates
-\1-  **Inconsistent Quality**: Custom scripts lead to formatting and link validation issues
-\1-  **Limited Automation**: Only 30% of documentation is auto-generated from source code
-\1-  **ADR Compliance Gaps**: No automated validation that architectural decisions match implementation
-\1-  **Poor Developer Experience**: Documentation updates lag days behind code changes
-\1-  **Missing Interactive Features**: Static documentation doesn't provide modern search and navigation
+-   **Manual Maintenance Burden**: 4-6 hours/week spent on documentation updates
+-   **Inconsistent Quality**: Custom scripts lead to formatting and link validation issues
+-   **Limited Automation**: Only 30% of documentation is auto-generated from source code
+-   **ADR Compliance Gaps**: No automated validation that architectural decisions match implementation
+-   **Poor Developer Experience**: Documentation updates lag days behind code changes
+-   **Missing Interactive Features**: Static documentation doesn't provide modern search and navigation
 
 The project needs to evolve from a technically excellent codebase to a**documentation excellence reference**that demonstrates industry-leading practices for automated, self-documenting systems.
 
@@ -32,12 +32,12 @@ Implement "Documentation Excellence" as a focused initiative establishing the pr
 
 Key architectural decisions:
 
-\1-  **Professional ADR Management**: Adopt `adrs` tool for complete ADR lifecycle management
-\1-  **Self-Documenting Codebase**: Achieve 95%+ auto-generated documentation using `cargo-modules` and `rust-code-analysis`
-\1-  **Interactive Documentation Platform**: Implement `mdbook`-based professional documentation with search and cross-references
-\1-  **ADR Compliance Validation**: Build automated framework ensuring architectural decisions match implementation
-\1-  **Quality Assurance Gates**: Establish automated validation preventing documentation drift using `cargo-spellcheck` and `cargo-deadlinks`
-\1-  **CI/CD Integration**: Quality gates blocking merges with documentation issues
+-   **Professional ADR Management**: Adopt `adrs` tool for complete ADR lifecycle management
+-   **Self-Documenting Codebase**: Achieve 95%+ auto-generated documentation using `cargo-modules` and `rust-code-analysis`
+-   **Interactive Documentation Platform**: Implement `mdbook`-based professional documentation with search and cross-references
+-   **ADR Compliance Validation**: Build automated framework ensuring architectural decisions match implementation
+-   **Quality Assurance Gates**: Establish automated validation preventing documentation drift using `cargo-spellcheck` and `cargo-deadlinks`
+-   **CI/CD Integration**: Quality gates blocking merges with documentation issues
 
 ## Consequences
 
@@ -45,51 +45,51 @@ Documentation excellence creates a self-sustaining, high-quality project but req
 
 ### Positive Consequences
 
-\1-  **80% Reduction in Manual Work**: Documentation maintenance burden drops from 4-6 hours/week to <30 min/week
-\1-  **Industry Leadership**: Establishes project as reference for documentation excellence in Rust
-\1-  **Improved Developer Experience**: Instant documentation updates and professional interactive platform
-\1-  **Quality Assurance**: Automated validation prevents technical debt accumulation
-\1-  **Attracts Contributors**: High-quality documentation lowers contribution barriers
-\1-  **Self-Sustaining**: Documentation automatically stays synchronized with code changes
-\1-  **Reference Implementation**: Serves as learning resource for documentation best practices
+-   **80% Reduction in Manual Work**: Documentation maintenance burden drops from 4-6 hours/week to <30 min/week
+-   **Industry Leadership**: Establishes project as reference for documentation excellence in Rust
+-   **Improved Developer Experience**: Instant documentation updates and professional interactive platform
+-   **Quality Assurance**: Automated validation prevents technical debt accumulation
+-   **Attracts Contributors**: High-quality documentation lowers contribution barriers
+-   **Self-Sustaining**: Documentation automatically stays synchronized with code changes
+-   **Reference Implementation**: Serves as learning resource for documentation best practices
 
 ### Negative Consequences
 
-\1-  **Initial Development Overhead**: 2-3 weeks focused on documentation infrastructure
-\1-  **Tool Ecosystem Complexity**: Multiple tools requiring integration and maintenance
-\1-  **Learning Curve**: Team adaptation to new documentation workflows
-\1-  **Dependency Management**: Additional tooling dependencies to maintain
-\1-  **Quality Standards Pressure**: Higher expectations for documentation quality
+-   **Initial Development Overhead**: 2-3 weeks focused on documentation infrastructure
+-   **Tool Ecosystem Complexity**: Multiple tools requiring integration and maintenance
+-   **Learning Curve**: Team adaptation to new documentation workflows
+-   **Dependency Management**: Additional tooling dependencies to maintain
+-   **Quality Standards Pressure**: Higher expectations for documentation quality
 
 ## Alternatives Considered
 
 ### Alternative 1: Incremental Documentation Improvements
 
-\1-  **Description**: Continue with current documentation approach, making gradual improvements
-\1-  **Pros**: Lower immediate effort, maintains current momentum
-\1-  **Cons**: Misses opportunity to establish industry leadership, continues manual maintenance burden
-\1-  **Rejection Reason**: Doesn't address fundamental issues and limits project's potential as reference implementation
+-   **Description**: Continue with current documentation approach, making gradual improvements
+-   **Pros**: Lower immediate effort, maintains current momentum
+-   **Cons**: Misses opportunity to establish industry leadership, continues manual maintenance burden
+-   **Rejection Reason**: Doesn't address fundamental issues and limits project's potential as reference implementation
 
 ### Alternative 2: Documentation as Separate Project
 
-\1-  **Description**: Create documentation tooling as standalone project or fork existing tools
-\1-  **Pros**: Could benefit broader ecosystem, separate maintenance concerns
-\1-  **Cons**: Scattered focus, delays core project improvements, harder to integrate tightly
-\1-  **Rejection Reason**: Documentation excellence should be demonstrated through the project itself
+-   **Description**: Create documentation tooling as standalone project or fork existing tools
+-   **Pros**: Could benefit broader ecosystem, separate maintenance concerns
+-   **Cons**: Scattered focus, delays core project improvements, harder to integrate tightly
+-   **Rejection Reason**: Documentation excellence should be demonstrated through the project itself
 
 ### Alternative 3: Minimal Automation Only
 
-\1-  **Description**: Focus only on basic auto-generation without comprehensive tooling ecosystem
-\1-  **Pros**: Simpler implementation, less complexity
-\1-  **Cons**: Misses interactive features and quality assurance opportunities
-\1-  **Rejection Reason**: Doesn't achieve the "excellence" standard needed for industry reference
+-   **Description**: Focus only on basic auto-generation without comprehensive tooling ecosystem
+-   **Pros**: Simpler implementation, less complexity
+-   **Cons**: Misses interactive features and quality assurance opportunities
+-   **Rejection Reason**: Doesn't achieve the "excellence" standard needed for industry reference
 
 ### Alternative 4: Commercial Documentation Tools
 
-\1-  **Description**: Adopt commercial documentation platforms (README, Stoplight, etc.)
-\1-  **Pros**: Professional features, support, and maintenance handled externally
-\1-  **Cons**: Vendor lock-in, ongoing costs, less control over automation
-\1-  **Rejection Reason**: Open-source project should demonstrate excellence using open-source tools
+-   **Description**: Adopt commercial documentation platforms (README, Stoplight, etc.)
+-   **Pros**: Professional features, support, and maintenance handled externally
+-   **Cons**: Vendor lock-in, ongoing costs, less control over automation
+-   **Rejection Reason**: Open-source project should demonstrate excellence using open-source tools
 
 ## Implementation Notes
 
@@ -146,14 +146,14 @@ jobs:
   docs-quality:
     runs-on: ubuntu-latest
     steps:
-\1-   uses: actions/checkout@v4
-\1-   name: ADR Compliance Check
+-    uses: actions/checkout@v4
+-    name: ADR Compliance Check
         run: cargo run --bin adr-validator
-\1-   name: Spell Check
+-    name: Spell Check
         run: cargo spellcheck
-\1-   name: Link Validation
+-    name: Link Validation
         run: cargo deadlinks
-\1-   name: Documentation Generation
+-    name: Documentation Generation
         run: make docs-auto
 ```
 
@@ -179,16 +179,22 @@ pub struct DocumentationMetrics {
 
 ### Risk Mitigation
 
-\1-  **Tool Compatibility**: Comprehensive integration testing before rollout
-\1-  **Migration Safety**: Dual validation during transition period
-\1-  **Quality Standards**: Gradual quality improvement with monitoring
-\1-  **Team Training**: Documentation and training for new workflows
+-   **Tool Compatibility**: Comprehensive integration testing before rollout
+-   **Migration Safety**: Dual validation during transition period
+-   **Quality Standards**: Gradual quality improvement with monitoring
+-   **Team Training**: Documentation and training for new workflows
+
+## Related ADRs
+
+-   [ADR-003: C4 Model Documentation](003-c4-model-documentation.md) - Architecture visualization
+-   [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Code quality standards
+-   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI documentation patterns
+-   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate documentation
 
 ## References
 
-\1-   [Documentation Automation Plan (v0.1.0)](../archive/2025-01-07-documentation-automation-improvement.md)
-\1-   [ADR Tools (`adrs`)](https://github.com/joshrotenberg/adrs)
-\1-   [`cargo-modules` Documentation](https://github.com/regexident/cargo-modules)
-\1-   [`mdbook` Documentation](https://rust-lang.github.io/mdbook/)
-\1-   [Mozilla `rust-code-analysis`](https://github.com/mozilla/rust-code-analysis)
-\1-   [C4 Model Documentation (ADR 003)](003-c4-model-documentation.md)
+-   [Documentation Automation Plan (v0.1.0)](../archive/2025-01-07-documentation-automation-improvement.md)
+-   [ADR Tools (`adrs`)](https://github.com/joshrotenberg/adrs)
+-   [`cargo-modules` Documentation](https://github.com/regexident/cargo-modules)
+-   [`mdbook` Documentation](https://rust-lang.github.io/mdbook/)
+-   [Mozilla `rust-code-analysis`](https://github.com/mozilla/rust-code-analysis)

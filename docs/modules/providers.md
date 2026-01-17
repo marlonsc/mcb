@@ -73,10 +73,10 @@ AST-based code chunking for 12 programming languages.
 
 | Language | Parser | Status |
 |----------|--------|--------|
-| Rust | tree-sitter-rust | Production |
+| Rust | tree-sitter-Rust | Production |
 | Python | tree-sitter-python | Production |
-| JavaScript | tree-sitter-javascript | Production |
-| TypeScript | tree-sitter-typescript | Production |
+| JavaScript | tree-sitter-JavaScript | Production |
+| TypeScript | tree-sitter-TypeScript | Production |
 | Go | tree-sitter-go | Production |
 | Java | tree-sitter-java | Production |
 | C | tree-sitter-c | Production |

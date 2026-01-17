@@ -18,20 +18,20 @@ MCP Context Browser v0.1.0 provides semantic code search but lacks session-level
 
 **Current problems:**
 
-\1-   No persistence of tool observations across sessions
-\1-   No session summaries or decision tracking
-\1-   No context injection for session continuity
-\1-   No semantic search over past work
-\1-   Token waste re-discovering solved problems
-\1-   No ROI metrics on context discovery
+-    No persistence of tool observations across sessions
+-    No session summaries or decision tracking
+-    No context injection for session continuity
+-    No semantic search over past work
+-    Token waste re-discovering solved problems
+-    No ROI metrics on context discovery
 
 **User demand:**
 
-\1-   Developers need cross-session memory (like Claude-mem provides)
-\1-   Need to recall past decisions and rationale
-\1-   Need semantic search over session history
-\1-   Need progressive disclosure (index → context → details)
-\1-   Need token-efficient context injection
+-    Developers need cross-session memory (like Claude-mem provides)
+-    Need to recall past decisions and rationale
+-    Need semantic search over session history
+-    Need progressive disclosure (index → context → details)
+-    Need token-efficient context injection
 
 **Reference implementation**: Claude-mem v8.5.2 demonstrates these features work well in practice with TypeScript + SQLite + Chroma architecture.
 
@@ -75,39 +75,39 @@ Claude Code Session
 
 ### Positive
 
-\1-  **Context preservation**: Past decisions, fixes, and discoveries survive sessions
-\1-  **Token efficiency**: 10x savings via 3-layer progressive disclosure
-\1-  **Unified platform**: Single MCP server for code search + session memory
-\1-  **Infrastructure reuse**: Leverages existing vector stores, hybrid search
-\1-  **Git integration**: Memory entries tagged with git context (ADR-008)
-\1-  **Admin UI**: Session dashboard in web interface (ADR-007)
+-   **Context preservation**: Past decisions, fixes, and discoveries survive sessions
+-   **Token efficiency**: 10x savings via 3-layer progressive disclosure
+-   **Unified platform**: Single MCP server for code search + session memory
+-   **Infrastructure reuse**: Leverages existing vector stores, hybrid search
+-   **Git integration**: Memory entries tagged with git context (ADR-008)
+-   **Admin UI**: Session dashboard in web interface (ADR-007)
 
 ### Negative
 
-\1-  **Complexity**: Adds ~15 new files, ~3000 LOC
-\1-  **Storage growth**: Per-session observations increase disk usage
-\1-  **Hook dependency**: Requires external hook setup for full functionality
-\1-  **Compression model**: Needs configured embedding provider
+-   **Complexity**: Adds ~15 new files, ~3000 LOC
+-   **Storage growth**: Per-session observations increase disk usage
+-   **Hook dependency**: Requires external hook setup for full functionality
+-   **Compression model**: Needs configured embedding provider
 
 ## Alternatives Considered
 
 ### Alternative 1: Use Claude-mem directly as plugin
 
-\1-  **Pros**: Proven, feature-complete
-\1-  **Cons**: Separate service, no integration with code search
-\1-  **Rejected**: Missed opportunity for unified platform
+-   **Pros**: Proven, feature-complete
+-   **Cons**: Separate service, no integration with code search
+-   **Rejected**: Missed opportunity for unified platform
 
 ### Alternative 2: SQLite-only storage (like Claude-mem)
 
-\1-  **Pros**: Simpler, proven approach
-\1-  **Cons**: Duplicates existing vector infrastructure
-\1-  **Rejected**: Leverage existing providers
+-   **Pros**: Simpler, proven approach
+-   **Cons**: Duplicates existing vector infrastructure
+-   **Rejected**: Leverage existing providers
 
 ### Alternative 3: Defer to v0.3.0
 
-\1-  **Pros**: Focus v0.2.0 on git only
-\1-  **Cons**: Delays high-value feature
-\1-  **Rejected**: Memory complements git context well
+-   **Pros**: Focus v0.2.0 on git only
+-   **Cons**: Delays high-value feature
+-   **Rejected**: Memory complements git context well
 
 ## Implementation Notes
 
@@ -1331,9 +1331,9 @@ let git_metadata = if let Some(git_provider) = &self.git_provider {
 
 ## References
 
-\1-   [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
-\1-   [ADR 001: Provider Pattern Architecture](001-provider-pattern-architecture.md)
-\1-   [ADR 002: Async-First Architecture](002-async-first-architecture.md)
-\1-   [ADR 004: Multi-Provider Strategy](004-multi-provider-strategy.md)
-\1-   [ADR 007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md)
-\1-   [ADR 008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md)
+-    [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
+-    [ADR 001: Provider Pattern Architecture](001-provider-pattern-architecture.md)
+-    [ADR 002: Async-First Architecture](002-async-first-architecture.md)
+-    [ADR 004: Multi-Provider Strategy](004-multi-provider-strategy.md)
+-    [ADR 007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md)
+-    [ADR 008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md)

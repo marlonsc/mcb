@@ -2,11 +2,25 @@
 
 ## Status
 
-**Implemented**(v0.1.0)
+**Implemented** (v0.1.1)
 
-> C4 model documentation structure in place with 3 PlantUML diagrams in `docs/diagrams/`:
-> system-context.puml, container-architecture.puml, C4-template.puml.
-> Structured Markdown documentation with ADR-driven architecture decisions.
+> C4 model documentation structure reflects the Clean Architecture seven-crate workspace:
+>
+> **Diagram Artifacts** (`docs/diagrams/`):
+>
+> -   `system-context.puml` - System boundaries with AI providers and vector stores
+> -   `container-architecture.puml` - Seven-crate workspace organization
+> -   `C4-template.puml` - Template for new diagrams
+>
+> **Crate-Level Components** (Level 3):
+>
+> -   `mcb-domain` - Core entities, ports (traits), value objects
+> -   `mcb-application` - Use cases, services, domain orchestration
+> -   `mcb-providers` - Provider implementations (embedding, vector_store, language)
+> -   `mcb-infrastructure` - DI modules, configuration, cross-cutting concerns
+> -   `mcb-server` - MCP protocol handlers, admin API
+> -   `mcb-validate` - Architecture validation tooling
+> -   `mcb` - Public API facade
 
 ## Context
 
@@ -14,11 +28,11 @@ The MCP Context Browser is a complex system with multiple architectural layers, 
 
 Current documentation challenges:
 
-\1-   Architecture documentation was inconsistent and incomplete
-\1-   Different audiences needed different levels of detail
-\1-   Visual diagrams were missing or outdated
-\1-   No standardized approach to documenting architectural decisions
-\1-   Difficulty communicating system complexity to stakeholders
+-    Architecture documentation was inconsistent and incomplete
+-    Different audiences needed different levels of detail
+-    Visual diagrams were missing or outdated
+-    No standardized approach to documenting architectural decisions
+-    Difficulty communicating system complexity to stakeholders
 
 The team needed a structured approach to architecture documentation that would scale with the project and provide clear communication channels.
 
@@ -28,13 +42,13 @@ Adopt the C4 model for architecture documentation, using PlantUML for diagram ge
 
 Implementation approach:
 
-\1-  **Context Diagrams**: System-level overview for non-technical stakeholders
-\1-  **Container Diagrams**: High-level technical overview for technical stakeholders
-\1-  **Component Diagrams**: Detailed design for developers
-\1-  **Code Diagrams**: Implementation-level detail for maintainers
-\1-   PlantUML for consistent, version-controlled diagram generation
-\1-   Structured Markdown documentation with clear navigation
-\1-   Automated diagram validation and generation
+-   **Context Diagrams**: System-level overview for non-technical stakeholders
+-   **Container Diagrams**: High-level technical overview for technical stakeholders
+-   **Component Diagrams**: Detailed design for developers
+-   **Code Diagrams**: Implementation-level detail for maintainers
+-    PlantUML for consistent, version-controlled diagram generation
+-    Structured Markdown documentation with clear navigation
+-    Automated diagram validation and generation
 
 ## Consequences
 
@@ -42,50 +56,50 @@ C4 model provides excellent structure and scalability but requires discipline in
 
 ### Positive Consequences
 
-\1-  **Clear Structure**: Four well-defined levels of architectural detail
-\1-  **Audience-Specific**: Different views for different stakeholders
-\1-  **Consistency**: Standardized notation and format
-\1-  **Maintainability**: Modular documentation that can evolve
-\1-  **Tooling Support**: Rich ecosystem of tools and integrations
-\1-  **Communication**: Better understanding across technical and non-technical teams
+-   **Clear Structure**: Four well-defined levels of architectural detail
+-   **Audience-Specific**: Different views for different stakeholders
+-   **Consistency**: Standardized notation and format
+-   **Maintainability**: Modular documentation that can evolve
+-   **Tooling Support**: Rich ecosystem of tools and integrations
+-   **Communication**: Better understanding across technical and non-technical teams
 
 ### Negative Consequences
 
-\1-  **Documentation Overhead**: Multiple diagrams and documents to maintain
-\1-  **Learning Curve**: Team needs to learn C4 notation and concepts
-\1-  **Maintenance Burden**: Diagrams can become outdated if not maintained
-\1-  **Tool Complexity**: PlantUML syntax has learning curve
-\1-  **Scope Management**: Need to decide what belongs at each level
+-   **Documentation Overhead**: Multiple diagrams and documents to maintain
+-   **Learning Curve**: Team needs to learn C4 notation and concepts
+-   **Maintenance Burden**: Diagrams can become outdated if not maintained
+-   **Tool Complexity**: PlantUML syntax has learning curve
+-   **Scope Management**: Need to decide what belongs at each level
 
 ## Alternatives Considered
 
 ### Alternative 1: Free-Form Documentation
 
-\1-  **Description**: Custom documentation structure without formal methodology
-\1-  **Pros**: Flexible, no learning curve, quick to start
-\1-  **Cons**: Inconsistent, hard to navigate, doesn't scale
-\1-  **Rejection Reason**: Leads to poor documentation quality and maintenance issues
+-   **Description**: Custom documentation structure without formal methodology
+-   **Pros**: Flexible, no learning curve, quick to start
+-   **Cons**: Inconsistent, hard to navigate, doesn't scale
+-   **Rejection Reason**: Leads to poor documentation quality and maintenance issues
 
 ### Alternative 2: UML Only
 
-\1-  **Description**: Traditional UML diagrams for all architectural views
-\1-  **Pros**: Formal notation, detailed modeling capabilities
-\1-  **Cons**: Too technical for non-technical audiences, complex to maintain
-\1-  **Rejection Reason**: Overkill for our needs and doesn't serve diverse audiences well
+-   **Description**: Traditional UML diagrams for all architectural views
+-   **Pros**: Formal notation, detailed modeling capabilities
+-   **Cons**: Too technical for non-technical audiences, complex to maintain
+-   **Rejection Reason**: Overkill for our needs and doesn't serve diverse audiences well
 
 ### Alternative 3: Arc42 Template
 
-\1-  **Description**: Comprehensive architecture documentation template
-\1-  **Pros**: Very thorough, covers all aspects, proven methodology
-\1-  **Cons**: Too heavyweight, would take too long to implement fully
-\1-  **Rejection Reason**: Overkill for current team size and project stage
+-   **Description**: Comprehensive architecture documentation template
+-   **Pros**: Very thorough, covers all aspects, proven methodology
+-   **Cons**: Too heavyweight, would take too long to implement fully
+-   **Rejection Reason**: Overkill for current team size and project stage
 
 ### Alternative 4: 4+1 Architectural View Model
 
-\1-  **Description**: Rational Unified Process architectural views
-\1-  **Pros**: Formal methodology, comprehensive coverage
-\1-  **Cons**: Complex to understand and maintain, academic focus
-\1-  **Rejection Reason**: Too complex for practical use in agile development
+-   **Description**: Rational Unified Process architectural views
+-   **Pros**: Formal methodology, comprehensive coverage
+-   **Cons**: Complex to understand and maintain, academic focus
+-   **Rejection Reason**: Too complex for practical use in agile development
 
 ## Implementation Notes
 
@@ -100,31 +114,58 @@ Content: System boundaries, users, external systems
 Notation: Simple boxes and arrows
 ```
 
-#### Level 2: Container Architecture
+#### Level 2: Container Architecture (Cargo Workspace)
 
 ```text
-Purpose: Show high-level technology choices
+Purpose: Show the seven-crate Clean Architecture organization
 Audience: Technical stakeholders
-Content: Containers, technologies, communication patterns
-Notation: Containers with technology labels
+Content: Crate boundaries, dependencies, technology choices
+Notation: Crates with layer annotations
+
+Current Containers:
+┌─────────────────────────────────────────────────────────┐
+│                     mcb-server                          │  Layer 5: Protocol
+│                  (MCP Protocol, Admin)                  │
+├─────────────────────────────────────────────────────────┤
+│                  mcb-infrastructure                     │  Layer 4: Infrastructure
+│              (DI, Config, Cross-cutting)                │
+├──────────────────┬──────────────────────────────────────┤
+│  mcb-application │        mcb-providers                 │  Layers 2-3
+│   (Use Cases)    │    (Provider Implementations)        │
+├──────────────────┴──────────────────────────────────────┤
+│                      mcb-domain                         │  Layer 1: Domain
+│               (Ports, Entities, Value Objects)          │
+└─────────────────────────────────────────────────────────┘
 ```
 
-#### Level 3: Component Architecture
+#### Level 3: Component Architecture (Crate Internals)
 
 ```text
-Purpose: Show component design and responsibilities
+Purpose: Show component design within each crate
 Audience: Developers and architects
-Content: Components, interfaces, data flows
-Notation: Detailed component relationships
+Content: Modules, port traits, adapter implementations
+Notation: Shaku modules, port/adapter relationships
+
+Example (mcb-infrastructure components):
+-   di/modules/       → Shaku module definitions
+-   di/factory/       → Provider factories
+-   config/           → Configuration management
+-   adapters/         → Null adapters for testing
 ```
 
-#### Level 4: Code Architecture
+#### Level 4: Code Architecture (Port/Adapter Patterns)
 
 ```text
-Purpose: Show implementation details
+Purpose: Show Shaku DI patterns and port implementations
 Audience: Developers maintaining code
-Content: Classes, interfaces, implementation patterns
-Notation: UML class diagrams, sequence diagrams
+Content: Trait definitions, Component derives, interface bindings
+Notation: Rust trait/impl relationships
+
+Example:
+  EmbeddingProvider (port trait in mcb-domain)
+    ├── NullEmbeddingProvider (mcb-providers) - testing
+    ├── OllamaEmbeddingProvider (mcb-providers) - local
+    └── OpenAIEmbeddingProvider (mcb-providers) - cloud
 ```
 
 ### PlantUML Integration
@@ -152,6 +193,8 @@ clean-docs:
 
 #### Diagram Template Structure
 
+**System Context Diagram:**
+
 ```plantuml
 @startuml System Context
 !include <C4/C4_Container>
@@ -163,12 +206,38 @@ System(mcp, "MCP Context Browser", "Provides semantic code search using vector e
 
 System_Ext(codebase, "Code Repository", "Git repositories with source code")
 System_Ext(ai_api, "AI Provider", "OpenAI, Ollama, etc.")
-System_Ext(vector_db, "Vector Database", "Milvus, Pinecone, etc.")
+System_Ext(vector_db, "Vector Database", "Milvus, In-Memory, etc.")
 
 Rel(user, mcp, "Queries code using natural language")
 Rel(mcp, codebase, "Indexes and searches code")
 Rel(mcp, ai_api, "Generates embeddings")
 Rel(mcp, vector_db, "Stores and retrieves vectors")
+
+@enduml
+```
+
+**Container Architecture Diagram (Seven-Crate Workspace):**
+
+```plantuml
+@startuml Container Architecture
+!include <C4/C4_Container>
+
+title Container Architecture - MCP Context Browser (v0.1.1)
+
+Container(server, "mcb-server", "Rust/Tokio", "MCP protocol handlers, Admin API")
+Container(infra, "mcb-infrastructure", "Rust/Shaku", "DI modules, config, factories")
+Container(app, "mcb-application", "Rust", "Use cases: Context, Search, Indexing")
+Container(providers, "mcb-providers", "Rust", "Embedding, VectorStore, Language providers")
+Container(domain, "mcb-domain", "Rust", "Ports (traits), Entities, Value Objects")
+Container(validate, "mcb-validate", "Rust", "Architecture validation tooling")
+Container(facade, "mcb", "Rust", "Public API facade and re-exports")
+
+Rel(server, infra, "Uses DI container")
+Rel(server, app, "Calls use cases")
+Rel(infra, app, "Wires services")
+Rel(infra, providers, "Creates providers via factories")
+Rel(app, domain, "Implements business logic")
+Rel(providers, domain, "Implements port traits")
 
 @enduml
 ```
@@ -185,16 +254,16 @@ on:
   push:
     branches: [ main ]
     paths:
-\1-   'docs/**'
-\1-   'src/**'
-\1-   'ARCHITECTURE.md'
+-    'docs/**'
+-    'src/**'
+-    'ARCHITECTURE.md'
 
 jobs:
   validate-diagrams:
     runs-on: ubuntu-latest
     steps:
-\1-   uses: actions/checkout@v3
-\1-   name: Validate PlantUML
+-    uses: actions/checkout@v3
+-    name: Validate PlantUML
         uses: cloudbees/plantuml-github-action@master
         with:
           args: -v -checkmetadata docs/diagrams/*.puml
@@ -202,14 +271,14 @@ jobs:
   build-docs:
     runs-on: ubuntu-latest
     steps:
-\1-   uses: actions/checkout@v3
-\1-   name: Setup Rust
+-    uses: actions/checkout@v3
+-    name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
-\1-   name: Generate Diagrams
+-    name: Generate Diagrams
         run: make diagrams
-\1-   name: Build Documentation
+-    name: Build Documentation
         run: make docs
-\1-   name: Deploy to GitHub Pages
+-    name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -296,32 +365,39 @@ The v0.1.0 release will significantly enhance the C4 model documentation through
 
 #### 🤖 Automated Diagram Generation
 
-\1-  **Code Analysis Integration**: `cargo-modules` and `rust-code-analysis` for automatic component discovery
-\1-  **Dependency Graph Generation**: Interactive dependency graphs from source code analysis
-\1-  **Real-time Updates**: Diagrams automatically updated when code changes
+-   **Code Analysis Integration**: `cargo-modules` and `rust-code-analysis` for automatic component discovery
+-   **Dependency Graph Generation**: Interactive dependency graphs from source code analysis
+-   **Real-time Updates**: Diagrams automatically updated when code changes
 
 #### 📊 Advanced Visualization
 
-\1-  **Interactive Diagrams**: Web-based interactive C4 diagrams with drill-down capabilities
-\1-  **Cross-References**: Links between diagrams, code, and documentation
-\1-  **Search Integration**: Full-text search across all architectural documentation
+-   **Interactive Diagrams**: Web-based interactive C4 diagrams with drill-down capabilities
+-   **Cross-References**: Links between diagrams, code, and documentation
+-   **Search Integration**: Full-text search across all architectural documentation
 
 #### 🔍 Quality Assurance
 
-\1-  **Automated Validation**: ADR compliance checking against architectural diagrams
-\1-  **Consistency Checks**: Automated verification that diagrams match implementation
-\1-  **Change Tracking**: Automated detection of architectural drift
+-   **Automated Validation**: ADR compliance checking against architectural diagrams
+-   **Consistency Checks**: Automated verification that diagrams match implementation
+-   **Change Tracking**: Automated detection of architectural drift
 
 #### 📈 Metrics and Analytics
 
-\1-  **Documentation Coverage**: Automated tracking of architectural documentation completeness
-\1-  **Quality Scoring**: A+ grade standards for architectural documentation
-\1-  **Maintenance Analytics**: Tracking documentation maintenance burden reduction
+-   **Documentation Coverage**: Automated tracking of architectural documentation completeness
+-   **Quality Scoring**: A+ grade standards for architectural documentation
+-   **Maintenance Analytics**: Tracking documentation maintenance burden reduction
+
+## Related ADRs
+
+-   [ADR-001: Provider Pattern Architecture](001-provider-pattern-architecture.md) - Port/adapter pattern documented
+-   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI architecture diagrams
+-   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate organization
 
 ## References
 
-\1-   [C4 Model Website](https://c4model.com/)
-\1-   [PlantUML Documentation](https://plantuml.com/)
-\1-   [Structurizr - C4 Tooling](https://structurizr.com/)
-\1-   [The C4 model for visualising software architecture](https://www.infoq.com/articles/C4-architecture-model/)
-\1-   [Documentation Automation Plan (v0.1.0)](../archive/2025-01-07-documentation-automation-improvement.md)
+-   [C4 Model Website](https://c4model.com/)
+-   [PlantUML Documentation](https://plantuml.com/)
+-   [Structurizr - C4 Tooling](https://structurizr.com/)
+-   [The C4 model for visualising software architecture](https://www.infoq.com/articles/C4-architecture-model/)
+-   [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+-   [Shaku Documentation](https://docs.rs/shaku)

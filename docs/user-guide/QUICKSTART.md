@@ -152,8 +152,8 @@ curl http://localhost:19530/v1/vector/health  # Milvus
 
 ## Next Steps
 
-\1-   [Migration Guide](../migration/FROM_CLAUDE_CONTEXT.md) - If coming from Claude-context
-\1-   [Architecture](../architecture/ARCHITECTURE.md) - Understanding the system
-\1-   [ADR Index](../adr/README.md) - Architectural decisions
-\1-   [Version History](../VERSION_HISTORY.md) - Complete version history
-\1-   [Roadmap](../developer/ROADMAP.md) - Upcoming features including v0.2.0 Git-Aware Indexing
+-    [Migration Guide](../migration/FROM_CLAUDE_CONTEXT.md) - If coming from Claude-context
+-    [Architecture](../architecture/ARCHITECTURE.md) - Understanding the system
+-    [ADR Index](../adr/README.md) - Architectural decisions
+-    [Version History](../VERSION_HISTORY.md) - Complete version history
+-    [Roadmap](../developer/ROADMAP.md) - Upcoming features including v0.2.0 Git-Aware Indexing

@@ -2,145 +2,171 @@
 
 ## Status
 
-**Implemented** (v0.1.0)
+**Implemented** (v0.1.1)
 
-> Fully implemented with 14 domain port traits in `src/domain/ports/`:
+> Fully implemented with Clean Architecture + Shaku DI across 6 crates:
 >
-> **Provider Ports:**
-> - `EmbeddingProvider` - Text-to-vector conversion (6 implementations: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
-> - `VectorStoreProvider` - Vector storage/retrieval (6 implementations: Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
-> - `HybridSearchProvider` - Combined BM25 + semantic search
->
-> **Infrastructure Ports:**
-> - `SyncProvider` - Low-level sync operations
-> - `SnapshotProvider` - Codebase snapshot management
-> - `SyncCoordinator` - File synchronization with debouncing
-> - `EventPublisher` - Domain event publishing
-> - `CodeChunker` - AST-based code chunking
->
-> **Repository Ports:**
-> - `ChunkRepository` - Code chunk persistence
-> - `SearchRepository` - Search operations
->
-> **Service Ports:**
-> - `ContextServiceInterface` - High-level code intelligence
-> - `SearchServiceInterface` - Semantic search
-> - `IndexingServiceInterface` - Codebase indexing
-> - `ChunkingOrchestratorInterface` - Batch chunking coordination
->
+> **Port Traits** (defined in `crates/mcb-domain/src/ports/`):
 > All traits extend `shaku::Interface` for DI compatibility.
+>
+> -   **Provider Ports** (`crates/mcb-domain/src/ports/providers/`):
+>     -   `EmbeddingProvider` - Text-to-vector conversion (6 implementations)
+>     -   `VectorStoreProvider` - Vector storage/retrieval (6 implementations)
+>     -   `CacheProvider` - Caching abstraction
+>     -   `CryptoProvider` - Encryption/hashing
+>     -   `LanguageChunkingProvider` - AST-based code chunking (12 languages)
+>
+> -   **Infrastructure Ports** (`crates/mcb-domain/src/ports/infrastructure/`):
+>     -   `SyncProvider` - Low-level sync operations
+>     -   `SnapshotProvider` - Codebase snapshot management
+>     -   `EventPublisher` - Domain event publishing
+>
+> -   **Admin Ports** (`crates/mcb-domain/src/ports/admin.rs`):
+>     -   `PerformanceMetrics` - Performance monitoring
+>     -   `IndexingOperations` - Indexing management
+>
+> **Provider Implementations** (in `crates/mcb-providers/src/`):
+>
+> -   Embedding: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null
+> -   Vector Store: Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null
+> -   Cache: Moka, Redis, Null
+> -   Language: Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin
 
 ## Context
 
-The MCP Context Browser needs to support multiple AI providers (OpenAI, Anthropic, Ollama) and vector databases (Milvus, Pinecone, Qdrant) without creating tight coupling between the core business logic and external service implementations. The system must be extensible to add new providers without modifying existing code, and support testing with mock implementations.
+The MCP Context Browser needs to support multiple AI providers (OpenAI, Ollama, VoyageAI) and vector databases (Milvus, In-Memory, Filesystem) without creating tight coupling between the core business logic and external service implementations. The system must be extensible to add new providers without modifying existing code, and support testing with mock implementations.
 
-Current requirements:
+Following Clean Architecture principles, we need:
 
-\1-   Support for multiple embedding providers with different APIs
-\1-   Multiple vector storage backends with varying capabilities
-\1-   Ability to switch providers at runtime
-\1-   Testability with mock implementations
-\1-   Clean separation between business logic and external dependencies
+1.  Port traits (interfaces) defined in the domain layer, independent of implementations
+2.  Provider implementations (adapters) in a separate providers crate
+3.  Dependency injection for wiring implementations to ports at runtime
+4.  Null implementations for testing without external services
 
 ## Decision
 
-Implement a provider pattern using Rust traits for abstraction, with a registry system for provider management and dependency injection for service instantiation.
+Implement a provider pattern using Rust traits as port interfaces, with Shaku for dependency injection and a two-layer DI strategy (see [ADR-012](012-di-strategy-two-layer-approach.md)).
 
 Key architectural elements:
 
-\1-   `EmbeddingProvider` trait for text-to-vector conversion
-\1-   `VectorStoreProvider` trait for vector storage and retrieval
-\1-   `ProviderRegistry` for runtime provider registration and lookup
-\1-   `ServiceProvider` factory for dependency injection
-\1-   Trait-based dependency injection in service constructors
+1.  **Port traits** extending `shaku::Interface` in `mcb-domain`
+2.  **Provider implementations** with `#[derive(Component)]` in `mcb-providers`
+3.  **Shaku modules** for compile-time DI composition in `mcb-infrastructure`
+4.  **Runtime factories** for configuration-driven provider selection
 
-## Consequences
+## Implementation
 
-The provider pattern provides excellent separation of concerns and extensibility but introduces some complexity in provider management.
+### Port Trait Definition (mcb-domain)
 
-### Positive Consequences
-
-\1-  **High Extensibility**: New providers can be added without modifying existing code
-\1-  **Clean Architecture**: Clear separation between business logic and external services
-\1-  **Testability**: Easy mocking and testing through dependency injection
-\1-  **Runtime Flexibility**: Providers can be switched without recompilation
-\1-  **Type Safety**: Rust traits ensure compile-time interface compliance
-
-### Negative Consequences
-
-\1-  **Increased Complexity**: Additional abstraction layers and indirection
-\1-  **Provider Management**: Need for registry and factory patterns
-\1-  **Trait Bounds**: Generic constraints can complicate service implementations
-\1-  **Testing Overhead**: More setup required for unit testing with mocks
-
-## Alternatives Considered
-
-### Alternative 1: Direct Provider Usage
-
-\1-  **Description**: Services directly instantiate and use specific provider implementations
-\1-  **Pros**: Simpler code, fewer abstractions
-\1-  **Cons**: Tight coupling, difficult to test, hard to add new providers
-\1-  **Rejection Reason**: Violates SOLID principles and makes the system inflexible
-
-### Alternative 2: Configuration-Based Factory
-
-\1-  **Description**: Simple factory pattern with configuration strings to select providers
-\1-  **Pros**: Less complex than full registry system
-\1-  **Cons**: Limited runtime flexibility, still requires recompilation for new providers
-\1-  **Rejection Reason**: Doesn't provide the same level of testability and runtime flexibility
-
-### Alternative 3: Plugin Architecture
-
-\1-  **Description**: Dynamic loading of provider implementations as plugins
-\1-  **Pros**: True runtime extensibility without recompilation
-\1-  **Cons**: Significant complexity, stability concerns, platform limitations
-\1-  **Rejection Reason**: Overkill for current requirements, adds operational complexity
-
-## Implementation Notes
-
-### Core Traits
+Ports are defined as traits extending `shaku::Interface` for DI compatibility:
 
 ```rust
+// crates/mcb-domain/src/ports/providers/embedding.rs
+use shaku::Interface;
+use async_trait::async_trait;
+
 #[async_trait]
-pub trait EmbeddingProvider: Send + Sync {
+pub trait EmbeddingProvider: Interface + Send + Sync {
     async fn embed(&self, text: &str) -> Result<Embedding>;
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>>;
     fn dimensions(&self) -> usize;
     fn provider_name(&self) -> &str;
 }
+```
+
+Important: All port traits must:
+
+-   Extend `shaku::Interface` (which implies `'static + Send + Sync` with thread_safe feature)
+-   Be object-safe (no generic methods, no `Self` returns)
+-   Use `async_trait` for async methods
+
+### Provider Implementation (mcb-providers)
+
+Providers implement ports and are registered as Shaku components:
+
+```rust
+// crates/mcb-providers/src/embedding/openai.rs
+use shaku::Component;
+use mcb_domain::ports::providers::EmbeddingProvider;
+
+#[derive(Component)]
+#[shaku(interface = EmbeddingProvider)]
+pub struct OpenAIEmbeddingProvider {
+    #[shaku(default)]
+    api_key: String,
+    #[shaku(default)]
+    model: String,
+    #[shaku(default)]
+    client: reqwest::Client,
+}
 
 #[async_trait]
-pub trait VectorStoreProvider: Send + Sync {
-    async fn store(&self, collection: &str, embeddings: &[Embedding]) -> Result<()>;
-    async fn search(&self, collection: &str, query: &[f32], limit: usize) -> Result<Vec<(f32, Embedding)>>;
-    async fn clear(&self, collection: &str) -> Result<()>;
-    fn provider_name(&self) -> &str;
+impl EmbeddingProvider for OpenAIEmbeddingProvider {
+    async fn embed(&self, text: &str) -> Result<Embedding> {
+        // OpenAI API call implementation
+    }
+
+    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
+        // Batch embedding implementation
+    }
+
+    fn dimensions(&self) -> usize { 1536 }
+    fn provider_name(&self) -> &str { "openai" }
 }
 ```
 
-### Registry Implementation
+### Null Provider for Testing
 
 ```rust
-pub struct ProviderRegistry {
-    embedding_providers: HashMap<String, Arc<dyn EmbeddingProvider>>,
-    vector_store_providers: HashMap<String, Arc<dyn VectorStoreProvider>>,
-}
+// crates/mcb-providers/src/embedding/null.rs
+use shaku::Component;
+use mcb_domain::ports::providers::EmbeddingProvider;
 
-impl ProviderRegistry {
-    pub fn register_embedding_provider(&mut self, name: &str, provider: Arc<dyn EmbeddingProvider>) {
-        self.embedding_providers.insert(name.to_string(), provider);
+#[derive(Component)]
+#[shaku(interface = EmbeddingProvider)]
+pub struct NullEmbeddingProvider;
+
+#[async_trait]
+impl EmbeddingProvider for NullEmbeddingProvider {
+    async fn embed(&self, _text: &str) -> Result<Embedding> {
+        Ok(Embedding::zeros(128))
     }
 
-    pub fn get_embedding_provider(&self, name: &str) -> Result<Arc<dyn EmbeddingProvider>> {
-        self.embedding_providers.get(name).cloned()
-            .ok_or_else(|| Error::not_found(format!("Embedding provider: {}", name)))
+    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
+        Ok(texts.iter().map(|_| Embedding::zeros(128)).collect())
+    }
+
+    fn dimensions(&self) -> usize { 128 }
+    fn provider_name(&self) -> &str { "null" }
+}
+```
+
+### DI Module Registration (mcb-infrastructure)
+
+Shaku modules register components for DI:
+
+```rust
+// crates/mcb-infrastructure/src/di/modules/embedding_module.rs
+use shaku::module;
+use mcb_providers::embedding::NullEmbeddingProvider;
+
+module! {
+    pub EmbeddingModuleImpl {
+        components = [NullEmbeddingProvider],
+        providers = []
     }
 }
 ```
 
-### Service Constructor Injection
+### Service Layer with Injected Dependencies (mcb-application)
+
+Use cases receive dependencies via constructor injection:
 
 ```rust
+// crates/mcb-application/src/services/context.rs
+use std::sync::Arc;
+use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
+
 pub struct ContextService {
     embedding_provider: Arc<dyn EmbeddingProvider>,
     vector_store_provider: Arc<dyn VectorStoreProvider>,
@@ -153,7 +179,36 @@ impl ContextService {
     ) -> Self {
         Self { embedding_provider, vector_store_provider }
     }
+
+    pub async fn embed_and_store(&self, collection: &str, texts: &[String]) -> Result<()> {
+        let embeddings = self.embedding_provider.embed_batch(texts).await?;
+        self.vector_store_provider.store(collection, &embeddings).await?;
+        Ok(())
+    }
 }
+```
+
+### Two-Layer DI Strategy
+
+The system uses a two-layer approach for DI (see [ADR-012](012-di-strategy-two-layer-approach.md)):
+
+**Layer 1: Shaku Modules** - Provide null implementations as defaults for testing:
+
+```rust
+// Testing with Shaku modules (null providers)
+let container = DiContainerBuilder::new().build().await?;
+// Uses NullEmbeddingProvider, NullVectorStoreProvider, etc.
+```
+
+**Layer 2: Runtime Factories** - Create production providers from configuration:
+
+```rust
+// Production with factories
+let embedding = EmbeddingProviderFactory::create(&config.embedding, None)?;
+let vector_store = VectorStoreProviderFactory::create(&config.vector_store, crypto)?;
+let services = DomainServicesFactory::create_services(
+    cache, crypto, config, embedding, vector_store, chunker
+).await?;
 ```
 
 ### Testing Pattern
@@ -163,23 +218,65 @@ impl ContextService {
 mod tests {
     use super::*;
     use std::sync::Arc;
+    use mcb_providers::embedding::NullEmbeddingProvider;
+    use mcb_providers::vector_store::NullVectorStoreProvider;
 
     #[tokio::test]
-    async fn test_context_service_with_mocks() {
-        let embedding_provider = Arc::new(MockEmbeddingProvider::new());
-        let vector_store_provider = Arc::new(MockVectorStoreProvider::new());
+    async fn test_context_service_with_null_providers() {
+        let embedding_provider = Arc::new(NullEmbeddingProvider);
+        let vector_store_provider = Arc::new(NullVectorStoreProvider);
 
         let service = ContextService::new(embedding_provider, vector_store_provider);
 
-        // Test with injected mocks
-        let result = service.embed_text("test").await;
+        let result = service.embed_and_store("test", &["hello".to_string()]).await;
         assert!(result.is_ok());
     }
 }
 ```
 
+## Consequences
+
+### Positive Consequences
+
+-   **Clean Architecture Compliance**: Strict separation between ports (domain) and adapters (providers)
+-   **High Extensibility**: New providers added in `mcb-providers` without touching domain/application
+-   **Testability**: Null providers enable unit testing without external services
+-   **Type Safety**: Shaku verifies DI wiring at compile time
+-   **Runtime Flexibility**: Factories enable configuration-driven provider selection
+
+### Negative Consequences
+
+-   **Learning Curve**: Developers must understand Shaku macros and Clean Architecture
+-   **Boilerplate**: Each provider needs trait implementation + Component derive
+-   **Two Patterns**: Testing uses Shaku modules, production uses factories
+
+## Crate Structure
+
+```
+crates/
+├── mcb-domain/src/ports/           # Port trait definitions
+│   ├── providers/                   # Provider ports (embedding, vector_store, etc.)
+│   ├── infrastructure/              # Infrastructure ports (sync, snapshot, etc.)
+│   └── admin.rs                     # Admin ports
+├── mcb-providers/src/               # Provider implementations
+│   ├── embedding/                   # 6 embedding providers
+│   ├── vector_store/               # 6 vector store providers
+│   ├── cache/                       # Cache providers
+│   └── language/                    # 12 language processors
+├── mcb-application/src/services/   # Use cases with injected ports
+└── mcb-infrastructure/src/di/      # DI modules and factories
+    ├── modules/                     # Shaku module definitions
+    └── factory/                     # Runtime provider factories
+```
+
+## Related ADRs
+
+-   [ADR-004: Multi-Provider Strategy](004-multi-provider-strategy.md)
+-   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md)
+-   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md)
+
 ## References
 
-\1-   [Provider Pattern](https://en.wikipedia.org/wiki/Provider_model)
-\1-   [Dependency Injection in Rust](https://doc.rust-lang.org/book/ch10-02-traits.html)
-\1-   [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
+-   [Shaku Documentation](https://docs.rs/shaku)
+-   [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+-   [Port and Adapter Pattern](https://en.wikipedia.org/wiki/Hexagonal_architecture_(software))

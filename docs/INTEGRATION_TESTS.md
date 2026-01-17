@@ -128,16 +128,16 @@ docker-compose down -v        # Cleanup
 
 Tests include:
 
-\1-   Provider creation and configuration
-\1-   Set/Get operations
-\1-   Delete operations
-\1-   Namespace clearing
-\1-   Key existence checks
-\1-   TTL expiration
-\1-   Health checks
-\1-   Concurrent access
-\1-   Connection pooling
-\1-   Large payload handling
+-    Provider creation and configuration
+-    Set/Get operations
+-    Delete operations
+-    Namespace clearing
+-    Key existence checks
+-    TTL expiration
+-    Health checks
+-    Concurrent access
+-    Connection pooling
+-    Large payload handling
 
 Run:
 
@@ -151,15 +151,15 @@ cargo test redis_cache_integration -- --nocapture
 
 Tests include:
 
-\1-   Provider creation and configuration
-\1-   Publish/Subscribe operations
-\1-   Multiple subscribers
-\1-   Different event types
-\1-   Concurrent publishing
-\1-   Health checks
-\1-   Message recovery
-\1-   Large payload handling
-\1-   Stream persistence
+-    Provider creation and configuration
+-    Publish/Subscribe operations
+-    Multiple subscribers
+-    Different event types
+-    Concurrent publishing
+-    Health checks
+-    Message recovery
+-    Large payload handling
+-    Stream persistence
 
 Run:
 
@@ -199,15 +199,15 @@ cargo test redis_cache_integration nats_event_bus_integration -- --nocapture
 
 The main Docker Compose file includes:
 
-\1-  **OpenAI-mock**: OpenAI API mock server (port 1080)
-\1-  **Ollama**: Ollama embedding service (port 11434)
-\1-  **Milvus-***: Milvus vector database (port 19530)
-\1-  **test-runner**: Test execution container
+-   **OpenAI-mock**: OpenAI API mock server (port 1080)
+-   **Ollama**: Ollama embedding service (port 11434)
+-   **Milvus-***: Milvus vector database (port 19530)
+-   **test-runner**: Test execution container
 
 The test-runner connects to:
 
-\1-   Docker services via internal network (`mcp-openai-mock:1080`, etc.)
-\1-   Host services via `host.docker.internal:port` (macOS) or `172.17.0.1:port` (Linux)
+-    Docker services via internal network (`mcp-openai-mock:1080`, etc.)
+-    Host services via `host.docker.internal:port` (macOS) or `172.17.0.1:port` (Linux)
 
 **Usage:**
 
@@ -367,9 +367,9 @@ test result: ok. 18 passed; 0 failed; 0 ignored
 
 Typical execution times:
 
-\1-   Redis tests: ~15-20 seconds (including TTL wait)
-\1-   NATS tests: ~25-30 seconds (including persistence wait)
-\1-   Total: ~45-50 seconds
+-    Redis tests: ~15-20 seconds (including TTL wait)
+-    NATS tests: ~25-30 seconds (including persistence wait)
+-    Total: ~45-50 seconds
 
 ## CI/CD Integration
 
@@ -393,7 +393,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-\1-   6379:6379
+-    6379:6379
 
       nats:
         image: nats:latest
@@ -403,13 +403,13 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-\1-   4222:4222
+-    4222:4222
 
     steps:
-\1-   uses: actions/checkout@v3
-\1-   uses: dtolnay/rust-toolchain@stable
+-    uses: actions/checkout@v3
+-    uses: dtolnay/rust-toolchain@stable
 
-\1-   name: Run integration tests
+-    name: Run integration tests
         run: |
           REDIS_URL=redis://127.0.0.1:6379 \
           NATS_URL=nats://127.0.0.1:4222 \
@@ -418,10 +418,10 @@ jobs:
 
 ## Additional Resources
 
-\1-   [Redis Documentation](https://redis.io/documentation)
-\1-   [NATS Documentation](https://docs.nats.io/)
-\1-   [MCP Context Browser Architecture](./architecture/ARCHITECTURE.md)
-\1-   [Provider Pattern Implementation](./adr/005-provider-pattern.md)
+-    [Redis Documentation](https://redis.io/documentation)
+-    [NATS Documentation](https://docs.nats.io/)
+-    [MCP Context Browser Architecture](./architecture/ARCHITECTURE.md)
+-    [Provider Pattern Implementation](./adr/005-provider-pattern.md)
 
 ## Contributing
 

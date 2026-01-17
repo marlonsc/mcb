@@ -289,8 +289,8 @@ impl DocumentationValidator {
                             // Check for example code in trait documentation
                             // Skip DI module traits and port traits - they are interface definitions
                             // that don't need examples (they define contracts for DI injection)
-                            let is_di_or_port_trait = path_str.contains("/di/modules/")
-                                || path_str.contains("/ports/");
+                            let is_di_or_port_trait =
+                                path_str.contains("/di/modules/") || path_str.contains("/ports/");
 
                             if !is_di_or_port_trait {
                                 let doc_section = self.get_doc_comment_section(&lines, line_num);

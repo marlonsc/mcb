@@ -24,7 +24,7 @@ Service implementations that orchestrate domain logic:
 Business logic components:
 
 -   `chunking.rs` - ChunkingOrchestrator: Batch file chunking coordination
--   `search.rs` - Search domain logic and result ranking
+-   `search.rs` - Search domain logic and Result ranking
 
 ### Ports (`ports/`)
 

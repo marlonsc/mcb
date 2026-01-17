@@ -22,10 +22,10 @@ This project follows **Clean Architecture** principles with **Shaku dependency i
 
 ### Clean Architecture Benefits
 
-- **Dependency Inversion**: Business logic doesn't depend on infrastructure
-- **Testability**: Easy mocking with DI and interface-based design
-- **Maintainability**: Clear separation of concerns and responsibilities
-- **Scalability**: Easy to add new providers or change implementations
+-   **Dependency Inversion**: Business logic doesn't depend on infrastructure
+-   **Testability**: Easy mocking with DI and interface-based design
+-   **Maintainability**: Clear separation of concerns and responsibilities
+-   **Scalability**: Easy to add new providers or change implementations
 
 ## Why Switch from Claude-context?
 
@@ -96,8 +96,8 @@ MILVUS_TOKEN=...
 
 ### Prerequisites
 
-- Rust 1.89+ ([install Rust](https://rustup.rs/))
-- (Optional) Milvus vector database for production use
+-   Rust 1.89+ ([install Rust](https://rustup.rs/))
+-   (Optional) Milvus vector database for production use
 
 ### Build from Source
 
@@ -151,10 +151,10 @@ export MILVUS_ADDRESS="http://localhost:19530"
 
 The server provides 4 MCP tools for AI assistants:
 
-1. **`index_codebase`** - Index your codebase for semantic search
-2. **`search_code`** - Perform natural language code search
-3. **`get_indexing_status`** - Check indexing progress and system health
-4. **`clear_index`** - Clear the search index
+1.  **`index_codebase`** - Index your codebase for semantic search
+2.  **`search_code`** - Perform natural language code search
+3.  **`get_indexing_status`** - Check indexing progress and system health
+4.  **`clear_index`** - Clear the search index
 
 ### Claude Desktop Integration
 

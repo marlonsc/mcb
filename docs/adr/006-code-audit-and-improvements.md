@@ -20,10 +20,10 @@
 > -   ✅ **SnapshotProvider consolidation** - Merged duplicate trait definitions
 > -   ✅ **Dead code removal** - Removed unused `hybrid_search_provider` parameter from ContextService
 > -   ✅ **New trait implementations wired:**
->     - `IntelligentChunker` → `CodeChunker`
->     - `EventBus` → `EventPublisher`
->     - `SyncManager` → `SyncCoordinator`
->     - `SnapshotManager` → `SnapshotProvider` (expanded to 4 methods)
+>     -   `IntelligentChunker` → `CodeChunker`
+>     -   `EventBus` → `EventPublisher`
+>     -   `SyncManager` → `SyncCoordinator`
+>     -   `SnapshotManager` → `SnapshotProvider` (expanded to 4 methods)
 > -   ✅ **All traits extend `shaku::Interface`** for DI compatibility
 
 ## Context
@@ -32,21 +32,21 @@ The MCP Context Browser codebase has grown organically and accumulated several a
 
 Key problems identified:
 
-\1-  **Giant structures**: Files with 1000+ lines violating Single Responsibility Principle
-\1-  **Excessive unwrap/expect usage**: 157 occurrences across 28 files causing potential runtime crashes
-\1-  **Tight coupling**: Direct concrete type dependencies instead of trait-based abstractions
-\1-  **Missing input validation**: Lack of robust validation leading to runtime errors
-\1-  **Inadequate error handling**: Generic error types without proper context
-\1-  **Missing design patterns**: No Builder, Strategy, or Repository patterns implemented
-\1-  **Poor testability**: High coupling making unit testing difficult
+-   **Giant structures**: Files with 1000+ lines violating Single Responsibility Principle
+-   **Excessive unwrap/expect usage**: 157 occurrences across 28 files causing potential runtime crashes
+-   **Tight coupling**: Direct concrete type dependencies instead of trait-based abstractions
+-   **Missing input validation**: Lack of robust validation leading to runtime errors
+-   **Inadequate error handling**: Generic error types without proper context
+-   **Missing design patterns**: No Builder, Strategy, or Repository patterns implemented
+-   **Poor testability**: High coupling making unit testing difficult
 
 Current state analysis:
 
-\1-   Total files: 189
-\1-   Total lines: 42,314
-\1-   Files with >1000 lines: 2 (config.rs, server/mod.rs)
-\1-   unwrap/expect count: 157 across 28 files
-\1-   Test coverage: ~60% (estimated)
+-    Total files: 189
+-    Total lines: 42,314
+-    Files with >1000 lines: 2 (config.rs, server/mod.rs)
+-    unwrap/expect count: 157 across 28 files
+-    Test coverage: ~60% (estimated)
 
 ## Decision
 
@@ -69,46 +69,46 @@ These architectural improvements will significantly enhance code quality but req
 
 ### Positive Consequences
 
-\1-  **Maintainability**: Smaller, focused modules easier to understand and modify
-\1-  **Reliability**: Proper error handling eliminates unexpected crashes
-\1-  **Testability**: Dependency injection enables comprehensive unit testing
-\1-  **Extensibility**: Design patterns allow easy addition of new providers/features
-\1-  **Performance**: Better resource management and optimization opportunities
-\1-  **Security**: Input validation prevents malicious or malformed data
-\1-  **Developer Experience**: Clearer APIs and better error messages
-\1-  **Code Quality**: Adherence to Rust best practices and community standards
+-   **Maintainability**: Smaller, focused modules easier to understand and modify
+-   **Reliability**: Proper error handling eliminates unexpected crashes
+-   **Testability**: Dependency injection enables comprehensive unit testing
+-   **Extensibility**: Design patterns allow easy addition of new providers/features
+-   **Performance**: Better resource management and optimization opportunities
+-   **Security**: Input validation prevents malicious or malformed data
+-   **Developer Experience**: Clearer APIs and better error messages
+-   **Code Quality**: Adherence to Rust best practices and community standards
 
 ### Negative Consequences
 
-\1-  **Development Time**: Significant refactoring effort required (6-8 weeks)
-\1-  **Learning Curve**: Team needs to adapt to new patterns and abstractions
-\1-  **Temporary Instability**: Refactoring may introduce bugs during transition
-\1-  **Increased Complexity**: Additional abstraction layers add cognitive overhead
-\1-  **Build Time**: More comprehensive testing increases CI/CD duration
-\1-  **Documentation Updates**: All docs need updating for new architecture
+-   **Development Time**: Significant refactoring effort required (6-8 weeks)
+-   **Learning Curve**: Team needs to adapt to new patterns and abstractions
+-   **Temporary Instability**: Refactoring may introduce bugs during transition
+-   **Increased Complexity**: Additional abstraction layers add cognitive overhead
+-   **Build Time**: More comprehensive testing increases CI/CD duration
+-   **Documentation Updates**: All docs need updating for new architecture
 
 ## Alternatives Considered
 
 ### Alternative 1: Incremental Refactoring
 
-\1-  **Description**: Address anti-patterns gradually over multiple releases
-\1-  **Pros**: Less disruptive, allows feature development in parallel
-\1-  **Cons**: Accumulates more technical debt, inconsistent codebase
-\1-  **Rejection Reason**: Current issues are critical and blocking quality improvements
+-   **Description**: Address anti-patterns gradually over multiple releases
+-   **Pros**: Less disruptive, allows feature development in parallel
+-   **Cons**: Accumulates more technical debt, inconsistent codebase
+-   **Rejection Reason**: Current issues are critical and blocking quality improvements
 
 ### Alternative 2: Complete Rewrite
 
-\1-  **Description**: Rewrite entire codebase with clean architecture from scratch
-\1-  **Pros**: Clean slate, no legacy constraints, modern patterns throughout
-\1-  **Cons**: Extremely high risk, long development time, potential feature loss
-\1-  **Rejection Reason**: Too risky for production system, better to evolve existing code
+-   **Description**: Rewrite entire codebase with clean architecture from scratch
+-   **Pros**: Clean slate, no legacy constraints, modern patterns throughout
+-   **Cons**: Extremely high risk, long development time, potential feature loss
+-   **Rejection Reason**: Too risky for production system, better to evolve existing code
 
 ### Alternative 3: Minimal Fixes Only
 
-\1-  **Description**: Only fix critical unwrap/expect issues, leave architecture as-is
-\1-  **Pros**: Quick implementation, minimal disruption
-\1-  **Cons**: Doesn't address root causes, technical debt continues growing
-\1-  **Rejection Reason**: Doesn't solve systemic architectural problems
+-   **Description**: Only fix critical unwrap/expect issues, leave architecture as-is
+-   **Pros**: Quick implementation, minimal disruption
+-   **Cons**: Doesn't address root causes, technical debt continues growing
+-   **Rejection Reason**: Doesn't solve systemic architectural problems
 
 ## Implementation Notes
 
@@ -218,25 +218,25 @@ mod tests {
 
 **Performance Benchmarks:**
 
-\1-   Establish baseline metrics before changes
-\1-   Monitor compilation time, binary size, runtime performance
-\1-   Set up continuous benchmarking in CI/CD
+-    Establish baseline metrics before changes
+-    Monitor compilation time, binary size, runtime performance
+-    Set up continuous benchmarking in CI/CD
 
 ### Phase 4: Validation and Release (Weeks 7-8)
 
 **Rollback Plan:**
 
-\1-   Feature flags for gradual rollout
-\1-   Database migration rollback scripts
-\1-   Configuration rollback procedures
-\1-   Monitoring alerts for performance regressions
+-    Feature flags for gradual rollout
+-    Database migration rollback scripts
+-    Configuration rollback procedures
+-    Monitoring alerts for performance regressions
 
 **Security Considerations:**
 
-\1-   Input validation prevents injection attacks
-\1-   Proper error handling avoids information leakage
-\1-   Dependency updates for security patches
-\1-   Code review security checklist
+-    Input validation prevents injection attacks
+-    Proper error handling avoids information leakage
+-    Dependency updates for security patches
+-    Code review security checklist
 
 ### Dependencies to Add
 
@@ -285,23 +285,31 @@ The code audit work has been extended to prepare the codebase for multi-domain a
 ### New Domains (to be implemented)
 
 **v0.3.0+**:
-1. **Analysis Domain**: Complexity analysis, technical debt detection, quality metrics
-2. **Quality Domain**: Quality gates, metric aggregation, baseline comparisons
-3. **Git Domain**: Repository operations, commit analysis, context generation
+
+1.  **Analysis Domain**: Complexity analysis, technical debt detection, quality metrics
+2.  **Quality Domain**: Quality gates, metric aggregation, baseline comparisons
+3.  **Git Domain**: Repository operations, commit analysis, context generation
 
 ### Organizational Changes (v0.3.0)
 
-**Domain Refactoring**:
+**Domain Refactoring** (based on current crate structure):
+
 ```
-src/domain/
-├── chunking/         # Existing (moved to libs/tree-sitter-analysis)
-├── search/           # Extract existing search code
-├── analysis/         # NEW (empty in v0.2.0)
-├── quality/          # NEW (empty in v0.2.0)
-└── git/              # NEW (empty in v0.2.0)
+crates/mcb-domain/src/
+├── entities/         # Core domain entities
+├── value_objects/    # Value objects
+├── repositories/     # Repository traits
+├── events/           # Domain events
+└── mod.rs            # Port traits (EmbeddingProvider, VectorStoreProvider, etc.)
+
+crates/mcb-application/src/
+├── use_cases/        # Application use cases
+├── domain_services/  # Domain services
+└── ports/            # Port definitions (providers/, infrastructure/)
 ```
 
 **Workspace Libraries** (shared code):
+
 ```
 libs/
 ├── tree-sitter-analysis/  # Unified AST processing
@@ -309,12 +317,15 @@ libs/
 └── analysis-core/         # Orchestration utilities (v0.3.0)
 ```
 
-**Adapter Integration**:
+**Provider Integration** (current structure):
+
 ```
-src/adapters/
-├── analyzers/   # NEW - Analysis adapters (PMAT → MCB type conversion)
-├── quality/     # NEW - Quality adapters (v0.5.0)
-└── git/         # NEW - Git adapters (v0.5.0)
+crates/mcb-providers/src/
+├── embedding/        # 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
+├── vector_store/     # 3 vector store providers (In-Memory, Encrypted, Null)
+├── language/         # 12 language processors with UniversalLanguageChunkingProvider
+├── cache/            # Cache providers (Moka, Null)
+└── events/           # Event providers
 ```
 
 ### Quality Implications
@@ -330,23 +341,27 @@ The multi-domain architecture maintains and extends the v0.1.0 quality standards
 ### No Functional Changes
 
 v0.2.0 is purely architectural:
+
 -   All existing features work unchanged
 -   No new features added
 -   Zero functional regressions
 -   100% backward compatible
 
+## Related ADRs
+
+-   [ADR-001: Provider Pattern Architecture](001-provider-pattern-architecture.md) - Trait-based DI patterns
+-   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async provider execution
+-   [ADR-003: C4 Model Documentation](003-c4-model-documentation.md) - Architecture visualization
+-   [ADR-004: Multi-Provider Strategy](004-multi-provider-strategy.md) - Provider routing and failover
+-   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI patterns
+-   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate organization
+
 ## References
 
-\1-   [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
-\1-   [SOLID Principles in Rust](https://www.fpcomplete.com/blog/solid-principles-rust/)
-\1-   [Error Handling in Rust](https://blog.yoshuawuyts.com/error-handling-survey/)
-\1-   [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
-\1-   [Builder Pattern](https://refactoring.guru/design-patterns/builder)
-\1-   [Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
-
-Related ADRs:
-
-\1-   [ADR 001: Provider Pattern Architecture](../001-provider-pattern-architecture.md)
-\1-   [ADR 002: Async-First Architecture](../002-async-first-architecture.md)
-\1-   [ADR 003: C4 Model Documentation](../003-c4-model-documentation.md)
-\1-   [ADR 004: Multi-Provider Strategy](../004-multi-provider-strategy.md)
+-   [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
+-   [SOLID Principles in Rust](https://www.fpcomplete.com/blog/solid-principles-rust/)
+-   [Error Handling in Rust](https://blog.yoshuawuyts.com/error-handling-survey/)
+-   [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
+-   [Builder Pattern](https://refactoring.guru/design-patterns/builder)
+-   [Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
+-   [Shaku Documentation](https://docs.rs/shaku)

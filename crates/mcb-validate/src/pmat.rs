@@ -186,7 +186,9 @@ impl Violation for PmatViolation {
                 "Remove unused {} '{}' or mark with #[allow(dead_code)] if intentional.",
                 item_type, name
             )),
-            Self::LowTdgScore { score, threshold, .. } => Some(format!(
+            Self::LowTdgScore {
+                score, threshold, ..
+            } => Some(format!(
                 "Technical debt score {} exceeds threshold {}. \
                  Address code smells, reduce complexity, and improve maintainability.",
                 score, threshold
@@ -194,9 +196,10 @@ impl Violation for PmatViolation {
             Self::PmatUnavailable { .. } => {
                 Some("Install PMAT CLI tool to enable additional analysis.".to_string())
             }
-            Self::PmatError { command, .. } => {
-                Some(format!("Check PMAT installation and run '{}' manually to diagnose.", command))
-            }
+            Self::PmatError { command, .. } => Some(format!(
+                "Check PMAT installation and run '{}' manually to diagnose.",
+                command
+            )),
         }
     }
 }

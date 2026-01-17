@@ -17,19 +17,19 @@ MCP Context Browser v0.1.0 provides efficient semantic code search but lacks ver
 
 **Current problems:**
 
-\1-   Indexes are based on filesystem paths, breaking if directory is moved
-\1-   No distinction between branches - search mixes code from different contexts
-\1-   Change detection based on file mtime, not actual commits
-\1-   No support for monorepos with multiple projects
-\1-   No commit history indexing
-\1-   No change impact analysis
+-    Indexes are based on filesystem paths, breaking if directory is moved
+-    No distinction between branches - search mixes code from different contexts
+-    Change detection based on file mtime, not actual commits
+-    No support for monorepos with multiple projects
+-    No commit history indexing
+-    No change impact analysis
 
 **User demand:**
 
-\1-   Developers work with large monorepos (Uber, Google, Meta patterns)
-\1-   Need to search code in specific branch
-\1-   Need to understand impact of changes before merge
-\1-   Need to index submodules as separate projects
+-    Developers work with large monorepos (Uber, Google, Meta patterns)
+-    Need to search code in specific branch
+-    Need to understand impact of changes before merge
+-    Need to index submodules as separate projects
 
 ## Decision
 
@@ -44,46 +44,46 @@ Implement full git integration in MCP-context-browser v0.2.0 with:
 
 **Library chosen**: git2 (libgit2 bindings)
 
-\1-   Mature, battle-tested, widely used
-\1-   Stable and well-documented API
-\1-   Superior performance to gitoxide (still in development)
+-    Mature, battle-tested, widely used
+-    Stable and well-documented API
+-    Superior performance to gitoxide (still in development)
 
 ## Consequences
 
 ### Positive
 
-\1-  **Portability**: Indexes survive directory moves/renames
-\1-  **Precise context**: Search within specific branch
-\1-  **Monorepo support**: Enterprises can use with large codebases
-\1-  **Impact analysis**: Prevents bugs before merge
-\1-  **History**: Search in previous versions of code
+-   **Portability**: Indexes survive directory moves/renames
+-   **Precise context**: Search within specific branch
+-   **Monorepo support**: Enterprises can use with large codebases
+-   **Impact analysis**: Prevents bugs before merge
+-   **History**: Search in previous versions of code
 
 ### Negative
 
-\1-  **Complexity**: Adds ~12 new files, ~2500 LOC
-\1-  **Dependency**: git2 adds libgit2 as native dependency
-\1-  **Storage**: Per-branch indexes increase disk usage
-\1-  **Performance**: Git operations add latency
+-   **Complexity**: Adds ~12 new files, ~2500 LOC
+-   **Dependency**: git2 adds libgit2 as native dependency
+-   **Storage**: Per-branch indexes increase disk usage
+-   **Performance**: Git operations add latency
 
 ## Alternatives Considered
 
 ### Alternative 1: gitoxide (pure Rust)
 
-\1-  **Pros**: Pure Rust, no native dependency
-\1-  **Cons**: API still unstable, fewer features
-\1-  **Rejected**: Risk of breaking changes
+-   **Pros**: Pure Rust, no native dependency
+-   **Cons**: API still unstable, fewer features
+-   **Rejected**: Risk of breaking changes
 
 ### Alternative 2: Shell commands (git CLI)
 
-\1-  **Pros**: Always available, no dependency
-\1-  **Cons**: Subprocess overhead, output parsing
-\1-  **Rejected**: Poor performance for frequent operations
+-   **Pros**: Always available, no dependency
+-   **Cons**: Subprocess overhead, output parsing
+-   **Rejected**: Poor performance for frequent operations
 
 ### Alternative 3: Keep without git
 
-\1-  **Pros**: Simplicity
-\1-  **Cons**: Does not meet user demand
-\1-  **Rejected**: Essential feature for adoption
+-   **Pros**: Simplicity
+-   **Cons**: Does not meet user demand
+-   **Rejected**: Essential feature for adoption
 
 ## Implementation Notes
 
@@ -617,7 +617,7 @@ git2 = "0.20"
 
 ## References
 
-\1-   [git2 crate](https://docs.rs/git2/)
-\1-   [libgit2](https://libgit2.org/)
-\1-   [ADR 001: Provider Pattern Architecture](001-provider-pattern-architecture.md)
-\1-   [ADR 004: Multi-Provider Strategy](004-multi-provider-strategy.md)
+-    [git2 crate](https://docs.rs/git2/)
+-    [libgit2](https://libgit2.org/)
+-    [ADR 001: Provider Pattern Architecture](001-provider-pattern-architecture.md)
+-    [ADR 004: Multi-Provider Strategy](004-multi-provider-strategy.md)

@@ -17,7 +17,7 @@ Repository pattern implementation for data access abstraction. Provides reposito
 Port definitions for repositories:
 
 -   `ChunkRepository` - Code chunk persistence operations
--   `SearchRepository` - Search result retrieval operations
+-   `SearchRepository` - Search Result retrieval operations
 
 ### Null Implementations (`mcb-infrastructure`)
 

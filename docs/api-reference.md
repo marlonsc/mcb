@@ -4,10 +4,10 @@ This document provides a comprehensive reference of the MCP Context Browser publ
 
 ## Table of Contents
 
-\1-   [Core Types](#core-types)
-\1-   [Providers](#providers)
-\1-   [Services](#services)
-\1-   [Utilities](#utilities)
+-    [Core Types](#core-types)
+-    [Providers](#providers)
+-    [Services](#services)
+-    [Utilities](#utilities)
 
 ## Core Types
 

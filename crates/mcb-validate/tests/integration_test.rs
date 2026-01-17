@@ -234,7 +234,10 @@ fn test_legacy_only() {
         .collect();
 
     if !legacy_quality.is_empty() {
-        println!("\nQuality violations in src.legacy: {}", legacy_quality.len());
+        println!(
+            "\nQuality violations in src.legacy: {}",
+            legacy_quality.len()
+        );
         for v in legacy_quality.iter().take(10) {
             println!("  [{:?}] {}", v.severity(), v);
         }

@@ -16,19 +16,19 @@ MCP Context Browser v0.1.1 introduces unified version management across the enti
 
 ### Major Improvements
 
-\1-  **Unified Version Management**: Centralized version constant using `env!("CARGO_PKG_VERSION")` for consistent version references across the entire codebase
-\1-  **Version Synchronization**: All documentation, templates, and configuration files now reference the same version source
-\1-  **Maintenance Updates**: Various minor improvements and bug fixes
+-   **Unified Version Management**: Centralized version constant using `env!("CARGO_PKG_VERSION")` for consistent version references across the entire codebase
+-   **Version Synchronization**: All documentation, templates, and configuration files now reference the same version source
+-   **Maintenance Updates**: Various minor improvements and bug fixes
 
 ### Technical Changes
 
-\1-  Added `VERSION` constant in `src/lib.rs` using `env!("CARGO_PKG_VERSION")`
-\1-  Updated all version references across documentation and templates
-\1-  Synchronized version information between Cargo.toml and all dependent files
+-   Added `VERSION` constant in `src/lib.rs` using `env!("CARGO_PKG_VERSION")`
+-   Updated all version references across documentation and templates
+-   Synchronized version information between Cargo.toml and all dependent files
 
 ### Breaking Changes
 
-\1-  None - fully backward compatible
+-   None - fully backward compatible
 
 ---
 
@@ -42,12 +42,12 @@ MCP Context Browser v0.1.0 is the first stable release, delivering a complete dr
 
 ### Major Achievements
 
-\1-  **Full Claude-context Compatibility**: Same environment variables, same MCP tools
-\1-  **12 Programming Languages**: Complete AST-based parsing with tree-sitter (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
-\1-  **6 Embedding Providers**: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null
-\1-  **6 Vector Stores**: Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null
-\1-  **790+ Tests**: Comprehensive test suite organized by Clean Architecture layers (100% pass rate)
-\1-  **Clean Architecture**: Complete refactoring with trait-based dependency injection
+-   **Full Claude-context Compatibility**: Same environment variables, same MCP tools
+-   **12 Programming Languages**: Complete AST-based parsing with tree-sitter (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
+-   **6 Embedding Providers**: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null
+-   **6 Vector Stores**: Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null
+-   **790+ Tests**: Comprehensive test suite organized by Clean Architecture layers (100% pass rate)
+-   **Clean Architecture**: Complete refactoring with trait-based dependency injection
 
 ### New Features
 
@@ -75,29 +75,29 @@ Per-language file organization with modular architecture:
 
 Infrastructure for future HTTP/SSE transport support:
 
-\1-   `src/server/transport/mod.rs` - Transport layer abstraction
-\1-   `src/server/transport/http.rs` - HTTP transport implementation
-\1-   `src/server/transport/session.rs` - Session management
-\1-   `src/server/transport/config.rs` - Transport configuration
-\1-   `src/server/transport/versioning.rs` - Protocol versioning
+-    `src/server/transport/mod.rs` - Transport layer abstraction
+-    `src/server/transport/http.rs` - HTTP transport implementation
+-    `src/server/transport/session.rs` - Session management
+-    `src/server/transport/config.rs` - Transport configuration
+-    `src/server/transport/versioning.rs` - Protocol versioning
 
 #### Infrastructure Enhancements
 
-\1-  **Binary Watcher**: `src/infrastructure/binary_watcher.rs` - Auto-respawn on binary update
-\1-  **Connection Tracker**: `src/infrastructure/connection_tracker.rs` - Graceful drain support
-\1-  **Signal Handling**: `src/infrastructure/signals.rs` - SIGHUP, SIGUSR2, SIGTERM handlers
-\1-  **Respawn Mechanism**: `src/infrastructure/respawn.rs` - Zero-downtime binary updates
+-   **Binary Watcher**: `src/infrastructure/binary_watcher.rs` - Auto-respawn on binary update
+-   **Connection Tracker**: `src/infrastructure/connection_tracker.rs` - Graceful drain support
+-   **Signal Handling**: `src/infrastructure/signals.rs` - SIGHUP, SIGUSR2, SIGTERM handlers
+-   **Respawn Mechanism**: `src/infrastructure/respawn.rs` - Zero-downtime binary updates
 
 #### Systemd Integration
 
-\1-   User-level service file: `systemd/mcp-context-browser.service`
-\1-   Installation script: `scripts/install-user-service.sh`
-\1-   Uninstallation script: `scripts/uninstall-user-service.sh`
+-    User-level service file: `systemd/mcp-context-browser.service`
+-    Installation script: `scripts/install-user-service.sh`
+-    Uninstallation script: `scripts/uninstall-user-service.sh`
 
 #### Documentation
 
-\1-   Migration guide: `docs/migration/FROM_CLAUDE_CONTEXT.md`
-\1-   Quick start guide: `docs/user-guide/QUICKSTART.md`
+-    Migration guide: `docs/migration/FROM_CLAUDE_CONTEXT.md`
+-    Quick start guide: `docs/user-guide/QUICKSTART.md`
 
 ### Technical Metrics
 
@@ -112,7 +112,7 @@ Infrastructure for future HTTP/SSE transport support:
 
 ### Breaking Changes from v0.1.0
 
-\1-   None - fully backward compatible
+-    None - fully backward compatible
 
 ### Migration from Claude-context
 
@@ -130,33 +130,33 @@ See [Migration Guide](migration/FROM_CLAUDE_CONTEXT.md) for detailed instruction
 
 ### Objectives
 
-\1-  **95%+ Auto-generated Documentation**: Self-documenting codebase
-\1-  **Professional ADR Management**: Automated architectural decision validation
-\1-  **Interactive Documentation**: mdbook-based platform with search
-\1-  **Zero Manual Maintenance**: Documentation that stays current automatically
+-   **95%+ Auto-generated Documentation**: Self-documenting codebase
+-   **Professional ADR Management**: Automated architectural decision validation
+-   **Interactive Documentation**: mdbook-based platform with search
+-   **Zero Manual Maintenance**: Documentation that stays current automatically
 
 ### Features
 
 #### Self-Documenting Codebase
 
-\1-   Comprehensive API documentation generation
-\1-   Automated dependency analysis and visualization
-\1-   Code example extraction and validation
-\1-   Quality gates preventing documentation drift
+-    Comprehensive API documentation generation
+-    Automated dependency analysis and visualization
+-    Code example extraction and validation
+-    Quality gates preventing documentation drift
 
 #### ADR Automation
 
-\1-   ADR lifecycle management with validation
-\1-   Compliance checking against architectural decisions
-\1-   Automated ADR generation from code changes
-\1-   Integration with CI/CD quality gates
+-    ADR lifecycle management with validation
+-    Compliance checking against architectural decisions
+-    Automated ADR generation from code changes
+-    Integration with CI/CD quality gates
 
 #### Interactive Platform
 
-\1-   mdbook-based documentation with search
-\1-   Interactive code examples and tutorials
-\1-   API reference with live examples
-\1-   Community contribution workflows
+-    mdbook-based documentation with search
+-    Interactive code examples and tutorials
+-    API reference with live examples
+-    Community contribution workflows
 
 ---
 
@@ -172,51 +172,51 @@ MCP Context Browser v0.0.3 delivers a fully production-ready MCP server with ent
 
 #### Enterprise Security (100% Complete)
 
-\1-  **Rate Limiting**: Distributed rate limiting with Redis backend
-\1-  **Authentication**: JWT-based authentication with RBAC
-\1-  **Encryption**: AES-256 encryption for sensitive data at rest
-\1-  **Audit Logging**: SOC 2 compliant audit logging for all operations
-\1-  **Access Control**: Fine-grained access control with role-based permissions
+-   **Rate Limiting**: Distributed rate limiting with Redis backend
+-   **Authentication**: JWT-based authentication with RBAC
+-   **Encryption**: AES-256 encryption for sensitive data at rest
+-   **Audit Logging**: SOC 2 compliant audit logging for all operations
+-   **Access Control**: Fine-grained access control with role-based permissions
 
 #### Performance and Scalability (100% Complete)
 
-\1-  **HTTP Connection Pooling**: Optimized external API connections
-\1-  **Distributed Caching**: Redis-based caching with TTL management
-\1-  **Resource Limits**: Comprehensive resource management and quotas
-\1-  **Database Pooling**: PostgreSQL connection pooling for metadata
-\1-  **Kubernetes Auto-scaling**: HPA with custom metrics and rolling updates
+-   **HTTP Connection Pooling**: Optimized external API connections
+-   **Distributed Caching**: Redis-based caching with TTL management
+-   **Resource Limits**: Comprehensive resource management and quotas
+-   **Database Pooling**: PostgreSQL connection pooling for metadata
+-   **Kubernetes Auto-scaling**: HPA with custom metrics and rolling updates
 
 #### Advanced Architecture (100% Complete)
 
-\1-  **Dependency Injection**: Advanced provider registry with health monitoring
-\1-  **Multi-Provider Routing**: Intelligent routing with circuit breakers and failover
-\1-  **Hybrid Search**: BM25 + semantic embeddings for superior relevance
-\1-  **Incremental Sync**: Background synchronization with change detection
-\1-  **Professional Indexing**: AST-based chunking with custom extensions
+-   **Dependency Injection**: Advanced provider registry with health monitoring
+-   **Multi-Provider Routing**: Intelligent routing with circuit breakers and failover
+-   **Hybrid Search**: BM25 + semantic embeddings for superior relevance
+-   **Incremental Sync**: Background synchronization with change detection
+-   **Professional Indexing**: AST-based chunking with custom extensions
 
 #### Production Monitoring (100% Complete)
 
-\1-  **Metrics Collection**: Comprehensive performance and system metrics
-\1-  **Health Checks**: Advanced health monitoring for all components
-\1-  **Prometheus Integration**: Production-ready metrics export
-\1-  **Structured Logging**: Correlation IDs and contextual logging
-\1-  **Grafana Dashboards**: Professional monitoring visualizations
+-   **Metrics Collection**: Comprehensive performance and system metrics
+-   **Health Checks**: Advanced health monitoring for all components
+-   **Prometheus Integration**: Production-ready metrics export
+-   **Structured Logging**: Correlation IDs and contextual logging
+-   **Grafana Dashboards**: Professional monitoring visualizations
 
 ### Technical Metrics
 
-\1-  **Code Quality**: 214 tests with 100% pass rate
-\1-  **Performance**: Less than 500ms latency with Redis caching
-\1-  **Scalability**: Supports 1000+ req/min with connection pooling
-\1-  **Security**: SOC 2 compliant with full audit logging
-\1-  **Documentation**: Complete technical and deployment guides
+-   **Code Quality**: 214 tests with 100% pass rate
+-   **Performance**: Less than 500ms latency with Redis caching
+-   **Scalability**: Supports 1000+ req/min with connection pooling
+-   **Security**: SOC 2 compliant with full audit logging
+-   **Documentation**: Complete technical and deployment guides
 
 ### Production Deployment
 
-\1-  **Kubernetes Manifests**: Complete production deployment with HPA
-\1-  **Docker Support**: Containerized deployment with multi-stage builds
-\1-  **Configuration Management**: Environment-based configuration
-\1-  **Security Contexts**: Non-root execution with proper permissions
-\1-  **Resource Management**: Optimized resource requests and limits
+-   **Kubernetes Manifests**: Complete production deployment with HPA
+-   **Docker Support**: Containerized deployment with multi-stage builds
+-   **Configuration Management**: Environment-based configuration
+-   **Security Contexts**: Non-root execution with proper permissions
+-   **Resource Management**: Optimized resource requests and limits
 
 ---
 
@@ -232,24 +232,24 @@ Established comprehensive project infrastructure and professional documentation 
 
 #### Documentation Architecture
 
-\1-  **Modular Documentation**: Split README into specialized docs
-\1-  **ADR System**: Architectural Decision Records for all major decisions
-\1-  **Realistic Roadmap**: Achievable milestones with clear timelines
-\1-  **Professional Guides**: CONTRIBUTING.md, DEPLOYMENT.md, ROADMAP.md
+-   **Modular Documentation**: Split README into specialized docs
+-   **ADR System**: Architectural Decision Records for all major decisions
+-   **Realistic Roadmap**: Achievable milestones with clear timelines
+-   **Professional Guides**: CONTRIBUTING.md, DEPLOYMENT.md, ROADMAP.md
 
 #### CI/CD Pipeline
 
-\1-  **GitHub Actions**: Automated testing on push/PR to main/develop
-\1-  **Quality Gates**: Code formatting, linting, security scanning
-\1-  **Multi-stage Builds**: Debug and release verification
-\1-  **Automated Releases**: Streamlined release process
+-   **GitHub Actions**: Automated testing on push/PR to main/develop
+-   **Quality Gates**: Code formatting, linting, security scanning
+-   **Multi-stage Builds**: Debug and release verification
+-   **Automated Releases**: Streamlined release process
 
 #### Development Infrastructure
 
-\1-  **Comprehensive Makefiles**: Build, test, documentation automation
-\1-  **Docker Integration**: Development and testing environments
-\1-  **Testing Frameworks**: Unit, integration, and performance testing
-\1-  **Code Quality Tools**: Formatting, linting, security scanning
+-   **Comprehensive Makefiles**: Build, test, documentation automation
+-   **Docker Integration**: Development and testing environments
+-   **Testing Frameworks**: Unit, integration, and performance testing
+-   **Code Quality Tools**: Formatting, linting, security scanning
 
 ---
 
@@ -265,23 +265,23 @@ Delivered working MCP server with core semantic search capabilities.
 
 #### MCP Protocol Implementation
 
-\1-  **Stdio Transport**: Standard MCP communication protocol
-\1-  **Tool Calling**: index_codebase, search_code, get_indexing_status
-\1-  **Protocol Compliance**: Full MCP specification adherence
-\1-  **Error Handling**: Proper error responses and status codes
+-   **Stdio Transport**: Standard MCP communication protocol
+-   **Tool Calling**: index_codebase, search_code, get_indexing_status
+-   **Protocol Compliance**: Full MCP specification adherence
+-   **Error Handling**: Proper error responses and status codes
 
 #### Basic Search Capabilities
 
-\1-  **Vector Similarity**: Semantic search using embeddings
-\1-  **In-Memory Storage**: Fast development and testing storage
-\1-  **Mock Embeddings**: Deterministic embedding generation for testing
-\1-  **File Processing**: Text-based code file reading and chunking
+-   **Vector Similarity**: Semantic search using embeddings
+-   **In-Memory Storage**: Fast development and testing storage
+-   **Mock Embeddings**: Deterministic embedding generation for testing
+-   **File Processing**: Text-based code file reading and chunking
 
 #### Configuration System
 
-\1-  **Environment Variables**: Flexible configuration via env vars
-\1-  **Provider Setup**: Basic embedding and vector store configuration
-\1-  **Validation**: Configuration validation and error reporting
+-   **Environment Variables**: Flexible configuration via env vars
+-   **Provider Setup**: Basic embedding and vector store configuration
+-   **Validation**: Configuration validation and error reporting
 
 ---
 
@@ -380,41 +380,41 @@ Comprehensive development platform
 
 ### v0.0.1: Core Functionality
 
-\1-   MCP protocol compliance: 100%
-\1-   Basic search working: 100%
-\1-   Tool calling functional: 100%
-\1-   Configuration system: 80%
+-    MCP protocol compliance: 100%
+-    Basic search working: 100%
+-    Tool calling functional: 100%
+-    Configuration system: 80%
 
 ### v0.0.2: Infrastructure Quality
 
-\1-   CI/CD pipeline: 100%
-\1-   Documentation coverage: 95%
-\1-   Testing frameworks: 100%
-\1-   Development tooling: 100%
+-    CI/CD pipeline: 100%
+-    Documentation coverage: 95%
+-    Testing frameworks: 100%
+-    Development tooling: 100%
 
 ### v0.0.3: Enterprise Readiness
 
-\1-   Security compliance: 100% (SOC 2)
-\1-   Performance targets: 100% (less than 500ms latency)
-\1-   Scalability: 100% (Kubernetes + HPA)
-\1-   Monitoring: 100% (Prometheus + Grafana)
-\1-   Production deployment: 100%
+-    Security compliance: 100% (SOC 2)
+-    Performance targets: 100% (less than 500ms latency)
+-    Scalability: 100% (Kubernetes + HPA)
+-    Monitoring: 100% (Prometheus + Grafana)
+-    Production deployment: 100%
 
 ### v0.1.0: Documentation Excellence
 
-\1-   Auto-generated docs: 95%+
-\1-   ADR compliance validation: 100%
-\1-   Interactive platform: 100%
-\1-   Zero manual maintenance: 100%
+-    Auto-generated docs: 95%+
+-    ADR compliance validation: 100%
+-    Interactive platform: 100%
+-    Zero manual maintenance: 100%
 
 ### v0.1.0: First Stable Release
 
-\1-   Claude-context compatibility: 100%
-\1-   Language processors: 12 languages
-\1-   Test coverage: 790+ tests
-\1-   HTTP transport foundation: Complete
-\1-   Systemd integration: Complete
-\1-   Clean architecture: Complete
+-    Claude-context compatibility: 100%
+-    Language processors: 12 languages
+-    Test coverage: 790+ tests
+-    HTTP transport foundation: Complete
+-    Systemd integration: Complete
+-    Clean architecture: Complete
 
 ---
 
@@ -436,47 +436,47 @@ Comprehensive development platform
 
 ### From v0.0.2 to v0.0.3
 
-\1-  **Breaking Changes**: Configuration format updates
-\1-  **Migration Required**: Environment variables standardization
-\1-  **Benefits**: Enterprise security, performance, scalability
+-   **Breaking Changes**: Configuration format updates
+-   **Migration Required**: Environment variables standardization
+-   **Benefits**: Enterprise security, performance, scalability
 
 ### From v0.0.3 to v0.1.0
 
-\1-  **Breaking Changes**: None
-\1-  **Migration Required**: Documentation tooling adoption
-\1-  **Benefits**: Zero maintenance documentation, ADR automation
+-   **Breaking Changes**: None
+-   **Migration Required**: Documentation tooling adoption
+-   **Benefits**: Zero maintenance documentation, ADR automation
 
 ### From v0.1.0 to v0.1.0
 
-\1-  **Breaking Changes**: None
-\1-  **Migration Required**: None (fully backward compatible)
-\1-  **Benefits**: Modular language processors, HTTP transport foundation, systemd integration
+-   **Breaking Changes**: None
+-   **Migration Required**: None (fully backward compatible)
+-   **Benefits**: Modular language processors, HTTP transport foundation, systemd integration
 
 ### From Claude-context to v0.1.0
 
-\1-  **Breaking Changes**: None - drop-in replacement
-\1-  **Migration Required**: Replace npm package with native binary
-\1-  **Benefits**: Better performance, more languages, no Node.js dependency
-\1-  **Guide**: [FROM_CLAUDE_CONTEXT.md](migration/FROM_CLAUDE_CONTEXT.md)
+-   **Breaking Changes**: None - drop-in replacement
+-   **Migration Required**: Replace npm package with native binary
+-   **Benefits**: Better performance, more languages, no Node.js dependency
+-   **Guide**: [FROM_CLAUDE_CONTEXT.md](migration/FROM_CLAUDE_CONTEXT.md)
 
 ### From v0.1.0 to v0.2.0 (Planned)
 
-\1-  **Breaking Changes**: TBD - likely metadata schema changes for git integration
-\1-  **Migration Required**:
-\1-   Re-indexing with git metadata for existing repositories
-\1-   New SQLite database for session memory (no migration needed)
-\1-  **Benefits**:
-\1-   Git awareness: multi-branch search, commit history, impact analysis
-\1-   Session memory: cross-session context, persistent decisions, token efficiency
-\1-  **ADRs**:
-\1-   [008-git-aware-semantic-indexing-v0.2.0](adr/008-git-aware-semantic-indexing-v0.2.0.md)
-\1-   [009-persistent-session-memory-v0.2.0](adr/009-persistent-session-memory-v0.2.0.md)
+-   **Breaking Changes**: TBD - likely metadata schema changes for git integration
+-   **Migration Required**:
+-    Re-indexing with git metadata for existing repositories
+-    New SQLite database for session memory (no migration needed)
+-   **Benefits**:
+-    Git awareness: multi-branch search, commit history, impact analysis
+-    Session memory: cross-session context, persistent decisions, token efficiency
+-   **ADRs**:
+-    [008-git-aware-semantic-indexing-v0.2.0](adr/008-git-aware-semantic-indexing-v0.2.0.md)
+-    [009-persistent-session-memory-v0.2.0](adr/009-persistent-session-memory-v0.2.0.md)
 
 ---
 
 ## Cross-References
 
-\1-  **Architecture**: [ARCHITECTURE.md](./architecture/ARCHITECTURE.md)
-\1-  **Changelog**: [CHANGELOG.md](./operations/CHANGELOG.md)
-\1-  **Roadmap**: [ROADMAP.md](./developer/ROADMAP.md)
-\1-  **Contributing**: [CONTRIBUTING.md](./developer/CONTRIBUTING.md)
+-   **Architecture**: [ARCHITECTURE.md](./architecture/ARCHITECTURE.md)
+-   **Changelog**: [CHANGELOG.md](./operations/CHANGELOG.md)
+-   **Roadmap**: [ROADMAP.md](./developer/ROADMAP.md)
+-   **Contributing**: [CONTRIBUTING.md](./developer/CONTRIBUTING.md)

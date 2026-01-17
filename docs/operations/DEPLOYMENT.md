@@ -8,8 +8,8 @@ MCP Context Browser currently supports local deployment for development and test
 
 ### Prerequisites
 
-\1-  **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
-\1-  **Git**: For cloning the repository
+-   **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
+-   **Git**: For cloning the repository
 
 ### Build from Source
 
@@ -121,18 +121,18 @@ free -h  # Memory
 
 ### Getting Help
 
-\1-   Check existing [GitHub Issues](https://github.com/marlonsc/mcp-context-browser/issues)
-\1-   Review the [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) for technical details
-\1-   See [CONTRIBUTING.md](../developer/CONTRIBUTING.md) for development setup
+-    Check existing [GitHub Issues](https://github.com/marlonsc/mcp-context-browser/issues)
+-    Review the [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) for technical details
+-    See [CONTRIBUTING.md](../developer/CONTRIBUTING.md) for development setup
 
 ## 🚀 Future Deployment Options
 
 The following deployment configurations are planned for future releases:
 
-\1-  **Docker containerization**
-\1-  **Kubernetes orchestration**
-\1-  **Multi-user support**
-\1-  **Cloud-native deployments**
+-   **Docker containerization**
+-   **Kubernetes orchestration**
+-   **Multi-user support**
+-   **Cloud-native deployments**
 
 These will be documented as they become available.
 
@@ -164,20 +164,20 @@ spec:
         app: mcp-context-browser
     spec:
       containers:
-\1-   name: mcp-context-browser
+-    name: mcp-context-browser
         image: mcp-context-browser:latest
         ports:
-\1-   containerPort: 3000
+-    containerPort: 3000
         env:
-\1-   name: MCP_MODE
+-    name: MCP_MODE
           value: "distributed"
-\1-   name: STORAGE_PROVIDER
+-    name: STORAGE_PROVIDER
           value: "milvus"
-\1-   name: MILVUS_URI
+-    name: MILVUS_URI
           value: "milvus-service:19530"
-\1-   name: DATABASE_URL
+-    name: DATABASE_URL
           value: "postgresql://user:password@db:5432/mcp_db"
-\1-   name: REDIS_URL
+-    name: REDIS_URL
           value: "redis://redis:6379"
         resources:
           requests:
@@ -198,30 +198,30 @@ services:
   mcp-context-browser:
     build: .
     ports:
-\1-   "3000:3000"
-\1-   "9090:9090"  # Metrics endpoint
+-    "3000:3000"
+-    "9090:9090"  # Metrics endpoint
     environment:
-\1-   MCP_MODE=distributed
-\1-   STORAGE_PROVIDER=milvus
-\1-   MILVUS_URI=milvus:19530
-\1-   DATABASE_URL=postgresql://user:password@postgres:5432/mcp_db
-\1-   REDIS_URL=redis://redis:6379
-\1-   JWT_SECRET=your-secret-key
+-    MCP_MODE=distributed
+-    STORAGE_PROVIDER=milvus
+-    MILVUS_URI=milvus:19530
+-    DATABASE_URL=postgresql://user:password@postgres:5432/mcp_db
+-    REDIS_URL=redis://redis:6379
+-    JWT_SECRET=your-secret-key
     depends_on:
-\1-   milvus
-\1-   postgres
-\1-   redis
+-    milvus
+-    postgres
+-    redis
     volumes:
-\1-   ./config:/app/config:ro
-\1-   ./data:/app/data
+-    ./config:/app/config:ro
+-    ./data:/app/data
 
   milvus:
     image: milvusdb/milvus:latest
     ports:
-\1-   "19530:19530"
-\1-   "9091:9091"
+-    "19530:19530"
+-    "9091:9091"
     volumes:
-\1-   milvus_data:/var/lib/milvus
+-    milvus_data:/var/lib/milvus
     command: milvus run standalone
 
   postgres:
@@ -231,16 +231,16 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     volumes:
-\1-   postgres_data:/var/lib/postgresql/data
+-    postgres_data:/var/lib/postgresql/data
     ports:
-\1-   "5432:5432"
+-    "5432:5432"
 
   redis:
     image: redis:7-alpine
     ports:
-\1-   "6379:6379"
+-    "6379:6379"
     volumes:
-\1-   redis_data:/data
+-    redis_data:/data
 
 volumes:
   milvus_data:
@@ -310,7 +310,7 @@ spec:
   selector:
     app: mcp-context-browser
   ports:
-\1-   port: 80
+-    port: 80
       targetPort: 3000
   type: LoadBalancer
 
@@ -324,14 +324,14 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   tls:
-\1-   hosts:
-\1-   mcp.yourcompany.com
+-    hosts:
+-    mcp.yourcompany.com
       secretName: mcp-tls
   rules:
-\1-   host: mcp.yourcompany.com
+-    host: mcp.yourcompany.com
       http:
         paths:
-\1-   path: /
+-    path: /
             pathType: Prefix
             backend:
               service:
@@ -462,7 +462,7 @@ data:
     # Milvus configuration
     etcd:
       endpoints:
-\1-   etcd-service:2379
+-    etcd-service:2379
     minio:
       address: minio-service
       port: 9000
@@ -716,19 +716,19 @@ spec:
   minReplicas: 3
   maxReplicas: 50
   metrics:
-\1-   type: Resource
+-    type: Resource
     resource:
       name: cpu
       target:
         type: Utilization
         averageUtilization: 70
-\1-   type: Resource
+-    type: Resource
     resource:
       name: memory
       target:
         type: Utilization
         averageUtilization: 80
-\1-   type: Pods
+-    type: Pods
     pods:
       metric:
         name: http_requests_per_second
@@ -763,8 +763,8 @@ This deployment guide provides comprehensive instructions for deploying MCP Cont
 
 ## Cross-References
 
-\1-  **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
-\1-  **Contributing**: [CONTRIBUTING.md](../developer/CONTRIBUTING.md)
-\1-  **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
-\1-  **Roadmap**: [ROADMAP.md](../developer/ROADMAP.md)
-\1-  **Module Documentation**: [docs/modules/](../modules/)
+-   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+-   **Contributing**: [CONTRIBUTING.md](../developer/CONTRIBUTING.md)
+-   **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
+-   **Roadmap**: [ROADMAP.md](../developer/ROADMAP.md)
+-   **Module Documentation**: [docs/modules/](../modules/)

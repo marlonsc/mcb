@@ -70,7 +70,7 @@ pub struct AuthConfig {
 | `MCP_HOST` | Server host | 0.0.0.0 |
 | `MCP_JWT_SECRET` | JWT signing secret | (required) |
 | `MCP_CACHE_ENABLED` | Enable caching | true |
-| `MCP_LOG_FORMAT` | Log format (json/text) | text |
+| `MCP_LOG_FORMAT` | Log format (JSON/text) | text |
 
 ## Key Exports
 

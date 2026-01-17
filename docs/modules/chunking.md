@@ -29,10 +29,10 @@ Tree-sitter based processors for 12 languages:
 
 | Processor | Language | Parser |
 |-----------|----------|--------|
-| `RustProcessor` | Rust | tree-sitter-rust |
+| `RustProcessor` | Rust | tree-sitter-Rust |
 | `PythonProcessor` | Python | tree-sitter-python |
-| `JavaScriptProcessor` | JavaScript | tree-sitter-javascript |
-| `TypeScriptProcessor` | TypeScript | tree-sitter-typescript |
+| `JavaScriptProcessor` | JavaScript | tree-sitter-JavaScript |
+| `TypeScriptProcessor` | TypeScript | tree-sitter-TypeScript |
 | `GoProcessor` | Go | tree-sitter-go |
 | `JavaProcessor` | Java | tree-sitter-java |
 | `CProcessor` | C | tree-sitter-c |
@@ -75,6 +75,7 @@ Language processors are controlled by feature flags in `mcb-providers`:
 lang-all = ["lang-rust", "lang-python", "lang-javascript", ...]
 lang-rust = ["tree-sitter-rust"]
 lang-python = ["tree-sitter-python"]
+
 # ... etc
 ```
 
