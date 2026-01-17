@@ -96,6 +96,9 @@ shaku = { workspace = true }
 # Concurrent data structures
 dashmap = { workspace = true }
 
+# UUID generation (for admin operations)
+uuid = { workspace = true }
+
 # Tree-sitter core (always needed for chunking)
 tree-sitter = { workspace = true }
 

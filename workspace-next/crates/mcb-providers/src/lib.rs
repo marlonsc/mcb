@@ -76,3 +76,8 @@ pub mod language;
 ///
 /// Implements `CodeChunker` trait with AST-based intelligent chunking using tree-sitter.
 pub mod chunking;
+
+/// Admin provider implementations
+///
+/// Implements `PerformanceMetricsInterface` and `IndexingOperationsInterface` ports.
+pub mod admin;

@@ -1,7 +1,7 @@
 //! Cache Factory Tests
 
 use mcb_infrastructure::cache::config::CacheEntryConfig;
-use mcb_infrastructure::cache::CacheProviderFactory;
+use mcb_infrastructure::cache::factory::CacheProviderFactory;
 use mcb_infrastructure::config::data::CacheConfig;
 
 #[tokio::test]

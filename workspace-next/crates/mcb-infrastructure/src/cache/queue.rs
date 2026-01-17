@@ -3,7 +3,7 @@
 //! Provides queuing and batching capabilities for cache operations
 //! to improve performance and reduce network overhead.
 
-use crate::cache::config::CacheEntryConfig;
+use mcb_domain::ports::providers::cache::CacheEntryConfig;
 use crate::cache::provider::SharedCacheProvider;
 use mcb_domain::error::Result;
 use serde::{de::DeserializeOwned, Serialize};

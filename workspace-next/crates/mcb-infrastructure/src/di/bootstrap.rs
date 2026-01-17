@@ -9,7 +9,7 @@
 //! - This module: ONLY wiring logic via Shaku DI
 
 use crate::cache::provider::SharedCacheProvider;
-use crate::cache::CacheProviderFactory;
+use crate::cache::factory::CacheProviderFactory;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
 use crate::health::{checkers, HealthRegistry};
@@ -22,8 +22,8 @@ use tracing::info;
 // Provider factories (wiring layer - uses mcb-providers internally)
 use super::factory::{EmbeddingProviderFactory, VectorStoreProviderFactory};
 
-// Admin service implementations (infrastructure concerns implementing domain ports)
-use super::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+// Admin service implementations from mcb-providers (implement domain ports)
+use mcb_providers::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 
 /// Trait for accessing storage components (cache, crypto)
 pub trait StorageComponentsAccess {

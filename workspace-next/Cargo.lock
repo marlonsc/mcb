@@ -3039,6 +3039,7 @@ dependencies = [
  "tree-sitter-swift",
  "tree-sitter-typescript",
  "unicode-segmentation",
+ "uuid",
 ]
 
 [[package]]

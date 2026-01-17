@@ -1,11 +1,10 @@
-//! Cache provider interface and shared cache provider
+//! Shared cache provider wrapper
 //!
-//! Defines the cache provider trait and shared cache provider implementation
-//! for unified cache access across the application.
-//! Uses cache provider implementations from mcb-providers crate.
+//! Infrastructure wrapper for cache providers from mcb-providers.
+//! Types come from mcb-domain (SOURCE OF TRUTH).
 
-use crate::cache::config::{CacheEntryConfig, CacheStats};
 use mcb_domain::error::Result;
+use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
 use mcb_providers::cache::{MokaCacheProvider, NullCacheProvider, RedisCacheProvider};
 use std::fmt;
 use std::sync::Arc;
@@ -78,6 +77,14 @@ impl CacheProvider for CacheProviderType {
             CacheProviderType::Null(provider) => provider.size().await,
         }
     }
+
+    fn provider_name(&self) -> &str {
+        match self {
+            CacheProviderType::Moka(provider) => provider.provider_name(),
+            CacheProviderType::Redis(provider) => provider.provider_name(),
+            CacheProviderType::Null(provider) => provider.provider_name(),
+        }
+    }
 }
 
 impl std::fmt::Debug for CacheProviderType {
@@ -88,50 +95,6 @@ impl std::fmt::Debug for CacheProviderType {
             CacheProviderType::Null(_) => write!(f, "CacheProviderType::Null"),
         }
     }
-}
-
-/// Cache provider trait (legacy - use CacheProviderType enum instead)
-///
-/// # Example
-///
-/// ```ignore
-/// use mcb_infrastructure::cache::CacheProvider;
-///
-/// // Store JSON in cache with TTL
-/// let config = CacheEntryConfig::default().with_ttl_secs(300);
-/// cache.set_json("user:123", &serde_json::to_string(&user)?, config).await?;
-///
-/// // Retrieve from cache
-/// if let Some(json) = cache.get_json("user:123").await? {
-///     let user: User = serde_json::from_str(&json)?;
-/// }
-///
-/// // Check stats
-/// let stats = cache.stats().await?;
-/// println!("Hit rate: {:.1}%", stats.hit_rate * 100.0);
-/// ```
-#[async_trait::async_trait]
-pub trait CacheProvider: Send + Sync + std::fmt::Debug {
-    /// Get a value from the cache as JSON string
-    async fn get_json(&self, key: &str) -> Result<Option<String>>;
-
-    /// Set a value in the cache from JSON string
-    async fn set_json(&self, key: &str, value: &str, config: CacheEntryConfig) -> Result<()>;
-
-    /// Delete a value from the cache
-    async fn delete(&self, key: &str) -> Result<bool>;
-
-    /// Check if a key exists in the cache
-    async fn exists(&self, key: &str) -> Result<bool>;
-
-    /// Clear all values from the cache
-    async fn clear(&self) -> Result<()>;
-
-    /// Get cache statistics
-    async fn stats(&self) -> Result<CacheStats>;
-
-    /// Get the cache size (number of entries)
-    async fn size(&self) -> Result<usize>;
 }
 
 /// Shared cache provider wrapper

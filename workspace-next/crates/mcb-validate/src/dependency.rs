@@ -2,8 +2,9 @@
 //!
 //! Validates Clean Architecture layer boundaries:
 //! - mcb-domain: No internal dependencies (pure domain)
-//! - mcb-infrastructure: Only mcb-domain
-//! - mcb-server: mcb-domain and mcb-infrastructure
+//! - mcb-providers: Only mcb-domain (adapter implementations)
+//! - mcb-infrastructure: mcb-domain and mcb-providers (DI composition root)
+//! - mcb-server: mcb-domain, mcb-infrastructure, and mcb-providers
 //! - mcb: All crates (facade that re-exports entire public API)
 
 use crate::{Result, Severity, ValidationConfig};
@@ -15,14 +16,19 @@ use walkdir::WalkDir;
 
 /// Allowed dependencies for each crate in Clean Architecture
 ///
-/// Notes:
-/// - mcb is a facade crate that re-exports the entire public API
-/// - mcb-validate is a development tool, not part of the runtime dependency graph
+/// Architecture layers:
+/// - mcb-domain: Pure domain layer (ports, entities, value objects) - no internal deps
+/// - mcb-providers: Adapter implementations of domain ports - depends on mcb-domain
+/// - mcb-infrastructure: DI composition root and cross-cutting concerns - depends on mcb-domain and mcb-providers for wiring
+/// - mcb-server: Transport layer - depends on mcb-domain and mcb-infrastructure
+/// - mcb: Facade crate that re-exports the entire public API
+/// - mcb-validate: Development tool, not part of runtime dependency graph
 const ALLOWED_DEPS: &[(&str, &[&str])] = &[
     ("mcb-domain", &[]),
-    ("mcb-infrastructure", &["mcb-domain"]),
-    ("mcb-server", &["mcb-domain", "mcb-infrastructure"]),
-    ("mcb", &["mcb-domain", "mcb-infrastructure", "mcb-server"]), // Facade: re-exports all
+    ("mcb-providers", &["mcb-domain"]),
+    ("mcb-infrastructure", &["mcb-domain", "mcb-providers"]),
+    ("mcb-server", &["mcb-domain", "mcb-infrastructure", "mcb-providers"]),
+    ("mcb", &["mcb-domain", "mcb-infrastructure", "mcb-server", "mcb-providers"]),
     ("mcb-validate", &[]),
 ];
 

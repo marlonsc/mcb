@@ -3,7 +3,7 @@
 //! Concrete implementations of factory traits for creating
 //! infrastructure components.
 
-use crate::cache::CacheProviderFactory as CacheFactory;
+use crate::cache::factory::CacheProviderFactory as CacheFactory;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
 use crate::di::bootstrap::{InfrastructureComponents, InfrastructureContainerBuilder};

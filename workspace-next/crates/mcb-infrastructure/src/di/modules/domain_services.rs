@@ -4,6 +4,7 @@
 //! These services implement domain interfaces using infrastructure components.
 
 use mcb_providers::chunking::{language_from_extension, IntelligentChunker};
+use mcb_domain::ports::providers::cache::CacheEntryConfig;
 use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
@@ -123,7 +124,7 @@ impl ContextServiceInterface for ContextServiceImpl {
             .set_json(
                 &collection_key,
                 "\"initialized\"",
-                crate::cache::config::CacheEntryConfig::default(),
+                CacheEntryConfig::default(),
             )
             .await?;
         Ok(())
@@ -161,7 +162,7 @@ impl ContextServiceInterface for ContextServiceImpl {
             .set(
                 &meta_key,
                 &chunk_count,
-                crate::cache::config::CacheEntryConfig::default(),
+                CacheEntryConfig::default(),
             )
             .await?;
 

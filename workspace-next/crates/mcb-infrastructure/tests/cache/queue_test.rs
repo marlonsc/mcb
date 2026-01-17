@@ -2,7 +2,7 @@
 
 use mcb_infrastructure::cache::config::CacheEntryConfig;
 use mcb_infrastructure::cache::provider::{CacheProviderType, SharedCacheProvider};
-use mcb_infrastructure::cache::providers::NullCacheProvider;
+use mcb_providers::cache::NullCacheProvider;
 use mcb_infrastructure::cache::queue::{CacheAsideHelper, CacheBatchProcessor};
 
 #[tokio::test]

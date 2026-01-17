@@ -2,7 +2,7 @@
 //!
 //! Tests for the component registry and service locator pattern.
 
-use mcb_infrastructure::cache::CacheProviderFactory;
+use mcb_infrastructure::cache::factory::CacheProviderFactory;
 use mcb_infrastructure::crypto::CryptoService;
 use mcb_infrastructure::di::registry::{ComponentRegistry, ServiceLocator};
 use mcb_infrastructure::health::HealthRegistry;

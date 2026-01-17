@@ -1,8 +1,8 @@
 //! Moka Cache Provider Tests
 
 use mcb_infrastructure::cache::config::CacheEntryConfig;
-use mcb_infrastructure::cache::providers::MokaCacheProvider;
-use mcb_infrastructure::cache::CacheProvider;
+use mcb_providers::cache::MokaCacheProvider;
+use mcb_domain::ports::providers::cache::CacheProvider;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
