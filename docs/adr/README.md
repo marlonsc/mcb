@@ -4,16 +4,16 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 
 ## Current ADRs
 
-### Core Architecture
+### Core Architecture (v0.1.1)
 
--   [ADR 001: Provider Pattern Architecture](001-provider-pattern-architecture.md)
--   [ADR 002: Async-First Architecture](002-async-first-architecture.md)
--   [ADR 003: C4 Model Documentation](003-c4-model-documentation.md)
--   [ADR 004: Multi-Provider Strategy](004-multi-provider-strategy.md)
+-   [ADR 001: Modular Crates Architecture](001-modular-crates-architecture.md)
+-   [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md)
+-   [ADR 003: Unified Provider Architecture](003-unified-provider-architecture.md)
+-   [ADR 004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md)
+-   [ADR 005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)
 
 ### Documentation & Quality
 
--   [ADR 005: Documentation Excellence](005-documentation-excellence.md)
 -   [ADR 006: Code Audit and Architecture Improvements](006-code-audit-and-improvements.md)
 -   [ADR 007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md)
 
@@ -23,8 +23,12 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 -   [ADR 009: Persistent Session Memory v0.2.0](009-persistent-session-memory-v0.2.0.md)
 -   [ADR 010: Hooks Subsystem with Agent-Backed Processing](010-hooks-subsystem-agent-backed.md)
 
-### Clean Architecture & DI (v0.1.1)
+### Legacy Architecture (Pre-v0.1.1)
 
+-   [ADR 002: Async-First Architecture](002-async-first-architecture.md)
+-   [ADR 003: C4 Model Documentation](003-c4-model-documentation.md)
+-   [ADR 004: Multi-Provider Strategy](004-multi-provider-strategy.md)
+-   [ADR 005: Documentation Excellence](005-documentation-excellence.md)
 -   [ADR 011: HTTP Transport Request/Response Pattern](011-http-transport-request-response-pattern.md)
 -   [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku modules + runtime factories
 -   [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate workspace organization

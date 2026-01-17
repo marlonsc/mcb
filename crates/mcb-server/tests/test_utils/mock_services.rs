@@ -38,7 +38,7 @@ impl MockSearchService {
     }
 
     /// Configure the mock to return specific results
-    pub fn with_results(mut self, results: Vec<SearchResult>) -> Self {
+    pub fn with_results(self, results: Vec<SearchResult>) -> Self {
         *self.results.lock().expect("Lock poisoned") = results;
         self
     }
@@ -191,7 +191,7 @@ impl MockContextService {
     }
 
     /// Configure the mock to return specific search results
-    pub fn with_search_results(mut self, results: Vec<SearchResult>) -> Self {
+    pub fn with_search_results(self, results: Vec<SearchResult>) -> Self {
         *self.search_results.lock().expect("Lock poisoned") = results;
         self
     }

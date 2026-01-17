@@ -13,58 +13,78 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Env
 /// Initialize logging with the provided configuration
 pub fn init_logging(config: LoggingConfig) -> Result<()> {
     let level = parse_log_level(&config.level)?;
-    let filter =
-        EnvFilter::try_from_env("MCB_LOG").unwrap_or_else(|_| EnvFilter::new(&config.level));
+    let filter = create_log_filter(&config.level);
+    let file_appender = create_file_appender(&config.file_output);
 
-    // Configure file appender if file output is specified
-    let file_appender = config.file_output.as_ref().map(|path| {
+    if config.json_format {
+        init_json_logging(filter, file_appender)?;
+    } else {
+        init_text_logging(filter, file_appender)?;
+    }
+
+    info!("Logging initialized with level: {}", level);
+    Ok(())
+}
+
+/// Create log filter from configuration
+fn create_log_filter(level: &str) -> EnvFilter {
+    EnvFilter::try_from_env("MCB_LOG").unwrap_or_else(|_| EnvFilter::new(level))
+}
+
+/// Create file appender if file output is configured
+fn create_file_appender(file_output: &Option<std::path::PathBuf>) -> Option<tracing_appender::rolling::RollingFileAppender> {
+    file_output.as_ref().map(|path| {
         tracing_appender::rolling::daily(
             path.parent().unwrap_or_else(|| std::path::Path::new(".")),
             path.file_stem()
                 .unwrap_or_else(|| std::ffi::OsStr::new("mcb")),
         )
-    });
+    })
+}
 
-    // Initialize based on json_format (types differ so we need separate branches)
-    if config.json_format {
-        let stdout = fmt::layer()
+/// Initialize logging with JSON format
+fn init_json_logging(filter: EnvFilter, file_appender: Option<tracing_appender::rolling::RollingFileAppender>) -> Result<()> {
+    let stdout = fmt::layer()
+        .json()
+        .with_target(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .with_file(true)
+        .with_line_number(true);
+
+    let registry = Registry::default().with(filter);
+    if let Some(appender) = file_appender {
+        let file = fmt::layer()
             .json()
-            .with_target(true)
-            .with_thread_ids(true)
-            .with_thread_names(true)
-            .with_file(true)
-            .with_line_number(true);
-        let registry = Registry::default().with(filter);
-        if let Some(appender) = file_appender {
-            let file = fmt::layer()
-                .json()
-                .with_writer(appender)
-                .with_ansi(false)
-                .with_target(true);
-            registry.with(stdout).with(file).init();
-        } else {
-            registry.with(stdout).init();
-        }
+            .with_writer(appender)
+            .with_ansi(false)
+            .with_target(true);
+        registry.with(stdout).with(file).init();
     } else {
-        let stdout = fmt::layer()
-            .with_target(true)
-            .with_thread_ids(true)
-            .with_thread_names(true)
-            .with_file(true)
-            .with_line_number(true);
-        let registry = Registry::default().with(filter);
-        if let Some(appender) = file_appender {
-            let file = fmt::layer()
-                .with_writer(appender)
-                .with_ansi(false)
-                .with_target(true);
-            registry.with(stdout).with(file).init();
-        } else {
-            registry.with(stdout).init();
-        }
+        registry.with(stdout).init();
     }
+    Ok(())
+}
 
-    info!("Logging initialized with level: {}", level);
+/// Initialize logging with text format
+fn init_text_logging(filter: EnvFilter, file_appender: Option<tracing_appender::rolling::RollingFileAppender>) -> Result<()> {
+    let stdout = fmt::layer()
+        .with_target(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .with_file(true)
+        .with_line_number(true);
+
+    let registry = Registry::default().with(filter);
+    if let Some(appender) = file_appender {
+        let file = fmt::layer()
+            .with_writer(appender)
+            .with_ansi(false)
+            .with_target(true);
+        registry.with(stdout).with(file).init();
+    } else {
+        registry.with(stdout).init();
+    }
     Ok(())
 }
 

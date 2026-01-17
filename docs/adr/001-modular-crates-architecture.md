@@ -1,58 +1,18 @@
-# ADR 001: Provider Pattern Architecture
+# ADR 001: Modular Crates Architecture
 
 ## Status
 
 **Implemented** (v0.1.1)
 
-> Fully implemented with Clean Architecture + Shaku DI across 6 crates:
->
-> **Port Traits** (defined in `crates/mcb-domain/src/ports/`):
-> All traits extend `shaku::Interface` for DI compatibility.
->
-> -   **Provider Ports** (`crates/mcb-domain/src/ports/providers/`):
->     -   `EmbeddingProvider` - Text-to-vector conversion (6 implementations)
->     -   `VectorStoreProvider` - Vector storage/retrieval (6 implementations)
->     -   `CacheProvider` - Caching abstraction
->     -   `CryptoProvider` - Encryption/hashing
->     -   `LanguageChunkingProvider` - AST-based code chunking (12 languages)
->
-> -   **Infrastructure Ports** (`crates/mcb-domain/src/ports/infrastructure/`):
->     -   `SyncProvider` - Low-level sync operations
->     -   `SnapshotProvider` - Codebase snapshot management
->     -   `EventPublisher` - Domain event publishing
->
-> -   **Admin Ports** (`crates/mcb-domain/src/ports/admin.rs`):
->     -   `PerformanceMetrics` - Performance monitoring
->     -   `IndexingOperations` - Indexing management
->
-> **Provider Implementations** (in `crates/mcb-providers/src/`):
->
-> -   Embedding: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null
-> -   Vector Store: Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null
-> -   Cache: Moka, Redis, Null
-> -   Language: Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin
+> Fully implemented with Clean Architecture + Shaku DI across 7 crates.
 
 ## Context
 
-The MCP Context Browser needs to support multiple AI providers (OpenAI, Ollama, VoyageAI) and vector databases (Milvus, In-Memory, Filesystem) without creating tight coupling between the core business logic and external service implementations. The system must be extensible to add new providers without modifying existing code, and support testing with mock implementations.
-
-Following Clean Architecture principles, we need:
-
-1.  Port traits (interfaces) defined in the domain layer, independent of implementations
-2.  Provider implementations (adapters) in a separate providers crate
-3.  Dependency injection for wiring implementations to ports at runtime
-4.  Null implementations for testing without external services
+Initially, the MCP Context Browser had a monolithic architecture. As the project grew, the need for better code organization, separation of concerns, and component reusability emerged. We evaluated adopting a modular architecture by dividing the system into multiple Rust crates, each responsible for a specific domain or functionality (e.g., core server crate, context providers crate, inter-module communication crate, etc.). We also considered how to manage the orderly initialization and shutdown of modules in a resilient manner.
 
 ## Decision
 
-Implement a provider pattern using Rust traits as port interfaces, with Shaku for dependency injection and a two-layer DI strategy (see [ADR-012](012-di-strategy-two-layer-approach.md)).
-
-Key architectural elements:
-
-1.  **Port traits** extending `shaku::Interface` in `mcb-domain`
-2.  **Provider implementations** with `#[derive(Component)]` in `mcb-providers`
-3.  **Shaku modules** for compile-time DI composition in `mcb-infrastructure`
-4.  **Runtime factories** for configuration-driven provider selection
+We opted for a modular architecture based on crates, where the project is divided into independent sub-modules compiled separately. Each crate encapsulates specific services and logics (e.g., core server crate, providers crate, EventBus crate, etc.), but all operate in an integrated manner. To coordinate the lifecycle of modules, we introduced a central component called ServiceManager responsible for registering, initializing, and maintaining references to all services (from each crate) running. Similarly, we implemented a graceful shutdown mechanism via ShutdownCoordinator, which orchestrates the termination of each service in the correct order when the application is shut down, ensuring resource release (threads, connections) in a safe manner.
 
 ## Implementation
 
@@ -236,47 +196,31 @@ mod tests {
 
 ## Consequences
 
-### Positive Consequences
-
--   **Clean Architecture Compliance**: Strict separation between ports (domain) and adapters (providers)
--   **High Extensibility**: New providers added in `mcb-providers` without touching domain/application
--   **Testability**: Null providers enable unit testing without external services
--   **Type Safety**: Shaku verifies DI wiring at compile time
--   **Runtime Flexibility**: Factories enable configuration-driven provider selection
-
-### Negative Consequences
-
--   **Learning Curve**: Developers must understand Shaku macros and Clean Architecture
--   **Boilerplate**: Each provider needs trait implementation + Component derive
--   **Two Patterns**: Testing uses Shaku modules, production uses factories
+This change to multiple crates improved code maintainability and scalability. Developers can evolve modules in isolation and even publish reusable crates. The modular architecture also facilitates unit testing and integration testing focused per module. On the other hand, it added complexity in managing versions between internal crates and required an orchestration layer (ServiceManager/ShutdownCoordinator) to coordinate dependencies and initialization order. These additional structures increase robustness at the cost of a small coordination overhead. Overall, the decision aligned with the goal of a pluggable and extensible design, allowing inclusion or removal of functionalities (crates) without significantly impacting the rest of the system.
 
 ## Crate Structure
 
 ```
 crates/
-├── mcb-domain/src/ports/           # Port trait definitions
-│   ├── providers/                   # Provider ports (embedding, vector_store, etc.)
-│   ├── infrastructure/              # Infrastructure ports (sync, snapshot, etc.)
-│   └── admin.rs                     # Admin ports
-├── mcb-providers/src/               # Provider implementations
-│   ├── embedding/                   # 6 embedding providers
-│   ├── vector_store/               # 6 vector store providers
-│   ├── cache/                       # Cache providers
-│   └── language/                    # 12 language processors
-├── mcb-application/src/services/   # Use cases with injected ports
-└── mcb-infrastructure/src/di/      # DI modules and factories
-    ├── modules/                     # Shaku module definitions
-    └── factory/                     # Runtime provider factories
+├── mcb/                 # Facade crate (re-exports public API)
+├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
+├── mcb-application/     # Layer 2: Use cases, services orchestration
+├── mcb-providers/       # Layer 3: Provider implementations (embedding, vector stores)
+├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging
+├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
+└── mcb-validate/        # Dev tooling: architecture validation rules
+```
+
+**Dependency Direction** (inward only):
+```
+mcb-server → mcb-infrastructure → mcb-application → mcb-domain
+                    ↓
+              mcb-providers
 ```
 
 ## Related ADRs
 
--   [ADR-004: Multi-Provider Strategy](004-multi-provider-strategy.md)
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md)
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md)
-
-## References
-
--   [Shaku Documentation](https://docs.rs/shaku)
--   [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
--   [Port and Adapter Pattern](https://en.wikipedia.org/wiki/Hexagonal_architecture_(software))
+-   [ADR-002: Dependency Injection with Shaku](002-dependency-injection-shaku.md)
+-   [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
+-   [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md)
+-   [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)

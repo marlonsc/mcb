@@ -27,7 +27,9 @@ async fn test_config_propagator_with_callback() {
 #[test]
 fn test_propagator_handle_is_running() {
     // Test that the handle properly tracks task state
-    let handle = tokio::runtime::Runtime::new().unwrap().block_on(async {
+    let runtime = tokio::runtime::Runtime::new().expect("Failed to create runtime");
+
+    let handle = runtime.block_on(async {
         let handle = tokio::spawn(async {
             // Simulate some work
             tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
@@ -35,12 +37,14 @@ fn test_propagator_handle_is_running() {
         PropagatorHandle { handle }
     });
 
-    // The task should either be running or have completed
-    // is_running() returns a boolean, we verify it's callable and returns expected types
+    // Verify that is_running() returns a boolean
     let is_running = handle.is_running();
+    assert!(matches!(is_running, true | false));
 
-    // A spawned task that sleeps should either still be running or have completed
-    // Both are valid states - we verify the method works correctly
-    // Just verify the function completes and returns a valid value
-    let _ = is_running;
+    // Wait for task completion and verify final state
+    runtime.block_on(async {
+        let _ = handle.handle.await;
+        // After awaiting, the task should not be running anymore
+        assert!(!handle.is_running());
+    });
 }

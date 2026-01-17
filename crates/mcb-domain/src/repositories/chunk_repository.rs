@@ -113,6 +113,7 @@ pub trait ChunkRepository: Interface + Send + Sync {
 }
 /// Value Object: Repository Statistics
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct RepositoryStats {
     /// Total chunks stored across all collections
     pub total_chunks: u64,

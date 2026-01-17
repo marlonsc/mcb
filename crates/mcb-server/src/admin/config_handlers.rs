@@ -223,64 +223,90 @@ fn config_update_error_response(
     error: ConfigUpdateError,
 ) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
     match error {
-        ConfigUpdateError::InvalidSection => (
-            StatusCode::BAD_REQUEST,
-            Json(ConfigSectionUpdateResponse::invalid_section(section)),
-        ),
-        ConfigUpdateError::WatcherUnavailable => (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(ConfigSectionUpdateResponse::watcher_unavailable(section)),
-        ),
-        ConfigUpdateError::PathUnavailable => (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(ConfigSectionUpdateResponse::failure(
-                section,
-                "Configuration file path not available",
-            )),
-        ),
-        ConfigUpdateError::ReadFailed(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ConfigSectionUpdateResponse::failure(
-                section,
-                format!("Failed to read configuration file: {}", e),
-            )),
-        ),
-        ConfigUpdateError::ParseFailed(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ConfigSectionUpdateResponse::failure(
-                section,
-                format!("Failed to parse configuration file: {}", e),
-            )),
-        ),
-        ConfigUpdateError::InvalidFormat => (
-            StatusCode::BAD_REQUEST,
-            Json(ConfigSectionUpdateResponse::failure(
-                section,
-                "Invalid configuration value format",
-            )),
-        ),
-        ConfigUpdateError::SerializeFailed(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ConfigSectionUpdateResponse::failure(
-                section,
-                format!("Failed to serialize configuration: {}", e),
-            )),
-        ),
-        ConfigUpdateError::WriteFailed(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ConfigSectionUpdateResponse::failure(
-                section,
-                format!("Failed to write configuration file: {}", e),
-            )),
-        ),
-        ConfigUpdateError::ReloadFailed(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ConfigSectionUpdateResponse::failure(
-                section,
-                format!("Configuration updated but reload failed: {}", e),
-            )),
-        ),
+        ConfigUpdateError::InvalidSection => create_bad_request_response(section, "invalid_section"),
+        ConfigUpdateError::WatcherUnavailable => create_service_unavailable_response(section, "watcher_unavailable"),
+        ConfigUpdateError::PathUnavailable => create_path_unavailable_response(section),
+        ConfigUpdateError::ReadFailed(e) => create_read_error_response(section, e),
+        ConfigUpdateError::ParseFailed(e) => create_parse_error_response(section, e),
+        ConfigUpdateError::InvalidFormat => create_invalid_format_response(section),
+        ConfigUpdateError::SerializeFailed(e) => create_serialize_error_response(section, e),
+        ConfigUpdateError::WriteFailed(e) => create_write_error_response(section, e),
+        ConfigUpdateError::ReloadFailed(e) => create_reload_error_response(section, e),
     }
+}
+
+/// Create bad request response
+fn create_bad_request_response(section: &str, method: &str) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    let response = match method {
+        "invalid_section" => ConfigSectionUpdateResponse::invalid_section(section),
+        _ => ConfigSectionUpdateResponse::failure(section, "Bad request"),
+    };
+    (StatusCode::BAD_REQUEST, Json(response))
+}
+
+/// Create service unavailable response
+fn create_service_unavailable_response(section: &str, method: &str) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    let response = match method {
+        "watcher_unavailable" => ConfigSectionUpdateResponse::watcher_unavailable(section),
+        _ => ConfigSectionUpdateResponse::failure(section, "Service unavailable"),
+    };
+    (StatusCode::SERVICE_UNAVAILABLE, Json(response))
+}
+
+/// Create path unavailable response
+fn create_path_unavailable_response(section: &str) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    (StatusCode::SERVICE_UNAVAILABLE, Json(ConfigSectionUpdateResponse::failure(
+        section,
+        "Configuration file path not available",
+    )))
+}
+
+/// Create read error response
+fn create_read_error_response(section: &str, error: String) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(ConfigSectionUpdateResponse::failure(
+        section,
+        format!("Failed to read configuration file: {}", error),
+    )))
+}
+
+/// Create parse error response
+fn create_parse_error_response(section: &str, error: String) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(ConfigSectionUpdateResponse::failure(
+        section,
+        format!("Failed to parse configuration file: {}", error),
+    )))
+}
+
+/// Create invalid format response
+fn create_invalid_format_response(section: &str) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    (StatusCode::BAD_REQUEST, Json(ConfigSectionUpdateResponse::failure(
+        section,
+        "Invalid configuration value format",
+    )))
+}
+
+/// Create serialize error response
+fn create_serialize_error_response(section: &str, error: String) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(ConfigSectionUpdateResponse::failure(
+        section,
+        format!("Failed to serialize configuration: {}", error),
+    )))
+}
+
+/// Create write error response
+fn create_write_error_response(section: &str, error: String) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(ConfigSectionUpdateResponse::failure(
+        section,
+        format!("Failed to write configuration file: {}", error),
+    )))
+}
+
+/// Create reload error response
+fn create_reload_error_response(section: &str, error: String) -> (StatusCode, Json<ConfigSectionUpdateResponse>) {
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(ConfigSectionUpdateResponse::failure(
+        section,
+        format!("Configuration updated but reload failed: {}", error),
+    )))
 }
 
 /// Convert a JSON value to a TOML value

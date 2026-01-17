@@ -24,6 +24,16 @@ pub struct ChunkCreationParams<'a> {
     pub language: &'a Language,
 }
 
+/// Context for chunking operations
+struct ChunkingContext<'a> {
+    lines: &'a [&'a str],
+    chunks: &'a mut Vec<CodeChunk>,
+    current_block: &'a mut Vec<String>,
+    block_start: &'a mut usize,
+    file_name: &'a str,
+    language: &'a Language,
+}
+
 /// Generic fallback chunker using regex patterns
 pub struct GenericFallbackChunker<'a> {
     #[allow(dead_code)]
@@ -54,58 +64,67 @@ impl<'a> GenericFallbackChunker<'a> {
         file_name: &str,
         language: &Language,
     ) -> Vec<CodeChunk> {
-        let mut chunks = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
+        let mut chunks = Vec::new();
         let mut current_block = Vec::new();
         let mut block_start = 0;
 
-        for (i, line) in lines.iter().enumerate() {
+        let mut context = ChunkingContext {
+            lines: &lines,
+            chunks: &mut chunks,
+            current_block: &mut current_block,
+            block_start: &mut block_start,
+            file_name,
+            language,
+        };
+
+        self.process_lines(&mut context);
+        self.finalize_remaining_block(&mut context);
+
+        chunks
+    }
+
+    /// Process all lines to identify and create chunks
+    fn process_lines(&self, context: &mut ChunkingContext) {
+        for (i, line) in context.lines.iter().enumerate() {
             let is_block_start = self.is_pattern_match(line.trim());
 
-            if is_block_start && !current_block.is_empty() {
-                let params = ChunkCreationParams {
-                    lines: &current_block,
-                    start_line: block_start,
-                    end_line: i - 1,
-                    file_name,
-                    language,
-                };
-                self.create_chunk(&params, &mut chunks);
-                current_block.clear();
+            if is_block_start && !context.current_block.is_empty() {
+                self.create_chunk_from_block(context, *context.block_start, i - 1);
+                context.current_block.clear();
             }
 
             if is_block_start {
-                current_block.push(line.to_string());
-                block_start = i;
-            } else if !current_block.is_empty() {
-                current_block.push(line.to_string());
-                if self.is_block_complete(&current_block) {
-                    let params = ChunkCreationParams {
-                        lines: &current_block,
-                        start_line: block_start,
-                        end_line: i,
-                        file_name,
-                        language,
-                    };
-                    self.create_chunk(&params, &mut chunks);
-                    current_block.clear();
-                    block_start = i + 1;
+                context.current_block.push(line.to_string());
+                *context.block_start = i;
+            } else if !context.current_block.is_empty() {
+                context.current_block.push(line.to_string());
+                if self.is_block_complete(context.current_block) {
+                    self.create_chunk_from_block(context, *context.block_start, i);
+                    context.current_block.clear();
+                    *context.block_start = i + 1;
                 }
             }
         }
+    }
 
-        if !current_block.is_empty() {
-            let params = ChunkCreationParams {
-                lines: &current_block,
-                start_line: block_start,
-                end_line: lines.len() - 1,
-                file_name,
-                language,
-            };
-            self.create_chunk(&params, &mut chunks);
+    /// Create a chunk from a completed block
+    fn create_chunk_from_block(&self, context: &mut ChunkingContext, start_line: usize, end_line: usize) {
+        let params = ChunkCreationParams {
+            lines: context.current_block,
+            start_line,
+            end_line,
+            file_name: context.file_name,
+            language: context.language,
+        };
+        self.create_chunk(&params, context.chunks);
+    }
+
+    /// Finalize any remaining block at the end
+    fn finalize_remaining_block(&self, context: &mut ChunkingContext) {
+        if !context.current_block.is_empty() {
+            self.create_chunk_from_block(context, *context.block_start, context.lines.len() - 1);
         }
-
-        chunks
     }
 
     fn is_pattern_match(&self, line: &str) -> bool {
