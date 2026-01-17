@@ -2,6 +2,8 @@
 //!
 //! Contains admin service with dependencies on infrastructure and server modules.
 
+#![allow(missing_docs)]
+
 use shaku::module;
 
 use super::traits::{
@@ -14,16 +16,6 @@ use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::events::EventBusProvider;
 use crate::infrastructure::metrics::system::SystemMetricsCollectorInterface;
 
-// Implementation of the AdminModule trait providing administrative services.
-// This module provides the main admin service with dependencies on infrastructure components.
-//
-// Generated components:
-// - `AdminServiceImpl`: Core admin service providing configuration, monitoring, and control
-//
-// Dependencies (from InfrastructureModule):
-// - `SystemMetricsCollectorInterface`: System resource monitoring for admin dashboard
-// - `ServiceProviderInterface`: Provider management and registry access
-// - `EventBusProvider`: Event system for admin notifications and updates
 module! {
     pub AdminModuleImpl: AdminModule {
         components = [AdminServiceImpl],

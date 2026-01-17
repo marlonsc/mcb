@@ -31,6 +31,8 @@
 //! let module = McpModule::builder(adapters, infrastructure, server, admin).build();
 //! ```
 
+#![allow(missing_docs)]
+
 /// Adapters module implementation
 mod adapters;
 /// Admin module implementation
@@ -76,16 +78,6 @@ use crate::infrastructure::di::factory::ServiceProviderInterface;
 use crate::infrastructure::events::EventBusProvider;
 use crate::infrastructure::metrics::system::SystemMetricsCollectorInterface;
 
-// Root dependency injection module for the MCP Context Browser.
-// This module composes all domain modules (adapters, infrastructure, application, server, admin)
-// into a single cohesive dependency injection container.
-//
-// Dependencies:
-// - `AdaptersModule`: HTTP clients, providers, repositories
-// - `InfrastructureModule`: System metrics, service providers, event bus, auth
-// - `ApplicationModule`: Business logic services (context, search, indexing)
-// - `ServerModule`: Server-side components (performance metrics, indexing ops)
-// - `AdminModule`: Administrative services and interfaces
 module! {
     pub McpModule {
         components = [],

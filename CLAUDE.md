@@ -1,6 +1,6 @@
 # MCP Context Browser - Claude Code Guide
 
-MCP server for semantic code search using vector embeddings. **v0.1.0 production-ready.**
+MCP server for semantic code search using vector embeddings. **v0.1.1 production-ready.**
 
 ## Quick Reference
 
@@ -119,7 +119,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 -   Rate limiting on all endpoints
 -   AES-GCM encryption at rest
 
-## Current Version: v0.1.0
+## Current Version: v0.1.1
 
 **First stable release** - Drop-in replacement for Claude-context:
 

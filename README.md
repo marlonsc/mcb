@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/marlonsc/mcp-context-browser/releases)
+[![Version](https://img.shields.io/badge/version-0.1.1-blue)](https://github.com/marlonsc/mcp-context-browser/releases)
 
 **High-performance MCP server for semantic code search** - AI-powered code analysis using vector embeddings. Provides intelligent, natural language code discovery with AST-based parsing for 12+ languages, supporting Claude Desktop and other AI assistants through the Model Context Protocol.
 
@@ -274,7 +274,7 @@ See [tests/README.md](tests/README.md) for detailed test structure.
 -   Multi-language support (Rust, Python, JavaScript, etc.)
 -   Security compliance with audit trails
 
-## Current Status: v0.1.0 ✅ RELEASED
+## Current Status: v0.1.1 ✅ RELEASED
 
 First stable release - drop-in replacement for Claude-context:
 

@@ -67,6 +67,9 @@
 // Documentation configuration for docs.rs
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+/// Current version of MCP Context Browser
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub mod adapters;
 pub mod application;
 pub mod domain;

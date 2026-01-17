@@ -65,36 +65,13 @@ pub trait LanguageModule:
 {
 }
 
-/// Use case module trait - application business logic.
-///
-/// Note: Use cases are created at runtime via DomainServicesFactory
-/// with proper dependency injection from context modules.
-pub trait UseCaseModule: Send + Sync {}
-
-// ============================================================================
-// Legacy Modules (Compatibility)
-// ============================================================================
-
-/// Adapters module trait - external service integrations.
-pub trait AdaptersModule:
-    HasComponent<dyn mcb_application::ports::providers::cache::CacheProvider>
-    + HasComponent<dyn mcb_application::ports::providers::EmbeddingProvider>
-    + HasComponent<dyn mcb_application::ports::providers::VectorStoreProvider>
-    + HasComponent<dyn mcb_application::ports::providers::LanguageChunkingProvider>
-{
-}
-
-// ============================================================================
-// Application Module (Business Logic)
-// ============================================================================
-
-/// Application module trait - business logic services.
-/// Services created via DomainServicesFactory at runtime.
-pub trait ApplicationModule: Send + Sync {}
-
 // ============================================================================
 // Admin Module (Administrative Services)
 // ============================================================================
 
 /// Admin module trait - administrative services.
+///
+/// Note: Server admin components (PerformanceMetricsInterface, IndexingOperationsInterface)
+/// are registered in ServerModule. This is a marker trait for future admin-specific
+/// services like shutdown coordination.
 pub trait AdminModule: Send + Sync {}

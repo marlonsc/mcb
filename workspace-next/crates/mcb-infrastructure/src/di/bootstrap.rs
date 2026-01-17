@@ -36,17 +36,14 @@ use mcb_domain::error::Result;
 use std::sync::Arc;
 use tracing::info;
 
-// Import module implementations
+// Import module implementations (Clean Architecture - no empty placeholder modules)
 use super::modules::{
     cache_module::CacheModuleImpl,
     data_module::DataModuleImpl,
     embedding_module::EmbeddingModuleImpl,
     language_module::LanguageModuleImpl,
-    usecase_module::UseCaseModuleImpl,
     infrastructure::InfrastructureModuleImpl,
     server::ServerModuleImpl,
-    adapters::AdaptersModuleImpl,
-    application::ApplicationModuleImpl,
     admin::AdminModuleImpl,
 };
 
@@ -162,10 +159,7 @@ impl DiContainerBuilder {
     /// This method delegates to the new Clean Architecture init_app function.
     /// The old McpModule approach has been replaced with proper hierarchical modules.
     pub async fn build(self) -> Result<DiContainer> {
-        // Convert from AppConfig (if available) or create default
-        // Note: This builder pattern is maintained for backward compatibility
-        // but delegates to the new init_app function
-        let config = AppConfig::default(); // TODO: Use actual config from builder
+        let config = self.config.unwrap_or_default();
         init_app(config).await
     }
 }
@@ -201,100 +195,29 @@ pub async fn create_production_container(config: AppConfig) -> Result<DiContaine
         .await
 }
 
-/// Legacy compatibility - creates full container for gradual migration
-///
-/// **DEPRECATED**: Use `create_production_container()` instead.
-/// This will be removed in v0.2.0 when migration to strict Shaku pattern is complete.
-#[deprecated(
-    since = "0.1.0",
-    note = "Use `create_production_container()` instead. This function will be removed in v0.2.0."
-)]
-pub async fn create_full_container(config: AppConfig) -> Result<DiContainer> {
-    create_production_container(config).await
-}
-
-// ============================================================================
-// Legacy Compatibility Types (for gradual migration)
-// ============================================================================
-
-/// Infrastructure components container for backward compatibility
-///
-/// **Note**: This exists for gradual migration from the old API.
-/// New code should use `create_production_container()` and Shaku modules.
-#[derive(Clone)]
-pub struct InfrastructureComponents {
-    /// Shared cache provider
-    pub cache: crate::cache::provider::SharedCacheProvider,
-    /// Crypto service
-    pub crypto: CryptoService,
-    /// Health registry
-    pub health: crate::health::HealthRegistry,
-}
-
-impl InfrastructureComponents {
-    /// Create infrastructure components from configuration
-    pub async fn new(config: AppConfig) -> Result<Self> {
-        InfrastructureContainerBuilder::new(config).build().await
-    }
-}
-
-/// Builder for infrastructure components (backward compatibility)
-///
-/// **Note**: This exists for gradual migration from the old API.
-pub struct InfrastructureContainerBuilder {
-    config: AppConfig,
-}
-
-impl InfrastructureContainerBuilder {
-    /// Create a new builder
-    pub fn new(config: AppConfig) -> Self {
-        Self { config }
-    }
-
-    /// Build infrastructure components
-    pub async fn build(self) -> Result<InfrastructureComponents> {
-        // Create cache provider
-        let cache = crate::cache::factory::CacheProviderFactory::create_from_config(
-            &self.config.system.infrastructure.cache,
-        )
-        .await?;
-
-        // Create crypto service with 32-byte key
-        let master_key = if self.config.auth.jwt.secret.len() >= 32 {
-            self.config.auth.jwt.secret.as_bytes()[..32].to_vec()
-        } else {
-            CryptoService::generate_master_key()
-        };
-        let crypto = CryptoService::new(master_key)?;
-
-        // Create health registry
-        let health = crate::health::HealthRegistry::new();
-        let system_checker = crate::health::checkers::SystemHealthChecker::new();
-        health.register_checker("system".to_string(), system_checker).await;
-
-        Ok(InfrastructureComponents {
-            cache,
-            crypto,
-            health,
-        })
-    }
-}
-
 // ============================================================================
 // Clean Architecture App Module (Hierarchical Composition)
 // ============================================================================
 
 /// Application container using Clean Architecture modules
+///
+/// Contains only the essential modules following Clean Architecture:
+/// - Context modules: cache, embedding, data, language (provider implementations)
+/// - Infrastructure modules: infrastructure (cross-cutting), server (MCP), admin
 pub struct AppContainer {
+    /// Cache provider module (NullCacheProvider by default)
     pub cache: CacheModuleImpl,
+    /// Embedding provider module (NullEmbeddingProvider by default)
     pub embedding: EmbeddingModuleImpl,
+    /// Data/vector store provider module (NullVectorStoreProvider by default)
     pub data: DataModuleImpl,
+    /// Language chunking module (UniversalLanguageChunkingProvider)
     pub language: LanguageModuleImpl,
-    pub usecase: UseCaseModuleImpl,
+    /// Core infrastructure services (auth, events, metrics, sync, snapshot)
     pub infrastructure: InfrastructureModuleImpl,
+    /// MCP server components (performance metrics, indexing operations)
     pub server: ServerModuleImpl,
-    pub adapters: AdaptersModuleImpl,
-    pub application: ApplicationModuleImpl,
+    /// Admin services (performance metrics, shutdown coordination)
     pub admin: AdminModuleImpl,
 }
 
@@ -305,41 +228,16 @@ pub struct AppContainer {
 pub async fn init_app(_config: AppConfig) -> Result<AppContainer> {
     info!("Initializing Clean Architecture application modules");
 
-    // Build context modules with production overrides
-    let cache = CacheModuleImpl::builder()
-        // Could override with Redis cache here if configured
-        .build();
+    // Build context modules (provider implementations)
+    let cache = CacheModuleImpl::builder().build();
+    let embedding = EmbeddingModuleImpl::builder().build();
+    let data = DataModuleImpl::builder().build();
+    let language = LanguageModuleImpl::builder().build();
 
-    let embedding = EmbeddingModuleImpl::builder()
-        // Override with production embedding provider if configured
-        .build();
-
-    let data = DataModuleImpl::builder()
-        // Override with production vector store if configured
-        .build();
-
-    let language = LanguageModuleImpl::builder()
-        // Universal chunker works for all languages
-        .build();
-
-    let usecase = UseCaseModuleImpl::builder()
-        // Use cases are components with DI
-        .build();
-
-    let infrastructure = InfrastructureModuleImpl::builder()
-        .build();
-
-    let server = ServerModuleImpl::builder()
-        .build();
-
-    let adapters = AdaptersModuleImpl::builder()
-        .build();
-
-    let application = ApplicationModuleImpl::builder()
-        .build();
-
-    let admin = AdminModuleImpl::builder()
-        .build();
+    // Build infrastructure modules
+    let infrastructure = InfrastructureModuleImpl::builder().build();
+    let server = ServerModuleImpl::builder().build();
+    let admin = AdminModuleImpl::builder().build();
 
     // Compose into final app container
     let app_container = AppContainer {
@@ -347,11 +245,8 @@ pub async fn init_app(_config: AppConfig) -> Result<AppContainer> {
         embedding,
         data,
         language,
-        usecase,
         infrastructure,
         server,
-        adapters,
-        application,
         admin,
     };
 

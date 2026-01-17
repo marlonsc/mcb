@@ -37,10 +37,7 @@ pub mod bootstrap;
 pub mod dispatch;
 pub mod factory;
 pub mod modules;
-pub mod registry;
 
 pub use bootstrap::*;
 pub use dispatch::*;
 pub use factory::*;
-pub use modules::*;
-pub use registry::*;

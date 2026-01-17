@@ -64,13 +64,7 @@ pub mod mcp_server;
 pub mod tools;
 pub mod transport;
 
-// Placeholder modules for future functionality
-// These are intentionally minimal stubs that will be expanded as needed
-mod components;
-mod metrics;
-mod operations;
-mod rate_limit_middleware;
-mod security;
+// Placeholder modules removed - functionality handled by infrastructure layer
 
 // Re-export core types for public API
 pub use builder::McpServerBuilder;

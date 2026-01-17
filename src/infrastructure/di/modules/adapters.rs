@@ -15,6 +15,8 @@
 //! - VectorStoreChunkRepository injects EmbeddingProvider + VectorStoreProvider
 //! - VectorStoreSearchRepository injects VectorStoreProvider
 
+#![allow(missing_docs)]
+
 use shaku::module;
 
 use super::traits::AdaptersModule;
@@ -23,15 +25,6 @@ use crate::adapters::providers::embedding::NullEmbeddingProvider;
 use crate::adapters::providers::vector_store::NullVectorStoreProvider;
 use crate::adapters::repository::{VectorStoreChunkRepository, VectorStoreSearchRepository};
 
-// Implementation of the AdaptersModule trait providing external service integrations.
-// This module provides HTTP clients, embedding providers, vector stores, and repository implementations.
-//
-// Generated components:
-// - `HttpClientPool`: Connection pool for HTTP requests to external APIs
-// - `NullEmbeddingProvider`: Fallback embedding provider for testing/development
-// - `NullVectorStoreProvider`: Fallback vector store provider for testing/development
-// - `VectorStoreChunkRepository`: Repository for storing and retrieving code chunks
-// - `VectorStoreSearchRepository`: Repository for semantic search operations
 module! {
     pub AdaptersModuleImpl: AdaptersModule {
         components = [

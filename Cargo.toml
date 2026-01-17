@@ -11,7 +11,7 @@ serde = { version = "1.0", features = ["derive"] }
 
 [package]
 name = "mcp-context-browser"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 license = "MIT"
