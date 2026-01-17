@@ -20,14 +20,14 @@ pub struct UndocumentedStruct {
     );
 
     let validator = DocumentationValidator::new(temp.path());
-    let violations = validator.validate_struct_docs().unwrap();
+    let violations = validator.validate_pub_item_docs().unwrap();
 
     assert!(!violations.is_empty(), "Should detect missing struct doc");
     match &violations[0] {
-        DocumentationViolation::MissingStructDoc { struct_name, .. } => {
-            assert_eq!(struct_name, "UndocumentedStruct");
+        DocumentationViolation::MissingPubItemDoc { item_name, .. } => {
+            assert_eq!(item_name, "UndocumentedStruct");
         }
-        _ => panic!("Expected MissingStructDoc"),
+        _ => panic!("Expected MissingPubItemDoc"),
     }
 }
 
@@ -46,7 +46,7 @@ pub struct DocumentedStruct {
     );
 
     let validator = DocumentationValidator::new(temp.path());
-    let violations = validator.validate_struct_docs().unwrap();
+    let violations = validator.validate_pub_item_docs().unwrap();
 
     assert!(violations.is_empty(), "Documented structs should pass");
 }

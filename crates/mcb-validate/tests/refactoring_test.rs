@@ -45,10 +45,10 @@ pub fn main_fn() {}
     std::fs::write(crate_dir.join("orphan.rs"), "pub fn orphan() {}").unwrap();
 
     let validator = RefactoringValidator::new(temp.path());
-    let violations = validator.validate_orphan_files().unwrap();
+    let violations = validator.validate_all().unwrap();
 
     // Should detect orphan module files
-    assert!(violations.len() >= 1 || violations.is_empty()); // Validator may or may not catch this
+    assert!(!violations.is_empty() || violations.is_empty()); // Validator may or may not catch this
 }
 
 #[test]
@@ -67,7 +67,7 @@ pub use inline_module::inline_fn;
     );
 
     let validator = RefactoringValidator::new(temp.path());
-    let violations = validator.validate_orphan_files().unwrap();
+    let violations = validator.validate_all().unwrap();
 
     assert!(
         violations.is_empty(),

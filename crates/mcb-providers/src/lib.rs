@@ -9,9 +9,10 @@
 //! | Category | Port | Implementations |
 //! |----------|------|-----------------|
 //! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed, Null |
-//! | Vector Store | `VectorStoreProvider` | InMemory, Encrypted, Null |
+//! | Vector Store | `VectorStoreProvider` | InMemory, Encrypted, Null, EdgeVec, Filesystem, Milvus |
 //! | Cache | `CacheProvider` | Moka, Redis, Null |
 //! | Events | `EventPublisher` | Tokio, Nats, Null |
+//! | Hybrid Search | `HybridSearchProvider` | HybridSearchEngine, Null |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
 //!
 //! ## Feature Flags
@@ -33,7 +34,8 @@
 
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_application::ports::providers::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider,
+    VectorStoreProvider,
 };
 pub use mcb_domain::error::{Error, Result};
 
@@ -88,3 +90,14 @@ pub mod language;
 ///
 /// Implements `PerformanceMetricsInterface` and `IndexingOperationsInterface` ports.
 pub mod admin;
+
+/// Hybrid search provider implementations
+///
+/// Implements `HybridSearchProvider` trait for combined BM25 + semantic search.
+/// Provides BM25 text ranking algorithm and hybrid score fusion.
+#[cfg(feature = "hybrid-search")]
+pub mod hybrid_search;
+
+// Re-export hybrid search providers when feature is enabled
+#[cfg(feature = "hybrid-search")]
+pub use hybrid_search::{HybridSearchEngine, NullHybridSearchProvider};

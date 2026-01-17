@@ -262,6 +262,7 @@ fn parse_tool_call_params(
     Ok(CallToolRequestParam {
         name: tool_name.into(),
         arguments,
+        task: None,
     })
 }
 

@@ -23,7 +23,7 @@ pub fn bad_perf(items: Vec<String>) {
     );
 
     let validator = PerformanceValidator::new(temp.path());
-    let violations = validator.validate_clone_patterns().unwrap();
+    let violations = validator.validate_clone_in_loops().unwrap();
 
     // May or may not detect based on validator configuration
     assert!(violations.is_empty() || !violations.is_empty());
@@ -53,7 +53,7 @@ pub fn returns_large() -> LargeStruct {
     );
 
     let validator = PerformanceValidator::new(temp.path());
-    let violations = validator.validate_large_types().unwrap();
+    let violations = validator.validate_all().unwrap();
 
     // May suggest boxing large return types
     assert!(violations.is_empty() || !violations.is_empty());

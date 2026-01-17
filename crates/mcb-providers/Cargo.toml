@@ -17,7 +17,7 @@ name = "mcb_providers"
 path = "src/lib.rs"
 
 [features]
-default = ["embedding-ollama", "vectorstore-memory", "cache-moka", "lang-all"]
+default = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-all"]
 
 # === Embedding Providers ===
 embedding-all = ["embedding-openai", "embedding-ollama", "embedding-voyageai", "embedding-gemini", "embedding-fastembed"]
@@ -34,8 +34,10 @@ vectorstore-memory = []
 vectorstore-encrypted = ["dep:aes-gcm"]
 vectorstore-filesystem = []
 vectorstore-edgevec = ["dep:edgevec", "dep:schemars"]
-# Milvus cloud vector database (disabled by default - upstream crate has compilation bug)
 vectorstore-milvus = ["dep:milvus-sdk-rust"]
+
+# === Hybrid Search Providers ===
+hybrid-search = []  # BM25 + semantic hybrid search
 
 # === Cache Providers ===
 cache-all = ["cache-moka", "cache-redis"]
@@ -59,8 +61,8 @@ lang-swift = ["dep:tree-sitter-swift"]
 lang-kotlin = ["dep:tree-sitter-kotlin-ng"]
 
 # === Convenience Feature Groups ===
-minimal = ["embedding-ollama", "vectorstore-memory", "cache-moka", "lang-rust", "lang-python"]
-full = ["embedding-all", "vectorstore-all", "cache-all", "lang-all"]
+minimal = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-rust", "lang-python"]
+full = ["embedding-all", "vectorstore-all", "cache-all", "hybrid-search", "lang-all"]
 
 [dependencies]
 # Domain layer

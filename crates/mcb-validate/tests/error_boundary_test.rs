@@ -53,7 +53,7 @@ pub enum MyError {
     );
 
     let validator = ErrorBoundaryValidator::new(temp.path());
-    let violations = validator.validate_error_definitions().unwrap();
+    let violations = validator.validate_error_context().unwrap();
 
     assert!(violations.is_empty(), "error.rs files should be exempt");
 }
@@ -73,7 +73,7 @@ pub fn might_fail() -> Result<(), String> {
     );
 
     let validator = ErrorBoundaryValidator::new(temp.path());
-    let violations = validator.validate_error_types().unwrap();
+    let violations = validator.validate_layer_error_types().unwrap();
 
     // Using String as error type should be flagged
     assert!(!violations.is_empty() || violations.is_empty()); // Depends on rules

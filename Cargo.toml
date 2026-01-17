@@ -166,9 +166,8 @@ health = "0.2"
 # EdgeVec high-performance vector database
 edgevec = "0.8"
 
-# Milvus vector database client
-# Note: v0.2.0 has a lifetime bug - vectorstore-milvus feature is excluded from "full"
-milvus = "0.2"
+# Milvus vector database client (from git - crates.io v0.2 has lifetime bug)
+milvus-sdk-rust = { version = "0.1.0", git = "https://github.com/milvus-io/milvus-sdk-rust.git" }
 
 # Additional dependencies
 async-trait = "0.1"

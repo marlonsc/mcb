@@ -2,7 +2,7 @@
 
 mod test_utils;
 
-use mcb_validate::tests_org::TestOrgValidator;
+use mcb_validate::tests_org::TestValidator;
 use std::fs;
 use tempfile::TempDir;
 use test_utils::create_test_crate;
@@ -30,8 +30,8 @@ mod tests {
 "#,
     );
 
-    let validator = TestOrgValidator::new(temp.path());
-    let violations = validator.validate_inline_tests().unwrap();
+    let validator = TestValidator::new(temp.path());
+    let violations = validator.validate_no_inline_tests().unwrap();
 
     // Inline tests in production code may or may not be violations depending on config
     assert!(violations.is_empty() || !violations.is_empty());
@@ -70,7 +70,7 @@ version = "0.1.1"
     )
     .unwrap();
 
-    let validator = TestOrgValidator::new(temp.path());
+    let validator = TestValidator::new(temp.path());
     let violations = validator.validate_test_naming().unwrap();
 
     // May or may not detect naming issues based on config
