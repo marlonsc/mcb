@@ -8,15 +8,6 @@ use shaku::module;
 // Import traits
 use crate::di::modules::traits::UseCaseModule;
 
-/// Use case module providing application business logic
-///
-/// ## Services Provided
-/// - ContextServiceInterface: Code intelligence operations
-/// - SearchServiceInterface: Semantic search operations
-/// - IndexingServiceInterface: Code indexing operations
-///
-/// ## Implementation
-/// Use cases are created at runtime via DomainServicesFactory with proper dependencies.
 module! {
     pub UseCaseModuleImpl: UseCaseModule {
         components = [

@@ -11,16 +11,6 @@ use mcb_providers::cache::NullCacheProvider;
 // Import traits
 use crate::di::modules::traits::CacheModule;
 
-/// Cache module providing cache provider implementations
-///
-/// ## Services Provided
-/// - CacheProvider: For caching operations
-///
-/// ## Default Implementation
-/// - NullCacheProvider: No-op cache for testing
-///
-/// ## Production Override
-/// Can be overridden with Redis, Moka, or other cache providers
 module! {
     pub CacheModuleImpl: CacheModule {
         components = [

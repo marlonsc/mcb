@@ -27,31 +27,6 @@ use mcb_providers::vector_store::NullVectorStoreProvider;
 // Import traits
 use super::traits::AdaptersModule;
 
-/// Adapters module implementation following Shaku strict pattern.
-///
-/// This module provides external service integrations with no dependencies.
-/// Uses null providers as defaults for testing, with runtime overrides for production.
-///
-/// ## Provider Strategy
-///
-/// - **Null Providers as Defaults**: `NullEmbeddingProvider`, `NullVectorStoreProvider`
-/// - **Runtime Overrides**: Production providers injected via `with_component_override()`
-/// - **Null Repositories**: For testing, can be overridden for production
-///
-/// ## Construction
-///
-/// ```rust,ignore
-/// let adapters = AdaptersModuleImpl::builder().build();
-/// ```
-///
-/// ## Production Configuration
-///
-/// ```rust,ignore
-/// let adapters = AdaptersModuleImpl::builder()
-///     .with_component_override::<dyn EmbeddingProvider>(openai_provider)
-///     .with_component_override::<dyn VectorStoreProvider>(milvus_provider)
-///     .build();
-/// ```
 module! {
     pub AdaptersModuleImpl: AdaptersModule {
         components = [

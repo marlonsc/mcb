@@ -11,16 +11,6 @@ use mcb_providers::vector_store::NullVectorStoreProvider;
 // Import traits
 use crate::di::modules::traits::DataModule;
 
-/// Data module providing data persistence implementations
-///
-/// ## Services Provided
-/// - VectorStoreProvider: For vector storage operations
-///
-/// ## Default Implementation
-/// - NullVectorStoreProvider: In-memory vector store for testing
-///
-/// ## Production Override
-/// Can be overridden with Milvus, EdgeVec, or other vector stores
 module! {
     pub DataModuleImpl: DataModule {
         components = [

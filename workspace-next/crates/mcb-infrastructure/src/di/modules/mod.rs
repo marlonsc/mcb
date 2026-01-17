@@ -81,8 +81,6 @@ pub use domain_services::{DomainServicesContainer, DomainServicesFactory};
 // Root Module Definition (Shaku Strict Pattern)
 // ============================================================================
 
-use shaku::Interface;
-use std::sync::Arc;
 
 // Import provider traits from mcb-domain
 use mcb_application::ports::providers::{EmbeddingProvider, VectorStoreProvider};
@@ -94,68 +92,3 @@ use mcb_application::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 // Root Module Definition
 // ============================================================================
 
-/// Legacy root dependency injection module.
-///
-/// **Deprecated**: Use `AppModule` instead for cleaner composition.
-///
-/// This module composes all domain modules into a single container.
-/// It uses `use dyn ModuleTrait` to import services from submodules,
-/// following Shaku's strict submodule composition pattern.
-///
-/// ## Note
-///
-/// Most services are created via runtime factories (DomainServicesFactory)
-/// rather than through Shaku resolution, because they need runtime config.
-/// The Shaku modules primarily hold null/default providers for testing.
-///
-/// ## Construction
-///
-/// ```rust,ignore
-/// let infrastructure = Arc::new(InfrastructureModuleImpl::builder().build());
-/// let server = Arc::new(ServerModuleImpl::builder().build());
-/// let adapters = Arc::new(AdaptersModuleImpl::builder().build());
-/// let application = Arc::new(ApplicationModuleImpl::builder().build());
-/// let admin = Arc::new(AdminModuleImpl::builder().build());
-///
-/// let root = McpModule::builder(infrastructure, server, adapters, application, admin).build();
-/// ```
-module! {
-    pub McpModule {
-        components = [],
-        providers = [],
-
-        // Infrastructure services (COMPLETE - all with Component derive)
-        use dyn InfrastructureModule {
-            components = [
-                dyn mcb_application::ports::infrastructure::AuthServiceInterface,
-                dyn mcb_application::ports::infrastructure::EventBusProvider,
-                dyn mcb_application::ports::infrastructure::SystemMetricsCollectorInterface,
-                dyn mcb_application::ports::infrastructure::SnapshotProvider,
-                dyn mcb_application::ports::infrastructure::SyncProvider
-            ],
-            providers = []
-        },
-
-        // Server components (COMPLETE - all with Component derive)
-        use dyn ServerModule {
-            components = [
-                dyn mcb_application::ports::admin::PerformanceMetricsInterface,
-                dyn mcb_application::ports::admin::IndexingOperationsInterface
-            ],
-            providers = []
-        },
-
-        // External adapters (providers, repositories, no dependencies)
-        use dyn AdaptersModule {
-            components = [
-                dyn EmbeddingProvider,
-                dyn VectorStoreProvider
-            ],
-            providers = []
-        }
-
-        // NOTE: ApplicationModule and AdminModule are NOT included here.
-        // They are placeholder modules for the hierarchy - services are created
-        // at runtime via DomainServicesFactory, not through Shaku resolution.
-    }
-}

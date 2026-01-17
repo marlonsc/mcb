@@ -35,17 +35,6 @@ use shaku::module;
 // Import traits
 use super::traits::ApplicationModule;
 
-/// Application module implementation - **Placeholder only**.
-///
-/// This module exists to satisfy the Shaku module hierarchy but
-/// does NOT register any components. Application services are
-/// created via `DomainServicesFactory` at runtime.
-///
-/// ## Construction
-///
-/// ```rust,ignore
-/// let application = ApplicationModuleImpl::builder().build();
-/// ```
 module! {
     pub ApplicationModuleImpl: ApplicationModule {
         components = [],

@@ -28,9 +28,6 @@ use crate::infrastructure::{
 // Import traits
 use super::traits::InfrastructureModule;
 
-/// Infrastructure module implementation with null providers for testing.
-///
-/// Real providers are injected at runtime via DomainServicesFactory.
 module! {
     pub InfrastructureModuleImpl: InfrastructureModule {
         components = [
