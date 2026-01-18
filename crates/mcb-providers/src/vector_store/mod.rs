@@ -22,10 +22,10 @@
 //! - **High-performance embedded**: Use `EdgeVecVectorStoreProvider` for sub-ms search
 //! - **Cloud production**: Use `MilvusVectorStoreProvider` for distributed cloud deployments
 
-#[cfg(feature = "vectorstore-encrypted")]
-pub mod encrypted;
 #[cfg(feature = "vectorstore-edgevec")]
 pub mod edgevec;
+#[cfg(feature = "vectorstore-encrypted")]
+pub mod encrypted;
 #[cfg(feature = "vectorstore-filesystem")]
 pub mod filesystem;
 pub mod in_memory;
@@ -34,10 +34,12 @@ pub mod milvus;
 pub mod null;
 
 // Re-export for convenience
+#[cfg(feature = "vectorstore-edgevec")]
+pub use edgevec::{
+    EdgeVecConfig, EdgeVecVectorStoreProvider, HnswConfig, MetricType, QuantizerConfig,
+};
 #[cfg(feature = "vectorstore-encrypted")]
 pub use encrypted::EncryptedVectorStoreProvider;
-#[cfg(feature = "vectorstore-edgevec")]
-pub use edgevec::{EdgeVecConfig, EdgeVecVectorStoreProvider, HnswConfig, MetricType, QuantizerConfig};
 #[cfg(feature = "vectorstore-filesystem")]
 pub use filesystem::{FilesystemVectorStore, FilesystemVectorStoreConfig};
 pub use in_memory::InMemoryVectorStoreProvider;

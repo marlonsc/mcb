@@ -54,18 +54,17 @@ pub mod vector_store;
 
 // Re-export all registry types and functions
 pub use cache::{
-    resolve_cache_provider, list_cache_providers,
-    CacheProviderConfig, CacheProviderEntry,
+    list_cache_providers, resolve_cache_provider, CacheProviderConfig, CacheProviderEntry,
 };
 pub use embedding::{
-    resolve_embedding_provider, list_embedding_providers,
-    EmbeddingProviderConfig, EmbeddingProviderEntry,
+    list_embedding_providers, resolve_embedding_provider, EmbeddingProviderConfig,
+    EmbeddingProviderEntry,
 };
 pub use language::{
-    resolve_language_provider, list_language_providers,
-    LanguageProviderConfig, LanguageProviderEntry,
+    list_language_providers, resolve_language_provider, LanguageProviderConfig,
+    LanguageProviderEntry,
 };
 pub use vector_store::{
-    resolve_vector_store_provider, list_vector_store_providers,
-    VectorStoreProviderConfig, VectorStoreProviderEntry,
+    list_vector_store_providers, resolve_vector_store_provider, VectorStoreProviderConfig,
+    VectorStoreProviderEntry,
 };

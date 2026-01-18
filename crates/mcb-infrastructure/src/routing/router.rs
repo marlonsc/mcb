@@ -54,7 +54,9 @@ impl DefaultProviderRouter {
             .collect();
 
         if available.is_empty() {
-            return Err(Error::infrastructure("No providers available after exclusions"));
+            return Err(Error::infrastructure(
+                "No providers available after exclusions",
+            ));
         }
 
         // Try preferred providers first (if healthy)
@@ -124,10 +126,7 @@ impl ProviderRouter for DefaultProviderRouter {
 
     async fn get_stats(&self) -> HashMap<String, serde_json::Value> {
         let mut stats = HashMap::new();
-        stats.insert(
-            "provider".to_string(),
-            serde_json::json!("default"),
-        );
+        stats.insert("provider".to_string(), serde_json::json!("default"));
         stats.insert(
             "embedding_providers".to_string(),
             serde_json::json!(self.embedding_providers),

@@ -165,3 +165,5 @@ criterion = { workspace = true }
 [dev-dependencies]
 tempfile = "3.10"
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+# Link mcb-providers for inventory auto-registration in tests
+mcb-providers = { path = "../mcb-providers" }

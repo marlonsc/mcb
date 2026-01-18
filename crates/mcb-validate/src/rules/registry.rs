@@ -123,6 +123,22 @@ impl RuleRegistry {
             registry.register(rule);
         }
 
+        for rule in linkme_rules() {
+            registry.register(rule);
+        }
+
+        for rule in constructor_injection_rules() {
+            registry.register(rule);
+        }
+
+        for rule in figment_rules() {
+            registry.register(rule);
+        }
+
+        for rule in rocket_rules() {
+            registry.register(rule);
+        }
+
         registry
     }
 }

@@ -1,7 +1,7 @@
 //! Tests for hybrid search providers
 
-use crate::hybrid_search::{BM25Params, BM25Scorer, HybridSearchEngine, NullHybridSearchProvider};
 use crate::constants::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
+use crate::hybrid_search::{BM25Params, BM25Scorer, HybridSearchEngine, NullHybridSearchProvider};
 use mcb_application::ports::providers::HybridSearchProvider;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::SearchResult;
@@ -67,9 +67,21 @@ fn test_bm25_scorer_creation() {
 fn test_bm25_scoring() {
     // Use content with clearly distinct keywords that match as separate tokens
     let chunks = vec![
-        create_test_chunk("authenticate the user and validate their credentials with proper authentication", "auth.rs", 1),
-        create_test_chunk("validate the password using hash function for security", "auth.rs", 10),
-        create_test_chunk("process the data and compress it for storage optimization", "data.rs", 1),
+        create_test_chunk(
+            "authenticate the user and validate their credentials with proper authentication",
+            "auth.rs",
+            1,
+        ),
+        create_test_chunk(
+            "validate the password using hash function for security",
+            "auth.rs",
+            10,
+        ),
+        create_test_chunk(
+            "process the data and compress it for storage optimization",
+            "data.rs",
+            1,
+        ),
     ];
 
     let scorer = BM25Scorer::new(&chunks, BM25Params::default());
@@ -80,15 +92,28 @@ fn test_bm25_scoring() {
 
     // Auth chunk should score highest (contains "authenticate", "user", "validate")
     // Data chunk has none of these terms
-    assert!(score_auth > score_data, "Auth chunk should score higher than data chunk (auth={}, data={})", score_auth, score_data);
+    assert!(
+        score_auth > score_data,
+        "Auth chunk should score higher than data chunk (auth={}, data={})",
+        score_auth,
+        score_data
+    );
 }
 
 #[test]
 fn test_bm25_batch_scoring() {
     // Use content with clearly distinct keywords
     let chunks = vec![
-        create_test_chunk("search through the codebase and find matching patterns", "search.rs", 1),
-        create_test_chunk("index the documents and build inverted index structure", "index.rs", 1),
+        create_test_chunk(
+            "search through the codebase and find matching patterns",
+            "search.rs",
+            1,
+        ),
+        create_test_chunk(
+            "index the documents and build inverted index structure",
+            "index.rs",
+            1,
+        ),
     ];
 
     let scorer = BM25Scorer::new(&chunks, BM25Params::default());
@@ -99,7 +124,12 @@ fn test_bm25_batch_scoring() {
 
     assert_eq!(scores.len(), 2);
     // First chunk contains "search" and "codebase", second has neither
-    assert!(scores[0] > scores[1], "First chunk should score higher (search={}, index={})", scores[0], scores[1]);
+    assert!(
+        scores[0] > scores[1],
+        "First chunk should score higher (search={}, index={})",
+        scores[0],
+        scores[1]
+    );
 }
 
 // ============================================================================
@@ -150,19 +180,27 @@ async fn test_hybrid_search() {
     // Semantic results: data.rs has slightly higher semantic score
     // But auth.rs has much better BM25 match for the query
     let semantic_results = vec![
-        create_test_search_result("auth.rs", 1, 0.7),  // Lower semantic
+        create_test_search_result("auth.rs", 1, 0.7), // Lower semantic
         create_test_search_result("data.rs", 1, 0.75), // Higher semantic
     ];
 
     // Query matches auth.rs content perfectly
     let results = engine
-        .search("test", "authenticate user validate credentials", semantic_results, 10)
+        .search(
+            "test",
+            "authenticate user validate credentials",
+            semantic_results,
+            10,
+        )
         .await
         .unwrap();
 
     assert_eq!(results.len(), 2);
     // Auth chunk should rank higher due to strong BM25 boost overcoming semantic difference
-    assert_eq!(results[0].file_path, "auth.rs", "Auth should rank first due to BM25 boost");
+    assert_eq!(
+        results[0].file_path, "auth.rs",
+        "Auth should rank first due to BM25 boost"
+    );
 }
 
 #[tokio::test]

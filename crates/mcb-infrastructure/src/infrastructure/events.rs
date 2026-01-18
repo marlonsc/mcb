@@ -20,9 +20,12 @@ use tracing::{debug, warn};
 ///
 /// Discards all published events without any side effects.
 /// Useful for testing when event publishing is not relevant.
+/// Used via `with_component_override` in tests.
+#[allow(dead_code)] // Constructed via Shaku DI component_override
 #[derive(Debug, Default)]
 pub struct NullEventBusProvider;
 
+#[allow(dead_code)] // Methods used via Shaku DI component_override
 impl NullEventBusProvider {
     /// Create a new null event bus provider
     pub fn new() -> Self {

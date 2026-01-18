@@ -192,7 +192,7 @@ inventory::submit! {
                 .timeout(timeout)
                 .build()
                 .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
-            
+
             Ok(std::sync::Arc::new(OllamaEmbeddingProvider::new(
                 base_url, model, timeout, http_client
             )))

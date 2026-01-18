@@ -182,18 +182,33 @@ impl FastEmbedActor {
 
 use mcb_application::ports::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry};
 
+/// Parse model name string to EmbeddingModel enum
+fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
+    match model_name.to_lowercase().as_str() {
+        "bgesmallenq" | "bge-small-en-q" => EmbeddingModel::BGESmallENV15Q,
+        "bgesmallen" | "bge-small-en" => EmbeddingModel::BGESmallENV15,
+        "bgesmallzh" | "bge-small-zh" => EmbeddingModel::BGESmallZHV15,
+        "bgebasenq" | "bge-base-en-q" => EmbeddingModel::BGEBaseENV15Q,
+        "bgebaseen" | "bge-base-en" => EmbeddingModel::BGEBaseENV15,
+        "bgelargeen" | "bge-large-en" => EmbeddingModel::BGELargeENV15Q,
+        "multilingual-e5-small" => EmbeddingModel::MultilingualE5Small,
+        "multilingual-e5-large" => EmbeddingModel::MultilingualE5Large,
+        _ => EmbeddingModel::AllMiniLML6V2, // default
+    }
+}
+
 inventory::submit! {
     EmbeddingProviderEntry {
         name: "fastembed",
         description: "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
         factory: |config: &EmbeddingProviderConfig| {
-            let model = config.model.clone()
+            let model_name = config.model.clone()
                 .unwrap_or_else(|| "AllMiniLML6V2".to_string());
-            
-            // FastEmbed requires sync initialization in the actor
-            let provider = FastEmbedProvider::new(&model)
+
+            let model = parse_embedding_model(&model_name);
+            let provider = FastEmbedProvider::with_model(model)
                 .map_err(|e| format!("Failed to create FastEmbed provider: {}", e))?;
-            
+
             Ok(std::sync::Arc::new(provider))
         },
     }

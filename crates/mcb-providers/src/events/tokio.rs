@@ -153,7 +153,10 @@ impl EventBusProvider for TokioEventBusProvider {
         let event: DomainEvent = match serde_json::from_slice(payload) {
             Ok(e) => e,
             Err(e) => {
-                warn!("Failed to deserialize event payload for topic '{}': {}", topic, e);
+                warn!(
+                    "Failed to deserialize event payload for topic '{}': {}",
+                    topic, e
+                );
                 return Ok(());
             }
         };

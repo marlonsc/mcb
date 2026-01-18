@@ -30,7 +30,7 @@ pub(crate) mod sync;
 // These types are NEVER exposed outside the crate - external code MUST use DI
 pub(crate) use admin::{NullIndexingOperations, NullPerformanceMetrics};
 pub(crate) use auth::NullAuthService;
-pub(crate) use events::{NullEventBusProvider, TokioBroadcastEventBus};
+pub(crate) use events::TokioBroadcastEventBus;
 pub(crate) use lifecycle::DefaultShutdownCoordinator;
 pub(crate) use metrics::NullSystemMetricsCollector;
 pub(crate) use snapshot::NullSnapshotProvider;

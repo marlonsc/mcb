@@ -36,7 +36,7 @@
 //! ```ignore
 //! let config = AppConfig::load()?;
 //! let providers = resolve_providers(&config)?;
-//! 
+//!
 //! // Use providers
 //! let embedding = providers.embedding.embed("hello").await?;
 //! ```
@@ -102,7 +102,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
         .embedding
         .values()
         .next()
-        .map(|ec| embedding_config_to_registry(ec))
+        .map(embedding_config_to_registry)
         .unwrap_or_else(default_embedding_config);
 
     // Get the first (default) vector store config or use defaults
@@ -111,7 +111,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
         .vector_store
         .values()
         .next()
-        .map(|vc| vector_store_config_to_registry(vc))
+        .map(vector_store_config_to_registry)
         .unwrap_or_else(default_vector_store_config);
 
     // Cache config from system.infrastructure.cache
@@ -119,7 +119,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
         crate::config::CacheProvider::Moka => "moka",
         crate::config::CacheProvider::Redis => "redis",
     };
-    
+
     let cache_config = CacheProviderConfig {
         provider: cache_provider_name.to_string(),
         uri: config.system.infrastructure.cache.redis_url.clone(),
@@ -141,13 +141,11 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
         Error::configuration(format!("Failed to resolve vector store provider: {}", e))
     })?;
 
-    let cache = resolve_cache_provider(&cache_config).map_err(|e| {
-        Error::configuration(format!("Failed to resolve cache provider: {}", e))
-    })?;
+    let cache = resolve_cache_provider(&cache_config)
+        .map_err(|e| Error::configuration(format!("Failed to resolve cache provider: {}", e)))?;
 
-    let language = resolve_language_provider(&language_config).map_err(|e| {
-        Error::configuration(format!("Failed to resolve language provider: {}", e))
-    })?;
+    let language = resolve_language_provider(&language_config)
+        .map_err(|e| Error::configuration(format!("Failed to resolve language provider: {}", e)))?;
 
     Ok(ResolvedProviders {
         embedding,

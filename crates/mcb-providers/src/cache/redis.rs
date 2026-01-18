@@ -252,13 +252,10 @@ inventory::submit! {
         factory: |config: &CacheProviderConfig| {
             let uri = config.uri.clone()
                 .unwrap_or_else(|| "redis://localhost:6379".to_string());
-            
-            let provider = tokio::task::block_in_place(|| {
-                tokio::runtime::Handle::current().block_on(async {
-                    RedisCacheProvider::new(&uri).await
-                })
-            }).map_err(|e| format!("Failed to create Redis provider: {}", e))?;
-            
+
+            let provider = RedisCacheProvider::new(&uri)
+                .map_err(|e| format!("Failed to create Redis provider: {}", e))?;
+
             Ok(std::sync::Arc::new(provider))
         },
     }

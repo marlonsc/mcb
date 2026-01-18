@@ -169,7 +169,11 @@ pub fn assert_no_violations<V: std::fmt::Debug>(violations: &[V], context: &str)
 }
 
 /// Assert that violations list has expected count
-pub fn assert_violation_count<V: std::fmt::Debug>(violations: &[V], expected: usize, context: &str) {
+pub fn assert_violation_count<V: std::fmt::Debug>(
+    violations: &[V],
+    expected: usize,
+    context: &str,
+) {
     assert_eq!(
         violations.len(),
         expected,

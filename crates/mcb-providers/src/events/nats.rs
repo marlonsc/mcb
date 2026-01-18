@@ -77,10 +77,12 @@ impl NatsEventBusProvider {
     pub async fn with_subject(url: &str, subject: &str) -> Result<Self> {
         info!("Connecting to NATS server at {}", url);
 
-        let client = async_nats::connect(url).await.map_err(|e| Error::Infrastructure {
-            message: format!("Failed to connect to NATS server at {}: {}", url, e),
-            source: None,
-        })?;
+        let client = async_nats::connect(url)
+            .await
+            .map_err(|e| Error::Infrastructure {
+                message: format!("Failed to connect to NATS server at {}: {}", url, e),
+                source: None,
+            })?;
 
         info!("Connected to NATS server at {}", url);
 
@@ -98,11 +100,7 @@ impl NatsEventBusProvider {
     /// * `url` - NATS server URL
     /// * `subject` - Subject for publishing events
     /// * `client_name` - Optional client name for server-side identification
-    pub async fn with_options(
-        url: &str,
-        subject: &str,
-        client_name: Option<&str>,
-    ) -> Result<Self> {
+    pub async fn with_options(url: &str, subject: &str, client_name: Option<&str>) -> Result<Self> {
         info!("Connecting to NATS server at {} with options", url);
 
         let mut options = async_nats::ConnectOptions::new();
@@ -111,10 +109,13 @@ impl NatsEventBusProvider {
             options = options.name(name);
         }
 
-        let client = options.connect(url).await.map_err(|e| Error::Infrastructure {
-            message: format!("Failed to connect to NATS server at {}: {}", url, e),
-            source: None,
-        })?;
+        let client = options
+            .connect(url)
+            .await
+            .map_err(|e| Error::Infrastructure {
+                message: format!("Failed to connect to NATS server at {}: {}", url, e),
+                source: None,
+            })?;
 
         info!("Connected to NATS server at {}", url);
 
@@ -170,7 +171,10 @@ impl EventBusProvider for NatsEventBusProvider {
             .subscribe(self.subject.clone())
             .await
             .map_err(|e| Error::Infrastructure {
-                message: format!("Failed to subscribe to NATS subject '{}': {}", self.subject, e),
+                message: format!(
+                    "Failed to subscribe to NATS subject '{}': {}",
+                    self.subject, e
+                ),
                 source: None,
             })?;
 
@@ -248,14 +252,14 @@ impl EventBusProvider for NatsEventBusProvider {
             format!("{}.{}", self.subject, topic)
         };
 
-        let _sub = self
-            .client
-            .subscribe(subject.clone())
-            .await
-            .map_err(|e| Error::Infrastructure {
-                message: format!("Failed to subscribe to NATS subject '{}': {}", subject, e),
-                source: None,
-            })?;
+        let _sub =
+            self.client
+                .subscribe(subject.clone())
+                .await
+                .map_err(|e| Error::Infrastructure {
+                    message: format!("Failed to subscribe to NATS subject '{}': {}", subject, e),
+                    source: None,
+                })?;
 
         let sub_id = format!("nats-{}-{}", subject, uuid::Uuid::new_v4());
         debug!("Created NATS subscription: {}", sub_id);

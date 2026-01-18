@@ -221,7 +221,7 @@ inventory::submit! {
                 .timeout(timeout)
                 .build()
                 .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
-            
+
             Ok(std::sync::Arc::new(OpenAIEmbeddingProvider::new(
                 api_key, base_url, model, timeout, http_client
             )))

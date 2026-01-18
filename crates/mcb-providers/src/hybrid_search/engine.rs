@@ -134,9 +134,9 @@ impl HybridSearchProvider for HybridSearchEngine {
         // Add new documents, deduplicating by key
         for chunk in chunks {
             let key = format!("{}:{}", chunk.file_path, chunk.start_line);
-            if !document_index.contains_key(&key) {
+            if let std::collections::hash_map::Entry::Vacant(e) = document_index.entry(key) {
                 let idx = documents.len();
-                document_index.insert(key, idx);
+                e.insert(idx);
                 documents.push(chunk.clone());
             }
         }
@@ -205,10 +205,7 @@ impl HybridSearchProvider for HybridSearchEngine {
             .collect();
 
         // Sort by hybrid score (descending)
-        scored_results.sort_by(|a, b| {
-            b.1.partial_cmp(&a.1)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
+        scored_results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
         // Update scores in results and return top limit
         Ok(scored_results
@@ -269,7 +266,10 @@ impl HybridSearchProvider for HybridSearchEngine {
                 }),
             );
         }
-        stats.insert("collections".to_string(), serde_json::json!(collection_stats));
+        stats.insert(
+            "collections".to_string(),
+            serde_json::json!(collection_stats),
+        );
 
         stats
     }

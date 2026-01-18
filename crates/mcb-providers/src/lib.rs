@@ -69,7 +69,6 @@ pub mod cache;
 /// Implements `EventPublisher` trait for event bus backends.
 pub mod events;
 
-
 /// HTTP client abstractions
 ///
 /// Provides `HttpClientProvider` trait and configuration for API-based providers.

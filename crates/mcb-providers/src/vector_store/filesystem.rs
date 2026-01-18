@@ -104,32 +104,33 @@ mod file_utils {
     }
 
     pub async fn read_json<T: DeserializeOwned>(path: &Path, description: &str) -> Result<T> {
-        let content = tokio::fs::read_to_string(path).await.map_err(|e| {
-            Error::io(format!("Failed to read {}: {}", description, e))
-        })?;
-        serde_json::from_str(&content).map_err(|e| {
-            Error::internal(format!("Failed to parse {}: {}", description, e))
-        })
+        let content = tokio::fs::read_to_string(path)
+            .await
+            .map_err(|e| Error::io(format!("Failed to read {}: {}", description, e)))?;
+        serde_json::from_str(&content)
+            .map_err(|e| Error::internal(format!("Failed to parse {}: {}", description, e)))
     }
 
     pub async fn write_json<T: Serialize>(path: &Path, data: &T, description: &str) -> Result<()> {
-        let content = serde_json::to_string_pretty(data).map_err(|e| {
-            Error::internal(format!("Failed to serialize {}: {}", description, e))
-        })?;
-        tokio::fs::write(path, content).await.map_err(|e| {
-            Error::io(format!("Failed to write {}: {}", description, e))
-        })
+        let content = serde_json::to_string_pretty(data)
+            .map_err(|e| Error::internal(format!("Failed to serialize {}: {}", description, e)))?;
+        tokio::fs::write(path, content)
+            .await
+            .map_err(|e| Error::io(format!("Failed to write {}: {}", description, e)))
     }
 
     pub async fn ensure_dir_write(path: &Path, data: &[u8], description: &str) -> Result<()> {
         if let Some(parent) = path.parent() {
             tokio::fs::create_dir_all(parent).await.map_err(|e| {
-                Error::io(format!("Failed to create directory for {}: {}", description, e))
+                Error::io(format!(
+                    "Failed to create directory for {}: {}",
+                    description, e
+                ))
             })?;
         }
-        tokio::fs::write(path, data).await.map_err(|e| {
-            Error::io(format!("Failed to write {}: {}", description, e))
-        })
+        tokio::fs::write(path, data)
+            .await
+            .map_err(|e| Error::io(format!("Failed to write {}: {}", description, e)))
     }
 
     pub async fn ensure_dir_write_json<T: Serialize>(
@@ -139,7 +140,10 @@ mod file_utils {
     ) -> Result<()> {
         if let Some(parent) = path.parent() {
             tokio::fs::create_dir_all(parent).await.map_err(|e| {
-                Error::io(format!("Failed to create directory for {}: {}", description, e))
+                Error::io(format!(
+                    "Failed to create directory for {}: {}",
+                    description, e
+                ))
             })?;
         }
         write_json(path, data, description).await
@@ -566,9 +570,7 @@ impl VectorStoreProvider for FilesystemVectorStore {
         if collection_path.exists() {
             tokio::fs::remove_dir_all(&collection_path)
                 .await
-                .map_err(|e| {
-                    Error::io(format!("Failed to delete collection shards: {}", e))
-                })?;
+                .map_err(|e| Error::io(format!("Failed to delete collection shards: {}", e)))?;
         }
 
         let index_path = self.config.base_path.join(format!("{}_index.json", name));
@@ -759,8 +761,22 @@ inventory::submit! {
         factory: |config: &VectorStoreProviderConfig| {
             let base_path = config.uri.clone()
                 .unwrap_or_else(|| "./data/vectors".to_string());
-            let path = std::path::PathBuf::from(base_path);
-            Ok(std::sync::Arc::new(FilesystemVectorStore::new(path)))
+            let dimensions = config.dimensions.unwrap_or(1536);
+
+            let fs_config = FilesystemVectorStoreConfig {
+                base_path: std::path::PathBuf::from(base_path),
+                dimensions,
+                ..Default::default()
+            };
+
+            // Create store synchronously using block_in_place for the async constructor
+            let store = tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(async {
+                    FilesystemVectorStore::new(fs_config).await
+                })
+            }).map_err(|e| format!("Failed to create filesystem store: {}", e))?;
+
+            Ok(std::sync::Arc::new(store))
         },
     }
 }

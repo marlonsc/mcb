@@ -194,7 +194,7 @@ inventory::submit! {
                 .timeout(timeout)
                 .build()
                 .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
-            
+
             Ok(std::sync::Arc::new(VoyageAIEmbeddingProvider::new(
                 api_key, base_url, model, http_client
             )))

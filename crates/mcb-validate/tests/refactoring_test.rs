@@ -33,7 +33,10 @@ pub struct DuplicateType {
     let validator = RefactoringValidator::new(temp.path());
     let violations = validator.validate_duplicate_definitions().unwrap();
 
-    assert!(!violations.is_empty(), "Should detect duplicate type definitions across crates");
+    assert!(
+        !violations.is_empty(),
+        "Should detect duplicate type definitions across crates"
+    );
 }
 
 #[test]

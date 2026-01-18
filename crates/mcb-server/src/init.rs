@@ -33,7 +33,6 @@ use std::sync::Arc;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::TransportMode;
 use mcb_infrastructure::crypto::CryptoService;
-use mcb_infrastructure::HasComponent;
 use tracing::{error, info};
 
 use crate::transport::http::{HttpTransport, HttpTransportConfig};
@@ -89,24 +88,20 @@ fn load_config(
 async fn create_mcp_server(
     config: mcb_infrastructure::config::AppConfig,
 ) -> Result<McpServer, Box<dyn std::error::Error>> {
-    // Create AppContainer with Shaku modules (all providers resolved via DI)
-    let app_container = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
+    // Create AppContext with resolved providers
+    let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
 
-    // Resolve all providers via Shaku DI - no direct instantiation
-    let embedding_provider: Arc<dyn mcb_application::ports::providers::EmbeddingProvider> =
-        app_container.embedding.resolve();
-    let vector_store_provider: Arc<dyn mcb_application::ports::providers::VectorStoreProvider> =
-        app_container.data.resolve();
-    let cache_provider: Arc<dyn mcb_application::ports::providers::cache::CacheProvider> =
-        app_container.cache.resolve();
-    let language_chunker: Arc<dyn mcb_application::ports::providers::LanguageChunkingProvider> =
-        app_container.language.resolve();
+    // Get all providers from resolved providers (no Shaku resolve needed)
+    let embedding_provider = Arc::clone(&app_context.providers.embedding);
+    let vector_store_provider = Arc::clone(&app_context.providers.vector_store);
+    let cache_provider = Arc::clone(&app_context.providers.cache);
+    let language_chunker = Arc::clone(&app_context.providers.language);
 
     // Create shared cache provider (conversion for domain services factory)
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
     let crypto = create_crypto_service(&config).await?;
 
-    // Create domain services with providers from Shaku DI
+    // Create domain services with providers
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         cache: shared_cache,
         crypto,

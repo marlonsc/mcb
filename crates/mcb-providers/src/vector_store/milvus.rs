@@ -716,15 +716,15 @@ inventory::submit! {
         factory: |config: &VectorStoreProviderConfig| {
             let uri = config.uri.clone()
                 .unwrap_or_else(|| "http://localhost:19530".to_string());
-            let dimensions = config.dimensions.unwrap_or(384);
-            
+            let token = config.api_key.clone();
+
             // Create Milvus client synchronously using block_on
             let provider = tokio::task::block_in_place(|| {
                 tokio::runtime::Handle::current().block_on(async {
-                    MilvusVectorStoreProvider::new(&uri, dimensions).await
+                    MilvusVectorStoreProvider::new(uri, token, None).await
                 })
             }).map_err(|e| format!("Failed to create Milvus provider: {}", e))?;
-            
+
             Ok(std::sync::Arc::new(provider))
         },
     }

@@ -611,7 +611,11 @@ inventory::submit! {
         description: "EdgeVec in-memory HNSW vector store (high-performance)",
         factory: |config: &VectorStoreProviderConfig| {
             let dimensions = config.dimensions.unwrap_or(384);
-            let provider = EdgeVecVectorStoreProvider::new(dimensions)
+            let edgevec_config = EdgeVecConfig {
+                dimensions,
+                ..Default::default()
+            };
+            let provider = EdgeVecVectorStoreProvider::new(edgevec_config)
                 .map_err(|e| format!("Failed to create EdgeVec provider: {}", e))?;
             Ok(std::sync::Arc::new(provider))
         },

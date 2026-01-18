@@ -18,7 +18,11 @@ fn create_crate_structure(temp: &TempDir, crate_name: &str, path: &str, content:
     }
     fs::write(&file_path, content).unwrap();
 
-    let cargo_path = temp.path().join("crates").join(crate_name).join("Cargo.toml");
+    let cargo_path = temp
+        .path()
+        .join("crates")
+        .join(crate_name)
+        .join("Cargo.toml");
     if !cargo_path.exists() {
         fs::write(
             cargo_path,

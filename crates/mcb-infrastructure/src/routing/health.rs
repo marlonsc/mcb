@@ -82,10 +82,13 @@ impl InMemoryHealthMonitor {
     }
 
     /// Get or create health data for a provider
-    fn get_or_create(&self, provider_id: &str) -> dashmap::mapref::one::RefMut<'_, String, ProviderHealthData> {
+    fn get_or_create(
+        &self,
+        provider_id: &str,
+    ) -> dashmap::mapref::one::RefMut<'_, String, ProviderHealthData> {
         self.health_data
             .entry(provider_id.to_string())
-            .or_insert_with(ProviderHealthData::default)
+            .or_default()
     }
 
     /// Calculate status based on failure count

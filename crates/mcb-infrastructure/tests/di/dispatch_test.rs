@@ -2,19 +2,32 @@
 //!
 //! Tests for the DI container bootstrap and initialization.
 
-use mcb_infrastructure::di::bootstrap::DiContainerBuilder;
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::di::bootstrap::init_app;
+
+// Force link mcb_providers so inventory registrations are included
+extern crate mcb_providers;
 
 #[tokio::test]
 async fn test_di_container_builder() {
-    let container = DiContainerBuilder::new().build().await;
+    let config = AppConfig::default();
+    let result = init_app(config).await;
+
     assert!(
-        container.is_ok(),
-        "DiContainerBuilder should build successfully"
+        result.is_ok(),
+        "init_app should complete successfully: {:?}",
+        result.err()
     );
-    let app_container = container.unwrap();
-    // Verify container has expected modules
+
+    let app_context = result.unwrap();
+
+    // Verify context has expected fields
     assert!(
-        std::mem::size_of_val(&app_container.cache) > 0,
-        "Cache module should be initialized"
+        std::mem::size_of_val(&app_context.config) > 0,
+        "Config should be initialized"
+    );
+    assert!(
+        std::mem::size_of_val(&app_context.providers) > 0,
+        "Providers should be initialized"
     );
 }
