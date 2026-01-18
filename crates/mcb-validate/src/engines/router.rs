@@ -135,7 +135,8 @@ impl RuleEngineRouter {
                 self.execute_with_expression(rule_definition, context).await
             }
             RoutedEngine::RustyRules => {
-                self.execute_with_rusty_rules(rule_definition, context).await
+                self.execute_with_rusty_rules(rule_definition, context)
+                    .await
             }
         }
     }

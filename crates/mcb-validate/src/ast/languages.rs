@@ -17,7 +17,9 @@ pub struct RustParser {
 impl RustParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(&tree_sitter_rust::LANGUAGE.into()).expect("Failed to load Rust grammar");
+        parser
+            .set_language(&tree_sitter_rust::LANGUAGE.into())
+            .expect("Failed to load Rust grammar");
 
         Self { parser }
     }
@@ -40,11 +42,13 @@ impl AstParser for RustParser {
     }
 
     fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree = self.parser.parse(content, None)
-            .ok_or_else(|| crate::ValidationError::Parse {
-                file: filename.into(),
-                message: "Failed to parse Rust code".into(),
-            })?;
+        let tree =
+            self.parser
+                .parse(content, None)
+                .ok_or_else(|| crate::ValidationError::Parse {
+                    file: filename.into(),
+                    message: "Failed to parse Rust code".into(),
+                })?;
 
         let root = super::decoder::AstDecoder::decode_tree(&tree, content);
 
@@ -63,7 +67,9 @@ pub struct PythonParser {
 impl PythonParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(&tree_sitter_python::LANGUAGE.into()).expect("Failed to load Python grammar");
+        parser
+            .set_language(&tree_sitter_python::LANGUAGE.into())
+            .expect("Failed to load Python grammar");
 
         Self { parser }
     }
@@ -86,11 +92,13 @@ impl AstParser for PythonParser {
     }
 
     fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree = self.parser.parse(content, None)
-            .ok_or_else(|| crate::ValidationError::Parse {
-                file: filename.into(),
-                message: "Failed to parse Python code".into(),
-            })?;
+        let tree =
+            self.parser
+                .parse(content, None)
+                .ok_or_else(|| crate::ValidationError::Parse {
+                    file: filename.into(),
+                    message: "Failed to parse Python code".into(),
+                })?;
 
         let root = super::decoder::AstDecoder::decode_tree(&tree, content);
 
@@ -109,7 +117,9 @@ pub struct JavaScriptParser {
 impl JavaScriptParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(&tree_sitter_javascript::LANGUAGE.into()).expect("Failed to load JavaScript grammar");
+        parser
+            .set_language(&tree_sitter_javascript::LANGUAGE.into())
+            .expect("Failed to load JavaScript grammar");
 
         Self { parser }
     }
@@ -132,11 +142,13 @@ impl AstParser for JavaScriptParser {
     }
 
     fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree = self.parser.parse(content, None)
-            .ok_or_else(|| crate::ValidationError::Parse {
-                file: filename.into(),
-                message: "Failed to parse JavaScript code".into(),
-            })?;
+        let tree =
+            self.parser
+                .parse(content, None)
+                .ok_or_else(|| crate::ValidationError::Parse {
+                    file: filename.into(),
+                    message: "Failed to parse JavaScript code".into(),
+                })?;
 
         let root = super::decoder::AstDecoder::decode_tree(&tree, content);
 
@@ -155,7 +167,9 @@ pub struct TypeScriptParser {
 impl TypeScriptParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(&tree_sitter_typescript::LANGUAGE_TSX.into()).expect("Failed to load TypeScript grammar");
+        parser
+            .set_language(&tree_sitter_typescript::LANGUAGE_TSX.into())
+            .expect("Failed to load TypeScript grammar");
 
         Self { parser }
     }
@@ -178,11 +192,13 @@ impl AstParser for TypeScriptParser {
     }
 
     fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree = self.parser.parse(content, None)
-            .ok_or_else(|| crate::ValidationError::Parse {
-                file: filename.into(),
-                message: "Failed to parse TypeScript code".into(),
-            })?;
+        let tree =
+            self.parser
+                .parse(content, None)
+                .ok_or_else(|| crate::ValidationError::Parse {
+                    file: filename.into(),
+                    message: "Failed to parse TypeScript code".into(),
+                })?;
 
         let root = super::decoder::AstDecoder::decode_tree(&tree, content);
 
@@ -201,7 +217,9 @@ pub struct GoParser {
 impl GoParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(&tree_sitter_go::LANGUAGE.into()).expect("Failed to load Go grammar");
+        parser
+            .set_language(&tree_sitter_go::LANGUAGE.into())
+            .expect("Failed to load Go grammar");
 
         Self { parser }
     }
@@ -224,11 +242,13 @@ impl AstParser for GoParser {
     }
 
     fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree = self.parser.parse(content, None)
-            .ok_or_else(|| crate::ValidationError::Parse {
-                file: filename.into(),
-                message: "Failed to parse Go code".into(),
-            })?;
+        let tree =
+            self.parser
+                .parse(content, None)
+                .ok_or_else(|| crate::ValidationError::Parse {
+                    file: filename.into(),
+                    message: "Failed to parse Go code".into(),
+                })?;
 
         let root = super::decoder::AstDecoder::decode_tree(&tree, content);
 

@@ -180,7 +180,9 @@ impl FastEmbedActor {
 // Auto-registration via linkme
 // ============================================================================
 
-use mcb_application::ports::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
+use mcb_application::ports::registry::{
+    EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS,
+};
 
 /// Parse model name string to EmbeddingModel enum
 fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
@@ -202,7 +204,9 @@ static FASTEMBED_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
     name: "fastembed",
     description: "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
     factory: |config: &EmbeddingProviderConfig| {
-        let model_name = config.model.clone()
+        let model_name = config
+            .model
+            .clone()
             .unwrap_or_else(|| "AllMiniLML6V2".to_string());
 
         let model = parse_embedding_model(&model_name);

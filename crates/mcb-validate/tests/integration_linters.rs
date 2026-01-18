@@ -6,7 +6,7 @@
 //! - LintViolation structs are properly populated
 //! - lint_select codes are correctly categorized
 
-use mcb_validate::linters::{LinterEngine, LinterType, LintViolation};
+use mcb_validate::linters::{LintViolation, LinterEngine, LinterType};
 use std::path::PathBuf;
 
 #[allow(dead_code)]
@@ -75,7 +75,11 @@ fn test_ruff_json_array_parsing() {
 
     let violations = LinterType::Ruff.parse_output(json_output);
 
-    assert_eq!(violations.len(), 2, "Should parse 2 violations from JSON array");
+    assert_eq!(
+        violations.len(),
+        2,
+        "Should parse 2 violations from JSON array"
+    );
 
     assert_eq!(violations[0].rule, "F401");
     assert_eq!(violations[0].file, "test.py");
@@ -102,10 +106,16 @@ fn test_ruff_json_lines_fallback() {
 #[test]
 fn test_ruff_empty_output() {
     let violations = LinterType::Ruff.parse_output("[]");
-    assert!(violations.is_empty(), "Empty array should yield no violations");
+    assert!(
+        violations.is_empty(),
+        "Empty array should yield no violations"
+    );
 
     let violations = LinterType::Ruff.parse_output("");
-    assert!(violations.is_empty(), "Empty string should yield no violations");
+    assert!(
+        violations.is_empty(),
+        "Empty string should yield no violations"
+    );
 }
 
 #[test]
@@ -116,7 +126,11 @@ fn test_clippy_json_parsing() {
 
     let violations = LinterType::Clippy.parse_output(json_output);
 
-    assert_eq!(violations.len(), 1, "Should parse 1 violation (ignoring build-finished)");
+    assert_eq!(
+        violations.len(),
+        1,
+        "Should parse 1 violation (ignoring build-finished)"
+    );
     assert_eq!(violations[0].rule, "clippy::unwrap_used");
     assert_eq!(violations[0].file, "src/lib.rs");
     assert_eq!(violations[0].line, 42);
@@ -141,7 +155,10 @@ fn test_clippy_requires_primary_span() {
     let json_output = r#"{"reason":"compiler-message","message":{"message":"help message","code":{"code":"clippy::help","explanation":null},"level":"help","spans":[{"file_name":"src/lib.rs","line_start":1,"column_start":1,"is_primary":false}]}}"#;
 
     let violations = LinterType::Clippy.parse_output(json_output);
-    assert!(violations.is_empty(), "Should skip messages without primary span");
+    assert!(
+        violations.is_empty(),
+        "Should skip messages without primary span"
+    );
 }
 
 // ==================== Severity Mapping Tests ====================
@@ -177,7 +194,10 @@ async fn test_linter_engine_empty_files() {
     let result = engine.check_files(&[]).await;
 
     assert!(result.is_ok(), "Checking empty file list should succeed");
-    assert!(result.unwrap().is_empty(), "No violations for empty file list");
+    assert!(
+        result.unwrap().is_empty(),
+        "No violations for empty file list"
+    );
 }
 
 #[tokio::test]
@@ -188,7 +208,10 @@ async fn test_linter_execution_with_nonexistent_files() {
     // This should not panic, just return empty or handle gracefully
     let result = engine.check_files(&[fake_path.as_path()]).await;
     // Linter might fail or return empty - either is acceptable
-    assert!(result.is_ok() || result.is_err(), "Should handle gracefully");
+    assert!(
+        result.is_ok() || result.is_err(),
+        "Should handle gracefully"
+    );
 }
 
 // ==================== Integration with Real Workspace ====================
@@ -201,7 +224,10 @@ async fn test_linter_mapping() {
     assert_eq!(engine.map_lint_to_rule("F401"), Some("QUAL005"));
 
     // Test Clippy code mapping
-    assert_eq!(engine.map_lint_to_rule("clippy::unwrap_used"), Some("QUAL001"));
+    assert_eq!(
+        engine.map_lint_to_rule("clippy::unwrap_used"),
+        Some("QUAL001")
+    );
 
     // Unknown codes should return None
     assert_eq!(engine.map_lint_to_rule("UNKNOWN"), None);
@@ -268,11 +294,6 @@ fn test_lint_code_categorization() {
 fn test_public_api_accessible() {
     // These should all be publicly accessible via the linters module
     // Using _ prefix to suppress unused warnings while still testing compilation
-    
-    
-    
-    
-    
 
     // If this compiles, the public API is correctly exported
     // All public linter types are accessible (no panic)

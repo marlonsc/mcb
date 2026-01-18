@@ -302,7 +302,9 @@ impl mcb_application::ports::providers::LanguageChunkingProvider
 // Auto-registration via linkme
 // ============================================================================
 
-use mcb_application::ports::registry::{LanguageProviderConfig, LanguageProviderEntry, LANGUAGE_PROVIDERS};
+use mcb_application::ports::registry::{
+    LanguageProviderConfig, LanguageProviderEntry, LANGUAGE_PROVIDERS,
+};
 
 #[linkme::distributed_slice(LANGUAGE_PROVIDERS)]
 static UNIVERSAL_LANGUAGE_PROVIDER: LanguageProviderEntry = LanguageProviderEntry {

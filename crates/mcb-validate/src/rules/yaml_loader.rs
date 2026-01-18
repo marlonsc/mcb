@@ -2,14 +2,14 @@
 //!
 //! Automatically loads and validates YAML-based rules with template support.
 
-use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_yaml;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use crate::Result;
-use super::yaml_validator::YamlRuleValidator;
 use super::templates::TemplateEngine;
+use super::yaml_validator::YamlRuleValidator;
+use crate::Result;
 
 /// Loaded and validated YAML rule
 #[derive(Debug, Clone)]
@@ -79,38 +79,47 @@ impl YamlRuleLoader {
 
     /// Load rules from a specific file
     pub async fn load_rule_file(&self, path: &Path) -> Result<Vec<ValidatedRule>> {
-        let content = tokio::fs::read_to_string(path).await
+        let content = tokio::fs::read_to_string(path)
+            .await
             .map_err(crate::ValidationError::Io)?;
 
-        let yaml_value: serde_yaml::Value = serde_yaml::from_str(&content)
-            .map_err(|e| crate::ValidationError::Parse {
+        let yaml_value: serde_yaml::Value =
+            serde_yaml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
                 message: format!("YAML parse error: {}", e),
             })?;
 
         // Check if this is a template
-        if yaml_value.get("_base").and_then(|v| v.as_bool()).unwrap_or(false) {
+        if yaml_value
+            .get("_base")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+        {
             // This is a template, skip it
             return Ok(vec![]);
         }
 
         // Apply template if specified
-        let processed_yaml = if let Some(template_name) = yaml_value.get("_template").and_then(|v| v.as_str()) {
-            self.template_engine.apply_template(template_name, &yaml_value)?
-        } else {
-            yaml_value
-        };
+        let processed_yaml =
+            if let Some(template_name) = yaml_value.get("_template").and_then(|v| v.as_str()) {
+                self.template_engine
+                    .apply_template(template_name, &yaml_value)?
+            } else {
+                yaml_value
+            };
 
         // Handle extends
-        let processed_yaml = if let Some(extends_name) = processed_yaml.get("_extends").and_then(|v| v.as_str()) {
-            self.template_engine.extend_rule(extends_name, &processed_yaml)?
-        } else {
-            processed_yaml
-        };
+        let processed_yaml =
+            if let Some(extends_name) = processed_yaml.get("_extends").and_then(|v| v.as_str()) {
+                self.template_engine
+                    .extend_rule(extends_name, &processed_yaml)?
+            } else {
+                processed_yaml
+            };
 
         // Convert to JSON for validation
-        let json_value: serde_json::Value = serde_json::to_value(processed_yaml)
-            .map_err(|e| crate::ValidationError::Parse {
+        let json_value: serde_json::Value =
+            serde_json::to_value(processed_yaml).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
                 message: format!("YAML to JSON conversion error: {}", e),
             })?;
@@ -126,63 +135,74 @@ impl YamlRuleLoader {
 
     /// Check if a file is a rule file
     fn is_rule_file(&self, path: &Path) -> bool {
-        path.extension().and_then(|ext| ext.to_str()) == Some("yml") &&
-        !path.to_string_lossy().contains("/templates/")
+        path.extension().and_then(|ext| ext.to_str()) == Some("yml")
+            && !path.to_string_lossy().contains("/templates/")
     }
 
     /// Convert YAML/JSON value to ValidatedRule
     fn yaml_to_validated_rule(&self, value: serde_json::Value) -> Result<ValidatedRule> {
-        let obj = value.as_object()
+        let obj = value
+            .as_object()
             .ok_or_else(|| crate::ValidationError::Config("Rule must be an object".to_string()))?;
 
-        let id = obj.get("id")
+        let id = obj
+            .get("id")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| crate::ValidationError::Config("Rule must have an 'id' field".to_string()))?
+            .ok_or_else(|| {
+                crate::ValidationError::Config("Rule must have an 'id' field".to_string())
+            })?
             .to_string();
 
-        let name = obj.get("name")
+        let name = obj
+            .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("Unnamed Rule")
             .to_string();
 
-        let category = obj.get("category")
+        let category = obj
+            .get("category")
             .and_then(|v| v.as_str())
             .unwrap_or("quality")
             .to_string();
 
-        let severity = obj.get("severity")
+        let severity = obj
+            .get("severity")
             .and_then(|v| v.as_str())
             .unwrap_or("warning")
             .to_string();
 
-        let enabled = obj.get("enabled")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
+        let enabled = obj.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
 
-        let description = obj.get("description")
+        let description = obj
+            .get("description")
             .and_then(|v| v.as_str())
             .unwrap_or("No description provided")
             .to_string();
 
-        let rationale = obj.get("rationale")
+        let rationale = obj
+            .get("rationale")
             .and_then(|v| v.as_str())
             .unwrap_or("No rationale provided")
             .to_string();
 
-        let engine = obj.get("engine")
+        let engine = obj
+            .get("engine")
             .and_then(|v| v.as_str())
             .unwrap_or("rusty-rules")
             .to_string();
 
-        let config = obj.get("config")
+        let config = obj
+            .get("config")
             .cloned()
             .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
-        let rule_definition = obj.get("rule")
+        let rule_definition = obj
+            .get("rule")
             .cloned()
             .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
-        let fixes = obj.get("fixes")
+        let fixes = obj
+            .get("fixes")
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
@@ -190,7 +210,10 @@ impl YamlRuleLoader {
                         if let Some(fix_obj) = fix.as_object() {
                             Some(RuleFix {
                                 fix_type: fix_obj.get("type")?.as_str()?.to_string(),
-                                pattern: fix_obj.get("pattern").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                                pattern: fix_obj
+                                    .get("pattern")
+                                    .and_then(|v| v.as_str())
+                                    .map(|s| s.to_string()),
                                 message: fix_obj.get("message")?.as_str()?.to_string(),
                             })
                         } else {
@@ -202,7 +225,8 @@ impl YamlRuleLoader {
             .unwrap_or_default();
 
         // Extract lint_select codes (for Ruff/Clippy integration)
-        let lint_select = obj.get("lint_select")
+        let lint_select = obj
+            .get("lint_select")
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
@@ -212,7 +236,8 @@ impl YamlRuleLoader {
             .unwrap_or_default();
 
         // Extract custom message
-        let message = obj.get("message")
+        let message = obj
+            .get("message")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string());
 
@@ -319,7 +344,11 @@ rule:
   pattern: "{{forbidden_prefixes}}"
 "#;
 
-        std::fs::write(templates_dir.join("cargo-dependency-check.yml"), template_content).unwrap();
+        std::fs::write(
+            templates_dir.join("cargo-dependency-check.yml"),
+            template_content,
+        )
+        .unwrap();
 
         // Create a rule using the template (template name is the filename without extension)
         // Variables for substitution must be at root level; config section overrides template's config

@@ -3,12 +3,12 @@
 //! Wrapper for rusty-rules crate with JSON DSL and composition support.
 
 use async_trait::async_trait;
+use glob::Pattern;
 use serde_json::Value;
 use std::collections::HashMap;
-use glob::Pattern;
 
-use crate::violation_trait::{ViolationCategory, Severity};
 use crate::engines::hybrid_engine::RuleViolation;
+use crate::violation_trait::{Severity, ViolationCategory};
 use crate::Result;
 
 use super::hybrid_engine::{RuleContext, RuleEngine};
@@ -37,7 +37,12 @@ pub enum Condition {
     /// Negate condition
     Not(Box<Condition>),
     /// Simple condition
-    Simple { fact_type: String, field: String, operator: String, value: Value },
+    Simple {
+        fact_type: String,
+        field: String,
+        operator: String,
+        value: Value,
+    },
 }
 
 /// Actions to execute when condition matches
@@ -145,10 +150,7 @@ impl RustyRulesEngineWrapper {
             .unwrap_or("equals")
             .to_string();
 
-        let value = condition_json
-            .get("value")
-            .cloned()
-            .unwrap_or(Value::Null);
+        let value = condition_json.get("value").cloned().unwrap_or(Value::Null);
 
         Ok(Condition::Simple {
             fact_type,
@@ -187,18 +189,19 @@ impl RustyRulesEngineWrapper {
     #[allow(dead_code)]
     fn evaluate_condition(&self, condition: &Condition, context: &RuleContext) -> bool {
         match condition {
-            Condition::All(conditions) => {
-                conditions.iter().all(|c| self.evaluate_condition(c, context))
-            }
-            Condition::Any(conditions) => {
-                conditions.iter().any(|c| self.evaluate_condition(c, context))
-            }
-            Condition::Not(condition) => {
-                !self.evaluate_condition(condition, context)
-            }
-            Condition::Simple { fact_type, field, operator, value } => {
-                self.evaluate_simple_condition(fact_type, field, operator, value, context)
-            }
+            Condition::All(conditions) => conditions
+                .iter()
+                .all(|c| self.evaluate_condition(c, context)),
+            Condition::Any(conditions) => conditions
+                .iter()
+                .any(|c| self.evaluate_condition(c, context)),
+            Condition::Not(condition) => !self.evaluate_condition(condition, context),
+            Condition::Simple {
+                fact_type,
+                field,
+                operator,
+                value,
+            } => self.evaluate_simple_condition(fact_type, field, operator, value, context),
         }
     }
 
@@ -215,12 +218,8 @@ impl RustyRulesEngineWrapper {
             "cargo_dependencies" => {
                 self.evaluate_cargo_dependencies(field, operator, expected_value, context)
             }
-            "file_pattern" => {
-                self.evaluate_file_pattern(field, operator, expected_value, context)
-            }
-            "ast_pattern" => {
-                self.evaluate_ast_pattern(field, operator, expected_value, context)
-            }
+            "file_pattern" => self.evaluate_file_pattern(field, operator, expected_value, context),
+            "ast_pattern" => self.evaluate_ast_pattern(field, operator, expected_value, context),
             _ => false,
         }
     }
@@ -248,8 +247,8 @@ impl RustyRulesEngineWrapper {
 
     fn has_forbidden_dependency(&self, pattern: &str, context: &RuleContext) -> bool {
         // Check Cargo.toml files for forbidden dependencies
-        use walkdir::WalkDir;
         use glob::Pattern;
+        use walkdir::WalkDir;
 
         let cargo_pattern = Pattern::new("**/Cargo.toml").unwrap();
 
@@ -280,7 +279,12 @@ impl RustyRulesEngineWrapper {
                 if operator == "pattern" {
                     if let Some(pattern) = expected_value.as_str() {
                         return Pattern::new(pattern)
-                            .map(|p| context.file_contents.keys().any(|path| p.matches_path(std::path::Path::new(path))))
+                            .map(|p| {
+                                context
+                                    .file_contents
+                                    .keys()
+                                    .any(|path| p.matches_path(std::path::Path::new(path)))
+                            })
                             .unwrap_or(false);
                     }
                 }
@@ -315,24 +319,31 @@ impl RustyRulesEngineWrapper {
 
     /// Execute rule action
     #[allow(dead_code)]
-    fn execute_action(&self, action: &Action, rule_id: &str, _context: &RuleContext) -> Vec<RuleViolation> {
+    fn execute_action(
+        &self,
+        action: &Action,
+        rule_id: &str,
+        _context: &RuleContext,
+    ) -> Vec<RuleViolation> {
         match action {
             Action::Violation { message, severity } => {
-        vec![RuleViolation::new(
-            rule_id,
-            ViolationCategory::Architecture, // Could be made configurable
-            *severity,
-            message.clone()
-        ).with_context(format!("Rule triggered: {}", rule_id))]
+                vec![RuleViolation::new(
+                    rule_id,
+                    ViolationCategory::Architecture, // Could be made configurable
+                    *severity,
+                    message.clone(),
+                )
+                .with_context(format!("Rule triggered: {}", rule_id))]
             }
             Action::Custom(action_str) => {
                 // Handle custom actions
-            vec![RuleViolation::new(
-                rule_id,
-                ViolationCategory::Quality,
-                Severity::Info,
-                format!("Custom action: {}", action_str)
-            ).with_context("Custom rule action")]
+                vec![RuleViolation::new(
+                    rule_id,
+                    ViolationCategory::Quality,
+                    Severity::Info,
+                    format!("Custom action: {}", action_str),
+                )
+                .with_context("Custom rule action")]
             }
         }
     }
@@ -353,10 +364,12 @@ impl RuleEngine for RustyRulesEngineWrapper {
         if let Some(rule_type) = rule_definition.get("type").and_then(|v| v.as_str()) {
             match rule_type {
                 "cargo_dependencies" => {
-                    self.execute_cargo_dependency_rule(rule_definition, context).await
+                    self.execute_cargo_dependency_rule(rule_definition, context)
+                        .await
                 }
                 "ast_pattern" => {
-                    self.execute_ast_pattern_rule(rule_definition, context).await
+                    self.execute_ast_pattern_rule(rule_definition, context)
+                        .await
                 }
                 _ => Ok(vec![]),
             }
@@ -376,12 +389,15 @@ impl RustyRulesEngineWrapper {
 
         if let Some(forbidden_pattern) = rule_definition.get("pattern").and_then(|v| v.as_str()) {
             if self.has_forbidden_dependency(forbidden_pattern, context) {
-            violations.push(RuleViolation::new(
-                "CARGO_DEP",
-                ViolationCategory::Architecture,
-                Severity::Error,
-                "Forbidden dependency found"
-            ).with_context(format!("Pattern: {}", forbidden_pattern)));
+                violations.push(
+                    RuleViolation::new(
+                        "CARGO_DEP",
+                        ViolationCategory::Architecture,
+                        Severity::Error,
+                        "Forbidden dependency found",
+                    )
+                    .with_context(format!("Pattern: {}", forbidden_pattern)),
+                );
             }
         }
 
@@ -401,13 +417,16 @@ impl RustyRulesEngineWrapper {
                     // Simplified check - in real implementation would use AST analysis
                     for (file_path, content) in &context.file_contents {
                         if content.contains(pattern) {
-                            violations.push(RuleViolation::new(
-                                "AST_PATTERN",
-                                ViolationCategory::Quality,
-                                Severity::Error,
-                                format!("Found forbidden pattern: {}", pattern)
-                            ).with_file(std::path::PathBuf::from(file_path))
-                             .with_context(format!("Pattern: {}", pattern)));
+                            violations.push(
+                                RuleViolation::new(
+                                    "AST_PATTERN",
+                                    ViolationCategory::Quality,
+                                    Severity::Error,
+                                    format!("Found forbidden pattern: {}", pattern),
+                                )
+                                .with_file(std::path::PathBuf::from(file_path))
+                                .with_context(format!("Pattern: {}", pattern)),
+                            );
                         }
                     }
                 }

@@ -49,12 +49,7 @@ impl ExpressionEngine {
         // Add workspace root path length
         let _ = ctx.set_value(
             "workspace_path_len".to_string(),
-            EvalValue::Int(
-                rule_context
-                    .workspace_root
-                    .to_string_lossy()
-                    .len() as i64,
-            ),
+            EvalValue::Int(rule_context.workspace_root.to_string_lossy().len() as i64),
         );
 
         // Check for common patterns in files
@@ -78,26 +73,19 @@ impl ExpressionEngine {
         let _ = ctx.set_value("has_async".to_string(), EvalValue::Boolean(has_async));
 
         // Check for test patterns (supports both absolute and relative paths)
-        let has_tests = rule_context
-            .file_contents
-            .keys()
-            .any(|path| {
-                path.contains("/tests/")
-                    || path.starts_with("tests/")
-                    || path.contains("_test.rs")
-                    || path.contains("test_")
-            });
+        let has_tests = rule_context.file_contents.keys().any(|path| {
+            path.contains("/tests/")
+                || path.starts_with("tests/")
+                || path.contains("_test.rs")
+                || path.contains("test_")
+        });
         let _ = ctx.set_value("has_tests".to_string(), EvalValue::Boolean(has_tests));
 
         ctx
     }
 
     /// Evaluate a simple expression
-    pub fn evaluate_expression(
-        &self,
-        expression: &str,
-        context: &RuleContext,
-    ) -> Result<bool> {
+    pub fn evaluate_expression(&self, expression: &str, context: &RuleContext) -> Result<bool> {
         let eval_ctx = self.build_eval_context(context);
 
         match evalexpr::eval_boolean_with_context(expression, &eval_ctx) {
@@ -148,7 +136,8 @@ impl ExpressionEngine {
             }
             serde_json::Value::String(s) => EvalValue::String(s.clone()),
             serde_json::Value::Array(arr) => {
-                let tuple: Vec<EvalValue> = arr.iter().map(|v| self.json_to_eval_value(v)).collect();
+                let tuple: Vec<EvalValue> =
+                    arr.iter().map(|v| self.json_to_eval_value(v)).collect();
                 EvalValue::Tuple(tuple)
             }
             serde_json::Value::Object(_) => {
@@ -211,7 +200,9 @@ impl RuleEngine for ExpressionEngine {
             .get("expression")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                crate::ValidationError::Config("Missing 'expression' field in rule definition".into())
+                crate::ValidationError::Config(
+                    "Missing 'expression' field in rule definition".into(),
+                )
             })?;
 
         let rule_id = rule_definition

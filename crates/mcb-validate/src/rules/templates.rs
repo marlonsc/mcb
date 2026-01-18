@@ -2,9 +2,9 @@
 //!
 //! Provides template inheritance and variable substitution for DRY rule definitions.
 
+use serde_yaml;
 use std::collections::HashMap;
 use std::path::Path;
-use serde_yaml;
 use walkdir::WalkDir;
 
 use crate::Result;
@@ -41,23 +41,32 @@ impl TemplateEngine {
             let path = entry.path();
 
             if path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
-                let template_name = path.file_stem()
-                    .and_then(|name| name.to_str())
-                    .ok_or_else(|| crate::ValidationError::Config(
-                        format!("Invalid template filename: {:?}", path)
-                    ))?;
+                let template_name =
+                    path.file_stem()
+                        .and_then(|name| name.to_str())
+                        .ok_or_else(|| {
+                            crate::ValidationError::Config(format!(
+                                "Invalid template filename: {:?}",
+                                path
+                            ))
+                        })?;
 
-                let content = tokio::fs::read_to_string(path).await
+                let content = tokio::fs::read_to_string(path)
+                    .await
                     .map_err(crate::ValidationError::Io)?;
 
-                let template: serde_yaml::Value = serde_yaml::from_str(&content)
-                    .map_err(|e| crate::ValidationError::Parse {
+                let template: serde_yaml::Value =
+                    serde_yaml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
                         file: path.to_path_buf(),
                         message: format!("Template parse error: {}", e),
                     })?;
 
                 // Verify this is actually a template
-                if template.get("_base").and_then(|v| v.as_bool()).unwrap_or(false) {
+                if template
+                    .get("_base")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false)
+                {
                     self.templates.insert(template_name.to_string(), template);
                 }
             }
@@ -67,11 +76,14 @@ impl TemplateEngine {
     }
 
     /// Apply a template to a rule definition
-    pub fn apply_template(&self, template_name: &str, rule: &serde_yaml::Value) -> Result<serde_yaml::Value> {
-        let template = self.templates.get(template_name)
-            .ok_or_else(|| crate::ValidationError::Config(
-                format!("Template '{}' not found", template_name)
-            ))?;
+    pub fn apply_template(
+        &self,
+        template_name: &str,
+        rule: &serde_yaml::Value,
+    ) -> Result<serde_yaml::Value> {
+        let template = self.templates.get(template_name).ok_or_else(|| {
+            crate::ValidationError::Config(format!("Template '{}' not found", template_name))
+        })?;
 
         // Start with the template as base
         let mut result = template.clone();
@@ -95,7 +107,11 @@ impl TemplateEngine {
     }
 
     /// Extend a rule with another rule (inheritance)
-    pub fn extend_rule(&self, _extends_name: &str, rule: &serde_yaml::Value) -> Result<serde_yaml::Value> {
+    pub fn extend_rule(
+        &self,
+        _extends_name: &str,
+        rule: &serde_yaml::Value,
+    ) -> Result<serde_yaml::Value> {
         // For now, just return the rule as-is
         // In a full implementation, this would look up the base rule
         // and merge it with the extending rule
@@ -105,8 +121,8 @@ impl TemplateEngine {
     /// Merge two YAML values (rule overrides template)
     fn merge_yaml_values(&self, base: &mut serde_yaml::Value, override_value: &serde_yaml::Value) {
         if let (serde_yaml::Value::Mapping(base_map), serde_yaml::Value::Mapping(override_map)) =
-            (base, override_value) {
-
+            (base, override_value)
+        {
             for (key, override_val) in override_map {
                 base_map.insert(key.clone(), override_val.clone());
             }
@@ -114,7 +130,11 @@ impl TemplateEngine {
     }
 
     /// Substitute variables in the form {{variable_name}}
-    fn substitute_variables(&self, value: &mut serde_yaml::Value, variables: &serde_yaml::Value) -> Result<()> {
+    fn substitute_variables(
+        &self,
+        value: &mut serde_yaml::Value,
+        variables: &serde_yaml::Value,
+    ) -> Result<()> {
         match value {
             serde_yaml::Value::String(s) => {
                 *s = self.substitute_string(s, variables)?;
@@ -171,7 +191,10 @@ impl TemplateEngine {
                 _ => Ok(format!("{:?}", value)),
             }
         } else {
-            Err(crate::ValidationError::Config(format!("Variable '{}' not found", var_name)))
+            Err(crate::ValidationError::Config(format!(
+                "Variable '{}' not found",
+                var_name
+            )))
         }
     }
 
@@ -221,46 +244,63 @@ config:
         let mut engine = TemplateEngine::new();
 
         // Add a template
-        let template: serde_yaml::Value = serde_yaml::from_str(r#"
+        let template: serde_yaml::Value = serde_yaml::from_str(
+            r#"
 _base: true
 name: "test_template"
 category: "architecture"
 severity: "error"
 config:
   crate_name: "{{crate_name}}"
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
-        engine.templates.insert("test_template".to_string(), template);
+        engine
+            .templates
+            .insert("test_template".to_string(), template);
 
         // Create a rule that uses the template
-        let rule: serde_yaml::Value = serde_yaml::from_str(r#"
+        let rule: serde_yaml::Value = serde_yaml::from_str(
+            r#"
 _template: "test_template"
 id: "TEST001"
 config:
   crate_name: "my-crate"
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let result = engine.apply_template("test_template", &rule).unwrap();
 
         // Check that template was applied and variables substituted
-        assert_eq!(result.get("category").unwrap().as_str().unwrap(), "architecture");
+        assert_eq!(
+            result.get("category").unwrap().as_str().unwrap(),
+            "architecture"
+        );
         assert_eq!(result.get("severity").unwrap().as_str().unwrap(), "error");
         assert_eq!(result.get("id").unwrap().as_str().unwrap(), "TEST001");
 
         let config = result.get("config").unwrap();
-        assert_eq!(config.get("crate_name").unwrap().as_str().unwrap(), "my-crate");
+        assert_eq!(
+            config.get("crate_name").unwrap().as_str().unwrap(),
+            "my-crate"
+        );
     }
 
     #[test]
     fn test_variable_substitution() {
         let engine = TemplateEngine::new();
 
-        let variables: serde_yaml::Value = serde_yaml::from_str(r#"
+        let variables: serde_yaml::Value = serde_yaml::from_str(
+            r#"
 crate_name: "test-crate"
 forbidden_prefixes:
   - "mcb-"
   - "forbidden-"
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let test_string = "{{crate_name}} should not use {{forbidden_prefixes}}".to_string();
         let result = engine.substitute_string(&test_string, &variables).unwrap();

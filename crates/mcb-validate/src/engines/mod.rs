@@ -22,7 +22,9 @@ pub mod rusty_rules_engine;
 pub mod validator_engine;
 
 pub use expression_engine::ExpressionEngine;
-pub use hybrid_engine::{HybridRuleEngine, RuleContext, RuleEngine, RuleEngineType, RuleResult, RuleViolation};
+pub use hybrid_engine::{
+    HybridRuleEngine, RuleContext, RuleEngine, RuleEngineType, RuleResult, RuleViolation,
+};
 pub use rete_engine::ReteEngine;
 pub use router::{RoutedEngine, RuleEngineRouter};
 pub use rust_rule_engine::RustRuleEngineWrapper;

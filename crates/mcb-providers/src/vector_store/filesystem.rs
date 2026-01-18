@@ -752,14 +752,18 @@ impl VectorStoreProvider for FilesystemVectorStore {
 // Auto-registration via linkme
 // ============================================================================
 
-use mcb_application::ports::registry::{VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS};
+use mcb_application::ports::registry::{
+    VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS,
+};
 
 #[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]
 static FILESYSTEM_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
     name: "filesystem",
     description: "Filesystem-based vector store (persistent, sharded)",
     factory: |config: &VectorStoreProviderConfig| {
-        let base_path = config.uri.clone()
+        let base_path = config
+            .uri
+            .clone()
             .unwrap_or_else(|| "./data/vectors".to_string());
         let dimensions = config.dimensions.unwrap_or(1536);
 
@@ -771,10 +775,10 @@ static FILESYSTEM_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry 
 
         // Create store synchronously using block_in_place for the async constructor
         let store = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async {
-                FilesystemVectorStore::new(fs_config).await
-            })
-        }).map_err(|e| format!("Failed to create filesystem store: {}", e))?;
+            tokio::runtime::Handle::current()
+                .block_on(async { FilesystemVectorStore::new(fs_config).await })
+        })
+        .map_err(|e| format!("Failed to create filesystem store: {}", e))?;
 
         Ok(std::sync::Arc::new(store))
     },

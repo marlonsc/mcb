@@ -70,11 +70,26 @@ impl AstEngine {
         let mut parsers: HashMap<String, Arc<Mutex<dyn AstParser>>> = HashMap::new();
 
         // Register language parsers
-        parsers.insert("rust".to_string(), Arc::new(Mutex::new(languages::RustParser::new())));
-        parsers.insert("python".to_string(), Arc::new(Mutex::new(languages::PythonParser::new())));
-        parsers.insert("javascript".to_string(), Arc::new(Mutex::new(languages::JavaScriptParser::new())));
-        parsers.insert("typescript".to_string(), Arc::new(Mutex::new(languages::TypeScriptParser::new())));
-        parsers.insert("go".to_string(), Arc::new(Mutex::new(languages::GoParser::new())));
+        parsers.insert(
+            "rust".to_string(),
+            Arc::new(Mutex::new(languages::RustParser::new())),
+        );
+        parsers.insert(
+            "python".to_string(),
+            Arc::new(Mutex::new(languages::PythonParser::new())),
+        );
+        parsers.insert(
+            "javascript".to_string(),
+            Arc::new(Mutex::new(languages::JavaScriptParser::new())),
+        );
+        parsers.insert(
+            "typescript".to_string(),
+            Arc::new(Mutex::new(languages::TypeScriptParser::new())),
+        );
+        parsers.insert(
+            "go".to_string(),
+            Arc::new(Mutex::new(languages::GoParser::new())),
+        );
 
         Self {
             parsers,
@@ -144,9 +159,18 @@ mod tests {
         let engine = AstEngine::new();
 
         assert_eq!(engine.detect_language(Path::new("main.rs")), Some("rust"));
-        assert_eq!(engine.detect_language(Path::new("script.py")), Some("python"));
-        assert_eq!(engine.detect_language(Path::new("app.js")), Some("javascript"));
-        assert_eq!(engine.detect_language(Path::new("component.ts")), Some("typescript"));
+        assert_eq!(
+            engine.detect_language(Path::new("script.py")),
+            Some("python")
+        );
+        assert_eq!(
+            engine.detect_language(Path::new("app.js")),
+            Some("javascript")
+        );
+        assert_eq!(
+            engine.detect_language(Path::new("component.ts")),
+            Some("typescript")
+        );
         assert_eq!(engine.detect_language(Path::new("server.go")), Some("go"));
         assert_eq!(engine.detect_language(Path::new("unknown.xyz")), None);
     }

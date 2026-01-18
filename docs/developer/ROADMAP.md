@@ -10,28 +10,33 @@ This roadmap outlines the development of MCP Context Browser, a drop-in replacem
 
 ### v0.1.2 - Provider Modernization + Validation Tooling 🚀 CURRENT
 
-**Status**: Production-Ready
+**Status**: In Development
 **Release Date**: January 18, 2026
 
-MCP Context Browser v0.1.2 modernizes provider registration using compile-time linkme distributed slices and introduces the mcb-validate crate for automated architecture enforcement.
+MCP Context Browser v0.1.2 modernizes provider registration using compile-time linkme distributed slices and introduces the mcb-validate crate scaffolding.
 
 #### Achievements
 
 **Provider Modernization:**
+
 -   ✅ All 15 providers migrated to linkme distributed slices (compile-time registration)
 -   ✅ 4 pure linkme registries (embedding, vector store, cache, language)
 -   ✅ Zero runtime overhead (provider discovery at compile time)
--   ✅ Eliminated inventory dependency (99% - final Cargo.toml cleanup pending)
+-   ✅ Eliminated inventory dependency (removed from Cargo.toml)
 
-**Architecture Validation System:**
+**Architecture Validation Scaffolding (mcb-validate):**
+
 -   ✅ New mcb-validate crate (8th crate in workspace)
--   ✅ Phase 1: Linter integration (Clippy + Ruff with JSON parsing)
--   ✅ Phase 2: AST query execution (Tree-sitter for Rust, Python, JS, TS, Go)
--   ✅ 12 migration validation rules (detect legacy patterns)
--   ✅ 17 integration tests validating linter pipeline
--   ✅ `make validate` command for architecture checks
+-   ✅ Phase 1: Linters verified (17/17 tests pass)
+-   ✅ Phase 2: AST verified (26/26 tests pass)
+-   ✅ Phase 3: Rule Engines verified (30/30 tests pass)
+-   ✅ 12 migration validation rules (YAML files in rules/migration/)
+-   ❌ Phases 4-7: Not started (directories do not exist)
+
+**Verification Date**: 2026-01-18 via `make test`. See `docs/developer/IMPLEMENTATION_STATUS.md`.
 
 **Maintained from v0.1.1:**
+
 -   ✅ 790+ tests with comprehensive coverage (100% pass rate)
 -   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 3 vector stores (In-Memory, Encrypted, Null)
@@ -43,8 +48,9 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 -   **Source Files**: 340 Rust files (↑ from ~300 in v0.1.1)
 -   **Test Suite**: 790+ tests passing (maintained)
 -   **Crates**: 8 (7 from v0.1.1 + mcb-validate)
--   **Validation Rules**: 12 YAML rules across migration/quality/architecture categories
--   **Provider Registration**: Compile-time via linkme (from runtime via inventory)
+-   **Validation Rules**: 12 YAML migration rules created
+-   **Provider Registration**: Compile-time via linkme (inventory removed)
+-   **mcb-validate Status**: Phases 1-3 verified (73 tests), Phases 4-7 not started
 
 ---
 
@@ -315,7 +321,7 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.0.3 | Released | Production foundation |
 | v0.1.0 | Released | Documentation excellence, clean architecture, first stable release |
 | v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
-| v0.1.2 | **Current** | Linkme provider registration, mcb-validate tooling (Phases 1-2) |
+| v0.1.2 | **Current** | Linkme provider registration, mcb-validate Phases 1-3 verified (73 tests) |
 | v0.2.0 | Planned | Git-aware semantic indexing, persistent session memory |
 | v0.3.0 | Future | Advanced code intelligence |
 | v0.4.0 | Future | Enterprise features |

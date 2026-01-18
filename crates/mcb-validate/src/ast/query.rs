@@ -30,7 +30,10 @@ pub enum QueryCondition {
     /// Node has no children of specific type
     NoChild { child_type: String },
     /// Node has specific metadata value
-    MetadataEquals { key: String, value: serde_json::Value },
+    MetadataEquals {
+        key: String,
+        value: serde_json::Value,
+    },
     /// Custom condition function
     Custom { name: String },
 }
@@ -93,18 +96,18 @@ impl AstQuery {
     /// Check individual condition
     fn check_condition(&self, condition: &QueryCondition, node: &AstNode) -> bool {
         match condition {
-            QueryCondition::HasField { field, value } => {
-                node.metadata.get(field)
-                    .and_then(|v| v.as_str())
-                    .map(|s| s == value)
-                    .unwrap_or(false)
-            }
-            QueryCondition::NotHasField { field } => {
-                !node.metadata.contains_key(field)
-            }
+            QueryCondition::HasField { field, value } => node
+                .metadata
+                .get(field)
+                .and_then(|v| v.as_str())
+                .map(|s| s == value)
+                .unwrap_or(false),
+            QueryCondition::NotHasField { field } => !node.metadata.contains_key(field),
             QueryCondition::NameMatches { pattern } => {
                 if let Some(name) = &node.name {
-                    Regex::new(pattern).map(|re| re.is_match(name)).unwrap_or(false)
+                    Regex::new(pattern)
+                        .map(|re| re.is_match(name))
+                        .unwrap_or(false)
                 } else {
                     false
                 }
@@ -116,13 +119,9 @@ impl AstQuery {
                 !node.children.iter().any(|child| child.kind == *child_type)
             }
             QueryCondition::MetadataEquals { key, value } => {
-                node.metadata.get(key)
-                    .map(|v| v == value)
-                    .unwrap_or(false)
+                node.metadata.get(key).map(|v| v == value).unwrap_or(false)
             }
-            QueryCondition::Custom { name } => {
-                self.check_custom_condition(name, node)
-            }
+            QueryCondition::Custom { name } => self.check_custom_condition(name, node),
         }
     }
 
@@ -130,13 +129,19 @@ impl AstQuery {
     fn check_custom_condition(&self, name: &str, node: &AstNode) -> bool {
         match name {
             "has_no_docstring" => self.has_no_docstring(node),
-            "is_async" => node.metadata.get("is_async")
+            "is_async" => node
+                .metadata
+                .get("is_async")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false),
-            "has_return_type" => node.metadata.get("has_return_type")
+            "has_return_type" => node
+                .metadata
+                .get("has_return_type")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false),
-            "is_test_function" => node.name.as_ref()
+            "is_test_function" => node
+                .name
+                .as_ref()
                 .map(|n| n.starts_with("test_") || n.contains("test"))
                 .unwrap_or(false),
             _ => false,
@@ -148,7 +153,9 @@ impl AstQuery {
         // Look for documentation comments before the function
         // This is a simplified check - real implementation would
         // need to check source code around the node
-        !node.metadata.get("has_docstring")
+        !node
+            .metadata
+            .get("has_docstring")
             .and_then(|v| v.as_bool())
             .unwrap_or(false)
     }
@@ -216,7 +223,7 @@ impl AstQueryPatterns {
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::Custom {
-                name: "has_no_docstring".to_string()
+                name: "has_no_docstring".to_string(),
             })
             .message("Functions must be documented")
             .severity("warning")

@@ -370,9 +370,7 @@ impl TestValidator {
                     continue;
                 }
 
-                let file_name = path.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
+                let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
                 // Skip allowed files in root tests directory
                 if matches!(file_name, "lib.rs" | "mod.rs" | "test_utils.rs") {
@@ -382,7 +380,8 @@ impl TestValidator {
                 // Any other .rs file directly in tests/ is a violation
                 violations.push(TestViolation::BadTestFileName {
                     file: path,
-                    suggestion: "Move to tests/unit/, tests/integration/, or tests/e2e/ directory".to_string(),
+                    suggestion: "Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
+                        .to_string(),
                     severity: Severity::Error,
                 });
             }
@@ -417,7 +416,8 @@ impl TestValidator {
             if !integration_dir.exists() {
                 violations.push(TestViolation::BadTestFileName {
                     file: tests_dir.clone(),
-                    suggestion: "Create tests/integration/ directory for integration tests".to_string(),
+                    suggestion: "Create tests/integration/ directory for integration tests"
+                        .to_string(),
                     severity: Severity::Info,
                 });
             }
@@ -435,10 +435,7 @@ impl TestValidator {
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let path = entry.path();
-                let file_name = path
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("");
+                let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
                 // Skip lib.rs and mod.rs
                 if file_name == "lib" || file_name == "mod" {
@@ -456,8 +453,11 @@ impl TestValidator {
                 }
 
                 // Check directory-based naming conventions
-                let parent_dir = path.parent().and_then(|p| p.file_name())
-                    .and_then(|n| n.to_str()).unwrap_or("");
+                let parent_dir = path
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
 
                 match parent_dir {
                     "unit" => {
@@ -465,7 +465,10 @@ impl TestValidator {
                         if !file_name.ends_with("_tests") {
                             violations.push(TestViolation::BadTestFileName {
                                 file: path.to_path_buf(),
-                                suggestion: format!("{}_tests.rs (unit tests must end with _tests)", file_name),
+                                suggestion: format!(
+                                    "{}_tests.rs (unit tests must end with _tests)",
+                                    file_name
+                                ),
                                 severity: Severity::Warning,
                             });
                         }
@@ -503,7 +506,9 @@ impl TestValidator {
                         // Files directly in tests/ directory (not in subdirs) are violations
                         violations.push(TestViolation::BadTestFileName {
                             file: path.to_path_buf(),
-                            suggestion: "Move to tests/unit/, tests/integration/, or tests/e2e/ directory".to_string(),
+                            suggestion:
+                                "Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
+                                    .to_string(),
                             severity: Severity::Warning,
                         });
                     }

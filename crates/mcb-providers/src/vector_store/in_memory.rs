@@ -293,7 +293,9 @@ fn cosine_similarity_with_norm(a: &[f32], b: &[f32], norm_a: f32) -> f32 {
 // Auto-registration via linkme
 // ============================================================================
 
-use mcb_application::ports::registry::{VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS};
+use mcb_application::ports::registry::{
+    VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS,
+};
 
 #[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]
 static MEMORY_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {

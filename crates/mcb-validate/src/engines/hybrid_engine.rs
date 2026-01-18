@@ -5,13 +5,13 @@
 //! - rusty-rules: Composable rules with JSON DSL
 //! - validator/garde: Field validations
 
-use std::collections::HashMap;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-use crate::violation_trait::{Violation, ViolationCategory, Severity};
-use crate::ValidationConfig;
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
 use crate::Result;
+use crate::ValidationConfig;
 
 use super::expression_engine::ExpressionEngine;
 use super::rete_engine::ReteEngine;
@@ -19,7 +19,7 @@ use super::router::RuleEngineRouter;
 use super::rust_rule_engine::RustRuleEngineWrapper;
 use super::rusty_rules_engine::RustyRulesEngineWrapper;
 use super::validator_engine::ValidatorEngine;
-use crate::linters::{LinterEngine, LintViolation, LinterType};
+use crate::linters::{LintViolation, LinterEngine, LinterType};
 
 /// Types of rule engines supported
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -81,7 +81,12 @@ impl std::fmt::Display for RuleViolation {
 }
 
 impl RuleViolation {
-    pub fn new(id: impl Into<String>, category: ViolationCategory, severity: Severity, message: impl Into<String>) -> Self {
+    pub fn new(
+        id: impl Into<String>,
+        category: ViolationCategory,
+        severity: Severity,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             id: id.into(),
             category,
@@ -165,13 +170,19 @@ impl HybridRuleEngine {
 
         let violations = match engine_type {
             RuleEngineType::RustRuleEngine => {
-                self.rust_rule_engine.execute(rule_definition, context).await?
+                self.rust_rule_engine
+                    .execute(rule_definition, context)
+                    .await?
             }
             RuleEngineType::RustyRules => {
-                self.rusty_rules_engine.execute(rule_definition, context).await?
+                self.rusty_rules_engine
+                    .execute(rule_definition, context)
+                    .await?
             }
             RuleEngineType::Expression => {
-                self.expression_engine.execute(rule_definition, context).await?
+                self.expression_engine
+                    .execute(rule_definition, context)
+                    .await?
             }
             RuleEngineType::Auto => {
                 // Use router to auto-detect and execute
@@ -255,11 +266,9 @@ impl HybridRuleEngine {
     }
 
     /// Validate rule definition using validator/garde
-    pub fn validate_rule_definition(
-        &self,
-        rule_definition: &serde_json::Value,
-    ) -> Result<()> {
-        self.validator_engine.validate_rule_definition(rule_definition)
+    pub fn validate_rule_definition(&self, rule_definition: &serde_json::Value) -> Result<()> {
+        self.validator_engine
+            .validate_rule_definition(rule_definition)
     }
 
     /// Get cached compiled rule
@@ -297,13 +306,13 @@ impl HybridRuleEngine {
         let (ruff_codes, clippy_codes) = Self::categorize_lint_codes(lint_select);
 
         // Collect files to check from context
-        let files: Vec<std::path::PathBuf> = context.file_contents.keys()
+        let files: Vec<std::path::PathBuf> = context
+            .file_contents
+            .keys()
             .map(std::path::PathBuf::from)
             .collect();
 
-        let file_refs: Vec<&std::path::Path> = files.iter()
-            .map(|p| p.as_path())
-            .collect();
+        let file_refs: Vec<&std::path::Path> = files.iter().map(|p| p.as_path()).collect();
 
         // Run Ruff for Python lint codes
         if !ruff_codes.is_empty() && !file_refs.is_empty() {
@@ -386,7 +395,8 @@ impl HybridRuleEngine {
 
     /// Check if a rule uses lint_select (linter-based validation)
     pub fn is_lint_rule(rule_definition: &serde_json::Value) -> bool {
-        rule_definition.get("lint_select")
+        rule_definition
+            .get("lint_select")
             .and_then(|v| v.as_array())
             .map(|arr| !arr.is_empty())
             .unwrap_or(false)

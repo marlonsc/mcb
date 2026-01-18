@@ -89,7 +89,5 @@ use mcb_application::ports::registry::{CacheProviderConfig, CacheProviderEntry, 
 static NULL_CACHE_PROVIDER: CacheProviderEntry = CacheProviderEntry {
     name: "null",
     description: "Null cache provider for testing (no-op operations)",
-    factory: |_config: &CacheProviderConfig| {
-        Ok(std::sync::Arc::new(NullCacheProvider::new()))
-    },
+    factory: |_config: &CacheProviderConfig| Ok(std::sync::Arc::new(NullCacheProvider::new())),
 };

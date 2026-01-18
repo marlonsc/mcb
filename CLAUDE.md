@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (Claude.ai/code) when working with co
 
 ## Project Overview
 
-MCP Context Browser is a high-performance MCP server for semantic code search using vector embeddings. Version 0.1.1 is production-ready.
+MCP Context Browser is a high-performance MCP server for semantic code search using vector embeddings. Version 0.1.2 is in development.
 
 ## Commands
 
@@ -43,7 +43,7 @@ crates/
 ├── mcb-providers/       # Layer 3: Provider implementations (embedding, vector stores)
 ├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging
 ├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
-├── mcb-validate/        # Dev tooling: architecture validation (Phases 1-2 ✅)
+├── mcb-validate/        # Dev tooling: architecture validation (Phases 1-3 verified)
 └── (mcb crate above)    # Facade aggregating all public APIs
 ```
 
@@ -65,7 +65,7 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 
 **mcb-server**: MCP tool handlers (`index_codebase`, `search_code`, `get_indexing_status`, `clear_index`), stdio transport.
 
-**mcb-validate**: Architecture validation tooling. Linters (Clippy, Ruff), AST parsers (Tree-sitter), rule engines, YAML rules for migration detection (12 rules). Phases 1-2 complete (linters + AST operational).
+**mcb-validate**: Architecture validation tooling. Linters (Clippy, Ruff), AST parsers (Tree-sitter), rule engines, YAML rules for migration detection (12 rules). Phases 1-3 verified (73 tests pass), Phases 4-7 not started. See `docs/developer/IMPLEMENTATION_STATUS.md`.
 
 ## Code Standards
 

@@ -44,10 +44,23 @@ impl AstDecoder {
 
     /// Check if node is noise (comments, whitespace, etc.)
     fn is_noise_node(node: &Node) -> bool {
-        matches!(node.kind(),
-            "comment" | "line_comment" | "block_comment" |
-            "whitespace" | "newline" | "indent" | "dedent" |
-            ";" | "," | "(" | ")" | "[" | "]" | "{" | "}"
+        matches!(
+            node.kind(),
+            "comment"
+                | "line_comment"
+                | "block_comment"
+                | "whitespace"
+                | "newline"
+                | "indent"
+                | "dedent"
+                | ";"
+                | ","
+                | "("
+                | ")"
+                | "["
+                | "]"
+                | "{"
+                | "}"
         )
     }
 
@@ -93,7 +106,9 @@ impl AstDecoder {
 
         // If node itself is an identifier
         if node.kind() == "identifier" || node.kind() == "type_identifier" {
-            node.utf8_text(source.as_bytes()).ok().map(|s| s.to_string())
+            node.utf8_text(source.as_bytes())
+                .ok()
+                .map(|s| s.to_string())
         } else {
             None
         }
@@ -116,7 +131,10 @@ impl AstDecoder {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind().contains("type") && child.kind() != "type" {
-                return child.utf8_text(source.as_bytes()).ok().map(|s| s.to_string());
+                return child
+                    .utf8_text(source.as_bytes())
+                    .ok()
+                    .map(|s| s.to_string());
             }
         }
         None
@@ -153,7 +171,11 @@ impl AstDecoder {
     }
 
     /// Extract function-specific metadata
-    fn extract_function_metadata(node: &Node, _source: &str, metadata: &mut HashMap<String, serde_json::Value>) {
+    fn extract_function_metadata(
+        node: &Node,
+        _source: &str,
+        metadata: &mut HashMap<String, serde_json::Value>,
+    ) {
         // Count parameters
         let param_count = Self::count_function_parameters(node);
         metadata.insert("parameter_count".to_string(), param_count.into());

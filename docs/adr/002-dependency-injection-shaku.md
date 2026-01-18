@@ -27,10 +27,12 @@ The use of Shaku brought decoupling and architectural flexibility. We can add ne
 **As of v0.2.0, this ADR is being superseded** by [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md).
 
 ### Migration Impact
-- **Shaku modules** will be replaced with direct constructor injection
-- **Component registration** will be simplified to manual service instantiation
-- **Trait-based DI** will be maintained but without the macro overhead
-- **Testing flexibility** will be preserved through constructor parameters
+
+-   **Shaku modules** will be replaced with direct constructor injection
+-   **Component registration** will be simplified to manual service instantiation
+-   **Trait-based DI** will be maintained but without the macro overhead
+-   **Testing flexibility** will be preserved through constructor parameters
 
 ### Backward Compatibility
+
 The public APIs and interfaces will remain stable. Only the internal DI mechanism will change from Shaku containers to direct dependency passing.

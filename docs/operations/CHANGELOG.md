@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **12 Migration Validation Rules**: YAML-based rules for detecting migration targets (Linkme, Shaku, Figment, Rocket patterns)
 -   **Tree-sitter AST Parsing**: Operational parsers for Rust, Python, JavaScript, TypeScript, and Go with query execution
 -   **Linter Integration**: Clippy and Ruff integration with JSON output parsing
--   **Rule Engine Framework**: Foundation for evalexpr (simple expressions) and rust-rule-engine (RETE algorithm)
+-   **Rule Engine Framework**: Foundation for evalexpr (simple expressions) and Rust-rule-engine (RETE algorithm)
 
 #### Provider Registration Modernization
 
@@ -66,18 +66,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Validation Rules
 
 -   **Migration Detection**: `rules/migration/` - 12 rules for detecting legacy patterns
-    - Inventory usage detection
-    - Linkme slice patterns
-    - Shaku Component detection
-    - Constructor injection patterns
-    - Figment migration targets
-    - Rocket attribute handlers
+    -   Inventory usage detection
+    -   Linkme slice patterns
+    -   Shaku Component detection
+    -   Constructor injection patterns
+    -   Figment migration targets
+    -   Rocket attribute handlers
 -   **Quality Rules**: `rules/quality/` - Code quality enforcement
-    - No-unwrap detection (Clippy + AST)
-    - Import organization (Ruff)
+    -   No-unwrap detection (Clippy + AST)
+    -   Import organization (Ruff)
 -   **Architecture Rules**: `rules/architecture/` - Clean architecture enforcement
-    - Domain layer independence
-    - Layer boundary validation
+    -   Domain layer independence
+    -   Layer boundary validation
 
 ### Changed
 
@@ -93,30 +93,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **linkme** (v0.3): Compile-time distributed slice registration
 -   **tree-sitter** family: Parsers for Rust, Python, JavaScript, TypeScript, Go
 -   **evalexpr** (v11): Zero-dependency expression evaluator (planned for Phase 3)
--   **rust-rule-engine** (v1.16): RETE-based pattern matching (planned for Phase 3)
+-   **Rust-rule-engine** (v1.16): RETE-based pattern matching (planned for Phase 3)
 
 #### New Files Created
 
 -   **mcb-validate crate**: ~40 source files across modules:
-    - `src/lib.rs` - Main validation pipeline
-    - `src/linters/` - Clippy and Ruff integration (Phase 1 ✅)
-    - `src/ast/` - Tree-sitter language parsers and query execution (Phase 2 ✅)
-    - `src/engines/` - Rule engine framework
-    - `src/rules/` - YAML rule loading and validation
-    - `tests/integration_linters.rs` - 17 integration tests
+    -   `src/lib.rs` - Main validation pipeline
+    -   `src/linters/` - Clippy and Ruff integration (Phase 1 ✅)
+    -   `src/ast/` - Tree-sitter language parsers and query execution (Phase 2 ✅)
+    -   `src/engines/` - Rule engine framework
+    -   `src/rules/` - YAML rule loading and validation
+    -   `tests/integration_linters.rs` - 17 integration tests
 
 #### Migration Status
 
-| Phase | Component | Status | Files Changed |
-|-------|-----------|--------|---------------|
-| 3.1 | Linkme Migration | ✅ 99% Complete | 15 providers, 4 registries |
-| 3.1 | Inventory Cleanup | ⚠️ Pending | Remove from Cargo.toml |
-| mcb-validate Phase 1 | Linters | ✅ Complete | 6 files |
-| mcb-validate Phase 2 | AST | ✅ Complete | 8 files |
-| mcb-validate Phase 3-7 | Advanced Rules | 📋 Planned | Future |
-| 3.2 | Shaku → DI | 📋 Planned | Future |
-| 3.3 | Config → Figment | 📋 Planned | Future |
-| 3.4 | Axum → Rocket | 📋 Planned | Future |
+| Phase | Component | Status | Files |
+|-------|-----------|--------|-------|
+| 3.1 | Linkme Migration | ✅ Complete | 15 providers, 4 registries |
+| 3.1 | Inventory Cleanup | ✅ Complete | Removed from Cargo.toml |
+| mcb-validate Phase 1 | Linters | ✅ Verified (17/17 tests) | src/linters/mod.rs, integration_linters.rs |
+| mcb-validate Phase 2 | AST | ✅ Verified (26/26 tests) | src/ast/*.rs, integration_ast.rs |
+| mcb-validate Phase 3 | Rule Engines | ✅ Verified (30/30 tests) | expression_engine.rs, rete_engine.rs, router.rs |
+| mcb-validate Phase 4-7 | Metrics/Dup/Arch | ❌ Not Started | Directories missing |
+| 3.2 | Shaku → DI | ❌ Not Started | shaku still in 5 Cargo.toml |
+| 3.3 | Config → Figment | ❌ Not Started | config still present |
+| 3.4 | Axum → Rocket | ❌ Not Started | axum still present |
+
+**Verification Date**: 2026-01-18 via `make test`. See `docs/developer/IMPLEMENTATION_STATUS.md` for detailed traceability.
 
 ### Performance Impact
 
@@ -143,7 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Next Steps (v0.1.3 or v0.2.0)
 
 -   Complete inventory dependency removal
--   Implement mcb-validate Phases 3-7 (rule engines, metrics, duplication, architecture)
+-   Implement mcb-validate Phases 4-7 (metrics, duplication, architecture, integration)
 -   Migrate Shaku → constructor injection (Phase 3.2)
 -   Migrate config → Figment (Phase 3.3)
 -   Migrate Axum → Rocket (Phase 3.4)

@@ -100,7 +100,9 @@ impl NullEmbeddingProvider {
 // Auto-registration via linkme
 // ============================================================================
 
-use mcb_application::ports::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
+use mcb_application::ports::registry::{
+    EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS,
+};
 
 #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
 static NULL_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {

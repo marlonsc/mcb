@@ -37,8 +37,8 @@ pub mod config;
 pub mod scan;
 
 // === Rule Registry (Phase 3) ===
-pub mod rules;
 pub mod engines;
+pub mod rules;
 
 // === Linter Integration (Phase 1 - Pure Rust Pipeline) ===
 pub mod linters;
@@ -93,19 +93,19 @@ pub use config::{
 };
 
 // Re-export rule registry and YAML system
-pub use rules::{Rule, RuleRegistry};
+pub use engines::{HybridRuleEngine, RuleEngineType};
+pub use rules::templates::TemplateEngine;
 pub use rules::yaml_loader::YamlRuleLoader;
 pub use rules::yaml_validator::YamlRuleValidator;
-pub use rules::templates::TemplateEngine;
-pub use engines::{HybridRuleEngine, RuleEngineType};
+pub use rules::{Rule, RuleRegistry};
 
 // Re-export linter integration
-pub use linters::{LintViolation, LinterEngine, LinterType, RuffLinter, ClippyLinter};
+pub use linters::{ClippyLinter, LintViolation, LinterEngine, LinterType, RuffLinter};
 
 // Re-export AST module types
 pub use ast::{
-    AstDecoder, AstEngine, AstNode, AstParseResult, AstParser, AstQuery,
-    AstQueryBuilder, AstQueryPatterns, AstViolation, Position, QueryCondition, Span,
+    AstDecoder, AstEngine, AstNode, AstParseResult, AstParser, AstQuery, AstQueryBuilder,
+    AstQueryPatterns, AstViolation, Position, QueryCondition, Span,
 };
 
 // Re-export new validators
@@ -637,8 +637,7 @@ impl ArchitectureValidator {
 
     /// Load and validate all YAML rules
     pub async fn load_yaml_rules(&self) -> Result<Vec<crate::rules::yaml_loader::ValidatedRule>> {
-        let rules_dir = std::env::current_dir()?
-            .join("crates/mcb-validate/rules");
+        let rules_dir = std::env::current_dir()?.join("crates/mcb-validate/rules");
 
         let mut loader = YamlRuleLoader::new(rules_dir)?;
         loader.load_all_rules().await
@@ -660,7 +659,7 @@ impl ArchitectureValidator {
             let context = engines::hybrid_engine::RuleContext {
                 workspace_root: self.config.workspace_root.clone(),
                 config: self.config.clone(),
-                ast_data: HashMap::new(), // Would be populated by scanner
+                ast_data: HashMap::new(),   // Would be populated by scanner
                 cargo_data: HashMap::new(), // Would be populated by scanner
                 file_contents: file_contents.clone(),
             };
@@ -687,16 +686,23 @@ impl ArchitectureValidator {
             // Check if this is a lint-based rule
             if !rule.lint_select.is_empty() {
                 // Use linter execution
-                let result = engine.execute_lint_rule(
-                    &rule.id,
-                    &rule.lint_select,
-                    &context,
-                    rule.message.as_deref(),
-                    severity,
-                    category,
-                ).await?;
+                let result = engine
+                    .execute_lint_rule(
+                        &rule.id,
+                        &rule.lint_select,
+                        &context,
+                        rule.message.as_deref(),
+                        severity,
+                        category,
+                    )
+                    .await?;
 
-                violations.extend(result.violations.into_iter().map(|v| Box::new(v) as Box<dyn Violation>));
+                violations.extend(
+                    result
+                        .violations
+                        .into_iter()
+                        .map(|v| Box::new(v) as Box<dyn Violation>),
+                );
             } else {
                 // Use rule engine execution
                 let engine_type = match rule.engine.as_str() {
@@ -705,14 +711,16 @@ impl ArchitectureValidator {
                     _ => RuleEngineType::RustyRules, // Default
                 };
 
-                let result = engine.execute_rule(
-                    &rule.id,
-                    engine_type,
-                    &rule.rule_definition,
-                    &context,
-                ).await?;
+                let result = engine
+                    .execute_rule(&rule.id, engine_type, &rule.rule_definition, &context)
+                    .await?;
 
-                violations.extend(result.violations.into_iter().map(|v| Box::new(v) as Box<dyn Violation>));
+                violations.extend(
+                    result
+                        .violations
+                        .into_iter()
+                        .map(|v| Box::new(v) as Box<dyn Violation>),
+                );
             }
         }
 
@@ -737,7 +745,11 @@ impl ArchitectureValidator {
     }
 
     /// Recursively scan a directory for source files
-    fn scan_directory(&self, dir: &Path, file_contents: &mut HashMap<String, String>) -> Result<()> {
+    fn scan_directory(
+        &self,
+        dir: &Path,
+        file_contents: &mut HashMap<String, String>,
+    ) -> Result<()> {
         if !dir.exists() || !dir.is_dir() {
             return Ok(());
         }
@@ -754,7 +766,10 @@ impl ArchitectureValidator {
                 self.scan_directory(&path, file_contents)?;
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 // Include common source file extensions
-                let is_source = matches!(ext, "rs" | "py" | "js" | "ts" | "go" | "java" | "c" | "cpp" | "h" | "hpp");
+                let is_source = matches!(
+                    ext,
+                    "rs" | "py" | "js" | "ts" | "go" | "java" | "c" | "cpp" | "h" | "hpp"
+                );
                 if is_source {
                     if let Ok(content) = std::fs::read_to_string(&path) {
                         file_contents.insert(path.to_string_lossy().to_string(), content);
@@ -865,4 +880,3 @@ pub fn find_workspace_root_from(start: &Path) -> Option<PathBuf> {
         }
     }
 }
-

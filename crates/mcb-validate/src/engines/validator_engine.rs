@@ -38,8 +38,9 @@ impl ValidatorEngine {
 
         // Validate category if present
         if let Some(ref category) = rule_config.category {
-            validate_category(category)
-                .map_err(|e| crate::ValidationError::Config(format!("Invalid category: {:?}", e)))?;
+            validate_category(category).map_err(|e| {
+                crate::ValidationError::Config(format!("Invalid category: {:?}", e))
+            })?;
         }
 
         // Validate engine if present
@@ -50,8 +51,9 @@ impl ValidatorEngine {
 
         // Validate severity if present
         if let Some(ref severity) = rule_config.severity {
-            validate_severity(severity)
-                .map_err(|e| crate::ValidationError::Config(format!("Invalid severity: {:?}", e)))?;
+            validate_severity(severity).map_err(|e| {
+                crate::ValidationError::Config(format!("Invalid severity: {:?}", e))
+            })?;
         }
 
         Ok(())
@@ -88,7 +90,6 @@ pub struct RuleConfigValidation {
 
     /// Config validation
     pub config: Option<RuleConfigFields>,
-
 }
 
 /// Configuration fields validation
@@ -119,14 +120,17 @@ fn validate_category(category: &str) -> std::result::Result<(), ValidationErrors
         "dependency_injection",
         "configuration",
         "web_framework",
-        "migration"
+        "migration",
     ];
 
     if valid_categories.contains(&category) {
         Ok(())
     } else {
         let mut errors = ValidationErrors::new();
-        errors.add("category", validator::ValidationError::new("invalid_category"));
+        errors.add(
+            "category",
+            validator::ValidationError::new("invalid_category"),
+        );
         Err(errors)
     }
 }
@@ -138,7 +142,10 @@ fn validate_severity(severity: &str) -> std::result::Result<(), ValidationErrors
         Ok(())
     } else {
         let mut errors = ValidationErrors::new();
-        errors.add("severity", validator::ValidationError::new("invalid_severity"));
+        errors.add(
+            "severity",
+            validator::ValidationError::new("invalid_severity"),
+        );
         Err(errors)
     }
 }
@@ -154,7 +161,6 @@ fn validate_engine(engine: &str) -> std::result::Result<(), ValidationErrors> {
         Err(errors)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

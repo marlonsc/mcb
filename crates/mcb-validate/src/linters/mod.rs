@@ -127,7 +127,9 @@ impl LinterEngine {
 
         // For Clippy, we need to check if any Rust files are present
         if self.enabled_linters.contains(&LinterType::Clippy) {
-            let has_rust_files = files.iter().any(|f| f.extension().is_some_and(|ext| ext == "rs"));
+            let has_rust_files = files
+                .iter()
+                .any(|f| f.extension().is_some_and(|ext| ext == "rs"));
             if has_rust_files {
                 // Find project root (simplified - assumes files are in a Cargo project)
                 if let Some(project_root) = find_project_root(files) {
@@ -272,7 +274,9 @@ fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
             };
 
             // Extract the code (either from nested structure or direct)
-            let rule_code = msg.code.as_ref()
+            let rule_code = msg
+                .code
+                .as_ref()
                 .map(|c| c.code.clone())
                 .unwrap_or_default();
 
@@ -288,7 +292,12 @@ fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
                 column: span.column_start,
                 message: msg.message.clone(),
                 severity: map_clippy_level(&msg.level),
-                category: if rule_code.contains("clippy") { "quality" } else { "correctness" }.to_string(),
+                category: if rule_code.contains("clippy") {
+                    "quality"
+                } else {
+                    "correctness"
+                }
+                .to_string(),
             });
         }
     }

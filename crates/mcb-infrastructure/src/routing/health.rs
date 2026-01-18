@@ -86,9 +86,7 @@ impl InMemoryHealthMonitor {
         &self,
         provider_id: &str,
     ) -> dashmap::mapref::one::RefMut<'_, String, ProviderHealthData> {
-        self.health_data
-            .entry(provider_id.to_string())
-            .or_default()
+        self.health_data.entry(provider_id.to_string()).or_default()
     }
 
     /// Calculate status based on failure count

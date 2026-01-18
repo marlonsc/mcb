@@ -35,14 +35,11 @@ pub use infrastructure::{
 };
 pub use providers::{EmbeddingProvider, HybridSearchProvider, VectorStoreProvider};
 pub use registry::{
-    EmbeddingProviderEntry, EmbeddingProviderConfig,
-    VectorStoreProviderEntry, VectorStoreProviderConfig,
-    CacheProviderEntry, CacheProviderConfig,
-    LanguageProviderEntry, LanguageProviderConfig,
-    resolve_embedding_provider, list_embedding_providers,
-    resolve_vector_store_provider, list_vector_store_providers,
-    resolve_cache_provider, list_cache_providers,
-    resolve_language_provider, list_language_providers,
+    list_cache_providers, list_embedding_providers, list_language_providers,
+    list_vector_store_providers, resolve_cache_provider, resolve_embedding_provider,
+    resolve_language_provider, resolve_vector_store_provider, CacheProviderConfig,
+    CacheProviderEntry, EmbeddingProviderConfig, EmbeddingProviderEntry, LanguageProviderConfig,
+    LanguageProviderEntry, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
 pub use services::{
     BatchIndexingServiceInterface, ChunkingOrchestratorInterface, ContextServiceInterface,

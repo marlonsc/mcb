@@ -133,7 +133,9 @@ impl VectorStoreProvider for NullVectorStoreProvider {
 // Auto-registration via linkme
 // ============================================================================
 
-use mcb_application::ports::registry::{VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS};
+use mcb_application::ports::registry::{
+    VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS,
+};
 
 #[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]
 static NULL_VECTOR_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {

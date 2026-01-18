@@ -4,7 +4,7 @@ name: "Domain Layer Independence"
 category: "architecture"
 severity: "error"
 enabled: true
-engine: "rusty-rules"
+engine: "rust-rule-engine"
 
 description: "Domain crate must have zero internal mcb-* dependencies"
 rationale: "Domain layer contains pure business logic independent of frameworks"
@@ -14,11 +14,18 @@ config:
   forbidden_prefixes: ["mcb-"]
   allowed_dependencies: ["std", "serde", "thiserror", "uuid", "chrono"]
 
+# GRL rule using rust-rule-engine syntax
+# IMPORTANT: All facts and violations must use "Facts." prefix for GRL compatibility
+# Facts available:
+#   - Facts.crate_name: current crate being analyzed
+#   - Facts.has_internal_dependencies: true if crate depends on mcb-* crates
+#   - Facts.internal_dependencies_count: number of internal dependencies
 rule: |
-  rule DomainIndependence "Domain Layer Independence" {
+  rule "DomainIndependence" salience 10 {
       when
-          Crate(name == "mcb-domain") &&
-          Dependencies(contains any "mcb-*")
+          Facts.has_internal_dependencies == true
       then
-          Violation("Domain layer cannot depend on internal mcb-* crates");
+          Facts.violation_triggered = true;
+          Facts.violation_message = "Domain layer cannot depend on internal mcb-* crates";
+          Facts.violation_rule_name = "CA001";
   }

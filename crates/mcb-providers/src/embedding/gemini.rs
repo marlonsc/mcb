@@ -205,17 +205,23 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
 // Auto-registration via linkme
 // ============================================================================
 
-use mcb_application::ports::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
+use mcb_application::ports::registry::{
+    EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS,
+};
 
 #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
 static GEMINI_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
     name: "gemini",
     description: "Google Gemini embedding provider (gemini-embedding-001, text-embedding-004)",
     factory: |config: &EmbeddingProviderConfig| {
-        let api_key = config.api_key.clone()
+        let api_key = config
+            .api_key
+            .clone()
             .ok_or_else(|| "Gemini requires api_key".to_string())?;
         let base_url = config.base_url.clone();
-        let model = config.model.clone()
+        let model = config
+            .model
+            .clone()
             .unwrap_or_else(|| "text-embedding-004".to_string());
         let timeout = std::time::Duration::from_secs(30);
         let http_client = reqwest::Client::builder()
@@ -224,7 +230,11 @@ static GEMINI_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
             .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
         Ok(std::sync::Arc::new(GeminiEmbeddingProvider::new(
-            api_key, base_url, model, timeout, http_client
+            api_key,
+            base_url,
+            model,
+            timeout,
+            http_client,
         )))
     },
 };

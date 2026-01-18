@@ -184,12 +184,14 @@ pub async fn run_server(config_path: Option<&Path>) -> Result<()> {
 **As of v0.2.0, this ADR is being superseded** by [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md).
 
 ### Migration Impact
-- **Shaku modules** will be completely removed
-- **Runtime factories** will be replaced with direct constructor injection
-- **Two-layer complexity** will be eliminated in favor of simple service composition
-- **Infrastructure defaults** will be provided through constructor parameters
+
+-   **Shaku modules** will be completely removed
+-   **Runtime factories** will be replaced with direct constructor injection
+-   **Two-layer complexity** will be eliminated in favor of simple service composition
+-   **Infrastructure defaults** will be provided through constructor parameters
 
 ### Backward Compatibility
+
 The public service interfaces will remain stable. Only the internal composition mechanism will change from complex DI containers to direct dependency passing.
 
 ## Related ADRs

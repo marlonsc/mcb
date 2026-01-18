@@ -6,10 +6,12 @@
 //! - AstQuery can detect violations like .unwrap() usage
 //! - The unified AST format works correctly
 
+use mcb_validate::ast::languages::{
+    GoParser, JavaScriptParser, PythonParser, RustParser, TypeScriptParser,
+};
 use mcb_validate::ast::{
     AstEngine, AstNode, AstParser, AstQuery, AstQueryBuilder, AstQueryPatterns, QueryCondition,
 };
-use mcb_validate::ast::languages::{GoParser, JavaScriptParser, PythonParser, RustParser, TypeScriptParser};
 
 // ==================== Parser Creation Tests ====================
 
@@ -20,8 +22,14 @@ fn test_ast_engine_creation() {
 
     assert!(languages.contains(&"rust"), "Should support Rust");
     assert!(languages.contains(&"python"), "Should support Python");
-    assert!(languages.contains(&"javascript"), "Should support JavaScript");
-    assert!(languages.contains(&"typescript"), "Should support TypeScript");
+    assert!(
+        languages.contains(&"javascript"),
+        "Should support JavaScript"
+    );
+    assert!(
+        languages.contains(&"typescript"),
+        "Should support TypeScript"
+    );
     assert!(languages.contains(&"go"), "Should support Go");
 }
 
@@ -29,12 +37,30 @@ fn test_ast_engine_creation() {
 fn test_language_detection() {
     let engine = AstEngine::new();
 
-    assert_eq!(engine.detect_language(std::path::Path::new("main.rs")), Some("rust"));
-    assert_eq!(engine.detect_language(std::path::Path::new("script.py")), Some("python"));
-    assert_eq!(engine.detect_language(std::path::Path::new("app.js")), Some("javascript"));
-    assert_eq!(engine.detect_language(std::path::Path::new("component.ts")), Some("typescript"));
-    assert_eq!(engine.detect_language(std::path::Path::new("main.go")), Some("go"));
-    assert_eq!(engine.detect_language(std::path::Path::new("unknown.xyz")), None);
+    assert_eq!(
+        engine.detect_language(std::path::Path::new("main.rs")),
+        Some("rust")
+    );
+    assert_eq!(
+        engine.detect_language(std::path::Path::new("script.py")),
+        Some("python")
+    );
+    assert_eq!(
+        engine.detect_language(std::path::Path::new("app.js")),
+        Some("javascript")
+    );
+    assert_eq!(
+        engine.detect_language(std::path::Path::new("component.ts")),
+        Some("typescript")
+    );
+    assert_eq!(
+        engine.detect_language(std::path::Path::new("main.go")),
+        Some("go")
+    );
+    assert_eq!(
+        engine.detect_language(std::path::Path::new("unknown.xyz")),
+        None
+    );
 }
 
 // ==================== Rust Parser Tests ====================
@@ -48,9 +74,14 @@ fn hello_world() {
 }
 "#;
 
-    let result = parser.parse_content(code, "test.rs").expect("Should parse Rust code");
+    let result = parser
+        .parse_content(code, "test.rs")
+        .expect("Should parse Rust code");
     assert_eq!(result.root.kind, "source_file");
-    assert!(!result.root.children.is_empty(), "Should have children nodes");
+    assert!(
+        !result.root.children.is_empty(),
+        "Should have children nodes"
+    );
 }
 
 #[test]
@@ -64,7 +95,9 @@ fn risky_function() {
 }
 "#;
 
-    let result = parser.parse_content(code, "test.rs").expect("Should parse Rust code with unwrap");
+    let result = parser
+        .parse_content(code, "test.rs")
+        .expect("Should parse Rust code with unwrap");
     assert_eq!(result.root.kind, "source_file");
 
     // Verify the AST contains the function
@@ -80,7 +113,10 @@ fn risky_function() {
         None
     }
 
-    assert!(find_node_by_kind(&result.root, "function_item").is_some(), "Should find function_item node");
+    assert!(
+        find_node_by_kind(&result.root, "function_item").is_some(),
+        "Should find function_item node"
+    );
 }
 
 #[test]
@@ -102,7 +138,9 @@ impl MyService {
 }
 "#;
 
-    let result = parser.parse_content(code, "test.rs").expect("Should parse Rust struct");
+    let result = parser
+        .parse_content(code, "test.rs")
+        .expect("Should parse Rust struct");
     assert_eq!(result.root.kind, "source_file");
     assert!(!result.root.children.is_empty());
 }
@@ -117,7 +155,9 @@ def hello_world():
     print("Hello, World!")
 "#;
 
-    let result = parser.parse_content(code, "test.py").expect("Should parse Python code");
+    let result = parser
+        .parse_content(code, "test.py")
+        .expect("Should parse Python code");
     assert_eq!(result.root.kind, "module");
     assert!(!result.root.children.is_empty());
 }
@@ -135,7 +175,9 @@ class MyService:
         return self.name
 "#;
 
-    let result = parser.parse_content(code, "test.py").expect("Should parse Python class");
+    let result = parser
+        .parse_content(code, "test.py")
+        .expect("Should parse Python class");
     assert_eq!(result.root.kind, "module");
     assert!(!result.root.children.is_empty());
 }
@@ -151,7 +193,9 @@ function helloWorld() {
 }
 "#;
 
-    let result = parser.parse_content(code, "test.js").expect("Should parse JavaScript code");
+    let result = parser
+        .parse_content(code, "test.js")
+        .expect("Should parse JavaScript code");
     assert_eq!(result.root.kind, "program");
     assert!(!result.root.children.is_empty());
 }
@@ -166,7 +210,9 @@ const multiply = (a, b) => {
 };
 "#;
 
-    let result = parser.parse_content(code, "test.js").expect("Should parse JS arrow functions");
+    let result = parser
+        .parse_content(code, "test.js")
+        .expect("Should parse JS arrow functions");
     assert_eq!(result.root.kind, "program");
     assert!(!result.root.children.is_empty());
 }
@@ -187,7 +233,9 @@ interface Person {
 }
 "#;
 
-    let result = parser.parse_content(code, "test.ts").expect("Should parse TypeScript code");
+    let result = parser
+        .parse_content(code, "test.ts")
+        .expect("Should parse TypeScript code");
     // TSX parser reports as "program"
     assert!(!result.root.children.is_empty());
 }
@@ -207,7 +255,9 @@ func main() {
 }
 "#;
 
-    let result = parser.parse_content(code, "test.go").expect("Should parse Go code");
+    let result = parser
+        .parse_content(code, "test.go")
+        .expect("Should parse Go code");
     assert_eq!(result.root.kind, "source_file");
     assert!(!result.root.children.is_empty());
 }
@@ -266,8 +316,16 @@ fn test_ast_query_node_type_matching() {
         kind: "identifier".to_string(),
         name: Some("test".to_string()),
         span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position { line: 1, column: 1, byte_offset: 0 },
-            end: mcb_validate::ast::Position { line: 1, column: 5, byte_offset: 4 },
+            start: mcb_validate::ast::Position {
+                line: 1,
+                column: 1,
+                byte_offset: 0,
+            },
+            end: mcb_validate::ast::Position {
+                line: 1,
+                column: 5,
+                byte_offset: 4,
+            },
         },
         children: vec![],
         metadata: std::collections::HashMap::new(),
@@ -286,8 +344,16 @@ fn test_ast_query_no_match() {
         kind: "identifier".to_string(),
         name: Some("test".to_string()),
         span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position { line: 1, column: 1, byte_offset: 0 },
-            end: mcb_validate::ast::Position { line: 1, column: 5, byte_offset: 4 },
+            start: mcb_validate::ast::Position {
+                line: 1,
+                column: 1,
+                byte_offset: 0,
+            },
+            end: mcb_validate::ast::Position {
+                line: 1,
+                column: 5,
+                byte_offset: 4,
+            },
         },
         children: vec![],
         metadata: std::collections::HashMap::new(),
@@ -305,8 +371,16 @@ fn test_ast_query_recursive_matching() {
         kind: "identifier".to_string(),
         name: Some("inner".to_string()),
         span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position { line: 2, column: 1, byte_offset: 10 },
-            end: mcb_validate::ast::Position { line: 2, column: 6, byte_offset: 15 },
+            start: mcb_validate::ast::Position {
+                line: 2,
+                column: 1,
+                byte_offset: 10,
+            },
+            end: mcb_validate::ast::Position {
+                line: 2,
+                column: 6,
+                byte_offset: 15,
+            },
         },
         children: vec![],
         metadata: std::collections::HashMap::new(),
@@ -316,8 +390,16 @@ fn test_ast_query_recursive_matching() {
         kind: "source_file".to_string(),
         name: None,
         span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position { line: 1, column: 1, byte_offset: 0 },
-            end: mcb_validate::ast::Position { line: 3, column: 1, byte_offset: 20 },
+            start: mcb_validate::ast::Position {
+                line: 1,
+                column: 1,
+                byte_offset: 0,
+            },
+            end: mcb_validate::ast::Position {
+                line: 3,
+                column: 1,
+                byte_offset: 20,
+            },
         },
         children: vec![child_node],
         metadata: std::collections::HashMap::new(),
@@ -332,7 +414,9 @@ fn test_ast_query_recursive_matching() {
 #[test]
 fn test_query_condition_has_child() {
     let query = AstQueryBuilder::new("rust", "function_item")
-        .with_condition(QueryCondition::HasChild { child_type: "block".to_string() })
+        .with_condition(QueryCondition::HasChild {
+            child_type: "block".to_string(),
+        })
         .message("Function has block")
         .severity("info")
         .build();
@@ -341,8 +425,16 @@ fn test_query_condition_has_child() {
         kind: "block".to_string(),
         name: None,
         span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position { line: 1, column: 20, byte_offset: 20 },
-            end: mcb_validate::ast::Position { line: 3, column: 1, byte_offset: 50 },
+            start: mcb_validate::ast::Position {
+                line: 1,
+                column: 20,
+                byte_offset: 20,
+            },
+            end: mcb_validate::ast::Position {
+                line: 3,
+                column: 1,
+                byte_offset: 50,
+            },
         },
         children: vec![],
         metadata: std::collections::HashMap::new(),
@@ -352,21 +444,35 @@ fn test_query_condition_has_child() {
         kind: "function_item".to_string(),
         name: Some("test_fn".to_string()),
         span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position { line: 1, column: 1, byte_offset: 0 },
-            end: mcb_validate::ast::Position { line: 3, column: 1, byte_offset: 50 },
+            start: mcb_validate::ast::Position {
+                line: 1,
+                column: 1,
+                byte_offset: 0,
+            },
+            end: mcb_validate::ast::Position {
+                line: 3,
+                column: 1,
+                byte_offset: 50,
+            },
         },
         children: vec![block_node],
         metadata: std::collections::HashMap::new(),
     };
 
     let violations = query.execute(&func_node);
-    assert_eq!(violations.len(), 1, "Should match function with block child");
+    assert_eq!(
+        violations.len(),
+        1,
+        "Should match function with block child"
+    );
 }
 
 #[test]
 fn test_query_condition_no_child() {
     let query = AstQueryBuilder::new("rust", "function_item")
-        .with_condition(QueryCondition::NoChild { child_type: "unsafe_block".to_string() })
+        .with_condition(QueryCondition::NoChild {
+            child_type: "unsafe_block".to_string(),
+        })
         .message("Safe function")
         .severity("info")
         .build();
@@ -375,15 +481,27 @@ fn test_query_condition_no_child() {
         kind: "function_item".to_string(),
         name: Some("safe_fn".to_string()),
         span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position { line: 1, column: 1, byte_offset: 0 },
-            end: mcb_validate::ast::Position { line: 3, column: 1, byte_offset: 50 },
+            start: mcb_validate::ast::Position {
+                line: 1,
+                column: 1,
+                byte_offset: 0,
+            },
+            end: mcb_validate::ast::Position {
+                line: 3,
+                column: 1,
+                byte_offset: 50,
+            },
         },
         children: vec![],
         metadata: std::collections::HashMap::new(),
     };
 
     let violations = query.execute(&func_node);
-    assert_eq!(violations.len(), 1, "Should match function without unsafe block");
+    assert_eq!(
+        violations.len(),
+        1,
+        "Should match function without unsafe block"
+    );
 }
 
 // ==================== Multi-Language Query Tests ====================

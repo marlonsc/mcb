@@ -473,4 +473,3 @@ impl crate::validator_trait::Validator for QualityValidator {
             .collect())
     }
 }
-

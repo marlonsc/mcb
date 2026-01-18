@@ -48,17 +48,20 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 ### Implementation Timeline v0.1.2
 
 #### Phase 1: Foundation (Week 1-2)
-- [ADR 023] Inventory to Linkme Migration
-- [ADR 024] Simplified Dependency Injection
+
+-   [ADR 023] Inventory to Linkme Migration
+-   [ADR 024] Simplified Dependency Injection
 
 #### Phase 2: Configuration & Routing (Week 3-4)
-- [ADR 025] Figment Configuration Migration
-- [ADR 026] API Routing Refactor (Rocket vs Poem)
+
+-   [ADR 025] Figment Configuration Migration
+-   [ADR 026] API Routing Refactor (Rocket vs Poem)
 
 #### Phase 3: Integration & Testing (Week 5-6)
-- Integration testing across all changes
-- Performance validation
-- Documentation updates
+
+-   Integration testing across all changes
+-   Performance validation
+-   Documentation updates
 
 **Target Release**: v0.1.2 (6 weeks from planning completion)
 

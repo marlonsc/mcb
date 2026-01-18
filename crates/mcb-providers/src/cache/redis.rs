@@ -250,7 +250,9 @@ static REDIS_PROVIDER: CacheProviderEntry = CacheProviderEntry {
     name: "redis",
     description: "Redis distributed cache",
     factory: |config: &CacheProviderConfig| {
-        let uri = config.uri.clone()
+        let uri = config
+            .uri
+            .clone()
             .unwrap_or_else(|| "redis://localhost:6379".to_string());
 
         let provider = RedisCacheProvider::new(&uri)
