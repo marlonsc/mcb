@@ -19,6 +19,12 @@ pub struct RustRuleEngineWrapper {
     compiled_rules: HashMap<String, String>,
 }
 
+impl Default for RustRuleEngineWrapper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RustRuleEngineWrapper {
     pub fn new() -> Self {
         Self {
@@ -129,6 +135,7 @@ impl RustRuleEngineWrapper {
         Ok(violations)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn scan_files_for_pattern(
         &self,
         context: &RuleContext,

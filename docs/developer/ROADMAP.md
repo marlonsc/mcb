@@ -8,10 +8,52 @@ This roadmap outlines the development of MCP Context Browser, a drop-in replacem
 
 ## Current Status
 
+### v0.1.2 - Provider Modernization + Validation Tooling 🚀 CURRENT
+
+**Status**: Production-Ready
+**Release Date**: January 18, 2026
+
+MCP Context Browser v0.1.2 modernizes provider registration using compile-time linkme distributed slices and introduces the mcb-validate crate for automated architecture enforcement.
+
+#### Achievements
+
+**Provider Modernization:**
+-   ✅ All 15 providers migrated to linkme distributed slices (compile-time registration)
+-   ✅ 4 pure linkme registries (embedding, vector store, cache, language)
+-   ✅ Zero runtime overhead (provider discovery at compile time)
+-   ✅ Eliminated inventory dependency (99% - final Cargo.toml cleanup pending)
+
+**Architecture Validation System:**
+-   ✅ New mcb-validate crate (8th crate in workspace)
+-   ✅ Phase 1: Linter integration (Clippy + Ruff with JSON parsing)
+-   ✅ Phase 2: AST query execution (Tree-sitter for Rust, Python, JS, TS, Go)
+-   ✅ 12 migration validation rules (detect legacy patterns)
+-   ✅ 17 integration tests validating linter pipeline
+-   ✅ `make validate` command for architecture checks
+
+**Maintained from v0.1.1:**
+-   ✅ 790+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
+-   ✅ 3 vector stores (In-Memory, Encrypted, Null)
+-   ✅ 12 languages with AST parsing support
+-   ✅ Clean architecture with trait-based dependency injection
+
+#### Technical Metrics
+
+-   **Source Files**: 340 Rust files (↑ from ~300 in v0.1.1)
+-   **Test Suite**: 790+ tests passing (maintained)
+-   **Crates**: 8 (7 from v0.1.1 + mcb-validate)
+-   **Validation Rules**: 12 YAML rules across migration/quality/architecture categories
+-   **Provider Registration**: Compile-time via linkme (from runtime via inventory)
+
+---
+
+## Recent Releases
+
 ### v0.1.0 - First Stable Release ✅ RELEASED
 
 **Status**: Production-Ready
-**Release Date**: January 2026
+**Release Date**: January 11, 2026
 
 MCP Context Browser v0.1.0 is the first stable release, providing a complete drop-in replacement for Claude-context with superior performance and expanded capabilities.
 
@@ -272,7 +314,8 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.0.2 | Released | Core architecture |
 | v0.0.3 | Released | Production foundation |
 | v0.1.0 | Released | Documentation excellence, clean architecture, first stable release |
-| v0.1.1 |**Current**| Modular crate architecture, architecture validation (mcb-validate) |
+| v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
+| v0.1.2 | **Current** | Linkme provider registration, mcb-validate tooling (Phases 1-2) |
 | v0.2.0 | Planned | Git-aware semantic indexing, persistent session memory |
 | v0.3.0 | Future | Advanced code intelligence |
 | v0.4.0 | Future | Enterprise features |

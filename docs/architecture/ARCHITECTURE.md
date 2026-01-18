@@ -49,9 +49,11 @@ MCP Context Browser is a high-performance, extensible Model Context Protocol (MC
 
 ### Current Status
 
-**Version**: 0.1.1 (First Stable Release)
-**Architecture Maturity**: ✅ **100% Complete DI Implementation**
+**Version**: 0.1.2 (Provider Modernization + Validation)
+**Architecture Maturity**: ✅ **100% Complete DI Implementation + Validation Tooling**
 **DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
+**Provider Registration**: ✅ Linkme distributed slices (compile-time), ⚠️ Inventory deprecated
+**Validation**: ✅ mcb-validate crate (Phases 1-2 complete: Linters + AST)
 **Port Traits**: `crates/mcb-application/src/ports/` - All traits extend `shaku::Interface` for DI compatibility
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -753,10 +755,50 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
+**Status**: Phase 1-2 Complete (v0.1.2) - Linters + AST operational
+
 **Components**:
 
--   `validators/`: 12 validators (deps, quality, patterns, tests, docs, naming, SOLID, org, kiss, shaku, refactor)
--   `report.rs`: Validation reporting
+-   `linters/`: Clippy and Ruff integration with JSON output parsing ✅
+-   `ast/`: Tree-sitter parsers (Rust, Python, JS, TS, Go) with query execution ✅
+-   `engines/`: Rule engine framework (hybrid, validator, rusty-rules)
+-   `rules/`: YAML rule loader, validator, templates
+-   `rules/migration/`: 12 migration detection rules (Linkme, Shaku, Figment, Rocket)
+-   `rules/quality/`: Code quality rules (no-unwrap, import organization)
+-   `rules/architecture/`: Clean architecture enforcement rules
+-   `tests/`: 17 integration tests validating linter pipeline ✅
+
+**Architecture**:
+
+```
+Validation Pipeline (Pure Rust):
+┌─────────────────────────────────────────────┐
+│ YAML Rules → Rule Loader → Rule Engine     │
+│                                             │
+│ Layer 1: Linters (Clippy/Ruff) ✅          │
+│ Layer 2: AST (Tree-sitter queries) ✅      │
+│ Layer 3: Rule Engines (planned)            │
+│ Layer 4: Metrics (planned)                 │
+│ Layer 5: Duplication (planned)             │
+│ Layer 6: Architecture (guarding, planned)  │
+│                                             │
+│ Output: Unified Violation Interface        │
+└─────────────────────────────────────────────┘
+```
+
+**Usage**:
+
+```bash
+make validate  # Run all architecture validation rules
+```
+
+**Features**:
+
+-   **Compile-time Safety**: Detects migration patterns (inventory → linkme)
+-   **Quality Gates**: Pre-commit validation prevents architecture violations
+-   **Multi-Language**: AST parsing for 5 languages via Tree-sitter
+-   **Extensible**: YAML-based rules with template inheritance
+-   **Fast**: Parallel validation with async processing
 
 #### 📦 Facade Crate (`crates/mcb/`)
 

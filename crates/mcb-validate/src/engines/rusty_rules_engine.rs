@@ -47,6 +47,12 @@ pub enum Action {
     Custom(String),
 }
 
+impl Default for RustyRulesEngineWrapper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RustyRulesEngineWrapper {
     pub fn new() -> Self {
         Self {
@@ -93,6 +99,7 @@ impl RustyRulesEngineWrapper {
         })
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn parse_condition(&self, condition_json: &Value) -> Result<Condition> {
         if let Some(all_conditions) = condition_json.get("all") {
             if let Some(conditions_array) = all_conditions.as_array() {
@@ -246,14 +253,12 @@ impl RustyRulesEngineWrapper {
 
         let cargo_pattern = Pattern::new("**/Cargo.toml").unwrap();
 
-        for entry in WalkDir::new(&context.workspace_root) {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if cargo_pattern.matches_path(path) {
-                    if let Ok(content) = std::fs::read_to_string(path) {
-                        if content.contains(pattern) {
-                            return true;
-                        }
+        for entry in WalkDir::new(&context.workspace_root).into_iter().flatten() {
+            let path = entry.path();
+            if cargo_pattern.matches_path(path) {
+                if let Ok(content) = std::fs::read_to_string(path) {
+                    if content.contains(pattern) {
+                        return true;
                     }
                 }
             }
@@ -275,7 +280,7 @@ impl RustyRulesEngineWrapper {
                 if operator == "pattern" {
                     if let Some(pattern) = expected_value.as_str() {
                         return Pattern::new(pattern)
-                            .map(|p| context.file_contents.keys().any(|path| p.matches_path(&std::path::Path::new(path))))
+                            .map(|p| context.file_contents.keys().any(|path| p.matches_path(std::path::Path::new(path))))
                             .unwrap_or(false);
                     }
                 }

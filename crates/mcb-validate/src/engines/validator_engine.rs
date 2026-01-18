@@ -12,6 +12,12 @@ use crate::Result;
 #[derive(Clone)]
 pub struct ValidatorEngine;
 
+impl Default for ValidatorEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ValidatorEngine {
     pub fn new() -> Self {
         Self

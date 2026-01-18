@@ -1,0 +1,613 @@
+//! Integration tests for Rule Engines
+//!
+//! Tests the dual rule engine architecture:
+//! - Expression engine (evalexpr) for simple boolean expressions
+//! - RETE engine (rust-rule-engine) for complex GRL rules
+//! - Router for automatic engine selection
+
+use mcb_validate::engines::{
+    ExpressionEngine, HybridRuleEngine, ReteEngine, RoutedEngine, RuleContext, RuleEngine,
+    RuleEngineRouter, RuleEngineType,
+};
+use mcb_validate::{ValidationConfig, Violation};
+use serde_json::json;
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+/// Create a test context with sample files
+fn create_test_context() -> RuleContext {
+    let mut file_contents = HashMap::new();
+    file_contents.insert(
+        "src/main.rs".to_string(),
+        r#"
+fn main() {
+    let x = get_value().unwrap(); // Violation
+    println!("{}", x);
+}
+"#
+        .to_string(),
+    );
+    file_contents.insert(
+        "src/lib.rs".to_string(),
+        r#"
+pub async fn process() -> Result<(), Error> {
+    let data = fetch_data().await?;
+    Ok(())
+}
+"#
+        .to_string(),
+    );
+    file_contents.insert(
+        "tests/test_main.rs".to_string(),
+        r#"
+#[test]
+fn test_main() {
+    let x = get_value().unwrap(); // OK in tests
+}
+"#
+        .to_string(),
+    );
+
+    RuleContext {
+        workspace_root: PathBuf::from("/test/workspace"),
+        config: ValidationConfig::new("/test/workspace"),
+        ast_data: HashMap::new(),
+        cargo_data: HashMap::new(),
+        file_contents,
+    }
+}
+
+// ============================================================================
+// Expression Engine Tests
+// ============================================================================
+
+mod expression_engine_tests {
+    use super::*;
+
+    #[test]
+    fn test_expression_engine_creation() {
+        let engine = ExpressionEngine::new();
+        // Engine was created successfully (no panic)
+        drop(engine);
+    }
+
+    #[test]
+    fn test_simple_numeric_expression() {
+        let engine = ExpressionEngine::new();
+        let context = create_test_context();
+
+        // file_count should be 3 (src/main.rs, src/lib.rs, tests/test_main.rs)
+        let result = engine.evaluate_expression("file_count == 3", &context);
+        assert!(result.is_ok());
+        assert!(result.unwrap(), "Should have 3 files");
+    }
+
+    #[test]
+    fn test_boolean_expression() {
+        let engine = ExpressionEngine::new();
+        let context = create_test_context();
+
+        // Check for unwrap pattern
+        let result = engine.evaluate_expression("has_unwrap == true", &context);
+        assert!(result.is_ok());
+        assert!(result.unwrap(), "Should detect unwrap in files");
+    }
+
+    #[test]
+    fn test_async_detection() {
+        let engine = ExpressionEngine::new();
+        let context = create_test_context();
+
+        // Check for async fn
+        let result = engine.evaluate_expression("has_async == true", &context);
+        assert!(result.is_ok());
+        assert!(result.unwrap(), "Should detect async fn in files");
+    }
+
+    #[test]
+    fn test_test_detection() {
+        let engine = ExpressionEngine::new();
+        let context = create_test_context();
+
+        // Check for tests directory
+        let result = engine.evaluate_expression("has_tests == true", &context);
+        assert!(result.is_ok());
+        assert!(result.unwrap(), "Should detect tests directory");
+    }
+
+    #[test]
+    fn test_custom_variables() {
+        let engine = ExpressionEngine::new();
+        let mut vars = HashMap::new();
+        vars.insert("threshold".to_string(), json!(100));
+        vars.insert("count".to_string(), json!(50));
+
+        let result = engine.evaluate_with_variables("count < threshold", &vars);
+        assert!(result.is_ok());
+        assert!(result.unwrap());
+
+        let result = engine.evaluate_with_variables("count > threshold", &vars);
+        assert!(result.is_ok());
+        assert!(!result.unwrap());
+    }
+
+    #[test]
+    fn test_invalid_expression() {
+        let engine = ExpressionEngine::new();
+        let context = create_test_context();
+
+        let result = engine.evaluate_expression("undefined_variable > 0", &context);
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_expression_rule_execution() {
+        let engine = ExpressionEngine::new();
+        let context = create_test_context();
+
+        let rule = json!({
+            "id": "EXPR001",
+            "expression": "has_unwrap == true",
+            "message": "Code contains .unwrap() calls",
+            "severity": "warning",
+            "category": "quality"
+        });
+
+        let result = engine.execute(&rule, &context).await;
+        assert!(result.is_ok());
+
+        let violations = result.unwrap();
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].message().contains("unwrap"));
+    }
+}
+
+// ============================================================================
+// RETE Engine Tests
+// ============================================================================
+
+mod rete_engine_tests {
+    use super::*;
+
+    #[test]
+    fn test_rete_engine_creation() {
+        let engine = ReteEngine::new();
+        // Engine was created successfully (no panic)
+        drop(engine);
+    }
+
+    #[test]
+    fn test_parse_grl_rule() {
+        let engine = ReteEngine::new();
+        let grl = r#"
+rule DomainIndependence "Domain Layer Independence" {
+    when
+        Crate(name == "mcb-domain") &&
+        Dependencies(contains any "mcb-*")
+    then
+        Violation("Domain layer cannot depend on internal mcb-* crates");
+}
+"#;
+
+        let result = engine.parse_grl(grl);
+        assert!(result.is_ok());
+
+        let rule = result.unwrap();
+        assert_eq!(rule.name, "DomainIndependence");
+        assert_eq!(rule.description, "Domain Layer Independence");
+        assert_eq!(rule.when_conditions.len(), 2);
+    }
+
+    // Note: extract_crate_name and extract_dependencies are tested
+    // via internal unit tests in rete_engine.rs module
+
+    #[tokio::test]
+    async fn test_grl_rule_execution() {
+        let engine = ReteEngine::new();
+        let context = create_test_context();
+
+        let rule = json!({
+            "rule": r#"
+                rule TestRule "Test Rule" {
+                    when
+                        File(content contains ".unwrap()")
+                    then
+                        Violation("Found unwrap usage");
+                }
+            "#
+        });
+
+        let result = engine.execute(&rule, &context).await;
+        assert!(result.is_ok());
+    }
+}
+
+// ============================================================================
+// Router Tests
+// ============================================================================
+
+mod router_tests {
+    use super::*;
+
+    #[test]
+    fn test_router_creation() {
+        let router = RuleEngineRouter::new();
+        // Router was created successfully (no panic)
+        drop(router);
+    }
+
+    #[test]
+    fn test_detect_rete_engine_explicit() {
+        let router = RuleEngineRouter::new();
+
+        let rule = json!({
+            "engine": "rust-rule-engine",
+            "rule": "rule Test { when true then Action(); }"
+        });
+
+        assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
+    }
+
+    #[test]
+    fn test_detect_rete_engine_by_content() {
+        let router = RuleEngineRouter::new();
+
+        let rule = json!({
+            "rule": r#"
+                rule DomainCheck "Check domain" {
+                    when
+                        Crate(name == "mcb-domain")
+                    then
+                        Violation("Error");
+                }
+            "#
+        });
+
+        assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
+    }
+
+    #[test]
+    fn test_detect_expression_engine() {
+        let router = RuleEngineRouter::new();
+
+        let rule = json!({
+            "expression": "file_count > 100",
+            "message": "Too many files"
+        });
+
+        assert_eq!(router.detect_engine(&rule), RoutedEngine::Expression);
+    }
+
+    #[test]
+    fn test_detect_rusty_rules_engine() {
+        let router = RuleEngineRouter::new();
+
+        let rule = json!({
+            "condition": {
+                "all": [
+                    { "fact_type": "file", "field": "path", "operator": "matches", "value": "*.rs" }
+                ]
+            },
+            "action": {
+                "violation": { "message": "Rule triggered" }
+            }
+        });
+
+        assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);
+    }
+
+    #[test]
+    fn test_detect_default_engine() {
+        let router = RuleEngineRouter::new();
+
+        let rule = json!({
+            "type": "cargo_dependencies",
+            "pattern": "mcb-*"
+        });
+
+        // Should default to RustyRules
+        assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);
+    }
+
+    #[test]
+    fn test_validate_rete_rule() {
+        let router = RuleEngineRouter::new();
+
+        // Valid RETE rule
+        let valid_rule = json!({
+            "engine": "rete",
+            "rule": "rule Test { when true then Action(); }"
+        });
+        assert!(router.validate_rule(&valid_rule).is_ok());
+
+        // Invalid RETE rule (missing 'rule' field)
+        let invalid_rule = json!({
+            "engine": "rete",
+            "message": "Something"
+        });
+        assert!(router.validate_rule(&invalid_rule).is_err());
+    }
+
+    #[test]
+    fn test_validate_expression_rule() {
+        let router = RuleEngineRouter::new();
+
+        // Valid expression rule
+        let valid_rule = json!({
+            "engine": "expression",
+            "expression": "x > 5"
+        });
+        assert!(router.validate_rule(&valid_rule).is_ok());
+
+        // Invalid expression rule (missing 'expression' field)
+        let invalid_rule = json!({
+            "engine": "expression",
+            "message": "Something"
+        });
+        assert!(router.validate_rule(&invalid_rule).is_err());
+    }
+
+    #[tokio::test]
+    async fn test_router_execute_expression() {
+        let router = RuleEngineRouter::new();
+        let context = create_test_context();
+
+        let rule = json!({
+            "expression": "file_count > 0",
+            "message": "Has files"
+        });
+
+        let result = router.execute(&rule, &context).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_router_execute_grl() {
+        let router = RuleEngineRouter::new();
+        let context = create_test_context();
+
+        let rule = json!({
+            "rule": r#"
+                rule TestRule "Test" {
+                    when
+                        File(path matches "*.rs")
+                    then
+                        Violation("Found Rust file");
+                }
+            "#
+        });
+
+        let result = router.execute(&rule, &context).await;
+        assert!(result.is_ok());
+    }
+}
+
+// ============================================================================
+// Hybrid Engine Integration Tests
+// ============================================================================
+
+mod hybrid_engine_tests {
+    use super::*;
+
+    #[test]
+    fn test_hybrid_engine_creation() {
+        let engine = HybridRuleEngine::new();
+        // Engine was created successfully (no panic)
+        drop(engine);
+    }
+
+    #[tokio::test]
+    async fn test_execute_with_expression_engine() {
+        let engine = HybridRuleEngine::new();
+        let context = create_test_context();
+
+        let rule = json!({
+            "id": "TEST001",
+            "expression": "file_count > 0"
+        });
+
+        let result = engine
+            .execute_rule("TEST001", RuleEngineType::Expression, &rule, &context)
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_execute_with_auto_detection() {
+        let engine = HybridRuleEngine::new();
+        let context = create_test_context();
+
+        // Expression-style rule
+        let expr_rule = json!({
+            "expression": "file_count > 0"
+        });
+
+        let result = engine
+            .execute_rule("TEST001", RuleEngineType::Auto, &expr_rule, &context)
+            .await;
+        assert!(result.is_ok());
+
+        // GRL-style rule
+        let grl_rule = json!({
+            "rule": r#"
+                rule Test "Test" {
+                    when
+                        File(path matches "*.rs")
+                    then
+                        Violation("Found");
+                }
+            "#
+        });
+
+        let result = engine
+            .execute_rule("TEST002", RuleEngineType::Auto, &grl_rule, &context)
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_execute_auto() {
+        let engine = HybridRuleEngine::new();
+        let context = create_test_context();
+
+        let rule = json!({
+            "expression": "has_async == true",
+            "message": "Found async code"
+        });
+
+        let result = engine.execute_auto(&rule, &context).await;
+        assert!(result.is_ok());
+
+        let violations = result.unwrap().violations;
+        assert!(!violations.is_empty());
+    }
+
+    #[test]
+    fn test_detect_engine() {
+        let engine = HybridRuleEngine::new();
+
+        let expr_rule = json!({
+            "expression": "x > 0"
+        });
+        assert_eq!(engine.detect_engine(&expr_rule), "Expression");
+
+        let grl_rule = json!({
+            "rule": "rule X { when true then Action(); }"
+        });
+        assert_eq!(engine.detect_engine(&grl_rule), "RETE");
+
+        let json_rule = json!({
+            "condition": { "all": [] }
+        });
+        assert_eq!(engine.detect_engine(&json_rule), "RustyRules");
+    }
+
+    #[tokio::test]
+    async fn test_execute_rules_batch() {
+        let engine = HybridRuleEngine::new();
+        let context = create_test_context();
+
+        let rules = vec![
+            (
+                "EXPR001".to_string(),
+                RuleEngineType::Expression,
+                json!({
+                    "expression": "file_count > 0"
+                }),
+            ),
+            (
+                "EXPR002".to_string(),
+                RuleEngineType::Expression,
+                json!({
+                    "expression": "has_tests == true"
+                }),
+            ),
+        ];
+
+        let results = engine.execute_rules_batch(rules, &context).await;
+        assert!(results.is_ok());
+        assert_eq!(results.unwrap().len(), 2);
+    }
+}
+
+// ============================================================================
+// CA001 Domain Independence Rule Test
+// ============================================================================
+
+mod ca001_domain_independence_tests {
+    use super::*;
+
+    fn create_domain_context() -> RuleContext {
+        let mut file_contents = HashMap::new();
+        file_contents.insert(
+            "crates/mcb-domain/src/lib.rs".to_string(),
+            r#"
+//! Domain layer - pure business logic
+
+pub mod entities;
+pub mod ports;
+pub mod errors;
+"#
+            .to_string(),
+        );
+
+        RuleContext {
+            workspace_root: PathBuf::from("/test/workspace"),
+            config: ValidationConfig::new("/test/workspace"),
+            ast_data: HashMap::new(),
+            cargo_data: HashMap::new(),
+            file_contents,
+        }
+    }
+
+    #[tokio::test]
+    async fn test_ca001_grl_parsing() {
+        let engine = ReteEngine::new();
+
+        let grl = r#"
+rule DomainIndependence "Domain Layer Independence" {
+    when
+        Crate(name == "mcb-domain") &&
+        Dependencies(contains any "mcb-*")
+    then
+        Violation("Domain layer cannot depend on internal mcb-* crates");
+}
+"#;
+
+        let result = engine.parse_grl(grl);
+        assert!(result.is_ok());
+
+        let rule = result.unwrap();
+        assert_eq!(rule.name, "DomainIndependence");
+        assert_eq!(rule.when_conditions.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_ca001_via_hybrid_engine() {
+        let engine = HybridRuleEngine::new();
+        let context = create_domain_context();
+
+        let rule = json!({
+            "id": "CA001",
+            "engine": "rust-rule-engine",
+            "rule": r#"
+                rule DomainIndependence "Domain Layer Independence" {
+                    when
+                        Crate(name == "mcb-domain") &&
+                        Dependencies(contains any "mcb-*")
+                    then
+                        Violation("Domain layer cannot depend on internal mcb-* crates");
+                }
+            "#
+        });
+
+        let result = engine
+            .execute_rule("CA001", RuleEngineType::RustRuleEngine, &rule, &context)
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_ca001_auto_detection() {
+        let engine = HybridRuleEngine::new();
+        let context = create_domain_context();
+
+        let rule = json!({
+            "rule": r#"
+                rule DomainIndependence "Domain Layer Independence" {
+                    when
+                        Crate(name == "mcb-domain") &&
+                        Dependencies(contains any "mcb-*")
+                    then
+                        Violation("Domain layer cannot depend on internal mcb-* crates");
+                }
+            "#
+        });
+
+        // Should auto-detect RETE engine
+        assert_eq!(engine.detect_engine(&rule), "RETE");
+
+        let result = engine.execute_auto(&rule, &context).await;
+        assert!(result.is_ok());
+    }
+}

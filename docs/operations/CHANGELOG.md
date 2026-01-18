@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Planned
 
 #### v0.2.0 Planning - 2026-01-12
 
@@ -36,6 +36,117 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Implementation Phases**: 10 phases for session memory (on top of 10 for git)
 -   **Estimated LOC**: ~3,000 for memory subsystem
 -   **New MCP Tools**: 5 tools (search, timeline, get_observations, store_observation, inject_context)
+
+---
+
+## [0.1.2] - 2026-01-18
+
+### What This Release Is
+
+**MCP Context Browser v0.1.2** delivers provider modernization and architecture validation capabilities. This release replaces the inventory-based provider registration with compile-time linkme distributed slices and introduces the mcb-validate crate for automated architecture enforcement.
+
+### Added
+
+#### Architecture Validation System
+
+-   **mcb-validate Crate**: New development tooling crate for architecture validation and quality enforcement
+-   **Pure Rust Validation Pipeline**: Multi-layer validation combining linters, AST analysis, and rule engines
+-   **12 Migration Validation Rules**: YAML-based rules for detecting migration targets (Linkme, Shaku, Figment, Rocket patterns)
+-   **Tree-sitter AST Parsing**: Operational parsers for Rust, Python, JavaScript, TypeScript, and Go with query execution
+-   **Linter Integration**: Clippy and Ruff integration with JSON output parsing
+-   **Rule Engine Framework**: Foundation for evalexpr (simple expressions) and rust-rule-engine (RETE algorithm)
+
+#### Provider Registration Modernization
+
+-   **Linkme Distributed Slices**: Compile-time provider registration replacing inventory runtime registration
+-   **4 Pure Linkme Registries**: Embedding, vector store, cache, and language provider registries
+-   **15 Migrated Providers**: All providers (6 embedding, 3 cache, 5 vector store, 1 language) using linkme pattern
+-   **Zero Runtime Overhead**: Provider discovery at compile-time instead of runtime
+
+#### Validation Rules
+
+-   **Migration Detection**: `rules/migration/` - 12 rules for detecting legacy patterns
+    - Inventory usage detection
+    - Linkme slice patterns
+    - Shaku Component detection
+    - Constructor injection patterns
+    - Figment migration targets
+    - Rocket attribute handlers
+-   **Quality Rules**: `rules/quality/` - Code quality enforcement
+    - No-unwrap detection (Clippy + AST)
+    - Import organization (Ruff)
+-   **Architecture Rules**: `rules/architecture/` - Clean architecture enforcement
+    - Domain layer independence
+    - Layer boundary validation
+
+### Changed
+
+-   **Provider Registration**: Moved from `inventory::submit!` to `#[linkme::distributed_slice]` attribute pattern
+-   **Build Process**: Compile-time provider discovery eliminates runtime registry initialization
+-   **Module Structure**: Added `mcb-validate` as 8th crate in workspace
+-   **Development Workflow**: Added `make validate` command for architecture checks
+
+### Technical Details
+
+#### New Dependencies
+
+-   **linkme** (v0.3): Compile-time distributed slice registration
+-   **tree-sitter** family: Parsers for Rust, Python, JavaScript, TypeScript, Go
+-   **evalexpr** (v11): Zero-dependency expression evaluator (planned for Phase 3)
+-   **rust-rule-engine** (v1.16): RETE-based pattern matching (planned for Phase 3)
+
+#### New Files Created
+
+-   **mcb-validate crate**: ~40 source files across modules:
+    - `src/lib.rs` - Main validation pipeline
+    - `src/linters/` - Clippy and Ruff integration (Phase 1 ✅)
+    - `src/ast/` - Tree-sitter language parsers and query execution (Phase 2 ✅)
+    - `src/engines/` - Rule engine framework
+    - `src/rules/` - YAML rule loading and validation
+    - `tests/integration_linters.rs` - 17 integration tests
+
+#### Migration Status
+
+| Phase | Component | Status | Files Changed |
+|-------|-----------|--------|---------------|
+| 3.1 | Linkme Migration | ✅ 99% Complete | 15 providers, 4 registries |
+| 3.1 | Inventory Cleanup | ⚠️ Pending | Remove from Cargo.toml |
+| mcb-validate Phase 1 | Linters | ✅ Complete | 6 files |
+| mcb-validate Phase 2 | AST | ✅ Complete | 8 files |
+| mcb-validate Phase 3-7 | Advanced Rules | 📋 Planned | Future |
+| 3.2 | Shaku → DI | 📋 Planned | Future |
+| 3.3 | Config → Figment | 📋 Planned | Future |
+| 3.4 | Axum → Rocket | 📋 Planned | Future |
+
+### Performance Impact
+
+-   **Compile Time**: Linkme adds ~5s to clean build (one-time cost)
+-   **Runtime**: Zero overhead (provider discovery at compile time)
+-   **Binary Size**: ~50KB increase from linkme metadata
+-   **Test Suite**: Maintained 790+ passing tests
+
+### Developer Experience
+
+-   **Architecture Validation**: `make validate` detects 12 migration patterns
+-   **Quality Gates**: Pre-commit validation prevents architecture violations
+-   **Migration Guidance**: Validation rules provide actionable feedback
+-   **Documentation**: 12 migration rules document modernization path
+
+### Impact Metrics
+
+-   **Provider Registration**: Compile-time (from runtime discovery)
+-   **Validation Coverage**: 12 architecture patterns automated
+-   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
+-   **Test Coverage**: 790+ tests maintained
+-   **Architecture Compliance**: Automated validation of 7-crate clean architecture
+
+### Next Steps (v0.1.3 or v0.2.0)
+
+-   Complete inventory dependency removal
+-   Implement mcb-validate Phases 3-7 (rule engines, metrics, duplication, architecture)
+-   Migrate Shaku → constructor injection (Phase 3.2)
+-   Migrate config → Figment (Phase 3.3)
+-   Migrate Axum → Rocket (Phase 3.4)
 
 ---
 

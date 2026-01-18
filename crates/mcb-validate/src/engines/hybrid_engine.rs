@@ -13,6 +13,9 @@ use crate::violation_trait::{Violation, ViolationCategory, Severity};
 use crate::ValidationConfig;
 use crate::Result;
 
+use super::expression_engine::ExpressionEngine;
+use super::rete_engine::ReteEngine;
+use super::router::RuleEngineRouter;
 use super::rust_rule_engine::RustRuleEngineWrapper;
 use super::rusty_rules_engine::RustyRulesEngineWrapper;
 use super::validator_engine::ValidatorEngine;
@@ -22,8 +25,14 @@ use crate::linters::{LinterEngine, LintViolation, LinterType};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum RuleEngineType {
+    /// RETE-UL algorithm with GRL syntax
     RustRuleEngine,
+    /// JSON DSL with composition (all/any/not)
     RustyRules,
+    /// Simple boolean expression evaluation
+    Expression,
+    /// Auto-detect engine based on rule content
+    Auto,
 }
 
 /// Concrete violation structure for rule engines
@@ -123,6 +132,9 @@ pub struct RuleContext {
 pub struct HybridRuleEngine {
     rust_rule_engine: RustRuleEngineWrapper,
     rusty_rules_engine: RustyRulesEngineWrapper,
+    expression_engine: ExpressionEngine,
+    rete_engine: ReteEngine,
+    router: RuleEngineRouter,
     validator_engine: ValidatorEngine,
     cache: HashMap<String, Vec<u8>>, // Compiled rule cache
 }
@@ -133,6 +145,9 @@ impl HybridRuleEngine {
         Self {
             rust_rule_engine: RustRuleEngineWrapper::new(),
             rusty_rules_engine: RustyRulesEngineWrapper::new(),
+            expression_engine: ExpressionEngine::new(),
+            rete_engine: ReteEngine::new(),
+            router: RuleEngineRouter::new(),
             validator_engine: ValidatorEngine::new(),
             cache: HashMap::new(),
         }
@@ -155,6 +170,13 @@ impl HybridRuleEngine {
             RuleEngineType::RustyRules => {
                 self.rusty_rules_engine.execute(rule_definition, context).await?
             }
+            RuleEngineType::Expression => {
+                self.expression_engine.execute(rule_definition, context).await?
+            }
+            RuleEngineType::Auto => {
+                // Use router to auto-detect and execute
+                self.router.execute(rule_definition, context).await?
+            }
         };
 
         let execution_time = start_time.elapsed().as_millis() as u64;
@@ -163,6 +185,32 @@ impl HybridRuleEngine {
             violations,
             execution_time_ms: execution_time,
         })
+    }
+
+    /// Execute a rule with automatic engine detection
+    ///
+    /// Uses the router to analyze the rule definition and select
+    /// the most appropriate engine.
+    pub async fn execute_auto(
+        &self,
+        rule_definition: &serde_json::Value,
+        context: &RuleContext,
+    ) -> Result<RuleResult> {
+        let start_time = std::time::Instant::now();
+
+        let violations = self.router.execute(rule_definition, context).await?;
+
+        let execution_time = start_time.elapsed().as_millis() as u64;
+
+        Ok(RuleResult {
+            violations,
+            execution_time_ms: execution_time,
+        })
+    }
+
+    /// Get the engine type that would be used for a rule
+    pub fn detect_engine(&self, rule_definition: &serde_json::Value) -> String {
+        self.router.get_engine_type(rule_definition)
     }
 
     /// Execute multiple rules in parallel
@@ -250,7 +298,7 @@ impl HybridRuleEngine {
 
         // Collect files to check from context
         let files: Vec<std::path::PathBuf> = context.file_contents.keys()
-            .map(|k| std::path::PathBuf::from(k))
+            .map(std::path::PathBuf::from)
             .collect();
 
         let file_refs: Vec<&std::path::Path> = files.iter()
@@ -356,6 +404,9 @@ impl Clone for HybridRuleEngine {
         Self {
             rust_rule_engine: self.rust_rule_engine.clone(),
             rusty_rules_engine: self.rusty_rules_engine.clone(),
+            expression_engine: self.expression_engine.clone(),
+            rete_engine: self.rete_engine.clone(),
+            router: self.router.clone(),
             validator_engine: self.validator_engine.clone(),
             cache: self.cache.clone(),
         }

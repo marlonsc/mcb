@@ -33,7 +33,7 @@ make sync           # Add + commit + push (never use raw git commit)
 cargo test test_name -- --nocapture
 ```
 
-## Architecture (7 Crates - Clean Architecture)
+## Architecture (8 Crates - Clean Architecture)
 
 ```
 crates/
@@ -43,7 +43,8 @@ crates/
 ├── mcb-providers/       # Layer 3: Provider implementations (embedding, vector stores)
 ├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging
 ├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
-└── mcb-validate/        # Dev tooling: architecture validation rules
+├── mcb-validate/        # Dev tooling: architecture validation (Phases 1-2 ✅)
+└── (mcb crate above)    # Facade aggregating all public APIs
 ```
 
 **Dependency Direction** (inward only):
@@ -63,6 +64,8 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 **mcb-infrastructure**: DI container (`InfrastructureComponents`, `FullContainer`), cache providers (Moka, Redis, Null), config loading, AES-GCM crypto, health checks, structured logging.
 
 **mcb-server**: MCP tool handlers (`index_codebase`, `search_code`, `get_indexing_status`, `clear_index`), stdio transport.
+
+**mcb-validate**: Architecture validation tooling. Linters (Clippy, Ruff), AST parsers (Tree-sitter), rule engines, YAML rules for migration detection (12 rules). Phases 1-2 complete (linters + AST operational).
 
 ## Code Standards
 

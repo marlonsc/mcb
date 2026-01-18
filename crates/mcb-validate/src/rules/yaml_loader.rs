@@ -65,7 +65,7 @@ impl YamlRuleLoader {
 
         // Load rule files
         for entry in WalkDir::new(&self.rules_dir) {
-            let entry = entry.map_err(|e| crate::ValidationError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+            let entry = entry.map_err(|e| crate::ValidationError::Io(std::io::Error::other(e)))?;
             let path = entry.path();
 
             if self.is_rule_file(path) {
@@ -80,7 +80,7 @@ impl YamlRuleLoader {
     /// Load rules from a specific file
     pub async fn load_rule_file(&self, path: &Path) -> Result<Vec<ValidatedRule>> {
         let content = tokio::fs::read_to_string(path).await
-            .map_err(|e| crate::ValidationError::Io(e))?;
+            .map_err(crate::ValidationError::Io)?;
 
         let yaml_value: serde_yaml::Value = serde_yaml::from_str(&content)
             .map_err(|e| crate::ValidationError::Parse {
@@ -237,14 +237,12 @@ impl YamlRuleLoader {
     pub fn get_rule_path(&self, rule_id: &str) -> Option<PathBuf> {
         // This would need a more sophisticated mapping
         // For now, just search in the rules directory
-        for entry in WalkDir::new(&self.rules_dir) {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if self.is_rule_file(path) {
-                    if let Ok(content) = std::fs::read_to_string(path) {
-                        if content.contains(&format!("id: {}", rule_id)) {
-                            return Some(path.to_path_buf());
-                        }
+        for entry in WalkDir::new(&self.rules_dir).into_iter().flatten() {
+            let path = entry.path();
+            if self.is_rule_file(path) {
+                if let Ok(content) = std::fs::read_to_string(path) {
+                    if content.contains(&format!("id: {}", rule_id)) {
+                        return Some(path.to_path_buf());
                     }
                 }
             }
@@ -324,12 +322,15 @@ rule:
         std::fs::write(templates_dir.join("cargo-dependency-check.yml"), template_content).unwrap();
 
         // Create a rule using the template (template name is the filename without extension)
+        // Variables for substitution must be at root level; config section overrides template's config
         let rule_content = r#"
 _template: "cargo-dependency-check"
 id: "TEST002"
 name: "Domain Dependencies"
 description: "Domain must not depend on other layers"
 rationale: "Domain should be independent"
+crate_name: "mcb-domain"
+forbidden_prefixes: ["mcb-"]
 
 config:
   crate_name: "mcb-domain"

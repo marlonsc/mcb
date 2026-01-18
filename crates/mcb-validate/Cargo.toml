@@ -41,20 +41,21 @@ clap = { workspace = true, optional = true }
 # Rule Engines - Core do sistema
 rust-rule-engine = "1.16"  # RETE-UL algorithm, GRL syntax
 rusty-rules = "0.2"        # JSON DSL rules engine
+evalexpr = "13"            # Simple expression evaluation
 
 # Validation libraries - Para estruturas e campos
 validator = { version = "0.20", features = ["derive"] }
-garde = { version = "0.21", features = ["derive"] }
+garde = { version = "0.22", features = ["derive"] }
 
 # JSON Schema validation - Para validar regras YAML
-jsonschema = "0.17"
+jsonschema = "0.40"
 
 # Pest parser - Para DSL avançada
 pest = "2.8"
 pest_derive = "2.8"
 
 # JSON Path - Para navegação complexa
-jsonpath-rust = "0.7"
+jsonpath-rust = "1.0.4"
 
 # Lazy static values
 once_cell = "1.19"

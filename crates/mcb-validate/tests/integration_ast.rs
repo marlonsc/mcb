@@ -431,7 +431,7 @@ fn undocumented() {
     let violations = query.execute(&result.root);
 
     // Should find the function_item nodes
-    assert!(violations.len() >= 1, "Should find at least one function");
+    assert!(!violations.is_empty(), "Should find at least one function");
 }
 
 #[test]

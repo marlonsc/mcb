@@ -2,7 +2,7 @@
 //!
 //! Validates YAML rules against JSON Schema using jsonschema crate.
 
-use jsonschema::JSONSchema;
+use jsonschema::Validator;
 use serde_json::Value;
 use std::path::Path;
 
@@ -10,7 +10,7 @@ use crate::Result;
 
 /// Validator for YAML-based rules using JSON Schema
 pub struct YamlRuleValidator {
-    schema: JSONSchema,
+    schema: Validator,
 }
 
 impl YamlRuleValidator {
@@ -20,7 +20,7 @@ impl YamlRuleValidator {
             .join("rules/schema.json");
 
         let schema_content = std::fs::read_to_string(&schema_path)
-            .map_err(|e| crate::ValidationError::Io(e))?;
+            .map_err(crate::ValidationError::Io)?;
 
         let schema_value: Value = serde_json::from_str(&schema_content)
             .map_err(|e| crate::ValidationError::Parse {
@@ -28,7 +28,7 @@ impl YamlRuleValidator {
                 message: format!("Schema parse error: {}", e),
             })?;
 
-        let schema = JSONSchema::compile(&schema_value)
+        let schema = jsonschema::validator_for(&schema_value)
             .map_err(|e| crate::ValidationError::Config(format!("Schema compilation error: {:?}", e)))?;
 
         Ok(Self { schema })
@@ -36,21 +36,14 @@ impl YamlRuleValidator {
 
     /// Validate a rule against the schema
     pub fn validate_rule(&self, rule: &Value) -> Result<()> {
-        let validation_result = self.schema.validate(rule);
-
-        let errors: Vec<jsonschema::ValidationError> = validation_result.err()
-            .map(|iter| iter.collect())
-            .unwrap_or_default();
+        let errors: Vec<String> = self.schema.iter_errors(rule)
+            .map(|e| format!("{}: {}", e.instance_path(), e))
+            .collect();
 
         if !errors.is_empty() {
-            let error_messages: Vec<String> = errors
-                .iter()
-                .map(|e| format!("{}: {}", e.instance_path, e.to_string()))
-                .collect();
-
             return Err(crate::ValidationError::Config(format!(
                 "Rule validation failed:\n{}",
-                error_messages.join("\n")
+                errors.join("\n")
             )));
         }
 
@@ -78,19 +71,20 @@ impl YamlRuleValidator {
                 message: format!("JSON conversion error: {}", e),
             })?;
 
-        let errors: Vec<jsonschema::ValidationError> = self.schema.validate(&json_value).err()
-            .map(|iter| iter.collect())
-            .unwrap_or_default();
+        let errors: Vec<String> = self.schema.iter_errors(&json_value)
+            .map(|e| format!("{}: {}", e.instance_path(), e))
+            .collect();
+
         if errors.is_empty() {
             Ok(())
         } else {
-            Err(crate::ValidationError::Config(format!("Schema validation failed: {:?}", errors)))
+            Err(crate::ValidationError::Config(format!("Schema validation failed: {}", errors.join(", "))))
         }
     }
 
     /// Create validator from custom schema
     pub fn from_schema(schema: &Value) -> Result<Self> {
-        let compiled_schema = JSONSchema::compile(schema)
+        let compiled_schema = jsonschema::validator_for(schema)
             .map_err(|e| crate::ValidationError::Config(format!("Schema compilation error: {:?}", e)))?;
 
         Ok(Self {

@@ -14,6 +14,12 @@ pub struct TemplateEngine {
     templates: HashMap<String, serde_yaml::Value>,
 }
 
+impl Default for TemplateEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TemplateEngine {
     /// Create a new template engine
     pub fn new() -> Self {
@@ -42,7 +48,7 @@ impl TemplateEngine {
                     ))?;
 
                 let content = tokio::fs::read_to_string(path).await
-                    .map_err(|e| crate::ValidationError::Io(e))?;
+                    .map_err(crate::ValidationError::Io)?;
 
                 let template: serde_yaml::Value = serde_yaml::from_str(&content)
                     .map_err(|e| crate::ValidationError::Parse {
@@ -76,10 +82,13 @@ impl TemplateEngine {
         // Process variable substitutions
         self.substitute_variables(&mut result, rule)?;
 
-        // Remove template metadata
+        // Remove template metadata (but keep name if rule provided one)
         if let Some(obj) = result.as_mapping_mut() {
             obj.remove("_base");
-            obj.remove("name"); // Template name, not rule name
+            // Only remove template's internal name if rule didn't provide its own
+            if rule.get("name").is_none() {
+                obj.remove("name");
+            }
         }
 
         Ok(result)

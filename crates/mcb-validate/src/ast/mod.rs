@@ -83,7 +83,7 @@ impl AstEngine {
     }
 
     pub fn register_query(&mut self, rule_id: String, query: AstQuery) {
-        self.queries.entry(rule_id).or_insert_with(Vec::new).push(query);
+        self.queries.entry(rule_id).or_default().push(query);
     }
 
     pub fn get_parser(&self, language: &str) -> Option<&Arc<Mutex<dyn AstParser>>> {

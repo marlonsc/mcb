@@ -25,19 +25,19 @@ fn get_workspace_root() -> PathBuf {
 fn test_linter_engine_creation() {
     let _engine = LinterEngine::new();
     // Engine should be created with default linters
-    assert!(true, "LinterEngine created successfully");
+    // Engine was created successfully (no panic)
 }
 
 #[test]
 fn test_linter_engine_with_specific_linters() {
     let _engine = LinterEngine::with_linters(vec![LinterType::Ruff]);
-    assert!(true, "LinterEngine created with Ruff only");
+    // Engine was created with Ruff only (no panic)
 
     let _engine = LinterEngine::with_linters(vec![LinterType::Clippy]);
-    assert!(true, "LinterEngine created with Clippy only");
+    // Engine was created with Clippy only (no panic)
 
     let _engine = LinterEngine::with_linters(vec![LinterType::Ruff, LinterType::Clippy]);
-    assert!(true, "LinterEngine created with both linters");
+    // Engine was created with both linters (no panic)
 }
 
 #[test]
@@ -275,5 +275,5 @@ fn test_public_api_accessible() {
     
 
     // If this compiles, the public API is correctly exported
-    assert!(true, "All public linter types are accessible");
+    // All public linter types are accessible (no panic)
 }

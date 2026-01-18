@@ -85,7 +85,7 @@ impl ClippyLinter {
     pub async fn check_project(project_root: &Path) -> Result<Vec<LintViolation>> {
         // Change to project directory and run clippy
         let output = Command::new("cargo")
-            .args(&["clippy", "--message-format=json"])
+            .args(["clippy", "--message-format=json"])
             .current_dir(project_root)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -127,7 +127,7 @@ impl LinterEngine {
 
         // For Clippy, we need to check if any Rust files are present
         if self.enabled_linters.contains(&LinterType::Clippy) {
-            let has_rust_files = files.iter().any(|f| f.extension().map_or(false, |ext| ext == "rs"));
+            let has_rust_files = files.iter().any(|f| f.extension().is_some_and(|ext| ext == "rs"));
             if has_rust_files {
                 // Find project root (simplified - assumes files are in a Cargo project)
                 if let Some(project_root) = find_project_root(files) {
@@ -163,7 +163,7 @@ impl Default for LinterEngine {
 /// Execute linter command
 async fn run_linter_command(linter: LinterType, files: &[&Path]) -> Result<String> {
     let output = Command::new(linter.command())
-        .args(&linter.args(files))
+        .args(linter.args(files))
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
