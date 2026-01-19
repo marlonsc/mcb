@@ -149,7 +149,7 @@ impl ServiceManager {
     }
 
     /// Start a specific service
-    pub async fn start(&self, name: &str) -> std::result::Result<(), ServiceManagerError> {
+    pub async fn start(&self, name: &str) -> Result<(), ServiceManagerError> {
         let service = self
             .services
             .get(name)
@@ -169,7 +169,7 @@ impl ServiceManager {
     }
 
     /// Stop a specific service
-    pub async fn stop(&self, name: &str) -> std::result::Result<(), ServiceManagerError> {
+    pub async fn stop(&self, name: &str) -> Result<(), ServiceManagerError> {
         let service = self
             .services
             .get(name)
@@ -189,7 +189,7 @@ impl ServiceManager {
     }
 
     /// Restart a specific service
-    pub async fn restart(&self, name: &str) -> std::result::Result<(), ServiceManagerError> {
+    pub async fn restart(&self, name: &str) -> Result<(), ServiceManagerError> {
         let service = self
             .services
             .get(name)
@@ -209,7 +209,7 @@ impl ServiceManager {
     }
 
     /// Start all registered services
-    pub async fn start_all(&self) -> Vec<(String, std::result::Result<(), ServiceManagerError>)> {
+    pub async fn start_all(&self) -> Vec<(String, Result<(), ServiceManagerError>)> {
         let names: Vec<String> = self.services.iter().map(|e| e.key().clone()).collect();
 
         let mut results = Vec::with_capacity(names.len());
@@ -221,7 +221,7 @@ impl ServiceManager {
     }
 
     /// Stop all registered services
-    pub async fn stop_all(&self) -> Vec<(String, std::result::Result<(), ServiceManagerError>)> {
+    pub async fn stop_all(&self) -> Vec<(String, Result<(), ServiceManagerError>)> {
         let names: Vec<String> = self.services.iter().map(|e| e.key().clone()).collect();
 
         let mut results = Vec::with_capacity(names.len());

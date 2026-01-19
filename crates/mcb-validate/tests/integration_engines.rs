@@ -29,22 +29,22 @@ fn main() {
     );
     file_contents.insert(
         "src/lib.rs".to_string(),
-        r#"
+        r"
 pub async fn process() -> Result<(), Error> {
     let data = fetch_data().await?;
     Ok(())
 }
-"#
+"
         .to_string(),
     );
     file_contents.insert(
         "tests/test_main.rs".to_string(),
-        r#"
+        r"
 #[test]
 fn test_main() {
     let x = get_value().unwrap(); // OK in tests
 }
-"#
+"
         .to_string(),
     );
 
@@ -195,7 +195,7 @@ rule "DomainIndependence" salience 10 {
         // The GRL syntax may need adjustment based on rust-rule-engine's exact format
         // This test verifies we're calling the real library
         if let Err(e) = &result {
-            println!("GRL parse error (expected if syntax differs): {:?}", e);
+            println!("GRL parse error (expected if syntax differs): {e:?}");
         }
         // Test passes if no panic - library is being called
     }
@@ -523,13 +523,13 @@ mod ca001_domain_independence_tests {
         let mut file_contents = HashMap::new();
         file_contents.insert(
             "crates/mcb-domain/src/lib.rs".to_string(),
-            r#"
+            r"
 //! Domain layer - pure business logic
 
 pub mod entities;
 pub mod ports;
 pub mod errors;
-"#
+"
             .to_string(),
         );
 
@@ -561,7 +561,7 @@ rule "DomainIndependence" salience 10 {
         let result = engine.load_grl(grl);
         // Verify we're calling the real library
         if let Err(e) = &result {
-            println!("GRL parse result: {:?}", e);
+            println!("GRL parse result: {e:?}");
         }
         // Test passes if no panic - library integration works
     }
@@ -593,7 +593,7 @@ rule "DomainIndependence" salience 10 {
         // GRL parsing may fail if syntax differs from library expectations
         // This test verifies we're calling the real library
         if let Err(ref e) = result {
-            println!("Hybrid engine result: {:?}", e);
+            println!("Hybrid engine result: {e:?}");
         }
     }
 
@@ -623,7 +623,7 @@ rule "DomainIndependence" salience 10 {
         // GRL parsing may fail if syntax differs from library expectations
         // This test verifies auto-detection and library integration
         if let Err(ref e) = result {
-            println!("Auto-detection result: {:?}", e);
+            println!("Auto-detection result: {e:?}");
         }
     }
 }

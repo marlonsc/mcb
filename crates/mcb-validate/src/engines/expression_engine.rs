@@ -218,23 +218,21 @@ impl RuleEngine for ExpressionEngine {
         let severity = rule_definition
             .get("severity")
             .and_then(|v| v.as_str())
-            .map(|s| match s {
+            .map_or(Severity::Warning, |s| match s {
                 "error" => Severity::Error,
                 "warning" => Severity::Warning,
                 _ => Severity::Info,
-            })
-            .unwrap_or(Severity::Warning);
+            });
 
         let category = rule_definition
             .get("category")
             .and_then(|v| v.as_str())
-            .map(|c| match c {
+            .map_or(ViolationCategory::Quality, |c| match c {
                 "architecture" => ViolationCategory::Architecture,
                 "quality" => ViolationCategory::Quality,
                 "performance" => ViolationCategory::Performance,
                 _ => ViolationCategory::Quality,
-            })
-            .unwrap_or(ViolationCategory::Quality);
+            });
 
         self.execute_expression_rule(rule_id, expression, context, message, severity, category)
             .await

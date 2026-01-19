@@ -310,7 +310,7 @@ impl NamingValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -324,7 +324,7 @@ impl NamingValidator {
 
                     // Check structs
                     if let Some(cap) = struct_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         if !self.is_camel_case(name) {
                             violations.push(NamingViolation::BadTypeName {
                                 file: entry.path().to_path_buf(),
@@ -338,7 +338,7 @@ impl NamingValidator {
 
                     // Check enums
                     if let Some(cap) = enum_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         if !self.is_camel_case(name) {
                             violations.push(NamingViolation::BadTypeName {
                                 file: entry.path().to_path_buf(),
@@ -352,7 +352,7 @@ impl NamingValidator {
 
                     // Check traits
                     if let Some(cap) = trait_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         if !self.is_camel_case(name) {
                             violations.push(NamingViolation::BadTypeName {
                                 file: entry.path().to_path_buf(),
@@ -386,14 +386,14 @@ impl NamingValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
 
                 for (line_num, line) in content.lines().enumerate() {
                     if let Some(cap) = fn_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip test functions
                         if name.starts_with("test_") {
@@ -434,7 +434,7 @@ impl NamingValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -442,7 +442,7 @@ impl NamingValidator {
                 for (line_num, line) in content.lines().enumerate() {
                     // Check const
                     if let Some(cap) = const_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         if !self.is_screaming_snake_case(name) {
                             violations.push(NamingViolation::BadConstantName {
                                 file: entry.path().to_path_buf(),
@@ -456,7 +456,7 @@ impl NamingValidator {
 
                     // Check static
                     if let Some(cap) = static_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         if !self.is_screaming_snake_case(name) {
                             violations.push(NamingViolation::BadConstantName {
                                 file: entry.path().to_path_buf(),
@@ -486,7 +486,7 @@ impl NamingValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let file_name = entry
@@ -527,7 +527,7 @@ impl NamingValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let path = entry.path();
@@ -623,7 +623,7 @@ impl NamingValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let path = entry.path();

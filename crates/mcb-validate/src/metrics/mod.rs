@@ -426,8 +426,9 @@ impl MetricsAnalyzer {
                 let else_depth = if_expr
                     .else_branch
                     .as_ref()
-                    .map(|(_, else_expr)| self.expr_nesting_depth(else_expr, current_depth + 1))
-                    .unwrap_or(current_depth);
+                    .map_or(current_depth, |(_, else_expr)| {
+                        self.expr_nesting_depth(else_expr, current_depth + 1)
+                    });
                 then_depth.max(else_depth)
             }
             syn::Expr::While(while_expr) => {

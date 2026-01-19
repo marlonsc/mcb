@@ -168,16 +168,16 @@ impl RustyRulesEngineWrapper {
                 .unwrap_or("Rule violation")
                 .to_string();
 
-            let severity = violation
-                .get("severity")
-                .and_then(|v| v.as_str())
-                .map(|s| match s {
-                    "error" => Severity::Error,
-                    "warning" => Severity::Warning,
-                    "info" => Severity::Info,
-                    _ => Severity::Warning,
-                })
-                .unwrap_or(Severity::Warning);
+            let severity =
+                violation
+                    .get("severity")
+                    .and_then(|v| v.as_str())
+                    .map_or(Severity::Warning, |s| match s {
+                        "error" => Severity::Error,
+                        "warning" => Severity::Warning,
+                        "info" => Severity::Info,
+                        _ => Severity::Warning,
+                    });
 
             return Ok(Action::Violation { message, severity });
         }
@@ -338,7 +338,7 @@ impl RustyRulesEngineWrapper {
                                 let line_count = content.lines().count();
                                 if line_count > max_lines {
                                     // Check exclusions
-                                    let path_str = file_path.to_string();
+                                    let path_str = file_path.clone();
                                     if !path_str.contains("/tests/")
                                         && !path_str.contains("/target/")
                                         && !path_str.ends_with("_test.rs")
@@ -567,7 +567,7 @@ impl RustyRulesEngineWrapper {
                     let line_count = content.lines().count();
 
                     // Check exclusions
-                    let path_str = file_path.to_string();
+                    let path_str = file_path.clone();
                     let should_exclude = path_str.contains("/tests/")
                         || path_str.contains("/target/")
                         || path_str.ends_with("_test.rs");

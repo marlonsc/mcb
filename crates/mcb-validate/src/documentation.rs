@@ -179,7 +179,7 @@ impl DocumentationValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -237,7 +237,7 @@ impl DocumentationValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -246,7 +246,7 @@ impl DocumentationValidator {
                 for (line_num, line) in lines.iter().enumerate() {
                     // Check for public structs
                     if let Some(cap) = pub_struct_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         if !self.has_doc_comment(&lines, line_num) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
                                 file: entry.path().to_path_buf(),
@@ -260,7 +260,7 @@ impl DocumentationValidator {
 
                     // Check for public enums
                     if let Some(cap) = pub_enum_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         if !self.has_doc_comment(&lines, line_num) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
                                 file: entry.path().to_path_buf(),
@@ -274,7 +274,7 @@ impl DocumentationValidator {
 
                     // Check for public traits
                     if let Some(cap) = pub_trait_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         let path_str = entry.path().to_string_lossy();
 
                         if !self.has_doc_comment(&lines, line_num) {
@@ -308,10 +308,10 @@ impl DocumentationValidator {
 
                     // Check for public functions (only top-level, not in impl blocks)
                     if let Some(cap) = pub_fn_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip methods in impl blocks (approximation: indentation > 0)
-                        if line.starts_with("    ") || line.starts_with("\t") {
+                        if line.starts_with("    ") || line.starts_with('\t') {
                             continue;
                         }
 
@@ -393,7 +393,7 @@ impl DocumentationValidator {
 
             // Collect doc comment
             if let Some(cap) = doc_pattern.captures(line) {
-                let content = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                let content = cap.get(1).map_or("", |m| m.as_str());
                 doc_lines.push(content);
             } else if !line.trim().is_empty() {
                 break;

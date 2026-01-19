@@ -12,13 +12,13 @@ fn test_arc_mutex_detection() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 use std::sync::{Arc, Mutex};
 
 pub struct State {
     data: Arc<Mutex<Vec<String>>>,
 }
-"#,
+",
     );
 
     let validator = PatternValidator::new(temp.path());
@@ -34,13 +34,13 @@ fn test_deprecated_api_detection() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 use std::mem::uninitialized;
 
 pub fn risky() {
     let x: MaybeUninit<u8> = unsafe { uninitialized() };
 }
-"#,
+",
     );
 
     let validator = PatternValidator::new(temp.path());

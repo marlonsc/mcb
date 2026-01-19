@@ -12,13 +12,13 @@ fn test_blocking_in_async_detection() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 use std::thread;
 
 pub async fn bad_async() {
     thread::sleep(std::time::Duration::from_secs(1));
 }
-"#,
+",
     );
 
     let validator = AsyncPatternValidator::new(temp.path());
@@ -36,13 +36,13 @@ fn test_proper_async_patterns() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 use tokio::time;
 
 pub async fn good_async() {
     time::sleep(std::time::Duration::from_secs(1)).await;
 }
-"#,
+",
     );
 
     let validator = AsyncPatternValidator::new(temp.path());

@@ -1,42 +1,49 @@
 # =============================================================================
-# MCP Context Browser - Makefile v0.1.1
+# MCP Context Browser - Makefile v2.0
 # =============================================================================
-# Streamlined, integrated with scripts/docs/*.sh
+# Modular structure with single-action verbs
+# Each verb does ONE thing. Use prerequisites for composition.
 # Run `make help` for command reference
 # =============================================================================
 
-# Include modular makefiles
-include make/Makefile.help.mk
+# =============================================================================
+# Global Parameters (limitations only, not for multi-function)
+# =============================================================================
+export RELEASE ?= 0
+export SCOPE ?= all
+export FIX ?= 0
+export STRICT ?= 0
+export QUICK ?= 0
+export LCOV ?= 0
+export CI_MODE ?= 0
+export BUMP ?=
+
+# Rust 2024 Edition lints
+export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
+
+# =============================================================================
+# Include Modules
+# =============================================================================
 include make/Makefile.core.mk
 include make/Makefile.quality.mk
-include make/Makefile.development.mk
+include make/Makefile.docs.mk
+include make/Makefile.dev.mk
 include make/Makefile.release.mk
-include make/Makefile.documentation.mk
-include make/Makefile.maintenance.mk
 include make/Makefile.git.mk
-include make/Makefile.version.mk
-include make/Makefile.aliases.mk
+include make/Makefile.help.mk
 
 # Default target
 .DEFAULT_GOAL := help
 
 # =============================================================================
-# PHONY declarations (consolidated)
+# CI (compound target using prerequisites)
 # =============================================================================
-.PHONY: help all
-.PHONY: build build-release test test-unit test-integration test-doc test-all clean run
-.PHONY: check fmt lint fix quality audit coverage bench
-.PHONY: validate validate-report validate-summary validate-arch
-.PHONY: validate-deps validate-quality validate-patterns validate-tests validate-docs validate-naming
-.PHONY: validate-solid validate-org validate-kiss validate-shaku validate-refactor
-.PHONY: validate-all validate-docs-all validate-config check-full ci-quality
-.PHONY: pmat-tdg pmat-diag pmat-entropy pmat-defects pmat-gate pmat-explain pmat-clean
-.PHONY: lint-md fix-md
-.PHONY: docs docs-build docs-serve docs-check docs-fix docs-setup docs-metrics docs-sync info doc
-.PHONY: adr-new adr-list adr-check rust-docs diagrams
-.PHONY: status commit push tag sync
-.PHONY: dev dev-metrics dev-sync setup
-.PHONY: docker-up docker-down docker-logs docker-status test-docker
-.PHONY: release package github-release install install-debug uninstall
-.PHONY: update health maintain
-.PHONY: b t c f l q r d s y p D S u a
+.PHONY: ci
+
+ci: ## Complete CI pipeline (lint + test + validate + audit)
+	@echo "Running CI pipeline..."
+	@$(MAKE) lint CI_MODE=1
+	@$(MAKE) test SCOPE=all
+	@$(MAKE) validate QUICK=1
+	@$(MAKE) audit
+	@echo "CI pipeline passed!"

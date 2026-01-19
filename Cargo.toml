@@ -214,6 +214,47 @@ tracing-appender = "0.2"
 # Benchmarking
 criterion = "0.8.1"
 
+# Plugin registration
+linkme = "0.3"
+
+# Development/testing
+tempfile = "3.19"
+
+# ============================================
+# mcb-validate specific dependencies
+# ============================================
+
+# Rust AST parsing
+syn = { version = "2.0", features = ["full", "parsing", "visit"] }
+proc-macro2 = "1.0"
+
+# YAML serialization
+serde_yaml = "0.9"
+
+# Rule Engines
+rust-rule-engine = "1.16"
+rusty-rules = "0.2"
+evalexpr = "13"
+
+# Additional validation
+garde = { version = "0.22", features = ["derive"] }
+
+# JSON Schema validation
+jsonschema = "0.40"
+
+# Pest parser for DSL
+pest = "2.8"
+pest_derive = "2.8"
+
+# JSON Path navigation
+jsonpath-rust = "1.0.4"
+
+# Lazy static values
+once_cell = "1.19"
+
+# Code metrics analysis (fork with tree-sitter 0.26.3 + Kotlin)
+rust-code-analysis = { git = "https://github.com/marlon-costa-dc/rust-code-analysis", branch = "tree-sitter-0.26-kotlin" }
+
 # ============================================
 # Build Profiles
 # ============================================

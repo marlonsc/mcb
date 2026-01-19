@@ -312,7 +312,7 @@ impl ImplementationQualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let file_name = entry
@@ -405,7 +405,7 @@ impl ImplementationQualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let file_name = entry
@@ -470,9 +470,9 @@ impl ImplementationQualityValidator {
                         || trimmed.contains("return false; }")  // inline guard: if x { return false; }
                         || trimmed.contains("return true; }")   // inline guard: if x { return true; }
                         || (trimmed == "return false;" && content.lines().nth(line_num.saturating_sub(1))
-                            .map(|l| l.trim().starts_with("if ")).unwrap_or(false))
+                            .is_some_and(|l| l.trim().starts_with("if ")))
                         || (trimmed == "return true;" && content.lines().nth(line_num.saturating_sub(1))
-                            .map(|l| l.trim().starts_with("if ")).unwrap_or(false));
+                            .is_some_and(|l| l.trim().starts_with("if ")));
 
                     if is_guard_clause {
                         continue;
@@ -519,7 +519,7 @@ impl ImplementationQualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 // Skip test files
@@ -598,7 +598,7 @@ impl ImplementationQualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 // Skip test files
@@ -659,7 +659,7 @@ impl ImplementationQualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let file_name = entry
@@ -748,8 +748,8 @@ impl ImplementationQualityValidator {
                             let meaningful_lines: Vec<_> = fn_body_lines
                                 .iter()
                                 .filter(|l| {
-                                    !l.starts_with("{")
-                                        && !l.starts_with("}")
+                                    !l.starts_with('{')
+                                        && !l.starts_with('}')
                                         && *l != "{"
                                         && *l != "}"
                                 })
@@ -758,8 +758,8 @@ impl ImplementationQualityValidator {
                             if meaningful_lines.len() == 1 {
                                 if let Some(ref re) = passthrough_pattern {
                                     if let Some(cap) = re.captures(meaningful_lines[0]) {
-                                        let field = cap.get(1).map(|m| m.as_str()).unwrap_or("");
-                                        let method = cap.get(2).map(|m| m.as_str()).unwrap_or("");
+                                        let field = cap.get(1).map_or("", |m| m.as_str());
+                                        let method = cap.get(2).map_or("", |m| m.as_str());
 
                                         // Only flag if method names match (pure delegation)
                                         if method == current_fn_name
@@ -814,7 +814,7 @@ impl ImplementationQualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 // Skip test files
@@ -878,8 +878,8 @@ impl ImplementationQualityValidator {
                             let meaningful_lines: Vec<_> = fn_body_lines
                                 .iter()
                                 .filter(|l| {
-                                    !l.starts_with("{")
-                                        && !l.starts_with("}")
+                                    !l.starts_with('{')
+                                        && !l.starts_with('}')
                                         && *l != "{"
                                         && *l != "}"
                                         && !l.starts_with("fn ")

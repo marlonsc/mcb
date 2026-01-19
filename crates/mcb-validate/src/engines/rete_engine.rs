@@ -133,7 +133,7 @@ impl ReteEngine {
 
         for entry in WalkDir::new(root)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
             .filter(|e| e.path().file_name().is_some_and(|n| n == "Cargo.toml"))
         {
             let path = entry.path();

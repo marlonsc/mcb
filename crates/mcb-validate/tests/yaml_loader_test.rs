@@ -135,13 +135,13 @@ config:
                 let qual006_violations = report
                     .violations_by_category
                     .get("quality")
-                    .map(|violations| violations.iter().filter(|v| v.id == "QUAL006").count())
-                    .unwrap_or(0);
+                    .map_or(0, |violations| {
+                        violations.iter().filter(|v| v.id == "QUAL006").count()
+                    });
 
                 if qual006_violations > 0 {
                     println!(
-                        "✅ SUCCESS: QUAL006 detected {} file size violations!",
-                        qual006_violations
+                        "✅ SUCCESS: QUAL006 detected {qual006_violations} file size violations!"
                     );
                 } else {
                     println!("⚠️  QUAL006 detected 0 violations - rule may not be working");
@@ -152,10 +152,7 @@ config:
             }
             Err(e) => {
                 // If rules directory doesn't exist in test environment, that's acceptable
-                println!(
-                    "YAML validation failed (expected in some environments): {}",
-                    e
-                );
+                println!("YAML validation failed (expected in some environments): {e}");
                 // Allow graceful failure - the important thing is no panic
             }
         }

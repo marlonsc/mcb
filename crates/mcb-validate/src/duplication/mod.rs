@@ -233,7 +233,7 @@ impl DuplicationAnalyzer {
         let path_str = path.to_string_lossy();
         for pattern in &self.thresholds.exclude_patterns {
             // Simple glob matching (** = any path, * = any segment)
-            let pattern_regex = pattern.replace("**", ".*").replace("*", "[^/]*");
+            let pattern_regex = pattern.replace("**", ".*").replace('*', "[^/]*");
             if regex::Regex::new(&pattern_regex)
                 .map(|r| r.is_match(&path_str))
                 .unwrap_or(false)

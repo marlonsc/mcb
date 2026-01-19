@@ -1,58 +1,51 @@
 # =============================================================================
-# CORE - Build, test and clean operations
+# CORE - Build, test, docs, clean
+# =============================================================================
+# Parameters: RELEASE, SCOPE (from main Makefile)
 # =============================================================================
 
-.PHONY: build build-release test test-unit test-integration test-doc test-all clean run
+.PHONY: build test clean
 
-# -----------------------------------------------------------------------------
-# Build
-# -----------------------------------------------------------------------------
-
-build: ## Build project (debug mode)
-	@cargo build
-
-build-release: ## Build project (release mode)
-	@cargo build --release
-
-# -----------------------------------------------------------------------------
-# Test
-# -----------------------------------------------------------------------------
-
-# Test-specific port (unified: Admin + Metrics + MCP on single port)
-# Uses 13001 to avoid conflicts with development server (default 3001)
+# Test port (avoids conflicts with dev server on 3001)
 export MCP_PORT ?= 13001
 
-test: ## Run all tests (uses port 13001 to avoid conflicts)
-	@MCP_PORT=$(MCP_PORT) cargo test --all-targets --all-features
+# =============================================================================
+# BUILD (RELEASE=1 for release)
+# =============================================================================
 
-test-unit: ## Run unit tests only
-	@MCP_PORT=$(MCP_PORT) cargo test --lib --all-features
+build: ## Build project (RELEASE=1 for release)
+ifeq ($(RELEASE),1)
+	@echo "Building release..."
+	cargo build --release --features "full"
+else
+	@echo "Building debug..."
+	cargo build --features "full"
+endif
 
-test-integration: ## Run integration tests only
-	@MCP_PORT=$(MCP_PORT) cargo test --test '*'
+# =============================================================================
+# TEST (SCOPE=unit|doc|golden|all)
+# =============================================================================
 
-test-doc: ## Run documentation tests (doctests)
-	@MCP_PORT=$(MCP_PORT) cargo test --doc --all-features
+test: ## Run tests (SCOPE=unit|doc|golden|all)
+ifeq ($(SCOPE),unit)
+	@echo "Running unit tests..."
+	MCP_PORT=$(MCP_PORT) cargo test --workspace --lib --bins
+else ifeq ($(SCOPE),doc)
+	@echo "Running doctests..."
+	MCP_PORT=$(MCP_PORT) cargo test --doc --workspace
+else ifeq ($(SCOPE),golden)
+	@echo "Running golden acceptance tests..."
+	MCP_PORT=$(MCP_PORT) cargo test -p mcb-server golden_acceptance -- --nocapture
+else
+	@echo "Running all tests..."
+	MCP_PORT=$(MCP_PORT) cargo test --workspace --features "full"
+endif
 
-test-all: test test-doc ## Run all tests including doctests
-	@echo "✅ All tests passed"
-
-test-ignored: ## Run ignored tests (requires external tools: ruff, clippy)
-	@MCP_PORT=$(MCP_PORT) cargo test --all-targets --all-features -- --ignored --nocapture
-
-# -----------------------------------------------------------------------------
-# Run
-# -----------------------------------------------------------------------------
-
-run: ## Build and run the server
-	@cargo run
-
-# -----------------------------------------------------------------------------
-# Clean
-# -----------------------------------------------------------------------------
+# =============================================================================
+# CLEAN
+# =============================================================================
 
 clean: ## Clean all build artifacts
-	@echo "🧹 Cleaning..."
-	@cargo clean
-	@rm -rf docs/generated/ docs/build/ coverage/ dist/
-	@echo "✅ Clean complete"
+	@echo "Cleaning..."
+	cargo clean
+	@echo "Clean complete"

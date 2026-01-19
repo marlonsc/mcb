@@ -1,10 +1,12 @@
 //! Integration tests for Phase 4: rust-code-analysis metrics
 //!
-//! Tests the RcaAnalyzer which provides 14 code metrics using
+//! Tests the `RcaAnalyzer` which provides 14 code metrics using
 //! the rust-code-analysis library.
 //!
 //! Note: rust-code-analysis parsing behavior may vary. Tests are designed
 //! to be resilient to parsing differences.
+
+#![allow(clippy::float_cmp)]
 
 #[cfg(test)]
 #[cfg(feature = "rca-metrics")]
@@ -15,7 +17,7 @@ mod rca_integration_tests {
     use std::path::Path;
     use tempfile::TempDir;
 
-    /// Test that RcaAnalyzer correctly detects language from file extension
+    /// Test that `RcaAnalyzer` correctly detects language from file extension
     #[test]
     fn test_language_detection() {
         assert_eq!(
@@ -54,9 +56,9 @@ mod rca_integration_tests {
     fn test_analyze_simple_rust_function() {
         let analyzer = RcaAnalyzer::new();
 
-        let code = br#"fn add(a: i32, b: i32) -> i32 {
+        let code = br"fn add(a: i32, b: i32) -> i32 {
     a + b
-}"#;
+}";
 
         let results = analyzer
             .analyze_code(code, &LANG::Rust, Path::new("simple.rs"))
@@ -74,7 +76,7 @@ mod rca_integration_tests {
     fn test_analyze_complex_rust_function() {
         let analyzer = RcaAnalyzer::new();
 
-        let code = br#"fn complex(a: i32, b: i32) -> i32 {
+        let code = br"fn complex(a: i32, b: i32) -> i32 {
     if a > b {
         if a > 10 {
             return a * 2;
@@ -84,7 +86,7 @@ mod rca_integration_tests {
         return b * 2;
     }
     a + b
-}"#;
+}";
 
         let results = analyzer
             .analyze_code(code, &LANG::Rust, Path::new("complex.rs"))
@@ -105,7 +107,7 @@ mod rca_integration_tests {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.rs");
 
-        let code = r#"fn highly_complex(a: i32, b: i32, c: i32) -> i32 {
+        let code = r"fn highly_complex(a: i32, b: i32, c: i32) -> i32 {
     if a > 0 {
         if b > 0 {
             if c > 0 { return a + b + c; }
@@ -123,7 +125,7 @@ mod rca_integration_tests {
             else { return 0; }
         }
     }
-}"#;
+}";
         std::fs::write(&file_path, code).expect("Write temp file");
 
         // Set threshold to 5 - the function has CC > 5
@@ -151,7 +153,7 @@ mod rca_integration_tests {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("multi.rs");
 
-        let code = r#"fn func1(x: i32) -> i32 {
+        let code = r"fn func1(x: i32) -> i32 {
     if x > 0 { x } else { -x }
 }
 
@@ -165,7 +167,7 @@ fn func3(x: i32) -> i32 {
         1 => 1,
         _ => x * 2,
     }
-}"#;
+}";
         std::fs::write(&file_path, code).expect("Write temp file");
 
         let analyzer = RcaAnalyzer::new();
@@ -183,7 +185,7 @@ fn func3(x: i32) -> i32 {
     fn test_halstead_metrics() {
         let analyzer = RcaAnalyzer::new();
 
-        let code = br#"fn calculate(a: i32, b: i32, c: i32) -> i32 {
+        let code = br"fn calculate(a: i32, b: i32, c: i32) -> i32 {
     let sum = a + b + c;
     let product = a * b * c;
     if sum > product {
@@ -191,7 +193,7 @@ fn func3(x: i32) -> i32 {
     } else {
         product
     }
-}"#;
+}";
 
         let results = analyzer
             .analyze_code(code, &LANG::Rust, Path::new("halstead.rs"))
@@ -212,9 +214,9 @@ fn func3(x: i32) -> i32 {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("mi.rs");
 
-        let code = r#"fn simple_add(a: i32, b: i32) -> i32 {
+        let code = r"fn simple_add(a: i32, b: i32) -> i32 {
     a + b
-}"#;
+}";
         std::fs::write(&file_path, code).expect("Write temp file");
 
         let analyzer = RcaAnalyzer::new();
@@ -230,14 +232,14 @@ fn func3(x: i32) -> i32 {
         );
     }
 
-    /// Test NArgs metric
+    /// Test `NArgs` metric
     #[test]
     fn test_nargs_metric() {
         let analyzer = RcaAnalyzer::new();
 
-        let code = br#"fn many_args(a: i32, b: i32, c: i32, d: i32, e: i32) -> i32 {
+        let code = br"fn many_args(a: i32, b: i32, c: i32, d: i32, e: i32) -> i32 {
     a + b + c + d + e
-}"#;
+}";
 
         let results = analyzer
             .analyze_code(code, &LANG::Rust, Path::new("args.rs"))

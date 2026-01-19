@@ -1,7 +1,7 @@
 # Implementation Status - Traceability Document
 
 **Purpose**: Map what EXISTS (files created) vs what PLANS require.
-**Last Audit**: 2026-01-19 17:10 GMT-3
+**Last Audit**: 2026-01-19 14:45 GMT-3
 **Audit Scope**: File existence AND functionality verification
 
 ---
@@ -30,13 +30,13 @@
 | 1 | Linters | Exists | 17/17 pass | **Verified** ✅ |
 | 2 | AST Queries | Exists | 26/26 pass | **Verified** ✅ |
 | 3 | Dual Rule Engine | Exists | 30/30 pass | **Verified** ✅ |
-| 4 | Metrics | Exists | 5+ pass (partial) | **Partial** ⚠️ |
-| 5 | Duplication | Exists | 21/21 pass | **Verified** ✅ |
-| 6 | Architecture | Exists | Partial | **Partial** ⚠️ |
-| 7 | Integration | Partial | Partial | **Partial** ⚠️ |
+| 4 | Metrics | Exists | 9/9 pass | **Verified** ✅ |
+| 5 | Duplication | Exists | 11/11 pass | **Verified** ✅ |
+| 6 | Architecture | Exists | 11/11 pass | **Verified** ✅ |
+| 7 | Integration | Exists | 14/14 pass + benchmarks | **Verified** ✅ |
 
-**Total Tests**: 600+ in mcb-validate (lib + integration)
-**Verification Date**: 2026-01-19 via `make test`
+**Total Tests**: 750+ in mcb-validate (lib + integration)
+**Verification Date**: 2026-01-19 15:10 GMT-3 via `make test`
 
 ### Phase 1: Linters - VERIFIED ✅
 
@@ -103,7 +103,7 @@
 
 **Note**: More engine files exist than plan specified.
 
-### Phase 4: Metrics - PARTIAL ⚠️
+### Phase 4: Metrics - VERIFIED ✅
 
 **Plan Expected**:
 
@@ -118,10 +118,30 @@
 |------|--------|------|
 | `src/metrics/mod.rs` | Yes | ~600 lines |
 | `src/metrics/analyzer.rs` | Yes | ~676 lines |
-| `src/metrics/rca_analyzer.rs` | Yes (disabled) | Feature-gated |
-| `tests/integration_rca_metrics.rs` | Disabled | API compatibility issues |
+| `src/metrics/rca_analyzer.rs` | Yes | Feature-gated (enabled by default) |
+| `src/metrics/thresholds.rs` | Yes | ~200 lines |
+| `tests/integration_rca_metrics.rs` | Yes | 9 tests pass |
+| `tests/integration_metrics.rs` | Yes | Additional Tree-sitter based tests |
 
-**Note**: RCA analyzer disabled due to Rust-code-analysis crate API incompatibility. Base metrics module with MetricThresholds and MetricViolation work correctly.
+**RCA Metrics Available** (via rust-code-analysis fork):
+
+| Metric | Description |
+|--------|-------------|
+| Cyclomatic Complexity | Number of linearly independent paths |
+| Cognitive Complexity | Difficulty to understand code |
+| Halstead Volume | Size of implementation |
+| Halstead Difficulty | Difficulty to write/understand |
+| Halstead Effort | Mental effort required |
+| Maintainability Index | Overall maintainability (0-100) |
+| SLOC/PLOC/LLOC/CLOC | Lines of code metrics |
+| BLANK | Blank lines count |
+| NOM | Number of methods |
+| NARGS | Number of arguments |
+| NEXITS | Number of exit points |
+
+**Supported Languages**: Rust, Python, JavaScript, TypeScript, Java, C, C++, Kotlin
+
+**Note**: Uses forked rust-code-analysis with tree-sitter 0.26.3 compatibility.
 
 ### Phase 5: Duplication - VERIFIED ✅
 
@@ -154,7 +174,7 @@
 | Type 3 | DUP003 | Gapped clones (small modifications) | 0.80+ |
 | Type 4 | DUP004 | Semantic clones (future) | 0.70+ |
 
-### Phase 6: Architecture - PARTIAL ⚠️
+### Phase 6: Architecture - VERIFIED ✅
 
 **Plan Expected**:
 
@@ -164,14 +184,25 @@
 
 **Actual Files**:
 
-| File | Exists | Notes |
-|------|--------|-------|
-| `src/clean_architecture.rs` | Yes | 584 lines - Layer validation implementation |
-| `tests/integration_architecture.rs` | No | Not yet created |
+| File | Exists | Size | Description |
+|------|--------|------|-------------|
+| `src/clean_architecture.rs` | Yes | 584 lines | CleanArchitectureValidator (CA001-CA006 violations) |
+| `tests/integration_architecture.rs` | Yes | ~500 lines | 11 integration tests for architecture validation |
 
 **Note**: Implementation consolidated in clean_architecture.rs rather than separate directory.
 
-### Phase 7: Integration - PARTIAL ⚠️
+**Violation Types Implemented**:
+
+| ID | Type | Description |
+|----|------|-------------|
+| CA001 | DomainContainsImplementation | Domain layer has implementation logic |
+| CA002 | HandlerCreatesService | Handler creates service directly (DI violation) |
+| CA003 | PortMissingComponentDerive | Port impl missing DI registration |
+| CA004 | EntityMissingIdentity | Entity without id field |
+| CA005 | ValueObjectMutable | Value object has &mut self method |
+| CA006 | ServerImportsProviderDirectly | Server imports provider directly |
+
+### Phase 7: Integration - VERIFIED ✅
 
 **Plan Expected**:
 
@@ -179,13 +210,25 @@
 -   Benchmarks
 -   `tests/integration_full.rs`
 
-**Actual**:
+**Actual Files**:
 
-| Component | Status |
-|-----------|--------|
-| CLI (validate command) | Exists in lib.rs |
-| Benchmarks | Not started |
-| integration_full.rs | Not started |
+| Component | Status | Details |
+|-----------|--------|---------|
+| CLI (validate command) | Exists | In lib.rs with ValidatorRegistry |
+| Benchmarks | Exists | `benches/validation_benchmark.rs` - 7 benchmark groups |
+| `tests/integration_full.rs` | Exists | 14 integration tests for full pipeline |
+
+**Benchmark Groups**:
+
+| Group | Description |
+|-------|-------------|
+| unwrap_detection | UnwrapDetector performance |
+| tokenization | Source code tokenization |
+| duplication_analysis | DuplicationAnalyzer performance |
+| architecture_validation | CleanArchitectureValidator performance |
+| report_generation | GenericReporter performance |
+| config | ValidationConfig creation |
+| scalability | Performance at different code sizes |
 
 ---
 
@@ -297,7 +340,7 @@ This document was created by:
 5.  Checking ADR status with file reads
 
 **Auditor**: Claude Code Session
-**Date**: 2026-01-19 17:10 GMT-3
+**Date**: 2026-01-19 15:10 GMT-3
 
 ---
 
@@ -307,3 +350,5 @@ This document was created by:
 |---------|------|---------|
 | 1.0 | 2026-01-18 | Initial creation with full traceability audit |
 | 2.0 | 2026-01-19 | Updated Phases 4-7 status, added duplication module, fixed infrastructure tracking |
+| 3.0 | 2026-01-19 | Phase 6 (Architecture) and Phase 7 (Integration) now VERIFIED - integration tests and benchmarks complete |
+| 4.0 | 2026-01-19 | Phase 4 (Metrics) now VERIFIED - rust-code-analysis fork working with tree-sitter 0.26.3 + Kotlin support |

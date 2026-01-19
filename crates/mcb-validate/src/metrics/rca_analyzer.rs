@@ -238,7 +238,7 @@ impl RcaAnalyzer {
             ))
         })?;
 
-        let func_space = get_function_spaces(&lang, code.to_vec(), path, None);
+        let func_space = get_function_spaces(&lang, code.clone(), path, None);
 
         let Some(root) = func_space else {
             return Ok(RcaMetrics::default());

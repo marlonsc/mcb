@@ -152,9 +152,11 @@ mod golden_acceptance_tests {
         let config = load_golden_queries();
 
         // Mock results - in actual implementation, these would come from search
-        let mock_results = [("embedding.rs".to_string(), 0.95),
+        let mock_results = [
+            ("embedding.rs".to_string(), 0.95),
             ("ollama.rs".to_string(), 0.87),
-            ("openai.rs".to_string(), 0.82)];
+            ("openai.rs".to_string(), 0.82),
+        ];
 
         // Validate that at least one expected file appears in results
         let query = &config.queries[0]; // embedding_provider query

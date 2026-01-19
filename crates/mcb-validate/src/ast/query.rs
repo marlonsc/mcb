@@ -100,8 +100,7 @@ impl AstQuery {
                 .metadata
                 .get(field)
                 .and_then(|v| v.as_str())
-                .map(|s| s == value)
-                .unwrap_or(false),
+                .is_some_and(|s| s == value),
             QueryCondition::NotHasField { field } => !node.metadata.contains_key(field),
             QueryCondition::NameMatches { pattern } => {
                 if let Some(name) = &node.name {
@@ -119,7 +118,7 @@ impl AstQuery {
                 !node.children.iter().any(|child| child.kind == *child_type)
             }
             QueryCondition::MetadataEquals { key, value } => {
-                node.metadata.get(key).map(|v| v == value).unwrap_or(false)
+                node.metadata.get(key).is_some_and(|v| v == value)
             }
             QueryCondition::Custom { name } => self.check_custom_condition(name, node),
         }
@@ -132,18 +131,17 @@ impl AstQuery {
             "is_async" => node
                 .metadata
                 .get("is_async")
-                .and_then(|v| v.as_bool())
+                .and_then(serde_json::Value::as_bool)
                 .unwrap_or(false),
             "has_return_type" => node
                 .metadata
                 .get("has_return_type")
-                .and_then(|v| v.as_bool())
+                .and_then(serde_json::Value::as_bool)
                 .unwrap_or(false),
             "is_test_function" => node
                 .name
                 .as_ref()
-                .map(|n| n.starts_with("test_") || n.contains("test"))
-                .unwrap_or(false),
+                .is_some_and(|n| n.starts_with("test_") || n.contains("test")),
             _ => false,
         }
     }
@@ -156,7 +154,7 @@ impl AstQuery {
         !node
             .metadata
             .get("has_docstring")
-            .and_then(|v| v.as_bool())
+            .and_then(serde_json::Value::as_bool)
             .unwrap_or(false)
     }
 }

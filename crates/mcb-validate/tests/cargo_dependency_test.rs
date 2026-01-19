@@ -1,5 +1,7 @@
 //! Tests for cargo dependency detection
 
+#![allow(clippy::items_after_statements)]
+
 #[cfg(test)]
 mod cargo_dependency_tests {
     use mcb_validate::ValidationConfig;

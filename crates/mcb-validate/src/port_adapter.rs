@@ -187,7 +187,10 @@ impl PortAdapterValidator {
         let trait_start_re = Regex::new(r"pub\s+trait\s+(\w+)").expect("Invalid regex");
         let fn_re = Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").expect("Invalid regex");
 
-        for entry in WalkDir::new(&ports_dir).into_iter().filter_map(|e| e.ok()) {
+        for entry in WalkDir::new(&ports_dir)
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+        {
             let path = entry.path();
             if path.extension().is_none_or(|e| e != "rs") {
                 continue;
@@ -261,7 +264,7 @@ impl PortAdapterValidator {
 
         for entry in WalkDir::new(&providers_dir)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
         {
             let path = entry.path();
             if path.extension().is_none_or(|e| e != "rs") {
@@ -283,7 +286,7 @@ impl PortAdapterValidator {
                 }
 
                 if let Some(captures) = adapter_import_re.captures(line) {
-                    let imported = captures.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let imported = captures.get(1).map_or("", |m| m.as_str());
                     if imported.to_lowercase().contains(current_adapter) {
                         continue;
                     }

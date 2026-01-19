@@ -108,7 +108,7 @@ impl AstDecoder {
         if node.kind() == "identifier" || node.kind() == "type_identifier" {
             node.utf8_text(source.as_bytes())
                 .ok()
-                .map(|s| s.to_string())
+                .map(std::string::ToString::to_string)
         } else {
             None
         }
@@ -134,7 +134,7 @@ impl AstDecoder {
                 return child
                     .utf8_text(source.as_bytes())
                     .ok()
-                    .map(|s| s.to_string());
+                    .map(std::string::ToString::to_string);
             }
         }
         None

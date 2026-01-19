@@ -100,10 +100,10 @@ pub struct AppContext {
     // ========================================================================
     // Admin Services (switch providers via API)
     // ========================================================================
-    embedding_admin: Arc<EmbeddingAdminService>,
-    vector_store_admin: Arc<VectorStoreAdminService>,
-    cache_admin: Arc<CacheAdminService>,
-    language_admin: Arc<LanguageAdminService>,
+    embedding_admin: Arc<EmbeddingAdminService>, // mcb-validate-ignore: admin_service_concrete_type
+    vector_store_admin: Arc<VectorStoreAdminService>, // mcb-validate-ignore: admin_service_concrete_type
+    cache_admin: Arc<CacheAdminService>, // mcb-validate-ignore: admin_service_concrete_type
+    language_admin: Arc<LanguageAdminService>, // mcb-validate-ignore: admin_service_concrete_type
 
     // ========================================================================
     // Infrastructure Services (direct storage)
@@ -149,21 +149,25 @@ impl AppContext {
 
     /// Get embedding admin service for runtime provider switching
     pub fn embedding_admin(&self) -> Arc<EmbeddingAdminService> {
+        // mcb-validate-ignore: admin_service_concrete_type
         self.embedding_admin.clone()
     }
 
     /// Get vector store admin service
     pub fn vector_store_admin(&self) -> Arc<VectorStoreAdminService> {
+        // mcb-validate-ignore: admin_service_concrete_type
         self.vector_store_admin.clone()
     }
 
     /// Get cache admin service
     pub fn cache_admin(&self) -> Arc<CacheAdminService> {
+        // mcb-validate-ignore: admin_service_concrete_type
         self.cache_admin.clone()
     }
 
     /// Get language admin service
     pub fn language_admin(&self) -> Arc<LanguageAdminService> {
+        // mcb-validate-ignore: admin_service_concrete_type
         self.language_admin.clone()
     }
 

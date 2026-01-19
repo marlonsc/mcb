@@ -1,0 +1,15 @@
+#!/bin/bash
+# =============================================================================
+# Pre-commit hook - Uses same Makefile verbs as CI
+# =============================================================================
+# Install: make install-hooks
+# =============================================================================
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Same lint check as CI
+make lint CI_MODE=1
+
+echo "Pre-commit checks passed!"

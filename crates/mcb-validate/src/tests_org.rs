@@ -299,7 +299,7 @@ impl TestValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -431,7 +431,7 @@ impl TestValidator {
 
             for entry in WalkDir::new(&tests_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let path = entry.path();
@@ -549,7 +549,7 @@ impl TestValidator {
 
             for entry in WalkDir::new(&tests_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -566,7 +566,7 @@ impl TestValidator {
                         while fn_line_idx < lines.len() {
                             let potential_fn = lines[fn_line_idx];
                             if let Some(cap) = fn_pattern.captures(potential_fn) {
-                                let fn_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                                let fn_name = cap.get(1).map_or("", |m| m.as_str());
 
                                 // Check naming convention - must start with test_
                                 if !fn_name.starts_with("test_") {
@@ -670,7 +670,7 @@ impl TestValidator {
 
             for entry in WalkDir::new(&tests_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -681,10 +681,7 @@ impl TestValidator {
                     let line = lines[i];
 
                     // Check for test attribute
-                    let is_test_attr = test_attr_pattern
-                        .as_ref()
-                        .map(|p| p.is_match(line))
-                        .unwrap_or(false);
+                    let is_test_attr = test_attr_pattern.as_ref().is_some_and(|p| p.is_match(line));
 
                     if is_test_attr {
                         // Find the function definition
@@ -694,7 +691,7 @@ impl TestValidator {
                             let fn_cap = fn_pattern.as_ref().and_then(|p| p.captures(potential_fn));
 
                             if let Some(cap) = fn_cap {
-                                let fn_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                                let fn_name = cap.get(1).map_or("", |m| m.as_str());
                                 let fn_start = fn_line_idx;
 
                                 // Collect function body
@@ -737,12 +734,10 @@ impl TestValidator {
                                 // Check for unwrap-only tests (has unwrap but no real assertion)
                                 let has_unwrap = unwrap_pattern
                                     .as_ref()
-                                    .map(|p| body_lines.iter().any(|(_, l)| p.is_match(l)))
-                                    .unwrap_or(false);
+                                    .is_some_and(|p| body_lines.iter().any(|(_, l)| p.is_match(l)));
                                 let has_real_assert = real_assert_pattern
                                     .as_ref()
-                                    .map(|p| body_lines.iter().any(|(_, l)| p.is_match(l)))
-                                    .unwrap_or(false);
+                                    .is_some_and(|p| body_lines.iter().any(|(_, l)| p.is_match(l)));
 
                                 if has_unwrap && !has_real_assert {
                                     violations.push(TestViolation::UnwrapOnlyAssertion {
@@ -760,8 +755,8 @@ impl TestValidator {
                                         let trimmed = l.trim();
                                         !trimmed.is_empty()
                                             && !trimmed.starts_with("//")
-                                            && !trimmed.starts_with("{")
-                                            && !trimmed.starts_with("}")
+                                            && !trimmed.starts_with('{')
+                                            && !trimmed.starts_with('}')
                                             && trimmed != "{"
                                             && trimmed != "}"
                                     })

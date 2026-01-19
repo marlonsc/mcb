@@ -603,6 +603,105 @@ Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 
 The `mcb-application` layer re-exports these traits for backward compatibility, but implementations in `mcb-providers` import directly from `mcb-domain`.
 
+### Extensibility - Adding New Providers
+
+The architecture is designed for easy extension with new provider implementations. Follow these three steps:
+
+#### Step 1: Define Contract in Domain
+
+New integrations require a trait in `mcb-domain/src/ports/providers/`:
+
+```rust
+// mcb-domain/src/ports/providers/new_service.rs
+use crate::error::Result;
+
+/// Provides new service functionality
+#[async_trait::async_trait]
+pub trait NewServiceProvider: Send + Sync {
+    /// Perform the service operation
+    async fn operation(&self, input: Input) -> Result<Output>;
+
+    /// Health check for this provider
+    async fn health_check(&self) -> Result<()>;
+}
+```
+
+**Guidelines:**
+- Use domain types only (no external dependencies)
+- Return `Result<T, Error>` from domain layer
+- Mark trait with `Send + Sync` for async safety
+- Include health check method
+
+#### Step 2: Implement in Providers
+
+Create implementation in `mcb-providers/src/new_service/`:
+
+```rust
+// mcb-providers/src/new_service/concrete.rs
+use mcb_domain::ports::providers::NewServiceProvider;
+use mcb_domain::error::Result;
+
+pub struct ConcreteNewService {
+    client: ExternalClient,
+    config: ServiceConfig,
+}
+
+#[async_trait::async_trait]
+impl NewServiceProvider for ConcreteNewService {
+    async fn operation(&self, input: Input) -> Result<Output> {
+        // Implementation using external SDK
+        let result = self.client.call(&input).await
+            .map_err(|e| Error::Provider {
+                message: format!("New service error: {}", e)
+            })?;
+        Ok(result)
+    }
+
+    async fn health_check(&self) -> Result<()> {
+        self.client.ping().await
+            .map_err(|e| Error::ProviderUnavailable {
+                provider: "ConcreteNewService".to_string(),
+                reason: e.to_string()
+            })
+    }
+}
+```
+
+**Guidelines:**
+- Import trait from `mcb_domain::ports::providers`
+- Use `Arc<dyn Trait>` for shared ownership
+- Implement error conversion from external errors
+- Add configuration struct if needed
+
+#### Step 3: Register via Linkme
+
+Use the `#[linkme::distributed_slice]` pattern for auto-registration:
+
+```rust
+// mcb-providers/src/new_service/mod.rs
+use linkme::distributed_slice;
+use mcb_application::ports::registry::new_service::NEW_SERVICE_REGISTRY;
+
+#[distributed_slice(NEW_SERVICE_REGISTRY)]
+pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
+    name: "concrete",
+    factory: |config| {
+        Box::pin(async move {
+            let service = ConcreteNewService::new(config).await?;
+            Ok(Arc::new(service) as Arc<dyn NewServiceProvider>)
+        })
+    },
+};
+```
+
+**Guidelines:**
+- Define registry slice in `mcb-application/src/ports/registry/`
+- Register all implementations in provider module
+- Use async factory for initialization
+- Return `Arc<dyn Trait>` from factory
+
+This pattern enables compile-time provider discovery with zero runtime overhead while maintaining Clean Architecture boundaries.
+
 ### Two-Layer DI Strategy
 
 The dependency injection system uses a **two-layer approach** documented in [ADR-012: Two-Layer DI Strategy](../adr/012-di-strategy-two-layer-approach.md):

@@ -280,7 +280,7 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
 
                 while let Some(next) = chars.next() {
                     string.push(next);
-                    if next == quote && !string.ends_with("\\") {
+                    if next == quote && !string.ends_with('\\') {
                         break;
                     }
                     if next == '\n' {

@@ -3,8 +3,11 @@
 //! These tests verify that:
 //! - Tree-sitter parsers can parse multiple languages
 //! - AST queries can match patterns in code
-//! - AstQuery can detect violations like .unwrap() usage
+//! - `AstQuery` can detect violations like .`unwrap()` usage
 //! - The unified AST format works correctly
+
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::similar_names)]
 
 use mcb_validate::ast::languages::{
     GoParser, JavaScriptParser, PythonParser, RustParser, TypeScriptParser,
@@ -122,7 +125,7 @@ fn risky_function() {
 #[test]
 fn test_rust_parser_struct() {
     let mut parser = RustParser::new();
-    let code = r#"
+    let code = r"
 pub struct MyService {
     name: String,
     value: i32,
@@ -136,7 +139,7 @@ impl MyService {
         }
     }
 }
-"#;
+";
 
     let result = parser
         .parse_content(code, "test.rs")
@@ -165,7 +168,7 @@ def hello_world():
 #[test]
 fn test_python_parser_class() {
     let mut parser = PythonParser::new();
-    let code = r#"
+    let code = r"
 class MyService:
     def __init__(self, name: str):
         self.name = name
@@ -173,7 +176,7 @@ class MyService:
 
     def get_name(self) -> str:
         return self.name
-"#;
+";
 
     let result = parser
         .parse_content(code, "test.py")
@@ -203,12 +206,12 @@ function helloWorld() {
 #[test]
 fn test_javascript_parser_arrow_function() {
     let mut parser = JavaScriptParser::new();
-    let code = r#"
+    let code = r"
 const add = (a, b) => a + b;
 const multiply = (a, b) => {
     return a * b;
 };
-"#;
+";
 
     let result = parser
         .parse_content(code, "test.js")
@@ -222,7 +225,7 @@ const multiply = (a, b) => {
 #[test]
 fn test_typescript_parser_typed_function() {
     let mut parser = TypeScriptParser::new();
-    let code = r#"
+    let code = r"
 function greet(name: string): string {
     return `Hello, ${name}!`;
 }
@@ -231,7 +234,7 @@ interface Person {
     name: string;
     age: number;
 }
-"#;
+";
 
     let result = parser
         .parse_content(code, "test.ts")
@@ -532,14 +535,14 @@ fn test_go_query_patterns() {
 #[test]
 fn test_parse_and_query_rust_code() {
     let mut parser = RustParser::new();
-    let code = r#"
+    let code = r"
 fn documented_function() {
     // This is documented
 }
 
 fn undocumented() {
 }
-"#;
+";
 
     let result = parser.parse_content(code, "test.rs").expect("Should parse");
     assert_eq!(result.root.kind, "source_file");

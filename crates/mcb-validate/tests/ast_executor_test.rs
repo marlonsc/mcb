@@ -2,6 +2,9 @@
 //!
 //! Integration tests for YAML rule → Tree-sitter → violations pipeline.
 
+#![allow(clippy::similar_names)]
+#![allow(clippy::items_after_statements)]
+
 #[cfg(test)]
 mod ast_executor_tests {
     use mcb_validate::ast::AstQueryExecutor;
@@ -37,14 +40,14 @@ mod ast_executor_tests {
         // Create a Rust file with unwrap calls
         std::fs::write(
             &rust_file,
-            r#"
+            r"
 fn main() {
     let x: Option<i32> = Some(42);
     let y = x.unwrap();  // This should be detected
 
     let z = Some(1).unwrap();  // This should be detected too
 }
-"#,
+",
         )
         .unwrap();
 
@@ -234,9 +237,9 @@ class MyClass:
 
         std::fs::write(
             &rust_file,
-            r#"fn main() {
+            r"fn main() {
     let x = Some(1).unwrap();
-}"#,
+}",
         )
         .unwrap();
 

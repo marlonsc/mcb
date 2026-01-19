@@ -11,14 +11,14 @@
 
 #[cfg(test)]
 mod full_integration_tests {
+    use mcb_validate::ValidationConfig;
+    use mcb_validate::ValidatorRegistry;
     use mcb_validate::generic_reporter::{GenericReport, GenericReporter, GenericSummary};
     use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
-    use mcb_validate::ValidatorRegistry;
-    use mcb_validate::ValidationConfig;
     use std::collections::HashMap;
     use std::fs;
     use std::io::Write;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
     use tempfile::TempDir;
 
     fn create_test_workspace(dir: &TempDir) -> PathBuf {
@@ -54,7 +54,7 @@ members = [
         root
     }
 
-    fn write_file(root: &PathBuf, relative_path: &str, content: &str) -> PathBuf {
+    fn write_file(root: &Path, relative_path: &str, content: &str) -> PathBuf {
         let path = root.join(relative_path);
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).unwrap();
@@ -64,7 +64,7 @@ members = [
         path
     }
 
-    /// Test ValidationConfig creation and paths
+    /// Test `ValidationConfig` creation and paths
     #[test]
     fn test_validation_config() {
         let dir = TempDir::new().unwrap();
@@ -77,32 +77,46 @@ members = [
         assert!(config.exclude_patterns.is_empty());
     }
 
-    /// Test ValidatorRegistry with multiple validators
+    /// Test `ValidatorRegistry` with multiple validators
     #[test]
     fn test_validator_registry() {
         let dir = TempDir::new().unwrap();
         let root = create_test_workspace(&dir);
 
-        let _config = ValidationConfig::new(&root);
-        let registry = ValidatorRegistry::new();
+        let config = ValidationConfig::new(&root);
 
-        // Registry should have available validators
-        let validators = registry.list_validators();
-        assert!(!validators.is_empty(), "Registry should have validators");
+        // Registry starts empty and validators are registered explicitly
+        let mut registry = ValidatorRegistry::new();
+        assert!(
+            registry.validators().is_empty(),
+            "New registry should be empty"
+        );
+
+        // Register the clean architecture validator
+        let validator = mcb_validate::clean_architecture::CleanArchitectureValidator::new(&root);
+        registry.register(Box::new(validator));
+
+        // Now registry should have one validator
+        let validators = registry.validators();
+        assert_eq!(validators.len(), 1, "Registry should have one validator");
+
+        // Can run validation on the registry
+        let result = registry.validate_all(&config);
+        assert!(result.is_ok(), "Validation should succeed");
     }
 
-    /// Test GenericReporter generates report from violations
+    /// Test `GenericReporter` generates report from violations
     #[test]
     fn test_generic_reporter() {
         let dir = TempDir::new().unwrap();
         let root = create_test_workspace(&dir);
 
         // Create some code with potential issues
-        let code_with_unwrap = r#"
+        let code_with_unwrap = r"
 pub fn risky_function(data: Option<String>) -> String {
     data.unwrap()  // This should be flagged
 }
-"#;
+";
         write_file(&root, "crates/mcb-domain/src/lib.rs", code_with_unwrap);
 
         // GenericReporter creates reports from violations list
@@ -122,7 +136,9 @@ pub fn risky_function(data: Option<String>) -> String {
             total_violations: 5,
             errors: 2,
             warnings: 3,
-            info: 0,
+            infos: 0,
+            by_category: HashMap::new(),
+            passed: false,
         };
 
         let report = GenericReport {
@@ -135,6 +151,7 @@ pub fn risky_function(data: Option<String>) -> String {
         assert_eq!(report.summary.total_violations, 5);
         assert_eq!(report.summary.errors, 2);
         assert_eq!(report.summary.warnings, 3);
+        assert!(!report.summary.passed);
     }
 
     /// Test full validation flow with clean code
@@ -216,6 +233,7 @@ mod tests {
 
         // Clean code should produce no violations
         assert_eq!(report.summary.total_violations, 0);
+        assert!(report.summary.passed);
     }
 
     /// Test validation with multiple violation types
@@ -253,11 +271,7 @@ impl MutableValueObject {
     }
 }
 "#;
-        write_file(
-            &root,
-            "crates/mcb-domain/src/lib.rs",
-            problematic_code,
-        );
+        write_file(&root, "crates/mcb-domain/src/lib.rs", problematic_code);
 
         let _config = ValidationConfig::new(&root);
 
@@ -268,10 +282,7 @@ impl MutableValueObject {
 
         // Should have valid report structure
         assert!(!report.timestamp.is_empty());
-        eprintln!(
-            "Report: {} violations",
-            report.summary.total_violations
-        );
+        eprintln!("Report: {} violations", report.summary.total_violations);
     }
 
     /// Test JSON serialization of report
@@ -281,7 +292,9 @@ impl MutableValueObject {
             total_violations: 2,
             errors: 1,
             warnings: 1,
-            info: 0,
+            infos: 0,
+            by_category: HashMap::new(),
+            passed: false,
         };
 
         let mut violations_by_category = HashMap::new();
@@ -325,42 +338,44 @@ impl MutableValueObject {
         ];
 
         // Each category should have unique string representation
-        let strings: Vec<String> = categories.iter().map(|c| format!("{:?}", c)).collect();
+        let strings: Vec<String> = categories.iter().map(|c| format!("{c:?}")).collect();
         let unique: std::collections::HashSet<_> = strings.iter().collect();
-        assert_eq!(unique.len(), categories.len(), "Categories should be unique");
+        assert_eq!(
+            unique.len(),
+            categories.len(),
+            "Categories should be unique"
+        );
     }
 
     /// Test severity levels
     #[test]
     fn test_severity_levels() {
-        let severities = [
-            Severity::Error,
-            Severity::Warning,
-            Severity::Info,
-        ];
+        let severities = [Severity::Error, Severity::Warning, Severity::Info];
 
         // Each severity should have unique representation
-        let strings: Vec<String> = severities.iter().map(|s| format!("{:?}", s)).collect();
+        let strings: Vec<String> = severities.iter().map(|s| format!("{s:?}")).collect();
         let unique: std::collections::HashSet<_> = strings.iter().collect();
-        assert_eq!(unique.len(), severities.len(), "Severities should be unique");
+        assert_eq!(
+            unique.len(),
+            severities.len(),
+            "Severities should be unique"
+        );
     }
 
     /// Test with actual workspace (integration with real codebase)
     #[test]
     fn test_with_real_workspace() {
         // Find the actual workspace root
-        let workspace_root = std::env::current_dir()
-            .ok()
-            .and_then(|p| {
-                let mut current = p;
-                for _ in 0..5 {
-                    if current.join("Cargo.toml").exists() && current.join("crates").exists() {
-                        return Some(current);
-                    }
-                    current = current.parent()?.to_path_buf();
+        let workspace_root = std::env::current_dir().ok().and_then(|p| {
+            let mut current = p;
+            for _ in 0..5 {
+                if current.join("Cargo.toml").exists() && current.join("crates").exists() {
+                    return Some(current);
                 }
-                None
-            });
+                current = current.parent()?.to_path_buf();
+            }
+            None
+        });
 
         if let Some(root) = workspace_root {
             let config = ValidationConfig::new(&root);
@@ -426,33 +441,37 @@ impl MutableValueObject {
         }
     }
 
-    /// Test ValidatorRegistry lists validators
+    /// Test `ValidatorRegistry` lists validators
     #[test]
     fn test_registry_lists_validators() {
         let registry = ValidatorRegistry::new();
-        let validators = registry.list_validators();
+        let validators = registry.validators();
 
         // Verify we have at least some validators
-        eprintln!("Available validators: {:?}", validators);
+        eprintln!("Available validators: {} registered", validators.len());
 
-        // Registry should always exist (even if empty)
-        assert!(validators.len() >= 0);
+        // Registry should always return a valid slice (even if empty)
+        // Just verify the registry was created and validators() works
+        let _ = validators;
     }
 
-    /// Test GenericSummary calculations
+    /// Test `GenericSummary` calculations
     #[test]
     fn test_summary_calculations() {
         let summary = GenericSummary {
             total_violations: 10,
             errors: 3,
             warnings: 5,
-            info: 2,
+            infos: 2,
+            by_category: HashMap::new(),
+            passed: false,
         };
 
         // Verify totals add up
         assert_eq!(
-            summary.errors + summary.warnings + summary.info,
+            summary.errors + summary.warnings + summary.infos,
             summary.total_violations
         );
+        assert!(!summary.passed);
     }
 }

@@ -227,7 +227,7 @@ impl TokenFingerprinter {
     /// Get statistics about stored fingerprints
     pub fn stats(&self) -> FingerprintStats {
         let total_fingerprints = self.fingerprint_map.len();
-        let total_locations: usize = self.fingerprint_map.values().map(|v| v.len()).sum();
+        let total_locations: usize = self.fingerprint_map.values().map(std::vec::Vec::len).sum();
         let duplicates: usize = self
             .fingerprint_map
             .values()

@@ -16,7 +16,7 @@ mod architecture_rules_tests {
             .to_path_buf();
         let rules_dir = workspace_root.join("crates/mcb-validate/rules");
 
-        println!("Rules directory: {:?}", rules_dir);
+        println!("Rules directory: {rules_dir:?}");
         println!("Rules directory exists: {}", rules_dir.exists());
 
         if rules_dir.exists() {
@@ -53,7 +53,7 @@ mod architecture_rules_tests {
                 panic!("CA001 rule should be loaded");
             }
         } else {
-            panic!("Rules directory does not exist: {:?}", rules_dir);
+            panic!("Rules directory does not exist: {rules_dir:?}");
         }
     }
 }

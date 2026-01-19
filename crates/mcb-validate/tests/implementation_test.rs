@@ -14,13 +14,13 @@ fn test_empty_method_detection() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub struct MyService;
 
 impl MyService {
     pub fn do_nothing(&self) -> Result<(), Error> { Ok(()) }
 }
-"#,
+",
     );
 
     let validator = ImplementationQualityValidator::new(temp.path());
@@ -62,7 +62,7 @@ fn test_empty_catchall_detection() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub fn handle_event(&self, event: Event) {
     match event {
         Event::Created => handle_created(),
@@ -70,7 +70,7 @@ pub fn handle_event(&self, event: Event) {
         _ => {}
     }
 }
-"#,
+",
     );
 
     let validator = ImplementationQualityValidator::new(temp.path());
@@ -91,11 +91,11 @@ fn test_null_provider_exempt() {
     fs::create_dir_all(&crate_dir).unwrap();
     fs::write(
         crate_dir.join("null.rs"),
-        r#"
+        r"
 pub fn do_nothing(&self) -> Result<(), Error> {
     Ok(())
 }
-"#,
+",
     )
     .unwrap();
 

@@ -133,7 +133,7 @@ impl YamlRuleLoader {
         // Check if this is a template
         if yaml_value
             .get("_base")
-            .and_then(|v| v.as_bool())
+            .and_then(serde_yaml::Value::as_bool)
             .unwrap_or(false)
         {
             // This is a template, skip it
@@ -212,7 +212,10 @@ impl YamlRuleLoader {
             .unwrap_or("warning")
             .to_string();
 
-        let enabled = obj.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
+        let enabled = obj
+            .get("enabled")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(true);
 
         let description = obj
             .get("description")
@@ -254,7 +257,7 @@ impl YamlRuleLoader {
                                 pattern: fix_obj
                                     .get("pattern")
                                     .and_then(|v| v.as_str())
-                                    .map(|s| s.to_string()),
+                                    .map(std::string::ToString::to_string),
                                 message: fix_obj.get("message")?.as_str()?.to_string(),
                             })
                         } else {
@@ -271,7 +274,7 @@ impl YamlRuleLoader {
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
-                    .filter_map(|code| code.as_str().map(|s| s.to_string()))
+                    .filter_map(|code| code.as_str().map(std::string::ToString::to_string))
                     .collect()
             })
             .unwrap_or_default();
@@ -280,7 +283,7 @@ impl YamlRuleLoader {
         let message = obj
             .get("message")
             .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
+            .map(std::string::ToString::to_string);
 
         // Extract AST selectors (Phase 2)
         let selectors = obj
@@ -296,7 +299,7 @@ impl YamlRuleLoader {
                                 pattern: sel_obj
                                     .get("pattern")
                                     .and_then(|v| v.as_str())
-                                    .map(|s| s.to_string()),
+                                    .map(std::string::ToString::to_string),
                             })
                         } else {
                             None
@@ -310,7 +313,7 @@ impl YamlRuleLoader {
         let ast_query = obj
             .get("ast_query")
             .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
+            .map(std::string::ToString::to_string);
 
         // Extract metrics configuration (Phase 4 - rule/v3)
         let metrics = obj

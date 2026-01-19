@@ -264,7 +264,7 @@ impl AsyncPatternValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 // Skip test files
@@ -350,7 +350,7 @@ impl AsyncPatternValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 // Skip test files
@@ -451,7 +451,7 @@ impl AsyncPatternValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 // Skip test files
@@ -539,7 +539,7 @@ impl AsyncPatternValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 // Skip test files
@@ -571,8 +571,7 @@ impl AsyncPatternValidator {
 
                     // Track current function name
                     if let Some(cap) = fn_pattern.captures(line) {
-                        current_fn_name =
-                            cap.get(1).map(|m| m.as_str()).unwrap_or("").to_lowercase();
+                        current_fn_name = cap.get(1).map_or("", |m| m.as_str()).to_lowercase();
                     }
 
                     // Check for unassigned spawn

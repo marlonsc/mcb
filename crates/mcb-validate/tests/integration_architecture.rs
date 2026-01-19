@@ -1,6 +1,6 @@
 //! Integration tests for Phase 6: Architecture Validation
 //!
-//! Tests the CleanArchitectureValidator which validates:
+//! Tests the `CleanArchitectureValidator` which validates:
 //! - Layer boundaries (server should not import providers directly)
 //! - Handler DI patterns (no direct service creation)
 //! - Entity identity fields
@@ -27,7 +27,7 @@ mod architecture_integration_tests {
     use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
     use std::fs;
     use std::io::Write;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
     use tempfile::TempDir;
 
     fn create_workspace_structure(dir: &TempDir) -> PathBuf {
@@ -48,7 +48,7 @@ mod architecture_integration_tests {
         root
     }
 
-    fn write_file(root: &PathBuf, relative_path: &str, content: &str) -> PathBuf {
+    fn write_file(root: &Path, relative_path: &str, content: &str) -> PathBuf {
         let path = root.join(relative_path);
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).unwrap();
@@ -76,7 +76,7 @@ mod architecture_integration_tests {
         let root = create_workspace_structure(&dir);
 
         // Create clean domain entity with identity
-        let entity_code = r#"
+        let entity_code = r"
 use uuid::Uuid;
 
 pub struct User {
@@ -94,11 +94,11 @@ impl User {
         }
     }
 }
-"#;
+";
         write_file(&root, "crates/mcb-domain/src/entities/user.rs", entity_code);
 
         // Create clean value object (immutable)
-        let vo_code = r#"
+        let vo_code = r"
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Email(String);
 
@@ -115,7 +115,7 @@ impl Email {
         &self.0
     }
 }
-"#;
+";
         write_file(
             &root,
             "crates/mcb-domain/src/value_objects/email.rs",
@@ -128,8 +128,7 @@ impl Email {
         // Clean code should produce no violations
         assert!(
             violations.is_empty(),
-            "Clean code should produce no violations, got: {:?}",
-            violations
+            "Clean code should produce no violations, got: {violations:?}"
         );
     }
 
@@ -192,7 +191,7 @@ impl SearchHandler {
         let root = create_workspace_structure(&dir);
 
         // Create entity without id field (violation)
-        let entity_code = r#"
+        let entity_code = r"
 pub struct Product {
     pub name: String,
     pub price: f64,
@@ -208,7 +207,7 @@ impl Product {
         }
     }
 }
-"#;
+";
         write_file(
             &root,
             "crates/mcb-domain/src/entities/product.rs",
@@ -239,7 +238,7 @@ impl Product {
         let root = create_workspace_structure(&dir);
 
         // Create value object with mutable method (violation)
-        let vo_code = r#"
+        let vo_code = r"
 pub struct Money {
     amount: f64,
     currency: String,
@@ -268,7 +267,7 @@ impl Money {
         }
     }
 }
-"#;
+";
         write_file(
             &root,
             "crates/mcb-domain/src/value_objects/money.rs",
@@ -299,7 +298,7 @@ impl Money {
         let root = create_workspace_structure(&dir);
 
         // Create server file importing provider directly (violation)
-        let server_code = r#"
+        let server_code = r"
 // Wrong: importing directly from providers
 use mcb_providers::embedding::OllamaEmbeddingProvider;
 use mcb_providers::vector_store::MilvusVectorStore;
@@ -317,7 +316,7 @@ impl Server {
         }
     }
 }
-"#;
+";
         write_file(&root, "crates/mcb-server/src/lib.rs", server_code);
 
         let validator = CleanArchitectureValidator::new(&root);
@@ -374,14 +373,15 @@ impl Server {
         );
 
         // Test Display
-        let display = format!("{}", violation);
+        let display = format!("{violation}");
         assert!(display.contains("SearchService"));
     }
 
     /// Test all violation IDs are correct
     #[test]
     fn test_violation_ids() {
-        let violations = [CleanArchitectureViolation::DomainContainsImplementation {
+        let violations = [
+            CleanArchitectureViolation::DomainContainsImplementation {
                 file: PathBuf::new(),
                 line: 1,
                 impl_type: "struct".to_string(),
@@ -391,7 +391,7 @@ impl Server {
                 file: PathBuf::new(),
                 line: 1,
                 service_name: "Svc".to_string(),
-                context: "".to_string(),
+                context: String::new(),
                 severity: Severity::Warning,
             },
             CleanArchitectureViolation::PortMissingComponentDerive {
@@ -419,7 +419,8 @@ impl Server {
                 line: 1,
                 import_path: "mcb_providers::x".to_string(),
                 severity: Severity::Warning,
-            }];
+            },
+        ];
 
         let expected_ids = ["CA001", "CA002", "CA003", "CA004", "CA005", "CA006"];
 

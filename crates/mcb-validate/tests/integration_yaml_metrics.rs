@@ -1,6 +1,6 @@
 //! Integration tests for YAML Metrics Rules (Phase 4)
 //!
-//! Tests the full pipeline: YAML rule → MetricsConfig → MetricsAnalyzer → violations
+//! Tests the full pipeline: YAML rule → `MetricsConfig` → `MetricsAnalyzer` → violations
 
 #[cfg(test)]
 mod yaml_metrics_tests {
@@ -10,7 +10,7 @@ mod yaml_metrics_tests {
     use std::path::Path;
     use tempfile::TempDir;
 
-    /// Test that MetricsConfig can be converted to MetricThresholds
+    /// Test that `MetricsConfig` can be converted to `MetricThresholds`
     #[test]
     fn test_metrics_config_to_thresholds() {
         let config = MetricsConfig {
@@ -53,7 +53,7 @@ mod yaml_metrics_tests {
         );
     }
 
-    /// Test analyzing code with thresholds from MetricsConfig
+    /// Test analyzing code with thresholds from `MetricsConfig`
     #[test]
     fn test_analyze_with_metrics_config() {
         let config = MetricsConfig {
@@ -70,7 +70,7 @@ mod yaml_metrics_tests {
         let thresholds = MetricThresholds::from_metrics_config(&config);
         let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
 
-        let content = r#"
+        let content = r"
 fn complex(x: i32) -> i32 {
     if x > 0 {
         if x > 10 {
@@ -81,7 +81,7 @@ fn complex(x: i32) -> i32 {
     }
     x
 }
-"#;
+";
 
         let violations = analyzer
             .analyze_rust_content(content, Path::new("test.rs"))
@@ -145,7 +145,7 @@ metrics:
         assert_eq!(nd.max, 3);
     }
 
-    /// Test full pipeline: YAML rule → MetricThresholds → MetricsAnalyzer → violations
+    /// Test full pipeline: YAML rule → `MetricThresholds` → `MetricsAnalyzer` → violations
     #[tokio::test]
     async fn test_full_yaml_metrics_pipeline() {
         let temp_dir = TempDir::new().unwrap();

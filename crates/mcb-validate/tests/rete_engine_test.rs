@@ -92,8 +92,7 @@ rule "TestRule" salience 10 {
             }
             _ => {
                 panic!(
-                    "Rule did NOT modify the fact! result_value should be Boolean(true) but got: {:?}",
-                    result_value
+                    "Rule did NOT modify the fact! result_value should be Boolean(true) but got: {result_value:?}"
                 );
             }
         }
@@ -157,7 +156,7 @@ rule "DomainIndependence" salience 10 {
                 // SUCCESS - violation detected (as expected)
             }
             other => {
-                panic!("CA001 did not trigger violation! Got: {:?}", other);
+                panic!("CA001 did not trigger violation! Got: {other:?}");
             }
         }
 
@@ -189,7 +188,7 @@ rule "DomainIndependence" salience 10 {
                 // SUCCESS - no violation (as expected)
             }
             other => {
-                panic!("CA001 incorrectly triggered violation! Got: {:?}", other);
+                panic!("CA001 incorrectly triggered violation! Got: {other:?}");
             }
         }
     }

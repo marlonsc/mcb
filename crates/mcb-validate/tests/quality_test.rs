@@ -35,12 +35,12 @@ fn test_todo_detection() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub fn incomplete() {
     // TODO: implement this properly
     // FIXME: this is broken
 }
-"#,
+",
     );
 
     let validator = QualityValidator::new(temp.path());
@@ -58,7 +58,7 @@ fn test_test_code_exempt() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 #[cfg(test)]
 mod tests {
     #[test]
@@ -66,7 +66,7 @@ mod tests {
         let value = some_option().unwrap();
     }
 }
-"#,
+",
     );
 
     let validator = QualityValidator::new(temp.path());

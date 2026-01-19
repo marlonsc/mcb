@@ -51,10 +51,10 @@ fn test_validate_workspace_quality() {
         .collect();
 
     for v in &errors {
-        println!("  [ERROR] {}", v);
+        println!("  [ERROR] {v}");
     }
     for v in &warnings {
-        println!("  [WARNING] {}", v);
+        println!("  [WARNING] {v}");
     }
     println!(
         "Total: {} errors, {} warnings\n",
@@ -67,7 +67,7 @@ fn test_validate_workspace_quality() {
     if !errors.is_empty() {
         println!("\nProduction code contains unwrap/expect/panic!");
         for e in &errors {
-            println!("  - {}", e);
+            println!("  - {e}");
         }
     }
 }
@@ -184,8 +184,7 @@ fn test_full_validation_report() {
         legacy_report.summary.total_violations + yaml_report.summary.total_violations;
 
     println!(
-        "Summary: {} errors, {} warnings, {} total violations",
-        total_errors, total_warnings, total_violations
+        "Summary: {total_errors} errors, {total_warnings} warnings, {total_violations} total violations"
     );
 
     // The validation should complete without panicking
@@ -257,7 +256,7 @@ fn test_legacy_only() {
         .quality_violations
         .iter()
         .filter(|v| {
-            let display = format!("{}", v);
+            let display = format!("{v}");
             display.contains("src.legacy") && !display.contains("/crates/")
         })
         .collect();

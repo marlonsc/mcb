@@ -203,7 +203,7 @@ impl DependencyValidator {
         for (crate_name, deps) in ALLOWED_DEPS {
             allowed_deps.insert(
                 crate_name.to_string(),
-                deps.iter().map(|s| s.to_string()).collect(),
+                deps.iter().map(std::string::ToString::to_string).collect(),
             );
         }
         Self {
@@ -283,7 +283,7 @@ impl DependencyValidator {
 
             for entry in WalkDir::new(&crate_src)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -301,7 +301,7 @@ impl DependencyValidator {
                     }
 
                     for cap in use_pattern.captures_iter(line) {
-                        let used_crate = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let used_crate = cap.get(1).map_or("", |m| m.as_str());
                         let used_crate_kebab = used_crate.replace('_', "-");
 
                         // Skip self-references

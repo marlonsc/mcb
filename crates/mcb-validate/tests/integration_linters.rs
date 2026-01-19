@@ -3,8 +3,10 @@
 //! These tests verify that:
 //! - Ruff and Clippy can be executed
 //! - JSON output is correctly parsed
-//! - LintViolation structs are properly populated
-//! - lint_select codes are correctly categorized
+//! - `LintViolation` structs are properly populated
+//! - `lint_select` codes are correctly categorized
+
+#![allow(clippy::ignore_without_reason)]
 
 use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
 use mcb_validate::{ValidatedRule, YamlRuleLoader};
@@ -311,7 +313,7 @@ fn test_public_api_accessible() {
 
 /// Test real ruff execution against Python files
 ///
-/// Phase 1 deliverable: "cargo test integration_linters passes with real Clippy/Ruff output"
+/// Phase 1 deliverable: "cargo test `integration_linters` passes with real Clippy/Ruff output"
 #[test]
 #[ignore] // Requires ruff installed: pip install ruff
 fn test_ruff_real_execution() {
@@ -322,13 +324,13 @@ fn test_ruff_real_execution() {
     let test_file = temp_dir.path().join("test_file.py");
     std::fs::write(
         &test_file,
-        r#"import os  # F401: unused import
+        r"import os  # F401: unused import
 import sys  # F401: unused import
 
 def example():
     x = 1
     return x
-"#,
+",
     )
     .expect("Failed to write test file");
 
@@ -343,7 +345,7 @@ def example():
         .expect("Failed to execute ruff - is it installed? (pip install ruff)");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    println!("Ruff output: {}", stdout);
+    println!("Ruff output: {stdout}");
 
     // Parse the real output
     let violations = LinterType::Ruff.parse_output(&stdout);
@@ -367,8 +369,7 @@ def example():
     let f401_count = violations.iter().filter(|v| v.rule == "F401").count();
     assert!(
         f401_count >= 2,
-        "Expected at least 2 F401 violations, got {}",
-        f401_count
+        "Expected at least 2 F401 violations, got {f401_count}"
     );
 
     println!(
@@ -379,7 +380,7 @@ def example():
 
 /// Test real clippy execution against Rust code
 ///
-/// Phase 1 deliverable: "cargo test integration_linters passes with real Clippy/Ruff output"
+/// Phase 1 deliverable: "cargo test `integration_linters` passes with real Clippy/Ruff output"
 #[test]
 #[ignore] // Requires cargo clippy: rustup component add clippy
 fn test_clippy_real_execution() {
@@ -431,7 +432,7 @@ fn test_clippy_real_execution() {
     }
 }
 
-/// Test LinterEngine can execute linters and aggregate results
+/// Test `LinterEngine` can execute linters and aggregate results
 #[tokio::test]
 #[ignore] // Requires ruff installed
 async fn test_linter_engine_real_execution() {
@@ -440,12 +441,12 @@ async fn test_linter_engine_real_execution() {
     let test_file = temp_dir.path().join("violations.py");
     std::fs::write(
         &test_file,
-        r#"import os  # unused
+        r"import os  # unused
 import sys  # unused
 
 def foo():
     pass
-"#,
+",
     )
     .expect("Failed to write test file");
 
@@ -468,7 +469,7 @@ def foo():
             );
         }
         Err(e) => {
-            panic!("LinterEngine should execute successfully: {:?}", e);
+            panic!("LinterEngine should execute successfully: {e:?}");
         }
     }
 }
@@ -482,7 +483,7 @@ def foo():
 //
 // This is the Phase 1 deliverable: "Wire lint_select YAML field to actual linter execution"
 
-/// Helper to create a ValidatedRule for testing
+/// Helper to create a `ValidatedRule` for testing
 fn create_test_rule(
     id: &str,
     lint_select: Vec<String>,
@@ -491,7 +492,7 @@ fn create_test_rule(
 ) -> ValidatedRule {
     ValidatedRule {
         id: id.to_string(),
-        name: format!("Test rule {}", id),
+        name: format!("Test rule {id}"),
         category: category.to_string(),
         severity: "warning".to_string(),
         enabled,
@@ -509,7 +510,7 @@ fn create_test_rule(
     }
 }
 
-/// Test that YamlRuleExecutor correctly routes Ruff codes to Ruff linter
+/// Test that `YamlRuleExecutor` correctly routes Ruff codes to Ruff linter
 #[tokio::test]
 #[ignore] // Requires ruff installed
 async fn test_yaml_rule_executor_ruff_integration() {
@@ -518,12 +519,12 @@ async fn test_yaml_rule_executor_ruff_integration() {
     let test_file = temp_dir.path().join("unused_imports.py");
     std::fs::write(
         &test_file,
-        r#"import os  # F401: unused import
+        r"import os  # F401: unused import
 import sys  # F401: unused import
 
 def example():
     return 42
-"#,
+",
     )
     .expect("Failed to write test file");
 
@@ -576,7 +577,7 @@ async fn test_yaml_rule_executor_disabled_rule() {
     );
 }
 
-/// Test that rules with empty lint_select return no violations
+/// Test that rules with empty `lint_select` return no violations
 #[tokio::test]
 async fn test_yaml_rule_executor_empty_lint_select() {
     let rule = create_test_rule(
@@ -624,7 +625,7 @@ async fn test_yaml_rule_executor_clippy_code_detection() {
     println!("YamlRuleExecutor Clippy code detection: pipeline works");
 }
 
-/// Test filtering: only lint_select codes should appear in results
+/// Test filtering: only `lint_select` codes should appear in results
 #[tokio::test]
 #[ignore] // Requires ruff installed
 async fn test_yaml_rule_executor_filters_to_lint_select() {
@@ -633,7 +634,7 @@ async fn test_yaml_rule_executor_filters_to_lint_select() {
     let test_file = temp_dir.path().join("multi_violations.py");
     std::fs::write(
         &test_file,
-        r#"import os  # F401: unused
+        r"import os  # F401: unused
 import sys  # F401: unused
 
 x=1  # E225: missing whitespace
@@ -641,7 +642,7 @@ y=2  # E225: missing whitespace
 
 def f():
     pass
-"#,
+",
     )
     .expect("Failed to write test file");
 
@@ -718,8 +719,7 @@ async fn test_e2e_yaml_file_to_linter_violations() {
     // Verify rules directory exists
     assert!(
         rules_dir.exists(),
-        "Rules directory should exist at {:?}",
-        rules_dir
+        "Rules directory should exist at {rules_dir:?}"
     );
 
     // Load rules from YAML files using YamlRuleLoader
@@ -791,7 +791,7 @@ if __name__ == "__main__":
     );
 }
 
-/// END-TO-END TEST: Load no-unwrap.yml → verify Clippy lint_select
+/// END-TO-END TEST: Load no-unwrap.yml → verify Clippy `lint_select`
 ///
 /// This verifies that Clippy-based rules load correctly from YAML.
 /// Note: Actually running Clippy requires a Cargo project context.
@@ -834,7 +834,7 @@ async fn test_e2e_yaml_clippy_rule_loads() {
     );
 }
 
-/// Verify all YAML rules with lint_select load correctly
+/// Verify all YAML rules with `lint_select` load correctly
 #[tokio::test]
 async fn test_all_yaml_rules_with_lint_select_load() {
     let rules_dir = get_rules_dir();
@@ -866,9 +866,9 @@ async fn test_all_yaml_rules_with_lint_select_load() {
 ///
 /// This is the Phase 1 deliverable for Clippy integration:
 /// 1. Load QUAL001 (no-unwrap) rule from actual YAML file
-/// 2. Create a temporary Cargo project with .unwrap() calls
-/// 3. Execute YamlRuleExecutor (which runs cargo clippy)
-/// 4. Verify clippy::unwrap_used violations are returned
+/// 2. Create a temporary Cargo project with .`unwrap()` calls
+/// 3. Execute `YamlRuleExecutor` (which runs cargo clippy)
+/// 4. Verify `clippy::unwrap_used` violations are returned
 #[tokio::test]
 #[ignore] // Requires cargo clippy: rustup component add clippy
 async fn test_e2e_yaml_clippy_rule_execution() {

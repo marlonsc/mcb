@@ -12,7 +12,7 @@ fn test_large_trait_detection() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub trait TooManyMethods {
     fn method1(&self);
     fn method2(&self);
@@ -27,7 +27,7 @@ pub trait TooManyMethods {
     fn method11(&self);
     fn method12(&self);
 }
-"#,
+",
     );
 
     let validator = SolidValidator::new(temp.path());

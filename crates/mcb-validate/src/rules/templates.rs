@@ -64,15 +64,14 @@ impl TemplateEngine {
                 // Verify this is actually a template
                 if template
                     .get("_base")
-                    .and_then(|v| v.as_bool())
+                    .and_then(serde_yaml::Value::as_bool)
                     .unwrap_or(false)
                 {
                     // Use the 'name' field from template YAML if present, otherwise use filename
-                    let registry_name = template
-                        .get("name")
-                        .and_then(|v| v.as_str())
-                        .map(|s| s.to_string())
-                        .unwrap_or_else(|| template_name.to_string());
+                    let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
+                        || template_name.to_string(),
+                        std::string::ToString::to_string,
+                    );
                     self.templates.insert(registry_name, template);
                 }
             }
@@ -190,7 +189,7 @@ impl TemplateEngine {
                     let strings: Vec<String> = seq
                         .iter()
                         .filter_map(|v| v.as_str())
-                        .map(|s| s.to_string())
+                        .map(std::string::ToString::to_string)
                         .collect();
                     Ok(strings.join(","))
                 }

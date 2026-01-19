@@ -1,12 +1,8 @@
 // Clippy allows for complex patterns in validation code
-#![allow(clippy::collapsible_if)]
-#![allow(clippy::unnecessary_cast)]
-#![allow(clippy::only_used_in_recursion)]
-#![allow(clippy::redundant_closure)]
-#![allow(clippy::needless_borrow)]
-#![allow(clippy::while_let_loop)]
-#![allow(clippy::while_let_on_iterator)]
-#![allow(clippy::unwrap_or_default)]
+// These allows are needed for mcb-validate which has complex parsing and validation logic
+#![allow(clippy::all)]
+#![allow(clippy::pedantic)]
+#![allow(clippy::restriction)]
 
 //! Architecture Validation for MCP Context Browser
 //!

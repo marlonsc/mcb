@@ -219,7 +219,10 @@ impl LayerFlowValidator {
             let forbidden_deps = &self.rules.forbidden[crate_name];
             let crate_name_underscored = crate_name.replace('-', "_");
 
-            for entry in WalkDir::new(&crate_dir).into_iter().filter_map(|e| e.ok()) {
+            for entry in WalkDir::new(&crate_dir)
+                .into_iter()
+                .filter_map(std::result::Result::ok)
+            {
                 let path = entry.path();
                 if path.extension().is_none_or(|e| e != "rs") {
                     continue;
@@ -233,7 +236,7 @@ impl LayerFlowValidator {
                     }
 
                     for captures in import_pattern.captures_iter(line) {
-                        let imported_crate = captures.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let imported_crate = captures.get(1).map_or("", |m| m.as_str());
                         let imported_crate_dashed = imported_crate.replace('_', "-");
                         if imported_crate == crate_name_underscored {
                             continue;

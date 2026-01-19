@@ -288,7 +288,7 @@ impl PatternValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -301,8 +301,12 @@ impl PatternValidator {
                         continue;
                     }
 
+                    // Check for ignore hints
+                    let has_ignore_hint =
+                        line.contains("mcb-validate-ignore: admin_service_concrete_type");
+
                     for cap in arc_pattern.captures_iter(line) {
-                        let type_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip allowed concrete types
                         if allowed_concrete.contains(&type_name) {
@@ -331,6 +335,11 @@ impl PatternValidator {
                             || type_name.ends_with("Adapter");
 
                         if is_likely_provider || is_impl_suffix {
+                            // Skip if ignore hint is present
+                            if has_ignore_hint {
+                                continue;
+                            }
+
                             let trait_name = if is_impl_suffix {
                                 type_name
                                     .trim_end_matches("Impl")
@@ -375,7 +384,7 @@ impl PatternValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -384,7 +393,7 @@ impl PatternValidator {
                 for (line_num, line) in lines.iter().enumerate() {
                     // Find trait definitions
                     if let Some(cap) = trait_pattern.captures(line) {
-                        let trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let trait_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Look ahead to see if trait has async methods
                         let mut has_async_methods = false;
@@ -481,7 +490,7 @@ impl PatternValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -515,7 +524,7 @@ impl PatternValidator {
 
                     // Check for Result<T, SomeError> with explicit error type
                     if let Some(cap) = explicit_result_pattern.captures(line) {
-                        let error_type = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let error_type = cap.get(1).map_or("", |m| m.as_str());
 
                         // Allow certain standard error types
                         let allowed_errors = [

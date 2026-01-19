@@ -28,10 +28,9 @@ fn create_crate_structure(temp: &TempDir, crate_name: &str, path: &str, content:
             cargo_path,
             format!(
                 r#"[package]
-name = "{}"
+name = "{crate_name}"
 version = "0.1.1"
-"#,
-                crate_name
+"#
             ),
         )
         .unwrap();
@@ -69,11 +68,11 @@ fn test_missing_error_type() {
         &temp,
         "mcb-test",
         "lib.rs",
-        r#"
+        r"
 pub fn might_fail() -> Result<(), String> {
     Ok(())
 }
-"#,
+",
     );
 
     let validator = ErrorBoundaryValidator::new(temp.path());

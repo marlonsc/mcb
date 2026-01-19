@@ -1,6 +1,6 @@
 //! Integration tests for Phase 5: Duplication Detection
 //!
-//! Tests the DuplicationAnalyzer which detects code clones using
+//! Tests the `DuplicationAnalyzer` which detects code clones using
 //! a hybrid approach of token fingerprinting and AST similarity.
 //!
 //! ## Clone Types Tested
@@ -33,13 +33,13 @@ mod duplication_integration_tests {
     /// Test that tokenizer correctly extracts tokens from Rust code
     #[test]
     fn test_tokenize_rust_code() {
-        let code = r#"fn calculate_sum(numbers: &[i32]) -> i32 {
+        let code = r"fn calculate_sum(numbers: &[i32]) -> i32 {
     let mut sum = 0;
     for num in numbers {
         sum += num;
     }
     sum
-}"#;
+}";
 
         let tokens = tokenize_source(code, "rust");
 
@@ -69,21 +69,21 @@ mod duplication_integration_tests {
     /// Test fingerprinting identifies duplicate token sequences
     #[test]
     fn test_fingerprinter_finds_duplicates() {
-        let code1 = r#"fn process_data(items: &[i32]) -> i32 {
+        let code1 = r"fn process_data(items: &[i32]) -> i32 {
     let mut total = 0;
     for item in items {
         total += item;
     }
     total
-}"#;
+}";
 
-        let code2 = r#"fn process_data(items: &[i32]) -> i32 {
+        let code2 = r"fn process_data(items: &[i32]) -> i32 {
     let mut total = 0;
     for item in items {
         total += item;
     }
     total
-}"#;
+}";
 
         let tokens1 = tokenize_source(code1, "rust");
         let tokens2 = tokenize_source(code2, "rust");
@@ -109,13 +109,13 @@ mod duplication_integration_tests {
         );
     }
 
-    /// Test DuplicationAnalyzer detects exact clones across files
+    /// Test `DuplicationAnalyzer` detects exact clones across files
     #[test]
     fn test_analyzer_detects_exact_clones() {
         let dir = TempDir::new().unwrap();
 
         // Create two files with identical function
-        let duplicated_code = r#"
+        let duplicated_code = r"
 fn calculate_average(numbers: &[f64]) -> f64 {
     if numbers.is_empty() {
         return 0.0;
@@ -123,17 +123,17 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     let sum: f64 = numbers.iter().sum();
     sum / numbers.len() as f64
 }
-"#;
+";
 
         let file1 = create_temp_file(
             &dir,
             "math_utils.rs",
-            &format!("// Math utilities\n{}", duplicated_code),
+            &format!("// Math utilities\n{duplicated_code}"),
         );
         let file2 = create_temp_file(
             &dir,
             "statistics.rs",
-            &format!("// Statistics helpers\n{}", duplicated_code),
+            &format!("// Statistics helpers\n{duplicated_code}"),
         );
 
         // Configure with low thresholds for test
@@ -290,7 +290,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
         assert_eq!(violation.category(), ViolationCategory::Quality);
 
         // Test Display
-        let display = format!("{}", violation);
+        let display = format!("{violation}");
         assert!(display.contains("src/utils.rs"));
         assert!(display.contains("42"));
         assert!(display.contains("src/helpers.rs"));
@@ -328,13 +328,13 @@ fn calculate_average(numbers: &[f64]) -> f64 {
         let dir = TempDir::new().unwrap();
 
         // Create duplicate code
-        let code = r#"fn duplicated_function(x: i32) -> i32 {
+        let code = r"fn duplicated_function(x: i32) -> i32 {
     let mut result = 0;
     for i in 0..x {
         result += i;
     }
     result
-}"#;
+}";
 
         // Create files - one in excluded "tests" directory
         let tests_dir = dir.path().join("tests");
@@ -397,14 +397,14 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     fn test_comment_only_files() {
         let dir = TempDir::new().unwrap();
 
-        let comments = r#"
+        let comments = r"
 // This is a file with only comments
 // No actual code here
 /*
  * Multi-line comment
  * Also no code
  */
-"#;
+";
 
         let file1 = create_temp_file(&dir, "comments1.rs", comments);
         let file2 = create_temp_file(&dir, "comments2.rs", comments);

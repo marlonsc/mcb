@@ -49,6 +49,9 @@ impl SecureErasure {
 
     /// Securely erase a string by overwriting its buffer
     pub fn erase_string(s: &mut String) {
+        // SAFETY: We have exclusive mutable access to the String, and we only
+        // overwrite the bytes without changing the length. The bytes remain
+        // valid UTF-8 (zeros are valid UTF-8).
         unsafe {
             let bytes = s.as_bytes_mut();
             Self::secure_erase(bytes);

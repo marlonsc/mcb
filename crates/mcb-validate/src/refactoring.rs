@@ -335,7 +335,7 @@ impl RefactoringValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let path = entry.path();
@@ -353,7 +353,7 @@ impl RefactoringValidator {
                 let content = std::fs::read_to_string(path)?;
 
                 for cap in definition_pattern.captures_iter(&content) {
-                    let type_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                     // Skip generic names that are expected to appear in multiple places
                     if GENERIC_TYPE_NAMES.contains(&type_name) {
@@ -379,7 +379,7 @@ impl RefactoringValidator {
                             .split("/crates/")
                             .nth(1)
                             .and_then(|s| s.split('/').next())
-                            .map(|s| s.to_string())
+                            .map(std::string::ToString::to_string)
                     })
                     .collect();
 
@@ -559,7 +559,10 @@ impl RefactoringValidator {
                 std::collections::HashSet::new();
             let mut test_dirs: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-            for entry in WalkDir::new(&tests_dir).into_iter().filter_map(|e| e.ok()) {
+            for entry in WalkDir::new(&tests_dir)
+                .into_iter()
+                .filter_map(std::result::Result::ok)
+            {
                 let path = entry.path();
                 if path.is_file() && path.extension().is_some_and(|ext| ext == "rs") {
                     if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
@@ -582,7 +585,7 @@ impl RefactoringValidator {
             // Check each source file
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let path = entry.path();
@@ -652,7 +655,7 @@ impl RefactoringValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let path = entry.path();
@@ -662,7 +665,7 @@ impl RefactoringValidator {
 
                 for (line_num, line) in lines.iter().enumerate() {
                     if let Some(cap) = mod_pattern.captures(line) {
-                        let mod_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let mod_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Check if module file exists
                         let mod_file = parent_dir.join(format!("{}.rs", mod_name));

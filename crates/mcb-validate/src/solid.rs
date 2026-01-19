@@ -402,7 +402,7 @@ impl SolidValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let file_name = entry
@@ -431,13 +431,13 @@ impl SolidValidator {
                 for (line_num, line) in lines.iter().enumerate() {
                     // Check struct sizes
                     if let Some(cap) = struct_pattern.captures(line) {
-                        let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).map_or("", |m| m.as_str());
                         structs_in_file.push((name.to_string(), line_num + 1));
                     }
 
                     // Check impl block sizes
                     if let Some(cap) = impl_pattern.captures(line) {
-                        let name = cap.get(1).or(cap.get(2)).map(|m| m.as_str()).unwrap_or("");
+                        let name = cap.get(1).or(cap.get(2)).map_or("", |m| m.as_str());
 
                         // Count lines in impl block
                         let block_lines = self.count_block_lines(&lines, line_num);
@@ -493,7 +493,7 @@ impl SolidValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -538,7 +538,7 @@ impl SolidValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -546,7 +546,7 @@ impl SolidValidator {
 
                 for (line_num, line) in lines.iter().enumerate() {
                     if let Some(cap) = trait_pattern.captures(line) {
-                        let trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let trait_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Count methods in trait
                         let method_count = self.count_trait_methods(&lines, line_num, &fn_pattern);
@@ -589,7 +589,7 @@ impl SolidValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -597,8 +597,8 @@ impl SolidValidator {
 
                 for (line_num, line) in lines.iter().enumerate() {
                     if let Some(cap) = impl_for_pattern.captures(line) {
-                        let trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
-                        let impl_name = cap.get(2).map(|m| m.as_str()).unwrap_or("");
+                        let trait_name = cap.get(1).map_or("", |m| m.as_str());
+                        let impl_name = cap.get(2).map_or("", |m| m.as_str());
 
                         // Check methods in impl block for panic!/unimplemented macros
                         let mut brace_depth = 0;
@@ -615,8 +615,7 @@ impl SolidValidator {
 
                                 // Track current method
                                 if let Some(fn_cap) = fn_pattern.captures(impl_line) {
-                                    let method_name =
-                                        fn_cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                                    let method_name = fn_cap.get(1).map_or("", |m| m.as_str());
                                     current_method =
                                         Some((method_name.to_string(), line_num + idx + 1));
                                 }
@@ -666,7 +665,7 @@ impl SolidValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -679,7 +678,7 @@ impl SolidValidator {
                     }
 
                     if let Some(cap) = impl_pattern.captures(line) {
-                        let type_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Count methods in impl block
                         let method_count = self.count_impl_methods(&lines, line_num, &fn_pattern);
@@ -720,7 +719,7 @@ impl SolidValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;

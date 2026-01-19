@@ -75,7 +75,7 @@ impl YamlRuleExecutor {
 
         for entry in walkdir::WalkDir::new(dir)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
             .filter(|e| e.file_type().is_file())
         {
             let path = entry.path();

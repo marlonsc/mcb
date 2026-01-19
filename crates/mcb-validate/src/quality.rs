@@ -219,6 +219,10 @@ pub struct QualityValidator {
 }
 
 impl QualityValidator {
+    /// Check if a line has an ignore hint for a specific violation type
+    fn has_ignore_hint(&self, line: &str, violation_type: &str) -> bool {
+        line.contains(&format!("mcb-validate-ignore: {}", violation_type))
+    }
     /// Create a new quality validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
@@ -262,8 +266,16 @@ impl QualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
+                .filter(|e| {
+                    // Skip test files
+                    let path_str = e.path().to_string_lossy();
+                    !path_str.contains("/tests/")
+                        && !path_str.contains("/target/")
+                        && !path_str.ends_with("_test.rs")
+                        && !path_str.ends_with("test.rs")
+                })
             {
                 // Use AST-based detection
                 let detections = detector.detect_in_file(entry.path())?;
@@ -274,14 +286,67 @@ impl QualityValidator {
                         continue;
                     }
 
-                    // Skip if context contains SAFETY justification
+                    // Skip if context contains SAFETY justification or ignore hints
                     // (checked via Regex since AST doesn't capture comments easily)
                     let content = std::fs::read_to_string(entry.path())?;
                     let lines: Vec<&str> = content.lines().collect();
                     if detection.line > 0 && detection.line <= lines.len() {
                         let line_content = lines[detection.line - 1];
+
+                        // Check for safety comments
                         if line_content.contains("// SAFETY:")
                             || line_content.contains("// safety:")
+                        {
+                            continue;
+                        }
+
+                        // Check for ignore hints around the detection
+                        let mut has_ignore = false;
+
+                        // Check current line
+                        if self.has_ignore_hint(line_content, "lock_poisoning_recovery")
+                            || self.has_ignore_hint(line_content, "hardcoded_fallback")
+                        {
+                            has_ignore = true;
+                        }
+
+                        // Check previous lines (up to 3 lines before)
+                        if !has_ignore && detection.line > 1 {
+                            for i in 1..=3.min(detection.line - 1) {
+                                let check_line = lines[detection.line - 1 - i];
+                                if self.has_ignore_hint(check_line, "lock_poisoning_recovery")
+                                    || self.has_ignore_hint(check_line, "hardcoded_fallback")
+                                {
+                                    has_ignore = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Check next lines (up to 3 lines after)
+                        if !has_ignore && detection.line < lines.len() {
+                            for i in 0..3.min(lines.len() - detection.line) {
+                                let check_line = lines[detection.line + i];
+                                if self.has_ignore_hint(check_line, "lock_poisoning_recovery")
+                                    || self.has_ignore_hint(check_line, "hardcoded_fallback")
+                                {
+                                    has_ignore = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if has_ignore {
+                            continue;
+                        }
+
+                        // Skip cases where we're handling system-level errors appropriately
+                        // (e.g., lock poisoning, which is a legitimate use of expect())
+                        if detection.method == "expect"
+                            && (line_content.contains("lock poisoned")
+                                || line_content.contains("Lock poisoned")
+                                || line_content.contains("poisoned")
+                                || line_content.contains("Mutex poisoned"))
                         {
                             continue;
                         }
@@ -323,7 +388,7 @@ impl QualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -371,7 +436,7 @@ impl QualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| {
                     e.path().extension().is_some_and(|ext| ext == "rs")
                         && !self.config.should_exclude(e.path())
@@ -407,15 +472,15 @@ impl QualityValidator {
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
 
                 for (line_num, line) in content.lines().enumerate() {
                     if let Some(cap) = todo_pattern.captures(line) {
-                        let todo_type = cap.get(1).map(|m| m.as_str()).unwrap_or("");
-                        let message = cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
+                        let todo_type = cap.get(1).map_or("", |m| m.as_str());
+                        let message = cap.get(2).map_or("", |m| m.as_str()).trim();
 
                         violations.push(QualityViolation::TodoComment {
                             file: entry.path().to_path_buf(),

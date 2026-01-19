@@ -12,11 +12,11 @@ fn test_missing_struct_doc() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub struct UndocumentedStruct {
     pub field: String,
 }
-"#,
+",
     );
 
     let validator = DocumentationValidator::new(temp.path());
@@ -37,12 +37,12 @@ fn test_documented_struct() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 /// A well-documented struct
 pub struct DocumentedStruct {
     pub field: String,
 }
-"#,
+",
     );
 
     let validator = DocumentationValidator::new(temp.path());

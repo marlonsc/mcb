@@ -65,7 +65,10 @@ impl AstEngine {
     }
 
     pub fn supported_languages(&self) -> Vec<&str> {
-        self.parsers.keys().map(|s| s.as_str()).collect()
+        self.parsers
+            .keys()
+            .map(std::string::String::as_str)
+            .collect()
     }
 
     pub fn detect_language(&self, path: &Path) -> Option<&str> {

@@ -12,7 +12,7 @@ fn test_struct_too_many_fields() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub struct TooManyFields {
     field1: String,
     field2: String,
@@ -24,7 +24,7 @@ pub struct TooManyFields {
     field8: String,
     field9: String,
 }
-"#,
+",
     );
 
     let validator = KissValidator::new(temp.path());
@@ -45,11 +45,11 @@ fn test_function_too_many_params() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub fn too_many_params(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32) -> i32 {
     a + b + c + d + e + f
 }
-"#,
+",
     );
 
     let validator = KissValidator::new(temp.path());
@@ -68,13 +68,13 @@ pub fn too_many_params(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32) -> i32 {
 fn test_function_too_long() {
     let temp = TempDir::new().unwrap();
     let long_function = format!(
-        r#"
+        r"
 pub fn long_function() {{
 {}
 }}
-"#,
+",
         (0..60)
-            .map(|i| format!("    let x{} = {};", i, i))
+            .map(|i| format!("    let x{i} = {i};"))
             .collect::<Vec<_>>()
             .join("\n")
     );
@@ -98,13 +98,13 @@ fn test_acceptable_struct() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub struct AcceptableFields {
     field1: String,
     field2: String,
     field3: String,
 }
-"#,
+",
     );
 
     let validator = KissValidator::new(temp.path());

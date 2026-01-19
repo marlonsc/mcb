@@ -129,16 +129,15 @@ impl MetricThresholds {
         if let Some(obj) = config.as_object() {
             // Parse cognitive_complexity
             if let Some(cc) = obj.get("cognitive_complexity") {
-                if let Some(max) = cc.get("max").and_then(|v| v.as_u64()) {
-                    let severity = cc
-                        .get("severity")
-                        .and_then(|v| v.as_str())
-                        .map(|s| match s {
+                if let Some(max) = cc.get("max").and_then(serde_json::Value::as_u64) {
+                    let severity = cc.get("severity").and_then(|v| v.as_str()).map_or(
+                        Severity::Warning,
+                        |s| match s {
                             "error" => Severity::Error,
                             "info" => Severity::Info,
                             _ => Severity::Warning,
-                        })
-                        .unwrap_or(Severity::Warning);
+                        },
+                    );
 
                     thresholds = thresholds.with_threshold(
                         MetricType::CognitiveComplexity,
@@ -150,16 +149,15 @@ impl MetricThresholds {
 
             // Parse function_length
             if let Some(fl) = obj.get("function_length") {
-                if let Some(max) = fl.get("max").and_then(|v| v.as_u64()) {
-                    let severity = fl
-                        .get("severity")
-                        .and_then(|v| v.as_str())
-                        .map(|s| match s {
+                if let Some(max) = fl.get("max").and_then(serde_json::Value::as_u64) {
+                    let severity = fl.get("severity").and_then(|v| v.as_str()).map_or(
+                        Severity::Warning,
+                        |s| match s {
                             "error" => Severity::Error,
                             "info" => Severity::Info,
                             _ => Severity::Warning,
-                        })
-                        .unwrap_or(Severity::Warning);
+                        },
+                    );
 
                     thresholds =
                         thresholds.with_threshold(MetricType::FunctionLength, max as u32, severity);
@@ -168,16 +166,15 @@ impl MetricThresholds {
 
             // Parse cyclomatic_complexity
             if let Some(cyc) = obj.get("cyclomatic_complexity") {
-                if let Some(max) = cyc.get("max").and_then(|v| v.as_u64()) {
-                    let severity = cyc
-                        .get("severity")
-                        .and_then(|v| v.as_str())
-                        .map(|s| match s {
+                if let Some(max) = cyc.get("max").and_then(serde_json::Value::as_u64) {
+                    let severity = cyc.get("severity").and_then(|v| v.as_str()).map_or(
+                        Severity::Warning,
+                        |s| match s {
                             "error" => Severity::Error,
                             "info" => Severity::Info,
                             _ => Severity::Warning,
-                        })
-                        .unwrap_or(Severity::Warning);
+                        },
+                    );
 
                     thresholds = thresholds.with_threshold(
                         MetricType::CyclomaticComplexity,
@@ -189,16 +186,15 @@ impl MetricThresholds {
 
             // Parse nesting_depth
             if let Some(nd) = obj.get("nesting_depth") {
-                if let Some(max) = nd.get("max").and_then(|v| v.as_u64()) {
-                    let severity = nd
-                        .get("severity")
-                        .and_then(|v| v.as_str())
-                        .map(|s| match s {
+                if let Some(max) = nd.get("max").and_then(serde_json::Value::as_u64) {
+                    let severity = nd.get("severity").and_then(|v| v.as_str()).map_or(
+                        Severity::Warning,
+                        |s| match s {
                             "error" => Severity::Error,
                             "info" => Severity::Info,
                             _ => Severity::Warning,
-                        })
-                        .unwrap_or(Severity::Warning);
+                        },
+                    );
 
                     thresholds =
                         thresholds.with_threshold(MetricType::NestingDepth, max as u32, severity);
@@ -235,12 +231,11 @@ impl MetricThresholds {
             let severity = cc
                 .severity
                 .as_ref()
-                .map(|s| match s.as_str() {
+                .map_or(Severity::Warning, |s| match s.as_str() {
                     "error" => Severity::Error,
                     "info" => Severity::Info,
                     _ => Severity::Warning,
-                })
-                .unwrap_or(Severity::Warning);
+                });
             thresholds =
                 thresholds.with_threshold(MetricType::CognitiveComplexity, cc.max, severity);
         }
@@ -250,12 +245,11 @@ impl MetricThresholds {
             let severity = cyc
                 .severity
                 .as_ref()
-                .map(|s| match s.as_str() {
+                .map_or(Severity::Warning, |s| match s.as_str() {
                     "error" => Severity::Error,
                     "info" => Severity::Info,
                     _ => Severity::Warning,
-                })
-                .unwrap_or(Severity::Warning);
+                });
             // If cognitive_complexity wasn't set, use cyclomatic as a fallback
             if config.cognitive_complexity.is_none() {
                 thresholds =
@@ -268,12 +262,11 @@ impl MetricThresholds {
             let severity = fl
                 .severity
                 .as_ref()
-                .map(|s| match s.as_str() {
+                .map_or(Severity::Warning, |s| match s.as_str() {
                     "error" => Severity::Error,
                     "info" => Severity::Info,
                     _ => Severity::Warning,
-                })
-                .unwrap_or(Severity::Warning);
+                });
             thresholds = thresholds.with_threshold(MetricType::FunctionLength, fl.max, severity);
         }
 
@@ -282,12 +275,11 @@ impl MetricThresholds {
             let severity = nd
                 .severity
                 .as_ref()
-                .map(|s| match s.as_str() {
+                .map_or(Severity::Warning, |s| match s.as_str() {
                     "error" => Severity::Error,
                     "info" => Severity::Info,
                     _ => Severity::Warning,
-                })
-                .unwrap_or(Severity::Warning);
+                });
             thresholds = thresholds.with_threshold(MetricType::NestingDepth, nd.max, severity);
         }
 

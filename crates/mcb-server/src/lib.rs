@@ -2,6 +2,8 @@
 #![allow(clippy::io_other_error)]
 #![allow(clippy::for_kv_map)]
 #![allow(clippy::while_let_loop)]
+// Allow Rust 2024 compatibility issues from Rocket's EventStream macro
+#![allow(rust_2024_compatibility)]
 
 //! # MCP Context Browser Server
 //!

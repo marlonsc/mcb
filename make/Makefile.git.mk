@@ -1,41 +1,48 @@
 # =============================================================================
-# GIT - Streamlined git operations
+# GIT - Git operations
 # =============================================================================
-# Naming: short action verbs
+# Each verb does ONE action. sync uses prerequisites for composition.
 # =============================================================================
 
 .PHONY: status commit push tag sync
 
-# -----------------------------------------------------------------------------
-# Essential Git Commands
-# -----------------------------------------------------------------------------
+# =============================================================================
+# STATUS - Show git status
+# =============================================================================
 
 status: ## Show git status
-	@echo "📊 Git Status:"
+	@echo "Git Status:"
 	@git status --short --branch
 
-commit: ## Commit all changes (interactive message)
+# =============================================================================
+# COMMIT - Stage and commit changes
+# =============================================================================
+
+commit: ## Stage and commit changes
 	@git add -A
 	@git commit || echo "Nothing to commit"
 
+# =============================================================================
+# PUSH - Push to remote
+# =============================================================================
+
 push: ## Push to remote
 	@git push origin $$(git branch --show-current)
-	@echo "✅ Pushed to origin"
+	@echo "Pushed to origin"
 
-tag: ## Create and push version tag from Cargo.toml
-	@VERSION=$$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/'); \
-	echo "🏷️  Tagging v$$VERSION..."; \
-	git tag -a "v$$VERSION" -m "Release v$$VERSION" 2>/dev/null || echo "Tag v$$VERSION already exists"; \
+# =============================================================================
+# TAG - Create and push version tag
+# =============================================================================
+
+tag: ## Create and push version tag
+	@VERSION=$$(grep '^version' crates/mcb/Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/'); \
+	echo "Tagging v$$VERSION..."; \
+	git tag -a "v$$VERSION" -m "Release v$$VERSION" 2>/dev/null || echo "Tag exists"; \
 	git push origin "v$$VERSION" 2>/dev/null || echo "Tag already pushed"
 
-# -----------------------------------------------------------------------------
-# Combined Operations
-# -----------------------------------------------------------------------------
+# =============================================================================
+# SYNC - Full sync: add + commit + push (uses prerequisites)
+# =============================================================================
 
-sync: ## Add, commit (auto-message), and push all changes
-	@echo "🔄 Syncing changes..."
-	@git add -A
-	@git commit -m "chore: sync changes $$(date '+%Y-%m-%d %H:%M')" --allow-empty 2>/dev/null || true
-	@git push origin $$(git branch --show-current) || git push --set-upstream origin $$(git branch --show-current)
-	@echo "✅ Synced to remote"
-
+sync: commit push ## Sync all changes (commit + push)
+	@echo "Synced to remote"

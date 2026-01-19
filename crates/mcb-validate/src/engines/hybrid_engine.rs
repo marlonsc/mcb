@@ -312,7 +312,8 @@ impl HybridRuleEngine {
             .map(std::path::PathBuf::from)
             .collect();
 
-        let file_refs: Vec<&std::path::Path> = files.iter().map(|p| p.as_path()).collect();
+        let file_refs: Vec<&std::path::Path> =
+            files.iter().map(std::path::PathBuf::as_path).collect();
 
         // Run Ruff for Python lint codes
         if !ruff_codes.is_empty() && !file_refs.is_empty() {
@@ -383,9 +384,8 @@ impl HybridRuleEngine {
         severity: Severity,
         category: ViolationCategory,
     ) -> RuleViolation {
-        let message = custom_message
-            .map(|m| format!("{}: {}", m, lv.message))
-            .unwrap_or_else(|| lv.message.clone());
+        let message =
+            custom_message.map_or_else(|| lv.message.clone(), |m| format!("{}: {}", m, lv.message));
 
         RuleViolation::new(rule_id, category, severity, message)
             .with_file(std::path::PathBuf::from(&lv.file))
@@ -398,8 +398,7 @@ impl HybridRuleEngine {
         rule_definition
             .get("lint_select")
             .and_then(|v| v.as_array())
-            .map(|arr| !arr.is_empty())
-            .unwrap_or(false)
+            .is_some_and(|arr| !arr.is_empty())
     }
 }
 

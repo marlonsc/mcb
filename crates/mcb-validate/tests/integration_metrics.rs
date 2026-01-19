@@ -1,6 +1,6 @@
 //! Integration tests for Phase 4: Complexity Metrics
 //!
-//! Tests the full flow: Rust file → MetricsAnalyzer → violations
+//! Tests the full flow: Rust file → `MetricsAnalyzer` → violations
 
 #[cfg(test)]
 mod integration_metrics_tests {
@@ -14,11 +14,11 @@ mod integration_metrics_tests {
     fn test_simple_function_passes() {
         let analyzer = MetricsAnalyzer::new();
 
-        let content = r#"
+        let content = r"
 fn add(a: i32, b: i32) -> i32 {
     a + b
 }
-"#;
+";
 
         let violations = analyzer
             .analyze_rust_content(content, Path::new("simple.rs"))
@@ -41,7 +41,7 @@ fn add(a: i32, b: i32) -> i32 {
 
         let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
 
-        let content = r#"
+        let content = r"
 fn complex(x: i32) -> i32 {
     if x > 0 {
         if x > 10 {
@@ -56,7 +56,7 @@ fn complex(x: i32) -> i32 {
     }
     x
 }
-"#;
+";
 
         let violations = analyzer
             .analyze_rust_content(content, Path::new("complex.rs"))
@@ -125,7 +125,7 @@ fn deeply_nested(x: i32) {
 
         let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
 
-        let content = r#"
+        let content = r"
 fn long_function() {
     let a = 1;
     let b = 2;
@@ -135,7 +135,7 @@ fn long_function() {
     let f = 6;
     let g = 7;
 }
-"#;
+";
 
         let violations = analyzer
             .analyze_rust_content(content, Path::new("long.rs"))
@@ -163,7 +163,7 @@ fn long_function() {
 
         let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
 
-        let content = r#"
+        let content = r"
 struct Calculator;
 
 impl Calculator {
@@ -182,7 +182,7 @@ impl Calculator {
         x
     }
 }
-"#;
+";
 
         let violations = analyzer
             .analyze_rust_content(content, Path::new("impl.rs"))
@@ -202,7 +202,7 @@ impl Calculator {
 
         std::fs::write(
             &file_path,
-            r#"
+            r"
 fn test_function(x: i32) -> i32 {
     match x {
         0 => 0,
@@ -210,15 +210,15 @@ fn test_function(x: i32) -> i32 {
         _ => x * 2,
     }
 }
-"#,
+",
         )
         .unwrap();
 
         let analyzer = MetricsAnalyzer::new();
-        let _violations = analyzer.analyze_rust_file(&file_path).unwrap();
+        let result = analyzer.analyze_rust_file(&file_path);
 
         // Should complete without error, violations depend on thresholds
-        assert!(true); // Just verify it runs without panicking
+        assert!(result.is_ok(), "analyze_rust_file should succeed");
     }
 
     /// Test multiple files analysis

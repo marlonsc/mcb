@@ -14,20 +14,20 @@ fn test_duplicate_definition_detection() {
     create_test_crate(
         &temp,
         "mcb-first",
-        r#"
+        r"
 pub struct DuplicateType {
     pub value: i32,
 }
-"#,
+",
     );
     create_test_crate(
         &temp,
         "mcb-second",
-        r#"
+        r"
 pub struct DuplicateType {
     pub value: String,
 }
-"#,
+",
     );
 
     let validator = RefactoringValidator::new(temp.path());
@@ -47,10 +47,10 @@ fn test_missing_module_reference() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 // No mod declaration for utils.rs
 pub fn main_fn() {}
-"#,
+",
     );
 
     // Create orphan file
@@ -70,13 +70,13 @@ fn test_no_false_positives_for_inline_mods() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 mod inline_module {
     pub fn inline_fn() {}
 }
 
 pub use inline_module::inline_fn;
-"#,
+",
     );
 
     let validator = RefactoringValidator::new(temp.path());

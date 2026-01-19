@@ -165,7 +165,10 @@ impl VisibilityValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&full_path).into_iter().filter_map(|e| e.ok()) {
+            for entry in WalkDir::new(&full_path)
+                .into_iter()
+                .filter_map(std::result::Result::ok)
+            {
                 let path = entry.path();
                 if path.extension().is_none_or(|e| e != "rs") {
                     continue;
@@ -179,7 +182,7 @@ impl VisibilityValidator {
                     }
 
                     if let Some(captures) = pub_item_re.captures(trimmed) {
-                        let item_name = captures.get(2).map(|m| m.as_str()).unwrap_or("unknown");
+                        let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
                         if item_name.starts_with("Error") || item_name == "Result" {
                             continue;
                         }
@@ -219,7 +222,10 @@ impl VisibilityValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&crate_src).into_iter().filter_map(|e| e.ok()) {
+            for entry in WalkDir::new(&crate_src)
+                .into_iter()
+                .filter_map(std::result::Result::ok)
+            {
                 let path = entry.path();
                 if path.extension().is_none_or(|e| e != "rs") {
                     continue;

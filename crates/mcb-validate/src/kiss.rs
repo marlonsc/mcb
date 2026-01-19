@@ -357,7 +357,7 @@ impl KissValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -392,7 +392,7 @@ impl KissValidator {
                     }
 
                     if let Some(cap) = struct_pattern.captures(line) {
-                        let struct_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let struct_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Count fields in struct
                         let field_count = self.count_struct_fields(&lines, line_num);
@@ -431,7 +431,7 @@ impl KissValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -479,8 +479,8 @@ impl KissValidator {
                     }
 
                     if let Some(cap) = fn_pattern.captures(&full_line) {
-                        let fn_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
-                        let params = cap.get(2).map(|m| m.as_str()).unwrap_or("");
+                        let fn_name = cap.get(1).map_or("", |m| m.as_str());
+                        let params = cap.get(2).map_or("", |m| m.as_str());
 
                         // Count parameters (comma-separated, excluding &self/self)
                         let param_count = self.count_function_params(params);
@@ -518,7 +518,7 @@ impl KissValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -526,7 +526,7 @@ impl KissValidator {
 
                 for (line_num, line) in lines.iter().enumerate() {
                     if let Some(cap) = builder_pattern.captures(line) {
-                        let builder_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let builder_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Count Option<> fields in builder struct
                         let optional_count =
@@ -564,7 +564,7 @@ impl KissValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -655,7 +655,7 @@ impl KissValidator {
 
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 let content = std::fs::read_to_string(entry.path())?;
@@ -690,7 +690,7 @@ impl KissValidator {
                     }
 
                     if let Some(cap) = fn_pattern.captures(line) {
-                        let fn_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let fn_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip test functions
                         if fn_name.starts_with("test_") {

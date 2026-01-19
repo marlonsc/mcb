@@ -752,7 +752,7 @@ impl OrganizationValidator {
                 }
 
                 for cap in magic_pattern.captures_iter(line) {
-                    let num = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let num = cap.get(1).map_or("", |m| m.as_str());
 
                     // Skip allowed numbers
                     if allowed.contains(&num) {
@@ -844,7 +844,7 @@ impl OrganizationValidator {
                 }
 
                 for cap in string_pattern.captures_iter(line) {
-                    let string_val = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let string_val = cap.get(1).map_or("", |m| m.as_str());
 
                     // Skip common patterns that are OK to repeat
                     if string_val.contains("{}")           // Format strings
@@ -1067,7 +1067,7 @@ impl OrganizationValidator {
                 }
 
                 if let Some(cap) = trait_pattern.captures(line) {
-                    let trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let trait_name = cap.get(1).map_or("", |m| m.as_str());
 
                     // Skip allowed traits
                     if allowed_traits.contains(&trait_name) {
@@ -1160,7 +1160,7 @@ impl OrganizationValidator {
 
                 // Check structs
                 if let Some(cap) = struct_pattern.captures(line) {
-                    let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let name = cap.get(1).map_or("", |m| m.as_str());
                     declarations.entry(name.to_string()).or_default().push((
                         path.to_path_buf(),
                         line_num + 1,
@@ -1170,7 +1170,7 @@ impl OrganizationValidator {
 
                 // Check enums
                 if let Some(cap) = enum_pattern.captures(line) {
-                    let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let name = cap.get(1).map_or("", |m| m.as_str());
                     declarations.entry(name.to_string()).or_default().push((
                         path.to_path_buf(),
                         line_num + 1,
@@ -1180,7 +1180,7 @@ impl OrganizationValidator {
 
                 // Check traits
                 if let Some(cap) = trait_pattern.captures(line) {
-                    let name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let name = cap.get(1).map_or("", |m| m.as_str());
                     declarations.entry(name.to_string()).or_default().push((
                         path.to_path_buf(),
                         line_num + 1,
@@ -1284,7 +1284,7 @@ impl OrganizationValidator {
                 // Check: Server layer creating services directly
                 if is_server_layer {
                     if let Some(cap) = arc_new_service_pattern.captures(line) {
-                        let service_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let service_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip if it's in a builder or factory file
                         let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -1376,7 +1376,7 @@ impl OrganizationValidator {
             if is_domain_crate {
                 for (line_num, line) in content.lines().enumerate() {
                     if let Some(cap) = port_trait_pattern.captures(line) {
-                        let trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let trait_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Allowed in: ports/, domain_services/, repositories/
                         // Domain service interfaces belong in domain_services
@@ -1401,7 +1401,7 @@ impl OrganizationValidator {
             if is_server_crate {
                 for (line_num, line) in content.lines().enumerate() {
                     if let Some(cap) = handler_struct_pattern.captures(line) {
-                        let handler_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let handler_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Allowed in: handlers/, admin/, tools/, and cross-cutting files
                         // Admin handlers belong in admin/
@@ -1429,8 +1429,8 @@ impl OrganizationValidator {
             if is_infrastructure_crate {
                 for line in content.lines() {
                     if let Some(cap) = adapter_impl_pattern.captures(line) {
-                        let _trait_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
-                        let _impl_name = cap.get(2).map(|m| m.as_str()).unwrap_or("");
+                        let _trait_name = cap.get(1).map_or("", |m| m.as_str());
+                        let _impl_name = cap.get(2).map_or("", |m| m.as_str());
 
                         // Allowed in: adapters/, di/, and cross-cutting concern directories
                         // crypto/, cache/, health/, events/ are infrastructure cross-cutting concerns
@@ -1554,7 +1554,7 @@ impl OrganizationValidator {
                 if let Some(cap) = impl_block_pattern.captures(line) {
                     if !trimmed.contains("trait ") {
                         in_impl_block = true;
-                        impl_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                        impl_name = cap.get(1).map_or("", |m| m.as_str()).to_string();
                         impl_start_brace = brace_depth;
                     }
                 }
@@ -1571,7 +1571,7 @@ impl OrganizationValidator {
                 // Check methods in impl blocks
                 if in_impl_block {
                     if let Some(cap) = method_pattern.captures(line) {
-                        let method_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let method_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip allowed methods
                         if allowed_methods.contains(&method_name) {

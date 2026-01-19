@@ -27,10 +27,9 @@ mod tests_org_tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -44,7 +43,7 @@ version = "0.1.1"
 
         fs::write(
             crate_dir.join("lib.rs"),
-            r#"
+            r"
 pub fn add(a: i32, b: i32) -> i32 {
     a + b
 }
@@ -58,7 +57,7 @@ mod tests {
         assert_eq!(add(1, 2), 3);
     }
 }
-"#,
+",
         )
         .unwrap();
 
@@ -92,7 +91,7 @@ version = "0.1.1"
             &temp,
             "mcb-test",
             "pub fn add(a: i32, b: i32) -> i32 { a + b }",
-            r#"
+            r"
 #[test]
 fn bad_name() {
     assert!(true);
@@ -102,7 +101,7 @@ fn bad_name() {
 fn test_good_name() {
     assert!(true);
 }
-"#,
+",
         );
 
         let validator = TestValidator::new(temp.path());

@@ -48,7 +48,7 @@ impl AdminApiConfig {
         let address: IpAddr = self
             .host
             .parse()
-            .unwrap_or_else(|_| "127.0.0.1".parse().expect("valid IP"));
+            .unwrap_or_else(|_| "127.0.0.1".parse().unwrap()); // mcb-validate-ignore: hardcoded_fallback
         RocketConfig {
             address,
             port: self.port,

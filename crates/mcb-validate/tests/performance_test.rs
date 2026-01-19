@@ -12,14 +12,14 @@ fn test_clone_in_loop_detection() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub fn bad_perf(items: Vec<String>) {
     for item in items {
         let cloned = expensive_data.clone();
         process(cloned);
     }
 }
-"#,
+",
     );
 
     let validator = PerformanceValidator::new(temp.path());
@@ -35,7 +35,7 @@ fn test_box_large_type_suggestion() {
     create_test_crate(
         &temp,
         "mcb-test",
-        r#"
+        r"
 pub struct LargeStruct {
     field1: [u8; 1024],
     field2: [u8; 1024],
@@ -49,7 +49,7 @@ pub fn returns_large() -> LargeStruct {
         field3: [0; 1024],
     }
 }
-"#,
+",
     );
 
     let validator = PerformanceValidator::new(temp.path());

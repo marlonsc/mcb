@@ -312,7 +312,7 @@ impl CleanArchitectureValidator {
 
         for entry in WalkDir::new(server_crate.join("src"))
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
         {
             let path = entry.path();
             if path.extension().is_some_and(|e| e == "rs") {
@@ -368,7 +368,7 @@ impl CleanArchitectureValidator {
 
         for entry in WalkDir::new(handlers_dir)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
         {
             let path = entry.path();
             if path.extension().is_some_and(|e| e == "rs") {
@@ -382,8 +382,7 @@ impl CleanArchitectureValidator {
 
                     for (pattern, pattern_type) in &service_creation_patterns {
                         if let Some(captures) = pattern.captures(line) {
-                            let service_name =
-                                captures.get(1).map(|m| m.as_str()).unwrap_or("unknown");
+                            let service_name = captures.get(1).map_or("unknown", |m| m.as_str());
                             violations.push(CleanArchitectureViolation::HandlerCreatesService {
                                 file: path.to_path_buf(),
                                 line: line_num + 1,
@@ -420,7 +419,7 @@ impl CleanArchitectureValidator {
 
         for entry in WalkDir::new(entities_dir)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
         {
             let path = entry.path();
             if path.extension().is_some_and(|e| e == "rs") {
@@ -434,7 +433,7 @@ impl CleanArchitectureValidator {
 
                 for (line_num, line) in lines.iter().enumerate() {
                     if let Some(captures) = struct_re.captures(line) {
-                        let struct_name = captures.get(1).map(|m| m.as_str()).unwrap_or("unknown");
+                        let struct_name = captures.get(1).map_or("unknown", |m| m.as_str());
 
                         // Skip if not an entity (e.g., helper structs)
                         if struct_name.ends_with("Builder")
@@ -502,7 +501,10 @@ impl CleanArchitectureValidator {
         let impl_re = Regex::new(r"impl\s+(\w+)\s*\{").expect("Invalid regex");
         let mut_method_re = Regex::new(r"fn\s+(\w+)\s*\(\s*&mut\s+self").expect("Invalid regex");
 
-        for entry in WalkDir::new(vo_dir).into_iter().filter_map(|e| e.ok()) {
+        for entry in WalkDir::new(vo_dir)
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+        {
             let path = entry.path();
             if path.extension().is_some_and(|e| e == "rs") {
                 // Skip mod.rs files
@@ -534,7 +536,7 @@ impl CleanArchitectureValidator {
                     // Check for mutable methods
                     if let Some(ref vo_name) = current_impl {
                         if let Some(captures) = mut_method_re.captures(line) {
-                            let method_name = captures.get(1).map(|m| m.as_str()).unwrap_or("?");
+                            let method_name = captures.get(1).map_or("?", |m| m.as_str());
 
                             // Allow some standard mutable methods
                             if !["set_", "add_", "remove_", "clear_", "reset_"]
