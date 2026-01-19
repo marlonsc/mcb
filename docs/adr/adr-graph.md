@@ -26,5 +26,12 @@ digraph {
     _1 -> _10 [label="extends", style="dashed"];
     _9 -> _10 [label="uses", style="dashed"];
     _8 -> _10 [label="integrates", style="dashed"];
+    _13 [label="ADR 013: Clean Architecture Crate Separation"; URL="013-clean-architecture-crate-separation.html"];
+    _24 [label="ADR 024: Simplified Dependency Injection"; URL="024-simplified-dependency-injection.html"];
+    _27 [label="ADR 027: Architecture Evolution v0.1.3"; URL="027-architecture-evolution-v013.html"];
+    _10 -> _27 [style="dotted", weight=1];
+    _13 -> _27 [label="extends", style="dashed"];
+    _24 -> _27 [label="extends", style="dashed"];
+    _27 -> _8 [label="prepares", style="dashed"];
   }
 }

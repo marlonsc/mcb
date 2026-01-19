@@ -126,7 +126,7 @@ impl ResponseFormatter {
             error
         );
         tracing::error!("Indexing failed for path {}: {}", path.display(), error);
-        CallToolResult::success(vec![Content::text(message)])
+        CallToolResult::error(vec![Content::text(message)])
     }
 
     /// Format indexing status response

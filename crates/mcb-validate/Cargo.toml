@@ -1,7 +1,7 @@
 [package]
 name = "mcb-validate"
 version = "0.1.1"
-edition = "2021"
+edition = "2024"
 description = "Architecture validation for MCP Context Browser workspace"
 license = "MIT"
 

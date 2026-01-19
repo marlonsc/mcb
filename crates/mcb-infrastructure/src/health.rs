@@ -339,8 +339,11 @@ pub mod checkers {
         }
     }
 
-    /// System resource health checker
-    pub struct SystemHealthChecker;
+    /// System resource health checker using real system metrics
+    pub struct SystemHealthChecker {
+        cpu_threshold_percent: f32,
+        memory_threshold_percent: f64,
+    }
 
     impl Default for SystemHealthChecker {
         fn default() -> Self {
@@ -349,22 +352,63 @@ pub mod checkers {
     }
 
     impl SystemHealthChecker {
+        /// Create a new system health checker with default thresholds
+        ///
+        /// Default thresholds: CPU > 90%, Memory > 90%
         pub fn new() -> Self {
-            Self
+            Self {
+                cpu_threshold_percent: 90.0,
+                memory_threshold_percent: 90.0,
+            }
+        }
+
+        /// Create with custom thresholds
+        pub fn with_thresholds(cpu_threshold: f32, memory_threshold: f64) -> Self {
+            Self {
+                cpu_threshold_percent: cpu_threshold,
+                memory_threshold_percent: memory_threshold,
+            }
         }
     }
 
     #[async_trait::async_trait]
     impl HealthChecker for SystemHealthChecker {
         async fn check_health(&self) -> HealthCheck {
+            use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
+
             let start_time = Instant::now();
 
-            // Check system resources (simplified)
-            // In a real implementation, you would check actual system metrics
-            let status = if self.check_system_resources() {
-                HealthStatus::Up
+            // Create system with specific refresh kinds for efficiency
+            let mut sys = System::new_with_specifics(
+                RefreshKind::nothing()
+                    .with_cpu(CpuRefreshKind::everything())
+                    .with_memory(MemoryRefreshKind::everything()),
+            );
+
+            // Refresh CPU metrics (requires two reads with a small delay)
+            sys.refresh_cpu_all();
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            sys.refresh_cpu_all();
+
+            // Get CPU usage (global average)
+            let cpu_usage = sys.global_cpu_usage();
+
+            // Get memory metrics
+            let total_memory = sys.total_memory();
+            let used_memory = sys.used_memory();
+            let memory_percent = if total_memory > 0 {
+                (used_memory as f64 / total_memory as f64) * 100.0
             } else {
+                0.0
+            };
+
+            // Determine health status based on thresholds
+            let status = if cpu_usage > self.cpu_threshold_percent
+                || memory_percent > self.memory_threshold_percent
+            {
                 HealthStatus::Degraded
+            } else {
+                HealthStatus::Up
             };
 
             HealthCheck {
@@ -374,18 +418,14 @@ pub mod checkers {
                 response_time_ms: start_time.elapsed().as_millis() as u64,
                 error: None,
                 details: Some(serde_json::json!({
-                    "cpu_usage": 45.2,
-                    "memory_usage": 1024 * 1024 * 512, // 512MB
+                    "cpu_usage_percent": cpu_usage,
+                    "memory_used_bytes": used_memory,
+                    "memory_total_bytes": total_memory,
+                    "memory_usage_percent": memory_percent,
+                    "cpu_threshold_percent": self.cpu_threshold_percent,
+                    "memory_threshold_percent": self.memory_threshold_percent,
                 })),
             }
-        }
-    }
-
-    impl SystemHealthChecker {
-        fn check_system_resources(&self) -> bool {
-            // Simplified system resource check
-            // In production, you would check actual CPU, memory, disk usage
-            true // Assume healthy for now
         }
     }
 }

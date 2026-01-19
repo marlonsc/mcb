@@ -907,7 +907,7 @@ async fn test_e2e_yaml_clippy_rule_execution() {
         r#"[package]
 name = "test_unwrap_violations"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 path = "src/lib.rs"

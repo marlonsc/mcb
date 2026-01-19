@@ -224,14 +224,19 @@ async fn run_hybrid_transport(
         info!("Hybrid: HTTP transport finished");
     });
 
-    // Wait for either transport to finish (use select for graceful handling)
-    tokio::select! {
-        _ = stdio_handle => {
-            info!("Hybrid: stdio transport task completed");
-        }
-        _ = http_handle => {
-            info!("Hybrid: HTTP transport task completed");
-        }
+    // Wait for both transports to finish (join keeps both running)
+    let (stdio_result, http_result) = tokio::join!(stdio_handle, http_handle);
+
+    if let Err(e) = stdio_result {
+        error!(error = %e, "Hybrid: stdio transport task panicked");
+    } else {
+        info!("Hybrid: stdio transport task completed");
+    }
+
+    if let Err(e) = http_result {
+        error!(error = %e, "Hybrid: HTTP transport task panicked");
+    } else {
+        info!("Hybrid: HTTP transport task completed");
     }
 
     Ok(())

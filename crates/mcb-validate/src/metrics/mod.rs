@@ -1,21 +1,23 @@
 //! Code Metrics Module (Phase 4)
 //!
-//! Provides code complexity metrics analysis using the `complexity` crate for Rust
-//! and custom Tree-sitter based metrics for other languages.
+//! Provides code complexity metrics analysis using Tree-sitter for multiple languages.
 //!
 //! ## Supported Metrics
 //!
 //! - **Cognitive Complexity**: Measures how difficult code is to understand
+//! - **Cyclomatic Complexity**: Number of linearly independent paths
 //! - **Function Length**: Lines of code in a function
 //! - **Nesting Depth**: Maximum nesting level
 //!
 //! ## Supported Languages
 //!
-//! - Rust (via `complexity` crate)
-//! - Python, JavaScript, TypeScript, Go (via Tree-sitter)
+//! - Rust, Python, JavaScript, TypeScript, Go, Java, C, C++ (via Tree-sitter)
+//! - Rust (also via syn for backward compatibility)
 
+mod analyzer;
 mod thresholds;
 
+pub use analyzer::{FunctionMetrics, MetricsLanguage, TreeSitterAnalyzer};
 pub use thresholds::{MetricThreshold, MetricThresholds, MetricType};
 
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
@@ -63,6 +65,7 @@ impl Violation for MetricViolation {
     fn id(&self) -> &str {
         match self.metric_type {
             MetricType::CognitiveComplexity => "METRIC001",
+            MetricType::CyclomaticComplexity => "METRIC004",
             MetricType::FunctionLength => "METRIC002",
             MetricType::NestingDepth => "METRIC003",
         }

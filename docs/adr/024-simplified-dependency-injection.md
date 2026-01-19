@@ -260,6 +260,7 @@ crates/mcb-infrastructure/src/di/
 - [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) - **SUPERSEDED** by this ADR
 - [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - **SUPERSEDED**
 - [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization
+- **Extended by**: [ADR 027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Formalizes engine contracts using handle pattern
 
 ## References
 

@@ -10,6 +10,8 @@ use std::collections::HashMap;
 pub enum MetricType {
     /// Cognitive complexity - how hard code is to understand
     CognitiveComplexity,
+    /// Cyclomatic complexity - number of linearly independent paths
+    CyclomaticComplexity,
     /// Number of lines/statements in a function
     FunctionLength,
     /// Maximum nesting depth (if/for/while/match)
@@ -21,6 +23,7 @@ impl MetricType {
     pub fn name(&self) -> &'static str {
         match self {
             Self::CognitiveComplexity => "Function",
+            Self::CyclomaticComplexity => "Function",
             Self::FunctionLength => "Function",
             Self::NestingDepth => "Function",
         }
@@ -30,6 +33,7 @@ impl MetricType {
     pub fn description(&self) -> &'static str {
         match self {
             Self::CognitiveComplexity => "cognitive complexity",
+            Self::CyclomaticComplexity => "cyclomatic complexity",
             Self::FunctionLength => "length",
             Self::NestingDepth => "nesting depth",
         }
@@ -41,6 +45,11 @@ impl MetricType {
             Self::CognitiveComplexity => {
                 "Consider breaking this function into smaller, focused functions. \
                  Extract complex conditions into named functions or early returns."
+                    .to_string()
+            }
+            Self::CyclomaticComplexity => {
+                "Reduce the number of decision points (if/else, switch, loops). \
+                 Consider using polymorphism or strategy pattern instead of conditionals."
                     .to_string()
             }
             Self::FunctionLength => {
@@ -77,6 +86,7 @@ impl Default for MetricThresholds {
         Self::new()
             // Default thresholds based on common industry standards
             .with_threshold(MetricType::CognitiveComplexity, 15, Severity::Warning)
+            .with_threshold(MetricType::CyclomaticComplexity, 10, Severity::Warning)
             .with_threshold(MetricType::FunctionLength, 50, Severity::Warning)
             .with_threshold(MetricType::NestingDepth, 4, Severity::Warning)
     }
@@ -151,6 +161,24 @@ impl MetricThresholds {
                 }
             }
 
+            // Parse cyclomatic_complexity
+            if let Some(cyc) = obj.get("cyclomatic_complexity") {
+                if let Some(max) = cyc.get("max").and_then(|v| v.as_u64()) {
+                    let severity = cyc
+                        .get("severity")
+                        .and_then(|v| v.as_str())
+                        .map(|s| match s {
+                            "error" => Severity::Error,
+                            "info" => Severity::Info,
+                            _ => Severity::Warning,
+                        })
+                        .unwrap_or(Severity::Warning);
+
+                    thresholds =
+                        thresholds.with_threshold(MetricType::CyclomaticComplexity, max as u32, severity);
+                }
+            }
+
             // Parse nesting_depth
             if let Some(nd) = obj.get("nesting_depth") {
                 if let Some(max) = nd.get("max").and_then(|v| v.as_u64()) {
@@ -173,6 +201,9 @@ impl MetricThresholds {
         // Fill in defaults for missing thresholds
         if thresholds.get(MetricType::CognitiveComplexity).is_none() {
             thresholds = thresholds.with_threshold(MetricType::CognitiveComplexity, 15, Severity::Warning);
+        }
+        if thresholds.get(MetricType::CyclomaticComplexity).is_none() {
+            thresholds = thresholds.with_threshold(MetricType::CyclomaticComplexity, 10, Severity::Warning);
         }
         if thresholds.get(MetricType::FunctionLength).is_none() {
             thresholds = thresholds.with_threshold(MetricType::FunctionLength, 50, Severity::Warning);

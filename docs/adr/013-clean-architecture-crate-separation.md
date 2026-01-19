@@ -341,6 +341,7 @@ async fn test_full_indexing_flow() {
 -   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - mcb-server admin module
 -   [ADR-011: HTTP Transport](011-http-transport-request-response-pattern.md) - mcb-server transport layer
 -   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI in mcb-infrastructure
+-   **Extended by**: [ADR-027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Introduces bounded contexts within layers
 
 ## References
 

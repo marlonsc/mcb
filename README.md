@@ -77,7 +77,7 @@ See [`docs/adr/`](./docs/adr/) for complete Architecture Decision Records and [`
 
 ### Requirements
 
--   Rust 1.89+ (edition 2021)
+-   Rust 1.89+ (edition 2024)
 -   For embedding providers: API keys (OpenAI, VoyageAI, Gemini) or local Ollama instance
 -   For vector stores: Milvus/Qdrant instance (or use in-memory for development)
 
