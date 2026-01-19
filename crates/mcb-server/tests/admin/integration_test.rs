@@ -11,7 +11,7 @@ use mcb_application::ports::infrastructure::{DomainEventStream, EventBusProvider
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_providers::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
-use mcb_server::admin::{handlers::AdminState, routes::admin_rocket};
+use mcb_server::admin::{auth::AdminAuthConfig, handlers::AdminState, routes::admin_rocket};
 use rocket::http::Status;
 use rocket::local::asynchronous::Client;
 use std::sync::Arc;
@@ -69,7 +69,7 @@ fn create_shared_test_state() -> (
 async fn test_full_admin_stack_integration() {
     // 1. Create shared state for metrics and indexing
     let (state, metrics, indexing) = create_shared_test_state();
-    let client = Client::tracked(admin_rocket(state))
+    let client = Client::tracked(admin_rocket(state, Arc::new(AdminAuthConfig::default())))
         .await
         .expect("valid rocket instance");
 
@@ -174,7 +174,7 @@ async fn test_full_admin_stack_integration() {
 #[rocket::async_test]
 async fn test_metrics_accumulation_integration() {
     let (state, metrics, _) = create_shared_test_state();
-    let client = Client::tracked(admin_rocket(state))
+    let client = Client::tracked(admin_rocket(state, Arc::new(AdminAuthConfig::default())))
         .await
         .expect("valid rocket instance");
 
@@ -215,7 +215,7 @@ async fn test_metrics_accumulation_integration() {
 #[rocket::async_test]
 async fn test_indexing_lifecycle_integration() {
     let (state, _, indexing) = create_shared_test_state();
-    let client = Client::tracked(admin_rocket(state))
+    let client = Client::tracked(admin_rocket(state, Arc::new(AdminAuthConfig::default())))
         .await
         .expect("valid rocket instance");
 

@@ -4,6 +4,7 @@
 //! performance metrics, indexing status, and runtime configuration management.
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
+//! Authentication guards added in v0.1.2.
 
 use mcb_application::ports::admin::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
@@ -22,6 +23,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tracing::info;
+
+use super::auth::AdminAuth;
 
 /// Admin handler state containing shared service references
 #[derive(Clone)]
@@ -70,9 +73,9 @@ pub fn health_check(state: &State<AdminState>) -> Json<AdminHealthResponse> {
     })
 }
 
-/// Get performance metrics endpoint
+/// Get performance metrics endpoint (protected)
 #[get("/metrics")]
-pub fn get_metrics(state: &State<AdminState>) -> Json<PerformanceMetricsData> {
+pub fn get_metrics(_auth: AdminAuth, state: &State<AdminState>) -> Json<PerformanceMetricsData> {
     let metrics = state.metrics.get_performance_metrics();
     Json(metrics)
 }
@@ -215,7 +218,7 @@ impl ShutdownResponse {
     }
 }
 
-/// Initiate graceful server shutdown
+/// Initiate graceful server shutdown (protected)
 ///
 /// Signals all components to begin shutdown. The server will attempt
 /// to complete in-flight requests before terminating.
@@ -224,8 +227,13 @@ impl ShutdownResponse {
 ///
 /// - `timeout_secs`: Optional custom timeout (default: 30s)
 /// - `immediate`: Skip graceful shutdown period (default: false)
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[post("/shutdown", format = "json", data = "<request>")]
 pub fn shutdown(
+    _auth: AdminAuth,
     state: &State<AdminState>,
     request: Json<ShutdownRequest>,
 ) -> (Status, Json<ShutdownResponse>) {
@@ -279,12 +287,16 @@ fn spawn_graceful_shutdown(coord: Arc<dyn ShutdownCoordinator>, timeout: u64) {
     });
 }
 
-/// Extended health check with dependency status
+/// Extended health check with dependency status (protected)
 ///
 /// Returns detailed health information including the status of
 /// all service dependencies (embedding provider, vector store, cache).
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[get("/health/extended")]
-pub fn extended_health_check(state: &State<AdminState>) -> Json<ExtendedHealthResponse> {
+pub fn extended_health_check(_auth: AdminAuth, state: &State<AdminState>) -> Json<ExtendedHealthResponse> {
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
     let now = current_timestamp();
@@ -412,11 +424,16 @@ pub struct CacheErrorResponse {
     pub error: String,
 }
 
-/// Get cache statistics
+/// Get cache statistics (protected)
 ///
 /// Returns cache hit/miss rates, entry counts, and other metrics.
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[get("/cache/stats")]
 pub async fn get_cache_stats(
+    _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<Json<mcb_application::ports::providers::cache::CacheStats>, (Status, Json<CacheErrorResponse>)>
 {

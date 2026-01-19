@@ -4,6 +4,7 @@
 //! reading, updating, and reloading configuration.
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
+//! Authentication guards added in v0.1.2.
 
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use rocket::http::Status;
@@ -12,6 +13,7 @@ use rocket::{get, patch, post, State};
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use super::auth::AdminAuth;
 use super::config::{
     ConfigReloadResponse, ConfigResponse, ConfigSectionUpdateRequest, ConfigSectionUpdateResponse,
     SanitizedConfig,
@@ -35,12 +37,16 @@ enum ConfigUpdateError {
 // Configuration Management Endpoints
 // ============================================================================
 
-/// Get current configuration (sanitized)
+/// Get current configuration (sanitized, protected)
 ///
 /// Returns the current configuration with sensitive fields removed.
 /// API keys, secrets, and passwords are not exposed.
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[get("/config")]
-pub async fn get_config(state: &State<AdminState>) -> (Status, Json<ConfigResponse>) {
+pub async fn get_config(_auth: AdminAuth, state: &State<AdminState>) -> (Status, Json<ConfigResponse>) {
     let Some(watcher) = &state.config_watcher else {
         return (
             Status::ServiceUnavailable,
@@ -67,12 +73,16 @@ pub async fn get_config(state: &State<AdminState>) -> (Status, Json<ConfigRespon
     )
 }
 
-/// Reload configuration from file
+/// Reload configuration from file (protected)
 ///
 /// Triggers a manual configuration reload. The new configuration
 /// will be validated before being applied.
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[post("/config/reload")]
-pub async fn reload_config(state: &State<AdminState>) -> (Status, Json<ConfigReloadResponse>) {
+pub async fn reload_config(_auth: AdminAuth, state: &State<AdminState>) -> (Status, Json<ConfigReloadResponse>) {
     let Some(watcher) = &state.config_watcher else {
         return (
             Status::ServiceUnavailable,
@@ -95,15 +105,20 @@ pub async fn reload_config(state: &State<AdminState>) -> (Status, Json<ConfigRel
     }
 }
 
-/// Update a specific configuration section
+/// Update a specific configuration section (protected)
 ///
 /// Updates a configuration section by merging the provided values
 /// with the existing configuration, then writing to the config file
 /// and triggering a reload.
 ///
 /// Valid sections: server, logging, cache, metrics, limits, resilience
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[patch("/config/<section>", format = "json", data = "<request>")]
 pub async fn update_config_section(
+    _auth: AdminAuth,
     state: &State<AdminState>,
     section: &str,
     request: Json<ConfigSectionUpdateRequest>,

@@ -12,6 +12,7 @@ use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use super::auth::AdminAuthConfig;
 use super::handlers::AdminState;
 use super::routes::admin_rocket;
 
@@ -58,6 +59,7 @@ impl AdminApiConfig {
 pub struct AdminApi {
     config: AdminApiConfig,
     state: AdminState,
+    auth_config: Arc<AdminAuthConfig>,
 }
 
 impl AdminApi {
@@ -81,6 +83,32 @@ impl AdminApi {
                 service_manager: None,
                 cache: None,
             },
+            auth_config: Arc::new(AdminAuthConfig::default()),
+        }
+    }
+
+    /// Create a new admin API server with authentication
+    pub fn with_auth(
+        config: AdminApiConfig,
+        metrics: Arc<dyn PerformanceMetricsInterface>,
+        indexing: Arc<dyn IndexingOperationsInterface>,
+        event_bus: Arc<dyn EventBusProvider>,
+        auth_config: AdminAuthConfig,
+    ) -> Self {
+        Self {
+            config,
+            state: AdminState {
+                metrics,
+                indexing,
+                config_watcher: None,
+                config_path: None,
+                shutdown_coordinator: None,
+                shutdown_timeout_secs: 30,
+                event_bus,
+                service_manager: None,
+                cache: None,
+            },
+            auth_config: Arc::new(auth_config),
         }
     }
 
@@ -92,6 +120,7 @@ impl AdminApi {
         config_watcher: Arc<ConfigWatcher>,
         config_path: PathBuf,
         event_bus: Arc<dyn EventBusProvider>,
+        auth_config: AdminAuthConfig,
     ) -> Self {
         Self {
             config,
@@ -106,6 +135,7 @@ impl AdminApi {
                 service_manager: None,
                 cache: None,
             },
+            auth_config: Arc::new(auth_config),
         }
     }
 
@@ -121,7 +151,7 @@ impl AdminApi {
             rocket_config.port
         );
 
-        let rocket = admin_rocket(self.state)
+        let rocket = admin_rocket(self.state, self.auth_config)
             .configure(rocket_config);
 
         rocket.launch().await.map_err(|e| {
@@ -151,7 +181,7 @@ impl AdminApi {
             rocket_config.port
         );
 
-        let rocket = admin_rocket(self.state)
+        let rocket = admin_rocket(self.state, self.auth_config)
             .configure(rocket_config)
             .ignite()
             .await

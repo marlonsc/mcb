@@ -8,12 +8,13 @@
 //!
 //! | Path | Method | Description |
 //! |------|--------|-------------|
-//! | `/services` | GET | List all registered services and their states |
-//! | `/services/{name}/start` | POST | Start a specific service |
-//! | `/services/{name}/stop` | POST | Stop a specific service |
-//! | `/services/{name}/restart` | POST | Restart a specific service |
+//! | `/services` | GET | List all registered services and their states (protected) |
+//! | `/services/{name}/start` | POST | Start a specific service (protected) |
+//! | `/services/{name}/stop` | POST | Stop a specific service (protected) |
+//! | `/services/{name}/restart` | POST | Restart a specific service (protected) |
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
+//! Authentication guards added in v0.1.2.
 
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -21,6 +22,7 @@ use rocket::{get, post, State};
 use serde::Serialize;
 use serde_json::json;
 
+use super::auth::AdminAuth;
 use super::handlers::AdminState;
 
 /// Response for service list endpoint
@@ -60,11 +62,16 @@ pub struct ServiceActionResponse {
     pub service: String,
 }
 
-/// List all registered services and their states
+/// List all registered services and their states (protected)
 ///
 /// GET /admin/services
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[get("/services")]
 pub fn list_services(
+    _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<Json<ServiceListResponse>, (Status, Json<ServiceErrorResponse>)> {
     let Some(service_manager) = &state.service_manager else {
@@ -94,11 +101,16 @@ pub fn list_services(
     }))
 }
 
-/// Start a specific service
+/// Start a specific service (protected)
 ///
 /// POST /admin/services/{name}/start
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[post("/services/<name>/start")]
 pub async fn start_service(
+    _auth: AdminAuth,
     state: &State<AdminState>,
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
@@ -134,11 +146,16 @@ pub async fn start_service(
     }
 }
 
-/// Stop a specific service
+/// Stop a specific service (protected)
 ///
 /// POST /admin/services/{name}/stop
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[post("/services/<name>/stop")]
 pub async fn stop_service(
+    _auth: AdminAuth,
     state: &State<AdminState>,
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
@@ -174,11 +191,16 @@ pub async fn stop_service(
     }
 }
 
-/// Restart a specific service
+/// Restart a specific service (protected)
 ///
 /// POST /admin/services/{name}/restart
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[post("/services/<name>/restart")]
 pub async fn restart_service(
+    _auth: AdminAuth,
     state: &State<AdminState>,
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
@@ -221,11 +243,16 @@ pub struct ServicesHealthResponse {
     pub checks: Vec<serde_json::Value>,
 }
 
-/// Get health check for all services
+/// Get health check for all services (protected)
 ///
 /// GET /admin/services/health
+///
+/// # Authentication
+///
+/// Requires valid admin API key via `X-Admin-Key` header.
 #[get("/services/health")]
 pub async fn services_health(
+    _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<Json<ServicesHealthResponse>, (Status, Json<ServiceErrorResponse>)> {
     let Some(service_manager) = &state.service_manager else {
