@@ -25,7 +25,7 @@
 //! | Module | Description |
 //! |--------|-------------|
 //! | [`config`] | TOML configuration with hot-reload |
-//! | [`di`] | dill dependency injection catalog |
+//! | [`di`] | Handle-based dependency injection |
 //! | [`constants`] | Centralized configuration constants |
 //!
 //! ### Observability
@@ -58,6 +58,9 @@ pub mod infrastructure;
 // Re-export commonly used types
 pub use error_ext::ErrorContext;
 pub use utils::TimedOperation;
+
+// Provider registration happens automatically via linkme distributed slices
+// when mcb-providers is compiled as a dependency
 
 // Internal tests module (can access pub(crate) items)
 #[cfg(test)]

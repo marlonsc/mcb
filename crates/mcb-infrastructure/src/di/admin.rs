@@ -16,7 +16,6 @@ use super::provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,
 };
-use dill::{Singleton, component};
 use mcb_application::ports::registry::{
     CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig, VectorStoreProviderConfig,
 };
@@ -32,14 +31,19 @@ use std::sync::Arc;
 /// - List available providers
 /// - Switch to a different provider
 /// - Reload from persisted config
-#[component]
-#[dill::scope(Singleton)]
 pub struct EmbeddingAdminService {
     resolver: Arc<EmbeddingProviderResolver>,
     handle: Arc<EmbeddingProviderHandle>,
 }
 
 impl EmbeddingAdminService {
+    /// Create a new embedding admin service
+    pub fn new(
+        resolver: Arc<EmbeddingProviderResolver>,
+        handle: Arc<EmbeddingProviderHandle>,
+    ) -> Self {
+        Self { resolver, handle }
+    }
     /// List all available embedding providers
     pub fn list_providers(&self) -> Vec<ProviderInfo> {
         self.resolver
@@ -92,14 +96,19 @@ impl std::fmt::Debug for EmbeddingAdminService {
 // ============================================================================
 
 /// Admin service for managing vector store providers at runtime
-#[component]
-#[dill::scope(Singleton)]
 pub struct VectorStoreAdminService {
     resolver: Arc<VectorStoreProviderResolver>,
     handle: Arc<VectorStoreProviderHandle>,
 }
 
 impl VectorStoreAdminService {
+    /// Create a new vector store admin service
+    pub fn new(
+        resolver: Arc<VectorStoreProviderResolver>,
+        handle: Arc<VectorStoreProviderHandle>,
+    ) -> Self {
+        Self { resolver, handle }
+    }
     /// List all available vector store providers
     pub fn list_providers(&self) -> Vec<ProviderInfo> {
         self.resolver
@@ -138,14 +147,16 @@ impl std::fmt::Debug for VectorStoreAdminService {
 // ============================================================================
 
 /// Admin service for managing cache providers at runtime
-#[component]
-#[dill::scope(Singleton)]
 pub struct CacheAdminService {
     resolver: Arc<CacheProviderResolver>,
     handle: Arc<CacheProviderHandle>,
 }
 
 impl CacheAdminService {
+    /// Create a new cache admin service
+    pub fn new(resolver: Arc<CacheProviderResolver>, handle: Arc<CacheProviderHandle>) -> Self {
+        Self { resolver, handle }
+    }
     /// List all available cache providers
     pub fn list_providers(&self) -> Vec<ProviderInfo> {
         self.resolver
@@ -191,14 +202,20 @@ impl std::fmt::Debug for CacheAdminService {
 // ============================================================================
 
 /// Admin service for managing language chunking providers at runtime
-#[component]
-#[dill::scope(Singleton)]
 pub struct LanguageAdminService {
     resolver: Arc<LanguageProviderResolver>,
     handle: Arc<LanguageProviderHandle>,
 }
 
 impl LanguageAdminService {
+    /// Create a new language admin service
+    pub fn new(
+        resolver: Arc<LanguageProviderResolver>,
+        handle: Arc<LanguageProviderHandle>,
+    ) -> Self {
+        Self { resolver, handle }
+    }
+
     /// List all available language providers
     pub fn list_providers(&self) -> Vec<ProviderInfo> {
         self.resolver

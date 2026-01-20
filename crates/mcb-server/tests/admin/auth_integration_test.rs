@@ -14,7 +14,7 @@ use async_trait::async_trait;
 use mcb_application::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
-use mcb_providers::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use mcb_server::admin::{auth::AdminAuthConfig, handlers::AdminState, routes::admin_rocket};
 use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;

@@ -45,16 +45,26 @@ impl EmbeddingProviderResolver {
 
     /// Resolve provider from current application config
     pub fn resolve_from_config(&self) -> Result<Arc<dyn EmbeddingProvider>, String> {
-        let registry_config = self
-            .config
-            .providers
-            .embedding
-            .values()
-            .next()
-            .map(embedding_config_to_registry)
-            .unwrap_or_else(|| EmbeddingProviderConfig::new("null"));
-
-        resolve_embedding_provider(&registry_config)
+        // Get the default provider configuration
+        if let Some(default_config) = self.config.providers.embedding.get("default") {
+            // If there's a specific config for this provider, use it
+            if let Some(specific_config) = self
+                .config
+                .providers
+                .embedding
+                .get(&default_config.provider.to_string())
+            {
+                let registry_config = embedding_config_to_registry(specific_config);
+                resolve_embedding_provider(&registry_config)
+            } else {
+                // Use the default config directly
+                let registry_config = embedding_config_to_registry(default_config);
+                resolve_embedding_provider(&registry_config)
+            }
+        } else {
+            // Fallback to null provider if no default configured
+            resolve_embedding_provider(&EmbeddingProviderConfig::new("null"))
+        }
     }
 
     /// Resolve provider from override config (for admin API)
@@ -100,16 +110,26 @@ impl VectorStoreProviderResolver {
 
     /// Resolve provider from current application config
     pub fn resolve_from_config(&self) -> Result<Arc<dyn VectorStoreProvider>, String> {
-        let registry_config = self
-            .config
-            .providers
-            .vector_store
-            .values()
-            .next()
-            .map(vector_store_config_to_registry)
-            .unwrap_or_else(|| VectorStoreProviderConfig::new("memory"));
-
-        resolve_vector_store_provider(&registry_config)
+        // Get the default provider configuration
+        if let Some(default_config) = self.config.providers.vector_store.get("default") {
+            // If there's a specific config for this provider, use it
+            if let Some(specific_config) = self
+                .config
+                .providers
+                .vector_store
+                .get(&default_config.provider.to_string())
+            {
+                let registry_config = vector_store_config_to_registry(specific_config);
+                resolve_vector_store_provider(&registry_config)
+            } else {
+                // Use the default config directly
+                let registry_config = vector_store_config_to_registry(default_config);
+                resolve_vector_store_provider(&registry_config)
+            }
+        } else {
+            // Fallback to memory provider if no default configured
+            resolve_vector_store_provider(&VectorStoreProviderConfig::new("memory"))
+        }
     }
 
     /// Resolve provider from override config (for admin API)

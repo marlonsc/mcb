@@ -944,10 +944,9 @@ use mcb_application::ports::registry::{
 fn milvus_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    let uri = config
-        .uri
-        .clone()
-        .unwrap_or_else(|| "http://localhost:19530".to_string());
+    let uri = config.uri.clone().ok_or_else(|| {
+        "Milvus requires 'uri' configuration (e.g., http://localhost:19530)".to_string()
+    })?;
     let token = config.api_key.clone();
 
     // Create Milvus client synchronously using block_on

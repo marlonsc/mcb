@@ -73,6 +73,8 @@ pub mod transport;
 
 // Placeholder modules removed - functionality handled by infrastructure layer
 
+// Provider modules are included in mcb-infrastructure for clean architecture compliance
+
 // Re-export core types for public API
 pub use builder::McpServerBuilder;
 pub use init::run_server;

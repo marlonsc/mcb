@@ -9,7 +9,6 @@
 # APPLICATION - Metadata
 # ============================================================================
 name = "MCP Context Browser"
-version = "0.1.0"
 
 # ============================================================================
 # SERVER - Core Network Settings
@@ -23,7 +22,6 @@ port = 3000               # MCP server port
 # ============================================================================
 [metrics]
 enabled = true            # Enable metrics/admin HTTP server
-port = 3001               # HTTP server port (dashboard, metrics, health)
 
 # Rate limiting configuration
 [metrics.rate_limiting]
@@ -56,7 +54,6 @@ enabled = false           # Enable authentication (JWT)
 jwt_secret = ""           # JWT signing secret (empty when disabled)
 jwt_expiration = 86400    # Token expiration in seconds (24 hours)
 jwt_issuer = "mcp-context-browser"  # JWT issuer claim
-bypass_paths = ["/health", "/metrics"]  # Paths that bypass authentication
 
 # ============================================================================
 # ADMIN INTERFACE - Dashboard & Web UI
@@ -73,36 +70,32 @@ jwt_expiration = 3600     # Token expiration in seconds (1 hour)
 # ============================================================================
 # EMBEDDING PROVIDERS - AI Model for Semantic Search
 # ============================================================================
-# DEFAULT: fastembed (lightweight, works offline, no external service needed)
-# FastEmbed is the default because it's self-contained and always available
 #
 # Available providers: openai, ollama, gemini, voyageai, fastembed, null
 # Provider selection is runtime-configurable via this setting
-[providers.embedding]
-provider = "fastembed"    # Use FastEmbed by default (lightweight, local)
-model = "BAAI/bge-small-en-v1.5"  # FastEmbed default model
-# Optional parameters:
-# dimensions = 384                   # FastEmbed default dimensions (defaults to 384)
+[providers.embedding.default]
+type = "fastembed"
 
-# Example configurations for other providers:
-# [providers.embedding]
-# provider = "openai"
-# model = "text-embedding-3-small"
-# api_key = "sk-your-openai-key-here"
-#
-# [providers.embedding]
-# provider = "ollama"
-# model = "nomic-embed-text"
-# base_url = "http://localhost:11434"
+[providers.embedding.ollama]
+model = "nomic-embed-text"
+base_url = "http://localhost:11434"
+dimensions = 768
+
+[providers.embedding.openai]
+provider = "openai"
+model = "text-embedding-3-small"
+api_key = "sk-your-openai-key-here"
 
 # ============================================================================
 # VECTOR STORE - Where Embeddings are Stored
 # ============================================================================
 # DEFAULT: filesystem (lightweight, works offline, no external service needed)
 # Filesystem is the default because it's self-contained and always available
-[providers.vector_store]
-provider = "filesystem"               # Use filesystem for vector storage (local, no external service)
-# address = "./data/vectors"         # Default filesystem path (relative to working directory)
+[providers.vector_store.default]
+type = "filesystem"               # Use filesystem for vector storage (local, no external service)
+
+[providers.vector_store.filesystem]
+address = "./data/vectors"         # Default filesystem path (relative to working directory)
 
 # ============================================================================
 # HYBRID SEARCH - Combined BM25 + Vector Search
@@ -126,18 +119,15 @@ type = "local"                    # Use local Moka cache (default, recommended)
                                   # Change to "redis" for distributed caching
 
 # Local cache settings (used when type = "local")
-[cache.backend.config]
+[cache.backend.local]
 max_entries = 10000               # Maximum number of entries
 default_ttl_seconds = 3600        # Default time-to-live (1 hour)
 
-# Redis cache settings (used when type = "redis")
-# Uncomment and set URL when using Redis backend:
-# [cache.backend]
-# type = "redis"
-# [cache.backend.config]
-# url = "redis://localhost:6379"
-# pool_size = 10
-# default_ttl_seconds = 3600
+
+[cache.backend.redis]
+url = "redis://localhost:6379"
+pool_size = 10
+default_ttl_seconds = 3600
 
 # Cache namespace-specific settings (all use code defaults if not specified)
 [cache.namespaces.embeddings]
@@ -223,41 +213,3 @@ max_concurrent_indexing = 4
 max_concurrent_search = 10
 max_concurrent_embedding = 5
 max_queue_size = 100
-
-# ============================================================================
-# BELOW: ALL PARAMETERS USE CODE DEFAULTS
-# ============================================================================
-# Uncomment and modify only if you need custom values:
-
-# [database]
-# enabled = false
-# url = ""                                    # Leave empty to disable
-# max_connections = 20
-# min_idle = 5
-# max_lifetime = 1800                        # seconds
-# idle_timeout = 600                         # seconds
-# connection_timeout = 30                    # seconds
-
-# [auth]
-# enabled = false
-# jwt_expiration = 86400                     # 24 hours
-# jwt_issuer = "mcp-context-browser"
-
-# [resource_limits]
-# enabled = true
-# [resource_limits.memory]
-# max_usage_percent = 85.0
-# max_per_operation = 536870912             # 512MB
-# warning_threshold = 75.0
-# [resource_limits.cpu]
-# max_usage_percent = 80.0
-# warning_threshold = 70.0
-# [resource_limits.disk]
-# max_usage_percent = 90.0
-# min_free_space = 1073741824               # 1GB
-# warning_threshold = 80.0
-# [resource_limits.operations]
-# max_concurrent_indexing = 3
-# max_concurrent_search = 10
-# max_concurrent_embedding = 5
-# max_queue_size = 100

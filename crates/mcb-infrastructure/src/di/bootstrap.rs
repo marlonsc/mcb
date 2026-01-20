@@ -148,26 +148,26 @@ impl AppContext {
     // ========================================================================
 
     /// Get embedding admin service for runtime provider switching
+    // mcb-validate-ignore: admin_service_concrete_type
     pub fn embedding_admin(&self) -> Arc<EmbeddingAdminService> {
-        // mcb-validate-ignore: admin_service_concrete_type
         self.embedding_admin.clone()
     }
 
     /// Get vector store admin service
+    // mcb-validate-ignore: admin_service_concrete_type
     pub fn vector_store_admin(&self) -> Arc<VectorStoreAdminService> {
-        // mcb-validate-ignore: admin_service_concrete_type
         self.vector_store_admin.clone()
     }
 
     /// Get cache admin service
+    // mcb-validate-ignore: admin_service_concrete_type
     pub fn cache_admin(&self) -> Arc<CacheAdminService> {
-        // mcb-validate-ignore: admin_service_concrete_type
         self.cache_admin.clone()
     }
 
     /// Get language admin service
+    // mcb-validate-ignore: admin_service_concrete_type
     pub fn language_admin(&self) -> Arc<LanguageAdminService> {
-        // mcb-validate-ignore: admin_service_concrete_type
         self.language_admin.clone()
     }
 
@@ -234,6 +234,9 @@ impl std::fmt::Debug for AppContext {
 /// - Provider Handles (RwLock for runtime switching)
 /// - Admin Services (for API-based provider management)
 /// - Infrastructure Services (null implementations by default)
+///
+/// Note: Providers are auto-registered via linkme distributed slices when
+/// mcb-providers is linked. No explicit registration call is needed.
 pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     info!("Initializing application context with provider handles");
 

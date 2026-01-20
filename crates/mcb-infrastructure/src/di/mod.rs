@@ -1,13 +1,13 @@
-//! Dependency Injection System - dill Catalog + linkme Registry
+//! Dependency Injection System - Handle-based Pattern + linkme Registry
 //!
 //! This module implements dependency injection using:
-//! - **dill Catalog**: Runtime DI for infrastructure services
+//! - **Handle-based pattern**: Runtime-swappable provider handles with RwLock
 //! - **linkme registry**: Compile-time discovery of external providers
 //!
 //! ## Architecture
 //!
 //! ```text
-//! linkme (compile-time)          dill (runtime)
+//! linkme (compile-time)          Handle-based (runtime)
 //! ─────────────────────          ──────────────────────
 //! EMBEDDING_PROVIDERS     →      EmbeddingProviderResolver
 //! (list of factories)                     ↓

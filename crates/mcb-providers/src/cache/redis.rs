@@ -249,10 +249,9 @@ use mcb_application::ports::registry::{CACHE_PROVIDERS, CacheProviderConfig, Cac
 fn redis_cache_factory(
     config: &CacheProviderConfig,
 ) -> std::result::Result<Arc<dyn CacheProvider>, String> {
-    let uri = config
-        .uri
-        .clone()
-        .unwrap_or_else(|| "redis://localhost:6379".to_string());
+    let uri = config.uri.clone().ok_or_else(|| {
+        "Redis requires 'uri' configuration (e.g., redis://localhost:6379)".to_string()
+    })?;
 
     let provider = RedisCacheProvider::new(&uri)
         .map_err(|e| format!("Failed to create Redis provider: {e}"))?;

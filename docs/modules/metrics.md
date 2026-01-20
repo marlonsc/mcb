@@ -1,20 +1,20 @@
 # Metrics Module
 
-**Source**: `crates/mcb-providers/src/admin/metrics.rs` and `crates/mcb-server/src/admin/`
-**Crates**: `mcb-providers`, `mcb-server`
+**Source**: `crates/mcb-infrastructure/src/infrastructure/admin.rs` and `crates/mcb-server/src/admin/`
+**Crates**: `mcb-infrastructure`, `mcb-server`
 
 System monitoring, performance tracking, and HTTP metrics API.
 
 ## Overview
 
-The metrics functionality is distributed across crates in v0.1.1:
+The metrics functionality is distributed across crates in v0.1.2:
 
--   **mcb-providers**: `AtomicPerformanceMetrics` - Performance tracking
+-   **mcb-infrastructure**: `AtomicPerformanceMetrics`, `DefaultIndexingOperations` - Performance tracking
 -   **mcb-server**: Admin endpoints for metrics exposure
 
 ## Components
 
-### AtomicPerformanceMetrics (`mcb-providers`)
+### AtomicPerformanceMetrics (`mcb-infrastructure`)
 
 Thread-safe performance metrics collection:
 
@@ -39,8 +39,8 @@ HTTP API for metrics access via admin router.
 ## File Structure
 
 ```text
-crates/mcb-providers/src/admin/
-└── metrics.rs               # AtomicPerformanceMetrics
+crates/mcb-infrastructure/src/infrastructure/
+└── admin.rs                 # AtomicPerformanceMetrics, DefaultIndexingOperations
 
 crates/mcb-server/src/admin/
 ├── handlers.rs              # Metrics endpoint handlers
@@ -50,8 +50,8 @@ crates/mcb-server/src/admin/
 ## Key Exports
 
 ```rust
-// From mcb-providers
-pub use admin::metrics::AtomicPerformanceMetrics;
+// From mcb-infrastructure
+pub use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 
 // From mcb-server
 pub use admin::{metrics_handler, MetricsResponse};

@@ -916,11 +916,12 @@ use mcb_application::ports::registry::{
 fn filesystem_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    let base_path = config
-        .uri
-        .clone()
-        .unwrap_or_else(|| "./data/vectors".to_string());
-    let dimensions = config.dimensions.unwrap_or(1536);
+    let base_path = config.uri.clone().ok_or_else(|| {
+        "Filesystem store requires 'uri' configuration (path to storage directory)".to_string()
+    })?;
+    let dimensions = config.dimensions.ok_or_else(|| {
+        "Filesystem store requires 'dimensions' configuration (embedding vector size)".to_string()
+    })?;
 
     let fs_config = FilesystemVectorStoreConfig {
         base_path: std::path::PathBuf::from(base_path),

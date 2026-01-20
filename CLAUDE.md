@@ -1,4 +1,4 @@
-# Claude.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (Claude.ai/code) when working with code in this repository.
 
@@ -39,41 +39,45 @@ cargo test test_name -- --nocapture
 crates/
 ├── mcb/                 # Facade crate (re-exports public API)
 ├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
-├── mcb-application/     # Layer 2: Use cases, services orchestration
-├── mcb-providers/       # Layer 3: Provider implementations (embedding, vector stores)
-├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging
+├── mcb-application/     # Layer 2: Use cases, services, registry (linkme slices)
+├── mcb-providers/       # Layer 3: Provider implementations (auto-register via linkme)
+├── mcb-infrastructure/  # Layer 4: DI handles, config (Figment), health, logging
 ├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
-├── mcb-validate/        # Dev tooling: architecture validation (Phases 1-3 verified)
-└── (mcb crate above)    # Facade aggregating all public APIs
+└── mcb-validate/        # Dev tooling: architecture validation
 ```
 
-**Dependency Direction** (inward only):
+**Dependency Direction**:
 
 ```
 mcb-server → mcb-infrastructure → mcb-application → mcb-domain
-                    ↓
-              mcb-providers
+                    ↓                    ↑
+              mcb-providers ─────────────┘
 ```
+
+Note: `mcb-providers` depends on both `mcb-domain` (port traits) and `mcb-application` (registry slices for auto-registration via linkme).
 
 ### Key Crate Contents
 
-**mcb-domain**: Port traits (`EmbeddingProvider`, `VectorStore`, `CacheProvider`), domain entities (`CodeChunk`, `Embedding`, `SearchResult`), domain errors with `thiserror`.
+**mcb-domain**: Port traits (`EmbeddingProvider`, `VectorStoreProvider`, `CacheProvider`, `LanguageChunkingProvider`), domain entities (`CodeChunk`, `Embedding`, `SearchResult`), domain errors with `thiserror`.
 
-**mcb-application**: Services (`ContextService`, `SearchService`, `IndexingService`), `ChunkingOrchestrator` for batch processing.
+**mcb-application**: Services (`ContextService`, `SearchService`, `IndexingService`), registry system (linkme distributed slices for provider auto-registration), admin ports (`IndexingOperationsInterface`, `PerformanceMetricsInterface`), infrastructure ports (`EventBusProvider`, `AuthServiceInterface`).
 
-**mcb-infrastructure**: DI container (`InfrastructureComponents`, `FullContainer`), cache providers (Moka, Redis, Null), config loading, AES-GCM crypto, health checks, structured logging.
+**mcb-providers**: Provider implementations. Auto-register via `#[linkme::distributed_slice]` into mcb-application registry.
 
-**mcb-server**: MCP tool handlers (`index_codebase`, `search_code`, `get_indexing_status`, `clear_index`), stdio transport.
+**mcb-infrastructure**: Handle-based DI (ADR-024), Figment config loading (ADR-025), provider handles (`EmbeddingProviderHandle`, etc.), resolvers, admin services for runtime switching.
 
-**mcb-validate**: Architecture validation tooling. Linters (Clippy, Ruff), AST parsers (Tree-sitter), rule engines, YAML rules for migration detection (12 rules). Phases 1-3 verified (73 tests pass), Phases 4-7 not started. See `docs/developer/IMPLEMENTATION_STATUS.md`.
+**mcb-server**: MCP tool handlers (`index_codebase`, `search_code`, `get_indexing_status`, `clear_index`), stdio/HTTP transport.
+
+**mcb-validate**: Architecture validation tooling. AST parsers (Tree-sitter), rule engines.
 
 ## Code Standards
 
 1.  **No unwrap/expect** - Use `?` operator with proper error types
-2.  **File size < 500 lines** - Split large files
-3.  **Trait-based DI** - Use `Arc<dyn Trait>`, not `Arc<ConcreteType>`
-4.  **Async-first** - All I/O operations async with Tokio
-5.  **Error handling** - Custom types with `thiserror`:
+2.  **No hardcoded fallbacks** - Require configuration, fail fast if missing
+3.  **File size < 500 lines** - Split large files
+4.  **Trait-based DI** - Use `Arc<dyn Trait>`, not `Arc<ConcreteType>`
+5.  **Async-first** - All I/O operations async with Tokio
+6.  **Error handling** - Custom types with `thiserror`:
 
 ```rust
 #[derive(Error, Debug)]
@@ -85,22 +89,66 @@ pub enum Error {
 }
 ```
 
-## DI Pattern
+## DI Pattern (ADR-024: Handle-Based DI)
 
-Manual builder pattern with dill runtime DI (v0.1.2):
+Handle-based pattern with linkme registry (NOT Shaku macros):
 
 ```rust
-pub struct InfrastructureComponents {
-    pub cache: SharedCacheProvider,
-    pub crypto: CryptoService,
-    pub health: HealthRegistry,
-    pub config: AppConfig,
+// Provider Handle - RwLock wrapper for runtime switching
+pub struct EmbeddingProviderHandle {
+    inner: RwLock<Arc<dyn EmbeddingProvider>>,
 }
 
-pub struct FullContainer {
-    pub infrastructure: InfrastructureComponents,
-    pub domain_services: DomainServicesContainer,
+// Provider Resolver - accesses linkme registry
+pub struct EmbeddingProviderResolver {
+    config: Arc<AppConfig>,
 }
+
+// Admin Service - runtime provider switching via API
+pub struct EmbeddingAdminService {
+    resolver: Arc<EmbeddingProviderResolver>,
+    handle: Arc<EmbeddingProviderHandle>,
+}
+
+// AppContext - composition root
+pub struct AppContext {
+    embedding_handle: Arc<EmbeddingProviderHandle>,
+    embedding_admin: Arc<EmbeddingAdminService>,
+    // ... other handles and services
+}
+```
+
+## Provider Registration (ADR-023: linkme)
+
+Providers auto-register via linkme distributed slices:
+
+```rust
+// In mcb-application: declare slice
+#[linkme::distributed_slice]
+pub static EMBEDDING_PROVIDERS: [EmbeddingProviderEntry] = [..];
+
+// In mcb-providers: register provider
+#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
+static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
+    name: "ollama",
+    description: "Ollama local embedding provider",
+    factory: ollama_factory,  // Function pointer, NOT closure
+};
+```
+
+## Configuration (ADR-025: Figment)
+
+Use Figment for configuration loading:
+
+```rust
+use figment::{Figment, providers::{Toml, Env}};
+
+let figment = Figment::new()
+    .merge(Toml::file("config/default.toml"))
+    .merge(Toml::file(config_path))
+    .merge(Env::prefixed("MCB_").split("_"));
+
+let config: AppConfig = figment.extract()?;
 ```
 
 ## Quality Gates
@@ -111,12 +159,15 @@ Before any commit:
 -   `make lint` - clean output
 -   `make validate` - 0 architecture violations
 -   No new `unwrap/expect`
+-   No hardcoded fallback values
 
 ## Supported Providers
 
 **Embedding**: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null
 
 **Vector Store**: Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null
+
+**Cache**: Moka, Redis, Null
 
 **Languages (AST)**: Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin
 

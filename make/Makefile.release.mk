@@ -9,9 +9,9 @@
 # Get version from mcb crate Cargo.toml
 VERSION := $(shell grep '^version' crates/mcb/Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
 
-# Installation directory
-INSTALL_DIR := $(HOME)/.claude/servers/claude-context-mcp
-SERVICE_NAME := claude-context-daemon.service
+# Installation directory - single location for MCP and systemd
+INSTALL_DIR := $(HOME)/.local/bin
+INSTALL_BINARY := mcp-context-browser
 BINARY_NAME := mcb-server
 
 # =============================================================================
@@ -34,25 +34,21 @@ release: ## Full release pipeline (lint + test + validate + build)
 # INSTALL - Install binary to system
 # =============================================================================
 
-install: ## Install release binary (RELEASE=1 for release, default debug)
+install: ## Install binary to ~/.local/bin/mcp-context-browser (RELEASE=1 for release)
 ifeq ($(RELEASE),1)
 	@echo "Installing release binary v$(VERSION)..."
 	@$(MAKE) build RELEASE=1
 	@mkdir -p $(INSTALL_DIR)
-	@systemctl --user stop $(SERVICE_NAME) 2>/dev/null || true
-	@cp target/release/$(BINARY_NAME) $(INSTALL_DIR)/
-	@chmod +x $(INSTALL_DIR)/$(BINARY_NAME)
-	@systemctl --user start $(SERVICE_NAME) 2>/dev/null || echo "Service not enabled"
-	@echo "Installed v$(VERSION) to $(INSTALL_DIR)"
+	@cp target/release/$(BINARY_NAME) $(INSTALL_DIR)/$(INSTALL_BINARY)
+	@chmod +x $(INSTALL_DIR)/$(INSTALL_BINARY)
+	@echo "Installed v$(VERSION) to $(INSTALL_DIR)/$(INSTALL_BINARY)"
 else
 	@echo "Installing debug binary v$(VERSION)..."
 	@$(MAKE) build
 	@mkdir -p $(INSTALL_DIR)
-	@systemctl --user stop $(SERVICE_NAME) 2>/dev/null || true
-	@cp target/debug/$(BINARY_NAME) $(INSTALL_DIR)/
-	@chmod +x $(INSTALL_DIR)/$(BINARY_NAME)
-	@systemctl --user start $(SERVICE_NAME) 2>/dev/null || echo "Service not enabled"
-	@echo "Installed v$(VERSION) (debug) to $(INSTALL_DIR)"
+	@cp target/debug/$(BINARY_NAME) $(INSTALL_DIR)/$(INSTALL_BINARY)
+	@chmod +x $(INSTALL_DIR)/$(INSTALL_BINARY)
+	@echo "Installed v$(VERSION) (debug) to $(INSTALL_DIR)/$(INSTALL_BINARY)"
 endif
 
 # =============================================================================

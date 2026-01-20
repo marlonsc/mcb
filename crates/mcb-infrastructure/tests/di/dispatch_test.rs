@@ -1,12 +1,15 @@
 //! DI Component Dispatch Tests
 //!
 //! Tests for the DI container bootstrap and initialization.
+//!
+//! Note: mcb-providers is linked as dev-dependency to ensure
+//! providers are registered via linkme distributed slices.
 
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 
-// Force link mcb_providers so inventory registrations are included
+// Force linkme registration by linking mcb_providers crate
 extern crate mcb_providers;
 
 #[tokio::test]
@@ -154,8 +157,8 @@ async fn test_admin_services_are_accessible() {
 }
 
 #[tokio::test]
-async fn test_infrastructure_services_from_catalog() {
-    // Test that infrastructure services are accessible from the dill catalog
+async fn test_infrastructure_services_from_app_context() {
+    // Test that infrastructure services are accessible from the AppContext
 
     let config = AppConfig::default();
     let app_context = init_app(config)

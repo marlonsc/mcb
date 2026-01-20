@@ -8,8 +8,8 @@ use mcb_domain::error::Result;
 
 /// Null implementation for testing
 ///
-/// Registered with dill Catalog via `add_value` in bootstrap.rs.
-/// Note: dill's `#[component]` macro is incompatible with our architecture
+/// Infrastructure service stored directly in AppContext.
+/// Uses handle-based DI pattern without dill macros.
 /// because it requires `InjectionError` error type and generates a conflicting
 /// `new()` method. We use `add_value` pattern instead.
 pub struct NullAuthService;

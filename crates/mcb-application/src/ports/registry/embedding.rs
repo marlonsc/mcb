@@ -112,16 +112,18 @@ pub fn resolve_embedding_provider(
 ) -> Result<Arc<dyn EmbeddingProvider>, String> {
     let provider_name = &config.provider;
 
+    // Search linkme registry for matching provider
     for entry in EMBEDDING_PROVIDERS {
         if entry.name == provider_name {
             return (entry.factory)(config);
         }
     }
 
+    // No fallbacks - fail fast if provider not found
     let available: Vec<&str> = EMBEDDING_PROVIDERS.iter().map(|e| e.name).collect();
-
     Err(format!(
-        "Unknown embedding provider '{}'. Available providers: {:?}",
+        "Unknown embedding provider '{}'. Available providers: {:?}. \
+         Ensure mcb-providers is linked with the required feature enabled.",
         provider_name, available
     ))
 }

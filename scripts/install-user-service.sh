@@ -24,9 +24,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Check if binary exists
 BINARY_SOURCE="$PROJECT_ROOT/target/release/mcp-context-browser"
 if [ ! -f "$BINARY_SOURCE" ]; then
-    echo -e "${YELLOW}Release binary not found. Building...${NC}"
+    echo -e "${YELLOW}Release binary not found. Building with make...${NC}"
     cd "$PROJECT_ROOT"
-    cargo build --release
+    make build-release
 fi
 
 # Create required directories
@@ -67,7 +67,9 @@ EOF
     fi
     echo -e "${GREEN}Created config at $CONFIG_DEST${NC}"
 else
-    echo -e "${YELLOW}Config already exists at $CONFIG_DEST (not overwritten)${NC}"
+    echo -e "${YELLOW}Config already exists at $CONFIG_DEST, checking for migration...${NC}"
+    # Run config migration if needed
+    "$SCRIPT_DIR/migrate-config.sh" "$CONFIG_DEST"
 fi
 
 # Install systemd service

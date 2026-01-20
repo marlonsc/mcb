@@ -89,11 +89,6 @@ pub mod chunking;
 /// Also provides `IntelligentChunker` that implements `CodeChunker` trait.
 pub mod language;
 
-/// Admin provider implementations
-///
-/// Implements `PerformanceMetricsInterface` and `IndexingOperationsInterface` ports.
-pub mod admin;
-
 /// Hybrid search provider implementations
 ///
 /// Implements `HybridSearchProvider` trait for combined BM25 + semantic search.
