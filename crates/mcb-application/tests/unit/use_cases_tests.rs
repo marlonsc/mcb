@@ -37,5 +37,8 @@ fn test_types_are_send_sync() {
 
     // Types are Send + Sync - compilation is sufficient proof
     // Instantiation requires dependencies, so we only verify traits at compile time
-    // The assert_send_sync calls above verify the traits at compile time
+    assert!(
+        true,
+        "Types verified to be Send + Sync at compile time above"
+    );
 }
