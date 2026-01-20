@@ -131,8 +131,8 @@ impl Default for EdgeVecConfig {
     }
 }
 
-/// Messages for the EdgeVec actor
-enum EdgeVecMessage {
+/// Core collection management messages
+enum CoreMessage {
     CreateCollection {
         name: String,
         tx: oneshot::Sender<Result<()>>,
@@ -158,6 +158,10 @@ enum EdgeVecMessage {
         ids: Vec<String>,
         tx: oneshot::Sender<Result<()>>,
     },
+}
+
+/// Query and stats messages
+enum QueryMessage {
     GetStats {
         collection: String,
         tx: oneshot::Sender<Result<HashMap<String, serde_json::Value>>>,
@@ -176,7 +180,10 @@ enum EdgeVecMessage {
         name: String,
         tx: oneshot::Sender<Result<bool>>,
     },
-    // Browse operations
+}
+
+/// Browse API messages
+enum BrowseMessage {
     ListCollections {
         tx: oneshot::Sender<Result<Vec<CollectionInfo>>>,
     },
@@ -192,10 +199,17 @@ enum EdgeVecMessage {
     },
 }
 
+/// Messages for the EdgeVec actor - categorized for OCP compliance
+enum EdgeVecMessage {
+    Core(CoreMessage),
+    Query(QueryMessage),
+    Browse(BrowseMessage),
+}
+
 /// EdgeVec vector store provider implementation using Actor pattern
 pub struct EdgeVecVectorStoreProvider {
     sender: mpsc::Sender<EdgeVecMessage>,
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Reserved for future collection-specific operations
     collection: String,
 }
 
@@ -230,10 +244,10 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::CollectionExists {
+            .send(EdgeVecMessage::Query(QueryMessage::CollectionExists {
                 name: name.to_string(),
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -243,10 +257,10 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::GetStats {
+            .send(EdgeVecMessage::Query(QueryMessage::GetStats {
                 collection: collection.to_string(),
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -267,10 +281,10 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::CreateCollection {
+            .send(EdgeVecMessage::Core(CoreMessage::CreateCollection {
                 name: name.to_string(),
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -280,10 +294,10 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::DeleteCollection {
+            .send(EdgeVecMessage::Core(CoreMessage::DeleteCollection {
                 name: name.to_string(),
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -298,12 +312,12 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::InsertVectors {
+            .send(EdgeVecMessage::Core(CoreMessage::InsertVectors {
                 collection: collection.to_string(),
                 vectors: vectors.to_vec(),
                 metadata,
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -319,12 +333,12 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::SearchSimilar {
+            .send(EdgeVecMessage::Core(CoreMessage::SearchSimilar {
                 collection: collection.to_string(),
                 query_vector: query_vector.to_vec(),
                 limit,
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -334,11 +348,11 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::DeleteVectors {
+            .send(EdgeVecMessage::Core(CoreMessage::DeleteVectors {
                 collection: collection.to_string(),
                 ids: ids.to_vec(),
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -352,11 +366,11 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::GetVectorsByIds {
+            .send(EdgeVecMessage::Query(QueryMessage::GetVectorsByIds {
                 collection: collection.to_string(),
                 ids: ids.to_vec(),
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -366,11 +380,11 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::ListVectors {
+            .send(EdgeVecMessage::Query(QueryMessage::ListVectors {
                 collection: collection.to_string(),
                 limit,
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -383,7 +397,9 @@ impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::ListCollections { tx })
+            .send(EdgeVecMessage::Browse(BrowseMessage::ListCollections {
+                tx,
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -393,11 +409,11 @@ impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::ListFilePaths {
+            .send(EdgeVecMessage::Browse(BrowseMessage::ListFilePaths {
                 collection: collection.to_string(),
                 limit,
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -411,11 +427,11 @@ impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
-            .send(EdgeVecMessage::GetChunksByFile {
+            .send(EdgeVecMessage::Browse(BrowseMessage::GetChunksByFile {
                 collection: collection.to_string(),
                 file_path: file_path.to_string(),
                 tx,
-            })
+            }))
             .await;
         rx.await
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
@@ -762,72 +778,90 @@ impl EdgeVecActor {
     async fn run(mut self) {
         while let Some(msg) = self.receiver.recv().await {
             match msg {
-                EdgeVecMessage::CreateCollection { name, tx } => {
-                    let _ = tx.send(self.handle_create_collection(name));
-                }
-                EdgeVecMessage::DeleteCollection { name, tx } => {
-                    let _ = tx.send(self.handle_delete_collection(name));
-                }
-                EdgeVecMessage::InsertVectors {
-                    collection,
-                    vectors,
-                    metadata,
-                    tx,
-                } => {
-                    let _ = tx.send(self.handle_insert_vectors(collection, vectors, metadata));
-                }
-                EdgeVecMessage::SearchSimilar {
-                    collection,
-                    query_vector,
-                    limit,
-                    tx,
-                } => {
-                    let _ = tx.send(self.handle_search_similar(&collection, &query_vector, limit));
-                }
-                EdgeVecMessage::DeleteVectors {
-                    collection,
-                    ids,
-                    tx,
-                } => {
-                    let _ = tx.send(self.handle_delete_vectors(&collection, ids));
-                }
-                EdgeVecMessage::GetStats { collection, tx } => {
-                    let _ = tx.send(Ok(self.handle_get_stats(&collection)));
-                }
-                EdgeVecMessage::ListVectors {
-                    collection,
-                    limit,
-                    tx,
-                } => {
-                    let _ = tx.send(Ok(self.handle_list_vectors(&collection, limit)));
-                }
-                EdgeVecMessage::GetVectorsByIds {
-                    collection,
-                    ids,
-                    tx,
-                } => {
-                    let _ = tx.send(Ok(self.handle_get_vectors_by_ids(&collection, ids)));
-                }
-                EdgeVecMessage::CollectionExists { name, tx } => {
-                    let _ = tx.send(self.handle_collection_exists(&name));
-                }
-                EdgeVecMessage::ListCollections { tx } => {
-                    let _ = tx.send(Ok(self.handle_list_collections()));
-                }
-                EdgeVecMessage::ListFilePaths {
-                    collection,
-                    limit,
-                    tx,
-                } => {
-                    let _ = tx.send(Ok(self.handle_list_file_paths(&collection, limit)));
-                }
-                EdgeVecMessage::GetChunksByFile {
-                    collection,
-                    file_path,
-                    tx,
-                } => {
-                    let _ = tx.send(Ok(self.handle_get_chunks_by_file(&collection, &file_path)));
-                }
+                EdgeVecMessage::Core(core) => self.handle_core_message(core),
+                EdgeVecMessage::Query(query) => self.handle_query_message(query),
+                EdgeVecMessage::Browse(browse) => self.handle_browse_message(browse),
+            }
+        }
+    }
+
+    fn handle_core_message(&mut self, msg: CoreMessage) {
+        match msg {
+            CoreMessage::CreateCollection { name, tx } => {
+                let _ = tx.send(self.handle_create_collection(name));
+            }
+            CoreMessage::DeleteCollection { name, tx } => {
+                let _ = tx.send(self.handle_delete_collection(name));
+            }
+            CoreMessage::InsertVectors {
+                collection,
+                vectors,
+                metadata,
+                tx,
+            } => {
+                let _ = tx.send(self.handle_insert_vectors(collection, vectors, metadata));
+            }
+            CoreMessage::SearchSimilar {
+                collection,
+                query_vector,
+                limit,
+                tx,
+            } => {
+                let _ = tx.send(self.handle_search_similar(&collection, &query_vector, limit));
+            }
+            CoreMessage::DeleteVectors {
+                collection,
+                ids,
+                tx,
+            } => {
+                let _ = tx.send(self.handle_delete_vectors(&collection, ids));
+            }
+        }
+    }
+
+    fn handle_query_message(&mut self, msg: QueryMessage) {
+        match msg {
+            QueryMessage::GetStats { collection, tx } => {
+                let _ = tx.send(Ok(self.handle_get_stats(&collection)));
+            }
+            QueryMessage::ListVectors {
+                collection,
+                limit,
+                tx,
+            } => {
+                let _ = tx.send(Ok(self.handle_list_vectors(&collection, limit)));
+            }
+            QueryMessage::GetVectorsByIds {
+                collection,
+                ids,
+                tx,
+            } => {
+                let _ = tx.send(Ok(self.handle_get_vectors_by_ids(&collection, ids)));
+            }
+            QueryMessage::CollectionExists { name, tx } => {
+                let _ = tx.send(self.handle_collection_exists(&name));
+            }
+        }
+    }
+
+    fn handle_browse_message(&mut self, msg: BrowseMessage) {
+        match msg {
+            BrowseMessage::ListCollections { tx } => {
+                let _ = tx.send(Ok(self.handle_list_collections()));
+            }
+            BrowseMessage::ListFilePaths {
+                collection,
+                limit,
+                tx,
+            } => {
+                let _ = tx.send(Ok(self.handle_list_file_paths(&collection, limit)));
+            }
+            BrowseMessage::GetChunksByFile {
+                collection,
+                file_path,
+                tx,
+            } => {
+                let _ = tx.send(Ok(self.handle_get_chunks_by_file(&collection, &file_path)));
             }
         }
     }

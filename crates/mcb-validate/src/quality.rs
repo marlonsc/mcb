@@ -60,6 +60,28 @@ pub enum QualityViolation {
         content: String,
         severity: Severity,
     },
+    /// Dead code annotation without justification
+    DeadCodeWithoutJustification {
+        file: PathBuf,
+        line: usize,
+        item_name: String,
+        severity: Severity,
+    },
+    /// Unused struct field
+    UnusedStructField {
+        file: PathBuf,
+        line: usize,
+        struct_name: String,
+        field_name: String,
+        severity: Severity,
+    },
+    /// Function marked dead but appears uncalled
+    DeadFunctionUncalled {
+        file: PathBuf,
+        line: usize,
+        function_name: String,
+        severity: Severity,
+    },
 }
 
 impl QualityViolation {
@@ -70,6 +92,9 @@ impl QualityViolation {
             Self::PanicInProduction { severity, .. } => *severity,
             Self::FileTooLarge { severity, .. } => *severity,
             Self::TodoComment { severity, .. } => *severity,
+            Self::DeadCodeWithoutJustification { severity, .. } => *severity,
+            Self::UnusedStructField { severity, .. } => *severity,
+            Self::DeadFunctionUncalled { severity, .. } => *severity,
         }
     }
 }
@@ -141,6 +166,50 @@ impl std::fmt::Display for QualityViolation {
             } => {
                 write!(f, "TODO/FIXME: {}:{} - {}", file.display(), line, content)
             }
+            Self::DeadCodeWithoutJustification {
+                file,
+                line,
+                item_name,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Dead code without justification: {}:{} - '{}' has #[allow(dead_code)] without explanation",
+                    file.display(),
+                    line,
+                    item_name
+                )
+            }
+            Self::UnusedStructField {
+                file,
+                line,
+                struct_name,
+                field_name,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Unused struct field: {}:{} - Field '{}' in struct '{}' is unused",
+                    file.display(),
+                    line,
+                    field_name,
+                    struct_name
+                )
+            }
+            Self::DeadFunctionUncalled {
+                file,
+                line,
+                function_name,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Dead function: {}:{} - Function '{}' marked as dead but appears uncalled",
+                    file.display(),
+                    line,
+                    function_name
+                )
+            }
         }
     }
 }
@@ -153,6 +222,9 @@ impl Violation for QualityViolation {
             Self::PanicInProduction { .. } => "QUAL003",
             Self::FileTooLarge { .. } => "QUAL004",
             Self::TodoComment { .. } => "QUAL005",
+            Self::DeadCodeWithoutJustification { .. } => "QUAL020",
+            Self::UnusedStructField { .. } => "QUAL021",
+            Self::DeadFunctionUncalled { .. } => "QUAL022",
         }
     }
 
@@ -167,6 +239,9 @@ impl Violation for QualityViolation {
             Self::PanicInProduction { severity, .. } => *severity,
             Self::FileTooLarge { severity, .. } => *severity,
             Self::TodoComment { severity, .. } => *severity,
+            Self::DeadCodeWithoutJustification { severity, .. } => *severity,
+            Self::UnusedStructField { severity, .. } => *severity,
+            Self::DeadFunctionUncalled { severity, .. } => *severity,
         }
     }
 
@@ -177,6 +252,9 @@ impl Violation for QualityViolation {
             Self::PanicInProduction { file, .. } => Some(file),
             Self::FileTooLarge { file, .. } => Some(file),
             Self::TodoComment { file, .. } => Some(file),
+            Self::DeadCodeWithoutJustification { file, .. } => Some(file),
+            Self::UnusedStructField { file, .. } => Some(file),
+            Self::DeadFunctionUncalled { file, .. } => Some(file),
         }
     }
 
@@ -187,6 +265,9 @@ impl Violation for QualityViolation {
             Self::PanicInProduction { line, .. } => Some(*line),
             Self::FileTooLarge { .. } => None,
             Self::TodoComment { line, .. } => Some(*line),
+            Self::DeadCodeWithoutJustification { line, .. } => Some(*line),
+            Self::UnusedStructField { line, .. } => Some(*line),
+            Self::DeadFunctionUncalled { line, .. } => Some(*line),
         }
     }
 
@@ -207,6 +288,15 @@ impl Violation for QualityViolation {
             )),
             Self::TodoComment { .. } => {
                 Some("Address the TODO/FIXME or create an issue to track it".to_string())
+            }
+            Self::DeadCodeWithoutJustification { .. } => {
+                Some("Add a comment explaining why this is marked dead (e.g., // Reserved for future admin API) or remove the annotation if actually used".to_string())
+            }
+            Self::UnusedStructField { .. } => {
+                Some("Remove the unused field or document why it's kept (e.g., for serialization format versioning)".to_string())
+            }
+            Self::DeadFunctionUncalled { .. } => {
+                Some("Remove the dead function or connect it to the public API if it's intended for future use".to_string())
             }
         }
     }
@@ -249,7 +339,116 @@ impl QualityValidator {
         violations.extend(self.validate_no_panic()?);
         violations.extend(self.validate_file_sizes()?);
         violations.extend(self.find_todo_comments()?);
+        violations.extend(self.validate_dead_code_annotations()?);
         Ok(violations)
+    }
+
+    /// Validate that #[allow(dead_code)] annotations have justification comments
+    pub fn validate_dead_code_annotations(&self) -> Result<Vec<QualityViolation>> {
+        let mut violations = Vec::new();
+        let dead_code_pattern = Regex::new(r"#\[allow\(dead_code\)\]").expect("Invalid regex");
+        let struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").expect("Invalid regex");
+        let fn_pattern = Regex::new(r"(?:pub\s+)?fn\s+(\w+)").expect("Invalid regex");
+        let field_pattern = Regex::new(r"(?:pub\s+)?(\w+):\s+").expect("Invalid regex");
+
+        for src_dir in self.config.get_scan_dirs()? {
+            for entry in WalkDir::new(&src_dir)
+                .into_iter()
+                .filter_map(std::result::Result::ok)
+                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
+                .filter(|e| !e.path().to_string_lossy().contains("/tests/"))
+            {
+                let content = std::fs::read_to_string(entry.path())?;
+                let lines: Vec<&str> = content.lines().collect();
+
+                for (i, line) in lines.iter().enumerate() {
+                    if dead_code_pattern.is_match(line) {
+                        // Check if there's a justification comment
+                        let has_justification = self.has_dead_code_justification(&lines, i);
+
+                        if !has_justification {
+                            // Find what item is being marked as dead
+                            if let Some(item_name) = self.find_dead_code_item(
+                                &lines,
+                                i,
+                                &struct_pattern,
+                                &fn_pattern,
+                                &field_pattern,
+                            ) {
+                                violations.push(QualityViolation::DeadCodeWithoutJustification {
+                                    file: entry.path().to_path_buf(),
+                                    line: i + 1,
+                                    item_name,
+                                    severity: Severity::Warning,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(violations)
+    }
+
+    fn has_dead_code_justification(&self, lines: &[&str], line_idx: usize) -> bool {
+        // Check lines above and below for justification
+        let check_range_before = if line_idx >= 2 { line_idx - 2 } else { 0 };
+        let check_range_after = std::cmp::min(line_idx + 3, lines.len());
+
+        for i in check_range_before..check_range_after {
+            let line = lines[i].trim();
+            if line.contains("// ")
+                && (line.contains("Reserved for")
+                    || line.contains("Will be used")
+                    || line.contains("Future")
+                    || line.contains("Admin API")
+                    || line.contains("Versioning")
+                    || line.contains("Serialization")
+                    || line.contains("Format")
+                    || line.contains("Used by")
+                    || line.contains("Test fixture")
+                    || line.contains("serde"))
+            {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn find_dead_code_item(
+        &self,
+        lines: &[&str],
+        start_idx: usize,
+        struct_pattern: &Regex,
+        fn_pattern: &Regex,
+        field_pattern: &Regex,
+    ) -> Option<String> {
+        // Look in next few lines for struct/fn/field name
+        for i in start_idx..std::cmp::min(start_idx + 5, lines.len()) {
+            let line = lines[i];
+
+            if let Some(captures) = struct_pattern.captures(line) {
+                if let Some(name) = captures.get(1) {
+                    return Some(format!("struct {}", name.as_str()));
+                }
+            }
+
+            if let Some(captures) = fn_pattern.captures(line) {
+                if let Some(name) = captures.get(1) {
+                    return Some(format!("fn {}", name.as_str()));
+                }
+            }
+
+            if let Some(captures) = field_pattern.captures(line) {
+                if let Some(name) = captures.get(1) {
+                    return Some(format!("field {}", name.as_str()));
+                }
+            }
+        }
+
+        None
     }
 
     /// Check for unwrap/expect in src/ (not tests/)

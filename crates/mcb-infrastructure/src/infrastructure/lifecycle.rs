@@ -98,7 +98,7 @@ pub struct ServiceManager {
     event_bus: Arc<dyn EventBusProvider>,
 }
 
-#[allow(dead_code)] // Methods will be used in admin API handlers
+#[allow(dead_code)] // Will be used in Admin API handlers
 impl ServiceManager {
     /// Create a new service manager with the given event bus
     pub fn new(event_bus: Arc<dyn EventBusProvider>) -> Self {

@@ -83,6 +83,23 @@ pub enum CleanArchitectureViolation {
         should_be: String,
         severity: Severity,
     },
+    /// Infrastructure layer imports from Application layer
+    ///
+    /// CA009: Infrastructure should NOT depend on Application layer.
+    /// Per Clean Architecture, the dependency flow is:
+    /// Server -> Infrastructure -> Domain
+    ///               |                  ^
+    ///               v                  |
+    ///          Providers ---------> Application
+    ///
+    /// Infrastructure importing from Application creates circular dependencies.
+    InfrastructureImportsApplication {
+        file: PathBuf,
+        line: usize,
+        import_path: String,
+        suggestion: String,
+        severity: Severity,
+    },
 }
 
 impl CleanArchitectureViolation {
@@ -96,6 +113,7 @@ impl CleanArchitectureViolation {
             Self::ServerImportsProviderDirectly { severity, .. } => *severity,
             Self::InfrastructureImportsConcreteService { severity, .. } => *severity,
             Self::ApplicationWrongPortImport { severity, .. } => *severity,
+            Self::InfrastructureImportsApplication { severity, .. } => *severity,
         }
     }
 }
@@ -222,6 +240,20 @@ impl std::fmt::Display for CleanArchitectureViolation {
                     line
                 )
             }
+            Self::InfrastructureImportsApplication {
+                file,
+                line,
+                import_path,
+                ..
+            } => {
+                write!(
+                    f,
+                    "CA009: Infrastructure imports from Application layer: {} at {}:{} - violates Clean Architecture dependency direction",
+                    import_path,
+                    file.display(),
+                    line
+                )
+            }
         }
     }
 }
@@ -237,6 +269,7 @@ impl Violation for CleanArchitectureViolation {
             Self::ServerImportsProviderDirectly { .. } => "CA006",
             Self::InfrastructureImportsConcreteService { .. } => "CA007",
             Self::ApplicationWrongPortImport { .. } => "CA008",
+            Self::InfrastructureImportsApplication { .. } => "CA009",
         }
     }
 
@@ -254,6 +287,7 @@ impl Violation for CleanArchitectureViolation {
             Self::ServerImportsProviderDirectly { severity, .. } => *severity,
             Self::InfrastructureImportsConcreteService { severity, .. } => *severity,
             Self::ApplicationWrongPortImport { severity, .. } => *severity,
+            Self::InfrastructureImportsApplication { severity, .. } => *severity,
         }
     }
 
@@ -267,6 +301,7 @@ impl Violation for CleanArchitectureViolation {
             Self::ServerImportsProviderDirectly { file, .. } => Some(file),
             Self::InfrastructureImportsConcreteService { file, .. } => Some(file),
             Self::ApplicationWrongPortImport { file, .. } => Some(file),
+            Self::InfrastructureImportsApplication { file, .. } => Some(file),
         }
     }
 
@@ -280,6 +315,7 @@ impl Violation for CleanArchitectureViolation {
             Self::ServerImportsProviderDirectly { line, .. } => Some(*line),
             Self::InfrastructureImportsConcreteService { line, .. } => Some(*line),
             Self::ApplicationWrongPortImport { line, .. } => Some(*line),
+            Self::InfrastructureImportsApplication { line, .. } => Some(*line),
         }
     }
 
@@ -311,6 +347,7 @@ impl Violation for CleanArchitectureViolation {
             Self::ApplicationWrongPortImport { should_be, .. } => {
                 Some(format!("Import ports from {} instead", should_be))
             }
+            Self::InfrastructureImportsApplication { suggestion, .. } => Some(suggestion.clone()),
         }
     }
 }
@@ -338,6 +375,11 @@ impl CleanArchitectureValidator {
         violations.extend(self.validate_handler_injection()?);
         violations.extend(self.validate_entity_identity()?);
         violations.extend(self.validate_value_object_immutability()?);
+        // ADR-029: Hexagonal architecture validations
+        violations.extend(self.validate_ca007_infrastructure_concrete_imports()?);
+        violations.extend(self.validate_ca008_application_port_imports()?);
+        // CA009: Infrastructure should NOT import from Application layer
+        violations.extend(self.validate_ca009_infrastructure_imports_application()?);
         Ok(violations)
     }
 
@@ -502,10 +544,12 @@ impl CleanArchitectureValidator {
                     if let Some(captures) = struct_re.captures(line) {
                         let struct_name = captures.get(1).map_or("unknown", |m| m.as_str());
 
-                        // Skip if not an entity (e.g., helper structs)
+                        // Skip if not an entity (e.g., helper structs, value objects)
+                        // Value Objects like *Changes don't need identity
                         if struct_name.ends_with("Builder")
                             || struct_name.ends_with("Options")
                             || struct_name.ends_with("Config")
+                            || struct_name.ends_with("Changes")
                         {
                             continue;
                         }
@@ -628,6 +672,243 @@ impl CleanArchitectureValidator {
 
         Ok(violations)
     }
+
+    /// CA007: Validate infrastructure layer doesn't import concrete types from application
+    ///
+    /// Infrastructure should only import trait interfaces (ports), not concrete implementations.
+    /// This prevents tight coupling and maintains proper dependency direction.
+    fn validate_ca007_infrastructure_concrete_imports(
+        &self,
+    ) -> Result<Vec<CleanArchitectureViolation>> {
+        let mut violations = Vec::new();
+        let infra_crate = self.config.workspace_root.join("crates/mcb-infrastructure");
+
+        if !infra_crate.exists() {
+            return Ok(violations);
+        }
+
+        // Patterns for concrete types that should NOT be imported
+        // These match patterns like: use mcb_application::services::ContextServiceImpl
+        let concrete_type_re =
+            Regex::new(r"use\s+mcb_application::(services|use_cases)::(\w+Impl)\b")
+                .expect("Invalid regex");
+
+        // Also catch any concrete service imports
+        let concrete_service_re =
+            Regex::new(r"use\s+mcb_application::\w+::(\w+Service)(?:Impl)?\b")
+                .expect("Invalid regex");
+
+        for entry in WalkDir::new(infra_crate.join("src"))
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+        {
+            let path = entry.path();
+            if path.extension().is_some_and(|e| e == "rs") {
+                let content = std::fs::read_to_string(path)?;
+
+                for (line_num, line) in content.lines().enumerate() {
+                    // Skip comments and test code
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("//")
+                        || trimmed.starts_with("#[test]")
+                        || trimmed.starts_with("#[cfg(test)]")
+                    {
+                        continue;
+                    }
+
+                    // Check for Impl types
+                    if let Some(captures) = concrete_type_re.captures(line) {
+                        let module = captures.get(1).map_or("?", |m| m.as_str());
+                        let concrete_type = captures.get(2).map_or("?", |m| m.as_str());
+                        violations.push(
+                            CleanArchitectureViolation::InfrastructureImportsConcreteService {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                import_path: format!(
+                                    "mcb_application::{}::{}",
+                                    module, concrete_type
+                                ),
+                                concrete_type: concrete_type.to_string(),
+                                severity: Severity::Error,
+                            },
+                        );
+                    }
+
+                    // Check for direct service imports (non-trait)
+                    if let Some(captures) = concrete_service_re.captures(line) {
+                        let service_name = captures.get(1).map_or("?", |m| m.as_str());
+                        // Allow trait imports (ports)
+                        if !line.contains("ports::") && !line.contains("dyn ") {
+                            violations.push(
+                                CleanArchitectureViolation::InfrastructureImportsConcreteService {
+                                    file: path.to_path_buf(),
+                                    line: line_num + 1,
+                                    import_path: line.trim().to_string(),
+                                    concrete_type: service_name.to_string(),
+                                    severity: Severity::Warning,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(violations)
+    }
+
+    /// CA008: Validate application layer imports ports from mcb-domain, not locally
+    ///
+    /// Application layer should not define provider traits locally; they must be
+    /// imported from mcb-domain to maintain single source of truth.
+    fn validate_ca008_application_port_imports(&self) -> Result<Vec<CleanArchitectureViolation>> {
+        let mut violations = Vec::new();
+        let app_crate = self.config.workspace_root.join("crates/mcb-application");
+
+        if !app_crate.exists() {
+            return Ok(violations);
+        }
+
+        let ports_dir = app_crate.join("src/ports/providers");
+        if !ports_dir.exists() {
+            return Ok(violations);
+        }
+
+        // Patterns to detect local trait definitions (violations)
+        let local_trait_re =
+            Regex::new(r"^\s*pub\s+trait\s+(\w+(?:Provider|Service))\s*(?::|where|\{)")
+                .expect("Invalid regex");
+
+        // Pattern for allowed re-exports from mcb-domain
+        let reexport_re = Regex::new(r"pub\s+use\s+mcb_domain::").expect("Invalid regex");
+
+        for entry in WalkDir::new(&ports_dir)
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+        {
+            let path = entry.path();
+            if path.extension().is_some_and(|e| e == "rs") {
+                let content = std::fs::read_to_string(path)?;
+                let has_reexport = reexport_re.is_match(&content);
+
+                for (line_num, line) in content.lines().enumerate() {
+                    // Skip comments
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("//") {
+                        continue;
+                    }
+
+                    // Check for local trait definition
+                    if let Some(captures) = local_trait_re.captures(line) {
+                        let trait_name = captures.get(1).map_or("?", |m| m.as_str());
+
+                        // If file has re-exports, allow documentation of traits
+                        // Only flag if this is a NEW trait definition (no re-export in file)
+                        if !has_reexport {
+                            violations.push(
+                                CleanArchitectureViolation::ApplicationWrongPortImport {
+                                    file: path.to_path_buf(),
+                                    line: line_num + 1,
+                                    import_path: format!(
+                                        "mcb_application::ports::providers::{}",
+                                        trait_name
+                                    ),
+                                    should_be: format!(
+                                        "mcb_domain::ports::providers::{}",
+                                        trait_name
+                                    ),
+                                    severity: Severity::Error,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(violations)
+    }
+
+    /// CA009: Validate infrastructure layer does NOT import from application layer
+    ///
+    /// Per Clean Architecture, the dependency flow should be:
+    /// ```text
+    /// mcb-server → mcb-infrastructure → mcb-domain
+    ///                     ↓                  ↑
+    ///               mcb-providers ────→ mcb-application
+    /// ```
+    ///
+    /// Infrastructure should only depend on Domain, NOT Application.
+    /// This prevents circular dependencies and maintains proper layering.
+    fn validate_ca009_infrastructure_imports_application(
+        &self,
+    ) -> Result<Vec<CleanArchitectureViolation>> {
+        let mut violations = Vec::new();
+        let infra_crate = self.config.workspace_root.join("crates/mcb-infrastructure");
+
+        if !infra_crate.exists() {
+            return Ok(violations);
+        }
+
+        // Pattern for any import from mcb_application
+        let app_import_re = Regex::new(r"use\s+mcb_application(?:::|;)").expect("Invalid regex");
+
+        // Extract specific import path
+        let import_path_re = Regex::new(r"use\s+(mcb_application::\S+)").expect("Invalid regex");
+
+        for entry in WalkDir::new(infra_crate.join("src"))
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+        {
+            let path = entry.path();
+            if path.extension().is_some_and(|e| e == "rs") {
+                let content = std::fs::read_to_string(path)?;
+
+                for (line_num, line) in content.lines().enumerate() {
+                    // Skip comments
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("//") {
+                        continue;
+                    }
+
+                    // Check for mcb_application imports
+                    if app_import_re.is_match(line) {
+                        let import_path = import_path_re
+                            .captures(line)
+                            .and_then(|c| c.get(1))
+                            .map(|m| m.as_str().to_string())
+                            .unwrap_or_else(|| "mcb_application".to_string());
+
+                        // Determine suggestion based on what's being imported
+                        let suggestion = if import_path.contains("::ports::providers::") {
+                            format!(
+                                "Import from mcb_domain instead: {}",
+                                import_path.replace("mcb_application", "mcb_domain")
+                            )
+                        } else if import_path.contains("::services::") {
+                            "Services should be injected via DI, not imported. Use Arc<dyn ServiceTrait> in function signatures.".to_string()
+                        } else if import_path.contains("::registry::") {
+                            "Registry should be accessed from mcb-application via mcb-providers, not mcb-infrastructure.".to_string()
+                        } else {
+                            "mcb-infrastructure should NOT depend on mcb-application. Move required traits to mcb-domain or refactor to use DI.".to_string()
+                        };
+
+                        violations.push(
+                            CleanArchitectureViolation::InfrastructureImportsApplication {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                import_path: import_path.clone(),
+                                suggestion,
+                                severity: Severity::Error,
+                            },
+                        );
+                    }
+                }
+            }
+        }
+
+        Ok(violations)
+    }
 }
 
 #[cfg(test)]
@@ -648,5 +929,99 @@ mod tests {
         assert!(re.is_match("let svc = IndexingService::new(config);"));
         assert!(re.is_match("SearchServiceImpl::new()"));
         assert!(!re.is_match("Arc<dyn IndexingService>"));
+    }
+
+    #[test]
+    fn test_ca007_concrete_type_pattern() {
+        // Pattern for concrete Impl types
+        let re = Regex::new(r"use\s+mcb_application::(services|use_cases)::(\w+Impl)\b").unwrap();
+
+        // Should match concrete implementations
+        assert!(re.is_match("use mcb_application::services::ContextServiceImpl;"));
+        assert!(re.is_match("use mcb_application::use_cases::SearchUseCaseImpl;"));
+
+        // Should NOT match ports/traits
+        assert!(!re.is_match("use mcb_application::ports::providers::EmbeddingProvider;"));
+        assert!(!re.is_match("use mcb_application::ports::admin::AdminService;"));
+    }
+
+    #[test]
+    fn test_ca007_service_import_pattern() {
+        // Pattern for direct service imports from services module
+        let re = Regex::new(r"use\s+mcb_application::\w+::(\w+Service)(?:Impl)?\b").unwrap();
+
+        // Should match service imports from services module
+        assert!(re.is_match("use mcb_application::services::ContextService;"));
+        assert!(re.is_match("use mcb_application::services::SearchServiceImpl;"));
+
+        // Note: The actual validation filters out "ports::" paths, so we test
+        // that the pattern doesn't overmatch nested module paths like ports::admin::
+        // This regex only matches single-level module paths: mcb_application::X::YService
+        assert!(!re.is_match("use mcb_application::ports::admin::AdminService;"));
+    }
+
+    #[test]
+    fn test_ca008_local_trait_pattern() {
+        // Pattern for local trait definitions
+        let re =
+            Regex::new(r"^\s*pub\s+trait\s+(\w+(?:Provider|Service))\s*(?::|where|\{)").unwrap();
+
+        // Should match local trait definitions
+        assert!(re.is_match("pub trait EmbeddingProvider: Send + Sync {"));
+        assert!(re.is_match("pub trait VectorStoreProvider: "));
+        assert!(re.is_match("  pub trait CacheProvider {"));
+
+        // Should NOT match re-exports or uses
+        assert!(!re.is_match("pub use mcb_domain::ports::providers::EmbeddingProvider;"));
+        assert!(!re.is_match("use EmbeddingProvider;"));
+    }
+
+    #[test]
+    fn test_ca008_reexport_pattern() {
+        // Pattern for allowed re-exports
+        let re = Regex::new(r"pub\s+use\s+mcb_domain::").unwrap();
+
+        // Should match re-exports from mcb-domain
+        assert!(re.is_match("pub use mcb_domain::ports::providers::*;"));
+        assert!(re.is_match("pub use mcb_domain::ports::providers::EmbeddingProvider;"));
+
+        // Should NOT match other imports
+        assert!(!re.is_match("use mcb_domain::ports::providers::*;"));
+        assert!(!re.is_match("pub use mcb_application::ports::*;"));
+    }
+
+    #[test]
+    fn test_ca009_infrastructure_imports_application() {
+        // Pattern for mcb_application imports
+        let re = Regex::new(r"use\s+mcb_application(?:::|;)").unwrap();
+
+        // Should match any mcb_application import
+        assert!(re.is_match("use mcb_application::ports::providers::CacheProvider;"));
+        assert!(re.is_match("use mcb_application::services::ContextService;"));
+        assert!(re.is_match("use mcb_application::registry::EMBEDDING_PROVIDERS;"));
+        assert!(re.is_match("use mcb_application;"));
+
+        // Should NOT match other imports
+        assert!(!re.is_match("use mcb_domain::ports::providers::CacheProvider;"));
+        assert!(!re.is_match("use mcb_providers::embedding::OllamaProvider;"));
+        assert!(!re.is_match("use mcb_infrastructure::config::AppConfig;"));
+    }
+
+    #[test]
+    fn test_ca009_import_path_extraction() {
+        // Pattern for extracting specific import path
+        let re = Regex::new(r"use\s+(mcb_application::\S+)").unwrap();
+
+        // Should extract full import path
+        let captures = re.captures("use mcb_application::ports::providers::CacheProvider;");
+        assert!(captures.is_some());
+        let path = captures.unwrap().get(1).unwrap().as_str();
+        assert_eq!(path, "mcb_application::ports::providers::CacheProvider;");
+
+        let captures2 =
+            re.captures("use mcb_application::services::{ContextService, SearchService};");
+        assert!(captures2.is_some());
+        let path2 = captures2.unwrap().get(1).unwrap().as_str();
+        assert!(path2.starts_with("mcb_application::services::"));
     }
 }

@@ -20,6 +20,6 @@ mod browse_api_integration;
 #[path = "integration/full_stack_integration.rs"]
 mod full_stack_integration;
 
-// Error recovery tests
-#[path = "integration/error_recovery_test.rs"]
-mod error_recovery_test;
+// Error recovery integration tests
+#[path = "integration/error_recovery_integration.rs"]
+mod error_recovery_integration;

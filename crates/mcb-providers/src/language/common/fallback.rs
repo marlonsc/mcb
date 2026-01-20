@@ -36,7 +36,7 @@ struct ChunkingContext<'a> {
 
 /// Generic fallback chunker using regex patterns
 pub struct GenericFallbackChunker<'a> {
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Reserved for future config-based pattern selection
     config: &'a LanguageConfig,
     /// Precompiled regex patterns for block detection
     compiled_patterns: Vec<Regex>,

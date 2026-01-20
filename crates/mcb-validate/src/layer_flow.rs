@@ -283,9 +283,35 @@ impl LayerFlowValidator {
             }
             let content = std::fs::read_to_string(&cargo_toml)?;
             let mut crate_deps = HashSet::new();
+            let mut in_dev_deps = false;
+            let mut in_build_deps = false;
+
             for line in content.lines() {
+                let trimmed = line.trim();
+
+                // Skip comments - they're not actual dependencies
+                if trimmed.starts_with('#') {
+                    continue;
+                }
+
+                // Track section changes
+                if trimmed.starts_with('[') {
+                    in_dev_deps = trimmed.contains("dev-dependencies");
+                    in_build_deps = trimmed.contains("build-dependencies");
+                }
+
+                // Skip dev-dependencies and build-dependencies (not part of runtime graph)
+                if in_dev_deps || in_build_deps {
+                    continue;
+                }
+
+                // Only match actual dependency declarations, not any mention of crate name
+                // Look for patterns like: mcb-domain = { path = ... } or mcb-domain.path = ...
                 for dep_crate in &crate_names {
-                    if *dep_crate != *crate_name && line.contains(*dep_crate) {
+                    if *dep_crate != *crate_name
+                        && (trimmed.starts_with(*dep_crate)
+                            || trimmed.contains(&format!("\"{}\"", dep_crate)))
+                    {
                         crate_deps.insert((*dep_crate).to_string());
                     }
                 }

@@ -51,7 +51,7 @@ impl ConfigLoader {
     /// Configuration sources are merged in this order (later sources override earlier):
     /// 1. Default values from `AppConfig::default()`
     /// 2. TOML configuration file (if exists)
-    /// 3. Environment variables with prefix (e.g., `MCB_SERVER_PORT`)
+    /// 3. Environment variables with `MCP__` prefix (e.g., `MCP__SERVER__NETWORK__PORT`)
     pub fn load(&self) -> Result<AppConfig> {
         // Start with default configuration
         let mut figment = Figment::new().merge(Serialized::defaults(AppConfig::default()));

@@ -1,12 +1,8 @@
-//! Infrastructure layer constants
-//!
-//! Contains constants that are part of the infrastructure implementation.
-//! Domain-specific constants are defined in `mcb_domain::constants`.
+//! Infrastructure layer constants. Domain-specific constants are in `mcb_domain::constants`.
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
 // ============================================================================
-
 /// Default configuration file name
 pub const DEFAULT_CONFIG_FILENAME: &str = "mcb.toml";
 
@@ -20,7 +16,6 @@ pub const CONFIG_ENV_PREFIX: &str = "MCP";
 // ============================================================================
 // AUTHENTICATION CONSTANTS
 // ============================================================================
-
 /// JWT default expiration time in seconds (24 hours)
 pub const JWT_DEFAULT_EXPIRATION_SECS: u64 = 86400;
 
@@ -33,6 +28,9 @@ pub const BCRYPT_DEFAULT_COST: u32 = 12;
 /// API key header name
 pub const API_KEY_HEADER: &str = "x-api-key";
 
+/// Default admin API key header name
+pub const DEFAULT_ADMIN_KEY_HEADER: &str = "X-Admin-Key";
+
 /// Authorization header name
 pub const AUTHORIZATION_HEADER: &str = "authorization";
 
@@ -42,7 +40,6 @@ pub const BEARER_PREFIX: &str = "Bearer ";
 // ============================================================================
 // CACHE CONSTANTS
 // ============================================================================
-
 /// Default cache TTL in seconds (1 hour)
 pub const CACHE_DEFAULT_TTL_SECS: u64 = 3600;
 
@@ -52,13 +49,15 @@ pub const CACHE_DEFAULT_SIZE_LIMIT: usize = 100 * 1024 * 1024;
 /// Redis connection pool size
 pub const REDIS_POOL_SIZE: usize = 10;
 
+/// Default cache namespace prefix
+pub const DEFAULT_CACHE_NAMESPACE: &str = "mcb";
+
 /// Cache namespace separator
 pub const CACHE_NAMESPACE_SEPARATOR: &str = ":";
 
 // ============================================================================
 // HTTP SERVER CONSTANTS
 // ============================================================================
-
 /// Default HTTP server port
 pub const DEFAULT_HTTP_PORT: u16 = 8080;
 
@@ -86,7 +85,6 @@ pub const METRICS_PATH: &str = "/metrics";
 // ============================================================================
 // HTTP CLIENT POOL CONSTANTS
 // ============================================================================
-
 /// HTTP client request timeout in seconds (for embedding API calls)
 pub const HTTP_REQUEST_TIMEOUT_SECS: u64 = 30;
 
@@ -102,7 +100,6 @@ pub const HTTP_MAX_IDLE_PER_HOST: usize = 10;
 // ============================================================================
 // RESILIENCE CONSTANTS
 // ============================================================================
-
 /// Circuit breaker failure threshold
 pub const CIRCUIT_BREAKER_FAILURE_THRESHOLD: u32 = 5;
 
@@ -121,7 +118,6 @@ pub const RATE_LIMITER_DEFAULT_BURST: u32 = 200;
 // ============================================================================
 // METRICS CONSTANTS
 // ============================================================================
-
 /// Metrics collection interval in seconds
 pub const METRICS_COLLECTION_INTERVAL_SECS: u64 = 60;
 
@@ -129,9 +125,14 @@ pub const METRICS_COLLECTION_INTERVAL_SECS: u64 = 60;
 pub const METRICS_PREFIX: &str = "mcb";
 
 // ============================================================================
+// EVENT BUS CONSTANTS
+// ============================================================================
+/// Default NATS client name for event bus connections
+pub const DEFAULT_NATS_CLIENT_NAME: &str = "mcb-context-browser";
+
+// ============================================================================
 // FILE SYSTEM CONSTANTS
 // ============================================================================
-
 /// Default file permissions (0o644)
 pub const DEFAULT_FILE_PERMISSIONS: u32 = 0o644;
 
@@ -150,7 +151,6 @@ pub const TEMP_FILE_PREFIX: &str = "mcb_temp_";
 // ============================================================================
 // FILESYSTEM VECTOR STORE CONSTANTS
 // ============================================================================
-
 /// Maximum vectors per shard file in filesystem vector store
 pub const FILESYSTEM_VECTOR_STORE_MAX_PER_SHARD: usize = 100_000;
 

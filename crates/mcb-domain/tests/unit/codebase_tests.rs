@@ -9,6 +9,7 @@ use std::collections::HashMap;
 #[test]
 fn test_file_snapshot_creation() {
     let file_snapshot = FileSnapshot {
+        id: "file-001".to_string(),
         path: "src/lib.rs".to_string(),
         modified_at: 1641081600, // 2022-01-02 00:00:00 UTC
         size: 2048,
@@ -29,6 +30,7 @@ fn test_codebase_snapshot_creation() {
     files.insert(
         "src/main.rs".to_string(),
         FileSnapshot {
+            id: "file-main".to_string(),
             path: "src/main.rs".to_string(),
             modified_at: 1640995200,
             size: 1024,
@@ -62,6 +64,7 @@ fn test_codebase_snapshot_multiple_files() {
     files.insert(
         "src/main.rs".to_string(),
         FileSnapshot {
+            id: "file-main-2".to_string(),
             path: "src/main.rs".to_string(),
             modified_at: 1640995200,
             size: 1024,
@@ -73,6 +76,7 @@ fn test_codebase_snapshot_multiple_files() {
     files.insert(
         "src/lib.rs".to_string(),
         FileSnapshot {
+            id: "file-lib".to_string(),
             path: "src/lib.rs".to_string(),
             modified_at: 1641081600,
             size: 2048,
@@ -84,6 +88,7 @@ fn test_codebase_snapshot_multiple_files() {
     files.insert(
         "Cargo.toml".to_string(),
         FileSnapshot {
+            id: "file-cargo".to_string(),
             path: "Cargo.toml".to_string(),
             modified_at: 1640995200,
             size: 512,

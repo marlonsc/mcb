@@ -66,6 +66,17 @@ jobs:
             exit 1
           fi
 
+  golden-tests:
+    name: Golden Acceptance Tests
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: make test SCOPE=golden
+
   audit:
     name: Security Audit
     runs-on: ubuntu-latest

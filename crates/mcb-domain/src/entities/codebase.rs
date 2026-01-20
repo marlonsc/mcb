@@ -14,6 +14,8 @@ use std::collections::HashMap;
 /// Used for detecting changes and managing incremental updates.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FileSnapshot {
+    /// Unique identifier for this file snapshot
+    pub id: String,
     /// Relative path to the file from repository root
     pub path: String,
     /// Last modification timestamp (Unix timestamp)

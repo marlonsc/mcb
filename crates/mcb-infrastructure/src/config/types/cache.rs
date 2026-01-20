@@ -60,6 +60,10 @@ pub struct CacheSystemConfig {
     pub namespace: String,
 }
 
+/// Default cache configuration
+///
+/// Default namespace: "mcb" - can be overridden via configuration to avoid conflicts
+/// in multi-tenant or shared cache environments.
 impl Default for CacheSystemConfig {
     fn default() -> Self {
         Self {
@@ -69,7 +73,7 @@ impl Default for CacheSystemConfig {
             max_size: CACHE_DEFAULT_SIZE_LIMIT,
             redis_url: None,
             redis_pool_size: REDIS_POOL_SIZE as u32,
-            namespace: "mcb".to_string(),
+            namespace: DEFAULT_CACHE_NAMESPACE.to_string(),
         }
     }
 }

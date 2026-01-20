@@ -15,6 +15,12 @@ rust-version = "1.89"
 [lib]
 name = "mcb_providers"
 path = "src/lib.rs"
+# Doctests disabled due to rustls version conflict:
+# - milvus-sdk-rust (git) → tonic 0.11 → rustls 0.22
+# - reqwest/fastembed → rustls 0.23
+# This causes "rlib format not found" errors during doctest compilation.
+# Provider functionality is covered by unit tests instead.
+doctest = false
 
 [features]
 default = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-all"]

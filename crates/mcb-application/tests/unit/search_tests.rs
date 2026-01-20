@@ -65,6 +65,7 @@ impl Config {
         CodeChunk {
             id: "auth_chunk".to_string(),
             file_path: "src/auth.rs".to_string(),
+            // Test data: Intentional stub - sample code for testing search functionality
             content: r#"pub async fn authenticate(token: &str) -> Result<User, AuthError> {
     let claims = verify_jwt(token)?;
     let user = User::from_claims(claims);
@@ -72,8 +73,8 @@ impl Config {
 }
 
 pub fn verify_jwt(token: &str) -> Result<Claims, AuthError> {
-    // JWT verification logic
-    todo!()
+    // JWT verification logic - stub for test data
+    Err(AuthError::InvalidToken("Test stub".to_string()))
 }"#
             .to_string(),
             start_line: 1,

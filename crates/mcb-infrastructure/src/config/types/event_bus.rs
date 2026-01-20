@@ -1,5 +1,6 @@
 //! EventBus configuration types
 
+use crate::constants::*;
 use serde::{Deserialize, Serialize};
 
 /// EventBus provider types
@@ -39,13 +40,17 @@ pub struct EventBusConfig {
     pub max_reconnect_attempts: u32,
 }
 
+/// Default event bus configuration
+///
+/// NATS client name defaults to "mcb-context-browser" but can be overridden
+/// via configuration for multi-instance deployments or custom identification.
 impl Default for EventBusConfig {
     fn default() -> Self {
         Self {
             provider: EventBusProvider::Tokio,
             capacity: 1024,
             nats_url: None,
-            nats_client_name: Some("mcb-context-browser".to_string()),
+            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_string()),
             connection_timeout_ms: 5000,
             max_reconnect_attempts: 5,
         }

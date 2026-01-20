@@ -120,6 +120,7 @@ fn create_codebase_snapshot(chunks: &[CodeChunk]) -> CodebaseSnapshot {
         let file_entry = files
             .entry(chunk.file_path.clone())
             .or_insert_with(|| FileSnapshot {
+                id: format!("file-{}", chunk.file_path.replace('/', "-")),
                 path: chunk.file_path.clone(),
                 modified_at: 1640995200,
                 size: 0,

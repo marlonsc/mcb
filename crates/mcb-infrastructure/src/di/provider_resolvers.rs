@@ -246,7 +246,7 @@ impl std::fmt::Debug for CacheProviderResolver {
 /// Uses the linkme registry to resolve language providers by name.
 /// Can resolve from current config or from an override config.
 pub struct LanguageProviderResolver {
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Reserved for config-based language selection in future
     config: Arc<AppConfig>,
 }
 

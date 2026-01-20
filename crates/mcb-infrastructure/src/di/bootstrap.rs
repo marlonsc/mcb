@@ -89,14 +89,15 @@ pub struct AppContext {
 
     // ========================================================================
     // Provider Resolvers (linkme registry access)
+    // Reserved for future admin API operations (list/switch providers)
     // ========================================================================
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Reserved for admin API: list available providers
     embedding_resolver: Arc<EmbeddingProviderResolver>,
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Reserved for admin API: list available providers
     vector_store_resolver: Arc<VectorStoreProviderResolver>,
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Reserved for admin API: list available providers
     cache_resolver: Arc<CacheProviderResolver>,
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Reserved for admin API: list available providers
     language_resolver: Arc<LanguageProviderResolver>,
 
     // ========================================================================

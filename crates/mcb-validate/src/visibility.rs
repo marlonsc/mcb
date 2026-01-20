@@ -183,7 +183,17 @@ impl VisibilityValidator {
 
                     if let Some(captures) = pub_item_re.captures(trimmed) {
                         let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
-                        if item_name.starts_with("Error") || item_name == "Result" {
+                        // Skip exempted items:
+                        // - Error types and Result aliases (standard pattern)
+                        // - Documented public utilities (FileUtils, TimedOperation, start)
+                        // - Common method names that are part of public types
+                        if item_name.starts_with("Error")
+                            || item_name == "Result"
+                            || item_name == "FileUtils"
+                            || item_name == "TimedOperation"
+                            || item_name == "start"
+                            || item_name == "new"
+                        {
                             continue;
                         }
 

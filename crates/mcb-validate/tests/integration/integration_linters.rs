@@ -22,6 +22,27 @@ fn get_workspace_root() -> PathBuf {
         .to_path_buf()
 }
 
+/// Check if an external tool is available on the system
+fn is_tool_available(tool: &str) -> bool {
+    std::process::Command::new(tool)
+        .arg("--version")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+/// Skip test if tool is not available, with helpful message
+macro_rules! require_tool {
+    ($tool:expr, $install_cmd:expr) => {
+        if !is_tool_available($tool) {
+            eprintln!("\n⚠️  Skipping test: {} not installed", $tool);
+            eprintln!("   Install: {}", $install_cmd);
+            eprintln!("   Run this test after installation to verify functionality\n");
+            return;
+        }
+    };
+}
+
 // ==================== Unit Tests for Linter Types ====================
 
 #[test]
@@ -315,9 +336,10 @@ fn test_public_api_accessible() {
 ///
 /// Phase 1 deliverable: "cargo test `integration_linters` passes with real Clippy/Ruff output"
 #[test]
-#[ignore] // Requires ruff installed: pip install ruff
 fn test_ruff_real_execution() {
     use std::process::Command;
+
+    require_tool!("ruff", "pip install ruff");
 
     // Create a temporary Python file with known violations
     let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
@@ -382,9 +404,10 @@ def example():
 ///
 /// Phase 1 deliverable: "cargo test `integration_linters` passes with real Clippy/Ruff output"
 #[test]
-#[ignore] // Requires cargo clippy: rustup component add clippy
 fn test_clippy_real_execution() {
     use std::process::Command;
+
+    require_tool!("cargo", "rustup component add clippy");
 
     // Run clippy on mcb-validate itself with JSON output
     // Using -q to reduce noise and only get diagnostic messages
@@ -434,8 +457,9 @@ fn test_clippy_real_execution() {
 
 /// Test `LinterEngine` can execute linters and aggregate results
 #[tokio::test]
-#[ignore] // Requires ruff installed
 async fn test_linter_engine_real_execution() {
+    require_tool!("ruff", "pip install ruff");
+
     // Create a temporary Python file with known violations
     let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
     let test_file = temp_dir.path().join("violations.py");
@@ -512,8 +536,9 @@ fn create_test_rule(
 
 /// Test that `YamlRuleExecutor` correctly routes Ruff codes to Ruff linter
 #[tokio::test]
-#[ignore] // Requires ruff installed
 async fn test_yaml_rule_executor_ruff_integration() {
+    require_tool!("ruff", "pip install ruff");
+
     // Create a temp file with unused imports
     let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
     let test_file = temp_dir.path().join("unused_imports.py");
@@ -627,8 +652,9 @@ async fn test_yaml_rule_executor_clippy_code_detection() {
 
 /// Test filtering: only `lint_select` codes should appear in results
 #[tokio::test]
-#[ignore] // Requires ruff installed
 async fn test_yaml_rule_executor_filters_to_lint_select() {
+    require_tool!("ruff", "pip install ruff");
+
     // Create a file with multiple violation types
     let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
     let test_file = temp_dir.path().join("multi_violations.py");
@@ -670,8 +696,9 @@ def f():
 
 /// Test custom message from rule is applied to violations
 #[tokio::test]
-#[ignore] // Requires ruff installed
 async fn test_yaml_rule_executor_custom_message() {
+    require_tool!("ruff", "pip install ruff");
+
     let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
     let test_file = temp_dir.path().join("custom_msg.py");
     std::fs::write(&test_file, "import os  # unused\n").expect("Failed to write test file");
@@ -712,8 +739,9 @@ fn get_rules_dir() -> PathBuf {
 /// This is the Phase 1 deliverable: "Integration test: YAML rule → linter → violations"
 /// Tests the COMPLETE pipeline from actual YAML file to violations.
 #[tokio::test]
-#[ignore] // Requires ruff installed
 async fn test_e2e_yaml_file_to_linter_violations() {
+    require_tool!("ruff", "pip install ruff");
+
     let rules_dir = get_rules_dir();
 
     // Verify rules directory exists
@@ -870,8 +898,9 @@ async fn test_all_yaml_rules_with_lint_select_load() {
 /// 3. Execute `YamlRuleExecutor` (which runs cargo clippy)
 /// 4. Verify `clippy::unwrap_used` violations are returned
 #[tokio::test]
-#[ignore] // Requires cargo clippy: rustup component add clippy
 async fn test_e2e_yaml_clippy_rule_execution() {
+    require_tool!("cargo", "rustup component add clippy");
+
     let rules_dir = get_rules_dir();
 
     // Step 1: Load QUAL001 rule from YAML

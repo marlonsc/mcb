@@ -357,6 +357,12 @@ async fn test_golden_search_validates_expected_files() {
     }
 }
 
+/// Test that validates all golden queries find their expected files.
+///
+/// Uses NullEmbeddingProvider with keyword-based embeddings that enable
+/// semantic-like matching without requiring external embedding services.
+/// The provider generates distinctive vectors based on domain keywords
+/// (embedding, vector_store, handler, cache, di, error, chunking, etc.)
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() {
     let config = AppConfig::default();

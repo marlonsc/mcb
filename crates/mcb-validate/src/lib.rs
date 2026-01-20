@@ -60,8 +60,10 @@ pub mod duplication;
 
 // === New Validators (using new system) ===
 pub mod clean_architecture;
+pub mod config_quality;
 pub mod layer_flow;
 pub mod port_adapter;
+pub mod test_quality;
 pub mod visibility;
 
 // === Migration Validators (v0.2.0) ===
@@ -131,8 +133,10 @@ pub use metrics::{
 
 // Re-export new validators
 pub use clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
+pub use config_quality::{ConfigQualityValidator, ConfigQualityViolation};
 pub use layer_flow::{LayerFlowValidator, LayerFlowViolation};
 pub use port_adapter::{PortAdapterValidator, PortAdapterViolation};
+pub use test_quality::{TestQualityValidator, TestQualityViolation};
 pub use visibility::{VisibilityValidator, VisibilityViolation};
 
 // Re-export migration validators (v0.1.2)
@@ -267,11 +271,9 @@ impl ValidationConfig {
                 let entry = entry?;
                 let path = entry.path();
 
-                // Skip the validate crate itself (it's a meta-tool)
-                if path
-                    .file_name()
-                    .is_some_and(|n| n == "mcb-validate" || n == "mcb")
-                {
+                // mcb-validate validates itself - no special treatment
+                // mcb (facade crate) is minimal re-exports, skip for now
+                if path.file_name().is_some_and(|n| n == "mcb") {
                     continue;
                 }
 

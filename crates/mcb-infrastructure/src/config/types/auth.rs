@@ -79,8 +79,12 @@ pub struct AdminApiKeyConfig {
     pub key: Option<String>,
 }
 
+/// Default admin key header
+///
+/// Returns the default admin API key header name. Can be overridden via configuration
+/// for custom header requirements.
 fn default_admin_key_header() -> String {
-    "X-Admin-Key".to_string()
+    DEFAULT_ADMIN_KEY_HEADER.to_string()
 }
 
 impl Default for AdminApiKeyConfig {
