@@ -28,24 +28,26 @@
 //!
 //! ### Registering a Provider (in mcb-providers)
 //!
-//! ```ignore
-//! use mcb_application::ports::registry::{EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
+//! ```no_run
+//! use mcb_application::ports::registry::embedding::{EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
+//! use mcb_domain::ports::providers::EmbeddingProvider;
+//! use std::sync::Arc;
 //!
-//! #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-//! static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-//!     name: "ollama",
-//!     description: "Ollama local embedding provider",
-//!     factory: |config| Ok(Arc::new(OllamaProvider::from_config(config)?)),
-//! };
+//! // Providers register via #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
+//! // See mcb-providers for implementation examples
 //! ```
 //!
 //! ### Resolving a Provider (in mcb-infrastructure)
 //!
-//! ```ignore
-//! use mcb_application::ports::registry::resolve_embedding_provider;
+//! ```no_run
+//! use mcb_application::ports::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 //!
-//! let config = EmbeddingProviderConfig { provider: "ollama".into(), .. };
-//! let provider = resolve_embedding_provider(&config)?;
+//! fn get_provider() -> Result<(), String> {
+//!     let config = EmbeddingProviderConfig::new("null");
+//!     let provider = resolve_embedding_provider(&config)?;
+//!     println!("Using provider: {}", provider.provider_name());
+//!     Ok(())
+//! }
 //! ```
 
 pub mod cache;

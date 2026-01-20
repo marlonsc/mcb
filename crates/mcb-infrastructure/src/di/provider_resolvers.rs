@@ -1,7 +1,7 @@
-//! Provider Resolvers - dill components for resolving providers from linkme registry
+//! Provider Resolvers - Components for resolving providers from linkme registry
 //!
 //! These components wrap the linkme registry resolution and can be injected
-//! into other services via dill.
+//! into other services.
 //!
 //! ## Pattern
 //!
@@ -10,7 +10,6 @@
 //! ```
 
 use crate::config::AppConfig;
-// dill macros removed - they conflict with manual new() methods
 use mcb_application::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
@@ -30,9 +29,6 @@ use std::sync::Arc;
 ///
 /// Uses the linkme registry to resolve embedding providers by name.
 /// Can resolve from current config or from an override config.
-///
-/// Note: dill `#[component]` removed - conflicts with manual `new()` method.
-/// Use `add_value` pattern in bootstrap.rs instead.
 pub struct EmbeddingProviderResolver {
     config: Arc<AppConfig>,
 }
@@ -95,9 +91,6 @@ impl std::fmt::Debug for EmbeddingProviderResolver {
 ///
 /// Uses the linkme registry to resolve vector store providers by name.
 /// Can resolve from current config or from an override config.
-///
-/// Note: dill `#[component]` removed - conflicts with manual `new()` method.
-/// Use `add_value` pattern in bootstrap.rs instead.
 pub struct VectorStoreProviderResolver {
     config: Arc<AppConfig>,
 }
@@ -160,9 +153,6 @@ impl std::fmt::Debug for VectorStoreProviderResolver {
 ///
 /// Uses the linkme registry to resolve cache providers by name.
 /// Can resolve from current config or from an override config.
-///
-/// Note: dill `#[component]` removed - conflicts with manual `new()` method.
-/// Use `add_value` pattern in bootstrap.rs instead.
 pub struct CacheProviderResolver {
     config: Arc<AppConfig>,
 }
@@ -220,9 +210,6 @@ impl std::fmt::Debug for CacheProviderResolver {
 ///
 /// Uses the linkme registry to resolve language providers by name.
 /// Can resolve from current config or from an override config.
-///
-/// Note: dill `#[component]` removed - conflicts with manual `new()` method.
-/// Use `add_value` pattern in bootstrap.rs instead.
 pub struct LanguageProviderResolver {
     #[allow(dead_code)]
     config: Arc<AppConfig>,

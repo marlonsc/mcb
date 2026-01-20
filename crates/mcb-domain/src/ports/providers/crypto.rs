@@ -22,13 +22,11 @@ use std::fmt;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::providers::CryptoProvider;
+/// ```no_run
+/// use mcb_domain::ports::providers::crypto::{CryptoProvider, EncryptedData};
+/// use std::sync::Arc;
 ///
-/// async fn encrypt_metadata(
-///     crypto: &dyn CryptoProvider,
-///     data: &[u8],
-/// ) -> Result<EncryptedData> {
+/// fn encrypt_metadata(crypto: Arc<dyn CryptoProvider>, data: &[u8]) -> mcb_domain::Result<EncryptedData> {
 ///     crypto.encrypt(data)
 /// }
 /// ```

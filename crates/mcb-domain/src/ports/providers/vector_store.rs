@@ -11,16 +11,20 @@ use std::collections::HashMap;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::providers::VectorStoreAdmin;
+/// ```no_run
+/// use mcb_domain::ports::providers::vector_store::VectorStoreAdmin;
+/// use std::sync::Arc;
 ///
-/// // Check if a collection exists
-/// if provider.collection_exists("code_embeddings").await? {
-///     let stats = provider.get_stats("code_embeddings").await?;
-///     println!("Collection has {} vectors", stats["total_count"]);
+/// async fn check_collection(provider: Arc<dyn VectorStoreAdmin>) -> mcb_domain::Result<()> {
+///     // Check if a collection exists
+///     if provider.collection_exists("code_embeddings").await? {
+///         let stats = provider.get_stats("code_embeddings").await?;
+///         println!("Collection stats: {:?}", stats);
 ///
-///     // Flush pending writes
-///     provider.flush("code_embeddings").await?;
+///         // Flush pending writes
+///         provider.flush("code_embeddings").await?;
+///     }
+///     Ok(())
 /// }
 /// ```
 #[async_trait]
@@ -75,20 +79,21 @@ pub trait VectorStoreAdmin: Send + Sync {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::providers::VectorStoreProvider;
+/// ```no_run
+/// use mcb_domain::ports::providers::vector_store::VectorStoreProvider;
+/// use std::sync::Arc;
 ///
-/// // Create a collection for code embeddings
-/// provider.create_collection("rust_code", 1536).await?;
+/// async fn index_code(provider: Arc<dyn VectorStoreProvider>) -> mcb_domain::Result<()> {
+///     // Create a collection for code embeddings
+///     provider.create_collection("rust_code", 384).await?;
 ///
-/// // Insert vectors with metadata
-/// let metadata = vec![hashmap!{ "file_path" => "src/main.rs".into() }];
-/// let ids = provider.insert_vectors("rust_code", &embeddings, metadata).await?;
-///
-/// // Search for similar code
-/// let results = provider.search_similar("rust_code", &query_vec, 10, None).await?;
-/// for result in results {
-///     println!("Found: {} (score: {})", result.file_path, result.score);
+///     // Search for similar code
+///     let query_vec = vec![0.1f32; 384];
+///     let results = provider.search_similar("rust_code", &query_vec, 10, None).await?;
+///     for result in results {
+///         println!("Found: {} (score: {})", result.file_path, result.score);
+///     }
+///     Ok(())
 /// }
 /// ```
 #[async_trait]
@@ -189,25 +194,23 @@ pub trait VectorStoreProvider: VectorStoreAdmin + Send + Sync {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::providers::VectorStoreBrowser;
+/// ```no_run
+/// use mcb_domain::ports::providers::vector_store::VectorStoreBrowser;
+/// use std::sync::Arc;
 ///
-/// // List all indexed collections
-/// let collections = provider.list_collections().await?;
-/// for coll in collections {
-///     println!("Collection: {} ({} vectors)", coll.name, coll.vector_count);
-/// }
+/// async fn browse_collections(provider: Arc<dyn VectorStoreBrowser>) -> mcb_domain::Result<()> {
+///     // List all indexed collections
+///     let collections = provider.list_collections().await?;
+///     for coll in collections {
+///         println!("Collection: {} ({} vectors)", coll.name, coll.vector_count);
+///     }
 ///
-/// // List files in a collection
-/// let files = provider.list_file_paths("my-project", 100).await?;
-/// for file in files {
-///     println!("File: {}", file.path);
-/// }
-///
-/// // Get chunks for a specific file
-/// let chunks = provider.get_chunks_by_file("my-project", "src/main.rs").await?;
-/// for chunk in chunks {
-///     println!("Chunk {}: lines {}-{}", chunk.id, chunk.start_line, chunk.end_line);
+///     // List files in a collection
+///     let files = provider.list_file_paths("my-project", 100).await?;
+///     for file in files {
+///         println!("File: {}", file.path);
+///     }
+///     Ok(())
 /// }
 /// ```
 #[async_trait]

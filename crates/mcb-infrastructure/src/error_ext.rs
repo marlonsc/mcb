@@ -10,19 +10,17 @@ use std::fmt;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
 /// use mcb_infrastructure::error_ext::ErrorContext;
+/// use std::path::Path;
 ///
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let path = Path::new("config.toml");
 /// // Add context to file operations
 /// let content = std::fs::read_to_string(&path)
 ///     .io_context(format!("Failed to read config file: {}", path.display()))?;
-///
-/// // Add context with lazy evaluation
-/// let result = operation()
-///     .with_context(|| format!("Operation failed for item {}", expensive_id()))?;
-///
-/// // Type-specific context
-/// auth_service.validate(token).auth_context("Invalid authentication token")?;
+/// # Ok(())
+/// # }
 /// ```
 pub trait ErrorContext<T> {
     /// Add context to a Result, converting the error to our domain Error type

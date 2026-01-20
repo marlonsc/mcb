@@ -33,12 +33,17 @@
 //!
 //! ## Usage
 //!
-//! ```ignore
-//! let config = AppConfig::load()?;
+//! ```no_run
+//! use mcb_infrastructure::config::AppConfig;
+//! use mcb_infrastructure::di::resolve_providers;
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let config = AppConfig::default();
 //! let providers = resolve_providers(&config)?;
 //!
-//! // Use providers
-//! let embedding = providers.embedding.embed("hello").await?;
+//! // Use providers for embedding operations
+//! # Ok(())
+//! # }
 //! ```
 
 use std::sync::Arc;

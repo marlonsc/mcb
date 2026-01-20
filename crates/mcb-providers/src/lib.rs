@@ -1,6 +1,3 @@
-// Allow collapsible_if for complex conditional logic
-#![allow(clippy::collapsible_if)]
-
 //! # MCP Context Browser - Provider Implementations
 //!
 //! This crate contains all user-selectable provider implementations following
@@ -29,11 +26,14 @@
 //!
 //! ## Usage
 //!
-//! ```ignore
+//! ```no_run
 //! use mcb_providers::embedding::OllamaEmbeddingProvider;
 //! use mcb_providers::cache::MokaCacheProvider;
 //! use mcb_providers::language::RustProcessor;
 //! ```
+
+// Allow collapsible_if for complex conditional logic
+#![allow(clippy::collapsible_if)]
 
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};

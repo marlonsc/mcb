@@ -1,10 +1,3 @@
-// Clippy allows for complex patterns in server code
-#![allow(clippy::io_other_error)]
-#![allow(clippy::for_kv_map)]
-#![allow(clippy::while_let_loop)]
-// Allow Rust 2024 compatibility issues from Rocket's EventStream macro
-#![allow(rust_2024_compatibility)]
-
 //! # MCP Context Browser Server
 //!
 //! MCP protocol server implementation for semantic code analysis using vector embeddings.
@@ -56,6 +49,12 @@
 //! - `redis-cache`: Redis distributed caching
 //! - `full`: All features enabled
 
+// Clippy allows for complex patterns in server code
+#![allow(clippy::io_other_error)]
+#![allow(clippy::for_kv_map)]
+#![allow(clippy::while_let_loop)]
+// Allow Rust 2024 compatibility issues from Rocket's EventStream macro
+#![allow(rust_2024_compatibility)]
 // Documentation configuration for docs.rs
 #![cfg_attr(docsrs, feature(doc_cfg))]
 

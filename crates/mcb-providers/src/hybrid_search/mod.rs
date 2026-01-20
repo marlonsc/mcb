@@ -29,7 +29,7 @@
 //!
 //! ## Usage
 //!
-//! ```ignore
+//! ```no_run
 //! use mcb_providers::hybrid_search::HybridSearchEngine;
 //! use mcb_domain::ports::providers::HybridSearchProvider;
 //!
@@ -37,13 +37,13 @@
 //! let engine = HybridSearchEngine::new();
 //!
 //! // Index code chunks for BM25 scoring
-//! engine.index_chunks("my-project", &code_chunks).await?;
+//! // engine.index_chunks("my-project", &code_chunks).await?;
 //!
 //! // Get semantic results from vector store
-//! let semantic_results = vector_store.search(...).await?;
+//! // let semantic_results = vector_store.search(...).await?;
 //!
 //! // Combine with BM25 for hybrid ranking
-//! let results = engine.search("my-project", "auth middleware", semantic_results, 10).await?;
+//! // let results = engine.search("my-project", "auth middleware", semantic_results, 10).await?;
 //! ```
 //!
 //! ## Providers

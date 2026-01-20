@@ -3,7 +3,7 @@
 //! Handles server startup, dependency injection setup, and graceful shutdown.
 //! Integrates with the infrastructure layer for configuration and DI container setup.
 //!
-//! # Architecture (Clean Architecture + dill DI)
+//! # Architecture (Clean Architecture + Handle-based DI)
 //!
 //! The server initialization follows a handle-based DI approach:
 //!

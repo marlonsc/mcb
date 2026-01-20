@@ -1,13 +1,9 @@
-// Clippy allows for complex patterns in infrastructure code
-#![allow(clippy::collapsible_if)]
-#![allow(clippy::manual_range_contains)]
-
 //! # Infrastructure Layer
 //!
 //! Cross-cutting technical concerns that support the application and domain layers.
 //!
 //! This layer provides shared technical capabilities used across the entire system.
-//! All adapters/providers are in mcb-providers crate, accessed via dill DI.
+//! All adapters/providers are in mcb-providers crate, accessed via linkme registry.
 //!
 //! ## Module Categories
 //!
@@ -38,6 +34,10 @@
 //! | Module | Description |
 //! |--------|-------------|
 //! | [`routing`] | Provider routing and selection |
+
+// Clippy allows for complex patterns in infrastructure code
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::manual_range_contains)]
 
 // Core infrastructure modules
 pub mod cache;

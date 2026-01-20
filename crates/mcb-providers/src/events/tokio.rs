@@ -12,16 +12,19 @@
 //!
 //! ## Example
 //!
-//! ```ignore
+//! ```no_run
 //! use mcb_providers::events::TokioEventBusProvider;
 //!
+//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! let bus = TokioEventBusProvider::new();
 //!
 //! // Subscribe to events
-//! let stream = bus.subscribe_events().await?;
+//! // let stream = bus.subscribe_events().await?;
 //!
 //! // Publish events
-//! bus.publish_event(DomainEvent::IndexRebuild { collection: None }).await?;
+//! // bus.publish_event(DomainEvent::IndexRebuild { collection: None }).await?;
+//! # Ok(())
+//! # }
 //! ```
 
 use async_trait::async_trait;

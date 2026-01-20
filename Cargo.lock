@@ -1392,29 +1392,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dill"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c0318172d46b12727598ececda9f4991c984e31dcb1f57c38c94e3630a9df95"
-dependencies = [
- "dill-impl",
- "indoc",
- "multimap",
- "thiserror 2.0.17",
-]
-
-[[package]]
-name = "dill-impl"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0712552907f5fa56bd104c524e81c33f8d183338a150d42ccc5edeee03f61c32"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.114",
-]
-
-[[package]]
 name = "dirs"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2773,15 +2750,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indoc"
-version = "2.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79cf5c93f93228cf8efb3ba362535fb11199ac548a09ce117c9b1adc3030d706"
-dependencies = [
- "rustversion",
-]
-
-[[package]]
 name = "inlinable_string"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3273,7 +3241,6 @@ dependencies = [
  "clap",
  "criterion",
  "dashmap 6.1.0",
- "dill",
  "dirs",
  "downcast-rs",
  "figment",
@@ -3661,9 +3628,6 @@ name = "multimap"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d87ecb2933e8aeadb3e3a02b828fed80a7528047e68b4f424523a0981a3a084"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "native-tls"

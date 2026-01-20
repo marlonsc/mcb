@@ -66,15 +66,15 @@ impl HttpClientConfig {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
 /// use mcb_providers::http::HttpClientProvider;
 ///
 /// async fn fetch_embeddings(provider: &dyn HttpClientProvider, text: &str) {
-///     let response = provider.client()
-///         .post("https://api.example.com/embeddings")
-///         .json(&serde_json::json!({ "input": text }))
-///         .send()
-///         .await?;
+///     // let response = provider.client()
+///     //     .post("https://api.example.com/embeddings")
+///     //     .json(&serde_json::json!({ "input": text }))
+///     //     .send()
+///     //     .await;
 /// }
 /// ```
 pub trait HttpClientProvider: Send + Sync {

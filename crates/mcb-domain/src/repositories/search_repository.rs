@@ -15,21 +15,20 @@ use async_trait::async_trait;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::repositories::SearchRepository;
+/// ```no_run
+/// use mcb_domain::repositories::search_repository::SearchRepository;
+/// use std::sync::Arc;
 ///
-/// // Semantic search using embedding vector
-/// let results = repo.semantic_search("my-project", &query_vec, 10, None).await?;
-///
-/// // Hybrid search (semantic + BM25 keyword matching)
-/// let results = repo.hybrid_search("my-project", "async error handling", &query_vec, 10).await?;
-/// for result in results {
-///     println!("{}: score={:.3}", result.file_path, result.score);
+/// async fn search_code(repo: Arc<dyn SearchRepository>) -> mcb_domain::Result<()> {
+///     // Semantic search using embedding vector
+///     let query_vec = vec![0.1f32; 384];
+///     let results = repo.semantic_search("my-project", &query_vec, 10, None).await?;
+///     
+///     for result in results {
+///         println!("{}: score={:.3}", result.file_path, result.score);
+///     }
+///     Ok(())
 /// }
-///
-/// // Get search statistics
-/// let stats = repo.stats().await?;
-/// println!("Queries: {}, Avg time: {:.1}ms", stats.total_queries, stats.avg_response_time_ms);
 /// ```
 #[async_trait]
 pub trait SearchRepository: Send + Sync {

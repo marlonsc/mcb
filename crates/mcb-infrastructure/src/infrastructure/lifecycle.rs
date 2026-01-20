@@ -30,23 +30,27 @@
 //!
 //! ## Usage
 //!
-//! ```ignore
+//! ```no_run
 //! use mcb_infrastructure::infrastructure::lifecycle::ServiceManager;
+//! use std::sync::Arc;
 //!
+//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! // Create manager with event bus
-//! let manager = ServiceManager::new(event_bus);
+//! // let manager = ServiceManager::new(event_bus);
 //!
 //! // Register services
-//! manager.register(Arc::new(embedding_service));
-//! manager.register(Arc::new(vector_store_service));
+//! // manager.register(Arc::new(embedding_service));
+//! // manager.register(Arc::new(vector_store_service));
 //!
 //! // List all services
-//! for info in manager.list() {
-//!     println!("{}: {:?}", info.name, info.state);
-//! }
-//!
+//! // for info in manager.list() {
+//! //     println!("{}: {:?}", info.name, info.state);
+//! // }
+//! //
 //! // Restart a specific service
-//! manager.restart("embedding").await?;
+//! // manager.restart("embedding").await?;
+//! # Ok(())
+//! # }
 //! ```
 
 use dashmap::DashMap;

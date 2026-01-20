@@ -10,10 +10,10 @@
 //!
 //! ## Usage via DI
 //!
-//! ```ignore
-//! // Never instantiate directly - use DI container
-//! let router: Arc<dyn ProviderRouter> = container.resolve();
-//! let provider = router.select_embedding_provider(&context).await?;
+//! ```no_run
+//! // Providers are obtained via DI container
+//! // let router: Arc<dyn ProviderRouter> = container.resolve();
+//! // let provider = router.select_embedding_provider(&context).await?;
 //! ```
 
 mod health;

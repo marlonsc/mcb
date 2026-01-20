@@ -8,6 +8,9 @@
 //! - Infrastructure: Cross-cutting concerns and external integrations (mcb-infrastructure)
 //! - Server: Transport and protocol layer (mcb-server)
 
+// Force-link mcb-providers to ensure linkme inventory registrations are included
+extern crate mcb_providers;
+
 use clap::Parser;
 use mcb_server::run_server;
 

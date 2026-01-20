@@ -44,10 +44,6 @@ toml = { workspace = true }
 notify = { workspace = true }
 arc-swap = { workspace = true }
 
-# Dependency injection
-dill = { workspace = true }
-
-
 # HTTP client
 reqwest = { workspace = true }
 

@@ -14,7 +14,8 @@ pub const DEFAULT_CONFIG_FILENAME: &str = "mcb.toml";
 pub const DEFAULT_CONFIG_DIR: &str = "mcb";
 
 /// Environment variable prefix for configuration
-pub const CONFIG_ENV_PREFIX: &str = "MCB";
+/// Uses MCP__ pattern for MCP server compatibility (e.g., MCP__PROVIDERS__EMBEDDING__PROVIDER)
+pub const CONFIG_ENV_PREFIX: &str = "MCP";
 
 // ============================================================================
 // AUTHENTICATION CONSTANTS

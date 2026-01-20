@@ -9,9 +9,7 @@ use mcb_domain::error::Result;
 /// Null implementation for testing
 ///
 /// Infrastructure service stored directly in AppContext.
-/// Uses handle-based DI pattern without dill macros.
-/// because it requires `InjectionError` error type and generates a conflicting
-/// `new()` method. We use `add_value` pattern instead.
+/// Uses handle-based DI pattern with manual constructors.
 pub struct NullAuthService;
 
 impl NullAuthService {

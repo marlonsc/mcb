@@ -75,8 +75,8 @@ impl ConfigLoader {
         }
 
         // Add environment variables
-        // Uses underscore as separator for nested keys (e.g., MCB_SERVER_PORT)
-        figment = figment.merge(Env::prefixed(&format!("{}_", self.env_prefix)).split("_"));
+        // Uses double underscore as separator for nested keys (e.g., MCP__SERVER__PORT)
+        figment = figment.merge(Env::prefixed(&format!("{}_", self.env_prefix)).split("__"));
 
         // Extract and deserialize configuration
         let app_config: AppConfig = figment

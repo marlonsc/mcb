@@ -29,19 +29,20 @@ pub struct HybridSearchResult {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::providers::HybridSearchProvider;
+/// ```no_run
+/// use mcb_domain::ports::providers::hybrid_search::HybridSearchProvider;
+/// use std::sync::Arc;
 ///
-/// // Index code chunks for hybrid search
-/// provider.index_chunks("project", &code_chunks).await?;
+/// async fn search_hybrid(provider: Arc<dyn HybridSearchProvider>) -> mcb_domain::Result<()> {
+///     // Perform hybrid search (requires semantic results from vector store)
+///     let semantic_results = vec![];  // From vector store search
+///     let results = provider.search("project", "async fn", semantic_results, 10).await?;
 ///
-/// // Perform hybrid search combining BM25 and semantic results
-/// let semantic_results = vector_store.search_similar("project", &query_vec, 20, None).await?;
-/// let results = provider.search("project", "async fn", semantic_results, 10).await?;
-///
-/// // Results are ranked by combined BM25 + semantic scores
-/// for result in results {
-///     println!("{}: {}", result.file_path, result.score);
+///     // Results are ranked by combined BM25 + semantic scores
+///     for result in results {
+///         println!("{}: score={:.3}", result.file_path, result.score);
+///     }
+///     Ok(())
 /// }
 /// ```
 #[async_trait]

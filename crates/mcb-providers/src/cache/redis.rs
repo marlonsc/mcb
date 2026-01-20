@@ -11,12 +11,15 @@
 //!
 //! ## Example
 //!
-//! ```ignore
+//! ```no_run
 //! use mcb_providers::cache::RedisCacheProvider;
 //!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let provider = RedisCacheProvider::new("redis://localhost:6379")?;
 //! // Or with host/port
 //! let provider = RedisCacheProvider::with_host_port("localhost", 6379)?;
+//! # Ok(())
+//! # }
 //! ```
 
 use async_trait::async_trait;
@@ -44,8 +47,13 @@ impl RedisCacheProvider {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```no_run
+    /// use mcb_providers::cache::RedisCacheProvider;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let provider = RedisCacheProvider::new("redis://localhost:6379")?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new(connection_string: &str) -> Result<Self> {
         let client = Client::open(connection_string).map_err(|e| Error::Infrastructure {

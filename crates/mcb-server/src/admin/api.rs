@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use super::auth::AdminAuthConfig;
+use super::browse_handlers::BrowseState;
 use super::handlers::AdminState;
 use super::routes::admin_rocket;
 
@@ -63,6 +64,7 @@ pub struct AdminApi {
     config: AdminApiConfig,
     state: AdminState,
     auth_config: Arc<AdminAuthConfig>,
+    browse_state: Option<BrowseState>,
 }
 
 impl AdminApi {
@@ -87,6 +89,7 @@ impl AdminApi {
                 cache: None,
             },
             auth_config: Arc::new(AdminAuthConfig::default()),
+            browse_state: None,
         }
     }
 
@@ -112,6 +115,7 @@ impl AdminApi {
                 cache: None,
             },
             auth_config: Arc::new(auth_config),
+            browse_state: None,
         }
     }
 
@@ -139,7 +143,17 @@ impl AdminApi {
                 cache: None,
             },
             auth_config: Arc::new(auth_config),
+            browse_state: None,
         }
+    }
+
+    /// Set the browse state for code browsing functionality
+    ///
+    /// When set, enables the browse API endpoints for navigating
+    /// indexed collections, files, and code chunks.
+    pub fn with_browse_state(mut self, browse_state: BrowseState) -> Self {
+        self.browse_state = Some(browse_state);
+        self
     }
 
     /// Start the admin API server
@@ -154,7 +168,8 @@ impl AdminApi {
             rocket_config.port
         );
 
-        let rocket = admin_rocket(self.state, self.auth_config, None).configure(rocket_config);
+        let rocket =
+            admin_rocket(self.state, self.auth_config, self.browse_state).configure(rocket_config);
 
         rocket.launch().await.map_err(|e| {
             Box::new(std::io::Error::new(
@@ -183,7 +198,7 @@ impl AdminApi {
             rocket_config.port
         );
 
-        let rocket = admin_rocket(self.state, self.auth_config, None)
+        let rocket = admin_rocket(self.state, self.auth_config, self.browse_state)
             .configure(rocket_config)
             .ignite()
             .await

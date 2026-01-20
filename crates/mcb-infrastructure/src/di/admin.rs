@@ -22,6 +22,54 @@ use mcb_application::ports::registry::{
 use std::sync::Arc;
 
 // ============================================================================
+// Admin Service Interfaces (Traits)
+// ============================================================================
+
+/// Interface for embedding provider admin operations
+pub trait EmbeddingAdminInterface: Send + Sync + std::fmt::Debug {
+    /// List all available embedding providers
+    fn list_providers(&self) -> Vec<ProviderInfo>;
+    /// Get current provider name
+    fn current_provider(&self) -> String;
+    /// Switch to a different embedding provider
+    fn switch_provider(&self, config: EmbeddingProviderConfig) -> Result<(), String>;
+    /// Reload provider from current application config
+    fn reload_from_config(&self) -> Result<(), String>;
+}
+
+/// Interface for vector store provider admin operations
+pub trait VectorStoreAdminInterface: Send + Sync + std::fmt::Debug {
+    /// List all available vector store providers
+    fn list_providers(&self) -> Vec<ProviderInfo>;
+    /// Switch to a different vector store provider
+    fn switch_provider(&self, config: VectorStoreProviderConfig) -> Result<(), String>;
+    /// Reload provider from current application config
+    fn reload_from_config(&self) -> Result<(), String>;
+}
+
+/// Interface for cache provider admin operations
+pub trait CacheAdminInterface: Send + Sync + std::fmt::Debug {
+    /// List all available cache providers
+    fn list_providers(&self) -> Vec<ProviderInfo>;
+    /// Get current provider name
+    fn current_provider(&self) -> String;
+    /// Switch to a different cache provider
+    fn switch_provider(&self, config: CacheProviderConfig) -> Result<(), String>;
+    /// Reload provider from current application config
+    fn reload_from_config(&self) -> Result<(), String>;
+}
+
+/// Interface for language provider admin operations
+pub trait LanguageAdminInterface: Send + Sync + std::fmt::Debug {
+    /// List all available language providers
+    fn list_providers(&self) -> Vec<ProviderInfo>;
+    /// Switch to a different language provider
+    fn switch_provider(&self, config: LanguageProviderConfig) -> Result<(), String>;
+    /// Reload provider from current application config
+    fn reload_from_config(&self) -> Result<(), String>;
+}
+
+// ============================================================================
 // Embedding Admin Service
 // ============================================================================
 
@@ -91,6 +139,24 @@ impl std::fmt::Debug for EmbeddingAdminService {
     }
 }
 
+impl EmbeddingAdminInterface for EmbeddingAdminService {
+    fn list_providers(&self) -> Vec<ProviderInfo> {
+        EmbeddingAdminService::list_providers(self)
+    }
+
+    fn current_provider(&self) -> String {
+        EmbeddingAdminService::current_provider(self)
+    }
+
+    fn switch_provider(&self, config: EmbeddingProviderConfig) -> Result<(), String> {
+        EmbeddingAdminService::switch_provider(self, config)
+    }
+
+    fn reload_from_config(&self) -> Result<(), String> {
+        EmbeddingAdminService::reload_from_config(self)
+    }
+}
+
 // ============================================================================
 // Vector Store Admin Service
 // ============================================================================
@@ -139,6 +205,20 @@ impl VectorStoreAdminService {
 impl std::fmt::Debug for VectorStoreAdminService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("VectorStoreAdminService").finish()
+    }
+}
+
+impl VectorStoreAdminInterface for VectorStoreAdminService {
+    fn list_providers(&self) -> Vec<ProviderInfo> {
+        VectorStoreAdminService::list_providers(self)
+    }
+
+    fn switch_provider(&self, config: VectorStoreProviderConfig) -> Result<(), String> {
+        VectorStoreAdminService::switch_provider(self, config)
+    }
+
+    fn reload_from_config(&self) -> Result<(), String> {
+        VectorStoreAdminService::reload_from_config(self)
     }
 }
 
@@ -197,6 +277,24 @@ impl std::fmt::Debug for CacheAdminService {
     }
 }
 
+impl CacheAdminInterface for CacheAdminService {
+    fn list_providers(&self) -> Vec<ProviderInfo> {
+        CacheAdminService::list_providers(self)
+    }
+
+    fn current_provider(&self) -> String {
+        CacheAdminService::current_provider(self)
+    }
+
+    fn switch_provider(&self, config: CacheProviderConfig) -> Result<(), String> {
+        CacheAdminService::switch_provider(self, config)
+    }
+
+    fn reload_from_config(&self) -> Result<(), String> {
+        CacheAdminService::reload_from_config(self)
+    }
+}
+
 // ============================================================================
 // Language Admin Service
 // ============================================================================
@@ -246,6 +344,20 @@ impl LanguageAdminService {
 impl std::fmt::Debug for LanguageAdminService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LanguageAdminService").finish()
+    }
+}
+
+impl LanguageAdminInterface for LanguageAdminService {
+    fn list_providers(&self) -> Vec<ProviderInfo> {
+        LanguageAdminService::list_providers(self)
+    }
+
+    fn switch_provider(&self, config: LanguageProviderConfig) -> Result<(), String> {
+        LanguageAdminService::switch_provider(self, config)
+    }
+
+    fn reload_from_config(&self) -> Result<(), String> {
+        LanguageAdminService::reload_from_config(self)
     }
 }
 

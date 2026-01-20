@@ -28,16 +28,16 @@ use crate::value_objects::Language;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
 /// use mcb_domain::ports::providers::LanguageChunkingProvider;
-/// use crate::value_objects::Language;
+/// use std::sync::Arc;
 ///
-/// // Get provider from registry
-/// let provider: Arc<dyn LanguageChunkingProvider> = registry.get_by_extension("rs")?;
-///
-/// // Chunk source code
-/// let chunks = provider.chunk(source_code, "src/main.rs");
-/// println!("Extracted {} chunks from {}", chunks.len(), provider.provider_name());
+/// fn chunk_code(provider: Arc<dyn LanguageChunkingProvider>) {
+///     // Chunk source code
+///     let source = "fn main() { println!(\"Hello\"); }";
+///     let chunks = provider.chunk(source, "src/main.rs");
+///     println!("Extracted {} chunks from {}", chunks.len(), provider.provider_name());
+/// }
 /// ```
 pub trait LanguageChunkingProvider: Send + Sync {
     /// Get the language identifier this provider handles

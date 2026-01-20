@@ -12,11 +12,11 @@
 //!
 //! ## Usage
 //!
-//! ```ignore
+//! ```no_run
 //! use mcb_providers::vector_store::EncryptedVectorStoreProvider;
-//! use mcb_domain::ports::providers::CryptoProvider;
+//! // use mcb_domain::ports::providers::CryptoProvider;
 //!
-//! let encrypted = EncryptedVectorStoreProvider::new(inner_provider, crypto_service);
+//! // let encrypted = EncryptedVectorStoreProvider::new(inner_provider, crypto_service);
 //! ```
 
 use async_trait::async_trait;

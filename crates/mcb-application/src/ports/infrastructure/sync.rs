@@ -68,12 +68,13 @@ impl SyncResult {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
 /// use mcb_application::ports::infrastructure::sync::{SyncCoordinator, SyncOptions};
 /// use std::path::Path;
+/// use std::sync::Arc;
 ///
 /// async fn sync_codebase(
-///     coordinator: &dyn SyncCoordinator,
+///     coordinator: Arc<dyn SyncCoordinator>,
 ///     path: &Path,
 /// ) -> mcb_domain::Result<bool> {
 ///     let result = coordinator.sync(path, SyncOptions::default()).await?;

@@ -104,9 +104,9 @@ tar = { workspace = true }
 futures = { workspace = true }
 async-stream = { workspace = true }
 
-# Providers are included via mcb-infrastructure for clean architecture compliance
+# Providers - MUST be in dependencies (not dev-dependencies) for linkme inventory registration
+mcb-providers = { path = "../mcb-providers", features = ["full"] }
 
 [dev-dependencies]
 tempfile = "3.10"
 async-trait = { workspace = true }
-mcb-providers = { path = "../mcb-providers" }

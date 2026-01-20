@@ -75,14 +75,15 @@ impl ChunkingResult {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
 /// use mcb_application::domain_services::chunking::{CodeChunker, ChunkingOptions};
 /// use std::path::Path;
+/// use std::sync::Arc;
 ///
 /// async fn process_file(
-///     chunker: &dyn CodeChunker,
+///     chunker: Arc<dyn CodeChunker>,
 ///     path: &Path,
-/// ) -> mcb_domain::Result<Vec<mcb_domain::CodeChunk>> {
+/// ) -> mcb_domain::Result<Vec<mcb_domain::entities::CodeChunk>> {
 ///     let result = chunker.chunk_file(path, ChunkingOptions::default()).await?;
 ///     Ok(result.chunks)
 /// }

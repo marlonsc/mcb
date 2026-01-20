@@ -12,11 +12,11 @@ use tracing::info;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
 /// use mcb_server::transport::StdioServerExt;
 ///
-/// let server = McpServer::new(context_service, config)?;
-/// server.serve_stdio().await?;  // Blocks until shutdown
+/// // let server = McpServer::new(context_service, config)?;
+/// // server.serve_stdio().await?;  // Blocks until shutdown
 /// ```
 #[allow(async_fn_in_trait)]
 pub trait StdioServerExt {

@@ -21,18 +21,18 @@ use std::time::Duration;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::infrastructure::SyncProvider;
+/// ```no_run
+/// use mcb_application::ports::infrastructure::snapshot::SyncProvider;
+/// use std::path::Path;
+/// use std::sync::Arc;
 ///
-/// // Check if sync should be debounced (too recent)
-/// if !sync.should_debounce(&codebase_path).await? {
-///     // Acquire a sync slot from the queue
-///     if let Some(batch) = sync.acquire_sync_slot(&codebase_path).await? {
-///         let changed = sync.get_changed_files(&codebase_path).await?;
-///         // Process changed files...
-///         sync.release_sync_slot(&codebase_path, batch).await?;
-///         sync.update_last_sync(&codebase_path).await;
+/// async fn sync_codebase(sync: Arc<dyn SyncProvider>, codebase_path: &Path) -> mcb_domain::Result<()> {
+///     // Check if sync should be debounced (too recent)
+///     if !sync.should_debounce(codebase_path).await? {
+///         let changed = sync.get_changed_files(codebase_path).await?;
+///         println!("Changed files: {:?}", changed);
 ///     }
+///     Ok(())
 /// }
 /// ```
 #[async_trait]
@@ -71,20 +71,21 @@ pub trait SyncProvider: Send + Sync {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::infrastructure::SnapshotProvider;
+/// ```no_run
+/// use mcb_application::ports::infrastructure::snapshot::SnapshotProvider;
+/// use std::path::Path;
+/// use std::sync::Arc;
 ///
-/// // Create a new snapshot of the codebase
-/// let new_snapshot = snapshot.create_snapshot(&project_path).await?;
+/// async fn snapshot_codebase(snapshot: Arc<dyn SnapshotProvider>, project_path: &Path) -> mcb_domain::Result<()> {
+///     // Create a new snapshot of the codebase
+///     let new_snapshot = snapshot.create_snapshot(project_path).await?;
+///     println!("Created snapshot with {} files", new_snapshot.files.len());
 ///
-/// // Load previous snapshot and compare
-/// if let Some(old_snapshot) = snapshot.load_snapshot(&project_path).await? {
-///     let changes = snapshot.compare_snapshots(&old_snapshot, &new_snapshot).await?;
-///     println!("Added: {}, Modified: {}", changes.added.len(), changes.modified.len());
+///     // Shortcut: get files needing re-indexing
+///     let changed_files = snapshot.get_changed_files(project_path).await?;
+///     println!("Changed files: {:?}", changed_files);
+///     Ok(())
 /// }
-///
-/// // Shortcut: get files needing re-indexing
-/// let changed_files = snapshot.get_changed_files(&project_path).await?;
 /// ```
 #[async_trait]
 pub trait SnapshotProvider: Send + Sync {

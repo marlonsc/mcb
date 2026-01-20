@@ -10,17 +10,19 @@
 //!
 //! ## Usage
 //!
-//! ```ignore
-//! // Resolve via DI - NEVER use concrete types directly
-//! let event_bus: Arc<dyn EventBusProvider> = container.resolve();
+//! ```no_run
+//! use mcb_application::ports::infrastructure::EventBusProvider;
+//! use mcb_domain::events::DomainEvent;
+//! use std::sync::Arc;
 //!
-//! // Publish typed domain event
-//! event_bus.publish_event(DomainEvent::IndexingStarted { ... }).await?;
-//!
-//! // Subscribe to receive events (returns receiver handle)
-//! let subscription = event_bus.subscribe_events().await?;
-//! while let Some(event) = subscription.recv().await {
-//!     // Handle event
+//! async fn publish_event(event_bus: Arc<dyn EventBusProvider>) -> mcb_domain::Result<()> {
+//!     // Publish typed domain event
+//!     let event = DomainEvent::IndexingStarted {
+//!         codebase_path: "./project".to_string(),
+//!         total_files: 100,
+//!     };
+//!     event_bus.publish_event(event).await?;
+//!     Ok(())
 //! }
 //! ```
 

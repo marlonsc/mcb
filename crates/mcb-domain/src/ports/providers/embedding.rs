@@ -17,19 +17,21 @@ use async_trait::async_trait;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
 /// use mcb_domain::ports::providers::EmbeddingProvider;
+/// use std::sync::Arc;
 ///
-/// // Inject the provider via dependency injection
-/// let provider: Arc<dyn EmbeddingProvider> = container.resolve();
+/// async fn embed_code(provider: Arc<dyn EmbeddingProvider>) -> mcb_domain::Result<()> {
+///     // Generate embedding for code
+///     let embedding = provider.embed("fn main() { println!(\"Hello\"); }").await?;
+///     println!("Embedding dimensions: {}", provider.dimensions());
 ///
-/// // Generate embedding for code
-/// let embedding = provider.embed("fn main() { println!(\"Hello\"); }").await?;
-/// println!("Embedding dimensions: {}", provider.dimensions());
-///
-/// // Batch processing for efficiency
-/// let texts = vec!["fn foo() {}".into(), "fn bar() {}".into()];
-/// let embeddings = provider.embed_batch(&texts).await?;
+///     // Batch processing for efficiency
+///     let texts = vec!["fn foo() {}".into(), "fn bar() {}".into()];
+///     let embeddings = provider.embed_batch(&texts).await?;
+///     println!("Got {} embeddings", embeddings.len());
+///     Ok(())
+/// }
 /// ```
 #[async_trait]
 pub trait EmbeddingProvider: Send + Sync {

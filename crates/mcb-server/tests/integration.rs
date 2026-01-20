@@ -11,3 +11,7 @@ mod tools;
 // Golden acceptance tests
 #[path = "integration/golden_acceptance.rs"]
 mod golden_acceptance;
+
+// Browse API tests
+#[path = "integration/browse_api_test.rs"]
+mod browse_api_test;

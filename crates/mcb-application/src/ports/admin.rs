@@ -44,19 +44,22 @@ pub struct PerformanceMetricsData {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::admin::PerformanceMetricsInterface;
+/// ```no_run
+/// use mcb_application::ports::admin::PerformanceMetricsInterface;
+/// use std::sync::Arc;
 ///
-/// // Record a successful query with 50ms response time (cache miss)
-/// metrics.record_query(50, true, false);
+/// fn record_metrics(metrics: Arc<dyn PerformanceMetricsInterface>) {
+///     // Record a successful query with 50ms response time (cache miss)
+///     metrics.record_query(50, true, false);
 ///
-/// // Track active connections
-/// metrics.update_active_connections(1);  // connection opened
-/// metrics.update_active_connections(-1); // connection closed
+///     // Track active connections
+///     metrics.update_active_connections(1);  // connection opened
+///     metrics.update_active_connections(-1); // connection closed
 ///
-/// // Get current metrics snapshot
-/// let stats = metrics.get_performance_metrics();
-/// println!("Uptime: {}s, Queries: {}", stats.uptime_seconds, stats.total_queries);
+///     // Get current metrics snapshot
+///     let stats = metrics.get_performance_metrics();
+///     println!("Uptime: {}s, Queries: {}", stats.uptime_seconds, stats.total_queries);
+/// }
 /// ```
 pub trait PerformanceMetricsInterface: Send + Sync {
     /// Get server uptime in seconds
@@ -103,14 +106,17 @@ pub struct IndexingOperation {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::admin::IndexingOperationsInterface;
+/// ```no_run
+/// use mcb_application::ports::admin::IndexingOperationsInterface;
+/// use std::sync::Arc;
 ///
-/// // Get all active indexing operations
-/// let operations = tracker.get_operations();
-/// for (id, op) in operations {
-///     println!("Operation {}: {}/{} files in {}",
-///         id, op.processed_files, op.total_files, op.collection);
+/// fn show_operations(tracker: Arc<dyn IndexingOperationsInterface>) {
+///     // Get all active indexing operations
+///     let operations = tracker.get_operations();
+///     for (id, op) in operations {
+///         println!("Operation {}: {}/{} files in {}",
+///             id, op.processed_files, op.total_files, op.collection);
+///     }
 /// }
 /// ```
 pub trait IndexingOperationsInterface: Send + Sync {
@@ -172,18 +178,23 @@ pub enum ServiceState {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::admin::LifecycleManaged;
+/// ```no_run
+/// use mcb_application::ports::admin::LifecycleManaged;
+/// use mcb_domain::events::ServiceState;
+/// use std::sync::Arc;
 ///
-/// // Check service state
-/// if service.state() == ServiceState::Running {
-///     // Perform health check
-///     let health = service.health_check().await;
-///     println!("Service health: {:?}", health.status);
+/// async fn check_service(service: Arc<dyn LifecycleManaged>) -> mcb_domain::Result<()> {
+///     // Check service state
+///     if service.state() == ServiceState::Running {
+///         // Perform health check
+///         let health = service.health_check().await;
+///         println!("Service health: {:?}", health.status);
+///     }
+///
+///     // Graceful shutdown
+///     service.stop().await?;
+///     Ok(())
 /// }
-///
-/// // Graceful shutdown
-/// service.stop().await;
 /// ```
 #[async_trait::async_trait]
 pub trait LifecycleManaged: Send + Sync {
@@ -220,16 +231,19 @@ pub trait LifecycleManaged: Send + Sync {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::admin::ShutdownCoordinator;
+/// ```no_run
+/// use mcb_application::ports::admin::ShutdownCoordinator;
+/// use std::sync::Arc;
 ///
-/// // Check if shutdown has been requested
-/// if coordinator.is_shutting_down() {
-///     println!("Shutdown in progress, stopping work");
+/// fn handle_shutdown(coordinator: Arc<dyn ShutdownCoordinator>) {
+///     // Check if shutdown has been requested
+///     if coordinator.is_shutting_down() {
+///         println!("Shutdown in progress, stopping work");
+///     }
+///
+///     // To trigger shutdown (e.g., from admin API)
+///     coordinator.signal_shutdown();
 /// }
-///
-/// // To trigger shutdown (e.g., from admin API)
-/// coordinator.signal_shutdown();
 /// ```
 pub trait ShutdownCoordinator: Send + Sync {
     /// Signal all components to begin shutdown

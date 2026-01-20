@@ -4,10 +4,9 @@
 //! Orchestrates embeddings, vector storage, and caching for semantic code understanding.
 
 use crate::domain_services::search::ContextServiceInterface;
-use crate::ports::providers::cache::CacheEntryConfig;
-use crate::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
+use mcb_domain::ports::providers::{CacheEntryConfig, EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::value_objects::{Embedding, SearchResult};
 use serde_json::json;
 use std::collections::HashMap;

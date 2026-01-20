@@ -12,22 +12,21 @@ use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::providers::ProviderConfigManagerInterface;
+/// ```no_run
+/// use mcb_domain::ports::providers::config::ProviderConfigManagerInterface;
+/// use std::sync::Arc;
 ///
-/// // List available embedding providers
-/// let providers = config_manager.list_embedding_providers();
-/// for name in providers {
-///     if let Ok(config) = config_manager.get_embedding_config(&name) {
-///         println!("{}: model={}", name, config.model);
+/// fn list_providers(config_manager: Arc<dyn ProviderConfigManagerInterface>) {
+///     // List available embedding providers
+///     let providers = config_manager.list_embedding_providers();
+///     for name in providers {
+///         println!("Provider: {}", name);
 ///     }
-/// }
 ///
-/// // Check if a specific provider exists
-/// if config_manager.has_embedding_provider("openai") {
-///     let config = config_manager.get_embedding_config("openai")?;
-///     // Use config...
-///
+///     // Check if a specific provider exists
+///     if config_manager.has_embedding_provider("openai") {
+///         println!("OpenAI provider is configured");
+///     }
 /// }
 /// ```
 #[async_trait::async_trait]

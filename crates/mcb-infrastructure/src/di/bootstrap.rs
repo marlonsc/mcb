@@ -37,7 +37,9 @@
 
 use crate::config::AppConfig;
 use crate::di::admin::{
-    CacheAdminService, EmbeddingAdminService, LanguageAdminService, VectorStoreAdminService,
+    CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
+    LanguageAdminInterface, LanguageAdminService, VectorStoreAdminInterface,
+    VectorStoreAdminService,
 };
 use crate::di::handles::{
     CacheProviderHandle, EmbeddingProviderHandle, LanguageProviderHandle, VectorStoreProviderHandle,
@@ -100,10 +102,10 @@ pub struct AppContext {
     // ========================================================================
     // Admin Services (switch providers via API)
     // ========================================================================
-    embedding_admin: Arc<EmbeddingAdminService>, // mcb-validate-ignore: admin_service_concrete_type
-    vector_store_admin: Arc<VectorStoreAdminService>, // mcb-validate-ignore: admin_service_concrete_type
-    cache_admin: Arc<CacheAdminService>, // mcb-validate-ignore: admin_service_concrete_type
-    language_admin: Arc<LanguageAdminService>, // mcb-validate-ignore: admin_service_concrete_type
+    embedding_admin: Arc<dyn EmbeddingAdminInterface>,
+    vector_store_admin: Arc<dyn VectorStoreAdminInterface>,
+    cache_admin: Arc<dyn CacheAdminInterface>,
+    language_admin: Arc<dyn LanguageAdminInterface>,
 
     // ========================================================================
     // Infrastructure Services (direct storage)
@@ -148,26 +150,22 @@ impl AppContext {
     // ========================================================================
 
     /// Get embedding admin service for runtime provider switching
-    // mcb-validate-ignore: admin_service_concrete_type
-    pub fn embedding_admin(&self) -> Arc<EmbeddingAdminService> {
+    pub fn embedding_admin(&self) -> Arc<dyn EmbeddingAdminInterface> {
         self.embedding_admin.clone()
     }
 
     /// Get vector store admin service
-    // mcb-validate-ignore: admin_service_concrete_type
-    pub fn vector_store_admin(&self) -> Arc<VectorStoreAdminService> {
+    pub fn vector_store_admin(&self) -> Arc<dyn VectorStoreAdminInterface> {
         self.vector_store_admin.clone()
     }
 
     /// Get cache admin service
-    // mcb-validate-ignore: admin_service_concrete_type
-    pub fn cache_admin(&self) -> Arc<CacheAdminService> {
+    pub fn cache_admin(&self) -> Arc<dyn CacheAdminInterface> {
         self.cache_admin.clone()
     }
 
     /// Get language admin service
-    // mcb-validate-ignore: admin_service_concrete_type
-    pub fn language_admin(&self) -> Arc<LanguageAdminService> {
+    pub fn language_admin(&self) -> Arc<dyn LanguageAdminInterface> {
         self.language_admin.clone()
     }
 
@@ -296,19 +294,18 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Admin Services (for API-based provider management)
     // ========================================================================
 
-    let embedding_admin = Arc::new(EmbeddingAdminService::new(
+    let embedding_admin: Arc<dyn EmbeddingAdminInterface> = Arc::new(EmbeddingAdminService::new(
         embedding_resolver.clone(),
         embedding_handle.clone(),
     ));
-    let vector_store_admin = Arc::new(VectorStoreAdminService::new(
-        vector_store_resolver.clone(),
-        vector_store_handle.clone(),
-    ));
-    let cache_admin = Arc::new(CacheAdminService::new(
+    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = Arc::new(
+        VectorStoreAdminService::new(vector_store_resolver.clone(), vector_store_handle.clone()),
+    );
+    let cache_admin: Arc<dyn CacheAdminInterface> = Arc::new(CacheAdminService::new(
         cache_resolver.clone(),
         cache_handle.clone(),
     ));
-    let language_admin = Arc::new(LanguageAdminService::new(
+    let language_admin: Arc<dyn LanguageAdminInterface> = Arc::new(LanguageAdminService::new(
         language_resolver.clone(),
         language_handle.clone(),
     ));

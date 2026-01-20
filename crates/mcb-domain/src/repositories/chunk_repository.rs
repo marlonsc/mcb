@@ -18,40 +18,29 @@ use async_trait::async_trait;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::repositories::ChunkRepository;
-/// use mcb_domain::CodeChunk;
+/// ```no_run
+/// use mcb_domain::repositories::chunk_repository::ChunkRepository;
+/// use mcb_domain::entities::CodeChunk;
+/// use std::sync::Arc;
 ///
-/// # async fn example(repo: &dyn ChunkRepository) -> mcb_domain::Result<()> {
-/// // Create a code chunk
-/// let chunk = CodeChunk {
-///     id: "chunk_001".to_string(),
-///     content: "fn hello() { println!(\"Hello!\"); }".to_string(),
-///     file_path: "src/lib.rs".to_string(),
-///     start_line: 1,
-///     end_line: 3,
-///     language: "rust".to_string(),
-///     metadata: serde_json::json!({"type": "function"}),
-/// };
+/// async fn save_chunk(repo: Arc<dyn ChunkRepository>) -> mcb_domain::Result<()> {
+///     // Create a code chunk
+///     let chunk = CodeChunk {
+///         id: "chunk_001".to_string(),
+///         content: "fn hello() { println!(\"Hello!\"); }".to_string(),
+///         file_path: "src/lib.rs".to_string(),
+///         start_line: 1,
+///         end_line: 3,
+///         language: "rust".to_string(),
+///         metadata: serde_json::json!({"type": "function"}),
+///     };
 ///
-/// // Save to collection
-/// let collection = "my-codebase";
-/// let id = repo.save(collection, &chunk).await?;
-///
-/// // Retrieve chunk
-/// if let Some(retrieved) = repo.find_by_id(collection, &id).await? {
-///     assert_eq!(retrieved.content, chunk.content);
+///     // Save to collection
+///     let collection = "my-codebase";
+///     let id = repo.save(collection, &chunk).await?;
+///     println!("Saved chunk: {}", id);
+///     Ok(())
 /// }
-///
-/// // List all chunks in collection
-/// let chunks = repo.find_by_collection(collection, 100).await?;
-/// assert!(!chunks.is_empty());
-///
-/// // Get statistics
-/// let stats = repo.stats().await?;
-/// assert!(stats.total_chunks > 0);
-/// # Ok(())
-/// # }
 /// ```
 #[async_trait]
 pub trait ChunkRepository: Send + Sync {

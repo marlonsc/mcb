@@ -10,7 +10,7 @@
 //!
 //! ## Example
 //!
-//! ```ignore
+//! ```no_run
 //! use mcb_providers::cache::MokaCacheProvider;
 //! use std::time::Duration;
 //!

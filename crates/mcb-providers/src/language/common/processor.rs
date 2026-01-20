@@ -13,20 +13,20 @@ use mcb_domain::value_objects::Language;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
 /// use mcb_providers::language::common::LanguageProcessor;
 ///
 /// // Parse code with tree-sitter
-/// let mut parser = tree_sitter::Parser::new();
-/// parser.set_language(processor.get_language())?;
-/// let tree = parser.parse(content, None)
-///     .ok_or_else(|| anyhow::anyhow!("Failed to parse content"))?;
-///
+/// // let mut parser = tree_sitter::Parser::new();
+/// // parser.set_language(processor.get_language())?;
+/// // let tree = parser.parse(content, None)
+/// //     .ok_or_else(|| anyhow::anyhow!("Failed to parse content"))?;
+/// //
 /// // Extract chunks using AST
-/// let chunks = processor.extract_chunks_with_tree_sitter(&tree, content, "main.rs", &Language::Rust);
-///
+/// // let chunks = processor.extract_chunks_with_tree_sitter(&tree, content, "main.rs", &Language::Rust);
+/// //
 /// // Or use fallback for unsupported syntax
-/// let chunks = processor.extract_chunks_fallback(content, "main.rs", &Language::Rust);
+/// // let chunks = processor.extract_chunks_fallback(content, "main.rs", &Language::Rust);
 /// ```
 pub trait LanguageProcessor: Send + Sync {
     /// Get language configuration

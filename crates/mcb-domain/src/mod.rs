@@ -22,11 +22,20 @@
 //!
 //! ## Example
 //!
-//! ```ignore
-//! use mcb_domain::{entities::CodeChunk, value_objects::Embedding};
+//! ```
+//! use mcb_domain::entities::CodeChunk;
+//! use mcb_domain::value_objects::Embedding;
 //!
 //! // Create a code chunk entity
-//! let chunk = CodeChunk::new("chunk-1", "fn main() {}", "example.rs", 1, 1, "rust");
+//! let chunk = CodeChunk {
+//!     id: "chunk-1".to_string(),
+//!     content: "fn main() {}".to_string(),
+//!     file_path: "example.rs".to_string(),
+//!     start_line: 1,
+//!     end_line: 1,
+//!     language: "rust".to_string(),
+//!     metadata: serde_json::json!({}),
+//! };
 //!
 //! // Create an embedding value object
 //! let embedding = Embedding { vector: vec![0.1, 0.2], model: "test".into(), dimensions: 2 };

@@ -24,8 +24,8 @@ pub const DEFAULT_CACHE_TTL_SECS: u64 = 300;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_application::ports::providers::cache::CacheEntryConfig;
+/// ```
+/// use mcb_domain::ports::providers::cache::CacheEntryConfig;
 /// use std::time::Duration;
 ///
 /// let config = CacheEntryConfig::default()
@@ -93,8 +93,8 @@ impl Default for CacheEntryConfig {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_application::ports::providers::cache::CacheStats;
+/// ```
+/// use mcb_domain::ports::providers::cache::CacheStats;
 ///
 /// let stats = CacheStats::default();
 /// println!("Hit rate: {:.1}%", stats.hit_rate * 100.0);
@@ -143,16 +143,20 @@ impl CacheStats {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::providers::CacheProvider;
+/// ```no_run
+/// use mcb_domain::ports::providers::cache::{CacheProvider, CacheEntryConfig};
+/// use std::sync::Arc;
 ///
-/// // Store JSON in cache with TTL
-/// let config = CacheEntryConfig::default().with_ttl_secs(300);
-/// cache.set_json("user:123", &user_json, config).await?;
+/// async fn cache_example(cache: Arc<dyn CacheProvider>) -> mcb_domain::Result<()> {
+///     // Store JSON in cache with TTL
+///     let config = CacheEntryConfig::default().with_ttl_secs(300);
+///     cache.set_json("user:123", "{}", config).await?;
 ///
-/// // Retrieve from cache
-/// if let Some(json) = cache.get_json("user:123").await? {
-///     let user: User = serde_json::from_str(&json)?;
+///     // Retrieve from cache
+///     if let Some(json) = cache.get_json("user:123").await? {
+///         println!("Got: {}", json);
+///     }
+///     Ok(())
 /// }
 /// ```
 #[async_trait]
@@ -215,15 +219,16 @@ pub trait CacheProvider: Send + Sync + std::fmt::Debug {
 ///
 /// # Example
 ///
-/// ```ignore
-/// use mcb_domain::ports::providers::CacheProviderFactoryInterface;
+/// ```no_run
+/// use mcb_domain::ports::providers::cache::{CacheProviderFactoryInterface, CacheProvider};
+/// use std::sync::Arc;
 ///
-/// // Create cache provider from configuration
-/// let cache = factory.create_from_config(&cache_config).await?;
-/// cache.set("key", &my_value, None).await?;
-///
-/// // Create null cache for testing
-/// let test_cache = factory.create_null();
+/// async fn create_cache(factory: Arc<dyn CacheProviderFactoryInterface>) -> mcb_domain::Result<()> {
+///     // Create null cache for testing
+///     let test_cache = factory.create_null();
+///     println!("Created: {}", test_cache.provider_name());
+///     Ok(())
+/// }
 /// ```
 #[async_trait]
 pub trait CacheProviderFactoryInterface: Send + Sync {

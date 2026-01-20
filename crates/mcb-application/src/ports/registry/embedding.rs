@@ -101,11 +101,16 @@ pub static EMBEDDING_PROVIDERS: [EmbeddingProviderEntry] = [..];
 ///
 /// # Example
 ///
-/// ```ignore
-/// let config = EmbeddingProviderConfig::new("ollama")
-///     .with_base_url("http://localhost:11434")
-///     .with_model("nomic-embed-text");
-/// let provider = resolve_embedding_provider(&config)?;
+/// ```no_run
+/// use mcb_application::ports::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+///
+/// fn get_provider() -> Result<(), String> {
+///     let config = EmbeddingProviderConfig::new("null")
+///         .with_dimensions(384);
+///     let provider = resolve_embedding_provider(&config)?;
+///     println!("Provider: {}", provider.provider_name());
+///     Ok(())
+/// }
 /// ```
 pub fn resolve_embedding_provider(
     config: &EmbeddingProviderConfig,

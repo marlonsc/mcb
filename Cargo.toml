@@ -55,10 +55,7 @@ toml = "0.9"
 # NOTE: config crate removed in v0.1.2 - migrated to figment (ADR-025)
 
 # Dependency injection
-dill = "0.15"
-# NOTE: shaku removed in v0.1.2 - migrated to dill (ADR-024)
-# NOTE: inventory removed in v0.1.2 - migrated to linkme (ADR-023)
-# NOTE: dill added in v0.1.2 for migration from shaku (ADR-024)
+# linkme is used for compile-time provider registration (ADR-023)
 
 # HTTP client
 reqwest = { version = "0.13", features = ["json", "__tls"] }
