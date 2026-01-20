@@ -2,9 +2,11 @@
 
 ## Status
 
-**Implemented** (v0.1.2)
+**Superseded by [ADR 029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md)** (v0.1.2)
 
-> Replacement for [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) using a handle-based DI pattern with linkme registry.
+> Original replacement for [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) using a handle-based DI pattern with linkme registry.
+>
+> **Update (2026-01-20)**: dill Catalog is now implemented as IoC container with `add_value()` pattern. See [ADR 029](029-hexagonal-architecture-dill.md) for current architecture.
 >
 > **Implementation Note (2026-01-19)**: The dill `#[component]` macro is incompatible with our domain error types and manual constructors. We use a handle-based pattern instead: Provider Handles (RwLock wrappers), Resolvers (linkme registry), and Admin Services (runtime switching via API).
 

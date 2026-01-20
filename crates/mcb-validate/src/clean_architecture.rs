@@ -63,6 +63,26 @@ pub enum CleanArchitectureViolation {
         import_path: String,
         severity: Severity,
     },
+    /// Infrastructure layer imports concrete service from Application
+    ///
+    /// CA007: Infrastructure should only import trait interfaces, not concrete types.
+    InfrastructureImportsConcreteService {
+        file: PathBuf,
+        line: usize,
+        import_path: String,
+        concrete_type: String,
+        severity: Severity,
+    },
+    /// Application layer imports ports from wrong location
+    ///
+    /// CA008: Application should import ports from mcb-domain, not locally.
+    ApplicationWrongPortImport {
+        file: PathBuf,
+        line: usize,
+        import_path: String,
+        should_be: String,
+        severity: Severity,
+    },
 }
 
 impl CleanArchitectureViolation {
@@ -74,6 +94,8 @@ impl CleanArchitectureViolation {
             Self::EntityMissingIdentity { severity, .. } => *severity,
             Self::ValueObjectMutable { severity, .. } => *severity,
             Self::ServerImportsProviderDirectly { severity, .. } => *severity,
+            Self::InfrastructureImportsConcreteService { severity, .. } => *severity,
+            Self::ApplicationWrongPortImport { severity, .. } => *severity,
         }
     }
 }
@@ -170,6 +192,36 @@ impl std::fmt::Display for CleanArchitectureViolation {
                     line
                 )
             }
+            Self::InfrastructureImportsConcreteService {
+                file,
+                line,
+                concrete_type,
+                ..
+            } => {
+                write!(
+                    f,
+                    "CA007: Infrastructure imports concrete service {} at {}:{}",
+                    concrete_type,
+                    file.display(),
+                    line
+                )
+            }
+            Self::ApplicationWrongPortImport {
+                file,
+                line,
+                import_path,
+                should_be,
+                ..
+            } => {
+                write!(
+                    f,
+                    "CA008: Application imports from {} but should import from {} at {}:{}",
+                    import_path,
+                    should_be,
+                    file.display(),
+                    line
+                )
+            }
         }
     }
 }
@@ -183,6 +235,8 @@ impl Violation for CleanArchitectureViolation {
             Self::EntityMissingIdentity { .. } => "CA004",
             Self::ValueObjectMutable { .. } => "CA005",
             Self::ServerImportsProviderDirectly { .. } => "CA006",
+            Self::InfrastructureImportsConcreteService { .. } => "CA007",
+            Self::ApplicationWrongPortImport { .. } => "CA008",
         }
     }
 
@@ -198,6 +252,8 @@ impl Violation for CleanArchitectureViolation {
             Self::EntityMissingIdentity { severity, .. } => *severity,
             Self::ValueObjectMutable { severity, .. } => *severity,
             Self::ServerImportsProviderDirectly { severity, .. } => *severity,
+            Self::InfrastructureImportsConcreteService { severity, .. } => *severity,
+            Self::ApplicationWrongPortImport { severity, .. } => *severity,
         }
     }
 
@@ -209,6 +265,8 @@ impl Violation for CleanArchitectureViolation {
             Self::EntityMissingIdentity { file, .. } => Some(file),
             Self::ValueObjectMutable { file, .. } => Some(file),
             Self::ServerImportsProviderDirectly { file, .. } => Some(file),
+            Self::InfrastructureImportsConcreteService { file, .. } => Some(file),
+            Self::ApplicationWrongPortImport { file, .. } => Some(file),
         }
     }
 
@@ -220,6 +278,8 @@ impl Violation for CleanArchitectureViolation {
             Self::EntityMissingIdentity { line, .. } => Some(*line),
             Self::ValueObjectMutable { line, .. } => Some(*line),
             Self::ServerImportsProviderDirectly { line, .. } => Some(*line),
+            Self::InfrastructureImportsConcreteService { line, .. } => Some(*line),
+            Self::ApplicationWrongPortImport { line, .. } => Some(*line),
         }
     }
 
@@ -243,6 +303,13 @@ impl Violation for CleanArchitectureViolation {
             }
             Self::ServerImportsProviderDirectly { .. } => {
                 Some("Import providers through mcb-infrastructure re-exports".to_string())
+            }
+            Self::InfrastructureImportsConcreteService { .. } => Some(
+                "Import only trait interfaces from Application, not concrete implementations"
+                    .to_string(),
+            ),
+            Self::ApplicationWrongPortImport { should_be, .. } => {
+                Some(format!("Import ports from {} instead", should_be))
             }
         }
     }

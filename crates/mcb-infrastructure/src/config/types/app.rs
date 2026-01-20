@@ -24,13 +24,51 @@ pub use super::{
     sync::SyncConfig,
 };
 
+/// Simple embedding config for flat env vars (MCP__PROVIDERS__EMBEDDING__PROVIDER)
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SimpleEmbeddingConfig {
+    /// Provider name (ollama, openai, fastembed, etc.)
+    pub provider: Option<String>,
+    /// Model name
+    pub model: Option<String>,
+    /// Base URL for API
+    pub base_url: Option<String>,
+    /// API key
+    pub api_key: Option<String>,
+    /// Embedding dimensions
+    pub dimensions: Option<usize>,
+}
+
+/// Simple vector store config for flat env vars (MCP__PROVIDERS__VECTOR_STORE__PROVIDER)
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SimpleVectorStoreConfig {
+    /// Provider name (milvus, filesystem, in_memory, etc.)
+    pub provider: Option<String>,
+    /// Server address
+    pub address: Option<String>,
+    /// Embedding dimensions
+    pub dimensions: Option<usize>,
+    /// Collection name
+    pub collection: Option<String>,
+}
+
 /// Provider configurations (embedding and vector store)
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ProvidersConfig {
-    /// Embedding provider configurations
+    /// Simple embedding config (for flat env vars like MCP__PROVIDERS__EMBEDDING__PROVIDER)
+    #[serde(flatten)]
+    pub embedding_simple: SimpleEmbeddingConfig,
+
+    /// Embedding provider configurations (for TOML: [providers.embedding.default])
+    #[serde(default)]
     pub embedding: HashMap<String, EmbeddingConfig>,
 
-    /// Vector store provider configurations
+    /// Simple vector store config (for flat env vars like MCP__PROVIDERS__VECTOR_STORE__PROVIDER)
+    #[serde(flatten)]
+    pub vector_store_simple: SimpleVectorStoreConfig,
+
+    /// Vector store provider configurations (for TOML: [providers.vector_store.default])
+    #[serde(default)]
     pub vector_store: HashMap<String, VectorStoreConfig>,
 }
 

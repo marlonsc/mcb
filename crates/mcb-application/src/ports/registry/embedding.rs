@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::providers::EmbeddingProvider;
 
 /// Configuration for embedding provider creation
 ///

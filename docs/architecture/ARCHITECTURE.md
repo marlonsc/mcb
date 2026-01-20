@@ -530,7 +530,7 @@ Beyond embedding and vector store providers, the system defines 12 additional po
 | `IndexingServiceInterface` | Codebase indexing | `IndexingService` |
 | `ChunkingOrchestratorInterface` | Batch chunking coordination | `ChunkingOrchestrator` |
 
-All 20+ port traits extend `shaku::Interface` for DI container integration (defined in mcb-application).
+All 20+ port traits are defined in mcb-domain and registered in dill Catalog for DI container integration.
 
 ---
 
@@ -713,70 +713,78 @@ pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
 
 This pattern enables compile-time provider discovery with zero runtime overhead while maintaining Clean Architecture boundaries.
 
-### Two-Layer DI Strategy
+### DI Strategy (ADR-024 → ADR-029)
 
-The dependency injection system uses a **two-layer approach** documented in [ADR-012: Two-Layer DI Strategy](../adr/012-di-strategy-two-layer-approach.md):
+The dependency injection system uses a **handle-based pattern with dill IoC Container** documented in [ADR-029: Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md):
 
-#### Layer 1: Shaku Modules (Compile-Time Defaults)
+#### dill Catalog (IoC Container)
 
-Shaku modules provide **null implementations** as testing defaults:
+The dill `Catalog` manages service registration and resolution:
 
 ```rust
-// Infrastructure module provides null adapters
-module! {
-    pub InfrastructureModuleImpl: InfrastructureModule {
-        components = [NullAuthService, NullEventBus, NullSystemMetricsCollector],
-        providers = []
+// Build catalog with all services (mcb-infrastructure/src/di/catalog.rs)
+pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
+    CatalogBuilder::new()
+        .add_value(config)
+        .add_value(embedding_provider)    // From linkme registry
+        .add_value(embedding_handle)      // RwLock wrapper
+        .add_value(embedding_admin)       // Runtime switching
+        .add_value(auth_service)          // Null implementation
+        .add_value(event_bus)             // TokioBroadcast
+        .build()
+}
+
+// Service retrieval
+pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>> {
+    catalog.get_one::<T>()
+}
+```
+
+**DI Components** (in `mcb-infrastructure/src/di/`):
+
+-   `catalog.rs`: dill Catalog configuration and service resolution
+-   `handles.rs`: RwLock wrappers for runtime provider switching
+-   `provider_resolvers.rs`: linkme registry access
+-   `admin.rs`: Admin services for API-based provider management
+-   `bootstrap.rs`: AppContext initialization
+
+#### Provider Handles (Runtime Switching)
+
+Handles wrap providers for runtime switching without restart:
+
+```rust
+pub struct EmbeddingProviderHandle {
+    inner: RwLock<Arc<dyn EmbeddingProvider>>,
+}
+
+impl EmbeddingProviderHandle {
+    pub fn get(&self) -> Arc<dyn EmbeddingProvider> {
+        self.inner.read().expect("lock poisoned").clone()
+    }
+
+    pub fn set(&self, new_provider: Arc<dyn EmbeddingProvider>) {
+        *self.inner.write().expect("lock poisoned") = new_provider;
     }
 }
 ```
 
-**Shaku Modules** (in `mcb-infrastructure/src/di/modules/`):
+**Why This Pattern?**
 
--   `CacheModuleImpl`: NullCacheProvider for testing
--   `EmbeddingModuleImpl`: NullEmbeddingProvider for testing
--   `DataModuleImpl`: NullVectorStoreProvider for testing
--   `LanguageModuleImpl`: UniversalLanguageChunkingProvider
--   `InfrastructureModuleImpl`: Auth, events, metrics services
--   `ServerModuleImpl`: MCP protocol components
--   `AdminModuleImpl`: Admin API services
-
-#### Layer 2: Runtime Factories (Production Providers)
-
-Production providers are created at runtime via factories configured from `AppConfig`:
-
-```rust
-// Production flow in mcb-server/init.rs:
-// 1. Create Shaku modules (null providers as defaults)
-let app_container = init_app(config.clone()).await?;
-
-// 2. Create production providers from configuration
-let embedding_provider = EmbeddingProviderFactory::create(&config.embedding, None)?;
-let vector_store_provider = VectorStoreProviderFactory::create(&config.vector_store, crypto)?;
-
-// 3. Create domain services with production providers
-let services = DomainServicesFactory::create_services(
-    cache, crypto, config, embedding, vector_store, chunker
-).await?;
-```
-
-**Why Two Layers?**
-
-| Aspect | Shaku Modules | Runtime Factories |
-|--------|---------------|-------------------|
-| **When** | Compile time | Runtime |
-| **Purpose** | Testing defaults | Production providers |
-| **Configuration** | None needed | API keys, URLs, endpoints |
-| **Async Init** | Not supported | Fully supported |
+| Aspect | dill Catalog | Provider Handles |
+|--------|--------------|------------------|
+| **When** | Runtime | Runtime |
+| **Purpose** | Service resolution | Provider switching |
+| **Configuration** | `add_value()` | Via admin API |
+| **Async Init** | Fully supported | Via resolvers |
 
 ### Port/Adapter Pattern
 
-The system enforces dependency inversion through port traits (interfaces) defined in the application layer:
+The system enforces dependency inversion through port traits (interfaces) defined in the domain layer:
 
 ```rust
-// Port trait (mcb-application/src/ports/providers/embedding.rs)
+// Port trait (mcb-domain/src/ports/providers/embedding.rs)
 #[async_trait]
-pub trait EmbeddingProvider: Interface + Send + Sync {
+pub trait EmbeddingProvider: Send + Sync {
     async fn embed(&self, text: &str) -> Result<Embedding>;
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>>;
     fn dimensions(&self) -> usize;
@@ -800,13 +808,15 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 
 | Category | Location | Examples |
 |----------|----------|----------|
-| Provider Ports | `mcb-application/src/ports/providers/` | EmbeddingProvider, VectorStoreProvider, CacheProvider |
+| Provider Ports | `mcb-domain/src/ports/providers/` | EmbeddingProvider, VectorStoreProvider, CacheProvider |
 | Infrastructure Ports | `mcb-application/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
 | Admin Ports | `mcb-application/src/ports/admin.rs` | PerformanceMetrics, IndexingOperations |
 
+> **Note**: Provider ports are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+
 ### Testing with DI
 
-The two-layer approach enables clean testing patterns:
+The handle-based pattern enables clean testing:
 
 ```rust
 // Unit testing (application layer) - manual mocks
@@ -818,10 +828,10 @@ async fn test_search_service() {
     // Test without infrastructure dependencies
 }
 
-// Integration testing - Shaku null providers
+// Integration testing - null providers via dill Catalog
 #[tokio::test]
 async fn test_full_flow() {
-    let container = DiContainerBuilder::new().build().await?;
+    let catalog = build_catalog(AppConfig::default()).await?;
     // Uses NullCacheProvider, NullEmbeddingProvider, etc.
     // Safe for CI/CD without external services
 }
@@ -837,18 +847,19 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 #### 📦 Domain Layer (`crates/mcb-domain/`)
 
-**Purpose**: Core business entities, value objects, events, and repository interfaces.
+**Purpose**: Core business entities, value objects, events, ports, and repository interfaces.
 
 **Key Components**:
 
 -   `entities/`: Domain entities (CodeChunk, Codebase)
 -   `events/`: Domain events (DomainEvent, EventPublisher trait)
+-   `ports/providers/`: Provider port traits (EmbeddingProvider, VectorStoreProvider, CacheProvider, etc.)
 -   `repositories/`: Repository port traits (ChunkRepository, SearchRepository)
 -   `value_objects/`: Value objects (Embedding, Config, Search, Types)
 -   `constants.rs`: Domain constants
 -   `error.rs`: Domain error types
 
-> **Note**: Provider port traits (EmbeddingProvider, VectorStoreProvider, etc.) are defined in `mcb-application/src/ports/`, not in mcb-domain.
+> **Note**: All provider port traits are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
 
 #### 🔧 Application Layer (`crates/mcb-application/`)
 
@@ -856,11 +867,12 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Services**:
 
--   `services/context.rs`: ContextService - embedding generation and vector storage coordination
--   `services/indexing.rs`: IndexingService - codebase indexing workflow
--   `services/search.rs`: SearchService - semantic search operations
+-   `use_cases/context_service.rs`: ContextService - embedding generation and vector storage coordination
+-   `use_cases/indexing_service.rs`: IndexingService - codebase indexing workflow
+-   `use_cases/search_service.rs`: SearchService - semantic search operations
 -   `domain_services/chunking.rs`: ChunkingOrchestrator - batch chunking coordination
--   `ports/`: Application-level port interfaces
+-   `ports/registry/`: linkme distributed slices for provider auto-registration
+-   `ports/providers/`: Re-exports from mcb-domain (backward compatibility)
 
 #### 🔌 Providers Layer (`crates/mcb-providers/`)
 
@@ -881,14 +893,16 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Key Components**:
 
--   `di/`: Shaku-based dependency injection with hierarchical modules
--   `di/modules/`: DI modules (infrastructure, server, providers, etc.)
--   `config/`: Configuration management
+-   `di/`: dill IoC Container with handle-based pattern (ADR-029)
+-   `di/catalog.rs`: dill Catalog configuration
+-   `di/handles.rs`: RwLock provider handles
+-   `di/admin.rs`: Admin services for runtime switching
+-   `config/`: Configuration management (Figment)
 -   `cache/`: Cache infrastructure
 -   `crypto/`: Encryption and hashing utilities
 -   `health/`: Health check infrastructure
 -   `logging/`: Logging configuration
--   `adapters/`: Null adapters for DI testing
+-   `infrastructure/`: Null adapters for DI testing
 
 #### 🌐 Server Layer (`crates/mcb-server/`)
 
@@ -1963,22 +1977,22 @@ impl QualityGateChecker {
 -   ⚠️ Configuration complexity
 -   ⚠️ Testing complexity across providers
 
-#### ADR-012: Two-Layer DI Strategy
+#### ADR-024 → ADR-029: Hexagonal Architecture with dill
 
-**Status**: Accepted
+**Status**: Accepted (ADR-024 superseded by ADR-029)
 
-**Context**: Shaku's compile-time DI doesn't fit all service creation needs - production providers require runtime configuration, async initialization, and configuration-driven selection.
+**Context**: Handle-based DI pattern needed IoC container for proper service lifecycle management and architectural enforcement.
 
-**Decision**: Use two-layer approach: Shaku modules for infrastructure defaults (null providers), runtime factories for production providers.
+**Decision**: Use dill Catalog as IoC Container with handle-based pattern for runtime provider switching. Ports defined in mcb-domain.
 
 **Consequences**:
 
--   ✅ Clear mental model: Shaku = defaults, Factories = production
--   ✅ Easy testing with null providers from Shaku modules
--   ✅ Configuration-driven provider selection at runtime
--   ⚠️ Two patterns to understand (Shaku and factories)
+-   ✅ Clear layer separation (hexagonal architecture)
+-   ✅ dill Catalog manages service lifecycle
+-   ✅ Runtime switching via admin API
+-   ✅ Architecture enforced via mcb-validate (CA007/CA008)
 
-See [ADR-012](../adr/012-di-strategy-two-layer-approach.md) for full details.
+See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
 
 #### ADR-013: Clean Architecture Crate Separation
 

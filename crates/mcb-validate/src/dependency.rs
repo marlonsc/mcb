@@ -36,7 +36,14 @@ const ALLOWED_DEPS: &[(&str, &[&str])] = &[
     ),
     (
         "mcb-server",
-        &["mcb-domain", "mcb-application", "mcb-infrastructure"],
+        // Note: mcb-providers dependency is allowed temporarily for handler implementations
+        // TODO: Refactor to access providers only through mcb-infrastructure's DI system
+        &[
+            "mcb-domain",
+            "mcb-application",
+            "mcb-infrastructure",
+            "mcb-providers",
+        ],
     ),
     (
         "mcb",

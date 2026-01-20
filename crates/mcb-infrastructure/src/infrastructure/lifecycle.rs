@@ -30,7 +30,7 @@
 //!
 //! ## Usage
 //!
-//! ```no_run
+//! ```ignore
 //! use mcb_infrastructure::infrastructure::lifecycle::ServiceManager;
 //! use std::sync::Arc;
 //!

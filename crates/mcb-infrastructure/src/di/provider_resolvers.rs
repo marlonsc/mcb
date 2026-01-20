@@ -41,7 +41,25 @@ impl EmbeddingProviderResolver {
 
     /// Resolve provider from current application config
     pub fn resolve_from_config(&self) -> Result<Arc<dyn EmbeddingProvider>, String> {
-        // Get the default provider configuration
+        // First, check simple config (flat env vars like MCP__PROVIDERS__EMBEDDING__PROVIDER)
+        if let Some(ref provider_name) = self.config.providers.embedding_simple.provider {
+            let mut registry_config = EmbeddingProviderConfig::new(provider_name);
+            if let Some(ref model) = self.config.providers.embedding_simple.model {
+                registry_config = registry_config.with_model(model);
+            }
+            if let Some(ref base_url) = self.config.providers.embedding_simple.base_url {
+                registry_config = registry_config.with_base_url(base_url);
+            }
+            if let Some(ref api_key) = self.config.providers.embedding_simple.api_key {
+                registry_config = registry_config.with_api_key(api_key);
+            }
+            if let Some(dimensions) = self.config.providers.embedding_simple.dimensions {
+                registry_config = registry_config.with_dimensions(dimensions);
+            }
+            return resolve_embedding_provider(&registry_config);
+        }
+
+        // Fallback to HashMap config (TOML: [providers.embedding.default])
         if let Some(default_config) = self.config.providers.embedding.get("default") {
             // If there's a specific config for this provider, use it
             if let Some(specific_config) = self
@@ -103,7 +121,22 @@ impl VectorStoreProviderResolver {
 
     /// Resolve provider from current application config
     pub fn resolve_from_config(&self) -> Result<Arc<dyn VectorStoreProvider>, String> {
-        // Get the default provider configuration
+        // First, check simple config (flat env vars like MCP__PROVIDERS__VECTOR_STORE__PROVIDER)
+        if let Some(ref provider_name) = self.config.providers.vector_store_simple.provider {
+            let mut registry_config = VectorStoreProviderConfig::new(provider_name);
+            if let Some(ref address) = self.config.providers.vector_store_simple.address {
+                registry_config = registry_config.with_uri(address);
+            }
+            if let Some(dimensions) = self.config.providers.vector_store_simple.dimensions {
+                registry_config = registry_config.with_dimensions(dimensions);
+            }
+            if let Some(ref collection) = self.config.providers.vector_store_simple.collection {
+                registry_config = registry_config.with_collection(collection);
+            }
+            return resolve_vector_store_provider(&registry_config);
+        }
+
+        // Fallback to HashMap config (TOML: [providers.vector_store.default])
         if let Some(default_config) = self.config.providers.vector_store.get("default") {
             // If there's a specific config for this provider, use it
             if let Some(specific_config) = self

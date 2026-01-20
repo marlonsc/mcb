@@ -195,7 +195,7 @@ impl Default for SystemInfo {
 /// # Example
 ///
 /// ```no_run
-/// use mcb_infrastructure::health::{HealthChecker, HealthCheck, HealthStatus};
+/// use mcb_infrastructure::health::{HealthChecker, HealthCheck};
 /// use async_trait::async_trait;
 ///
 /// struct DatabaseHealthChecker;
@@ -203,7 +203,7 @@ impl Default for SystemInfo {
 /// #[async_trait]
 /// impl HealthChecker for DatabaseHealthChecker {
 ///     async fn check_health(&self) -> HealthCheck {
-///         HealthCheck::new("database", HealthStatus::Healthy)
+///         HealthCheck::healthy("database")
 ///     }
 /// }
 /// ```

@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::ports::providers::cache::CacheProvider;
+use mcb_domain::ports::providers::CacheProvider;
 
 /// Configuration for cache provider creation
 ///

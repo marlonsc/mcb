@@ -6,9 +6,9 @@
 use crate::domain_services::search::{
     ContextServiceInterface, IndexingResult, IndexingServiceInterface,
 };
-use crate::ports::providers::LanguageChunkingProvider;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
+use mcb_domain::ports::providers::LanguageChunkingProvider;
 use std::path::Path;
 use std::sync::Arc;
 

@@ -214,6 +214,9 @@ criterion = "0.8.1"
 # Plugin registration
 linkme = "0.3"
 
+# Dependency Injection (IoC Container)
+dill = "0.15"
+
 # Development/testing
 tempfile = "3.19"
 

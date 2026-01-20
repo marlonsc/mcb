@@ -6,7 +6,7 @@
 //!
 //! This port defines the abstraction for event-driven communication.
 //! Implementations (TokioBroadcastEventBus, NatsEventBus, etc.) are in
-//! the infrastructure layer and registered via Shaku DI.
+//! the infrastructure layer and registered via dill Catalog.
 //!
 //! ## Usage
 //!
@@ -18,7 +18,7 @@
 //! async fn publish_event(event_bus: Arc<dyn EventBusProvider>) -> mcb_domain::Result<()> {
 //!     // Publish typed domain event
 //!     let event = DomainEvent::IndexingStarted {
-//!         codebase_path: "./project".to_string(),
+//!         collection: "my-project".to_string(),
 //!         total_files: 100,
 //!     };
 //!     event_bus.publish_event(event).await?;
@@ -41,7 +41,7 @@ pub type DomainEventStream =
 /// Event bus provider interface for typed event pub/sub
 ///
 /// This trait defines the contract for event-driven communication in the system.
-/// All implementations MUST be resolved via Shaku DI - never instantiate directly.
+/// All implementations MUST be resolved via dill Catalog - never instantiate directly.
 ///
 /// ## Methods
 ///

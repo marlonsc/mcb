@@ -89,34 +89,43 @@ pub enum Error {
 }
 ```
 
-## DI Pattern (ADR-024: Handle-Based DI)
+## DI Pattern (ADR-024 → ADR-029: Hexagonal Architecture with dill)
 
-Handle-based pattern with linkme registry (NOT Shaku macros):
+Handle-based pattern with dill IoC Container and linkme registry:
 
 ```rust
+// dill Catalog - IoC Container (mcb-infrastructure/src/di/catalog.rs)
+pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
+    CatalogBuilder::new()
+        .add_value(config)
+        .add_value(embedding_provider)    // From linkme registry
+        .add_value(embedding_handle)      // RwLock wrapper
+        .add_value(embedding_admin)       // Runtime switching
+        .build()
+}
+
+// Service retrieval
+pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>> {
+    catalog.get_one::<T>()
+}
+
 // Provider Handle - RwLock wrapper for runtime switching
 pub struct EmbeddingProviderHandle {
     inner: RwLock<Arc<dyn EmbeddingProvider>>,
 }
 
-// Provider Resolver - accesses linkme registry
-pub struct EmbeddingProviderResolver {
-    config: Arc<AppConfig>,
-}
-
-// Admin Service - runtime provider switching via API
-pub struct EmbeddingAdminService {
-    resolver: Arc<EmbeddingProviderResolver>,
-    handle: Arc<EmbeddingProviderHandle>,
-}
-
-// AppContext - composition root
+// AppContext - composition root (wraps Catalog)
 pub struct AppContext {
     embedding_handle: Arc<EmbeddingProviderHandle>,
-    embedding_admin: Arc<EmbeddingAdminService>,
-    // ... other handles and services
+    embedding_admin: Arc<dyn EmbeddingAdminInterface>,
+    // ... other handles and services via trait objects
 }
 ```
+
+**Key Architecture Rules** (enforced by mcb-validate CA007/CA008):
+- Ports defined in `mcb-domain/src/ports/providers/`
+- Application imports ports from mcb-domain (not duplicated)
+- Infrastructure uses `Arc<dyn Trait>` for admin services
 
 ## Provider Registration (ADR-023: linkme)
 

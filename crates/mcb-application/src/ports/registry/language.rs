@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::ports::providers::LanguageChunkingProvider;
+use mcb_domain::ports::providers::LanguageChunkingProvider;
 
 /// Configuration for language chunking provider creation
 ///

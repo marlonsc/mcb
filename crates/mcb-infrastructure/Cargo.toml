@@ -132,6 +132,9 @@ async-trait = { workspace = true }
 downcast-rs = { workspace = true }
 futures-util = { workspace = true }
 
+# Dependency Injection (IoC Container)
+dill = { workspace = true }
+
 # Service layer improvements
 itertools = { workspace = true }
 humantime = { workspace = true }

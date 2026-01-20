@@ -179,8 +179,7 @@ pub enum ServiceState {
 /// # Example
 ///
 /// ```no_run
-/// use mcb_application::ports::admin::LifecycleManaged;
-/// use mcb_domain::events::ServiceState;
+/// use mcb_application::ports::admin::{LifecycleManaged, ServiceState};
 /// use std::sync::Arc;
 ///
 /// async fn check_service(service: Arc<dyn LifecycleManaged>) -> mcb_domain::Result<()> {
