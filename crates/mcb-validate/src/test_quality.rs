@@ -192,8 +192,14 @@ pub struct TestQualityValidator {
 }
 
 impl TestQualityValidator {
+    /// Create a new test quality validator with the given configuration
     pub fn new(config: ValidationConfig) -> Self {
         Self { config }
+    }
+
+    /// Create a validator with a custom configuration (alias for new)
+    pub fn with_config(config: ValidationConfig) -> Self {
+        Self::new(config)
     }
 
     /// Validate test quality across all test files

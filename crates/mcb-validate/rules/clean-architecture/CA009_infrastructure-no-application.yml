@@ -1,4 +1,4 @@
-_template: "import_check"
+schema: "rule/v1"
 id: "CA009"
 name: "Infrastructure Must Not Import Application"
 category: "architecture"
@@ -8,24 +8,11 @@ engine: "rusty-rules"
 
 description: "Infrastructure layer should NOT depend on Application layer"
 rationale: |
-  Per Clean Architecture, the correct dependency direction is:
-  
-  mcb-server → mcb-infrastructure → mcb-domain
-                      ↓                  ↑
-                mcb-providers ────→ mcb-application
-  
-  Infrastructure layer (mcb-infrastructure) should only depend on:
-  - mcb-domain (for port traits)
-  
-  It should NOT depend on:
-  - mcb-application (causes circular dependency)
-  - mcb-providers (providers depend on infrastructure)
-  - mcb-server (server is the top layer)
-  
-  If mcb-infrastructure imports from mcb-application, it creates:
-  1. Circular dependency: infra → app → providers → infra
-  2. Layer violation: inner layer depending on outer layer
-  3. Compilation order issues in the crate graph
+  Per Clean Architecture, infrastructure layer (mcb-infrastructure) should only
+  depend on mcb-domain (for port traits).
+
+  It should NOT depend on mcb-application, mcb-providers, or mcb-server as this
+  creates circular dependencies and layer violations.
 
 fix_guidance: |
   1. If importing port traits: Move them to mcb-domain/src/ports/

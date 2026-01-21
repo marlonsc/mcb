@@ -5,8 +5,8 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
     aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore},
 };
-use mcb_application::ports::providers::{CryptoProvider, EncryptedData};
 use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 use sha2::{Digest, Sha256};
 
 use super::utils::bytes_to_hex;

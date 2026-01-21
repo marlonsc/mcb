@@ -288,8 +288,8 @@ impl TestValidator {
     /// Verify no #[cfg(test)] mod tests {} in src/
     pub fn validate_no_inline_tests(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
-        let cfg_test_pattern = Regex::new(r"#\[cfg\(test\)\]").expect("Invalid regex");
-        let mod_tests_pattern = Regex::new(r"mod\s+tests\s*\{").expect("Invalid regex");
+        let cfg_test_pattern = Regex::new(r"#\[cfg\(test\)\]").unwrap();
+        let mod_tests_pattern = Regex::new(r"mod\s+tests\s*\{").unwrap();
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -532,15 +532,14 @@ impl TestValidator {
     /// Verify test functions follow naming pattern
     pub fn validate_test_function_naming(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
-        let test_attr_pattern = Regex::new(r"#\[test\]").expect("Invalid regex");
-        let tokio_test_pattern = Regex::new(r"#\[tokio::test\]").expect("Invalid regex");
-        let fn_pattern =
-            Regex::new(r"(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(").expect("Invalid regex");
+        let test_attr_pattern = Regex::new(r"#\[test\]").unwrap();
+        let tokio_test_pattern = Regex::new(r"#\[tokio::test\]").unwrap();
+        let fn_pattern = Regex::new(r"(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(").unwrap();
         // Standard assertions plus implicit assertions
         let assert_pattern = Regex::new(
             r"assert!|assert_eq!|assert_ne!|panic!|should_panic|\.unwrap\(|\.expect\(|Box<dyn\s|type_name::",
         )
-        .expect("Invalid regex");
+        .unwrap();
 
         // Smoke test patterns - these verify compilation, not runtime behavior
         let smoke_test_patterns = [

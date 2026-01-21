@@ -3,7 +3,6 @@
 //! Wrapper for rusty-rules crate with JSON DSL and composition support.
 
 use async_trait::async_trait;
-use glob::Pattern;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -185,67 +184,6 @@ impl RustyRulesEngineWrapper {
         Ok(Action::Custom("Custom action".to_string()))
     }
 
-    /// Evaluate condition against context (reserved for rule composition)
-    #[allow(dead_code)]
-    fn evaluate_condition(&self, condition: &Condition, context: &RuleContext) -> bool {
-        match condition {
-            Condition::All(conditions) => conditions
-                .iter()
-                .all(|c| self.evaluate_condition(c, context)),
-            Condition::Any(conditions) => conditions
-                .iter()
-                .any(|c| self.evaluate_condition(c, context)),
-            Condition::Not(condition) => !self.evaluate_condition(condition, context),
-            Condition::Simple {
-                fact_type,
-                field,
-                operator,
-                value,
-            } => self.evaluate_simple_condition(fact_type, field, operator, value, context),
-        }
-    }
-
-    #[allow(dead_code)]
-    fn evaluate_simple_condition(
-        &self,
-        fact_type: &str,
-        field: &str,
-        operator: &str,
-        expected_value: &Value,
-        context: &RuleContext,
-    ) -> bool {
-        match fact_type {
-            "cargo_dependencies" => {
-                self.evaluate_cargo_dependencies(field, operator, expected_value, context)
-            }
-            "file_pattern" => self.evaluate_file_pattern(field, operator, expected_value, context),
-            "file_size" => self.evaluate_file_size(field, operator, expected_value, context),
-            "ast_pattern" => self.evaluate_ast_pattern(field, operator, expected_value, context),
-            _ => false,
-        }
-    }
-
-    #[allow(dead_code)]
-    fn evaluate_cargo_dependencies(
-        &self,
-        field: &str,
-        operator: &str,
-        expected_value: &Value,
-        context: &RuleContext,
-    ) -> bool {
-        match field {
-            "not_exists" => {
-                if operator == "pattern" {
-                    if let Some(pattern) = expected_value.as_str() {
-                        return !self.has_forbidden_dependency(pattern, context);
-                    }
-                }
-                false
-            }
-            _ => false,
-        }
-    }
-
     fn has_forbidden_dependency(&self, pattern: &str, context: &RuleContext) -> bool {
         // Check Cargo.toml files for forbidden dependencies
         use glob::Pattern;
@@ -287,131 +225,6 @@ impl RustyRulesEngineWrapper {
         }
 
         false
-    }
-
-    #[allow(dead_code)]
-    fn evaluate_file_pattern(
-        &self,
-        field: &str,
-        operator: &str,
-        expected_value: &Value,
-        context: &RuleContext,
-    ) -> bool {
-        match field {
-            "matches" => {
-                if operator == "pattern" {
-                    if let Some(pattern) = expected_value.as_str() {
-                        return Pattern::new(pattern)
-                            .map(|p| {
-                                context
-                                    .file_contents
-                                    .keys()
-                                    .any(|path| p.matches_path(std::path::Path::new(path)))
-                            })
-                            .unwrap_or(false);
-                    }
-                }
-                false
-            }
-            _ => false,
-        }
-    }
-
-    #[allow(dead_code)]
-    fn evaluate_file_size(
-        &self,
-        field: &str,
-        operator: &str,
-        expected_value: &Value,
-        context: &RuleContext,
-    ) -> bool {
-        match field {
-            "exceeds_limit" => {
-                if operator == "extension" {
-                    if let Some(extension) = expected_value.as_str() {
-                        // Check if any file with the given extension exceeds the configured limit
-                        // For simplicity, we'll use a hardcoded limit of 500 for now
-                        let max_lines = 500;
-
-                        for (file_path, content) in &context.file_contents {
-                            if file_path.ends_with(extension) {
-                                let line_count = content.lines().count();
-                                if line_count > max_lines {
-                                    // Check exclusions
-                                    let path_str = file_path.clone();
-                                    if !path_str.contains("/tests/")
-                                        && !path_str.contains("/target/")
-                                        && !path_str.ends_with("_test.rs")
-                                    {
-                                        return true; // Found a file that exceeds the limit
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                false
-            }
-            _ => false,
-        }
-    }
-
-    #[allow(dead_code)]
-    fn evaluate_ast_pattern(
-        &self,
-        field: &str,
-        operator: &str,
-        expected_value: &Value,
-        _context: &RuleContext,
-    ) -> bool {
-        // Simplified AST pattern evaluation
-        match field {
-            "contains" => {
-                if operator == "pattern" {
-                    if let Some(pattern) = expected_value.as_str() {
-                        // In real implementation, this would analyze AST
-                        return pattern == ".unwrap()" || pattern == ".expect(";
-                    }
-                }
-                false
-            }
-            _ => false,
-        }
-    }
-
-    /// Execute rule action
-    #[allow(dead_code)]
-    fn execute_action(
-        &self,
-        action: &Action,
-        rule_id: &str,
-        _context: &RuleContext,
-    ) -> Vec<RuleViolation> {
-        match action {
-            Action::Violation { message, severity } => {
-                vec![
-                    RuleViolation::new(
-                        rule_id,
-                        ViolationCategory::Architecture, // Could be made configurable
-                        *severity,
-                        message.clone(),
-                    )
-                    .with_context(format!("Rule triggered: {}", rule_id)),
-                ]
-            }
-            Action::Custom(action_str) => {
-                // Handle custom actions
-                vec![
-                    RuleViolation::new(
-                        rule_id,
-                        ViolationCategory::Quality,
-                        Severity::Info,
-                        format!("Custom action: {}", action_str),
-                    )
-                    .with_context("Custom rule action"),
-                ]
-            }
-        }
     }
 }
 

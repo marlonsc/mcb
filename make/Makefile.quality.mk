@@ -34,15 +34,14 @@ endif
 validate: ## Architecture validation (STRICT=1, QUICK=1)
 ifeq ($(QUICK),1)
 	@echo "Quick architecture validation..."
-	@cargo test --package mcb-validate -- --nocapture 2>&1 | \
+	@cargo test --package mcb-validate test_full_validation_report -- --nocapture 2>&1 | \
 		grep -E "(Total Violations:|Status:|\[Error\])" | head -20
 else ifeq ($(STRICT),1)
 	@echo "Strict architecture validation..."
 	cargo test --package mcb-validate test_full_validation_report -- --nocapture
 else
 	@echo "Architecture validation..."
-	@cargo test --package mcb-validate -- --nocapture 2>&1 | \
-		grep -E "(Total Violations:|Dependency:|Quality:|Patterns:|Tests:|Documentation:|Naming:|SOLID:|Organization:|KISS:|Status:|\[Error\]|\[Warning\])"
+	cargo test --package mcb-validate test_full_validation_report -- --nocapture
 endif
 
 # =============================================================================

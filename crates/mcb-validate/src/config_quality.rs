@@ -201,8 +201,14 @@ pub struct ConfigQualityValidator {
 }
 
 impl ConfigQualityValidator {
+    /// Create a new configuration quality validator with the given configuration
     pub fn new(config: ValidationConfig) -> Self {
         Self { config }
+    }
+
+    /// Create a validator with a custom configuration (alias for new)
+    pub fn with_config(config: ValidationConfig) -> Self {
+        Self::new(config)
     }
 
     /// Validate configuration quality across all config files

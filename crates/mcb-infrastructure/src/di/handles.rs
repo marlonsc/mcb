@@ -11,7 +11,7 @@
 //!              AdminService.switch_provider()
 //! ```
 
-use mcb_application::ports::providers::{
+use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 use std::sync::{Arc, RwLock};

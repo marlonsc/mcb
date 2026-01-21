@@ -21,6 +21,9 @@ proc-macro2.workspace = true
 # File traversal and globbing
 walkdir.workspace = true
 glob.workspace = true
+globset.workspace = true
+
+# No external dependencies needed - using simplified detection
 
 # Pattern matching
 regex.workspace = true
@@ -83,13 +86,15 @@ tree-sitter-cpp.workspace = true
 async-trait.workspace = true
 tokio.workspace = true
 
+# Logging
+tracing.workspace = true
+
 [dev-dependencies]
 tempfile.workspace = true
 
 [features]
-default = ["rca-metrics"]
+default = []
 cli = ["clap"]
-rca-metrics = []
 
 # Binary will be added when CLI feature is implemented
 # [[bin]]

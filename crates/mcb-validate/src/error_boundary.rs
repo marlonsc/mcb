@@ -6,7 +6,7 @@
 //! - Error type placement (right layer)
 
 use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig, ValidationError};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -188,9 +188,10 @@ impl ErrorBoundaryValidator {
 
         // Pattern: ? operator without .context() or .with_context()
         // This is a heuristic - we look for lines with ? but no context method
-        let question_mark_pattern = Regex::new(r"\?\s*;?\s*$").expect("Invalid regex");
-        let context_pattern =
-            Regex::new(r"\.(context|with_context|map_err)\s*\(").expect("Invalid regex");
+        let question_mark_pattern = Regex::new(r"\?\s*;?\s*$")
+            .map_err(|e| ValidationError::InvalidRegex(format!("question mark pattern: {}", e)))?;
+        let context_pattern = Regex::new(r"\.(context|with_context|map_err)\s*\(")
+            .map_err(|e| ValidationError::InvalidRegex(format!("context pattern: {}", e)))?;
 
         // Files that are likely error boundary crossing points
         let boundary_paths = ["handlers/", "adapters/", "services/"];

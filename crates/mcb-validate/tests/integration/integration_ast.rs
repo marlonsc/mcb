@@ -9,9 +9,7 @@
 #![allow(clippy::items_after_statements)]
 #![allow(clippy::similar_names)]
 
-use mcb_validate::ast::languages::{
-    GoParser, JavaScriptParser, PythonParser, RustParser, TypeScriptParser,
-};
+use mcb_validate::ast::languages::TreeSitterParser;
 use mcb_validate::ast::{
     AstEngine, AstNode, AstParser, AstQuery, AstQueryBuilder, AstQueryPatterns, QueryCondition,
 };
@@ -70,7 +68,7 @@ fn test_language_detection() {
 
 #[test]
 fn test_rust_parser_simple_function() {
-    let mut parser = RustParser::new();
+    let mut parser = TreeSitterParser::rust();
     let code = r#"
 fn hello_world() {
     println!("Hello, World!");
@@ -89,7 +87,7 @@ fn hello_world() {
 
 #[test]
 fn test_rust_parser_with_unwrap() {
-    let mut parser = RustParser::new();
+    let mut parser = TreeSitterParser::rust();
     let code = r#"
 fn risky_function() {
     let value = Some(42);
@@ -124,7 +122,7 @@ fn risky_function() {
 
 #[test]
 fn test_rust_parser_struct() {
-    let mut parser = RustParser::new();
+    let mut parser = TreeSitterParser::rust();
     let code = r"
 pub struct MyService {
     name: String,
@@ -152,7 +150,7 @@ impl MyService {
 
 #[test]
 fn test_python_parser_simple_function() {
-    let mut parser = PythonParser::new();
+    let mut parser = TreeSitterParser::python();
     let code = r#"
 def hello_world():
     print("Hello, World!")
@@ -167,7 +165,7 @@ def hello_world():
 
 #[test]
 fn test_python_parser_class() {
-    let mut parser = PythonParser::new();
+    let mut parser = TreeSitterParser::python();
     let code = r"
 class MyService:
     def __init__(self, name: str):
@@ -189,7 +187,7 @@ class MyService:
 
 #[test]
 fn test_javascript_parser_simple_function() {
-    let mut parser = JavaScriptParser::new();
+    let mut parser = TreeSitterParser::javascript();
     let code = r#"
 function helloWorld() {
     console.log("Hello, World!");
@@ -205,7 +203,7 @@ function helloWorld() {
 
 #[test]
 fn test_javascript_parser_arrow_function() {
-    let mut parser = JavaScriptParser::new();
+    let mut parser = TreeSitterParser::javascript();
     let code = r"
 const add = (a, b) => a + b;
 const multiply = (a, b) => {
@@ -224,7 +222,7 @@ const multiply = (a, b) => {
 
 #[test]
 fn test_typescript_parser_typed_function() {
-    let mut parser = TypeScriptParser::new();
+    let mut parser = TreeSitterParser::typescript();
     let code = r"
 function greet(name: string): string {
     return `Hello, ${name}!`;
@@ -247,7 +245,7 @@ interface Person {
 
 #[test]
 fn test_go_parser_simple_function() {
-    let mut parser = GoParser::new();
+    let mut parser = TreeSitterParser::go();
     let code = r#"
 package main
 
@@ -534,7 +532,7 @@ fn test_go_query_patterns() {
 
 #[test]
 fn test_parse_and_query_rust_code() {
-    let mut parser = RustParser::new();
+    let mut parser = TreeSitterParser::rust();
     let code = r"
 fn documented_function() {
     // This is documented

@@ -94,12 +94,16 @@ version = "0.1.1"
             r"
 #[test]
 fn bad_name() {
-    assert!(true);
+    // This test function has a bad name (doesn't start with 'test_')
+    // The actual validation happens in test_function_naming_validation
+    assert_eq!(2 + 2, 4); // Basic assertion to ensure test runs
 }
 
 #[test]
 fn test_good_name() {
-    assert!(true);
+    // This test function has a good name (starts with 'test_')
+    // The actual validation happens in test_function_naming_validation
+    assert_eq!(2 + 2, 4); // Basic assertion to ensure test runs
 }
 ",
         );

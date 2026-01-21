@@ -247,7 +247,7 @@ impl PatternValidator {
         let mut violations = Vec::new();
 
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
-        let arc_pattern = Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").expect("Invalid regex");
+        let arc_pattern = Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").unwrap();
 
         // Known concrete types that are OK to use directly
         let allowed_concrete = [
@@ -369,16 +369,13 @@ impl PatternValidator {
     pub fn validate_async_traits(&self) -> Result<Vec<PatternViolation>> {
         let mut violations = Vec::new();
 
-        let trait_pattern =
-            Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)").expect("Invalid regex");
-        let async_fn_pattern = Regex::new(r"async\s+fn\s+").expect("Invalid regex");
-        let send_sync_pattern = Regex::new(r":\s*.*Send\s*\+\s*Sync").expect("Invalid regex");
+        let trait_pattern = Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)").unwrap();
+        let async_fn_pattern = Regex::new(r"async\s+fn\s+").unwrap();
+        let send_sync_pattern = Regex::new(r":\s*.*Send\s*\+\s*Sync").unwrap();
         // Match both #[async_trait] and #[async_trait::async_trait]
-        let async_trait_attr =
-            Regex::new(r"#\[(async_trait::)?async_trait\]").expect("Invalid regex");
+        let async_trait_attr = Regex::new(r"#\[(async_trait::)?async_trait\]").unwrap();
         // Rust 1.75+ native async trait support
-        let allow_async_fn_trait =
-            Regex::new(r"#\[allow\(async_fn_in_trait\)\]").expect("Invalid regex");
+        let allow_async_fn_trait = Regex::new(r"#\[allow\(async_fn_in_trait\)\]").unwrap();
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {

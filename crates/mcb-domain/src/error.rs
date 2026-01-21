@@ -50,6 +50,15 @@ pub enum Error {
     #[error("String error: {0}")]
     String(String),
 
+    /// Invalid regular expression pattern
+    #[error("Invalid regex pattern '{pattern}': {message}")]
+    InvalidRegex {
+        /// The regex pattern that failed to compile
+        pattern: String,
+        /// The compilation error message
+        message: String,
+    },
+
     /// Resource not found error
     #[error("Not found: {resource}")]
     NotFound {

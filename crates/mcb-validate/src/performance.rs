@@ -244,8 +244,8 @@ impl PerformanceValidator {
     pub fn validate_clone_in_loops(&self) -> Result<Vec<PerformanceViolation>> {
         let mut violations = Vec::new();
 
-        let loop_start_pattern = Regex::new(r"^\s*(for|while|loop)\s+").expect("Invalid regex");
-        let clone_pattern = Regex::new(r"\.clone\(\)").expect("Invalid regex");
+        let loop_start_pattern = Regex::new(r"^\s*(for|while|loop)\s+").unwrap();
+        let clone_pattern = Regex::new(r"\.clone\(\)").unwrap();
 
         for src_dir in self.config.get_scan_dirs()? {
             // Skip mcb-providers - complex storage operations often require clones (ADR-029)
@@ -350,7 +350,7 @@ impl PerformanceValidator {
     pub fn validate_allocation_in_loops(&self) -> Result<Vec<PerformanceViolation>> {
         let mut violations = Vec::new();
 
-        let loop_start_pattern = Regex::new(r"^\s*(for|while|loop)\s+").expect("Invalid regex");
+        let loop_start_pattern = Regex::new(r"^\s*(for|while|loop)\s+").unwrap();
         let allocation_patterns = [
             (r"Vec::new\(\)", "Vec::new()"),
             (r"Vec::with_capacity\(", "Vec::with_capacity"),

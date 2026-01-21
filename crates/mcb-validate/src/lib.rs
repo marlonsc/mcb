@@ -46,6 +46,12 @@ pub mod scan;
 pub mod engines;
 pub mod rules;
 
+// === Pattern Registry (YAML-driven patterns) ===
+pub mod pattern_registry;
+
+// === Rule Filtering System (Phase 6) ===
+pub mod filters;
+
 // === Linter Integration (Phase 1 - Pure Rust Pipeline) ===
 pub mod linters;
 
@@ -81,7 +87,7 @@ pub mod implementation;
 pub mod kiss;
 pub mod naming;
 pub mod organization;
-pub mod patterns;
+pub mod pattern_validator;
 pub mod performance;
 pub mod pmat;
 pub mod quality;
@@ -152,7 +158,7 @@ pub use implementation::{ImplementationQualityValidator, ImplementationViolation
 pub use kiss::{KissValidator, KissViolation};
 pub use naming::{NamingValidator, NamingViolation};
 pub use organization::{OrganizationValidator, OrganizationViolation};
-pub use patterns::{PatternValidator, PatternViolation};
+pub use pattern_validator::{PatternValidator, PatternViolation};
 pub use quality::{QualityValidator, QualityViolation};
 pub use reporter::{Reporter, ValidationReport, ValidationSummary};
 
@@ -339,8 +345,14 @@ pub enum ValidationError {
     #[error("TOML parse error: {0}")]
     Toml(#[from] toml::de::Error),
 
+    #[error("YAML parse error: {0}")]
+    Yaml(#[from] serde_yaml::Error),
+
     #[error("Configuration error: {0}")]
     Config(String),
+
+    #[error("Invalid regex pattern: {0}")]
+    InvalidRegex(String),
 }
 
 /// Severity level for violations
@@ -425,6 +437,11 @@ pub struct ArchitectureValidator {
     async_patterns: AsyncPatternValidator,
     error_boundary: ErrorBoundaryValidator,
     pmat: PmatValidator,
+    // New quality validators (v0.1.2)
+    test_quality: TestQualityValidator,
+    config_quality: ConfigQualityValidator,
+    // Clean Architecture validator (CA001-CA009)
+    clean_architecture: CleanArchitectureValidator,
 }
 
 impl ArchitectureValidator {
@@ -468,6 +485,11 @@ impl ArchitectureValidator {
             async_patterns: AsyncPatternValidator::with_config(config.clone()),
             error_boundary: ErrorBoundaryValidator::with_config(config.clone()),
             pmat: PmatValidator::with_config(config.clone()),
+            // New quality validators (v0.1.2)
+            test_quality: TestQualityValidator::with_config(config.clone()),
+            config_quality: ConfigQualityValidator::with_config(config.clone()),
+            // Clean Architecture validator (CA001-CA009)
+            clean_architecture: CleanArchitectureValidator::with_config(config.clone()),
             config: ValidationConfig {
                 workspace_root: root,
                 ..config
@@ -503,6 +525,11 @@ impl ArchitectureValidator {
         let async_violations = self.async_patterns.validate_all()?;
         let error_boundary_violations = self.error_boundary.validate_all()?;
         let pmat_violations = self.pmat.validate_all()?;
+        // New quality validators (v0.1.2)
+        let test_quality_violations = self.test_quality.validate()?;
+        let config_quality_violations = self.config_quality.validate()?;
+        // Clean Architecture validator (CA001-CA009)
+        let clean_architecture_violations = self.clean_architecture.validate_all()?;
 
         let total = dependency_violations.len()
             + quality_violations.len()
@@ -518,7 +545,10 @@ impl ArchitectureValidator {
             + performance_violations.len()
             + async_violations.len()
             + error_boundary_violations.len()
-            + pmat_violations.len();
+            + pmat_violations.len()
+            + test_quality_violations.len()
+            + config_quality_violations.len()
+            + clean_architecture_violations.len();
 
         let summary = ValidationSummary {
             total_violations: total,
@@ -537,7 +567,9 @@ impl ArchitectureValidator {
             async_count: async_violations.len(),
             error_boundary_count: error_boundary_violations.len(),
             pmat_count: pmat_violations.len(),
-            // New v0.2.0 migration rules will be tracked separately
+            clean_architecture_count: clean_architecture_violations.len(),
+            test_quality_count: test_quality_violations.len(),
+            config_quality_count: config_quality_violations.len(),
             passed: total == 0,
         };
 
@@ -560,6 +592,9 @@ impl ArchitectureValidator {
             async_violations,
             error_boundary_violations,
             pmat_violations,
+            clean_architecture_violations,
+            test_quality_violations,
+            config_quality_violations,
         })
     }
 

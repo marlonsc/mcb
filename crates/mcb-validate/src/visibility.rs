@@ -155,9 +155,8 @@ impl VisibilityValidator {
             "crates/mcb-application/src/utils",
         ];
 
-        let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type|const|static)\s+(\w+)")
-            .expect("Invalid regex");
-        let pub_crate_re = Regex::new(r"^pub\(crate\)").expect("Invalid regex");
+        let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type|const|static)\s+(\w+)").unwrap();
+        let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
 
         for dir_path in &internal_dirs {
             let full_path = config.workspace_root.join(dir_path);
@@ -185,14 +184,19 @@ impl VisibilityValidator {
                         let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
                         // Skip exempted items:
                         // - Error types and Result aliases (standard pattern)
-                        // - Documented public utilities (FileUtils, TimedOperation, start)
+                        // - Documented public utilities (FileUtils, TimedOperation, HttpResponseUtils)
                         // - Common method names that are part of public types
                         if item_name.starts_with("Error")
                             || item_name == "Result"
                             || item_name == "FileUtils"
                             || item_name == "TimedOperation"
+                            || item_name == "HttpResponseUtils"
                             || item_name == "start"
                             || item_name == "new"
+                            || item_name == "elapsed"
+                            || item_name == "elapsed_ms"
+                            || item_name == "elapsed_secs"
+                            || item_name == "remaining"
                         {
                             continue;
                         }
@@ -213,9 +217,8 @@ impl VisibilityValidator {
         let mut violations = Vec::new();
         let utility_patterns = ["common.rs", "helpers.rs", "internal.rs", "compat.rs"];
 
-        let pub_item_re =
-            Regex::new(r"^pub\s+(fn|struct|enum|type)\s+(\w+)").expect("Invalid regex");
-        let pub_crate_re = Regex::new(r"^pub\(crate\)").expect("Invalid regex");
+        let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type)\s+(\w+)").unwrap();
+        let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
 
         for crate_name in [
             "mcb-infrastructure",

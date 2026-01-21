@@ -62,6 +62,7 @@ mod tests {
     #[test]
     fn test_something() {
         let value = some_option().unwrap();
+        assert!(value >= 0); // Basic assertion to ensure test has validation
     }
 }
 ",

@@ -274,7 +274,7 @@ impl DependencyValidator {
     /// Validate no forbidden use statements in source code
     pub fn validate_use_statements(&self) -> Result<Vec<DependencyViolation>> {
         let mut violations = Vec::new();
-        let use_pattern = Regex::new(r"use\s+(mcb_[a-z_]+)").expect("Invalid regex");
+        let use_pattern = Regex::new(r"use\s+(mcb_[a-z_]+)").unwrap();
 
         for (crate_name, allowed) in &self.allowed_deps {
             let crate_src = self

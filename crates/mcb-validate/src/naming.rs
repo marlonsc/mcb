@@ -295,12 +295,9 @@ impl NamingValidator {
     pub fn validate_type_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
-        let struct_pattern =
-            Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z_][A-Za-z0-9_]*)").expect("Invalid regex");
-        let enum_pattern =
-            Regex::new(r"(?:pub\s+)?enum\s+([A-Za-z_][A-Za-z0-9_]*)").expect("Invalid regex");
-        let trait_pattern =
-            Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z_][A-Za-z0-9_]*)").expect("Invalid regex");
+        let struct_pattern = Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z_][A-Za-z0-9_]*)").unwrap();
+        let enum_pattern = Regex::new(r"(?:pub\s+)?enum\s+([A-Za-z_][A-Za-z0-9_]*)").unwrap();
+        let trait_pattern = Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z_][A-Za-z0-9_]*)").unwrap();
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -375,8 +372,7 @@ impl NamingValidator {
         let mut violations = Vec::new();
 
         let fn_pattern =
-            Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*[<(]")
-                .expect("Invalid regex");
+            Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*[<(]").unwrap();
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -421,10 +417,9 @@ impl NamingValidator {
     pub fn validate_constant_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
-        let const_pattern =
-            Regex::new(r"(?:pub\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*:").expect("Invalid regex");
+        let const_pattern = Regex::new(r"(?:pub\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*:").unwrap();
         let static_pattern =
-            Regex::new(r"(?:pub\s+)?static\s+([A-Za-z_][A-Za-z0-9_]*)\s*:").expect("Invalid regex");
+            Regex::new(r"(?:pub\s+)?static\s+([A-Za-z_][A-Za-z0-9_]*)\s*:").unwrap();
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -729,7 +724,9 @@ impl NamingValidator {
         }
 
         // Must start with uppercase
-        let first_char = name.chars().next().unwrap();
+        let Some(first_char) = name.chars().next() else {
+            return false;
+        };
         if !first_char.is_ascii_uppercase() {
             return false;
         }
@@ -757,7 +754,7 @@ impl NamingValidator {
         }
 
         // Can't start with digit
-        !name.chars().next().unwrap().is_ascii_digit()
+        !name.chars().next().is_some_and(|c| c.is_ascii_digit())
     }
 
     /// Check if name is SCREAMING_SNAKE_CASE
@@ -774,7 +771,7 @@ impl NamingValidator {
         }
 
         // Can't start with digit
-        !name.chars().next().unwrap().is_ascii_digit()
+        !name.chars().next().is_some_and(|c| c.is_ascii_digit())
     }
 
     fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {

@@ -6,10 +6,11 @@
 //! - CI summary for GitHub Actions annotations
 
 use crate::{
-    AsyncViolation, DependencyViolation, DocumentationViolation, ErrorBoundaryViolation,
-    ImplementationViolation, KissViolation, NamingViolation, OrganizationViolation,
-    PatternViolation, PerformanceViolation, PmatViolation, QualityViolation, RefactoringViolation,
-    Severity, SolidViolation, TestViolation,
+    AsyncViolation, CleanArchitectureViolation, ConfigQualityViolation, DependencyViolation,
+    DocumentationViolation, ErrorBoundaryViolation, ImplementationViolation, KissViolation,
+    NamingViolation, OrganizationViolation, PatternViolation, PerformanceViolation, PmatViolation,
+    QualityViolation, RefactoringViolation, Severity, SolidViolation, TestQualityViolation,
+    TestViolation,
 };
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -53,6 +54,12 @@ pub struct ValidationReport {
     pub error_boundary_violations: Vec<ErrorBoundaryViolation>,
     /// PMAT integration violations
     pub pmat_violations: Vec<PmatViolation>,
+    /// Clean Architecture layer boundary violations (CA001-CA009)
+    pub clean_architecture_violations: Vec<CleanArchitectureViolation>,
+    /// Test quality violations (ignored tests, todo in fixtures)
+    pub test_quality_violations: Vec<TestQualityViolation>,
+    /// Configuration quality violations (hardcoded values)
+    pub config_quality_violations: Vec<ConfigQualityViolation>,
 }
 
 /// Summary of validation results
@@ -90,6 +97,12 @@ pub struct ValidationSummary {
     pub error_boundary_count: usize,
     /// Number of PMAT integration violations
     pub pmat_count: usize,
+    /// Number of Clean Architecture violations (CA001-CA009)
+    pub clean_architecture_count: usize,
+    /// Number of test quality violations
+    pub test_quality_count: usize,
+    /// Number of configuration quality violations
+    pub config_quality_count: usize,
     /// Whether validation passed (no error-level violations)
     pub passed: bool,
 }
@@ -179,6 +192,10 @@ impl Reporter {
         output.push_str(&format!(
             "  PMAT:           {}\n",
             report.summary.pmat_count
+        ));
+        output.push_str(&format!(
+            "  CleanArch:      {}\n",
+            report.summary.clean_architecture_count
         ));
         output.push('\n');
 
@@ -319,6 +336,15 @@ impl Reporter {
         if !report.pmat_violations.is_empty() {
             output.push_str("--- PMAT Violations ---\n");
             for v in &report.pmat_violations {
+                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
+            }
+            output.push('\n');
+        }
+
+        // Clean Architecture violations (CA001-CA009)
+        if !report.clean_architecture_violations.is_empty() {
+            output.push_str("--- Clean Architecture Violations ---\n");
+            for v in &report.clean_architecture_violations {
                 output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
             }
             output.push('\n');
@@ -683,6 +709,9 @@ mod tests {
                 async_count: 0,
                 error_boundary_count: 0,
                 pmat_count: 0,
+                clean_architecture_count: 0,
+                test_quality_count: 0,
+                config_quality_count: 0,
                 passed: true,
             },
             dependency_violations: vec![],
@@ -700,6 +729,9 @@ mod tests {
             async_violations: vec![],
             error_boundary_violations: vec![],
             pmat_violations: vec![],
+            clean_architecture_violations: vec![],
+            test_quality_violations: vec![],
+            config_quality_violations: vec![],
         }
     }
 

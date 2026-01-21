@@ -206,7 +206,7 @@ impl AsyncPatternValidator {
     pub fn validate_blocking_in_async(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
-        let async_fn_pattern = Regex::new(r"async\s+fn\s+(\w+)").expect("Invalid regex");
+        let async_fn_pattern = Regex::new(r"async\s+fn\s+(\w+)").unwrap();
 
         let blocking_patterns = [
             (
@@ -334,7 +334,7 @@ impl AsyncPatternValidator {
     pub fn validate_block_on_usage(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
-        let async_fn_pattern = Regex::new(r"async\s+fn\s+").expect("Invalid regex");
+        let async_fn_pattern = Regex::new(r"async\s+fn\s+").unwrap();
         let block_on_patterns = [
             r"block_on\(",
             r"futures::executor::block_on",
@@ -419,7 +419,7 @@ impl AsyncPatternValidator {
     pub fn validate_mutex_types(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
-        let async_indicator = Regex::new(r"async\s+fn|\.await").expect("Invalid regex");
+        let async_indicator = Regex::new(r"async\s+fn|\.await").unwrap();
         let std_mutex_patterns = [
             (
                 r"use\s+std::sync::Mutex",
@@ -510,10 +510,9 @@ impl AsyncPatternValidator {
         let mut violations = Vec::new();
 
         // Pattern: tokio::spawn without assigning to variable or awaiting
-        let spawn_pattern = Regex::new(r"tokio::spawn\s*\(").expect("Invalid regex");
-        let assigned_spawn_pattern =
-            Regex::new(r"let\s+\w+\s*=\s*tokio::spawn").expect("Invalid regex");
-        let fn_pattern = Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+(\w+)").expect("Invalid regex");
+        let spawn_pattern = Regex::new(r"tokio::spawn\s*\(").unwrap();
+        let assigned_spawn_pattern = Regex::new(r"let\s+\w+\s*=\s*tokio::spawn").unwrap();
+        let fn_pattern = Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+(\w+)").unwrap();
 
         // Function name patterns that indicate intentional fire-and-forget spawns
         // Includes constructor patterns that often spawn background workers

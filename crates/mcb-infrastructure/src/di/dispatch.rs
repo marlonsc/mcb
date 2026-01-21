@@ -53,9 +53,6 @@ impl InfrastructureInitializer {
         // Initialize logging first
         self.initialize_logging()?;
 
-        // Initialize configuration watching if enabled
-        self.initialize_config_watching().await?;
-
         // Dispatch all components via Shaku DI
         let container = self.dispatcher.dispatch().await?;
 
@@ -73,12 +70,5 @@ impl InfrastructureInitializer {
                 source: Some(Box::new(e)),
             }
         })
-    }
-
-    /// Initialize configuration watching if enabled
-    async fn initialize_config_watching(&self) -> Result<()> {
-        // Configuration watching would be initialized here if needed
-        // For now, this is a placeholder for future implementation
-        Ok(())
     }
 }

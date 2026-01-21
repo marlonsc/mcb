@@ -1,39 +1,63 @@
 //! Language-specific AST parsers using Tree-sitter
 //!
-//! Provides parsers for different programming languages that convert
-//! Tree-sitter AST to unified format.
+//! Provides a unified parser that handles multiple programming languages,
+//! converting Tree-sitter AST to the internal format used for validation queries.
 
 use std::path::Path;
-use tree_sitter::Parser;
+use tree_sitter::{Language, Parser};
 
 use super::{AstParseResult, AstParser};
 use crate::Result;
 
-/// Rust AST parser using tree-sitter-rust
-pub struct RustParser {
+/// Tree-sitter based AST parser supporting multiple languages
+pub struct TreeSitterParser {
     parser: Parser,
+    language_name: &'static str,
 }
 
-impl RustParser {
-    pub fn new() -> Self {
+impl TreeSitterParser {
+    /// Create a parser for the specified language
+    fn new(grammar: Language, language_name: &'static str) -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(&tree_sitter_rust::LANGUAGE.into())
-            .expect("Failed to load Rust grammar");
+            .set_language(&grammar)
+            .expect("Failed to load grammar");
 
-        Self { parser }
+        Self {
+            parser,
+            language_name,
+        }
+    }
+
+    /// Create a Rust parser
+    pub fn rust() -> Self {
+        Self::new(tree_sitter_rust::LANGUAGE.into(), "rust")
+    }
+
+    /// Create a Python parser
+    pub fn python() -> Self {
+        Self::new(tree_sitter_python::LANGUAGE.into(), "python")
+    }
+
+    /// Create a JavaScript parser
+    pub fn javascript() -> Self {
+        Self::new(tree_sitter_javascript::LANGUAGE.into(), "javascript")
+    }
+
+    /// Create a TypeScript/TSX parser
+    pub fn typescript() -> Self {
+        Self::new(tree_sitter_typescript::LANGUAGE_TSX.into(), "typescript")
+    }
+
+    /// Create a Go parser
+    pub fn go() -> Self {
+        Self::new(tree_sitter_go::LANGUAGE.into(), "go")
     }
 }
 
-impl Default for RustParser {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AstParser for RustParser {
+impl AstParser for TreeSitterParser {
     fn language(&self) -> &'static str {
-        "rust"
+        self.language_name
     }
 
     fn parse_file(&mut self, path: &Path) -> Result<AstParseResult> {
@@ -47,207 +71,7 @@ impl AstParser for RustParser {
                 .parse(content, None)
                 .ok_or_else(|| crate::ValidationError::Parse {
                     file: filename.into(),
-                    message: "Failed to parse Rust code".into(),
-                })?;
-
-        let root = super::decoder::AstDecoder::decode_tree(&tree, content);
-
-        Ok(AstParseResult {
-            root,
-            errors: Vec::new(), // Tree-sitter doesn't provide detailed errors
-        })
-    }
-}
-
-/// Python AST parser using tree-sitter-python
-pub struct PythonParser {
-    parser: Parser,
-}
-
-impl PythonParser {
-    pub fn new() -> Self {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_python::LANGUAGE.into())
-            .expect("Failed to load Python grammar");
-
-        Self { parser }
-    }
-}
-
-impl Default for PythonParser {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AstParser for PythonParser {
-    fn language(&self) -> &'static str {
-        "python"
-    }
-
-    fn parse_file(&mut self, path: &Path) -> Result<AstParseResult> {
-        let content = std::fs::read_to_string(path)?;
-        self.parse_content(&content, &path.to_string_lossy())
-    }
-
-    fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree =
-            self.parser
-                .parse(content, None)
-                .ok_or_else(|| crate::ValidationError::Parse {
-                    file: filename.into(),
-                    message: "Failed to parse Python code".into(),
-                })?;
-
-        let root = super::decoder::AstDecoder::decode_tree(&tree, content);
-
-        Ok(AstParseResult {
-            root,
-            errors: Vec::new(),
-        })
-    }
-}
-
-/// JavaScript AST parser using tree-sitter-javascript
-pub struct JavaScriptParser {
-    parser: Parser,
-}
-
-impl JavaScriptParser {
-    pub fn new() -> Self {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_javascript::LANGUAGE.into())
-            .expect("Failed to load JavaScript grammar");
-
-        Self { parser }
-    }
-}
-
-impl Default for JavaScriptParser {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AstParser for JavaScriptParser {
-    fn language(&self) -> &'static str {
-        "javascript"
-    }
-
-    fn parse_file(&mut self, path: &Path) -> Result<AstParseResult> {
-        let content = std::fs::read_to_string(path)?;
-        self.parse_content(&content, &path.to_string_lossy())
-    }
-
-    fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree =
-            self.parser
-                .parse(content, None)
-                .ok_or_else(|| crate::ValidationError::Parse {
-                    file: filename.into(),
-                    message: "Failed to parse JavaScript code".into(),
-                })?;
-
-        let root = super::decoder::AstDecoder::decode_tree(&tree, content);
-
-        Ok(AstParseResult {
-            root,
-            errors: Vec::new(),
-        })
-    }
-}
-
-/// TypeScript AST parser using tree-sitter-typescript
-pub struct TypeScriptParser {
-    parser: Parser,
-}
-
-impl TypeScriptParser {
-    pub fn new() -> Self {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_typescript::LANGUAGE_TSX.into())
-            .expect("Failed to load TypeScript grammar");
-
-        Self { parser }
-    }
-}
-
-impl Default for TypeScriptParser {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AstParser for TypeScriptParser {
-    fn language(&self) -> &'static str {
-        "typescript"
-    }
-
-    fn parse_file(&mut self, path: &Path) -> Result<AstParseResult> {
-        let content = std::fs::read_to_string(path)?;
-        self.parse_content(&content, &path.to_string_lossy())
-    }
-
-    fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree =
-            self.parser
-                .parse(content, None)
-                .ok_or_else(|| crate::ValidationError::Parse {
-                    file: filename.into(),
-                    message: "Failed to parse TypeScript code".into(),
-                })?;
-
-        let root = super::decoder::AstDecoder::decode_tree(&tree, content);
-
-        Ok(AstParseResult {
-            root,
-            errors: Vec::new(),
-        })
-    }
-}
-
-/// Go AST parser using tree-sitter-go
-pub struct GoParser {
-    parser: Parser,
-}
-
-impl GoParser {
-    pub fn new() -> Self {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_go::LANGUAGE.into())
-            .expect("Failed to load Go grammar");
-
-        Self { parser }
-    }
-}
-
-impl Default for GoParser {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AstParser for GoParser {
-    fn language(&self) -> &'static str {
-        "go"
-    }
-
-    fn parse_file(&mut self, path: &Path) -> Result<AstParseResult> {
-        let content = std::fs::read_to_string(path)?;
-        self.parse_content(&content, &path.to_string_lossy())
-    }
-
-    fn parse_content(&mut self, content: &str, filename: &str) -> Result<AstParseResult> {
-        let tree =
-            self.parser
-                .parse(content, None)
-                .ok_or_else(|| crate::ValidationError::Parse {
-                    file: filename.into(),
-                    message: "Failed to parse Go code".into(),
+                    message: format!("Failed to parse {} code", self.language_name),
                 })?;
 
         let root = super::decoder::AstDecoder::decode_tree(&tree, content);
@@ -264,59 +88,49 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_rust_parser_creation() {
-        let parser = RustParser::new();
+    fn test_rust_parser() {
+        let mut parser = TreeSitterParser::rust();
         assert_eq!(parser.language(), "rust");
-    }
 
-    #[test]
-    fn test_python_parser_creation() {
-        let parser = PythonParser::new();
-        assert_eq!(parser.language(), "python");
-    }
-
-    #[test]
-    fn test_javascript_parser_creation() {
-        let parser = JavaScriptParser::new();
-        assert_eq!(parser.language(), "javascript");
-    }
-
-    #[test]
-    fn test_typescript_parser_creation() {
-        let parser = TypeScriptParser::new();
-        assert_eq!(parser.language(), "typescript");
-    }
-
-    #[test]
-    fn test_go_parser_creation() {
-        let parser = GoParser::new();
-        assert_eq!(parser.language(), "go");
-    }
-
-    #[test]
-    fn test_parse_simple_rust_function() {
-        let mut parser = RustParser::new();
         let code = r#"
 fn hello_world() {
     println!("Hello, World!");
 }
 "#;
-
         let result = parser.parse_content(code, "test.rs").unwrap();
         assert_eq!(result.root.kind, "source_file");
         assert!(!result.root.children.is_empty());
     }
 
     #[test]
-    fn test_parse_simple_python_function() {
-        let mut parser = PythonParser::new();
+    fn test_python_parser() {
+        let mut parser = TreeSitterParser::python();
+        assert_eq!(parser.language(), "python");
+
         let code = r#"
 def hello_world():
     print("Hello, World!")
 "#;
-
         let result = parser.parse_content(code, "test.py").unwrap();
         assert_eq!(result.root.kind, "module");
         assert!(!result.root.children.is_empty());
+    }
+
+    #[test]
+    fn test_javascript_parser() {
+        let parser = TreeSitterParser::javascript();
+        assert_eq!(parser.language(), "javascript");
+    }
+
+    #[test]
+    fn test_typescript_parser() {
+        let parser = TreeSitterParser::typescript();
+        assert_eq!(parser.language(), "typescript");
+    }
+
+    #[test]
+    fn test_go_parser() {
+        let parser = TreeSitterParser::go();
+        assert_eq!(parser.language(), "go");
     }
 }

@@ -6,7 +6,7 @@
 //! - Example code blocks for traits
 
 use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig, ValidationError};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -169,7 +169,8 @@ impl DocumentationValidator {
     /// Verify module-level documentation exists
     pub fn validate_module_docs(&self) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
-        let module_doc_pattern = Regex::new(r"^//!").expect("Invalid regex");
+        let module_doc_pattern = Regex::new(r"^//!")
+            .map_err(|e| ValidationError::InvalidRegex(format!("module doc pattern: {}", e)))?;
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -218,16 +219,17 @@ impl DocumentationValidator {
         let mut violations = Vec::new();
 
         // Patterns for public items
-        let pub_struct_pattern =
-            Regex::new(r"pub\s+struct\s+([A-Z][a-zA-Z0-9_]*)").expect("Invalid regex");
-        let pub_enum_pattern =
-            Regex::new(r"pub\s+enum\s+([A-Z][a-zA-Z0-9_]*)").expect("Invalid regex");
-        let pub_trait_pattern =
-            Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)").expect("Invalid regex");
-        let pub_fn_pattern =
-            Regex::new(r"pub\s+(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)").expect("Invalid regex");
-        let _doc_comment_pattern = Regex::new(r"^\s*///").expect("Invalid regex");
-        let example_pattern = Regex::new(r"#\s*Example").expect("Invalid regex");
+        let pub_struct_pattern = Regex::new(r"pub\s+struct\s+([A-Z][a-zA-Z0-9_]*)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("pub struct pattern: {}", e)))?;
+        let pub_enum_pattern = Regex::new(r"pub\s+enum\s+([A-Z][a-zA-Z0-9_]*)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("pub enum pattern: {}", e)))?;
+        let pub_trait_pattern = Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("pub trait pattern: {}", e)))?;
+        let pub_fn_pattern = Regex::new(r"pub\s+(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("pub fn pattern: {}", e)))?;
+        let _doc_comment_pattern = Regex::new(r"^\s*///")
+            .map_err(|e| ValidationError::InvalidRegex(format!("doc comment pattern: {}", e)))?;
+        let example_pattern = Regex::new(r"#\s*Example").unwrap();
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -246,7 +248,7 @@ impl DocumentationValidator {
                 for (line_num, line) in lines.iter().enumerate() {
                     // Check for public structs
                     if let Some(cap) = pub_struct_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m| m.as_str());
+                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
                         if !self.has_doc_comment(&lines, line_num) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
                                 file: entry.path().to_path_buf(),
@@ -260,7 +262,7 @@ impl DocumentationValidator {
 
                     // Check for public enums
                     if let Some(cap) = pub_enum_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m| m.as_str());
+                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
                         if !self.has_doc_comment(&lines, line_num) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
                                 file: entry.path().to_path_buf(),
@@ -274,7 +276,7 @@ impl DocumentationValidator {
 
                     // Check for public traits
                     if let Some(cap) = pub_trait_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m| m.as_str());
+                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
                         let path_str = entry.path().to_string_lossy();
 
                         if !self.has_doc_comment(&lines, line_num) {
@@ -308,7 +310,7 @@ impl DocumentationValidator {
 
                     // Check for public functions (only top-level, not in impl blocks)
                     if let Some(cap) = pub_fn_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m| m.as_str());
+                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
 
                         // Skip methods in impl blocks (approximation: indentation > 0)
                         if line.starts_with("    ") || line.starts_with('\t') {
@@ -333,8 +335,8 @@ impl DocumentationValidator {
     }
 
     fn has_doc_comment(&self, lines: &[&str], item_line: usize) -> bool {
-        let doc_pattern = Regex::new(r"^\s*///").expect("Invalid regex");
-        let attr_pattern = Regex::new(r"^\s*#\[").expect("Invalid regex");
+        let doc_pattern = Regex::new(r"^\s*///").unwrap();
+        let attr_pattern = Regex::new(r"^\s*#\[").unwrap();
 
         if item_line == 0 {
             return false;
@@ -369,8 +371,8 @@ impl DocumentationValidator {
     }
 
     fn get_doc_comment_section(&self, lines: &[&str], item_line: usize) -> String {
-        let doc_pattern = Regex::new(r"^\s*///(.*)").expect("Invalid regex");
-        let attr_pattern = Regex::new(r"^\s*#\[").expect("Invalid regex");
+        let doc_pattern = Regex::new(r"^\s*///(.*)").unwrap();
+        let attr_pattern = Regex::new(r"^\s*#\[").unwrap();
 
         if item_line == 0 {
             return String::new();

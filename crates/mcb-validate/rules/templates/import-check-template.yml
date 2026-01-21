@@ -1,0 +1,28 @@
+schema: "template/v1"
+_base: true
+name: "import_check"
+description: "Template for checking forbidden imports in a crate"
+category: "architecture"
+severity: "error"
+enabled: true
+
+config:
+  crate_name: "{{crate_name}}"
+  forbidden_imports: "{{forbidden_imports}}"
+
+validation:
+  fields:
+    crate_name: ["required", "length(min=1)"]
+    forbidden_imports: ["required", "length(min=1)"]
+
+rule:
+  type: "import_pattern"
+  engine: "rusty-rules"
+  condition: "crate_imports_forbidden"
+  crate: "{{crate_name}}"
+  forbidden: "{{forbidden_imports}}"
+  message: "Crate {{crate_name}} must not import from {{forbidden_imports}}"
+
+fixes:
+  - type: "remove_import"
+    suggestion: "{{fix_guidance}}"

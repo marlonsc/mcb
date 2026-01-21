@@ -4,8 +4,8 @@
 //! to improve performance and reduce network overhead.
 
 use crate::cache::provider::SharedCacheProvider;
-use mcb_application::ports::providers::cache::CacheEntryConfig;
 use mcb_domain::error::Result;
+use mcb_domain::ports::providers::CacheEntryConfig;
 use serde::{Serialize, de::DeserializeOwned};
 use std::collections::HashMap;
 use std::sync::Arc;

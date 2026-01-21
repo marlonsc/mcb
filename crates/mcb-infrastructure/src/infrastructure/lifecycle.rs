@@ -285,7 +285,6 @@ impl ServiceManager {
 }
 
 /// Convert port ServiceState to domain event ServiceState
-#[allow(dead_code)] // Used by ServiceManager::emit_state_change
 fn port_to_event_state(state: PortServiceState) -> EventServiceState {
     match state {
         PortServiceState::Starting => EventServiceState::Starting,

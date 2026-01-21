@@ -346,10 +346,10 @@ impl QualityValidator {
     /// Validate that #[allow(dead_code)] annotations have justification comments
     pub fn validate_dead_code_annotations(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
-        let dead_code_pattern = Regex::new(r"#\[allow\(dead_code\)\]").expect("Invalid regex");
-        let struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").expect("Invalid regex");
-        let fn_pattern = Regex::new(r"(?:pub\s+)?fn\s+(\w+)").expect("Invalid regex");
-        let field_pattern = Regex::new(r"(?:pub\s+)?(\w+):\s+").expect("Invalid regex");
+        let dead_code_pattern = Regex::new(r"#\[allow\(dead_code\)\]").unwrap();
+        let struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").unwrap();
+        let fn_pattern = Regex::new(r"(?:pub\s+)?fn\s+(\w+)").unwrap();
+        let field_pattern = Regex::new(r"(?:pub\s+)?(\w+):\s+").unwrap();
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
@@ -581,7 +581,7 @@ impl QualityValidator {
     /// Check for panic!() macros in production code
     pub fn validate_no_panic(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
-        let panic_pattern = Regex::new(r"panic!\s*\(").expect("Invalid regex");
+        let panic_pattern = Regex::new(r"panic!\s*\(").unwrap();
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
@@ -674,8 +674,7 @@ impl QualityValidator {
     /// Find TODO/FIXME comments
     pub fn find_todo_comments(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
-        let todo_pattern =
-            Regex::new(r"(?i)(TODO|FIXME|XXX|HACK):?\s*(.*)").expect("Invalid regex");
+        let todo_pattern = Regex::new(r"(?i)(TODO|FIXME|XXX|HACK):?\s*(.*)").unwrap();
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {

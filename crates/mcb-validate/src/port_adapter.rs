@@ -184,8 +184,8 @@ impl PortAdapterValidator {
             return Ok(violations);
         }
 
-        let trait_start_re = Regex::new(r"pub\s+trait\s+(\w+)").expect("Invalid regex");
-        let fn_re = Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").expect("Invalid regex");
+        let trait_start_re = Regex::new(r"pub\s+trait\s+(\w+)").unwrap();
+        let fn_re = Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").unwrap();
 
         for entry in WalkDir::new(&ports_dir)
             .into_iter()
@@ -205,7 +205,10 @@ impl PortAdapterValidator {
 
             for (line_num, line) in lines.iter().enumerate() {
                 if let Some(captures) = trait_start_re.captures(line) {
-                    let trait_name = captures.get(1).map(|m| m.as_str().to_string()).unwrap();
+                    let trait_name = captures
+                        .get(1)
+                        .map(|m| m.as_str().to_string())
+                        .expect("Trait regex should capture group 1");
                     current_trait = Some((trait_name, line_num + 1, 0));
                     in_trait = true;
                 }
@@ -221,7 +224,9 @@ impl PortAdapterValidator {
                     }
 
                     if brace_depth == 0 && current_trait.is_some() {
-                        let (trait_name, start_line, method_count) = current_trait.take().unwrap();
+                        let (trait_name, start_line, method_count) = current_trait
+                            .take()
+                            .expect("current_trait should exist when brace_depth == 0");
                         in_trait = false;
 
                         if method_count > 10 {
@@ -260,7 +265,7 @@ impl PortAdapterValidator {
         let adapter_import_re = Regex::new(
             r"use\s+(?:crate|super)::(?:\w+::)*(\w+(?:Provider|Repository|Adapter|Client))",
         )
-        .expect("Invalid regex");
+        .unwrap();
 
         for entry in WalkDir::new(&providers_dir)
             .into_iter()

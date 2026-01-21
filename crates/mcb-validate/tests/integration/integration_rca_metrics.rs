@@ -7,13 +7,14 @@
 //! to be resilient to parsing differences.
 
 #![allow(clippy::float_cmp)]
+#![allow(unexpected_cfgs)]
 
 #[cfg(test)]
 #[cfg(feature = "rca-metrics")]
 mod rca_integration_tests {
+    use mcb_validate::filters::language_detector::LANG;
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
     use mcb_validate::violation_trait::Severity;
-    use rust_code_analysis::LANG;
     use std::path::Path;
     use tempfile::TempDir;
 

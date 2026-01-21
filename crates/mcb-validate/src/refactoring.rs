@@ -322,7 +322,7 @@ impl RefactoringValidator {
         let mut violations = Vec::new();
         let definition_pattern =
             Regex::new(r"(?:pub\s+)?(?:struct|trait|enum)\s+([A-Z][a-zA-Z0-9_]*)(?:\s*<|\s*\{|\s*;|\s*\(|\s+where)")
-                .expect("Invalid regex");
+                .unwrap();
 
         // Map: type_name -> Vec<file_path>
         let mut definitions: HashMap<String, Vec<PathBuf>> = HashMap::new();
@@ -644,8 +644,7 @@ impl RefactoringValidator {
     /// Check for mod declarations that reference non-existent files
     pub fn validate_mod_declarations(&self) -> Result<Vec<RefactoringViolation>> {
         let mut violations = Vec::new();
-        let mod_pattern =
-            Regex::new(r"(?:pub\s+)?mod\s+([a-z_][a-z0-9_]*)(?:\s*;)").expect("Invalid regex");
+        let mod_pattern = Regex::new(r"(?:pub\s+)?mod\s+([a-z_][a-z0-9_]*)(?:\s*;)").unwrap();
 
         for src_dir in self.config.get_scan_dirs()? {
             // Skip mcb-validate itself

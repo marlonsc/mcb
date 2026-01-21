@@ -6,8 +6,10 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
+use rust_code_analysis::guess_language;
+
 use super::core::AstParseResult;
-use super::languages;
+use super::languages::TreeSitterParser;
 use super::query::AstQuery;
 use crate::Result;
 
@@ -28,26 +30,25 @@ impl AstEngine {
     pub fn new() -> Self {
         let mut parsers: HashMap<String, Arc<Mutex<dyn AstParser>>> = HashMap::new();
 
-        // Register language parsers
         parsers.insert(
             "rust".to_string(),
-            Arc::new(Mutex::new(languages::RustParser::new())),
+            Arc::new(Mutex::new(TreeSitterParser::rust())),
         );
         parsers.insert(
             "python".to_string(),
-            Arc::new(Mutex::new(languages::PythonParser::new())),
+            Arc::new(Mutex::new(TreeSitterParser::python())),
         );
         parsers.insert(
             "javascript".to_string(),
-            Arc::new(Mutex::new(languages::JavaScriptParser::new())),
+            Arc::new(Mutex::new(TreeSitterParser::javascript())),
         );
         parsers.insert(
             "typescript".to_string(),
-            Arc::new(Mutex::new(languages::TypeScriptParser::new())),
+            Arc::new(Mutex::new(TreeSitterParser::typescript())),
         );
         parsers.insert(
             "go".to_string(),
-            Arc::new(Mutex::new(languages::GoParser::new())),
+            Arc::new(Mutex::new(TreeSitterParser::go())),
         );
 
         Self {
@@ -71,18 +72,33 @@ impl AstEngine {
             .collect()
     }
 
+    /// Detect programming language from file path using rust-code-analysis
     pub fn detect_language(&self, path: &Path) -> Option<&str> {
-        let extension = path.extension()?.to_str()?;
-
-        match extension {
-            "rs" => Some("rust"),
-            "py" => Some("python"),
-            "js" => Some("javascript"),
-            "ts" => Some("typescript"),
-            "tsx" => Some("typescript"),
-            "go" => Some("go"),
-            _ => None,
+        // Try RCA's guess_language if file exists
+        if let Ok(source) = std::fs::read(path) {
+            let (lang, _) = guess_language(&source, path);
+            if let Some(name) = lang.map(|l| l.get_name()) {
+                return match name {
+                    "rust" => Some("rust"),
+                    "python" => Some("python"),
+                    "javascript" | "mozjs" => Some("javascript"),
+                    "typescript" | "tsx" => Some("typescript"),
+                    _ => None,
+                };
+            }
         }
+
+        // Fallback to extension-based detection
+        path.extension()
+            .and_then(|ext| ext.to_str())
+            .and_then(|ext| match ext {
+                "rs" => Some("rust"),
+                "py" => Some("python"),
+                "js" | "mjs" | "cjs" => Some("javascript"),
+                "ts" | "tsx" => Some("typescript"),
+                "go" => Some("go"),
+                _ => None,
+            })
     }
 }
 

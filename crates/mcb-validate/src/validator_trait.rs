@@ -143,7 +143,7 @@ impl ValidatorRegistry {
         // Quality validators
         use crate::documentation::DocumentationValidator;
         use crate::naming::NamingValidator;
-        use crate::patterns::PatternValidator;
+        use crate::pattern_validator::PatternValidator;
         use crate::quality::QualityValidator;
         use crate::solid::SolidValidator;
         use crate::tests_org::TestValidator;
