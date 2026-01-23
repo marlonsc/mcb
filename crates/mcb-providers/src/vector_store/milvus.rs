@@ -434,8 +434,11 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             }
 
             for (i, id_val) in ids.iter().enumerate() {
+                // For L2 metric, Milvus returns distance (lower = more similar)
+                // Convert to similarity score in [0, 1] using: 1 / (1 + distance)
+                // This maps: distance 0 → 1.0, distance 1 → 0.5, distance 10 → 0.09
                 let distance = scores.get(i).copied().unwrap_or(0.0);
-                let score = (-distance).exp();
+                let score = 1.0 / (1.0 + distance);
 
                 let id_str = match id_val {
                     Value::Long(id) => id.to_string(),
