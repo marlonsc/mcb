@@ -295,6 +295,7 @@ fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderCo
         api_key: config.api_key.clone(),
         base_url: config.base_url.clone(),
         dimensions: config.dimensions,
+        cache_dir: None,
         extra: Default::default(),
     }
 }

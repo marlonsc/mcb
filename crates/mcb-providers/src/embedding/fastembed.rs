@@ -180,6 +180,7 @@ impl FastEmbedActor {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use mcb_application::ports::registry::{
@@ -203,6 +204,9 @@ fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
 }
 
 /// Factory function for creating FastEmbed provider instances.
+///
+/// Uses a centralized cache directory to avoid creating `.fastembed_cache`
+/// directories in repository working directories.
 fn fastembed_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
@@ -212,7 +216,19 @@ fn fastembed_factory(
         .unwrap_or_else(|| "AllMiniLML6V2".to_string());
 
     let model = parse_embedding_model(&model_name);
-    let provider = FastEmbedProvider::with_model(model)
+
+    // Use configured cache dir or default to ~/.cache/mcp-context-browser/fastembed
+    let cache_dir = config.cache_dir.clone().unwrap_or_else(|| {
+        dirs::cache_dir()
+            .map(|p| p.join("mcp-context-browser").join("fastembed"))
+            .unwrap_or_else(|| PathBuf::from("/tmp/mcp-context-browser/fastembed"))
+    });
+
+    let init_options = InitOptions::new(model)
+        .with_show_download_progress(true)
+        .with_cache_dir(cache_dir);
+
+    let provider = FastEmbedProvider::with_options(init_options)
         .map_err(|e| format!("Failed to create FastEmbed provider: {e}"))?;
 
     Ok(Arc::new(provider))

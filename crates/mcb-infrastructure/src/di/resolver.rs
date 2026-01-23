@@ -115,6 +115,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
             api_key: config.providers.embedding.api_key.clone(),
             base_url: config.providers.embedding.base_url.clone(),
             dimensions: config.providers.embedding.dimensions,
+            cache_dir: None,
             extra: Default::default(),
         }
     } else {
@@ -206,6 +207,7 @@ fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderCo
         api_key: config.api_key.clone(),
         base_url: config.base_url.clone(),
         dimensions: config.dimensions,
+        cache_dir: None,
         extra: Default::default(),
     }
 }

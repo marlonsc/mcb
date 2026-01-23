@@ -5,6 +5,7 @@
 //! discovered at runtime.
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider;
@@ -25,6 +26,8 @@ pub struct EmbeddingProviderConfig {
     pub base_url: Option<String>,
     /// Embedding dimensions (if configurable)
     pub dimensions: Option<usize>,
+    /// Cache directory for local providers (FastEmbed)
+    pub cache_dir: Option<PathBuf>,
     /// Additional provider-specific configuration
     pub extra: HashMap<String, String>,
 }
@@ -59,6 +62,12 @@ impl EmbeddingProviderConfig {
     /// Set the dimensions
     pub fn with_dimensions(mut self, dimensions: usize) -> Self {
         self.dimensions = Some(dimensions);
+        self
+    }
+
+    /// Set the cache directory for local providers (FastEmbed)
+    pub fn with_cache_dir(mut self, cache_dir: impl Into<PathBuf>) -> Self {
+        self.cache_dir = Some(cache_dir.into());
         self
     }
 
