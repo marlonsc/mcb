@@ -196,23 +196,18 @@ fn test_legacy_disable_watching_not_supported() {
 // Non-ignored tests: These don't modify env vars, so they can run in parallel
 // ============================================================================
 
-/// Verify auth is ENABLED by default and requires JWT secret (fail-fast per ADR-025)
+/// Verify auth is DISABLED by default (changed from ADR-025 for local development ease)
+/// When auth.enabled=false, JWT secret is not required
 #[test]
-fn test_auth_enabled_by_default_requires_jwt_secret() {
-    // Load config without any env vars set - should FAIL because JWT secret is required
+fn test_auth_disabled_by_default_loads_without_jwt_secret() {
+    // Load config without any env vars set - should SUCCEED because auth is disabled by default
     let result = ConfigLoader::new().load();
 
-    // Config should fail validation because auth.enabled=true by default
-    // but JWT secret is empty (ADR-025: fail-fast, no implicit defaults)
+    // Config should load successfully because auth.enabled=false by default
+    // No JWT secret is required when auth is disabled
     assert!(
-        result.is_err(),
-        "Config should fail when auth.enabled=true (default) but JWT secret is empty"
-    );
-
-    let err = result.unwrap_err().to_string();
-    assert!(
-        err.contains("JWT") || err.contains("secret"),
-        "Error should mention JWT secret requirement, got: {}",
-        err
+        result.is_ok(),
+        "Config should load when auth.enabled=false (default), got error: {:?}",
+        result.err()
     );
 }
