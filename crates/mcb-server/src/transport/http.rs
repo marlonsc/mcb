@@ -215,7 +215,7 @@ async fn handle_initialize(state: &HttpTransportState, request: &McpRequest) -> 
     let server_info = state.server.get_info();
 
     let result = serde_json::json!({
-        "protocolVersion": format!("{:?}", server_info.protocol_version),
+        "protocolVersion": server_info.protocol_version.to_string(),
         "capabilities": {
             "tools": {}
         },
@@ -241,7 +241,7 @@ async fn handle_tools_list(_state: &HttpTransportState, request: &McpRequest) ->
                     serde_json::json!({
                         "name": tool.name,
                         "description": tool.description,
-                        "inputSchema": tool.input_schema.as_ref()
+                        "inputSchema": serde_json::to_value(tool.input_schema.as_ref()).ok()
                     })
                 })
                 .collect();
