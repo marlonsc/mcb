@@ -157,7 +157,7 @@ schemars = "1.0"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "0.13", features = ["server", "client", "macros", "transport-io", "transport-child-process"] }
+rmcp = { version = "0.14", features = ["server", "client", "macros", "transport-io", "transport-child-process"] }
 
 # Advanced Multi-Provider Strategy
 prometheus = "0.14"

@@ -8,7 +8,7 @@ use std::sync::Arc;
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 use rmcp::model::{
-    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParam, ProtocolVersion,
+    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
     ServerCapabilities, ServerInfo,
 };
 
@@ -106,7 +106,7 @@ impl ServerHandler for McpServer {
     /// Get server information and capabilities
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
-            protocol_version: ProtocolVersion::V_2024_11_05,
+            protocol_version: ProtocolVersion::V_2025_03_26, // Updated to latest MCP protocol
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation {
                 name: "MCP Context Browser".to_string(),
@@ -129,7 +129,7 @@ impl ServerHandler for McpServer {
     /// List available tools
     async fn list_tools(
         &self,
-        _pagination: Option<PaginatedRequestParam>,
+        _pagination: Option<PaginatedRequestParams>,
         _context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
         let tools = create_tool_list()?;
@@ -143,7 +143,7 @@ impl ServerHandler for McpServer {
     /// Call a tool
     async fn call_tool(
         &self,
-        request: rmcp::model::CallToolRequestParam,
+        request: rmcp::model::CallToolRequestParams,
         _context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<CallToolResult, McpError> {
         let handlers = ToolHandlers {

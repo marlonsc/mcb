@@ -78,23 +78,55 @@ fn init_text_logging(
     filter: EnvFilter,
     file_appender: Option<tracing_appender::rolling::RollingFileAppender>,
 ) -> Result<()> {
-    let stdout = fmt::layer()
-        .with_target(true)
-        .with_thread_ids(true)
-        .with_thread_names(true)
-        .with_file(true)
-        .with_line_number(true);
+    // Detect if we're in stdio mode (when stdout is a pipe, not a terminal)
+    // In stdio mode:
+    // 1. Disable ANSI colors (corrupts JSON-RPC)
+    // 2. Send logs to stderr instead of stdout (stdout is for JSON-RPC only)
+    let is_terminal = atty::is(atty::Stream::Stdout);
 
     let registry = Registry::default().with(filter);
-    if let Some(appender) = file_appender {
-        let file = fmt::layer()
-            .with_writer(appender)
-            .with_ansi(false)
-            .with_target(true);
-        registry.with(stdout).with(file).init();
+
+    if is_terminal {
+        // Terminal mode: colored logs to stdout
+        let console = fmt::layer()
+            .with_ansi(true)
+            .with_target(true)
+            .with_thread_ids(true)
+            .with_thread_names(true)
+            .with_file(true)
+            .with_line_number(true);
+
+        if let Some(appender) = file_appender {
+            let file = fmt::layer()
+                .with_writer(appender)
+                .with_ansi(false)
+                .with_target(true);
+            registry.with(console).with(file).init();
+        } else {
+            registry.with(console).init();
+        }
     } else {
-        registry.with(stdout).init();
+        // Stdio mode: plain logs to stderr (stdout reserved for JSON-RPC)
+        let console = fmt::layer()
+            .with_ansi(false)
+            .with_writer(std::io::stderr)
+            .with_target(true)
+            .with_thread_ids(true)
+            .with_thread_names(true)
+            .with_file(true)
+            .with_line_number(true);
+
+        if let Some(appender) = file_appender {
+            let file = fmt::layer()
+                .with_writer(appender)
+                .with_ansi(false)
+                .with_target(true);
+            registry.with(console).with(file).init();
+        } else {
+            registry.with(console).init();
+        }
     }
+
     Ok(())
 }
 

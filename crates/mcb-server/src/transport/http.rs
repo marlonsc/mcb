@@ -32,7 +32,7 @@ use crate::McpServer;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 use rmcp::ServerHandler;
-use rmcp::model::CallToolRequestParam;
+use rmcp::model::CallToolRequestParams;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::response::stream::{Event, EventStream};
@@ -265,7 +265,7 @@ async fn handle_tools_list(_state: &HttpTransportState, request: &McpRequest) ->
 /// Parse tool call parameters from the request
 fn parse_tool_call_params(
     params: &serde_json::Value,
-) -> Result<CallToolRequestParam, (i32, &'static str)> {
+) -> Result<CallToolRequestParams, (i32, &'static str)> {
     let tool_name = params
         .get("name")
         .and_then(|v| v.as_str())
@@ -277,10 +277,11 @@ fn parse_tool_call_params(
 
     let arguments = params.get("arguments").and_then(|v| v.as_object().cloned());
 
-    Ok(CallToolRequestParam {
+    Ok(CallToolRequestParams {
         name: tool_name.into(),
         arguments,
         task: None,
+        meta: None, // Meta is optional in MCP 2024-11-05+
     })
 }
 

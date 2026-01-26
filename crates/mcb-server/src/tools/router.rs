@@ -5,7 +5,7 @@
 
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolRequestParam, CallToolResult};
+use rmcp::model::{CallToolRequestParams, CallToolResult};
 use std::sync::Arc;
 
 use crate::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
@@ -29,7 +29,7 @@ pub struct ToolHandlers {
 ///
 /// Parses the request arguments and delegates to the matching handler.
 pub async fn route_tool_call(
-    request: CallToolRequestParam,
+    request: CallToolRequestParams,
     handlers: &ToolHandlers,
 ) -> Result<CallToolResult, McpError> {
     match request.name.as_ref() {
@@ -58,7 +58,7 @@ pub async fn route_tool_call(
 
 /// Parse request arguments into the expected type
 fn parse_args<T: serde::de::DeserializeOwned>(
-    request: &CallToolRequestParam,
+    request: &CallToolRequestParams,
 ) -> Result<T, McpError> {
     let args_value = serde_json::Value::Object(request.arguments.clone().unwrap_or_default());
     serde_json::from_value(args_value)

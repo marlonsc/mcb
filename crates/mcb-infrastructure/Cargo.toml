@@ -37,6 +37,7 @@ thiserror = { workspace = true }
 # Logging
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+atty = "0.2"  # Terminal detection for disabling ANSI colors in stdio mode
 
 # Configuration
 figment = { workspace = true }
