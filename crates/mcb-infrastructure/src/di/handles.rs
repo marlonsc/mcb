@@ -1,203 +1,73 @@
 //! Provider Handles - Runtime-swappable provider wrappers
 //!
-//! These components wrap providers in RwLock to allow runtime reconfiguration
-//! via admin API without restarting the application.
+//! Type aliases for the generic Handle<T> for backward compatibility.
+//! All handle types use the same underlying generic implementation.
 //!
 //! ## Pattern
 //!
 //! ```text
-//! linkme registry → Resolver → Handle (RwLock) → Domain Services
+//! linkme registry → Resolver → Handle<T> (RwLock) → Domain Services
 //!                      ↑
 //!              AdminService.switch_provider()
 //! ```
 
+use super::handle::Handle;
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
-use std::sync::{Arc, RwLock};
 
 // ============================================================================
-// Embedding Provider Handle
+// Type Aliases (Backward Compatibility)
 // ============================================================================
 
 /// Handle for runtime-swappable embedding provider
 ///
 /// Wraps the current embedding provider in a RwLock, allowing admin API
 /// to switch providers without restarting the application.
-pub struct EmbeddingProviderHandle {
-    inner: RwLock<Arc<dyn EmbeddingProvider>>,
-}
-
-impl EmbeddingProviderHandle {
-    /// Create a new handle with an initial provider
-    pub fn new(provider: Arc<dyn EmbeddingProvider>) -> Self {
-        Self {
-            inner: RwLock::new(provider),
-        }
-    }
-
-    /// Get the current provider
-    pub fn get(&self) -> Arc<dyn EmbeddingProvider> {
-        self.inner
-            .read()
-            .expect("EmbeddingProviderHandle lock poisoned") // mcb-validate-ignore: lock_poisoning_recovery
-            .clone()
-    }
-
-    /// Set a new provider (used by admin service)
-    pub fn set(&self, new_provider: Arc<dyn EmbeddingProvider>) {
-        *self
-            .inner
-            .write()
-            .expect("EmbeddingProviderHandle lock poisoned") = new_provider; // mcb-validate-ignore: lock_poisoning_recovery
-    }
-
-    /// Get provider name for diagnostics
-    pub fn provider_name(&self) -> String {
-        self.get().provider_name().to_string()
-    }
-}
-
-impl std::fmt::Debug for EmbeddingProviderHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EmbeddingProviderHandle")
-            .field("provider", &self.provider_name())
-            .finish()
-    }
-}
-
-// ============================================================================
-// Vector Store Provider Handle
-// ============================================================================
+pub type EmbeddingProviderHandle = Handle<dyn EmbeddingProvider>;
 
 /// Handle for runtime-swappable vector store provider
 ///
 /// Wraps the current vector store provider in a RwLock, allowing admin API
 /// to switch providers without restarting the application.
-pub struct VectorStoreProviderHandle {
-    inner: RwLock<Arc<dyn VectorStoreProvider>>,
-}
-
-impl VectorStoreProviderHandle {
-    /// Create a new handle with an initial provider
-    pub fn new(provider: Arc<dyn VectorStoreProvider>) -> Self {
-        Self {
-            inner: RwLock::new(provider),
-        }
-    }
-
-    /// Get the current provider
-    pub fn get(&self) -> Arc<dyn VectorStoreProvider> {
-        self.inner
-            .read()
-            .expect("VectorStoreProviderHandle lock poisoned") // mcb-validate-ignore: lock_poisoning_recovery
-            .clone()
-    }
-
-    /// Set a new provider (used by admin service)
-    pub fn set(&self, new_provider: Arc<dyn VectorStoreProvider>) {
-        *self
-            .inner
-            .write()
-            .expect("VectorStoreProviderHandle lock poisoned") = new_provider; // mcb-validate-ignore: lock_poisoning_recovery
-    }
-}
-
-impl std::fmt::Debug for VectorStoreProviderHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("VectorStoreProviderHandle").finish()
-    }
-}
-
-// ============================================================================
-// Cache Provider Handle
-// ============================================================================
+pub type VectorStoreProviderHandle = Handle<dyn VectorStoreProvider>;
 
 /// Handle for runtime-swappable cache provider
 ///
 /// Wraps the current cache provider in a RwLock, allowing admin API
 /// to switch providers without restarting the application.
-pub struct CacheProviderHandle {
-    inner: RwLock<Arc<dyn CacheProvider>>,
-}
-
-impl CacheProviderHandle {
-    /// Create a new handle with an initial provider
-    pub fn new(provider: Arc<dyn CacheProvider>) -> Self {
-        Self {
-            inner: RwLock::new(provider),
-        }
-    }
-
-    /// Get the current provider
-    pub fn get(&self) -> Arc<dyn CacheProvider> {
-        self.inner
-            .read()
-            .expect("CacheProviderHandle lock poisoned") // mcb-validate-ignore: lock_poisoning_recovery
-            .clone()
-    }
-
-    /// Set a new provider (used by admin service)
-    pub fn set(&self, new_provider: Arc<dyn CacheProvider>) {
-        *self
-            .inner
-            .write()
-            .expect("CacheProviderHandle lock poisoned") = new_provider; // mcb-validate-ignore: lock_poisoning_recovery
-    }
-
-    /// Get provider name for diagnostics
-    pub fn provider_name(&self) -> String {
-        self.get().provider_name().to_string()
-    }
-}
-
-impl std::fmt::Debug for CacheProviderHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CacheProviderHandle")
-            .field("provider", &self.provider_name())
-            .finish()
-    }
-}
-
-// ============================================================================
-// Language Chunking Provider Handle
-// ============================================================================
+pub type CacheProviderHandle = Handle<dyn CacheProvider>;
 
 /// Handle for runtime-swappable language chunking provider
 ///
 /// Wraps the current language chunking provider in a RwLock, allowing admin API
 /// to switch providers without restarting the application.
-pub struct LanguageProviderHandle {
-    inner: RwLock<Arc<dyn LanguageChunkingProvider>>,
+pub type LanguageProviderHandle = Handle<dyn LanguageChunkingProvider>;
+
+// ============================================================================
+// Extension Trait for Provider-Specific Methods
+// ============================================================================
+
+/// Extension methods for EmbeddingProviderHandle
+pub trait EmbeddingHandleExt {
+    /// Get provider name for diagnostics
+    fn provider_name(&self) -> String;
 }
 
-impl LanguageProviderHandle {
-    /// Create a new handle with an initial provider
-    pub fn new(provider: Arc<dyn LanguageChunkingProvider>) -> Self {
-        Self {
-            inner: RwLock::new(provider),
-        }
-    }
-
-    /// Get the current provider
-    pub fn get(&self) -> Arc<dyn LanguageChunkingProvider> {
-        self.inner
-            .read()
-            .expect("LanguageProviderHandle lock poisoned") // mcb-validate-ignore: lock_poisoning_recovery
-            .clone()
-    }
-
-    /// Set a new provider (used by admin service)
-    pub fn set(&self, new_provider: Arc<dyn LanguageChunkingProvider>) {
-        *self
-            .inner
-            .write()
-            .expect("LanguageProviderHandle lock poisoned") = new_provider; // mcb-validate-ignore: lock_poisoning_recovery
+impl EmbeddingHandleExt for EmbeddingProviderHandle {
+    fn provider_name(&self) -> String {
+        self.get().provider_name().to_string()
     }
 }
 
-impl std::fmt::Debug for LanguageProviderHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("LanguageProviderHandle").finish()
+/// Extension methods for CacheProviderHandle
+pub trait CacheHandleExt {
+    /// Get provider name for diagnostics
+    fn provider_name(&self) -> String;
+}
+
+impl CacheHandleExt for CacheProviderHandle {
+    fn provider_name(&self) -> String {
+        self.get().provider_name().to_string()
     }
 }

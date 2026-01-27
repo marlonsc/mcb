@@ -28,20 +28,24 @@ pub mod admin;
 pub mod bootstrap;
 pub mod catalog;
 pub mod dispatch;
+pub mod handle;
 pub mod handles;
 pub mod modules;
 pub mod provider_resolvers;
 pub mod resolver;
 
 pub use admin::{
-    CacheAdminService, EmbeddingAdminService, LanguageAdminService, ProviderInfo,
-    VectorStoreAdminService,
+    AdminService, CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface,
+    EmbeddingAdminService, LanguageAdminInterface, LanguageAdminService, ProviderInfo,
+    ProviderResolver, VectorStoreAdminInterface, VectorStoreAdminService,
 };
 pub use bootstrap::*;
 pub use catalog::build_catalog;
 pub use dispatch::*;
+pub use handle::Handle;
 pub use handles::{
-    CacheProviderHandle, EmbeddingProviderHandle, LanguageProviderHandle, VectorStoreProviderHandle,
+    CacheHandleExt, CacheProviderHandle, EmbeddingHandleExt, EmbeddingProviderHandle,
+    LanguageProviderHandle, VectorStoreProviderHandle,
 };
 pub use modules::{DomainServicesContainer, DomainServicesFactory, ServiceDependencies};
 pub use provider_resolvers::{

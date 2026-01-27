@@ -13,5 +13,6 @@
 mod architecture_validation_tests;
 mod catalog_tests;
 mod dispatch_tests;
+mod handle_tests;
 mod modules_tests;
 mod resolver_tests;

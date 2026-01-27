@@ -7,6 +7,7 @@
 
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::di::EmbeddingHandleExt;
 use mcb_infrastructure::di::bootstrap::init_app;
 
 // Force linkme registration by linking mcb_providers crate
