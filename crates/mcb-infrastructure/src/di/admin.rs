@@ -54,6 +54,23 @@ impl ProviderInfo {
 ///
 /// This trait abstracts the resolution logic so AdminService can work
 /// with any resolver type generically.
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::ProviderResolver;
+///
+/// fn list_providers<R, P, C>(resolver: &R) -> Vec<String>
+/// where
+///     R: ProviderResolver<P, C>,
+///     P: ?Sized + Send + Sync,
+/// {
+///     resolver.list_available()
+///         .into_iter()
+///         .map(|(name, _)| name.to_string())
+///         .collect()
+/// }
+/// ```
 pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
     /// Resolve provider from current application config
     fn resolve_from_config(&self) -> Result<Arc<P>, String>;

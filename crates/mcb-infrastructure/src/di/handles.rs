@@ -49,6 +49,16 @@ pub type LanguageProviderHandle = Handle<dyn LanguageChunkingProvider>;
 // ============================================================================
 
 /// Extension methods for EmbeddingProviderHandle
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::{EmbeddingProviderHandle, EmbeddingHandleExt};
+///
+/// fn log_provider(handle: &EmbeddingProviderHandle) {
+///     println!("Using: {}", handle.provider_name());
+/// }
+/// ```
 pub trait EmbeddingHandleExt {
     /// Get provider name for diagnostics
     fn provider_name(&self) -> String;
@@ -61,6 +71,16 @@ impl EmbeddingHandleExt for EmbeddingProviderHandle {
 }
 
 /// Extension methods for CacheProviderHandle
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::{CacheProviderHandle, CacheHandleExt};
+///
+/// fn log_cache(handle: &CacheProviderHandle) {
+///     println!("Cache provider: {}", handle.provider_name());
+/// }
+/// ```
 pub trait CacheHandleExt {
     /// Get provider name for diagnostics
     fn provider_name(&self) -> String;
