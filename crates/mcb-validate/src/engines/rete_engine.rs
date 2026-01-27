@@ -2,8 +2,12 @@
 //!
 //! Wrapper for rust-rule-engine crate implementing RETE-UL algorithm.
 //! Use this engine for complex GRL rules with when/then syntax.
+//!
+//! Uses `cargo_metadata` for reliable Cargo.toml/workspace parsing,
+//! with TOML fallback for incomplete projects or tests.
 
 use async_trait::async_trait;
+use cargo_metadata::MetadataCommand;
 use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as RreValue};
 use serde_json::Value;
 use std::path::Path;
@@ -47,24 +51,74 @@ impl ReteEngine {
         Ok(())
     }
 
-    /// Build facts from rule context
+    /// Build facts from rule context using cargo_metadata
     ///
     /// IMPORTANT: All facts MUST use "Facts." prefix to match GRL syntax.
     /// GRL conditions like `Facts.has_internal_dependencies == true` require
     /// facts to be set with `facts.set("Facts.has_internal_dependencies", ...)`.
+    ///
+    /// Uses cargo_metadata for real projects, falls back to TOML parsing for tests.
     fn build_facts(&self, context: &RuleContext) -> Result<Facts> {
         let facts = Facts::new();
 
-        // Add crate information (with Facts. prefix for GRL compatibility)
-        let crate_name = self.extract_crate_name_from_context(context);
-        facts.set("Facts.crate_name", RreValue::String(crate_name));
+        // Use cargo_metadata for reliable workspace/package parsing
+        let manifest_path = context.workspace_root.join("Cargo.toml");
 
-        // Add dependencies as facts
-        let deps = self.collect_dependencies(&context.workspace_root)?;
-        for (crate_nm, dep_name, _version) in &deps {
-            // Create fact: Facts.crate_{crate_name}_depends_on_{dep_name} = true
-            let key = format!("Facts.crate_{}_depends_on_{}", crate_nm, dep_name);
-            facts.set(&key, RreValue::Boolean(true));
+        // Try to get metadata from cargo
+        let metadata_result = MetadataCommand::new()
+            .manifest_path(&manifest_path)
+            .no_deps() // We only need local workspace packages
+            .exec();
+
+        match metadata_result {
+            Ok(metadata) if !metadata.packages.is_empty() => {
+                // Get root package name (or first workspace member)
+                // cargo_metadata 0.23 returns PackageName, convert to String
+                let root_name = metadata
+                    .root_package()
+                    .map(|p| p.name.to_string())
+                    .or_else(|| metadata.packages.first().map(|p| p.name.to_string()))
+                    .unwrap_or_else(|| self.fallback_crate_name(context));
+
+                facts.set("Facts.crate_name", RreValue::String(root_name));
+
+                // Collect all dependencies from all packages
+                let mut internal_deps_count = 0;
+
+                for package in &metadata.packages {
+                    for dep in &package.dependencies {
+                        // Create fact: Facts.crate_{package}_depends_on_{dep} = true
+                        // cargo_metadata 0.23 uses PackageName, convert to String for comparison
+                        let pkg_name = package.name.to_string();
+                        let dep_name = dep.name.to_string();
+                        let key = format!("Facts.crate_{}_depends_on_{}", pkg_name, dep_name);
+                        facts.set(&key, RreValue::Boolean(true));
+
+                        // Count internal dependencies (mcb-*)
+                        if dep_name.starts_with("mcb-") {
+                            internal_deps_count += 1;
+                        }
+                    }
+                }
+
+                facts.set(
+                    "Facts.internal_dependencies_count",
+                    RreValue::Number(f64::from(internal_deps_count)),
+                );
+
+                facts.set(
+                    "Facts.has_internal_dependencies",
+                    RreValue::Boolean(internal_deps_count > 0),
+                );
+            }
+            Ok(_metadata) => {
+                // Fallback to manual TOML parsing (for tests, incomplete projects, or empty metadata)
+                self.build_facts_from_toml(&facts, context);
+            }
+            Err(_e) => {
+                // Fallback to manual TOML parsing (for tests, incomplete projects, or empty metadata)
+                self.build_facts_from_toml(&facts, context);
+            }
         }
 
         // Add file facts
@@ -73,37 +127,46 @@ impl ReteEngine {
             facts.set(&key, RreValue::Boolean(true));
         }
 
-        // Add a list of internal dependencies (mcb-*)
-        let internal_deps: Vec<String> = deps
-            .iter()
-            .filter(|(_, dep, _)| dep.starts_with("mcb-"))
-            .map(|(crate_nm, dep, _)| format!("{}:{}", crate_nm, dep))
-            .collect();
-
-        facts.set(
-            "Facts.internal_dependencies_count",
-            RreValue::Number(internal_deps.len() as f64),
-        );
-
-        // Add convenience flags (main fact for CA001)
-        let has_internal_deps = !internal_deps.is_empty();
-        facts.set(
-            "Facts.has_internal_dependencies",
-            RreValue::Boolean(has_internal_deps),
-        );
-
         Ok(facts)
     }
 
-    /// Extract crate name from context
-    fn extract_crate_name_from_context(&self, context: &RuleContext) -> String {
-        // Try to find Cargo.toml in workspace root
-        let cargo_path = context.workspace_root.join("Cargo.toml");
-        if let Ok(content) = std::fs::read_to_string(&cargo_path) {
-            return self.extract_crate_name(&content);
+    /// Fallback TOML parsing when cargo_metadata fails (for tests or incomplete projects)
+    fn build_facts_from_toml(&self, facts: &Facts, context: &RuleContext) {
+        let deps = self.collect_dependencies_from_toml(&context.workspace_root);
+
+        // Get crate name from first Cargo.toml found
+        let crate_name = deps
+            .first()
+            .map(|(name, _, _)| name.clone())
+            .unwrap_or_else(|| self.fallback_crate_name(context));
+
+        facts.set("Facts.crate_name", RreValue::String(crate_name));
+
+        // Count internal dependencies
+        let mut internal_deps_count = 0;
+
+        for (crate_nm, dep_name, _) in &deps {
+            let key = format!("Facts.crate_{}_depends_on_{}", crate_nm, dep_name);
+            facts.set(&key, RreValue::Boolean(true));
+
+            if dep_name.starts_with("mcb-") {
+                internal_deps_count += 1;
+            }
         }
 
-        // Fallback: use directory name
+        facts.set(
+            "Facts.internal_dependencies_count",
+            RreValue::Number(f64::from(internal_deps_count)),
+        );
+
+        facts.set(
+            "Facts.has_internal_dependencies",
+            RreValue::Boolean(internal_deps_count > 0),
+        );
+    }
+
+    /// Fallback crate name extraction when cargo_metadata fails
+    fn fallback_crate_name(&self, context: &RuleContext) -> String {
         context
             .workspace_root
             .file_name()
@@ -112,24 +175,12 @@ impl ReteEngine {
             .to_string()
     }
 
-    /// Extract crate name from Cargo.toml content
-    fn extract_crate_name(&self, content: &str) -> String {
-        for line in content.lines() {
-            let trimmed = line.trim();
-            if trimmed.starts_with("name = ") || trimmed.starts_with("name=") {
-                return trimmed
-                    .split('=')
-                    .nth(1)
-                    .map(|s| s.trim().trim_matches('"').to_string())
-                    .unwrap_or_default();
-            }
-        }
-        String::new()
-    }
-
-    /// Collect dependencies from all Cargo.toml files
-    fn collect_dependencies(&self, root: &Path) -> Result<Vec<(String, String, String)>> {
+    /// Collect dependencies from Cargo.toml files using TOML parsing (fallback)
+    fn collect_dependencies_from_toml(&self, root: &Path) -> Vec<(String, String, String)> {
         let mut deps = Vec::new();
+
+        // DEBUG: print to stderr for test visibility
+        eprintln!("[RETE DEBUG] Walking directory: {:?}", root);
 
         for entry in WalkDir::new(root)
             .into_iter()
@@ -137,64 +188,58 @@ impl ReteEngine {
             .filter(|e| e.path().file_name().is_some_and(|n| n == "Cargo.toml"))
         {
             let path = entry.path();
+            // DEBUG: print to stderr for test visibility
+            eprintln!("[RETE DEBUG] Found Cargo.toml at: {:?}", path);
+
             // Skip target directory
             if path.to_string_lossy().contains("/target/") {
+                eprintln!("[RETE DEBUG] Skipping (target dir)");
                 continue;
             }
 
             if let Ok(content) = std::fs::read_to_string(path) {
-                let crate_name = self.extract_crate_name(&content);
-                for (dep_name, version) in self.extract_dependencies(&content) {
-                    deps.push((crate_name.clone(), dep_name, version));
-                }
-            }
-        }
+                eprintln!("[RETE DEBUG] Read content (len={})", content.len());
+                // Trim leading/trailing whitespace for TOML parsing
+                let content = content.trim();
+                eprintln!(
+                    "[RETE DEBUG] Trimmed content (len={}): {:?}",
+                    content.len(),
+                    content.chars().take(50).collect::<String>()
+                );
+                // toml 0.9 uses Table instead of Value
+                match content.parse::<toml::Table>() {
+                    Ok(toml_table) => {
+                        eprintln!("[RETE DEBUG] Parsed TOML successfully");
+                        // Extract crate name
+                        let crate_name = toml_table
+                            .get("package")
+                            .and_then(|p| p.get("name"))
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("unknown")
+                            .to_string();
 
-        Ok(deps)
-    }
-
-    /// Extract dependencies from Cargo.toml content
-    fn extract_dependencies(&self, content: &str) -> Vec<(String, String)> {
-        let mut deps = Vec::new();
-        let mut in_deps_section = false;
-
-        for line in content.lines() {
-            let trimmed = line.trim();
-
-            if trimmed.starts_with("[dependencies]")
-                || trimmed.starts_with("[dev-dependencies]")
-                || trimmed.starts_with("[build-dependencies]")
-            {
-                in_deps_section = true;
-                continue;
-            }
-
-            if trimmed.starts_with('[') {
-                in_deps_section = false;
-                continue;
-            }
-
-            if in_deps_section && !trimmed.is_empty() && !trimmed.starts_with('#') {
-                if let Some(eq_pos) = trimmed.find('=') {
-                    let dep_name = trimmed[..eq_pos].trim().to_string();
-                    let value_part = trimmed[eq_pos + 1..].trim();
-
-                    let version = if value_part.starts_with('"') {
-                        value_part.trim_matches('"').to_string()
-                    } else if value_part.contains("version") {
-                        value_part
-                            .split("version")
-                            .nth(1)
-                            .and_then(|s| s.split('"').nth(1))
-                            .unwrap_or("*")
-                            .to_string()
-                    } else if value_part.contains("workspace") {
-                        "workspace".to_string()
-                    } else {
-                        "*".to_string()
-                    };
-
-                    deps.push((dep_name, version));
+                        // Extract dependencies from [dependencies] section
+                        if let Some(dep_table) =
+                            toml_table.get("dependencies").and_then(|d| d.as_table())
+                        {
+                            for (dep_name, dep_value) in dep_table {
+                                let version = if let Some(v) = dep_value.as_str() {
+                                    v.to_string()
+                                } else if let Some(t) = dep_value.as_table() {
+                                    t.get("version")
+                                        .and_then(|v| v.as_str())
+                                        .unwrap_or("*")
+                                        .to_string()
+                                } else {
+                                    "*".to_string()
+                                };
+                                deps.push((crate_name.clone(), dep_name.clone(), version));
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("[RETE DEBUG] TOML parse error: {:?}", e);
+                    }
                 }
             }
         }

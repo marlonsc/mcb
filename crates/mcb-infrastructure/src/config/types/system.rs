@@ -30,6 +30,11 @@ pub struct JwtConfig {
     pub refresh_expiration_secs: u64,
 }
 
+/// Default JWT configuration using infrastructure constants.
+///
+/// - `secret`: empty (must be configured)
+/// - `expiration_secs`: `JWT_DEFAULT_EXPIRATION_SECS`
+/// - `refresh_expiration_secs`: `JWT_REFRESH_EXPIRATION_SECS`
 impl Default for JwtConfig {
     fn default() -> Self {
         Self {
@@ -49,6 +54,10 @@ pub struct ApiKeyConfig {
     pub header: String,
 }
 
+/// Default API key configuration using infrastructure constants.
+///
+/// - `enabled`: true
+/// - `header`: `API_KEY_HEADER`
 impl Default for ApiKeyConfig {
     fn default() -> Self {
         Self {
@@ -75,6 +84,11 @@ pub struct AdminApiKeyConfig {
     pub key: Option<String>,
 }
 
+/// Default admin API key configuration.
+///
+/// - `enabled`: false (admin API disabled by default)
+/// - `header`: `DEFAULT_ADMIN_KEY_HEADER`
+/// - `key`: None
 impl Default for AdminApiKeyConfig {
     fn default() -> Self {
         Self {
@@ -103,6 +117,13 @@ pub struct AuthConfig {
     pub password_algorithm: PasswordAlgorithm,
 }
 
+/// Default authentication configuration.
+///
+/// - `enabled`: true
+/// - `jwt`: JwtConfig::default()
+/// - `api_key`: ApiKeyConfig::default()
+/// - `admin`: AdminApiKeyConfig::default()
+/// - `password_algorithm`: Argon2
 impl Default for AuthConfig {
     fn default() -> Self {
         Self {
@@ -150,6 +171,13 @@ pub struct EventBusConfig {
     pub max_reconnect_attempts: u32,
 }
 
+/// Default event bus configuration.
+///
+/// - `provider`: Tokio (in-process)
+/// - `capacity`: 1024 events
+/// - `nats_client_name`: `DEFAULT_NATS_CLIENT_NAME`
+/// - `connection_timeout_ms`: 5000
+/// - `max_reconnect_attempts`: 5
 impl Default for EventBusConfig {
     fn default() -> Self {
         Self {
@@ -215,6 +243,13 @@ pub struct BackupConfig {
     pub encryption_key: Option<String>,
 }
 
+/// Default backup configuration.
+///
+/// - `enabled`: false
+/// - `directory`: ./backups
+/// - `interval_secs`: 86400 (24 hours)
+/// - `max_backups`: 7
+/// - `compress`: true
 impl Default for BackupConfig {
     fn default() -> Self {
         Self {
@@ -255,6 +290,13 @@ pub struct SyncConfig {
     pub max_concurrent: usize,
 }
 
+/// Default sync configuration using infrastructure constants.
+///
+/// - `enabled`: true
+/// - `watching_enabled`: true
+/// - `batch_size`: `SYNC_BATCH_SIZE`
+/// - `debounce_delay_ms`: `SYNC_DEBOUNCE_DELAY_MS`
+/// - `timeout_secs`: `SYNC_TIMEOUT_SECS`
 impl Default for SyncConfig {
     fn default() -> Self {
         Self {
@@ -287,6 +329,13 @@ pub struct SnapshotConfig {
     pub change_detection_enabled: bool,
 }
 
+/// Default snapshot configuration.
+///
+/// - `enabled`: true
+/// - `directory`: ./snapshots
+/// - `max_file_size`: `MAX_SNAPSHOT_FILE_SIZE`
+/// - `compression_enabled`: true
+/// - `change_detection_enabled`: true
 impl Default for SnapshotConfig {
     fn default() -> Self {
         Self {
@@ -318,6 +367,13 @@ pub struct DaemonConfig {
     pub auto_start: bool,
 }
 
+/// Default daemon configuration using infrastructure constants.
+///
+/// - `enabled`: true
+/// - `check_interval_secs`: `DAEMON_CHECK_INTERVAL_SECS`
+/// - `restart_delay_secs`: `DAEMON_RESTART_DELAY_SECS`
+/// - `max_restart_attempts`: `DAEMON_MAX_RESTART_ATTEMPTS`
+/// - `auto_start`: true
 impl Default for DaemonConfig {
     fn default() -> Self {
         Self {
@@ -347,6 +403,12 @@ pub struct OperationsConfig {
     pub max_operations_in_memory: usize,
 }
 
+/// Default operations configuration using infrastructure constants.
+///
+/// - `tracking_enabled`: true
+/// - `cleanup_interval_secs`: `OPERATIONS_CLEANUP_INTERVAL_SECS`
+/// - `retention_secs`: `OPERATIONS_RETENTION_SECS`
+/// - `max_operations_in_memory`: `OPERATIONS_MAX_IN_MEMORY`
 impl Default for OperationsConfig {
     fn default() -> Self {
         Self {

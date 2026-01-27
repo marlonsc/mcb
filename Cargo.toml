@@ -52,10 +52,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # Configuration
 figment = { version = "0.10", features = ["toml", "env"] }
 toml = "0.9"
-# NOTE: config crate removed in v0.1.2 - migrated to figment (ADR-025)
-
-# Dependency injection
-# linkme is used for compile-time provider registration (ADR-023)
 
 # HTTP client
 reqwest = { version = "0.13", features = ["json", "__tls"] }
@@ -116,8 +112,8 @@ rocket = { version = "0.5", features = ["json"] }
 # NOTE: axum, axum-extra, tower, tower-http removed in v0.1.2 - migrated to Rocket (ADR-026)
 
 # System metrics
-sysinfo = "0.37.2"
-nix = { version = "0.30", features = ["fs"] }
+sysinfo = "0.38"
+nix = { version = "0.31", features = ["fs"] }
 
 # Code analysis and AST parsing
 complexity = "0.2"  # Cognitive complexity for Rust (syn-based)
@@ -183,7 +179,7 @@ itertools = "0.14"
 humantime = "2.1"
 
 # Event bus providers
-async-nats = "0.45"
+async-nats = "0.46"
 
 # Local embeddings without external services
 fastembed = { version = "5.8", default-features = false, features = ["default"] }
@@ -229,9 +225,8 @@ serial_test = "3.2"
 # mcb-validate specific dependencies
 # ============================================
 
-# Rust AST parsing
-syn = { version = "2.0", features = ["full", "parsing", "visit"] }
-proc-macro2 = "1.0"
+# Cargo metadata parsing (replaces manual Cargo.toml parsing)
+cargo_metadata = "0.23"
 
 # YAML serialization
 serde_yaml = "0.9"

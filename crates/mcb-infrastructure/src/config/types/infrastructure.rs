@@ -26,6 +26,13 @@ pub struct LoggingConfig {
     pub max_files: usize,
 }
 
+/// Default logging configuration using infrastructure constants.
+///
+/// - `level`: `DEFAULT_LOG_LEVEL` ("info")
+/// - `json_format`: false (text format)
+/// - `file_output`: None
+/// - `max_file_size`: `LOG_ROTATION_SIZE`
+/// - `max_files`: `LOG_MAX_FILES`
 impl Default for LoggingConfig {
     fn default() -> Self {
         Self {
@@ -57,6 +64,13 @@ pub struct LimitsConfig {
     pub max_requests_per_connection: u32,
 }
 
+/// Default resource limits using infrastructure constants.
+///
+/// - `memory_limit`: `DEFAULT_MEMORY_LIMIT`
+/// - `cpu_limit`: `DEFAULT_CPU_LIMIT`
+/// - `disk_io_limit`: `DEFAULT_DISK_IO_LIMIT`
+/// - `max_connections`: 1000
+/// - `max_requests_per_connection`: 100
 impl Default for LimitsConfig {
     fn default() -> Self {
         Self {
@@ -111,6 +125,14 @@ pub struct CacheSystemConfig {
     pub namespace: String,
 }
 
+/// Default cache system configuration using infrastructure constants.
+///
+/// - `enabled`: true
+/// - `provider`: Moka (in-memory)
+/// - `default_ttl_secs`: `CACHE_DEFAULT_TTL_SECS`
+/// - `max_size`: `CACHE_DEFAULT_SIZE_LIMIT`
+/// - `redis_pool_size`: `REDIS_POOL_SIZE`
+/// - `namespace`: `DEFAULT_CACHE_NAMESPACE`
 impl Default for CacheSystemConfig {
     fn default() -> Self {
         Self {
@@ -146,6 +168,13 @@ pub struct MetricsConfig {
     pub exporter_url: Option<String>,
 }
 
+/// Default metrics configuration using infrastructure constants.
+///
+/// - `enabled`: true
+/// - `collection_interval_secs`: `METRICS_COLLECTION_INTERVAL_SECS`
+/// - `prefix`: `METRICS_PREFIX`
+/// - `endpoint_enabled`: true
+/// - `endpoint_path`: `METRICS_PATH`
 impl Default for MetricsConfig {
     fn default() -> Self {
         Self {
@@ -182,6 +211,11 @@ pub struct ResilienceConfig {
     pub retry_delay_ms: u64,
 }
 
+/// Default resilience configuration using infrastructure constants.
+///
+/// Circuit breaker: `CIRCUIT_BREAKER_*` constants
+/// Rate limiter: `RATE_LIMITER_DEFAULT_*` constants
+/// Retry: 3 attempts with 1000ms delay
 impl Default for ResilienceConfig {
     fn default() -> Self {
         Self {

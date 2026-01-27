@@ -23,3 +23,6 @@ mod browse_handlers_tests;
 
 #[path = "unit/mcp_protocol_tests.rs"]
 mod mcp_protocol_tests;
+
+#[path = "unit/collection_mapping_tests.rs"]
+mod collection_mapping_tests;

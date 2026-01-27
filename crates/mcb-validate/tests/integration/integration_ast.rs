@@ -1,129 +1,133 @@
-//! Integration tests for AST parsing and query execution (Phase 2 of mcb-validate refactoring)
+//! Integration tests for AST parsing and query execution
 //!
 //! These tests verify that:
-//! - Tree-sitter parsers can parse multiple languages
+//! - RCA parsers can parse multiple languages via `action()`
+//! - `guess_language()` correctly detects languages
 //! - AST queries can match patterns in code
-//! - `AstQuery` can detect violations like .`unwrap()` usage
 //! - The unified AST format works correctly
+//!
+//! Using rust-code-analysis (RCA) directly - NO wrappers.
 
 #![allow(clippy::items_after_statements)]
 #![allow(clippy::similar_names)]
 
-use mcb_validate::ast::languages::TreeSitterParser;
+use std::path::Path;
+
 use mcb_validate::ast::{
-    AstEngine, AstNode, AstParser, AstQuery, AstQueryBuilder, AstQueryPatterns, QueryCondition,
+    AstNode, AstQuery, AstQueryBuilder, AstQueryPatterns, Position, QueryCondition, Span,
 };
+use rust_code_analysis::{Callback, LANG, ParserTrait, action, find, guess_language};
 
-// ==================== Parser Creation Tests ====================
+// ==================== RCA Callback for Parsing Tests ====================
+
+/// Simple callback that returns the root node kind
+struct RootKindCallback;
+
+impl Callback for RootKindCallback {
+    type Res = String;
+    type Cfg = ();
+
+    fn call<T: ParserTrait>(_cfg: Self::Cfg, parser: &T) -> Self::Res {
+        parser.get_root().kind().to_string()
+    }
+}
+
+/// Callback that checks if a specific node type exists
+struct HasNodeCallback;
+
+impl Callback for HasNodeCallback {
+    type Res = bool;
+    type Cfg = String; // node type to find
+
+    fn call<T: ParserTrait>(node_type: Self::Cfg, parser: &T) -> Self::Res {
+        if let Some(nodes) = find(parser, &[node_type]) {
+            !nodes.is_empty()
+        } else {
+            false
+        }
+    }
+}
+
+// ==================== Language Detection Tests (using RCA guess_language) ====================
 
 #[test]
-fn test_ast_engine_creation() {
-    let engine = AstEngine::new();
-    let languages = engine.supported_languages();
-
-    assert!(languages.contains(&"rust"), "Should support Rust");
-    assert!(languages.contains(&"python"), "Should support Python");
-    assert!(
-        languages.contains(&"javascript"),
-        "Should support JavaScript"
-    );
-    assert!(
-        languages.contains(&"typescript"),
-        "Should support TypeScript"
-    );
-    assert!(languages.contains(&"go"), "Should support Go");
+fn test_language_detection_rust() {
+    let code = b"fn main() {}";
+    let (lang, _) = guess_language(code, Path::new("main.rs"));
+    assert_eq!(lang, Some(LANG::Rust));
 }
 
 #[test]
-fn test_language_detection() {
-    let engine = AstEngine::new();
-
-    assert_eq!(
-        engine.detect_language(std::path::Path::new("main.rs")),
-        Some("rust")
-    );
-    assert_eq!(
-        engine.detect_language(std::path::Path::new("script.py")),
-        Some("python")
-    );
-    assert_eq!(
-        engine.detect_language(std::path::Path::new("app.js")),
-        Some("javascript")
-    );
-    assert_eq!(
-        engine.detect_language(std::path::Path::new("component.ts")),
-        Some("typescript")
-    );
-    assert_eq!(
-        engine.detect_language(std::path::Path::new("main.go")),
-        Some("go")
-    );
-    assert_eq!(
-        engine.detect_language(std::path::Path::new("unknown.xyz")),
-        None
-    );
+fn test_language_detection_python() {
+    let code = b"def main(): pass";
+    let (lang, _) = guess_language(code, Path::new("script.py"));
+    assert_eq!(lang, Some(LANG::Python));
 }
 
-// ==================== Rust Parser Tests ====================
+#[test]
+fn test_language_detection_javascript() {
+    let code = b"function main() {}";
+    let (lang, _) = guess_language(code, Path::new("app.js"));
+    // JavaScript is detected as Mozjs in RCA
+    assert!(matches!(lang, Some(LANG::Javascript | LANG::Mozjs)));
+}
+
+#[test]
+fn test_language_detection_typescript() {
+    let code = b"function main(): void {}";
+    let (lang, _) = guess_language(code, Path::new("component.ts"));
+    assert!(matches!(lang, Some(LANG::Typescript | LANG::Tsx)));
+}
+
+// Note: Go is not supported by rust-code-analysis
+// Go tests removed as LANG::Go doesn't exist
+
+#[test]
+fn test_language_detection_unknown() {
+    let code = b"some content";
+    let (lang, _) = guess_language(code, Path::new("unknown.xyz"));
+    assert_eq!(lang, None);
+}
+
+// ==================== Rust Parser Tests (using RCA action) ====================
 
 #[test]
 fn test_rust_parser_simple_function() {
-    let mut parser = TreeSitterParser::rust();
-    let code = r#"
+    let code = br#"
 fn hello_world() {
     println!("Hello, World!");
 }
 "#;
+    let path = Path::new("test.rs");
 
-    let result = parser
-        .parse_content(code, "test.rs")
-        .expect("Should parse Rust code");
-    assert_eq!(result.root.kind, "source_file");
-    assert!(
-        !result.root.children.is_empty(),
-        "Should have children nodes"
-    );
+    let root_kind = action::<RootKindCallback>(&LANG::Rust, code.to_vec(), path, None, ());
+    assert_eq!(root_kind, "source_file");
 }
 
 #[test]
-fn test_rust_parser_with_unwrap() {
-    let mut parser = TreeSitterParser::rust();
-    let code = r#"
+fn test_rust_parser_finds_function() {
+    let code = br#"
 fn risky_function() {
     let value = Some(42);
     let unwrapped = value.unwrap();
     println!("{}", unwrapped);
 }
 "#;
+    let path = Path::new("test.rs");
 
-    let result = parser
-        .parse_content(code, "test.rs")
-        .expect("Should parse Rust code with unwrap");
-    assert_eq!(result.root.kind, "source_file");
-
-    // Verify the AST contains the function
-    fn find_node_by_kind<'a>(node: &'a AstNode, kind: &str) -> Option<&'a AstNode> {
-        if node.kind == kind {
-            return Some(node);
-        }
-        for child in &node.children {
-            if let Some(found) = find_node_by_kind(child, kind) {
-                return Some(found);
-            }
-        }
-        None
-    }
-
-    assert!(
-        find_node_by_kind(&result.root, "function_item").is_some(),
-        "Should find function_item node"
+    let has_function = action::<HasNodeCallback>(
+        &LANG::Rust,
+        code.to_vec(),
+        path,
+        None,
+        "function_item".into(),
     );
+    assert!(has_function, "Should find function_item node");
 }
 
 #[test]
 fn test_rust_parser_struct() {
-    let mut parser = TreeSitterParser::rust();
-    let code = r"
+    let code = br"
 pub struct MyService {
     name: String,
     value: i32,
@@ -138,35 +142,33 @@ impl MyService {
     }
 }
 ";
+    let path = Path::new("test.rs");
 
-    let result = parser
-        .parse_content(code, "test.rs")
-        .expect("Should parse Rust struct");
-    assert_eq!(result.root.kind, "source_file");
-    assert!(!result.root.children.is_empty());
+    let root_kind = action::<RootKindCallback>(&LANG::Rust, code.to_vec(), path, None, ());
+    assert_eq!(root_kind, "source_file");
+
+    let has_struct =
+        action::<HasNodeCallback>(&LANG::Rust, code.to_vec(), path, None, "struct_item".into());
+    assert!(has_struct, "Should find struct_item node");
 }
 
 // ==================== Python Parser Tests ====================
 
 #[test]
 fn test_python_parser_simple_function() {
-    let mut parser = TreeSitterParser::python();
-    let code = r#"
+    let code = br#"
 def hello_world():
     print("Hello, World!")
 "#;
+    let path = Path::new("test.py");
 
-    let result = parser
-        .parse_content(code, "test.py")
-        .expect("Should parse Python code");
-    assert_eq!(result.root.kind, "module");
-    assert!(!result.root.children.is_empty());
+    let root_kind = action::<RootKindCallback>(&LANG::Python, code.to_vec(), path, None, ());
+    assert_eq!(root_kind, "module");
 }
 
 #[test]
 fn test_python_parser_class() {
-    let mut parser = TreeSitterParser::python();
-    let code = r"
+    let code = br"
 class MyService:
     def __init__(self, name: str):
         self.name = name
@@ -175,55 +177,64 @@ class MyService:
     def get_name(self) -> str:
         return self.name
 ";
+    let path = Path::new("test.py");
 
-    let result = parser
-        .parse_content(code, "test.py")
-        .expect("Should parse Python class");
-    assert_eq!(result.root.kind, "module");
-    assert!(!result.root.children.is_empty());
+    let root_kind = action::<RootKindCallback>(&LANG::Python, code.to_vec(), path, None, ());
+    assert_eq!(root_kind, "module");
+
+    let has_class = action::<HasNodeCallback>(
+        &LANG::Python,
+        code.to_vec(),
+        path,
+        None,
+        "class_definition".into(),
+    );
+    assert!(has_class, "Should find class_definition node");
 }
 
 // ==================== JavaScript Parser Tests ====================
 
 #[test]
 fn test_javascript_parser_simple_function() {
-    let mut parser = TreeSitterParser::javascript();
-    let code = r#"
+    let code = br#"
 function helloWorld() {
     console.log("Hello, World!");
 }
 "#;
+    let path = Path::new("test.js");
 
-    let result = parser
-        .parse_content(code, "test.js")
-        .expect("Should parse JavaScript code");
-    assert_eq!(result.root.kind, "program");
-    assert!(!result.root.children.is_empty());
+    let root_kind = action::<RootKindCallback>(&LANG::Javascript, code.to_vec(), path, None, ());
+    assert_eq!(root_kind, "program");
 }
 
 #[test]
 fn test_javascript_parser_arrow_function() {
-    let mut parser = TreeSitterParser::javascript();
-    let code = r"
+    let code = br"
 const add = (a, b) => a + b;
 const multiply = (a, b) => {
     return a * b;
 };
 ";
+    let path = Path::new("test.js");
 
-    let result = parser
-        .parse_content(code, "test.js")
-        .expect("Should parse JS arrow functions");
-    assert_eq!(result.root.kind, "program");
-    assert!(!result.root.children.is_empty());
+    let root_kind = action::<RootKindCallback>(&LANG::Javascript, code.to_vec(), path, None, ());
+    assert_eq!(root_kind, "program");
+
+    let has_arrow = action::<HasNodeCallback>(
+        &LANG::Javascript,
+        code.to_vec(),
+        path,
+        None,
+        "arrow_function".into(),
+    );
+    assert!(has_arrow, "Should find arrow_function node");
 }
 
 // ==================== TypeScript Parser Tests ====================
 
 #[test]
 fn test_typescript_parser_typed_function() {
-    let mut parser = TreeSitterParser::typescript();
-    let code = r"
+    let code = br"
 function greet(name: string): string {
     return `Hello, ${name}!`;
 }
@@ -233,37 +244,15 @@ interface Person {
     age: number;
 }
 ";
+    let path = Path::new("test.ts");
 
-    let result = parser
-        .parse_content(code, "test.ts")
-        .expect("Should parse TypeScript code");
-    // TSX parser reports as "program"
-    assert!(!result.root.children.is_empty());
+    let root_kind = action::<RootKindCallback>(&LANG::Typescript, code.to_vec(), path, None, ());
+    assert_eq!(root_kind, "program");
 }
 
-// ==================== Go Parser Tests ====================
+// Note: Go parser tests removed - LANG::Go doesn't exist in rust-code-analysis
 
-#[test]
-fn test_go_parser_simple_function() {
-    let mut parser = TreeSitterParser::go();
-    let code = r#"
-package main
-
-import "fmt"
-
-func main() {
-    fmt.Println("Hello, World!")
-}
-"#;
-
-    let result = parser
-        .parse_content(code, "test.go")
-        .expect("Should parse Go code");
-    assert_eq!(result.root.kind, "source_file");
-    assert!(!result.root.children.is_empty());
-}
-
-// ==================== AST Query Tests ====================
+// ==================== AST Query Tests (unchanged - uses internal AstNode) ====================
 
 #[test]
 fn test_ast_query_builder() {
@@ -316,13 +305,13 @@ fn test_ast_query_node_type_matching() {
     let node = AstNode {
         kind: "identifier".to_string(),
         name: Some("test".to_string()),
-        span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position {
+        span: Span {
+            start: Position {
                 line: 1,
                 column: 1,
                 byte_offset: 0,
             },
-            end: mcb_validate::ast::Position {
+            end: Position {
                 line: 1,
                 column: 5,
                 byte_offset: 4,
@@ -344,13 +333,13 @@ fn test_ast_query_no_match() {
     let node = AstNode {
         kind: "identifier".to_string(),
         name: Some("test".to_string()),
-        span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position {
+        span: Span {
+            start: Position {
                 line: 1,
                 column: 1,
                 byte_offset: 0,
             },
-            end: mcb_validate::ast::Position {
+            end: Position {
                 line: 1,
                 column: 5,
                 byte_offset: 4,
@@ -371,13 +360,13 @@ fn test_ast_query_recursive_matching() {
     let child_node = AstNode {
         kind: "identifier".to_string(),
         name: Some("inner".to_string()),
-        span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position {
+        span: Span {
+            start: Position {
                 line: 2,
                 column: 1,
                 byte_offset: 10,
             },
-            end: mcb_validate::ast::Position {
+            end: Position {
                 line: 2,
                 column: 6,
                 byte_offset: 15,
@@ -390,13 +379,13 @@ fn test_ast_query_recursive_matching() {
     let root_node = AstNode {
         kind: "source_file".to_string(),
         name: None,
-        span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position {
+        span: Span {
+            start: Position {
                 line: 1,
                 column: 1,
                 byte_offset: 0,
             },
-            end: mcb_validate::ast::Position {
+            end: Position {
                 line: 3,
                 column: 1,
                 byte_offset: 20,
@@ -425,13 +414,13 @@ fn test_query_condition_has_child() {
     let block_node = AstNode {
         kind: "block".to_string(),
         name: None,
-        span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position {
+        span: Span {
+            start: Position {
                 line: 1,
                 column: 20,
                 byte_offset: 20,
             },
-            end: mcb_validate::ast::Position {
+            end: Position {
                 line: 3,
                 column: 1,
                 byte_offset: 50,
@@ -444,13 +433,13 @@ fn test_query_condition_has_child() {
     let func_node = AstNode {
         kind: "function_item".to_string(),
         name: Some("test_fn".to_string()),
-        span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position {
+        span: Span {
+            start: Position {
                 line: 1,
                 column: 1,
                 byte_offset: 0,
             },
-            end: mcb_validate::ast::Position {
+            end: Position {
                 line: 3,
                 column: 1,
                 byte_offset: 50,
@@ -481,13 +470,13 @@ fn test_query_condition_no_child() {
     let func_node = AstNode {
         kind: "function_item".to_string(),
         name: Some("safe_fn".to_string()),
-        span: mcb_validate::ast::Span {
-            start: mcb_validate::ast::Position {
+        span: Span {
+            start: Position {
                 line: 1,
                 column: 1,
                 byte_offset: 0,
             },
-            end: mcb_validate::ast::Position {
+            end: Position {
                 line: 3,
                 column: 1,
                 byte_offset: 50,
@@ -526,55 +515,4 @@ fn test_go_query_patterns() {
     let query = AstQueryPatterns::undocumented_functions("go");
     assert_eq!(query.language, "go");
     assert_eq!(query.node_type, "function_declaration");
-}
-
-// ==================== End-to-End Tests ====================
-
-#[test]
-fn test_parse_and_query_rust_code() {
-    let mut parser = TreeSitterParser::rust();
-    let code = r"
-fn documented_function() {
-    // This is documented
-}
-
-fn undocumented() {
-}
-";
-
-    let result = parser.parse_content(code, "test.rs").expect("Should parse");
-    assert_eq!(result.root.kind, "source_file");
-
-    // Verify we can query the AST
-    let query = AstQuery::new("rust", "function_item", "Found function", "info");
-    let violations = query.execute(&result.root);
-
-    // Should find the function_item nodes
-    assert!(!violations.is_empty(), "Should find at least one function");
-}
-
-#[test]
-fn test_ast_engine_get_parser_and_parse() {
-    let engine = AstEngine::new();
-
-    // Get the Rust parser
-    if let Some(parser_arc) = engine.get_parser("rust") {
-        let mut parser = parser_arc.lock().expect("Should lock parser");
-        let code = "fn main() {}";
-        let result = parser.parse_content(code, "main.rs").expect("Should parse");
-        assert_eq!(result.root.kind, "source_file");
-    } else {
-        panic!("Should have Rust parser");
-    }
-}
-
-#[test]
-fn test_ast_engine_register_query() {
-    let mut engine = AstEngine::new();
-
-    let query = AstQueryPatterns::unwrap_usage("rust");
-    engine.register_query("QUAL001".to_string(), query);
-
-    // Engine should now have the query registered
-    // (internal state, but we verify no panic occurs)
 }

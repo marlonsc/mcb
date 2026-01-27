@@ -110,6 +110,9 @@ tar = { workspace = true }
 futures = { workspace = true }
 async-stream = { workspace = true }
 
+# File locking for concurrent access
+libc = "0.2"
+
 # Providers - MUST be in dependencies (not dev-dependencies) for linkme inventory registration
 mcb-providers = { path = "../mcb-providers", features = ["full"] }
 

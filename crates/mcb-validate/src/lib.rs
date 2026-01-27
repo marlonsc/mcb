@@ -120,16 +120,19 @@ pub use linters::{
     ClippyLinter, LintViolation, LinterEngine, LinterType, RuffLinter, YamlRuleExecutor,
 };
 
-// Re-export AST module types
+// Re-export AST module types (RCA-based)
 pub use ast::{
-    AstDecoder, AstEngine, AstNode, AstParseResult, AstParser, AstQuery, AstQueryBuilder,
-    AstQueryPatterns, AstViolation, Position, QueryCondition, Span, UnwrapDetection,
-    UnwrapDetector,
+    AstDecoder, AstNode, AstParseResult, AstQuery, AstQueryBuilder, AstQueryPatterns, AstViolation,
+    Position, QueryCondition, Span, UnwrapDetection, UnwrapDetector,
 };
 
-// Re-export Metrics module types (Phase 4)
+// Re-export RCA types for direct usage (NO wrappers)
+pub use ast::{Callback, LANG, Node, ParserTrait, Search, action, find, guess_language};
+
+// Re-export Metrics module types (Phase 4) - RCA-based
 pub use metrics::{
-    MetricThreshold, MetricThresholds, MetricType, MetricViolation, MetricsAnalyzer,
+    MetricThreshold, MetricThresholds, MetricType, MetricViolation, RcaAnalyzer,
+    RcaFunctionMetrics, RcaMetrics,
 };
 
 // Re-export new validators

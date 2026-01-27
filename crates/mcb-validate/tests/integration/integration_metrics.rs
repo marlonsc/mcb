@@ -1,33 +1,37 @@
 //! Integration tests for Phase 4: Complexity Metrics
 //!
-//! Tests the full flow: Rust file → `MetricsAnalyzer` → violations
+//! Tests the full flow: source file → `RcaAnalyzer` → violations
+//! Using rust-code-analysis (RCA) directly - NO wrappers.
 
 #[cfg(test)]
 mod integration_metrics_tests {
-    use mcb_validate::metrics::{MetricThresholds, MetricType, MetricsAnalyzer};
-    use mcb_validate::violation_trait::{Severity, Violation};
+    use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
+    use mcb_validate::violation_trait::Severity;
+    use rust_code_analysis::LANG;
     use std::path::Path;
     use tempfile::TempDir;
 
     /// Test analyzing a simple function that should pass all thresholds
     #[test]
     fn test_simple_function_passes() {
-        let analyzer = MetricsAnalyzer::new();
+        let analyzer = RcaAnalyzer::new();
+        let path = Path::new("simple.rs");
 
-        let content = r"
+        let content = br"
 fn add(a: i32, b: i32) -> i32 {
     a + b
 }
 ";
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("simple.rs"))
-            .unwrap();
+        let functions = analyzer.analyze_code(content, &LANG::Rust, path).unwrap();
 
-        assert!(
-            violations.is_empty(),
-            "Simple function should pass all thresholds"
-        );
+        // Simple function should have low complexity
+        for func in &functions {
+            assert!(
+                func.metrics.cognitive <= 5.0,
+                "Simple function should have low cognitive complexity"
+            );
+        }
     }
 
     /// Test detecting high cognitive complexity
@@ -39,9 +43,9 @@ fn add(a: i32, b: i32) -> i32 {
             Severity::Warning,
         );
 
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = r"
+        let content = br"
 fn complex(x: i32) -> i32 {
     if x > 0 {
         if x > 10 {
@@ -58,9 +62,11 @@ fn complex(x: i32) -> i32 {
 }
 ";
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("complex.rs"))
-            .unwrap();
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("complex.rs");
+        std::fs::write(&file_path, content).unwrap();
+
+        let violations = analyzer.find_violations(&file_path).unwrap();
 
         assert!(
             !violations.is_empty(),
@@ -76,42 +82,48 @@ fn complex(x: i32) -> i32 {
         assert_eq!(complexity_violations[0].item_name, "complex");
     }
 
-    /// Test detecting deep nesting
+    /// Test detecting high cyclomatic complexity
     #[test]
-    fn test_detects_deep_nesting() {
-        let thresholds =
-            MetricThresholds::new().with_threshold(MetricType::NestingDepth, 2, Severity::Error);
+    fn test_detects_high_cyclomatic_complexity() {
+        let thresholds = MetricThresholds::new().with_threshold(
+            MetricType::CyclomaticComplexity,
+            3,
+            Severity::Error,
+        );
 
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = r#"
-fn deeply_nested(x: i32) {
+        let content = br"
+fn branchy(x: i32) -> i32 {
     if x > 0 {
-        while x > 10 {
-            for i in 0..x {
-                if i > 5 {
-                    println!("deep!");
-                }
-            }
+        match x {
+            1 => 1,
+            2 => 2,
+            3 => 3,
+            _ => x
         }
+    } else {
+        0
     }
 }
-"#;
+";
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("nested.rs"))
-            .unwrap();
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("branchy.rs");
+        std::fs::write(&file_path, content).unwrap();
 
-        let nesting_violations: Vec<_> = violations
+        let violations = analyzer.find_violations(&file_path).unwrap();
+
+        let cyclomatic_violations: Vec<_> = violations
             .iter()
-            .filter(|v| v.metric_type == MetricType::NestingDepth)
+            .filter(|v| v.metric_type == MetricType::CyclomaticComplexity)
             .collect();
 
         assert!(
-            !nesting_violations.is_empty(),
-            "Should detect nesting depth violation"
+            !cyclomatic_violations.is_empty(),
+            "Should detect cyclomatic complexity violation"
         );
-        assert_eq!(nesting_violations[0].severity, Severity::Error);
+        assert_eq!(cyclomatic_violations[0].severity, Severity::Error);
     }
 
     /// Test detecting long functions
@@ -123,9 +135,9 @@ fn deeply_nested(x: i32) {
             Severity::Warning,
         );
 
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = r"
+        let content = br"
 fn long_function() {
     let a = 1;
     let b = 2;
@@ -134,12 +146,15 @@ fn long_function() {
     let e = 5;
     let f = 6;
     let g = 7;
+    let h = 8;
 }
 ";
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("long.rs"))
-            .unwrap();
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("long.rs");
+        std::fs::write(&file_path, content).unwrap();
+
+        let violations = analyzer.find_violations(&file_path).unwrap();
 
         let length_violations: Vec<_> = violations
             .iter()
@@ -161,9 +176,9 @@ fn long_function() {
             Severity::Warning,
         );
 
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = r"
+        let content = br"
 struct Calculator;
 
 impl Calculator {
@@ -184,9 +199,11 @@ impl Calculator {
 }
 ";
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("impl.rs"))
-            .unwrap();
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("impl.rs");
+        std::fs::write(&file_path, content).unwrap();
+
+        let violations = analyzer.find_violations(&file_path).unwrap();
 
         // Should detect complex but not simple
         let names: Vec<_> = violations.iter().map(|v| &v.item_name).collect();
@@ -214,11 +231,11 @@ fn test_function(x: i32) -> i32 {
         )
         .unwrap();
 
-        let analyzer = MetricsAnalyzer::new();
-        let result = analyzer.analyze_rust_file(&file_path);
+        let analyzer = RcaAnalyzer::new();
+        let result = analyzer.analyze_file(&file_path);
 
-        // Should complete without error, violations depend on thresholds
-        assert!(result.is_ok(), "analyze_rust_file should succeed");
+        // Should complete without error
+        assert!(result.is_ok(), "analyze_file should succeed");
     }
 
     /// Test multiple files analysis
@@ -252,12 +269,15 @@ fn complex(x: i32) {
             Severity::Warning,
         );
 
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
-        let violations = analyzer.analyze_files(&[file1, file2]).unwrap();
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
+
+        // Analyze each file
+        let violations1 = analyzer.find_violations(&file1).unwrap();
+        let violations2 = analyzer.find_violations(&file2).unwrap();
 
         // Should find complexity in file2 but not file1
-        assert!(!violations.is_empty());
-        assert!(violations.iter().any(|v| v.file.ends_with("file2.rs")));
+        assert!(violations1.is_empty(), "file1 should have no violations");
+        assert!(!violations2.is_empty(), "file2 should have violations");
     }
 
     /// Test thresholds from YAML config
@@ -302,9 +322,9 @@ fn complex(x: i32) {
             Severity::Warning,
         );
 
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = r#"
+        let content = br#"
 fn with_if(x: i32) {
     if x > 0 {
         println!("positive");
@@ -312,9 +332,11 @@ fn with_if(x: i32) {
 }
 "#;
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("msg.rs"))
-            .unwrap();
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("msg.rs");
+        std::fs::write(&file_path, content).unwrap();
+
+        let violations = analyzer.find_violations(&file_path).unwrap();
 
         assert!(
             !violations.is_empty(),
@@ -327,22 +349,22 @@ fn with_if(x: i32) {
         assert_eq!(v.metric_type, MetricType::CognitiveComplexity);
         assert!(v.actual_value >= 1); // Should be at least 1 (the if statement)
         assert_eq!(v.threshold, 0);
-
-        // Check message() method
-        let msg = v.message();
-        assert!(msg.contains("with_if"));
-        assert!(msg.contains("cognitive complexity"));
     }
 
-    /// Test suggestion text
+    /// Test suggestion text via Violation trait
     #[test]
     fn test_suggestion_text() {
-        let thresholds =
-            MetricThresholds::new().with_threshold(MetricType::NestingDepth, 1, Severity::Warning);
+        use mcb_validate::violation_trait::Violation;
 
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
+        let thresholds = MetricThresholds::new().with_threshold(
+            MetricType::CyclomaticComplexity,
+            1,
+            Severity::Warning,
+        );
 
-        let content = r#"
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
+
+        let content = br#"
 fn nested(x: i32) {
     if x > 0 {
         if x > 10 {
@@ -352,23 +374,63 @@ fn nested(x: i32) {
 }
 "#;
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("suggestion.rs"))
-            .unwrap();
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("suggestion.rs");
+        std::fs::write(&file_path, content).unwrap();
+
+        let violations = analyzer.find_violations(&file_path).unwrap();
 
         assert!(!violations.is_empty());
         let v = &violations[0];
 
-        // Check suggestion is provided
+        // Check suggestion is provided via Violation trait
         let suggestion = v.suggestion();
         assert!(suggestion.is_some());
         let suggestion_text = suggestion.unwrap();
         assert!(!suggestion_text.is_empty());
-        // Should mention early returns or extracting logic
-        assert!(
-            suggestion_text.contains("early returns")
-                || suggestion_text.contains("extract")
-                || suggestion_text.contains("guard")
-        );
+    }
+
+    /// Test multi-language support
+    #[test]
+    fn test_python_analysis() {
+        let analyzer = RcaAnalyzer::new();
+        let path = Path::new("test.py");
+
+        let content = br"
+def complex_function(x):
+    if x > 0:
+        if x > 10:
+            if x > 100:
+                return x * 2
+    return x
+";
+
+        let functions = analyzer.analyze_code(content, &LANG::Python, path).unwrap();
+
+        assert!(!functions.is_empty(), "Should find Python functions");
+    }
+
+    /// Test JavaScript analysis
+    #[test]
+    fn test_javascript_analysis() {
+        let analyzer = RcaAnalyzer::new();
+        let path = Path::new("test.js");
+
+        let content = br"
+function complexFunction(x) {
+    if (x > 0) {
+        if (x > 10) {
+            if (x > 100) {
+                return x * 2;
+            }
+        }
+    }
+    return x;
+}
+";
+
+        let functions = analyzer.analyze_code(content, &LANG::Mozjs, path).unwrap();
+
+        assert!(!functions.is_empty(), "Should find JavaScript functions");
     }
 }

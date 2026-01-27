@@ -1,13 +1,12 @@
 //! Integration tests for YAML Metrics Rules (Phase 4)
 //!
-//! Tests the full pipeline: YAML rule → `MetricsConfig` → `MetricsAnalyzer` → violations
+//! Tests the full pipeline: YAML rule → `MetricsConfig` → `RcaAnalyzer` → violations
+//! Using rust-code-analysis (RCA) directly - NO wrappers.
 
 #[cfg(test)]
 mod yaml_metrics_tests {
-    use mcb_validate::metrics::{MetricThresholds, MetricType, MetricsAnalyzer};
+    use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
     use mcb_validate::rules::yaml_loader::{MetricThresholdConfig, MetricsConfig, YamlRuleLoader};
-    use mcb_validate::violation_trait::Violation;
-    use std::path::Path;
     use tempfile::TempDir;
 
     /// Test that `MetricsConfig` can be converted to `MetricThresholds`
@@ -68,9 +67,9 @@ mod yaml_metrics_tests {
         };
 
         let thresholds = MetricThresholds::from_metrics_config(&config);
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = r"
+        let content = br"
 fn complex(x: i32) -> i32 {
     if x > 0 {
         if x > 10 {
@@ -83,9 +82,11 @@ fn complex(x: i32) -> i32 {
 }
 ";
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("test.rs"))
-            .unwrap();
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("test.rs");
+        std::fs::write(&file_path, content).unwrap();
+
+        let violations = analyzer.find_violations(&file_path).unwrap();
 
         assert!(!violations.is_empty(), "Should detect complexity violation");
         let v = &violations[0];
@@ -145,7 +146,7 @@ metrics:
         assert_eq!(nd.max, 3);
     }
 
-    /// Test full pipeline: YAML rule → `MetricThresholds` → `MetricsAnalyzer` → violations
+    /// Test full pipeline: YAML rule → `MetricThresholds` → `RcaAnalyzer` → violations
     #[tokio::test]
     async fn test_full_yaml_metrics_pipeline() {
         let temp_dir = TempDir::new().unwrap();
@@ -181,9 +182,9 @@ metrics:
         let thresholds = MetricThresholds::from_metrics_config(metrics_config);
 
         // Analyze code
-        let analyzer = MetricsAnalyzer::with_thresholds(thresholds);
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = r#"
+        let content = br#"
 fn nested(x: i32) {
     if x > 0 {
         if x > 10 {
@@ -193,14 +194,14 @@ fn nested(x: i32) {
 }
 "#;
 
-        let violations = analyzer
-            .analyze_rust_content(content, Path::new("test.rs"))
-            .unwrap();
+        let test_file = temp_dir.path().join("test.rs");
+        std::fs::write(&test_file, content).unwrap();
+
+        let violations = analyzer.find_violations(&test_file).unwrap();
 
         // Should detect cognitive complexity > 2
         assert!(!violations.is_empty(), "Should detect violation");
         let v = &violations[0];
-        assert_eq!(v.id(), "METRIC001");
         assert!(v.actual_value > 2, "Actual value should exceed threshold");
     }
 

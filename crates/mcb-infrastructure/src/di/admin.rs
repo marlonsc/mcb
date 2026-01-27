@@ -241,6 +241,19 @@ where
 // ============================================================================
 
 /// Interface for embedding provider admin operations
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::admin::{EmbeddingAdminInterface, ProviderInfo};
+///
+/// fn list_embedding_providers(admin: &dyn EmbeddingAdminInterface) -> Vec<String> {
+///     admin.list_providers()
+///         .into_iter()
+///         .map(|info| info.name)
+///         .collect()
+/// }
+/// ```
 pub trait EmbeddingAdminInterface: Send + Sync + std::fmt::Debug {
     /// List all available embedding providers
     fn list_providers(&self) -> Vec<ProviderInfo>;
@@ -253,6 +266,19 @@ pub trait EmbeddingAdminInterface: Send + Sync + std::fmt::Debug {
 }
 
 /// Interface for vector store provider admin operations
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::admin::{VectorStoreAdminInterface, ProviderInfo};
+///
+/// fn list_vector_providers(admin: &dyn VectorStoreAdminInterface) -> Vec<String> {
+///     admin.list_providers()
+///         .into_iter()
+///         .map(|info| info.name)
+///         .collect()
+/// }
+/// ```
 pub trait VectorStoreAdminInterface: Send + Sync + std::fmt::Debug {
     /// List all available vector store providers
     fn list_providers(&self) -> Vec<ProviderInfo>;
@@ -263,6 +289,19 @@ pub trait VectorStoreAdminInterface: Send + Sync + std::fmt::Debug {
 }
 
 /// Interface for cache provider admin operations
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::admin::{CacheAdminInterface, ProviderInfo};
+///
+/// fn list_cache_providers(admin: &dyn CacheAdminInterface) -> Vec<String> {
+///     admin.list_providers()
+///         .into_iter()
+///         .map(|info| info.name)
+///         .collect()
+/// }
+/// ```
 pub trait CacheAdminInterface: Send + Sync + std::fmt::Debug {
     /// List all available cache providers
     fn list_providers(&self) -> Vec<ProviderInfo>;
@@ -275,6 +314,19 @@ pub trait CacheAdminInterface: Send + Sync + std::fmt::Debug {
 }
 
 /// Interface for language provider admin operations
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_infrastructure::di::admin::{LanguageAdminInterface, ProviderInfo};
+///
+/// fn list_language_providers(admin: &dyn LanguageAdminInterface) -> Vec<String> {
+///     admin.list_providers()
+///         .into_iter()
+///         .map(|info| info.name)
+///         .collect()
+/// }
+/// ```
 pub trait LanguageAdminInterface: Send + Sync + std::fmt::Debug {
     /// List all available language providers
     fn list_providers(&self) -> Vec<ProviderInfo>;

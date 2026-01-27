@@ -45,6 +45,13 @@ mcb-infrastructure = "0.1.0"
             file_contents: HashMap::new(),
         };
 
+        // Debug: Check Cargo.toml is properly created
+        let cargo_path = domain_dir.join("Cargo.toml");
+        let cargo_exists = cargo_path.exists();
+        let cargo_content = std::fs::read_to_string(&cargo_path).unwrap_or_default();
+        println!("Debug: Cargo.toml exists at {cargo_path:?}: {cargo_exists}");
+        println!("Debug: workspace_root = {:?}", context.workspace_root);
+
         // Load CA001 GRL rule
         let grl = r#"
 rule "DomainIndependence" salience 10 {
@@ -70,7 +77,7 @@ rule "DomainIndependence" salience 10 {
         // Should detect the violation
         assert!(
             !violations.is_empty(),
-            "CA001 should detect forbidden dependency in mcb-domain"
+            "CA001 should detect forbidden dependency in mcb-domain. Cargo.toml content:\n{cargo_content}"
         );
         assert!(
             violations[0].message.contains("Domain layer cannot depend"),
