@@ -52,7 +52,7 @@ pub type LanguageProviderHandle = Handle<dyn LanguageChunkingProvider>;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// use mcb_infrastructure::di::{EmbeddingProviderHandle, EmbeddingHandleExt};
 ///
 /// fn log_provider(handle: &EmbeddingProviderHandle) {
@@ -74,7 +74,7 @@ impl EmbeddingHandleExt for EmbeddingProviderHandle {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// use mcb_infrastructure::di::{CacheProviderHandle, CacheHandleExt};
 ///
 /// fn log_cache(handle: &CacheProviderHandle) {

@@ -6,21 +6,14 @@
 //! - No implicit fallbacks or legacy `MCB_` prefix support
 //! - Fail-fast on missing required configuration
 //!
-//! # Running These Tests
-//!
-//! These tests modify environment variables and must run sequentially:
-//!
-//! ```bash
-//! cargo test -p mcb-infrastructure --test unit config_figment -- --test-threads=1 --ignored
-//! ```
-//!
 //! # Safety
 //!
 //! Tests use `unsafe` blocks for `env::set_var`/`env::remove_var` because
 //! Rust 2024 edition requires this for environment variable mutations.
-//! Tests MUST run with `--test-threads=1` to prevent data races.
+//! Tests use `#[serial]` to prevent data races between env var mutations.
 
 use mcb_infrastructure::config::loader::ConfigLoader;
+use serial_test::serial;
 use std::env;
 
 /// Helper to set env var safely
@@ -50,10 +43,8 @@ fn cleanup_auth() {
 }
 
 /// Verify env vars with MCP__ prefix are loaded correctly
-///
-/// Run with: `cargo test -p mcb-infrastructure config_figment -- --test-threads=1 --ignored`
 #[test]
-#[ignore = "requires --test-threads=1 due to env var mutations"]
+#[serial]
 fn test_mcp_prefix_env_vars_loaded() {
     // Disable auth to avoid JWT validation
     disable_auth();
@@ -73,10 +64,8 @@ fn test_mcp_prefix_env_vars_loaded() {
 }
 
 /// Verify old MCB_ prefix is NOT loaded (breaking change per ADR-025)
-///
-/// Run with: `cargo test -p mcb-infrastructure config_figment -- --test-threads=1 --ignored`
 #[test]
-#[ignore = "requires --test-threads=1 due to env var mutations"]
+#[serial]
 fn test_old_mcb_prefix_not_loaded() {
     // Disable auth to avoid JWT validation
     disable_auth();
@@ -96,10 +85,8 @@ fn test_old_mcb_prefix_not_loaded() {
 }
 
 /// Verify new MCP__ admin key IS loaded correctly
-///
-/// Run with: `cargo test -p mcb-infrastructure config_figment -- --test-threads=1 --ignored`
 #[test]
-#[ignore = "requires --test-threads=1 due to env var mutations"]
+#[serial]
 fn test_new_admin_key_loaded() {
     // Disable auth to avoid JWT validation
     disable_auth();
@@ -120,10 +107,8 @@ fn test_new_admin_key_loaded() {
 }
 
 /// Verify JWT secret validation fails when empty and auth is enabled
-///
-/// Run with: `cargo test -p mcb-infrastructure config_figment -- --test-threads=1 --ignored`
 #[test]
-#[ignore = "requires --test-threads=1 due to env var mutations"]
+#[serial]
 fn test_jwt_secret_required_when_auth_enabled() {
     // Enable auth but don't set JWT secret
     set_env("MCP__AUTH__ENABLED", "true");
@@ -148,10 +133,8 @@ fn test_jwt_secret_required_when_auth_enabled() {
 }
 
 /// Verify watching_enabled config is loaded from Figment, not direct env::var
-///
-/// Run with: `cargo test -p mcb-infrastructure config_figment -- --test-threads=1 --ignored`
 #[test]
-#[ignore = "requires --test-threads=1 due to env var mutations"]
+#[serial]
 fn test_watching_enabled_via_figment() {
     // Disable auth to avoid JWT validation
     disable_auth();
@@ -170,10 +153,8 @@ fn test_watching_enabled_via_figment() {
 }
 
 /// Verify that DISABLE_CONFIG_WATCHING env var is NOT supported (legacy removal)
-///
-/// Run with: `cargo test -p mcb-infrastructure config_figment -- --test-threads=1 --ignored`
 #[test]
-#[ignore = "requires --test-threads=1 due to env var mutations"]
+#[serial]
 fn test_legacy_disable_watching_not_supported() {
     // Disable auth to avoid JWT validation
     disable_auth();
@@ -193,13 +174,18 @@ fn test_legacy_disable_watching_not_supported() {
 }
 
 // ============================================================================
-// Non-ignored tests: These don't modify env vars, so they can run in parallel
+// Tests that need clean env state (also serial to avoid interference)
 // ============================================================================
 
 /// Verify auth is DISABLED by default (changed from ADR-025 for local development ease)
 /// When auth.enabled=false, JWT secret is not required
 #[test]
+#[serial]
 fn test_auth_disabled_by_default_loads_without_jwt_secret() {
+    // Ensure clean state - remove any auth env vars from previous tests
+    remove_env("MCP__AUTH__ENABLED");
+    remove_env("MCP__AUTH__JWT__SECRET");
+
     // Load config without any env vars set - should SUCCEED because auth is disabled by default
     let result = ConfigLoader::new().load();
 

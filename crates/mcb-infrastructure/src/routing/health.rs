@@ -36,7 +36,7 @@ impl Default for ProviderHealthData {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```rust,ignore
 /// // Get health status of a provider
 /// let status = monitor.get_health("ollama-embedding");
 /// match status {

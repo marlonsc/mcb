@@ -4,7 +4,7 @@
 //!
 //! ## Usage
 //!
-//! ```rust,ignore
+//! ```
 //! use mcb_providers::events::NullEventBusProvider;
 //!
 //! let bus = NullEventBusProvider::new();

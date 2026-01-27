@@ -15,9 +15,7 @@
 //!
 //! ## Usage
 //!
-//! ```ignore
-//! use mcb_validate::duplication::{DuplicationAnalyzer, DuplicationThresholds};
-//!
+//! ```text
 //! let analyzer = DuplicationAnalyzer::new();
 //! let violations = analyzer.analyze_files(&[path1, path2])?;
 //!

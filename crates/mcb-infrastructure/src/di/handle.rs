@@ -24,18 +24,26 @@ use std::sync::{Arc, RwLock};
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// use std::sync::Arc;
 /// use mcb_infrastructure::di::Handle;
-/// use mcb_domain::ports::providers::EmbeddingProvider;
+///
+/// // Handle works with any Send + Sync trait object
+/// trait MyTrait: Send + Sync {
+///     fn name(&self) -> &str;
+/// }
+///
+/// struct MyImpl;
+/// impl MyTrait for MyImpl {
+///     fn name(&self) -> &str { "impl" }
+/// }
 ///
 /// // Create handle with initial provider
-/// let handle = Handle::new(Arc::new(my_provider));
+/// let handle: Handle<dyn MyTrait> = Handle::new(Arc::new(MyImpl));
 ///
 /// // Get current provider
 /// let provider = handle.get();
-///
-/// // Switch to new provider (admin API)
-/// handle.set(Arc::new(new_provider));
+/// assert_eq!(provider.name(), "impl");
 /// ```
 pub struct Handle<T: ?Sized + Send + Sync> {
     inner: RwLock<Arc<T>>,

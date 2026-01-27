@@ -18,7 +18,7 @@
 //!
 //! ## Usage
 //!
-//! ```rust,ignore
+//! ```text
 //! let catalog = build_catalog(config).await?;
 //! let embedding: Arc<dyn EmbeddingProvider> = catalog.get_one()?;
 //! ```

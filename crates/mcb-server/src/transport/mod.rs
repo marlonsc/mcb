@@ -13,23 +13,9 @@
 //!
 //! ## Usage
 //!
-//! ```rust,ignore
-//! use mcb_server::transport::{TransportConfig, TransportMode};
-//! use mcb_server::McpServer;
-//!
-//! let server = McpServer::new(/* ... */);
-//!
-//! // Stdio transport (traditional MCP - standalone mode)
-//! server.serve_stdio().await?;
-//!
-//! // HTTP server transport (server mode)
-//! let http = HttpTransport::new(config, Arc::new(server));
-//! http.start().await?;
-//!
-//! // HTTP client transport (client mode)
-//! let client = HttpClientTransport::new(server_url, session_prefix, timeout);
-//! client.run().await?;
-//! ```
+//! Transport selection is typically handled by the initialization system.
+//! See [`mcb_server::init`] for the entry point that configures transports
+//! based on the operating mode.
 
 pub mod config;
 pub mod http;

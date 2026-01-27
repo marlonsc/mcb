@@ -57,7 +57,7 @@ impl ProviderInfo {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// use mcb_infrastructure::di::ProviderResolver;
 ///
 /// fn list_providers<R, P, C>(resolver: &R) -> Vec<String>

@@ -20,3 +20,6 @@ mod mcp_error_handling_tests;
 
 #[path = "unit/browse_handlers_tests.rs"]
 mod browse_handlers_tests;
+
+#[path = "unit/mcp_protocol_tests.rs"]
+mod mcp_protocol_tests;

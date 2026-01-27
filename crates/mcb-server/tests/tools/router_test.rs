@@ -1,11 +1,56 @@
 //! Tool Router Tests
 //!
-//! Note: Internal router functions are private. These tests verify
-//! the public API and exported types from the tools module.
+//! Tests for the MCP tool registry and definitions.
+
+use mcb_server::tools::{ToolDefinitions, create_tool_list};
 
 #[test]
-fn test_tools_module_exists() {
-    // Verify the tools module is accessible by checking it compiles
-    // Internal router functions are private, so we just verify the module exists
-    let _ = std::any::type_name::<fn()>();
+fn test_tool_definitions_index_codebase() {
+    let tool = ToolDefinitions::index_codebase().expect("Should create index_codebase tool");
+    assert_eq!(&*tool.name, "index_codebase");
+    assert!(tool.description.is_some(), "Tool should have description");
+    // input_schema is Arc<JsonObject>, verify it has schema properties
+    assert!(
+        !tool.input_schema.is_empty(),
+        "Tool should have valid input schema"
+    );
+}
+
+#[test]
+fn test_tool_definitions_search_code() {
+    let tool = ToolDefinitions::search_code().expect("Should create search_code tool");
+    assert_eq!(&*tool.name, "search_code");
+    assert!(tool.description.is_some(), "Tool should have description");
+    // input_schema is Arc<JsonObject>, verify it has schema properties
+    assert!(
+        !tool.input_schema.is_empty(),
+        "Tool should have valid input schema"
+    );
+}
+
+#[test]
+fn test_tool_definitions_get_indexing_status() {
+    let tool =
+        ToolDefinitions::get_indexing_status().expect("Should create get_indexing_status tool");
+    assert_eq!(&*tool.name, "get_indexing_status");
+    assert!(tool.description.is_some(), "Tool should have description");
+}
+
+#[test]
+fn test_tool_definitions_clear_index() {
+    let tool = ToolDefinitions::clear_index().expect("Should create clear_index tool");
+    assert_eq!(&*tool.name, "clear_index");
+    assert!(tool.description.is_some(), "Tool should have description");
+}
+
+#[test]
+fn test_create_tool_list() {
+    let tools = create_tool_list().expect("Should create tool list");
+    assert_eq!(tools.len(), 4, "Should have 4 tools");
+
+    let names: Vec<&str> = tools.iter().map(|t| &*t.name).collect();
+    assert!(names.contains(&"index_codebase"));
+    assert!(names.contains(&"search_code"));
+    assert!(names.contains(&"get_indexing_status"));
+    assert!(names.contains(&"clear_index"));
 }

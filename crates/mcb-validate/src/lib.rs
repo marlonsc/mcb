@@ -20,7 +20,7 @@
 //!
 //! The validator can scan multiple source directories (e.g., workspace crates + legacy src/):
 //!
-//! ```ignore
+//! ```text
 //! use mcb_validate::{ValidationConfig, ArchitectureValidator};
 //!
 //! let config = ValidationConfig::new("/workspace")
@@ -174,7 +174,7 @@ pub type Result<T> = std::result::Result<T, ValidationError>;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// use mcb_validate::ValidationConfig;
 ///
 /// let config = ValidationConfig::new("/workspace")
@@ -451,7 +451,9 @@ impl ArchitectureValidator {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```
+    /// use mcb_validate::{ValidationConfig, ArchitectureValidator};
+    ///
     /// let config = ValidationConfig::new("/workspace")
     ///     .with_additional_path("../src");  // Also validate legacy code
     ///

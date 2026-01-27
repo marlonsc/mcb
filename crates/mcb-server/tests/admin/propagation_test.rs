@@ -24,27 +24,27 @@ async fn test_config_propagator_with_callback() {
     assert_eq!(propagator.callbacks.len(), 1);
 }
 
-#[test]
-fn test_propagator_handle_is_running() {
+#[tokio::test]
+async fn test_propagator_handle_is_running() {
     // Test that the handle properly tracks task state
-    let runtime = tokio::runtime::Runtime::new().expect("Failed to create runtime");
-
-    let handle = runtime.block_on(async {
-        let handle = tokio::spawn(async {
-            // Simulate some work
-            tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-        });
-        PropagatorHandle { handle }
+    let handle = tokio::spawn(async {
+        // Simulate work that takes time
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
     });
+    let propagator_handle = PropagatorHandle { handle };
 
-    // Verify that is_running() returns a boolean
-    let is_running = handle.is_running();
-    assert!(matches!(is_running, true | false));
+    // Task should be running immediately after spawn
+    assert!(
+        propagator_handle.is_running(),
+        "Task should be running immediately after spawn"
+    );
 
-    // Wait for task completion
-    // Note: awaiting the JoinHandle consumes it, so we can't check is_running() after
-    runtime.block_on(async {
-        // Just ensure the task completes without panic
-        tokio::time::sleep(tokio::time::Duration::from_millis(20)).await;
-    });
+    // Wait for task to complete
+    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+    // Task should be finished after sleep
+    assert!(
+        !propagator_handle.is_running(),
+        "Task should be finished after completion"
+    );
 }

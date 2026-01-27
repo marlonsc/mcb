@@ -169,3 +169,4 @@ test-utils = []
 [dev-dependencies]
 tempfile = "3.10"
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+serial_test = { workspace = true }

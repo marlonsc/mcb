@@ -129,17 +129,10 @@ impl AuthErrorResponse {
 
 /// Request guard for admin authentication
 ///
-/// Add this guard to route handlers that require authentication:
-///
-/// ```rust,ignore
-/// #[get("/protected")]
-/// fn protected(_auth: AdminAuth) -> &'static str {
-///     "Protected content"
-/// }
-/// ```
-///
-/// Routes that should bypass authentication (like health checks)
-/// should not include this guard.
+/// Add this guard to route handlers that require authentication.
+/// Routes that include `AdminAuth` as a parameter will require valid
+/// API key authentication. Routes without this guard (like health checks)
+/// will bypass authentication.
 pub struct AdminAuth;
 
 /// Error type for admin authentication failures

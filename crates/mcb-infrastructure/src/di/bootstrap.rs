@@ -18,7 +18,7 @@
 //!
 //! ## Usage
 //!
-//! ```rust,ignore
+//! ```text
 //! // Create AppContext with provider handles
 //! let context = init_app(AppConfig::default()).await?;
 //!

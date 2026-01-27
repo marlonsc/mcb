@@ -85,8 +85,10 @@ fn generate_milvus_name(user_name: &str) -> String {
 /// * `String` - Milvus-compatible name (stored in mapping)
 ///
 /// # Example
-/// ```ignore
-/// let milvus_name = map_collection_name("mcp-context-browser")?;
+/// ```no_run
+/// use mcb_server::collection_mapping::map_collection_name;
+///
+/// let milvus_name = map_collection_name("mcp-context-browser").unwrap();
 /// // Returns: "mcp_context_browser_143021" (with mapping stored)
 /// ```
 pub fn map_collection_name(user_name: &str) -> Result<String> {

@@ -15,7 +15,7 @@
 //!
 //! ## Example
 //!
-//! ```ignore
+//! ```
 //! use mcb::domain::CodeChunk;
 //!
 //! // Domain types are available through the mcb facade
@@ -25,9 +25,10 @@
 //!     file_path: "example.rs".to_string(),
 //!     start_line: 1,
 //!     end_line: 1,
-//!     language: "rust".to_string(),  // Language is a String type alias
+//!     language: "rust".to_string(),
 //!     metadata: serde_json::json!({}),
 //! };
+//! assert_eq!(chunk.id, "chunk-1");
 //! ```
 //!
 //! ## Architecture

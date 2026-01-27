@@ -6,6 +6,15 @@
 
 use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_domain::SearchResult;
+use mcb_infrastructure::cache::provider::SharedCacheProvider;
+use mcb_infrastructure::config::types::AppConfig;
+use mcb_infrastructure::crypto::CryptoService;
+use mcb_infrastructure::di::bootstrap::init_app;
+use mcb_infrastructure::di::modules::domain_services::{
+    DomainServicesFactory, ServiceDependencies,
+};
+use mcb_server::McpServerBuilder;
+use mcb_server::mcp_server::McpServer;
 use std::path::PathBuf;
 use tempfile::TempDir;
 
@@ -133,4 +142,47 @@ pub fn create_test_search_results(count: usize) -> Vec<SearchResult> {
             )
         })
         .collect()
+}
+
+/// Create an MCP server with null providers for testing
+///
+/// This uses the default AppConfig which initializes null providers,
+/// suitable for unit tests that don't need real embedding/vector store.
+pub async fn create_test_mcp_server() -> McpServer {
+    let config = AppConfig::default();
+    let ctx = init_app(config.clone()).await.expect("Failed to init app");
+
+    // Get providers from context
+    let embedding_provider = ctx.embedding_handle().get();
+    let vector_store_provider = ctx.vector_store_handle().get();
+    let language_chunker = ctx.language_handle().get();
+    let cache_provider = ctx.cache_handle().get();
+
+    // Create shared cache provider for domain services factory
+    let shared_cache = SharedCacheProvider::from_arc(cache_provider);
+
+    // Create crypto service with random key for tests
+    let master_key = CryptoService::generate_master_key();
+    let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
+
+    // Create domain services
+    let deps = ServiceDependencies {
+        cache: shared_cache,
+        crypto,
+        config,
+        embedding_provider,
+        vector_store_provider,
+        language_chunker,
+    };
+
+    let services = DomainServicesFactory::create_services(deps)
+        .await
+        .expect("Failed to create services");
+
+    McpServerBuilder::new()
+        .with_indexing_service(services.indexing_service)
+        .with_context_service(services.context_service)
+        .with_search_service(services.search_service)
+        .build()
+        .expect("Failed to build MCP server")
 }

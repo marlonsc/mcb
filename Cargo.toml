@@ -223,6 +223,7 @@ dill = "0.15"
 
 # Development/testing
 tempfile = "3.19"
+serial_test = "3.2"
 
 # ============================================
 # mcb-validate specific dependencies

@@ -5,7 +5,7 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```text
 //! define_violations! {
 //!     ViolationCategory::Architecture,
 //!     pub enum DependencyViolation {

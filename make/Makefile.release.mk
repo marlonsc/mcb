@@ -12,7 +12,7 @@ VERSION := $(shell grep '^version' crates/mcb/Cargo.toml | head -1 | sed 's/.*"\
 # Installation directory - single location for MCP and systemd
 INSTALL_DIR := $(HOME)/.local/bin
 INSTALL_BINARY := mcb
-BINARY_NAME := mcb-server
+BINARY_NAME := mcb
 
 # =============================================================================
 # RELEASE - Full release pipeline

@@ -13,7 +13,7 @@
 //!
 //! ## Usage
 //!
-//! ```rust,ignore
+//! ```text
 //! use crate::test_utils::real_providers::*;
 //!
 //! #[tokio::test]
