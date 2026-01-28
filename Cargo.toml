@@ -87,7 +87,7 @@ aes-gcm = "0.10"
 rand = "0.9"
 
 # Authentication
-jsonwebtoken = { version = "10.3", features = ["rust_crypto"] }
+# NOTE: jsonwebtoken removed in v0.1.4 (RUSTSEC-2023-0071) - was never actually used
 bcrypt = "0.18"
 argon2 = "0.5"
 base64 = "0.22"
