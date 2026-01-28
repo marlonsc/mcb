@@ -1,6 +1,8 @@
 # Integration Tests - Redis and NATS
 
-This document explains how to run the comprehensive integration tests for Redis cache provider and NATS event bus against real local services.
+This document explains how to run integration tests that use Redis (cache) and NATS (event bus) against real local services.
+
+**Note:** Current integration tests use `skip_if_service_unavailable!` and check Milvus, Ollama, Redis, Postgres, etc. (see `crates/mcb-server/tests/integration_helpers.rs`). The specific `cargo test redis_cache_integration` / `nats_event_bus_integration` targets may not exist; use `make test` or `make test SCOPE=integration` for the actual suite. The Redis/NATS Docker setup below remains useful when those services are required.
 
 ## Quick Start
 
@@ -25,14 +27,18 @@ curl -s http://localhost:8222/healthz
 
 ```bash
 
-# Option 1: Start services, then run tests (host services)
+# Option 1: Redis + NATS only (lightweight)
+docker-compose -f docker-compose.testing.yml up -d
+make test
+# docker-compose -f docker-compose.testing.yml down -v when done
+
+# Option 2: Full stack (Ollama, Milvus, etc.) via make docker-up
 make docker-up
 make test
-# make docker-down when done
-
-# Option 2: Full stack via docker-compose (container connects to host services)
-docker-compose up
+make docker-down
 ```
+
+`make docker-up` uses `docker-compose.yml` (Ollama, Milvus, OpenAI mock). For Redis and NATS only, use `docker-compose.testing.yml` as above.
 
 ## Detailed Setup
 
@@ -92,16 +98,16 @@ cargo test redis_cache_integration nats_event_bus_integration -- --nocapture
 
 #### Method 2: Docker services + local tests
 
-Start Docker services (e.g. Redis, NATS via `docker-compose`), then run tests on the host:
+Start Redis and NATS via `docker-compose.testing.yml`, then run tests on the host:
 
 ```bash
 
-make docker-up                           # Start Docker services
-REDIS_URL=redis://127.0.0.1:6379 \
-NATS_URL=nats://127.0.0.1:4222 \
-make test                                # Run all tests (integration tests use host services)
-make docker-down                         # Stop Docker services
+docker-compose -f docker-compose.testing.yml up -d
+REDIS_URL=redis://127.0.0.1:6379 NATS_URL=nats://127.0.0.1:4222 make test
+docker-compose -f docker-compose.testing.yml down -v
 ```
+
+For the full stack (Ollama, Milvus): `make docker-up` then `make test` then `make docker-down`.
 
 #### Method 3: Full Docker Compose (Container Test Runner)
 
@@ -122,7 +128,7 @@ docker-compose down -v        # Cleanup
 
 ### Redis Cache Provider Tests
 
-**File:** `crates/mcb-infrastructure/tests/cache/providers/redis_test.rs`
+**See:** `crates/mcb-server/tests/integration_helpers.rs` (e.g. `is_redis_available`), `crates/mcb-providers/src/cache/redis.rs`, and integration tests.
 
 Tests include:
 
@@ -145,7 +151,7 @@ cargo test redis_cache_integration -- --nocapture
 
 ### NATS Event Bus Tests
 
-**File:** `crates/mcb-infrastructure/tests/events/nats_event_bus_test.rs` (or inline tests in `crates/mcb-infrastructure/src/events/`)
+**See:** `crates/mcb-infrastructure/src/infrastructure/events.rs` and integration tests. NATS availability checks may use similar patterns to `is_redis_available` in `integration_helpers`.
 
 Tests include:
 
@@ -259,11 +265,13 @@ When a required service is missing, tests skip with a message such as:
 ```bash
 make test                      # Run all unit + integration tests locally
 make test SCOPE=integration    # Run only integration tests
-make docker-up                 # Start Docker services (docker-compose up -d)
-make docker-down               # Stop Docker services
+make docker-up                 # Start main stack (docker-compose.yml: Ollama, Milvus, etc.)
+make docker-down               # Stop main stack
 make docker-logs               # View Docker logs
 make docker                    # Show Docker service status
 ```
+
+For Redis + NATS only, use `docker-compose -f docker-compose.testing.yml up -d` (and `down -v` when done). `make docker-up` uses the main compose, not the testing one.
 
 ## Troubleshooting
 
@@ -416,15 +424,15 @@ jobs:
 -   [Redis Documentation](https://redis.io/documentation)
 -   [NATS Documentation](https://docs.nats.io/)
 -   [MCP Context Browser Architecture](./architecture/ARCHITECTURE.md)
--   [Provider Pattern Implementation](./adr/005-provider-pattern.md)
+-   [ADR-005: Context Cache Support (Moka and Redis)](./adr/005-context-cache-support.md)
 
 ## Contributing
 
 When adding new integration tests:
 
-1.  Use the existing patterns in `crates/mcb-infrastructure/tests/cache/providers/redis_test.rs`
+1.  Use existing patterns in `crates/mcb-server/tests/integration_helpers.rs` and `crates/mcb-providers/src/cache/redis.rs`
 2.  Include environment variable support for flexible service locations
-3.  Use `skip_if_no_service!()` macro for graceful skipping
+3.  Use `skip_if_service_unavailable!("Service", is_*_available())` for graceful skipping
 4.  Add cleanup code to prevent test pollution
 5.  Include both success and failure paths
 6.  Document expected behavior in test comments

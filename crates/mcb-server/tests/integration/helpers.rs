@@ -4,9 +4,10 @@
 /// Usage in tests:
 /// ```ignore
 /// #[tokio::test]
-/// async fn example_test() {
+/// async fn example() {
 ///     skip_if_service_unavailable!("Milvus", is_milvus_available());
-///     // Test code that requires Milvus
+///     let result = do_something();
+///     assert_eq!(result, expected);
 /// }
 /// ```
 use std::net::TcpStream;

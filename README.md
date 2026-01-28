@@ -34,10 +34,10 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 ### Main Features
 
 -   **Semantic Code Search**: Natural language queries → code discovery using vector embeddings
--   **Clean Architecture**: 7 crates organized by Clean Architecture layers (domain, application, infrastructure, providers, server, validate)
+-   **Clean Architecture**: 8 crates (domain, application, infrastructure, providers, server, validate) per Clean Architecture layers
 -   **Provider Ecosystem**: 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 5 vector stores
 -   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
--   **Architecture Validation**: mcb-validate crate with automated architecture enforcement (Phases 1-3 verified: 73 tests pass)
+-   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 1638+ tests project-wide
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
 
 ## Architecture
@@ -52,7 +52,7 @@ crates/
 ├── mcb-providers/       # Layer 3: Provider implementations (embedding, vector stores)
 ├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging
 ├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
-└── mcb-validate/        # Dev tooling: architecture validation (Phases 1-3 verified)
+└── mcb-validate/        # Dev tooling: architecture validation (Phases 1–7)
 ```
 
 **Dependency Direction** (inward only):
@@ -65,11 +65,11 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 
 ### Key Architectural Decisions
 
--   **ADR-001**: Modular Crates Architecture - 7 crates for separation of concerns
--   **ADR-002**: Async-First Architecture - Tokio throughout
--   **ADR-012**: Two-Layer DI Strategy - Shaku modules + runtime factories
--   **ADR-013**: Clean Architecture Crate Separation - Port/Adapter pattern
--   **ADR-023**: Inventory to Linkme Migration - Compile-time provider registration
+-   **ADR-001**: Modular Crates Architecture – 8 crates, separation of concerns
+-   **ADR-002**: Async-First Architecture – Tokio throughout
+-   **ADR-029**: Hexagonal Architecture with dill – DI, handles, linkme registry (replaces Shaku)
+-   **ADR-013**: Clean Architecture Crate Separation – Port/Adapter pattern
+-   **ADR-023**: Inventory to Linkme Migration – Compile-time provider registration
 
 See [`docs/adr/`](./docs/adr/) for complete Architecture Decision Records and [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md) for detailed architecture documentation.
 

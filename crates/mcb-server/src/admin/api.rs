@@ -46,6 +46,7 @@ impl AdminApiConfig {
 
     /// Get the Rocket configuration
     pub fn rocket_config(&self) -> RocketConfig {
+        // mcb-validate-ignore: hardcoded_fallback - fallback IP is safe and always valid
         let address: IpAddr = self.host.parse().unwrap_or_else(|_| {
             "127.0.0.1"
                 .parse()
@@ -54,7 +55,7 @@ impl AdminApiConfig {
                     e
                 })
                 .expect("Hardcoded fallback IP should always parse")
-        }); // mcb-validate-ignore: hardcoded_fallback
+        });
         RocketConfig {
             address,
             port: self.port,
