@@ -1,7 +1,7 @@
 //! Test Quality Validation
 //!
 //! Validates test code quality:
-//! - Detects `#[ignore]` attributes without proper justification
+//! - Detects `#[ignore]` attributes without proper justification (attribute without documentation)
 //! - Detects `todo!()` macros in test fixtures outside intentional stubs
 //! - Detects missing test implementations
 //! - Ensures tests have proper documentation
@@ -16,7 +16,7 @@ use walkdir::WalkDir;
 /// Test quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TestQualityViolation {
-    /// Test with #[ignore] attribute missing justification
+    /// Test with `#[ignore]` attribute missing justification
     IgnoreWithoutJustification {
         file: PathBuf,
         line: usize,
