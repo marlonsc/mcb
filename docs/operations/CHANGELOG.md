@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **MCP Context Browser v0.1.4** delivers RCA integration, security fixes, and dependency updates. This release migrates AST analysis to Rust-code-analysis, removes the deprecated `atty` crate, and includes all Dependabot security updates.
 
+<!-- markdownlint-disable MD044 -->
 ### Added
 
 -   **RCA Integration**: Migrated `unwrap_detector.rs` to use Rust-code-analysis Callback pattern
@@ -60,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **atty dependency**: Removed due to security advisory GHSA-g98v-hv3f-hcfr (potential unaligned read)
 -   **TOML fallback**: Removed from rete_engine.rs - now uses Cargo metadata only
 -   **executor.rs**: Deleted 240 lines of legacy AST executor code
+<!-- markdownlint-enable MD044 -->
 
 ### Security
 

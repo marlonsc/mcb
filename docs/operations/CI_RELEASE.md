@@ -4,17 +4,17 @@
 
 This document describes the automated CI/CD pipeline and release process for MCP Context Browser. The system uses:
 
-- **Local Validation**: Git pre-commit hooks and `make` targets for fast feedback
-- **GitHub Actions**: Automated CI pipeline matching local validation
-- **Automated Releases**: Tag-based release workflow with binary artifacts
+-   **Local Validation**: Git pre-commit hooks and `make` targets for fast feedback
+-   **GitHub Actions**: Automated CI pipeline matching local validation
+-   **Automated Releases**: Tag-based release workflow with binary artifacts
 
 ## Table of Contents
 
-1. [Local Validation (Pre-commit)](#local-validation-pre-commit)
-2. [CI Pipeline (GitHub Actions)](#ci-pipeline-github-actions)
-3. [Automated Release Deployment](#automated-release-deployment)
-4. [Test Timeout Management](#test-timeout-management)
-5. [Troubleshooting](#troubleshooting)
+1.  [Local Validation (Pre-commit)](#local-validation-pre-commit)
+2.  [CI Pipeline (GitHub Actions)](#ci-pipeline-github-actions)
+3.  [Automated Release Deployment](#automated-release-deployment)
+4.  [Test Timeout Management](#test-timeout-management)
+5.  [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -43,10 +43,11 @@ make validate QUICK=1
 ```
 
 **Validation includes:**
-- Format check (rustfmt)
-- Clippy lints with Rust 2024 edition compatibility
-- Architecture validation (imports, dependencies, layer boundaries)
-- No test execution (tests run in CI after push)
+
+-   Format check (rustfmt)
+-   Clippy lints with Rust 2024 edition compatibility
+-   Architecture validation (imports, dependencies, layer boundaries)
+-   No test execution (tests run in CI after push)
 
 ### Running Pre-commit Manually
 
@@ -78,9 +79,9 @@ git commit --no-verify
 
 The CI pipeline runs automatically on:
 
-1. **Push to main or develop**: Runs on every push
-2. **Pull requests**: Validates changes before merge
-3. **Tag push**: Triggers release workflow (see below)
+1.  **Push to main or develop**: Runs on every push
+2.  **Pull requests**: Validates changes before merge
+3.  **Tag push**: Triggers release workflow (see below)
 
 ### CI Jobs and Dependencies
 
@@ -106,7 +107,7 @@ lint → test ──┬→ validate → release-build
 | `test` | Unit & integration tests | 30 min | lint passes |
 | `validate` | Architecture validation | 15 min | lint passes |
 | `golden-tests` | Acceptance tests | 15 min | test passes |
-| `audit` | Security audit (cargo-audit) | 15 min | None (parallel) |
+| `audit` | Security audit (Cargo-audit) | 15 min | None (parallel) |
 | `docs` | Documentation build | 15 min | None (parallel) |
 | `coverage` | Code coverage | 30 min | test passes |
 | `release-build` | Build artifacts (3 platforms) | 20 min | test + validate pass |
@@ -171,23 +172,23 @@ git push origin v0.1.4
 
 The release workflow is triggered by tags matching `v*` pattern and performs:
 
-1. **Pre-Release Validation**: Runs full CI validation
-   - Lint (Rust 2024 compliance)
-   - Unit tests (4 threads)
-   - Integration tests
-   - Architecture validation (strict)
-   - Security audit
-   - Documentation build
+1.  **Pre-Release Validation**: Runs full CI validation
+   -   Lint (Rust 2024 compliance)
+   -   Unit tests (4 threads)
+   -   Integration tests
+   -   Architecture validation (strict)
+   -   Security audit
+   -   Documentation build
 
-2. **Build Release Artifacts**: Compiles for all platforms
-   - Linux: `mcb-x86_64-linux-gnu`
-   - macOS: `mcb-x86_64-macos`
-   - Windows: `mcb-x86_64-windows.exe`
+2.  **Build Release Artifacts**: Compiles for all platforms
+   -   Linux: `mcb-x86_64-linux-gnu`
+   -   macOS: `mcb-x86_64-macos`
+   -   Windows: `mcb-x86_64-windows.exe`
 
-3. **Create GitHub Release**: Publishes release with:
-   - Automatic changelog (git log since previous release)
-   - All binary artifacts as downloads
-   - Release notes from CHANGELOG.md
+3.  **Create GitHub Release**: Publishes release with:
+   -   Automatic changelog (git log since previous release)
+   -   All binary artifacts as downloads
+   -   Release notes from CHANGELOG.md
 
 ### Release Process Summary
 
@@ -209,9 +210,10 @@ https://github.com/marlonsc/mcb/releases
 ```
 
 Each release includes:
-- Pre-compiled binaries for all platforms
-- Automatic changelog
-- Installation instructions
+
+-   Pre-compiled binaries for all platforms
+-   Automatic changelog
+-   Installation instructions
 
 ---
 
@@ -220,10 +222,11 @@ Each release includes:
 ### Why Timeouts Happen
 
 Tests can timeout in CI due to:
-- High parallelization (many tests running simultaneously)
-- GitHub runner resource constraints
-- Integration tests that take time
-- Network-dependent operations
+
+-   High parallelization (many tests running simultaneously)
+-   GitHub runner resource constraints
+-   Integration tests that take time
+-   Network-dependent operations
 
 ### Timeout Configuration
 
@@ -283,6 +286,7 @@ gh run view <run-id> -j test --log
 **Problem**: Commits don't run pre-commit validation
 
 **Solution**:
+
 ```bash
 # Reinstall hooks
 make install-hooks
@@ -294,12 +298,14 @@ cat .git/hooks/pre-commit
 ### CI Fails But Pre-commit Passed Locally
 
 **Possible causes:**
-1. Different environment (macOS vs Linux)
-2. Different Rust versions
-3. Cache issues
-4. Race conditions in tests
+
+1.  Different environment (macOS vs Linux)
+2.  Different Rust versions
+3.  Cache issues
+4.  Race conditions in tests
 
 **Solutions:**
+
 ```bash
 # Run exact CI validation
 make ci-full
@@ -317,17 +323,21 @@ rustc --version  # Should be stable
 **Problem**: `test` job timeout after 30 minutes
 
 **Solutions:**
-1. **Increase timeout** in `.github/workflows/ci.yml`:
+
+1.  **Increase timeout** in `.github/workflows/ci.yml`:
+
    ```yaml
    timeout-minutes: 45
    ```
 
-2. **Reduce parallelization**:
+2.  **Reduce parallelization**:
+
    ```yaml
    - run: make test TEST_THREADS=2
    ```
 
-3. **Run tests locally** to identify slow tests:
+3.  **Run tests locally** to identify slow tests:
+
    ```bash
    make test TEST_THREADS=4
    ```
@@ -337,13 +347,16 @@ rustc --version  # Should be stable
 **Problem**: `release-build` job fails with compilation error
 
 **Check**:
-1. All CI checks passed before release job
-2. Built locally successfully
+
+1.  All CI checks passed before release job
+2.  Built locally successfully
+
    ```bash
    make build RELEASE=1
    ```
 
-3. No uncommitted changes in version
+3.  No uncommitted changes in version
+
    ```bash
    git status
    ```
@@ -353,6 +366,7 @@ rustc --version  # Should be stable
 **Problem**: Tag pushed but release workflow didn't complete
 
 **Check**:
+
 ```bash
 # View release workflow runs
 gh run list --workflow=release.yml -L 5
@@ -362,9 +376,10 @@ gh run view <run-id> --log
 ```
 
 **Common issues:**
-- Pre-release validation failed (check test/lint/audit logs)
-- Tag format incorrect (must be `v*` like `v0.1.4`)
-- Artifacts failed to upload
+
+-   Pre-release validation failed (check test/lint/audit logs)
+-   Tag format incorrect (must be `v*` like `v0.1.4`)
+-   Artifacts failed to upload
 
 ---
 
@@ -396,6 +411,7 @@ make coverage LCOV=1       # Code coverage
 Pipeline is automated. No manual intervention needed.
 
 To view results:
+
 ```bash
 gh run list --workflow=ci.yml
 gh run view <run-id>
@@ -430,6 +446,6 @@ make release               # Full release pipeline
 
 ## See Also
 
-- [Deployment Guide](./DEPLOYMENT.md) - Installation and configuration
-- [CHANGELOG](./CHANGELOG.md) - Release history
-- [Architecture](../architecture/ARCHITECTURE.md) - System design
+-   [Deployment Guide](./DEPLOYMENT.md) - Installation and configuration
+-   [CHANGELOG](./CHANGELOG.md) - Release history
+-   [Architecture](../architecture/ARCHITECTURE.md) - System design

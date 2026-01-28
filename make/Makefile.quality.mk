@@ -65,15 +65,13 @@ ifeq ($(LCOV),1)
 	cargo tarpaulin --out Lcov --output-dir coverage \
 		--exclude-files 'crates/*/tests/integration/*' \
 		--exclude-files 'crates/*/tests/admin/*' \
-		--timeout 300 \
-		--test-threads $(if $(TEST_THREADS),$(TEST_THREADS),4)
+		--timeout 300
 else
 	@echo "Generating HTML coverage (excluding integration tests)..."
 	cargo tarpaulin --out Html --output-dir coverage \
 		--exclude-files 'crates/*/tests/integration/*' \
 		--exclude-files 'crates/*/tests/admin/*' \
-		--timeout 300 \
-		--test-threads $(if $(TEST_THREADS),$(TEST_THREADS),4) 2>/dev/null || echo "Note: cargo-tarpaulin not installed"
+		--timeout 300 2>/dev/null || echo "Note: cargo-tarpaulin not installed"
 endif
 
 # =============================================================================

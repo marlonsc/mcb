@@ -31,9 +31,11 @@ MCP Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes
 
 **Dependency Updates:**
 
+<!-- markdownlint-disable MD044 -->
 -   ✅ uuid 1.20.0, clap 4.5.55, rust-rule-engine 1.18.26
 -   ✅ jsonwebtoken 10.3.0, dirs 6.0.0, moka 0.12.13
 -   ✅ chrono 0.4.43, thiserror 2.0.18, proc-macro2 1.0.106
+<!-- markdownlint-enable MD044 -->
 
 **Metrics:**
 
