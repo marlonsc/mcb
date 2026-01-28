@@ -18,6 +18,12 @@ on:  # yamllint disable-line rule:truthy
       - main
     tags:
       - 'v*'
+    paths:
+      - 'src/**'
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/codeql.yml'
 
 jobs:
   analyze:

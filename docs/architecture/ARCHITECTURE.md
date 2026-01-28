@@ -1,7 +1,7 @@
 # MCP Context Browser - Comprehensive Architecture Documentation
 
 [![Version](https://img.shields.io/badge/version-0.1.4-blue)](https://github.com/marlonsc/mcb/releases)
-[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
+[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 
 **Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings**
@@ -53,7 +53,7 @@ MCP Context Browser is a high-performance, extensible Model Context Protocol (MC
 **Architecture Maturity**: ✅ **100% Complete DI Implementation**
 **DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ mcb-validate crate Phases 1-7 verified (750+ tests pass)
+**Validation**: ✅ mcb-validate crate Phases 1–7 verified (750+ tests); 950+ tests project-wide
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -920,7 +920,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Phases 1-7 all VERIFIED (v0.1.2) - 750+ tests pass
+**Status**: Phases 1–7 all VERIFIED (v0.1.4) - 750+ tests pass
 
 **Components**:
 
@@ -931,7 +931,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 -   `rules/migration/`: 12 migration detection YAML rules created
 -   `metrics/`: ✅ mod.rs, analyzer.rs, rca_analyzer.rs, thresholds.rs - 9/9 tests pass
 -   `duplication/`: ✅ mod.rs, fingerprint.rs, detector.rs, thresholds.rs - 11/11 tests pass
--   `clean_architecture.rs`: ✅ CleanArchitectureValidator (CA001-CA006) - 11/11 tests pass
+-   `clean_architecture.rs`: ✅ CleanArchitectureValidator (CA001–CA009) - 11/11 tests pass
 -   `tests/`: integration_linters.rs, integration_ast.rs, integration_engines.rs, integration_rca_metrics.rs, integration_duplication.rs, integration_architecture.rs - all passing
 
 **Architecture**:
@@ -953,7 +953,7 @@ Validation Pipeline (Pure Rust):
 └─────────────────────────────────────────────┘
 ```
 
-**Verification Date**: 2026-01-20 via `make test`. See `docs/developer/IMPLEMENTATION_STATUS.md`.
+**Verification Date**: 2026-01-28 via `make test`. See `docs/developer/IMPLEMENTATION_STATUS.md`.
 
 **Usage**:
 
@@ -1991,7 +1991,7 @@ impl QualityGateChecker {
 -   ✅ Clear layer separation (hexagonal architecture)
 -   ✅ dill Catalog manages service lifecycle
 -   ✅ Runtime switching via admin API
--   ✅ Architecture enforced via mcb-validate (CA007/CA008)
+-   ✅ Architecture enforced via mcb-validate (CA007–CA009)
 
 See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
 
@@ -2001,14 +2001,14 @@ See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
 
 **Context**: Monolithic architecture created coupling, testability, and compilation challenges as the system grew.
 
-**Decision**: Organize into seven Cargo workspace crates following Clean Architecture principles with strict layer separation.
+**Decision**: Organize into eight Cargo workspace crates (including facade) following Clean Architecture principles with strict layer separation.
 
 **Consequences**:
 
 -   ✅ Clear boundaries and responsibilities per crate
 -   ✅ Testability without infrastructure dependencies
 -   ✅ Parallel compilation, incremental builds
--   ⚠️ Seven crates require coordination
+-   ⚠️ Eight crates require coordination
 -   ⚠️ Learning curve for Clean Architecture concepts
 
 See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full details.

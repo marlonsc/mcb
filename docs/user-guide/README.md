@@ -83,7 +83,7 @@ GitHub Actions automatically runs:
 
 ## 🤝 Contributing
 
-See [**CONTRIBUTING.md**](CONTRIBUTING.md) for detailed contribution guidelines.
+See [**CONTRIBUTING.md**](../developer/CONTRIBUTING.md) for detailed contribution guidelines.
 
 ## 📄 License
 

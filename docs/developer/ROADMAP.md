@@ -61,8 +61,9 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 -   ✅ Phase 1: Linters verified (17/17 tests pass)
 -   ✅ Phase 2: AST verified (26/26 tests pass)
 -   ✅ Phase 3: Rule Engines verified (30/30 tests pass)
+-   ✅ Phases 4–7: Metrics, Duplication, Architecture (CA001–CA009), Integration verified
 -   ✅ 12 migration validation rules (YAML files in rules/migration/)
--   ❌ Phases 4-7: Not started (directories do not exist)
+-   ✅ 750+ mcb-validate tests; 894+ tests project-wide
 
 **Admin UI Code Browser:**
 
@@ -74,24 +75,24 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 -   ✅ Prism.js syntax highlighting in code viewer
 -   ✅ Nav links added to all admin pages
 
-**Verification Date**: 2026-01-18 via `make test`. See `docs/developer/IMPLEMENTATION_STATUS.md`.
+**Verification Date**: 2026-01-28 via `make test`. See `docs/developer/IMPLEMENTATION_STATUS.md`.
 
 **Maintained from v0.1.1:**
 
 -   ✅ 894+ tests with comprehensive coverage (100% pass rate)
 -   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   ✅ 5 vector stores (In-Memory, Encrypted, Null)
+-   ✅ 5 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
 -   ✅ 14 languages with AST parsing support
--   ✅ Clean architecture with trait-based dependency injection
+-   ✅ Clean architecture with dill-based DI (ADR-029)
 
 #### Technical Metrics
 
--   **Source Files**: 340 Rust files (↑ from ~300 in v0.1.1)
--   **Test Suite**: 894+ tests passing (maintained)
--   **Crates**: 8 (7 from v0.1.1 + mcb-validate)
--   **Validation Rules**: 12 YAML migration rules created
+-   **Source Files**: 340+ Rust files
+-   **Test Suite**: 894+ tests passing
+-   **Crates**: 8 (7 + mcb-validate)
+-   **Validation Rules**: 12 YAML migration rules; CA001–CA009 architecture rules
 -   **Provider Registration**: Compile-time via linkme (inventory removed)
--   **mcb-validate Status**: Phases 1-3 verified (73 tests), Phases 4-7 not started
+-   **mcb-validate Status**: Phases 1–7 verified (894+ tests)
 
 ---
 

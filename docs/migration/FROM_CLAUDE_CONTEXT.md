@@ -9,8 +9,8 @@ This guide helps you migrate from [zilliztech/Claude-context](https://github.com
 |**Runtime**| Node.js 20-23 | Native Rust binary |
 |**MCP Tools**| 4 tools | 4 tools (same interface) |
 |**Hybrid Search**| BM25 + vector | BM25 + vector |
-|**Embedding Providers**| 4 | 6 (+ FastEmbed, Mock) |
-|**Vector Stores**| 2 (Milvus/Zilliz) | 3 (In-Memory, Encrypted, Null) |
+|**Embedding Providers**| 4 | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) |
+|**Vector Stores**| 2 (Milvus/Zilliz) | 6 (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null) |
 |**Languages**| 13+ | 13 (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin) |
 |**Performance**| Node.js interpreter | Native compiled |
 |**Dependencies**| npm packages | Single binary |

@@ -55,16 +55,25 @@ audit: ## Security audit (cargo-audit)
 
 # =============================================================================
 # COVERAGE (LCOV=1 for CI format)
-# Optimized with tarpaulin.toml for fast runs
+# Excludes integration tests to prevent timeouts from external dependencies
+# (Milvus, Ollama) that aren't available in CI environments
 # =============================================================================
 
 coverage: ## Code coverage (LCOV=1 for CI format)
 ifeq ($(LCOV),1)
-	@echo "Generating LCOV coverage..."
-	cargo tarpaulin --out Lcov --output-dir coverage
+	@echo "Generating LCOV coverage (excluding integration tests)..."
+	cargo tarpaulin --out Lcov --output-dir coverage \
+		--exclude-files 'crates/*/tests/integration/*' \
+		--exclude-files 'crates/*/tests/admin/*' \
+		--timeout 300 \
+		--test-threads $(if $(TEST_THREADS),$(TEST_THREADS),4)
 else
-	@echo "Generating HTML coverage..."
-	cargo tarpaulin --out Html --output-dir coverage 2>/dev/null || echo "Note: cargo-tarpaulin not installed"
+	@echo "Generating HTML coverage (excluding integration tests)..."
+	cargo tarpaulin --out Html --output-dir coverage \
+		--exclude-files 'crates/*/tests/integration/*' \
+		--exclude-files 'crates/*/tests/admin/*' \
+		--timeout 300 \
+		--test-threads $(if $(TEST_THREADS),$(TEST_THREADS),4) 2>/dev/null || echo "Note: cargo-tarpaulin not installed"
 endif
 
 # =============================================================================
