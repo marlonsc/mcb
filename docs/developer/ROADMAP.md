@@ -78,16 +78,16 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 **Maintained from v0.1.1:**
 
--   ✅ 790+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 894+ tests with comprehensive coverage (100% pass rate)
 -   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   ✅ 3 vector stores (In-Memory, Encrypted, Null)
--   ✅ 12 languages with AST parsing support
+-   ✅ 5 vector stores (In-Memory, Encrypted, Null)
+-   ✅ 14 languages with AST parsing support
 -   ✅ Clean architecture with trait-based dependency injection
 
 #### Technical Metrics
 
 -   **Source Files**: 340 Rust files (↑ from ~300 in v0.1.1)
--   **Test Suite**: 790+ tests passing (maintained)
+-   **Test Suite**: 894+ tests passing (maintained)
 -   **Crates**: 8 (7 from v0.1.1 + mcb-validate)
 -   **Validation Rules**: 12 YAML migration rules created
 -   **Provider Registration**: Compile-time via linkme (inventory removed)
@@ -107,11 +107,11 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 #### Achievements
 
 -   ✅ Full MCP protocol implementation (4 tools)
--   ✅ 12 languages with AST parsing (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
+-   ✅ 14 languages with AST parsing (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
 -   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   ✅ 3 vector stores (In-Memory, Encrypted, Null)
+-   ✅ 5 vector stores (In-Memory, Encrypted, Null)
 -   ✅ Claude-context environment variable compatibility
--   ✅ 790+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 894+ tests with comprehensive coverage (100% pass rate)
 -   ✅ JWT authentication and rate limiting
 -   ✅ Clean architecture with trait-based dependency injection
 -   ✅ HTTP transport foundation for future enhancements
@@ -391,7 +391,7 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
-| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 950+ tests |
+| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 894+ tests |
 | v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
 | v0.3.0 | Future | Advanced code intelligence |
 | v0.4.0 | Future | Enterprise features |

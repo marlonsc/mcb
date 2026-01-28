@@ -39,6 +39,35 @@ jobs:
       - uses: actions/checkout@v6
       - run: make docs-check
 
+  update-docs:
+    name: Auto-Update Documentation
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Update README and metrics
+        run: |
+          make docs-auto
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md docs/generated/METRICS.md || true
+          if ! git diff --staged --quiet; then
+            git commit -m >-
+              "docs: auto-update README and project metrics [skip ci]"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+
   diagrams:
     name: Generate Diagrams
     runs-on: ubuntu-latest

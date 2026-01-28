@@ -1,26 +1,33 @@
 # =============================================================================
 # DOCS - Documentation management
 # =============================================================================
-# Essential targets only. Each verb does ONE action.
+# Professional, minimal verb set - each verb does ONE thing
 # =============================================================================
 
-.PHONY: docs docs-serve docs-check docs-setup docs-sync docs-build diagrams rust-docs adr adr-new info
+.PHONY: docs docs-serve docs-check docs-setup docs-sync docs-build rust-docs diagrams adr adr-new
 
 # Path to mdbook
 MDBOOK := $(HOME)/.cargo/bin/mdbook
 
 # =============================================================================
-# DOCS - Build all documentation
+# DOCS - Main documentation target
 # =============================================================================
 
-docs: ## Build all documentation (Rust API + mdbook)
+docs: ## Build all documentation (auto-updates metrics, Rust API docs, mdbook)
 	@echo "Building documentation..."
+	@echo "  → Updating metrics in documentation..."
+	@./scripts/docs/inject-metrics.sh 2>/dev/null || true
+	@echo "  → Building Rust API docs..."
 	@cargo doc --no-deps --workspace
+	@echo "  → Syncing mdbook..."
 	@./scripts/docs/mdbook-sync.sh 2>/dev/null || true
 	@if [ -x "$(MDBOOK)" ]; then $(MDBOOK) build book/ 2>/dev/null || true; fi
-	@echo "Documentation built"
+	@echo "✓ Documentation built"
 
+# =============================================================================
 # Workflow targets (used by .github/workflows/docs.yml)
+# =============================================================================
+
 docs-check: ## Validate documentation files exist
 	@if [ ! -d "docs" ]; then echo "ERROR: docs/ directory not found"; exit 1; fi
 
@@ -65,11 +72,11 @@ adr: ## List Architecture Decision Records
 	done
 
 adr-new: ## Create new ADR
-	@./scripts/docs/create-adr.sh
+	@./scripts/docs/create-adr.sh 2>/dev/null || echo "create-adr.sh not found"
 
 # =============================================================================
-# INFO - Project metrics
+# Metrics - Auto-update documentation with current project metrics
 # =============================================================================
 
-info: ## Display project metrics
-	@./scripts/docs/extract-metrics.sh --markdown 2>/dev/null || echo "Metrics script not found"
+docs-metrics: ## Update all documentation with current metrics (single source of truth)
+	@./scripts/docs/inject-metrics.sh

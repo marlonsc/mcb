@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.1.4-blue)](https://github.com/marlonsc/mcb/releases)
+[![Version](https://img.shields.io/badge/version-0.1.4-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.1.4)
 
 **High-performance MCP server for semantic code search using vector embeddings**
 
@@ -11,7 +11,7 @@
 
 MCP Context Browser is a Model Context Protocol (MCP) server that provides semantic code search capabilities using vector embeddings. Transform natural language queries into code search across indexed codebases, enabling intelligent code discovery and analysis. Built with Clean Architecture principles in Rust with comprehensive provider support.
 
-**Current Version**: 0.1.4 - RCA Integration + Dependency Updates + Security Fixes
+**Current Version**: 0.1.4
 
 See [`CLAUDE.md`](./CLAUDE.md) for development guide and [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md) for complete architecture documentation.
 
@@ -34,9 +34,9 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 ### Main Features
 
 -   **Semantic Code Search**: Natural language queries → code discovery using vector embeddings
--   **Clean Architecture**: 8 crates organized by Clean Architecture layers (domain, application, infrastructure, providers, server, validate)
--   **Provider Ecosystem**: 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 3+ vector stores
--   **Multi-Language Support**: AST-based parsing for 12 programming languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
+-   **Clean Architecture**: 7 crates organized by Clean Architecture layers (domain, application, infrastructure, providers, server, validate)
+-   **Provider Ecosystem**: 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 5 vector stores
+-   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
 -   **Architecture Validation**: mcb-validate crate with automated architecture enforcement (Phases 1-3 verified: 73 tests pass)
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
 
@@ -65,7 +65,7 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 
 ### Key Architectural Decisions
 
--   **ADR-001**: Modular Crates Architecture - 8 crates for separation of concerns
+-   **ADR-001**: Modular Crates Architecture - 7 crates for separation of concerns
 -   **ADR-002**: Async-First Architecture - Tokio throughout
 -   **ADR-012**: Two-Layer DI Strategy - Shaku modules + runtime factories
 -   **ADR-013**: Clean Architecture Crate Separation - Port/Adapter pattern
@@ -145,7 +145,7 @@ See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for con
 
 ## Testing
 
-950+ comprehensive tests covering all layers:
+894+ tests covering all layers:
 
 ```bash
 make test           # All tests
