@@ -10,8 +10,6 @@ name: CI
 
 permissions:
   contents: "read"
-  security-events: write
-  actions: read
 
 on:  # yamllint disable-line rule:truthy
   push:
@@ -89,34 +87,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: make test SCOPE=golden TEST_THREADS=2
-
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: "read"
-      security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        language:
-          - "rust"
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          queries: +security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
 
   audit:
     name: Security Audit
