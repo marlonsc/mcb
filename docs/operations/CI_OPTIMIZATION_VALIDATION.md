@@ -17,7 +17,41 @@ This document tracks validation of CI optimizations before considering them prod
 -   [x] Confirmed job dependencies are syntactically correct
 -   [x] Validated workflow file passes YAML validation
 
-### ⏳ Pending Validations
+1.  **Tarpaulin Installation** (Locally tested 2026-01-28)
+
+-   [x] Cargo-tarpaulin v0.35.1 installed successfully
+-   [x] Tarpaulin binary available and executable
+
+### 🔴 BLOCKING ISSUE DISCOVERED
+
+**Problem**: Tarpaulin `--exclude-files` does NOT skip test execution
+
+**Symptoms**:
+
+-   Process killed after ~8 minutes (system timeout or OOM)
+-   Integration tests still executing (test_full_validation_report, test_clippy_real_execution)
+-   No coverage output generated (coverage/ directory not created)
+-   Tests attempting to connect to Milvus/Ollama, causing hangs
+
+**Root Cause**:
+
+-   `--exclude-files` parameter only excludes files from coverage REPORT
+-   Integration tests still RUN to completion before coverage is measured
+-   External service dependencies (Milvus, Ollama) cause test hangs
+
+**Impact on CI Optimization**:
+
+-   ❌ Current tarpaulin approach WILL NOT WORK
+-   Coverage job in CI will still timeout even with path exclusions
+-   Integration tests must be executed but skipped in CI environment
+
+**Solution Path Forward**:
+
+1.  Use `#[ignore]` or feature flags to conditionally skip integration tests in CI
+2.  Set environment variable (e.g., `CI=1`) to detect CI context
+3.  Or: Keep integration tests separate, run coverage on unit tests only
+
+### ⏳ Pending Validations (Blocked by Issue Above)
 
 #### 1. Coverage Execution (Tarpaulin Installation & Test)
 

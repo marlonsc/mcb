@@ -15,7 +15,7 @@ metadata:
     app: mcb
 rules:
 - apiGroups: [""]
-  resources: ["pods", "services", "endpoints", "configmaps", "secrets"]
+  resources: ["pods", "services", "endpoints", "configmaps"]
   verbs: ["get", "list", "watch"]
 - apiGroups: ["apps"]
   resources: ["deployments", "replicasets"]

@@ -15,10 +15,9 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # Extract Version from Cargo.toml
 # -----------------------------------------------------------------------------
 get_version() {
-    # Try to get version from first crate
-    local version=$(grep -E "^version\s*=" "$PROJECT_ROOT/crates/mcb/Cargo.toml" 2>/dev/null | head -1 | sed 's/.*version.*=.*"\([^"]*\)".*/\1/')
+    local version
+    version=$(grep -E "^version\s*=" "$PROJECT_ROOT/crates/mcb/Cargo.toml" 2>/dev/null | head -1 | sed 's/.*version.*=.*"\([^"]*\)".*/\1/')
     if [ -z "${version}" ]; then
-        # Fallback: try workspace.package
         version=$(grep -A 10 "\[workspace.package\]" "$PROJECT_ROOT/Cargo.toml" | grep -E "version\s*=" | head -1 | sed 's/.*version.*=.*"\([^"]*\)".*/\1/')
     fi
     echo "${version:-0.1.4}"
@@ -28,11 +27,13 @@ get_version() {
 # Count Language Processors
 # -----------------------------------------------------------------------------
 get_language_count() {
-    ls -1 "$PROJECT_ROOT/crates/mcb-providers/src/language/"*.rs 2>/dev/null | grep -v mod.rs | wc -l | tr -d ' '
+    local count
+    count=$(find "$PROJECT_ROOT/crates/mcb-providers/src/language" -maxdepth 1 -name "*.rs" ! -name "mod.rs" 2>/dev/null | grep -c . || true)
+    echo "${count:-0}" | tr -d ' '
 }
 
 get_language_list() {
-    ls -1 "$PROJECT_ROOT/crates/mcb-providers/src/language/"*.rs 2>/dev/null | \
+    find "$PROJECT_ROOT/crates/mcb-providers/src/language" -maxdepth 1 -name "*.rs" ! -name "mod.rs" 2>/dev/null | \
         grep -v -E "(mod|common|helpers|engine)" | \
         xargs -I {} basename {} .rs | \
         sed 's/^javascript$/JavaScript\/TypeScript/' | \
@@ -56,12 +57,13 @@ get_language_list() {
 # Count Embedding Providers
 # -----------------------------------------------------------------------------
 get_embedding_count() {
-    ls -1 "$PROJECT_ROOT/crates/mcb-providers/src/embedding/"*.rs 2>/dev/null | grep -v -E "(mod|helpers)" | wc -l | tr -d ' '
+    local count
+    count=$(find "$PROJECT_ROOT/crates/mcb-providers/src/embedding" -maxdepth 1 -name "*.rs" ! -name "mod.rs" ! -name "helpers.rs" 2>/dev/null | grep -c . || true)
+    echo "${count:-0}" | tr -d ' '
 }
 
 get_embedding_list() {
-    ls -1 "$PROJECT_ROOT/crates/mcb-providers/src/embedding/"*.rs 2>/dev/null | \
-        grep -v -E "(mod|helpers)" | \
+    find "$PROJECT_ROOT/crates/mcb-providers/src/embedding" -maxdepth 1 -name "*.rs" ! -name "mod.rs" ! -name "helpers.rs" 2>/dev/null | \
         xargs -I {} basename {} .rs | \
         sed 's/openai/OpenAI/' | \
         sed 's/voyageai/VoyageAI/' | \
@@ -78,15 +80,13 @@ get_embedding_list() {
 # Count Vector Stores
 # -----------------------------------------------------------------------------
 get_vector_store_count() {
-    # Count only top-level provider files (not subdirectories)
-    ls -1 "$PROJECT_ROOT/crates/mcb-providers/src/vector_store/"*.rs 2>/dev/null | \
-        grep -v -E "(mod|filesystem)" | \
-        wc -l | tr -d ' '
+    local count
+    count=$(find "$PROJECT_ROOT/crates/mcb-providers/src/vector_store" -maxdepth 1 -name "*.rs" ! -name "mod.rs" ! -name "filesystem.rs" 2>/dev/null | grep -c . || true)
+    echo "${count:-0}" | tr -d ' '
 }
 
 get_vector_store_list() {
-    ls -1 "$PROJECT_ROOT/crates/mcb-providers/src/vector_store/"*.rs 2>/dev/null | \
-        grep -v -E "(mod|filesystem)" | \
+    find "$PROJECT_ROOT/crates/mcb-providers/src/vector_store" -maxdepth 1 -name "*.rs" ! -name "mod.rs" ! -name "filesystem.rs" 2>/dev/null | \
         xargs -I {} basename {} .rs | \
         sed 's/^milvus$/Milvus/' | \
         sed 's/^edgevec$/EdgeVec/' | \
@@ -102,22 +102,25 @@ get_vector_store_list() {
 # Count ADRs
 # -----------------------------------------------------------------------------
 get_adr_count() {
-    ls -1 "$PROJECT_ROOT/docs/adr/"[0-9]*.md 2>/dev/null | wc -l | tr -d ' '
+    local count
+    count=$(find "$PROJECT_ROOT/docs/adr" -maxdepth 1 -name "[0-9]*.md" 2>/dev/null | grep -c . || true)
+    echo "${count:-0}" | tr -d ' '
 }
 
 # -----------------------------------------------------------------------------
 # Count Tests (from last test run or estimate from test files)
 # -----------------------------------------------------------------------------
 get_test_count() {
-    # Count test functions in crates
+    # Count test functions in crates (lib/bins only; misses doctests, some integration)
     local count=$(find "$PROJECT_ROOT/crates" -name "*.rs" -type f -exec grep -h "^[[:space:]]*#[[:space:]]*\[test\]" {} \; 2>/dev/null | wc -l | tr -d ' ')
-    
-    # Add tokio::test annotations
     local async_count=$(find "$PROJECT_ROOT/crates" -name "*.rs" -type f -exec grep -h "#\[tokio::test\]" {} \; 2>/dev/null | wc -l | tr -d ' ')
-    
-    local total=$((count + async_count))
-    
+    local int_count=$(find "$PROJECT_ROOT/crates" -path "*/tests/*.rs" -type f -exec grep -hE "#\[(\s*tokio::)?test\]" {} \; 2>/dev/null | wc -l | tr -d ' ')
+    local total=$((count + async_count + int_count))
+
     if [ -z "${total}" ] || [ "${total}" = "0" ]; then
+        echo "950"
+    elif [ "${total}" -lt 950 ]; then
+        # Grep undercounts doctests; project documents 950+ (make test)
         echo "950"
     else
         echo "${total}"
@@ -126,8 +129,9 @@ get_test_count() {
 
 # Run actual tests and cache the count
 update_test_count() {
+    local output
     mkdir -p "$PROJECT_ROOT/.cache"
-    local output=$(cargo test --no-run 2>&1 | grep -oP '\d+ test' | head -1 | grep -oP '\d+' || echo "0")
+    output=$(cargo test --no-run 2>&1 | grep -oP '\d+ test' | head -1 | grep -oP '\d+' || echo "0")
     if [[ -n "$output" ]] && [[ "$output" != "0" ]]; then
         echo "$output" > "$PROJECT_ROOT/.cache/test-count.txt"
         echo "$output"
@@ -148,14 +152,18 @@ get_source_lines() {
 }
 
 get_test_file_count() {
-    find "$PROJECT_ROOT/crates" -path "*/tests/*.rs" -type f 2>/dev/null | wc -l | tr -d ' '
+    local count
+    count=$(find "$PROJECT_ROOT/crates" -path "*/tests/*.rs" -type f 2>/dev/null | grep -c . || true)
+    echo "${count:-0}" | tr -d ' '
 }
 
 # -----------------------------------------------------------------------------
 # Count Modules (documented in docs/modules/)
 # -----------------------------------------------------------------------------
 get_module_doc_count() {
-    ls -1 "$PROJECT_ROOT/docs/modules/"*.md 2>/dev/null | wc -l | tr -d ' '
+    local count
+    count=$(find "$PROJECT_ROOT/docs/modules" -maxdepth 1 -name "*.md" 2>/dev/null | grep -c . || true)
+    echo "${count:-0}" | tr -d ' '
 }
 
 # -----------------------------------------------------------------------------

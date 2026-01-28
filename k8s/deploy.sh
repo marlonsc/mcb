@@ -5,7 +5,7 @@
 
 set -e
 
-NAMESPACE=${NAMESPACE:-default}
+NAMESPACE=${NAMESPACE:-mcb}
 APP_NAME="mcb"
 VERSION="v0.1.1"
 
@@ -60,21 +60,21 @@ kubectl apply -f ingress.yaml -n "$NAMESPACE"
 
 # Wait for rollout
 echo "⏳ Waiting for rollout to complete..."
-kubectl rollout status deployment/$APP_NAME -n "$NAMESPACE" --timeout=300s
+kubectl rollout status "deployment/$APP_NAME" -n "$NAMESPACE" --timeout=300s
 
 # Show status
 echo "📊 Deployment Status:"
-kubectl get pods -l app=$APP_NAME -n "$NAMESPACE"
-kubectl get hpa -l app=$APP_NAME -n $NAMESPACE
-kubectl get ingress -l app=$APP_NAME -n $NAMESPACE
+kubectl get pods -l "app=$APP_NAME" -n "$NAMESPACE"
+kubectl get hpa -l "app=$APP_NAME" -n "$NAMESPACE"
+kubectl get ingress -l "app=$APP_NAME" -n "$NAMESPACE"
 
 echo "✅ MCP Context Browser $VERSION deployed successfully!"
 echo ""
 echo "🌐 Service URLs:"
 echo "  - API: http://$(kubectl get ingress $APP_NAME-ingress -n "$NAMESPACE" -o jsonpath='{.spec.rules[0].host}')"
-echo "  - Metrics: http://$(kubectl get ingress $APP_NAME-ingress -n $NAMESPACE -o jsonpath='{.spec.rules[0].host}'):3001/api/context/metrics"
+echo "  - Metrics: http://$(kubectl get ingress $APP_NAME-ingress -n "$NAMESPACE" -o jsonpath='{.spec.rules[0].host}'):3001/api/context/metrics"
 echo ""
 echo "🔧 Useful commands:"
 echo "  kubectl logs -f deployment/$APP_NAME -n $NAMESPACE"
 echo "  kubectl get events -n $NAMESPACE --sort-by=.metadata.creationTimestamp"
-echo "  kubectl describe hpa $APP_NAME-hpa -n $NAMESPACE"
+echo "  kubectl describe hpa ${APP_NAME}-hpa -n $NAMESPACE"

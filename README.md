@@ -145,7 +145,7 @@ See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for con
 
 ## Testing
 
-894+ tests covering all layers:
+1634+ tests covering all layers:
 
 ```bash
 make test           # All tests

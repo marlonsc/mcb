@@ -59,8 +59,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git add README.md docs/generated/METRICS.md || true
           if ! git diff --staged --quiet; then
-            git commit -m >-
-              "docs: auto-update README and project metrics [skip ci]"
+            git commit -m "docs: auto-update README and project metrics [skip ci]"
             git push
           else
             echo "No changes to commit"

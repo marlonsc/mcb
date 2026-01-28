@@ -53,7 +53,7 @@ MCP Context Browser is a high-performance, extensible Model Context Protocol (MC
 **Architecture Maturity**: ✅ **100% Complete DI Implementation**
 **DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ mcb-validate crate Phases 1–7 verified (750+ tests); 950+ tests project-wide
+**Validation**: ✅ mcb-validate crate Phases 1–7 verified (750+ tests); 1634+ tests project-wide
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -2012,6 +2012,33 @@ See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
 -   ⚠️ Learning curve for Clean Architecture concepts
 
 See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full details.
+
+#### Additional ADR References
+
+-   [ADR-005](../adr/005-context-cache-support.md) Context Cache
+-   [ADR-006](../adr/006-code-audit-and-improvements.md) Code Audit
+-   [ADR-007](../adr/007-integrated-web-administration-interface.md) Admin UI
+-   [ADR-010](../adr/010-hooks-subsystem-agent-backed.md) Hooks
+-   [ADR-011](../adr/011-http-transport-request-response-pattern.md) HTTP Transport
+-   [ADR-012](../adr/012-di-strategy-two-layer-approach.md) Two-Layer DI
+-   [ADR-014](../adr/014-multi-domain-architecture.md) Multi-Domain
+-   [ADR-015](../adr/015-workspace-shared-libraries.md) Workspace Libraries
+-   [ADR-016](../adr/016-integration-points-adapter-pattern.md) Integration Points
+-   [ADR-017](../adr/017-phased-feature-integration.md) Phased Integration
+-   [ADR-018](../adr/018-hybrid-caching-strategy.md) Caching
+-   [ADR-019](../adr/019-error-handling-strategy.md) Error Handling
+-   [ADR-020](../adr/020-testing-strategy-integration.md) Testing
+-   [ADR-021](../adr/021-dependency-management.md) Dependency Mgmt
+-   [ADR-022](../adr/022-ci-integration-strategy.md) CI
+-   [ADR-023](../adr/023-inventory-to-linkme-migration.md) Linkme
+-   [ADR-025](../adr/025-figment-configuration.md) Figment
+-   [ADR-026](../adr/026-routing-refactor-rocket-poem.md) Routing
+-   [ADR-027](../adr/027-architecture-evolution-v013.md) Arch Evolution
+-   [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
+-   [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider
+-   [ADR-031](../adr/031-documentation-excellence.md) Documentation Excellence
+
+See [ADR index](../adr/README.md) for the full list.
 
 ### ADR Maintenance Process
 

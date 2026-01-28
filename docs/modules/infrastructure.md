@@ -147,4 +147,4 @@ Infrastructure tests are located in `crates/mcb-infrastructure/tests/`.
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-28 - Reflects dill IoC, Figment config (v0.1.4)*

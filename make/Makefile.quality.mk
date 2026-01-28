@@ -4,7 +4,18 @@
 # Parameters: FIX, CI_MODE, STRICT, QUICK, LCOV (from main Makefile)
 # =============================================================================
 
-.PHONY: lint validate audit coverage update
+.PHONY: fmt lint validate audit coverage update
+
+# =============================================================================
+# FMT - Format Rust and Markdown
+# =============================================================================
+
+fmt: ## Format Rust and Markdown (cargo fmt + markdownlint -f)
+	@echo "Formatting Rust..."
+	@cargo fmt --all
+	@echo "Formatting Markdown..."
+	@$(MAKE) docs-lint FIX=1
+	@echo "Format complete"
 
 # =============================================================================
 # LINT (FIX=1 to auto-fix, CI_MODE=1 for Rust 2024 strict)

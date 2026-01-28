@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mcb
+  namespace: mcb
   labels:
     app: mcb
     version: v0.0.3
@@ -25,9 +26,24 @@ spec:
         prometheus.io/port: "3001"
         prometheus.io/path: "/api/context/metrics"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: mcb
         image: mcb:v0.0.3
+        securityContext:
+          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          runAsUser: 10001
+          runAsGroup: 10001
         ports:
         - containerPort: 3001
           name: http
@@ -153,9 +169,4 @@ spec:
                   values:
                   - mcb
               topologyKey: kubernetes.io/hostname
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
       serviceAccountName: mcp-service-account
