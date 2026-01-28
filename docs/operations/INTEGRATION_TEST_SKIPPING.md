@@ -6,7 +6,7 @@ Integration tests in MCB can depend on external services (Milvus, Ollama, Redis,
 
 ## Service Detection Helpers
 
-Located in: `crates/mcb-server/tests/integration_helpers.rs`
+Located in: `crates/mcb-server/tests/integration/helpers.rs`
 
 ### Available Detection Functions
 
@@ -310,7 +310,7 @@ If tests timeout:
 
 ## Related Files
 
--   `crates/mcb-server/tests/integration_helpers.rs` - Detection functions and macros
+-   `crates/mcb-server/tests/integration/helpers.rs` - Detection functions and macros
 -   `crates/mcb-server/tests/integration.rs` - Test module root
 -   `make/Makefile.quality.mk` - Coverage target configuration
 -   `.github/workflows/ci.yml` - CI pipeline
