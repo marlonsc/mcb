@@ -9,6 +9,7 @@ mod test_utils;
 mod tools;
 
 // Integration helpers - service detection and skip macros
+#[path = "integration/helpers.rs"]
 mod helpers;
 
 pub use helpers::{
