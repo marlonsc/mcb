@@ -233,5 +233,6 @@ Be respectful and constructive in all interactions. Focus on improving the proje
 ### Operations
 
 -   **Deployment**: [DEPLOYMENT.md](../operations/DEPLOYMENT.md)
+-   **CI/CD & Release**: [CI_RELEASE.md](../operations/CI_RELEASE.md) - Pre-commit hooks, GitHub Actions, release process
 -   **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
 -   **Roadmap**: [ROADMAP.md](./ROADMAP.md)

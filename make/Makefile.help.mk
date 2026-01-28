@@ -51,4 +51,6 @@ help: ## Show available commands
 	@printf "\n"
 	@printf "\033[1;33mCI:\033[0m\n"
 	@printf "  \033[1;34mci\033[0m           Full CI pipeline\n"
+	@printf "  \033[1;34mci-full\033[0m      Full CI matching GitHub (lint+test+validate+audit+docs)\n"
+	@printf "  \033[1;34mci-local\033[0m     Pre-commit validation (lint+validate QUICK, no tests)\n"
 	@printf "\n"

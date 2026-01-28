@@ -24,9 +24,9 @@ docs: ## Build all documentation (Rust API + mdbook)
 docs-check: ## Validate documentation files exist
 	@if [ ! -d "docs" ]; then echo "ERROR: docs/ directory not found"; exit 1; fi
 
-docs-setup: ## Setup documentation (creates mdbook config if needed)
+docs-setup: ## Setup documentation (validates mdbook config)
 	@mkdir -p book
-	@if [ ! -f "book/book.toml" ]; then echo "ERROR: book/book.toml not found"; exit 1; fi
+	@if [ ! -f "book.toml" ]; then echo "ERROR: book.toml not found in root"; exit 1; fi
 
 docs-sync: ## Sync documentation files from source
 	@./scripts/docs/mdbook-sync.sh 2>/dev/null || true
