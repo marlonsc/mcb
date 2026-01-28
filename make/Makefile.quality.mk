@@ -4,7 +4,18 @@
 # Parameters: FIX, CI_MODE, STRICT, QUICK, LCOV (from main Makefile)
 # =============================================================================
 
-.PHONY: fmt lint validate audit coverage update
+.PHONY: quality fmt lint validate audit coverage update
+
+# =============================================================================
+# QUALITY - Full check (fmt + lint + test)
+# =============================================================================
+
+quality: ## Full check: fmt + lint + test (pre-commit gate)
+	@echo "Running quality checks (fmt + lint + test)..."
+	@$(MAKE) fmt
+	@$(MAKE) lint
+	@$(MAKE) test SCOPE=all
+	@echo "Quality checks passed."
 
 # =============================================================================
 # FMT - Format Rust and Markdown

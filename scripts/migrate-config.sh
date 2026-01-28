@@ -10,7 +10,8 @@
 
 set -e
 
-# Colors for output
+# Colors for output (RED reserved for error messages)
+# shellcheck disable=SC2034
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -45,7 +46,8 @@ migrate_provider() {
         echo "Found old format for $provider_type provider, migrating..."
 
         # Extract the provider configuration
-        local temp_file=$(mktemp)
+        local temp_file
+        temp_file=$(mktemp)
         local in_section=false
         local next_section=false
 
@@ -64,6 +66,7 @@ migrate_provider() {
             if $in_section && ! $next_section; then
                 # Convert 'host' to 'base_url' for compatibility
                 if [[ "$line" =~ ^[[:space:]]*host[[:space:]]*=[[:space:]]* ]]; then
+                    # shellcheck disable=SC2001
                     line=$(echo "$line" | sed 's/host/base_url/')
                     echo "$line" >> "$temp_file"
                 # Skip empty lines and comments at the beginning

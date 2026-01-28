@@ -114,7 +114,7 @@ mod tests {
 
 -   [ ] Tests pass: `make test`
 -   [ ] Code formats correctly: `make fmt`
--   [ ] No linting errors: `make lint`
+-   [ ] No Rust lint errors: `make lint`; no Markdown lint errors: `make docs-lint`
 -   [ ] Quality checks pass: `make quality`
 -   [ ] Documentation updated if needed
 

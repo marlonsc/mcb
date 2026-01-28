@@ -22,7 +22,7 @@ This guide helps you migrate from [zilliztech/Claude-context](https://github.com
 ```bash
 
 # Download the latest release
-curl -LO https://github.com/your-org/mcb/releases/latest/download/mcb-linux-x86_64.tar.gz
+curl -LO https://github.com/marlonsc/mcb/releases/latest/download/mcb-linux-x86_64.tar.gz
 tar xzf mcb-linux-x86_64.tar.gz
 sudo mv mcb /usr/local/bin/
 ```
@@ -216,8 +216,8 @@ Re-index your codebase:
 
 ## Getting Help
 
--   GitHub Issues: <https://github.com/your-org/mcb/issues>
--   Documentation: <https://github.com/your-org/mcb/docs>
+-   GitHub Issues: [mcb issues](https://github.com/marlonsc/mcb/issues)
+-   Documentation: [mcb docs](https://github.com/marlonsc/mcb)
 
 ## Rollback
 

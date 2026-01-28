@@ -25,7 +25,7 @@ O Default Setup do GitHub:
 
 Para verificar se o CodeQL está ativo:
 
-1.  Acesse o repositório: <https://github.com/marlonsc/mcb>
+1.  Acesse o repositório: [GitHub](https://github.com/marlonsc/mcb)
 2.  Vá para a aba **Security** (no topo do repositório)
 3.  Clique em **Code scanning** no menu lateral
 4.  Você deve ver os resultados das análises CodeQL

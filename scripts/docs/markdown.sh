@@ -10,6 +10,7 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
 
 # Fix counter
@@ -281,12 +282,12 @@ EOF
 main() {
     local command="${1:-lint}"
 
-    # Handle --dry-run flag
+    # Handle --dry-run flag (exported for use in fix/lint functions)
     if [[ "$command" == "--dry-run" ]]; then
-        DRY_RUN=true
+        export DRY_RUN=true
         command="${2:-lint}"
     elif [[ "${2:-}" == "--dry-run" ]]; then
-        DRY_RUN=true
+        export DRY_RUN=true
     fi
 
     case "$command" in

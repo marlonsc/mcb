@@ -16,6 +16,7 @@ help: ## Show available commands
 	@printf "  \033[1;34mclean\033[0m        Clean artifacts\n"
 	@printf "\n"
 	@printf "\033[1;33mQuality:\033[0m\n"
+	@printf "  \033[1;34mquality\033[0m      Full check: fmt + lint + test\n"
 	@printf "  \033[1;34mfmt\033[0m          Format Rust + Markdown\n"
 	@printf "  \033[1;34mlint\033[0m         Lint (FIX=1, CI_MODE=1)\n"
 	@printf "  \033[1;34mvalidate\033[0m     Architecture (STRICT=1, QUICK=1)\n"

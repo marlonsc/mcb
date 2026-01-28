@@ -475,5 +475,5 @@ The existing router pattern extends to new provider types:
 
 -   [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
 -   [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/)
--   [Multi-Cloud Architecture Patterns](https://aws.amazon.com/blogs/architecture/category/multi-cloud/)
+-   [Multicloud on AWS](https://aws.amazon.com/multicloud/)
 -   [Shaku Documentation](https://docs.rs/shaku)

@@ -180,7 +180,7 @@ let violations = registry.validate_all(&config)?;
 **Phases 1-7**: ✅ **All VERIFIED** (v0.1.4)
 
 -   **Total Tests**: 750+ in mcb-validate crate
--   **Project-Wide Tests**: 950+ (includes all crates)
+-   **Project-Wide Tests**: 1634+ (includes all crates)
 -   **Verification Date**: 2026-01-28
 -   **Architecture Violations**: 0
 

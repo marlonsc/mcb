@@ -8,6 +8,15 @@ mod handlers;
 mod test_utils;
 mod tools;
 
+// Integration helpers - service detection and skip macros
+#[path = "integration_helpers.rs"]
+mod integration_helpers;
+
+pub use integration_helpers::{
+    check_service_available, is_milvus_available, is_ollama_available, is_postgres_available,
+    is_redis_available,
+};
+
 // Golden acceptance tests
 #[path = "integration/golden_acceptance_integration.rs"]
 mod golden_acceptance_integration;

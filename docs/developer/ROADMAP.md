@@ -43,6 +43,10 @@ MCP Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes
 -   Code reduction: ~607 lines net reduction
 -   Architecture violations: 0
 
+**Known transitive RUSTSEC (no fix available from upstream):**
+
+-   atomic-polyfill@1.0.3 (RUSTSEC-2023-0089), number_prefix@0.4.0 (RUSTSEC-2025-0119), paste@1.0.15 (RUSTSEC-2024-0436), rustls-pemfile@2.2.0 (RUSTSEC-2025-0134) — pulled in by fastembed, indicatif, tokenizers, tonic; crates are unmaintained or deprecated. Resolve when upstream deps update or via workspace patch.
+
 ---
 
 ### v0.1.2 - Provider Modernization + Validation Tooling
@@ -69,7 +73,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 -   ✅ Phase 3: Rule Engines verified (30/30 tests pass)
 -   ✅ Phases 4–7: Metrics, Duplication, Architecture (CA001–CA009), Integration verified
 -   ✅ 12 migration validation rules (YAML files in rules/migration/)
--   ✅ 750+ mcb-validate tests; 1634+ tests project-wide
+-   ✅ 750+ mcb-validate tests; 1638+ tests project-wide
 
 **Admin UI Code Browser:**
 
@@ -85,7 +89,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 **Maintained from v0.1.1:**
 
--   ✅ 1634+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 1638+ tests with comprehensive coverage (100% pass rate)
 -   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 5 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
 -   ✅ 14 languages with AST parsing support
@@ -94,11 +98,11 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 #### Technical Metrics
 
 -   **Source Files**: 340+ Rust files
--   **Test Suite**: 1634+ tests passing
+-   **Test Suite**: 1638+ tests passing
 -   **Crates**: 8 (7 + mcb-validate)
 -   **Validation Rules**: 12 YAML migration rules; CA001–CA009 architecture rules
 -   **Provider Registration**: Compile-time via linkme (inventory removed)
--   **mcb-validate Status**: Phases 1–7 verified (1634+ tests)
+-   **mcb-validate Status**: Phases 1–7 verified (1638+ tests)
 
 ---
 
@@ -118,7 +122,7 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 -   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 5 vector stores (In-Memory, Encrypted, Null)
 -   ✅ Claude-context environment variable compatibility
--   ✅ 1634+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 1638+ tests with comprehensive coverage (100% pass rate)
 -   ✅ JWT authentication and rate limiting
 -   ✅ Clean architecture with trait-based dependency injection
 -   ✅ HTTP transport foundation for future enhancements
@@ -398,7 +402,7 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
-| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 1634+ tests |
+| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 1638+ tests |
 | v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
 | v0.3.0 | Future | Advanced code intelligence |
 | v0.4.0 | Future | Enterprise features |

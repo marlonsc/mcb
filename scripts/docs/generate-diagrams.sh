@@ -187,9 +187,9 @@ EOF
 
 # Clean generated files
 clean_generated() {
-    if [ -d "$OUTPUT_DIR" ]; then
+    if [ -d "${OUTPUT_DIR:?}" ]; then
         log_info "Cleaning generated diagrams..."
-        rm -rf "$OUTPUT_DIR"/*
+        rm -rf "${OUTPUT_DIR:?}"/*
         log_success "Cleaned: $OUTPUT_DIR"
     else
         log_info "No generated files to clean"

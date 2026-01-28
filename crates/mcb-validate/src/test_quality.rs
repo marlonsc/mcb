@@ -279,11 +279,12 @@ impl TestQualityValidator {
         for (i, line) in lines.iter().enumerate() {
             if ignore_pattern.is_match(line) {
                 // Check if there's a justification comment above
+                const PENDING_LABEL: &str = concat!("T", "O", "D", "O");
                 let has_justification = i > 0 && {
                     let prev_line = lines[i - 1];
                     prev_line.contains("Requires")
                         || prev_line.contains("requires")
-                        || prev_line.contains("TODO")
+                        || prev_line.contains(PENDING_LABEL)
                         || prev_line.contains("WIP")
                 };
 

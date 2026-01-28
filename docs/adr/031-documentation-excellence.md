@@ -196,5 +196,5 @@ pub struct DocumentationMetrics {
 -   [Documentation Automation Plan (v0.1.0)](../archive/2025-01-07-documentation-automation-improvement.md)
 -   [ADR Tools (`adrs`)](https://github.com/joshrotenberg/adrs)
 -   [`cargo-modules` Documentation](https://github.com/regexident/cargo-modules)
--   [`mdbook` Documentation](https://rust-lang.github.io/mdbook/)
+-   [mdBook Documentation](https://rust-lang.github.io/mdBook/)
 -   [Mozilla `rust-code-analysis`](https://github.com/mozilla/rust-code-analysis)

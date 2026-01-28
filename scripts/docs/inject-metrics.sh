@@ -23,7 +23,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Load metrics
+# Load metrics (dynamic source - extract-metrics.sh outputs env vars)
+# shellcheck disable=SC1090
 source <("$SCRIPT_DIR/extract-metrics.sh" --env)
 
 log() {

@@ -63,8 +63,8 @@ get_embedding_count() {
 }
 
 get_embedding_list() {
-    find "$PROJECT_ROOT/crates/mcb-providers/src/embedding" -maxdepth 1 -name "*.rs" ! -name "mod.rs" ! -name "helpers.rs" 2>/dev/null | \
-        xargs -I {} basename {} .rs | \
+    find "$PROJECT_ROOT/crates/mcb-providers/src/embedding" -maxdepth 1 -name "*.rs" ! -name "mod.rs" ! -name "helpers.rs" -print0 2>/dev/null | \
+        xargs -0 -I {} basename {} .rs | \
         sed 's/openai/OpenAI/' | \
         sed 's/voyageai/VoyageAI/' | \
         sed 's/ollama/Ollama/' | \
@@ -86,8 +86,8 @@ get_vector_store_count() {
 }
 
 get_vector_store_list() {
-    find "$PROJECT_ROOT/crates/mcb-providers/src/vector_store" -maxdepth 1 -name "*.rs" ! -name "mod.rs" ! -name "filesystem.rs" 2>/dev/null | \
-        xargs -I {} basename {} .rs | \
+    find "$PROJECT_ROOT/crates/mcb-providers/src/vector_store" -maxdepth 1 -name "*.rs" ! -name "mod.rs" ! -name "filesystem.rs" -print0 2>/dev/null | \
+        xargs -0 -I {} basename {} .rs | \
         sed 's/^milvus$/Milvus/' | \
         sed 's/^edgevec$/EdgeVec/' | \
         sed 's/^in_memory$/In-Memory/' | \
@@ -112,10 +112,11 @@ get_adr_count() {
 # -----------------------------------------------------------------------------
 get_test_count() {
     # Count test functions in crates (lib/bins only; misses doctests, some integration)
-    local count=$(find "$PROJECT_ROOT/crates" -name "*.rs" -type f -exec grep -h "^[[:space:]]*#[[:space:]]*\[test\]" {} \; 2>/dev/null | wc -l | tr -d ' ')
-    local async_count=$(find "$PROJECT_ROOT/crates" -name "*.rs" -type f -exec grep -h "#\[tokio::test\]" {} \; 2>/dev/null | wc -l | tr -d ' ')
-    local int_count=$(find "$PROJECT_ROOT/crates" -path "*/tests/*.rs" -type f -exec grep -hE "#\[(\s*tokio::)?test\]" {} \; 2>/dev/null | wc -l | tr -d ' ')
-    local total=$((count + async_count + int_count))
+    local count async_count int_count total
+    count=$(find "$PROJECT_ROOT/crates" -name "*.rs" -type f -exec grep -h "^[[:space:]]*#[[:space:]]*\[test\]" {} \; 2>/dev/null | grep -c . || true)
+    async_count=$(find "$PROJECT_ROOT/crates" -name "*.rs" -type f -exec grep -h "#\[tokio::test\]" {} \; 2>/dev/null | grep -c . || true)
+    int_count=$(find "$PROJECT_ROOT/crates" -path "*/tests/*.rs" -type f -exec grep -hE "#\[(\s*tokio::)?test\]" {} \; 2>/dev/null | grep -c . || true)
+    total=$((count + async_count + int_count))
 
     if [ -z "${total}" ] || [ "${total}" = "0" ]; then
         echo "950"

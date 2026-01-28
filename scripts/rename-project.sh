@@ -28,8 +28,8 @@ declare -A CHANGE_PATTERNS=(
     ["https://github.com/marlonsc/mcb"]="https://github.com/marlonsc/mcb"
 
     # Data and config directories
-    ["~/.local/share/mcb"]="~/.local/share/mcb"
-    ["~/.config/mcb"]="~/.config/mcb"
+    ["$HOME/.local/share/mcb"]="$HOME/.local/share/mcb"
+    ["$HOME/.config/mcb"]="$HOME/.config/mcb"
 
     # Crate and binary names
     ["mcb"]="mcb"
@@ -110,7 +110,7 @@ log_success() {
 should_exclude_file() {
     local file="$1"
     for pattern in "${EXCLUDE_PATTERNS[@]}"; do
-        if [[ "$file" == $pattern ]]; then
+        if [[ "$file" == "$pattern" ]]; then
             return 0
         fi
     done
@@ -119,7 +119,8 @@ should_exclude_file() {
 
 backup_file() {
     local file="$1"
-    local backup="${file}.backup.$(date +%Y%m%d_%H%M%S)"
+    local backup
+    backup="${file}.backup.$(date +%Y%m%d_%H%M%S)"
     if $VERBOSE; then
         log_info "Creating backup: $backup"
     fi
@@ -128,10 +129,10 @@ backup_file() {
 
 validate_change() {
     local file="$1"
-    local old_content="$2"
+    local _old_content="$2"
     local new_content="$3"
 
-    # Basic validation - ensure we haven't broken anything obvious
+    # Basic validation - ensure we haven't broken anything obvious (_old_content available for diff)
     if [[ "$file" == "Cargo.toml" ]]; then
         # Check that name field is valid
         if ! grep -q "^name = \"mcb\"$" <<< "$new_content"; then
@@ -176,7 +177,8 @@ apply_changes_to_file() {
             if $DRY_RUN; then
                 log_info "Would change in $file: '$old_pattern' → '$new_pattern'"
             else
-                # Use sed to replace all occurrences
+                # Use sed to replace all occurrences (dynamic pattern - cannot use ${var//search/replace})
+                # shellcheck disable=SC2001
                 new_content=$(sed "s|$old_pattern|$new_pattern|g" <<< "$new_content")
                 ((changes_made++))
             fi
@@ -240,14 +242,15 @@ process_files() {
     local changed_files=0
 
     # Process regular files using a temporary file to avoid process substitution issues
-    local temp_file=$(mktemp)
+    local temp_file
+    temp_file=$(mktemp)
     if $VERBOSE; then
         log_info "Finding files to process..."
     fi
     find "$PROJECT_ROOT" -type f \( -name "*.rs" -o -name "*.toml" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.sh" -o -name "*.service" -o -name "*.mk" -o -name "Makefile" -o -name "*.json" \) -print0 > "$temp_file"
     if $VERBOSE; then
-        # Count null-delimited entries
-        local file_count=$(tr -cd '\0' < "$temp_file" | wc -c)
+        local file_count
+        file_count=$(tr -cd '\0' < "$temp_file" | wc -c)
         log_info "Found $file_count files to process"
     fi
 

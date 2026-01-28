@@ -137,7 +137,7 @@ make validate       # Architecture validation
 ### Quality Gates
 
 -   All tests pass (`make test`)
--   Clean linting (`make lint`)
+-   Clean Rust lint (`make lint`); clean Markdown lint (`make docs-lint`)
 -   Zero architecture violations (`make validate`)
 -   No new `unwrap/expect` in code
 
@@ -145,7 +145,7 @@ See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for con
 
 ## Testing
 
-1634+ tests covering all layers:
+1638+ tests covering all layers:
 
 ```bash
 make test           # All tests
