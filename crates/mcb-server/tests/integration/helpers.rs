@@ -1,15 +1,8 @@
 /// Unified integration test helpers
 /// Detects external service availability and skips tests if services are unavailable
 ///
-/// Usage in tests:
-/// ```ignore
-/// #[tokio::test]
-/// async fn example() {
-///     skip_if_service_unavailable!("Milvus", is_milvus_available());
-///     let result = do_something();
-///     assert_eq!(result, expected);
-/// }
-/// ```
+/// Usage: Call `skip_if_service_unavailable!("ServiceName", is_service_available())`
+/// at the start of your test function to skip if the service is unavailable.
 use std::net::TcpStream;
 use std::time::Duration;
 

@@ -2,7 +2,7 @@
 
 This document explains how to run integration tests that use Redis (cache) and NATS (event bus) against real local services.
 
-**Note:** Current integration tests use `skip_if_service_unavailable!` and check Milvus, Ollama, Redis, Postgres, etc. (see `crates/mcb-server/tests/integration_helpers.rs`). The specific `cargo test redis_cache_integration` / `nats_event_bus_integration` targets may not exist; use `make test` or `make test SCOPE=integration` for the actual suite. The Redis/NATS Docker setup below remains useful when those services are required.
+**Note:** Current integration tests use `skip_if_service_unavailable!` and check Milvus, Ollama, Redis, Postgres, etc. (see `crates/mcb-server/tests/integration/helpers.rs`). The specific `cargo test redis_cache_integration` / `nats_event_bus_integration` targets may not exist; use `make test` or `make test SCOPE=integration` for the actual suite. The Redis/NATS Docker setup below remains useful when those services are required.
 
 ## Quick Start
 
@@ -81,20 +81,17 @@ systemctl start nats-server
 
 ```bash
 
-# Run only Redis tests
-cargo test redis_cache_integration -- --nocapture
-
-# Run only NATS tests
-cargo test nats_event_bus_integration -- --nocapture
-
-# Run all integration tests
+# Run all tests (recommended; includes integration tests that use Redis/NATS when available)
 make test
 
-# Or with environment variables if services are on different hosts
-REDIS_URL=redis://192.168.1.100:6379 \
-NATS_URL=nats://192.168.1.100:4222 \
-cargo test redis_cache_integration nats_event_bus_integration -- --nocapture
+# Or only integration tests
+make test SCOPE=integration
+
+# With environment variables if services are on different hosts
+REDIS_URL=redis://192.168.1.100:6379 NATS_URL=nats://192.168.1.100:4222 make test
 ```
+
+If Redis/NATS-specific test targets (e.g. `redis_cache_integration`, `nats_event_bus_integration`) exist, you can run them with `cargo test <name> -- --nocapture`. Otherwise use `make test` above.
 
 #### Method 2: Docker services + local tests
 
@@ -128,7 +125,7 @@ docker-compose down -v        # Cleanup
 
 ### Redis Cache Provider Tests
 
-**See:** `crates/mcb-server/tests/integration_helpers.rs` (e.g. `is_redis_available`), `crates/mcb-providers/src/cache/redis.rs`, and integration tests.
+**See:** `crates/mcb-server/tests/integration/helpers.rs` (e.g. `is_redis_available`), `crates/mcb-providers/src/cache/redis.rs`, and integration tests.
 
 Tests include:
 
@@ -143,15 +140,11 @@ Tests include:
 -   Connection pooling
 -   Large payload handling
 
-Run:
-
-```bash
-cargo test redis_cache_integration -- --nocapture
-```
+Run: `make test` or `make test SCOPE=integration`. If a dedicated `redis_cache_integration` test exists, use `cargo test redis_cache_integration -- --nocapture`.
 
 ### NATS Event Bus Tests
 
-**See:** `crates/mcb-infrastructure/src/infrastructure/events.rs` and integration tests. NATS availability checks may use similar patterns to `is_redis_available` in `integration_helpers`.
+**See:** `crates/mcb-infrastructure/src/infrastructure/events.rs` and integration tests. NATS availability checks may use similar patterns to `is_redis_available` in `integration/helpers.rs`.
 
 Tests include:
 
@@ -165,11 +158,7 @@ Tests include:
 -   Large payload handling
 -   Stream persistence
 
-Run:
-
-```bash
-cargo test nats_event_bus_integration -- --nocapture
-```
+Run: `make test` or `make test SCOPE=integration`. If a dedicated `nats_event_bus_integration` test exists, use `cargo test nats_event_bus_integration -- --nocapture`.
 
 ## Environment Variables
 
@@ -192,9 +181,7 @@ Example:
 ```bash
 
 # Use custom host services
-REDIS_URL=redis://custom-host:6379 \
-NATS_URL=nats://custom-host:4222 \
-cargo test redis_cache_integration nats_event_bus_integration -- --nocapture
+REDIS_URL=redis://custom-host:6379 NATS_URL=nats://custom-host:4222 make test
 ```
 
 ## Docker Integration
@@ -247,7 +234,7 @@ docker-compose -f docker-compose.testing.yml down -v
 
 ## Service Detection
 
-Tests automatically skip if services are unavailable via `skip_if_service_unavailable!` and helpers in `integration_helpers` (e.g. `is_redis_available`, `is_milvus_available`, `is_ollama_available`):
+Tests automatically skip if services are unavailable via `skip_if_service_unavailable!` and helpers in `integration/helpers.rs` (e.g. `is_redis_available`, `is_milvus_available`, `is_ollama_available`):
 
 ```rust
 skip_if_service_unavailable!("Redis", is_redis_available());
@@ -315,7 +302,7 @@ docker network inspect mcp-test
 # Use IP directly
 docker exec mcp-test-runner bash
 export REDIS_URL=redis://172.17.0.1:6379  # Replace with actual host IP
-cargo test redis_cache_integration
+make test
 ```
 
 ### Tests Timeout
@@ -323,7 +310,8 @@ cargo test redis_cache_integration
 Increase timeout and add debugging:
 
 ```bash
-RUST_LOG=debug cargo test redis_cache_integration -- --nocapture --test-threads=1
+RUST_LOG=debug make test
+# Or, for a single test: cargo test <test_name> -- --nocapture --test-threads=1
 ```
 
 ### Container Cannot Reach Host Services
@@ -414,9 +402,7 @@ jobs:
 
 -   name: Run integration tests
         run: |
-          REDIS_URL=redis://127.0.0.1:6379 \
-          NATS_URL=nats://127.0.0.1:4222 \
-          cargo test redis_cache_integration nats_event_bus_integration -- --nocapture
+          REDIS_URL=redis://127.0.0.1:6379 NATS_URL=nats://127.0.0.1:4222 make test
 ```
 
 ## Additional Resources
@@ -430,7 +416,7 @@ jobs:
 
 When adding new integration tests:
 
-1.  Use existing patterns in `crates/mcb-server/tests/integration_helpers.rs` and `crates/mcb-providers/src/cache/redis.rs`
+1.  Use existing patterns in `crates/mcb-server/tests/integration/helpers.rs` and `crates/mcb-providers/src/cache/redis.rs`
 2.  Include environment variable support for flexible service locations
 3.  Use `skip_if_service_unavailable!("Service", is_*_available())` for graceful skipping
 4.  Add cleanup code to prevent test pollution
