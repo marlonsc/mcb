@@ -25,10 +25,12 @@ curl -s http://localhost:8222/healthz
 
 ```bash
 
-# Option 1: Direct tests (fastest - tests connect directly to host services)
-make test-docker
+# Option 1: Start services, then run tests (host services)
+make docker-up
+make test
+# make docker-down when done
 
-# Option 2: Docker container tests (container connects to host services)
+# Option 2: Full stack via docker-compose (container connects to host services)
 docker-compose up
 ```
 
@@ -88,20 +90,16 @@ NATS_URL=nats://192.168.1.100:4222 \
 cargo test redis_cache_integration nats_event_bus_integration -- --nocapture
 ```
 
-#### Method 2: Docker Container Tests (Recommended for CI/CD)
+#### Method 2: Docker services + local tests
 
-Uses Docker containers for OpenAI mock, Ollama, and Milvus while connecting to host Redis/NATS:
+Start Docker services (e.g. Redis, NATS via `docker-compose`), then run tests on the host:
 
 ```bash
 
-# Full Docker integration test cycle
-make test-docker
-
-# Or step by step:
 make docker-up                           # Start Docker services
 REDIS_URL=redis://127.0.0.1:6379 \
 NATS_URL=nats://127.0.0.1:4222 \
-make test-integration-docker            # Run tests inside docker environment
+make test                                # Run all tests (integration tests use host services)
 make docker-down                         # Stop Docker services
 ```
 
@@ -243,31 +241,28 @@ docker-compose -f docker-compose.testing.yml down -v
 
 ## Service Detection
 
-Tests automatically skip if services are unavailable:
+Tests automatically skip if services are unavailable via `skip_if_service_unavailable!` and helpers in `integration_helpers` (e.g. `is_redis_available`, `is_milvus_available`, `is_ollama_available`):
 
 ```rust
-skip_if_no_redis!();  // Skips if Redis not available
-skip_if_no_nats!();   // Skips if NATS not available
+skip_if_service_unavailable!("Redis", is_redis_available());
+skip_if_service_unavailable!("Milvus", is_milvus_available());
 ```
 
-Output:
+When a required service is missing, tests skip with a message such as:
 
 ```
-⚠️  Skipping test: Redis not available on localhost:6379
-    Start Redis with: docker-compose up -d redis
+⊘ SKIPPED: Redis service not available (skipping test)
 ```
 
 ## Make Targets
 
 ```bash
 make test                      # Run all unit + integration tests locally
-make test-docker               # Run with Docker services + host Redis/NATS
-make test-integration          # Run only integration tests
-make test-integration-docker   # Run integration tests in docker environment
-make docker-up                 # Start Docker services
+make test SCOPE=integration    # Run only integration tests
+make docker-up                 # Start Docker services (docker-compose up -d)
 make docker-down               # Stop Docker services
 make docker-logs               # View Docker logs
-make docker-status             # Show service status
+make docker                    # Show Docker service status
 ```
 
 ## Troubleshooting
@@ -441,5 +436,5 @@ For issues or questions:
 1.  Check the Troubleshooting section above
 2.  Review test output with `--nocapture` flag
 3.  Check Docker logs: `docker-compose logs`
-4.  Check service health: `make docker-status`
+4.  Check service health: `make docker`
 5.  Open an issue on GitHub with test output

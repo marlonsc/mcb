@@ -96,6 +96,8 @@ make adr
 make adr-new
 ```
 
+`make docs-lint` and `make docs-validate` do not require a Rust build (useful when `target/` is broken or for docs-only CI).
+
 ## 📊 Documentation Quality
 
 | Aspect | Status | Description |
@@ -108,11 +110,11 @@ make adr-new
 
 ## 🎯 Documentation Principles
 
-1.  **Single Source of Truth**- Documentation stays synchronized with code
-2.  **Audience-Specific**- Different views for different stakeholders
-3.  **Automated Maintenance**- No manual updates required
-4.  **Version Controlled**- All documentation is version controlled
-5.  **Quality Assured**- Automated validation and consistency checks
+1.  **Single Source of Truth**: Documentation stays synchronized with code
+2.  **Audience-Specific**: Different views for different stakeholders
+3.  **Automated Maintenance**: No manual updates required
+4.  **Version Controlled**: All documentation is version controlled
+5.  **Quality Assured**: Automated validation and consistency checks
 
 ## 📈 Documentation Metrics
 
