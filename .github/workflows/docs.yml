@@ -38,6 +38,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: make docs-check
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@stable
+      - run: make docs-validate
 
   update-docs:
     name: Auto-Update Documentation
@@ -99,7 +102,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: make rust-docs
-      - run: make test-doc
+      - run: make test SCOPE=doc
 
       - uses: actions/upload-artifact@v6
         with:
