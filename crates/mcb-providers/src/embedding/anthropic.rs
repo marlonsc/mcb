@@ -127,7 +127,10 @@ impl AnthropicEmbeddingProvider {
                         self.timeout
                     ))
                 } else {
-                    Error::embedding(format!("HTTP request failed: {}", e))
+                    Error::embedding(format!(
+                        "Anthropic HTTP request to /embeddings failed: {}",
+                        e
+                    ))
                 }
             })?;
 

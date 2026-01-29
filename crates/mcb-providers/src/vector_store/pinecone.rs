@@ -100,11 +100,11 @@ impl PineconeVectorStoreProvider {
         let response = builder.send().await.map_err(|e| {
             if e.is_timeout() {
                 Error::vector_db(format!(
-                    "Pinecone request timed out after {:?}",
-                    self.timeout
+                    "Pinecone request to {} timed out after {:?}",
+                    path, self.timeout
                 ))
             } else {
-                Error::vector_db(format!("Pinecone HTTP request failed: {}", e))
+                Error::vector_db(format!("Pinecone HTTP request to {} failed: {}", path, e))
             }
         })?;
 

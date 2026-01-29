@@ -108,9 +108,12 @@ impl QdrantVectorStoreProvider {
 
         let response = builder.send().await.map_err(|e| {
             if e.is_timeout() {
-                Error::vector_db(format!("Qdrant request timed out after {:?}", self.timeout))
+                Error::vector_db(format!(
+                    "Qdrant request to {} timed out after {:?}",
+                    path, self.timeout
+                ))
             } else {
-                Error::vector_db(format!("Qdrant HTTP request failed: {}", e))
+                Error::vector_db(format!("Qdrant HTTP request to {} failed: {}", path, e))
             }
         })?;
 
