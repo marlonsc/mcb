@@ -71,8 +71,12 @@ jobs:
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
       - uses: actions/checkout@v6
-      - run: bash .github/setup-ci.sh
+      - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        run: choco install protoc -y
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
