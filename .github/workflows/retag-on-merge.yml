@@ -1,0 +1,80 @@
+---
+# =============================================================================
+# Auto-Tag on Release Branch Merge
+# =============================================================================
+# Purpose: Automatically create version tags when release branches merge to main
+#
+# Behavior:
+#   1. Triggers when a PR is merged to main
+#   2. Checks if the source branch matches release/v* pattern
+#   3. Extracts version from branch name (e.g., release/v0.1.5 -> v0.1.5)
+#   4. Creates a lightweight git tag on the merge commit
+#   5. Triggers the Release workflow (which listens on tag push)
+#
+# This eliminates manual `git tag` + `git push --tags` after merging releases.
+# =============================================================================
+
+name: Auto-Tag Release
+
+permissions:
+  contents: write
+
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  tag-release:
+    name: Create Version Tag
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from branch name
+        id: version
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          # Extract version: release/v0.1.5 -> v0.1.5
+          VERSION="${BRANCH#release/}"
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected version tag: $VERSION"
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::warning ::Tag $TAG already exists, skipping creation"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "::notice ::Created and pushed tag $TAG"
+
+      - name: Summary
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          echo "## Release Tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.check_tag.outputs.exists }}" == "true" ]; then
+            echo "Tag \`$TAG\` already existed. No action taken." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Created tag \`$TAG\` on merge commit." >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "The [Release workflow](${{ github.server_url }}/${{ github.repository }}/actions/workflows/release.yml) will now build artifacts." >> "$GITHUB_STEP_SUMMARY"
+          fi

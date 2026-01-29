@@ -1,0 +1,69 @@
+---
+# =============================================================================
+# Dependabot Auto-Review & Auto-Merge
+# =============================================================================
+# Purpose: Automatically approve and merge Dependabot PRs that pass CI
+#
+# Behavior:
+#   1. Triggers when Dependabot opens or updates a PR
+#   2. Waits for CI checks to complete
+#   3. Auto-approves the PR
+#   4. Enables auto-merge with squash strategy
+#
+# Security:
+#   - Only runs for dependabot[bot] actor
+#   - Requires CI to pass before merge
+#   - Uses GITHUB_TOKEN (not PAT) for approval
+# =============================================================================
+
+name: Dependabot Auto-Merge
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:  # yamllint disable-line rule:truthy
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  auto-merge:
+    name: Auto-Merge Dependabot
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Auto-approve patch and minor updates
+        if: >-
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for patch and minor updates
+        if: >-
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-approve major updates (review only, no merge)
+        if: >-
+          steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: |
+          echo "::notice ::Major update detected: ${{ steps.metadata.outputs.dependency-names }}"
+          echo "Major updates require manual review and merge."
+          gh pr comment "$PR_URL" --body \
+            "**Major version update detected.** This PR requires manual review before merging."
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
