@@ -436,6 +436,10 @@ pub struct ArchitectureValidator {
     config_quality: ConfigQualityValidator,
     // Clean Architecture validator (CA001-CA009)
     clean_architecture: CleanArchitectureValidator,
+    // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
+    visibility: VisibilityValidator,
+    layer_flow: LayerFlowValidator,
+    port_adapter: PortAdapterValidator,
 }
 
 impl ArchitectureValidator {
@@ -486,6 +490,10 @@ impl ArchitectureValidator {
             config_quality: ConfigQualityValidator::with_config(config.clone()),
             // Clean Architecture validator (CA001-CA009)
             clean_architecture: CleanArchitectureValidator::with_config(config.clone()),
+            // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
+            visibility: VisibilityValidator::new(),
+            layer_flow: LayerFlowValidator::new(),
+            port_adapter: PortAdapterValidator::new(),
             config: ValidationConfig {
                 workspace_root: root,
                 ..config
@@ -560,6 +568,16 @@ impl ArchitectureValidator {
             all_violations.push(Box::new(v));
         }
         for v in self.clean_architecture.validate_all()? {
+            all_violations.push(Box::new(v));
+        }
+        // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
+        for v in self.visibility.validate(&self.config)? {
+            all_violations.push(Box::new(v));
+        }
+        for v in self.layer_flow.validate(&self.config)? {
+            all_violations.push(Box::new(v));
+        }
+        for v in self.port_adapter.validate(&self.config)? {
             all_violations.push(Box::new(v));
         }
 
