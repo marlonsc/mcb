@@ -12,6 +12,8 @@
 //! | FilesystemVectorStore | Local | Persistent filesystem-based storage |
 //! | EdgeVecVectorStoreProvider | Embedded | High-performance HNSW vector store |
 //! | MilvusVectorStoreProvider | Cloud | Production-scale cloud vector database |
+//! | PineconeVectorStoreProvider | Cloud | Pinecone cloud vector database |
+//! | QdrantVectorStoreProvider | Cloud | Qdrant vector search engine |
 //!
 //! ## Provider Selection Guide
 //!
@@ -32,6 +34,10 @@ pub mod in_memory;
 #[cfg(feature = "vectorstore-milvus")]
 pub mod milvus;
 pub mod null;
+#[cfg(feature = "vectorstore-pinecone")]
+pub mod pinecone;
+#[cfg(feature = "vectorstore-qdrant")]
+pub mod qdrant;
 
 // Re-export for convenience
 #[cfg(feature = "vectorstore-edgevec")]
@@ -46,3 +52,7 @@ pub use in_memory::InMemoryVectorStoreProvider;
 #[cfg(feature = "vectorstore-milvus")]
 pub use milvus::MilvusVectorStoreProvider;
 pub use null::NullVectorStoreProvider;
+#[cfg(feature = "vectorstore-pinecone")]
+pub use pinecone::PineconeVectorStoreProvider;
+#[cfg(feature = "vectorstore-qdrant")]
+pub use qdrant::QdrantVectorStoreProvider;

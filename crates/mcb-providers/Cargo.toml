@@ -26,7 +26,8 @@ doctest = false
 default = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-all"]
 
 # === Embedding Providers ===
-embedding-all = ["embedding-openai", "embedding-ollama", "embedding-voyageai", "embedding-gemini", "embedding-fastembed"]
+embedding-all = ["embedding-openai", "embedding-ollama", "embedding-voyageai", "embedding-gemini", "embedding-fastembed", "embedding-anthropic"]
+embedding-anthropic = []
 embedding-openai = []
 embedding-ollama = []
 embedding-voyageai = []
@@ -35,8 +36,10 @@ embedding-fastembed = ["dep:fastembed"]
 
 # === Vector Store Providers ===
 
-vectorstore-all = ["vectorstore-memory", "vectorstore-encrypted", "vectorstore-filesystem", "vectorstore-edgevec", "vectorstore-milvus"]
+vectorstore-all = ["vectorstore-memory", "vectorstore-encrypted", "vectorstore-filesystem", "vectorstore-edgevec", "vectorstore-milvus", "vectorstore-pinecone", "vectorstore-qdrant"]
 vectorstore-memory = []
+vectorstore-pinecone = []
+vectorstore-qdrant = []
 vectorstore-encrypted = ["dep:aes-gcm"]
 vectorstore-filesystem = []
 vectorstore-edgevec = ["dep:edgevec", "dep:schemars"]
