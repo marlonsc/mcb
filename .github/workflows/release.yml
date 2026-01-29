@@ -67,8 +67,12 @@ jobs:
             artifact_name: mcb.exe
             asset_name: mcb-x86_64-windows.exe
     steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
       - uses: actions/checkout@v6
       - run: bash .github/setup-ci.sh
+        if: runner.os != 'Windows'
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
