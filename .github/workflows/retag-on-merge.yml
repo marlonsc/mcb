@@ -1,0 +1,61 @@
+---
+# =============================================================================
+# Retag on Merge
+# =============================================================================
+# When a release/* branch is merged into main, moves the existing tag
+# to the merge commit so the Release workflow triggers correctly.
+#
+# Flow:
+#   1. PR from release/v0.1.4 merged into main
+#   2. This workflow detects tag v0.1.4 exists on the old branch commit
+#   3. Deletes the old tag and recreates it on the merge commit
+#   4. The tag push triggers the Release workflow
+# =============================================================================
+
+name: Retag on Merge
+
+permissions:
+  contents: write
+
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  retag:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from branch name
+        id: version
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          # release/v0.1.4 -> v0.1.4
+          TAG="${BRANCH#release/}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Detected tag: $TAG from branch: $BRANCH"
+
+      - name: Move tag to merge commit
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          MERGE_SHA="${{ github.event.pull_request.merge_commit_sha }}"
+
+          echo "Moving tag $TAG to merge commit $MERGE_SHA"
+
+          # Delete remote tag if it exists
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG"; then
+            git push origin ":refs/tags/$TAG"
+            echo "Deleted old tag $TAG"
+          fi
+
+          # Create and push new tag
+          git tag "$TAG" "$MERGE_SHA"
+          git push origin "$TAG"
+          echo "Created tag $TAG at $MERGE_SHA"
