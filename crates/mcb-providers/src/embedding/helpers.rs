@@ -43,5 +43,5 @@ pub(crate) mod constructor {
 ///
 /// Re-exports from utils::http for backward compatibility.
 pub(crate) mod http {
-    pub(crate) use crate::utils::http::create_default_client;
+    pub(crate) use crate::utils::http::{create_default_client, create_http_provider_config};
 }

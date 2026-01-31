@@ -91,3 +91,71 @@ pub(crate) fn parse_embedding_vector(
         })
         .collect()
 }
+
+/// Configuration for HTTP-based embedding providers
+///
+/// Extracted from `EmbeddingProviderConfig` with provider-specific defaults applied.
+pub(crate) struct HttpProviderConfig {
+    /// API key for authentication (required for most providers)
+    pub api_key: String,
+    /// Base URL for the API endpoint
+    pub base_url: Option<String>,
+    /// Model name to use
+    pub model: String,
+    /// Request timeout
+    pub timeout: Duration,
+    /// Configured HTTP client
+    pub client: Client,
+}
+
+/// Create configuration for an HTTP-based embedding provider
+///
+/// This helper extracts common configuration from `EmbeddingProviderConfig`,
+/// applies provider-specific defaults, and creates the HTTP client.
+///
+/// # Arguments
+/// * `config` - The provider configuration from registry
+/// * `provider_name` - Name of the provider (for error messages)
+/// * `default_model` - Default model to use if none specified
+///
+/// # Returns
+/// Configured `HttpProviderConfig` or error message
+///
+/// # Example
+/// ```ignore
+/// let cfg = create_http_provider_config(config, "openai", "text-embedding-3-small")?;
+/// Ok(Arc::new(OpenAIEmbeddingProvider::new(
+///     cfg.api_key,
+///     cfg.base_url,
+///     cfg.model,
+///     cfg.timeout,
+///     cfg.client,
+/// )))
+/// ```
+pub(crate) fn create_http_provider_config(
+    config: &mcb_application::ports::registry::EmbeddingProviderConfig,
+    provider_name: &str,
+    default_model: &str,
+) -> Result<HttpProviderConfig, String> {
+    let api_key = config
+        .api_key
+        .clone()
+        .ok_or_else(|| format!("{provider_name} requires api_key"))?;
+
+    let base_url = config.base_url.clone();
+
+    let model = config
+        .model
+        .clone()
+        .unwrap_or_else(|| default_model.to_string());
+
+    let client = create_default_client()?;
+
+    Ok(HttpProviderConfig {
+        api_key,
+        base_url,
+        model,
+        timeout: DEFAULT_HTTP_TIMEOUT,
+        client,
+    })
+}

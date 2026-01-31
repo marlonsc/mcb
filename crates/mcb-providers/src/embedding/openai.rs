@@ -193,25 +193,16 @@ use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 fn openai_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use super::helpers::{DEFAULT_EMBEDDING_TIMEOUT, http::create_default_client};
+    use super::helpers::http::create_http_provider_config;
 
-    let api_key = config
-        .api_key
-        .clone()
-        .ok_or_else(|| "OpenAI requires api_key".to_string())?;
-    let base_url = config.base_url.clone();
-    let model = config
-        .model
-        .clone()
-        .unwrap_or_else(|| "text-embedding-3-small".to_string());
-    let http_client = create_default_client()?;
+    let cfg = create_http_provider_config(config, "OpenAI", "text-embedding-3-small")?;
 
     Ok(Arc::new(OpenAIEmbeddingProvider::new(
-        api_key,
-        base_url,
-        model,
-        DEFAULT_EMBEDDING_TIMEOUT,
-        http_client,
+        cfg.api_key,
+        cfg.base_url,
+        cfg.model,
+        cfg.timeout,
+        cfg.client,
     )))
 }
 

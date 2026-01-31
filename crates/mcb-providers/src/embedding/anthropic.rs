@@ -192,25 +192,16 @@ use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 fn anthropic_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use super::helpers::{DEFAULT_EMBEDDING_TIMEOUT, http::create_default_client};
+    use super::helpers::http::create_http_provider_config;
 
-    let api_key = config
-        .api_key
-        .clone()
-        .ok_or_else(|| "Anthropic requires api_key".to_string())?;
-    let base_url = config.base_url.clone();
-    let model = config
-        .model
-        .clone()
-        .unwrap_or_else(|| "voyage-3".to_string());
-    let http_client = create_default_client()?;
+    let cfg = create_http_provider_config(config, "Anthropic", "voyage-3")?;
 
     Ok(Arc::new(AnthropicEmbeddingProvider::new(
-        api_key,
-        base_url,
-        model,
-        DEFAULT_EMBEDDING_TIMEOUT,
-        http_client,
+        cfg.api_key,
+        cfg.base_url,
+        cfg.model,
+        cfg.timeout,
+        cfg.client,
     )))
 }
 
