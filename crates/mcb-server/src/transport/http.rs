@@ -339,6 +339,10 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         get_indexing_status: state.server.get_indexing_status_handler(),
         clear_index: state.server.clear_index_handler(),
         validate_architecture: state.server.validate_architecture_handler(),
+        validate_file: state.server.validate_file_handler(),
+        list_validators: state.server.list_validators_handler(),
+        get_validation_rules: state.server.get_validation_rules_handler(),
+        analyze_complexity: state.server.analyze_complexity_handler(),
     };
 
     match route_tool_call(call_request, &handlers).await {

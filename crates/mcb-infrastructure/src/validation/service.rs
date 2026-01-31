@@ -5,7 +5,10 @@
 
 use async_trait::async_trait;
 use mcb_domain::error::Result;
-use mcb_domain::ports::services::{ValidationReport, ValidationServiceInterface, ViolationEntry};
+use mcb_domain::ports::services::{
+    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
+};
 use std::path::Path;
 
 /// Infrastructure validation service using mcb-validate
@@ -53,6 +56,26 @@ impl ValidationServiceInterface for InfraValidationService {
             "patterns".into(),
             "tests".into(),
         ])
+    }
+
+    async fn validate_file(
+        &self,
+        file_path: &Path,
+        validators: Option<&[String]>,
+    ) -> Result<ValidationReport> {
+        run_file_validation(file_path, validators)
+    }
+
+    async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>> {
+        get_validation_rules(category)
+    }
+
+    async fn analyze_complexity(
+        &self,
+        file_path: &Path,
+        include_functions: bool,
+    ) -> Result<ComplexityReport> {
+        analyze_file_complexity(file_path, include_functions)
     }
 }
 
@@ -130,4 +153,196 @@ fn convert_report(
         violations,
         passed: errors == 0,
     }
+}
+
+fn run_file_validation(
+    file_path: &Path,
+    validators: Option<&[String]>,
+) -> Result<ValidationReport> {
+    // For single file validation, we need to find the workspace root
+    // and run validation scoped to that file
+    let workspace_root = find_workspace_root(file_path)
+        .unwrap_or_else(|| file_path.parent().unwrap_or(file_path).to_path_buf());
+
+    // Run standard validation - mcb-validate doesn't have single-file mode yet
+    // So we run full validation and filter to the specific file
+    let full_report = run_validation(&workspace_root, validators, None)?;
+
+    let file_str = file_path.to_string_lossy().to_string();
+    let file_violations: Vec<ViolationEntry> = full_report
+        .violations
+        .into_iter()
+        .filter(|v| v.file.as_ref().is_some_and(|f| f.contains(&file_str)))
+        .collect();
+
+    let errors = file_violations
+        .iter()
+        .filter(|v| v.severity == "ERROR")
+        .count();
+
+    Ok(ValidationReport {
+        total_violations: file_violations.len(),
+        errors,
+        warnings: file_violations
+            .iter()
+            .filter(|v| v.severity == "WARNING")
+            .count(),
+        infos: file_violations
+            .iter()
+            .filter(|v| v.severity == "INFO")
+            .count(),
+        violations: file_violations,
+        passed: errors == 0,
+    })
+}
+
+fn find_workspace_root(start: &Path) -> Option<std::path::PathBuf> {
+    let mut current = if start.is_file() {
+        start.parent()?.to_path_buf()
+    } else {
+        start.to_path_buf()
+    };
+
+    loop {
+        let cargo_toml = current.join("Cargo.toml");
+        if cargo_toml.exists() {
+            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+                if content.contains("[workspace]") {
+                    return Some(current);
+                }
+            }
+        }
+        if !current.pop() {
+            return None;
+        }
+    }
+}
+
+fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
+    // Return a list of known validation rules
+    let all_rules = vec![
+        // Clean Architecture rules
+        RuleInfo {
+            id: "CA001".into(),
+            category: "clean_architecture".into(),
+            severity: "error".into(),
+            description: "Domain layer must not depend on infrastructure".into(),
+            engine: "rust-validator".into(),
+        },
+        RuleInfo {
+            id: "CA002".into(),
+            category: "clean_architecture".into(),
+            severity: "error".into(),
+            description: "Application layer must not depend on infrastructure".into(),
+            engine: "rust-validator".into(),
+        },
+        RuleInfo {
+            id: "CA003".into(),
+            category: "clean_architecture".into(),
+            severity: "error".into(),
+            description: "Ports must be defined in domain layer".into(),
+            engine: "rust-validator".into(),
+        },
+        // SOLID rules
+        RuleInfo {
+            id: "SOLID001".into(),
+            category: "solid".into(),
+            severity: "warning".into(),
+            description: "Single Responsibility Principle violation".into(),
+            engine: "rust-validator".into(),
+        },
+        RuleInfo {
+            id: "SOLID002".into(),
+            category: "solid".into(),
+            severity: "warning".into(),
+            description: "Open/Closed Principle violation".into(),
+            engine: "rust-validator".into(),
+        },
+        // Quality rules
+        RuleInfo {
+            id: "QUAL001".into(),
+            category: "quality".into(),
+            severity: "error".into(),
+            description: "No unwrap() in production code".into(),
+            engine: "rust-validator".into(),
+        },
+        RuleInfo {
+            id: "QUAL002".into(),
+            category: "quality".into(),
+            severity: "error".into(),
+            description: "No expect() in production code".into(),
+            engine: "rust-validator".into(),
+        },
+        RuleInfo {
+            id: "QUAL003".into(),
+            category: "quality".into(),
+            severity: "warning".into(),
+            description: "Magic number detected".into(),
+            engine: "rust-validator".into(),
+        },
+        // KISS rules
+        RuleInfo {
+            id: "KISS001".into(),
+            category: "kiss".into(),
+            severity: "warning".into(),
+            description: "Function too long".into(),
+            engine: "rca-metrics".into(),
+        },
+        RuleInfo {
+            id: "KISS002".into(),
+            category: "kiss".into(),
+            severity: "warning".into(),
+            description: "Cyclomatic complexity too high".into(),
+            engine: "rca-metrics".into(),
+        },
+    ];
+
+    if let Some(cat) = category {
+        Ok(all_rules
+            .into_iter()
+            .filter(|r| r.category == cat)
+            .collect())
+    } else {
+        Ok(all_rules)
+    }
+}
+
+fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {
+    use mcb_validate::RcaAnalyzer;
+
+    let analyzer = RcaAnalyzer::new();
+
+    // Get aggregate metrics for the file
+    let aggregate = analyzer
+        .analyze_file_aggregate(file_path)
+        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+
+    let functions = if include_functions {
+        // Get function-level metrics
+        let func_metrics = analyzer
+            .analyze_file(file_path)
+            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+
+        func_metrics
+            .into_iter()
+            .map(|f| FunctionComplexity {
+                name: f.name,
+                line: f.start_line,
+                cyclomatic: f.metrics.cyclomatic,
+                cognitive: f.metrics.cognitive,
+                sloc: f.metrics.sloc,
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    Ok(ComplexityReport {
+        file: file_path.to_string_lossy().to_string(),
+        cyclomatic: aggregate.cyclomatic,
+        cognitive: aggregate.cognitive,
+        maintainability_index: aggregate.maintainability_index,
+        sloc: aggregate.sloc,
+        functions,
+    })
 }

@@ -8,15 +8,28 @@
 //!
 //! | Mode | Command | Description |
 //! |------|---------|-------------|
-//! | **Standalone** | `mcb` (config: `mode.type = "standalone"`) | Local providers, stdio transport |
-//! | **Server** | `mcb --server` | HTTP daemon, accepts client connections |
-//! | **Client** | `mcb` (config: `mode.type = "client"`) | Connects to server via HTTP |
+//! | **Standalone** | `mcb serve` (config: `mode.type = "standalone"`) | Local providers, stdio transport |
+//! | **Server** | `mcb serve --server` | HTTP daemon, accepts client connections |
+//! | **Client** | `mcb serve` (config: `mode.type = "client"`) | Connects to server via HTTP |
+//! | **Validate** | `mcb validate [path]` | Run architecture validation |
+//!
+//! ## Subcommands
+//!
+//! - `mcb serve` - Start MCP server (default when no subcommand)
+//! - `mcb validate` - Run architecture validation
+//!
+//! ## Backwards Compatibility
+//!
+//! - Bare `mcb` (no subcommand) defaults to `serve`
+//! - `mcb --server` continues to work (deprecated, use `mcb serve --server`)
 
 // Force-link mcb-providers to ensure linkme inventory registrations are included
 extern crate mcb_providers;
 
-use clap::Parser;
-use mcb_server::run;
+mod cli;
+
+use clap::{Parser, Subcommand};
+use cli::{ServeArgs, ValidateArgs};
 
 /// Command line interface for MCP Context Browser
 #[derive(Parser, Debug)]
@@ -24,27 +37,59 @@ use mcb_server::run;
 #[command(about = "MCP Context Browser - Semantic Code Search Server")]
 #[command(version)]
 pub struct Cli {
-    /// Path to configuration file
-    #[arg(short, long)]
+    #[command(subcommand)]
+    pub command: Option<Command>,
+
+    // Legacy flags for backwards compatibility (when no subcommand is used)
+    /// Path to configuration file (deprecated: use `mcb serve --config`)
+    #[arg(short, long, global = true)]
     pub config: Option<std::path::PathBuf>,
 
-    /// Run as server daemon (HTTP + optional stdio)
-    ///
-    /// When this flag is set, MCB runs as a server daemon that accepts
-    /// connections from MCB clients. Without this flag, MCB checks the
-    /// config file to determine if it should run in standalone or client mode.
-    #[arg(long, help = "Run as server daemon")]
+    /// Run as server daemon (deprecated: use `mcb serve --server`)
+    #[arg(long, global = true)]
     pub server: bool,
+}
+
+/// Available subcommands
+#[derive(Subcommand, Debug)]
+pub enum Command {
+    /// Start MCP server (default when no subcommand)
+    #[command(alias = "server")]
+    Serve(ServeArgs),
+
+    /// Run architecture validation
+    Validate(ValidateArgs),
 }
 
 /// Main entry point for the MCP Context Browser
 ///
-/// Dispatches to the appropriate mode based on CLI flags and configuration:
-/// - `--server` flag: Run as HTTP server daemon
-/// - Config `mode.type = "standalone"`: Run with local providers (default)
-/// - Config `mode.type = "client"`: Connect to remote server
+/// Dispatches to the appropriate mode based on CLI subcommand:
+/// - No subcommand / `serve`: Run as MCP server
+/// - `validate`: Run architecture validation
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
-    run(cli.config.as_deref(), cli.server).await
+
+    match cli.command {
+        Some(Command::Serve(args)) => args.execute().await,
+        Some(Command::Validate(args)) => {
+            let result = args.execute()?;
+
+            // Exit code: 1 if validation failed
+            // Normal mode: errors only
+            // Strict mode: errors OR warnings
+            if result.failed() {
+                std::process::exit(1);
+            }
+            Ok(())
+        }
+        None => {
+            // No subcommand: default to serve with legacy flags
+            let args = ServeArgs {
+                config: cli.config,
+                server: cli.server,
+            };
+            args.execute().await
+        }
+    }
 }

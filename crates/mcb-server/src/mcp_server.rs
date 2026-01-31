@@ -18,8 +18,9 @@ use mcb_application::{
 };
 
 use crate::handlers::{
-    ClearIndexHandler, GetIndexingStatusHandler, IndexCodebaseHandler, SearchCodeHandler,
-    ValidateArchitectureHandler,
+    AnalyzeComplexityHandler, ClearIndexHandler, GetIndexingStatusHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, ListValidatorsHandler, SearchCodeHandler,
+    ValidateArchitectureHandler, ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
@@ -57,7 +58,15 @@ impl McpServer {
             search_code: Arc::new(SearchCodeHandler::new(search_service.clone())),
             get_indexing_status: Arc::new(GetIndexingStatusHandler::new(indexing_service.clone())),
             clear_index: Arc::new(ClearIndexHandler::new(indexing_service.clone())),
-            validate_architecture: Arc::new(ValidateArchitectureHandler::new(validation_service)),
+            validate_architecture: Arc::new(ValidateArchitectureHandler::new(
+                validation_service.clone(),
+            )),
+            validate_file: Arc::new(ValidateFileHandler::new(validation_service.clone())),
+            list_validators: Arc::new(ListValidatorsHandler::new(validation_service.clone())),
+            get_validation_rules: Arc::new(GetValidationRulesHandler::new(
+                validation_service.clone(),
+            )),
+            analyze_complexity: Arc::new(AnalyzeComplexityHandler::new(validation_service)),
         };
 
         Self {
@@ -109,6 +118,26 @@ impl McpServer {
     pub fn validate_architecture_handler(&self) -> Arc<ValidateArchitectureHandler> {
         Arc::clone(&self.handlers.validate_architecture)
     }
+
+    /// Access to validate file handler (for HTTP transport)
+    pub fn validate_file_handler(&self) -> Arc<ValidateFileHandler> {
+        Arc::clone(&self.handlers.validate_file)
+    }
+
+    /// Access to list validators handler (for HTTP transport)
+    pub fn list_validators_handler(&self) -> Arc<ListValidatorsHandler> {
+        Arc::clone(&self.handlers.list_validators)
+    }
+
+    /// Access to get validation rules handler (for HTTP transport)
+    pub fn get_validation_rules_handler(&self) -> Arc<GetValidationRulesHandler> {
+        Arc::clone(&self.handlers.get_validation_rules)
+    }
+
+    /// Access to analyze complexity handler (for HTTP transport)
+    pub fn analyze_complexity_handler(&self) -> Arc<AnalyzeComplexityHandler> {
+        Arc::clone(&self.handlers.analyze_complexity)
+    }
 }
 
 impl ServerHandler for McpServer {
@@ -130,7 +159,11 @@ impl ServerHandler for McpServer {
                  - search_code: Query indexed code using natural language\n\
                  - get_indexing_status: Inspect indexing progress\n\
                  - clear_index: Clear a collection before re-indexing\n\
-                 - validate_architecture: Run architecture validation rules on a codebase\n"
+                 - validate_architecture: Run architecture validation rules on a codebase\n\
+                 - validate_file: Validate a single file against architecture rules\n\
+                 - list_validators: List available validators\n\
+                 - get_validation_rules: Get validation rules by category\n\
+                 - analyze_complexity: Get code complexity metrics for a file\n"
                     .to_string(),
             ),
         }

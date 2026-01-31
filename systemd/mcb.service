@@ -17,7 +17,7 @@ After=default.target
 [Service]
 Type=simple
 
-# Binary in server mode (HTTP daemon + optional stdio)
+# Binary in server mode (HTTP daemon)
 # Config auto-discovered at ~/.config/mcb/mcb.toml
 ExecStart=%h/.local/bin/mcb --server
 
@@ -34,7 +34,10 @@ Restart=on-failure
 RestartSec=5
 
 # Environment
+# IMPORTANT: Override transport_mode to HTTP for server daemon
+# Without this, stdio mode would fail (no client connected)
 Environment=RUST_LOG=info
+Environment=MCP__SERVER__TRANSPORT_MODE=http
 
 # Working directory for data storage
 WorkingDirectory=%h/.local/share/mcb

@@ -50,6 +50,53 @@ pub struct ViolationEntry {
     pub suggestion: Option<String>,
 }
 
+/// Information about a validation rule
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct RuleInfo {
+    /// Rule ID (e.g., "CA001")
+    pub id: String,
+    /// Rule category
+    pub category: String,
+    /// Rule severity (error, warning, info)
+    pub severity: String,
+    /// Human-readable description
+    pub description: String,
+    /// Engine that executes this rule
+    pub engine: String,
+}
+
+/// Code complexity metrics report
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ComplexityReport {
+    /// File path
+    pub file: String,
+    /// Cyclomatic complexity
+    pub cyclomatic: f64,
+    /// Cognitive complexity
+    pub cognitive: f64,
+    /// Maintainability index (0-100)
+    pub maintainability_index: f64,
+    /// Source lines of code
+    pub sloc: usize,
+    /// Function-level metrics (if requested)
+    pub functions: Vec<FunctionComplexity>,
+}
+
+/// Function-level complexity metrics
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct FunctionComplexity {
+    /// Function name
+    pub name: String,
+    /// Start line number
+    pub line: usize,
+    /// Cyclomatic complexity
+    pub cyclomatic: f64,
+    /// Cognitive complexity
+    pub cognitive: f64,
+    /// Source lines of code
+    pub sloc: usize,
+}
+
 /// Architecture Validation Service Interface
 ///
 /// Defines the contract for running architecture validation on a codebase.
@@ -78,6 +125,49 @@ pub trait ValidationServiceInterface: Send + Sync {
     ///
     /// Returns a list of all validator names that can be passed to `validate()`.
     async fn list_validators(&self) -> Result<Vec<String>>;
+
+    /// Validate a single file
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - Path to the file to validate
+    /// * `validators` - Optional list of specific validators to run
+    ///
+    /// # Returns
+    ///
+    /// A `ValidationReport` containing violations found in the file.
+    async fn validate_file(
+        &self,
+        file_path: &Path,
+        validators: Option<&[String]>,
+    ) -> Result<ValidationReport>;
+
+    /// Get available validation rules
+    ///
+    /// # Arguments
+    ///
+    /// * `category` - Optional category filter (e.g., "clean_architecture")
+    ///
+    /// # Returns
+    ///
+    /// List of rule information.
+    async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>>;
+
+    /// Analyze code complexity using RCA metrics
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - Path to the file to analyze
+    /// * `include_functions` - Whether to include function-level metrics
+    ///
+    /// # Returns
+    ///
+    /// Complexity report with metrics.
+    async fn analyze_complexity(
+        &self,
+        file_path: &Path,
+        include_functions: bool,
+    ) -> Result<ComplexityReport>;
 }
 
 // ============================================================================
@@ -127,5 +217,39 @@ impl ValidationServiceInterface for NullValidationService {
             "solid".into(),
             "quality".into(),
         ])
+    }
+
+    async fn validate_file(
+        &self,
+        _file_path: &Path,
+        _validators: Option<&[String]>,
+    ) -> Result<ValidationReport> {
+        Ok(ValidationReport {
+            total_violations: 0,
+            errors: 0,
+            warnings: 0,
+            infos: 0,
+            violations: Vec::new(),
+            passed: true,
+        })
+    }
+
+    async fn get_rules(&self, _category: Option<&str>) -> Result<Vec<RuleInfo>> {
+        Ok(Vec::new())
+    }
+
+    async fn analyze_complexity(
+        &self,
+        file_path: &Path,
+        _include_functions: bool,
+    ) -> Result<ComplexityReport> {
+        Ok(ComplexityReport {
+            file: file_path.to_string_lossy().to_string(),
+            cyclomatic: 0.0,
+            cognitive: 0.0,
+            maintainability_index: 100.0,
+            sloc: 0,
+            functions: Vec::new(),
+        })
     }
 }

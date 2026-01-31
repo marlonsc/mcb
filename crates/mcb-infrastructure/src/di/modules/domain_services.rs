@@ -17,6 +17,8 @@ use mcb_application::domain_services::search::{
 };
 use mcb_application::use_cases::{ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl};
 use mcb_domain::error::Result;
+use mcb_domain::ports::admin::IndexingOperationsInterface;
+use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
@@ -59,6 +61,10 @@ pub struct ServiceDependencies {
     pub vector_store_provider: Arc<dyn VectorStoreProvider>,
     /// Language chunker for code processing
     pub language_chunker: Arc<dyn LanguageChunkingProvider>,
+    /// Indexing operations tracker for async progress tracking
+    pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    /// Event bus for publishing domain events
+    pub event_bus: Arc<dyn EventBusProvider>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
@@ -78,10 +84,14 @@ impl DomainServicesFactory {
         let search_service: Arc<dyn SearchServiceInterface> =
             Arc::new(SearchServiceImpl::new(Arc::clone(&context_service)));
 
-        // Create indexing service with context service and language chunker dependency
-        let indexing_service: Arc<dyn IndexingServiceInterface> = Arc::new(
-            IndexingServiceImpl::new(Arc::clone(&context_service), deps.language_chunker),
-        );
+        // Create indexing service with context service, language chunker, and async tracking deps
+        let indexing_service: Arc<dyn IndexingServiceInterface> =
+            Arc::new(IndexingServiceImpl::new(
+                Arc::clone(&context_service),
+                deps.language_chunker,
+                deps.indexing_ops,
+                deps.event_bus,
+            ));
 
         // Create validation service
         // Uses real mcb-validate when feature is enabled, stub otherwise
@@ -111,9 +121,15 @@ impl DomainServicesFactory {
         // Create context service first (dependency)
         let context_service = Self::create_context_service(app_context).await?;
 
+        // Get indexing operations tracker and event bus from context
+        let indexing_ops = app_context.indexing();
+        let event_bus = app_context.event_bus();
+
         Ok(Arc::new(IndexingServiceImpl::new(
             context_service,
             language_chunker,
+            indexing_ops,
+            event_bus,
         )))
     }
 

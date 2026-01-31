@@ -9,8 +9,9 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::args::{
-    ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs,
-    ValidateArchitectureArgs,
+    AnalyzeComplexityArgs, ClearIndexArgs, GetIndexingStatusArgs, GetValidationRulesArgs,
+    IndexCodebaseArgs, ListValidatorsArgs, SearchCodeArgs, ValidateArchitectureArgs,
+    ValidateFileArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -62,6 +63,42 @@ impl ToolDefinitions {
         )
     }
 
+    /// Get the validate_file tool definition
+    pub fn validate_file() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "validate_file",
+            "Validate a single file against architecture rules",
+            schemars::schema_for!(ValidateFileArgs),
+        )
+    }
+
+    /// Get the list_validators tool definition
+    pub fn list_validators() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "list_validators",
+            "List all available validators with their descriptions",
+            schemars::schema_for!(ListValidatorsArgs),
+        )
+    }
+
+    /// Get the get_validation_rules tool definition
+    pub fn get_validation_rules() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "get_validation_rules",
+            "Get available validation rules, optionally filtered by category",
+            schemars::schema_for!(GetValidationRulesArgs),
+        )
+    }
+
+    /// Get the analyze_complexity tool definition
+    pub fn analyze_complexity() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "analyze_complexity",
+            "Analyze code complexity metrics (cyclomatic, cognitive, maintainability) for a file",
+            schemars::schema_for!(AnalyzeComplexityArgs),
+        )
+    }
+
     /// Create a tool from schema
     fn create_tool(
         name: &'static str,
@@ -101,5 +138,9 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::get_indexing_status()?,
         ToolDefinitions::clear_index()?,
         ToolDefinitions::validate_architecture()?,
+        ToolDefinitions::validate_file()?,
+        ToolDefinitions::list_validators()?,
+        ToolDefinitions::get_validation_rules()?,
+        ToolDefinitions::analyze_complexity()?,
     ])
 }

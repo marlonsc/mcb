@@ -542,6 +542,8 @@ async fn create_test_mcp_server() -> McpServer {
     let vector_store_provider = ctx.vector_store_handle().get();
     let language_chunker = ctx.language_handle().get();
     let cache_provider = ctx.cache_handle().get();
+    let indexing_ops = ctx.indexing();
+    let event_bus = ctx.event_bus();
 
     // Create shared cache provider for domain services factory
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
@@ -558,6 +560,8 @@ async fn create_test_mcp_server() -> McpServer {
         embedding_provider,
         vector_store_provider,
         language_chunker,
+        indexing_ops,
+        event_bus,
     };
 
     let services = DomainServicesFactory::create_services(deps)

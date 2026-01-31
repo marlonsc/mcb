@@ -3137,6 +3137,7 @@ dependencies = [
  "mcb-infrastructure",
  "mcb-providers",
  "mcb-server",
+ "mcb-validate",
  "serde_json",
  "tokio",
 ]

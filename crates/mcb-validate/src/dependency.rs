@@ -56,12 +56,15 @@ const ALLOWED_DEPS: &[(&str, &[&str])] = &[
     ),
     (
         "mcb",
+        // Note: mcb-validate is allowed for `mcb validate` CLI subcommand
+        // This is a compile-time dependency that enables the validation CLI
         &[
             "mcb-domain",
             "mcb-application",
             "mcb-infrastructure",
             "mcb-server",
             "mcb-providers",
+            "mcb-validate",
         ],
     ),
     ("mcb-validate", &[]),

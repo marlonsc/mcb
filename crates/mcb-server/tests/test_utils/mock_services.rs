@@ -111,6 +111,8 @@ impl MockIndexingService {
                 chunks_created: 0,
                 files_skipped: 0,
                 errors: Vec::new(),
+                operation_id: None,
+                status: "completed".to_string(),
             }))),
             status: Arc::new(Mutex::new(IndexingStatus::default())),
             should_fail: Arc::new(AtomicBool::new(false)),
@@ -158,6 +160,8 @@ impl IndexingServiceInterface for MockIndexingService {
             chunks_created: 0,
             files_skipped: 0,
             errors: Vec::new(),
+            operation_id: None,
+            status: "completed".to_string(),
         }))
     }
 
@@ -406,5 +410,47 @@ impl ValidationServiceInterface for MockValidationService {
         }
 
         Ok(self.validators.lock().expect("Lock poisoned").clone())
+    }
+
+    async fn validate_file(
+        &self,
+        _file_path: &Path,
+        _validators: Option<&[String]>,
+    ) -> Result<ValidationReport> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+        Ok(self.report.lock().expect("Lock poisoned").clone())
+    }
+
+    async fn get_rules(
+        &self,
+        _category: Option<&str>,
+    ) -> Result<Vec<mcb_application::ports::services::RuleInfo>> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+        Ok(Vec::new())
+    }
+
+    async fn analyze_complexity(
+        &self,
+        file_path: &Path,
+        _include_functions: bool,
+    ) -> Result<mcb_application::ports::services::ComplexityReport> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+        Ok(mcb_application::ports::services::ComplexityReport {
+            file: file_path.to_string_lossy().to_string(),
+            cyclomatic: 0.0,
+            cognitive: 0.0,
+            maintainability_index: 100.0,
+            sloc: 0,
+            functions: Vec::new(),
+        })
     }
 }

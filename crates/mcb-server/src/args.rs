@@ -243,3 +243,59 @@ pub struct ValidateArchitectureArgs {
     #[schemars(description = "Glob patterns for files/directories to exclude from validation")]
     pub exclude_patterns: Option<Vec<String>>,
 }
+
+/// Arguments for the validate_file tool
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for validating a single file")]
+pub struct ValidateFileArgs {
+    /// Path to the file to validate
+    #[validate(length(min = 1, message = "Path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Absolute path to the file to validate")]
+    pub path: String,
+
+    /// Specific validators to run (optional, default: all)
+    #[schemars(
+        description = "List of validators to run: clean_architecture, solid, quality, organization"
+    )]
+    pub validators: Option<Vec<String>>,
+}
+
+/// Arguments for the list_validators tool
+///
+/// This tool requires no parameters - it returns all available validators.
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "No parameters required - returns all available validators")]
+pub struct ListValidatorsArgs {
+    /// Reserved for future filtering capabilities
+    #[schemars(description = "Reserved for future category filtering")]
+    #[serde(default)]
+    pub category: Option<String>,
+}
+
+/// Arguments for the get_validation_rules tool
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for getting validation rules")]
+pub struct GetValidationRulesArgs {
+    /// Category filter (optional)
+    #[schemars(
+        description = "Filter rules by category: clean_architecture, solid, quality, kiss, organization"
+    )]
+    pub category: Option<String>,
+}
+
+/// Arguments for the analyze_complexity tool
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for analyzing code complexity")]
+pub struct AnalyzeComplexityArgs {
+    /// Path to the file to analyze
+    #[validate(length(min = 1, message = "Path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Absolute path to the file to analyze")]
+    pub path: String,
+
+    /// Include function-level metrics (optional, default: false)
+    #[schemars(description = "Whether to include per-function complexity metrics")]
+    #[serde(default)]
+    pub include_functions: bool,
+}

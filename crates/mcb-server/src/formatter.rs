@@ -227,6 +227,11 @@ fn build_indexing_success_message(
     path: &Path,
     duration: Duration,
 ) -> String {
+    // Check if this is an async "started" response
+    if result.status == "started" {
+        return build_indexing_started_message(result, path);
+    }
+
     let duration_secs = duration.as_secs_f64();
     let chunks_per_sec = if duration_secs > 0.0 {
         result.chunks_created as f64 / duration_secs
@@ -268,6 +273,23 @@ fn build_indexing_success_message(
     }
 
     message
+}
+
+fn build_indexing_started_message(result: &IndexingResult, path: &Path) -> String {
+    let operation_id = result.operation_id.as_deref().unwrap_or("unknown");
+
+    format!(
+        "🚀 **Indexing Started**\n\n\
+         📁 **Path:** `{}`\n\
+         🔑 **Operation ID:** `{}`\n\
+         📊 **Status:** {}\n\n\
+         💡 **Note:** Indexing is running in the background.\n\
+         Use `get_indexing_status` to check progress.\n\
+         Once complete, use `search_code` to query the index.",
+        path.display(),
+        operation_id,
+        result.status
+    )
 }
 
 fn build_indexing_error_message(error: &str, path: &Path) -> String {

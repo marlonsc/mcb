@@ -115,6 +115,10 @@ pub struct IndexingResult {
     pub files_skipped: usize,
     /// Any errors encountered (non-fatal)
     pub errors: Vec<String>,
+    /// Operation ID for async tracking (None for synchronous operations)
+    pub operation_id: Option<String>,
+    /// Status string: "started", "completed", "failed"
+    pub status: String,
 }
 
 /// Current indexing status
@@ -196,5 +200,6 @@ pub struct IndexingStats {
 
 // Re-export from domain layer (Clean Architecture)
 pub use mcb_domain::ports::services::{
-    ValidationReport, ValidationServiceInterface, ViolationEntry,
+    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
 };

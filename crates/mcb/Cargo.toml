@@ -33,6 +33,9 @@ mcb-infrastructure = { path = "../mcb-infrastructure" }
 # Providers - MUST be in dependencies (not dev-dependencies) for linkme inventory registration
 mcb-providers = { path = "../mcb-providers", features = ["full"] }
 
+# Validation - for mcb validate subcommand
+mcb-validate = { path = "../mcb-validate" }
+
 # Core async runtime
 tokio = { workspace = true }
 

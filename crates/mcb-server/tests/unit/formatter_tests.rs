@@ -59,6 +59,8 @@ fn test_format_indexing_success() {
         chunks_created: 250,
         files_skipped: 5,
         errors: Vec::new(),
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/project/src");
     let duration = Duration::from_secs(10);
@@ -78,6 +80,8 @@ fn test_format_indexing_success_with_errors() {
             "Failed to parse binary.bin".to_string(),
             "Encoding error in data.csv".to_string(),
         ],
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/project/src");
     let duration = Duration::from_secs(8);
@@ -95,6 +99,8 @@ fn test_format_indexing_success_fast() {
         chunks_created: 500,
         files_skipped: 0,
         errors: Vec::new(),
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/project");
     let duration = Duration::from_millis(100); // Very fast

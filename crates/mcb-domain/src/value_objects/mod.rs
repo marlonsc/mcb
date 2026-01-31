@@ -32,5 +32,6 @@ pub use config::{CacheConfig, EmbeddingConfig, VectorStoreConfig};
 pub use embedding::Embedding;
 pub use search::SearchResult;
 pub use types::{
-    CacheProviderKind, EmbeddingProviderKind, Language, OperationType, VectorStoreProviderKind,
+    CacheProviderKind, EmbeddingProviderKind, Language, OperationType, SupportedLanguage,
+    VectorStoreProviderKind,
 };

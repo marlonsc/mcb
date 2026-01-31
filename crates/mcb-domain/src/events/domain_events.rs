@@ -157,6 +157,47 @@ pub enum DomainEvent {
         /// Duration in milliseconds
         duration_ms: u64,
     },
+
+    // === Validation Events ===
+    /// Validation operation started
+    ValidationStarted {
+        /// Operation ID for tracking
+        operation_id: String,
+        /// Workspace being validated
+        workspace: String,
+        /// Validators being run
+        validators: Vec<String>,
+        /// Total files to validate
+        total_files: usize,
+    },
+    /// Validation progress update
+    ValidationProgress {
+        /// Operation ID
+        operation_id: String,
+        /// Files processed so far
+        processed: usize,
+        /// Total files to process
+        total: usize,
+        /// Current file being validated
+        current_file: Option<String>,
+    },
+    /// Validation operation completed
+    ValidationCompleted {
+        /// Operation ID
+        operation_id: String,
+        /// Workspace that was validated
+        workspace: String,
+        /// Total violations found
+        total_violations: usize,
+        /// Number of errors
+        errors: usize,
+        /// Number of warnings
+        warnings: usize,
+        /// Whether validation passed (no errors)
+        passed: bool,
+        /// Duration in milliseconds
+        duration_ms: u64,
+    },
 }
 
 /// Domain Port for Publishing System Events
