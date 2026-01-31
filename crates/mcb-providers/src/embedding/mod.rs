@@ -34,7 +34,7 @@ pub mod anthropic;
 #[cfg(feature = "embedding-fastembed")]
 pub mod fastembed;
 pub mod gemini;
-pub mod helpers;
+pub(crate) mod helpers;
 pub mod null;
 pub mod ollama;
 pub mod openai;
@@ -46,7 +46,6 @@ pub use anthropic::AnthropicEmbeddingProvider;
 #[cfg(feature = "embedding-fastembed")]
 pub use fastembed::FastEmbedProvider;
 pub use gemini::GeminiEmbeddingProvider;
-pub use helpers::{DEFAULT_EMBEDDING_TIMEOUT, constructor, http, parsing};
 pub use null::NullEmbeddingProvider;
 pub use ollama::OllamaEmbeddingProvider;
 pub use openai::OpenAIEmbeddingProvider;

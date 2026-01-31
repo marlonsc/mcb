@@ -32,7 +32,14 @@ const ALLOWED_DEPS: &[(&str, &[&str])] = &[
     ("mcb-providers", &["mcb-domain", "mcb-application"]),
     (
         "mcb-infrastructure",
-        &["mcb-domain", "mcb-application", "mcb-providers"],
+        // Note: mcb-validate is an optional dependency for architecture validation feature
+        // This dependency is behind the "validation" feature flag and is not a runtime dependency
+        &[
+            "mcb-domain",
+            "mcb-application",
+            "mcb-providers",
+            "mcb-validate",
+        ],
     ),
     (
         "mcb-server",

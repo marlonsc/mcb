@@ -41,7 +41,7 @@ pub struct IndexCodebaseArgs {
 /// Search filters for narrowing down search results
 #[derive(Debug, Deserialize, JsonSchema, Validate)]
 #[schemars(description = "Filters to narrow down search results")]
-pub struct SearchFilters {
+pub struct SearchFiltersInput {
     /// Filter by file extensions (e.g., [\"rs\", \"py\", \"js\"])
     #[schemars(description = "Only include files with these extensions")]
     pub file_extensions: Option<Vec<String>>,
@@ -89,7 +89,7 @@ pub struct SearchCodeArgs {
     pub extensions: Option<Vec<String>>,
     /// Optional search filters
     #[schemars(description = "Optional filters to narrow down search results")]
-    pub filters: Option<SearchFilters>,
+    pub filters: Option<SearchFiltersInput>,
     /// Optional JWT token for authentication
     #[schemars(description = "JWT token for authenticated requests")]
     pub token: Option<String>,

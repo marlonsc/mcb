@@ -16,6 +16,7 @@ use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
 
 /// Handler for code search operations
+#[derive(Clone)]
 pub struct SearchCodeHandler {
     search_service: Arc<dyn SearchServiceInterface>,
 }

@@ -16,6 +16,7 @@
 //! - **admin** - Administrative interfaces for system management and monitoring
 //! - **infrastructure/** - Infrastructure services (sync, snapshots, auth, events)
 //! - **providers/** - External service provider ports (embeddings, vector stores, search)
+//! - **services** - Application service ports (validation, etc.)
 
 /// Administrative interfaces for system management and monitoring
 pub mod admin;
@@ -23,6 +24,8 @@ pub mod admin;
 pub mod infrastructure;
 /// External service provider ports
 pub mod providers;
+/// Application service ports
+pub mod services;
 
 // Re-export commonly used port traits for convenience
 pub use admin::{
@@ -41,4 +44,7 @@ pub use providers::{
     EmbeddingProvider, EncryptedData, HybridSearchProvider, HybridSearchResult,
     LanguageChunkingProvider, ProviderConfigManagerInterface, VectorStoreAdmin,
     VectorStoreProvider,
+};
+pub use services::{
+    NullValidationService, ValidationReport, ValidationServiceInterface, ViolationEntry,
 };

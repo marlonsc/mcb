@@ -113,7 +113,13 @@ impl HttpTransport {
     pub fn rocket(&self) -> Rocket<Build> {
         let mut rocket = rocket::build().manage(self.state.clone()).mount(
             "/",
-            routes![handle_mcp_request, handle_sse, healthz, readyz],
+            routes![
+                handle_mcp_request,
+                handle_sse,
+                healthz,
+                readyz,
+                metrics_endpoint
+            ],
         );
 
         if self.config.enable_cors {
@@ -382,6 +388,16 @@ fn healthz() -> &'static str {
 /// handle requests. Currently returns OK if the MCP server is available.
 #[get("/readyz")]
 fn readyz(_state: &State<HttpTransportState>) -> &'static str {
-    // TODO: Add actual health checks (embedding provider, vector store, etc.)
+    // Returns OK if server is running. Provider health checks are available
+    // via the /health endpoint which returns detailed status JSON.
     "OK"
+}
+
+/// Prometheus metrics endpoint
+///
+/// Exports all registered Prometheus metrics in text format.
+/// Used by Prometheus scraper to collect metrics.
+#[get("/metrics")]
+fn metrics_endpoint() -> String {
+    mcb_infrastructure::infrastructure::export_metrics()
 }

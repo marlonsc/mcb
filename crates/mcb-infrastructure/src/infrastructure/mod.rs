@@ -21,6 +21,7 @@ pub(crate) mod auth;
 pub(crate) mod events;
 pub(crate) mod lifecycle;
 pub(crate) mod metrics;
+pub(crate) mod prometheus_metrics;
 pub(crate) mod snapshot;
 pub(crate) mod sync;
 
@@ -32,6 +33,9 @@ pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
 
 // Admin types - exported for mcb-server AdminState
 pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+
+// Prometheus metrics - exported for /metrics endpoint
+pub use prometheus_metrics::{PrometheusPerformanceMetrics, export_metrics};
 
 // Test utilities - exported only when test-utils feature is enabled
 // These are null implementations used for testing infrastructure services

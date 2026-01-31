@@ -347,6 +347,9 @@ pub enum ValidationError {
 
     #[error("Invalid regex pattern: {0}")]
     InvalidRegex(String),
+
+    #[error("Pattern not found: {0}")]
+    PatternNotFound(String),
 }
 
 /// Severity level for violations

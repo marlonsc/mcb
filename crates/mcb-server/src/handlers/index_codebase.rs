@@ -23,6 +23,7 @@ struct ValidatedRequest {
 }
 
 /// Handler for codebase indexing operations
+#[derive(Clone)]
 pub struct IndexCodebaseHandler {
     indexing_service: Arc<dyn IndexingServiceInterface>,
 }

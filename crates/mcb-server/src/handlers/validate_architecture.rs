@@ -11,12 +11,13 @@ use std::sync::Arc;
 use std::time::Instant;
 use validator::Validate;
 
-use mcb_application::ports::services::ValidationServiceInterface;
+use mcb_domain::ports::services::ValidationServiceInterface;
 
 use crate::args::ValidateArchitectureArgs;
 use crate::formatter::ResponseFormatter;
 
 /// Handler for architecture validation operations
+#[derive(Clone)]
 pub struct ValidateArchitectureHandler {
     validation_service: Arc<dyn ValidationServiceInterface>,
 }

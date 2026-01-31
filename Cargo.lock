@@ -3214,6 +3214,7 @@ dependencies = [
  "mcb-application",
  "mcb-domain",
  "mcb-providers",
+ "mcb-validate",
  "metrics",
  "metrics-exporter-prometheus",
  "nix 0.31.1",

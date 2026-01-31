@@ -13,6 +13,7 @@
 //! | [`AuthServiceInterface`] | Authentication and token services |
 //! | [`EventBusProvider`] | Event publish/subscribe services |
 //! | [`SystemMetricsCollectorInterface`] | System metrics collection |
+//! | [`PerformanceMetricsCollector`] | Provider performance metrics (Prometheus) |
 //! | [`LockProvider`] | Distributed lock coordination |
 //! | [`StateStoreProvider`] | Key-value state persistence |
 //! | [`ProviderRouter`] | Provider routing and selection services |
@@ -25,6 +26,8 @@ pub mod events;
 pub mod lock;
 /// System metrics collector port
 pub mod metrics;
+/// Performance metrics collector port (Prometheus histograms/counters)
+pub mod performance;
 /// Provider routing and selection port
 pub mod routing;
 /// Snapshot management infrastructure port
@@ -39,6 +42,7 @@ pub use auth::AuthServiceInterface;
 pub use events::{DomainEventStream, EventBusProvider};
 pub use lock::{LockGuard, LockProvider};
 pub use metrics::{SystemMetrics, SystemMetricsCollectorInterface};
+pub use performance::{NullMetricsCollector, PerformanceMetricsCollector};
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 pub use snapshot::{SnapshotProvider, SyncProvider};
 pub use state_store::StateStoreProvider;

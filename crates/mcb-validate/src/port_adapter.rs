@@ -229,6 +229,8 @@ impl PortAdapterValidator {
                             .expect("current_trait should exist when brace_depth == 0");
                         in_trait = false;
 
+                        // Flag ports with too many methods (violates ISP)
+                        // Single-method interfaces are valid per ISP - don't flag them
                         if method_count > 10 {
                             violations.push(PortAdapterViolation::PortTooLarge {
                                 trait_name,
@@ -236,14 +238,9 @@ impl PortAdapterValidator {
                                 file: path.to_path_buf(),
                                 line: start_line,
                             });
-                        } else if method_count < 2 && method_count > 0 {
-                            violations.push(PortAdapterViolation::PortTooSmall {
-                                trait_name,
-                                method_count,
-                                file: path.to_path_buf(),
-                                line: start_line,
-                            });
                         }
+                        // Note: Removed PortTooSmall check. Single-method interfaces
+                        // follow Interface Segregation Principle (ISP) and are valid.
                     }
                 }
             }

@@ -15,17 +15,23 @@ use crate::crypto::CryptoService;
 use mcb_application::domain_services::search::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
-use mcb_application::ports::services::ValidationServiceInterface;
-use mcb_application::use_cases::{
-    ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl, ValidationService,
-};
+use mcb_application::use_cases::{ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl};
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
+use mcb_domain::ports::services::ValidationServiceInterface;
 use std::sync::Arc;
 
 use super::super::bootstrap::AppContext;
+
+// Use infrastructure validation service when validation feature is enabled
+#[cfg(feature = "validation")]
+use crate::validation::InfraValidationService;
+
+// Use null validation from domain when validation feature is disabled
+#[cfg(not(feature = "validation"))]
+use mcb_domain::ports::services::NullValidationService;
 
 /// Domain services container
 #[derive(Clone)]
@@ -77,9 +83,15 @@ impl DomainServicesFactory {
             IndexingServiceImpl::new(Arc::clone(&context_service), deps.language_chunker),
         );
 
-        // Create validation service (no dependencies)
+        // Create validation service
+        // Uses real mcb-validate when feature is enabled, stub otherwise
+        #[cfg(feature = "validation")]
         let validation_service: Arc<dyn ValidationServiceInterface> =
-            Arc::new(ValidationService::new());
+            Arc::new(InfraValidationService::new());
+
+        #[cfg(not(feature = "validation"))]
+        let validation_service: Arc<dyn ValidationServiceInterface> =
+            Arc::new(NullValidationService::new());
 
         Ok(DomainServicesContainer {
             context_service,

@@ -1,7 +1,8 @@
-//! Language detection and helper utilities
+//! Language Detection
 //!
-//! Provides functions to detect programming languages from file extensions
-//! and other utility functions for working with language identifiers.
+//! Provides functions to detect programming languages from file extensions,
+//! check language support for AST chunking, and retrieve language-specific
+//! configuration values.
 
 use super::common::constants::*;
 

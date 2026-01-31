@@ -447,10 +447,10 @@ impl SolidValidator {
         let mut violations = Vec::new();
         let impl_pattern = PATTERNS
             .get("SOLID002.impl_decl")
-            .expect("Pattern SOLID002.impl_decl not found");
-        let struct_pattern = PATTERNS
-            .get("SOLID002.struct_decl")
-            .expect("Pattern SOLID002.struct_decl not found");
+            .ok_or_else(|| crate::ValidationError::PatternNotFound("SOLID002.impl_decl".into()))?;
+        let struct_pattern = PATTERNS.get("SOLID002.struct_decl").ok_or_else(|| {
+            crate::ValidationError::PatternNotFound("SOLID002.struct_decl".into())
+        })?;
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");

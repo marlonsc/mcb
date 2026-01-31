@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.1.4-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.1.4)
+[![Version](https://img.shields.io/badge/version-0.1.5-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.1.4)
 
 **High-performance MCP server for semantic code search using vector embeddings**
 
@@ -37,7 +37,7 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 -   **Clean Architecture**: 8 crates (domain, application, infrastructure, providers, server, validate) per Clean Architecture layers
 -   **Provider Ecosystem**: 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 7 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
 -   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
--   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 1636+ tests project-wide
+-   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 1642+ tests project-wide
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
 
 ## Architecture
@@ -145,7 +145,7 @@ See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for con
 
 ## Testing
 
-1636+ tests covering all layers:
+1642+ tests covering all layers:
 
 ```bash
 make test           # All tests
@@ -159,7 +159,7 @@ Test organization:
 -   **Application layer**: Service and use case tests
 -   **Infrastructure layer**: DI, config, cache tests
 -   **Providers**: Embedding and vector store provider tests
--   **mcb-validate**: Architecture validation (Phases 1–7, 1636+ tests)
+-   **mcb-validate**: Architecture validation (Phases 1–7, 1642+ tests)
 
 See [`docs/INTEGRATION_TESTS.md`](./docs/INTEGRATION_TESTS.md) for testing documentation.
 

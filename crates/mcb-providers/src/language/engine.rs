@@ -4,7 +4,7 @@
 //! chunking using tree-sitter and fallback methods.
 
 use super::common::constants::CHUNK_SIZE_GENERIC;
-use super::helpers::{is_language_supported, language_from_extension};
+use super::detection::{is_language_supported, language_from_extension};
 use super::{
     CProcessor, CSharpProcessor, CppProcessor, GoProcessor, JavaProcessor, JavaScriptProcessor,
     KotlinProcessor, LanguageProcessor, PhpProcessor, PythonProcessor, RubyProcessor,
@@ -284,7 +284,7 @@ impl mcb_domain::ports::providers::LanguageChunkingProvider for UniversalLanguag
     fn chunk(&self, content: &str, file_path: &str) -> Vec<mcb_domain::entities::CodeChunk> {
         let path = std::path::Path::new(file_path);
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-        let language = super::helpers::language_from_extension(ext);
+        let language = super::detection::language_from_extension(ext);
         self.chunker.chunk_code(content, file_path, &language)
     }
 

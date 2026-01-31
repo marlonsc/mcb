@@ -18,6 +18,7 @@ use crate::handlers::{
 };
 
 /// Handler references for tool routing
+#[derive(Clone)]
 pub struct ToolHandlers {
     /// Handler for codebase indexing operations
     pub index_codebase: Arc<IndexCodebaseHandler>,

@@ -73,6 +73,17 @@ impl SearchServiceInterface for MockSearchService {
         let results = self.results.lock().expect("Lock poisoned");
         Ok(results.iter().take(limit).cloned().collect())
     }
+
+    async fn search_with_filters(
+        &self,
+        collection: &str,
+        query: &str,
+        limit: usize,
+        _filters: Option<&mcb_application::ports::services::SearchFilters>,
+    ) -> Result<Vec<SearchResult>> {
+        // Mock ignores filters and delegates to search
+        self.search(collection, query, limit).await
+    }
 }
 
 // ============================================================================
