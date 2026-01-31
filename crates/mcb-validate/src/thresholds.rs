@@ -53,6 +53,15 @@ pub struct ValidationThresholds {
 
     /// Maximum lines per function
     pub max_function_lines: usize,
+
+    // ========================================================================
+    // Complexity Thresholds
+    // ========================================================================
+    /// Maximum cyclomatic complexity per function
+    pub max_cyclomatic_complexity: u32,
+
+    /// Maximum cognitive complexity per function
+    pub max_cognitive_complexity: u32,
 }
 
 impl Default for ValidationThresholds {
@@ -74,6 +83,10 @@ impl Default for ValidationThresholds {
             // Quality
             max_file_lines: 500,
             max_function_lines: 50,
+
+            // Complexity
+            max_cyclomatic_complexity: 10,
+            max_cognitive_complexity: 15,
         }
     }
 }
@@ -121,3 +134,7 @@ pub const MAX_NESTING_DEPTH: usize = 3;
 // Quality
 pub const MAX_FILE_LINES: usize = 500;
 pub const MAX_FUNCTION_LINES: usize = 50;
+
+// Complexity
+pub const MAX_CYCLOMATIC_COMPLEXITY: u32 = 10;
+pub const MAX_COGNITIVE_COMPLEXITY: u32 = 15;
