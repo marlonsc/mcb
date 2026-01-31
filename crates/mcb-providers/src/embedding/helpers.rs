@@ -8,9 +8,8 @@
 //! | Helper | Purpose |
 //! |--------|---------|
 //! | [`constructor`] | API key/URL validation, defaults |
-//! | [`http`] | HTTP client creation with standard config |
+//! | [`http`] | HTTP client creation (re-exported from utils) |
 
-use reqwest::Client;
 use std::time::Duration;
 
 /// Default timeout for embedding API requests (30 seconds)
@@ -20,7 +19,6 @@ pub(crate) const DEFAULT_EMBEDDING_TIMEOUT: Duration = Duration::from_secs(30);
 ///
 /// Provides re-usable patterns for provider initialization.
 pub(crate) mod constructor {
-
     /// Template for validating and normalizing API keys
     pub(crate) fn validate_api_key(api_key: &str) -> String {
         api_key.trim().to_string()
@@ -43,34 +41,7 @@ pub(crate) mod constructor {
 
 /// HTTP client helpers for embedding providers (DRY)
 ///
-/// Provides standardized HTTP client creation and error handling
-/// to eliminate duplication across provider factory functions.
+/// Re-exports from utils::http for backward compatibility.
 pub(crate) mod http {
-    use super::*;
-
-    /// Create an HTTP client with standard timeout configuration
-    ///
-    /// # Arguments
-    /// * `timeout_secs` - Request timeout in seconds
-    ///
-    /// # Returns
-    /// Configured reqwest Client or error message
-    ///
-    /// # Example
-    /// ```ignore
-    /// use mcb_providers::embedding::helpers::http::create_client;
-    ///
-    /// let client = create_client(30)?;
-    /// ```
-    pub(crate) fn create_client(timeout_secs: u64) -> std::result::Result<Client, String> {
-        Client::builder()
-            .timeout(Duration::from_secs(timeout_secs))
-            .build()
-            .map_err(|e| format!("Failed to create HTTP client: {e}"))
-    }
-
-    /// Create an HTTP client with default 30-second timeout
-    pub(crate) fn create_default_client() -> std::result::Result<Client, String> {
-        create_client(30)
-    }
+    pub(crate) use crate::utils::http::create_default_client;
 }

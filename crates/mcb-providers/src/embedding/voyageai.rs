@@ -15,7 +15,7 @@ use crate::constants::{
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
 use crate::embedding::helpers::constructor;
-use crate::utils::HttpResponseUtils;
+use crate::utils::{HttpResponseUtils, parse_embedding_vector};
 
 /// VoyageAI embedding provider
 ///
@@ -117,14 +117,7 @@ impl VoyageAIEmbeddingProvider {
 
     /// Parse embedding vector from response data
     fn parse_embedding(&self, index: usize, item: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = item["embedding"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::embedding(format!("Invalid embedding format for text {}", index))
-            })?
-            .iter()
-            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-            .collect::<Vec<f32>>();
+        let embedding_vec = parse_embedding_vector(item, "embedding", index)?;
 
         Ok(Embedding {
             vector: embedding_vec,

@@ -24,6 +24,9 @@
 //! - **High-performance embedded**: Use `EdgeVecVectorStoreProvider` for sub-ms search
 //! - **Cloud production**: Use `MilvusVectorStoreProvider` for distributed cloud deployments
 
+/// Shared helpers for vector store providers (DRY)
+pub mod helpers;
+
 #[cfg(feature = "vectorstore-edgevec")]
 pub mod edgevec;
 #[cfg(feature = "vectorstore-encrypted")]

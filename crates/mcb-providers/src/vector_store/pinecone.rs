@@ -21,6 +21,7 @@ use serde_json::Value;
 
 use crate::constants::CONTENT_TYPE_JSON;
 use crate::utils::{HttpResponseUtils, JsonExt};
+use crate::vector_store::helpers::handle_vector_request_error;
 
 /// Pinecone vector store provider
 ///
@@ -97,16 +98,10 @@ impl PineconeVectorStoreProvider {
             builder = builder.json(&payload);
         }
 
-        let response = builder.send().await.map_err(|e| {
-            if e.is_timeout() {
-                Error::vector_db(format!(
-                    "Pinecone request to {} timed out after {:?}",
-                    path, self.timeout
-                ))
-            } else {
-                Error::vector_db(format!("Pinecone HTTP request to {} failed: {}", path, e))
-            }
-        })?;
+        let response = builder
+            .send()
+            .await
+            .map_err(|e| handle_vector_request_error(e, self.timeout, "Pinecone", path))?;
 
         HttpResponseUtils::check_and_parse(response, "Pinecone").await
     }

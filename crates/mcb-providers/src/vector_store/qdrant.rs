@@ -14,13 +14,14 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use reqwest::Client;
 
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionInfo, Embedding, FileInfo, SearchResult};
 use serde_json::Value;
 
 use crate::constants::CONTENT_TYPE_JSON;
 use crate::utils::{HttpResponseUtils, JsonExt};
+use crate::vector_store::helpers::handle_vector_request_error;
 
 /// Qdrant vector store provider
 ///
@@ -106,16 +107,10 @@ impl QdrantVectorStoreProvider {
             builder = builder.json(&payload);
         }
 
-        let response = builder.send().await.map_err(|e| {
-            if e.is_timeout() {
-                Error::vector_db(format!(
-                    "Qdrant request to {} timed out after {:?}",
-                    path, self.timeout
-                ))
-            } else {
-                Error::vector_db(format!("Qdrant HTTP request to {} failed: {}", path, e))
-            }
-        })?;
+        let response = builder
+            .send()
+            .await
+            .map_err(|e| handle_vector_request_error(e, self.timeout, "Qdrant", path))?;
 
         HttpResponseUtils::check_and_parse(response, "Qdrant").await
     }

@@ -16,10 +16,8 @@ use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
     EMBEDDING_DIMENSION_OPENAI_SMALL,
 };
-
-/// Error message for request timeouts
 use crate::embedding::helpers::constructor;
-use crate::utils::HttpResponseUtils;
+use crate::utils::{HttpResponseUtils, handle_request_error, parse_embedding_vector};
 
 /// OpenAI embedding provider
 ///
@@ -122,31 +120,14 @@ impl OpenAIEmbeddingProvider {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| {
-                if e.is_timeout() {
-                    Error::embedding(format!(
-                        "{} {:?}",
-                        crate::constants::ERROR_MSG_REQUEST_TIMEOUT,
-                        self.timeout
-                    ))
-                } else {
-                    Error::embedding(format!("HTTP request failed: {}", e))
-                }
-            })?;
+            .map_err(|e| handle_request_error(e, self.timeout, "OpenAI"))?;
 
         HttpResponseUtils::check_and_parse(response, "OpenAI").await
     }
 
     /// Parse embedding vector from response data
     fn parse_embedding(&self, index: usize, item: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = item["embedding"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::embedding(format!("Invalid embedding format for text {}", index))
-            })?
-            .iter()
-            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-            .collect::<Vec<f32>>();
+        let embedding_vec = parse_embedding_vector(item, "embedding", index)?;
 
         Ok(Embedding {
             vector: embedding_vec,
