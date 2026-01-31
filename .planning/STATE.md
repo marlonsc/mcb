@@ -1,6 +1,6 @@
 # Project State: MCB v0.2.0
 
-**Updated:** 2026-01-31T20:50:00Z
+**Updated:** 2026-01-31T21:20:00Z
 **Branch:** release/v0.1.5 (will create feature/v0.2.0)
 
 ## Project Reference
@@ -19,7 +19,7 @@ See: .planning/PROJECT.md (updated 2026-01-31)
   - [x] REQUIREMENTS.md defined (38 requirements)
   - [x] ROADMAP.md created (10 phases)
   - [x] Beads tasks created for tracking
-- Now: [→] Phase 1: Architecture Cleanup
+- Now: [→] Phase 1: Architecture Cleanup (Plan 01 ready)
 - Next: Phase 2: Git Foundation
 - Remaining:
   - [ ] Phase 1: Architecture Cleanup (ARCH-01→05)
@@ -44,11 +44,17 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 | Languages | 14 | 14 |
 | LOC Added | — | ~9600 |
 
+## Key Decisions (Confirmed)
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| git2 dependency | Required | Always compiled, simpler code, git features always available |
+| Session memory storage | DI with SQLite default | MemoryStorageProvider port with SQLite as default impl, follows existing DI patterns |
+| Browser UI interactivity | Alpine.js | Lightweight (15KB), declarative, CDN-loaded |
+
 ## Open Questions
 
-- UNCONFIRMED: Should git2 be optional feature flag or required?
-- UNCONFIRMED: SQLite vs PostgreSQL for session memory?
-- UNCONFIRMED: Alpine.js vs vanilla JS for browser UI?
+None — all architectural decisions confirmed.
 
 ## Working Set
 

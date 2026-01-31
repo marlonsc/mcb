@@ -3162,6 +3162,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "mcb-ast-utils"
+version = "0.1.5"
+dependencies = [
+ "mcb-language-support",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tree-sitter",
+ "tree-sitter-c",
+ "tree-sitter-cpp",
+ "tree-sitter-go",
+ "tree-sitter-java",
+ "tree-sitter-javascript",
+ "tree-sitter-kotlin-ng",
+ "tree-sitter-python",
+ "tree-sitter-rust",
+ "tree-sitter-typescript",
+]
+
+[[package]]
 name = "mcb-domain"
 version = "0.1.5"
 dependencies = [
