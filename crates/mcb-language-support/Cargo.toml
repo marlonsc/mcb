@@ -1,0 +1,29 @@
+[package]
+name = "mcb-language-support"
+version = "0.1.5"
+edition.workspace = true
+license.workspace = true
+description = "Unified language abstraction for MCP Context Browser"
+
+[lints]
+workspace = true
+
+[dependencies]
+# Mozilla Rust Code Analysis (fork with tree-sitter 0.26.3 + Kotlin)
+rust-code-analysis.workspace = true
+
+# Error handling
+thiserror.workspace = true
+
+# Async runtime
+tokio.workspace = true
+async-trait.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# Serialization (for LanguageId)
+serde = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -8,6 +8,7 @@ members = [
     "crates/mcb-providers",
     "crates/mcb-server",
     "crates/mcb-validate",
+    "crates/mcb-language-support",
 ]
 
 [workspace.package]

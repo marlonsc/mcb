@@ -3255,6 +3255,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "mcb-language-support"
+version = "0.1.5"
+dependencies = [
+ "async-trait",
+ "rust-code-analysis",
+ "serde",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "mcb-providers"
 version = "0.1.5"
 dependencies = [

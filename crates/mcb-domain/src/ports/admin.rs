@@ -368,7 +368,8 @@ pub struct ValidationOperationResult {
 ///
 /// fn start_validation(tracker: Arc<dyn ValidationOperationsInterface>) {
 ///     // Start tracking a new operation
-///     let operation_id = tracker.start_operation(".", &["clean_architecture", "solid"]);
+///     let validators = ["clean_architecture", "solid"].map(String::from);
+///     let operation_id = tracker.start_operation(".", &validators);
 ///
 ///     // Update progress as files are processed
 ///     tracker.update_progress(&operation_id, Some("src/main.rs".to_string()), 50, 100);
