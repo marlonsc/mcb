@@ -8,24 +8,13 @@
 //! - DIP: Dependency Inversion Principle (concrete dependencies)
 
 use crate::pattern_registry::PATTERNS;
+use crate::thresholds::{MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_STRUCT_LINES, MAX_TRAIT_METHODS};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use walkdir::WalkDir;
-
-/// Maximum methods for a single trait (ISP)
-pub const MAX_TRAIT_METHODS: usize = 10;
-
-/// Maximum lines for a single struct/impl block (SRP)
-pub const MAX_STRUCT_LINES: usize = 200;
-
-/// Maximum match arms before warning (OCP)
-pub const MAX_MATCH_ARMS: usize = 10;
-
-/// Maximum methods for a single impl block (SRP)
-pub const MAX_IMPL_METHODS: usize = 15;
 
 /// SOLID violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -31,6 +31,9 @@
 //! let report = validator.validate_all()?;
 //! ```
 
+// === Centralized Thresholds (Phase 2 DRY) ===
+pub mod thresholds;
+
 // === New DRY Violation System (Phase 3 Refactoring) ===
 pub mod violation_trait;
 #[macro_use]
@@ -93,6 +96,13 @@ pub mod tests_org;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
+
+// Re-export centralized thresholds
+pub use thresholds::{
+    MAX_BUILDER_FIELDS, MAX_DI_CONTAINER_FIELDS, MAX_FILE_LINES, MAX_FUNCTION_LINES,
+    MAX_FUNCTION_PARAMS, MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS,
+    MAX_STRUCT_LINES, MAX_TRAIT_METHODS, ValidationThresholds, thresholds,
+};
 
 // Re-export new DRY violation system
 pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary, ViolationEntry};
