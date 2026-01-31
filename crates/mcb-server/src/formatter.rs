@@ -319,70 +319,49 @@ fn build_indexing_status_message(status: &IndexingStatus) -> String {
 // ============================================================================
 
 fn build_validation_message(report: &ValidationReport, path: &Path, duration: Duration) -> String {
-    let (status_emoji, status_text) = if report.passed {
-        ("✅", "PASSED")
-    } else {
-        ("❌", "FAILED")
-    };
+    // Return JSON structured output as per plan specification
+    let json_output = serde_json::json!({
+        "workspace": path.display().to_string(),
+        "passed": report.passed,
+        "total_violations": report.total_violations,
+        "errors": report.errors,
+        "warnings": report.warnings,
+        "infos": report.infos,
+        "duration_secs": duration.as_secs_f64(),
+        "violations": report.violations.iter().map(|v| {
+            serde_json::json!({
+                "id": v.id,
+                "category": v.category,
+                "severity": v.severity,
+                "file": v.file,
+                "line": v.line,
+                "message": v.message,
+                "suggestion": v.suggestion
+            })
+        }).collect::<Vec<_>>()
+    });
 
-    let mut message = format!(
-        "{} **Architecture Validation {}**\n\n\
-         📊 **Summary**:\n\
-         • Workspace: `{}`\n\
-         • Total violations: {}\n\
-         • Errors: {} | Warnings: {} | Infos: {}\n\
-         • Duration: {:.2}s\n",
-        status_emoji,
-        status_text,
-        path.display(),
-        report.total_violations,
-        report.errors,
-        report.warnings,
-        report.infos,
-        duration.as_secs_f64()
-    );
-
-    if report.violations.is_empty() {
-        message.push_str("\n🎉 **No violations found!** Code follows architecture rules.\n");
-    } else {
-        message.push_str("\n📋 **Violations**:\n\n");
-        for v in &report.violations {
-            append_violation(&mut message, v);
-        }
-    }
-    message
-}
-
-fn append_violation(message: &mut String, v: &mcb_application::ports::services::ViolationEntry) {
-    let emoji = match v.severity.as_str() {
-        "ERROR" => "🔴",
-        "WARNING" => "🟡",
-        _ => "🔵",
-    };
-    message.push_str(&format!(
-        "{} **[{}]** {} - {}\n",
-        emoji, v.id, v.category, v.message
-    ));
-    if let Some(file) = &v.file {
-        let loc = v.line.map_or(file.clone(), |l| format!("{}:{}", file, l));
-        message.push_str(&format!("   📁 `{}`\n", loc));
-    }
-    if let Some(suggestion) = &v.suggestion {
-        message.push_str(&format!("   💡 {}\n", suggestion));
-    }
-    message.push('\n');
+    serde_json::to_string_pretty(&json_output).unwrap_or_else(|_| {
+        format!(
+            "{{\"error\": \"Failed to serialize validation report\", \"path\": \"{}\"}}",
+            path.display()
+        )
+    })
 }
 
 fn build_validation_error_message(error: &str, path: &Path) -> String {
-    format!(
-        "❌ **Validation Failed**\n\n\
-         **Error Details**: {}\n\n\
-         **Troubleshooting:**\n\
-         • Verify the workspace path exists and is readable\n\
-         • Check that mcb-validate is properly configured\n\
-         • Ensure the workspace contains Rust source files\n\n\
-         **Path**: `{}`",
-        error,
-        path.display()
-    )
+    // Return JSON structured error output
+    let json_output = serde_json::json!({
+        "error": error,
+        "path": path.display().to_string(),
+        "passed": false
+    });
+
+    serde_json::to_string_pretty(&json_output).unwrap_or_else(|_| {
+        format!(
+            "{{\"error\": \"{}\", \"path\": \"{}\"}}",
+            error,
+            path.display()
+        )
+    })
 }

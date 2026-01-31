@@ -91,7 +91,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 -   ✅ 1670+ tests with comprehensive coverage (100% pass rate)
 -   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   ✅ 7 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
+-   ✅ 8 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
 -   ✅ 14 languages with AST parsing support
 -   ✅ Clean architecture with dill-based DI (ADR-029)
 
@@ -120,7 +120,7 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 -   ✅ Full MCP protocol implementation (4 tools)
 -   ✅ 14 languages with AST parsing (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
 -   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   ✅ 7 vector stores (In-Memory, Encrypted, Null)
+-   ✅ 8 vector stores (In-Memory, Encrypted, Null)
 -   ✅ Claude-context environment variable compatibility
 -   ✅ 1670+ tests with comprehensive coverage (100% pass rate)
 -   ✅ JWT authentication and rate limiting

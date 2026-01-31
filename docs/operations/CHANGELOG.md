@@ -204,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   **Linkme Distributed Slices**: Compile-time provider registration replacing inventory runtime registration
 -   **4 Pure Linkme Registries**: Embedding, vector store, cache, and language provider registries
--   **15 Migrated Providers**: All providers (6 embedding, 3 cache, 7 vector stores, 14 languages) using linkme pattern
+-   **15 Migrated Providers**: All providers (6 embedding, 3 cache, 8 vector stores, 14 languages) using linkme pattern
 -   **Zero Runtime Overhead**: Provider discovery at compile-time instead of runtime
 
 #### Validation Rules
@@ -379,7 +379,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   **Startup Time**: Instant (from npm/npx overhead)
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
--   **Provider Support**: 7 embedding providers, 7 vector stores
+-   **Provider Support**: 7 embedding providers, 8 vector stores
 -   **Language Support**: 14 languages with AST parsing
 -   **Test Coverage**: 1670+ tests
 

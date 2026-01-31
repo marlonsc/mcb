@@ -35,7 +35,7 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 
 -   **Semantic Code Search**: Natural language queries → code discovery using vector embeddings
 -   **Clean Architecture**: 8 crates (domain, application, infrastructure, providers, server, validate) per Clean Architecture layers
--   **Provider Ecosystem**: 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 7 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
+-   **Provider Ecosystem**: 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 8 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
 -   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
 -   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 1670+ tests project-wide
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
