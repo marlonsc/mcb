@@ -238,6 +238,7 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
+        .with_validation_service(services.validation_service)
         .try_build()
         .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
 }

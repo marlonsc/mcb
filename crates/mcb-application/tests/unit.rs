@@ -10,3 +10,6 @@ mod use_cases_tests;
 
 #[path = "unit/registry_tests.rs"]
 mod registry_tests;
+
+#[path = "unit/instrumented_embedding_test.rs"]
+mod instrumented_embedding_test;

@@ -178,7 +178,6 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
 // ============================================================================
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use mcb_application::ports::registry::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
@@ -189,6 +188,8 @@ use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 fn voyageai_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
+    use super::helpers::http::create_default_client;
+
     let api_key = config
         .api_key
         .clone()
@@ -198,11 +199,7 @@ fn voyageai_factory(
         .model
         .clone()
         .unwrap_or_else(|| "voyage-code-3".to_string());
-    let timeout = Duration::from_secs(30);
-    let http_client = Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+    let http_client = create_default_client()?;
 
     Ok(Arc::new(VoyageAIEmbeddingProvider::new(
         api_key,

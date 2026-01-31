@@ -568,6 +568,7 @@ async fn create_test_mcp_server() -> McpServer {
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
+        .with_validation_service(services.validation_service)
         .build()
         .expect("Failed to build MCP server")
 }

@@ -46,11 +46,12 @@ fn test_tool_definitions_clear_index() {
 #[test]
 fn test_create_tool_list() {
     let tools = create_tool_list().expect("Should create tool list");
-    assert_eq!(tools.len(), 4, "Should have 4 tools");
+    assert_eq!(tools.len(), 5, "Should have 5 tools");
 
     let names: Vec<&str> = tools.iter().map(|t| &*t.name).collect();
     assert!(names.contains(&"index_codebase"));
     assert!(names.contains(&"search_code"));
     assert!(names.contains(&"get_indexing_status"));
     assert!(names.contains(&"clear_index"));
+    assert!(names.contains(&"validate_architecture"));
 }

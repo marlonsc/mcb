@@ -4,6 +4,7 @@
 
 #![allow(dead_code)]
 
+use mcb_application::ValidationService;
 use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_domain::SearchResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
@@ -16,6 +17,7 @@ use mcb_infrastructure::di::modules::domain_services::{
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use std::path::PathBuf;
+use std::sync::Arc;
 use tempfile::TempDir;
 
 /// Create a temporary codebase directory with sample code files
@@ -179,10 +181,13 @@ pub async fn create_test_mcp_server() -> McpServer {
         .await
         .expect("Failed to create services");
 
+    let validation_service = Arc::new(ValidationService::new());
+
     McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
+        .with_validation_service(validation_service)
         .build()
         .expect("Failed to build MCP server")
 }

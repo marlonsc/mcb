@@ -15,7 +15,10 @@ use crate::crypto::CryptoService;
 use mcb_application::domain_services::search::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
-use mcb_application::use_cases::{ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl};
+use mcb_application::ports::services::ValidationServiceInterface;
+use mcb_application::use_cases::{
+    ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl, ValidationService,
+};
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
@@ -30,6 +33,7 @@ pub struct DomainServicesContainer {
     pub context_service: Arc<dyn ContextServiceInterface>,
     pub search_service: Arc<dyn SearchServiceInterface>,
     pub indexing_service: Arc<dyn IndexingServiceInterface>,
+    pub validation_service: Arc<dyn ValidationServiceInterface>,
 }
 
 /// Dependencies for creating domain services
@@ -73,10 +77,15 @@ impl DomainServicesFactory {
             IndexingServiceImpl::new(Arc::clone(&context_service), deps.language_chunker),
         );
 
+        // Create validation service (no dependencies)
+        let validation_service: Arc<dyn ValidationServiceInterface> =
+            Arc::new(ValidationService::new());
+
         Ok(DomainServicesContainer {
             context_service,
             search_service,
             indexing_service,
+            validation_service,
         })
     }
 

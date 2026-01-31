@@ -39,6 +39,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.5] - 2026-01-31
+
+### What This Release Is
+
+**MCP Context Browser v0.1.5** delivers new providers, health endpoints, and code quality improvements following DRY/SOLID principles. This release adds Anthropic embedding, Pinecone and Qdrant vector store providers, plus Kubernetes-ready health endpoints.
+
+<!-- markdownlint-disable MD044 -->
+### Added
+
+-   **Anthropic Embedding Provider**: Full Voyage AI model support with configurable dimensions
+-   **Pinecone Vector Store Provider**: Production-ready cloud vector database integration
+-   **Qdrant Vector Store Provider**: Self-hosted vector search with gRPC support
+-   **Health Endpoints**: `/healthz` (liveness) and `/readyz` (readiness) for container orchestration
+-   **Performance Metrics Decorator**: SOLID-compliant instrumented embedding provider
+-   **Golden Test Framework**: Architecture boundary documentation and test scaffolding (ADR-027)
+
+### Changed
+
+-   **DRY Refactoring**: Shared HTTP helpers across embedding and vector store providers (~200 lines deduplicated)
+-   **CI/CD Improvements**: Auto-merge Dependabot PRs (patch/minor), auto-tag on release branch merge
+-   **SOLID Compliance**: Metrics added via decorator pattern (Open/Closed principle)
+-   **Test Organization**: Inline tests moved to proper test directories (TEST001 violations resolved)
+
+### Fixed
+
+-   All architecture validation errors resolved (0 errors, 4 warnings)
+-   Validation service properly wired through DI system
+-   Tool count tests updated for new `validate_architecture` tool
+<!-- markdownlint-enable MD044 -->
+
+### Impact Metrics
+
+-   **New Providers**: 3 (Anthropic embedding, Pinecone, Qdrant)
+-   **Tests**: 1636+ passing
+-   **Violations**: 0 errors (was 1)
+-   **DRY Improvement**: ~200 lines of duplication removed
+
+---
+
 ## [0.1.4] - 2026-01-28
 
 ### What This Release Is

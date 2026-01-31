@@ -8,7 +8,10 @@ use rmcp::model::Tool;
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
+use crate::args::{
+    ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs,
+    ValidateArchitectureArgs,
+};
 
 /// Tool definitions for MCP protocol
 pub struct ToolDefinitions;
@@ -50,6 +53,15 @@ impl ToolDefinitions {
         )
     }
 
+    /// Get the validate_architecture tool definition
+    pub fn validate_architecture() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "validate_architecture",
+            "Run architecture validation rules on a codebase to check for Clean Architecture, SOLID, and other code quality violations",
+            schemars::schema_for!(ValidateArchitectureArgs),
+        )
+    }
+
     /// Create a tool from schema
     fn create_tool(
         name: &'static str,
@@ -88,5 +100,6 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::search_code()?,
         ToolDefinitions::get_indexing_status()?,
         ToolDefinitions::clear_index()?,
+        ToolDefinitions::validate_architecture()?,
     ])
 }

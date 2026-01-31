@@ -10,6 +10,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
+use mcb_application::ports::services::ValidationReport;
 use mcb_domain::SearchResult;
 
 /// Response formatter for MCP server tools
@@ -165,6 +166,92 @@ impl ResponseFormatter {
             collection
         );
         CallToolResult::success(vec![Content::text(message)])
+    }
+
+    /// Format validation success response
+    pub fn format_validation_success(
+        report: &ValidationReport,
+        path: &Path,
+        duration: Duration,
+    ) -> CallToolResult {
+        let status_emoji = if report.passed { "✅" } else { "❌" };
+        let status_text = if report.passed { "PASSED" } else { "FAILED" };
+
+        let mut message = format!(
+            "{} **Architecture Validation {}**\n\n\
+             📊 **Summary**:\n\
+             • Workspace: `{}`\n\
+             • Total violations: {}\n\
+             • Errors: {}\n\
+             • Warnings: {}\n\
+             • Infos: {}\n\
+             • Duration: {:.2}s\n",
+            status_emoji,
+            status_text,
+            path.display(),
+            report.total_violations,
+            report.errors,
+            report.warnings,
+            report.infos,
+            duration.as_secs_f64()
+        );
+
+        if !report.violations.is_empty() {
+            message.push_str("\n📋 **Violations**:\n\n");
+            for violation in &report.violations {
+                let severity_emoji = match violation.severity.as_str() {
+                    "ERROR" => "🔴",
+                    "WARNING" => "🟡",
+                    _ => "🔵",
+                };
+                message.push_str(&format!(
+                    "{} **[{}]** {} - {}\n",
+                    severity_emoji, violation.id, violation.category, violation.message
+                ));
+                if let Some(file) = &violation.file {
+                    if let Some(line) = violation.line {
+                        message.push_str(&format!("   📁 `{}:{}`\n", file, line));
+                    } else {
+                        message.push_str(&format!("   📁 `{}`\n", file));
+                    }
+                }
+                if let Some(suggestion) = &violation.suggestion {
+                    message.push_str(&format!("   💡 {}\n", suggestion));
+                }
+                message.push('\n');
+            }
+        } else {
+            message.push_str("\n🎉 **No violations found!** Code follows architecture rules.\n");
+        }
+
+        tracing::info!(
+            "Validation completed: {} violations in {:?}",
+            report.total_violations,
+            duration
+        );
+
+        if report.passed {
+            CallToolResult::success(vec![Content::text(message)])
+        } else {
+            CallToolResult::error(vec![Content::text(message)])
+        }
+    }
+
+    /// Format validation error response
+    pub fn format_validation_error(error: &str, path: &Path) -> CallToolResult {
+        let message = format!(
+            "❌ **Validation Failed**\n\n\
+             **Error Details**: {}\n\n\
+             **Troubleshooting:**\n\
+             • Verify the workspace path exists and is readable\n\
+             • Check that mcb-validate is properly configured\n\
+             • Ensure the workspace contains Rust source files\n\n\
+             **Path**: `{}`",
+            error,
+            path.display()
+        );
+        tracing::error!("Validation failed for path {}: {}", path.display(), error);
+        CallToolResult::error(vec![Content::text(message)])
     }
 }
 

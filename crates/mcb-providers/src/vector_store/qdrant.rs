@@ -491,21 +491,19 @@ const QDRANT_DEFAULT_PORT: u16 = 6333;
 fn qdrant_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
+    use crate::embedding::helpers::{DEFAULT_EMBEDDING_TIMEOUT, http::create_default_client};
+
     let base_url = config
         .uri
         .clone()
         .unwrap_or_else(|| format!("http://localhost:{QDRANT_DEFAULT_PORT}"));
     let api_key = config.api_key.clone();
-    let timeout = Duration::from_secs(30);
-    let http_client = Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+    let http_client = create_default_client()?;
 
     Ok(Arc::new(QdrantVectorStoreProvider::new(
         base_url,
         api_key,
-        timeout,
+        DEFAULT_EMBEDDING_TIMEOUT,
         http_client,
     )))
 }

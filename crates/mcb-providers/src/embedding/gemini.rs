@@ -216,6 +216,8 @@ use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 fn gemini_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
+    use super::helpers::{DEFAULT_EMBEDDING_TIMEOUT, http::create_default_client};
+
     let api_key = config
         .api_key
         .clone()
@@ -225,17 +227,13 @@ fn gemini_factory(
         .model
         .clone()
         .unwrap_or_else(|| "text-embedding-004".to_string());
-    let timeout = Duration::from_secs(30);
-    let http_client = Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+    let http_client = create_default_client()?;
 
     Ok(Arc::new(GeminiEmbeddingProvider::new(
         api_key,
         base_url,
         model,
-        timeout,
+        DEFAULT_EMBEDDING_TIMEOUT,
         http_client,
     )))
 }

@@ -5,13 +5,14 @@ use mcb_server::tools::registry::create_tool_list;
 #[test]
 fn test_tool_definitions_create_valid_tools() {
     let tools = create_tool_list().expect("should create tool list");
-    assert_eq!(tools.len(), 4);
+    assert_eq!(tools.len(), 5);
 
     let names: Vec<_> = tools.iter().map(|t| t.name.as_ref()).collect();
     assert!(names.contains(&"index_codebase"));
     assert!(names.contains(&"search_code"));
     assert!(names.contains(&"get_indexing_status"));
     assert!(names.contains(&"clear_index"));
+    assert!(names.contains(&"validate_architecture"));
 }
 
 #[test]

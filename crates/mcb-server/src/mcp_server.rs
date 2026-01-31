@@ -12,10 +12,14 @@ use rmcp::model::{
     ServerCapabilities, ServerInfo,
 };
 
-use mcb_application::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
+use mcb_application::{
+    ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface,
+};
 
 use crate::handlers::{
     ClearIndexHandler, GetIndexingStatusHandler, IndexCodebaseHandler, SearchCodeHandler,
+    ValidateArchitectureHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
@@ -40,6 +44,8 @@ pub struct McpServer {
     get_indexing_status_handler: Arc<GetIndexingStatusHandler>,
     /// Handler for index clearing operations
     clear_index_handler: Arc<ClearIndexHandler>,
+    /// Handler for architecture validation operations
+    validate_architecture_handler: Arc<ValidateArchitectureHandler>,
 }
 
 impl McpServer {
@@ -48,12 +54,15 @@ impl McpServer {
         indexing_service: Arc<dyn IndexingServiceInterface>,
         context_service: Arc<dyn ContextServiceInterface>,
         search_service: Arc<dyn SearchServiceInterface>,
+        validation_service: Arc<dyn ValidationServiceInterface>,
     ) -> Self {
         let index_codebase_handler = Arc::new(IndexCodebaseHandler::new(indexing_service.clone()));
         let search_code_handler = Arc::new(SearchCodeHandler::new(search_service.clone()));
         let get_indexing_status_handler =
             Arc::new(GetIndexingStatusHandler::new(indexing_service.clone()));
         let clear_index_handler = Arc::new(ClearIndexHandler::new(indexing_service.clone()));
+        let validate_architecture_handler =
+            Arc::new(ValidateArchitectureHandler::new(validation_service));
 
         Self {
             indexing_service,
@@ -63,6 +72,7 @@ impl McpServer {
             search_code_handler,
             get_indexing_status_handler,
             clear_index_handler,
+            validate_architecture_handler,
         }
     }
 
@@ -100,6 +110,11 @@ impl McpServer {
     pub fn clear_index_handler(&self) -> Arc<ClearIndexHandler> {
         Arc::clone(&self.clear_index_handler)
     }
+
+    /// Access to validate architecture handler (for HTTP transport)
+    pub fn validate_architecture_handler(&self) -> Arc<ValidateArchitectureHandler> {
+        Arc::clone(&self.validate_architecture_handler)
+    }
 }
 
 impl ServerHandler for McpServer {
@@ -120,7 +135,8 @@ impl ServerHandler for McpServer {
                  - index_codebase: Build a semantic index for a directory\n\
                  - search_code: Query indexed code using natural language\n\
                  - get_indexing_status: Inspect indexing progress\n\
-                 - clear_index: Clear a collection before re-indexing\n"
+                 - clear_index: Clear a collection before re-indexing\n\
+                 - validate_architecture: Run architecture validation rules on a codebase\n"
                     .to_string(),
             ),
         }
@@ -151,6 +167,7 @@ impl ServerHandler for McpServer {
             search_code: Arc::clone(&self.search_code_handler),
             get_indexing_status: Arc::clone(&self.get_indexing_status_handler),
             clear_index: Arc::clone(&self.clear_index_handler),
+            validate_architecture: Arc::clone(&self.validate_architecture_handler),
         };
         route_tool_call(request, &handlers).await
     }

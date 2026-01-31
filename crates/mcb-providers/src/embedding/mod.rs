@@ -46,7 +46,7 @@ pub use anthropic::AnthropicEmbeddingProvider;
 #[cfg(feature = "embedding-fastembed")]
 pub use fastembed::FastEmbedProvider;
 pub use gemini::GeminiEmbeddingProvider;
-pub use helpers::constructor;
+pub use helpers::{DEFAULT_EMBEDDING_TIMEOUT, constructor, http, parsing};
 pub use null::NullEmbeddingProvider;
 pub use ollama::OllamaEmbeddingProvider;
 pub use openai::OpenAIEmbeddingProvider;

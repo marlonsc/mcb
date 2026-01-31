@@ -8,9 +8,13 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
 use std::sync::Arc;
 
-use crate::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
+use crate::args::{
+    ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs,
+    ValidateArchitectureArgs,
+};
 use crate::handlers::{
     ClearIndexHandler, GetIndexingStatusHandler, IndexCodebaseHandler, SearchCodeHandler,
+    ValidateArchitectureHandler,
 };
 
 /// Handler references for tool routing
@@ -23,6 +27,8 @@ pub struct ToolHandlers {
     pub get_indexing_status: Arc<GetIndexingStatusHandler>,
     /// Handler for index clearing operations
     pub clear_index: Arc<ClearIndexHandler>,
+    /// Handler for architecture validation operations
+    pub validate_architecture: Arc<ValidateArchitectureHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -48,6 +54,13 @@ pub async fn route_tool_call(
         "clear_index" => {
             let args = parse_args::<ClearIndexArgs>(&request)?;
             handlers.clear_index.handle(Parameters(args)).await
+        }
+        "validate_architecture" => {
+            let args = parse_args::<ValidateArchitectureArgs>(&request)?;
+            handlers
+                .validate_architecture
+                .handle(Parameters(args))
+                .await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

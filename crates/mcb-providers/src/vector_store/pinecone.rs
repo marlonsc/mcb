@@ -456,6 +456,8 @@ use mcb_application::ports::registry::{
 fn pinecone_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
+    use crate::embedding::helpers::{DEFAULT_EMBEDDING_TIMEOUT, http::create_default_client};
+
     let api_key = config
         .api_key
         .clone()
@@ -464,16 +466,12 @@ fn pinecone_factory(
         .uri
         .clone()
         .ok_or_else(|| "Pinecone requires uri (index host URL)".to_string())?;
-    let timeout = Duration::from_secs(30);
-    let http_client = Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+    let http_client = create_default_client()?;
 
     Ok(Arc::new(PineconeVectorStoreProvider::new(
         api_key,
         host,
-        timeout,
+        DEFAULT_EMBEDDING_TIMEOUT,
         http_client,
     )))
 }
