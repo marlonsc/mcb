@@ -35,6 +35,8 @@ pub mod thresholds;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use mcb_language_support::LanguageDetector;
+
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 
 pub use detector::{CloneCandidate, CloneDetector, tokenize_source};
@@ -157,6 +159,7 @@ impl Violation for DuplicationViolation {
 /// AST similarity analysis for accurate clone classification.
 pub struct DuplicationAnalyzer {
     thresholds: DuplicationThresholds,
+    detector: LanguageDetector,
 }
 
 impl DuplicationAnalyzer {
@@ -164,12 +167,16 @@ impl DuplicationAnalyzer {
     pub fn new() -> Self {
         Self {
             thresholds: DuplicationThresholds::default(),
+            detector: LanguageDetector::new(),
         }
     }
 
     /// Create an analyzer with custom thresholds
     pub fn with_thresholds(thresholds: DuplicationThresholds) -> Self {
-        Self { thresholds }
+        Self {
+            thresholds,
+            detector: LanguageDetector::new(),
+        }
     }
 
     /// Analyze files for code duplication
@@ -219,11 +226,9 @@ impl DuplicationAnalyzer {
 
     /// Check if a file should be analyzed based on language and patterns
     pub fn should_analyze_file(&self, path: &Path) -> bool {
-        // Check extension
-        let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-
-        let language = self.extension_to_language(extension);
-        if !self.thresholds.languages.contains(&language.to_string()) {
+        // Check language using detect_language (which uses mcb-language-support)
+        let language = self.detect_language(path);
+        if !self.thresholds.languages.contains(&language) {
             return false;
         }
 
@@ -243,31 +248,31 @@ impl DuplicationAnalyzer {
         true
     }
 
-    /// Detect language from file path
+    /// Detect language from file path using mcb-language-support
+    ///
+    /// Delegates to `LanguageDetector` from mcb-language-support to avoid
+    /// duplicate language detection logic. Falls back to extension-based
+    /// detection for languages not supported by mcb-language-support.
     fn detect_language(&self, path: &Path) -> String {
-        let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+        // Try mcb-language-support first
+        if let Some(name) = self.detector.detect_name(path, None) {
+            return name;
+        }
 
-        self.extension_to_language(extension).to_string()
+        // Fallback for languages not in mcb-language-support (go, csharp, ruby, php, swift)
+        let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+        self.extension_to_language_fallback(extension).to_string()
     }
 
-    /// Map file extension to language name
-    fn extension_to_language(&self, extension: &str) -> &str {
+    /// Fallback extension to language mapping for languages not in mcb-language-support
+    fn extension_to_language_fallback(&self, extension: &str) -> &str {
         match extension {
-            "rs" => "rust",
-            "py" => "python",
-            "js" | "mjs" | "cjs" => "javascript",
-            "ts" | "mts" | "cts" => "typescript",
-            "jsx" => "javascript",
-            "tsx" => "typescript",
             "go" => "go",
-            "java" => "java",
             "c" | "h" => "c",
-            "cpp" | "cc" | "cxx" | "hpp" | "hxx" => "cpp",
             "cs" => "csharp",
             "rb" => "ruby",
             "php" => "php",
             "swift" => "swift",
-            "kt" | "kts" => "kotlin",
             _ => "unknown",
         }
     }

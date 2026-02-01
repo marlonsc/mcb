@@ -42,12 +42,14 @@ pub mod parser;
 
 // Re-export main types for convenience
 pub use chunking::{
-    ChunkType, ChunkingConfig, ChunkingStrategy, CodeChunk, LineBasedChunking, SemanticChunking,
+    ChunkType, ChunkingConfig, ChunkingStrategy, LineBasedChunking, ParsedChunk, SemanticChunking,
 };
 pub use detection::LanguageDetector;
 pub use error::{LanguageError, Result};
 pub use language::{LanguageId, LanguageInfo, LanguageRegistry};
-pub use parser::{FileMetrics, FunctionInfo, FunctionMetrics, ParsedFile, Parser, RcaParser};
+pub use parser::{
+    FunctionInfo, ParsedFile, ParsedFileMetrics, ParsedFunctionMetrics, Parser, RcaParser,
+};
 
 /// Re-export rust-code-analysis LANG enum for direct access when needed
 pub use rust_code_analysis::LANG;

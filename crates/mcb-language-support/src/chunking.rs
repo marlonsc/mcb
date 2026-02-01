@@ -10,9 +10,12 @@ use crate::error::Result;
 use crate::language::LanguageId;
 use crate::parser::{Parser, RcaParser};
 
-/// A chunk of code with metadata
+/// A parsed code chunk with metadata (internal representation)
+///
+/// This is the internal chunking result type used within mcb-language-support.
+/// For the domain entity used in the public API, see `mcb_domain::entities::ParsedChunk`.
 #[derive(Debug, Clone)]
-pub struct CodeChunk {
+pub struct ParsedChunk {
     /// The chunk content
     pub content: String,
     /// Start line (1-indexed)
@@ -82,7 +85,7 @@ pub trait ChunkingStrategy: Send + Sync {
         content: &str,
         language: LanguageId,
         path: &Path,
-    ) -> Result<Vec<CodeChunk>>;
+    ) -> Result<Vec<ParsedChunk>>;
 
     /// Get the configuration for this strategy
     fn config(&self) -> &ChunkingConfig;
@@ -157,7 +160,7 @@ impl ChunkingStrategy for SemanticChunking {
         content: &str,
         language: LanguageId,
         path: &Path,
-    ) -> Result<Vec<CodeChunk>> {
+    ) -> Result<Vec<ParsedChunk>> {
         let parsed = self
             .parser
             .parse_content(content.as_bytes(), language, path)
@@ -177,7 +180,7 @@ impl ChunkingStrategy for SemanticChunking {
 
             // If function is too large, we still include it as one semantic unit
             // (breaking a function mid-way loses semantic coherence)
-            chunks.push(CodeChunk {
+            chunks.push(ParsedChunk {
                 content: chunk_content.to_string(),
                 start_line: func.start_line,
                 end_line: func.end_line,
@@ -190,7 +193,7 @@ impl ChunkingStrategy for SemanticChunking {
         if chunks.is_empty() {
             let lines: Vec<&str> = content.lines().collect();
             if !lines.is_empty() {
-                chunks.push(CodeChunk {
+                chunks.push(ParsedChunk {
                     content: content.to_string(),
                     start_line: 1,
                     end_line: lines.len(),
@@ -238,7 +241,7 @@ impl ChunkingStrategy for LineBasedChunking {
         content: &str,
         _language: LanguageId,
         path: &Path,
-    ) -> Result<Vec<CodeChunk>> {
+    ) -> Result<Vec<ParsedChunk>> {
         let lines: Vec<&str> = content.lines().collect();
         let mut chunks = Vec::new();
 
@@ -254,7 +257,7 @@ impl ChunkingStrategy for LineBasedChunking {
             let chunk_lines = &lines[start..end];
             let chunk_content = chunk_lines.join("\n");
 
-            chunks.push(CodeChunk {
+            chunks.push(ParsedChunk {
                 content: chunk_content,
                 start_line: start + 1, // 1-indexed
                 end_line: end,
@@ -277,95 +280,4 @@ impl ChunkingStrategy for LineBasedChunking {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_semantic_chunking_rust() {
-        let chunker = SemanticChunking::default();
-        let code = r#"fn foo() {
-    println!("foo");
-}
-
-fn bar(x: i32) -> i32 {
-    if x > 0 {
-        x * 2
-    } else {
-        -x
-    }
-}
-"#;
-
-        let chunks = chunker
-            .chunk(code, LanguageId::Rust, Path::new("test.rs"))
-            .await
-            .expect("Should chunk");
-
-        // Should find the functions
-        assert!(!chunks.is_empty());
-
-        // All chunks should have valid line numbers
-        for chunk in &chunks {
-            assert!(chunk.start_line >= 1);
-            assert!(chunk.end_line >= chunk.start_line);
-        }
-    }
-
-    #[tokio::test]
-    async fn test_semantic_chunking_small_file() {
-        let chunker = SemanticChunking::default();
-        let code = "x = 1\ny = 2\n";
-
-        let chunks = chunker
-            .chunk(code, LanguageId::Python, Path::new("test.py"))
-            .await
-            .expect("Should chunk");
-
-        // Small file should be treated as single module chunk
-        assert_eq!(chunks.len(), 1);
-        assert_eq!(chunks[0].chunk_type, ChunkType::Module);
-    }
-
-    #[tokio::test]
-    async fn test_line_based_chunking() {
-        let config = ChunkingConfig {
-            target_lines: 3,
-            ..Default::default()
-        };
-        let chunker = LineBasedChunking::new(config);
-
-        let code = "line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\n";
-
-        let chunks = chunker
-            .chunk(code, LanguageId::Python, Path::new("test.py"))
-            .await
-            .expect("Should chunk");
-
-        // Should create multiple chunks of ~3 lines each
-        assert!(chunks.len() >= 2);
-
-        for chunk in &chunks {
-            assert_eq!(chunk.chunk_type, ChunkType::Block);
-        }
-    }
-
-    #[tokio::test]
-    async fn test_empty_content() {
-        let chunker = SemanticChunking::default();
-        let chunks = chunker
-            .chunk("", LanguageId::Rust, Path::new("empty.rs"))
-            .await
-            .expect("Should handle empty");
-
-        assert!(chunks.is_empty());
-    }
-
-    #[test]
-    fn test_chunk_type_display() {
-        assert_eq!(ChunkType::Function.to_string(), "function");
-        assert_eq!(ChunkType::Class.to_string(), "class");
-        assert_eq!(ChunkType::Module.to_string(), "module");
-        assert_eq!(ChunkType::Block.to_string(), "block");
-    }
-}
+// Tests moved to tests/unit/chunking_tests.rs

@@ -9,9 +9,12 @@
 //! - NOM, NARGS, NEXITS, WMC
 //!
 //! Supports: Rust, Python, JavaScript, TypeScript, Java, C, C++, Kotlin
+//!
+//! Uses `mcb-language-support` for language detection to avoid code duplication.
 
 use std::path::Path;
 
+use mcb_language_support::LanguageDetector;
 use rust_code_analysis::{FuncSpace, LANG, get_function_spaces};
 
 use crate::{Result, ValidationError};
@@ -68,6 +71,7 @@ pub struct RcaFunctionMetrics {
 /// rust-code-analysis based analyzer
 pub struct RcaAnalyzer {
     thresholds: MetricThresholds,
+    detector: LanguageDetector,
 }
 
 impl RcaAnalyzer {
@@ -75,33 +79,29 @@ impl RcaAnalyzer {
     pub fn new() -> Self {
         Self {
             thresholds: MetricThresholds::default(),
+            detector: LanguageDetector::new(),
         }
     }
 
     /// Create analyzer with custom thresholds
     pub fn with_thresholds(thresholds: MetricThresholds) -> Self {
-        Self { thresholds }
+        Self {
+            thresholds,
+            detector: LanguageDetector::new(),
+        }
     }
 
-    /// Detect language from file extension
-    pub fn detect_language(path: &Path) -> Option<LANG> {
-        let ext = path.extension()?.to_str()?;
-        match ext.to_lowercase().as_str() {
-            "rs" => Some(LANG::Rust),
-            "py" => Some(LANG::Python),
-            "js" | "mjs" | "cjs" | "jsx" => Some(LANG::Mozjs),
-            "ts" | "mts" | "cts" => Some(LANG::Typescript),
-            "tsx" => Some(LANG::Tsx),
-            "java" => Some(LANG::Java),
-            "kt" | "kts" => Some(LANG::Kotlin),
-            "c" | "h" | "cpp" | "cc" | "cxx" | "hpp" | "hxx" | "mm" | "m" => Some(LANG::Cpp),
-            _ => None,
-        }
+    /// Detect language from file path using mcb-language-support
+    ///
+    /// Delegates to `LanguageDetector` from mcb-language-support to avoid
+    /// duplicate language detection logic.
+    pub fn detect_language(&self, path: &Path) -> Option<LANG> {
+        self.detector.detect_rca_lang(path, None)
     }
 
     /// Analyze a file and return all function metrics
     pub fn analyze_file(&self, path: &Path) -> Result<Vec<RcaFunctionMetrics>> {
-        let lang = Self::detect_language(path).ok_or_else(|| {
+        let lang = self.detect_language(path).ok_or_else(|| {
             ValidationError::Config(format!("Unsupported language for file: {}", path.display()))
         })?;
 
@@ -231,7 +231,7 @@ impl RcaAnalyzer {
 
     /// Get file-level metrics (aggregated)
     pub fn analyze_file_aggregate(&self, path: &Path) -> Result<RcaMetrics> {
-        let lang = Self::detect_language(path).ok_or_else(|| {
+        let lang = self.detect_language(path).ok_or_else(|| {
             ValidationError::Config(format!("Unsupported language for file: {}", path.display()))
         })?;
 
@@ -263,23 +263,24 @@ mod tests {
 
     #[test]
     fn test_detect_language() {
+        let analyzer = RcaAnalyzer::new();
         assert_eq!(
-            RcaAnalyzer::detect_language(Path::new("foo.rs")),
+            analyzer.detect_language(Path::new("foo.rs")),
             Some(LANG::Rust)
         );
         assert_eq!(
-            RcaAnalyzer::detect_language(Path::new("foo.py")),
+            analyzer.detect_language(Path::new("foo.py")),
             Some(LANG::Python)
         );
         assert_eq!(
-            RcaAnalyzer::detect_language(Path::new("foo.js")),
+            analyzer.detect_language(Path::new("foo.js")),
             Some(LANG::Mozjs)
         );
         assert_eq!(
-            RcaAnalyzer::detect_language(Path::new("foo.kt")),
+            analyzer.detect_language(Path::new("foo.kt")),
             Some(LANG::Kotlin)
         );
-        assert_eq!(RcaAnalyzer::detect_language(Path::new("foo.txt")), None);
+        assert_eq!(analyzer.detect_language(Path::new("foo.txt")), None);
     }
 
     #[test]

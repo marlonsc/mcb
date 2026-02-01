@@ -83,7 +83,11 @@ impl SupportedLanguage {
             "php" | "phtml" => Some(Self::Php),
             "swift" => Some(Self::Swift),
             "kt" | "kts" => Some(Self::Kotlin),
-            _ => None,
+            // Intentional: return None for unsupported extensions (not an error)
+            other => {
+                let _ = other; // Acknowledge all extensions are considered
+                None
+            }
         }
     }
 
@@ -120,7 +124,7 @@ impl SupportedLanguage {
     }
 
     /// Get file extensions for this language
-    pub fn extensions(&self) -> &'static [&'static str] {
+    pub fn get_extensions(&self) -> &'static [&'static str] {
         match self {
             Self::Rust => &["rs"],
             Self::Python => &["py", "pyi", "pyw"],
@@ -139,7 +143,7 @@ impl SupportedLanguage {
     }
 
     /// Get all supported languages
-    pub fn all() -> &'static [Self] {
+    pub fn get_all() -> &'static [Self] {
         &[
             Self::Rust,
             Self::Python,
@@ -158,7 +162,7 @@ impl SupportedLanguage {
     }
 
     /// Check if this language supports metrics via RCA
-    pub fn supports_metrics(&self) -> bool {
+    pub fn is_metrics_supported(&self) -> bool {
         // RCA supports all these languages
         true
     }

@@ -142,7 +142,13 @@ impl IndexingServiceImpl {
     }
 
     /// Chunk file content using intelligent AST-based chunking
-    #[allow(dead_code)] // WIP: will be used when background task uses IndexingProgress
+    ///
+    /// Reserved for future background task integration with `IndexingProgress`.
+    /// Currently unused but retained for planned incremental indexing feature.
+    #[allow(
+        dead_code,
+        reason = "Reserved for IndexingProgress integration in background tasks"
+    )]
     fn chunk_file_content(&self, content: &str, path: &Path) -> Vec<CodeChunk> {
         self.language_chunker
             .chunk(content, &path.to_string_lossy())

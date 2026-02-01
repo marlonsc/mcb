@@ -37,3 +37,6 @@ mod browse;
 
 #[path = "unit/performance_tests.rs"]
 mod performance;
+
+#[path = "unit/ports/providers/metrics_tests.rs"]
+mod metrics;

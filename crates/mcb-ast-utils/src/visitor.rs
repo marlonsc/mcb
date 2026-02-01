@@ -124,20 +124,4 @@ impl NodeVisitor for KindCounter {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_kind_collector() {
-        let collector = KindCollector::new("function_item");
-        assert!(collector.matches.is_empty());
-        assert_eq!(collector.target_kind, "function_item");
-    }
-
-    #[test]
-    fn test_kind_counter() {
-        let counter = KindCounter::new();
-        assert_eq!(counter.count("function"), 0);
-    }
-}
+// Tests moved to tests/unit/visitor_tests.rs
