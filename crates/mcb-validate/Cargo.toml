@@ -14,6 +14,10 @@ workspace = true
 path = "src/lib.rs"
 
 [dependencies]
+# Shared language and AST utilities
+mcb-language-support = { path = "../mcb-language-support" }
+mcb-ast-utils = { path = "../mcb-ast-utils" }
+
 # File traversal and globbing
 walkdir.workspace = true
 glob.workspace = true

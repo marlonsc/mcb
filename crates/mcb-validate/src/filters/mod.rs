@@ -17,5 +17,5 @@ pub use dependency_parser::{
     CargoDependencyParser, CrateDependencies, DependencyInfo, WorkspaceDependencies,
 };
 pub use file_matcher::FilePatternMatcher;
-pub use language_detector::LanguageDetector;
+pub use language_detector::{LanguageDetector, LanguageId};
 pub use rule_filters::{RuleFilterExecutor, RuleFilters};

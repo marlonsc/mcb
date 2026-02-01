@@ -3400,6 +3400,8 @@ dependencies = [
  "globset",
  "jsonpath-rust",
  "jsonschema",
+ "mcb-ast-utils",
+ "mcb-language-support",
  "once_cell",
  "pest",
  "pest_derive",

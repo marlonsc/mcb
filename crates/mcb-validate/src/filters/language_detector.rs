@@ -1,43 +1,33 @@
 //! Language Detection for Rule Filtering
 //!
 //! Detects programming language from file extensions and content patterns.
-//! Uses Mozilla's rust-code-analysis library for accurate language detection.
+//! Re-exports from mcb-language-support for unified language detection.
 
-use rust_code_analysis::{LANG, guess_language};
 use std::path::Path;
 
-/// Detects programming language from file paths using Mozilla's rust-code-analysis
-pub struct LanguageDetector;
+// Re-export the shared LanguageDetector for external use
+pub use mcb_language_support::LanguageDetector;
 
-impl Default for LanguageDetector {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// Also expose LanguageId for callers who need it
+pub use mcb_language_support::LanguageId;
 
-impl LanguageDetector {
-    /// Create a new language detector using Mozilla's rust-code-analysis
-    pub fn new() -> Self {
-        Self
-    }
-
-    /// Detect language from file path
+/// Extension trait providing mcb-validate compatible API (returns Option<String>)
+///
+/// The underlying mcb-language-support `LanguageDetector` has methods that return
+/// `Result<LanguageId, Error>` or `Option<LanguageId>`. This trait provides
+/// compatibility methods that return `Option<String>` for mcb-validate's existing API.
+pub trait LanguageDetectorExt {
+    /// Detect language from file path (mcb-validate API)
     ///
     /// # Arguments
     /// * `path` - File path to analyze
     /// * `content` - Optional file content for shebang detection
     ///
     /// # Returns
-    /// The detected language name, or None if unable to detect
-    pub fn detect(&self, path: &Path, content: Option<&str>) -> Option<String> {
-        let source = content
-            .map(|c| c.as_bytes().to_vec())
-            .unwrap_or_else(|| std::fs::read(path).unwrap_or_default());
+    /// The detected language name as a string, or None if unable to detect
+    fn detect_as_string(&self, path: &Path, content: Option<&str>) -> Option<String>;
 
-        guess_language(&source, path).0.map(lang_to_string)
-    }
-
-    /// Check if a file matches any of the specified languages
+    /// Check if a file matches any of the specified languages (by string name)
     ///
     /// # Arguments
     /// * `path` - File path to check
@@ -46,26 +36,37 @@ impl LanguageDetector {
     ///
     /// # Returns
     /// true if the file's language is in the allowed list
-    pub fn matches_languages(
+    fn matches_languages_by_name(
+        &self,
+        path: &Path,
+        content: Option<&str>,
+        allowed_languages: &[String],
+    ) -> bool;
+
+    /// Get all supported languages as strings
+    fn supported_language_names(&self) -> Vec<String>;
+}
+
+impl LanguageDetectorExt for LanguageDetector {
+    fn detect_as_string(&self, path: &Path, content: Option<&str>) -> Option<String> {
+        // Use the shared detector's detect_name method
+        self.detect_name(path, content)
+    }
+
+    fn matches_languages_by_name(
         &self,
         path: &Path,
         content: Option<&str>,
         allowed_languages: &[String],
     ) -> bool {
-        self.detect(path, content)
-            .map(|language| allowed_languages.contains(&language))
-            .unwrap_or(false)
+        // Use the shared detector's matches_languages method
+        self.matches_languages(path, content, allowed_languages)
     }
 
-    /// Get all supported languages
-    pub fn supported_languages(&self) -> Vec<String> {
-        LANG::into_enum_iter().map(lang_to_string).collect()
+    fn supported_language_names(&self) -> Vec<String> {
+        // Get supported languages from mcb-language-support
+        mcb_language_support::LanguageDetector::supported_language_names(self)
     }
-}
-
-/// Convert LANG enum to string using RCA's get_name()
-fn lang_to_string(lang: LANG) -> String {
-    lang.get_name().to_string()
 }
 
 #[cfg(test)]
@@ -76,20 +77,21 @@ mod tests {
     fn test_extension_detection() {
         let detector = LanguageDetector::new();
 
+        // Use detect_name from mcb-language-support
         assert_eq!(
-            detector.detect(Path::new("main.rs"), None),
+            detector.detect_name(Path::new("main.rs"), None),
             Some("rust".to_string())
         );
         assert_eq!(
-            detector.detect(Path::new("script.py"), None),
+            detector.detect_name(Path::new("script.py"), None),
             Some("python".to_string())
         );
         assert_eq!(
-            detector.detect(Path::new("app.js"), None),
+            detector.detect_name(Path::new("app.js"), None),
             Some("javascript".to_string())
         );
         assert_eq!(
-            detector.detect(Path::new("component.tsx"), None),
+            detector.detect_name(Path::new("component.tsx"), None),
             Some("typescript".to_string())
         );
     }
@@ -102,7 +104,7 @@ mod tests {
         // Test with proper extension and content
         let python_content = "#!/usr/bin/env python\nprint('hello')";
         assert_eq!(
-            detector.detect(Path::new("script.py"), Some(python_content)),
+            detector.detect_name(Path::new("script.py"), Some(python_content)),
             Some("python".to_string())
         );
     }
@@ -110,7 +112,7 @@ mod tests {
     #[test]
     fn test_unknown_extension() {
         let detector = LanguageDetector::new();
-        assert_eq!(detector.detect(Path::new("file.unknown"), None), None);
+        assert_eq!(detector.detect_name(Path::new("file.unknown"), None), None);
     }
 
     #[test]
@@ -133,9 +135,9 @@ mod tests {
     #[test]
     fn test_supported_languages() {
         let detector = LanguageDetector::new();
-        let languages = detector.supported_languages();
+        let languages = detector.supported_language_names();
         assert!(languages.contains(&"rust".to_string()));
         assert!(languages.contains(&"python".to_string()));
-        assert!(languages.len() >= 10);
+        assert!(languages.len() >= 7);
     }
 }

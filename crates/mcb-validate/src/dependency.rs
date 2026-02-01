@@ -67,7 +67,13 @@ const ALLOWED_DEPS: &[(&str, &[&str])] = &[
             "mcb-validate",
         ],
     ),
-    ("mcb-validate", &[]),
+    // mcb-validate: Development tool with shared language/AST utilities
+    // mcb-language-support and mcb-ast-utils are shared infrastructure crates
+    // that provide language detection and AST traversal utilities
+    ("mcb-validate", &["mcb-language-support", "mcb-ast-utils"]),
+    // Shared infrastructure crates - no dependencies on main architecture
+    ("mcb-language-support", &[]),
+    ("mcb-ast-utils", &["mcb-language-support"]),
 ];
 
 /// Dependency violation types
