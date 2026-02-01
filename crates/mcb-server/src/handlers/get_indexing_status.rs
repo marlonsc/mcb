@@ -14,6 +14,7 @@ use crate::args::GetIndexingStatusArgs;
 use crate::formatter::ResponseFormatter;
 
 /// Handler for indexing status operations
+#[derive(Clone)]
 pub struct GetIndexingStatusHandler {
     indexing_service: Arc<dyn IndexingServiceInterface>,
 }

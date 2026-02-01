@@ -9,18 +9,13 @@
 //! Phase 2 deliverable: QUAL001 (no-unwrap) detects `.unwrap()` calls via AST
 
 use crate::ast::UnwrapDetector;
+use crate::thresholds::MAX_FILE_LINES;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use walkdir::WalkDir;
-
-/// Maximum allowed lines per file
-pub const MAX_FILE_LINES: usize = 500;
-
-/// Maximum allowed function lines (informational)
-pub const MAX_FUNCTION_LINES: usize = 50;
 
 /// Quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

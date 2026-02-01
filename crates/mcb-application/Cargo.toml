@@ -1,6 +1,6 @@
 [package]
 name = "mcb-application"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 license = "MIT"
@@ -51,6 +51,9 @@ uuid = { workspace = true }
 
 # Async streams for event subscription
 futures = { workspace = true }
+
+[features]
+default = []
 
 [dev-dependencies]
 tempfile = "3.10"

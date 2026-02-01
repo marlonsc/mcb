@@ -219,6 +219,10 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
     let crypto = create_crypto_service(&config).await?;
 
+    // Get indexing operations and event bus for async indexing
+    let indexing_ops = app_context.indexing();
+    let event_bus = app_context.event_bus();
+
     // Create domain services with providers
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         cache: shared_cache,
@@ -227,6 +231,8 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         embedding_provider,
         vector_store_provider,
         language_chunker,
+        indexing_ops,
+        event_bus,
     };
     let services =
         mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(
@@ -238,6 +244,7 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
+        .with_validation_service(services.validation_service)
         .try_build()
         .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
 }

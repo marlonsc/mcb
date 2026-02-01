@@ -46,6 +46,7 @@ use crate::infrastructure::{
     sync::NullSyncProvider,
 };
 use dill::{Catalog, CatalogBuilder};
+use mcb_application::decorators::InstrumentedEmbeddingProvider;
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::{
     IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
@@ -128,10 +129,32 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     );
 
     // ========================================================================
+    // Create Infrastructure Services (needed before handles for decorator)
+    // ========================================================================
+
+    let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
+        Arc::new(NullPerformanceMetrics);
+
+    // ========================================================================
+    // Optionally wrap embedding provider with instrumentation (SOLID O/C)
+    // ========================================================================
+
+    let final_embedding_provider: Arc<dyn EmbeddingProvider> =
+        if config.system.infrastructure.metrics.enabled {
+            info!("Metrics enabled: wrapping embedding provider with instrumentation");
+            Arc::new(InstrumentedEmbeddingProvider::new(
+                embedding_provider.clone(),
+                performance_metrics.clone(),
+            ))
+        } else {
+            embedding_provider.clone()
+        };
+
+    // ========================================================================
     // Create Handles (RwLock wrappers for runtime switching)
     // ========================================================================
 
-    let embedding_handle = Arc::new(EmbeddingProviderHandle::new(embedding_provider.clone()));
+    let embedding_handle = Arc::new(EmbeddingProviderHandle::new(final_embedding_provider));
     let vector_store_handle = Arc::new(VectorStoreProviderHandle::new(
         vector_store_provider.clone(),
     ));
@@ -163,7 +186,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     info!("Created admin services");
 
     // ========================================================================
-    // Create Infrastructure Services (null implementations by default)
+    // Create Remaining Infrastructure Services
     // ========================================================================
 
     let auth_service: Arc<dyn AuthServiceInterface> = Arc::new(NullAuthService::new());
@@ -174,8 +197,6 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     let snapshot_provider: Arc<dyn SnapshotProvider> = Arc::new(NullSnapshotProvider::new());
     let shutdown_coordinator: Arc<dyn ShutdownCoordinator> =
         Arc::new(DefaultShutdownCoordinator::new());
-    let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
-        Arc::new(NullPerformanceMetrics);
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
         Arc::new(NullIndexingOperations);
 

@@ -4,7 +4,10 @@
 //! Ensures all required dependencies are provided before server construction.
 
 use crate::McpServer;
-use mcb_application::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
+use mcb_application::{
+    ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface,
+};
 use std::sync::Arc;
 
 /// Builder for MCP Server with dependency injection
@@ -16,6 +19,7 @@ pub struct McpServerBuilder {
     indexing_service: Option<Arc<dyn IndexingServiceInterface>>,
     context_service: Option<Arc<dyn ContextServiceInterface>>,
     search_service: Option<Arc<dyn SearchServiceInterface>>,
+    validation_service: Option<Arc<dyn ValidationServiceInterface>>,
 }
 
 impl McpServerBuilder {
@@ -51,6 +55,15 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the validation service
+    ///
+    /// # Arguments
+    /// * `service` - Implementation of the validation service port
+    pub fn with_validation_service(mut self, service: Arc<dyn ValidationServiceInterface>) -> Self {
+        self.validation_service = Some(service);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -78,11 +91,15 @@ impl McpServerBuilder {
         let search_service = self
             .search_service
             .ok_or(BuilderError::MissingDependency("search service"))?;
+        let validation_service = self
+            .validation_service
+            .ok_or(BuilderError::MissingDependency("validation service"))?;
 
         Ok(McpServer::new(
             indexing_service,
             context_service,
             search_service,
+            validation_service,
         ))
     }
 }

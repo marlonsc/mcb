@@ -43,6 +43,15 @@ pub const EMBEDDING_DIMENSION_OLLAMA_ARCTIC: usize = 768;
 /// Ollama default dimension
 pub const EMBEDDING_DIMENSION_OLLAMA_DEFAULT: usize = 768;
 
+/// Anthropic (Voyage AI) voyage-3 default dimension
+pub const EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT: usize = 1024;
+
+/// Anthropic (Voyage AI) voyage-3-lite dimension
+pub const EMBEDDING_DIMENSION_ANTHROPIC_LITE: usize = 512;
+
+/// Anthropic (Voyage AI) voyage-code-3 dimension
+pub const EMBEDDING_DIMENSION_ANTHROPIC_CODE: usize = 1024;
+
 /// Gemini embedding dimension
 pub const EMBEDDING_DIMENSION_GEMINI: usize = 768;
 
@@ -61,6 +70,9 @@ pub const VOYAGEAI_MAX_OUTPUT_TOKENS: usize = 16000;
 
 /// OpenAI max tokens per request
 pub const OPENAI_MAX_TOKENS_PER_REQUEST: usize = 8191;
+
+/// Anthropic (Voyage AI) max input tokens per request
+pub const ANTHROPIC_MAX_INPUT_TOKENS: usize = 32000;
 
 /// Ollama server default port
 pub const OLLAMA_DEFAULT_PORT: u16 = 11434;

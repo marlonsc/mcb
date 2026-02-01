@@ -7,32 +7,16 @@
 //! - Nesting depth (max 3 levels)
 //! - Function length (max 50 lines)
 
+use crate::thresholds::{
+    MAX_BUILDER_FIELDS, MAX_DI_CONTAINER_FIELDS, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS,
+    MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS,
+};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use walkdir::WalkDir;
-
-/// Maximum allowed struct fields (KISS)
-pub const MAX_STRUCT_FIELDS: usize = 7;
-
-/// Maximum allowed struct fields for DI containers and config structs (ADR-029)
-/// These legitimately aggregate many dependencies, but should still have limits
-/// Set to 25 to accommodate existing containers like AppContext (21 fields) with some headroom
-pub const MAX_DI_CONTAINER_FIELDS: usize = 25;
-
-/// Maximum allowed function parameters (KISS)
-pub const MAX_FUNCTION_PARAMS: usize = 5;
-
-/// Maximum allowed builder optional fields (KISS)
-pub const MAX_BUILDER_FIELDS: usize = 7;
-
-/// Maximum allowed nesting depth (KISS)
-pub const MAX_NESTING_DEPTH: usize = 3;
-
-/// Maximum allowed function lines (KISS/SRP)
-pub const MAX_FUNCTION_LINES: usize = 50;
 
 /// KISS violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

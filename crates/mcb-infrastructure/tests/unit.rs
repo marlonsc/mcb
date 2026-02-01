@@ -32,6 +32,14 @@ mod lifecycle_tests;
 #[path = "unit/config_figment_tests.rs"]
 mod config_figment_tests;
 
+#[path = "unit/prometheus_metrics_tests.rs"]
+mod prometheus_metrics_tests;
+
+// Validation service tests - require validation feature
+#[cfg(feature = "validation")]
+#[path = "unit/validation_service_tests.rs"]
+mod validation_service_tests;
+
 // Infrastructure service tests (require test-utils feature)
 #[cfg(feature = "test-utils")]
 #[path = "unit/auth_tests.rs"]

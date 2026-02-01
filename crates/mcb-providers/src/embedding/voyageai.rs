@@ -15,7 +15,7 @@ use crate::constants::{
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
 use crate::embedding::helpers::constructor;
-use crate::utils::HttpResponseUtils;
+use crate::utils::{HttpResponseUtils, parse_embedding_vector};
 
 /// VoyageAI embedding provider
 ///
@@ -117,14 +117,7 @@ impl VoyageAIEmbeddingProvider {
 
     /// Parse embedding vector from response data
     fn parse_embedding(&self, index: usize, item: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = item["embedding"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::embedding(format!("Invalid embedding format for text {}", index))
-            })?
-            .iter()
-            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-            .collect::<Vec<f32>>();
+        let embedding_vec = parse_embedding_vector(item, "embedding", index)?;
 
         Ok(Embedding {
             vector: embedding_vec,
@@ -178,7 +171,6 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
 // ============================================================================
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use mcb_application::ports::registry::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
@@ -189,6 +181,8 @@ use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 fn voyageai_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
+    use super::helpers::http::create_default_client;
+
     let api_key = config
         .api_key
         .clone()
@@ -198,11 +192,7 @@ fn voyageai_factory(
         .model
         .clone()
         .unwrap_or_else(|| "voyage-code-3".to_string());
-    let timeout = Duration::from_secs(30);
-    let http_client = Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+    let http_client = create_default_client()?;
 
     Ok(Arc::new(VoyageAIEmbeddingProvider::new(
         api_key,

@@ -3130,20 +3130,21 @@ dependencies = [
 
 [[package]]
 name = "mcb"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "clap",
  "mcb-domain",
  "mcb-infrastructure",
  "mcb-providers",
  "mcb-server",
+ "mcb-validate",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
 name = "mcb-application"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3161,8 +3162,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "mcb-ast-utils"
+version = "0.1.5"
+dependencies = [
+ "mcb-language-support",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tree-sitter",
+ "tree-sitter-c",
+ "tree-sitter-cpp",
+ "tree-sitter-go",
+ "tree-sitter-java",
+ "tree-sitter-javascript",
+ "tree-sitter-kotlin-ng",
+ "tree-sitter-python",
+ "tree-sitter-rust",
+ "tree-sitter-typescript",
+]
+
+[[package]]
 name = "mcb-domain"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -3182,7 +3204,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-infrastructure"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -3214,6 +3236,7 @@ dependencies = [
  "mcb-application",
  "mcb-domain",
  "mcb-providers",
+ "mcb-validate",
  "metrics",
  "metrics-exporter-prometheus",
  "nix 0.31.1",
@@ -3253,8 +3276,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "mcb-language-support"
+version = "0.1.5"
+dependencies = [
+ "async-trait",
+ "rust-code-analysis",
+ "serde",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "mcb-providers"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -3302,7 +3338,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-server"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3351,7 +3387,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-validate"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3364,6 +3400,8 @@ dependencies = [
  "globset",
  "jsonpath-rust",
  "jsonschema",
+ "mcb-ast-utils",
+ "mcb-language-support",
  "once_cell",
  "pest",
  "pest_derive",

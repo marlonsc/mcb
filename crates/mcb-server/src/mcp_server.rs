@@ -12,10 +12,15 @@ use rmcp::model::{
     ServerCapabilities, ServerInfo,
 };
 
-use mcb_application::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
+use mcb_application::{
+    ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface,
+};
 
 use crate::handlers::{
-    ClearIndexHandler, GetIndexingStatusHandler, IndexCodebaseHandler, SearchCodeHandler,
+    AnalyzeComplexityHandler, ClearIndexHandler, GetIndexingStatusHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, ListValidatorsHandler, SearchCodeHandler,
+    ValidateArchitectureHandler, ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
@@ -26,20 +31,18 @@ use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 /// constructor injection following Clean Architecture principles.
 #[derive(Clone)]
 pub struct McpServer {
-    /// Service for indexing codebases
-    indexing_service: Arc<dyn IndexingServiceInterface>,
-    /// Service for providing code context
-    context_service: Arc<dyn ContextServiceInterface>,
-    /// Service for semantic code search
-    search_service: Arc<dyn SearchServiceInterface>,
-    /// Handler for indexing operations
-    index_codebase_handler: Arc<IndexCodebaseHandler>,
-    /// Handler for search operations
-    search_code_handler: Arc<SearchCodeHandler>,
-    /// Handler for indexing status operations
-    get_indexing_status_handler: Arc<GetIndexingStatusHandler>,
-    /// Handler for index clearing operations
-    clear_index_handler: Arc<ClearIndexHandler>,
+    /// Domain services for core operations
+    services: McpServices,
+    /// Tool handlers for MCP protocol
+    handlers: ToolHandlers,
+}
+
+/// Domain services container (keeps struct field count manageable)
+#[derive(Clone)]
+struct McpServices {
+    indexing: Arc<dyn IndexingServiceInterface>,
+    context: Arc<dyn ContextServiceInterface>,
+    search: Arc<dyn SearchServiceInterface>,
 }
 
 impl McpServer {
@@ -48,57 +51,92 @@ impl McpServer {
         indexing_service: Arc<dyn IndexingServiceInterface>,
         context_service: Arc<dyn ContextServiceInterface>,
         search_service: Arc<dyn SearchServiceInterface>,
+        validation_service: Arc<dyn ValidationServiceInterface>,
     ) -> Self {
-        let index_codebase_handler = Arc::new(IndexCodebaseHandler::new(indexing_service.clone()));
-        let search_code_handler = Arc::new(SearchCodeHandler::new(search_service.clone()));
-        let get_indexing_status_handler =
-            Arc::new(GetIndexingStatusHandler::new(indexing_service.clone()));
-        let clear_index_handler = Arc::new(ClearIndexHandler::new(indexing_service.clone()));
+        let handlers = ToolHandlers {
+            index_codebase: Arc::new(IndexCodebaseHandler::new(indexing_service.clone())),
+            search_code: Arc::new(SearchCodeHandler::new(search_service.clone())),
+            get_indexing_status: Arc::new(GetIndexingStatusHandler::new(indexing_service.clone())),
+            clear_index: Arc::new(ClearIndexHandler::new(indexing_service.clone())),
+            validate_architecture: Arc::new(ValidateArchitectureHandler::new(
+                validation_service.clone(),
+            )),
+            validate_file: Arc::new(ValidateFileHandler::new(validation_service.clone())),
+            list_validators: Arc::new(ListValidatorsHandler::new(validation_service.clone())),
+            get_validation_rules: Arc::new(GetValidationRulesHandler::new(
+                validation_service.clone(),
+            )),
+            analyze_complexity: Arc::new(AnalyzeComplexityHandler::new(validation_service)),
+        };
 
         Self {
-            indexing_service,
-            context_service,
-            search_service,
-            index_codebase_handler,
-            search_code_handler,
-            get_indexing_status_handler,
-            clear_index_handler,
+            services: McpServices {
+                indexing: indexing_service,
+                context: context_service,
+                search: search_service,
+            },
+            handlers,
         }
     }
 
     /// Access to indexing service
     pub fn indexing_service(&self) -> Arc<dyn IndexingServiceInterface> {
-        Arc::clone(&self.indexing_service)
+        Arc::clone(&self.services.indexing)
     }
 
     /// Access to context service
     pub fn context_service(&self) -> Arc<dyn ContextServiceInterface> {
-        Arc::clone(&self.context_service)
+        Arc::clone(&self.services.context)
     }
 
     /// Access to search service
     pub fn search_service(&self) -> Arc<dyn SearchServiceInterface> {
-        Arc::clone(&self.search_service)
+        Arc::clone(&self.services.search)
     }
 
     /// Access to index codebase handler (for HTTP transport)
     pub fn index_codebase_handler(&self) -> Arc<IndexCodebaseHandler> {
-        Arc::clone(&self.index_codebase_handler)
+        Arc::clone(&self.handlers.index_codebase)
     }
 
     /// Access to search code handler (for HTTP transport)
     pub fn search_code_handler(&self) -> Arc<SearchCodeHandler> {
-        Arc::clone(&self.search_code_handler)
+        Arc::clone(&self.handlers.search_code)
     }
 
     /// Access to get indexing status handler (for HTTP transport)
     pub fn get_indexing_status_handler(&self) -> Arc<GetIndexingStatusHandler> {
-        Arc::clone(&self.get_indexing_status_handler)
+        Arc::clone(&self.handlers.get_indexing_status)
     }
 
     /// Access to clear index handler (for HTTP transport)
     pub fn clear_index_handler(&self) -> Arc<ClearIndexHandler> {
-        Arc::clone(&self.clear_index_handler)
+        Arc::clone(&self.handlers.clear_index)
+    }
+
+    /// Access to validate architecture handler (for HTTP transport)
+    pub fn validate_architecture_handler(&self) -> Arc<ValidateArchitectureHandler> {
+        Arc::clone(&self.handlers.validate_architecture)
+    }
+
+    /// Access to validate file handler (for HTTP transport)
+    pub fn validate_file_handler(&self) -> Arc<ValidateFileHandler> {
+        Arc::clone(&self.handlers.validate_file)
+    }
+
+    /// Access to list validators handler (for HTTP transport)
+    pub fn list_validators_handler(&self) -> Arc<ListValidatorsHandler> {
+        Arc::clone(&self.handlers.list_validators)
+    }
+
+    /// Access to get validation rules handler (for HTTP transport)
+    pub fn get_validation_rules_handler(&self) -> Arc<GetValidationRulesHandler> {
+        Arc::clone(&self.handlers.get_validation_rules)
+    }
+
+    /// Access to analyze complexity handler (for HTTP transport)
+    pub fn analyze_complexity_handler(&self) -> Arc<AnalyzeComplexityHandler> {
+        Arc::clone(&self.handlers.analyze_complexity)
     }
 }
 
@@ -120,7 +158,12 @@ impl ServerHandler for McpServer {
                  - index_codebase: Build a semantic index for a directory\n\
                  - search_code: Query indexed code using natural language\n\
                  - get_indexing_status: Inspect indexing progress\n\
-                 - clear_index: Clear a collection before re-indexing\n"
+                 - clear_index: Clear a collection before re-indexing\n\
+                 - validate_architecture: Run architecture validation rules on a codebase\n\
+                 - validate_file: Validate a single file against architecture rules\n\
+                 - list_validators: List available validators\n\
+                 - get_validation_rules: Get validation rules by category\n\
+                 - analyze_complexity: Get code complexity metrics for a file\n"
                     .to_string(),
             ),
         }
@@ -146,12 +189,6 @@ impl ServerHandler for McpServer {
         request: rmcp::model::CallToolRequestParams,
         _context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let handlers = ToolHandlers {
-            index_codebase: Arc::clone(&self.index_codebase_handler),
-            search_code: Arc::clone(&self.search_code_handler),
-            get_indexing_status: Arc::clone(&self.get_indexing_status_handler),
-            clear_index: Arc::clone(&self.clear_index_handler),
-        };
-        route_tool_call(request, &handlers).await
+        route_tool_call(request, &self.handlers).await
     }
 }

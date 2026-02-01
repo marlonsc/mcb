@@ -34,3 +34,6 @@ mod types;
 
 #[path = "unit/browse_tests.rs"]
 mod browse;
+
+#[path = "unit/performance_tests.rs"]
+mod performance;

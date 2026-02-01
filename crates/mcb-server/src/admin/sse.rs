@@ -12,6 +12,9 @@
 //! | `ServiceStateChanged` | Service lifecycle state changed |
 //! | `IndexingProgress` | Indexing operation progress update |
 //! | `IndexingCompleted` | Indexing operation completed |
+//! | `ValidationStarted` | Validation operation started |
+//! | `ValidationProgress` | Validation operation progress update |
+//! | `ValidationCompleted` | Validation operation completed |
 //! | `HealthCheckCompleted` | Health check cycle completed |
 //! | `MetricsSnapshot` | Periodic metrics snapshot |
 //!
@@ -104,5 +107,9 @@ pub fn get_event_name(event: &DomainEvent) -> &'static str {
         DomainEvent::MetricsSnapshot { .. } => "MetricsSnapshot",
         // Search events
         DomainEvent::SearchExecuted { .. } => "SearchExecuted",
+        // Validation events
+        DomainEvent::ValidationStarted { .. } => "ValidationStarted",
+        DomainEvent::ValidationProgress { .. } => "ValidationProgress",
+        DomainEvent::ValidationCompleted { .. } => "ValidationCompleted",
     }
 }

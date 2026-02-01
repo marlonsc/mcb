@@ -16,10 +16,8 @@ use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
     EMBEDDING_DIMENSION_OPENAI_SMALL,
 };
-
-/// Error message for request timeouts
 use crate::embedding::helpers::constructor;
-use crate::utils::HttpResponseUtils;
+use crate::utils::{HttpResponseUtils, handle_request_error, parse_embedding_vector};
 
 /// OpenAI embedding provider
 ///
@@ -122,31 +120,14 @@ impl OpenAIEmbeddingProvider {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| {
-                if e.is_timeout() {
-                    Error::embedding(format!(
-                        "{} {:?}",
-                        crate::constants::ERROR_MSG_REQUEST_TIMEOUT,
-                        self.timeout
-                    ))
-                } else {
-                    Error::embedding(format!("HTTP request failed: {}", e))
-                }
-            })?;
+            .map_err(|e| handle_request_error(e, self.timeout, "OpenAI"))?;
 
         HttpResponseUtils::check_and_parse(response, "OpenAI").await
     }
 
     /// Parse embedding vector from response data
     fn parse_embedding(&self, index: usize, item: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = item["embedding"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::embedding(format!("Invalid embedding format for text {}", index))
-            })?
-            .iter()
-            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-            .collect::<Vec<f32>>();
+        let embedding_vec = parse_embedding_vector(item, "embedding", index)?;
 
         Ok(Embedding {
             vector: embedding_vec,
@@ -212,27 +193,16 @@ use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 fn openai_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    let api_key = config
-        .api_key
-        .clone()
-        .ok_or_else(|| "OpenAI requires api_key".to_string())?;
-    let base_url = config.base_url.clone();
-    let model = config
-        .model
-        .clone()
-        .unwrap_or_else(|| "text-embedding-3-small".to_string());
-    let timeout = Duration::from_secs(30);
-    let http_client = Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+    use super::helpers::http::create_http_provider_config;
+
+    let cfg = create_http_provider_config(config, "OpenAI", "text-embedding-3-small")?;
 
     Ok(Arc::new(OpenAIEmbeddingProvider::new(
-        api_key,
-        base_url,
-        model,
-        timeout,
-        http_client,
+        cfg.api_key,
+        cfg.base_url,
+        cfg.model,
+        cfg.timeout,
+        cfg.client,
     )))
 }
 

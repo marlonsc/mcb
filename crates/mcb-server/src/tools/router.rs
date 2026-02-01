@@ -8,12 +8,19 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
 use std::sync::Arc;
 
-use crate::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
+use crate::args::{
+    AnalyzeComplexityArgs, ClearIndexArgs, GetIndexingStatusArgs, GetValidationRulesArgs,
+    IndexCodebaseArgs, ListValidatorsArgs, SearchCodeArgs, ValidateArchitectureArgs,
+    ValidateFileArgs,
+};
 use crate::handlers::{
-    ClearIndexHandler, GetIndexingStatusHandler, IndexCodebaseHandler, SearchCodeHandler,
+    AnalyzeComplexityHandler, ClearIndexHandler, GetIndexingStatusHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, ListValidatorsHandler, SearchCodeHandler,
+    ValidateArchitectureHandler, ValidateFileHandler,
 };
 
 /// Handler references for tool routing
+#[derive(Clone)]
 pub struct ToolHandlers {
     /// Handler for codebase indexing operations
     pub index_codebase: Arc<IndexCodebaseHandler>,
@@ -23,6 +30,16 @@ pub struct ToolHandlers {
     pub get_indexing_status: Arc<GetIndexingStatusHandler>,
     /// Handler for index clearing operations
     pub clear_index: Arc<ClearIndexHandler>,
+    /// Handler for architecture validation operations
+    pub validate_architecture: Arc<ValidateArchitectureHandler>,
+    /// Handler for single file validation
+    pub validate_file: Arc<ValidateFileHandler>,
+    /// Handler for listing validators
+    pub list_validators: Arc<ListValidatorsHandler>,
+    /// Handler for getting validation rules
+    pub get_validation_rules: Arc<GetValidationRulesHandler>,
+    /// Handler for complexity analysis
+    pub analyze_complexity: Arc<AnalyzeComplexityHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -48,6 +65,29 @@ pub async fn route_tool_call(
         "clear_index" => {
             let args = parse_args::<ClearIndexArgs>(&request)?;
             handlers.clear_index.handle(Parameters(args)).await
+        }
+        "validate_architecture" => {
+            let args = parse_args::<ValidateArchitectureArgs>(&request)?;
+            handlers
+                .validate_architecture
+                .handle(Parameters(args))
+                .await
+        }
+        "validate_file" => {
+            let args = parse_args::<ValidateFileArgs>(&request)?;
+            handlers.validate_file.handle(Parameters(args)).await
+        }
+        "list_validators" => {
+            let args = parse_args::<ListValidatorsArgs>(&request)?;
+            handlers.list_validators.handle(Parameters(args)).await
+        }
+        "get_validation_rules" => {
+            let args = parse_args::<GetValidationRulesArgs>(&request)?;
+            handlers.get_validation_rules.handle(Parameters(args)).await
+        }
+        "analyze_complexity" => {
+            let args = parse_args::<AnalyzeComplexityArgs>(&request)?;
+            handlers.analyze_complexity.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

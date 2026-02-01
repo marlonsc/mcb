@@ -51,6 +51,10 @@ pub mod logging;
 pub mod routing;
 pub mod utils;
 
+// Architecture validation (feature-gated)
+#[cfg(feature = "validation")]
+pub mod validation;
+
 // DI bridge modules (re-exports for module composition)
 pub mod adapters;
 pub mod infrastructure;

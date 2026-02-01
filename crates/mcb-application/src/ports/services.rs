@@ -53,7 +53,7 @@ pub trait ContextServiceInterface: Send + Sync {
 
 /// Search Service Interface
 ///
-/// Simplified search interface for code queries.
+/// Provides semantic code search capabilities.
 #[async_trait]
 pub trait SearchServiceInterface: Send + Sync {
     /// Search for code similar to the query
@@ -63,6 +63,26 @@ pub trait SearchServiceInterface: Send + Sync {
         query: &str,
         limit: usize,
     ) -> Result<Vec<SearchResult>>;
+
+    /// Search with optional filters for more refined results
+    async fn search_with_filters(
+        &self,
+        collection: &str,
+        query: &str,
+        limit: usize,
+        filters: Option<&SearchFilters>,
+    ) -> Result<Vec<SearchResult>>;
+}
+
+/// Filters for search queries
+#[derive(Debug, Clone, Default)]
+pub struct SearchFilters {
+    /// Filter by file extension (e.g., "rs", "py")
+    pub file_extensions: Option<Vec<String>>,
+    /// Filter by programming language
+    pub languages: Option<Vec<String>>,
+    /// Minimum relevance score threshold (0.0 to 1.0)
+    pub min_score: Option<f32>,
 }
 
 // ============================================================================
@@ -95,6 +115,10 @@ pub struct IndexingResult {
     pub files_skipped: usize,
     /// Any errors encountered (non-fatal)
     pub errors: Vec<String>,
+    /// Operation ID for async tracking (None for synchronous operations)
+    pub operation_id: Option<String>,
+    /// Status string: "started", "completed", "failed"
+    pub status: String,
 }
 
 /// Current indexing status
@@ -169,3 +193,13 @@ pub struct IndexingStats {
     /// Average indexing throughput (chunks per second)
     pub avg_throughput: f64,
 }
+
+// ============================================================================
+// Validation Service Interface
+// ============================================================================
+
+// Re-export from domain layer (Clean Architecture)
+pub use mcb_domain::ports::services::{
+    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
+};

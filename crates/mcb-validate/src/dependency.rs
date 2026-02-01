@@ -32,7 +32,14 @@ const ALLOWED_DEPS: &[(&str, &[&str])] = &[
     ("mcb-providers", &["mcb-domain", "mcb-application"]),
     (
         "mcb-infrastructure",
-        &["mcb-domain", "mcb-application", "mcb-providers"],
+        // Note: mcb-validate is an optional dependency for architecture validation feature
+        // This dependency is behind the "validation" feature flag and is not a runtime dependency
+        &[
+            "mcb-domain",
+            "mcb-application",
+            "mcb-providers",
+            "mcb-validate",
+        ],
     ),
     (
         "mcb-server",
@@ -49,15 +56,24 @@ const ALLOWED_DEPS: &[(&str, &[&str])] = &[
     ),
     (
         "mcb",
+        // Note: mcb-validate is allowed for `mcb validate` CLI subcommand
+        // This is a compile-time dependency that enables the validation CLI
         &[
             "mcb-domain",
             "mcb-application",
             "mcb-infrastructure",
             "mcb-server",
             "mcb-providers",
+            "mcb-validate",
         ],
     ),
-    ("mcb-validate", &[]),
+    // mcb-validate: Development tool with shared language/AST utilities
+    // mcb-language-support and mcb-ast-utils are shared infrastructure crates
+    // that provide language detection and AST traversal utilities
+    ("mcb-validate", &["mcb-language-support", "mcb-ast-utils"]),
+    // Shared infrastructure crates - no dependencies on main architecture
+    ("mcb-language-support", &[]),
+    ("mcb-ast-utils", &["mcb-language-support"]),
 ];
 
 /// Dependency violation types

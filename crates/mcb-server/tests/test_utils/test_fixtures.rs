@@ -4,6 +4,7 @@
 
 #![allow(dead_code)]
 
+use mcb_application::ValidationService;
 use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_domain::SearchResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
@@ -16,6 +17,7 @@ use mcb_infrastructure::di::modules::domain_services::{
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use std::path::PathBuf;
+use std::sync::Arc;
 use tempfile::TempDir;
 
 /// Create a temporary codebase directory with sample code files
@@ -74,6 +76,8 @@ pub fn create_test_indexing_result(
         chunks_created,
         files_skipped: 0,
         errors,
+        operation_id: None,
+        status: "completed".to_string(),
     }
 }
 
@@ -88,6 +92,8 @@ pub fn create_test_indexing_result_with_errors(
         chunks_created,
         files_skipped: 0,
         errors,
+        operation_id: None,
+        status: "completed".to_string(),
     }
 }
 
@@ -157,6 +163,8 @@ pub async fn create_test_mcp_server() -> McpServer {
     let vector_store_provider = ctx.vector_store_handle().get();
     let language_chunker = ctx.language_handle().get();
     let cache_provider = ctx.cache_handle().get();
+    let indexing_ops = ctx.indexing();
+    let event_bus = ctx.event_bus();
 
     // Create shared cache provider for domain services factory
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
@@ -173,16 +181,21 @@ pub async fn create_test_mcp_server() -> McpServer {
         embedding_provider,
         vector_store_provider,
         language_chunker,
+        indexing_ops,
+        event_bus,
     };
 
     let services = DomainServicesFactory::create_services(deps)
         .await
         .expect("Failed to create services");
 
+    let validation_service = Arc::new(ValidationService::new());
+
     McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
+        .with_validation_service(validation_service)
         .build()
         .expect("Failed to build MCP server")
 }
