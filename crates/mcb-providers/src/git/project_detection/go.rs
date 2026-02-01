@@ -1,0 +1,133 @@
+//! Go project detector.
+
+use std::path::Path;
+use std::sync::Arc;
+
+use async_trait::async_trait;
+use regex::Regex;
+
+use mcb_domain::entities::project::ProjectType;
+use mcb_domain::error::Result;
+use mcb_domain::ports::providers::project_detection::{
+    ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
+};
+
+use super::PROJECT_DETECTORS;
+
+/// Go project detector
+pub struct GoDetector {
+    module_re: Regex,
+    go_version_re: Regex,
+    require_re: Regex,
+}
+
+impl GoDetector {
+    #[must_use]
+    pub fn new(_config: &ProjectDetectorConfig) -> Self {
+        Self {
+            module_re: Regex::new(r"^module\s+(\S+)").expect("valid regex"),
+            go_version_re: Regex::new(r"^go\s+(\d+\.\d+)").expect("valid regex"),
+            require_re: Regex::new(r"^\s*(\S+)\s+v").expect("valid regex"),
+        }
+    }
+}
+
+#[async_trait]
+impl ProjectDetector for GoDetector {
+    async fn detect(&self, path: &Path) -> Result<Option<ProjectType>> {
+        let gomod_path = path.join("go.mod");
+        if !gomod_path.exists() {
+            return Ok(None);
+        }
+
+        let content = match std::fs::read_to_string(&gomod_path) {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::debug!(path = ?gomod_path, error = %e, "Failed to read go.mod");
+                return Ok(None);
+            }
+        };
+
+        let mut module = String::new();
+        let mut go_version = String::new();
+        let mut dependencies = Vec::new();
+        let mut in_require_block = false;
+
+        for line in content.lines() {
+            let line = line.trim();
+
+            if let Some(caps) = self.module_re.captures(line) {
+                module = caps
+                    .get(1)
+                    .map(|m| m.as_str().to_string())
+                    .unwrap_or_default();
+            }
+
+            if let Some(caps) = self.go_version_re.captures(line) {
+                go_version = caps
+                    .get(1)
+                    .map(|m| m.as_str().to_string())
+                    .unwrap_or_default();
+            }
+
+            if line.starts_with("require (") {
+                in_require_block = true;
+                continue;
+            }
+
+            if line == ")" {
+                in_require_block = false;
+                continue;
+            }
+
+            if in_require_block {
+                if let Some(caps) = self.require_re.captures(line) {
+                    if let Some(dep) = caps.get(1) {
+                        dependencies.push(dep.as_str().to_string());
+                    }
+                }
+            }
+
+            // Single-line require
+            if line.starts_with("require ") && !line.contains('(') {
+                if let Some(caps) = self.require_re.captures(&line[8..]) {
+                    if let Some(dep) = caps.get(1) {
+                        dependencies.push(dep.as_str().to_string());
+                    }
+                }
+            }
+        }
+
+        if module.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(ProjectType::Go {
+            module,
+            go_version,
+            dependencies,
+        }))
+    }
+
+    fn marker_files(&self) -> &[&str] {
+        &["go.mod"]
+    }
+
+    fn detector_name(&self) -> &str {
+        "go"
+    }
+}
+
+fn go_factory(
+    config: &ProjectDetectorConfig,
+) -> std::result::Result<Arc<dyn ProjectDetector>, String> {
+    Ok(Arc::new(GoDetector::new(config)))
+}
+
+#[linkme::distributed_slice(PROJECT_DETECTORS)]
+static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
+    name: "go",
+    description: "Detects Go projects with go.mod",
+    marker_files: &["go.mod"],
+    factory: go_factory,
+};

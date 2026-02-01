@@ -52,6 +52,9 @@ uuid = { workspace = true }
 # Async streams for event subscription
 futures = { workspace = true }
 
+# File system traversal for git indexing
+walkdir = { workspace = true }
+
 [features]
 default = []
 

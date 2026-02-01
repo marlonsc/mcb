@@ -17,6 +17,7 @@
 //! | ValidationProvider | Pluggable code validation engines |
 //! | CacheProvider | Caching backend services |
 //! | CryptoProvider | Encryption/decryption services |
+//! | ProjectDetector | Project type detection (Cargo, npm, Python, Go, Maven) |
 
 /// Cache provider port
 pub mod cache;
@@ -34,6 +35,8 @@ pub mod language_chunking;
 pub mod metrics;
 /// Code metrics analysis provider port
 pub mod metrics_analysis;
+/// Project detection provider port
+pub mod project_detection;
 /// Validation provider port
 pub mod validation;
 /// Vector store provider port
@@ -52,6 +55,7 @@ pub use metrics::{
 pub use metrics_analysis::{
     FileMetrics, FunctionMetrics, HalsteadMetrics, MetricsAnalysisProvider, NullMetricsProvider,
 };
+pub use project_detection::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 pub use validation::{
     NullValidationProvider, ValidationOptions, ValidationProvider, ValidatorInfo,
 };

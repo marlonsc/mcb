@@ -230,6 +230,16 @@ serial_test = "3.2"
 # Cargo metadata parsing (replaces manual Cargo.toml parsing)
 cargo_metadata = "0.23"
 
+# Manifest parsers for project detection (Phase 3: Git Advanced)
+cargo_toml = "0.21"
+quick-xml = "0.36"
+
+# SQLite for file hash storage (Phase 3: Incremental indexing)
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
+
+# Git repository operations (Phase 2/3: Git indexing)
+git2 = "0.19"
+
 # YAML serialization
 serde_yaml = "0.9"
 

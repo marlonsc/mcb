@@ -132,6 +132,16 @@ uuid = { workspace = true }
 # XDG directories (for cache paths)
 dirs = "6.0"
 
+# Manifest parsers for project detection (Phase 3)
+cargo_toml = { workspace = true }
+quick-xml = { workspace = true }
+
+# Git repository operations (Phase 3)
+git2 = { workspace = true }
+
+# TOML parsing for Python pyproject.toml (Phase 3)
+toml = { workspace = true }
+
 # Tree-sitter core (always needed for chunking)
 tree-sitter = { workspace = true }
 

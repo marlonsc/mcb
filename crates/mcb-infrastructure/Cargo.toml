@@ -155,6 +155,9 @@ hmac = { workspace = true }
 # Logging appenders
 tracing-appender = { workspace = true }
 
+# SQLite for file hash storage (Phase 3: Incremental indexing)
+sqlx = { workspace = true }
+
 # Benchmarking
 criterion = { workspace = true }
 

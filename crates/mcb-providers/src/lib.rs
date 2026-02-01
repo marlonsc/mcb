@@ -99,3 +99,9 @@ pub mod hybrid_search;
 // Re-export hybrid search providers when feature is enabled
 #[cfg(feature = "hybrid-search")]
 pub use hybrid_search::{HybridSearchEngine, NullHybridSearchProvider};
+
+/// Git-related providers for repository operations
+///
+/// Provides project type detection (Cargo, npm, Python, Go, Maven) and
+/// submodule discovery with recursive traversal.
+pub mod git;

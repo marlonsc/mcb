@@ -49,6 +49,7 @@ pub mod error_ext;
 pub mod health;
 pub mod logging;
 pub mod routing;
+pub mod storage;
 pub mod utils;
 
 // Architecture validation (feature-gated)

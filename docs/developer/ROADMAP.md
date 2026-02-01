@@ -73,7 +73,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 -   ✅ Phase 3: Rule Engines verified (30/30 tests pass)
 -   ✅ Phases 4–7: Metrics, Duplication, Architecture (CA001–CA009), Integration verified
 -   ✅ 12 migration validation rules (YAML files in rules/migration/)
--   ✅ 750+ mcb-validate tests; 1776+ tests project-wide
+-   ✅ 750+ mcb-validate tests; 1786+ tests project-wide
 
 **Admin UI Code Browser:**
 
@@ -89,7 +89,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 **Maintained from v0.1.1:**
 
--   ✅ 1776+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 1786+ tests with comprehensive coverage (100% pass rate)
 -   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 8 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
 -   ✅ 14 languages with AST parsing support
@@ -98,11 +98,11 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 #### Technical Metrics
 
 -   **Source Files**: 340+ Rust files
--   **Test Suite**: 1776+ tests passing
+-   **Test Suite**: 1786+ tests passing
 -   **Crates**: 8 (7 + mcb-validate)
 -   **Validation Rules**: 12 YAML migration rules; CA001–CA009 architecture rules
 -   **Provider Registration**: Compile-time via linkme (inventory removed)
--   **mcb-validate Status**: Phases 1–7 verified (1776+ tests)
+-   **mcb-validate Status**: Phases 1–7 verified (1786+ tests)
 
 ---
 
@@ -122,7 +122,7 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 -   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 8 vector stores (In-Memory, Encrypted, Null)
 -   ✅ Claude-context environment variable compatibility
--   ✅ 1776+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 1786+ tests with comprehensive coverage (100% pass rate)
 -   ✅ JWT authentication and rate limiting
 -   ✅ Clean architecture with trait-based dependency injection
 -   ✅ HTTP transport foundation for future enhancements
@@ -402,7 +402,7 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
-| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 1776+ tests |
+| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 1786+ tests |
 | v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
 | v0.3.0 | Future | Advanced code intelligence |
 | v0.4.0 | Future | Enterprise features |
