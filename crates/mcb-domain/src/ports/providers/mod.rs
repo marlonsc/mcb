@@ -30,6 +30,8 @@ pub mod embedding;
 pub mod hybrid_search;
 /// Language chunking provider port
 pub mod language_chunking;
+/// Observability metrics provider port (Prometheus/OpenTelemetry)
+pub mod metrics;
 /// Code metrics analysis provider port
 pub mod metrics_analysis;
 /// Validation provider port
@@ -44,6 +46,9 @@ pub use crypto::{CryptoProvider, EncryptedData};
 pub use embedding::EmbeddingProvider;
 pub use hybrid_search::{HybridSearchProvider, HybridSearchResult};
 pub use language_chunking::LanguageChunkingProvider;
+pub use metrics::{
+    MetricLabels, MetricsError, MetricsProvider, MetricsResult, NullMetricsObservabilityProvider,
+};
 pub use metrics_analysis::{
     FileMetrics, FunctionMetrics, HalsteadMetrics, MetricsAnalysisProvider, NullMetricsProvider,
 };
