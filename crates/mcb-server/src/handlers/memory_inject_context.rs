@@ -3,6 +3,7 @@
 use crate::args::MemoryInjectContextArgs;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
+use mcb_domain::utils::git_context::GitContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
@@ -29,6 +30,13 @@ struct ContextBundle {
     observation_ids: Vec<String>,
     context: String,
     estimated_tokens: usize,
+    git_context: GitBootstrap,
+}
+
+#[derive(Serialize)]
+struct GitBootstrap {
+    branch: Option<String>,
+    commit: Option<String>,
 }
 
 impl MemoryInjectContextHandler {
@@ -102,12 +110,18 @@ impl MemoryInjectContextHandler {
                 let context = context_parts.join("\n\n");
                 let estimated_tokens = context.len() / 4;
 
+                let git_ctx = GitContext::capture();
+
                 let response = ContextBundle {
                     session_id: args.session_id,
                     observation_count: observation_ids.len(),
                     observation_ids,
                     context,
                     estimated_tokens,
+                    git_context: GitBootstrap {
+                        branch: git_ctx.branch,
+                        commit: git_ctx.commit,
+                    },
                 };
 
                 let json = serde_json::to_string_pretty(&response)
