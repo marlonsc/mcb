@@ -161,7 +161,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — FTS5 and Hybrid Search Infrastructure
+- [x] 06-01-PLAN.md — FTS5 and Hybrid Search Infrastructure
 - [ ] 06-02-PLAN.md — Hybrid Search Implementation
 - [ ] 06-03-PLAN.md — Progressive Disclosure Tools
 
