@@ -5,6 +5,8 @@
 **Files**: 40+
 **Lines of Code**: ~6,000
 
+**Project links**: `docs/context/technical-patterns.md` (DI/provider patterns), `docs/context/project-state.md` (phase progress), `docs/context/domain-concepts.md`, `.planning/STATE.md` (Phase 6), and `docs/developer/ROADMAP.md`; every infrastructure change should reference these artifacts so system wiring stays aligned with the Hybrid Search roadmap and validated requirements.
+
 ## Overview
 
 The infrastructure module provides shared technical services and cross-cutting concerns for the MCP Context Browser system. It implements dill-based dependency injection (ADR-029), Figment configuration, caching, health checks, and null adapters for testing.
@@ -139,11 +141,12 @@ pub use adapters::infrastructure::{
 
 Infrastructure tests are located in `crates/mcb-infrastructure/tests/`.
 
-## Cross-References
+## Project Alignment
 
--   **Domain Ports**: [domain.md](./domain.md) (interfaces implemented)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
--   **Module Structure**: [module-structure.md](./module-structure.md)
+- **Phase context**: Keep infrastructure work tied to `docs/context/project-state.md` and `.planning/STATE.md`, ensuring Phase 6 Hybrid Search (06-02 plan) uses these DI/configuration layers without drifting ahead of the release control branch (`release/v0.1.5`).
+- **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the layered wiring and `docs/context/technical-patterns.md` documents linkme/provider registration so every adapter matches compiled routing expectations.
+- **Roadmap signals**: Anchor infrastructure decisions in `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` (validated requirements, debt) so features like provider health checks and session memory inherit the correct dependencies.
+- **Operational metrics**: Sync with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for metrics when adjusting caches, health, or DI to maintain the declared `0 architecture violations` and `~1805 tests` commitments.
 
 ---
 

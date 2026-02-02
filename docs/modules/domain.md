@@ -8,6 +8,8 @@
 **Structs**: 10+
 **Enums**: 5
 
+**Project links**: `docs/context/domain-concepts.md`, `docs/context/project-state.md`, `docs/context/technical-patterns.md`, `.planning/STATE.md` (Phase 6), and `docs/developer/ROADMAP.md` so new domain work stays aligned with Phase 6 Hybrid Search and the v0.2.0 objectives.
+
 ## Overview
 
 The domain module defines the core business entities, value objects, and repository interfaces following Clean Architecture principles. All domain logic is technology-agnostic, with external concerns abstracted behind port traits.
