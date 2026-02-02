@@ -260,4 +260,16 @@ pub trait MemoryServiceInterface: Send + Sync {
 
     /// Generate embedding for content (for external use).
     async fn embed_content(&self, content: &str) -> Result<Embedding>;
+
+    /// Get observations in timeline order around an anchor (for progressive disclosure).
+    async fn get_timeline(
+        &self,
+        anchor_id: &str,
+        before: usize,
+        after: usize,
+        filter: Option<MemoryFilter>,
+    ) -> Result<Vec<Observation>>;
+
+    /// Get multiple observations by IDs (for progressive disclosure step 3).
+    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>>;
 }

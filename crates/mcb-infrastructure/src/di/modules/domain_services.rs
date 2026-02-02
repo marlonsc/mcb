@@ -71,7 +71,7 @@ impl DomainServicesFactory {
         let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(
             deps.cache.into(),
             Arc::clone(&deps.embedding_provider),
-            deps.vector_store_provider,
+            Arc::clone(&deps.vector_store_provider),
         ));
 
         let search_service: Arc<dyn SearchServiceInterface> =
@@ -98,6 +98,7 @@ impl DomainServicesFactory {
         let memory_service: Arc<dyn MemoryServiceInterface> = Arc::new(MemoryServiceImpl::new(
             deps.memory_repository,
             deps.embedding_provider,
+            deps.vector_store_provider,
         ));
 
         Ok(DomainServicesContainer {

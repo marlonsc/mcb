@@ -11,8 +11,8 @@ use std::sync::Arc;
 use crate::args::{
     AnalyzeComplexityArgs, ClearIndexArgs, CreateSessionSummaryArgs, GetIndexingStatusArgs,
     GetSessionSummaryArgs, GetValidationRulesArgs, IndexCodebaseArgs, ListValidatorsArgs,
-    SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs, ValidateArchitectureArgs,
-    ValidateFileArgs,
+    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemoryTimelineArgs, SearchCodeArgs,
+    SearchMemoriesArgs, StoreObservationArgs, ValidateArchitectureArgs, ValidateFileArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -136,7 +136,30 @@ impl ToolDefinitions {
         )
     }
 
-    /// Create a tool from schema
+    pub fn memory_timeline() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_timeline",
+            "[EXPERIMENTAL] Step 2 of progressive disclosure: Get context around an anchor observation",
+            schemars::schema_for!(MemoryTimelineArgs),
+        )
+    }
+
+    pub fn memory_get_observations() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_get_observations",
+            "[EXPERIMENTAL] Step 3 of progressive disclosure: Fetch full details for specific observation IDs",
+            schemars::schema_for!(MemoryGetObservationsArgs),
+        )
+    }
+
+    pub fn memory_inject_context() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_inject_context",
+            "[EXPERIMENTAL] Generate context bundle for session start injection",
+            schemars::schema_for!(MemoryInjectContextArgs),
+        )
+    }
+
     fn create_tool(
         name: &'static str,
         description: &'static str,
@@ -183,5 +206,8 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::search_memories()?,
         ToolDefinitions::get_session_summary()?,
         ToolDefinitions::create_session_summary()?,
+        ToolDefinitions::memory_timeline()?,
+        ToolDefinitions::memory_get_observations()?,
+        ToolDefinitions::memory_inject_context()?,
     ])
 }

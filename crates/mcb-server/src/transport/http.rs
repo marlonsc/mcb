@@ -352,6 +352,9 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         search_memories: state.server.search_memories_handler(),
         get_session_summary: state.server.get_session_summary_handler(),
         create_session_summary: state.server.create_session_summary_handler(),
+        memory_timeline: state.server.memory_timeline_handler(),
+        memory_get_observations: state.server.memory_get_observations_handler(),
+        memory_inject_context: state.server.memory_inject_context_handler(),
     };
 
     match route_tool_call(call_request, &handlers).await {

@@ -22,7 +22,8 @@ use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
     CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
     GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
-    ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler, SearchCodeHandler,
+    ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
+    MemoryInjectContextHandler, MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler,
     SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
     ValidateFileHandler,
 };
@@ -85,6 +86,13 @@ impl McpServer {
             search_memories: Arc::new(SearchMemoriesHandler::new(memory_service.clone())),
             get_session_summary: Arc::new(GetSessionSummaryHandler::new(memory_service.clone())),
             create_session_summary: Arc::new(CreateSessionSummaryHandler::new(
+                memory_service.clone(),
+            )),
+            memory_timeline: Arc::new(MemoryTimelineHandler::new(memory_service.clone())),
+            memory_get_observations: Arc::new(MemoryGetObservationsHandler::new(
+                memory_service.clone(),
+            )),
+            memory_inject_context: Arc::new(MemoryInjectContextHandler::new(
                 memory_service.clone(),
             )),
         };
@@ -209,6 +217,21 @@ impl McpServer {
     /// Access to create session summary handler (for HTTP transport)
     pub fn create_session_summary_handler(&self) -> Arc<CreateSessionSummaryHandler> {
         Arc::clone(&self.handlers.create_session_summary)
+    }
+
+    /// Access to memory timeline handler (for HTTP transport)
+    pub fn memory_timeline_handler(&self) -> Arc<MemoryTimelineHandler> {
+        Arc::clone(&self.handlers.memory_timeline)
+    }
+
+    /// Access to memory get observations handler (for HTTP transport)
+    pub fn memory_get_observations_handler(&self) -> Arc<MemoryGetObservationsHandler> {
+        Arc::clone(&self.handlers.memory_get_observations)
+    }
+
+    /// Access to memory inject context handler (for HTTP transport)
+    pub fn memory_inject_context_handler(&self) -> Arc<MemoryInjectContextHandler> {
+        Arc::clone(&self.handlers.memory_inject_context)
     }
 }
 

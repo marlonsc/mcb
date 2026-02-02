@@ -8,6 +8,7 @@ use mcb_domain::{
     },
     error::{Error, Result},
     ports::MemoryRepository,
+    ports::repositories::memory::FtsSearchResult,
 };
 
 use sqlx::{Row, SqlitePool};
@@ -264,6 +265,30 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(ids)
     }
 
+    async fn search_fts_ranked(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
+        let rows = sqlx::query(
+            "SELECT id, rank FROM observations_fts WHERE observations_fts MATCH ? ORDER BY rank LIMIT ?",
+        )
+        .bind(query)
+        .bind(limit as i64)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| Error::memory_with_source("Failed to search FTS ranked", e))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            let id: String = row
+                .try_get("id")
+                .map_err(|e| Error::memory_with_source("Failed to get id from FTS result", e))?;
+            let rank: f64 = row
+                .try_get("rank")
+                .map_err(|e| Error::memory_with_source("Failed to get rank from FTS result", e))?;
+            results.push(FtsSearchResult { id, rank });
+        }
+
+        Ok(results)
+    }
+
     async fn delete_observation(&self, id: &str) -> Result<()> {
         sqlx::query("DELETE FROM observations WHERE id = ?")
             .bind(id)
@@ -326,6 +351,114 @@ impl MemoryRepository for SqliteMemoryRepository {
         }
 
         Ok(results)
+    }
+
+    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let placeholders: Vec<&str> = ids.iter().map(|_| "?").collect();
+        let query = format!(
+            "SELECT * FROM observations WHERE id IN ({})",
+            placeholders.join(",")
+        );
+
+        let mut q = sqlx::query(&query);
+        for id in ids {
+            q = q.bind(id);
+        }
+
+        let rows = q
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| Error::memory_with_source("Failed to get observations by ids", e))?;
+
+        let mut observations = Vec::new();
+        for row in rows {
+            observations.push(Self::row_to_observation(&row)?);
+        }
+
+        Ok(observations)
+    }
+
+    async fn get_timeline(
+        &self,
+        anchor_id: &str,
+        before: usize,
+        after: usize,
+        filter: Option<MemoryFilter>,
+    ) -> Result<Vec<Observation>> {
+        let anchor = self.get_observation(anchor_id).await?;
+        let anchor_time = match anchor {
+            Some(obs) => obs.created_at,
+            None => return Ok(Vec::new()),
+        };
+
+        let mut base_query = String::from("SELECT * FROM observations WHERE 1=1");
+        let mut params: Vec<String> = Vec::new();
+
+        if let Some(ref f) = filter {
+            if let Some(session_id) = &f.session_id {
+                base_query.push_str(" AND json_extract(metadata, '$.session_id') = ?");
+                params.push(session_id.clone());
+            }
+            if let Some(repo_id) = &f.repo_id {
+                base_query.push_str(" AND json_extract(metadata, '$.repo_id') = ?");
+                params.push(repo_id.clone());
+            }
+            if let Some(obs_type) = &f.observation_type {
+                base_query.push_str(" AND observation_type = ?");
+                params.push(obs_type.as_str().to_string());
+            }
+        }
+
+        let before_query = format!(
+            "{} AND created_at < ? ORDER BY created_at DESC LIMIT ?",
+            base_query
+        );
+        let after_query = format!(
+            "{} AND created_at > ? ORDER BY created_at ASC LIMIT ?",
+            base_query
+        );
+
+        let mut before_q = sqlx::query(&before_query);
+        for param in &params {
+            before_q = before_q.bind(param);
+        }
+        before_q = before_q.bind(anchor_time).bind(before as i64);
+
+        let before_rows = before_q
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| Error::memory_with_source("Failed to get timeline before", e))?;
+
+        let mut after_q = sqlx::query(&after_query);
+        for param in &params {
+            after_q = after_q.bind(param);
+        }
+        after_q = after_q.bind(anchor_time).bind(after as i64);
+
+        let after_rows = after_q
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| Error::memory_with_source("Failed to get timeline after", e))?;
+
+        let mut timeline = Vec::new();
+
+        for row in before_rows.iter().rev() {
+            timeline.push(Self::row_to_observation(row)?);
+        }
+
+        if let Some(anchor_obs) = self.get_observation(anchor_id).await? {
+            timeline.push(anchor_obs);
+        }
+
+        for row in after_rows {
+            timeline.push(Self::row_to_observation(&row)?);
+        }
+
+        Ok(timeline)
     }
 
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()> {

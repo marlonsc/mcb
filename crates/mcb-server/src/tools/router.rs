@@ -12,14 +12,16 @@ use crate::args::{
     AnalyzeComplexityArgs, AnalyzeImpactArgs, ClearIndexArgs, CompareBranchesArgs,
     CreateSessionSummaryArgs, GetIndexingStatusArgs, GetSessionSummaryArgs, GetValidationRulesArgs,
     IndexCodebaseArgs, IndexGitRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
-    SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs,
-    ValidateArchitectureArgs, ValidateFileArgs,
+    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemoryTimelineArgs, SearchBranchArgs,
+    SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs, ValidateArchitectureArgs,
+    ValidateFileArgs,
 };
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
     CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
     GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
-    ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler, SearchCodeHandler,
+    ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
+    MemoryInjectContextHandler, MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler,
     SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
     ValidateFileHandler,
 };
@@ -63,6 +65,12 @@ pub struct ToolHandlers {
     pub get_session_summary: Arc<GetSessionSummaryHandler>,
     /// Handler for creating session summaries
     pub create_session_summary: Arc<CreateSessionSummaryHandler>,
+    /// Handler for memory timeline operations (MEM-04)
+    pub memory_timeline: Arc<MemoryTimelineHandler>,
+    /// Handler for getting observation details (MEM-04)
+    pub memory_get_observations: Arc<MemoryGetObservationsHandler>,
+    /// Handler for context injection (MEM-08)
+    pub memory_inject_context: Arc<MemoryInjectContextHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -148,6 +156,24 @@ pub async fn route_tool_call(
             let args = parse_args::<CreateSessionSummaryArgs>(&request)?;
             handlers
                 .create_session_summary
+                .handle(Parameters(args))
+                .await
+        }
+        "memory_timeline" => {
+            let args = parse_args::<MemoryTimelineArgs>(&request)?;
+            handlers.memory_timeline.handle(Parameters(args)).await
+        }
+        "memory_get_observations" => {
+            let args = parse_args::<MemoryGetObservationsArgs>(&request)?;
+            handlers
+                .memory_get_observations
+                .handle(Parameters(args))
+                .await
+        }
+        "memory_inject_context" => {
+            let args = parse_args::<MemoryInjectContextArgs>(&request)?;
+            handlers
+                .memory_inject_context
                 .handle(Parameters(args))
                 .await
         }

@@ -2,7 +2,11 @@
 
 ## Status
 
-**Proposed**(Planned for v0.2.0)
+**Proposed** (Planned for v0.2.0)
+
+> **Amendment 2026-02-02**: Tool naming convention updated to use `memory_` prefix
+> for all memory-related MCP tools to avoid namespace collisions with code search
+> tools and ensure stable API surface for v1.0.0.
 
 > Not yet implemented. Target crate structure for v0.2.0:
 >
@@ -52,6 +56,30 @@ Implement persistent session memory in mcb v0.2.0 by porting Claude-mem's core a
 7.**Progressive disclosure**with token cost visibility
 
 **Key design choice**: Leverage existing mcb infrastructure (provider pattern, vector stores, hybrid search) rather than duplicating Claude-mem's SQLite + Chroma approach.
+
+### Tool Naming Convention (Amendment 2026-02-02)
+
+All memory-related MCP tools use the `memory_` prefix to avoid namespace collisions:
+
+| ADR Original Name | Canonical Name (v1.0.0) | Rationale |
+|-------------------|-------------------------|-----------|
+| `search` | `memory_search` | Avoids collision with `search_code` |
+| `timeline` | `memory_timeline` | Explicit memory domain |
+| `get_observations` | `memory_get_observations` | Consistent namespace |
+| `store_observation` | `memory_store_observation` | Matches existing tool |
+| `inject_context` | `memory_inject_context` | Avoids future collisions |
+
+**Existing tools retained** (already namespaced):
+- `store_observation` → alias for `memory_store_observation`
+- `search_memories` → alias for `memory_search`
+- `get_session_summary` → unchanged (session domain)
+- `create_session_summary` → unchanged (session domain)
+
+**Compatibility policy**:
+1. Aliases kept for at least one major version cycle
+2. New tools MUST use `memory_` prefix
+3. Experimental tools marked in description until stable
+4. Response envelope includes `_api_version` field for client compatibility
 
 ### Architecture Overview
 
@@ -901,9 +929,9 @@ use crate::application::memory_search::MemorySearchService;
 use crate::application::session::SessionManager;
 use crate::application::context_injection::ContextInjectionService;
 
-/// Tool: search - Step 1 of 3-layer workflow
+/// Tool: memory_search - Step 1 of 3-layer workflow
 #[derive(Debug, Deserialize)]
-pub struct SearchInput {
+pub struct MemorySearchInput {
     pub query: Option<String>,
     pub project: Option<String>,
     #[serde(rename = "type")]
@@ -918,9 +946,9 @@ pub struct SearchInput {
     pub order_by: Option<String>,
 }
 
-/// Tool: timeline - Step 2 of 3-layer workflow
+/// Tool: memory_timeline - Step 2 of 3-layer workflow
 #[derive(Debug, Deserialize)]
-pub struct TimelineInput {
+pub struct MemoryTimelineInput {
     /// Anchor observation ID (or query to find it)
     pub anchor: Option<u64>,
     pub query: Option<String>,
@@ -929,16 +957,16 @@ pub struct TimelineInput {
     pub project: Option<String>,
 }
 
-/// Tool: get_observations - Step 3 of 3-layer workflow
+/// Tool: memory_get_observations - Step 3 of 3-layer workflow
 #[derive(Debug, Deserialize)]
-pub struct GetObservationsInput {
+pub struct MemoryGetObservationsInput {
     pub ids: Vec<u64>,
     pub project: Option<String>,
 }
 
-/// Tool: store_observation - PostToolUse hook integration
+/// Tool: memory_store_observation - PostToolUse hook integration
 #[derive(Debug, Deserialize)]
-pub struct StoreObservationInput {
+pub struct MemoryStoreObservationInput {
     pub session_id: String,
     pub tool_name: String,
     pub tool_input: serde_json::Value,
@@ -946,9 +974,9 @@ pub struct StoreObservationInput {
     pub project: String,
 }
 
-/// Tool: inject_context - SessionStart hook integration
+/// Tool: memory_inject_context - SessionStart hook integration
 #[derive(Debug, Deserialize)]
-pub struct InjectContextInput {
+pub struct MemoryInjectContextInput {
     pub project: String,
     pub session_id: Option<String>,
     pub observation_types: Option<Vec<String>>,
@@ -962,7 +990,7 @@ pub struct MemoryToolsHandler {
 }
 
 impl MemoryToolsHandler {
-    pub async fn handle_search(&self, input: SearchInput) -> Result<serde_json::Value> {
+    pub async fn handle_memory_search(&self, input: MemorySearchInput) -> Result<serde_json::Value> {
         let query = SearchQuery {
             query: input.query,
             project: input.project,
@@ -980,11 +1008,11 @@ impl MemoryToolsHandler {
         Ok(serde_json::json!({
             "count": results.len(),
             "results": results,
-            "hint": "Use timeline(anchor=ID) for context, get_observations(ids=[...]) for details"
+            "hint": "Use memory_timeline(anchor=ID) for context, memory_get_observations(ids=[...]) for details"
         }))
     }
 
-    pub async fn handle_timeline(&self, input: TimelineInput) -> Result<serde_json::Value> {
+    pub async fn handle_memory_timeline(&self, input: MemoryTimelineInput) -> Result<serde_json::Value> {
         let anchor_id = match (input.anchor, input.query) {
             (Some(id), _) => id,
             (None, Some(q)) => {
@@ -1011,12 +1039,12 @@ impl MemoryToolsHandler {
         Ok(serde_json::to_value(context)?)
     }
 
-    pub async fn handle_get_observations(&self, input: GetObservationsInput) -> Result<serde_json::Value> {
+    pub async fn handle_memory_get_observations(&self, input: MemoryGetObservationsInput) -> Result<serde_json::Value> {
         let observations = self.search_service.get_observations(&input.ids).await?;
         Ok(serde_json::to_value(observations)?)
     }
 
-    pub async fn handle_inject_context(&self, input: InjectContextInput) -> Result<serde_json::Value> {
+    pub async fn handle_memory_inject_context(&self, input: MemoryInjectContextInput) -> Result<serde_json::Value> {
         let config = ContextInjectionConfig {
             observation_limit: input.observation_limit.unwrap_or(20),
             ..Default::default()
@@ -1040,19 +1068,17 @@ impl MemoryToolsHandler {
 fn register_memory_tools(&self) -> Vec<ToolInfo> {
     vec![
         ToolInfo {
-            name: "__IMPORTANT".to_string(),
+            name: "__MEMORY_WORKFLOW".to_string(),
             description: "3-LAYER WORKFLOW (ALWAYS FOLLOW):\n\
-
-                1. search(query) -> Get index with IDs (~50-100 tokens/result)\n\
-                2. timeline(anchor=ID) -> Get context around interesting results\n\
-                3. get_observations([IDs]) -> Fetch full details ONLY for filtered IDs\n\
-
+                1. memory_search(query) -> Get index with IDs (~50-100 tokens/result)\n\
+                2. memory_timeline(anchor=ID) -> Get context around interesting results\n\
+                3. memory_get_observations([IDs]) -> Fetch full details ONLY for filtered IDs\n\
                 NEVER fetch full details without filtering first. 10x token savings.".to_string(),
             input_schema: json!({"type": "object", "properties": {}}),
         },
         ToolInfo {
-            name: "search".to_string(),
-            description: "Step 1: Search memory. Returns index with IDs. \
+            name: "memory_search".to_string(),
+            description: "[EXPERIMENTAL] Step 1: Search memory. Returns index with IDs. \
                 Params: query, limit, project, type, obs_type, dateStart, dateEnd, offset, orderBy".to_string(),
             input_schema: json!({
                 "type": "object",
@@ -1066,8 +1092,8 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "timeline".to_string(),
-            description: "Step 2: Get context around results. \
+            name: "memory_timeline".to_string(),
+            description: "[EXPERIMENTAL] Step 2: Get context around results. \
                 Params: anchor (observation ID) OR query (finds anchor automatically), \
                 depth_before, depth_after, project".to_string(),
             input_schema: json!({
@@ -1082,8 +1108,8 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "get_observations".to_string(),
-            description: "Step 3: Fetch full details for filtered IDs. \
+            name: "memory_get_observations".to_string(),
+            description: "[EXPERIMENTAL] Step 3: Fetch full details for filtered IDs. \
                 Params: ids (array of observation IDs, required), orderBy, limit, project".to_string(),
             input_schema: json!({
                 "type": "object",
@@ -1099,8 +1125,8 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "store_observation".to_string(),
-            description: "Store tool observation (for PostToolUse hook integration)".to_string(),
+            name: "memory_store_observation".to_string(),
+            description: "[EXPERIMENTAL] Store tool observation (for PostToolUse hook integration)".to_string(),
             input_schema: json!({
                 "type": "object",
                 "required": ["session_id", "tool_name", "project"],
@@ -1114,8 +1140,8 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "inject_context".to_string(),
-            description: "Generate context for SessionStart hook injection".to_string(),
+            name: "memory_inject_context".to_string(),
+            description: "[EXPERIMENTAL] Generate context for SessionStart hook injection".to_string(),
             input_schema: json!({
                 "type": "object",
                 "required": ["project"],
@@ -1332,6 +1358,52 @@ let git_metadata = if let Some(git_provider) = &self.git_provider {
 | Observation limit | 20 | Per-request |
 | Date range | 30 days | Per-request |
 | SDK compression | Disabled | Opt-in |
+
+## Hybrid Search Architecture (Amendment 2026-02-02)
+
+Memory search uses hybrid retrieval (BM25 + vector) with Reciprocal Rank Fusion (RRF):
+
+### Layer Separation (Clean Architecture)
+
+| Layer | Responsibility | Implementation |
+|-------|----------------|----------------|
+| Domain | `MemoryRepository` port with `search(query_embedding, filter, limit)` | No engine-specific logic |
+| Application | `MemorySearchService` orchestrates FTS + vector retrieval, performs RRF fusion | Pure business logic |
+| Infrastructure | `SqliteMemoryRepository` implements FTS5 queries + calls VectorStoreProvider | Database-specific |
+
+### Fusion Algorithm (RRF)
+
+```rust
+/// Reciprocal Rank Fusion: combines rankings from multiple retrieval methods
+fn reciprocal_rank_fusion(
+    fts_results: &[(String, f32)],    // (id, bm25_score)
+    vec_results: &[(String, f32)],    // (id, cosine_similarity)
+    k: f32,                           // smoothing constant (default: 60.0)
+) -> Vec<(String, f32)> {
+    let mut scores: HashMap<String, f32> = HashMap::new();
+    
+    // FTS contribution
+    for (rank, (id, _)) in fts_results.iter().enumerate() {
+        *scores.entry(id.clone()).or_default() += 1.0 / (k + rank as f32 + 1.0);
+    }
+    
+    // Vector contribution
+    for (rank, (id, _)) in vec_results.iter().enumerate() {
+        *scores.entry(id.clone()).or_default() += 1.0 / (k + rank as f32 + 1.0);
+    }
+    
+    let mut results: Vec<_> = scores.into_iter().collect();
+    results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+    results
+}
+```
+
+### Search Flow
+
+1. **FTS retrieval**: `observations_fts MATCH ?` → ranked by BM25
+2. **Vector retrieval**: `VectorStoreProvider::search_similar("memories", query_embedding, limit)`
+3. **Fusion**: RRF merge with k=60
+4. **Return**: `ObservationIndex` with fused scores
 
 ## Related ADRs
 
