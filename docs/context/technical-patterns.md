@@ -1,7 +1,7 @@
 # Technical Patterns Context
 
 **Last updated:** 2026-02-02
-**Source:** `AGENTS.md` (architecture guidance) and `README.md` (product overview)
+**Source:** `README.md` (project overview) and `docs/architecture/ARCHITECTURE.md` (system architecture)
 
 ## Overview
 The MCP Context Browser keeps its codebase aligned with Clean Architecture layers and distributed-provider discovery so the runtime stays lean while each crate can evolve independently.
@@ -9,7 +9,7 @@ The MCP Context Browser keeps its codebase aligned with Clean Architecture layer
 ## Key Patterns
 
 ### Clean Architecture crate layering
-**Used in:** `AGENTS.md` "Architecture (9 Crates)"
+**Used in:** `README.md` "Architecture" summary and `docs/architecture/ARCHITECTURE.md`
 ```
 crates/
 ├── mcb/             # Facade re-exporting the public API
@@ -25,7 +25,7 @@ crates/
 **When to use:** Keep new functionality within this layered structure and respect the dependency direction: `mcb-server → mcb-infrastructure → mcb-application → mcb-domain` with `mcb-providers` being consumed but never depending upstream.
 
 ### Linkme provider registration
-**Used in:** `AGENTS.md` "Provider Registration (linkme)"
+**Used in:** `docs/architecture/ARCHITECTURE.md` provider registration section
 ```rust
 #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
 static NULL_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
@@ -37,7 +37,7 @@ static NULL_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 **When to use:** Any new embedding/vector-store provider must follow this registration so the distributed slice auto-discovers it at compile time and no manual wiring is required.
 
 ### Async traits and error factory methods
-**Used in:** `AGENTS.md` "Traits & DI" and "Error Handling"
+**Used in:** `docs/architecture/ARCHITECTURE.md` and `mcb-domain` module docs covering errors and ports
 ```rust
 #[async_trait]
 pub trait EmbeddingProvider: Send + Sync {

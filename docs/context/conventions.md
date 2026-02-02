@@ -1,7 +1,7 @@
 # Conventions Context
 
 **Last updated:** 2026-02-02
-**Source:** `AGENTS.md` (style rules) and `README.md` (developer workflow)
+**Source:** `README.md` (developer workflow) and `docs/developer/CONTRIBUTING.md` (contributor guide)
 
 ## Overview
 The team uses strict tooling, formatting, and safety conventions so the large workspace stays consistent across contributions and CI validations.

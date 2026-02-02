@@ -1,7 +1,7 @@
 # Domain Concepts Context
 
 **Last updated:** 2026-02-02
-**Source:** `README.md` (project narrative) and `.planning/STATE.md` (phase tracking)
+**Source:** `README.md` (project narrative), `.planning/STATE.md` (phase tracking), and `docs/developer/ROADMAP.md`
 
 ## Overview
 The product delivers semantic code search by combining vector embeddings, git context, and MCP tooling inside a Clean Architecture stack so teams can ask natural-language queries and get code recommendations enriched with project memory.
