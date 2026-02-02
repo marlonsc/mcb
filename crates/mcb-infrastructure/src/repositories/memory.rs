@@ -243,9 +243,34 @@ impl MemoryRepository for SqliteMemoryRepository {
         }
     }
 
-    async fn search_fts(&self, _query: &str, _limit: usize) -> Result<Vec<String>> {
-        // TODO: Implement in Task 3
-        Ok(Vec::new())
+    async fn search_fts(&self, query: &str, limit: usize) -> Result<Vec<String>> {
+        let rows = sqlx::query(
+            "SELECT id FROM observations_fts WHERE observations_fts MATCH ? ORDER BY rank LIMIT ?",
+        )
+        .bind(query)
+        .bind(limit as i64)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| Error::memory_with_source("Failed to search FTS", e))?;
+
+        let mut ids = Vec::new();
+        for row in rows {
+            let id: String = row
+                .try_get("id")
+                .map_err(|e| Error::memory_with_source("Failed to get id from FTS result", e))?;
+            ids.push(id);
+        }
+
+        Ok(ids)
+    }
+
+    async fn delete_observation(&self, id: &str) -> Result<()> {
+        sqlx::query("DELETE FROM observations WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| Error::memory_with_source("Failed to delete observation", e))?;
+        Ok(())
     }
 
     async fn search(
