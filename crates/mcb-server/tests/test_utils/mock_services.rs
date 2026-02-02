@@ -542,9 +542,134 @@ impl MemoryRepository for MockMemoryRepository {
         Ok(())
     }
 
-    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
-        let sums = self.summaries.lock().expect("Lock poisoned");
-        Ok(sums.iter().find(|s| s.session_id == session_id).cloned())
+    async fn get_timeline(
+        &self,
+        anchor_id: &str,
+        depth_before: usize,
+        depth_after: usize,
+        filter: Option<MemoryFilter>,
+    ) -> Result<Vec<Observation>> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+
+        let obs = self.observations.lock().expect("Lock poisoned");
+        let anchor_idx = obs.iter().position(|o| o.id == anchor_id);
+
+        match anchor_idx {
+            None => Ok(vec![]),
+            Some(idx) => {
+                let start = if idx > depth_before {
+                    idx - depth_before
+                } else {
+                    0
+                };
+                let end = std::cmp::min(idx + depth_after + 1, obs.len());
+
+                let timeline: Vec<Observation> = obs[start..end]
+                    .iter()
+                    .filter(|o| {
+                        if let Some(ref f) = filter {
+                            if let Some(ref session) = f.session_id {
+                                if o.metadata.session_id.as_ref() != Some(session) {
+                                    return false;
+                                }
+                            }
+                        }
+                        true
+                    })
+                    .cloned()
+                    .collect();
+
+                Ok(timeline)
+            }
+        }
+    }
+
+    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+        let observations = self.observations.lock().expect("Lock poisoned");
+        Ok(observations.iter().find(|o| o.id == id).cloned())
+    }
+
+    async fn embed_content(&self, _content: &str) -> Result<Embedding> {
+        Ok(Embedding {
+            vector: vec![0.0; 384],
+            model: "mock-model".to_string(),
+            dimensions: 384,
+        })
+    }
+
+    async fn search_fts(&self, _query: &str, limit: usize) -> Result<Vec<String>> {
+        let obs = self.observations.lock().expect("Lock poisoned");
+        Ok(obs.iter().take(limit).map(|o| o.id.clone()).collect())
+    }
+
+    async fn search_fts_ranked(&self, _query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
+        let obs = self.observations.lock().expect("Lock poisoned");
+        Ok(obs
+            .iter()
+            .take(limit)
+            .map(|o| FtsSearchResult {
+                id: o.id.clone(),
+                rank: 1.0,
+            })
+            .collect())
+    }
+
+    async fn delete_observation(&self, id: &str) -> Result<()> {
+        let mut obs = self.observations.lock().expect("Lock poisoned");
+        obs.retain(|o| o.id != id);
+        Ok(())
+    }
+
+    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+        let obs = self.observations.lock().expect("Lock poisoned");
+        Ok(obs
+            .iter()
+            .filter(|o| ids.contains(&o.id))
+            .cloned()
+            .collect())
+    }
+
+    async fn get_timeline(
+        &self,
+        anchor_id: &str,
+        depth_before: usize,
+        depth_after: usize,
+        filter: Option<MemoryFilter>,
+    ) -> Result<Vec<Observation>> {
+        let obs = self.observations.lock().expect("Lock poisoned");
+        let anchor_idx = obs.iter().position(|o| o.id == anchor_id);
+
+        match anchor_idx {
+            None => Ok(vec![]),
+            Some(idx) => {
+                let start = if idx > depth_before {
+                    idx - depth_before
+                } else {
+                    0
+                };
+                let end = std::cmp::min(idx + depth_after + 1, obs.len());
+
+                let timeline: Vec<Observation> = obs[start..end]
+                    .iter()
+                    .filter(|o| {
+                        if let Some(ref f) = filter {
+                            if let Some(ref session) = f.session_id {
+                                if o.metadata.session_id.as_ref() != Some(session) {
+                                    return false;
+                                }
+                            }
+                        }
+                        true
+                    })
+                    .cloned()
+                    .collect();
+
+                Ok(timeline)
+            }
+        }
     }
 }
 
@@ -680,17 +805,65 @@ impl MemoryServiceInterface for MockMemoryService {
         Ok(id)
     }
 
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+    async fn get_timeline(
+        &self,
+        anchor_id: &str,
+        depth_before: usize,
+        depth_after: usize,
+        filter: Option<MemoryFilter>,
+    ) -> Result<Vec<Observation>> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+
         let observations = self.observations.lock().expect("Lock poisoned");
-        Ok(observations.iter().find(|o| o.id == id).cloned())
+        let anchor_idx = observations.iter().position(|o| o.id == anchor_id);
+
+        match anchor_idx {
+            None => Ok(vec![]),
+            Some(idx) => {
+                let start = if idx > depth_before {
+                    idx - depth_before
+                } else {
+                    0
+                };
+                let end = std::cmp::min(idx + depth_after + 1, observations.len());
+
+                let timeline: Vec<Observation> = observations[start..end]
+                    .iter()
+                    .filter(|obs| {
+                        if let Some(ref f) = filter {
+                            if let Some(ref session) = f.session_id {
+                                if obs.metadata.session_id.as_ref() != Some(session) {
+                                    return false;
+                                }
+                            }
+                        }
+                        true
+                    })
+                    .cloned()
+                    .collect();
+
+                Ok(timeline)
+            }
+        }
     }
 
-    async fn embed_content(&self, _content: &str) -> Result<mcb_domain::Embedding> {
-        Ok(mcb_domain::Embedding {
-            vector: vec![0.0; 384],
-            model: "mock-model".to_string(),
-            dimensions: 384,
-        })
+    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+
+        let observations = self.observations.lock().expect("Lock poisoned");
+        let results: Vec<Observation> = observations
+            .iter()
+            .filter(|obs| ids.contains(&obs.id))
+            .cloned()
+            .collect();
+
+        Ok(results)
     }
 }
 

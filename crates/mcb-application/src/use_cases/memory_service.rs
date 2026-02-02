@@ -48,25 +48,25 @@ impl MemoryServiceImpl {
     }
 
     fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
-        if let Some(ref session_id) = filter.session_id {
-            if obs.metadata.session_id.as_ref() != Some(session_id) {
-                return false;
-            }
+        if let Some(ref session_id) = filter.session_id
+            && obs.metadata.session_id.as_ref() != Some(session_id)
+        {
+            return false;
         }
-        if let Some(ref repo_id) = filter.repo_id {
-            if obs.metadata.repo_id.as_ref() != Some(repo_id) {
-                return false;
-            }
+        if let Some(ref repo_id) = filter.repo_id
+            && obs.metadata.repo_id.as_ref() != Some(repo_id)
+        {
+            return false;
         }
-        if let Some(ref obs_type) = filter.observation_type {
-            if &obs.observation_type != obs_type {
-                return false;
-            }
+        if let Some(ref obs_type) = filter.observation_type
+            && &obs.observation_type != obs_type
+        {
+            return false;
         }
-        if let Some((start, end)) = filter.time_range {
-            if obs.created_at < start || obs.created_at > end {
-                return false;
-            }
+        if let Some((start, end)) = filter.time_range
+            && (obs.created_at < start || obs.created_at > end)
+        {
+            return false;
         }
         true
     }
