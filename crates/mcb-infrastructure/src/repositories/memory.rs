@@ -85,6 +85,47 @@ impl SqliteMemoryRepository {
         .await
         .map_err(|e| Error::memory_with_source("Failed to create session_summaries table", e))?;
 
+        sqlx::query(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS observations_fts USING fts5(content, id UNINDEXED)",
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e| Error::memory_with_source("Failed to create observations_fts table", e))?;
+
+        sqlx::query(
+            r"
+            CREATE TRIGGER IF NOT EXISTS obs_ai AFTER INSERT ON observations BEGIN
+              INSERT INTO observations_fts(id, content) VALUES (new.id, new.content);
+            END;
+            ",
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e| Error::memory_with_source("Failed to create obs_ai trigger", e))?;
+
+        sqlx::query(
+            r"
+            CREATE TRIGGER IF NOT EXISTS obs_ad AFTER DELETE ON observations BEGIN
+              DELETE FROM observations_fts WHERE id = old.id;
+            END;
+            ",
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e| Error::memory_with_source("Failed to create obs_ad trigger", e))?;
+
+        sqlx::query(
+            r"
+            CREATE TRIGGER IF NOT EXISTS obs_au AFTER UPDATE ON observations BEGIN
+              DELETE FROM observations_fts WHERE id = old.id;
+              INSERT INTO observations_fts(id, content) VALUES (new.id, new.content);
+            END;
+            ",
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e| Error::memory_with_source("Failed to create obs_au trigger", e))?;
+
         sqlx::query("CREATE INDEX IF NOT EXISTS idx_obs_hash ON observations(content_hash)")
             .execute(&self.pool)
             .await
