@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use crate::test_utils::mock_services::{
     MockContextService, MockIndexingService, MockSearchService, MockValidationService,
+    MockVcsProvider,
 };
 
 #[test]
@@ -13,12 +14,14 @@ fn test_builder_all_services_provided() {
     let context_service = Arc::new(MockContextService::new());
     let search_service = Arc::new(MockSearchService::new());
     let validation_service = Arc::new(MockValidationService::new());
+    let vcs_provider = Arc::new(MockVcsProvider::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
         .with_context_service(context_service)
         .with_search_service(search_service)
         .with_validation_service(validation_service)
+        .with_vcs_provider(vcs_provider)
         .try_build();
 
     assert!(result.is_ok());
@@ -29,11 +32,13 @@ fn test_builder_missing_indexing_service() {
     let context_service = Arc::new(MockContextService::new());
     let search_service = Arc::new(MockSearchService::new());
     let validation_service = Arc::new(MockValidationService::new());
+    let vcs_provider = Arc::new(MockVcsProvider::new());
 
     let result = McpServerBuilder::new()
         .with_context_service(context_service)
         .with_search_service(search_service)
         .with_validation_service(validation_service)
+        .with_vcs_provider(vcs_provider)
         .try_build();
 
     assert!(result.is_err());
@@ -50,11 +55,13 @@ fn test_builder_missing_context_service() {
     let indexing_service = Arc::new(MockIndexingService::new());
     let search_service = Arc::new(MockSearchService::new());
     let validation_service = Arc::new(MockValidationService::new());
+    let vcs_provider = Arc::new(MockVcsProvider::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
         .with_search_service(search_service)
         .with_validation_service(validation_service)
+        .with_vcs_provider(vcs_provider)
         .try_build();
 
     assert!(result.is_err());
@@ -71,11 +78,13 @@ fn test_builder_missing_search_service() {
     let indexing_service = Arc::new(MockIndexingService::new());
     let context_service = Arc::new(MockContextService::new());
     let validation_service = Arc::new(MockValidationService::new());
+    let vcs_provider = Arc::new(MockVcsProvider::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
         .with_context_service(context_service)
         .with_validation_service(validation_service)
+        .with_vcs_provider(vcs_provider)
         .try_build();
 
     assert!(result.is_err());
@@ -92,11 +101,13 @@ fn test_builder_missing_validation_service() {
     let indexing_service = Arc::new(MockIndexingService::new());
     let context_service = Arc::new(MockContextService::new());
     let search_service = Arc::new(MockSearchService::new());
+    let vcs_provider = Arc::new(MockVcsProvider::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
         .with_context_service(context_service)
         .with_search_service(search_service)
+        .with_vcs_provider(vcs_provider)
         .try_build();
 
     assert!(result.is_err());
@@ -121,15 +132,40 @@ fn test_try_build_success() {
     let context_service = Arc::new(MockContextService::new());
     let search_service = Arc::new(MockSearchService::new());
     let validation_service = Arc::new(MockValidationService::new());
+    let vcs_provider = Arc::new(MockVcsProvider::new());
 
     let server = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
         .with_context_service(context_service)
         .with_search_service(search_service)
         .with_validation_service(validation_service)
+        .with_vcs_provider(vcs_provider)
         .try_build();
 
     assert!(server.is_ok());
+}
+
+#[test]
+fn test_builder_missing_vcs_provider() {
+    let indexing_service = Arc::new(MockIndexingService::new());
+    let context_service = Arc::new(MockContextService::new());
+    let search_service = Arc::new(MockSearchService::new());
+    let validation_service = Arc::new(MockValidationService::new());
+
+    let result = McpServerBuilder::new()
+        .with_indexing_service(indexing_service)
+        .with_context_service(context_service)
+        .with_search_service(search_service)
+        .with_validation_service(validation_service)
+        .try_build();
+
+    assert!(result.is_err());
+    match result {
+        Err(BuilderError::MissingDependency(dep)) => {
+            assert_eq!(dep, "vcs provider");
+        }
+        _ => panic!("Expected MissingDependency error"),
+    }
 }
 
 #[test]

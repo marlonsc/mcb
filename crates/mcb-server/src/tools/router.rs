@@ -10,12 +10,13 @@ use std::sync::Arc;
 
 use crate::args::{
     AnalyzeComplexityArgs, ClearIndexArgs, GetIndexingStatusArgs, GetValidationRulesArgs,
-    IndexCodebaseArgs, ListValidatorsArgs, SearchCodeArgs, ValidateArchitectureArgs,
-    ValidateFileArgs,
+    IndexCodebaseArgs, IndexGitRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
+    SearchBranchArgs, SearchCodeArgs, ValidateArchitectureArgs, ValidateFileArgs,
 };
 use crate::handlers::{
     AnalyzeComplexityHandler, ClearIndexHandler, GetIndexingStatusHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, ListValidatorsHandler, SearchCodeHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
+    ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler, SearchCodeHandler,
     ValidateArchitectureHandler, ValidateFileHandler,
 };
 
@@ -40,6 +41,12 @@ pub struct ToolHandlers {
     pub get_validation_rules: Arc<GetValidationRulesHandler>,
     /// Handler for complexity analysis
     pub analyze_complexity: Arc<AnalyzeComplexityHandler>,
+    /// Handler for git repository indexing
+    pub index_git_repository: Arc<IndexGitRepositoryHandler>,
+    /// Handler for branch-specific search
+    pub search_branch: Arc<SearchBranchHandler>,
+    /// Handler for listing indexed repositories
+    pub list_repositories: Arc<ListRepositoriesHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -88,6 +95,18 @@ pub async fn route_tool_call(
         "analyze_complexity" => {
             let args = parse_args::<AnalyzeComplexityArgs>(&request)?;
             handlers.analyze_complexity.handle(Parameters(args)).await
+        }
+        "index_git_repository" => {
+            let args = parse_args::<IndexGitRepositoryArgs>(&request)?;
+            handlers.index_git_repository.handle(Parameters(args)).await
+        }
+        "search_branch" => {
+            let args = parse_args::<SearchBranchArgs>(&request)?;
+            handlers.search_branch.handle(Parameters(args)).await
+        }
+        "list_repositories" => {
+            let args = parse_args::<ListRepositoriesArgs>(&request)?;
+            handlers.list_repositories.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

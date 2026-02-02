@@ -16,10 +16,12 @@ use mcb_application::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
     ValidationServiceInterface,
 };
+use mcb_domain::ports::providers::VcsProvider;
 
 use crate::handlers::{
     AnalyzeComplexityHandler, ClearIndexHandler, GetIndexingStatusHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, ListValidatorsHandler, SearchCodeHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
+    ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler, SearchCodeHandler,
     ValidateArchitectureHandler, ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
@@ -43,6 +45,8 @@ struct McpServices {
     indexing: Arc<dyn IndexingServiceInterface>,
     context: Arc<dyn ContextServiceInterface>,
     search: Arc<dyn SearchServiceInterface>,
+    #[allow(dead_code)]
+    vcs: Arc<dyn VcsProvider>,
 }
 
 impl McpServer {
@@ -52,6 +56,7 @@ impl McpServer {
         context_service: Arc<dyn ContextServiceInterface>,
         search_service: Arc<dyn SearchServiceInterface>,
         validation_service: Arc<dyn ValidationServiceInterface>,
+        vcs_provider: Arc<dyn VcsProvider>,
     ) -> Self {
         let handlers = ToolHandlers {
             index_codebase: Arc::new(IndexCodebaseHandler::new(indexing_service.clone())),
@@ -67,6 +72,9 @@ impl McpServer {
                 validation_service.clone(),
             )),
             analyze_complexity: Arc::new(AnalyzeComplexityHandler::new(validation_service)),
+            index_git_repository: Arc::new(IndexGitRepositoryHandler::new(vcs_provider.clone())),
+            search_branch: Arc::new(SearchBranchHandler::new(vcs_provider.clone())),
+            list_repositories: Arc::new(ListRepositoriesHandler::new()),
         };
 
         Self {
@@ -74,6 +82,7 @@ impl McpServer {
                 indexing: indexing_service,
                 context: context_service,
                 search: search_service,
+                vcs: vcs_provider,
             },
             handlers,
         }
@@ -137,6 +146,21 @@ impl McpServer {
     /// Access to analyze complexity handler (for HTTP transport)
     pub fn analyze_complexity_handler(&self) -> Arc<AnalyzeComplexityHandler> {
         Arc::clone(&self.handlers.analyze_complexity)
+    }
+
+    /// Access to index git repository handler (for HTTP transport)
+    pub fn index_git_repository_handler(&self) -> Arc<IndexGitRepositoryHandler> {
+        Arc::clone(&self.handlers.index_git_repository)
+    }
+
+    /// Access to search branch handler (for HTTP transport)
+    pub fn search_branch_handler(&self) -> Arc<SearchBranchHandler> {
+        Arc::clone(&self.handlers.search_branch)
+    }
+
+    /// Access to list repositories handler (for HTTP transport)
+    pub fn list_repositories_handler(&self) -> Arc<ListRepositoriesHandler> {
+        Arc::clone(&self.handlers.list_repositories)
     }
 }
 

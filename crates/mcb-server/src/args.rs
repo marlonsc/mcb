@@ -299,3 +299,55 @@ pub struct AnalyzeComplexityArgs {
     #[serde(default)]
     pub include_functions: bool,
 }
+
+/// Arguments for the `index_git_repository` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for indexing a git repository")]
+pub struct IndexGitRepositoryArgs {
+    /// Path to git repository
+    #[validate(length(min = 1, message = "Path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Absolute path to the git repository")]
+    pub path: String,
+
+    /// Branches to index (default: default branch only)
+    #[serde(default)]
+    #[schemars(description = "List of branches to index (empty = default branch only)")]
+    pub branches: Vec<String>,
+
+    /// Also index commit messages
+    #[serde(default)]
+    #[schemars(description = "Whether to index commit messages for search")]
+    pub include_commits: bool,
+}
+
+/// Arguments for the `search_branch` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for searching code within a specific branch")]
+pub struct SearchBranchArgs {
+    /// Repository ID from index_git_repository
+    #[validate(length(min = 1, message = "repository_id cannot be empty"))]
+    #[schemars(description = "Repository ID returned by index_git_repository")]
+    pub repository_id: String,
+
+    /// Branch name to search
+    #[validate(length(min = 1, message = "branch cannot be empty"))]
+    #[schemars(description = "Name of the branch to search within")]
+    pub branch: String,
+
+    /// Search query
+    #[validate(length(min = 1, message = "query cannot be empty"))]
+    #[schemars(description = "The search query")]
+    pub query: String,
+
+    /// Maximum number of results
+    #[serde(default = "default_limit")]
+    #[validate(range(min = 1, max = 100))]
+    #[schemars(description = "Maximum number of results to return (default: 10)")]
+    pub limit: usize,
+}
+
+/// Arguments for the `list_repositories` tool
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "No parameters required - returns all indexed repositories")]
+pub struct ListRepositoriesArgs {}

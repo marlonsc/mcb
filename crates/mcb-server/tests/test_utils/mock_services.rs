@@ -7,9 +7,11 @@ use mcb_application::domain_services::search::{
     SearchServiceInterface,
 };
 use mcb_domain::entities::CodeChunk;
+use mcb_domain::entities::git::{GitBranch, GitCommit, GitRepository, RepositoryId};
 use mcb_domain::error::Result;
+use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::value_objects::{Embedding, SearchResult};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -452,5 +454,91 @@ impl ValidationServiceInterface for MockValidationService {
             sloc: 0,
             functions: Vec::new(),
         })
+    }
+}
+
+/// Mock VCS provider for testing
+pub struct MockVcsProvider {
+    should_fail: AtomicBool,
+}
+
+impl MockVcsProvider {
+    pub fn new() -> Self {
+        Self {
+            should_fail: AtomicBool::new(false),
+        }
+    }
+
+    pub fn with_failure(self) -> Self {
+        self.should_fail.store(true, Ordering::SeqCst);
+        self
+    }
+}
+
+impl Default for MockVcsProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl VcsProvider for MockVcsProvider {
+    async fn open_repository(&self, path: &Path) -> Result<GitRepository> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            return Err(mcb_domain::error::Error::git("Mock failure"));
+        }
+        Ok(GitRepository {
+            id: RepositoryId::new("mock-repo-id".to_string()),
+            path: path.to_path_buf(),
+            default_branch: "main".to_string(),
+            branches: vec!["main".to_string()],
+            remote_url: None,
+        })
+    }
+
+    fn repository_id(&self, repo: &GitRepository) -> RepositoryId {
+        repo.id.clone()
+    }
+
+    async fn list_branches(&self, _repo: &GitRepository) -> Result<Vec<GitBranch>> {
+        Ok(vec![GitBranch {
+            name: "main".to_string(),
+            head_commit: "abc123".to_string(),
+            is_default: true,
+            upstream: None,
+        }])
+    }
+
+    async fn commit_history(
+        &self,
+        _repo: &GitRepository,
+        _branch: &str,
+        _limit: Option<usize>,
+    ) -> Result<Vec<GitCommit>> {
+        Ok(vec![GitCommit {
+            hash: "abc123".to_string(),
+            message: "Initial commit".to_string(),
+            author: "Test".to_string(),
+            author_email: "test@test.com".to_string(),
+            timestamp: 0,
+            parent_hashes: vec![],
+        }])
+    }
+
+    async fn list_files(&self, _repo: &GitRepository, _branch: &str) -> Result<Vec<PathBuf>> {
+        Ok(vec![PathBuf::from("README.md")])
+    }
+
+    async fn read_file(
+        &self,
+        _repo: &GitRepository,
+        _branch: &str,
+        _path: &Path,
+    ) -> Result<String> {
+        Ok("# Mock File".to_string())
+    }
+
+    fn vcs_name(&self) -> &str {
+        "mock"
     }
 }

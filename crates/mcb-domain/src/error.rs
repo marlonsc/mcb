@@ -157,6 +157,30 @@ pub enum Error {
         #[source]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
+
+    /// Git operation error
+    #[error("Git error: {message}")]
+    Git {
+        /// Description of the git error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+
+    /// Git repository not found
+    #[error("Repository not found: {path}")]
+    RepositoryNotFound {
+        /// Path to the repository that was not found
+        path: String,
+    },
+
+    /// Git branch not found
+    #[error("Branch not found: {name}")]
+    BranchNotFound {
+        /// Name of the branch that was not found
+        name: String,
+    },
 }
 
 // Basic error creation methods
@@ -354,6 +378,38 @@ impl Error {
             message: message.into(),
             source: Some(Box::new(source)),
         }
+    }
+}
+
+// Git error creation methods
+impl Error {
+    /// Create a git error
+    pub fn git<S: Into<String>>(message: S) -> Self {
+        Self::Git {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// Create a git error with source
+    pub fn git_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Git {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a repository not found error
+    pub fn repository_not_found<S: Into<String>>(path: S) -> Self {
+        Self::RepositoryNotFound { path: path.into() }
+    }
+
+    /// Create a branch not found error
+    pub fn branch_not_found<S: Into<String>>(name: S) -> Self {
+        Self::BranchNotFound { name: name.into() }
     }
 }
 

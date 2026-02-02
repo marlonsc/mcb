@@ -8,6 +8,7 @@ use mcb_application::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
     ValidationServiceInterface,
 };
+use mcb_domain::ports::providers::VcsProvider;
 use std::sync::Arc;
 
 /// Builder for MCP Server with dependency injection
@@ -20,6 +21,7 @@ pub struct McpServerBuilder {
     context_service: Option<Arc<dyn ContextServiceInterface>>,
     search_service: Option<Arc<dyn SearchServiceInterface>>,
     validation_service: Option<Arc<dyn ValidationServiceInterface>>,
+    vcs_provider: Option<Arc<dyn VcsProvider>>,
 }
 
 impl McpServerBuilder {
@@ -64,6 +66,15 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the VCS provider
+    ///
+    /// # Arguments
+    /// * `provider` - Implementation of the VCS provider port
+    pub fn with_vcs_provider(mut self, provider: Arc<dyn VcsProvider>) -> Self {
+        self.vcs_provider = Some(provider);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -94,12 +105,16 @@ impl McpServerBuilder {
         let validation_service = self
             .validation_service
             .ok_or(BuilderError::MissingDependency("validation service"))?;
+        let vcs_provider = self
+            .vcs_provider
+            .ok_or(BuilderError::MissingDependency("vcs provider"))?;
 
         Ok(McpServer::new(
             indexing_service,
             context_service,
             search_service,
             validation_service,
+            vcs_provider,
         ))
     }
 }

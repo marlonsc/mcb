@@ -38,7 +38,7 @@
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};
 pub use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider,
+    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
     VectorStoreProvider,
 };
 

@@ -39,6 +39,8 @@ pub mod metrics_analysis;
 pub mod project_detection;
 /// Validation provider port
 pub mod validation;
+/// Version control system provider port
+pub mod vcs;
 /// Vector store provider port
 pub mod vector_store;
 
@@ -59,4 +61,5 @@ pub use project_detection::{ProjectDetector, ProjectDetectorConfig, ProjectDetec
 pub use validation::{
     NullValidationProvider, ValidationOptions, ValidationProvider, ValidatorInfo,
 };
+pub use vcs::VcsProvider;
 pub use vector_store::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};

@@ -20,9 +20,10 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{
-    EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+    EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
 use mcb_domain::ports::services::ValidationServiceInterface;
+use mcb_providers::git::Git2Provider;
 use std::sync::Arc;
 
 use super::super::bootstrap::AppContext;
@@ -42,6 +43,7 @@ pub struct DomainServicesContainer {
     pub search_service: Arc<dyn SearchServiceInterface>,
     pub indexing_service: Arc<dyn IndexingServiceInterface>,
     pub validation_service: Arc<dyn ValidationServiceInterface>,
+    pub vcs_provider: Arc<dyn VcsProvider>,
 }
 
 /// Dependencies for creating domain services
@@ -103,11 +105,14 @@ impl DomainServicesFactory {
         let validation_service: Arc<dyn ValidationServiceInterface> =
             Arc::new(NullValidationService::new());
 
+        let vcs_provider: Arc<dyn VcsProvider> = Arc::new(Git2Provider::new());
+
         Ok(DomainServicesContainer {
             context_service,
             search_service,
             indexing_service,
             validation_service,
+            vcs_provider,
         })
     }
 
