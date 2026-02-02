@@ -524,6 +524,36 @@ pub struct MemoryGetObservationsArgs {
     pub ids: Vec<String>,
 }
 
+/// Arguments for the `memory_search` tool (token-efficient index - Step 1 of 3)
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(
+    description = "Token-efficient memory search returning index only (IDs, types, scores, previews). Use memory_get_observations with returned IDs for full details."
+)]
+pub struct MemorySearchArgs {
+    #[validate(length(min = 1, max = 1000, message = "Query must be 1-1000 chars"))]
+    #[schemars(description = "Search query for semantic matching")]
+    pub query: String,
+
+    #[serde(default = "default_limit")]
+    #[validate(range(min = 1, max = 100))]
+    #[schemars(description = "Maximum number of results (default: 10)")]
+    pub limit: usize,
+
+    #[schemars(description = "Filter by tags")]
+    pub tags: Option<Vec<String>>,
+
+    #[schemars(
+        description = "Filter by observation type: code, decision, context, error, summary"
+    )]
+    pub observation_type: Option<String>,
+
+    #[schemars(description = "Filter by session ID")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Filter by repository ID")]
+    pub repo_id: Option<String>,
+}
+
 /// Arguments for the `memory_inject_context` tool (SessionStart hook integration)
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 #[schemars(description = "[EXPERIMENTAL] Generate context bundle for session start injection")]

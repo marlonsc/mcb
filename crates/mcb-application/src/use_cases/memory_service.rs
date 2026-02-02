@@ -5,8 +5,8 @@
 use crate::ports::EmbeddingProvider;
 use crate::ports::services::MemoryServiceInterface;
 use mcb_domain::entities::memory::{
-    MemoryFilter, MemorySearchResult, Observation, ObservationMetadata, ObservationType,
-    SessionSummary,
+    MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
+    ObservationType, SessionSummary,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::VectorStoreProvider;
@@ -251,6 +251,42 @@ impl MemoryServiceInterface for MemoryServiceImpl {
 
     async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
         self.repository.get_observations_by_ids(ids).await
+    }
+
+    async fn memory_search(
+        &self,
+        query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<MemorySearchIndex>> {
+        const PREVIEW_LENGTH: usize = 120;
+
+        let results = self.search_memories(query, filter, limit).await?;
+
+        let index_results: Vec<MemorySearchIndex> = results
+            .into_iter()
+            .map(|r| {
+                let content_preview = if r.observation.content.len() > PREVIEW_LENGTH {
+                    format!("{}...", &r.observation.content[..PREVIEW_LENGTH])
+                } else {
+                    r.observation.content.clone()
+                };
+
+                MemorySearchIndex {
+                    id: r.observation.id,
+                    observation_type: r.observation.observation_type.as_str().to_string(),
+                    relevance_score: r.similarity_score,
+                    tags: r.observation.tags,
+                    content_preview,
+                    session_id: r.observation.metadata.session_id,
+                    repo_id: r.observation.metadata.repo_id,
+                    file_path: r.observation.metadata.file_path,
+                    created_at: r.observation.created_at,
+                }
+            })
+            .collect();
+
+        Ok(index_results)
     }
 }
 

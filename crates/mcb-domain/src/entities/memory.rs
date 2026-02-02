@@ -77,6 +77,33 @@ pub struct MemorySearchResult {
     pub similarity_score: f32,
 }
 
+/// Token-efficient memory search index result
+///
+/// This is a lightweight version of MemorySearchResult designed for
+/// the 3-layer workflow (search -> timeline -> details). It returns
+/// only essential metadata to minimize token usage.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemorySearchIndex {
+    /// Observation ID (use with memory_get_observations for full details)
+    pub id: String,
+    /// Observation type (code, decision, context, error, summary)
+    pub observation_type: String,
+    /// Relevance score from hybrid search (0.0 to 1.0)
+    pub relevance_score: f32,
+    /// Tags for categorization
+    pub tags: Vec<String>,
+    /// Brief content preview (first N chars, truncated with ellipsis)
+    pub content_preview: String,
+    /// Associated session ID
+    pub session_id: Option<String>,
+    /// Associated repository ID
+    pub repo_id: Option<String>,
+    /// File path if applicable
+    pub file_path: Option<String>,
+    /// Creation timestamp
+    pub created_at: i64,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MemoryFilter {
     pub tags: Option<Vec<String>>,

@@ -11,8 +11,9 @@ use std::sync::Arc;
 use crate::args::{
     AnalyzeComplexityArgs, ClearIndexArgs, CreateSessionSummaryArgs, GetIndexingStatusArgs,
     GetSessionSummaryArgs, GetValidationRulesArgs, IndexCodebaseArgs, ListValidatorsArgs,
-    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemoryTimelineArgs, SearchCodeArgs,
-    SearchMemoriesArgs, StoreObservationArgs, ValidateArchitectureArgs, ValidateFileArgs,
+    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemorySearchArgs, MemoryTimelineArgs,
+    SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs, ValidateArchitectureArgs,
+    ValidateFileArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -160,6 +161,14 @@ impl ToolDefinitions {
         )
     }
 
+    pub fn memory_search() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_search",
+            "[EXPERIMENTAL] Step 1 of progressive disclosure: Token-efficient memory search (index only). Use with memory_get_observations for full details.",
+            schemars::schema_for!(MemorySearchArgs),
+        )
+    }
+
     fn create_tool(
         name: &'static str,
         description: &'static str,
@@ -209,5 +218,6 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::memory_timeline()?,
         ToolDefinitions::memory_get_observations()?,
         ToolDefinitions::memory_inject_context()?,
+        ToolDefinitions::memory_search()?,
     ])
 }

@@ -23,8 +23,8 @@ use crate::handlers::{
     CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
     GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
     ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
-    MemoryInjectContextHandler, MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler,
-    SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
+    MemoryInjectContextHandler, MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler,
+    SearchCodeHandler, SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
     ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
@@ -95,6 +95,7 @@ impl McpServer {
             memory_inject_context: Arc::new(MemoryInjectContextHandler::new(
                 memory_service.clone(),
             )),
+            memory_search: Arc::new(MemorySearchHandler::new(memory_service.clone())),
         };
 
         Self {
@@ -232,6 +233,11 @@ impl McpServer {
     /// Access to memory inject context handler (for HTTP transport)
     pub fn memory_inject_context_handler(&self) -> Arc<MemoryInjectContextHandler> {
         Arc::clone(&self.handlers.memory_inject_context)
+    }
+
+    /// Access to memory search handler (for HTTP transport)
+    pub fn memory_search_handler(&self) -> Arc<MemorySearchHandler> {
+        Arc::clone(&self.handlers.memory_search)
     }
 }
 

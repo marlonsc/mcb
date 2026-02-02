@@ -355,6 +355,7 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         memory_timeline: state.server.memory_timeline_handler(),
         memory_get_observations: state.server.memory_get_observations_handler(),
         memory_inject_context: state.server.memory_inject_context_handler(),
+        memory_search: state.server.memory_search_handler(),
     };
 
     match route_tool_call(call_request, &handlers).await {

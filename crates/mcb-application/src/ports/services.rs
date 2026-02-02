@@ -272,4 +272,16 @@ pub trait MemoryServiceInterface: Send + Sync {
 
     /// Get multiple observations by IDs (for progressive disclosure step 3).
     async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>>;
+
+    /// Token-efficient memory search - returns index only (no full content).
+    ///
+    /// This is Step 1 of the 3-layer workflow (search -> timeline -> details).
+    /// Returns lightweight index entries with IDs, types, tags, scores, and brief previews.
+    /// Use memory_get_observations with the returned IDs for full details.
+    async fn memory_search(
+        &self,
+        query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<mcb_domain::entities::memory::MemorySearchIndex>>;
 }

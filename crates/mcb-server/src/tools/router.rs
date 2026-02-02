@@ -12,17 +12,17 @@ use crate::args::{
     AnalyzeComplexityArgs, AnalyzeImpactArgs, ClearIndexArgs, CompareBranchesArgs,
     CreateSessionSummaryArgs, GetIndexingStatusArgs, GetSessionSummaryArgs, GetValidationRulesArgs,
     IndexCodebaseArgs, IndexGitRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
-    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemoryTimelineArgs, SearchBranchArgs,
-    SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs, ValidateArchitectureArgs,
-    ValidateFileArgs,
+    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemorySearchArgs, MemoryTimelineArgs,
+    SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs,
+    ValidateArchitectureArgs, ValidateFileArgs,
 };
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
     CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
     GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
     ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
-    MemoryInjectContextHandler, MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler,
-    SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
+    MemoryInjectContextHandler, MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler,
+    SearchCodeHandler, SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
     ValidateFileHandler,
 };
 
@@ -71,6 +71,8 @@ pub struct ToolHandlers {
     pub memory_get_observations: Arc<MemoryGetObservationsHandler>,
     /// Handler for context injection (MEM-08)
     pub memory_inject_context: Arc<MemoryInjectContextHandler>,
+    /// Handler for token-efficient memory search (Step 1 - MEM-04a)
+    pub memory_search: Arc<MemorySearchHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -176,6 +178,10 @@ pub async fn route_tool_call(
                 .memory_inject_context
                 .handle(Parameters(args))
                 .await
+        }
+        "memory_search" => {
+            let args = parse_args::<MemorySearchArgs>(&request)?;
+            handlers.memory_search.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),
