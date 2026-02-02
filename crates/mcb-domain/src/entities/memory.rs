@@ -45,6 +45,7 @@ pub struct ObservationMetadata {
     pub repo_id: Option<String>,
     pub file_path: Option<String>,
     pub branch: Option<String>,
+    pub commit: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,4 +84,6 @@ pub struct MemoryFilter {
     pub session_id: Option<String>,
     pub repo_id: Option<String>,
     pub time_range: Option<(i64, i64)>,
+    pub branch: Option<String>,
+    pub commit: Option<String>,
 }

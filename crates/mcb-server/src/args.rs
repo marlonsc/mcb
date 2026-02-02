@@ -414,6 +414,9 @@ pub struct StoreObservationArgs {
 
     #[schemars(description = "Git branch related to this observation")]
     pub branch: Option<String>,
+
+    #[schemars(description = "Git commit related to this observation")]
+    pub commit: Option<String>,
 }
 
 /// Arguments for the `search_memories` tool

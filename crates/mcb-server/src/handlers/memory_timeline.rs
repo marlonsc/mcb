@@ -81,6 +81,8 @@ impl MemoryTimelineHandler {
                     observation_type,
                     tags: None,
                     time_range: None,
+                    branch: None,
+                    commit: None,
                 })
             } else {
                 None

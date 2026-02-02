@@ -317,6 +317,16 @@ impl MemoryRepository for SqliteMemoryRepository {
             params.push(repo_id.clone());
         }
 
+        if let Some(branch) = &filter.branch {
+            query.push_str(" AND json_extract(metadata, '$.branch') = ?");
+            params.push(branch.clone());
+        }
+
+        if let Some(commit) = &filter.commit {
+            query.push_str(" AND json_extract(metadata, '$.commit') = ?");
+            params.push(commit.clone());
+        }
+
         if let Some(obs_type) = &filter.observation_type {
             query.push_str(" AND observation_type = ?");
             params.push(obs_type.as_str().to_string());
@@ -406,6 +416,14 @@ impl MemoryRepository for SqliteMemoryRepository {
             if let Some(repo_id) = &f.repo_id {
                 base_query.push_str(" AND json_extract(metadata, '$.repo_id') = ?");
                 params.push(repo_id.clone());
+            }
+            if let Some(branch) = &f.branch {
+                base_query.push_str(" AND json_extract(metadata, '$.branch') = ?");
+                params.push(branch.clone());
+            }
+            if let Some(commit) = &f.commit {
+                base_query.push_str(" AND json_extract(metadata, '$.commit') = ?");
+                params.push(commit.clone());
             }
             if let Some(obs_type) = &f.observation_type {
                 base_query.push_str(" AND observation_type = ?");

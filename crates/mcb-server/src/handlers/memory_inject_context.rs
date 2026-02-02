@@ -58,6 +58,8 @@ impl MemoryInjectContextHandler {
             observation_type: None,
             tags: None,
             time_range: None,
+            branch: None,
+            commit: None,
         };
 
         match self

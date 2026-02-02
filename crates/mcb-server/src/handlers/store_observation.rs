@@ -3,6 +3,7 @@
 use crate::args::StoreObservationArgs;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::ObservationType;
+use mcb_domain::utils::git_context::GitContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
@@ -37,6 +38,11 @@ impl StoreObservationHandler {
             .parse()
             .map_err(|e: String| McpError::invalid_params(e, None))?;
 
+        let git_context = GitContext::capture();
+
+        let branch = args.branch.or(git_context.branch);
+        let commit = args.commit.or(git_context.commit);
+
         match self
             .memory_service
             .store_observation(
@@ -45,9 +51,10 @@ impl StoreObservationHandler {
                 args.tags,
                 mcb_domain::entities::memory::ObservationMetadata {
                     session_id: args.session_id,
-                    repo_id: args.repo_id,
+                    repo_id: args.repo_id.or(git_context.repo_id),
                     file_path: args.file_path,
-                    branch: args.branch,
+                    branch,
+                    commit,
                 },
             )
             .await

@@ -62,6 +62,8 @@ impl SearchMemoriesHandler {
                 session_id: args.session_id,
                 repo_id: args.repo_id,
                 time_range: None,
+                branch: None,
+                commit: None,
             })
         } else {
             None
