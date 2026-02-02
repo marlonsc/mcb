@@ -37,25 +37,25 @@ impl StoreObservationHandler {
             .parse()
             .map_err(|e: String| McpError::invalid_params(e, None))?;
 
-        let content_before = args.content.clone();
-
         match self
             .memory_service
             .store_observation(
-                args.content,
+                args.content.clone(),
                 observation_type,
                 args.tags,
-                args.session_id,
-                args.repo_id,
-                args.file_path,
-                args.branch,
+                mcb_domain::entities::memory::ObservationMetadata {
+                    session_id: args.session_id,
+                    repo_id: args.repo_id,
+                    file_path: args.file_path,
+                    branch: args.branch,
+                },
             )
             .await
         {
             Ok(id) => {
                 let result = StoreResult {
                     observation_id: id,
-                    deduplicated: content_before.len() > 0,
+                    deduplicated: args.content.len() > 0,
                 };
 
                 let json = serde_json::to_string_pretty(&result)

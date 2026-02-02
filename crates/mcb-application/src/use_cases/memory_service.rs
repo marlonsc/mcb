@@ -47,10 +47,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         content: String,
         observation_type: ObservationType,
         tags: Vec<String>,
-        session_id: Option<String>,
-        repo_id: Option<String>,
-        file_path: Option<String>,
-        branch: Option<String>,
+        metadata: ObservationMetadata,
     ) -> Result<String> {
         let content_hash = compute_content_hash(&content);
 
@@ -68,12 +65,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             content_hash,
             tags,
             observation_type,
-            metadata: ObservationMetadata {
-                session_id,
-                repo_id,
-                file_path,
-                branch,
-            },
+            metadata,
             created_at: Self::current_timestamp(),
             embedding_id: embedding_id.clone(),
         };

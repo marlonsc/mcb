@@ -227,10 +227,7 @@ pub trait MemoryServiceInterface: Send + Sync {
         content: String,
         observation_type: ObservationType,
         tags: Vec<String>,
-        session_id: Option<String>,
-        repo_id: Option<String>,
-        file_path: Option<String>,
-        branch: Option<String>,
+        metadata: mcb_domain::entities::memory::ObservationMetadata,
     ) -> Result<String>;
 
     /// Search memories using semantic similarity.

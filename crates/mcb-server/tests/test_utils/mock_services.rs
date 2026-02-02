@@ -585,10 +585,7 @@ impl MemoryServiceInterface for MockMemoryService {
         content: String,
         observation_type: ObservationType,
         tags: Vec<String>,
-        session_id: Option<String>,
-        repo_id: Option<String>,
-        file_path: Option<String>,
-        branch: Option<String>,
+        metadata: mcb_domain::entities::memory::ObservationMetadata,
     ) -> Result<String> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
@@ -601,12 +598,7 @@ impl MemoryServiceInterface for MockMemoryService {
             content_hash: "mock-hash".to_string(),
             tags,
             observation_type,
-            metadata: mcb_domain::entities::memory::ObservationMetadata {
-                session_id,
-                repo_id,
-                file_path,
-                branch,
-            },
+            metadata,
             created_at: chrono::Utc::now().timestamp(),
             embedding_id: None,
         };
