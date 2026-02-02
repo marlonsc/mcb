@@ -15,13 +15,13 @@ The team uses strict tooling, formatting, and safety conventions so the large wo
 **Why it matters:** `make sync` encapsulates git hooks/formatting, keeping contributions aligned with the release branch.
 
 ### Formatting and imports
-**Used in:** `AGENTS.md` "Formatting" and "Imports"
+**Used in:** `docs/developer/CONTRIBUTING.md` (style guide) and `docs/architecture/ARCHITECTURE.md`
 - Rustfmt config: edition 2024, max width 100, tab size 4.
 - Import order: standard library → external crates → workspace crates → local modules.
 **When to apply:** Run `make fmt` before committing and keep imports ordered to satisfy linters.
 
 ### Safety and error handling
-**Used in:** `AGENTS.md` "Forbidden"
+**Used in:** `docs/ADR/019-error-handling-strategy.md`
 - Never use `unwrap()`/`expect()` outside tests.
 - Avoid `as any`/`@ts-ignore` equivalents or hardcoded fallback values.
 - Prefer helper constructors (`Error::io(...)`) and `?` propagation.
