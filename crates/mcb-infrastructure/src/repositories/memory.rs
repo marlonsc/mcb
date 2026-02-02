@@ -202,6 +202,11 @@ impl MemoryRepository for SqliteMemoryRepository {
         }
     }
 
+    async fn search_fts(&self, _query: &str, _limit: usize) -> Result<Vec<String>> {
+        // TODO: Implement in Task 3
+        Ok(Vec::new())
+    }
+
     async fn search(
         &self,
         _query_embedding: &[f32],

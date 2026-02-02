@@ -9,6 +9,7 @@ pub trait MemoryRepository: Send + Sync {
     async fn store_observation(&self, observation: &Observation) -> Result<()>;
     async fn get_observation(&self, id: &str) -> Result<Option<Observation>>;
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>>;
+    async fn search_fts(&self, query: &str, limit: usize) -> Result<Vec<String>>;
     async fn search(
         &self,
         query_embedding: &[f32],
