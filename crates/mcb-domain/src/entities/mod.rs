@@ -28,6 +28,6 @@ pub mod submodule;
 // Re-export commonly used entities
 pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
-pub use git::{GitBranch, GitCommit, GitRepository, RepositoryId};
+pub use git::{DiffStatus, FileDiff, GitBranch, GitCommit, GitRepository, RefDiff, RepositoryId};
 pub use project::{DetectedProject, ProjectType};
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};

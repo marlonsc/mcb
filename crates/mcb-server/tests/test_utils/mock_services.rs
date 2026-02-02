@@ -7,7 +7,9 @@ use mcb_application::domain_services::search::{
     SearchServiceInterface,
 };
 use mcb_domain::entities::CodeChunk;
-use mcb_domain::entities::git::{GitBranch, GitCommit, GitRepository, RepositoryId};
+use mcb_domain::entities::git::{
+    DiffStatus, FileDiff, GitBranch, GitCommit, GitRepository, RefDiff, RepositoryId,
+};
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::value_objects::{Embedding, SearchResult};
@@ -540,5 +542,25 @@ impl VcsProvider for MockVcsProvider {
 
     fn vcs_name(&self) -> &str {
         "mock"
+    }
+
+    async fn diff_refs(
+        &self,
+        _repo: &GitRepository,
+        base_ref: &str,
+        head_ref: &str,
+    ) -> Result<RefDiff> {
+        Ok(RefDiff {
+            base_ref: base_ref.to_string(),
+            head_ref: head_ref.to_string(),
+            files: vec![FileDiff {
+                path: PathBuf::from("README.md"),
+                status: DiffStatus::Modified,
+                additions: 5,
+                deletions: 2,
+            }],
+            total_additions: 5,
+            total_deletions: 2,
+        })
     }
 }

@@ -19,10 +19,10 @@ use mcb_application::{
 use mcb_domain::ports::providers::VcsProvider;
 
 use crate::handlers::{
-    AnalyzeComplexityHandler, ClearIndexHandler, GetIndexingStatusHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
-    ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler, SearchCodeHandler,
-    ValidateArchitectureHandler, ValidateFileHandler,
+    AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
+    GetIndexingStatusHandler, GetValidationRulesHandler, IndexCodebaseHandler,
+    IndexGitRepositoryHandler, ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler,
+    SearchCodeHandler, ValidateArchitectureHandler, ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
@@ -75,6 +75,8 @@ impl McpServer {
             index_git_repository: Arc::new(IndexGitRepositoryHandler::new(vcs_provider.clone())),
             search_branch: Arc::new(SearchBranchHandler::new(vcs_provider.clone())),
             list_repositories: Arc::new(ListRepositoriesHandler::new()),
+            compare_branches: Arc::new(CompareBranchesHandler::new(vcs_provider.clone())),
+            analyze_impact: Arc::new(AnalyzeImpactHandler::new(vcs_provider.clone())),
         };
 
         Self {
@@ -161,6 +163,16 @@ impl McpServer {
     /// Access to list repositories handler (for HTTP transport)
     pub fn list_repositories_handler(&self) -> Arc<ListRepositoriesHandler> {
         Arc::clone(&self.handlers.list_repositories)
+    }
+
+    /// Access to compare branches handler (for HTTP transport)
+    pub fn compare_branches_handler(&self) -> Arc<CompareBranchesHandler> {
+        Arc::clone(&self.handlers.compare_branches)
+    }
+
+    /// Access to analyze impact handler (for HTTP transport)
+    pub fn analyze_impact_handler(&self) -> Arc<AnalyzeImpactHandler> {
+        Arc::clone(&self.handlers.analyze_impact)
     }
 }
 

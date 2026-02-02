@@ -9,15 +9,16 @@ use rmcp::model::{CallToolRequestParams, CallToolResult};
 use std::sync::Arc;
 
 use crate::args::{
-    AnalyzeComplexityArgs, ClearIndexArgs, GetIndexingStatusArgs, GetValidationRulesArgs,
-    IndexCodebaseArgs, IndexGitRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
-    SearchBranchArgs, SearchCodeArgs, ValidateArchitectureArgs, ValidateFileArgs,
+    AnalyzeComplexityArgs, AnalyzeImpactArgs, ClearIndexArgs, CompareBranchesArgs,
+    GetIndexingStatusArgs, GetValidationRulesArgs, IndexCodebaseArgs, IndexGitRepositoryArgs,
+    ListRepositoriesArgs, ListValidatorsArgs, SearchBranchArgs, SearchCodeArgs,
+    ValidateArchitectureArgs, ValidateFileArgs,
 };
 use crate::handlers::{
-    AnalyzeComplexityHandler, ClearIndexHandler, GetIndexingStatusHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
-    ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler, SearchCodeHandler,
-    ValidateArchitectureHandler, ValidateFileHandler,
+    AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
+    GetIndexingStatusHandler, GetValidationRulesHandler, IndexCodebaseHandler,
+    IndexGitRepositoryHandler, ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler,
+    SearchCodeHandler, ValidateArchitectureHandler, ValidateFileHandler,
 };
 
 /// Handler references for tool routing
@@ -47,6 +48,10 @@ pub struct ToolHandlers {
     pub search_branch: Arc<SearchBranchHandler>,
     /// Handler for listing indexed repositories
     pub list_repositories: Arc<ListRepositoriesHandler>,
+    /// Handler for comparing branches
+    pub compare_branches: Arc<CompareBranchesHandler>,
+    /// Handler for impact analysis
+    pub analyze_impact: Arc<AnalyzeImpactHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -107,6 +112,14 @@ pub async fn route_tool_call(
         "list_repositories" => {
             let args = parse_args::<ListRepositoriesArgs>(&request)?;
             handlers.list_repositories.handle(Parameters(args)).await
+        }
+        "compare_branches" => {
+            let args = parse_args::<CompareBranchesArgs>(&request)?;
+            handlers.compare_branches.handle(Parameters(args)).await
+        }
+        "analyze_impact" => {
+            let args = parse_args::<AnalyzeImpactArgs>(&request)?;
+            handlers.analyze_impact.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

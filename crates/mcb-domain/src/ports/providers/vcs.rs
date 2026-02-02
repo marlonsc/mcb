@@ -1,6 +1,6 @@
 //! Version Control System provider port for repository operations.
 
-use crate::entities::git::{GitBranch, GitCommit, GitRepository, RepositoryId};
+use crate::entities::git::{GitBranch, GitCommit, GitRepository, RefDiff, RepositoryId};
 use crate::error::Result;
 use async_trait::async_trait;
 use std::path::{Path, PathBuf};
@@ -37,4 +37,12 @@ pub trait VcsProvider: Send + Sync {
 
     /// VCS type name (e.g., "git", "mercurial", "svn")
     fn vcs_name(&self) -> &str;
+
+    /// Compare two refs and return the diff
+    async fn diff_refs(
+        &self,
+        repo: &GitRepository,
+        base_ref: &str,
+        head_ref: &str,
+    ) -> Result<RefDiff>;
 }

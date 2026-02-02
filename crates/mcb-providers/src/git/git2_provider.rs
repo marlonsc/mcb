@@ -3,7 +3,9 @@
 use async_trait::async_trait;
 use git2::{BranchType, Repository, Sort};
 use mcb_domain::{
-    entities::git::{GitBranch, GitCommit, GitRepository, RepositoryId},
+    entities::git::{
+        DiffStatus, FileDiff, GitBranch, GitCommit, GitRepository, RefDiff, RepositoryId,
+    },
     error::{Error, Result},
     ports::providers::VcsProvider,
 };
@@ -295,6 +297,83 @@ impl VcsProvider for Git2Provider {
 
     fn vcs_name(&self) -> &str {
         "git"
+    }
+
+    async fn diff_refs(
+        &self,
+        repo: &GitRepository,
+        base_ref: &str,
+        head_ref: &str,
+    ) -> Result<RefDiff> {
+        let git_repo = Self::open_repo(&repo.path)?;
+
+        let base_obj = git_repo
+            .revparse_single(base_ref)
+            .map_err(|e| Error::git_with_source(format!("Failed to resolve ref: {base_ref}"), e))?;
+        let head_obj = git_repo
+            .revparse_single(head_ref)
+            .map_err(|e| Error::git_with_source(format!("Failed to resolve ref: {head_ref}"), e))?;
+
+        let base_tree = base_obj
+            .peel_to_tree()
+            .map_err(|e| Error::git_with_source("Failed to get base tree", e))?;
+        let head_tree = head_obj
+            .peel_to_tree()
+            .map_err(|e| Error::git_with_source("Failed to get head tree", e))?;
+
+        let diff = git_repo
+            .diff_tree_to_tree(Some(&base_tree), Some(&head_tree), None)
+            .map_err(|e| Error::git_with_source("Failed to create diff", e))?;
+
+        let mut files = Vec::new();
+        let mut total_additions = 0;
+        let mut total_deletions = 0;
+
+        diff.foreach(
+            &mut |delta, _| {
+                let status = match delta.status() {
+                    git2::Delta::Added => DiffStatus::Added,
+                    git2::Delta::Deleted => DiffStatus::Deleted,
+                    git2::Delta::Modified => DiffStatus::Modified,
+                    git2::Delta::Renamed => DiffStatus::Renamed,
+                    _ => DiffStatus::Modified,
+                };
+
+                let path = delta
+                    .new_file()
+                    .path()
+                    .or_else(|| delta.old_file().path())
+                    .map(PathBuf::from)
+                    .unwrap_or_default();
+
+                files.push(FileDiff {
+                    path,
+                    status,
+                    additions: 0,
+                    deletions: 0,
+                });
+                true
+            },
+            None,
+            None,
+            Some(&mut |_delta, _hunk, line| {
+                match line.origin() {
+                    '+' => total_additions += 1,
+                    '-' => total_deletions += 1,
+                    _ => {}
+                }
+                true
+            }),
+        )
+        .map_err(|e| Error::git_with_source("Failed to iterate diff", e))?;
+
+        Ok(RefDiff {
+            base_ref: base_ref.to_string(),
+            head_ref: head_ref.to_string(),
+            files,
+            total_additions,
+            total_deletions,
+        })
     }
 }
 

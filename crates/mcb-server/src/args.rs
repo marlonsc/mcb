@@ -351,3 +351,39 @@ pub struct SearchBranchArgs {
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema, Validate)]
 #[schemars(description = "No parameters required - returns all indexed repositories")]
 pub struct ListRepositoriesArgs {}
+
+/// Arguments for the `compare_branches` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Compare two branches and return the diff")]
+pub struct CompareBranchesArgs {
+    #[validate(length(min = 1, message = "path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Path to the git repository")]
+    pub path: String,
+
+    #[validate(length(min = 1, message = "base_branch cannot be empty"))]
+    #[schemars(description = "Base branch for comparison")]
+    pub base_branch: String,
+
+    #[validate(length(min = 1, message = "head_branch cannot be empty"))]
+    #[schemars(description = "Head branch for comparison")]
+    pub head_branch: String,
+}
+
+/// Arguments for the `analyze_impact` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Analyze the impact of changes between two refs")]
+pub struct AnalyzeImpactArgs {
+    #[validate(length(min = 1, message = "path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Path to the git repository")]
+    pub path: String,
+
+    #[validate(length(min = 1, message = "base_ref cannot be empty"))]
+    #[schemars(description = "Base ref (branch, tag, or commit)")]
+    pub base_ref: String,
+
+    #[validate(length(min = 1, message = "head_ref cannot be empty"))]
+    #[schemars(description = "Head ref (branch, tag, or commit)")]
+    pub head_ref: String,
+}

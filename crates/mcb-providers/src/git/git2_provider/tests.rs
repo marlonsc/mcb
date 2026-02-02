@@ -156,3 +156,44 @@ async fn test_read_file_not_found() {
 
     assert!(result.is_err());
 }
+
+#[tokio::test]
+async fn test_diff_refs() {
+    let dir = create_test_repo();
+
+    std::fs::write(dir.path().join("new_file.txt"), "New content\n").expect("Failed to write");
+
+    std::process::Command::new("git")
+        .args(["add", "."])
+        .current_dir(dir.path())
+        .output()
+        .expect("Failed to add");
+
+    std::process::Command::new("git")
+        .args(["commit", "-m", "Second commit"])
+        .current_dir(dir.path())
+        .output()
+        .expect("Failed to commit");
+
+    let provider = Git2Provider::new();
+    let repo = provider.open_repository(dir.path()).await.unwrap();
+
+    let commits = provider
+        .commit_history(&repo, &repo.default_branch, Some(2))
+        .await
+        .unwrap();
+
+    assert!(commits.len() >= 2);
+
+    let diff = provider
+        .diff_refs(&repo, &commits[1].hash, &commits[0].hash)
+        .await
+        .unwrap();
+
+    assert!(!diff.files.is_empty());
+    assert!(
+        diff.files
+            .iter()
+            .any(|f| f.path.to_string_lossy().contains("new_file"))
+    );
+}

@@ -346,6 +346,8 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         index_git_repository: state.server.index_git_repository_handler(),
         search_branch: state.server.search_branch_handler(),
         list_repositories: state.server.list_repositories_handler(),
+        compare_branches: state.server.compare_branches_handler(),
+        analyze_impact: state.server.analyze_impact_handler(),
     };
 
     match route_tool_call(call_request, &handlers).await {

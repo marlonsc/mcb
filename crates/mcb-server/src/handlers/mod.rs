@@ -4,7 +4,9 @@
 //! Each handler translates MCP protocol requests into domain service calls.
 
 pub mod analyze_complexity;
+pub mod analyze_impact;
 pub mod clear_index;
+pub mod compare_branches;
 pub mod get_indexing_status;
 pub mod get_validation_rules;
 pub mod index_codebase;
@@ -18,7 +20,9 @@ pub mod validate_file;
 
 // Re-export handlers for convenience
 pub use analyze_complexity::AnalyzeComplexityHandler;
+pub use analyze_impact::AnalyzeImpactHandler;
 pub use clear_index::ClearIndexHandler;
+pub use compare_branches::CompareBranchesHandler;
 pub use get_indexing_status::GetIndexingStatusHandler;
 pub use get_validation_rules::GetValidationRulesHandler;
 pub use index_codebase::IndexCodebaseHandler;

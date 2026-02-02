@@ -85,3 +85,28 @@ impl GitCommit {
         self.message.lines().next().unwrap_or(&self.message)
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DiffStatus {
+    Added,
+    Modified,
+    Deleted,
+    Renamed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileDiff {
+    pub path: PathBuf,
+    pub status: DiffStatus,
+    pub additions: usize,
+    pub deletions: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RefDiff {
+    pub base_ref: String,
+    pub head_ref: String,
+    pub files: Vec<FileDiff>,
+    pub total_additions: usize,
+    pub total_deletions: usize,
+}
