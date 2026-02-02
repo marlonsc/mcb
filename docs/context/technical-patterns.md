@@ -50,6 +50,20 @@ impl Error {
 ```
 **When to use:** Implement providers with `#[async_trait]`, return workspace `Result` types, and create helper constructors for custom errors instead of `panic!`ing or using `unwrap()`.
 
+## Project-phase Patterns
+
+### Hybrid Search (Phase 6)
+**Used in:** `.planning/STATE.md` and `docs/developer/ROADMAP.md` latest sections
+- Phase 6 "Memory Search" is in progress with plan 06-02 (Hybrid Search Implementation) next in line.
+- The project batches FTS5 infrastructure work (triggers, deduplication by SHA256) before layering vector search on top again.
+**When to use:** Align any new feature with the release branch `release/v0.1.5` and cross-check against the plan checklist so Phase 6 artifacts stay coordinated.
+
+### Metrics awareness
+**Used in:** `.planning/PROJECT.md`
+- Track provider counts (7), vector stores (8), languages (14), and 1805+ tests as part of documentation metrics injection.
+- Pre-commit hooks automatically refresh badges and metrics in `docs/user-guide/README.md`, `docs/developer/ROADMAP.md`, and `docs/operations/CHANGELOG.md`.
+**When to use:** Update metrics data whenever capability counts change so the `docs/generated/METRICS.md` stays accurate and the documentation reflects the live project state.
+
 ## Related Context
 - `docs/architecture/ARCHITECTURE.md` (system-level architecture description)
 - `docs/adr/023-inventory-to-linkme-migration.md` (provider migration rationale)

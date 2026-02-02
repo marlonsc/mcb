@@ -1,7 +1,7 @@
 # Domain Concepts Context
 
-**Last updated:** 2026-02-02
-**Source:** `README.md` (project narrative), `.planning/STATE.md` (phase tracking), and `docs/developer/ROADMAP.md`
+**Last updated:** 2026-02-03
+**Source:** `README.md` (project narrative), `.planning/STATE.md` (phase tracking), `docs/developer/ROADMAP.md`, and `.planning/PROJECT.md`
 
 ## Overview
 The product delivers semantic code search by combining vector embeddings, git context, and MCP tooling inside a Clean Architecture stack so teams can ask natural-language queries and get code recommendations enriched with project memory.
@@ -16,10 +16,16 @@ The product delivers semantic code search by combining vector embeddings, git co
 **When to use:** Build API surfaces and CLI workflows around these MCP tools so every search operation stays traceable and testable.
 
 ### Phase-driven memory search
-**Used in:** `.planning/STATE.md` (Phase 6 in progress)
-- Phase 6 "Memory Search" currently executing; Phase 5 established SQLite + FTS + dedup workflows.
-- Next action is 06-02 PLAN (Hybrid Search Implementation) which layers vector + memory search together.
-**Guidance:** Sync new work with the documented phase progression and commit to `release/v0.1.5` so the branch state matches `.planning/STATE.md`.
+**Used in:** `.planning/STATE.md` (Phase 6 in progress) and `docs/developer/ROADMAP.md` (v0.2.0 vision)
+- Phase 6 "Memory Search" is active; plan 06-01 concluded and 06-02 (Hybrid Search Implementation) is the next checkpoint.
+- The release branch `release/v0.1.5` holds these artifacts, so phase milestones should update this branch before advancing to the next plan.
+**Guidance:** Always align new work with the numbered plan file (e.g., `06-02-PLAN.md`) and update `.planning/STATE.md` progress metrics to reflect completion percentages.
+
+## Project-State Signals
+**Used in:** `.planning/PROJECT.md` and `docs/developer/ROADMAP.md`
+- `docs/developer/ROADMAP.md` tracks release v0.1.4 (RCA + security) as current and plots v0.2.0 (git-aware indexing, session memory, advanced browser) as the high priority target.
+- `.planning/PROJECT.md` lists validated requirements (MCP tools, 14 languages, 7 embedding providers, 8 vector stores, clean architecture) and active debt items (mcb-validate coupling, duplicate Tree-sitter, missing provider health checks).
+- `docs/context/project-state.md` consolidates these signals so contributors can see the validated capabilities, project constraints, and planned objectives together.
 
 ## Constraints
 - Approximately 1805 tests span the 9 crates, so major changes should keep test coverage in mind.
@@ -28,3 +34,4 @@ The product delivers semantic code search by combining vector embeddings, git co
 ## Related Context
 - `docs/context/technical-patterns.md`
 - `docs/developer/ROADMAP.md` (long-term planning)
+- `docs/context/project-state.md`
