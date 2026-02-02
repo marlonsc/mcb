@@ -24,6 +24,8 @@ pub mod admin;
 pub mod infrastructure;
 /// External service provider ports
 pub mod providers;
+/// Repository ports for data persistence
+pub mod repositories;
 /// Application service ports
 pub mod services;
 
@@ -47,6 +49,7 @@ pub use providers::{
     NullMetricsProvider, NullValidationProvider, ProviderConfigManagerInterface, ValidationOptions,
     ValidationProvider, ValidatorInfo, VectorStoreAdmin, VectorStoreProvider,
 };
+pub use repositories::MemoryRepository;
 pub use services::{
     NullValidationService, ValidationReport, ValidationServiceInterface, ViolationEntry,
 };

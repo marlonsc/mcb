@@ -46,7 +46,7 @@ fn test_tool_definitions_clear_index() {
 #[test]
 fn test_create_tool_list() {
     let tools = create_tool_list().expect("Should create tool list");
-    assert_eq!(tools.len(), 9, "Should have 9 tools");
+    assert_eq!(tools.len(), 13, "Should have 13 tools");
 
     let names: Vec<&str> = tools.iter().map(|t| &*t.name).collect();
     // Core tools
@@ -60,4 +60,9 @@ fn test_create_tool_list() {
     assert!(names.contains(&"list_validators"));
     assert!(names.contains(&"get_validation_rules"));
     assert!(names.contains(&"analyze_complexity"));
+    // Memory tools
+    assert!(names.contains(&"store_observation"));
+    assert!(names.contains(&"search_memories"));
+    assert!(names.contains(&"get_session_summary"));
+    assert!(names.contains(&"create_session_summary"));
 }

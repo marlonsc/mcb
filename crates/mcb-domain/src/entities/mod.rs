@@ -20,6 +20,8 @@ pub mod code_chunk;
 pub mod codebase;
 /// Git repository, branch, and commit entities
 pub mod git;
+/// Memory entities for observations and session tracking
+pub mod memory;
 /// Project type entity for detected projects within repositories
 pub mod project;
 /// Submodule entity for git submodule tracking
@@ -29,5 +31,9 @@ pub mod submodule;
 pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 pub use git::{DiffStatus, FileDiff, GitBranch, GitCommit, GitRepository, RefDiff, RepositoryId};
+pub use memory::{
+    MemoryFilter, MemorySearchResult, Observation, ObservationMetadata, ObservationType,
+    SessionSummary,
+};
 pub use project::{DetectedProject, ProjectType};
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};

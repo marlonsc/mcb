@@ -20,6 +20,7 @@ path = "src/lib.rs"
 # Domain layer - core business logic and port traits
 mcb-domain = { path = "../mcb-domain" }
 
+
 # NOTE: mcb-providers is NOT a dependency here to avoid circular deps.
 # Providers register themselves into the linkme registry slices declared here.
 # mcb-infrastructure pulls in mcb-providers to complete the registration.

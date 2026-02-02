@@ -53,6 +53,8 @@ pub mod events;
 pub mod ports;
 /// Repository interfaces
 pub mod repositories;
+/// Common utilities
+pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
 
@@ -61,4 +63,5 @@ pub use constants::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
+pub use utils::*;
 pub use value_objects::*;

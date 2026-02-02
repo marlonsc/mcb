@@ -219,11 +219,19 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
     let crypto = create_crypto_service(&config).await?;
 
-    // Get indexing operations and event bus for async indexing
     let indexing_ops = app_context.indexing();
     let event_bus = app_context.event_bus();
 
-    // Create domain services with providers
+    let memory_db_path = dirs::home_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join(".mcb")
+        .join("memory.db");
+    let memory_repository = std::sync::Arc::new(
+        mcb_infrastructure::repositories::SqliteMemoryRepository::new(memory_db_path)
+            .await
+            .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?,
+    );
+
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         cache: shared_cache,
         crypto,
@@ -233,6 +241,7 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         language_chunker,
         indexing_ops,
         event_bus,
+        memory_repository,
     };
     let services =
         mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(
@@ -245,6 +254,7 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
         .with_validation_service(services.validation_service)
+        .with_memory_service(services.memory_service)
         .with_vcs_provider(services.vcs_provider)
         .try_build()
         .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })

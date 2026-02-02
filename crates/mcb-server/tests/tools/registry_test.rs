@@ -5,7 +5,7 @@ use mcb_server::tools::registry::create_tool_list;
 #[test]
 fn test_tool_definitions_create_valid_tools() {
     let tools = create_tool_list().expect("should create tool list");
-    assert_eq!(tools.len(), 9);
+    assert_eq!(tools.len(), 13);
 
     let names: Vec<_> = tools.iter().map(|t| t.name.as_ref()).collect();
     // Core tools
@@ -19,6 +19,11 @@ fn test_tool_definitions_create_valid_tools() {
     assert!(names.contains(&"list_validators"));
     assert!(names.contains(&"get_validation_rules"));
     assert!(names.contains(&"analyze_complexity"));
+    // Memory tools
+    assert!(names.contains(&"store_observation"));
+    assert!(names.contains(&"search_memories"));
+    assert!(names.contains(&"get_session_summary"));
+    assert!(names.contains(&"create_session_summary"));
 }
 
 #[test]

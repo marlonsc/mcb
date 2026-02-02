@@ -348,6 +348,10 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         list_repositories: state.server.list_repositories_handler(),
         compare_branches: state.server.compare_branches_handler(),
         analyze_impact: state.server.analyze_impact_handler(),
+        store_observation: state.server.store_observation_handler(),
+        search_memories: state.server.search_memories_handler(),
+        get_session_summary: state.server.get_session_summary_handler(),
+        create_session_summary: state.server.create_session_summary_handler(),
     };
 
     match route_tool_call(call_request, &handlers).await {

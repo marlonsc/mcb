@@ -48,6 +48,7 @@ pub mod di;
 pub mod error_ext;
 pub mod health;
 pub mod logging;
+pub mod repositories;
 pub mod routing;
 pub mod storage;
 pub mod utils;

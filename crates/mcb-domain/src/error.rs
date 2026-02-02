@@ -181,6 +181,30 @@ pub enum Error {
         /// Name of the branch that was not found
         name: String,
     },
+
+    /// Memory operation error
+    #[error("Memory error: {message}")]
+    Memory {
+        /// Description of the memory error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+
+    /// Observation not found
+    #[error("Observation not found: {id}")]
+    ObservationNotFound {
+        /// ID of the observation
+        id: String,
+    },
+
+    /// Duplicate observation
+    #[error("Duplicate observation: {content_hash}")]
+    DuplicateObservation {
+        /// Content hash of duplicate
+        content_hash: String,
+    },
 }
 
 // Basic error creation methods
@@ -410,6 +434,40 @@ impl Error {
     /// Create a branch not found error
     pub fn branch_not_found<S: Into<String>>(name: S) -> Self {
         Self::BranchNotFound { name: name.into() }
+    }
+}
+
+// Memory error creation methods
+impl Error {
+    /// Create a memory error
+    pub fn memory<S: Into<String>>(message: S) -> Self {
+        Self::Memory {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// Create a memory error with source
+    pub fn memory_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Memory {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create an observation not found error
+    pub fn observation_not_found<S: Into<String>>(id: S) -> Self {
+        Self::ObservationNotFound { id: id.into() }
+    }
+
+    /// Create a duplicate observation error
+    pub fn duplicate_observation<S: Into<String>>(content_hash: S) -> Self {
+        Self::DuplicateObservation {
+            content_hash: content_hash.into(),
+        }
     }
 }
 

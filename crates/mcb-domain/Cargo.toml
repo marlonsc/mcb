@@ -44,6 +44,8 @@ uuid = { workspace = true }
 # Base64 encoding
 base64 = { workspace = true }
 
+hex = "0.4"
+
 # Regex for text processing
 regex = { workspace = true }
 

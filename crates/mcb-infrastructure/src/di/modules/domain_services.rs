@@ -12,16 +12,20 @@
 use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
+use mcb_application::domain_services::memory::MemoryServiceInterface;
 use mcb_application::domain_services::search::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
-use mcb_application::use_cases::{ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl};
+use mcb_application::use_cases::{
+    ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl, SearchServiceImpl,
+};
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
+use mcb_domain::ports::repositories::MemoryRepository;
 use mcb_domain::ports::services::ValidationServiceInterface;
 use mcb_providers::git::Git2Provider;
 use std::sync::Arc;
@@ -43,50 +47,36 @@ pub struct DomainServicesContainer {
     pub search_service: Arc<dyn SearchServiceInterface>,
     pub indexing_service: Arc<dyn IndexingServiceInterface>,
     pub validation_service: Arc<dyn ValidationServiceInterface>,
+    pub memory_service: Arc<dyn MemoryServiceInterface>,
     pub vcs_provider: Arc<dyn VcsProvider>,
 }
 
-/// Dependencies for creating domain services
-///
-/// Groups all required dependencies into a single struct to reduce
-/// function parameter count (KISS principle).
 pub struct ServiceDependencies {
-    /// Cache provider for caching operations
     pub cache: SharedCacheProvider,
-    /// Crypto service (reserved for future use)
     pub crypto: CryptoService,
-    /// Application configuration (reserved for future use)
     pub config: AppConfig,
-    /// Embedding provider for vector embeddings
     pub embedding_provider: Arc<dyn EmbeddingProvider>,
-    /// Vector store provider for similarity search
     pub vector_store_provider: Arc<dyn VectorStoreProvider>,
-    /// Language chunker for code processing
     pub language_chunker: Arc<dyn LanguageChunkingProvider>,
-    /// Indexing operations tracker for async progress tracking
     pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
-    /// Event bus for publishing domain events
     pub event_bus: Arc<dyn EventBusProvider>,
+    pub memory_repository: Arc<dyn MemoryRepository>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
 pub struct DomainServicesFactory;
 
 impl DomainServicesFactory {
-    /// Create domain services using infrastructure components
     pub async fn create_services(deps: ServiceDependencies) -> Result<DomainServicesContainer> {
-        // Create context service with dependencies
         let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(
             deps.cache.into(),
-            deps.embedding_provider,
+            Arc::clone(&deps.embedding_provider),
             deps.vector_store_provider,
         ));
 
-        // Create search service with context service dependency
         let search_service: Arc<dyn SearchServiceInterface> =
             Arc::new(SearchServiceImpl::new(Arc::clone(&context_service)));
 
-        // Create indexing service with context service, language chunker, and async tracking deps
         let indexing_service: Arc<dyn IndexingServiceInterface> =
             Arc::new(IndexingServiceImpl::new(
                 Arc::clone(&context_service),
@@ -95,8 +85,6 @@ impl DomainServicesFactory {
                 deps.event_bus,
             ));
 
-        // Create validation service
-        // Uses real mcb-validate when feature is enabled, stub otherwise
         #[cfg(feature = "validation")]
         let validation_service: Arc<dyn ValidationServiceInterface> =
             Arc::new(InfraValidationService::new());
@@ -107,11 +95,17 @@ impl DomainServicesFactory {
 
         let vcs_provider: Arc<dyn VcsProvider> = Arc::new(Git2Provider::new());
 
+        let memory_service: Arc<dyn MemoryServiceInterface> = Arc::new(MemoryServiceImpl::new(
+            deps.memory_repository,
+            deps.embedding_provider,
+        ));
+
         Ok(DomainServicesContainer {
             context_service,
             search_service,
             indexing_service,
             validation_service,
+            memory_service,
             vcs_provider,
         })
     }

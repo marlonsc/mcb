@@ -10,15 +10,18 @@ use std::sync::Arc;
 
 use crate::args::{
     AnalyzeComplexityArgs, AnalyzeImpactArgs, ClearIndexArgs, CompareBranchesArgs,
-    GetIndexingStatusArgs, GetValidationRulesArgs, IndexCodebaseArgs, IndexGitRepositoryArgs,
-    ListRepositoriesArgs, ListValidatorsArgs, SearchBranchArgs, SearchCodeArgs,
+    CreateSessionSummaryArgs, GetIndexingStatusArgs, GetSessionSummaryArgs, GetValidationRulesArgs,
+    IndexCodebaseArgs, IndexGitRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
+    SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs,
     ValidateArchitectureArgs, ValidateFileArgs,
 };
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
-    GetIndexingStatusHandler, GetValidationRulesHandler, IndexCodebaseHandler,
-    IndexGitRepositoryHandler, ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler,
-    SearchCodeHandler, ValidateArchitectureHandler, ValidateFileHandler,
+    CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
+    ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler, SearchCodeHandler,
+    SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
+    ValidateFileHandler,
 };
 
 /// Handler references for tool routing
@@ -52,6 +55,14 @@ pub struct ToolHandlers {
     pub compare_branches: Arc<CompareBranchesHandler>,
     /// Handler for impact analysis
     pub analyze_impact: Arc<AnalyzeImpactHandler>,
+    /// Handler for storing observations in memory
+    pub store_observation: Arc<StoreObservationHandler>,
+    /// Handler for searching memories
+    pub search_memories: Arc<SearchMemoriesHandler>,
+    /// Handler for getting session summaries
+    pub get_session_summary: Arc<GetSessionSummaryHandler>,
+    /// Handler for creating session summaries
+    pub create_session_summary: Arc<CreateSessionSummaryHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -120,6 +131,25 @@ pub async fn route_tool_call(
         "analyze_impact" => {
             let args = parse_args::<AnalyzeImpactArgs>(&request)?;
             handlers.analyze_impact.handle(Parameters(args)).await
+        }
+        "store_observation" => {
+            let args = parse_args::<StoreObservationArgs>(&request)?;
+            handlers.store_observation.handle(Parameters(args)).await
+        }
+        "search_memories" => {
+            let args = parse_args::<SearchMemoriesArgs>(&request)?;
+            handlers.search_memories.handle(Parameters(args)).await
+        }
+        "get_session_summary" => {
+            let args = parse_args::<GetSessionSummaryArgs>(&request)?;
+            handlers.get_session_summary.handle(Parameters(args)).await
+        }
+        "create_session_summary" => {
+            let args = parse_args::<CreateSessionSummaryArgs>(&request)?;
+            handlers
+                .create_session_summary
+                .handle(Parameters(args))
+                .await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

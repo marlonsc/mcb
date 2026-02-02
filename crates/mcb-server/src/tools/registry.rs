@@ -9,8 +9,9 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::args::{
-    AnalyzeComplexityArgs, ClearIndexArgs, GetIndexingStatusArgs, GetValidationRulesArgs,
-    IndexCodebaseArgs, ListValidatorsArgs, SearchCodeArgs, ValidateArchitectureArgs,
+    AnalyzeComplexityArgs, ClearIndexArgs, CreateSessionSummaryArgs, GetIndexingStatusArgs,
+    GetSessionSummaryArgs, GetValidationRulesArgs, IndexCodebaseArgs, ListValidatorsArgs,
+    SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs, ValidateArchitectureArgs,
     ValidateFileArgs,
 };
 
@@ -99,6 +100,42 @@ impl ToolDefinitions {
         )
     }
 
+    /// Get the store_observation tool definition
+    pub fn store_observation() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "store_observation",
+            "Store an observation in the semantic memory",
+            schemars::schema_for!(StoreObservationArgs),
+        )
+    }
+
+    /// Get the search_memories tool definition
+    pub fn search_memories() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "search_memories",
+            "Search observations in semantic memory using a natural language query",
+            schemars::schema_for!(SearchMemoriesArgs),
+        )
+    }
+
+    /// Get the get_session_summary tool definition
+    pub fn get_session_summary() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "get_session_summary",
+            "Retrieve a summary for a specific session ID",
+            schemars::schema_for!(GetSessionSummaryArgs),
+        )
+    }
+
+    /// Get the create_session_summary tool definition
+    pub fn create_session_summary() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "create_session_summary",
+            "Create or update a summary for a coding session",
+            schemars::schema_for!(CreateSessionSummaryArgs),
+        )
+    }
+
     /// Create a tool from schema
     fn create_tool(
         name: &'static str,
@@ -142,5 +179,9 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::list_validators()?,
         ToolDefinitions::get_validation_rules()?,
         ToolDefinitions::analyze_complexity()?,
+        ToolDefinitions::store_observation()?,
+        ToolDefinitions::search_memories()?,
+        ToolDefinitions::get_session_summary()?,
+        ToolDefinitions::create_session_summary()?,
     ])
 }

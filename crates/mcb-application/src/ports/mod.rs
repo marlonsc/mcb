@@ -47,5 +47,6 @@ pub use registry::{
 pub use services::{
     BatchIndexingServiceInterface, ChunkingOrchestratorInterface, ContextServiceInterface,
     IndexingResult, IndexingServiceInterface, IndexingStats, IndexingStatus,
-    SearchServiceInterface, ValidationReport, ValidationServiceInterface, ViolationEntry,
+    MemoryServiceInterface, SearchServiceInterface, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
 };

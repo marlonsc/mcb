@@ -13,16 +13,18 @@ use rmcp::model::{
 };
 
 use mcb_application::{
-    ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface,
+    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
+    SearchServiceInterface, ValidationServiceInterface,
 };
 use mcb_domain::ports::providers::VcsProvider;
 
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
-    GetIndexingStatusHandler, GetValidationRulesHandler, IndexCodebaseHandler,
-    IndexGitRepositoryHandler, ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler,
-    SearchCodeHandler, ValidateArchitectureHandler, ValidateFileHandler,
+    CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
+    ListRepositoriesHandler, ListValidatorsHandler, SearchBranchHandler, SearchCodeHandler,
+    SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
+    ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
@@ -45,6 +47,7 @@ struct McpServices {
     indexing: Arc<dyn IndexingServiceInterface>,
     context: Arc<dyn ContextServiceInterface>,
     search: Arc<dyn SearchServiceInterface>,
+    memory: Arc<dyn MemoryServiceInterface>,
     #[allow(dead_code)]
     vcs: Arc<dyn VcsProvider>,
 }
@@ -56,6 +59,7 @@ impl McpServer {
         context_service: Arc<dyn ContextServiceInterface>,
         search_service: Arc<dyn SearchServiceInterface>,
         validation_service: Arc<dyn ValidationServiceInterface>,
+        memory_service: Arc<dyn MemoryServiceInterface>,
         vcs_provider: Arc<dyn VcsProvider>,
     ) -> Self {
         let handlers = ToolHandlers {
@@ -77,6 +81,12 @@ impl McpServer {
             list_repositories: Arc::new(ListRepositoriesHandler::new()),
             compare_branches: Arc::new(CompareBranchesHandler::new(vcs_provider.clone())),
             analyze_impact: Arc::new(AnalyzeImpactHandler::new(vcs_provider.clone())),
+            store_observation: Arc::new(StoreObservationHandler::new(memory_service.clone())),
+            search_memories: Arc::new(SearchMemoriesHandler::new(memory_service.clone())),
+            get_session_summary: Arc::new(GetSessionSummaryHandler::new(memory_service.clone())),
+            create_session_summary: Arc::new(CreateSessionSummaryHandler::new(
+                memory_service.clone(),
+            )),
         };
 
         Self {
@@ -84,6 +94,7 @@ impl McpServer {
                 indexing: indexing_service,
                 context: context_service,
                 search: search_service,
+                memory: memory_service,
                 vcs: vcs_provider,
             },
             handlers,
@@ -103,6 +114,11 @@ impl McpServer {
     /// Access to search service
     pub fn search_service(&self) -> Arc<dyn SearchServiceInterface> {
         Arc::clone(&self.services.search)
+    }
+
+    /// Access to memory service
+    pub fn memory_service(&self) -> Arc<dyn MemoryServiceInterface> {
+        Arc::clone(&self.services.memory)
     }
 
     /// Access to index codebase handler (for HTTP transport)
@@ -174,6 +190,26 @@ impl McpServer {
     pub fn analyze_impact_handler(&self) -> Arc<AnalyzeImpactHandler> {
         Arc::clone(&self.handlers.analyze_impact)
     }
+
+    /// Access to store observation handler (for HTTP transport)
+    pub fn store_observation_handler(&self) -> Arc<StoreObservationHandler> {
+        Arc::clone(&self.handlers.store_observation)
+    }
+
+    /// Access to search memories handler (for HTTP transport)
+    pub fn search_memories_handler(&self) -> Arc<SearchMemoriesHandler> {
+        Arc::clone(&self.handlers.search_memories)
+    }
+
+    /// Access to get session summary handler (for HTTP transport)
+    pub fn get_session_summary_handler(&self) -> Arc<GetSessionSummaryHandler> {
+        Arc::clone(&self.handlers.get_session_summary)
+    }
+
+    /// Access to create session summary handler (for HTTP transport)
+    pub fn create_session_summary_handler(&self) -> Arc<CreateSessionSummaryHandler> {
+        Arc::clone(&self.handlers.create_session_summary)
+    }
 }
 
 impl ServerHandler for McpServer {
@@ -199,7 +235,12 @@ impl ServerHandler for McpServer {
                  - validate_file: Validate a single file against architecture rules\n\
                  - list_validators: List available validators\n\
                  - get_validation_rules: Get validation rules by category\n\
-                 - analyze_complexity: Get code complexity metrics for a file\n"
+                 - analyze_complexity: Get code complexity metrics for a file\n\
+                 - store_observation: Store an observation in the semantic memory\n\
+                 - search_memories: Search observations in semantic memory using a natural language query\n\
+                 - get_session_summary: Retrieve a summary for a specific session ID\n\
+                 - create_session_summary: Create or update a summary for a coding session\n\
+                 "
                     .to_string(),
             ),
         }

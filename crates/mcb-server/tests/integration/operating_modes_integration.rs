@@ -552,7 +552,12 @@ async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
-    // Create domain services
+    let memory_repository = Arc::new(
+        mcb_infrastructure::repositories::SqliteMemoryRepository::in_memory()
+            .await
+            .expect("Failed to create memory repository"),
+    );
+
     let deps = ServiceDependencies {
         cache: shared_cache,
         crypto,
@@ -562,6 +567,7 @@ async fn create_test_mcp_server() -> McpServer {
         language_chunker,
         indexing_ops,
         event_bus,
+        memory_repository,
     };
 
     let services = DomainServicesFactory::create_services(deps)
@@ -573,6 +579,8 @@ async fn create_test_mcp_server() -> McpServer {
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
         .with_validation_service(services.validation_service)
+        .with_memory_service(services.memory_service)
+        .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")
 }

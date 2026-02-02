@@ -459,6 +459,253 @@ impl ValidationServiceInterface for MockValidationService {
     }
 }
 
+// ============================================================================
+// Mock Memory Repository
+// ============================================================================
+
+use mcb_domain::entities::memory::{
+    MemoryFilter, MemorySearchResult, Observation, ObservationType, SessionSummary,
+};
+use mcb_domain::ports::repositories::MemoryRepository;
+
+pub struct MockMemoryRepository {
+    observations: Arc<Mutex<Vec<Observation>>>,
+    summaries: Arc<Mutex<Vec<SessionSummary>>>,
+}
+
+impl MockMemoryRepository {
+    pub fn new() -> Self {
+        Self {
+            observations: Arc::new(Mutex::new(Vec::new())),
+            summaries: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
+impl Default for MockMemoryRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl MemoryRepository for MockMemoryRepository {
+    async fn store_observation(&self, observation: &Observation) -> Result<()> {
+        self.observations
+            .lock()
+            .expect("Lock poisoned")
+            .push(observation.clone());
+        Ok(())
+    }
+
+    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+        let obs = self.observations.lock().expect("Lock poisoned");
+        Ok(obs.iter().find(|o| o.id == id).cloned())
+    }
+
+    async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
+        let obs = self.observations.lock().expect("Lock poisoned");
+        Ok(obs.iter().find(|o| o.content_hash == content_hash).cloned())
+    }
+
+    async fn search(
+        &self,
+        _query_embedding: &[f32],
+        filter: MemoryFilter,
+        limit: usize,
+    ) -> Result<Vec<MemorySearchResult>> {
+        let obs = self.observations.lock().expect("Lock poisoned");
+        let results: Vec<MemorySearchResult> = obs
+            .iter()
+            .filter(|o| {
+                if let Some(ref session) = filter.session_id {
+                    if o.metadata.session_id.as_ref() != Some(session) {
+                        return false;
+                    }
+                }
+                true
+            })
+            .take(limit)
+            .map(|o| MemorySearchResult {
+                observation: o.clone(),
+                similarity_score: 0.9,
+            })
+            .collect();
+        Ok(results)
+    }
+
+    async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()> {
+        self.summaries
+            .lock()
+            .expect("Lock poisoned")
+            .push(summary.clone());
+        Ok(())
+    }
+
+    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
+        let sums = self.summaries.lock().expect("Lock poisoned");
+        Ok(sums.iter().find(|s| s.session_id == session_id).cloned())
+    }
+}
+
+// ============================================================================
+// Mock Memory Service
+// ============================================================================
+
+use mcb_application::domain_services::memory::MemoryServiceInterface;
+
+pub struct MockMemoryService {
+    should_fail: Arc<AtomicBool>,
+    error_message: Arc<Mutex<String>>,
+    observations: Arc<Mutex<Vec<Observation>>>,
+    summaries: Arc<Mutex<Vec<SessionSummary>>>,
+}
+
+impl MockMemoryService {
+    pub fn new() -> Self {
+        Self {
+            should_fail: Arc::new(AtomicBool::new(false)),
+            error_message: Arc::new(Mutex::new("Simulated memory failure".to_string())),
+            observations: Arc::new(Mutex::new(Vec::new())),
+            summaries: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
+impl Default for MockMemoryService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl MemoryServiceInterface for MockMemoryService {
+    async fn store_observation(
+        &self,
+        content: String,
+        observation_type: ObservationType,
+        tags: Vec<String>,
+        session_id: Option<String>,
+        repo_id: Option<String>,
+        file_path: Option<String>,
+        branch: Option<String>,
+    ) -> Result<String> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+
+        let obs = Observation {
+            id: uuid::Uuid::new_v4().to_string(),
+            content,
+            content_hash: "mock-hash".to_string(),
+            tags,
+            observation_type,
+            metadata: mcb_domain::entities::memory::ObservationMetadata {
+                session_id,
+                repo_id,
+                file_path,
+                branch,
+            },
+            created_at: chrono::Utc::now().timestamp(),
+            embedding_id: None,
+        };
+        let id = obs.id.clone();
+        self.observations.lock().expect("Lock poisoned").push(obs);
+        Ok(id)
+    }
+
+    async fn search_memories(
+        &self,
+        _query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<MemorySearchResult>> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+
+        let observations = self.observations.lock().expect("Lock poisoned");
+        let results: Vec<MemorySearchResult> = observations
+            .iter()
+            .filter(|obs| {
+                if let Some(ref f) = filter {
+                    if let Some(ref session) = f.session_id {
+                        if obs.metadata.session_id.as_ref() != Some(session) {
+                            return false;
+                        }
+                    }
+                }
+                true
+            })
+            .take(limit)
+            .map(|obs| MemorySearchResult {
+                observation: obs.clone(),
+                similarity_score: 0.95,
+            })
+            .collect();
+        Ok(results)
+    }
+
+    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+
+        let summaries = self.summaries.lock().expect("Lock poisoned");
+        Ok(summaries
+            .iter()
+            .find(|s| s.session_id == session_id)
+            .cloned())
+    }
+
+    async fn create_session_summary(
+        &self,
+        session_id: String,
+        topics: Vec<String>,
+        decisions: Vec<String>,
+        next_steps: Vec<String>,
+        key_files: Vec<String>,
+    ) -> Result<String> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            let msg = self.error_message.lock().expect("Lock poisoned").clone();
+            return Err(mcb_domain::error::Error::internal(msg));
+        }
+
+        let summary = SessionSummary {
+            id: uuid::Uuid::new_v4().to_string(),
+            session_id,
+            topics,
+            decisions,
+            next_steps,
+            key_files,
+            created_at: chrono::Utc::now().timestamp(),
+        };
+        let id = summary.id.clone();
+        self.summaries.lock().expect("Lock poisoned").push(summary);
+        Ok(id)
+    }
+
+    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+        let observations = self.observations.lock().expect("Lock poisoned");
+        Ok(observations.iter().find(|o| o.id == id).cloned())
+    }
+
+    async fn embed_content(&self, _content: &str) -> Result<mcb_domain::Embedding> {
+        Ok(mcb_domain::Embedding {
+            vector: vec![0.0; 384],
+            model: "mock-model".to_string(),
+            dimensions: 384,
+        })
+    }
+}
+
+// ============================================================================
+// Mock VCS Provider
+// ============================================================================
+
 /// Mock VCS provider for testing
 pub struct MockVcsProvider {
     should_fail: AtomicBool,

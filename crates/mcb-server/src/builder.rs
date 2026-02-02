@@ -5,8 +5,8 @@
 
 use crate::McpServer;
 use mcb_application::{
-    ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface,
+    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
+    SearchServiceInterface, ValidationServiceInterface,
 };
 use mcb_domain::ports::providers::VcsProvider;
 use std::sync::Arc;
@@ -21,6 +21,7 @@ pub struct McpServerBuilder {
     context_service: Option<Arc<dyn ContextServiceInterface>>,
     search_service: Option<Arc<dyn SearchServiceInterface>>,
     validation_service: Option<Arc<dyn ValidationServiceInterface>>,
+    memory_service: Option<Arc<dyn MemoryServiceInterface>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
 }
 
@@ -66,6 +67,15 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the memory service
+    ///
+    /// # Arguments
+    /// * `service` - Implementation of the memory service port
+    pub fn with_memory_service(mut self, service: Arc<dyn MemoryServiceInterface>) -> Self {
+        self.memory_service = Some(service);
+        self
+    }
+
     /// Set the VCS provider
     ///
     /// # Arguments
@@ -105,6 +115,9 @@ impl McpServerBuilder {
         let validation_service = self
             .validation_service
             .ok_or(BuilderError::MissingDependency("validation service"))?;
+        let memory_service = self
+            .memory_service
+            .ok_or(BuilderError::MissingDependency("memory service"))?;
         let vcs_provider = self
             .vcs_provider
             .ok_or(BuilderError::MissingDependency("vcs provider"))?;
@@ -114,6 +127,7 @@ impl McpServerBuilder {
             context_service,
             search_service,
             validation_service,
+            memory_service,
             vcs_provider,
         ))
     }

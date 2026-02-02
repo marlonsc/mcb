@@ -387,3 +387,91 @@ pub struct AnalyzeImpactArgs {
     #[schemars(description = "Head ref (branch, tag, or commit)")]
     pub head_ref: String,
 }
+
+/// Arguments for the `store_observation` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Store an observation in semantic memory")]
+pub struct StoreObservationArgs {
+    #[validate(length(min = 1, max = 10000, message = "Content must be 1-10000 chars"))]
+    #[schemars(description = "The observation content to store")]
+    pub content: String,
+
+    #[schemars(description = "Type of observation: code, decision, context, error, summary")]
+    pub observation_type: String,
+
+    #[serde(default)]
+    #[schemars(description = "Tags for categorizing the observation")]
+    pub tags: Vec<String>,
+
+    #[schemars(description = "Session ID to associate with this observation")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Repository ID for context")]
+    pub repo_id: Option<String>,
+
+    #[schemars(description = "File path related to this observation")]
+    pub file_path: Option<String>,
+
+    #[schemars(description = "Git branch related to this observation")]
+    pub branch: Option<String>,
+}
+
+/// Arguments for the `search_memories` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Search observations using semantic similarity")]
+pub struct SearchMemoriesArgs {
+    #[validate(length(min = 1, max = 1000, message = "Query must be 1-1000 chars"))]
+    #[schemars(description = "Search query for semantic matching")]
+    pub query: String,
+
+    #[serde(default = "default_limit")]
+    #[validate(range(min = 1, max = 100))]
+    #[schemars(description = "Maximum number of results (default: 10)")]
+    pub limit: usize,
+
+    #[schemars(description = "Filter by tags")]
+    pub tags: Option<Vec<String>>,
+
+    #[schemars(description = "Filter by observation type")]
+    pub observation_type: Option<String>,
+
+    #[schemars(description = "Filter by session ID")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Filter by repository ID")]
+    pub repo_id: Option<String>,
+}
+
+/// Arguments for the `get_session_summary` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Get a session summary by session ID")]
+pub struct GetSessionSummaryArgs {
+    #[validate(length(min = 1, message = "session_id cannot be empty"))]
+    #[schemars(description = "The session ID to get summary for")]
+    pub session_id: String,
+}
+
+/// Arguments for the `create_session_summary` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Create a summary of a coding session")]
+pub struct CreateSessionSummaryArgs {
+    #[validate(length(min = 1, message = "session_id cannot be empty"))]
+    #[schemars(description = "Session ID to create summary for")]
+    pub session_id: String,
+
+    #[serde(default)]
+    #[schemars(description = "Key topics discussed in the session")]
+    pub topics: Vec<String>,
+
+    #[serde(default)]
+    #[schemars(description = "Decisions made during the session")]
+    pub decisions: Vec<String>,
+
+    #[serde(default)]
+    #[schemars(description = "Next steps or action items")]
+    pub next_steps: Vec<String>,
+
+    #[serde(default)]
+    #[schemars(description = "Key files worked on during the session")]
+    pub key_files: Vec<String>,
+}
