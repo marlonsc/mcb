@@ -114,7 +114,7 @@ You are an AI code assistant specialized in semantic search.
 
 {memory_context.get('context', '')}
 
-Git Context: branch={memory_context.get('git_context', {}).get('branch')}, 
+Git Context: branch={memory_context.get('git_context', {}).get('branch')},
              commit={memory_context.get('git_context', {}).get('commit')}
 
 ## Instructions

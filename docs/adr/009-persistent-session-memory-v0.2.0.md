@@ -1382,17 +1382,17 @@ fn reciprocal_rank_fusion(
     k: f32,                           // smoothing constant (default: 60.0)
 ) -> Vec<(String, f32)> {
     let mut scores: HashMap<String, f32> = HashMap::new();
-    
+
     // FTS contribution
     for (rank, (id, _)) in fts_results.iter().enumerate() {
         *scores.entry(id.clone()).or_default() += 1.0 / (k + rank as f32 + 1.0);
     }
-    
+
     // Vector contribution
     for (rank, (id, _)) in vec_results.iter().enumerate() {
         *scores.entry(id.clone()).or_default() += 1.0 / (k + rank as f32 + 1.0);
     }
-    
+
     let mut results: Vec<_> = scores.into_iter().collect();
     results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
     results

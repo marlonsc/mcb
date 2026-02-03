@@ -1,9 +1,9 @@
 # ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
-**Status:** Proposed  
-**Date:** 2026-02-03  
-**Deciders:** Architecture Team  
-**Supersedes:** None  
+**Status:** Proposed
+**Date:** 2026-02-03
+**Deciders:** Architecture Team
+**Supersedes:** None
 **Related:** ADR-009 (Memory), ADR-013 (Clean Architecture), ADR-029 (Hexagonal/dill)
 
 ## Context
