@@ -17,11 +17,14 @@
 pub mod chunking;
 /// Indexing domain service interface
 pub mod indexing;
+/// Memory domain service interface
+pub mod memory;
 /// Search and context domain service interfaces
 pub mod search;
 
 // Re-export domain service interfaces
 pub use chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
+pub use memory::MemoryServiceInterface;
 pub use search::{
     ChunkingOrchestratorInterface, ContextServiceInterface, IndexingResult,
     IndexingServiceInterface, IndexingStatus, SearchServiceInterface,

@@ -15,6 +15,7 @@ use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
 
 /// Handler for index clearing operations
+#[derive(Clone)]
 pub struct ClearIndexHandler {
     indexing_service: Arc<dyn IndexingServiceInterface>,
 }

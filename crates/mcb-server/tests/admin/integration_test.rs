@@ -7,7 +7,10 @@
 
 use async_trait::async_trait;
 use mcb_application::ports::admin::PerformanceMetricsInterface;
-use mcb_application::ports::infrastructure::{DomainEventStream, EventBusProvider};
+use mcb_application::ports::{
+    IndexingOperationsInterface,
+    infrastructure::{DomainEventStream, EventBusProvider},
+};
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};

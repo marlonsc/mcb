@@ -122,23 +122,47 @@ impl Default for PatternRegistry {
 
 /// Get the default rules directory
 pub fn default_rules_dir() -> PathBuf {
-    // Try to find rules relative to the crate
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("."));
+    // 1. Try CARGO_MANIFEST_DIR (works when building mcb-validate directly)
+    if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+        let rules_dir = PathBuf::from(&manifest_dir).join("rules");
+        if rules_dir.exists() {
+            return rules_dir;
+        }
 
-    let rules_dir = manifest_dir.join("rules");
-    if rules_dir.exists() {
-        return rules_dir;
+        // 2. When used as dependency, CARGO_MANIFEST_DIR points to consumer crate
+        // Try to find mcb-validate/rules relative to workspace root
+        if let Some(workspace_root) = PathBuf::from(&manifest_dir)
+            .ancestors()
+            .find(|p| p.join("Cargo.toml").exists() && p.join("crates").exists())
+        {
+            let validate_rules = workspace_root.join("crates/mcb-validate/rules");
+            if validate_rules.exists() {
+                return validate_rules;
+            }
+        }
     }
 
-    // Try relative to current directory
+    // 3. Try relative to current directory (works when running from workspace root)
     let cwd_rules = PathBuf::from("crates/mcb-validate/rules");
     if cwd_rules.exists() {
         return cwd_rules;
     }
 
-    // Fallback
+    // 4. Check ~/.local/share/mcb/rules (make install target)
+    if let Some(home) = std::env::var_os("HOME") {
+        let xdg_rules = PathBuf::from(home).join(".local/share/mcb/rules");
+        if xdg_rules.exists() {
+            return xdg_rules;
+        }
+    }
+
+    // 5. Try /usr/share/mcb/rules (system-wide)
+    let system_rules = PathBuf::from("/usr/share/mcb/rules");
+    if system_rules.exists() {
+        return system_rules;
+    }
+
+    // 6. Fallback
     PathBuf::from("rules")
 }
 

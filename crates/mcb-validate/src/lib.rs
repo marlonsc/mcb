@@ -31,6 +31,9 @@
 //! let report = validator.validate_all()?;
 //! ```
 
+// === Centralized Thresholds (Phase 2 DRY) ===
+pub mod thresholds;
+
 // === New DRY Violation System (Phase 3 Refactoring) ===
 pub mod violation_trait;
 #[macro_use]
@@ -93,6 +96,14 @@ pub mod tests_org;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
+
+// Re-export centralized thresholds
+pub use thresholds::{
+    MAX_BUILDER_FIELDS, MAX_COGNITIVE_COMPLEXITY, MAX_CYCLOMATIC_COMPLEXITY,
+    MAX_DI_CONTAINER_FIELDS, MAX_FILE_LINES, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS,
+    MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS, MAX_STRUCT_LINES,
+    MAX_TRAIT_METHODS, ValidationThresholds, thresholds,
+};
 
 // Re-export new DRY violation system
 pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary, ViolationEntry};
@@ -347,6 +358,9 @@ pub enum ValidationError {
 
     #[error("Invalid regex pattern: {0}")]
     InvalidRegex(String),
+
+    #[error("Pattern not found: {0}")]
+    PatternNotFound(String),
 }
 
 /// Severity level for violations
@@ -436,6 +450,10 @@ pub struct ArchitectureValidator {
     config_quality: ConfigQualityValidator,
     // Clean Architecture validator (CA001-CA009)
     clean_architecture: CleanArchitectureValidator,
+    // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
+    visibility: VisibilityValidator,
+    layer_flow: LayerFlowValidator,
+    port_adapter: PortAdapterValidator,
 }
 
 impl ArchitectureValidator {
@@ -486,6 +504,10 @@ impl ArchitectureValidator {
             config_quality: ConfigQualityValidator::with_config(config.clone()),
             // Clean Architecture validator (CA001-CA009)
             clean_architecture: CleanArchitectureValidator::with_config(config.clone()),
+            // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
+            visibility: VisibilityValidator::new(),
+            layer_flow: LayerFlowValidator::new(),
+            port_adapter: PortAdapterValidator::new(),
             config: ValidationConfig {
                 workspace_root: root,
                 ..config
@@ -560,6 +582,16 @@ impl ArchitectureValidator {
             all_violations.push(Box::new(v));
         }
         for v in self.clean_architecture.validate_all()? {
+            all_violations.push(Box::new(v));
+        }
+        // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
+        for v in self.visibility.validate(&self.config)? {
+            all_violations.push(Box::new(v));
+        }
+        for v in self.layer_flow.validate(&self.config)? {
+            all_violations.push(Box::new(v));
+        }
+        for v in self.port_adapter.validate(&self.config)? {
             all_violations.push(Box::new(v));
         }
 

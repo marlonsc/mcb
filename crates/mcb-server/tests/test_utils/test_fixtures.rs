@@ -2,8 +2,7 @@
 //!
 //! Provides factory functions for creating test data and temporary directories.
 
-#![allow(dead_code)]
-
+use mcb_application::ValidationService;
 use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_domain::SearchResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
@@ -16,6 +15,7 @@ use mcb_infrastructure::di::modules::domain_services::{
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use std::path::PathBuf;
+use std::sync::Arc;
 use tempfile::TempDir;
 
 /// Create a temporary codebase directory with sample code files
@@ -74,6 +74,8 @@ pub fn create_test_indexing_result(
         chunks_created,
         files_skipped: 0,
         errors,
+        operation_id: None,
+        status: "completed".to_string(),
     }
 }
 
@@ -88,6 +90,8 @@ pub fn create_test_indexing_result_with_errors(
         chunks_created,
         files_skipped: 0,
         errors,
+        operation_id: None,
+        status: "completed".to_string(),
     }
 }
 
@@ -157,6 +161,8 @@ pub async fn create_test_mcp_server() -> McpServer {
     let vector_store_provider = ctx.vector_store_handle().get();
     let language_chunker = ctx.language_handle().get();
     let cache_provider = ctx.cache_handle().get();
+    let indexing_ops = ctx.indexing();
+    let event_bus = ctx.event_bus();
 
     // Create shared cache provider for domain services factory
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
@@ -165,24 +171,54 @@ pub async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
-    // Create domain services
+    let memory_repository = Arc::new(crate::test_utils::mock_services::MockMemoryRepository::new());
+
     let deps = ServiceDependencies {
+        project_id: "test-project".to_string(),
         cache: shared_cache,
         crypto,
         config,
         embedding_provider,
         vector_store_provider,
         language_chunker,
+        indexing_ops,
+        event_bus,
+        memory_repository,
     };
 
     let services = DomainServicesFactory::create_services(deps)
         .await
         .expect("Failed to create services");
 
+    let validation_service = Arc::new(ValidationService::new());
+
     McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
+        .with_validation_service(validation_service)
+        .with_memory_service(services.memory_service)
+        .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Smoke test so fixture helpers are not reported as dead code in the unit test target.
+    #[test]
+    fn fixture_helpers_used_in_unit_target() {
+        let (_temp, path) = create_temp_codebase();
+        assert!(path.join("lib.rs").exists());
+        let r = create_test_indexing_result(2, 10, 0);
+        assert_eq!(r.files_processed, 2);
+        let r2 = create_test_indexing_result_with_errors(1, 5, vec!["err".to_string()]);
+        assert_eq!(r2.errors.len(), 1);
+        let idle = create_idle_status();
+        assert!(!idle.is_indexing);
+        let prog = create_in_progress_status(0.5, "src/main.rs");
+        assert!(prog.is_indexing);
+    }
 }

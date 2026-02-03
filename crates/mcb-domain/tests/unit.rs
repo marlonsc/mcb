@@ -34,3 +34,24 @@ mod types;
 
 #[path = "unit/browse_tests.rs"]
 mod browse;
+
+#[path = "unit/performance_tests.rs"]
+mod performance;
+
+#[path = "unit/ports/providers/metrics_tests.rs"]
+mod metrics;
+
+#[path = "unit/vcs_context_tests.rs"]
+mod vcs_context_tests;
+
+#[path = "unit/memory_tests.rs"]
+mod memory_tests;
+
+#[path = "unit/project_tests.rs"]
+mod project_tests;
+
+#[path = "unit/submodule_tests.rs"]
+mod submodule_tests;
+
+#[path = "unit/vcs_tests.rs"]
+mod vcs_tests;

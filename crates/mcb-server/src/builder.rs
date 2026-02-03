@@ -4,7 +4,11 @@
 //! Ensures all required dependencies are provided before server construction.
 
 use crate::McpServer;
-use mcb_application::{ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface};
+use mcb_application::{
+    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
+    SearchServiceInterface, ValidationServiceInterface,
+};
+use mcb_domain::ports::providers::VcsProvider;
 use std::sync::Arc;
 
 /// Builder for MCP Server with dependency injection
@@ -16,6 +20,9 @@ pub struct McpServerBuilder {
     indexing_service: Option<Arc<dyn IndexingServiceInterface>>,
     context_service: Option<Arc<dyn ContextServiceInterface>>,
     search_service: Option<Arc<dyn SearchServiceInterface>>,
+    validation_service: Option<Arc<dyn ValidationServiceInterface>>,
+    memory_service: Option<Arc<dyn MemoryServiceInterface>>,
+    vcs_provider: Option<Arc<dyn VcsProvider>>,
 }
 
 impl McpServerBuilder {
@@ -51,6 +58,33 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the validation service
+    ///
+    /// # Arguments
+    /// * `service` - Implementation of the validation service port
+    pub fn with_validation_service(mut self, service: Arc<dyn ValidationServiceInterface>) -> Self {
+        self.validation_service = Some(service);
+        self
+    }
+
+    /// Set the memory service
+    ///
+    /// # Arguments
+    /// * `service` - Implementation of the memory service port
+    pub fn with_memory_service(mut self, service: Arc<dyn MemoryServiceInterface>) -> Self {
+        self.memory_service = Some(service);
+        self
+    }
+
+    /// Set the VCS provider
+    ///
+    /// # Arguments
+    /// * `provider` - Implementation of the VCS provider port
+    pub fn with_vcs_provider(mut self, provider: Arc<dyn VcsProvider>) -> Self {
+        self.vcs_provider = Some(provider);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -78,11 +112,23 @@ impl McpServerBuilder {
         let search_service = self
             .search_service
             .ok_or(BuilderError::MissingDependency("search service"))?;
+        let validation_service = self
+            .validation_service
+            .ok_or(BuilderError::MissingDependency("validation service"))?;
+        let memory_service = self
+            .memory_service
+            .ok_or(BuilderError::MissingDependency("memory service"))?;
+        let vcs_provider = self
+            .vcs_provider
+            .ok_or(BuilderError::MissingDependency("vcs provider"))?;
 
         Ok(McpServer::new(
             indexing_service,
             context_service,
             search_service,
+            validation_service,
+            memory_service,
+            vcs_provider,
         ))
     }
 }

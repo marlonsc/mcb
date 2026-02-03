@@ -12,6 +12,7 @@
 //! | OpenAIEmbeddingProvider | Cloud | Complete |
 //! | VoyageAIEmbeddingProvider | Cloud | Complete |
 //! | GeminiEmbeddingProvider | Cloud | Complete |
+//! | AnthropicEmbeddingProvider | Cloud | Complete (optional) |
 //! | FastEmbedProvider | Local ML | Complete (optional) |
 //!
 //! ## Provider Selection Guide
@@ -28,20 +29,23 @@
 //! - **VoyageAI**: Optimized for code embeddings
 //! - **Gemini**: Google ecosystem integration
 
+#[cfg(feature = "embedding-anthropic")]
+pub mod anthropic;
 #[cfg(feature = "embedding-fastembed")]
 pub mod fastembed;
 pub mod gemini;
-pub mod helpers;
+pub(crate) mod helpers;
 pub mod null;
 pub mod ollama;
 pub mod openai;
 pub mod voyageai;
 
 // Re-export for convenience
+#[cfg(feature = "embedding-anthropic")]
+pub use anthropic::AnthropicEmbeddingProvider;
 #[cfg(feature = "embedding-fastembed")]
 pub use fastembed::FastEmbedProvider;
 pub use gemini::GeminiEmbeddingProvider;
-pub use helpers::constructor;
 pub use null::NullEmbeddingProvider;
 pub use ollama::OllamaEmbeddingProvider;
 pub use openai::OpenAIEmbeddingProvider;

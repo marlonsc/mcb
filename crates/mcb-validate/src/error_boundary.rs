@@ -190,7 +190,7 @@ impl ErrorBoundaryValidator {
         // This is a heuristic - we look for lines with ? but no context method
         let question_mark_pattern = Regex::new(r"\?\s*;?\s*$")
             .map_err(|e| ValidationError::InvalidRegex(format!("question mark pattern: {}", e)))?;
-        let context_pattern = Regex::new(r"\.(context|with_context|map_err)\s*\(")
+        let context_pattern = Regex::new(r"\.(context|with_context|map_err|ok_or_else)\s*\(")
             .map_err(|e| ValidationError::InvalidRegex(format!("context pattern: {}", e)))?;
 
         // Files that are likely error boundary crossing points

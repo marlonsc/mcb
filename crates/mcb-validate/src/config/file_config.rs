@@ -26,6 +26,10 @@
 //! ```
 
 use crate::Severity;
+use crate::thresholds::{
+    MAX_FILE_LINES, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS, MAX_IMPL_METHODS, MAX_MATCH_ARMS,
+    MAX_TRAIT_METHODS,
+};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
@@ -283,19 +287,19 @@ pub struct QualityRulesConfig {
 }
 
 fn default_max_file_lines() -> usize {
-    500
+    MAX_FILE_LINES
 }
 
 fn default_max_function_lines() -> usize {
-    50
+    MAX_FUNCTION_LINES
 }
 
 impl Default for QualityRulesConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            max_file_lines: 500,
-            max_function_lines: 50,
+            max_file_lines: MAX_FILE_LINES,
+            max_function_lines: MAX_FUNCTION_LINES,
             allow_unwrap_in_tests: true,
             allow_expect_with_message: true,
             exempt_patterns: vec![],
@@ -362,29 +366,29 @@ pub struct SolidRulesConfig {
 }
 
 fn default_max_trait_methods() -> usize {
-    10
+    MAX_TRAIT_METHODS
 }
 
 fn default_max_impl_methods() -> usize {
-    15
+    MAX_IMPL_METHODS
 }
 
 fn default_max_match_arms() -> usize {
-    10
+    MAX_MATCH_ARMS
 }
 
 fn default_max_params() -> usize {
-    5
+    MAX_FUNCTION_PARAMS
 }
 
 impl Default for SolidRulesConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            max_trait_methods: 10,
-            max_impl_methods: 15,
-            max_match_arms: 10,
-            max_function_params: 5,
+            max_trait_methods: MAX_TRAIT_METHODS,
+            max_impl_methods: MAX_IMPL_METHODS,
+            max_match_arms: MAX_MATCH_ARMS,
+            max_function_params: MAX_FUNCTION_PARAMS,
         }
     }
 }

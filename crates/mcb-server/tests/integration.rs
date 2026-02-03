@@ -13,13 +13,17 @@ mod tools;
 mod helpers;
 
 pub use helpers::{
-    check_service_available, is_milvus_available, is_ollama_available, is_postgres_available,
-    is_redis_available,
+    check_service_available, is_ci, is_milvus_available, is_ollama_available,
+    is_postgres_available, is_redis_available,
 };
 
 // Golden acceptance tests
 #[path = "integration/golden_acceptance_integration.rs"]
 mod golden_acceptance_integration;
+
+// Golden MCP tools e2e (no ignore)
+#[path = "integration/golden_tools_e2e.rs"]
+mod golden_tools_e2e;
 
 // Browse API integration tests
 #[path = "integration/browse_api_integration.rs"]

@@ -128,6 +128,8 @@ fn test_format_indexing_success_has_is_error_false() {
         chunks_created: 250,
         files_skipped: 5,
         errors: Vec::new(),
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/project/src");
     let duration = Duration::from_secs(10);
@@ -148,6 +150,8 @@ fn test_format_indexing_success_contains_statistics() {
         chunks_created: 156,
         files_skipped: 3,
         errors: Vec::new(),
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/my/project");
     let duration = Duration::from_secs(5);
@@ -180,6 +184,8 @@ fn test_format_indexing_success_contains_path() {
         chunks_created: 50,
         files_skipped: 0,
         errors: Vec::new(),
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/test/project/path");
     let duration = Duration::from_millis(500);
@@ -202,6 +208,8 @@ fn test_format_indexing_success_contains_timing() {
         chunks_created: 500,
         files_skipped: 0,
         errors: Vec::new(),
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/project");
     let duration = Duration::from_secs(8);
@@ -224,6 +232,8 @@ fn test_format_indexing_success_contains_next_steps() {
         chunks_created: 50,
         files_skipped: 0,
         errors: Vec::new(),
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/project");
     let duration = Duration::from_secs(1);
@@ -250,6 +260,8 @@ fn test_format_indexing_success_with_errors_lists_them() {
             "Encoding error in data.csv".to_string(),
             "Unsupported format: image.png".to_string(),
         ],
+        operation_id: None,
+        status: "completed".to_string(),
     };
     let path = Path::new("/project");
     let duration = Duration::from_secs(5);

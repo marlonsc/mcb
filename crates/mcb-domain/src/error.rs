@@ -157,6 +157,54 @@ pub enum Error {
         #[source]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
+
+    /// VCS operation error
+    #[error("VCS error: {message}")]
+    Vcs {
+        /// Description of the VCS error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+
+    /// VCS repository not found
+    #[error("Repository not found: {path}")]
+    RepositoryNotFound {
+        /// Path to the repository that was not found
+        path: String,
+    },
+
+    /// VCS branch not found
+    #[error("Branch not found: {name}")]
+    BranchNotFound {
+        /// Name of the branch that was not found
+        name: String,
+    },
+
+    /// Observation storage operation error
+    #[error("Observation storage error: {message}")]
+    ObservationStorage {
+        /// Description of the observation storage error
+        message: String,
+        /// Optional source error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+
+    /// Observation not found
+    #[error("Observation not found: {id}")]
+    ObservationNotFound {
+        /// ID of the observation
+        id: String,
+    },
+
+    /// Duplicate observation
+    #[error("Duplicate observation: {content_hash}")]
+    DuplicateObservation {
+        /// Content hash of duplicate
+        content_hash: String,
+    },
 }
 
 // Basic error creation methods
@@ -353,6 +401,72 @@ impl Error {
         Self::Infrastructure {
             message: message.into(),
             source: Some(Box::new(source)),
+        }
+    }
+}
+
+// VCS error creation methods
+impl Error {
+    /// Create a VCS error
+    pub fn vcs<S: Into<String>>(message: S) -> Self {
+        Self::Vcs {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// Create a VCS error with source
+    pub fn vcs_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Vcs {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a repository not found error
+    pub fn repository_not_found<S: Into<String>>(path: S) -> Self {
+        Self::RepositoryNotFound { path: path.into() }
+    }
+
+    /// Create a branch not found error
+    pub fn branch_not_found<S: Into<String>>(name: S) -> Self {
+        Self::BranchNotFound { name: name.into() }
+    }
+}
+
+// Observation storage error creation methods
+impl Error {
+    /// Create an observation storage error
+    pub fn memory<S: Into<String>>(message: S) -> Self {
+        Self::ObservationStorage {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// Create an observation storage error with source
+    pub fn memory_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::ObservationStorage {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create an observation not found error
+    pub fn observation_not_found<S: Into<String>>(id: S) -> Self {
+        Self::ObservationNotFound { id: id.into() }
+    }
+
+    /// Create a duplicate observation error
+    pub fn duplicate_observation<S: Into<String>>(content_hash: S) -> Self {
+        Self::DuplicateObservation {
+            content_hash: content_hash.into(),
         }
     }
 }

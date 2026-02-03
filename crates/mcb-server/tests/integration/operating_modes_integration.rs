@@ -542,6 +542,8 @@ async fn create_test_mcp_server() -> McpServer {
     let vector_store_provider = ctx.vector_store_handle().get();
     let language_chunker = ctx.language_handle().get();
     let cache_provider = ctx.cache_handle().get();
+    let indexing_ops = ctx.indexing();
+    let event_bus = ctx.event_bus();
 
     // Create shared cache provider for domain services factory
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
@@ -550,14 +552,21 @@ async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
-    // Create domain services
+    let memory_repository = mcb_providers::database::create_memory_repository_in_memory()
+        .await
+        .expect("Failed to create memory database");
+
     let deps = ServiceDependencies {
+        project_id: "test-project".to_string(),
         cache: shared_cache,
         crypto,
         config,
         embedding_provider,
         vector_store_provider,
         language_chunker,
+        indexing_ops,
+        event_bus,
+        memory_repository,
     };
 
     let services = DomainServicesFactory::create_services(deps)
@@ -568,6 +577,9 @@ async fn create_test_mcp_server() -> McpServer {
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
+        .with_validation_service(services.validation_service)
+        .with_memory_service(services.memory_service)
+        .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")
 }

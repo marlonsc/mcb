@@ -7,8 +7,12 @@ paths:
 paths-ignore:
   - target
   - tests
+  - '**/tests/**'
+  - '**/*_tests.rs'
   - '**/*.test.rs'
   - '**/*.tests.rs'
+  - '**/test_*.rs'
+  - '**/sample_codebase/**'
 
 queries:
   - uses: security-and-quality

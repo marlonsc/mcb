@@ -41,7 +41,7 @@ pub struct IndexCodebaseArgs {
 /// Search filters for narrowing down search results
 #[derive(Debug, Deserialize, JsonSchema, Validate)]
 #[schemars(description = "Filters to narrow down search results")]
-pub struct SearchFilters {
+pub struct SearchFiltersInput {
     /// Filter by file extensions (e.g., [\"rs\", \"py\", \"js\"])
     #[schemars(description = "Only include files with these extensions")]
     pub file_extensions: Option<Vec<String>>,
@@ -89,7 +89,7 @@ pub struct SearchCodeArgs {
     pub extensions: Option<Vec<String>>,
     /// Optional search filters
     #[schemars(description = "Optional filters to narrow down search results")]
-    pub filters: Option<SearchFilters>,
+    pub filters: Option<SearchFiltersInput>,
     /// Optional JWT token for authentication
     #[schemars(description = "JWT token for authenticated requests")]
     pub token: Option<String>,
@@ -133,7 +133,7 @@ pub struct ClearIndexArgs {
     pub collection: String,
 }
 
-fn default_limit() -> usize {
+pub(crate) fn default_limit() -> usize {
     10
 }
 
@@ -218,3 +218,266 @@ fn validate_collection_name(name: &str) -> Result<(), validator::ValidationError
 
     Ok(())
 }
+
+/// Arguments for the validate_architecture tool
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for validating architecture rules")]
+pub struct ValidateArchitectureArgs {
+    /// Path to workspace root directory
+    #[validate(length(min = 1, message = "Path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Absolute path to the workspace root directory")]
+    pub path: String,
+
+    /// Specific validators to run (optional, default: all)
+    #[schemars(
+        description = "List of validators to run: clean_architecture, solid, quality, organization, kiss, naming, documentation, performance, async_patterns"
+    )]
+    pub validators: Option<Vec<String>>,
+
+    /// Minimum severity filter (optional, default: all)
+    #[schemars(description = "Minimum severity level to report: error, warning, or info")]
+    pub severity_filter: Option<String>,
+
+    /// Exclude patterns (optional)
+    #[schemars(description = "Glob patterns for files/directories to exclude from validation")]
+    pub exclude_patterns: Option<Vec<String>>,
+}
+
+/// Arguments for the validate_file tool
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for validating a single file")]
+pub struct ValidateFileArgs {
+    /// Path to the file to validate
+    #[validate(length(min = 1, message = "Path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Absolute path to the file to validate")]
+    pub path: String,
+
+    /// Specific validators to run (optional, default: all)
+    #[schemars(
+        description = "List of validators to run: clean_architecture, solid, quality, organization"
+    )]
+    pub validators: Option<Vec<String>>,
+}
+
+/// Arguments for the list_validators tool
+///
+/// This tool requires no parameters - it returns all available validators.
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "No parameters required - returns all available validators")]
+pub struct ListValidatorsArgs {
+    /// Reserved for future filtering capabilities
+    #[schemars(description = "Reserved for future category filtering")]
+    #[serde(default)]
+    pub category: Option<String>,
+}
+
+/// Arguments for the get_validation_rules tool
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for getting validation rules")]
+pub struct GetValidationRulesArgs {
+    /// Category filter (optional)
+    #[schemars(
+        description = "Filter rules by category: clean_architecture, solid, quality, kiss, organization"
+    )]
+    pub category: Option<String>,
+}
+
+/// Arguments for the analyze_complexity tool
+#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for analyzing code complexity")]
+pub struct AnalyzeComplexityArgs {
+    /// Path to the file to analyze
+    #[validate(length(min = 1, message = "Path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Absolute path to the file to analyze")]
+    pub path: String,
+
+    /// Include function-level metrics (optional, default: false)
+    #[schemars(description = "Whether to include per-function complexity metrics")]
+    #[serde(default)]
+    pub include_functions: bool,
+}
+
+/// Arguments for the `index_vcs_repository` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for indexing a VCS repository")]
+pub struct IndexVcsRepositoryArgs {
+    /// Path to VCS repository
+    #[validate(length(min = 1, message = "Path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Absolute path to the VCS repository")]
+    pub path: String,
+
+    /// Branches to index (default: default branch only)
+    #[serde(default)]
+    #[schemars(description = "List of branches to index (empty = default branch only)")]
+    pub branches: Vec<String>,
+
+    /// Also index commit messages
+    #[serde(default)]
+    #[schemars(description = "Whether to index commit messages for search")]
+    pub include_commits: bool,
+}
+
+/// Arguments for the `search_branch` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Parameters for searching code within a specific branch")]
+pub struct SearchBranchArgs {
+    /// Repository ID from index_vcs_repository
+    #[validate(length(min = 1, message = "repository_id cannot be empty"))]
+    #[schemars(description = "Repository ID returned by index_vcs_repository")]
+    pub repository_id: String,
+
+    /// Branch name to search
+    #[validate(length(min = 1, message = "branch cannot be empty"))]
+    #[schemars(description = "Name of the branch to search within")]
+    pub branch: String,
+
+    /// Search query
+    #[validate(length(min = 1, message = "query cannot be empty"))]
+    #[schemars(description = "The search query")]
+    pub query: String,
+
+    /// Maximum number of results
+    #[serde(default = "default_limit")]
+    #[validate(range(min = 1, max = 100))]
+    #[schemars(description = "Maximum number of results to return (default: 10)")]
+    pub limit: usize,
+}
+
+/// Arguments for the `list_repositories` tool
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "No parameters required - returns all indexed repositories")]
+pub struct ListRepositoriesArgs {}
+
+/// Arguments for the `compare_branches` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Compare two branches and return the diff")]
+pub struct CompareBranchesArgs {
+    #[validate(length(min = 1, message = "path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Path to the VCS repository")]
+    pub path: String,
+
+    #[validate(length(min = 1, message = "base_branch cannot be empty"))]
+    #[schemars(description = "Base branch for comparison")]
+    pub base_branch: String,
+
+    #[validate(length(min = 1, message = "head_branch cannot be empty"))]
+    #[schemars(description = "Head branch for comparison")]
+    pub head_branch: String,
+}
+
+/// Arguments for the `analyze_impact` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Analyze the impact of changes between two refs")]
+pub struct AnalyzeImpactArgs {
+    #[validate(length(min = 1, message = "path cannot be empty"))]
+    #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
+    #[schemars(description = "Path to the VCS repository")]
+    pub path: String,
+
+    #[validate(length(min = 1, message = "base_ref cannot be empty"))]
+    #[schemars(description = "Base ref (branch, tag, or commit)")]
+    pub base_ref: String,
+
+    #[validate(length(min = 1, message = "head_ref cannot be empty"))]
+    #[schemars(description = "Head ref (branch, tag, or commit)")]
+    pub head_ref: String,
+}
+
+/// Arguments for the `store_observation` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Store an observation in semantic memory")]
+pub struct StoreObservationArgs {
+    #[validate(length(min = 1, max = 10000, message = "Content must be 1-10000 chars"))]
+    #[schemars(description = "The observation content to store")]
+    pub content: String,
+
+    #[schemars(description = "Type of observation: code, decision, context, error, summary")]
+    pub observation_type: String,
+
+    #[serde(default)]
+    #[schemars(description = "Tags for categorizing the observation")]
+    pub tags: Vec<String>,
+
+    #[schemars(description = "Session ID to associate with this observation")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Repository ID for context")]
+    pub repo_id: Option<String>,
+
+    #[schemars(description = "File path related to this observation")]
+    pub file_path: Option<String>,
+
+    #[schemars(description = "VCS branch related to this observation")]
+    pub branch: Option<String>,
+
+    #[schemars(description = "VCS commit related to this observation")]
+    pub commit: Option<String>,
+}
+
+/// Arguments for the `search_memories` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Search observations using semantic similarity")]
+pub struct SearchMemoriesArgs {
+    #[validate(length(min = 1, max = 1000, message = "Query must be 1-1000 chars"))]
+    #[schemars(description = "Search query for semantic matching")]
+    pub query: String,
+
+    #[serde(default = "default_limit")]
+    #[validate(range(min = 1, max = 100))]
+    #[schemars(description = "Maximum number of results (default: 10)")]
+    pub limit: usize,
+
+    #[schemars(description = "Filter by tags")]
+    pub tags: Option<Vec<String>>,
+
+    #[schemars(description = "Filter by observation type")]
+    pub observation_type: Option<String>,
+
+    #[schemars(description = "Filter by session ID")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Filter by repository ID")]
+    pub repo_id: Option<String>,
+}
+
+/// Arguments for the `get_session_summary` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Get a session summary by session ID")]
+pub struct GetSessionSummaryArgs {
+    #[validate(length(min = 1, message = "session_id cannot be empty"))]
+    #[schemars(description = "The session ID to get summary for")]
+    pub session_id: String,
+}
+
+/// Arguments for the `create_session_summary` tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Create a summary of a coding session")]
+pub struct CreateSessionSummaryArgs {
+    #[validate(length(min = 1, message = "session_id cannot be empty"))]
+    #[schemars(description = "Session ID to create summary for")]
+    pub session_id: String,
+
+    #[serde(default)]
+    #[schemars(description = "Key topics discussed in the session")]
+    pub topics: Vec<String>,
+
+    #[serde(default)]
+    #[schemars(description = "Decisions made during the session")]
+    pub decisions: Vec<String>,
+
+    #[serde(default)]
+    #[schemars(description = "Next steps or action items")]
+    pub next_steps: Vec<String>,
+
+    #[serde(default)]
+    #[schemars(description = "Key files worked on during the session")]
+    pub key_files: Vec<String>,
+}
+
+pub mod memory;
+pub use memory::*;

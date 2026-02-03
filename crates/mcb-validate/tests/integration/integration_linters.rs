@@ -6,8 +6,6 @@
 //! - `LintViolation` structs are properly populated
 //! - `lint_select` codes are correctly categorized
 
-#![allow(clippy::ignore_without_reason)]
-
 use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
 use mcb_validate::{ValidatedRule, YamlRuleLoader};
 use std::path::PathBuf;

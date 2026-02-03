@@ -666,11 +666,23 @@ impl RefactoringValidator {
                     if let Some(cap) = mod_pattern.captures(line) {
                         let mod_name = cap.get(1).map_or("", |m| m.as_str());
 
-                        // Check if module file exists
+                        // Check if module file exists (Rust: same dir or parent_name/mod_name)
                         let mod_file = parent_dir.join(format!("{}.rs", mod_name));
                         let mod_dir = parent_dir.join(mod_name).join("mod.rs");
+                        let module_subdir = path.file_stem().and_then(|s| s.to_str()).map(|stem| {
+                            (
+                                parent_dir.join(stem).join(format!("{}.rs", mod_name)),
+                                parent_dir.join(stem).join(mod_name).join("mod.rs"),
+                            )
+                        });
 
-                        if !mod_file.exists() && !mod_dir.exists() {
+                        let exists = mod_file.exists()
+                            || mod_dir.exists()
+                            || module_subdir
+                                .map(|(f, d)| f.exists() || d.exists())
+                                .unwrap_or(false);
+
+                        if !exists {
                             violations.push(RefactoringViolation::DeletedModuleReference {
                                 referencing_file: path.to_path_buf(),
                                 line: line_num + 1,

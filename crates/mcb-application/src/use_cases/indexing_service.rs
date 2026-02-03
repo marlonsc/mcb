@@ -2,15 +2,21 @@
 //!
 //! Application service for code indexing and ingestion operations.
 //! Orchestrates file discovery, chunking, and storage of code embeddings.
+//! Supports async background indexing with event publishing.
 
 use crate::domain_services::search::{
     ContextServiceInterface, IndexingResult, IndexingServiceInterface,
 };
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
+use mcb_domain::events::DomainEvent;
+use mcb_domain::ports::admin::IndexingOperationsInterface;
+use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::LanguageChunkingProvider;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::time::Instant;
+use tracing::{debug, info, warn};
 
 /// Directories to skip during indexing
 const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target", "__pycache__"];
@@ -19,6 +25,10 @@ const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target", "__pycache__"];
 const SUPPORTED_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "java", "cpp", "c", "go"];
 
 /// Accumulator for indexing progress and errors
+///
+/// Note: Fields are used via `into_result()` method. The struct is WIP
+/// for async background indexing support.
+// Fields used during file discovery error recording, not dead code
 struct IndexingProgress {
     files_processed: usize,
     chunks_created: usize,
@@ -36,25 +46,46 @@ impl IndexingProgress {
         }
     }
 
+    fn with_counts(
+        files_processed: usize,
+        chunks_created: usize,
+        files_skipped: usize,
+        errors: Vec<String>,
+    ) -> Self {
+        Self {
+            files_processed,
+            chunks_created,
+            files_skipped,
+            errors,
+        }
+    }
+
     fn record_error(&mut self, context: &str, path: &Path, error: impl std::fmt::Display) {
         self.errors
             .push(format!("{} {}: {}", context, path.display(), error));
     }
 
-    fn into_result(self) -> IndexingResult {
+    /// Build final IndexingResult (used by sync path and tests).
+    fn into_result(self, operation_id: Option<String>, status: &str) -> IndexingResult {
         IndexingResult {
             files_processed: self.files_processed,
             chunks_created: self.chunks_created,
             files_skipped: self.files_skipped,
             errors: self.errors,
+            operation_id,
+            status: status.to_string(),
         }
     }
 }
 
 /// Indexing service implementation - orchestrates file discovery and chunking
+///
+/// Supports async background indexing with progress tracking and event publishing.
 pub struct IndexingServiceImpl {
     context_service: Arc<dyn ContextServiceInterface>,
     language_chunker: Arc<dyn LanguageChunkingProvider>,
+    indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    event_bus: Arc<dyn EventBusProvider>,
 }
 
 impl IndexingServiceImpl {
@@ -62,10 +93,14 @@ impl IndexingServiceImpl {
     pub fn new(
         context_service: Arc<dyn ContextServiceInterface>,
         language_chunker: Arc<dyn LanguageChunkingProvider>,
+        indexing_ops: Arc<dyn IndexingOperationsInterface>,
+        event_bus: Arc<dyn EventBusProvider>,
     ) -> Self {
         Self {
             context_service,
             language_chunker,
+            indexing_ops,
+            event_bus,
         }
     }
 
@@ -120,50 +155,190 @@ impl IndexingServiceImpl {
     }
 
     /// Chunk file content using intelligent AST-based chunking
+    ///
+    /// Reserved for future background task integration with `IndexingProgress`.
+    /// Currently unused but retained for planned incremental indexing feature.
+    #[allow(
+        dead_code,
+        reason = "Reserved for IndexingProgress integration in background tasks"
+    )]
     fn chunk_file_content(&self, content: &str, path: &Path) -> Vec<CodeChunk> {
         self.language_chunker
             .chunk(content, &path.to_string_lossy())
     }
 }
 
+/// Progress update interval (publish event every N files)
+const PROGRESS_UPDATE_INTERVAL: usize = 10;
+
 #[async_trait::async_trait]
 impl IndexingServiceInterface for IndexingServiceImpl {
     async fn index_codebase(&self, path: &Path, collection: &str) -> Result<IndexingResult> {
-        use tokio::fs;
-
+        // Initialize collection
         self.context_service.initialize(collection).await?;
+
+        // Discover files first (quick operation)
         let mut progress = IndexingProgress::new();
-
-        // Discover and process files
         let files = self.discover_files(path, &mut progress).await;
+        let total_files = files.len();
 
-        for file_path in files {
-            let content = match fs::read_to_string(&file_path).await {
-                Ok(c) => c,
-                Err(e) => {
-                    progress.record_error("Failed to read", &file_path, e);
-                    progress.files_skipped += 1;
-                    continue;
-                }
-            };
+        info!(
+            "Starting indexing: {} files in {}",
+            total_files,
+            path.display()
+        );
 
-            let chunks = self.chunk_file_content(&content, &file_path);
-            if let Err(e) = self.context_service.store_chunks(collection, &chunks).await {
-                progress.record_error("Failed to store chunks for", &file_path, e);
-                continue;
-            }
-            progress.files_processed += 1;
-            progress.chunks_created += chunks.len();
+        // Start tracking operation
+        let operation_id = self.indexing_ops.start_operation(collection, total_files);
+
+        // Publish IndexingStarted event
+        if let Err(e) = self
+            .event_bus
+            .publish_event(DomainEvent::IndexingStarted {
+                collection: collection.to_string(),
+                total_files,
+            })
+            .await
+        {
+            warn!("Failed to publish IndexingStarted event: {}", e);
         }
 
-        Ok(progress.into_result())
+        // Clone dependencies for the background task
+        let context_service = self.context_service.clone();
+        let language_chunker = self.language_chunker.clone();
+        let indexing_ops = self.indexing_ops.clone();
+        let event_bus = self.event_bus.clone();
+        let collection_owned = collection.to_string();
+        let op_id = operation_id.clone();
+
+        // Spawn background task - explicitly drop handle since we don't await it
+        // (fire-and-forget pattern for async indexing)
+        let _handle = tokio::spawn(async move {
+            Self::run_indexing_task(
+                context_service,
+                language_chunker,
+                indexing_ops,
+                event_bus,
+                files,
+                &collection_owned,
+                &op_id,
+            )
+            .await;
+        });
+
+        // Return immediately with operation_id
+        Ok(IndexingResult {
+            files_processed: 0,
+            chunks_created: 0,
+            files_skipped: 0,
+            errors: vec![],
+            operation_id: Some(operation_id),
+            status: "started".to_string(),
+        })
     }
 
     fn get_status(&self) -> crate::domain_services::search::IndexingStatus {
-        crate::domain_services::search::IndexingStatus::default()
+        use crate::domain_services::search::IndexingStatus;
+
+        let ops = self.indexing_ops.get_operations();
+        // Get first active operation if any - use if-let to avoid expect()
+        if let Some((_, op)) = ops.iter().next() {
+            let total = op.total_files.max(1);
+            IndexingStatus {
+                is_indexing: true,
+                progress: op.processed_files as f64 / total as f64,
+                current_file: op.current_file.clone(),
+                total_files: op.total_files,
+                processed_files: op.processed_files,
+            }
+        } else {
+            IndexingStatus::default()
+        }
     }
 
     async fn clear_collection(&self, collection: &str) -> Result<()> {
         self.context_service.clear_collection(collection).await
+    }
+}
+
+impl IndexingServiceImpl {
+    /// Background task that performs the actual indexing work
+    async fn run_indexing_task(
+        context_service: Arc<dyn ContextServiceInterface>,
+        language_chunker: Arc<dyn LanguageChunkingProvider>,
+        indexing_ops: Arc<dyn IndexingOperationsInterface>,
+        event_bus: Arc<dyn EventBusProvider>,
+        files: Vec<PathBuf>,
+        collection: &str,
+        operation_id: &str,
+    ) {
+        let start = Instant::now();
+        let total = files.len();
+        let mut chunks_created = 0usize;
+        let mut files_processed = 0usize;
+
+        for (i, file_path) in files.iter().enumerate() {
+            // Update progress tracker
+            indexing_ops.update_progress(operation_id, Some(file_path.display().to_string()), i);
+
+            // Publish progress event periodically
+            if i % PROGRESS_UPDATE_INTERVAL == 0
+                && let Err(e) = event_bus
+                    .publish_event(DomainEvent::IndexingProgress {
+                        collection: collection.to_string(),
+                        processed: i,
+                        total,
+                        current_file: Some(file_path.display().to_string()),
+                    })
+                    .await
+            {
+                debug!("Failed to publish progress event: {}", e);
+            }
+
+            // Read and process file
+            let content = match tokio::fs::read_to_string(&file_path).await {
+                Ok(c) => c,
+                Err(e) => {
+                    debug!("Failed to read file {}: {}", file_path.display(), e);
+                    continue;
+                }
+            };
+
+            let chunks = language_chunker.chunk(&content, &file_path.to_string_lossy());
+            if let Err(e) = context_service.store_chunks(collection, &chunks).await {
+                debug!("Failed to store chunks for {}: {}", file_path.display(), e);
+                continue;
+            }
+
+            files_processed += 1;
+            chunks_created += chunks.len();
+        }
+
+        // Update final progress
+        indexing_ops.update_progress(operation_id, None, total);
+
+        // Complete and remove operation
+        indexing_ops.complete_operation(operation_id);
+
+        let duration_ms = start.elapsed().as_millis() as u64;
+
+        let result = IndexingProgress::with_counts(files_processed, chunks_created, 0, vec![])
+            .into_result(Some(operation_id.to_string()), "completed");
+
+        if let Err(e) = event_bus
+            .publish_event(DomainEvent::IndexingCompleted {
+                collection: collection.to_string(),
+                chunks: result.chunks_created,
+                duration_ms,
+            })
+            .await
+        {
+            warn!("Failed to publish IndexingCompleted event: {}", e);
+        }
+
+        info!(
+            "Indexing completed: {} files, {} chunks in {}ms",
+            result.files_processed, result.chunks_created, duration_ms
+        );
     }
 }

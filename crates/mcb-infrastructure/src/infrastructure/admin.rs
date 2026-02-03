@@ -191,8 +191,8 @@ impl DefaultIndexingOperations {
         Arc::new(Self::new())
     }
 
-    /// Start tracking a new indexing operation
-    pub fn start_operation(&self, collection: &str, total_files: usize) -> String {
+    /// Start tracking a new indexing operation (inherent impl; trait delegates here).
+    pub fn start_operation_internal(&self, collection: &str, total_files: usize) -> String {
         let id = Uuid::new_v4().to_string();
         let operation = IndexingOperation {
             id: id.clone(),
@@ -248,6 +248,18 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
             .map(|entry| (entry.key().clone(), entry.value().clone()))
             .collect()
     }
+
+    fn start_operation(&self, collection: &str, total_files: usize) -> String {
+        self.start_operation_internal(collection, total_files)
+    }
+
+    fn update_progress(&self, operation_id: &str, current_file: Option<String>, processed: usize) {
+        DefaultIndexingOperations::update_progress(self, operation_id, current_file, processed);
+    }
+
+    fn complete_operation(&self, operation_id: &str) {
+        DefaultIndexingOperations::complete_operation(self, operation_id);
+    }
 }
 
 // ============================================================================
@@ -261,6 +273,23 @@ pub struct NullIndexingOperations;
 impl IndexingOperationsInterface for NullIndexingOperations {
     fn get_operations(&self) -> HashMap<String, IndexingOperation> {
         HashMap::new()
+    }
+
+    fn start_operation(&self, _collection: &str, _total_files: usize) -> String {
+        String::new() // no-op
+    }
+
+    fn update_progress(
+        &self,
+        _operation_id: &str,
+        _current_file: Option<String>,
+        _processed: usize,
+    ) {
+        // no-op
+    }
+
+    fn complete_operation(&self, _operation_id: &str) {
+        // no-op
     }
 }
 

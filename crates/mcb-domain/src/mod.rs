@@ -53,6 +53,10 @@ pub mod events;
 pub mod ports;
 /// Repository interfaces
 pub mod repositories;
+/// Generic schema definitions for persistence (backend-agnostic model)
+pub mod schema;
+/// Common utilities
+pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
 
@@ -61,4 +65,9 @@ pub use constants::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
+pub use schema::{
+    ForeignKeyDef, MemorySchema, MemorySchemaDdlGenerator, ProjectSchema, SchemaDdlGenerator,
+    UniqueConstraintDef,
+};
+pub use utils::{compute_content_hash, project_type, vcs_context};
 pub use value_objects::*;

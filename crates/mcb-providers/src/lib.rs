@@ -38,7 +38,7 @@
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};
 pub use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider,
+    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
     VectorStoreProvider,
 };
 
@@ -99,3 +99,19 @@ pub mod hybrid_search;
 // Re-export hybrid search providers when feature is enabled
 #[cfg(feature = "hybrid-search")]
 pub use hybrid_search::{HybridSearchEngine, NullHybridSearchProvider};
+
+/// Database providers (memory repository backends)
+///
+/// Each backend (SQLite, PostgreSQL, MySQL) has its own submodule and
+/// implements the generic schema DDL in its dialect.
+#[cfg(feature = "memory-sqlite")]
+pub mod database;
+
+#[cfg(feature = "memory-sqlite")]
+pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+
+/// Git-related providers for repository operations
+///
+/// Provides project type detection (Cargo, npm, Python, Go, Maven) and
+/// submodule discovery with recursive traversal.
+pub mod git;

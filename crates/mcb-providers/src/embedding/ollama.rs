@@ -187,6 +187,8 @@ use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 fn ollama_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
+    use super::helpers::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
+
     let base_url = config
         .base_url
         .clone()
@@ -195,16 +197,12 @@ fn ollama_factory(
         .model
         .clone()
         .unwrap_or_else(|| "nomic-embed-text".to_string());
-    let timeout = Duration::from_secs(30);
-    let http_client = Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+    let http_client = create_default_client()?;
 
     Ok(Arc::new(OllamaEmbeddingProvider::new(
         base_url,
         model,
-        timeout,
+        DEFAULT_HTTP_TIMEOUT,
         http_client,
     )))
 }

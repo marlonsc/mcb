@@ -118,10 +118,40 @@ pub struct IndexingOperation {
 ///             id, op.processed_files, op.total_files, op.collection);
 ///     }
 /// }
+///
+/// fn start_indexing(tracker: Arc<dyn IndexingOperationsInterface>) {
+///     // Start tracking a new operation
+///     let operation_id = tracker.start_operation("my-collection", 100);
+///
+///     // Update progress as files are processed
+///     tracker.update_progress(&operation_id, Some("src/main.rs".to_string()), 50);
+///
+///     // Mark operation complete when done
+///     tracker.complete_operation(&operation_id);
+/// }
 /// ```
 pub trait IndexingOperationsInterface: Send + Sync {
     /// Get the map of ongoing indexing operations
     fn get_operations(&self) -> HashMap<String, IndexingOperation>;
+
+    /// Start tracking a new indexing operation
+    ///
+    /// Returns a unique operation ID that can be used to update progress
+    /// and complete the operation.
+    fn start_operation(&self, collection: &str, total_files: usize) -> String;
+
+    /// Update progress for an ongoing operation
+    ///
+    /// # Arguments
+    /// * `operation_id` - The ID returned by `start_operation`
+    /// * `current_file` - Optional path of the file currently being processed
+    /// * `processed` - Number of files processed so far
+    fn update_progress(&self, operation_id: &str, current_file: Option<String>, processed: usize);
+
+    /// Complete and remove an operation from tracking
+    ///
+    /// After calling this, the operation will no longer appear in `get_operations()`.
+    fn complete_operation(&self, operation_id: &str);
 }
 
 // ============================================================================
@@ -268,4 +298,142 @@ pub struct ExtendedHealthResponse {
     pub dependencies: Vec<DependencyHealthCheck>,
     /// Overall dependencies health status
     pub dependencies_status: DependencyHealth,
+}
+
+// ============================================================================
+// Validation Operations Types
+// ============================================================================
+
+/// Tracks ongoing validation operations
+#[derive(Debug, Clone)]
+pub struct ValidationOperation {
+    /// Operation ID
+    pub id: String,
+    /// Workspace being validated
+    pub workspace: String,
+    /// Validators being run
+    pub validators: Vec<String>,
+    /// Current file being processed
+    pub current_file: Option<String>,
+    /// Total files to process
+    pub total_files: usize,
+    /// Files processed so far
+    pub processed_files: usize,
+    /// Operation start timestamp (Unix timestamp)
+    pub start_timestamp: u64,
+    /// Validation result (set when complete)
+    pub result: Option<ValidationOperationResult>,
+}
+
+/// Result of a completed validation operation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidationOperationResult {
+    /// Total violations found
+    pub total_violations: usize,
+    /// Number of errors
+    pub errors: usize,
+    /// Number of warnings
+    pub warnings: usize,
+    /// Number of infos
+    pub infos: usize,
+    /// Whether validation passed (no errors)
+    pub passed: bool,
+    /// Duration in milliseconds
+    pub duration_ms: u64,
+}
+
+// ============================================================================
+// Validation Operations Interface
+// ============================================================================
+
+/// Interface for validation operations tracking
+///
+/// Domain port for tracking ongoing validation operations, following the
+/// same pattern as [`IndexingOperationsInterface`].
+///
+/// # Example
+///
+/// ```no_run
+/// use mcb_domain::ports::admin::ValidationOperationsInterface;
+/// use std::sync::Arc;
+///
+/// fn show_operations(tracker: Arc<dyn ValidationOperationsInterface>) {
+///     // Get all active validation operations
+///     let operations = tracker.get_operations();
+///     for (id, op) in operations {
+///         println!("Operation {}: {}/{} files in {}",
+///             id, op.processed_files, op.total_files, op.workspace);
+///     }
+/// }
+///
+/// fn start_validation(tracker: Arc<dyn ValidationOperationsInterface>) {
+///     // Start tracking a new operation
+///     let validators = ["clean_architecture", "solid"].map(String::from);
+///     let operation_id = tracker.start_operation(".", &validators);
+///
+///     // Update progress as files are processed
+///     tracker.update_progress(&operation_id, Some("src/main.rs".to_string()), 50, 100);
+///
+///     // Mark operation complete when done
+///     use mcb_domain::ports::admin::ValidationOperationResult;
+///     let result = ValidationOperationResult {
+///         total_violations: 5,
+///         errors: 1,
+///         warnings: 3,
+///         infos: 1,
+///         passed: false,
+///         duration_ms: 1500,
+///     };
+///     tracker.complete_operation(&operation_id, result);
+/// }
+/// ```
+pub trait ValidationOperationsInterface: Send + Sync {
+    /// Get the map of ongoing validation operations
+    fn get_operations(&self) -> HashMap<String, ValidationOperation>;
+
+    /// Get a specific operation by ID
+    fn get_operation(&self, operation_id: &str) -> Option<ValidationOperation>;
+
+    /// Start tracking a new validation operation
+    ///
+    /// # Arguments
+    /// * `workspace` - Path to workspace being validated
+    /// * `validators` - List of validators being run
+    ///
+    /// # Returns
+    /// A unique operation ID that can be used to update progress
+    fn start_operation(&self, workspace: &str, validators: &[String]) -> String;
+
+    /// Update progress for an ongoing operation
+    ///
+    /// # Arguments
+    /// * `operation_id` - The ID returned by `start_operation`
+    /// * `current_file` - Optional path of the file currently being processed
+    /// * `processed` - Number of files processed so far
+    /// * `total` - Total number of files to process
+    fn update_progress(
+        &self,
+        operation_id: &str,
+        current_file: Option<String>,
+        processed: usize,
+        total: usize,
+    );
+
+    /// Complete an operation with its result
+    ///
+    /// After calling this, the operation status changes to complete
+    /// and the result is stored for retrieval.
+    ///
+    /// # Arguments
+    /// * `operation_id` - The operation ID
+    /// * `result` - The validation result
+    fn complete_operation(&self, operation_id: &str, result: ValidationOperationResult);
+
+    /// Cancel an ongoing operation
+    ///
+    /// Removes the operation from tracking without storing a result.
+    fn cancel_operation(&self, operation_id: &str);
+
+    /// Check if an operation is still in progress
+    fn is_in_progress(&self, operation_id: &str) -> bool;
 }

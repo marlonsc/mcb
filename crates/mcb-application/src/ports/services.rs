@@ -53,7 +53,7 @@ pub trait ContextServiceInterface: Send + Sync {
 
 /// Search Service Interface
 ///
-/// Simplified search interface for code queries.
+/// Provides semantic code search capabilities.
 #[async_trait]
 pub trait SearchServiceInterface: Send + Sync {
     /// Search for code similar to the query
@@ -63,6 +63,26 @@ pub trait SearchServiceInterface: Send + Sync {
         query: &str,
         limit: usize,
     ) -> Result<Vec<SearchResult>>;
+
+    /// Search with optional filters for more refined results
+    async fn search_with_filters(
+        &self,
+        collection: &str,
+        query: &str,
+        limit: usize,
+        filters: Option<&SearchFilters>,
+    ) -> Result<Vec<SearchResult>>;
+}
+
+/// Filters for search queries
+#[derive(Debug, Clone, Default)]
+pub struct SearchFilters {
+    /// Filter by file extension (e.g., "rs", "py")
+    pub file_extensions: Option<Vec<String>>,
+    /// Filter by programming language
+    pub languages: Option<Vec<String>>,
+    /// Minimum relevance score threshold (0.0 to 1.0)
+    pub min_score: Option<f32>,
 }
 
 // ============================================================================
@@ -95,6 +115,10 @@ pub struct IndexingResult {
     pub files_skipped: usize,
     /// Any errors encountered (non-fatal)
     pub errors: Vec<String>,
+    /// Operation ID for async tracking (None for synchronous operations)
+    pub operation_id: Option<String>,
+    /// Status string: "started", "completed", "failed"
+    pub status: String,
 }
 
 /// Current indexing status
@@ -168,4 +192,96 @@ pub struct IndexingStats {
     pub last_indexed_at: Option<i64>,
     /// Average indexing throughput (chunks per second)
     pub avg_throughput: f64,
+}
+
+// ============================================================================
+// Validation Service Interface
+// ============================================================================
+
+// Re-export from domain layer (Clean Architecture)
+pub use mcb_domain::ports::services::{
+    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
+};
+
+// ============================================================================
+// Memory Service Interface
+// ============================================================================
+
+pub use mcb_domain::entities::memory::{
+    MemoryFilter, MemorySearchResult, Observation, ObservationType, SessionSummary,
+};
+
+/// Memory Service Interface
+///
+/// Provides observation storage and retrieval with semantic search capabilities.
+/// Supports session-based memory organization and content deduplication.
+#[async_trait]
+pub trait MemoryServiceInterface: Send + Sync {
+    /// Store an observation with optional embedding for semantic search.
+    ///
+    /// Returns `(observation_id, deduplicated)`. If duplicate content is detected (same hash),
+    /// returns the existing observation's ID and `deduplicated: true`.
+    async fn store_observation(
+        &self,
+        content: String,
+        observation_type: ObservationType,
+        tags: Vec<String>,
+        metadata: mcb_domain::entities::memory::ObservationMetadata,
+    ) -> Result<(String, bool)>;
+
+    /// Search memories using semantic similarity.
+    ///
+    /// Returns observations ranked by similarity to the query embedding.
+    async fn search_memories(
+        &self,
+        query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<MemorySearchResult>>;
+
+    /// Get a session summary by session ID.
+    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>>;
+
+    /// Create or update a session summary.
+    ///
+    /// Summarizes the key topics, decisions, and next steps from a session.
+    async fn create_session_summary(
+        &self,
+        session_id: String,
+        topics: Vec<String>,
+        decisions: Vec<String>,
+        next_steps: Vec<String>,
+        key_files: Vec<String>,
+    ) -> Result<String>;
+
+    /// Get an observation by ID.
+    async fn get_observation(&self, id: &str) -> Result<Option<Observation>>;
+
+    /// Generate embedding for content (for external use).
+    async fn embed_content(&self, content: &str) -> Result<Embedding>;
+
+    /// Get observations in timeline order around an anchor (for progressive disclosure).
+    async fn get_timeline(
+        &self,
+        anchor_id: &str,
+        before: usize,
+        after: usize,
+        filter: Option<MemoryFilter>,
+    ) -> Result<Vec<Observation>>;
+
+    /// Get multiple observations by IDs (for progressive disclosure step 3).
+    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>>;
+
+    /// Token-efficient memory search - returns index only (no full content).
+    ///
+    /// This is Step 1 of the 3-layer workflow (search -> timeline -> details).
+    /// Returns lightweight index entries with IDs, types, tags, scores, and brief previews.
+    /// Use memory_get_observations with the returned IDs for full details.
+    async fn memory_search(
+        &self,
+        query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<mcb_domain::entities::memory::MemorySearchIndex>>;
 }

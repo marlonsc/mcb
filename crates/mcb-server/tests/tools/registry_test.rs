@@ -5,13 +5,30 @@ use mcb_server::tools::registry::create_tool_list;
 #[test]
 fn test_tool_definitions_create_valid_tools() {
     let tools = create_tool_list().expect("should create tool list");
-    assert_eq!(tools.len(), 4);
+    assert_eq!(tools.len(), 17);
 
     let names: Vec<_> = tools.iter().map(|t| t.name.as_ref()).collect();
+    // Core tools
     assert!(names.contains(&"index_codebase"));
     assert!(names.contains(&"search_code"));
     assert!(names.contains(&"get_indexing_status"));
     assert!(names.contains(&"clear_index"));
+    // Validation tools
+    assert!(names.contains(&"validate_architecture"));
+    assert!(names.contains(&"validate_file"));
+    assert!(names.contains(&"list_validators"));
+    assert!(names.contains(&"get_validation_rules"));
+    assert!(names.contains(&"analyze_complexity"));
+    // Memory tools
+    assert!(names.contains(&"store_observation"));
+    assert!(names.contains(&"search_memories"));
+    assert!(names.contains(&"get_session_summary"));
+    assert!(names.contains(&"create_session_summary"));
+    // Memory progressive disclosure (memory_ prefix)
+    assert!(names.contains(&"memory_timeline"));
+    assert!(names.contains(&"memory_get_observations"));
+    assert!(names.contains(&"memory_inject_context"));
+    assert!(names.contains(&"memory_search"));
 }
 
 #[test]

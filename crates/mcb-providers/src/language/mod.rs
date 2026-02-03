@@ -31,8 +31,10 @@
 /// Common utilities and base types for language processors
 pub mod common;
 
-/// Language detection and helper utilities
-pub mod helpers;
+/// Language detection and utility functions
+///
+/// Part of the public API - provides language identification and configuration.
+pub mod detection;
 
 /// Intelligent chunking engine using tree-sitter
 pub mod engine;
@@ -66,8 +68,10 @@ pub use ruby::RubyProcessor;
 pub use rust::RustProcessor;
 pub use swift::SwiftProcessor;
 
-// Re-export engine and helpers
+// Re-export engine
 pub use engine::{IntelligentChunker, UniversalLanguageChunkingProvider};
-pub use helpers::{
+
+// Re-export detection functions
+pub use detection::{
     get_chunk_size, is_language_supported, language_from_extension, supported_languages,
 };

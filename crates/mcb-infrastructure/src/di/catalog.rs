@@ -37,6 +37,7 @@ use crate::di::provider_resolvers::{
     VectorStoreProviderResolver,
 };
 use crate::infrastructure::{
+    PrometheusPerformanceMetrics,
     admin::{NullIndexingOperations, NullPerformanceMetrics},
     auth::NullAuthService,
     events::TokioBroadcastEventBus,
@@ -46,6 +47,7 @@ use crate::infrastructure::{
     sync::NullSyncProvider,
 };
 use dill::{Catalog, CatalogBuilder};
+use mcb_application::decorators::InstrumentedEmbeddingProvider;
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::{
     IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
@@ -54,13 +56,11 @@ use mcb_domain::ports::infrastructure::{
     AuthServiceInterface, EventBusProvider, SnapshotProvider, SyncProvider,
     SystemMetricsCollectorInterface,
 };
-// Provider traits imported for documentation and future use
-#[allow(unused_imports)]
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, warn};
 
 /// Build the dill Catalog with all application services
 ///
@@ -103,19 +103,20 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // Resolve initial providers from config
     // ========================================================================
 
-    let embedding_provider = embedding_resolver
-        .resolve_from_config()
-        .map_err(|e| mcb_domain::error::Error::configuration(format!("Embedding: {e}")))?;
+    let embedding_provider: Arc<dyn EmbeddingProvider> =
+        embedding_resolver
+            .resolve_from_config()
+            .map_err(|e| mcb_domain::error::Error::configuration(format!("Embedding: {e}")))?;
 
-    let vector_store_provider = vector_store_resolver
+    let vector_store_provider: Arc<dyn VectorStoreProvider> = vector_store_resolver
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("VectorStore: {e}")))?;
 
-    let cache_provider = cache_resolver
+    let cache_provider: Arc<dyn CacheProvider> = cache_resolver
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("Cache: {e}")))?;
 
-    let language_provider = language_resolver
+    let language_provider: Arc<dyn LanguageChunkingProvider> = language_resolver
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("Language: {e}")))?;
 
@@ -128,10 +129,48 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     );
 
     // ========================================================================
+    // Create Infrastructure Services (needed before handles for decorator)
+    // ========================================================================
+
+    let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
+        if config.system.infrastructure.metrics.enabled {
+            match PrometheusPerformanceMetrics::try_new() {
+                Ok(metrics) => {
+                    info!("Prometheus metrics initialized successfully");
+                    Arc::new(metrics)
+                }
+                Err(e) => {
+                    warn!(
+                        "Failed to initialize Prometheus metrics: {}, falling back to null metrics",
+                        e
+                    );
+                    Arc::new(NullPerformanceMetrics)
+                }
+            }
+        } else {
+            Arc::new(NullPerformanceMetrics)
+        };
+
+    // ========================================================================
+    // Optionally wrap embedding provider with instrumentation (SOLID O/C)
+    // ========================================================================
+
+    let final_embedding_provider: Arc<dyn EmbeddingProvider> =
+        if config.system.infrastructure.metrics.enabled {
+            info!("Metrics enabled: wrapping embedding provider with instrumentation");
+            Arc::new(InstrumentedEmbeddingProvider::new(
+                embedding_provider.clone(),
+                performance_metrics.clone(),
+            ))
+        } else {
+            embedding_provider.clone()
+        };
+
+    // ========================================================================
     // Create Handles (RwLock wrappers for runtime switching)
     // ========================================================================
 
-    let embedding_handle = Arc::new(EmbeddingProviderHandle::new(embedding_provider.clone()));
+    let embedding_handle = Arc::new(EmbeddingProviderHandle::new(final_embedding_provider));
     let vector_store_handle = Arc::new(VectorStoreProviderHandle::new(
         vector_store_provider.clone(),
     ));
@@ -163,7 +202,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     info!("Created admin services");
 
     // ========================================================================
-    // Create Infrastructure Services (null implementations by default)
+    // Create Remaining Infrastructure Services
     // ========================================================================
 
     let auth_service: Arc<dyn AuthServiceInterface> = Arc::new(NullAuthService::new());
@@ -174,8 +213,6 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     let snapshot_provider: Arc<dyn SnapshotProvider> = Arc::new(NullSnapshotProvider::new());
     let shutdown_coordinator: Arc<dyn ShutdownCoordinator> =
         Arc::new(DefaultShutdownCoordinator::new());
-    let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
-        Arc::new(NullPerformanceMetrics);
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
         Arc::new(NullIndexingOperations);
 

@@ -1,6 +1,6 @@
 [package]
 name = "mcb-infrastructure"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 license = "MIT"
@@ -155,16 +155,24 @@ hmac = { workspace = true }
 # Logging appenders
 tracing-appender = { workspace = true }
 
+# SQLite for file hash storage (Phase 3: Incremental indexing)
+sqlx = { workspace = true }
+
 # Benchmarking
 criterion = { workspace = true }
 
 # Links providers into linkme distributed slices
 mcb-providers = { path = "../mcb-providers" }
 
+# Architecture validation (optional, for MCP tool integration)
+mcb-validate = { path = "../mcb-validate", optional = true }
+
 [features]
-default = []
+default = ["validation"]
 # Export internal test utilities (null implementations) for integration tests
 test-utils = []
+# Enable architecture validation via mcb-validate
+validation = ["mcb-validate"]
 
 [dev-dependencies]
 tempfile = "3.10"

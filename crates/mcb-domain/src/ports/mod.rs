@@ -16,6 +16,7 @@
 //! - **admin** - Administrative interfaces for system management and monitoring
 //! - **infrastructure/** - Infrastructure services (sync, snapshots, auth, events)
 //! - **providers/** - External service provider ports (embeddings, vector stores, search)
+//! - **services** - Application service ports (validation, etc.)
 
 /// Administrative interfaces for system management and monitoring
 pub mod admin;
@@ -23,22 +24,32 @@ pub mod admin;
 pub mod infrastructure;
 /// External service provider ports
 pub mod providers;
+/// Repository ports for data persistence
+pub mod repositories;
+/// Application service ports
+pub mod services;
 
 // Re-export commonly used port traits for convenience
 pub use admin::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
     IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsData,
-    PerformanceMetricsInterface, PortServiceState, ShutdownCoordinator,
+    PerformanceMetricsInterface, PortServiceState, ShutdownCoordinator, ValidationOperation,
+    ValidationOperationResult, ValidationOperationsInterface,
 };
 pub use infrastructure::{
-    AuthServiceInterface, DomainEventStream, EventBusProvider, LockGuard, LockProvider,
-    ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, SnapshotProvider,
-    StateStoreProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult, SystemMetrics,
-    SystemMetricsCollectorInterface,
+    AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, LockGuard,
+    LockProvider, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
+    SnapshotProvider, SqlParam, SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions,
+    SyncProvider, SyncResult, SystemMetrics, SystemMetricsCollectorInterface,
 };
 pub use providers::{
     CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats, CryptoProvider,
-    EmbeddingProvider, EncryptedData, HybridSearchProvider, HybridSearchResult,
-    LanguageChunkingProvider, ProviderConfigManagerInterface, VectorStoreAdmin,
-    VectorStoreProvider,
+    EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics, HalsteadMetrics,
+    HybridSearchProvider, HybridSearchResult, LanguageChunkingProvider, MetricsAnalysisProvider,
+    NullMetricsProvider, NullValidationProvider, ProviderConfigManagerInterface, ValidationOptions,
+    ValidationProvider, ValidatorInfo, VectorStoreAdmin, VectorStoreProvider,
+};
+pub use repositories::MemoryRepository;
+pub use services::{
+    NullValidationService, ValidationReport, ValidationServiceInterface, ViolationEntry,
 };

@@ -108,6 +108,23 @@ impl IndexingOperationsInterface for MockIndexing {
     fn get_operations(&self) -> HashMap<String, IndexingOperation> {
         HashMap::new()
     }
+
+    fn start_operation(&self, _collection: &str, _total_files: usize) -> String {
+        "mock-operation-id".to_string()
+    }
+
+    fn update_progress(
+        &self,
+        _operation_id: &str,
+        _current_file: Option<String>,
+        _processed: usize,
+    ) {
+        // No-op for mock
+    }
+
+    fn complete_operation(&self, _operation_id: &str) {
+        // No-op for mock
+    }
 }
 
 /// Mock event bus

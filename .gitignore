@@ -8,8 +8,25 @@ exports/
 .idea/
 *.swp
 *.swo
+
 # Private directories
 thoughts/
+
+# AI/Planning data (not for version control)
+.claude/
+.planning/
+.beads/
+.oc-memory/
+.sisyphus/
+.aider*
+GEMINI.md
+AGENTS.md
+
+# Oracle reference data
+oracle/
+.oracle/
+**/oracle/
+**/.oracle/
 
 # Docs exclusions (plans, archive, backups)
 docs/plans/
@@ -17,7 +34,6 @@ docs/archive/
 docs/**/*backup*
 docs/**/*bak*
 docs/**/*old*
-.claude/
 
 # OS files
 .DS_Store
@@ -103,3 +119,5 @@ fuzz/corpus/
 benchmark_results/.cleanup-dead-code/
 # Reference legacy code (extracted from git history, not for commit)
 reference/
+.aider*
+*.rlib

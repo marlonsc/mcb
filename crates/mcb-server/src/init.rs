@@ -219,14 +219,34 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
     let crypto = create_crypto_service(&config).await?;
 
-    // Create domain services with providers
+    let indexing_ops = app_context.indexing();
+    let event_bus = app_context.event_bus();
+
+    let memory_db_path = dirs::data_local_dir()
+        .or_else(|| std::env::current_dir().ok())
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join(".mcb")
+        .join("memory.db");
+    let memory_repository = mcb_providers::database::create_memory_repository(memory_db_path)
+        .await
+        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
+
+    let project_id = std::env::current_dir()
+        .ok()
+        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+        .unwrap_or_else(|| "default".to_string());
+
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
+        project_id,
         cache: shared_cache,
         crypto,
         config,
         embedding_provider,
         vector_store_provider,
         language_chunker,
+        indexing_ops,
+        event_bus,
+        memory_repository,
     };
     let services =
         mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(
@@ -238,6 +258,9 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
+        .with_validation_service(services.validation_service)
+        .with_memory_service(services.memory_service)
+        .with_vcs_provider(services.vcs_provider)
         .try_build()
         .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
 }

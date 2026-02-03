@@ -8,7 +8,13 @@ use rmcp::model::Tool;
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
+use crate::args::{
+    AnalyzeComplexityArgs, ClearIndexArgs, CreateSessionSummaryArgs, GetIndexingStatusArgs,
+    GetSessionSummaryArgs, GetValidationRulesArgs, IndexCodebaseArgs, ListValidatorsArgs,
+    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemorySearchArgs, MemoryTimelineArgs,
+    SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs, ValidateArchitectureArgs,
+    ValidateFileArgs,
+};
 
 /// Tool definitions for MCP protocol
 pub struct ToolDefinitions;
@@ -50,7 +56,119 @@ impl ToolDefinitions {
         )
     }
 
-    /// Create a tool from schema
+    /// Get the validate_architecture tool definition
+    pub fn validate_architecture() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "validate_architecture",
+            "Run architecture validation rules on a codebase to check for Clean Architecture, SOLID, and other code quality violations",
+            schemars::schema_for!(ValidateArchitectureArgs),
+        )
+    }
+
+    /// Get the validate_file tool definition
+    pub fn validate_file() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "validate_file",
+            "Validate a single file against architecture rules",
+            schemars::schema_for!(ValidateFileArgs),
+        )
+    }
+
+    /// Get the list_validators tool definition
+    pub fn list_validators() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "list_validators",
+            "List all available validators with their descriptions",
+            schemars::schema_for!(ListValidatorsArgs),
+        )
+    }
+
+    /// Get the get_validation_rules tool definition
+    pub fn get_validation_rules() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "get_validation_rules",
+            "Get available validation rules, optionally filtered by category",
+            schemars::schema_for!(GetValidationRulesArgs),
+        )
+    }
+
+    /// Get the analyze_complexity tool definition
+    pub fn analyze_complexity() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "analyze_complexity",
+            "Analyze code complexity metrics (cyclomatic, cognitive, maintainability) for a file",
+            schemars::schema_for!(AnalyzeComplexityArgs),
+        )
+    }
+
+    /// Get the store_observation tool definition
+    pub fn store_observation() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "store_observation",
+            "Store an observation in the semantic memory",
+            schemars::schema_for!(StoreObservationArgs),
+        )
+    }
+
+    /// Get the search_memories tool definition
+    pub fn search_memories() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "search_memories",
+            "Search observations in semantic memory using a natural language query",
+            schemars::schema_for!(SearchMemoriesArgs),
+        )
+    }
+
+    /// Get the get_session_summary tool definition
+    pub fn get_session_summary() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "get_session_summary",
+            "Retrieve a summary for a specific session ID",
+            schemars::schema_for!(GetSessionSummaryArgs),
+        )
+    }
+
+    /// Get the create_session_summary tool definition
+    pub fn create_session_summary() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "create_session_summary",
+            "Create or update a summary for a coding session",
+            schemars::schema_for!(CreateSessionSummaryArgs),
+        )
+    }
+
+    pub fn memory_timeline() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_timeline",
+            "[EXPERIMENTAL] Step 2 of progressive disclosure: Get context around an anchor observation",
+            schemars::schema_for!(MemoryTimelineArgs),
+        )
+    }
+
+    pub fn memory_get_observations() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_get_observations",
+            "[EXPERIMENTAL] Step 3 of progressive disclosure: Fetch full details for specific observation IDs",
+            schemars::schema_for!(MemoryGetObservationsArgs),
+        )
+    }
+
+    pub fn memory_inject_context() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_inject_context",
+            "[EXPERIMENTAL] Generate context bundle for session start injection",
+            schemars::schema_for!(MemoryInjectContextArgs),
+        )
+    }
+
+    pub fn memory_search() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_search",
+            "[EXPERIMENTAL] Step 1 of progressive disclosure: Token-efficient memory search (index only). Use with memory_get_observations for full details.",
+            schemars::schema_for!(MemorySearchArgs),
+        )
+    }
+
     fn create_tool(
         name: &'static str,
         description: &'static str,
@@ -88,5 +206,18 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::search_code()?,
         ToolDefinitions::get_indexing_status()?,
         ToolDefinitions::clear_index()?,
+        ToolDefinitions::validate_architecture()?,
+        ToolDefinitions::validate_file()?,
+        ToolDefinitions::list_validators()?,
+        ToolDefinitions::get_validation_rules()?,
+        ToolDefinitions::analyze_complexity()?,
+        ToolDefinitions::store_observation()?,
+        ToolDefinitions::search_memories()?,
+        ToolDefinitions::get_session_summary()?,
+        ToolDefinitions::create_session_summary()?,
+        ToolDefinitions::memory_timeline()?,
+        ToolDefinitions::memory_get_observations()?,
+        ToolDefinitions::memory_inject_context()?,
+        ToolDefinitions::memory_search()?,
     ])
 }

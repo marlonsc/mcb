@@ -111,9 +111,16 @@ impl HttpTransport {
 
     /// Build the Rocket application
     pub fn rocket(&self) -> Rocket<Build> {
-        let mut rocket = rocket::build()
-            .manage(self.state.clone())
-            .mount("/", routes![handle_mcp_request, handle_sse]);
+        let mut rocket = rocket::build().manage(self.state.clone()).mount(
+            "/",
+            routes![
+                handle_mcp_request,
+                handle_sse,
+                healthz,
+                readyz,
+                metrics_endpoint
+            ],
+        );
 
         if self.config.enable_cors {
             rocket = rocket.attach(Cors);
@@ -331,6 +338,24 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         search_code: state.server.search_code_handler(),
         get_indexing_status: state.server.get_indexing_status_handler(),
         clear_index: state.server.clear_index_handler(),
+        validate_architecture: state.server.validate_architecture_handler(),
+        validate_file: state.server.validate_file_handler(),
+        list_validators: state.server.list_validators_handler(),
+        get_validation_rules: state.server.get_validation_rules_handler(),
+        analyze_complexity: state.server.analyze_complexity_handler(),
+        index_vcs_repository: state.server.index_vcs_repository_handler(),
+        search_branch: state.server.search_branch_handler(),
+        list_repositories: state.server.list_repositories_handler(),
+        compare_branches: state.server.compare_branches_handler(),
+        analyze_impact: state.server.analyze_impact_handler(),
+        store_observation: state.server.store_observation_handler(),
+        search_memories: state.server.search_memories_handler(),
+        get_session_summary: state.server.get_session_summary_handler(),
+        create_session_summary: state.server.create_session_summary_handler(),
+        memory_timeline: state.server.memory_timeline_handler(),
+        memory_get_observations: state.server.memory_get_observations_handler(),
+        memory_inject_context: state.server.memory_inject_context_handler(),
+        memory_search: state.server.memory_search_handler(),
     };
 
     match route_tool_call(call_request, &handlers).await {
@@ -359,4 +384,37 @@ fn handle_sse(state: &State<HttpTransportState>) -> EventStream![] {
             }
         }
     }
+}
+
+// =============================================================================
+// Health Endpoints
+// =============================================================================
+
+/// Liveness probe - returns 200 OK if the server is running
+///
+/// Used by Kubernetes/container orchestrators to check if the process is alive.
+/// Always returns OK since if this responds, the process is running.
+#[get("/healthz")]
+fn healthz() -> &'static str {
+    "OK"
+}
+
+/// Readiness probe - returns 200 OK if the server is ready to serve traffic
+///
+/// Used by Kubernetes/container orchestrators to check if the server can
+/// handle requests. Currently returns OK if the MCP server is available.
+#[get("/readyz")]
+fn readyz(_state: &State<HttpTransportState>) -> &'static str {
+    // Returns OK if server is running. Provider health checks are available
+    // via the /health endpoint which returns detailed status JSON.
+    "OK"
+}
+
+/// Prometheus metrics endpoint
+///
+/// Exports all registered Prometheus metrics in text format.
+/// Used by Prometheus scraper to collect metrics.
+#[get("/metrics")]
+fn metrics_endpoint() -> String {
+    mcb_infrastructure::infrastructure::export_metrics()
 }

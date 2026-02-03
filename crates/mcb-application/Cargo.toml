@@ -1,6 +1,6 @@
 [package]
 name = "mcb-application"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 license = "MIT"
@@ -19,6 +19,7 @@ path = "src/lib.rs"
 [dependencies]
 # Domain layer - core business logic and port traits
 mcb-domain = { path = "../mcb-domain" }
+
 
 # NOTE: mcb-providers is NOT a dependency here to avoid circular deps.
 # Providers register themselves into the linkme registry slices declared here.
@@ -51,6 +52,12 @@ uuid = { workspace = true }
 
 # Async streams for event subscription
 futures = { workspace = true }
+
+# File system traversal for git indexing
+walkdir = { workspace = true }
+
+[features]
+default = []
 
 [dev-dependencies]
 tempfile = "3.10"
