@@ -152,7 +152,7 @@ rayon = "1.8"
 unicode-segmentation = "1.12"
 
 # Schema generation for MCP
-schemars = "1.0"
+schemars = "1.2"
 
 # Input validation
 validator = { version = "0.20", features = ["derive"] }
@@ -193,13 +193,13 @@ fastembed = { version = "5.8", default-features = false, features = ["default"] 
 
 # Configuration watching
 notify = "8.2"
-arc-swap = "1.7"
+arc-swap = "1.8"
 
 # Shell expansion
 shellexpand = "3.1"
 
 # Compression
-flate2 = "1.0"
+flate2 = "1.1"
 tar = "0.4"
 seahash = "4.1"
 
@@ -247,7 +247,7 @@ git2 = "0.19"
 serde_yaml = "0.9"
 
 # Rule Engines
-rust-rule-engine = "1.18"
+rust-rule-engine = "1.19"
 rusty-rules = "0.2"
 evalexpr = "13"
 
