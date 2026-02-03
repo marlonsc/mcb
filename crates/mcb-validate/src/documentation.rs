@@ -37,9 +37,9 @@ pub enum DocumentationViolation {
 impl DocumentationViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::MissingModuleDoc { severity, .. } => *severity,
-            Self::MissingPubItemDoc { severity, .. } => *severity,
-            Self::MissingExampleCode { severity, .. } => *severity,
+            Self::MissingModuleDoc { severity, .. }
+            | Self::MissingPubItemDoc { severity, .. }
+            | Self::MissingExampleCode { severity, .. } => *severity,
         }
     }
 }
@@ -99,25 +99,26 @@ impl Violation for DocumentationViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::MissingModuleDoc { severity, .. } => *severity,
-            Self::MissingPubItemDoc { severity, .. } => *severity,
-            Self::MissingExampleCode { severity, .. } => *severity,
+            Self::MissingModuleDoc { severity, .. }
+            | Self::MissingPubItemDoc { severity, .. }
+            | Self::MissingExampleCode { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::MissingModuleDoc { file, .. } => Some(file),
-            Self::MissingPubItemDoc { file, .. } => Some(file),
-            Self::MissingExampleCode { file, .. } => Some(file),
+            Self::MissingModuleDoc { file, .. }
+            | Self::MissingPubItemDoc { file, .. }
+            | Self::MissingExampleCode { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
             Self::MissingModuleDoc { .. } => None,
-            Self::MissingPubItemDoc { line, .. } => Some(*line),
-            Self::MissingExampleCode { line, .. } => Some(*line),
+            Self::MissingPubItemDoc { line, .. } | Self::MissingExampleCode { line, .. } => {
+                Some(*line)
+            }
         }
     }
 

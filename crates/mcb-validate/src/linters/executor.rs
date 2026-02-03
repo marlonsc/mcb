@@ -1,6 +1,7 @@
 //! YAML Rule Executor Module
 //!
 //! Executes YAML rules that use `lint_select` for linter-based validation.
+//! Linters (Clippy for Rust, Ruff for Python) are auto-detected from the codes.
 
 use std::path::{Path, PathBuf};
 
@@ -51,12 +52,10 @@ impl YamlRuleExecutor {
             .into_iter()
             .filter(|v| rule.lint_select.contains(&v.rule))
             .map(|mut v| {
-                // Apply rule's custom message if provided
                 if let Some(ref msg) = rule.message {
-                    v.message = msg.clone();
+                    v.message.clone_from(msg);
                 }
-                // Set category from rule
-                v.category = rule.category.clone();
+                v.category.clone_from(&rule.category);
                 v
             })
             .collect();
@@ -79,15 +78,8 @@ impl YamlRuleExecutor {
             .filter(|e| e.file_type().is_file())
         {
             let path = entry.path();
-            let ext = path.extension().and_then(|e| e.to_str());
-
-            // Collect Python files for Ruff
-            if linters.contains(&LinterType::Ruff) && ext == Some("py") {
-                files.push(path.to_path_buf());
-            }
-
-            // Collect Rust files for Clippy
-            if linters.contains(&LinterType::Clippy) && ext == Some("rs") {
+            let ext = path.extension().and_then(std::ffi::OsStr::to_str);
+            if linters.iter().any(|lt| lt.matches_extension(ext)) {
                 files.push(path.to_path_buf());
             }
         }

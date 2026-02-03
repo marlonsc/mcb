@@ -70,10 +70,8 @@ impl DuplicationViolation {
     /// Create a new duplication violation from a clone candidate
     pub fn from_candidate(candidate: &CloneCandidate) -> Self {
         let severity = match candidate.clone_type {
-            DuplicationType::ExactClone => Severity::Warning,
-            DuplicationType::RenamedClone => Severity::Warning,
-            DuplicationType::GappedClone => Severity::Info,
-            DuplicationType::SemanticClone => Severity::Info,
+            DuplicationType::ExactClone | DuplicationType::RenamedClone => Severity::Warning,
+            DuplicationType::GappedClone | DuplicationType::SemanticClone => Severity::Info,
         };
 
         Self {
@@ -204,7 +202,7 @@ impl DuplicationAnalyzer {
             let tokens = tokenize_source(&content, &language);
 
             if tokens.len() >= self.thresholds.min_tokens {
-                fingerprinter.fingerprint_file(path.clone(), &tokens);
+                fingerprinter.fingerprint_file(path, &tokens);
             }
         }
 

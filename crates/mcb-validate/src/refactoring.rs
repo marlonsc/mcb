@@ -482,8 +482,6 @@ impl RefactoringValidator {
 
     /// Check for source files without corresponding test files
     pub fn validate_missing_test_files(&self) -> Result<Vec<RefactoringViolation>> {
-        let mut violations = Vec::new();
-
         // Files that don't need dedicated tests (re-exports, utilities, infrastructure)
         const SKIP_FILES: &[&str] = &[
             // Standard files
@@ -535,7 +533,7 @@ impl RefactoringValidator {
             "utils",    // Utilities have tests in tests/utils/
             "ports",    // Port traits have tests in tests/ports/
         ];
-
+        let mut violations = Vec::new();
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
             let tests_dir = crate_dir.join("tests");

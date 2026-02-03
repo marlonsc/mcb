@@ -70,13 +70,13 @@ pub enum TestViolation {
 impl TestViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::InlineTestModule { severity, .. } => *severity,
-            Self::BadTestFileName { severity, .. } => *severity,
-            Self::BadTestFunctionName { severity, .. } => *severity,
-            Self::TestWithoutAssertion { severity, .. } => *severity,
-            Self::TrivialAssertion { severity, .. } => *severity,
-            Self::UnwrapOnlyAssertion { severity, .. } => *severity,
-            Self::CommentOnlyTest { severity, .. } => *severity,
+            Self::InlineTestModule { severity, .. }
+            | Self::BadTestFileName { severity, .. }
+            | Self::BadTestFunctionName { severity, .. }
+            | Self::TestWithoutAssertion { severity, .. }
+            | Self::TrivialAssertion { severity, .. }
+            | Self::UnwrapOnlyAssertion { severity, .. }
+            | Self::CommentOnlyTest { severity, .. } => *severity,
         }
     }
 }
@@ -199,37 +199,37 @@ impl Violation for TestViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::InlineTestModule { severity, .. } => *severity,
-            Self::BadTestFileName { severity, .. } => *severity,
-            Self::BadTestFunctionName { severity, .. } => *severity,
-            Self::TestWithoutAssertion { severity, .. } => *severity,
-            Self::TrivialAssertion { severity, .. } => *severity,
-            Self::UnwrapOnlyAssertion { severity, .. } => *severity,
-            Self::CommentOnlyTest { severity, .. } => *severity,
+            Self::InlineTestModule { severity, .. }
+            | Self::BadTestFileName { severity, .. }
+            | Self::BadTestFunctionName { severity, .. }
+            | Self::TestWithoutAssertion { severity, .. }
+            | Self::TrivialAssertion { severity, .. }
+            | Self::UnwrapOnlyAssertion { severity, .. }
+            | Self::CommentOnlyTest { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&std::path::PathBuf> {
         match self {
-            Self::InlineTestModule { file, .. } => Some(file),
-            Self::BadTestFileName { file, .. } => Some(file),
-            Self::BadTestFunctionName { file, .. } => Some(file),
-            Self::TestWithoutAssertion { file, .. } => Some(file),
-            Self::TrivialAssertion { file, .. } => Some(file),
-            Self::UnwrapOnlyAssertion { file, .. } => Some(file),
-            Self::CommentOnlyTest { file, .. } => Some(file),
+            Self::InlineTestModule { file, .. }
+            | Self::BadTestFileName { file, .. }
+            | Self::BadTestFunctionName { file, .. }
+            | Self::TestWithoutAssertion { file, .. }
+            | Self::TrivialAssertion { file, .. }
+            | Self::UnwrapOnlyAssertion { file, .. }
+            | Self::CommentOnlyTest { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::InlineTestModule { line, .. } => Some(*line),
             Self::BadTestFileName { .. } => None,
-            Self::BadTestFunctionName { line, .. } => Some(*line),
-            Self::TestWithoutAssertion { line, .. } => Some(*line),
-            Self::TrivialAssertion { line, .. } => Some(*line),
-            Self::UnwrapOnlyAssertion { line, .. } => Some(*line),
-            Self::CommentOnlyTest { line, .. } => Some(*line),
+            Self::InlineTestModule { line, .. }
+            | Self::BadTestFunctionName { line, .. }
+            | Self::TestWithoutAssertion { line, .. }
+            | Self::TrivialAssertion { line, .. }
+            | Self::UnwrapOnlyAssertion { line, .. }
+            | Self::CommentOnlyTest { line, .. } => Some(*line),
         }
     }
 
@@ -238,8 +238,10 @@ impl Violation for TestViolation {
             Self::InlineTestModule { .. } => {
                 Some("Move test module to tests/ directory".to_string())
             }
-            Self::BadTestFileName { suggestion, .. } => Some(format!("Rename to {suggestion}")),
-            Self::BadTestFunctionName { suggestion, .. } => Some(format!("Rename to {suggestion}")),
+            Self::BadTestFileName { suggestion, .. }
+            | Self::BadTestFunctionName { suggestion, .. } => {
+                Some(format!("Rename to {suggestion}"))
+            }
             Self::TestWithoutAssertion { function_name, .. } => Some(format!(
                 "Add assertion to {function_name} or use smoke test suffix"
             )),
@@ -639,6 +641,7 @@ impl TestValidator {
     }
 
     /// Validate test quality (trivial assertions, unwrap-only, comment-only)
+    #[allow(clippy::too_many_lines)]
     pub fn validate_test_quality(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
 
@@ -723,10 +726,14 @@ impl TestValidator {
                                         started = true;
                                     }
                                     if started {
-                                        brace_depth +=
-                                            check_line.chars().filter(|c| *c == '{').count() as i32;
-                                        brace_depth -=
-                                            check_line.chars().filter(|c| *c == '}').count() as i32;
+                                        brace_depth += i32::try_from(
+                                            check_line.chars().filter(|c| *c == '{').count(),
+                                        )
+                                        .unwrap_or(0);
+                                        brace_depth -= i32::try_from(
+                                            check_line.chars().filter(|c| *c == '}').count(),
+                                        )
+                                        .unwrap_or(0);
                                         body_lines.push((idx, check_line));
                                         if brace_depth <= 0 {
                                             break;

@@ -66,7 +66,7 @@ pub struct MemorySearchArgs {
     pub tags: Option<Vec<String>>,
 
     #[schemars(
-        description = "Filter by observation type: code, decision, context, error, summary"
+        description = "Filter by observation type: code, decision, context, error, summary, execution"
     )]
     pub observation_type: Option<String>,
 
@@ -75,6 +75,89 @@ pub struct MemorySearchArgs {
 
     #[schemars(description = "Filter by repository ID")]
     pub repo_id: Option<String>,
+}
+
+/// Arguments for the `memory_store_execution` tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Store execution results in semantic memory")]
+pub struct MemoryStoreExecutionArgs {
+    #[validate(length(min = 1, max = 2000, message = "Command must be 1-2000 chars"))]
+    #[schemars(description = "Command executed (full command string)")]
+    pub command: String,
+
+    #[schemars(description = "Exit code from execution")]
+    pub exit_code: Option<i32>,
+
+    #[schemars(description = "Execution duration in milliseconds")]
+    pub duration_ms: Option<i64>,
+
+    #[schemars(description = "Whether the execution succeeded")]
+    pub success: bool,
+
+    #[schemars(description = "Execution type: test, lint, build, ci")]
+    pub execution_type: String,
+
+    #[schemars(description = "Coverage percentage (0-100)")]
+    pub coverage: Option<f32>,
+
+    #[serde(default)]
+    #[schemars(description = "Files affected by the execution")]
+    pub files_affected: Vec<String>,
+
+    #[schemars(description = "Summary of output (truncated or aggregated)")]
+    pub output_summary: Option<String>,
+
+    #[schemars(description = "Number of warnings emitted")]
+    pub warnings_count: Option<i32>,
+
+    #[schemars(description = "Number of errors emitted")]
+    pub errors_count: Option<i32>,
+
+    #[schemars(description = "Session ID to associate with this execution")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Repository ID for context")]
+    pub repo_id: Option<String>,
+
+    #[schemars(description = "VCS branch related to this execution")]
+    pub branch: Option<String>,
+
+    #[schemars(description = "VCS commit related to this execution")]
+    pub commit: Option<String>,
+}
+
+/// Arguments for the `memory_get_executions` tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Retrieve execution history with optional filters")]
+pub struct MemoryGetExecutionsArgs {
+    #[serde(default = "crate::args::default_limit")]
+    #[validate(range(min = 1, max = 200))]
+    #[schemars(description = "Maximum number of executions to return (default: 10)")]
+    pub limit: usize,
+
+    #[schemars(description = "Filter by session ID")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Filter by repository ID")]
+    pub repo_id: Option<String>,
+
+    #[schemars(description = "Filter by execution type: test, lint, build, ci")]
+    pub execution_type: Option<String>,
+
+    #[schemars(description = "Filter by success status")]
+    pub success: Option<bool>,
+
+    #[schemars(description = "Filter by branch")]
+    pub branch: Option<String>,
+
+    #[schemars(description = "Filter by commit")]
+    pub commit: Option<String>,
+
+    #[schemars(description = "Filter by start timestamp (inclusive)")]
+    pub start_time: Option<i64>,
+
+    #[schemars(description = "Filter by end timestamp (inclusive)")]
+    pub end_time: Option<i64>,
 }
 
 /// Arguments for the `memory_inject_context` tool (SessionStart hook integration).

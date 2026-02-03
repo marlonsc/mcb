@@ -25,7 +25,7 @@ pub struct ValidatedRule {
     pub config: serde_json::Value,
     pub rule_definition: serde_json::Value,
     pub fixes: Vec<RuleFix>,
-    /// Linter codes to execute (e.g., ["F401"] for Ruff, ["`clippy::unwrap_used`"] for Clippy)
+    /// Linter codes to execute (e.g., `["F401"]` for Ruff, `["clippy::unwrap_used"]` for Clippy)
     pub lint_select: Vec<String>,
     /// Custom message for violations
     pub message: Option<String>,
@@ -169,7 +169,7 @@ impl YamlRuleLoader {
         self.validator.validate_rule(&json_value)?;
 
         // Convert to validated rule
-        let validated_rule = self.yaml_to_validated_rule(json_value)?;
+        let validated_rule = self.yaml_to_validated_rule(&json_value)?;
 
         Ok(vec![validated_rule])
     }
@@ -181,7 +181,8 @@ impl YamlRuleLoader {
     }
 
     /// Convert YAML/JSON value to `ValidatedRule`
-    fn yaml_to_validated_rule(&self, value: serde_json::Value) -> Result<ValidatedRule> {
+    #[allow(clippy::too_many_lines)]
+    fn yaml_to_validated_rule(&self, value: &serde_json::Value) -> Result<ValidatedRule> {
         let obj = value
             .as_object()
             .ok_or_else(|| crate::ValidationError::Config("Rule must be an object".to_string()))?;

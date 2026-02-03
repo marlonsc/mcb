@@ -58,6 +58,7 @@ impl StoreObservationHandler {
                     file_path: args.file_path,
                     branch,
                     commit,
+                    execution: None,
                 },
             )
             .await

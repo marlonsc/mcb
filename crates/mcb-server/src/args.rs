@@ -396,7 +396,9 @@ pub struct StoreObservationArgs {
     #[schemars(description = "The observation content to store")]
     pub content: String,
 
-    #[schemars(description = "Type of observation: code, decision, context, error, summary")]
+    #[schemars(
+        description = "Type of observation: code, decision, context, error, summary, execution"
+    )]
     pub observation_type: String,
 
     #[serde(default)]

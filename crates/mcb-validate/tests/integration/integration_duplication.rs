@@ -97,8 +97,8 @@ mod duplication_integration_tests {
 
         // Use fingerprinter to check
         let mut fingerprinter = TokenFingerprinter::new(5);
-        fingerprinter.fingerprint_file(PathBuf::from("file1.rs"), &tokens1);
-        fingerprinter.fingerprint_file(PathBuf::from("file2.rs"), &tokens2);
+        fingerprinter.fingerprint_file(&PathBuf::from("file1.rs"), &tokens1);
+        fingerprinter.fingerprint_file(&PathBuf::from("file2.rs"), &tokens2);
 
         let matches = fingerprinter.find_duplicates();
 

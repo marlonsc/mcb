@@ -22,10 +22,10 @@ impl MetricType {
     /// Get the human-readable name
     pub fn name(&self) -> &'static str {
         match self {
-            Self::CognitiveComplexity => "Function",
-            Self::CyclomaticComplexity => "Function",
-            Self::FunctionLength => "Function",
-            Self::NestingDepth => "Function",
+            Self::CognitiveComplexity
+            | Self::CyclomaticComplexity
+            | Self::FunctionLength
+            | Self::NestingDepth => "Function",
         }
     }
 
@@ -101,6 +101,7 @@ impl MetricThresholds {
     }
 
     /// Add or update a threshold
+    #[must_use]
     pub fn with_threshold(
         mut self,
         metric: MetricType,
@@ -140,11 +141,9 @@ impl MetricThresholds {
                             _ => Severity::Warning,
                         });
 
-                thresholds = thresholds.with_threshold(
-                    MetricType::CognitiveComplexity,
-                    max as u32,
-                    severity,
-                );
+                let max_u32 = u32::try_from(max).unwrap_or(u32::MAX);
+                thresholds =
+                    thresholds.with_threshold(MetricType::CognitiveComplexity, max_u32, severity);
             }
 
             // Parse function_length
@@ -160,8 +159,9 @@ impl MetricThresholds {
                             _ => Severity::Warning,
                         });
 
+                let max_u32 = u32::try_from(max).unwrap_or(u32::MAX);
                 thresholds =
-                    thresholds.with_threshold(MetricType::FunctionLength, max as u32, severity);
+                    thresholds.with_threshold(MetricType::FunctionLength, max_u32, severity);
             }
 
             // Parse cyclomatic_complexity
@@ -177,11 +177,9 @@ impl MetricThresholds {
                             _ => Severity::Warning,
                         });
 
-                thresholds = thresholds.with_threshold(
-                    MetricType::CyclomaticComplexity,
-                    max as u32,
-                    severity,
-                );
+                let max_u32 = u32::try_from(max).unwrap_or(u32::MAX);
+                thresholds =
+                    thresholds.with_threshold(MetricType::CyclomaticComplexity, max_u32, severity);
             }
 
             // Parse nesting_depth
@@ -197,8 +195,8 @@ impl MetricThresholds {
                             _ => Severity::Warning,
                         });
 
-                thresholds =
-                    thresholds.with_threshold(MetricType::NestingDepth, max as u32, severity);
+                let max_u32 = u32::try_from(max).unwrap_or(u32::MAX);
+                thresholds = thresholds.with_threshold(MetricType::NestingDepth, max_u32, severity);
             }
         }
 

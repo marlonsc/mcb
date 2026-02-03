@@ -14,6 +14,10 @@ fn test_observation_type_from_str() {
         "context".parse::<ObservationType>().unwrap(),
         ObservationType::Context
     );
+    assert_eq!(
+        "execution".parse::<ObservationType>().unwrap(),
+        ObservationType::Execution
+    );
     assert!("unknown".parse::<ObservationType>().is_err());
 }
 
@@ -21,6 +25,7 @@ fn test_observation_type_from_str() {
 fn test_observation_type_as_str() {
     assert_eq!(ObservationType::Code.as_str(), "code");
     assert_eq!(ObservationType::Summary.as_str(), "summary");
+    assert_eq!(ObservationType::Execution.as_str(), "execution");
 }
 
 #[test]

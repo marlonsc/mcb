@@ -482,6 +482,7 @@ mod tests {
 
     #[test]
     fn test_error_counting() {
+        const TEST_PENDING_LABEL: &str = concat!("T", "O", "D", "O");
         let mut report = create_empty_report();
         report
             .quality_violations
@@ -491,7 +492,6 @@ mod tests {
                 context: "test".to_string(),
                 severity: Severity::Error,
             });
-        const TEST_PENDING_LABEL: &str = concat!("T", "O", "D", "O");
         report
             .quality_violations
             .push(QualityViolation::TodoComment {

@@ -69,12 +69,12 @@ pub enum ImplementationViolation {
 impl ImplementationViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::EmptyMethodBody { severity, .. } => *severity,
-            Self::HardcodedReturnValue { severity, .. } => *severity,
-            Self::PassThroughWrapper { severity, .. } => *severity,
-            Self::LogOnlyMethod { severity, .. } => *severity,
-            Self::StubMacro { severity, .. } => *severity,
-            Self::EmptyCatchAll { severity, .. } => *severity,
+            Self::EmptyMethodBody { severity, .. }
+            | Self::HardcodedReturnValue { severity, .. }
+            | Self::PassThroughWrapper { severity, .. }
+            | Self::LogOnlyMethod { severity, .. }
+            | Self::StubMacro { severity, .. }
+            | Self::EmptyCatchAll { severity, .. } => *severity,
         }
     }
 }
@@ -198,34 +198,34 @@ impl Violation for ImplementationViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::EmptyMethodBody { severity, .. } => *severity,
-            Self::HardcodedReturnValue { severity, .. } => *severity,
-            Self::PassThroughWrapper { severity, .. } => *severity,
-            Self::LogOnlyMethod { severity, .. } => *severity,
-            Self::StubMacro { severity, .. } => *severity,
-            Self::EmptyCatchAll { severity, .. } => *severity,
+            Self::EmptyMethodBody { severity, .. }
+            | Self::HardcodedReturnValue { severity, .. }
+            | Self::PassThroughWrapper { severity, .. }
+            | Self::LogOnlyMethod { severity, .. }
+            | Self::StubMacro { severity, .. }
+            | Self::EmptyCatchAll { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::EmptyMethodBody { file, .. } => Some(file),
-            Self::HardcodedReturnValue { file, .. } => Some(file),
-            Self::PassThroughWrapper { file, .. } => Some(file),
-            Self::LogOnlyMethod { file, .. } => Some(file),
-            Self::StubMacro { file, .. } => Some(file),
-            Self::EmptyCatchAll { file, .. } => Some(file),
+            Self::EmptyMethodBody { file, .. }
+            | Self::HardcodedReturnValue { file, .. }
+            | Self::PassThroughWrapper { file, .. }
+            | Self::LogOnlyMethod { file, .. }
+            | Self::StubMacro { file, .. }
+            | Self::EmptyCatchAll { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::EmptyMethodBody { line, .. } => Some(*line),
-            Self::HardcodedReturnValue { line, .. } => Some(*line),
-            Self::PassThroughWrapper { line, .. } => Some(*line),
-            Self::LogOnlyMethod { line, .. } => Some(*line),
-            Self::StubMacro { line, .. } => Some(*line),
-            Self::EmptyCatchAll { line, .. } => Some(*line),
+            Self::EmptyMethodBody { line, .. }
+            | Self::HardcodedReturnValue { line, .. }
+            | Self::PassThroughWrapper { line, .. }
+            | Self::LogOnlyMethod { line, .. }
+            | Self::StubMacro { line, .. }
+            | Self::EmptyCatchAll { line, .. } => Some(*line),
         }
     }
 
@@ -548,10 +548,8 @@ impl ImplementationQualityValidator {
 
     /// Detect stub macros (todo!, unimplemented!)
     pub fn validate_stub_macros(&self) -> Result<Vec<ImplementationViolation>> {
-        let mut violations = Vec::new();
-
-        // Pattern names from IMPL001 YAML with descriptions
         const STUB_PANIC_LABEL: &str = concat!("panic(", "T", "O", "D", "O", ")");
+        let mut violations = Vec::new();
         let stub_pattern_ids = [
             ("IMPL001.stub_todo", "todo"),
             ("IMPL001.stub_unimplemented", "unimplemented"),

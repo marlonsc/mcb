@@ -7,7 +7,7 @@
 //! - Ensures tests have proper documentation
 
 use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig, ValidationError};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -207,14 +207,20 @@ impl TestQualityValidator {
         let mut violations = Vec::new();
 
         // Regex patterns
-        let ignore_pattern = Regex::new(r"#\[ignore\]").unwrap();
-        let test_pattern = Regex::new(r"#\[test\]|#\[tokio::test\]").unwrap();
-        let fn_pattern = Regex::new(r"fn\s+(\w+)").unwrap();
-        let todo_pattern = Regex::new(r"todo!\(").unwrap();
-        let empty_body_pattern = Regex::new(r"\{\s*\}").unwrap();
-        let stub_assert_pattern =
-            Regex::new(r"assert!\(true\)|assert_eq!\(true,\s*true\)").unwrap();
-        let doc_comment_pattern = Regex::new(r"^\s*///").unwrap();
+        let ignore_pattern = Regex::new(r"#\[ignore\]")
+            .map_err(|e| ValidationError::InvalidRegex(format!("ignore_pattern: {e}")))?;
+        let test_pattern = Regex::new(r"#\[test\]|#\[tokio::test\]")
+            .map_err(|e| ValidationError::InvalidRegex(format!("test_pattern: {e}")))?;
+        let fn_pattern = Regex::new(r"fn\s+(\w+)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("fn_pattern: {e}")))?;
+        let todo_pattern = Regex::new(r"todo!\(")
+            .map_err(|e| ValidationError::InvalidRegex(format!("todo_pattern: {e}")))?;
+        let empty_body_pattern = Regex::new(r"\{\s*\}")
+            .map_err(|e| ValidationError::InvalidRegex(format!("empty_body_pattern: {e}")))?;
+        let stub_assert_pattern = Regex::new(r"assert!\(true\)|assert_eq!\(true,\s*true\)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("stub_assert_pattern: {e}")))?;
+        let doc_comment_pattern = Regex::new(r"^\s*///")
+            .map_err(|e| ValidationError::InvalidRegex(format!("doc_comment_pattern: {e}")))?;
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
@@ -258,6 +264,7 @@ impl TestQualityValidator {
                     &lines,
                     &test_pattern,
                     &stub_assert_pattern,
+                    &fn_pattern,
                     &mut violations,
                 );
             }
@@ -266,6 +273,7 @@ impl TestQualityValidator {
         Ok(violations)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn check_ignored_tests(
         &self,
         file: &Path,
@@ -383,22 +391,19 @@ impl TestQualityValidator {
         lines: &[&str],
         test_pattern: &Regex,
         stub_assert_pattern: &Regex,
+        fn_pattern: &Regex,
         violations: &mut Vec<TestQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
             if test_pattern.is_match(line) {
-                // Look for stub assertions in the next 20 lines (typical test body)
                 for offset in 0..20 {
                     if i + offset >= lines.len() {
                         break;
                     }
                     if stub_assert_pattern.is_match(lines[i + offset]) {
-                        if let Some(test_name) = self.find_test_name(
-                            lines,
-                            i,
-                            test_pattern,
-                            &Regex::new(r"fn\s+(\w+)").unwrap(),
-                        ) {
+                        if let Some(test_name) =
+                            self.find_test_name(lines, i, test_pattern, fn_pattern)
+                        {
                             violations.push(TestQualityViolation::StubTestAssertion {
                                 file: file.to_path_buf(),
                                 line: i + offset + 1,
@@ -420,9 +425,9 @@ impl TestQualityValidator {
         _test_pattern: &Regex,
         fn_pattern: &Regex,
     ) -> Option<String> {
-        // Look for function name in next few lines
-        for i in start_idx..std::cmp::min(start_idx + 5, lines.len()) {
-            if let Some(captures) = fn_pattern.captures(lines[i])
+        let end = std::cmp::min(start_idx + 5, lines.len());
+        for line in lines.iter().take(end).skip(start_idx) {
+            if let Some(captures) = fn_pattern.captures(line)
                 && let Some(name) = captures.get(1)
             {
                 return Some(name.as_str().to_string());

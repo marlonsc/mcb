@@ -127,13 +127,16 @@ impl RcaAnalyzer {
         })?;
 
         let mut results = Vec::new();
-        self.extract_function_metrics(&root, &mut results);
+        Self::extract_function_metrics(&root, &mut results);
         Ok(results)
     }
 
     /// Convert RCA `CodeMetrics` to our `RcaMetrics`
+    /// LOC/count metrics from `rust_code_analysis` are f64; we round and clamp for usize.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn extract_metrics(space: &FuncSpace) -> RcaMetrics {
         let m = &space.metrics;
+        let to_usize = |x: f64| x.round().max(0.0) as usize;
         RcaMetrics {
             cyclomatic: m.cyclomatic.cyclomatic(),
             cognitive: m.cognitive.cognitive(),
@@ -141,20 +144,19 @@ impl RcaAnalyzer {
             halstead_difficulty: m.halstead.difficulty(),
             halstead_effort: m.halstead.effort(),
             maintainability_index: m.mi.mi_original(),
-            sloc: m.loc.sloc() as usize,
-            ploc: m.loc.ploc() as usize,
-            lloc: m.loc.lloc() as usize,
-            cloc: m.loc.cloc() as usize,
-            blank: m.loc.blank() as usize,
-            nom: (m.nom.functions() + m.nom.closures()) as usize,
-            nargs: m.nargs.fn_args_sum() as usize,
-            nexits: m.nexits.exit_sum() as usize,
+            sloc: to_usize(m.loc.sloc()),
+            ploc: to_usize(m.loc.ploc()),
+            lloc: to_usize(m.loc.lloc()),
+            cloc: to_usize(m.loc.cloc()),
+            blank: to_usize(m.loc.blank()),
+            nom: to_usize(m.nom.functions() + m.nom.closures()),
+            nargs: to_usize(m.nargs.fn_args_sum()),
+            nexits: to_usize(m.nexits.exit_sum()),
         }
     }
 
     /// Recursively extract metrics from function spaces
-    fn extract_function_metrics(&self, space: &FuncSpace, results: &mut Vec<RcaFunctionMetrics>) {
-        // Only process actual functions/methods, not the file-level space
+    fn extract_function_metrics(space: &FuncSpace, results: &mut Vec<RcaFunctionMetrics>) {
         let name = space.name.as_deref().unwrap_or("");
         if !name.is_empty() && name != "<unit>" {
             results.push(RcaFunctionMetrics {
@@ -164,10 +166,8 @@ impl RcaAnalyzer {
                 metrics: Self::extract_metrics(space),
             });
         }
-
-        // Recurse into nested spaces
         for child in &space.spaces {
-            self.extract_function_metrics(child, results);
+            Self::extract_function_metrics(child, results);
         }
     }
 
@@ -176,10 +176,11 @@ impl RcaAnalyzer {
         let functions = self.analyze_file(path)?;
         let mut violations = Vec::new();
 
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let to_u32_metric = |x: f64| x.round().max(0.0) as u32;
         for func in functions {
-            // Check cyclomatic complexity
             if let Some(threshold) = self.thresholds.get(MetricType::CyclomaticComplexity) {
-                let value = func.metrics.cyclomatic as u32;
+                let value = to_u32_metric(func.metrics.cyclomatic);
                 if value > threshold.max_value {
                     violations.push(MetricViolation {
                         file: path.to_path_buf(),
@@ -193,9 +194,8 @@ impl RcaAnalyzer {
                 }
             }
 
-            // Check cognitive complexity
             if let Some(threshold) = self.thresholds.get(MetricType::CognitiveComplexity) {
-                let value = func.metrics.cognitive as u32;
+                let value = to_u32_metric(func.metrics.cognitive);
                 if value > threshold.max_value {
                     violations.push(MetricViolation {
                         file: path.to_path_buf(),
@@ -209,9 +209,8 @@ impl RcaAnalyzer {
                 }
             }
 
-            // Check function length (using SLOC)
             if let Some(threshold) = self.thresholds.get(MetricType::FunctionLength) {
-                let value = func.metrics.sloc as u32;
+                let value = u32::try_from(func.metrics.sloc).unwrap_or(u32::MAX);
                 if value > threshold.max_value {
                     violations.push(MetricViolation {
                         file: path.to_path_buf(),

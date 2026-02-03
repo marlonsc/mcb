@@ -88,7 +88,7 @@ impl RustyRulesEngineWrapper {
 
         // Parse action
         let action = if let Some(action_json) = definition.get("action") {
-            self.parse_action(action_json)?
+            self.parse_action(action_json)
         } else {
             Action::Violation {
                 message: "Rule violation".to_string(),
@@ -158,7 +158,7 @@ impl RustyRulesEngineWrapper {
         })
     }
 
-    fn parse_action(&self, action_json: &Value) -> Result<Action> {
+    fn parse_action(&self, action_json: &Value) -> Action {
         if let Some(violation) = action_json.get("violation") {
             let message = violation
                 .get("message")
@@ -172,15 +172,14 @@ impl RustyRulesEngineWrapper {
                     .and_then(|v| v.as_str())
                     .map_or(Severity::Warning, |s| match s {
                         "error" => Severity::Error,
-                        "warning" => Severity::Warning,
                         "info" => Severity::Info,
                         _ => Severity::Warning,
                     });
 
-            return Ok(Action::Violation { message, severity });
+            return Action::Violation { message, severity };
         }
 
-        Ok(Action::Custom("Custom action".to_string()))
+        Action::Custom("Custom action".to_string())
     }
 
     fn has_forbidden_dependency(&self, pattern: &str, context: &RuleContext) -> bool {

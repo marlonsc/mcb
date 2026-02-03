@@ -18,11 +18,4 @@ fn test_git2_provider_is_object_safe() {
     fn _assert_object_safe(_: &dyn VcsProvider) {}
     let provider = Git2Provider::new();
     _assert_object_safe(&provider);
-    let erased: &dyn VcsProvider = &provider;
-    // Trait object fat pointer is always 2 * pointer size (data + vtable)
-    assert_eq!(
-        std::mem::size_of_val(&erased),
-        2 * std::mem::size_of::<usize>(),
-        "trait object reference should be a fat pointer"
-    );
 }

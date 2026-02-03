@@ -105,9 +105,9 @@ pub enum DependencyViolation {
 impl DependencyViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::ForbiddenCargoDepedency { severity, .. } => *severity,
-            Self::ForbiddenUseStatement { severity, .. } => *severity,
-            Self::CircularDependency { severity, .. } => *severity,
+            Self::ForbiddenCargoDepedency { severity, .. }
+            | Self::ForbiddenUseStatement { severity, .. }
+            | Self::CircularDependency { severity, .. } => *severity,
         }
     }
 }
@@ -169,9 +169,9 @@ impl Violation for DependencyViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::ForbiddenCargoDepedency { severity, .. } => *severity,
-            Self::ForbiddenUseStatement { severity, .. } => *severity,
-            Self::CircularDependency { severity, .. } => *severity,
+            Self::ForbiddenCargoDepedency { severity, .. }
+            | Self::ForbiddenUseStatement { severity, .. }
+            | Self::CircularDependency { severity, .. } => *severity,
         }
     }
 

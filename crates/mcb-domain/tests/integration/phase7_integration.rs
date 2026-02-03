@@ -14,6 +14,7 @@ mod phase7_integration_tests {
             file_path: Some("src/main.rs".to_string()),
             branch: Some("feature/memory".to_string()),
             commit: Some("abc123def456".to_string()),
+            execution: None,
         };
 
         assert_eq!(metadata.session_id, Some("sess-123".to_string()));
@@ -47,6 +48,7 @@ mod phase7_integration_tests {
             file_path: None,
             branch: None,
             commit: None,
+            execution: None,
         };
 
         assert!(metadata.branch.is_none());
@@ -62,6 +64,7 @@ mod phase7_integration_tests {
             file_path: Some("file1.rs".to_string()),
             branch: Some("main".to_string()),
             commit: Some("commit1".to_string()),
+            execution: None,
         };
 
         let metadata2 = ObservationMetadata {
@@ -71,6 +74,7 @@ mod phase7_integration_tests {
             file_path: Some("file2.rs".to_string()),
             branch: Some("main".to_string()),
             commit: Some("commit2".to_string()),
+            execution: None,
         };
 
         assert_eq!(metadata1.branch, metadata2.branch);
@@ -105,6 +109,7 @@ mod phase7_integration_tests {
             file_path: Some("src/main.rs".to_string()),
             branch: Some("main".to_string()),
             commit: Some("abc123".to_string()),
+            execution: None,
         };
 
         let json = serde_json::to_value(&metadata).expect("Serialization failed");

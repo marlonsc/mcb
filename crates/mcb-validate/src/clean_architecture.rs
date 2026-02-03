@@ -105,20 +105,21 @@ pub enum CleanArchitectureViolation {
 impl CleanArchitectureViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::DomainContainsImplementation { severity, .. } => *severity,
-            Self::HandlerCreatesService { severity, .. } => *severity,
-            Self::PortMissingComponentDerive { severity, .. } => *severity,
-            Self::EntityMissingIdentity { severity, .. } => *severity,
-            Self::ValueObjectMutable { severity, .. } => *severity,
-            Self::ServerImportsProviderDirectly { severity, .. } => *severity,
-            Self::InfrastructureImportsConcreteService { severity, .. } => *severity,
-            Self::ApplicationWrongPortImport { severity, .. } => *severity,
-            Self::InfrastructureImportsApplication { severity, .. } => *severity,
+            Self::DomainContainsImplementation { severity, .. }
+            | Self::HandlerCreatesService { severity, .. }
+            | Self::PortMissingComponentDerive { severity, .. }
+            | Self::EntityMissingIdentity { severity, .. }
+            | Self::ValueObjectMutable { severity, .. }
+            | Self::ServerImportsProviderDirectly { severity, .. }
+            | Self::InfrastructureImportsConcreteService { severity, .. }
+            | Self::ApplicationWrongPortImport { severity, .. }
+            | Self::InfrastructureImportsApplication { severity, .. } => *severity,
         }
     }
 }
 
 impl std::fmt::Display for CleanArchitectureViolation {
+    #[allow(clippy::too_many_lines)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::DomainContainsImplementation {
@@ -279,43 +280,43 @@ impl Violation for CleanArchitectureViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::DomainContainsImplementation { severity, .. } => *severity,
-            Self::HandlerCreatesService { severity, .. } => *severity,
-            Self::PortMissingComponentDerive { severity, .. } => *severity,
-            Self::EntityMissingIdentity { severity, .. } => *severity,
-            Self::ValueObjectMutable { severity, .. } => *severity,
-            Self::ServerImportsProviderDirectly { severity, .. } => *severity,
-            Self::InfrastructureImportsConcreteService { severity, .. } => *severity,
-            Self::ApplicationWrongPortImport { severity, .. } => *severity,
-            Self::InfrastructureImportsApplication { severity, .. } => *severity,
+            Self::DomainContainsImplementation { severity, .. }
+            | Self::HandlerCreatesService { severity, .. }
+            | Self::PortMissingComponentDerive { severity, .. }
+            | Self::EntityMissingIdentity { severity, .. }
+            | Self::ValueObjectMutable { severity, .. }
+            | Self::ServerImportsProviderDirectly { severity, .. }
+            | Self::InfrastructureImportsConcreteService { severity, .. }
+            | Self::ApplicationWrongPortImport { severity, .. }
+            | Self::InfrastructureImportsApplication { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::DomainContainsImplementation { file, .. } => Some(file),
-            Self::HandlerCreatesService { file, .. } => Some(file),
-            Self::PortMissingComponentDerive { file, .. } => Some(file),
-            Self::EntityMissingIdentity { file, .. } => Some(file),
-            Self::ValueObjectMutable { file, .. } => Some(file),
-            Self::ServerImportsProviderDirectly { file, .. } => Some(file),
-            Self::InfrastructureImportsConcreteService { file, .. } => Some(file),
-            Self::ApplicationWrongPortImport { file, .. } => Some(file),
-            Self::InfrastructureImportsApplication { file, .. } => Some(file),
+            Self::DomainContainsImplementation { file, .. }
+            | Self::HandlerCreatesService { file, .. }
+            | Self::PortMissingComponentDerive { file, .. }
+            | Self::EntityMissingIdentity { file, .. }
+            | Self::ValueObjectMutable { file, .. }
+            | Self::ServerImportsProviderDirectly { file, .. }
+            | Self::InfrastructureImportsConcreteService { file, .. }
+            | Self::ApplicationWrongPortImport { file, .. }
+            | Self::InfrastructureImportsApplication { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::DomainContainsImplementation { line, .. } => Some(*line),
-            Self::HandlerCreatesService { line, .. } => Some(*line),
-            Self::PortMissingComponentDerive { line, .. } => Some(*line),
-            Self::EntityMissingIdentity { line, .. } => Some(*line),
-            Self::ValueObjectMutable { line, .. } => Some(*line),
-            Self::ServerImportsProviderDirectly { line, .. } => Some(*line),
-            Self::InfrastructureImportsConcreteService { line, .. } => Some(*line),
-            Self::ApplicationWrongPortImport { line, .. } => Some(*line),
-            Self::InfrastructureImportsApplication { line, .. } => Some(*line),
+            Self::DomainContainsImplementation { line, .. }
+            | Self::HandlerCreatesService { line, .. }
+            | Self::PortMissingComponentDerive { line, .. }
+            | Self::EntityMissingIdentity { line, .. }
+            | Self::ValueObjectMutable { line, .. }
+            | Self::ServerImportsProviderDirectly { line, .. }
+            | Self::InfrastructureImportsConcreteService { line, .. }
+            | Self::ApplicationWrongPortImport { line, .. }
+            | Self::InfrastructureImportsApplication { line, .. } => Some(*line),
         }
     }
 

@@ -216,12 +216,14 @@ impl ValidationConfig {
     /// Add an additional source path to validate
     ///
     /// Paths can be absolute or relative to `workspace_root`.
+    #[must_use]
     pub fn with_additional_path(mut self, path: impl Into<PathBuf>) -> Self {
         self.additional_src_paths.push(path.into());
         self
     }
 
     /// Add an exclude pattern (files/directories matching this will be skipped)
+    #[must_use]
     pub fn with_exclude_pattern(mut self, pattern: impl Into<String>) -> Self {
         self.exclude_patterns.push(pattern.into());
         self
@@ -324,10 +326,8 @@ impl ValidationConfig {
             } else if self.is_legacy_path(&dir) {
                 // Legacy flat directory: scan directly
                 scan_dirs.push(dir);
-            } else {
-                // Standard crate without src/ directory yet - skip
-                continue;
             }
+            // Standard crate without src/ directory yet - skip (implicit continue)
         }
 
         Ok(scan_dirs)
@@ -718,12 +718,12 @@ impl ArchitectureValidator {
             // Determine category
             let category = match rule.category.to_lowercase().as_str() {
                 "architecture" | "clean-architecture" => ViolationCategory::Architecture,
-                "quality" => ViolationCategory::Quality,
                 "performance" => ViolationCategory::Performance,
                 "organization" => ViolationCategory::Organization,
                 "solid" => ViolationCategory::Solid,
                 "di" | "dependency-injection" => ViolationCategory::DependencyInjection,
                 "migration" => ViolationCategory::Configuration, // Use Configuration for migration rules
+                // Default to Quality for "quality" and any unmatched category
                 _ => ViolationCategory::Quality,
             };
 
@@ -732,8 +732,8 @@ impl ArchitectureValidator {
                 // Use rule engine execution
                 let engine_type = match rule.engine.as_str() {
                     "rust-rule-engine" => RuleEngineType::RustRuleEngine,
-                    "rusty-rules" => RuleEngineType::RustyRules,
-                    _ => RuleEngineType::RustyRules, // Default
+                    // Default to RustyRules for "rusty-rules" and any unmatched engine
+                    _ => RuleEngineType::RustyRules,
                 };
 
                 let result = engine
@@ -861,7 +861,7 @@ impl ArchitectureValidator {
     ///
     /// # Arguments
     ///
-    /// * `names` - Names of validators to run (e.g., &["`clean_architecture`", "`layer_flow`"])
+    /// * `names` - Names of validators to run (e.g., `&["clean_architecture", "layer_flow"]`)
     ///
     /// # Available validators
     ///

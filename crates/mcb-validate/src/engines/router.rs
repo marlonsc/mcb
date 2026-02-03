@@ -40,6 +40,7 @@ impl std::fmt::Display for RoutedEngine {
 /// Rule Engine Router
 ///
 /// Analyzes rule definitions and routes them to the appropriate engine.
+#[allow(clippy::struct_field_names)]
 pub struct RuleEngineRouter {
     rete_engine: ReteEngine,
     expression_engine: ExpressionEngine,

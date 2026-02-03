@@ -103,19 +103,20 @@ pub enum SolidViolation {
 impl SolidViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::TooManyResponsibilities { severity, .. } => *severity,
-            Self::ExcessiveMatchArms { severity, .. } => *severity,
-            Self::TraitTooLarge { severity, .. } => *severity,
-            Self::ConcreteDependency { severity, .. } => *severity,
-            Self::MultipleUnrelatedStructs { severity, .. } => *severity,
-            Self::PartialTraitImplementation { severity, .. } => *severity,
-            Self::ImplTooManyMethods { severity, .. } => *severity,
-            Self::StringBasedDispatch { severity, .. } => *severity,
+            Self::TooManyResponsibilities { severity, .. }
+            | Self::ExcessiveMatchArms { severity, .. }
+            | Self::TraitTooLarge { severity, .. }
+            | Self::ConcreteDependency { severity, .. }
+            | Self::MultipleUnrelatedStructs { severity, .. }
+            | Self::PartialTraitImplementation { severity, .. }
+            | Self::ImplTooManyMethods { severity, .. }
+            | Self::StringBasedDispatch { severity, .. } => *severity,
         }
     }
 }
 
 impl std::fmt::Display for SolidViolation {
+    #[allow(clippy::too_many_lines)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::TooManyResponsibilities {
@@ -286,55 +287,55 @@ impl Violation for SolidViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::TooManyResponsibilities { severity, .. } => *severity,
-            Self::ExcessiveMatchArms { severity, .. } => *severity,
-            Self::TraitTooLarge { severity, .. } => *severity,
-            Self::ConcreteDependency { severity, .. } => *severity,
-            Self::MultipleUnrelatedStructs { severity, .. } => *severity,
-            Self::PartialTraitImplementation { severity, .. } => *severity,
-            Self::ImplTooManyMethods { severity, .. } => *severity,
-            Self::StringBasedDispatch { severity, .. } => *severity,
+            Self::TooManyResponsibilities { severity, .. }
+            | Self::ExcessiveMatchArms { severity, .. }
+            | Self::TraitTooLarge { severity, .. }
+            | Self::ConcreteDependency { severity, .. }
+            | Self::MultipleUnrelatedStructs { severity, .. }
+            | Self::PartialTraitImplementation { severity, .. }
+            | Self::ImplTooManyMethods { severity, .. }
+            | Self::StringBasedDispatch { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::TooManyResponsibilities { file, .. } => Some(file),
-            Self::ExcessiveMatchArms { file, .. } => Some(file),
-            Self::TraitTooLarge { file, .. } => Some(file),
-            Self::ConcreteDependency { file, .. } => Some(file),
-            Self::MultipleUnrelatedStructs { file, .. } => Some(file),
-            Self::PartialTraitImplementation { file, .. } => Some(file),
-            Self::ImplTooManyMethods { file, .. } => Some(file),
-            Self::StringBasedDispatch { file, .. } => Some(file),
+            Self::TooManyResponsibilities { file, .. }
+            | Self::ExcessiveMatchArms { file, .. }
+            | Self::TraitTooLarge { file, .. }
+            | Self::ConcreteDependency { file, .. }
+            | Self::MultipleUnrelatedStructs { file, .. }
+            | Self::PartialTraitImplementation { file, .. }
+            | Self::ImplTooManyMethods { file, .. }
+            | Self::StringBasedDispatch { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::TooManyResponsibilities { line, .. } => Some(*line),
-            Self::ExcessiveMatchArms { line, .. } => Some(*line),
-            Self::TraitTooLarge { line, .. } => Some(*line),
-            Self::ConcreteDependency { line, .. } => Some(*line),
             Self::MultipleUnrelatedStructs { .. } => None,
-            Self::PartialTraitImplementation { line, .. } => Some(*line),
-            Self::ImplTooManyMethods { line, .. } => Some(*line),
-            Self::StringBasedDispatch { line, .. } => Some(*line),
+            Self::TooManyResponsibilities { line, .. }
+            | Self::ExcessiveMatchArms { line, .. }
+            | Self::TraitTooLarge { line, .. }
+            | Self::ConcreteDependency { line, .. }
+            | Self::PartialTraitImplementation { line, .. }
+            | Self::ImplTooManyMethods { line, .. }
+            | Self::StringBasedDispatch { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::TooManyResponsibilities { suggestion, .. } => Some(suggestion.clone()),
-            Self::ExcessiveMatchArms { suggestion, .. } => Some(suggestion.clone()),
-            Self::TraitTooLarge { suggestion, .. } => Some(suggestion.clone()),
-            Self::ConcreteDependency { suggestion, .. } => Some(suggestion.clone()),
-            Self::MultipleUnrelatedStructs { suggestion, .. } => Some(suggestion.clone()),
             Self::PartialTraitImplementation { .. } => {
                 Some("Implement the method properly or remove the trait implementation".to_string())
             }
-            Self::ImplTooManyMethods { suggestion, .. } => Some(suggestion.clone()),
-            Self::StringBasedDispatch { suggestion, .. } => Some(suggestion.clone()),
+            Self::TooManyResponsibilities { suggestion, .. }
+            | Self::ExcessiveMatchArms { suggestion, .. }
+            | Self::TraitTooLarge { suggestion, .. }
+            | Self::ConcreteDependency { suggestion, .. }
+            | Self::MultipleUnrelatedStructs { suggestion, .. }
+            | Self::ImplTooManyMethods { suggestion, .. }
+            | Self::StringBasedDispatch { suggestion, .. } => Some(suggestion.clone()),
         }
     }
 }
@@ -831,9 +832,11 @@ impl SolidValidator {
                         test_brace_depth = brace_depth;
                     }
 
-                    // Track brace depth
-                    brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                    brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                    // Track brace depth (count per line fits i32 in practice)
+                    brace_depth +=
+                        i32::try_from(line.chars().filter(|c| *c == '{').count()).unwrap_or(0);
+                    brace_depth -=
+                        i32::try_from(line.chars().filter(|c| *c == '}').count()).unwrap_or(0);
 
                     // Exit test module when braces close (use < not <= to avoid premature exit)
                     if in_test_module && brace_depth < test_brace_depth {
@@ -1012,6 +1015,7 @@ impl SolidValidator {
     }
 
     /// Check if structs seem related (share common prefix/suffix)
+    #[allow(clippy::too_many_lines)]
     fn structs_seem_related(&self, names: &[String]) -> bool {
         if names.len() < 2 {
             return true;

@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Observation type for semantic memory (code, decision, context, error, summary).
+/// Observation type for semantic memory (code, decision, context, error, summary, execution).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ObservationType {
     Code,
@@ -11,6 +11,7 @@ pub enum ObservationType {
     Context,
     Error,
     Summary,
+    Execution,
 }
 
 impl ObservationType {
@@ -22,6 +23,7 @@ impl ObservationType {
             Self::Context => "context",
             Self::Error => "error",
             Self::Summary => "summary",
+            Self::Execution => "execution",
         }
     }
 }
@@ -36,9 +38,60 @@ impl std::str::FromStr for ObservationType {
             "context" => Ok(Self::Context),
             "error" => Ok(Self::Error),
             "summary" => Ok(Self::Summary),
+            "execution" => Ok(Self::Execution),
             _ => Err(format!("Unknown observation type: {s}")),
         }
     }
+}
+
+/// Execution type for command tracking (test, lint, build, CI).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ExecutionType {
+    Test,
+    Lint,
+    Build,
+    CI,
+}
+
+impl ExecutionType {
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Test => "test",
+            Self::Lint => "lint",
+            Self::Build => "build",
+            Self::CI => "ci",
+        }
+    }
+}
+
+impl std::str::FromStr for ExecutionType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "test" => Ok(Self::Test),
+            "lint" => Ok(Self::Lint),
+            "build" => Ok(Self::Build),
+            "ci" => Ok(Self::CI),
+            _ => Err(format!("Unknown execution type: {s}")),
+        }
+    }
+}
+
+/// Metadata for execution tracking stored on execution observations.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutionMetadata {
+    pub command: String,
+    pub exit_code: Option<i32>,
+    pub duration_ms: Option<i64>,
+    pub success: bool,
+    pub execution_type: ExecutionType,
+    pub coverage: Option<f32>,
+    pub files_affected: Vec<String>,
+    pub output_summary: Option<String>,
+    pub warnings_count: Option<i32>,
+    pub errors_count: Option<i32>,
 }
 
 /// Metadata for an observation (session, repo, file, branch, commit).
@@ -50,6 +103,8 @@ pub struct ObservationMetadata {
     pub file_path: Option<String>,
     pub branch: Option<String>,
     pub commit: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub execution: Option<ExecutionMetadata>,
 }
 
 impl Default for ObservationMetadata {
@@ -61,6 +116,7 @@ impl Default for ObservationMetadata {
             file_path: None,
             branch: None,
             commit: None,
+            execution: None,
         }
     }
 }

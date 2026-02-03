@@ -36,8 +36,8 @@ pub use agent::{
 pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 pub use memory::{
-    MemoryFilter, MemorySearchResult, Observation, ObservationMetadata, ObservationType,
-    SessionSummary,
+    ExecutionMetadata, ExecutionType, MemoryFilter, MemorySearchResult, Observation,
+    ObservationMetadata, ObservationType, SessionSummary,
 };
 pub use project::{DetectedProject, Project, ProjectType};
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};

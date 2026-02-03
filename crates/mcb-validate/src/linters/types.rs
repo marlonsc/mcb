@@ -29,6 +29,19 @@ impl LinterType {
         }
     }
 
+    /// File extension this linter operates on (e.g. "py" for Ruff, "rs" for Clippy)
+    pub fn supported_extension(&self) -> &'static str {
+        match self {
+            LinterType::Ruff => "py",
+            LinterType::Clippy => "rs",
+        }
+    }
+
+    /// Returns true if the given extension (e.g. from `path.extension()`) matches this linter
+    pub fn matches_extension(&self, ext: Option<&str>) -> bool {
+        ext == Some(self.supported_extension())
+    }
+
     pub fn args(&self, files: &[&std::path::Path]) -> Vec<String> {
         match self {
             LinterType::Ruff => {

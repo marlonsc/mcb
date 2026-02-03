@@ -22,13 +22,13 @@ use mcb_domain::ports::providers::VcsProvider;
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
     CreateAgentSessionHandler, CreateSessionSummaryHandler, GetAgentSessionHandler,
-    GetIndexingStatusHandler, GetSessionSummaryHandler, GetValidationRulesHandler,
-    IndexCodebaseHandler, IndexVcsRepositoryHandler, ListAgentSessionsHandler,
-    ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
-    MemoryInjectContextHandler, MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler,
-    SearchCodeHandler, SearchMemoriesHandler, StoreDelegationHandler, StoreObservationHandler,
-    StoreToolCallHandler, UpdateAgentSessionHandler, ValidateArchitectureHandler,
-    ValidateFileHandler,
+    GetExecutionsHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, IndexVcsRepositoryHandler,
+    ListAgentSessionsHandler, ListRepositoriesHandler, ListValidatorsHandler,
+    MemoryGetObservationsHandler, MemoryInjectContextHandler, MemorySearchHandler,
+    MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler, SearchMemoriesHandler,
+    StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler, StoreToolCallHandler,
+    UpdateAgentSessionHandler, ValidateArchitectureHandler, ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
@@ -100,6 +100,8 @@ impl McpServer {
                 memory_service.clone(),
             )),
             memory_search: Arc::new(MemorySearchHandler::new(memory_service.clone())),
+            memory_store_execution: Arc::new(StoreExecutionHandler::new(memory_service.clone())),
+            memory_get_executions: Arc::new(GetExecutionsHandler::new(memory_service.clone())),
             create_agent_session: Arc::new(CreateAgentSessionHandler::new(
                 agent_session_service.clone(),
             )),
@@ -260,6 +262,16 @@ impl McpServer {
     /// Access to memory search handler (for HTTP transport)
     pub fn memory_search_handler(&self) -> Arc<MemorySearchHandler> {
         Arc::clone(&self.handlers.memory_search)
+    }
+
+    /// Access to memory store execution handler (for HTTP transport)
+    pub fn memory_store_execution_handler(&self) -> Arc<StoreExecutionHandler> {
+        Arc::clone(&self.handlers.memory_store_execution)
+    }
+
+    /// Access to memory get executions handler (for HTTP transport)
+    pub fn memory_get_executions_handler(&self) -> Arc<GetExecutionsHandler> {
+        Arc::clone(&self.handlers.memory_get_executions)
     }
 
     pub fn create_agent_session_handler(&self) -> Arc<CreateAgentSessionHandler> {

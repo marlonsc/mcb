@@ -51,9 +51,10 @@ impl LinterEngine {
 
         // For Clippy, we need to check if any Rust files are present
         if self.enabled_linters.contains(&LinterType::Clippy) {
-            let has_rust_files = files
-                .iter()
-                .any(|f| f.extension().is_some_and(|ext| ext == "rs"));
+            let has_rust_files = files.iter().any(|f| {
+                LinterType::Clippy
+                    .matches_extension(f.extension().and_then(std::ffi::OsStr::to_str))
+            });
             if has_rust_files {
                 // Find project root (simplified - assumes files are in a Cargo project)
                 if let Some(project_root) = find_project_root(files) {

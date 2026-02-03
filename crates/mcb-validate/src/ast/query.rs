@@ -1,7 +1,17 @@
 //! AST Query Engine
 //!
-//! Provides querying capabilities over unified AST format
-//! for rule validation.
+//! Provides querying capabilities over unified AST format for rule validation.
+//!
+//! # Example
+//!
+//! ```ignore
+//! let query = AstQueryBuilder::new("rust", "function_item")
+//!     .with_condition(QueryCondition::Custom { name: "has_no_docstring".to_string() })
+//!     .message("Function needs documentation")
+//!     .severity("warning")
+//!     .build();
+//! let violations = query.execute(&root_node);
+//! ```
 
 use regex::Regex;
 
@@ -49,6 +59,7 @@ impl AstQuery {
         }
     }
 
+    #[must_use]
     pub fn with_condition(mut self, condition: QueryCondition) -> Self {
         self.conditions.push(condition);
         self
@@ -102,15 +113,10 @@ impl AstQuery {
                 .and_then(|v| v.as_str())
                 .is_some_and(|s| s == value),
             QueryCondition::NotHasField { field } => !node.metadata.contains_key(field),
-            QueryCondition::NameMatches { pattern } => {
-                if let Some(name) = &node.name {
-                    Regex::new(pattern)
-                        .map(|re| re.is_match(name))
-                        .unwrap_or(false)
-                } else {
-                    false
-                }
-            }
+            QueryCondition::NameMatches { pattern } => match &node.name {
+                Some(name) => Regex::new(pattern).ok().is_some_and(|re| re.is_match(name)),
+                None => false,
+            },
             QueryCondition::HasChild { child_type } => {
                 node.children.iter().any(|child| child.kind == *child_type)
             }
@@ -179,21 +185,25 @@ impl AstQueryBuilder {
         }
     }
 
+    #[must_use]
     pub fn with_condition(mut self, condition: QueryCondition) -> Self {
         self.conditions.push(condition);
         self
     }
 
+    #[must_use]
     pub fn message(mut self, message: &str) -> Self {
         self.message = message.to_string();
         self
     }
 
+    #[must_use]
     pub fn severity(mut self, severity: &str) -> Self {
         self.severity = severity.to_string();
         self
     }
 
+    #[must_use]
     pub fn build(self) -> AstQuery {
         AstQuery {
             language: self.language,
@@ -205,19 +215,31 @@ impl AstQueryBuilder {
     }
 }
 
+/// Returns the AST node type for function-like declarations for the given language.
+fn function_node_type(language: &str) -> &'static str {
+    match language {
+        "rust" => "function_item",
+        "python" => "function_definition",
+        "javascript" | "typescript" | "go" => "function_declaration",
+        _ => "function",
+    }
+}
+
+/// Returns the AST node type for call expressions for the given language.
+fn call_node_type(language: &str) -> &'static str {
+    match language {
+        "rust" | "javascript" | "typescript" | "go" => "call_expression",
+        _ => "call", // python and others
+    }
+}
+
 /// Common query patterns
 pub struct AstQueryPatterns;
 
 impl AstQueryPatterns {
     /// Query for functions without documentation
     pub fn undocumented_functions(language: &str) -> AstQuery {
-        let node_type = match language {
-            "rust" => "function_item",
-            "python" => "function_definition",
-            "javascript" | "typescript" => "function_declaration",
-            "go" => "function_declaration",
-            _ => "function",
-        };
+        let node_type = function_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::Custom {
@@ -230,13 +252,7 @@ impl AstQueryPatterns {
 
     /// Query for `unwrap()` usage in non-test code
     pub fn unwrap_usage(language: &str) -> AstQuery {
-        let node_type = match language {
-            "rust" => "call_expression",
-            "python" => "call",
-            "javascript" | "typescript" => "call_expression",
-            "go" => "call_expression",
-            _ => "call",
-        };
+        let node_type = call_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::HasField {
@@ -253,13 +269,7 @@ impl AstQueryPatterns {
 
     /// Query for async functions
     pub fn async_functions(language: &str) -> AstQuery {
-        let node_type = match language {
-            "rust" => "function_item",
-            "python" => "function_definition",
-            "javascript" | "typescript" => "function_declaration",
-            "go" => "function_declaration",
-            _ => "function",
-        };
+        let node_type = function_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::Custom {

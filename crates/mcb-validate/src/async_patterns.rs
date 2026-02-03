@@ -52,10 +52,10 @@ pub enum AsyncViolation {
 impl AsyncViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::BlockingInAsync { severity, .. } => *severity,
-            Self::BlockOnInAsync { severity, .. } => *severity,
-            Self::WrongMutexType { severity, .. } => *severity,
-            Self::UnawaitedSpawn { severity, .. } => *severity,
+            Self::BlockingInAsync { severity, .. }
+            | Self::BlockOnInAsync { severity, .. }
+            | Self::WrongMutexType { severity, .. }
+            | Self::UnawaitedSpawn { severity, .. } => *severity,
         }
     }
 }
@@ -147,29 +147,30 @@ impl Violation for AsyncViolation {
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::BlockingInAsync { file, .. } => Some(file),
-            Self::BlockOnInAsync { file, .. } => Some(file),
-            Self::WrongMutexType { file, .. } => Some(file),
-            Self::UnawaitedSpawn { file, .. } => Some(file),
+            Self::BlockingInAsync { file, .. }
+            | Self::BlockOnInAsync { file, .. }
+            | Self::WrongMutexType { file, .. }
+            | Self::UnawaitedSpawn { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::BlockingInAsync { line, .. } => Some(*line),
-            Self::BlockOnInAsync { line, .. } => Some(*line),
-            Self::WrongMutexType { line, .. } => Some(*line),
-            Self::UnawaitedSpawn { line, .. } => Some(*line),
+            Self::BlockingInAsync { line, .. }
+            | Self::BlockOnInAsync { line, .. }
+            | Self::WrongMutexType { line, .. }
+            | Self::UnawaitedSpawn { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::BlockingInAsync { suggestion, .. } => Some(suggestion.clone()),
+            Self::BlockingInAsync { suggestion, .. } | Self::WrongMutexType { suggestion, .. } => {
+                Some(suggestion.clone())
+            }
             Self::BlockOnInAsync { .. } => {
                 Some("Use .await instead of block_on() in async context".to_string())
             }
-            Self::WrongMutexType { suggestion, .. } => Some(suggestion.clone()),
             Self::UnawaitedSpawn { .. } => Some(
                 "Assign JoinHandle to a variable or use let _ = to explicitly ignore".to_string(),
             ),
@@ -204,6 +205,7 @@ impl AsyncPatternValidator {
     }
 
     /// Detect blocking calls in async functions
+    #[allow(clippy::too_many_lines)]
     pub fn validate_blocking_in_async(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
@@ -304,10 +306,11 @@ impl AsyncPatternValidator {
                         async_fn_depth = 0;
                     }
 
-                    // Track brace depth
                     if in_async_fn {
-                        async_fn_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                        async_fn_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                        let open = line.chars().filter(|c| *c == '{').count();
+                        let close = line.chars().filter(|c| *c == '}').count();
+                        async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
+                        async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
 
                         // Check for blocking calls
                         for (pattern, desc, sugg) in &compiled_blocking {
@@ -392,10 +395,11 @@ impl AsyncPatternValidator {
                         async_fn_depth = 0;
                     }
 
-                    // Track brace depth
                     if in_async_fn {
-                        async_fn_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                        async_fn_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                        let open = line.chars().filter(|c| *c == '{').count();
+                        let close = line.chars().filter(|c| *c == '}').count();
+                        async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
+                        async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
 
                         // Check for block_on calls
                         for pattern in &compiled_block_on {

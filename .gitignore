@@ -21,6 +21,15 @@ thoughts/
 .aider*
 GEMINI.md
 AGENTS.md
+.agent/
+.codex/
+.cursor/
+.gemini/
+.github/prompts/
+.github/skills/
+.opencode/
+openspec/
+
 
 # Oracle reference data
 oracle/

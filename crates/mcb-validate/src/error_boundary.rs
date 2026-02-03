@@ -43,9 +43,9 @@ pub enum ErrorBoundaryViolation {
 impl ErrorBoundaryViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::MissingErrorContext { severity, .. } => *severity,
-            Self::WrongLayerError { severity, .. } => *severity,
-            Self::LeakedInternalError { severity, .. } => *severity,
+            Self::MissingErrorContext { severity, .. }
+            | Self::WrongLayerError { severity, .. }
+            | Self::LeakedInternalError { severity, .. } => *severity,
         }
     }
 }
@@ -118,25 +118,25 @@ impl Violation for ErrorBoundaryViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::MissingErrorContext { severity, .. } => *severity,
-            Self::WrongLayerError { severity, .. } => *severity,
-            Self::LeakedInternalError { severity, .. } => *severity,
+            Self::MissingErrorContext { severity, .. }
+            | Self::WrongLayerError { severity, .. }
+            | Self::LeakedInternalError { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::MissingErrorContext { file, .. } => Some(file),
-            Self::WrongLayerError { file, .. } => Some(file),
-            Self::LeakedInternalError { file, .. } => Some(file),
+            Self::MissingErrorContext { file, .. }
+            | Self::WrongLayerError { file, .. }
+            | Self::LeakedInternalError { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::MissingErrorContext { line, .. } => Some(*line),
-            Self::WrongLayerError { line, .. } => Some(*line),
-            Self::LeakedInternalError { line, .. } => Some(*line),
+            Self::MissingErrorContext { line, .. }
+            | Self::WrongLayerError { line, .. }
+            | Self::LeakedInternalError { line, .. } => Some(*line),
         }
     }
 

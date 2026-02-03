@@ -11,10 +11,11 @@ use std::sync::Arc;
 use crate::args::{
     AnalyzeComplexityArgs, ClearIndexArgs, CreateAgentSessionArgs, CreateSessionSummaryArgs,
     GetAgentSessionArgs, GetIndexingStatusArgs, GetSessionSummaryArgs, GetValidationRulesArgs,
-    IndexCodebaseArgs, ListAgentSessionsArgs, ListValidatorsArgs, MemoryGetObservationsArgs,
-    MemoryInjectContextArgs, MemorySearchArgs, MemoryTimelineArgs, SearchCodeArgs,
-    SearchMemoriesArgs, StoreDelegationArgs, StoreObservationArgs, StoreToolCallArgs,
-    UpdateAgentSessionArgs, ValidateArchitectureArgs, ValidateFileArgs,
+    IndexCodebaseArgs, ListAgentSessionsArgs, ListValidatorsArgs, MemoryGetExecutionsArgs,
+    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemorySearchArgs, MemoryStoreExecutionArgs,
+    MemoryTimelineArgs, SearchCodeArgs, SearchMemoriesArgs, StoreDelegationArgs,
+    StoreObservationArgs, StoreToolCallArgs, UpdateAgentSessionArgs, ValidateArchitectureArgs,
+    ValidateFileArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -170,6 +171,22 @@ impl ToolDefinitions {
         )
     }
 
+    pub fn memory_store_execution() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_store_execution",
+            "Store execution results in semantic memory",
+            schemars::schema_for!(MemoryStoreExecutionArgs),
+        )
+    }
+
+    pub fn memory_get_executions() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_get_executions",
+            "Retrieve execution history with optional filters",
+            schemars::schema_for!(MemoryGetExecutionsArgs),
+        )
+    }
+
     pub fn create_agent_session() -> Result<Tool, McpError> {
         Self::create_tool(
             "create_agent_session",
@@ -268,6 +285,8 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::memory_get_observations()?,
         ToolDefinitions::memory_inject_context()?,
         ToolDefinitions::memory_search()?,
+        ToolDefinitions::memory_store_execution()?,
+        ToolDefinitions::memory_get_executions()?,
         ToolDefinitions::create_agent_session()?,
         ToolDefinitions::get_agent_session()?,
         ToolDefinitions::update_agent_session()?,

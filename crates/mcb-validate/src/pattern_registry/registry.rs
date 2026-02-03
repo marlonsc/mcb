@@ -37,8 +37,8 @@ impl PatternRegistry {
         {
             if let Err(e) = registry.load_rule_file(entry.path()) {
                 eprintln!(
-                    "Warning: Failed to load patterns from {:?}: {}",
-                    entry.path(),
+                    "Warning: Failed to load patterns from {}: {}",
+                    entry.path().display(),
                     e
                 );
             }

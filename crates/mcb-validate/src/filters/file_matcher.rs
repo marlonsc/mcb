@@ -1,7 +1,15 @@
 //! File Pattern Matching
 //!
 //! Matches file paths against glob patterns for rule filtering.
-//! Supports inclusion and exclusion patterns.
+//! Supports inclusion and exclusion patterns (including `!`-prefixed exclusions).
+//!
+//! # Example
+//!
+//! ```ignore
+//! let matcher = FilePatternMatcher::new(&["src/**/*.rs".into()], &["**/target/**".into()])?;
+//! assert!(matcher.should_include(Path::new("src/lib.rs")));
+//! assert!(!matcher.should_include(Path::new("target/debug/lib.rs")));
+//! ```
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use std::path::Path;
@@ -17,7 +25,7 @@ impl FilePatternMatcher {
     ///
     /// # Arguments
     /// * `include_patterns` - Patterns that files must match (e.g., ["src/**/*.rs", "tests/**/*.rs"])
-    /// * `exclude_patterns` - Patterns that files must NOT match (e.g., ["**/target/**", "**/*_test.rs"])
+    /// * `exclude_patterns` - Patterns that files must NOT match (e.g. `["**/target/**", "**/*_test.rs"]`)
     pub fn new(
         include_patterns: &[String],
         exclude_patterns: &[String],
@@ -103,8 +111,8 @@ impl FilePatternMatcher {
         let mut excludes = Vec::new();
 
         for pattern in patterns {
-            if pattern.starts_with('!') {
-                excludes.push(pattern[1..].to_string());
+            if let Some(stripped) = pattern.strip_prefix('!') {
+                excludes.push(stripped.to_string());
             } else {
                 includes.push(pattern.clone());
             }
@@ -121,8 +129,9 @@ impl FilePatternMatcher {
 }
 
 impl Default for FilePatternMatcher {
+    /// Returns a matcher that includes all paths and excludes none.
+    /// `new(&[], &[])` cannot fail (empty lists build successfully).
     fn default() -> Self {
-        // Default: include everything, exclude nothing
         Self::new(&[], &[]).unwrap()
     }
 }

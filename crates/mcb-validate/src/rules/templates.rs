@@ -46,7 +46,8 @@ impl TemplateEngine {
                         .and_then(|name| name.to_str())
                         .ok_or_else(|| {
                             crate::ValidationError::Config(format!(
-                                "Invalid template filename: {path:?}"
+                                "Invalid template filename: {}",
+                                path.display()
                             ))
                         })?;
 

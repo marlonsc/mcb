@@ -175,29 +175,30 @@ pub enum OrganizationViolation {
 impl OrganizationViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::MagicNumber { severity, .. } => *severity,
-            Self::DuplicateStringLiteral { severity, .. } => *severity,
-            Self::DecentralizedConstant { severity, .. } => *severity,
-            Self::TypeInWrongLayer { severity, .. } => *severity,
-            Self::FileInWrongLocation { severity, .. } => *severity,
-            Self::DeclarationCollision { severity, .. } => *severity,
-            Self::TraitOutsidePorts { severity, .. } => *severity,
-            Self::AdapterOutsideInfrastructure { severity, .. } => *severity,
-            Self::ConstantsFileTooLarge { severity, .. } => *severity,
-            Self::CommonMagicNumber { severity, .. } => *severity,
-            Self::LargeFileWithoutModules { severity, .. } => *severity,
-            Self::DualLayerDefinition { severity, .. } => *severity,
-            Self::ServerCreatingServices { severity, .. } => *severity,
-            Self::ApplicationImportsServer { severity, .. } => *severity,
-            Self::StrictDirectoryViolation { severity, .. } => *severity,
-            Self::DomainLayerImplementation { severity, .. } => *severity,
-            Self::HandlerOutsideHandlers { severity, .. } => *severity,
-            Self::PortOutsidePorts { severity, .. } => *severity,
+            Self::MagicNumber { severity, .. }
+            | Self::DuplicateStringLiteral { severity, .. }
+            | Self::DecentralizedConstant { severity, .. }
+            | Self::TypeInWrongLayer { severity, .. }
+            | Self::FileInWrongLocation { severity, .. }
+            | Self::DeclarationCollision { severity, .. }
+            | Self::TraitOutsidePorts { severity, .. }
+            | Self::AdapterOutsideInfrastructure { severity, .. }
+            | Self::ConstantsFileTooLarge { severity, .. }
+            | Self::CommonMagicNumber { severity, .. }
+            | Self::LargeFileWithoutModules { severity, .. }
+            | Self::DualLayerDefinition { severity, .. }
+            | Self::ServerCreatingServices { severity, .. }
+            | Self::ApplicationImportsServer { severity, .. }
+            | Self::StrictDirectoryViolation { severity, .. }
+            | Self::DomainLayerImplementation { severity, .. }
+            | Self::HandlerOutsideHandlers { severity, .. }
+            | Self::PortOutsidePorts { severity, .. } => *severity,
         }
     }
 }
 
 impl std::fmt::Display for OrganizationViolation {
+    #[allow(clippy::too_many_lines)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::MagicNumber {
@@ -514,78 +515,81 @@ impl Violation for OrganizationViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::MagicNumber { severity, .. } => *severity,
-            Self::DuplicateStringLiteral { severity, .. } => *severity,
-            Self::DecentralizedConstant { severity, .. } => *severity,
-            Self::TypeInWrongLayer { severity, .. } => *severity,
-            Self::FileInWrongLocation { severity, .. } => *severity,
-            Self::DeclarationCollision { severity, .. } => *severity,
-            Self::TraitOutsidePorts { severity, .. } => *severity,
-            Self::AdapterOutsideInfrastructure { severity, .. } => *severity,
-            Self::ConstantsFileTooLarge { severity, .. } => *severity,
-            Self::CommonMagicNumber { severity, .. } => *severity,
-            Self::LargeFileWithoutModules { severity, .. } => *severity,
-            Self::DualLayerDefinition { severity, .. } => *severity,
-            Self::ServerCreatingServices { severity, .. } => *severity,
-            Self::ApplicationImportsServer { severity, .. } => *severity,
-            Self::StrictDirectoryViolation { severity, .. } => *severity,
-            Self::DomainLayerImplementation { severity, .. } => *severity,
-            Self::HandlerOutsideHandlers { severity, .. } => *severity,
-            Self::PortOutsidePorts { severity, .. } => *severity,
+            Self::MagicNumber { severity, .. }
+            | Self::DuplicateStringLiteral { severity, .. }
+            | Self::DecentralizedConstant { severity, .. }
+            | Self::TypeInWrongLayer { severity, .. }
+            | Self::FileInWrongLocation { severity, .. }
+            | Self::DeclarationCollision { severity, .. }
+            | Self::TraitOutsidePorts { severity, .. }
+            | Self::AdapterOutsideInfrastructure { severity, .. }
+            | Self::ConstantsFileTooLarge { severity, .. }
+            | Self::CommonMagicNumber { severity, .. }
+            | Self::LargeFileWithoutModules { severity, .. }
+            | Self::DualLayerDefinition { severity, .. }
+            | Self::ServerCreatingServices { severity, .. }
+            | Self::ApplicationImportsServer { severity, .. }
+            | Self::StrictDirectoryViolation { severity, .. }
+            | Self::DomainLayerImplementation { severity, .. }
+            | Self::HandlerOutsideHandlers { severity, .. }
+            | Self::PortOutsidePorts { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::MagicNumber { file, .. } => Some(file),
-            Self::DuplicateStringLiteral { .. } => None, // Multiple files
-            Self::DecentralizedConstant { file, .. } => Some(file),
-            Self::TypeInWrongLayer { file, .. } => Some(file),
-            Self::FileInWrongLocation { file, .. } => Some(file),
-            Self::DeclarationCollision { .. } => None, // Multiple files
-            Self::TraitOutsidePorts { file, .. } => Some(file),
-            Self::AdapterOutsideInfrastructure { file, .. } => Some(file),
-            Self::ConstantsFileTooLarge { file, .. } => Some(file),
-            Self::CommonMagicNumber { file, .. } => Some(file),
-            Self::LargeFileWithoutModules { file, .. } => Some(file),
-            Self::DualLayerDefinition { .. } => None, // Multiple files
-            Self::ServerCreatingServices { file, .. } => Some(file),
-            Self::ApplicationImportsServer { file, .. } => Some(file),
-            Self::StrictDirectoryViolation { file, .. } => Some(file),
-            Self::DomainLayerImplementation { file, .. } => Some(file),
-            Self::HandlerOutsideHandlers { file, .. } => Some(file),
-            Self::PortOutsidePorts { file, .. } => Some(file),
+            Self::DuplicateStringLiteral { .. }
+            | Self::DeclarationCollision { .. }
+            | Self::DualLayerDefinition { .. } => None,
+            Self::MagicNumber { file, .. }
+            | Self::DecentralizedConstant { file, .. }
+            | Self::TypeInWrongLayer { file, .. }
+            | Self::FileInWrongLocation { file, .. }
+            | Self::TraitOutsidePorts { file, .. }
+            | Self::AdapterOutsideInfrastructure { file, .. }
+            | Self::ConstantsFileTooLarge { file, .. }
+            | Self::CommonMagicNumber { file, .. }
+            | Self::LargeFileWithoutModules { file, .. }
+            | Self::ServerCreatingServices { file, .. }
+            | Self::ApplicationImportsServer { file, .. }
+            | Self::StrictDirectoryViolation { file, .. }
+            | Self::DomainLayerImplementation { file, .. }
+            | Self::HandlerOutsideHandlers { file, .. }
+            | Self::PortOutsidePorts { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::MagicNumber { line, .. } => Some(*line),
-            Self::DuplicateStringLiteral { .. } => None, // Multiple lines
-            Self::DecentralizedConstant { line, .. } => Some(*line),
-            Self::TypeInWrongLayer { line, .. } => Some(*line),
-            Self::FileInWrongLocation { .. } => None, // File-level issue
-            Self::DeclarationCollision { .. } => None, // Multiple lines
-            Self::TraitOutsidePorts { line, .. } => Some(*line),
-            Self::AdapterOutsideInfrastructure { line, .. } => Some(*line),
-            Self::ConstantsFileTooLarge { .. } => None, // File-level issue
-            Self::CommonMagicNumber { line, .. } => Some(*line),
-            Self::LargeFileWithoutModules { .. } => None, // File-level issue
-            Self::DualLayerDefinition { .. } => None,     // Multiple files
-            Self::ServerCreatingServices { line, .. } => Some(*line),
-            Self::ApplicationImportsServer { line, .. } => Some(*line),
-            Self::StrictDirectoryViolation { .. } => None, // File-level issue
-            Self::DomainLayerImplementation { line, .. } => Some(*line),
-            Self::HandlerOutsideHandlers { line, .. } => Some(*line),
-            Self::PortOutsidePorts { line, .. } => Some(*line),
+            Self::DuplicateStringLiteral { .. }
+            | Self::FileInWrongLocation { .. }
+            | Self::DeclarationCollision { .. }
+            | Self::ConstantsFileTooLarge { .. }
+            | Self::LargeFileWithoutModules { .. }
+            | Self::DualLayerDefinition { .. }
+            | Self::StrictDirectoryViolation { .. } => None,
+            Self::MagicNumber { line, .. }
+            | Self::DecentralizedConstant { line, .. }
+            | Self::TypeInWrongLayer { line, .. }
+            | Self::TraitOutsidePorts { line, .. }
+            | Self::AdapterOutsideInfrastructure { line, .. }
+            | Self::CommonMagicNumber { line, .. }
+            | Self::ServerCreatingServices { line, .. }
+            | Self::ApplicationImportsServer { line, .. }
+            | Self::DomainLayerImplementation { line, .. }
+            | Self::HandlerOutsideHandlers { line, .. }
+            | Self::PortOutsidePorts { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::MagicNumber { suggestion, .. } => Some(suggestion.clone()),
-            Self::DuplicateStringLiteral { suggestion, .. } => Some(suggestion.clone()),
-            Self::DecentralizedConstant { suggestion, .. } => Some(suggestion.clone()),
+            Self::MagicNumber { suggestion, .. }
+            | Self::DuplicateStringLiteral { suggestion, .. }
+            | Self::DecentralizedConstant { suggestion, .. }
+            | Self::CommonMagicNumber { suggestion, .. }
+            | Self::LargeFileWithoutModules { suggestion, .. }
+            | Self::ServerCreatingServices { suggestion, .. } => Some(suggestion.clone()),
             Self::TypeInWrongLayer { expected_layer, .. } => {
                 Some(format!("Move type to {expected_layer} layer"))
             }
@@ -602,12 +606,9 @@ impl Violation for OrganizationViolation {
             Self::ConstantsFileTooLarge { .. } => {
                 Some("Split constants file by domain".to_string())
             }
-            Self::CommonMagicNumber { suggestion, .. } => Some(suggestion.clone()),
-            Self::LargeFileWithoutModules { suggestion, .. } => Some(suggestion.clone()),
             Self::DualLayerDefinition { .. } => {
                 Some("Keep definition in one layer only".to_string())
             }
-            Self::ServerCreatingServices { suggestion, .. } => Some(suggestion.clone()),
             Self::ApplicationImportsServer { .. } => {
                 Some("Remove server import from application layer".to_string())
             }
@@ -975,6 +976,7 @@ impl OrganizationValidator {
     }
 
     /// Check for traits defined outside domain/ports
+    #[allow(clippy::too_many_lines)]
     pub fn validate_trait_placement(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
         let trait_pattern =
@@ -1173,11 +1175,11 @@ impl OrganizationValidator {
                     test_brace_depth = brace_depth;
                 }
 
-                // Track brace depth
-                brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                brace_depth +=
+                    i32::try_from(line.chars().filter(|c| *c == '{').count()).unwrap_or(0);
+                brace_depth -=
+                    i32::try_from(line.chars().filter(|c| *c == '}').count()).unwrap_or(0);
 
-                // Exit test module when braces close (use < not <= to avoid premature exit)
                 if in_test_module && brace_depth < test_brace_depth {
                     in_test_module = false;
                 }
@@ -1415,7 +1417,7 @@ impl OrganizationValidator {
         ];
         // Also allow any method starting with common prefixes (factory methods on value objects)
         // Note: These are checked inline below rather than via this array for performance
-        let _allowed_prefixes = [
+        let allowed_prefixes = [
             "from_", "into_", "as_", "to_", "get_", "is_", "has_", "with_",
         ];
 
@@ -1462,34 +1464,23 @@ impl OrganizationValidator {
                     impl_start_brace = brace_depth;
                 }
 
-                // Track brace depth
-                brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                brace_depth +=
+                    i32::try_from(line.chars().filter(|c| *c == '{').count()).unwrap_or(0);
+                brace_depth -=
+                    i32::try_from(line.chars().filter(|c| *c == '}').count()).unwrap_or(0);
 
-                // Exit impl block when braces close
                 if in_impl_block && brace_depth <= impl_start_brace {
                     in_impl_block = false;
                 }
 
-                // Check methods in impl blocks
                 if in_impl_block && let Some(cap) = method_pattern.captures(line) {
                     let method_name = cap.get(1).map_or("", |m| m.as_str());
 
-                    // Skip allowed methods
                     if allowed_methods.contains(&method_name) {
                         continue;
                     }
 
-                    // Skip if method name starts with allowed prefix
-                    if method_name.starts_with("get_")
-                        || method_name.starts_with("is_")
-                        || method_name.starts_with("has_")
-                        || method_name.starts_with("to_")
-                        || method_name.starts_with("as_")
-                        || method_name.starts_with("with_")
-                        || method_name.starts_with("from_")
-                        || method_name.starts_with("into_")
-                    {
+                    if allowed_prefixes.iter().any(|p| method_name.starts_with(p)) {
                         continue;
                     }
 
