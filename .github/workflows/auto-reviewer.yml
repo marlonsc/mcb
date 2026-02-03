@@ -8,8 +8,8 @@
 #   1. Triggers when Dependabot opens or updates a PR
 #   2. Waits for CI checks to complete (branch protection)
 #   3. Enables auto-merge with squash for patch/minor (no auto-approve;
-#      GITHUB_TOKEN cannot approve PRs per GitHub restriction)
-#
+#      GITHUB_TOKEN cannot approve PRs opened by the same bot (Dependabot)
+#      per GitHub restriction)
 # Security:
 #   - Only runs for dependabot[bot] actor
 #   - Requires CI to pass before merge (configure in branch protection)
