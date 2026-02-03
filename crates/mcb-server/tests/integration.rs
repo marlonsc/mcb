@@ -21,6 +21,10 @@ pub use helpers::{
 #[path = "integration/golden_acceptance_integration.rs"]
 mod golden_acceptance_integration;
 
+// Golden MCP tools e2e (no ignore)
+#[path = "integration/golden_tools_e2e.rs"]
+mod golden_tools_e2e;
+
 // Browse API integration tests
 #[path = "integration/browse_api_integration.rs"]
 mod browse_api_integration;

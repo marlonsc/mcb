@@ -44,8 +44,8 @@ else ifeq ($(SCOPE),doc)
 	@echo "Running doctests..."
 	MCP_PORT=$(MCP_PORT) cargo test --doc --workspace $(TEST_THREADS_FLAG)
 else ifeq ($(SCOPE),golden)
-	@echo "Running golden acceptance tests..."
-	MCP_PORT=$(MCP_PORT) cargo test -p mcb-server golden_acceptance -- --nocapture $(TEST_THREADS_FLAG)
+	@echo "Running golden acceptance and tools e2e tests..."
+	MCP_PORT=$(MCP_PORT) cargo test -p mcb-server golden -- --nocapture $(TEST_THREADS_FLAG)
 else ifeq ($(SCOPE),integration)
 	@echo "Running integration tests..."
 	MCP_PORT=$(MCP_PORT) cargo test -p mcb-server --test integration $(TEST_THREADS_FLAG)
