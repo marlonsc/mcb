@@ -5,11 +5,15 @@
 //! Provides [`SqliteExecutor`] (port [`DatabaseExecutor`]), [`SqliteMemoryRepository`]
 //! (port [`MemoryRepository`]), and factory functions for DI.
 
+mod agent_repository;
+mod agent_repository;
 mod ddl;
 mod executor;
 mod memory_repository;
 mod row_convert;
 
+pub use agent_repository::SqliteAgentRepository;
+pub use agent_repository::SqliteAgentRepository;
 pub use ddl::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 pub use executor::SqliteExecutor;
 pub use memory_repository::SqliteMemoryRepository;

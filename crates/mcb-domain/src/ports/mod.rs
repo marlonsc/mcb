@@ -49,7 +49,7 @@ pub use providers::{
     NullMetricsProvider, NullValidationProvider, ProviderConfigManagerInterface, ValidationOptions,
     ValidationProvider, ValidatorInfo, VectorStoreAdmin, VectorStoreProvider,
 };
-pub use repositories::MemoryRepository;
+pub use repositories::{AgentRepository, MemoryRepository};
 pub use services::{
     NullValidationService, ValidationReport, ValidationServiceInterface, ViolationEntry,
 };

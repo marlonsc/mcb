@@ -2,8 +2,11 @@
 //!
 //! Single source of truth for the whole project: memory (observations,
 //! session_summaries), collections (vector store mapping), file_hashes
-//! (incremental indexing), with FKs so backends generate correct REFERENCES.
-//! Aligns database port data with vector stores (collections) and project org.
+//! (incremental indexing), agent sessions (agent tracking), with FKs so
+//! backends generate correct REFERENCES. Aligns database port data with
+//! vector stores (collections) and project org.
+
+pub mod agent;
 
 use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 
@@ -52,8 +55,7 @@ impl ProjectSchema {
     }
 
     fn tables() -> Vec<TableDef> {
-        vec![
-            // projects: root entity that ties collections, file_hashes, and observations
+        let mut tables = vec![
             TableDef {
                 name: "projects".to_string(),
                 columns: vec![
@@ -355,7 +357,9 @@ impl ProjectSchema {
                     },
                 ],
             },
-        ]
+        ];
+        tables.extend(agent::tables());
+        tables
     }
 
     fn fts_def() -> Option<FtsDef> {
@@ -368,7 +372,7 @@ impl ProjectSchema {
     }
 
     fn indexes() -> Vec<IndexDef> {
-        vec![
+        let mut indexes = vec![
             IndexDef {
                 name: "idx_collections_project".to_string(),
                 table: "collections".to_string(),
@@ -409,11 +413,13 @@ impl ProjectSchema {
                 table: "file_hashes".to_string(),
                 columns: vec!["deleted_at".to_string()],
             },
-        ]
+        ];
+        indexes.extend(agent::indexes());
+        indexes
     }
 
     fn foreign_keys() -> Vec<ForeignKeyDef> {
-        vec![
+        let mut fks = vec![
             ForeignKeyDef {
                 from_table: "collections".to_string(),
                 from_column: "project_id".to_string(),
@@ -438,7 +444,9 @@ impl ProjectSchema {
                 to_table: "projects".to_string(),
                 to_column: "id".to_string(),
             },
-        ]
+        ];
+        fks.extend(agent::foreign_keys());
+        fks
     }
 
     fn unique_constraints() -> Vec<UniqueConstraintDef> {

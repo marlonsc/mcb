@@ -16,8 +16,10 @@ use mcb_application::domain_services::memory::MemoryServiceInterface;
 use mcb_application::domain_services::search::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
+use mcb_application::ports::services::AgentSessionServiceInterface;
 use mcb_application::use_cases::{
-    ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl, SearchServiceImpl,
+    AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl,
+    SearchServiceImpl,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
@@ -25,7 +27,7 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
-use mcb_domain::ports::repositories::MemoryRepository;
+use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
 use mcb_domain::ports::services::ValidationServiceInterface;
 use mcb_providers::git::Git2Provider;
 use std::sync::Arc;
@@ -48,6 +50,7 @@ pub struct DomainServicesContainer {
     pub indexing_service: Arc<dyn IndexingServiceInterface>,
     pub validation_service: Arc<dyn ValidationServiceInterface>,
     pub memory_service: Arc<dyn MemoryServiceInterface>,
+    pub agent_session_service: Arc<dyn AgentSessionServiceInterface>,
     pub vcs_provider: Arc<dyn VcsProvider>,
 }
 
@@ -67,6 +70,7 @@ pub struct ServiceDependencies {
     pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
     pub event_bus: Arc<dyn EventBusProvider>,
     pub memory_repository: Arc<dyn MemoryRepository>,
+    pub agent_repository: Arc<dyn AgentRepository>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
@@ -108,12 +112,16 @@ impl DomainServicesFactory {
             deps.vector_store_provider,
         ));
 
+        let agent_session_service: Arc<dyn AgentSessionServiceInterface> =
+            Arc::new(AgentSessionServiceImpl::new(deps.agent_repository));
+
         Ok(DomainServicesContainer {
             context_service,
             search_service,
             indexing_service,
             validation_service,
             memory_service,
+            agent_session_service,
             vcs_provider,
         })
     }
