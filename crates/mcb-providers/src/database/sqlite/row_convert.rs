@@ -6,6 +6,12 @@ use mcb_domain::entities::memory::{
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::SqlRow;
 
+/// Helper function to extract a required string field from a row.
+fn required_string(row: &dyn SqlRow, field_name: &str) -> Result<String> {
+    row.try_get_string(field_name)?
+        .ok_or_else(|| Error::memory(format!("Missing {}", field_name)))
+}
+
 /// Build an `Observation` from a port row.
 pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
     let tags_json: Option<String> = row.try_get_string("tags")?;
@@ -24,18 +30,10 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
         .unwrap_or_default();
 
     Ok(Observation {
-        id: row
-            .try_get_string("id")?
-            .ok_or_else(|| Error::memory("Missing id"))?,
-        project_id: row
-            .try_get_string("project_id")?
-            .ok_or_else(|| Error::memory("Missing project_id"))?,
-        content: row
-            .try_get_string("content")?
-            .ok_or_else(|| Error::memory("Missing content"))?,
-        content_hash: row
-            .try_get_string("content_hash")?
-            .ok_or_else(|| Error::memory("Missing content_hash"))?,
+        id: required_string(row, "id")?,
+        project_id: required_string(row, "project_id")?,
+        content: required_string(row, "content")?,
+        content_hash: required_string(row, "content_hash")?,
         tags,
         observation_type,
         metadata,
@@ -54,15 +52,9 @@ pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
     let key_files_json: Option<String> = row.try_get_string("key_files")?;
 
     Ok(SessionSummary {
-        id: row
-            .try_get_string("id")?
-            .ok_or_else(|| Error::memory("Missing id"))?,
-        project_id: row
-            .try_get_string("project_id")?
-            .ok_or_else(|| Error::memory("Missing project_id"))?,
-        session_id: row
-            .try_get_string("session_id")?
-            .ok_or_else(|| Error::memory("Missing session_id"))?,
+        id: required_string(row, "id")?,
+        project_id: required_string(row, "project_id")?,
+        session_id: required_string(row, "session_id")?,
         topics: topics_json
             .and_then(|s| serde_json::from_str(&s).ok())
             .unwrap_or_default(),
