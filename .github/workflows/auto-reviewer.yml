@@ -1,19 +1,18 @@
 ---
 # =============================================================================
-# Dependabot Auto-Review & Auto-Merge
+# Dependabot Auto-Merge
 # =============================================================================
-# Purpose: Automatically approve and merge Dependabot PRs that pass CI
+# Purpose: Enable auto-merge for Dependabot PRs that pass CI (patch/minor).
 #
 # Behavior:
 #   1. Triggers when Dependabot opens or updates a PR
-#   2. Waits for CI checks to complete
-#   3. Auto-approves the PR
-#   4. Enables auto-merge with squash strategy
+#   2. Waits for CI checks to complete (branch protection)
+#   3. Enables auto-merge with squash for patch/minor (no auto-approve;
+#      GITHUB_TOKEN cannot approve PRs per GitHub restriction)
 #
 # Security:
 #   - Only runs for dependabot[bot] actor
-#   - Requires CI to pass before merge
-#   - Uses GITHUB_TOKEN (not PAT) for approval
+#   - Requires CI to pass before merge (configure in branch protection)
 # =============================================================================
 
 name: Dependabot Auto-Merge
@@ -37,15 +36,6 @@ jobs:
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Auto-approve patch and minor updates
-        if: >-
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr review --approve "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable auto-merge for patch and minor updates
         if: >-

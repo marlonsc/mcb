@@ -18,6 +18,7 @@
 use std::sync::OnceLock;
 use std::time::Duration;
 
+use mcb_domain::ports::admin::{PerformanceMetricsData, PerformanceMetricsInterface};
 use mcb_domain::ports::infrastructure::PerformanceMetricsCollector;
 use prometheus::{
     CounterVec, Gauge, HistogramVec, register_counter_vec, register_gauge, register_histogram_vec,
@@ -207,6 +208,28 @@ impl PerformanceMetricsCollector for PrometheusPerformanceMetrics {
                 .batch_embedding_size
                 .with_label_values(&[provider])
                 .observe(batch_size as f64);
+        }
+    }
+}
+
+impl PerformanceMetricsInterface for PrometheusPerformanceMetrics {
+    fn uptime_secs(&self) -> u64 {
+        0
+    }
+
+    fn record_query(&self, _response_time_ms: u64, _success: bool, _cache_hit: bool) {}
+
+    fn update_active_connections(&self, _delta: i64) {}
+
+    fn get_performance_metrics(&self) -> PerformanceMetricsData {
+        PerformanceMetricsData {
+            total_queries: 0,
+            successful_queries: 0,
+            failed_queries: 0,
+            average_response_time_ms: 0.0,
+            cache_hit_rate: 0.0,
+            active_connections: 0,
+            uptime_seconds: 0,
         }
     }
 }

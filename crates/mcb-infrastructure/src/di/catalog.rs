@@ -37,6 +37,7 @@ use crate::di::provider_resolvers::{
     VectorStoreProviderResolver,
 };
 use crate::infrastructure::{
+    PrometheusPerformanceMetrics,
     admin::{NullIndexingOperations, NullPerformanceMetrics},
     auth::NullAuthService,
     events::TokioBroadcastEventBus,

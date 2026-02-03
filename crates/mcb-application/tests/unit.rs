@@ -19,3 +19,6 @@ mod vcs_indexing_tests;
 
 #[path = "unit/memory_service_tests.rs"]
 mod memory_service_tests;
+
+#[path = "unit/memory_tests.rs"]
+mod memory_tests;
