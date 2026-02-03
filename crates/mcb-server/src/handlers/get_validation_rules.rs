@@ -50,7 +50,7 @@ impl GetValidationRulesHandler {
 
                 let res = serde_json::to_string_pretty(&response);
                 #[rustfmt::skip]
-                let text = res.map_err(|_| McpError::internal_error("Failed to load validation rules", None))?;
+                let text = res.map_err(|_| McpError::internal_error("Failed to serialize validation rules", None))?;
 
                 Ok(CallToolResult::success(vec![Content::text(text)]))
             }

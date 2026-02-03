@@ -11,7 +11,8 @@ mod tests {
     use super::super::fixtures::{test_collection, test_repo_path};
 
     #[tokio::test]
-    #[ignore] // Run with: cargo test --test golden -- --ignored
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
+    #[ignore]
     async fn golden_index_test_repository() {
         // TODO: Phase 4 - Implement after DI catalog available
         // 1. Build DI catalog with null providers
@@ -25,6 +26,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_index_handles_multiple_languages() {
         // TODO: Phase 4
@@ -34,6 +36,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_index_respects_ignore_patterns() {
         // TODO: Phase 4

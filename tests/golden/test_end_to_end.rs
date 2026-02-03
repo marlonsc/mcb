@@ -13,7 +13,8 @@ mod tests {
     use super::super::fixtures::{test_collection, test_repo_path};
 
     #[tokio::test]
-    #[ignore] // Run with: cargo test --test golden -- --ignored
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
+    #[ignore]
     async fn golden_e2e_complete_workflow() {
         // TODO: Phase 4 - Implement complete end-to-end test
         //
@@ -56,6 +57,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_e2e_handles_concurrent_operations() {
         // TODO: Phase 4
@@ -68,6 +70,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_e2e_respects_collection_isolation() {
         // TODO: Phase 4
@@ -79,6 +82,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_e2e_handles_reindex_correctly() {
         // TODO: Phase 4

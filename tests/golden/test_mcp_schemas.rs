@@ -11,7 +11,8 @@ mod tests {
     use serde_json::Value;
 
     #[tokio::test]
-    #[ignore] // Run with: cargo test --test golden -- --ignored
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
+    #[ignore]
     async fn golden_mcp_index_codebase_schema() {
         // TODO: Phase 4 - Implement after MCP handlers testable
         // 1. Call index_codebase handler
@@ -26,6 +27,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_mcp_search_code_schema() {
         // TODO: Phase 4
@@ -38,6 +40,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_mcp_get_indexing_status_schema() {
         // TODO: Phase 4
@@ -52,6 +55,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_mcp_clear_index_schema() {
         // TODO: Phase 4
@@ -64,6 +68,7 @@ mod tests {
     }
 
     #[tokio::test]
+    // TODO Phase 4; run with: cargo test --test golden -- --ignored
     #[ignore]
     async fn golden_mcp_error_responses_consistent() {
         // TODO: Phase 4
