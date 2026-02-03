@@ -7,12 +7,15 @@ use mcb_application::domain_services::search::{
     SearchServiceInterface,
 };
 use mcb_domain::entities::CodeChunk;
+use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
 use mcb_domain::entities::vcs::{
     DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
 use mcb_domain::value_objects::{Embedding, SearchResult};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -622,6 +625,129 @@ impl MemoryRepository for MockMemoryRepository {
 }
 
 // ============================================================================
+// Mock Agent Repository
+// ============================================================================
+
+pub struct MockAgentRepository {
+    sessions: Arc<Mutex<HashMap<String, AgentSession>>>,
+    delegations: Arc<Mutex<Vec<Delegation>>>,
+    tool_calls: Arc<Mutex<Vec<ToolCall>>>,
+    checkpoints: Arc<Mutex<HashMap<String, Checkpoint>>>,
+}
+
+impl MockAgentRepository {
+    pub fn new() -> Self {
+        Self {
+            sessions: Arc::new(Mutex::new(HashMap::new())),
+            delegations: Arc::new(Mutex::new(Vec::new())),
+            tool_calls: Arc::new(Mutex::new(Vec::new())),
+            checkpoints: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    fn matches_query(session: &AgentSession, query: &AgentSessionQuery) -> bool {
+        if let Some(ref summary_id) = query.session_summary_id {
+            if session.session_summary_id != *summary_id {
+                return false;
+            }
+        }
+
+        if let Some(ref parent_id) = query.parent_session_id {
+            if session.parent_session_id.as_ref() != Some(parent_id) {
+                return false;
+            }
+        }
+
+        if let Some(ref agent_type) = query.agent_type {
+            if &session.agent_type != agent_type {
+                return false;
+            }
+        }
+
+        if let Some(ref status) = query.status {
+            if &session.status != status {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+#[async_trait]
+impl AgentRepository for MockAgentRepository {
+    async fn create_session(&self, session: &AgentSession) -> Result<()> {
+        self.sessions
+            .lock()
+            .expect("Lock poisoned")
+            .insert(session.id.clone(), session.clone());
+        Ok(())
+    }
+
+    async fn get_session(&self, id: &str) -> Result<Option<AgentSession>> {
+        let sessions = self.sessions.lock().expect("Lock poisoned");
+        Ok(sessions.get(id).cloned())
+    }
+
+    async fn update_session(&self, session: &AgentSession) -> Result<()> {
+        self.sessions
+            .lock()
+            .expect("Lock poisoned")
+            .insert(session.id.clone(), session.clone());
+        Ok(())
+    }
+
+    async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
+        let sessions = self.sessions.lock().expect("Lock poisoned");
+        let mut all: Vec<AgentSession> = sessions.values().cloned().collect();
+        all.retain(|session| Self::matches_query(session, &query));
+
+        if let Some(limit) = query.limit {
+            all.truncate(limit);
+        }
+
+        Ok(all)
+    }
+
+    async fn store_delegation(&self, delegation: &Delegation) -> Result<()> {
+        self.delegations
+            .lock()
+            .expect("Lock poisoned")
+            .push(delegation.clone());
+        Ok(())
+    }
+
+    async fn store_tool_call(&self, tool_call: &ToolCall) -> Result<()> {
+        self.tool_calls
+            .lock()
+            .expect("Lock poisoned")
+            .push(tool_call.clone());
+        Ok(())
+    }
+
+    async fn store_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
+        self.checkpoints
+            .lock()
+            .expect("Lock poisoned")
+            .insert(checkpoint.id.clone(), checkpoint.clone());
+        Ok(())
+    }
+
+    async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>> {
+        let checkpoints = self.checkpoints.lock().expect("Lock poisoned");
+        Ok(checkpoints.get(id).cloned())
+    }
+
+    async fn update_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
+        self.checkpoints
+            .lock()
+            .expect("Lock poisoned")
+            .insert(checkpoint.id.clone(), checkpoint.clone());
+        Ok(())
+    }
+}
+
+// ============================================================================
 // Mock Memory Service
 // ============================================================================
 
@@ -975,5 +1101,57 @@ impl VcsProvider for MockVcsProvider {
             total_additions: 5,
             total_deletions: 2,
         })
+    }
+}
+
+// ============================================================================
+// Mock Agent Repository
+// ============================================================================
+
+use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
+use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
+
+pub struct MockAgentRepository;
+
+impl MockAgentRepository {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for MockAgentRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl AgentRepository for MockAgentRepository {
+    async fn create_session(&self, _session: &AgentSession) -> Result<()> {
+        Ok(())
+    }
+    async fn get_session(&self, _id: &str) -> Result<Option<AgentSession>> {
+        Ok(None)
+    }
+    async fn update_session(&self, _session: &AgentSession) -> Result<()> {
+        Ok(())
+    }
+    async fn list_sessions(&self, _query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
+        Ok(Vec::new())
+    }
+    async fn store_delegation(&self, _delegation: &Delegation) -> Result<()> {
+        Ok(())
+    }
+    async fn store_tool_call(&self, _tool_call: &ToolCall) -> Result<()> {
+        Ok(())
+    }
+    async fn store_checkpoint(&self, _checkpoint: &Checkpoint) -> Result<()> {
+        Ok(())
+    }
+    async fn get_checkpoint(&self, _id: &str) -> Result<Option<Checkpoint>> {
+        Ok(None)
+    }
+    async fn update_checkpoint(&self, _checkpoint: &Checkpoint) -> Result<()> {
+        Ok(())
     }
 }

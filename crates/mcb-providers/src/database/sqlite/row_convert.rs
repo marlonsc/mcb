@@ -1,8 +1,6 @@
 //! Row-to-entity conversion using the domain port [`SqlRow`].
 
-use mcb_domain::entities::agent::{
-    AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, Delegation, ToolCall,
-};
+use mcb_domain::entities::agent::{AgentSession, Checkpoint, CheckpointType};
 use mcb_domain::entities::memory::{
     Observation, ObservationMetadata, ObservationType, SessionSummary,
 };
@@ -123,64 +121,6 @@ pub fn row_to_agent_session(row: &dyn SqlRow) -> Result<AgentSession> {
         token_count: row.try_get_i64("token_count")?,
         tool_calls_count: row.try_get_i64("tool_calls_count")?,
         delegations_count: row.try_get_i64("delegations_count")?,
-    })
-}
-
-/// Build a `Delegation` from a port row.
-pub fn row_to_delegation(row: &dyn SqlRow) -> Result<Delegation> {
-    let success = row
-        .try_get_i64("success")?
-        .ok_or_else(|| Error::memory("Missing success"))?
-        != 0;
-
-    Ok(Delegation {
-        id: row
-            .try_get_string("id")?
-            .ok_or_else(|| Error::memory("Missing id"))?,
-        parent_session_id: row
-            .try_get_string("parent_session_id")?
-            .ok_or_else(|| Error::memory("Missing parent_session_id"))?,
-        child_session_id: row
-            .try_get_string("child_session_id")?
-            .ok_or_else(|| Error::memory("Missing child_session_id"))?,
-        prompt: row
-            .try_get_string("prompt")?
-            .ok_or_else(|| Error::memory("Missing prompt"))?,
-        prompt_embedding_id: row.try_get_string("prompt_embedding_id")?,
-        result: row.try_get_string("result")?,
-        success,
-        created_at: row
-            .try_get_i64("created_at")?
-            .ok_or_else(|| Error::memory("Missing created_at"))?,
-        completed_at: row.try_get_i64("completed_at")?,
-        duration_ms: row.try_get_i64("duration_ms")?,
-    })
-}
-
-/// Build a `ToolCall` from a port row.
-pub fn row_to_tool_call(row: &dyn SqlRow) -> Result<ToolCall> {
-    let success = row
-        .try_get_i64("success")?
-        .ok_or_else(|| Error::memory("Missing success"))?
-        != 0;
-
-    Ok(ToolCall {
-        id: row
-            .try_get_string("id")?
-            .ok_or_else(|| Error::memory("Missing id"))?,
-        session_id: row
-            .try_get_string("session_id")?
-            .ok_or_else(|| Error::memory("Missing session_id"))?,
-        tool_name: row
-            .try_get_string("tool_name")?
-            .ok_or_else(|| Error::memory("Missing tool_name"))?,
-        params_summary: row.try_get_string("params_summary")?,
-        success,
-        error_message: row.try_get_string("error_message")?,
-        duration_ms: row.try_get_i64("duration_ms")?,
-        created_at: row
-            .try_get_i64("created_at")?
-            .ok_or_else(|| Error::memory("Missing created_at"))?,
     })
 }
 

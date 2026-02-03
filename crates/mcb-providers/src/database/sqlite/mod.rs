@@ -6,13 +6,11 @@
 //! (port [`MemoryRepository`]), and factory functions for DI.
 
 mod agent_repository;
-mod agent_repository;
 mod ddl;
 mod executor;
 mod memory_repository;
 mod row_convert;
 
-pub use agent_repository::SqliteAgentRepository;
 pub use agent_repository::SqliteAgentRepository;
 pub use ddl::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 pub use executor::SqliteExecutor;
@@ -21,7 +19,7 @@ pub use memory_repository::SqliteMemoryRepository;
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, DatabaseProvider};
-use mcb_domain::ports::repositories::MemoryRepository;
+use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
 use mcb_domain::schema::{ProjectSchema, SchemaDdlGenerator};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -43,9 +41,24 @@ impl DatabaseProvider for SqliteDatabaseProvider {
 
 /// Create a file-backed memory repository: connect, apply [`ProjectSchema`] DDL, return repository.
 pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRepository>> {
+    let (repo, _) = create_memory_repository_with_executor(path).await?;
+    Ok(repo)
+}
+
+/// Create a file-backed agent repository sharing the same SQLite project schema database.
+pub async fn create_agent_repository(path: PathBuf) -> Result<Arc<dyn AgentRepository>> {
+    let (_, executor) = create_memory_repository_with_executor(path).await?;
+    Ok(create_agent_repository_from_executor(executor))
+}
+
+/// Create file-backed memory repository and executor (same DB) for use with agent repository.
+pub async fn create_memory_repository_with_executor(
+    path: PathBuf,
+) -> Result<(Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>)> {
     let pool = connect_and_init(path).await?;
-    let executor = Arc::new(SqliteExecutor::new(pool));
-    Ok(Arc::new(SqliteMemoryRepository::new(executor)))
+    let executor: Arc<dyn DatabaseExecutor> = Arc::new(SqliteExecutor::new(pool));
+    let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&executor)));
+    Ok((memory_repository, executor))
 }
 
 pub async fn create_memory_repository_in_memory() -> Result<Arc<dyn MemoryRepository>> {
@@ -63,6 +76,19 @@ pub async fn create_memory_repository_in_memory_with_executor()
         Arc::new(SqliteMemoryRepository::new(executor_arc)),
         executor,
     ))
+}
+
+/// Create an agent repository backed by the provided database executor.
+pub fn create_agent_repository_from_executor(
+    executor: Arc<dyn DatabaseExecutor>,
+) -> Arc<dyn AgentRepository> {
+    Arc::new(SqliteAgentRepository::new(executor))
+}
+
+/// Create an in-memory agent repository (separate connection).
+pub async fn create_agent_repository_in_memory() -> Result<Arc<dyn AgentRepository>> {
+    let (_, executor) = create_memory_repository_in_memory_with_executor().await?;
+    Ok(Arc::new(SqliteAgentRepository::new(Arc::new(executor))))
 }
 
 async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {

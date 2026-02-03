@@ -226,9 +226,12 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join(".mcb")
         .join("memory.db");
-    let memory_repository = mcb_providers::database::create_memory_repository(memory_db_path)
-        .await
-        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
+    let (memory_repository, db_executor) =
+        mcb_providers::database::create_memory_repository_with_executor(memory_db_path)
+            .await
+            .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
+    let agent_repository =
+        mcb_providers::database::create_agent_repository_from_executor(db_executor);
 
     let project_id = std::env::current_dir()
         .ok()
@@ -246,6 +249,7 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         indexing_ops,
         event_bus,
         memory_repository,
+        agent_repository,
     };
     let services =
         mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(

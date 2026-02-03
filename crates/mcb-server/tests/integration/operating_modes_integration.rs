@@ -552,9 +552,13 @@ async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
-    let memory_repository = mcb_providers::database::create_memory_repository_in_memory()
-        .await
-        .expect("Failed to create memory database");
+    let (memory_repository, db_executor) =
+        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+            .await
+            .expect("Failed to create memory database");
+    let agent_repository = mcb_providers::database::create_agent_repository_from_executor(
+        std::sync::Arc::new(db_executor),
+    );
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
@@ -567,6 +571,7 @@ async fn create_test_mcp_server() -> McpServer {
         indexing_ops,
         event_bus,
         memory_repository,
+        agent_repository,
     };
 
     let services = DomainServicesFactory::create_services(deps)

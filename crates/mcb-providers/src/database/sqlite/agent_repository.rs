@@ -37,12 +37,8 @@ impl AgentRepository for SqliteAgentRepository {
                 .as_ref()
                 .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
             SqlParam::I64(session.started_at),
-            session
-                .ended_at
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
-            session
-                .duration_ms
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+            session.ended_at.map_or(SqlParam::Null, SqlParam::I64),
+            session.duration_ms.map_or(SqlParam::Null, SqlParam::I64),
             SqlParam::String(session.status.as_str().to_string()),
             session
                 .prompt_summary
@@ -52,15 +48,13 @@ impl AgentRepository for SqliteAgentRepository {
                 .result_summary
                 .as_ref()
                 .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
-            session
-                .token_count
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+            session.token_count.map_or(SqlParam::Null, SqlParam::I64),
             session
                 .tool_calls_count
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+                .map_or(SqlParam::Null, SqlParam::I64),
             session
                 .delegations_count
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+                .map_or(SqlParam::Null, SqlParam::I64),
         ];
 
         self.executor
@@ -119,12 +113,8 @@ impl AgentRepository for SqliteAgentRepository {
                 .as_ref()
                 .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
             SqlParam::I64(session.started_at),
-            session
-                .ended_at
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
-            session
-                .duration_ms
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+            session.ended_at.map_or(SqlParam::Null, SqlParam::I64),
+            session.duration_ms.map_or(SqlParam::Null, SqlParam::I64),
             SqlParam::String(session.status.as_str().to_string()),
             session
                 .prompt_summary
@@ -134,15 +124,13 @@ impl AgentRepository for SqliteAgentRepository {
                 .result_summary
                 .as_ref()
                 .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
-            session
-                .token_count
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+            session.token_count.map_or(SqlParam::Null, SqlParam::I64),
             session
                 .tool_calls_count
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+                .map_or(SqlParam::Null, SqlParam::I64),
             session
                 .delegations_count
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+                .map_or(SqlParam::Null, SqlParam::I64),
             SqlParam::String(session.id.clone()),
         ];
 
@@ -229,10 +217,8 @@ impl AgentRepository for SqliteAgentRepository {
             SqlParam::I64(delegation.created_at),
             delegation
                 .completed_at
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
-            delegation
-                .duration_ms
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+                .map_or(SqlParam::Null, SqlParam::I64),
+            delegation.duration_ms.map_or(SqlParam::Null, SqlParam::I64),
         ];
 
         self.executor
@@ -273,9 +259,7 @@ impl AgentRepository for SqliteAgentRepository {
                 .error_message
                 .as_ref()
                 .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
-            tool_call
-                .duration_ms
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+            tool_call.duration_ms.map_or(SqlParam::Null, SqlParam::I64),
             SqlParam::I64(tool_call.created_at),
         ];
 
@@ -312,9 +296,7 @@ impl AgentRepository for SqliteAgentRepository {
             SqlParam::String(checkpoint.description.clone()),
             SqlParam::String(snapshot_json),
             SqlParam::I64(checkpoint.created_at),
-            checkpoint
-                .restored_at
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+            checkpoint.restored_at.map_or(SqlParam::Null, SqlParam::I64),
             SqlParam::Bool(checkpoint.expired),
         ];
 
@@ -368,9 +350,7 @@ impl AgentRepository for SqliteAgentRepository {
             SqlParam::String(checkpoint.description.clone()),
             SqlParam::String(snapshot_json),
             SqlParam::I64(checkpoint.created_at),
-            checkpoint
-                .restored_at
-                .map_or(SqlParam::Null, |n| SqlParam::I64(n)),
+            checkpoint.restored_at.map_or(SqlParam::Null, SqlParam::I64),
             SqlParam::Bool(checkpoint.expired),
             SqlParam::String(checkpoint.id.clone()),
         ];

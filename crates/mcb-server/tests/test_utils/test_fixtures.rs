@@ -4,6 +4,7 @@
 
 #![allow(dead_code)]
 
+use crate::test_utils::mock_services::{MockAgentRepository, MockMemoryRepository};
 use mcb_application::ValidationService;
 use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_domain::SearchResult;
@@ -173,7 +174,8 @@ pub async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
-    let memory_repository = Arc::new(crate::test_utils::mock_services::MockMemoryRepository::new());
+    let memory_repository = Arc::new(MockMemoryRepository::new());
+    let agent_repository = Arc::new(MockAgentRepository::new());
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
@@ -186,6 +188,7 @@ pub async fn create_test_mcp_server() -> McpServer {
         indexing_ops,
         event_bus,
         memory_repository,
+        agent_repository,
     };
 
     let services = DomainServicesFactory::create_services(deps)

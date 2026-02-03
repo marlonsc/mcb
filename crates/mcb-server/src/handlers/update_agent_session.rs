@@ -1,6 +1,5 @@
 use crate::args::UpdateAgentSessionArgs;
 use mcb_application::ports::services::AgentSessionServiceInterface;
-use mcb_domain::entities::agent::AgentSessionStatus;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
