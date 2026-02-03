@@ -192,7 +192,7 @@ impl DefaultIndexingOperations {
     }
 
     /// Start tracking a new indexing operation (inherent impl; trait delegates here).
-    pub fn start_operation_impl(&self, collection: &str, total_files: usize) -> String {
+    pub fn start_operation_internal(&self, collection: &str, total_files: usize) -> String {
         let id = Uuid::new_v4().to_string();
         let operation = IndexingOperation {
             id: id.clone(),
