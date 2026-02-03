@@ -15,6 +15,8 @@ pub enum SqlParam {
     String(String),
     /// 64-bit integer
     I64(i64),
+    /// Boolean value
+    Bool(bool),
     /// Null
     Null,
 }

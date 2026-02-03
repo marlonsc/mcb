@@ -14,6 +14,8 @@
 //! | [`ProjectType`] | Detected project type with metadata (Cargo, npm, Python, Go, Maven) |
 //! | [`SubmoduleInfo`] | VCS submodule information with parent linking |
 
+/// Agent session tracking entities
+pub mod agent;
 /// Core entity representing a semantically meaningful code segment
 pub mod code_chunk;
 /// Entities for codebase state management and change tracking
@@ -28,6 +30,9 @@ pub mod submodule;
 pub mod vcs;
 
 // Re-export commonly used entities
+pub use agent::{
+    AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, Delegation, ToolCall,
+};
 pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 pub use memory::{

@@ -481,3 +481,126 @@ pub struct CreateSessionSummaryArgs {
 
 pub mod memory;
 pub use memory::*;
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Create an agent session record")]
+pub struct CreateAgentSessionArgs {
+    #[validate(length(min = 1, message = "session_summary_id cannot be empty"))]
+    #[schemars(description = "The parent session summary ID")]
+    pub session_summary_id: String,
+
+    #[validate(length(min = 1, message = "agent_type cannot be empty"))]
+    #[schemars(description = "Type of agent: sisyphus, oracle, or explore")]
+    pub agent_type: String,
+
+    #[validate(length(min = 1, message = "model cannot be empty"))]
+    #[schemars(description = "Model name used for this agent session")]
+    pub model: String,
+
+    #[schemars(description = "Parent agent session ID for delegation chains")]
+    pub parent_session_id: Option<String>,
+
+    #[schemars(description = "Summary of the prompt given to the agent")]
+    pub prompt_summary: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Get an agent session by ID")]
+pub struct GetAgentSessionArgs {
+    #[validate(length(min = 1, message = "id cannot be empty"))]
+    #[schemars(description = "The agent session ID")]
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Update an agent session (typically to mark completion)")]
+pub struct UpdateAgentSessionArgs {
+    #[validate(length(min = 1, message = "id cannot be empty"))]
+    #[schemars(description = "The agent session ID to update")]
+    pub id: String,
+
+    #[schemars(description = "New status: active, completed, or failed")]
+    pub status: Option<String>,
+
+    #[schemars(description = "Summary of the agent's result")]
+    pub result_summary: Option<String>,
+
+    #[schemars(description = "Token count used in this session")]
+    pub token_count: Option<i64>,
+
+    #[schemars(description = "Number of tool calls made")]
+    pub tool_calls_count: Option<i64>,
+
+    #[schemars(description = "Number of delegations made")]
+    pub delegations_count: Option<i64>,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "List agent sessions with optional filters")]
+pub struct ListAgentSessionsArgs {
+    #[schemars(description = "Filter by parent session summary ID")]
+    pub session_summary_id: Option<String>,
+
+    #[schemars(description = "Filter by parent agent session ID")]
+    pub parent_session_id: Option<String>,
+
+    #[schemars(description = "Filter by agent type: sisyphus, oracle, or explore")]
+    pub agent_type: Option<String>,
+
+    #[schemars(description = "Filter by status: active, completed, or failed")]
+    pub status: Option<String>,
+
+    #[serde(default = "default_limit")]
+    #[validate(range(min = 1, max = 100))]
+    #[schemars(description = "Maximum number of results (default: 10)")]
+    pub limit: usize,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Store a tool call record")]
+pub struct StoreToolCallArgs {
+    #[validate(length(min = 1, message = "session_id cannot be empty"))]
+    #[schemars(description = "The agent session ID this tool call belongs to")]
+    pub session_id: String,
+
+    #[validate(length(min = 1, message = "tool_name cannot be empty"))]
+    #[schemars(description = "Name of the tool that was called")]
+    pub tool_name: String,
+
+    #[schemars(description = "Summary of the parameters passed")]
+    pub params_summary: Option<String>,
+
+    #[schemars(description = "Whether the tool call succeeded")]
+    pub success: bool,
+
+    #[schemars(description = "Error message if the tool call failed")]
+    pub error_message: Option<String>,
+
+    #[schemars(description = "Duration of the tool call in milliseconds")]
+    pub duration_ms: Option<i64>,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Store a delegation record")]
+pub struct StoreDelegationArgs {
+    #[validate(length(min = 1, message = "parent_session_id cannot be empty"))]
+    #[schemars(description = "The parent agent session ID")]
+    pub parent_session_id: String,
+
+    #[validate(length(min = 1, message = "child_session_id cannot be empty"))]
+    #[schemars(description = "The child agent session ID")]
+    pub child_session_id: String,
+
+    #[validate(length(min = 1, message = "prompt cannot be empty"))]
+    #[schemars(description = "The delegation prompt")]
+    pub prompt: String,
+
+    #[schemars(description = "Result from the delegated agent")]
+    pub result: Option<String>,
+
+    #[schemars(description = "Whether the delegation succeeded")]
+    pub success: bool,
+
+    #[schemars(description = "Duration of the delegation in milliseconds")]
+    pub duration_ms: Option<i64>,
+}

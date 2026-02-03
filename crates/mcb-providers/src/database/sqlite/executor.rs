@@ -96,6 +96,7 @@ impl SqliteExecutor {
             q = match p {
                 SqlParam::String(s) => q.bind(s.as_str()),
                 SqlParam::I64(n) => q.bind(*n),
+                SqlParam::Bool(b) => q.bind(*b),
                 SqlParam::Null => q.bind(Option::<String>::None),
             };
         }
@@ -115,6 +116,7 @@ impl SqliteExecutor {
             q = match p {
                 SqlParam::String(s) => q.bind(s.as_str()),
                 SqlParam::I64(n) => q.bind(*n),
+                SqlParam::Bool(b) => q.bind(*b),
                 SqlParam::Null => q.bind(Option::<String>::None),
             };
         }
@@ -138,6 +140,7 @@ impl SqliteExecutor {
             q = match p {
                 SqlParam::String(s) => q.bind(s.as_str()),
                 SqlParam::I64(n) => q.bind(*n),
+                SqlParam::Bool(b) => q.bind(*b),
                 SqlParam::Null => q.bind(Option::<String>::None),
             };
         }
