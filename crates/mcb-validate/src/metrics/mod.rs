@@ -13,7 +13,7 @@
 //!
 //! ## Supported Languages
 //!
-//! Rust, Python, JavaScript, TypeScript, Java, C, C++, Kotlin (via RcaAnalyzer)
+//! Rust, Python, JavaScript, TypeScript, Java, C, C++, Kotlin (via `RcaAnalyzer`)
 
 mod rca_analyzer;
 mod thresholds;

@@ -117,10 +117,10 @@ impl std::fmt::Display for PmatViolation {
                 )
             }
             Self::PmatUnavailable { message, .. } => {
-                write!(f, "PMAT unavailable: {}", message)
+                write!(f, "PMAT unavailable: {message}")
             }
             Self::PmatError { command, error, .. } => {
-                write!(f, "PMAT error running '{}': {}", command, error)
+                write!(f, "PMAT error running '{command}': {error}")
             }
         }
     }
@@ -176,29 +176,23 @@ impl Violation for PmatViolation {
                 threshold,
                 ..
             } => Some(format!(
-                "Consider refactoring '{}' to reduce complexity from {} to below {}. \
-                 Split into smaller functions or simplify control flow.",
-                function, complexity, threshold
+                "Consider refactoring '{function}' to reduce complexity from {complexity} to below {threshold}. \
+                 Split into smaller functions or simplify control flow."
             )),
             Self::DeadCode {
                 item_type, name, ..
-            } => Some(format!(
-                "Remove unused {} '{}' or mark with #[allow(dead_code)] if intentional.",
-                item_type, name
-            )),
+            } => Some(format!("{item_type} {name}")),
             Self::LowTdgScore {
                 score, threshold, ..
             } => Some(format!(
-                "Technical debt score {} exceeds threshold {}. \
-                 Address code smells, reduce complexity, and improve maintainability.",
-                score, threshold
+                "Technical debt score {score} exceeds threshold {threshold}. \
+                 Address code smells, reduce complexity, and improve maintainability."
             )),
             Self::PmatUnavailable { .. } => {
                 Some("Install PMAT CLI tool to enable additional analysis.".to_string())
             }
             Self::PmatError { command, .. } => Some(format!(
-                "Check PMAT installation and run '{}' manually to diagnose.",
-                command
+                "Check PMAT installation and run '{command}' manually to diagnose."
             )),
         }
     }
@@ -335,20 +329,19 @@ impl PmatValidator {
                     for result in results {
                         if let (Some(file), Some(function), Some(complexity)) =
                             (result.file, result.function, result.complexity)
+                            && complexity > self.complexity_threshold
                         {
-                            if complexity > self.complexity_threshold {
-                                violations.push(PmatViolation::HighComplexity {
-                                    file: PathBuf::from(file),
-                                    function,
-                                    complexity,
-                                    threshold: self.complexity_threshold,
-                                    severity: if complexity > self.complexity_threshold * 2 {
-                                        Severity::Warning
-                                    } else {
-                                        Severity::Info
-                                    },
-                                });
-                            }
+                            violations.push(PmatViolation::HighComplexity {
+                                file: PathBuf::from(file),
+                                function,
+                                complexity,
+                                threshold: self.complexity_threshold,
+                                severity: if complexity > self.complexity_threshold * 2 {
+                                    Severity::Warning
+                                } else {
+                                    Severity::Info
+                                },
+                            });
                         }
                     }
                 }
@@ -457,19 +450,19 @@ impl PmatValidator {
                 // Try to parse as JSON array of TDG results
                 if let Ok(results) = serde_json::from_str::<Vec<TdgResult>>(&stdout) {
                     for result in results {
-                        if let (Some(file), Some(score)) = (result.file, result.score) {
-                            if score > self.tdg_threshold {
-                                violations.push(PmatViolation::LowTdgScore {
-                                    file: PathBuf::from(file),
-                                    score,
-                                    threshold: self.tdg_threshold,
-                                    severity: if score > self.tdg_threshold + 25 {
-                                        Severity::Warning
-                                    } else {
-                                        Severity::Info
-                                    },
-                                });
-                            }
+                        if let (Some(file), Some(score)) = (result.file, result.score)
+                            && score > self.tdg_threshold
+                        {
+                            violations.push(PmatViolation::LowTdgScore {
+                                file: PathBuf::from(file),
+                                score,
+                                threshold: self.tdg_threshold,
+                                severity: if score > self.tdg_threshold + 25 {
+                                    Severity::Warning
+                                } else {
+                                    Severity::Info
+                                },
+                            });
                         }
                     }
                 }

@@ -2,9 +2,9 @@
 
 Golden tests validate **real** MCP tool behaviour: indexing, search, status, and clear. They run with the real DI stack (NullEmbedding + InMemoryVectorStore) and assert on handler responses and content.
 
-**Location:** `crates/mcb-server/tests/integration/golden_e2e_complete.rs`  
+**Locations:** `crates/mcb-server/tests/integration/` (`golden_e2e_complete.rs`, `golden_tools_e2e.rs`, `golden_acceptance_integration.rs`). The legacy `tests/golden/` directory remains as a shim but no longer contains executable tests.  
 **Run:** `cargo test -p mcb-server golden` or `make test SCOPE=golden`  
-**Fixture:** `crates/mcb-server/tests/fixtures/sample_codebase/` (Rust files: embedding.rs, vector_store.rs, handlers.rs, etc.)
+**Fixtures:** `sample_codebase/` (Rust files), `golden_queries.json` (queries + expected_files for E2E via handlers)
 
 ---
 
@@ -16,6 +16,7 @@ Golden tests validate **real** MCP tool behaviour: indexing, search, status, and
 | `golden_e2e_handles_concurrent_operations` | Two concurrent get_indexing_status(collection) calls both succeed. |
 | `golden_e2e_respects_collection_isolation` | clear_index(collection_a) and clear_index(collection_b) both succeed; operations on one collection do not break the other. |
 | `golden_e2e_handles_reindex_correctly` | index_codebase(path, collection) twice (reindex) both succeed; no panic, response indicates indexing (sync or async). |
+| Golden queries E2E | See section 5 (split into setup, one query, all handlers succeed). |
 
 ---
 
@@ -53,8 +54,19 @@ Golden tests validate **real** MCP tool behaviour: indexing, search, status, and
 
 ---
 
+## 5. Golden queries E2E (split to avoid timeout)
+
+| Test | Contract |
+|------|----------|
+| `golden_e2e_golden_queries_setup` | clear_index, index_codebase, then poll get_indexing_status until Idle/processed (bounded wait: 20 × 50ms). |
+| `golden_e2e_golden_queries_one_query` | After clear + index, one search_code call succeeds and response is not error. |
+| `golden_e2e_golden_queries_all_handlers_succeed` | After clear + index, run all queries from golden_queries.JSON; every search_code must succeed (no error). With null embedding, Result counts may be 0. |
+
+---
+
 ## Implementation notes
 
 -   All tests use `create_test_mcp_server()` (null embedding + in-memory vector store).
 -   Indexing may return "Indexing Started" (async) or "Indexing Completed" (sync); assertions accept both.
 -   Search Result format: "**Results found:** N", "**1.** 📁 `path` (line L)", "Relevance Score"; use these to assert counts and file paths when strengthening tests.
+-   Golden-queries E2E is split into three tests (setup, one query, all handlers succeed) to keep each test short and avoid timeouts.

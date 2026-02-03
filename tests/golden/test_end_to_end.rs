@@ -2,7 +2,7 @@
 //! Included by mcb-server test binary; contract: docs/testing/GOLDEN_TESTS_CONTRACT.md.
 
 use crate::test_utils::test_fixtures::{
-    create_test_mcp_server, golden_content_to_string, sample_codebase_path, GOLDEN_COLLECTION,
+    GOLDEN_COLLECTION, create_test_mcp_server, golden_content_to_string, sample_codebase_path,
 };
 use mcb_server::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
 use rmcp::handler::server::wrapper::Parameters;

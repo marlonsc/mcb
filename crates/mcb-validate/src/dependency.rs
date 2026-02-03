@@ -197,11 +197,10 @@ impl Violation for DependencyViolation {
                 forbidden_dep,
                 ..
             } => Some(format!(
-                "Remove {} from {}/Cargo.toml",
-                forbidden_dep, crate_name
+                "Remove {forbidden_dep} from {crate_name}/Cargo.toml"
             )),
             Self::ForbiddenUseStatement { forbidden_dep, .. } => {
-                Some(format!("Access {} through allowed layer", forbidden_dep))
+                Some(format!("Access {forbidden_dep} through allowed layer"))
             }
             Self::CircularDependency { .. } => {
                 Some("Extract shared types to mcb-domain".to_string())
@@ -389,7 +388,7 @@ impl DependencyValidator {
         for start in graph.keys() {
             let mut visited = HashSet::new();
             let mut path = Vec::new();
-            if let Some(cycle) = self.find_cycle(&graph, start, &mut visited, &mut path) {
+            if let Some(cycle) = find_cycle_impl(&graph, start, &mut visited, &mut path) {
                 violations.push(DependencyViolation::CircularDependency {
                     cycle,
                     severity: Severity::Error,
@@ -399,40 +398,39 @@ impl DependencyValidator {
 
         Ok(violations)
     }
+}
 
-    #[allow(clippy::only_used_in_recursion)]
-    fn find_cycle(
-        &self,
-        graph: &HashMap<String, HashSet<String>>,
-        node: &str,
-        visited: &mut HashSet<String>,
-        path: &mut Vec<String>,
-    ) -> Option<Vec<String>> {
-        if path.contains(&node.to_string()) {
-            let cycle_start = path.iter().position(|n| n == node)?;
-            let mut cycle: Vec<String> = path[cycle_start..].to_vec();
-            cycle.push(node.to_string());
-            return Some(cycle);
-        }
+/// DFS cycle detection; free function to avoid `only_used_in_recursion`.
+fn find_cycle_impl(
+    graph: &HashMap<String, HashSet<String>>,
+    node: &str,
+    visited: &mut HashSet<String>,
+    path: &mut Vec<String>,
+) -> Option<Vec<String>> {
+    if path.contains(&node.to_string()) {
+        let cycle_start = path.iter().position(|n| n == node)?;
+        let mut cycle: Vec<String> = path[cycle_start..].to_vec();
+        cycle.push(node.to_string());
+        return Some(cycle);
+    }
 
-        if visited.contains(node) {
-            return None;
-        }
+    if visited.contains(node) {
+        return None;
+    }
 
-        visited.insert(node.to_string());
-        path.push(node.to_string());
+    visited.insert(node.to_string());
+    path.push(node.to_string());
 
-        if let Some(deps) = graph.get(node) {
-            for dep in deps {
-                if let Some(cycle) = self.find_cycle(graph, dep, visited, path) {
-                    return Some(cycle);
-                }
+    if let Some(deps) = graph.get(node) {
+        for dep in deps {
+            if let Some(cycle) = find_cycle_impl(graph, dep, visited, path) {
+                return Some(cycle);
             }
         }
-
-        path.pop();
-        None
     }
+
+    path.pop();
+    None
 }
 
 impl crate::validator_trait::Validator for DependencyValidator {
@@ -521,8 +519,7 @@ mcb-domain = { path = "../mcb-domain" }
         let violations = validator.validate_cargo_dependencies().unwrap();
         assert!(
             violations.is_empty(),
-            "Expected no violations, got: {:?}",
-            violations
+            "Expected no violations, got: {violations:?}"
         );
     }
 

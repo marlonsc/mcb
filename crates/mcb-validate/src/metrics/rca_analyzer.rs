@@ -131,7 +131,7 @@ impl RcaAnalyzer {
         Ok(results)
     }
 
-    /// Convert RCA CodeMetrics to our RcaMetrics
+    /// Convert RCA `CodeMetrics` to our `RcaMetrics`
     fn extract_metrics(space: &FuncSpace) -> RcaMetrics {
         let m = &space.metrics;
         RcaMetrics {
@@ -286,7 +286,7 @@ mod tests {
     #[test]
     fn test_analyze_rust_code() {
         let analyzer = RcaAnalyzer::new();
-        let code = br#"fn simple_function() -> i32 {
+        let code = br"fn simple_function() -> i32 {
     let x = 1;
     let y = 2;
     x + y
@@ -302,7 +302,7 @@ fn complex_function(a: i32, b: i32) -> i32 {
         return b * 2;
     }
     a + b
-}"#;
+}";
         let path = Path::new("test.rs");
         let results = analyzer
             .analyze_code(code, &LANG::Rust, path)
@@ -334,7 +334,7 @@ fn complex_function(a: i32, b: i32) -> i32 {
         );
 
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);
-        let code = br#"fn complex_function(a: i32, b: i32) -> i32 {
+        let code = br"fn complex_function(a: i32, b: i32) -> i32 {
     if a > b {
         if a > 10 {
             return a * 2;
@@ -344,7 +344,7 @@ fn complex_function(a: i32, b: i32) -> i32 {
         return b * 2;
     }
     a + b
-}"#;
+}";
 
         // Write to temp file for find_violations
         let temp_dir = std::env::temp_dir();
@@ -368,7 +368,7 @@ fn complex_function(a: i32, b: i32) -> i32 {
     #[test]
     fn test_file_aggregate_metrics() {
         let analyzer = RcaAnalyzer::new();
-        let code = br#"fn function_one() -> i32 {
+        let code = br"fn function_one() -> i32 {
     let x = 1;
     x
 }
@@ -378,7 +378,7 @@ fn function_two(a: i32) -> i32 {
         return a * 2;
     }
     a
-}"#;
+}";
 
         // Write to temp file
         let temp_dir = std::env::temp_dir();

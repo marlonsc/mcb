@@ -36,8 +36,6 @@
 //! | [`routing`] | Provider routing and selection |
 
 // Clippy allows for complex patterns in infrastructure code
-#![allow(clippy::collapsible_if)]
-#![allow(clippy::manual_range_contains)]
 
 // Core infrastructure modules
 pub mod cache;

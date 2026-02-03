@@ -1,6 +1,6 @@
 //! YAML Rule Executor Module
 //!
-//! Executes YAML rules that use lint_select for linter-based validation.
+//! Executes YAML rules that use `lint_select` for linter-based validation.
 
 use std::path::{Path, PathBuf};
 
@@ -9,20 +9,20 @@ use super::types::{LintViolation, LinterType};
 use crate::Result;
 use crate::rules::yaml_loader::ValidatedRule;
 
-/// Execute a YAML rule that uses lint_select for linter-based validation
+/// Execute a YAML rule that uses `lint_select` for linter-based validation
 ///
 /// This is the Phase 1 deliverable: YAML rule → linter → violations pipeline
 pub struct YamlRuleExecutor;
 
 impl YamlRuleExecutor {
-    /// Execute a rule's lint_select codes against files
+    /// Execute a rule's `lint_select` codes against files
     ///
     /// # Arguments
-    /// * `rule` - The validated YAML rule with lint_select codes
+    /// * `rule` - The validated YAML rule with `lint_select` codes
     /// * `files` - Files to check (Python for Ruff, Rust for Clippy)
     ///
     /// # Returns
-    /// Violations that match the rule's lint_select codes
+    /// Violations that match the rule's `lint_select` codes
     pub async fn execute_rule(rule: &ValidatedRule, files: &[&Path]) -> Result<Vec<LintViolation>> {
         // Skip if no lint_select codes
         if rule.lint_select.is_empty() {
@@ -96,7 +96,7 @@ impl YamlRuleExecutor {
         Self::execute_rule(rule, &file_refs).await
     }
 
-    /// Detect which linters to use based on lint_select codes
+    /// Detect which linters to use based on `lint_select` codes
     fn detect_linters_from_codes(codes: &[String]) -> Vec<LinterType> {
         let mut linters = Vec::new();
 

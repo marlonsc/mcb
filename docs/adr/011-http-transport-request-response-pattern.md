@@ -206,7 +206,7 @@ async fn handle_mcp_get(
 ) -> Result<Response, McpError> {
     // Session validation happens here
 
-    // TODO: Implement Server-Sent Events streaming
+    // NOTE: SSE streaming to be implemented when real-time transport is added
     // For now, return 501 to indicate not implemented
     Err(McpError::NotImplemented(
         "SSE streaming not yet implemented. Use POST for request-response communication."

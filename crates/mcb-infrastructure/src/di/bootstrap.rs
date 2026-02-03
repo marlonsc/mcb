@@ -91,13 +91,9 @@ pub struct AppContext {
     // Provider Resolvers (linkme registry access)
     // Reserved for future admin API operations (list/switch providers)
     // ========================================================================
-    #[allow(dead_code)] // Reserved for admin API: list available providers
     embedding_resolver: Arc<EmbeddingProviderResolver>,
-    #[allow(dead_code)] // Reserved for admin API: list available providers
     vector_store_resolver: Arc<VectorStoreProviderResolver>,
-    #[allow(dead_code)] // Reserved for admin API: list available providers
     cache_resolver: Arc<CacheProviderResolver>,
-    #[allow(dead_code)] // Reserved for admin API: list available providers
     language_resolver: Arc<LanguageProviderResolver>,
 
     // ========================================================================
@@ -144,6 +140,30 @@ impl AppContext {
     /// Get language provider handle
     pub fn language_handle(&self) -> Arc<LanguageProviderHandle> {
         self.language_handle.clone()
+    }
+
+    // ========================================================================
+    // Provider Resolvers (used by admin services and init)
+    // ========================================================================
+
+    /// Get embedding provider resolver (for admin API and catalog)
+    pub fn embedding_resolver(&self) -> Arc<EmbeddingProviderResolver> {
+        self.embedding_resolver.clone()
+    }
+
+    /// Get vector store provider resolver (for admin API and catalog)
+    pub fn vector_store_resolver(&self) -> Arc<VectorStoreProviderResolver> {
+        self.vector_store_resolver.clone()
+    }
+
+    /// Get cache provider resolver (for admin API and catalog)
+    pub fn cache_resolver(&self) -> Arc<CacheProviderResolver> {
+        self.cache_resolver.clone()
+    }
+
+    /// Get language provider resolver (for admin API and catalog)
+    pub fn language_resolver(&self) -> Arc<LanguageProviderResolver> {
+        self.language_resolver.clone()
     }
 
     // ========================================================================

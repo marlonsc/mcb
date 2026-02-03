@@ -2,9 +2,9 @@
 //!
 //! Validates naming conventions:
 //! - Structs/Enums/Traits: CamelCase
-//! - Functions/Methods: snake_case
-//! - Constants: SCREAMING_SNAKE_CASE
-//! - Modules/Files: snake_case
+//! - Functions/Methods: `snake_case`
+//! - Constants: `SCREAMING_SNAKE_CASE`
+//! - Modules/Files: `snake_case`
 
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
@@ -24,7 +24,7 @@ pub enum NamingViolation {
         expected_case: String,
         severity: Severity,
     },
-    /// Bad function/method name (should be snake_case)
+    /// Bad function/method name (should be `snake_case`)
     BadFunctionName {
         file: PathBuf,
         line: usize,
@@ -32,7 +32,7 @@ pub enum NamingViolation {
         expected_case: String,
         severity: Severity,
     },
-    /// Bad constant name (should be SCREAMING_SNAKE_CASE)
+    /// Bad constant name (should be `SCREAMING_SNAKE_CASE`)
     BadConstantName {
         file: PathBuf,
         line: usize,
@@ -40,7 +40,7 @@ pub enum NamingViolation {
         expected_case: String,
         severity: Severity,
     },
-    /// Bad module/file name (should be snake_case)
+    /// Bad module/file name (should be `snake_case`)
     BadModuleName {
         path: PathBuf,
         expected_case: String,
@@ -233,31 +233,28 @@ impl Violation for NamingViolation {
                 name,
                 expected_case,
                 ..
-            } => Some(format!("Rename '{}' to {} format", name, expected_case)),
+            } => Some(format!("Rename '{name}' to {expected_case} format")),
             Self::BadFunctionName {
                 name,
                 expected_case,
                 ..
-            } => Some(format!("Rename '{}' to {} format", name, expected_case)),
+            } => Some(format!("Rename '{name}' to {expected_case} format")),
             Self::BadConstantName {
                 name,
                 expected_case,
                 ..
-            } => Some(format!("Rename '{}' to {} format", name, expected_case)),
+            } => Some(format!("Rename '{name}' to {expected_case} format")),
             Self::BadModuleName {
                 path,
                 expected_case,
                 ..
             } => {
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-                Some(format!(
-                    "Rename '{}' to {} format",
-                    file_name, expected_case
-                ))
+                Some(format!("Rename '{file_name}' to {expected_case} format"))
             }
             Self::BadFileSuffix {
                 expected_suffix, ..
-            } => Some(format!("Add '{}' suffix to file name", expected_suffix)),
+            } => Some(format!("Add '{expected_suffix}' suffix to file name")),
             Self::BadCaNaming { suggestion, .. } => Some(suggestion.clone()),
         }
     }
@@ -367,7 +364,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate function/method names are snake_case
+    /// Validate function/method names are `snake_case`
     pub fn validate_function_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -413,7 +410,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate constants are SCREAMING_SNAKE_CASE
+    /// Validate constants are `SCREAMING_SNAKE_CASE`
     pub fn validate_constant_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -469,7 +466,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate module/file names are snake_case
+    /// Validate module/file names are `snake_case`
     pub fn validate_module_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -740,7 +737,7 @@ impl NamingValidator {
         name.chars().any(|c| c.is_ascii_lowercase())
     }
 
-    /// Check if name is snake_case
+    /// Check if name is `snake_case`
     fn is_snake_case(&self, name: &str) -> bool {
         if name.is_empty() {
             return false;
@@ -757,7 +754,7 @@ impl NamingValidator {
         !name.chars().next().is_some_and(|c| c.is_ascii_digit())
     }
 
-    /// Check if name is SCREAMING_SNAKE_CASE
+    /// Check if name is `SCREAMING_SNAKE_CASE`
     fn is_screaming_snake_case(&self, name: &str) -> bool {
         if name.is_empty() {
             return false;

@@ -43,10 +43,10 @@ impl LinterEngine {
         let mut all_violations = Vec::new();
 
         // Check if Ruff is available and run it
-        if self.enabled_linters.contains(&LinterType::Ruff) {
-            if let Ok(violations) = RuffLinter::check_files(files).await {
-                all_violations.extend(violations);
-            }
+        if self.enabled_linters.contains(&LinterType::Ruff)
+            && let Ok(violations) = RuffLinter::check_files(files).await
+        {
+            all_violations.extend(violations);
         }
 
         // For Clippy, we need to check if any Rust files are present

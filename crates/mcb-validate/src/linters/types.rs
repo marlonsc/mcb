@@ -86,11 +86,10 @@ pub struct ClippyMessageContent {
     pub spans: Vec<ClippySpan>,
 }
 
-/// Clippy code is nested: {"code": "clippy::unwrap_used", "explanation": null}
+/// Clippy code is nested: {"code": "`clippy::unwrap_used`", "explanation": null}
 #[derive(serde::Deserialize)]
 pub struct ClippyCode {
     pub code: String,
-    #[allow(dead_code)]
     pub explanation: Option<String>,
 }
 

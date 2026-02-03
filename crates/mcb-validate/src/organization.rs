@@ -587,11 +587,11 @@ impl Violation for OrganizationViolation {
             Self::DuplicateStringLiteral { suggestion, .. } => Some(suggestion.clone()),
             Self::DecentralizedConstant { suggestion, .. } => Some(suggestion.clone()),
             Self::TypeInWrongLayer { expected_layer, .. } => {
-                Some(format!("Move type to {} layer", expected_layer))
+                Some(format!("Move type to {expected_layer} layer"))
             }
             Self::FileInWrongLocation {
                 expected_location, ..
-            } => Some(format!("Move file to {}", expected_location)),
+            } => Some(format!("Move file to {expected_location}")),
             Self::DeclarationCollision { .. } => {
                 Some("Consolidate declarations or use different names".to_string())
             }
@@ -613,7 +613,7 @@ impl Violation for OrganizationViolation {
             }
             Self::StrictDirectoryViolation {
                 expected_directory, ..
-            } => Some(format!("Move to {}", expected_directory)),
+            } => Some(format!("Move to {expected_directory}")),
             Self::DomainLayerImplementation { .. } => {
                 Some("Move implementation to application or infrastructure layer".to_string())
             }
@@ -761,7 +761,7 @@ impl OrganizationValidator {
 
                     // Skip numbers that are clearly part of a constant reference
                     // e.g., _1024, SIZE_16384
-                    if line.contains(&format!("_{}", num)) || line.contains(&format!("{}_", num)) {
+                    if line.contains(&format!("_{num}")) || line.contains(&format!("{num}_")) {
                         continue;
                     }
 
@@ -1193,27 +1193,25 @@ impl OrganizationValidator {
                 }
 
                 // Check: Server layer creating services directly
-                if is_server_layer {
-                    if let Some(cap) = arc_new_service_pattern.captures(line) {
-                        let service_name = cap.get(1).map_or("", |m| m.as_str());
+                if is_server_layer && let Some(cap) = arc_new_service_pattern.captures(line) {
+                    let service_name = cap.get(1).map_or("", |m| m.as_str());
 
-                        // Skip if it's in a builder or factory file
-                        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                        if file_name.contains("builder")
-                            || file_name.contains("factory")
-                            || file_name.contains("bootstrap")
-                        {
-                            continue;
-                        }
-
-                        violations.push(OrganizationViolation::ServerCreatingServices {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            service_name: service_name.to_string(),
-                            suggestion: "Use DI container to resolve services".to_string(),
-                            severity: Severity::Warning,
-                        });
+                    // Skip if it's in a builder or factory file
+                    let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                    if file_name.contains("builder")
+                        || file_name.contains("factory")
+                        || file_name.contains("bootstrap")
+                    {
+                        continue;
                     }
+
+                    violations.push(OrganizationViolation::ServerCreatingServices {
+                        file: path.to_path_buf(),
+                        line: line_num + 1,
+                        service_name: service_name.to_string(),
+                        suggestion: "Use DI container to resolve services".to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
 
                 // Check: Application layer importing from server
@@ -1456,12 +1454,12 @@ impl OrganizationValidator {
                 }
 
                 // Track impl blocks
-                if let Some(cap) = impl_block_pattern.captures(line) {
-                    if !trimmed.contains("trait ") {
-                        in_impl_block = true;
-                        impl_name = cap.get(1).map_or("", |m| m.as_str()).to_string();
-                        impl_start_brace = brace_depth;
-                    }
+                if let Some(cap) = impl_block_pattern.captures(line)
+                    && !trimmed.contains("trait ")
+                {
+                    in_impl_block = true;
+                    impl_name = cap.get(1).map_or("", |m| m.as_str()).to_string();
+                    impl_start_brace = brace_depth;
                 }
 
                 // Track brace depth
@@ -1474,37 +1472,35 @@ impl OrganizationValidator {
                 }
 
                 // Check methods in impl blocks
-                if in_impl_block {
-                    if let Some(cap) = method_pattern.captures(line) {
-                        let method_name = cap.get(1).map_or("", |m| m.as_str());
+                if in_impl_block && let Some(cap) = method_pattern.captures(line) {
+                    let method_name = cap.get(1).map_or("", |m| m.as_str());
 
-                        // Skip allowed methods
-                        if allowed_methods.contains(&method_name) {
-                            continue;
-                        }
-
-                        // Skip if method name starts with allowed prefix
-                        if method_name.starts_with("get_")
-                            || method_name.starts_with("is_")
-                            || method_name.starts_with("has_")
-                            || method_name.starts_with("to_")
-                            || method_name.starts_with("as_")
-                            || method_name.starts_with("with_")
-                            || method_name.starts_with("from_")
-                            || method_name.starts_with("into_")
-                        {
-                            continue;
-                        }
-
-                        // This looks like business logic in domain layer
-                        violations.push(OrganizationViolation::DomainLayerImplementation {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            impl_type: "method".to_string(),
-                            type_name: format!("{}::{}", impl_name, method_name),
-                            severity: Severity::Info,
-                        });
+                    // Skip allowed methods
+                    if allowed_methods.contains(&method_name) {
+                        continue;
                     }
+
+                    // Skip if method name starts with allowed prefix
+                    if method_name.starts_with("get_")
+                        || method_name.starts_with("is_")
+                        || method_name.starts_with("has_")
+                        || method_name.starts_with("to_")
+                        || method_name.starts_with("as_")
+                        || method_name.starts_with("with_")
+                        || method_name.starts_with("from_")
+                        || method_name.starts_with("into_")
+                    {
+                        continue;
+                    }
+
+                    // This looks like business logic in domain layer
+                    violations.push(OrganizationViolation::DomainLayerImplementation {
+                        file: path.to_path_buf(),
+                        line: line_num + 1,
+                        impl_type: "method".to_string(),
+                        type_name: format!("{impl_name}::{method_name}"),
+                        severity: Severity::Info,
+                    });
                 }
             }
 

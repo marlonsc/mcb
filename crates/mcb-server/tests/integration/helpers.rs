@@ -39,7 +39,6 @@ pub fn is_postgres_available() -> bool {
 
 /// Check if running in CI environment
 /// Returns true if CI environment variable is set
-#[allow(dead_code)] // Used in macros below via direct env var check
 pub fn is_ci() -> bool {
     std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok()
 }
@@ -60,9 +59,7 @@ pub fn is_ci() -> bool {
 #[macro_export]
 macro_rules! skip_if_service_unavailable {
     ($service:expr, $is_available:expr) => {
-        // Skip in CI to prevent coverage timeouts
-        // Check CI environment variables directly to avoid clippy::crate-in-macro-def warning
-        if std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok() {
+        if $crate::helpers::is_ci() {
             println!("⊘ SKIPPED: Running in CI environment (skipping test)");
             return;
         }
@@ -86,8 +83,7 @@ macro_rules! skip_if_service_unavailable {
 #[macro_export]
 macro_rules! skip_if_any_service_unavailable {
     ($($service:expr => $is_available:expr),+ $(,)?) => {
-        // Skip in CI to prevent coverage timeouts
-        if std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok() {
+        if $crate::helpers::is_ci() {
             println!("⊘ SKIPPED: Running in CI environment (skipping test)");
             return;
         }
@@ -109,13 +105,12 @@ mod tests {
 
     #[test]
     fn test_service_detection_logic() {
-        // These checks should not panic and return boolean values
+        let _ = is_ci();
         let milvus = is_milvus_available();
         let ollama = is_ollama_available();
         let redis = is_redis_available();
         let postgres = is_postgres_available();
 
-        // Assert that functions return boolean (may be true or false depending on environment)
         assert!(matches!(milvus, true | false));
         assert!(matches!(ollama, true | false));
         assert!(matches!(redis, true | false));

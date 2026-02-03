@@ -126,8 +126,7 @@ impl Violation for LayerFlowViolation {
                 target_crate,
                 ..
             } => Some(format!(
-                "Remove {} from {} - violates CA",
-                target_crate, source_crate
+                "Remove {target_crate} from {source_crate} - violates CA"
             )),
             Self::CircularDependency { .. } => {
                 Some("Extract shared types to mcb-domain".to_string())
@@ -211,15 +210,15 @@ impl LayerFlowValidator {
         let import_pattern = Regex::new(r"use\s+(mcb_\w+)").expect("Invalid regex");
 
         for crate_name in self.rules.forbidden.keys() {
-            let crate_dir = crates_dir.join(crate_name).join("src");
-            if !crate_dir.exists() {
+            let crate_src_dir = crates_dir.join(crate_name).join("src");
+            if !crate_src_dir.exists() {
                 continue;
             }
 
             let forbidden_deps = &self.rules.forbidden[crate_name];
             let crate_name_underscored = crate_name.replace('-', "_");
 
-            for entry in WalkDir::new(&crate_dir)
+            for entry in WalkDir::new(&crate_src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
             {
@@ -310,7 +309,7 @@ impl LayerFlowValidator {
                 for dep_crate in &crate_names {
                     if *dep_crate != *crate_name
                         && (trimmed.starts_with(*dep_crate)
-                            || trimmed.contains(&format!("\"{}\"", dep_crate)))
+                            || trimmed.contains(&format!("\"{dep_crate}\"")))
                     {
                         crate_deps.insert((*dep_crate).to_string());
                     }

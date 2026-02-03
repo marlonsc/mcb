@@ -239,15 +239,15 @@ impl VcsProvider for Git2Provider {
 
         let mut files = Vec::new();
         tree.walk(git2::TreeWalkMode::PreOrder, |dir, entry| {
-            if entry.kind() == Some(git2::ObjectType::Blob) {
-                if let Some(name) = entry.name() {
-                    let path = if dir.is_empty() {
-                        PathBuf::from(name)
-                    } else {
-                        PathBuf::from(dir).join(name)
-                    };
-                    files.push(path);
-                }
+            if entry.kind() == Some(git2::ObjectType::Blob)
+                && let Some(name) = entry.name()
+            {
+                let path = if dir.is_empty() {
+                    PathBuf::from(name)
+                } else {
+                    PathBuf::from(dir).join(name)
+                };
+                files.push(path);
             }
             git2::TreeWalkResult::Ok
         })

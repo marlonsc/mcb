@@ -156,12 +156,11 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
 
         match response {
             Ok(data) => {
-                if let Some(namespaces) = data.get("namespaces") {
-                    if let Some(ns) = namespaces.get(collection) {
-                        if let Some(count) = ns.get("vectorCount") {
-                            stats.insert("vectors_count".to_string(), count.clone());
-                        }
-                    }
+                if let Some(namespaces) = data.get("namespaces")
+                    && let Some(ns) = namespaces.get(collection)
+                    && let Some(count) = ns.get("vectorCount")
+                {
+                    stats.insert("vectors_count".to_string(), count.clone());
                 }
                 stats.insert("status".to_string(), serde_json::json!("active"));
             }
@@ -265,10 +264,10 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
             "includeMetadata": true
         });
 
-        if let Some(filter_str) = filter {
-            if let Ok(filter_val) = serde_json::from_str::<Value>(filter_str) {
-                payload["filter"] = filter_val;
-            }
+        if let Some(filter_str) = filter
+            && let Ok(filter_val) = serde_json::from_str::<Value>(filter_str)
+        {
+            payload["filter"] = filter_val;
         }
 
         let response = self

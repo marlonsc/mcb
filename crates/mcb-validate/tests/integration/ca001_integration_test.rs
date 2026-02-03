@@ -6,8 +6,6 @@
 #[cfg(test)]
 mod ca001_integration_tests {
     use mcb_validate::ValidationConfig;
-    #[allow(unused_imports)]
-    use mcb_validate::Violation; // Used for type context in violation iteration
     use mcb_validate::engines::RuleContext;
     use mcb_validate::engines::rete_engine::ReteEngine;
     use std::collections::HashMap;

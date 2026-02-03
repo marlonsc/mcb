@@ -182,13 +182,13 @@ impl<'a> AstTraverser<'a> {
         let mut chunk = self.create_chunk_from_node(node, chunk_params);
 
         // Add context metadata if available
-        if let Some(context_lines) = context {
-            if let Some(metadata) = chunk.metadata.as_object_mut() {
-                metadata.insert(
-                    "context_lines".to_string(),
-                    serde_json::json!(context_lines),
-                );
-            }
+        if let Some(context_lines) = context
+            && let Some(metadata) = chunk.metadata.as_object_mut()
+        {
+            metadata.insert(
+                "context_lines".to_string(),
+                serde_json::json!(context_lines),
+            );
         }
 
         Some(chunk)

@@ -128,77 +128,77 @@ impl MetricThresholds {
 
         if let Some(obj) = config.as_object() {
             // Parse cognitive_complexity
-            if let Some(cc) = obj.get("cognitive_complexity") {
-                if let Some(max) = cc.get("max").and_then(serde_json::Value::as_u64) {
-                    let severity = cc.get("severity").and_then(|v| v.as_str()).map_or(
-                        Severity::Warning,
-                        |s| match s {
+            if let Some(cc) = obj.get("cognitive_complexity")
+                && let Some(max) = cc.get("max").and_then(serde_json::Value::as_u64)
+            {
+                let severity =
+                    cc.get("severity")
+                        .and_then(|v| v.as_str())
+                        .map_or(Severity::Warning, |s| match s {
                             "error" => Severity::Error,
                             "info" => Severity::Info,
                             _ => Severity::Warning,
-                        },
-                    );
+                        });
 
-                    thresholds = thresholds.with_threshold(
-                        MetricType::CognitiveComplexity,
-                        max as u32,
-                        severity,
-                    );
-                }
+                thresholds = thresholds.with_threshold(
+                    MetricType::CognitiveComplexity,
+                    max as u32,
+                    severity,
+                );
             }
 
             // Parse function_length
-            if let Some(fl) = obj.get("function_length") {
-                if let Some(max) = fl.get("max").and_then(serde_json::Value::as_u64) {
-                    let severity = fl.get("severity").and_then(|v| v.as_str()).map_or(
-                        Severity::Warning,
-                        |s| match s {
+            if let Some(fl) = obj.get("function_length")
+                && let Some(max) = fl.get("max").and_then(serde_json::Value::as_u64)
+            {
+                let severity =
+                    fl.get("severity")
+                        .and_then(|v| v.as_str())
+                        .map_or(Severity::Warning, |s| match s {
                             "error" => Severity::Error,
                             "info" => Severity::Info,
                             _ => Severity::Warning,
-                        },
-                    );
+                        });
 
-                    thresholds =
-                        thresholds.with_threshold(MetricType::FunctionLength, max as u32, severity);
-                }
+                thresholds =
+                    thresholds.with_threshold(MetricType::FunctionLength, max as u32, severity);
             }
 
             // Parse cyclomatic_complexity
-            if let Some(cyc) = obj.get("cyclomatic_complexity") {
-                if let Some(max) = cyc.get("max").and_then(serde_json::Value::as_u64) {
-                    let severity = cyc.get("severity").and_then(|v| v.as_str()).map_or(
-                        Severity::Warning,
-                        |s| match s {
+            if let Some(cyc) = obj.get("cyclomatic_complexity")
+                && let Some(max) = cyc.get("max").and_then(serde_json::Value::as_u64)
+            {
+                let severity =
+                    cyc.get("severity")
+                        .and_then(|v| v.as_str())
+                        .map_or(Severity::Warning, |s| match s {
                             "error" => Severity::Error,
                             "info" => Severity::Info,
                             _ => Severity::Warning,
-                        },
-                    );
+                        });
 
-                    thresholds = thresholds.with_threshold(
-                        MetricType::CyclomaticComplexity,
-                        max as u32,
-                        severity,
-                    );
-                }
+                thresholds = thresholds.with_threshold(
+                    MetricType::CyclomaticComplexity,
+                    max as u32,
+                    severity,
+                );
             }
 
             // Parse nesting_depth
-            if let Some(nd) = obj.get("nesting_depth") {
-                if let Some(max) = nd.get("max").and_then(serde_json::Value::as_u64) {
-                    let severity = nd.get("severity").and_then(|v| v.as_str()).map_or(
-                        Severity::Warning,
-                        |s| match s {
+            if let Some(nd) = obj.get("nesting_depth")
+                && let Some(max) = nd.get("max").and_then(serde_json::Value::as_u64)
+            {
+                let severity =
+                    nd.get("severity")
+                        .and_then(|v| v.as_str())
+                        .map_or(Severity::Warning, |s| match s {
                             "error" => Severity::Error,
                             "info" => Severity::Info,
                             _ => Severity::Warning,
-                        },
-                    );
+                        });
 
-                    thresholds =
-                        thresholds.with_threshold(MetricType::NestingDepth, max as u32, severity);
-                }
+                thresholds =
+                    thresholds.with_threshold(MetricType::NestingDepth, max as u32, severity);
             }
         }
 
@@ -222,7 +222,7 @@ impl MetricThresholds {
         thresholds
     }
 
-    /// Create thresholds from a MetricsConfig struct (from ValidatedRule)
+    /// Create thresholds from a `MetricsConfig` struct (from `ValidatedRule`)
     pub fn from_metrics_config(config: &crate::rules::yaml_loader::MetricsConfig) -> Self {
         let mut thresholds = Self::new();
 

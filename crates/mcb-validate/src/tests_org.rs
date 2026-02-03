@@ -43,7 +43,7 @@ pub enum TestViolation {
         function_name: String,
         severity: Severity,
     },
-    /// Trivial assertion that always passes (assert!(true), assert_eq!(1, 1))
+    /// Trivial assertion that always passes (assert!(true), `assert_eq!(1`, 1))
     TrivialAssertion {
         file: PathBuf,
         line: usize,
@@ -51,7 +51,7 @@ pub enum TestViolation {
         assertion: String,
         severity: Severity,
     },
-    /// Test only uses .unwrap() as assertion (crash = pass)
+    /// Test only uses .`unwrap()` as assertion (crash = pass)
     UnwrapOnlyAssertion {
         file: PathBuf,
         line: usize,
@@ -238,16 +238,13 @@ impl Violation for TestViolation {
             Self::InlineTestModule { .. } => {
                 Some("Move test module to tests/ directory".to_string())
             }
-            Self::BadTestFileName { suggestion, .. } => Some(format!("Rename to {}", suggestion)),
-            Self::BadTestFunctionName { suggestion, .. } => {
-                Some(format!("Rename to {}", suggestion))
-            }
+            Self::BadTestFileName { suggestion, .. } => Some(format!("Rename to {suggestion}")),
+            Self::BadTestFunctionName { suggestion, .. } => Some(format!("Rename to {suggestion}")),
             Self::TestWithoutAssertion { function_name, .. } => Some(format!(
-                "Add assertion to {} or use smoke test suffix",
-                function_name
+                "Add assertion to {function_name} or use smoke test suffix"
             )),
             Self::TrivialAssertion { assertion, .. } => {
-                Some(format!("Replace {} with meaningful assertion", assertion))
+                Some(format!("Replace {assertion} with meaningful assertion"))
             }
             Self::UnwrapOnlyAssertion { .. } => Some(
                 "Add explicit assert! or assert_eq! instead of relying on .unwrap()".to_string(),
@@ -351,7 +348,7 @@ impl TestValidator {
             if !unit_exists && !integration_exists {
                 let has_test_files = std::fs::read_dir(&tests_dir)
                     .map(|entries| {
-                        entries.filter_map(|e| e.ok()).any(|e| {
+                        entries.filter_map(std::result::Result::ok).any(|e| {
                             let path = e.path();
                             path.is_file()
                                 && path.extension().and_then(|x| x.to_str()) == Some("rs")
@@ -462,8 +459,7 @@ impl TestValidator {
                             violations.push(TestViolation::BadTestFileName {
                                 file: path.to_path_buf(),
                                 suggestion: format!(
-                                    "{}_tests.rs (unit tests must end with _tests)",
-                                    file_name
+                                    "{file_name}_tests.rs (unit tests must end with _tests)"
                                 ),
                                 severity: Severity::Warning,
                             });
@@ -479,7 +475,7 @@ impl TestValidator {
                         if !is_valid_integration {
                             violations.push(TestViolation::BadTestFileName {
                                 file: path.to_path_buf(),
-                                suggestion: format!("{}_integration.rs or {}_workflow.rs (integration tests should indicate their purpose)", file_name, file_name),
+                                suggestion: format!("{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"),
                                 severity: Severity::Info,
                             });
                         }
@@ -493,7 +489,7 @@ impl TestValidator {
                         if !is_valid_e2e {
                             violations.push(TestViolation::BadTestFileName {
                                 file: path.to_path_buf(),
-                                suggestion: format!("{}_e2e.rs or test_{}.rs (e2e tests should indicate they're end-to-end)", file_name, file_name),
+                                suggestion: format!("{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"),
                                 severity: Severity::Info,
                             });
                         }
@@ -584,7 +580,7 @@ impl TestValidator {
                                         file: entry.path().to_path_buf(),
                                         line: fn_line_idx + 1,
                                         function_name: fn_name.to_string(),
-                                        suggestion: format!("test_{}", fn_name),
+                                        suggestion: format!("test_{fn_name}"),
                                         severity: Severity::Warning,
                                     });
                                 }

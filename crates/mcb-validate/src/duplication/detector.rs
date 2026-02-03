@@ -50,10 +50,10 @@ impl CloneDetector {
         let mut candidates = Vec::new();
 
         for m in matches {
-            if let Some(candidate) = self.verify_single_match(m) {
-                if self.passes_thresholds(&candidate) {
-                    candidates.push(candidate);
-                }
+            if let Some(candidate) = self.verify_single_match(m)
+                && self.passes_thresholds(&candidate)
+            {
+                candidates.push(candidate);
             }
         }
 
@@ -278,7 +278,7 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
                 string.push(c);
                 let start_column = current_column;
 
-                while let Some(next) = chars.next() {
+                for next in chars.by_ref() {
                     string.push(next);
                     if next == quote && !string.ends_with('\\') {
                         break;

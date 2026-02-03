@@ -132,15 +132,15 @@ impl CargoDependencyParser {
         for entry in WalkDir::new(&self.workspace_root)
             .max_depth(3) // Don't go too deep
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
         {
             let path = entry.path();
-            if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml") {
-                if let Some(parent) = path.parent() {
-                    // Skip workspace root Cargo.toml (already added)
-                    if parent != self.workspace_root {
-                        crates.push(parent.to_path_buf());
-                    }
+            if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml")
+                && let Some(parent) = path.parent()
+            {
+                // Skip workspace root Cargo.toml (already added)
+                if parent != self.workspace_root {
+                    crates.push(parent.to_path_buf());
                 }
             }
         }
@@ -154,7 +154,7 @@ impl CargoDependencyParser {
         let value: toml::Value =
             toml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
-                message: format!("Failed to parse Cargo.toml: {}", e),
+                message: format!("Failed to parse Cargo.toml: {e}"),
             })?;
 
         let mut deps = HashMap::new();
@@ -213,21 +213,21 @@ impl CargoDependencyParser {
                 let version = table
                     .get("version")
                     .and_then(|v| v.as_str())
-                    .map(|s| s.to_string());
+                    .map(std::string::ToString::to_string);
 
                 let features = table
                     .get("features")
                     .and_then(|v| v.as_array())
                     .map(|arr| {
                         arr.iter()
-                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .filter_map(|v| v.as_str().map(std::string::ToString::to_string))
                             .collect()
                     })
                     .unwrap_or_default();
 
                 let optional = table
                     .get("optional")
-                    .and_then(|v| v.as_bool())
+                    .and_then(toml::Value::as_bool)
                     .unwrap_or(false);
 
                 Ok(DependencyInfo {

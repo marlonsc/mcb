@@ -3,7 +3,6 @@
 #[cfg(test)]
 mod rete_engine_tests {
     use mcb_validate::engines::rete_engine::ReteEngine;
-    #[allow(unused_imports)]
     use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as RreValue};
 
     #[test]

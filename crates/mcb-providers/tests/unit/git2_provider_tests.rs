@@ -14,11 +14,13 @@ fn test_git2_provider_constructs() {
 }
 
 #[test]
-#[allow(clippy::assertions_on_constants)]
 fn test_git2_provider_is_object_safe() {
     fn _assert_object_safe(_: &dyn VcsProvider) {}
+    let provider = Git2Provider::new();
+    _assert_object_safe(&provider);
+    let _erased: &dyn VcsProvider = &provider;
     assert!(
-        true,
-        "VcsProvider implemented by Git2Provider is object-safe"
+        std::mem::size_of_val(_erased) > 0,
+        "trait object must have non-zero size"
     );
 }

@@ -328,8 +328,7 @@ impl Violation for CleanArchitectureViolation {
                 "Inject service via constructor injection instead of creating directly".to_string(),
             ),
             Self::PortMissingComponentDerive { trait_name, .. } => Some(format!(
-                "Add proper DI component registration for {}",
-                trait_name
+                "Add proper DI component registration for {trait_name}"
             )),
             Self::EntityMissingIdentity { .. } => {
                 Some("Add id: Uuid or similar identity field to entity".to_string())
@@ -345,7 +344,7 @@ impl Violation for CleanArchitectureViolation {
                     .to_string(),
             ),
             Self::ApplicationWrongPortImport { should_be, .. } => {
-                Some(format!("Import ports from {} instead", should_be))
+                Some(format!("Import ports from {should_be} instead"))
             }
             Self::InfrastructureImportsApplication { suggestion, .. } => Some(suggestion.clone()),
         }
@@ -403,7 +402,7 @@ impl crate::validator_trait::Validator for CleanArchitectureValidator {
     }
 
     fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        self.validate_boxed().map_err(|e| anyhow::anyhow!("{}", e))
+        self.validate_boxed().map_err(|e| anyhow::anyhow!("{e}"))
     }
 }
 
@@ -504,7 +503,7 @@ impl CleanArchitectureValidator {
                                 file: path.to_path_buf(),
                                 line: line_num + 1,
                                 service_name: service_name.to_string(),
-                                context: format!("Direct {} instead of DI", pattern_type),
+                                context: format!("Direct {pattern_type} instead of DI"),
                                 severity: Severity::Warning,
                             });
                         }
@@ -661,26 +660,26 @@ impl CleanArchitectureValidator {
                     }
 
                     // Check for mutable methods
-                    if let Some(ref vo_name) = current_impl {
-                        if let Some(captures) = mut_method_re.captures(line) {
-                            let method_name = captures.get(1).map_or("?", |m| m.as_str());
+                    if let Some(ref vo_name) = current_impl
+                        && let Some(captures) = mut_method_re.captures(line)
+                    {
+                        let method_name = captures.get(1).map_or("?", |m| m.as_str());
 
-                            // Allow some standard mutable methods
-                            if !["set_", "add_", "remove_", "clear_", "reset_"]
-                                .iter()
-                                .any(|p| method_name.starts_with(p))
-                            {
-                                continue;
-                            }
-
-                            violations.push(CleanArchitectureViolation::ValueObjectMutable {
-                                file: path.to_path_buf(),
-                                line: line_num + 1,
-                                vo_name: vo_name.clone(),
-                                method_name: method_name.to_string(),
-                                severity: Severity::Warning,
-                            });
+                        // Allow some standard mutable methods
+                        if !["set_", "add_", "remove_", "clear_", "reset_"]
+                            .iter()
+                            .any(|p| method_name.starts_with(p))
+                        {
+                            continue;
                         }
+
+                        violations.push(CleanArchitectureViolation::ValueObjectMutable {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            vo_name: vo_name.clone(),
+                            method_name: method_name.to_string(),
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
@@ -740,10 +739,7 @@ impl CleanArchitectureValidator {
                             CleanArchitectureViolation::InfrastructureImportsConcreteService {
                                 file: path.to_path_buf(),
                                 line: line_num + 1,
-                                import_path: format!(
-                                    "mcb_application::{}::{}",
-                                    module, concrete_type
-                                ),
+                                import_path: format!("mcb_application::{module}::{concrete_type}"),
                                 concrete_type: concrete_type.to_string(),
                                 severity: Severity::Error,
                             },
@@ -828,12 +824,10 @@ impl CleanArchitectureValidator {
                                     file: path.to_path_buf(),
                                     line: line_num + 1,
                                     import_path: format!(
-                                        "mcb_application::ports::providers::{}",
-                                        trait_name
+                                        "mcb_application::ports::providers::{trait_name}"
                                     ),
                                     should_be: format!(
-                                        "mcb_domain::ports::providers::{}",
-                                        trait_name
+                                        "mcb_domain::ports::providers::{trait_name}"
                                     ),
                                     severity: Severity::Error,
                                 },
@@ -906,8 +900,10 @@ impl CleanArchitectureValidator {
                         let import_path = import_path_re
                             .captures(line)
                             .and_then(|c| c.get(1))
-                            .map(|m| m.as_str().to_string())
-                            .unwrap_or_else(|| "mcb_application".to_string());
+                            .map_or_else(
+                                || "mcb_application".to_string(),
+                                |m| m.as_str().to_string(),
+                            );
 
                         // Determine suggestion based on what's being imported
                         let suggestion = if import_path.contains("::ports::providers::") {

@@ -358,22 +358,19 @@ impl TestQualityValidator {
                     // Check if the function body is empty (just {})
                     if let Some(body_start) = (fn_line_idx..fn_line_idx + 3)
                         .find(|&idx| idx < lines.len() && lines[idx].contains('{'))
+                        && (empty_body_pattern.is_match(lines[body_start])
+                            || (body_start + 1 < lines.len()
+                                && lines[body_start + 1].trim() == "}"))
+                        && let Some(test_name) = fn_pattern
+                            .captures(lines[fn_line_idx])
+                            .and_then(|c| c.get(1))
                     {
-                        if empty_body_pattern.is_match(lines[body_start])
-                            || (body_start + 1 < lines.len() && lines[body_start + 1].trim() == "}")
-                        {
-                            if let Some(test_name) = fn_pattern
-                                .captures(lines[fn_line_idx])
-                                .and_then(|c| c.get(1))
-                            {
-                                violations.push(TestQualityViolation::EmptyTestBody {
-                                    file: file.to_path_buf(),
-                                    line: fn_line_idx + 1,
-                                    test_name: test_name.as_str().to_string(),
-                                    severity: Severity::Error,
-                                });
-                            }
-                        }
+                        violations.push(TestQualityViolation::EmptyTestBody {
+                            file: file.to_path_buf(),
+                            line: fn_line_idx + 1,
+                            test_name: test_name.as_str().to_string(),
+                            severity: Severity::Error,
+                        });
                     }
                 }
             }
@@ -425,10 +422,10 @@ impl TestQualityValidator {
     ) -> Option<String> {
         // Look for function name in next few lines
         for i in start_idx..std::cmp::min(start_idx + 5, lines.len()) {
-            if let Some(captures) = fn_pattern.captures(lines[i]) {
-                if let Some(name) = captures.get(1) {
-                    return Some(name.as_str().to_string());
-                }
+            if let Some(captures) = fn_pattern.captures(lines[i])
+                && let Some(name) = captures.get(1)
+            {
+                return Some(name.as_str().to_string());
             }
         }
         None
@@ -442,10 +439,10 @@ impl TestQualityValidator {
     ) -> Option<String> {
         // Look backwards for function name
         for i in (0..=start_idx).rev().take(10) {
-            if let Some(captures) = fn_pattern.captures(lines[i]) {
-                if let Some(name) = captures.get(1) {
-                    return Some(name.as_str().to_string());
-                }
+            if let Some(captures) = fn_pattern.captures(lines[i])
+                && let Some(name) = captures.get(1)
+            {
+                return Some(name.as_str().to_string());
             }
         }
         None

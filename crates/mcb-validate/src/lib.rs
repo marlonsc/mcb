@@ -1,8 +1,5 @@
 // Clippy allows for complex patterns in validation code
 // These allows are needed for mcb-validate which has complex parsing and validation logic
-#![allow(clippy::all)]
-#![allow(clippy::pedantic)]
-#![allow(clippy::restriction)]
 
 //! Architecture Validation for MCP Context Browser
 //!
@@ -218,7 +215,7 @@ impl ValidationConfig {
 
     /// Add an additional source path to validate
     ///
-    /// Paths can be absolute or relative to workspace_root.
+    /// Paths can be absolute or relative to `workspace_root`.
     pub fn with_additional_path(mut self, path: impl Into<PathBuf>) -> Self {
         self.additional_src_paths.push(path.into());
         self
@@ -242,17 +239,16 @@ impl ValidationConfig {
             // Canonicalize if possible for accurate comparison
             if let (Ok(canonical_full), Ok(canonical_path)) =
                 (full_path.canonicalize(), path.canonicalize())
+                && canonical_path.starts_with(&canonical_full)
             {
-                if canonical_path.starts_with(&canonical_full) {
-                    return true;
-                }
+                return true;
             }
 
             // Fallback to string-based check
-            if let (Some(full_str), Some(path_str)) = (full_path.to_str(), path.to_str()) {
-                if path_str.contains(full_str) || path_str.contains("src/") {
-                    return true;
-                }
+            if let (Some(full_str), Some(path_str)) = (full_path.to_str(), path.to_str())
+                && (path_str.contains(full_str) || path_str.contains("src/"))
+            {
+                return true;
             }
         }
         false
@@ -732,7 +728,25 @@ impl ArchitectureValidator {
             };
 
             // Check if this is a lint-based rule
-            if !rule.lint_select.is_empty() {
+            if rule.lint_select.is_empty() {
+                // Use rule engine execution
+                let engine_type = match rule.engine.as_str() {
+                    "rust-rule-engine" => RuleEngineType::RustRuleEngine,
+                    "rusty-rules" => RuleEngineType::RustyRules,
+                    _ => RuleEngineType::RustyRules, // Default
+                };
+
+                let result = engine
+                    .execute_rule(&rule.id, engine_type, &rule.rule_definition, &context)
+                    .await?;
+
+                violations.extend(
+                    result
+                        .violations
+                        .into_iter()
+                        .map(|v| Box::new(v) as Box<dyn Violation>),
+                );
+            } else {
                 // Use linter execution
                 let result = engine
                     .execute_lint_rule(
@@ -743,24 +757,6 @@ impl ArchitectureValidator {
                         severity,
                         category,
                     )
-                    .await?;
-
-                violations.extend(
-                    result
-                        .violations
-                        .into_iter()
-                        .map(|v| Box::new(v) as Box<dyn Violation>),
-                );
-            } else {
-                // Use rule engine execution
-                let engine_type = match rule.engine.as_str() {
-                    "rust-rule-engine" => RuleEngineType::RustRuleEngine,
-                    "rusty-rules" => RuleEngineType::RustyRules,
-                    _ => RuleEngineType::RustyRules, // Default
-                };
-
-                let result = engine
-                    .execute_rule(&rule.id, engine_type, &rule.rule_definition, &context)
                     .await?;
 
                 violations.extend(
@@ -818,10 +814,8 @@ impl ArchitectureValidator {
                     ext,
                     "rs" | "py" | "js" | "ts" | "go" | "java" | "c" | "cpp" | "h" | "hpp"
                 );
-                if is_source {
-                    if let Ok(content) = std::fs::read_to_string(&path) {
-                        file_contents.insert(path.to_string_lossy().to_string(), content);
-                    }
+                if is_source && let Ok(content) = std::fs::read_to_string(&path) {
+                    file_contents.insert(path.to_string_lossy().to_string(), content);
                 }
             }
         }
@@ -831,13 +825,13 @@ impl ArchitectureValidator {
 
     // ========== Registry-Based Validation (Phase 7) ==========
 
-    /// Create a ValidatorRegistry with the standard new validators
+    /// Create a `ValidatorRegistry` with the standard new validators
     ///
     /// This registry contains validators that implement the new `Validator` trait:
-    /// - CleanArchitectureValidator
-    /// - LayerFlowValidator
-    /// - PortAdapterValidator
-    /// - VisibilityValidator
+    /// - `CleanArchitectureValidator`
+    /// - `LayerFlowValidator`
+    /// - `PortAdapterValidator`
+    /// - `VisibilityValidator`
     pub fn new_validator_registry(&self) -> ValidatorRegistry {
         ValidatorRegistry::standard_for(&self.config.workspace_root)
     }
@@ -867,13 +861,13 @@ impl ArchitectureValidator {
     ///
     /// # Arguments
     ///
-    /// * `names` - Names of validators to run (e.g., &["clean_architecture", "layer_flow"])
+    /// * `names` - Names of validators to run (e.g., &["`clean_architecture`", "`layer_flow`"])
     ///
     /// # Available validators
     ///
-    /// - "clean_architecture" - Clean Architecture compliance
-    /// - "layer_flow" - Layer dependency rules
-    /// - "port_adapter" - Port/adapter patterns
+    /// - "`clean_architecture`" - Clean Architecture compliance
+    /// - "`layer_flow`" - Layer dependency rules
+    /// - "`port_adapter`" - Port/adapter patterns
     /// - "visibility" - Visibility modifiers
     pub fn validate_named(&self, names: &[&str]) -> Result<GenericReport> {
         let registry = self.new_validator_registry();
@@ -899,12 +893,11 @@ pub fn find_workspace_root_from(start: &Path) -> Option<PathBuf> {
     let mut current = start.to_path_buf();
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
-                    return Some(current);
-                }
-            }
+        if cargo_toml.exists()
+            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
+            && content.contains("[workspace]")
+        {
+            return Some(current);
         }
         if !current.pop() {
             return None;

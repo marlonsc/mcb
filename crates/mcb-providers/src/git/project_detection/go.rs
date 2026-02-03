@@ -84,21 +84,20 @@ impl ProjectDetector for GoDetector {
                 continue;
             }
 
-            if in_require_block {
-                if let Some(caps) = self.require_re.captures(line) {
-                    if let Some(dep) = caps.get(1) {
-                        dependencies.push(dep.as_str().to_string());
-                    }
-                }
+            if in_require_block
+                && let Some(caps) = self.require_re.captures(line)
+                && let Some(dep) = caps.get(1)
+            {
+                dependencies.push(dep.as_str().to_string());
             }
 
             // Single-line require
-            if line.starts_with("require ") && !line.contains('(') {
-                if let Some(caps) = self.require_re.captures(&line["require ".len()..]) {
-                    if let Some(dep) = caps.get(1) {
-                        dependencies.push(dep.as_str().to_string());
-                    }
-                }
+            if line.starts_with("require ")
+                && !line.contains('(')
+                && let Some(caps) = self.require_re.captures(&line["require ".len()..])
+                && let Some(dep) = caps.get(1)
+            {
+                dependencies.push(dep.as_str().to_string());
             }
         }
 

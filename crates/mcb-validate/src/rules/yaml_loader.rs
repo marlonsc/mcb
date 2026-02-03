@@ -25,7 +25,7 @@ pub struct ValidatedRule {
     pub config: serde_json::Value,
     pub rule_definition: serde_json::Value,
     pub fixes: Vec<RuleFix>,
-    /// Linter codes to execute (e.g., ["F401"] for Ruff, ["clippy::unwrap_used"] for Clippy)
+    /// Linter codes to execute (e.g., ["F401"] for Ruff, ["`clippy::unwrap_used`"] for Clippy)
     pub lint_select: Vec<String>,
     /// Custom message for violations
     pub message: Option<String>,
@@ -66,7 +66,7 @@ pub struct MetricThresholdConfig {
 pub struct AstSelector {
     /// Programming language (e.g., "rust", "python")
     pub language: String,
-    /// AST node type to match (e.g., "call_expression", "function_definition")
+    /// AST node type to match (e.g., "`call_expression`", "`function_definition`")
     pub node_type: String,
     /// Tree-sitter query pattern (optional, for complex matching)
     pub pattern: Option<String>,
@@ -127,7 +127,7 @@ impl YamlRuleLoader {
         let yaml_value: serde_yaml::Value =
             serde_yaml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
-                message: format!("YAML parse error: {}", e),
+                message: format!("YAML parse error: {e}"),
             })?;
 
         // Check if this is a template
@@ -162,7 +162,7 @@ impl YamlRuleLoader {
         let json_value: serde_json::Value =
             serde_json::to_value(processed_yaml).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
-                message: format!("YAML to JSON conversion error: {}", e),
+                message: format!("YAML to JSON conversion error: {e}"),
             })?;
 
         // Validate against schema
@@ -180,7 +180,7 @@ impl YamlRuleLoader {
             && !path.to_string_lossy().contains("/templates/")
     }
 
-    /// Convert YAML/JSON value to ValidatedRule
+    /// Convert YAML/JSON value to `ValidatedRule`
     fn yaml_to_validated_rule(&self, value: serde_json::Value) -> Result<ValidatedRule> {
         let obj = value
             .as_object()
@@ -346,12 +346,11 @@ impl YamlRuleLoader {
         // For now, just search in the rules directory
         for entry in WalkDir::new(&self.rules_dir).into_iter().flatten() {
             let path = entry.path();
-            if self.is_rule_file(path) {
-                if let Ok(content) = std::fs::read_to_string(path) {
-                    if content.contains(&format!("id: {}", rule_id)) {
-                        return Some(path.to_path_buf());
-                    }
-                }
+            if self.is_rule_file(path)
+                && let Ok(content) = std::fs::read_to_string(path)
+                && content.contains(&format!("id: {rule_id}"))
+            {
+                return Some(path.to_path_buf());
             }
         }
         None

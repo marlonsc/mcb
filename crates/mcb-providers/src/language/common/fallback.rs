@@ -36,10 +36,9 @@ struct ChunkingContext<'a> {
 
 /// Generic fallback chunker using regex patterns
 pub struct GenericFallbackChunker<'a> {
-    #[allow(dead_code)] // Reserved for future config-based pattern selection
-    config: &'a LanguageConfig,
-    /// Precompiled regex patterns for block detection
+    /// Precompiled regex patterns for block detection (built from config in new())
     compiled_patterns: Vec<Regex>,
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> GenericFallbackChunker<'a> {
@@ -52,8 +51,8 @@ impl<'a> GenericFallbackChunker<'a> {
             .collect();
 
         Self {
-            config,
             compiled_patterns,
+            _marker: std::marker::PhantomData,
         }
     }
 

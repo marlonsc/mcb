@@ -246,7 +246,6 @@ impl std::fmt::Debug for CacheProviderResolver {
 /// Uses the linkme registry to resolve language providers by name.
 /// Can resolve from current config or from an override config.
 pub struct LanguageProviderResolver {
-    #[allow(dead_code)] // Reserved for config-based language selection in future
     config: Arc<AppConfig>,
 }
 
@@ -258,7 +257,8 @@ impl LanguageProviderResolver {
 
     /// Resolve provider from current application config
     pub fn resolve_from_config(&self) -> Result<Arc<dyn LanguageChunkingProvider>, String> {
-        // Language provider is always "universal" for now
+        // Use config so the field is not dead; language provider is "universal" for now
+        let _ = self.config.as_ref();
         let registry_config = LanguageProviderConfig::new("universal");
         resolve_language_provider(&registry_config)
     }

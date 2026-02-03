@@ -130,13 +130,9 @@ impl CursorUtils {
     }
 
     /// Get named children (excluding anonymous nodes like punctuation)
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "Child count is always small"
-    )]
     pub fn named_children(node: Node<'_>) -> Vec<Node<'_>> {
         (0..node.named_child_count())
-            .filter_map(|i| node.named_child(i as u32))
+            .filter_map(|i| u32::try_from(i).ok().and_then(|u| node.named_child(u)))
             .collect()
     }
 

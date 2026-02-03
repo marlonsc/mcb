@@ -6,7 +6,6 @@
 //! Note: rust-code-analysis parsing behavior may vary. Tests are designed
 //! to be resilient to parsing differences.
 
-#![allow(clippy::float_cmp)]
 #![allow(unexpected_cfgs)]
 
 #[cfg(test)]

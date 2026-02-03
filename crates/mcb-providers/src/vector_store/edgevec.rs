@@ -209,7 +209,6 @@ enum EdgeVecMessage {
 /// EdgeVec vector store provider implementation using Actor pattern
 pub struct EdgeVecVectorStoreProvider {
     sender: mpsc::Sender<EdgeVecMessage>,
-    #[allow(dead_code)] // Reserved for future collection-specific operations
     collection: String,
 }
 
@@ -623,22 +622,22 @@ impl EdgeVecActor {
                             }
                         });
 
-                        if let Some(ext_id) = external_id {
-                            if let Some(meta_val) = collection_metadata.get(&ext_id) {
-                                let meta = meta_val.as_object().cloned().unwrap_or_default();
-                                let start_line =
-                                    meta.opt_u64("start_line")
-                                        .or_else(|| meta.opt_u64("line_number"))
-                                        .unwrap_or(0) as u32;
-                                final_results.push(SearchResult {
-                                    id: ext_id,
-                                    file_path: meta.string_or("file_path", "unknown"),
-                                    start_line,
-                                    content: meta.string_or("content", ""),
-                                    score: res.distance as f64,
-                                    language: meta.string_or("language", "unknown"),
-                                });
-                            }
+                        if let Some(ext_id) = external_id
+                            && let Some(meta_val) = collection_metadata.get(&ext_id)
+                        {
+                            let meta = meta_val.as_object().cloned().unwrap_or_default();
+                            let start_line = meta
+                                .opt_u64("start_line")
+                                .or_else(|| meta.opt_u64("line_number"))
+                                .unwrap_or(0) as u32;
+                            final_results.push(SearchResult {
+                                id: ext_id,
+                                file_path: meta.string_or("file_path", "unknown"),
+                                start_line,
+                                content: meta.string_or("content", ""),
+                                score: res.distance as f64,
+                                language: meta.string_or("language", "unknown"),
+                            });
                         }
                     }
                 }
@@ -710,19 +709,19 @@ impl EdgeVecActor {
             let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
 
             for meta_val in collection_metadata.values() {
-                if let Some(meta) = meta_val.as_object() {
-                    if let Some(file_path) = meta.get("file_path").and_then(|v| v.as_str()) {
-                        let language = meta
-                            .get("language")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("unknown")
-                            .to_string();
+                if let Some(meta) = meta_val.as_object()
+                    && let Some(file_path) = meta.get("file_path").and_then(|v| v.as_str())
+                {
+                    let language = meta
+                        .get("language")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                        .to_string();
 
-                        let entry = file_map
-                            .entry(file_path.to_string())
-                            .or_insert((0, language));
-                        entry.0 += 1;
-                    }
+                    let entry = file_map
+                        .entry(file_path.to_string())
+                        .or_insert((0, language));
+                    entry.0 += 1;
                 }
             }
 
@@ -741,26 +740,25 @@ impl EdgeVecActor {
         let mut results = Vec::new();
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for (ext_id, meta_val) in collection_metadata.iter() {
-                if let Some(meta) = meta_val.as_object() {
-                    if meta
+                if let Some(meta) = meta_val.as_object()
+                    && meta
                         .get("file_path")
                         .and_then(|v| v.as_str())
                         .is_some_and(|p| p == file_path)
-                    {
-                        let start_line = meta
-                            .opt_u64("start_line")
-                            .or_else(|| meta.opt_u64("line_number"))
-                            .unwrap_or(0) as u32;
+                {
+                    let start_line = meta
+                        .opt_u64("start_line")
+                        .or_else(|| meta.opt_u64("line_number"))
+                        .unwrap_or(0) as u32;
 
-                        results.push(SearchResult {
-                            id: ext_id.clone(),
-                            file_path: file_path.to_string(),
-                            start_line,
-                            content: meta.string_or("content", ""),
-                            score: 1.0,
-                            language: meta.string_or("language", "unknown"),
-                        });
-                    }
+                    results.push(SearchResult {
+                        id: ext_id.clone(),
+                        file_path: file_path.to_string(),
+                        start_line,
+                        content: meta.string_or("content", ""),
+                        score: 1.0,
+                        language: meta.string_or("language", "unknown"),
+                    });
                 }
             }
         }

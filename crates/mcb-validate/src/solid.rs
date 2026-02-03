@@ -620,7 +620,7 @@ impl SolidValidator {
                         let trait_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Count methods in trait
-                        let method_count = self.count_trait_methods(&lines, line_num, &fn_pattern);
+                        let method_count = self.count_trait_methods(&lines, line_num, fn_pattern);
 
                         if method_count > self.max_trait_methods {
                             violations.push(SolidViolation::TraitTooLarge {
@@ -695,19 +695,17 @@ impl SolidValidator {
                                 }
 
                                 // Check for panic!/todo! in method body
-                                if let Some((ref method_name, method_line)) = current_method {
-                                    if panic_todo_pattern.is_match(impl_line) {
-                                        violations.push(
-                                            SolidViolation::PartialTraitImplementation {
-                                                file: entry.path().to_path_buf(),
-                                                line: method_line,
-                                                impl_name: format!("{}::{}", impl_name, trait_name),
-                                                method_name: method_name.clone(),
-                                                severity: Severity::Warning,
-                                            },
-                                        );
-                                        current_method = None; // Don't report same method twice
-                                    }
+                                if let Some((ref method_name, method_line)) = current_method
+                                    && panic_todo_pattern.is_match(impl_line)
+                                {
+                                    violations.push(SolidViolation::PartialTraitImplementation {
+                                        file: entry.path().to_path_buf(),
+                                        line: method_line,
+                                        impl_name: format!("{impl_name}::{trait_name}"),
+                                        method_name: method_name.clone(),
+                                        severity: Severity::Warning,
+                                    });
+                                    current_method = None; // Don't report same method twice
                                 }
 
                                 if brace_depth == 0 {
@@ -773,7 +771,7 @@ impl SolidValidator {
                         let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Count methods in impl block
-                        let method_count = self.count_impl_methods(&lines, line_num, &fn_pattern);
+                        let method_count = self.count_impl_methods(&lines, line_num, fn_pattern);
 
                         if method_count > self.max_impl_methods {
                             violations.push(SolidViolation::ImplTooManyMethods {
@@ -851,7 +849,7 @@ impl SolidValidator {
                     if string_match_pattern.is_match(line) {
                         // Count string arms in the match
                         let string_arm_count =
-                            self.count_string_match_arms(&lines, line_num, &string_arm_pattern);
+                            self.count_string_match_arms(&lines, line_num, string_arm_pattern);
 
                         if string_arm_count >= 3 {
                             violations.push(SolidViolation::StringBasedDispatch {

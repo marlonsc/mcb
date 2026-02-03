@@ -10,7 +10,6 @@ use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExe
 use mcb_validate::{ValidatedRule, YamlRuleLoader};
 use std::path::PathBuf;
 
-#[allow(dead_code)]
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()

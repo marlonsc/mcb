@@ -2,8 +2,6 @@
 //!
 //! Provides factory functions for creating test data and temporary directories.
 
-#![allow(dead_code)]
-
 use crate::test_utils::mock_services::{MockAgentRepository, MockMemoryRepository};
 use mcb_application::ValidationService;
 use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};

@@ -20,14 +20,14 @@ use walkdir::WalkDir;
 /// Quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum QualityViolation {
-    /// unwrap() found in production code
+    /// `unwrap()` found in production code
     UnwrapInProduction {
         file: PathBuf,
         line: usize,
         context: String,
         severity: Severity,
     },
-    /// expect() found in production code
+    /// `expect()` found in production code
     ExpectInProduction {
         file: PathBuf,
         line: usize,
@@ -55,8 +55,8 @@ pub enum QualityViolation {
         content: String,
         severity: Severity,
     },
-    /// Dead code annotation without justification
-    DeadCodeWithoutJustification {
+    /// #[`allow(dead_code)`] is not permitted; fix or remove dead code instead.
+    DeadCodeAllowNotPermitted {
         file: PathBuf,
         line: usize,
         item_name: String,
@@ -87,7 +87,7 @@ impl QualityViolation {
             Self::PanicInProduction { severity, .. } => *severity,
             Self::FileTooLarge { severity, .. } => *severity,
             Self::TodoComment { severity, .. } => *severity,
-            Self::DeadCodeWithoutJustification { severity, .. } => *severity,
+            Self::DeadCodeAllowNotPermitted { severity, .. } => *severity,
             Self::UnusedStructField { severity, .. } => *severity,
             Self::DeadFunctionUncalled { severity, .. } => *severity,
         }
@@ -161,7 +161,7 @@ impl std::fmt::Display for QualityViolation {
             } => {
                 write!(f, "Pending: {}:{} - {}", file.display(), line, content)
             }
-            Self::DeadCodeWithoutJustification {
+            Self::DeadCodeAllowNotPermitted {
                 file,
                 line,
                 item_name,
@@ -169,7 +169,7 @@ impl std::fmt::Display for QualityViolation {
             } => {
                 write!(
                     f,
-                    "Dead code without justification: {}:{} - '{}' has #[allow(dead_code)] without explanation",
+                    "{}:{} - {} (allow(dead_code) not permitted)",
                     file.display(),
                     line,
                     item_name
@@ -217,7 +217,7 @@ impl Violation for QualityViolation {
             Self::PanicInProduction { .. } => "QUAL003",
             Self::FileTooLarge { .. } => "QUAL004",
             Self::TodoComment { .. } => "QUAL005",
-            Self::DeadCodeWithoutJustification { .. } => "QUAL020",
+            Self::DeadCodeAllowNotPermitted { .. } => "QUAL020",
             Self::UnusedStructField { .. } => "QUAL021",
             Self::DeadFunctionUncalled { .. } => "QUAL022",
         }
@@ -234,7 +234,7 @@ impl Violation for QualityViolation {
             Self::PanicInProduction { severity, .. } => *severity,
             Self::FileTooLarge { severity, .. } => *severity,
             Self::TodoComment { severity, .. } => *severity,
-            Self::DeadCodeWithoutJustification { severity, .. } => *severity,
+            Self::DeadCodeAllowNotPermitted { severity, .. } => *severity,
             Self::UnusedStructField { severity, .. } => *severity,
             Self::DeadFunctionUncalled { severity, .. } => *severity,
         }
@@ -247,7 +247,7 @@ impl Violation for QualityViolation {
             Self::PanicInProduction { file, .. } => Some(file),
             Self::FileTooLarge { file, .. } => Some(file),
             Self::TodoComment { file, .. } => Some(file),
-            Self::DeadCodeWithoutJustification { file, .. } => Some(file),
+            Self::DeadCodeAllowNotPermitted { file, .. } => Some(file),
             Self::UnusedStructField { file, .. } => Some(file),
             Self::DeadFunctionUncalled { file, .. } => Some(file),
         }
@@ -260,7 +260,7 @@ impl Violation for QualityViolation {
             Self::PanicInProduction { line, .. } => Some(*line),
             Self::FileTooLarge { .. } => None,
             Self::TodoComment { line, .. } => Some(*line),
-            Self::DeadCodeWithoutJustification { line, .. } => Some(*line),
+            Self::DeadCodeAllowNotPermitted { line, .. } => Some(*line),
             Self::UnusedStructField { line, .. } => Some(*line),
             Self::DeadFunctionUncalled { line, .. } => Some(*line),
         }
@@ -278,14 +278,13 @@ impl Violation for QualityViolation {
                 Some("Return an error instead of panicking".to_string())
             }
             Self::FileTooLarge { max_allowed, .. } => Some(format!(
-                "Split file into smaller modules (max {} lines)",
-                max_allowed
+                "Split file into smaller modules (max {max_allowed} lines)"
             )),
             Self::TodoComment { .. } => {
                 Some("Address the pending comment or create an issue to track it".to_string())
             }
-            Self::DeadCodeWithoutJustification { .. } => {
-                Some("Add a comment explaining why this is marked dead (e.g., // Reserved for future admin API) or remove the annotation if actually used".to_string())
+            Self::DeadCodeAllowNotPermitted { .. } => {
+                Some("Remove #[allow(dead_code)] and fix or remove the dead code; justifications are not permitted".to_string())
             }
             Self::UnusedStructField { .. } => {
                 Some("Remove the unused field or document why it's kept (e.g., for serialization format versioning)".to_string())
@@ -306,7 +305,7 @@ pub struct QualityValidator {
 impl QualityValidator {
     /// Check if a line has an ignore hint for a specific violation type
     fn has_ignore_hint(&self, line: &str, violation_type: &str) -> bool {
-        line.contains(&format!("mcb-validate-ignore: {}", violation_type))
+        line.contains(&format!("mcb-validate-ignore: {violation_type}"))
     }
     /// Create a new quality validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
@@ -338,10 +337,11 @@ impl QualityValidator {
         Ok(violations)
     }
 
-    /// Validate that #[allow(dead_code)] annotations have justification comments
+    /// Report any #[`allow(dead_code)`] or #[allow(..., `dead_code`, ...)].
+    /// Justifications are not permitted; fix or remove dead code instead.
     pub fn validate_dead_code_annotations(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
-        let dead_code_pattern = Regex::new(r"#\[allow\(dead_code\)\]").unwrap();
+        let dead_code_pattern = Regex::new(r"#\[allow\([^\)]*dead_code[^\)]*\)\]").unwrap();
         let struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").unwrap();
         let fn_pattern = Regex::new(r"(?:pub\s+)?fn\s+(\w+)").unwrap();
         let field_pattern = Regex::new(r"(?:pub\s+)?(\w+):\s+").unwrap();
@@ -358,58 +358,27 @@ impl QualityValidator {
 
                 for (i, line) in lines.iter().enumerate() {
                     if dead_code_pattern.is_match(line) {
-                        // Check if there's a justification comment
-                        let has_justification = self.has_dead_code_justification(&lines, i);
-
-                        if !has_justification {
-                            // Find what item is being marked as dead
-                            if let Some(item_name) = self.find_dead_code_item(
+                        let item_name = self
+                            .find_dead_code_item(
                                 &lines,
                                 i,
                                 &struct_pattern,
                                 &fn_pattern,
                                 &field_pattern,
-                            ) {
-                                violations.push(QualityViolation::DeadCodeWithoutJustification {
-                                    file: entry.path().to_path_buf(),
-                                    line: i + 1,
-                                    item_name,
-                                    severity: Severity::Warning,
-                                });
-                            }
-                        }
+                            )
+                            .unwrap_or_else(|| "allow(dead_code)".to_string());
+                        violations.push(QualityViolation::DeadCodeAllowNotPermitted {
+                            file: entry.path().to_path_buf(),
+                            line: i + 1,
+                            item_name,
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
         }
 
         Ok(violations)
-    }
-
-    fn has_dead_code_justification(&self, lines: &[&str], line_idx: usize) -> bool {
-        // Check lines above and below for justification
-        let check_range_before = if line_idx >= 2 { line_idx - 2 } else { 0 };
-        let check_range_after = std::cmp::min(line_idx + 3, lines.len());
-
-        for i in check_range_before..check_range_after {
-            let line = lines[i].trim();
-            if line.contains("// ")
-                && (line.contains("Reserved for")
-                    || line.contains("Will be used")
-                    || line.contains("Future")
-                    || line.contains("Admin API")
-                    || line.contains("Versioning")
-                    || line.contains("Serialization")
-                    || line.contains("Format")
-                    || line.contains("Used by")
-                    || line.contains("Test fixture")
-                    || line.contains("serde"))
-            {
-                return true;
-            }
-        }
-
-        false
     }
 
     fn find_dead_code_item(
@@ -424,22 +393,22 @@ impl QualityValidator {
         for i in start_idx..std::cmp::min(start_idx + 5, lines.len()) {
             let line = lines[i];
 
-            if let Some(captures) = struct_pattern.captures(line) {
-                if let Some(name) = captures.get(1) {
-                    return Some(format!("struct {}", name.as_str()));
-                }
+            if let Some(captures) = struct_pattern.captures(line)
+                && let Some(name) = captures.get(1)
+            {
+                return Some(format!("struct {}", name.as_str()));
             }
 
-            if let Some(captures) = fn_pattern.captures(line) {
-                if let Some(name) = captures.get(1) {
-                    return Some(format!("fn {}", name.as_str()));
-                }
+            if let Some(captures) = fn_pattern.captures(line)
+                && let Some(name) = captures.get(1)
+            {
+                return Some(format!("fn {}", name.as_str()));
             }
 
-            if let Some(captures) = field_pattern.captures(line) {
-                if let Some(name) = captures.get(1) {
-                    return Some(format!("field {}", name.as_str()));
-                }
+            if let Some(captures) = field_pattern.captures(line)
+                && let Some(name) = captures.get(1)
+            {
+                return Some(format!("field {}", name.as_str()));
             }
         }
 
@@ -674,8 +643,7 @@ impl QualityValidator {
         const PENDING_XXX: &str = concat!("X", "X", "X");
         const PENDING_HACK: &str = concat!("H", "A", "C", "K");
         let todo_pattern = Regex::new(&format!(
-            r"(?i)({}|{}|{}|{}):?\s*(.*)",
-            PENDING_TODO, PENDING_FIXME, PENDING_XXX, PENDING_HACK
+            r"(?i)({PENDING_TODO}|{PENDING_FIXME}|{PENDING_XXX}|{PENDING_HACK}):?\s*(.*)"
         ))
         .unwrap();
 

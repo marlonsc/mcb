@@ -149,15 +149,15 @@ impl TokenFingerprinter {
         };
         self.fingerprint_map
             .entry(fingerprint)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(location);
 
         // Roll through remaining tokens
         for i in 1..=(tokens.len() - self.window_size) {
             hash = self.rolling_hash(
                 hash,
-                &token_strs[i - 1],
-                &token_strs[i + self.window_size - 1],
+                token_strs[i - 1],
+                token_strs[i + self.window_size - 1],
             );
 
             let fingerprint = Fingerprint::new(hash);
@@ -169,7 +169,7 @@ impl TokenFingerprinter {
             };
             self.fingerprint_map
                 .entry(fingerprint)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(location);
         }
     }

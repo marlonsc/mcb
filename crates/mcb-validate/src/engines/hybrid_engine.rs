@@ -252,11 +252,11 @@ impl HybridRuleEngine {
             match handle.await {
                 Ok((rule_id, Ok(result))) => results.push((rule_id, result)),
                 Ok((rule_id, Err(e))) => {
-                    eprintln!("Warning: Rule '{}' execution error: {}", rule_id, e);
+                    eprintln!("Warning: Rule '{rule_id}' execution error: {e}");
                     // Continue with other tasks
                 }
                 Err(e) => {
-                    eprintln!("Warning: Task join error: {}", e);
+                    eprintln!("Warning: Task join error: {e}");
                     // Continue with other tasks
                 }
             }
@@ -286,7 +286,7 @@ impl HybridRuleEngine {
         self.cache.clear();
     }
 
-    /// Execute linter-based validation for rules with lint_select
+    /// Execute linter-based validation for rules with `lint_select`
     ///
     /// This method runs Ruff and/or Clippy based on the lint codes specified
     /// in the rule's `lint_select` field and filters the results.
@@ -376,7 +376,7 @@ impl HybridRuleEngine {
         (ruff_codes, clippy_codes)
     }
 
-    /// Convert a LintViolation to a RuleViolation
+    /// Convert a `LintViolation` to a `RuleViolation`
     fn lint_to_rule_violation(
         lv: &LintViolation,
         rule_id: &str,
@@ -393,7 +393,7 @@ impl HybridRuleEngine {
             .with_context(format!("Linter: {} ({})", lv.rule, lv.category))
     }
 
-    /// Check if a rule uses lint_select (linter-based validation)
+    /// Check if a rule uses `lint_select` (linter-based validation)
     pub fn is_lint_rule(rule_definition: &serde_json::Value) -> bool {
         rule_definition
             .get("lint_select")

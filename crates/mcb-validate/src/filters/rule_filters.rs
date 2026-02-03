@@ -68,27 +68,26 @@ impl RuleFilterExecutor {
         }
 
         // Check language filter
-        if let Some(languages) = &filters.languages {
-            if !self
+        if let Some(languages) = &filters.languages
+            && !self
                 .language_detector
                 .matches_languages(file_path, file_content, languages)
-            {
-                return Ok(false);
-            }
+        {
+            return Ok(false);
         }
 
         // Check dependency filter
-        if let Some(required_deps) = &filters.dependencies {
-            if !self.check_dependencies(required_deps, file_path, workspace_deps) {
-                return Ok(false);
-            }
+        if let Some(required_deps) = &filters.dependencies
+            && !self.check_dependencies(required_deps, file_path, workspace_deps)
+        {
+            return Ok(false);
         }
 
         // Check file pattern filter
-        if let Some(patterns) = &filters.file_patterns {
-            if !self.file_matcher.matches_any(file_path, patterns) {
-                return Ok(false);
-            }
+        if let Some(patterns) = &filters.file_patterns
+            && !self.file_matcher.matches_any(file_path, patterns)
+        {
+            return Ok(false);
         }
 
         Ok(true)
@@ -119,7 +118,7 @@ impl RuleFilterExecutor {
     /// Create a file matcher for specific patterns
     pub fn create_file_matcher(&self, patterns: &[String]) -> crate::Result<FilePatternMatcher> {
         FilePatternMatcher::from_mixed_patterns(patterns)
-            .map_err(|e| crate::ValidationError::Config(format!("Invalid file pattern: {}", e)))
+            .map_err(|e| crate::ValidationError::Config(format!("Invalid file pattern: {e}")))
     }
 
     /// Get the language detector for direct use

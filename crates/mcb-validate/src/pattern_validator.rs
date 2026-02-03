@@ -32,14 +32,14 @@ pub enum PatternViolation {
         missing_bound: String,
         severity: Severity,
     },
-    /// Async trait missing #[async_trait] attribute
+    /// Async trait missing #[`async_trait`] attribute
     MissingAsyncTrait {
         file: PathBuf,
         line: usize,
         trait_name: String,
         severity: Severity,
     },
-    /// Using std::result::Result instead of crate::error::Result
+    /// Using `std::result::Result` instead of `crate::error::Result`
     RawResultType {
         file: PathBuf,
         line: usize,
@@ -204,12 +204,12 @@ impl Violation for PatternViolation {
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::ConcreteTypeInDi { suggestion, .. } => Some(format!("Use {}", suggestion)),
+            Self::ConcreteTypeInDi { suggestion, .. } => Some(format!("Use {suggestion}")),
             Self::MissingSendSync { missing_bound, .. } => {
-                Some(format!("Add {} bounds to trait", missing_bound))
+                Some(format!("Add {missing_bound} bounds to trait"))
             }
             Self::MissingAsyncTrait { .. } => Some("Add #[async_trait] attribute".to_string()),
-            Self::RawResultType { suggestion, .. } => Some(format!("Use {}", suggestion)),
+            Self::RawResultType { suggestion, .. } => Some(format!("Use {suggestion}")),
             Self::MissingInterfaceBound { .. } => {
                 Some("Add : Interface bound for Shaku DI".to_string())
             }
@@ -314,13 +314,13 @@ impl PatternValidator {
                         }
 
                         // Skip if already using dyn (handled by different pattern)
-                        if line.contains(&format!("Arc<dyn {}", type_name)) {
+                        if line.contains(&format!("Arc<dyn {type_name}")) {
                             continue;
                         }
 
                         // Skip decorator pattern: Arc<Type<T>> (generic wrapper types)
                         // e.g., Arc<EncryptedProvider<P>> where P is a generic
-                        if line.contains(&format!("Arc<{}<", type_name)) {
+                        if line.contains(&format!("Arc<{type_name}<")) {
                             continue;
                         }
 
@@ -352,8 +352,8 @@ impl PatternValidator {
                             violations.push(PatternViolation::ConcreteTypeInDi {
                                 file: entry.path().to_path_buf(),
                                 line: line_num + 1,
-                                concrete_type: format!("Arc<{}>", type_name),
-                                suggestion: format!("Arc<dyn {}>", trait_name),
+                                concrete_type: format!("Arc<{type_name}>"),
+                                suggestion: format!("Arc<dyn {trait_name}>"),
                                 severity: Severity::Warning,
                             });
                         }
@@ -365,7 +365,7 @@ impl PatternValidator {
         Ok(violations)
     }
 
-    /// Check async traits have #[async_trait] and Send + Sync bounds
+    /// Check async traits have #[`async_trait`] and Send + Sync bounds
     pub fn validate_async_traits(&self) -> Result<Vec<PatternViolation>> {
         let mut violations = Vec::new();
 
@@ -590,10 +590,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -605,7 +604,7 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Arc;
 
 pub struct MyServiceImpl;
@@ -613,7 +612,7 @@ pub struct MyServiceImpl;
 pub struct Container {
     service: Arc<MyServiceImpl>,
 }
-"#,
+",
         );
 
         let validator = PatternValidator::new(temp.path());
@@ -639,7 +638,7 @@ pub struct Container {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Arc;
 
 pub trait MyService: Send + Sync {}
@@ -647,7 +646,7 @@ pub trait MyService: Send + Sync {}
 pub struct Container {
     service: Arc<dyn MyService>,
 }
-"#,
+",
         );
 
         let validator = PatternValidator::new(temp.path());
@@ -655,8 +654,7 @@ pub struct Container {
 
         assert!(
             violations.is_empty(),
-            "Arc<dyn Trait> should be allowed: {:?}",
-            violations
+            "Arc<dyn Trait> should be allowed: {violations:?}"
         );
     }
 
@@ -666,11 +664,11 @@ pub struct Container {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn bad_function() -> std::result::Result<i32, String> {
     Ok(42)
 }
-"#,
+",
         );
 
         let validator = PatternValidator::new(temp.path());

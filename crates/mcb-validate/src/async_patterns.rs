@@ -1,9 +1,9 @@
 //! Async Pattern Validation
 //!
 //! Detects async-specific anti-patterns based on Tokio documentation:
-//! - Blocking in async (std::thread::sleep, std::sync::Mutex in async)
-//! - block_on() in async context
-//! - Spawn patterns (missing JoinHandle handling)
+//! - Blocking in async (`std::thread::sleep`, `std::sync::Mutex` in async)
+//! - `block_on()` in async context
+//! - Spawn patterns (missing `JoinHandle` handling)
 //! - Wrong mutex types in async code
 
 use crate::pattern_registry::PATTERNS;
@@ -25,14 +25,14 @@ pub enum AsyncViolation {
         suggestion: String,
         severity: Severity,
     },
-    /// block_on() used in async context
+    /// `block_on()` used in async context
     BlockOnInAsync {
         file: PathBuf,
         line: usize,
         context: String,
         severity: Severity,
     },
-    /// std::sync::Mutex used in async code (should use tokio::sync::Mutex)
+    /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
     WrongMutexType {
         file: PathBuf,
         line: usize,
@@ -40,7 +40,7 @@ pub enum AsyncViolation {
         suggestion: String,
         severity: Severity,
     },
-    /// Spawn without awaiting JoinHandle
+    /// Spawn without awaiting `JoinHandle`
     UnawaitedSpawn {
         file: PathBuf,
         line: usize,
@@ -333,7 +333,7 @@ impl AsyncPatternValidator {
         Ok(violations)
     }
 
-    /// Detect block_on() usage in async context
+    /// Detect `block_on()` usage in async context
     pub fn validate_block_on_usage(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
@@ -420,7 +420,7 @@ impl AsyncPatternValidator {
         Ok(violations)
     }
 
-    /// Detect std::sync::Mutex usage in files with async code
+    /// Detect `std::sync::Mutex` usage in files with async code
     pub fn validate_mutex_types(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
@@ -648,10 +648,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -663,11 +662,11 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 async fn bad_function() {
     std::thread::sleep(std::time::Duration::from_secs(1));
 }
-"#,
+",
         );
 
         let validator = AsyncPatternValidator::new(temp.path());
@@ -682,14 +681,14 @@ async fn bad_function() {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Mutex;
 
 async fn use_mutex() {
     let m = Mutex::new(0);
     let guard = m.lock().await;
 }
-"#,
+",
         );
 
         let validator = AsyncPatternValidator::new(temp.path());
@@ -707,14 +706,14 @@ async fn use_mutex() {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Mutex;
 
 fn sync_function() {
     let m = Mutex::new(0);
     let guard = m.lock().unwrap();
 }
-"#,
+",
         );
 
         let validator = AsyncPatternValidator::new(temp.path());
@@ -722,8 +721,7 @@ fn sync_function() {
 
         assert!(
             violations.is_empty(),
-            "Files without async code should be exempt: {:?}",
-            violations
+            "Files without async code should be exempt: {violations:?}"
         );
     }
 
@@ -733,7 +731,7 @@ fn sync_function() {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub async fn good_code() {}
 
 #[cfg(test)]
@@ -742,7 +740,7 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 }
-"#,
+",
         );
 
         let validator = AsyncPatternValidator::new(temp.path());
@@ -750,8 +748,7 @@ mod tests {
 
         assert!(
             violations.is_empty(),
-            "Test modules should be exempt: {:?}",
-            violations
+            "Test modules should be exempt: {violations:?}"
         );
     }
 }

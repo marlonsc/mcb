@@ -5,7 +5,6 @@
 //!
 //! Phase 2 of v0.1.2: These tests verify that errors return `is_error: Some(true)`
 //! and contain proper troubleshooting information.
-#![allow(clippy::collapsible_if)]
 
 use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;

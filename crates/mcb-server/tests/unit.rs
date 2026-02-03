@@ -26,3 +26,6 @@ mod mcp_protocol_tests;
 
 #[path = "unit/collection_mapping_tests.rs"]
 mod collection_mapping_tests;
+
+#[path = "unit/fixtures_smoke.rs"]
+mod fixtures_smoke;

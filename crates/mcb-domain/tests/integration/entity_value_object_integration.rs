@@ -139,8 +139,7 @@ fn test_embedding_vector_properties() {
 #[test]
 fn test_search_result_ranking() {
     // Test integration of search results with different relevance scores
-    #[allow(clippy::useless_vec)]
-    let results = vec![
+    let results = [
         SearchResult {
             id: "exact-match".to_string(),
             file_path: "src/perfect.rs".to_string(),

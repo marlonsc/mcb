@@ -1,5 +1,5 @@
-//! Mock implementations of domain service interfaces for testing
-#![allow(dead_code, unused_mut)]
+//! Mock implementations of domain service interfaces for testing.
+//! Some methods are only used by specific tests; avoid #[allow(dead_code)].
 
 use async_trait::async_trait;
 use mcb_application::domain_services::search::{
@@ -1101,5 +1101,51 @@ impl VcsProvider for MockVcsProvider {
             total_additions: 5,
             total_deletions: 2,
         })
+    }
+}
+
+#[cfg(test)]
+mod constructibility {
+    use super::*;
+
+    #[test]
+    fn all_mocks_constructible() {
+        let _ = MockSearchService::new()
+            .with_results(vec![])
+            .with_failure("ok");
+        let _ = MockIndexingService::new()
+            .with_result(IndexingResult {
+                files_processed: 0,
+                chunks_created: 0,
+                files_skipped: 0,
+                errors: vec![],
+                operation_id: None,
+                status: "ok".to_string(),
+            })
+            .with_status(IndexingStatus {
+                is_indexing: false,
+                progress: 0.0,
+                current_file: None,
+                total_files: 0,
+                processed_files: 0,
+            });
+        let _ = MockContextService::new()
+            .with_search_results(vec![])
+            .with_dimensions(128)
+            .with_failure("ok");
+        let _ = MockValidationService::new()
+            .with_report(ValidationReport {
+                total_violations: 0,
+                errors: 0,
+                warnings: 0,
+                infos: 0,
+                violations: vec![],
+                passed: true,
+            })
+            .with_validators(vec![])
+            .with_failure("ok");
+        let _ = MockValidationService::with_violations(vec![]);
+        let _ = MockMemoryService::new();
+        let _ = MockVcsProvider::new().with_failure();
     }
 }

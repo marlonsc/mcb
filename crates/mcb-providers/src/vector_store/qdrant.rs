@@ -283,10 +283,10 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             "with_payload": true
         });
 
-        if let Some(filter_str) = filter {
-            if let Ok(filter_val) = serde_json::from_str::<Value>(filter_str) {
-                payload["filter"] = filter_val;
-            }
+        if let Some(filter_str) = filter
+            && let Ok(filter_val) = serde_json::from_str::<Value>(filter_str)
+        {
+            payload["filter"] = filter_val;
         }
 
         let response = self

@@ -49,7 +49,6 @@ struct McpServices {
     context: Arc<dyn ContextServiceInterface>,
     search: Arc<dyn SearchServiceInterface>,
     memory: Arc<dyn MemoryServiceInterface>,
-    #[allow(dead_code)] // Reserved for future branch/compare tool wiring
     vcs: Arc<dyn VcsProvider>,
 }
 
@@ -118,6 +117,11 @@ impl McpServer {
     /// Access to context service
     pub fn context_service(&self) -> Arc<dyn ContextServiceInterface> {
         Arc::clone(&self.services.context)
+    }
+
+    /// Access to VCS provider (for branch/repo handlers)
+    pub fn vcs_provider(&self) -> Arc<dyn VcsProvider> {
+        Arc::clone(&self.services.vcs)
     }
 
     /// Access to search service

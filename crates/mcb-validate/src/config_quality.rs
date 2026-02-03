@@ -278,18 +278,18 @@ impl ConfigQualityValidator {
         violations: &mut Vec<ConfigQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if let Some(captures) = namespace_pattern.captures(line) {
-                if let Some(namespace) = captures.get(1) {
-                    let namespace_str = namespace.as_str();
-                    // Skip if it's already using a constant or documented default
-                    if !self.is_documented_or_constant(lines, i) {
-                        violations.push(ConfigQualityViolation::HardcodedNamespace {
-                            file: file.to_path_buf(),
-                            line: i + 1,
-                            namespace: namespace_str.to_string(),
-                            severity: Severity::Warning,
-                        });
-                    }
+            if let Some(captures) = namespace_pattern.captures(line)
+                && let Some(namespace) = captures.get(1)
+            {
+                let namespace_str = namespace.as_str();
+                // Skip if it's already using a constant or documented default
+                if !self.is_documented_or_constant(lines, i) {
+                    violations.push(ConfigQualityViolation::HardcodedNamespace {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        namespace: namespace_str.to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
             }
         }
@@ -303,19 +303,19 @@ impl ConfigQualityValidator {
         violations: &mut Vec<ConfigQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if let Some(captures) = client_name_pattern.captures(line) {
-                if let Some(client_name) = captures.get(1) {
-                    let client_name_str = client_name.as_str();
-                    // This is actually acceptable as a default - skip if properly documented
-                    if !self.is_documented_or_constant(lines, i) {
-                        violations.push(ConfigQualityViolation::HardcodedConfigString {
-                            file: file.to_path_buf(),
-                            line: i + 1,
-                            string_value: client_name_str.to_string(),
-                            context: "client_name".to_string(),
-                            severity: Severity::Info,
-                        });
-                    }
+            if let Some(captures) = client_name_pattern.captures(line)
+                && let Some(client_name) = captures.get(1)
+            {
+                let client_name_str = client_name.as_str();
+                // This is actually acceptable as a default - skip if properly documented
+                if !self.is_documented_or_constant(lines, i) {
+                    violations.push(ConfigQualityViolation::HardcodedConfigString {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        string_value: client_name_str.to_string(),
+                        context: "client_name".to_string(),
+                        severity: Severity::Info,
+                    });
                 }
             }
         }
@@ -329,21 +329,22 @@ impl ConfigQualityValidator {
         violations: &mut Vec<ConfigQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if let Some(captures) = header_pattern.captures(line) {
-                if let Some(header) = captures.get(1) {
-                    let header_str = header.as_str();
-                    // Skip if it's a well-known constant like API_KEY_HEADER
-                    if header_str.starts_with("X-") && !line.contains("API_KEY_HEADER") {
-                        if !self.is_documented_or_constant(lines, i) {
-                            violations.push(ConfigQualityViolation::HardcodedConfigString {
-                                file: file.to_path_buf(),
-                                line: i + 1,
-                                string_value: header_str.to_string(),
-                                context: "HTTP header".to_string(),
-                                severity: Severity::Warning,
-                            });
-                        }
-                    }
+            if let Some(captures) = header_pattern.captures(line)
+                && let Some(header) = captures.get(1)
+            {
+                let header_str = header.as_str();
+                // Skip if it's a well-known constant like API_KEY_HEADER
+                if header_str.starts_with("X-")
+                    && !line.contains("API_KEY_HEADER")
+                    && !self.is_documented_or_constant(lines, i)
+                {
+                    violations.push(ConfigQualityViolation::HardcodedConfigString {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        string_value: header_str.to_string(),
+                        context: "HTTP header".to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
             }
         }
@@ -357,22 +358,22 @@ impl ConfigQualityValidator {
         violations: &mut Vec<ConfigQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if let Some(captures) = default_impl_pattern.captures(line) {
-                if let Some(struct_name) = captures.get(1) {
-                    // Check if there's a doc comment above
-                    let has_doc_comment = i > 0 && {
-                        lines[i - 1].trim().starts_with("///")
-                            || (i > 1 && lines[i - 2].trim().starts_with("///"))
-                    };
+            if let Some(captures) = default_impl_pattern.captures(line)
+                && let Some(struct_name) = captures.get(1)
+            {
+                // Check if there's a doc comment above
+                let has_doc_comment = i > 0 && {
+                    lines[i - 1].trim().starts_with("///")
+                        || (i > 1 && lines[i - 2].trim().starts_with("///"))
+                };
 
-                    if !has_doc_comment {
-                        violations.push(ConfigQualityViolation::UndocumentedDefault {
-                            file: file.to_path_buf(),
-                            line: i + 1,
-                            struct_name: struct_name.as_str().to_string(),
-                            severity: Severity::Info,
-                        });
-                    }
+                if !has_doc_comment {
+                    violations.push(ConfigQualityViolation::UndocumentedDefault {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        struct_name: struct_name.as_str().to_string(),
+                        severity: Severity::Info,
+                    });
                 }
             }
         }

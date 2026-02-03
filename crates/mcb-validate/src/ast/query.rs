@@ -228,7 +228,7 @@ impl AstQueryPatterns {
             .build()
     }
 
-    /// Query for unwrap() usage in non-test code
+    /// Query for `unwrap()` usage in non-test code
     pub fn unwrap_usage(language: &str) -> AstQuery {
         let node_type = match language {
             "rust" => "call_expression",

@@ -2,7 +2,6 @@
 //!
 //! Loads regex patterns from YAML rules and provides centralized access.
 
-use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -29,11 +28,11 @@ impl PatternRegistry {
 
         for entry in WalkDir::new(rules_dir)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
             .filter(|e| {
                 e.path()
                     .extension()
-                    .map_or(false, |ext| ext == "yml" || ext == "yaml")
+                    .is_some_and(|ext| ext == "yml" || ext == "yaml")
             })
         {
             if let Err(e) = registry.load_rule_file(entry.path()) {
@@ -60,7 +59,7 @@ impl PatternRegistry {
         if let Some(patterns) = yaml.get("patterns").and_then(|v| v.as_mapping()) {
             for (name, pattern) in patterns {
                 if let (Some(name_str), Some(pattern_str)) = (name.as_str(), pattern.as_str()) {
-                    let pattern_id = format!("{}.{}", rule_id, name_str);
+                    let pattern_id = format!("{rule_id}.{name_str}");
                     self.register_pattern(&pattern_id, pattern_str)?;
                 }
             }
@@ -70,7 +69,7 @@ impl PatternRegistry {
         if let Some(selectors) = yaml.get("selectors").and_then(|v| v.as_sequence()) {
             for (i, selector) in selectors.iter().enumerate() {
                 if let Some(pattern) = selector.get("regex").and_then(|v| v.as_str()) {
-                    let pattern_id = format!("{}.selector_{}", rule_id, i);
+                    let pattern_id = format!("{rule_id}.selector_{i}");
                     self.register_pattern(&pattern_id, pattern)?;
                 }
             }
@@ -82,7 +81,7 @@ impl PatternRegistry {
     /// Register a pattern with the given ID
     pub fn register_pattern(&mut self, id: &str, pattern: &str) -> Result<()> {
         let regex = Regex::new(pattern).map_err(|e| {
-            crate::ValidationError::Config(format!("Invalid regex pattern '{}': {}", id, e))
+            crate::ValidationError::Config(format!("Invalid regex pattern '{id}': {e}"))
         })?;
         self.patterns.insert(id.to_string(), regex);
         Ok(())
@@ -167,10 +166,10 @@ pub fn default_rules_dir() -> PathBuf {
 }
 
 /// Global pattern registry, lazy-loaded from YAML rules
-pub static PATTERNS: Lazy<PatternRegistry> = Lazy::new(|| {
+pub static PATTERNS: std::sync::LazyLock<PatternRegistry> = std::sync::LazyLock::new(|| {
     let rules_dir = default_rules_dir();
     PatternRegistry::load_from_rules(&rules_dir).unwrap_or_else(|e| {
-        eprintln!("Error: Failed to load pattern registry: {}", e);
+        eprintln!("Error: Failed to load pattern registry: {e}");
         PatternRegistry::new()
     })
 });

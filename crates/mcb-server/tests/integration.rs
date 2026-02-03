@@ -13,8 +13,8 @@ mod tools;
 mod helpers;
 
 pub use helpers::{
-    check_service_available, is_milvus_available, is_ollama_available, is_postgres_available,
-    is_redis_available,
+    check_service_available, is_ci, is_milvus_available, is_ollama_available,
+    is_postgres_available, is_redis_available,
 };
 
 // Golden acceptance tests

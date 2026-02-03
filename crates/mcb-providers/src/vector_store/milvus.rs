@@ -98,10 +98,10 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
         result.insert("collection".to_string(), serde_json::json!(collection));
         result.insert("status".to_string(), serde_json::json!("active"));
 
-        if let Some(count_str) = stats.get("row_count") {
-            if let Ok(count) = count_str.parse::<i64>() {
-                result.insert("vectors_count".to_string(), serde_json::json!(count));
-            }
+        if let Some(count_str) = stats.get("row_count")
+            && let Ok(count) = count_str.parse::<i64>()
+        {
+            result.insert("vectors_count".to_string(), serde_json::json!(count));
         }
 
         result.insert("provider".to_string(), serde_json::json!("milvus"));

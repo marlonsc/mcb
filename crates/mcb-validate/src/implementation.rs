@@ -1,7 +1,7 @@
 //! Implementation Quality Validation
 //!
 //! Detects false, incomplete, or low-quality implementations:
-//! - Empty method bodies (return Ok(()), None, Vec::new())
+//! - Empty method bodies (return Ok(()), None, `Vec::new()`)
 //! - Hardcoded return values (return true, return 0)
 //! - Pass-through wrappers without transformation
 //! - Log-only methods (no actual logic)
@@ -232,24 +232,20 @@ impl Violation for ImplementationViolation {
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::EmptyMethodBody { pattern, .. } => Some(format!(
-                "Replace trivial return '{}' with actual implementation logic",
-                pattern
+                "Replace trivial return '{pattern}' with actual implementation logic"
             )),
             Self::HardcodedReturnValue { return_value, .. } => Some(format!(
-                "Replace hardcoded '{}' with computed value based on actual logic",
-                return_value
+                "Replace hardcoded '{return_value}' with computed value based on actual logic"
             )),
             Self::PassThroughWrapper { delegated_to, .. } => Some(format!(
-                "Add value to this wrapper or consider removing it if '{}' delegation is sufficient",
-                delegated_to
+                "Add value to this wrapper or consider removing it if '{delegated_to}' delegation is sufficient"
             )),
             Self::LogOnlyMethod { .. } => Some(
                 "Add actual business logic; logging alone does not constitute implementation"
                     .to_string(),
             ),
             Self::StubMacro { macro_type, .. } => Some(format!(
-                "Replace {}!() with actual implementation",
-                macro_type
+                "Replace {macro_type}!() with actual implementation"
             )),
             Self::EmptyCatchAll { .. } => {
                 Some("Handle the catch-all case explicitly or log unhandled variants".to_string())
@@ -355,13 +351,13 @@ impl ImplementationQualityValidator {
                     }
 
                     // Track function names
-                    if let Some(ref re) = fn_pattern {
-                        if let Some(cap) = re.captures(trimmed) {
-                            current_fn_name = cap
-                                .get(1)
-                                .map(|m| m.as_str().to_string())
-                                .unwrap_or_default();
-                        }
+                    if let Some(re) = fn_pattern
+                        && let Some(cap) = re.captures(trimmed)
+                    {
+                        current_fn_name = cap
+                            .get(1)
+                            .map(|m| m.as_str().to_string())
+                            .unwrap_or_default();
                     }
 
                     // Check for empty patterns
@@ -455,91 +451,91 @@ impl ImplementationQualityValidator {
                     }
 
                     // Find function definitions
-                    if let Some(ref re) = fn_pattern {
-                        if let Some(cap) = re.captures(trimmed) {
-                            let fn_name = cap
-                                .get(1)
-                                .map(|m| m.as_str().to_string())
-                                .unwrap_or_default();
-                            let fn_start = i;
+                    if let Some(re) = fn_pattern
+                        && let Some(cap) = re.captures(trimmed)
+                    {
+                        let fn_name = cap
+                            .get(1)
+                            .map(|m| m.as_str().to_string())
+                            .unwrap_or_default();
+                        let fn_start = i;
 
-                            // Find function body extent
-                            let mut brace_depth = 0;
-                            let mut fn_end = i;
-                            let mut fn_started = false;
+                        // Find function body extent
+                        let mut brace_depth = 0;
+                        let mut fn_end = i;
+                        let mut fn_started = false;
 
-                            for j in i..lines.len() {
-                                let line = lines[j];
-                                let opens = line.chars().filter(|c| *c == '{').count() as i32;
-                                let closes = line.chars().filter(|c| *c == '}').count() as i32;
+                        for j in i..lines.len() {
+                            let line = lines[j];
+                            let opens = line.chars().filter(|c| *c == '{').count() as i32;
+                            let closes = line.chars().filter(|c| *c == '}').count() as i32;
 
-                                if opens > 0 {
-                                    fn_started = true;
-                                }
-                                brace_depth += opens - closes;
-
-                                if fn_started && brace_depth <= 0 {
-                                    fn_end = j;
-                                    break;
-                                }
+                            if opens > 0 {
+                                fn_started = true;
                             }
+                            brace_depth += opens - closes;
 
-                            // Collect function body
-                            let fn_body: Vec<&str> = lines[fn_start..=fn_end]
-                                .iter()
-                                .map(|l| l.trim())
-                                .filter(|l| !l.is_empty() && !l.starts_with("//"))
-                                .collect();
-
-                            // Check if function has control flow (if/match/for/while/loop/let...else)
-                            // If it does, returns are conditional, not "always hardcoded"
-                            let has_control_flow = fn_body.iter().any(|line| {
-                                line.contains(" if ")
-                                    || line.starts_with("if ")
-                                    || line.contains("} else")
-                                    || line.starts_with("match ")
-                                    || line.contains(" match ")
-                                    || line.starts_with("for ")
-                                    || line.starts_with("while ")
-                                    || line.starts_with("loop ")
-                                    || line.contains(" else {")
-                                    || line.contains("else {")
-                            });
-
-                            // Only check for hardcoded returns if NO control flow
-                            if !has_control_flow {
-                                for (line_idx, line) in fn_body.iter().enumerate() {
-                                    // Skip function signature and braces
-                                    if line.starts_with("fn ")
-                                        || line.starts_with("pub fn ")
-                                        || line.starts_with("async fn ")
-                                        || line.starts_with("pub async fn ")
-                                        || *line == "{"
-                                        || *line == "}"
-                                    {
-                                        continue;
-                                    }
-
-                                    for (pattern, desc) in &compiled_patterns {
-                                        if pattern.is_match(line) {
-                                            let actual_line = fn_start + line_idx + 1;
-                                            violations.push(
-                                                ImplementationViolation::HardcodedReturnValue {
-                                                    file: entry.path().to_path_buf(),
-                                                    line: actual_line,
-                                                    method_name: fn_name.clone(),
-                                                    return_value: desc.to_string(),
-                                                    severity: Severity::Warning,
-                                                },
-                                            );
-                                        }
-                                    }
-                                }
+                            if fn_started && brace_depth <= 0 {
+                                fn_end = j;
+                                break;
                             }
-
-                            // Skip to end of function
-                            i = fn_end;
                         }
+
+                        // Collect function body
+                        let fn_body: Vec<&str> = lines[fn_start..=fn_end]
+                            .iter()
+                            .map(|l| l.trim())
+                            .filter(|l| !l.is_empty() && !l.starts_with("//"))
+                            .collect();
+
+                        // Check if function has control flow (if/match/for/while/loop/let...else)
+                        // If it does, returns are conditional, not "always hardcoded"
+                        let has_control_flow = fn_body.iter().any(|line| {
+                            line.contains(" if ")
+                                || line.starts_with("if ")
+                                || line.contains("} else")
+                                || line.starts_with("match ")
+                                || line.contains(" match ")
+                                || line.starts_with("for ")
+                                || line.starts_with("while ")
+                                || line.starts_with("loop ")
+                                || line.contains(" else {")
+                                || line.contains("else {")
+                        });
+
+                        // Only check for hardcoded returns if NO control flow
+                        if !has_control_flow {
+                            for (line_idx, line) in fn_body.iter().enumerate() {
+                                // Skip function signature and braces
+                                if line.starts_with("fn ")
+                                    || line.starts_with("pub fn ")
+                                    || line.starts_with("async fn ")
+                                    || line.starts_with("pub async fn ")
+                                    || *line == "{"
+                                    || *line == "}"
+                                {
+                                    continue;
+                                }
+
+                                for (pattern, desc) in &compiled_patterns {
+                                    if pattern.is_match(line) {
+                                        let actual_line = fn_start + line_idx + 1;
+                                        violations.push(
+                                            ImplementationViolation::HardcodedReturnValue {
+                                                file: entry.path().to_path_buf(),
+                                                line: actual_line,
+                                                method_name: fn_name.clone(),
+                                                return_value: desc.to_string(),
+                                                severity: Severity::Warning,
+                                            },
+                                        );
+                                    }
+                                }
+                            }
+                        }
+
+                        // Skip to end of function
+                        i = fn_end;
                     }
 
                     i += 1;
@@ -603,13 +599,13 @@ impl ImplementationQualityValidator {
                     }
 
                     // Track function names
-                    if let Some(ref re) = fn_pattern {
-                        if let Some(cap) = re.captures(trimmed) {
-                            current_fn_name = cap
-                                .get(1)
-                                .map(|m| m.as_str().to_string())
-                                .unwrap_or_default();
-                        }
+                    if let Some(re) = fn_pattern
+                        && let Some(cap) = re.captures(trimmed)
+                    {
+                        current_fn_name = cap
+                            .get(1)
+                            .map(|m| m.as_str().to_string())
+                            .unwrap_or_default();
                     }
 
                     // Check for stub macros
@@ -758,27 +754,27 @@ impl ImplementationQualityValidator {
                     }
 
                     // Track impl blocks
-                    if let Some(re) = impl_pattern {
-                        if let Some(cap) = re.captures(trimmed) {
-                            current_struct_name = cap
-                                .get(1)
-                                .map(|m| m.as_str().to_string())
-                                .unwrap_or_default();
-                        }
+                    if let Some(re) = impl_pattern
+                        && let Some(cap) = re.captures(trimmed)
+                    {
+                        current_struct_name = cap
+                            .get(1)
+                            .map(|m| m.as_str().to_string())
+                            .unwrap_or_default();
                     }
 
                     // Track function definitions
-                    if let Some(ref re) = fn_pattern {
-                        if let Some(cap) = re.captures(trimmed) {
-                            current_fn_name = cap
-                                .get(1)
-                                .map(|m| m.as_str().to_string())
-                                .unwrap_or_default();
-                            fn_start_line = line_num + 1;
-                            fn_body_lines.clear();
-                            in_fn = true;
-                            brace_depth = 0;
-                        }
+                    if let Some(re) = fn_pattern
+                        && let Some(cap) = re.captures(trimmed)
+                    {
+                        current_fn_name = cap
+                            .get(1)
+                            .map(|m| m.as_str().to_string())
+                            .unwrap_or_default();
+                        fn_start_line = line_num + 1;
+                        fn_body_lines.clear();
+                        in_fn = true;
+                        brace_depth = 0;
                     }
 
                     if in_fn {
@@ -807,31 +803,24 @@ impl ImplementationQualityValidator {
                                 })
                                 .collect();
 
-                            if meaningful_lines.len() == 1 {
-                                if let Some(re) = passthrough_pattern {
-                                    if let Some(cap) = re.captures(meaningful_lines[0]) {
-                                        let field = cap.get(1).map_or("", |m| m.as_str());
-                                        let method = cap.get(2).map_or("", |m| m.as_str());
+                            if meaningful_lines.len() == 1
+                                && let Some(re) = passthrough_pattern
+                                && let Some(cap) = re.captures(meaningful_lines[0])
+                            {
+                                let field = cap.get(1).map_or("", |m| m.as_str());
+                                let method = cap.get(2).map_or("", |m| m.as_str());
 
-                                        // Only flag if method names match (pure delegation)
-                                        if method == current_fn_name
-                                            || method.starts_with(&current_fn_name)
-                                        {
-                                            violations.push(
-                                                ImplementationViolation::PassThroughWrapper {
-                                                    file: entry.path().to_path_buf(),
-                                                    line: fn_start_line,
-                                                    struct_name: current_struct_name.clone(),
-                                                    method_name: current_fn_name.clone(),
-                                                    delegated_to: format!(
-                                                        "self.{}.{}()",
-                                                        field, method
-                                                    ),
-                                                    severity: Severity::Info,
-                                                },
-                                            );
-                                        }
-                                    }
+                                // Only flag if method names match (pure delegation)
+                                if method == current_fn_name || method.starts_with(&current_fn_name)
+                                {
+                                    violations.push(ImplementationViolation::PassThroughWrapper {
+                                        file: entry.path().to_path_buf(),
+                                        line: fn_start_line,
+                                        struct_name: current_struct_name.clone(),
+                                        method_name: current_fn_name.clone(),
+                                        delegated_to: format!("self.{field}.{method}()"),
+                                        severity: Severity::Info,
+                                    });
                                 }
                             }
 
@@ -902,17 +891,17 @@ impl ImplementationQualityValidator {
                     }
 
                     // Track function definitions
-                    if let Some(ref re) = fn_pattern {
-                        if let Some(cap) = re.captures(trimmed) {
-                            current_fn_name = cap
-                                .get(1)
-                                .map(|m| m.as_str().to_string())
-                                .unwrap_or_default();
-                            fn_start_line = line_num + 1;
-                            fn_body_lines.clear();
-                            in_fn = true;
-                            brace_depth = 0;
-                        }
+                    if let Some(re) = fn_pattern
+                        && let Some(cap) = re.captures(trimmed)
+                    {
+                        current_fn_name = cap
+                            .get(1)
+                            .map(|m| m.as_str().to_string())
+                            .unwrap_or_default();
+                        fn_start_line = line_num + 1;
+                        fn_body_lines.clear();
+                        in_fn = true;
+                        brace_depth = 0;
                     }
 
                     if in_fn {
@@ -1002,10 +991,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -1018,7 +1006,7 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub trait Service {
     fn do_something(&self) -> Result<(), Error>;
 }
@@ -1026,7 +1014,7 @@ pub trait Service {
 impl Service for MyService {
     fn do_something(&self) -> Result<(), Error> { Ok(()) }
 }
-"#,
+",
         );
 
         let validator = ImplementationQualityValidator::new(temp.path());
@@ -1041,11 +1029,11 @@ impl Service for MyService {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn validate(&self) -> bool {
     return true;
 }
-"#,
+",
         );
 
         let validator = ImplementationQualityValidator::new(temp.path());
@@ -1090,7 +1078,7 @@ pub fn also_not_done(&self) {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn handle_event(&self, event: Event) {
     match event {
         Event::Created => handle_created(),
@@ -1098,7 +1086,7 @@ pub fn handle_event(&self, event: Event) {
         _ => {}
     }
 }
-"#,
+",
         );
 
         let validator = ImplementationQualityValidator::new(temp.path());
@@ -1119,11 +1107,11 @@ pub fn handle_event(&self, event: Event) {
         fs::create_dir_all(&crate_dir).unwrap();
         fs::write(
             crate_dir.join("null.rs"),
-            r#"
+            r"
 pub fn do_nothing(&self) -> Result<(), Error> {
     Ok(())
 }
-"#,
+",
         )
         .unwrap();
 

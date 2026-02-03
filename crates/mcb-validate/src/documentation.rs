@@ -130,13 +130,9 @@ impl Violation for DocumentationViolation {
                 item_kind,
                 item_name,
                 ..
-            } => Some(format!(
-                "Add /// documentation for {} {}",
-                item_kind, item_name
-            )),
+            } => Some(format!("Add /// documentation for {item_kind} {item_name}")),
             Self::MissingExampleCode { item_name, .. } => Some(format!(
-                "Add # Example section to {} documentation",
-                item_name
+                "Add # Example section to {item_name} documentation"
             )),
         }
     }
@@ -170,7 +166,7 @@ impl DocumentationValidator {
     pub fn validate_module_docs(&self) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
         let module_doc_pattern = Regex::new(r"^//!")
-            .map_err(|e| ValidationError::InvalidRegex(format!("module doc pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("module doc pattern: {e}")))?;
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -220,15 +216,15 @@ impl DocumentationValidator {
 
         // Patterns for public items
         let pub_struct_pattern = Regex::new(r"pub\s+struct\s+([A-Z][a-zA-Z0-9_]*)")
-            .map_err(|e| ValidationError::InvalidRegex(format!("pub struct pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("pub struct pattern: {e}")))?;
         let pub_enum_pattern = Regex::new(r"pub\s+enum\s+([A-Z][a-zA-Z0-9_]*)")
-            .map_err(|e| ValidationError::InvalidRegex(format!("pub enum pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("pub enum pattern: {e}")))?;
         let pub_trait_pattern = Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)")
-            .map_err(|e| ValidationError::InvalidRegex(format!("pub trait pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("pub trait pattern: {e}")))?;
         let pub_fn_pattern = Regex::new(r"pub\s+(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)")
-            .map_err(|e| ValidationError::InvalidRegex(format!("pub fn pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("pub fn pattern: {e}")))?;
         let _doc_comment_pattern = Regex::new(r"^\s*///")
-            .map_err(|e| ValidationError::InvalidRegex(format!("doc comment pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("doc comment pattern: {e}")))?;
         let example_pattern = Regex::new(r"#\s*Example").unwrap();
 
         for crate_dir in self.get_crate_dirs()? {
@@ -279,15 +275,7 @@ impl DocumentationValidator {
                         let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
                         let path_str = entry.path().to_string_lossy();
 
-                        if !self.has_doc_comment(&lines, line_num) {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "trait".to_string(),
-                                severity: Severity::Error,
-                            });
-                        } else {
+                        if self.has_doc_comment(&lines, line_num) {
                             // Check for example code in trait documentation
                             // Skip DI module traits and port traits - they are interface definitions
                             // that don't need examples (they define contracts for DI injection)
@@ -305,6 +293,14 @@ impl DocumentationValidator {
                                     });
                                 }
                             }
+                        } else {
+                            violations.push(DocumentationViolation::MissingPubItemDoc {
+                                file: entry.path().to_path_buf(),
+                                line: line_num + 1,
+                                item_name: name.to_string(),
+                                item_kind: "trait".to_string(),
+                                severity: Severity::Error,
+                            });
                         }
                     }
 
@@ -451,10 +447,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -466,9 +461,9 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn something() {}
-"#,
+",
         );
 
         let validator = DocumentationValidator::new(temp.path());
@@ -487,10 +482,10 @@ pub fn something() {}
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"//! This is the module documentation.
+            r"//! This is the module documentation.
 
 pub fn something() {}
-"#,
+",
         );
 
         let validator = DocumentationValidator::new(temp.path());
@@ -498,8 +493,7 @@ pub fn something() {}
 
         assert!(
             violations.is_empty(),
-            "Should have no violations: {:?}",
-            violations
+            "Should have no violations: {violations:?}"
         );
     }
 
@@ -509,12 +503,12 @@ pub fn something() {}
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"//! Module doc.
+            r"//! Module doc.
 
 pub struct UndocumentedStruct {
     field: i32,
 }
-"#,
+",
         );
 
         let validator = DocumentationValidator::new(temp.path());
@@ -534,13 +528,13 @@ pub struct UndocumentedStruct {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"//! Module doc.
+            r"//! Module doc.
 
 /// This struct is documented.
 pub struct DocumentedStruct {
     field: i32,
 }
-"#,
+",
         );
 
         let validator = DocumentationValidator::new(temp.path());
@@ -553,8 +547,7 @@ pub struct DocumentedStruct {
 
         assert!(
             struct_violations.is_empty(),
-            "Should have no struct violations: {:?}",
-            struct_violations
+            "Should have no struct violations: {struct_violations:?}"
         );
     }
 }

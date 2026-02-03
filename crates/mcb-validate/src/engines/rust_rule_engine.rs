@@ -1,6 +1,6 @@
 //! Rust Rule Engine Wrapper
 //!
-//! Wrapper that delegates to ReteEngine for actual rust-rule-engine execution.
+//! Wrapper that delegates to `ReteEngine` for actual rust-rule-engine execution.
 //! This provides backwards compatibility while using the real library.
 
 use async_trait::async_trait;
@@ -12,10 +12,10 @@ use crate::engines::hybrid_engine::RuleViolation;
 use super::hybrid_engine::{RuleContext, RuleEngine};
 use super::rete_engine::ReteEngine;
 
-/// Wrapper for rust-rule-engine that delegates to ReteEngine
+/// Wrapper for rust-rule-engine that delegates to `ReteEngine`
 ///
 /// This struct provides backwards compatibility with existing code
-/// while the actual GRL execution is handled by ReteEngine which
+/// while the actual GRL execution is handled by `ReteEngine` which
 /// uses the real rust-rule-engine library.
 pub struct RustRuleEngineWrapper {
     rete_engine: ReteEngine,

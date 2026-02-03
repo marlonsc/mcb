@@ -36,7 +36,7 @@ impl ClippyLinter {
 
     /// Check project with specific lint codes enabled as warnings
     ///
-    /// This is used by YamlRuleExecutor to enable specific lints from lint_select.
+    /// This is used by `YamlRuleExecutor` to enable specific lints from `lint_select`.
     /// For example, `clippy::unwrap_used` is "allow" by default and needs `-W` to enable.
     pub async fn check_project_with_lints(
         project_root: &Path,

@@ -2,8 +2,6 @@
 //!
 //! This module provides common test helpers to avoid duplication across test files.
 
-#![allow(dead_code)] // Test utilities may not all be used in every test file
-
 use std::fs;
 use tempfile::TempDir;
 

@@ -217,10 +217,10 @@ impl PortAdapterValidator {
                     brace_depth += line.matches('{').count();
                     brace_depth -= line.matches('}').count();
 
-                    if fn_re.is_match(line) {
-                        if let Some((_, _, ref mut count)) = current_trait {
-                            *count += 1;
-                        }
+                    if fn_re.is_match(line)
+                        && let Some((_, _, ref mut count)) = current_trait
+                    {
+                        *count += 1;
                     }
 
                     if brace_depth == 0 && current_trait.is_some() {
@@ -282,7 +282,7 @@ impl PortAdapterValidator {
                 || path
                     .parent()
                     .and_then(|p| p.file_name())
-                    .map_or(false, |n| n == "tests")
+                    .is_some_and(|n| n == "tests")
             {
                 continue;
             }

@@ -146,12 +146,10 @@ impl Violation for ErrorBoundaryViolation {
             Self::WrongLayerError {
                 error_type, layer, ..
             } => Some(format!(
-                "Wrap {} in a domain error type instead of using it directly in {}",
-                error_type, layer
+                "Wrap {error_type} in a domain error type instead of using it directly in {layer}"
             )),
             Self::LeakedInternalError { pattern, .. } => Some(format!(
-                "Replace {} with a sanitized error response that doesn't expose internal details",
-                pattern
+                "Replace {pattern} with a sanitized error response that doesn't expose internal details"
             )),
         }
     }
@@ -189,9 +187,9 @@ impl ErrorBoundaryValidator {
         // Pattern: ? operator without .context() or .with_context()
         // This is a heuristic - we look for lines with ? but no context method
         let question_mark_pattern = Regex::new(r"\?\s*;?\s*$")
-            .map_err(|e| ValidationError::InvalidRegex(format!("question mark pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("question mark pattern: {e}")))?;
         let context_pattern = Regex::new(r"\.(context|with_context|map_err|ok_or_else)\s*\(")
-            .map_err(|e| ValidationError::InvalidRegex(format!("context pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("context pattern: {e}")))?;
 
         // Files that are likely error boundary crossing points
         let boundary_paths = ["handlers/", "adapters/", "services/"];
@@ -358,7 +356,7 @@ impl ErrorBoundaryValidator {
                 r#"format!\s*\(\s*"\{\:?\?\}""#,
                 "Debug formatting in response",
             ),
-            (r#"\.to_string\(\)\s*\)"#, "Error .to_string() in response"),
+            (r"\.to_string\(\)\s*\)", "Error .to_string() in response"),
             (
                 r#"serde_json::json!\s*\(\s*\{\s*"error"\s*:\s*format!"#,
                 "Internal error in JSON response",
@@ -479,10 +477,9 @@ mod tests {
                 format!(
                     r#"
 [package]
-name = "{}"
+name = "{crate_name}"
 version = "0.1.1"
-"#,
-                    crate_name
+"#
                 ),
             )
             .unwrap();
@@ -496,13 +493,13 @@ version = "0.1.1"
             &temp,
             "mcb-server",
             "handlers/test.rs",
-            r#"
+            r"
 pub async fn handle_request() -> Result<(), Error> {
     let data = fetch_data()?;
     process_data(data)?;
     Ok(())
 }
-"#,
+",
         );
 
         let validator = ErrorBoundaryValidator::new(temp.path());
@@ -521,13 +518,13 @@ pub async fn handle_request() -> Result<(), Error> {
             &temp,
             "mcb-domain",
             "services/test.rs",
-            r#"
+            r"
 use std::io::Error;
 
 pub fn domain_function() -> Result<(), std::io::Error> {
     Ok(())
 }
-"#,
+",
         );
 
         let validator = ErrorBoundaryValidator::new(temp.path());
@@ -546,14 +543,14 @@ pub fn domain_function() -> Result<(), std::io::Error> {
             &temp,
             "mcb-domain",
             "error.rs",
-            r#"
+            r"
 use std::io::Error;
 
 #[derive(Debug)]
 pub enum DomainError {
     Io(std::io::Error),
 }
-"#,
+",
         );
 
         let validator = ErrorBoundaryValidator::new(temp.path());
@@ -561,8 +558,7 @@ pub enum DomainError {
 
         assert!(
             violations.is_empty(),
-            "error.rs files should be exempt: {:?}",
-            violations
+            "error.rs files should be exempt: {violations:?}"
         );
     }
 }

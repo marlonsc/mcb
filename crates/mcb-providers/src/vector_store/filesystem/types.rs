@@ -14,12 +14,10 @@ pub(super) struct ShardMetadata {
     /// Number of vectors in this shard
     pub vector_count: usize,
     /// File offset for the start of vectors
-    #[allow(dead_code)] // Used by serde for serialization/deserialization
     pub vectors_offset: u64,
     /// File size for vectors section
     pub vectors_size: u64,
     /// Creation timestamp
-    #[allow(dead_code)] // Used by serde for serialization format versioning
     pub created_at: u64,
 }
 
@@ -33,6 +31,5 @@ pub(super) struct IndexEntry {
     /// Offset within the shard file
     pub offset: u64,
     /// Vector metadata
-    #[allow(dead_code)] // Used by serde for serialization format
     pub metadata: HashMap<String, serde_json::Value>,
 }

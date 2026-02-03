@@ -274,19 +274,17 @@ impl Violation for RefactoringViolation {
                 source_file.display()
             )),
             Self::StaleReExport { re_export, .. } => {
-                Some(format!("Remove or update the re-export '{}'", re_export))
+                Some(format!("Remove or update the re-export '{re_export}'"))
             }
             Self::DeletedModuleReference { deleted_module, .. } => Some(format!(
-                "Remove the mod declaration for '{}' or create the module file",
-                deleted_module
+                "Remove the mod declaration for '{deleted_module}' or create the module file"
             )),
             Self::RefactoringDeadCode {
                 item_name,
                 item_type,
                 ..
             } => Some(format!(
-                "Remove the unused {} '{}' or add #[allow(dead_code)] if intentional",
-                item_type, item_name
+                "Remove the unused {item_type} '{item_name}' or use it"
             )),
         }
     }
@@ -389,16 +387,13 @@ impl RefactoringValidator {
 
                     let suggestion = match severity {
                         Severity::Info => format!(
-                            "Type '{}' exists in {:?}. This is a known migration pattern - consolidate when migration completes.",
-                            type_name, crates
+                            "Type '{type_name}' exists in {crates:?}. This is a known migration pattern - consolidate when migration completes."
                         ),
                         Severity::Warning => format!(
-                            "Type '{}' is defined in {:?}. Consider consolidating to one location.",
-                            type_name, crates
+                            "Type '{type_name}' is defined in {crates:?}. Consider consolidating to one location."
                         ),
                         Severity::Error => format!(
-                            "Type '{}' is unexpectedly defined in multiple crates: {:?}. This requires immediate consolidation.",
-                            type_name, crates
+                            "Type '{type_name}' is unexpectedly defined in multiple crates: {crates:?}. This requires immediate consolidation."
                         ),
                     };
 
@@ -575,10 +570,10 @@ impl RefactoringValidator {
                             test_files.insert(base.to_string());
                         }
                     }
-                } else if path.is_dir() {
-                    if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
-                        test_dirs.insert(name.to_string());
-                    }
+                } else if path.is_dir()
+                    && let Some(name) = path.file_name().and_then(|s| s.to_str())
+                {
+                    test_dirs.insert(name.to_string());
                 }
             }
 
@@ -610,8 +605,8 @@ impl RefactoringValidator {
 
                 // Check if this file or its parent module has a test
                 let has_test = test_files.contains(file_name)
-                    || test_files.contains(&format!("{}_test", file_name))
-                    || test_files.contains(&format!("{}_tests", file_name));
+                    || test_files.contains(&format!("{file_name}_test"))
+                    || test_files.contains(&format!("{file_name}_tests"));
 
                 // For files in subdirectories, also check parent directory coverage
                 let parent_covered = if relative.components().count() > 1 {
@@ -622,8 +617,8 @@ impl RefactoringValidator {
                         .unwrap_or("");
                     test_files.contains(parent_name)
                         || test_dirs.contains(parent_name)
-                        || test_files.contains(&format!("{}_test", parent_name))
-                        || test_files.contains(&format!("{}_tests", parent_name))
+                        || test_files.contains(&format!("{parent_name}_test"))
+                        || test_files.contains(&format!("{parent_name}_tests"))
                 } else {
                     false
                 };
@@ -631,7 +626,7 @@ impl RefactoringValidator {
                 if !has_test && !parent_covered {
                     violations.push(RefactoringViolation::MissingTestFile {
                         source_file: path.to_path_buf(),
-                        expected_test: tests_dir.join(format!("{}_test.rs", file_name)),
+                        expected_test: tests_dir.join(format!("{file_name}_test.rs")),
                         severity: Severity::Warning, // Warning, not Error - tests are quality, not critical
                     });
                 }
@@ -667,20 +662,18 @@ impl RefactoringValidator {
                         let mod_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Check if module file exists (Rust: same dir or parent_name/mod_name)
-                        let mod_file = parent_dir.join(format!("{}.rs", mod_name));
+                        let mod_file = parent_dir.join(format!("{mod_name}.rs"));
                         let mod_dir = parent_dir.join(mod_name).join("mod.rs");
                         let module_subdir = path.file_stem().and_then(|s| s.to_str()).map(|stem| {
                             (
-                                parent_dir.join(stem).join(format!("{}.rs", mod_name)),
+                                parent_dir.join(stem).join(format!("{mod_name}.rs")),
                                 parent_dir.join(stem).join(mod_name).join("mod.rs"),
                             )
                         });
 
                         let exists = mod_file.exists()
                             || mod_dir.exists()
-                            || module_subdir
-                                .map(|(f, d)| f.exists() || d.exists())
-                                .unwrap_or(false);
+                            || module_subdir.is_some_and(|(f, d)| f.exists() || d.exists());
 
                         if !exists {
                             violations.push(RefactoringViolation::DeletedModuleReference {
@@ -761,10 +754,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -782,22 +774,22 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-domain",
-            r#"
+            r"
 pub struct MyService {
     pub name: String,
 }
-"#,
+",
         );
 
         // Create second crate with same MyService
         create_test_crate(
             &temp,
             "mcb-server",
-            r#"
+            r"
 pub struct MyService {
     pub id: u64,
 }
-"#,
+",
         );
 
         let validator = RefactoringValidator::new(temp.path());
@@ -814,10 +806,10 @@ pub struct MyService {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub mod existing;
 pub mod deleted_module;  // This module doesn't exist
-"#,
+",
         );
 
         // Create existing.rs
@@ -844,11 +836,11 @@ pub mod deleted_module;  // This module doesn't exist
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub mod inline {
     pub fn hello() {}
 }
-"#,
+",
         );
 
         let validator = RefactoringValidator::new(temp.path());

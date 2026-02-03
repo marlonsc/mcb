@@ -56,8 +56,6 @@ use mcb_domain::ports::infrastructure::{
     AuthServiceInterface, EventBusProvider, SnapshotProvider, SyncProvider,
     SystemMetricsCollectorInterface,
 };
-// Provider traits imported for documentation and future use
-#[allow(unused_imports)]
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
@@ -105,19 +103,20 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // Resolve initial providers from config
     // ========================================================================
 
-    let embedding_provider = embedding_resolver
-        .resolve_from_config()
-        .map_err(|e| mcb_domain::error::Error::configuration(format!("Embedding: {e}")))?;
+    let embedding_provider: Arc<dyn EmbeddingProvider> =
+        embedding_resolver
+            .resolve_from_config()
+            .map_err(|e| mcb_domain::error::Error::configuration(format!("Embedding: {e}")))?;
 
-    let vector_store_provider = vector_store_resolver
+    let vector_store_provider: Arc<dyn VectorStoreProvider> = vector_store_resolver
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("VectorStore: {e}")))?;
 
-    let cache_provider = cache_resolver
+    let cache_provider: Arc<dyn CacheProvider> = cache_resolver
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("Cache: {e}")))?;
 
-    let language_provider = language_resolver
+    let language_provider: Arc<dyn LanguageChunkingProvider> = language_resolver
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("Language: {e}")))?;
 

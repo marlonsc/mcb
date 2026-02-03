@@ -5,6 +5,7 @@
 //! - Human-readable for terminal output
 //! - CI summary for GitHub Actions annotations
 
+use crate::violation_trait::Violation;
 use crate::{
     AsyncViolation, CleanArchitectureViolation, ConfigQualityViolation, DependencyViolation,
     DocumentationViolation, ErrorBoundaryViolation, ImplementationViolation, KissViolation,
@@ -13,7 +14,14 @@ use crate::{
     TestViolation,
 };
 use serde::{Deserialize, Serialize};
+use std::fmt::Write;
 use std::path::PathBuf;
+
+/// Summary row for table rendering: (display label, count)
+type SummaryRow = (&'static str, usize);
+
+/// Section of violations: (section title, violations as trait objects)
+type ViolationSection<'a> = (&'static str, Vec<&'a dyn Violation>);
 
 /// Validation report containing all violations
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,6 +115,187 @@ pub struct ValidationSummary {
     pub passed: bool,
 }
 
+impl ValidationSummary {
+    /// Returns summary rows for table rendering (label, count) in display order.
+    fn summary_rows(&self) -> Vec<SummaryRow> {
+        vec![
+            ("Dependency", self.dependency_count),
+            ("Quality", self.quality_count),
+            ("Patterns", self.pattern_count),
+            ("Tests", self.test_count),
+            ("Documentation", self.documentation_count),
+            ("Naming", self.naming_count),
+            ("SOLID", self.solid_count),
+            ("Organization", self.organization_count),
+            ("KISS", self.kiss_count),
+            ("Refactoring", self.refactoring_count),
+            ("Implementation", self.implementation_count),
+            ("Performance", self.performance_count),
+            ("Async", self.async_count),
+            ("ErrorBoundary", self.error_boundary_count),
+            ("PMAT", self.pmat_count),
+            ("CleanArch", self.clean_architecture_count),
+            ("TestQuality", self.test_quality_count),
+            ("ConfigQuality", self.config_quality_count),
+        ]
+    }
+}
+
+impl ValidationReport {
+    /// Returns violation sections (title, violations) for dynamic report rendering.
+    fn violation_sections(&self) -> Vec<ViolationSection<'_>> {
+        vec![
+            (
+                "Dependency",
+                self.dependency_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Quality",
+                self.quality_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Patterns",
+                self.pattern_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Test Organization",
+                self.test_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Documentation",
+                self.documentation_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Naming",
+                self.naming_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "SOLID",
+                self.solid_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Organization",
+                self.organization_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "KISS",
+                self.kiss_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Refactoring",
+                self.refactoring_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Implementation Quality",
+                self.implementation_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Performance",
+                self.performance_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Async Patterns",
+                self.async_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Error Boundary",
+                self.error_boundary_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "PMAT",
+                self.pmat_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Clean Architecture",
+                self.clean_architecture_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Test Quality",
+                self.test_quality_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+            (
+                "Config Quality",
+                self.config_quality_violations
+                    .iter()
+                    .map(|v| v as &dyn Violation)
+                    .collect(),
+            ),
+        ]
+    }
+
+    /// Collects error-level violation messages for CI output.
+    fn collect_errors(&self) -> Vec<String> {
+        let mut errors = Vec::new();
+        for (_, violations) in self.violation_sections() {
+            for v in violations {
+                if v.severity() == Severity::Error {
+                    errors.push(format!("::error ::{v}"));
+                }
+            }
+        }
+        errors
+    }
+
+    /// Counts violations by severity (Error or Warning).
+    fn count_by_severity(&self, severity: Severity) -> usize {
+        self.violation_sections()
+            .into_iter()
+            .map(|(_, v)| v.iter().filter(|x| x.severity() == severity).count())
+            .sum()
+    }
+}
+
 /// Report generator
 pub struct Reporter;
 
@@ -121,233 +310,40 @@ impl Reporter {
         let mut output = String::new();
 
         output.push_str("=== Architecture Validation Report ===\n\n");
-        output.push_str(&format!("Timestamp: {}\n", report.timestamp));
-        output.push_str(&format!(
-            "Workspace: {}\n\n",
-            report.workspace_root.display()
-        ));
+        let _ = writeln!(output, "Timestamp: {}", report.timestamp);
+        let _ = writeln!(output, "Workspace: {}", report.workspace_root.display());
+        let _ = writeln!(output);
 
-        // Summary
+        // Summary (dynamic loop)
         output.push_str("--- Summary ---\n");
-        output.push_str(&format!(
-            "Total Violations: {}\n",
+        let _ = writeln!(
+            output,
+            "Total Violations: {}",
             report.summary.total_violations
-        ));
-        output.push_str(&format!(
-            "  Dependency:     {}\n",
-            report.summary.dependency_count
-        ));
-        output.push_str(&format!(
-            "  Quality:        {}\n",
-            report.summary.quality_count
-        ));
-        output.push_str(&format!(
-            "  Patterns:       {}\n",
-            report.summary.pattern_count
-        ));
-        output.push_str(&format!(
-            "  Tests:          {}\n",
-            report.summary.test_count
-        ));
-        output.push_str(&format!(
-            "  Documentation:  {}\n",
-            report.summary.documentation_count
-        ));
-        output.push_str(&format!(
-            "  Naming:         {}\n",
-            report.summary.naming_count
-        ));
-        output.push_str(&format!(
-            "  SOLID:          {}\n",
-            report.summary.solid_count
-        ));
-        output.push_str(&format!(
-            "  Organization:   {}\n",
-            report.summary.organization_count
-        ));
-        output.push_str(&format!(
-            "  KISS:           {}\n",
-            report.summary.kiss_count
-        ));
-        output.push_str(&format!(
-            "  Refactoring:    {}\n",
-            report.summary.refactoring_count
-        ));
-        output.push_str(&format!(
-            "  Implementation: {}\n",
-            report.summary.implementation_count
-        ));
-        output.push_str(&format!(
-            "  Performance:    {}\n",
-            report.summary.performance_count
-        ));
-        output.push_str(&format!(
-            "  Async:          {}\n",
-            report.summary.async_count
-        ));
-        output.push_str(&format!(
-            "  ErrorBoundary:  {}\n",
-            report.summary.error_boundary_count
-        ));
-        output.push_str(&format!(
-            "  PMAT:           {}\n",
-            report.summary.pmat_count
-        ));
-        output.push_str(&format!(
-            "  CleanArch:      {}\n",
-            report.summary.clean_architecture_count
-        ));
-        output.push('\n');
+        );
+        for (label, count) in report.summary.summary_rows() {
+            let _ = writeln!(output, "  {label:<17} {}", count);
+        }
+        let _ = writeln!(output);
 
         let status = if report.summary.passed {
             "PASSED"
         } else {
             "FAILED"
         };
-        output.push_str(&format!("Status: {}\n\n", status));
+        let _ = writeln!(output, "Status: {status}");
+        let _ = writeln!(output);
 
-        // Dependency violations
-        if !report.dependency_violations.is_empty() {
-            output.push_str("--- Dependency Violations ---\n");
-            for v in &report.dependency_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
+        // Violation sections (dynamic loop)
+        for (title, violations) in report.violation_sections() {
+            if violations.is_empty() {
+                continue;
             }
-            output.push('\n');
-        }
-
-        // Quality violations
-        if !report.quality_violations.is_empty() {
-            output.push_str("--- Quality Violations ---\n");
-            for v in &report.quality_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
+            let _ = writeln!(output, "--- {title} Violations ---");
+            for v in violations {
+                let _ = writeln!(output, "  [{:?}] {}", v.severity(), v);
             }
-            output.push('\n');
-        }
-
-        // Pattern violations
-        if !report.pattern_violations.is_empty() {
-            output.push_str("--- Pattern Violations ---\n");
-            for v in &report.pattern_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Test violations
-        if !report.test_violations.is_empty() {
-            output.push_str("--- Test Organization Violations ---\n");
-            for v in &report.test_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Documentation violations
-        if !report.documentation_violations.is_empty() {
-            output.push_str("--- Documentation Violations ---\n");
-            for v in &report.documentation_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Naming violations
-        if !report.naming_violations.is_empty() {
-            output.push_str("--- Naming Violations ---\n");
-            for v in &report.naming_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // SOLID violations
-        if !report.solid_violations.is_empty() {
-            output.push_str("--- SOLID Violations ---\n");
-            for v in &report.solid_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Organization violations
-        if !report.organization_violations.is_empty() {
-            output.push_str("--- Organization Violations ---\n");
-            for v in &report.organization_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // KISS violations
-        if !report.kiss_violations.is_empty() {
-            output.push_str("--- KISS Violations ---\n");
-            for v in &report.kiss_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Refactoring violations
-        if !report.refactoring_violations.is_empty() {
-            output.push_str("--- Refactoring Violations ---\n");
-            for v in &report.refactoring_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Implementation violations
-        if !report.implementation_violations.is_empty() {
-            output.push_str("--- Implementation Quality Violations ---\n");
-            for v in &report.implementation_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Performance violations
-        if !report.performance_violations.is_empty() {
-            output.push_str("--- Performance Violations ---\n");
-            for v in &report.performance_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Async pattern violations
-        if !report.async_violations.is_empty() {
-            output.push_str("--- Async Pattern Violations ---\n");
-            for v in &report.async_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Error boundary violations
-        if !report.error_boundary_violations.is_empty() {
-            output.push_str("--- Error Boundary Violations ---\n");
-            for v in &report.error_boundary_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // PMAT violations
-        if !report.pmat_violations.is_empty() {
-            output.push_str("--- PMAT Violations ---\n");
-            for v in &report.pmat_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
-        }
-
-        // Clean Architecture violations (CA001-CA009)
-        if !report.clean_architecture_violations.is_empty() {
-            output.push_str("--- Clean Architecture Violations ---\n");
-            for v in &report.clean_architecture_violations {
-                output.push_str(&format!("  [{:?}] {}\n", v.severity(), v));
-            }
-            output.push('\n');
+            let _ = writeln!(output);
         }
 
         output
@@ -359,158 +355,32 @@ impl Reporter {
 
         output.push_str("## Architecture Validation\n\n");
 
-        // Status badge
-        if report.summary.passed {
-            output.push_str("**Status:** :white_check_mark: PASSED\n\n");
+        let status = if report.summary.passed {
+            "**Status:** :white_check_mark: PASSED"
         } else {
-            output.push_str("**Status:** :x: FAILED\n\n");
-        }
+            "**Status:** :x: FAILED"
+        };
+        let _ = writeln!(output, "{status}\n");
 
-        // Summary table
+        // Summary table (dynamic loop)
         output.push_str("| Category | Count |\n");
         output.push_str("|----------|-------|\n");
-        output.push_str(&format!(
-            "| Dependency | {} |\n",
-            report.summary.dependency_count
-        ));
-        output.push_str(&format!("| Quality | {} |\n", report.summary.quality_count));
-        output.push_str(&format!(
-            "| Patterns | {} |\n",
-            report.summary.pattern_count
-        ));
-        output.push_str(&format!("| Tests | {} |\n", report.summary.test_count));
-        output.push_str(&format!(
-            "| Documentation | {} |\n",
-            report.summary.documentation_count
-        ));
-        output.push_str(&format!("| Naming | {} |\n", report.summary.naming_count));
-        output.push_str(&format!("| SOLID | {} |\n", report.summary.solid_count));
-        output.push_str(&format!(
-            "| Organization | {} |\n",
-            report.summary.organization_count
-        ));
-        output.push_str(&format!("| KISS | {} |\n", report.summary.kiss_count));
-        output.push_str(&format!(
-            "| Refactoring | {} |\n",
-            report.summary.refactoring_count
-        ));
-        output.push_str(&format!(
-            "| Implementation | {} |\n",
-            report.summary.implementation_count
-        ));
-        output.push_str(&format!(
-            "| Performance | {} |\n",
-            report.summary.performance_count
-        ));
-        output.push_str(&format!("| Async | {} |\n", report.summary.async_count));
-        output.push_str(&format!(
-            "| ErrorBoundary | {} |\n",
-            report.summary.error_boundary_count
-        ));
-        output.push_str(&format!("| PMAT | {} |\n", report.summary.pmat_count));
-        output.push_str(&format!(
-            "| **Total** | **{}** |\n",
+        for (label, count) in report.summary.summary_rows() {
+            let _ = writeln!(output, "| {label} | {count} |");
+        }
+        let _ = writeln!(
+            output,
+            "| **Total** | **{}** |",
             report.summary.total_violations
-        ));
-        output.push('\n');
+        );
+        let _ = writeln!(output);
 
-        // Error-level violations as annotations
-        let mut errors = Vec::new();
-
-        for v in &report.dependency_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.quality_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.pattern_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.test_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.documentation_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.naming_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.solid_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.organization_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.kiss_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.refactoring_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.implementation_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.performance_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.async_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.error_boundary_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
-        for v in &report.pmat_violations {
-            if v.severity() == Severity::Error {
-                errors.push(format!("::error ::{}", v));
-            }
-        }
-
+        // Error-level violations (dynamic)
+        let errors = report.collect_errors();
         if !errors.is_empty() {
             output.push_str("\n### Errors\n\n");
             for e in errors {
-                output.push_str(&format!("{}\n", e));
+                let _ = writeln!(output, "{e}");
             }
         }
 
@@ -519,168 +389,12 @@ impl Reporter {
 
     /// Count error-level violations
     pub fn count_errors(report: &ValidationReport) -> usize {
-        let mut count = 0;
-
-        count += report
-            .dependency_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .quality_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .pattern_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .test_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .documentation_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .naming_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .solid_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .organization_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .kiss_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .refactoring_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .implementation_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .performance_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .async_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .error_boundary_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        count += report
-            .pmat_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-
-        count
+        report.count_by_severity(Severity::Error)
     }
 
     /// Count warning-level violations
     pub fn count_warnings(report: &ValidationReport) -> usize {
-        let mut count = 0;
-
-        count += report
-            .dependency_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .quality_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .pattern_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .test_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .documentation_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .naming_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .solid_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .organization_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .kiss_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .refactoring_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .implementation_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .performance_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .async_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .error_boundary_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        count += report
-            .pmat_violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-
-        count
+        report.count_by_severity(Severity::Warning)
     }
 }
 

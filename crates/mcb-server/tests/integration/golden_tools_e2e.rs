@@ -7,10 +7,9 @@
 use mcb_server::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::Content;
-use std::path::Path;
 
 fn sample_codebase_path() -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample_codebase")
+    crate::test_utils::test_fixtures::sample_codebase_path()
 }
 
 fn test_collection() -> &'static str {
@@ -187,13 +186,20 @@ async fn golden_index_test_repository() {
         "response: {}",
         text
     );
-    if text.contains("Indexing Completed") {
-        if let Some((files, chunks)) =
+    if text.contains("Indexing Completed")
+        && let Some((files, chunks)) =
             crate::test_utils::test_fixtures::golden_parse_indexing_stats(&text)
-        {
-            assert!(files > 0, "indexing must report files_processed > 0: {}", text);
-            assert!(chunks > 0, "indexing must report chunks_created > 0: {}", text);
-        }
+    {
+        assert!(
+            files > 0,
+            "indexing must report files_processed > 0: {}",
+            text
+        );
+        assert!(
+            chunks > 0,
+            "indexing must report chunks_created > 0: {}",
+            text
+        );
     }
 }
 

@@ -471,7 +471,6 @@ Architecture validation: 0 violations
 **Phase 4**: Quality Analysis
 
 -   Visibility rules (VIS001: `pub` vs `pub(crate)`)
--   Code quality (QUAL020: unjustified `#[allow(dead_code)]`)
 -   Documentation (DOC002: missing struct docs)
 
 **Phase 5**: Integration Validation

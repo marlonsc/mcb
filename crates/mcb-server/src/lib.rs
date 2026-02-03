@@ -51,9 +51,7 @@
 //! - `full`: All features enabled
 
 // Clippy allows for complex patterns in server code
-#![allow(clippy::io_other_error)]
-#![allow(clippy::for_kv_map)]
-#![allow(clippy::while_let_loop)]
+
 // Allow Rust 2024 compatibility issues from Rocket's EventStream macro
 #![allow(rust_2024_compatibility)]
 // Documentation configuration for docs.rs
@@ -80,6 +78,4 @@ pub mod transport;
 // Re-export core types for public API
 pub use builder::McpServerBuilder;
 pub use init::run;
-#[allow(deprecated)]
-pub use init::run_server;
 pub use mcp_server::McpServer;

@@ -1,6 +1,6 @@
 //! AST Decoder
 //!
-//! Converts Tree-sitter concrete syntax trees to unified AstNode format.
+//! Converts Tree-sitter concrete syntax trees to unified `AstNode` format.
 
 use std::collections::HashMap;
 use tree_sitter::Node;
@@ -11,12 +11,12 @@ use super::{AstNode, Position, Span};
 pub struct AstDecoder;
 
 impl AstDecoder {
-    /// Convert Tree-sitter tree to unified AstNode
+    /// Convert Tree-sitter tree to unified `AstNode`
     pub fn decode_tree(tree: &tree_sitter::Tree, source: &str) -> AstNode {
         Self::decode_node(tree.root_node(), source)
     }
 
-    /// Convert Tree-sitter node to unified AstNode
+    /// Convert Tree-sitter node to unified `AstNode`
     pub fn decode_node(node: Node, source: &str) -> AstNode {
         let kind = node.kind().to_string();
         let span = Self::decode_span(node, source);

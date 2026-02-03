@@ -226,28 +226,27 @@ impl VectorStoreProvider for FilesystemVectorStore {
 
         let mut results = Vec::new();
         for id in ids {
-            if let Some(entry) = self.index_cache.get(&(collection.to_string(), id.clone())) {
-                if let Ok((_, metadata)) = self
+            if let Some(entry) = self.index_cache.get(&(collection.to_string(), id.clone()))
+                && let Ok((_, metadata)) = self
                     .read_vector_from_shard(collection, entry.shard_id, entry.offset)
                     .await
-                {
-                    let file_path = metadata.string_or("file_path", "unknown");
-                    let start_line = metadata
-                        .opt_u64("start_line")
-                        .or_else(|| metadata.opt_u64("line_number"))
-                        .unwrap_or(0) as u32;
-                    let content = metadata.string_or("content", "");
-                    let language = metadata.string_or("language", "unknown");
+            {
+                let file_path = metadata.string_or("file_path", "unknown");
+                let start_line = metadata
+                    .opt_u64("start_line")
+                    .or_else(|| metadata.opt_u64("line_number"))
+                    .unwrap_or(0) as u32;
+                let content = metadata.string_or("content", "");
+                let language = metadata.string_or("language", "unknown");
 
-                    results.push(SearchResult {
-                        id: id.clone(),
-                        file_path,
-                        start_line,
-                        content,
-                        score: 1.0,
-                        language,
-                    });
-                }
+                results.push(SearchResult {
+                    id: id.clone(),
+                    file_path,
+                    start_line,
+                    content,
+                    score: 1.0,
+                    language,
+                });
             }
         }
         Ok(results)
@@ -316,40 +315,40 @@ impl VectorStoreBrowser for FilesystemVectorStore {
             .map_err(|e| Error::io(format!("Failed to read directory entry: {}", e)))?
         {
             let path = entry.path();
-            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.ends_with("_index.json") {
-                    let collection_name = name.trim_end_matches("_index.json");
+            if let Some(name) = path.file_name().and_then(|n| n.to_str())
+                && name.ends_with("_index.json")
+            {
+                let collection_name = name.trim_end_matches("_index.json");
 
-                    // Get stats for this collection
-                    let stats = self.get_stats(collection_name).await.unwrap_or_default();
-                    let vector_count = stats
-                        .get("total_vectors")
-                        .and_then(|v| v.as_u64())
-                        .unwrap_or(0);
+                // Get stats for this collection
+                let stats = self.get_stats(collection_name).await.unwrap_or_default();
+                let vector_count = stats
+                    .get("total_vectors")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0);
 
-                    // Count unique files from index cache
-                    let file_paths: HashSet<String> = self
-                        .index_cache
-                        .iter()
-                        .filter(|r| r.key().0 == collection_name)
-                        .filter_map(|r| {
-                            r.value()
-                                .metadata
-                                .get("file_path")
-                                .and_then(|v| v.as_str())
-                                .map(|s| s.to_string())
-                        })
-                        .collect();
-                    let file_count = file_paths.len() as u64;
+                // Count unique files from index cache
+                let file_paths: HashSet<String> = self
+                    .index_cache
+                    .iter()
+                    .filter(|r| r.key().0 == collection_name)
+                    .filter_map(|r| {
+                        r.value()
+                            .metadata
+                            .get("file_path")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string())
+                    })
+                    .collect();
+                let file_count = file_paths.len() as u64;
 
-                    collections.push(CollectionInfo::new(
-                        collection_name,
-                        vector_count,
-                        file_count,
-                        None,
-                        self.provider_name(),
-                    ));
-                }
+                collections.push(CollectionInfo::new(
+                    collection_name,
+                    vector_count,
+                    file_count,
+                    None,
+                    self.provider_name(),
+                ));
             }
         }
 
@@ -366,26 +365,25 @@ impl VectorStoreBrowser for FilesystemVectorStore {
         let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
 
         for entry in self.index_cache.iter() {
-            if entry.key().0 == collection {
-                if let Some(file_path) = entry
+            if entry.key().0 == collection
+                && let Some(file_path) = entry
                     .value()
                     .metadata
                     .get("file_path")
                     .and_then(|v| v.as_str())
-                {
-                    let language = entry
-                        .value()
-                        .metadata
-                        .get("language")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("unknown")
-                        .to_string();
+            {
+                let language = entry
+                    .value()
+                    .metadata
+                    .get("language")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
 
-                    let e = file_map
-                        .entry(file_path.to_string())
-                        .or_insert((0, language));
-                    e.0 += 1; // Increment chunk count
-                }
+                let e = file_map
+                    .entry(file_path.to_string())
+                    .or_insert((0, language));
+                e.0 += 1; // Increment chunk count
             }
         }
 

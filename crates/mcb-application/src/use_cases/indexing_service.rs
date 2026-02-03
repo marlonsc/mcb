@@ -7,7 +7,6 @@
 use crate::domain_services::search::{
     ContextServiceInterface, IndexingResult, IndexingServiceInterface,
 };
-use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
@@ -24,44 +23,19 @@ const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target", "__pycache__"];
 /// Supported file extensions for indexing
 const SUPPORTED_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "java", "cpp", "c", "go"];
 
-/// Accumulator for indexing progress and errors
-///
-/// Note: Fields are used via `into_result()` method. The struct is WIP
-/// for async background indexing support.
-// Fields used during file discovery error recording, not dead code
+/// Accumulator for errors during file discovery (used by discover_files).
 struct IndexingProgress {
-    files_processed: usize,
-    chunks_created: usize,
-    files_skipped: usize,
     errors: Vec<String>,
 }
 
 impl IndexingProgress {
     fn new() -> Self {
-        Self {
-            files_processed: 0,
-            chunks_created: 0,
-            files_skipped: 0,
-            errors: Vec::new(),
-        }
+        Self { errors: Vec::new() }
     }
 
     fn record_error(&mut self, context: &str, path: &Path, error: impl std::fmt::Display) {
         self.errors
             .push(format!("{} {}: {}", context, path.display(), error));
-    }
-
-    // Reserved for sync indexing path - async path builds IndexingResult directly
-    #[allow(dead_code)]
-    fn into_result(self, operation_id: Option<String>, status: &str) -> IndexingResult {
-        IndexingResult {
-            files_processed: self.files_processed,
-            chunks_created: self.chunks_created,
-            files_skipped: self.files_skipped,
-            errors: self.errors,
-            operation_id,
-            status: status.to_string(),
-        }
     }
 }
 
@@ -139,19 +113,6 @@ impl IndexingServiceImpl {
             .and_then(|ext| ext.to_str())
             .map(|ext| SUPPORTED_EXTENSIONS.contains(&ext.to_lowercase().as_str()))
             .unwrap_or(false)
-    }
-
-    /// Chunk file content using intelligent AST-based chunking
-    ///
-    /// Reserved for future background task integration with `IndexingProgress`.
-    /// Currently unused but retained for planned incremental indexing feature.
-    #[allow(
-        dead_code,
-        reason = "Reserved for IndexingProgress integration in background tasks"
-    )]
-    fn chunk_file_content(&self, content: &str, path: &Path) -> Vec<CodeChunk> {
-        self.language_chunker
-            .chunk(content, &path.to_string_lossy())
     }
 }
 

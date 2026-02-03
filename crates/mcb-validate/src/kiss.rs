@@ -234,9 +234,8 @@ impl Violation for KissViolation {
                 max_allowed,
                 ..
             } => Some(format!(
-                "Split '{}' into smaller structs or use composition. \
-                 {} fields exceeds the maximum of {}.",
-                struct_name, field_count, max_allowed
+                "Split '{struct_name}' into smaller structs or use composition. \
+                 {field_count} fields exceeds the maximum of {max_allowed}."
             )),
             Self::FunctionTooManyParams {
                 function_name,
@@ -244,9 +243,8 @@ impl Violation for KissViolation {
                 max_allowed,
                 ..
             } => Some(format!(
-                "Refactor '{}' to use a config/options struct instead of {} parameters. \
-                 Maximum allowed is {}.",
-                function_name, param_count, max_allowed
+                "Refactor '{function_name}' to use a config/options struct instead of {param_count} parameters. \
+                 Maximum allowed is {max_allowed}."
             )),
             Self::BuilderTooComplex {
                 builder_name,
@@ -254,9 +252,8 @@ impl Violation for KissViolation {
                 max_allowed,
                 ..
             } => Some(format!(
-                "Split '{}' into smaller builders or use builder composition. \
-                 {} optional fields exceeds the maximum of {}.",
-                builder_name, optional_field_count, max_allowed
+                "Split '{builder_name}' into smaller builders or use builder composition. \
+                 {optional_field_count} optional fields exceeds the maximum of {max_allowed}."
             )),
             Self::DeepNesting {
                 nesting_level,
@@ -264,8 +261,7 @@ impl Violation for KissViolation {
                 ..
             } => Some(format!(
                 "Extract nested logic into separate functions using early returns or guard clauses. \
-                 Nesting depth {} exceeds the maximum of {}.",
-                nesting_level, max_allowed
+                 Nesting depth {nesting_level} exceeds the maximum of {max_allowed}."
             )),
             Self::FunctionTooLong {
                 function_name,
@@ -273,9 +269,8 @@ impl Violation for KissViolation {
                 max_allowed,
                 ..
             } => Some(format!(
-                "Break '{}' into smaller, focused functions. \
-                 {} lines exceeds the maximum of {}.",
-                function_name, line_count, max_allowed
+                "Break '{function_name}' into smaller, focused functions. \
+                 {line_count} lines exceeds the maximum of {max_allowed}."
             )),
         }
     }

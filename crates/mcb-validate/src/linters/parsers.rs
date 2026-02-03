@@ -136,7 +136,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
             let rule_code = if raw_code.starts_with("clippy::") {
                 raw_code
             } else {
-                format!("clippy::{}", raw_code)
+                format!("clippy::{raw_code}")
             };
 
             violations.push(LintViolation {

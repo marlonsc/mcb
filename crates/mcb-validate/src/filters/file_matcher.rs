@@ -51,19 +51,19 @@ impl FilePatternMatcher {
 
         // First check exclusions (they take precedence)
         for exclude_pattern in &excludes {
-            if let Ok(glob) = Glob::new(exclude_pattern) {
-                if glob.compile_matcher().is_match(path) {
-                    return false;
-                }
+            if let Ok(glob) = Glob::new(exclude_pattern)
+                && glob.compile_matcher().is_match(path)
+            {
+                return false;
             }
         }
 
         // Then check inclusions
         for include_pattern in &includes {
-            if let Ok(glob) = Glob::new(include_pattern) {
-                if glob.compile_matcher().is_match(path) {
-                    return true;
-                }
+            if let Ok(glob) = Glob::new(include_pattern)
+                && glob.compile_matcher().is_match(path)
+            {
+                return true;
             }
         }
 
@@ -97,7 +97,7 @@ impl FilePatternMatcher {
     /// * `patterns` - Mixed list of include and exclude patterns
     ///
     /// # Returns
-    /// Tuple of (include_patterns, exclude_patterns)
+    /// Tuple of (`include_patterns`, `exclude_patterns`)
     pub fn parse_patterns(patterns: &[String]) -> (Vec<String>, Vec<String>) {
         let mut includes = Vec::new();
         let mut excludes = Vec::new();

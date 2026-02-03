@@ -29,31 +29,29 @@ impl ValidatorEngine {
         let rule_config: RuleConfigValidation = serde_json::from_value(rule_definition.clone())
             .map_err(|e| crate::ValidationError::Parse {
                 file: "rule_definition".into(),
-                message: format!("Invalid rule structure: {}", e),
+                message: format!("Invalid rule structure: {e}"),
             })?;
 
         // Use validator for basic validations
         validator::Validate::validate(&rule_config)
-            .map_err(|e| crate::ValidationError::Config(format!("Validation error: {:?}", e)))?;
+            .map_err(|e| crate::ValidationError::Config(format!("Validation error: {e:?}")))?;
 
         // Validate category if present
         if let Some(ref category) = rule_config.category {
-            validate_category(category).map_err(|e| {
-                crate::ValidationError::Config(format!("Invalid category: {:?}", e))
-            })?;
+            validate_category(category)
+                .map_err(|e| crate::ValidationError::Config(format!("Invalid category: {e:?}")))?;
         }
 
         // Validate engine if present
         if let Some(ref engine) = rule_config.engine {
             validate_engine(engine)
-                .map_err(|e| crate::ValidationError::Config(format!("Invalid engine: {:?}", e)))?;
+                .map_err(|e| crate::ValidationError::Config(format!("Invalid engine: {e:?}")))?;
         }
 
         // Validate severity if present
         if let Some(ref severity) = rule_config.severity {
-            validate_severity(severity).map_err(|e| {
-                crate::ValidationError::Config(format!("Invalid severity: {:?}", e))
-            })?;
+            validate_severity(severity)
+                .map_err(|e| crate::ValidationError::Config(format!("Invalid severity: {e:?}")))?;
         }
 
         Ok(())

@@ -119,11 +119,11 @@ impl ValidatorRegistry {
     ///
     /// This registers all built-in validators with default configuration.
     /// Validators include:
-    /// - Architecture: clean_architecture, layer_flow, port_adapter, visibility
+    /// - Architecture: `clean_architecture`, `layer_flow`, `port_adapter`, visibility
     /// - Dependencies: dependency
-    /// - Quality: quality, solid, naming, patterns, documentation, tests_org
-    /// - Performance: performance, async_patterns, kiss, pmat
-    /// - Organization: organization, implementation, refactoring, error_boundary
+    /// - Quality: quality, solid, naming, patterns, documentation, `tests_org`
+    /// - Performance: performance, `async_patterns`, kiss, pmat
+    /// - Organization: organization, implementation, refactoring, `error_boundary`
     pub fn standard() -> Self {
         Self::standard_for(".")
     }

@@ -16,7 +16,7 @@ use walkdir::WalkDir;
 /// Performance violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PerformanceViolation {
-    /// .clone() called inside a loop
+    /// .`clone()` called inside a loop
     CloneInLoop {
         file: PathBuf,
         line: usize,
@@ -240,7 +240,7 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
-    /// Detect .clone() calls inside loops
+    /// Detect .`clone()` calls inside loops
     pub fn validate_clone_in_loops(&self) -> Result<Vec<PerformanceViolation>> {
         let mut violations = Vec::new();
 
@@ -346,7 +346,7 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
-    /// Detect Vec::new() or String::new() inside loops
+    /// Detect `Vec::new()` or `String::new()` inside loops
     pub fn validate_allocation_in_loops(&self) -> Result<Vec<PerformanceViolation>> {
         let mut violations = Vec::new();
 
@@ -707,10 +707,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -722,14 +721,14 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn process_items(items: Vec<String>) {
     for item in &items {
         // Direct clone in function call - detectable pattern
         process(item.clone());
     }
 }
-"#,
+",
         );
 
         let validator = PerformanceValidator::new(temp.path());
@@ -744,14 +743,14 @@ pub fn process_items(items: Vec<String>) {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn process_many() {
     for i in 0..100 {
         let mut v = Vec::new();
         v.push(i);
     }
 }
-"#,
+",
         );
 
         let validator = PerformanceValidator::new(temp.path());
@@ -766,13 +765,13 @@ pub fn process_many() {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Mutex;
 
 pub struct Counter {
     value: Mutex<bool>,
 }
-"#,
+",
         );
 
         let validator = PerformanceValidator::new(temp.path());
@@ -806,8 +805,7 @@ mod tests {
 
         assert!(
             violations.is_empty(),
-            "Test modules should be exempt: {:?}",
-            violations
+            "Test modules should be exempt: {violations:?}"
         );
     }
 }
