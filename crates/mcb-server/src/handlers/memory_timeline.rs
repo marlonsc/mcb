@@ -52,13 +52,12 @@ impl MemoryTimelineHandler {
                     .await
                     .map_err(|_| McpError::internal_error("Search failed", None))?;
 
-                let anchor_id = results
+                results
                     .first()
                     .map(|r| r.observation.id.clone())
                     .ok_or_else(|| {
                         McpError::invalid_params("No observations found for query", None)
-                    })?;
-                anchor_id
+                    })?
             }
             (None, None) => {
                 return Err(McpError::invalid_params(
