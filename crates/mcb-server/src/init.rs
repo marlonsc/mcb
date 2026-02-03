@@ -222,7 +222,8 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
     let indexing_ops = app_context.indexing();
     let event_bus = app_context.event_bus();
 
-    let memory_db_path = dirs::home_dir()
+    let memory_db_path = dirs::data_local_dir()
+        .or_else(|| std::env::current_dir().ok())
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join(".mcb")
         .join("memory.db");
