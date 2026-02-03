@@ -55,9 +55,7 @@ impl MemoryTimelineHandler {
                 results
                     .first()
                     .map(|r| r.observation.id.clone())
-                    .ok_or_else(|| {
-                        McpError::invalid_params("No observations found for query", None)
-                    })?
+                    .ok_or_else(|| McpError::invalid_params("No observations found", None))?
             }
             (None, None) => {
                 return Err(McpError::invalid_params(
