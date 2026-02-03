@@ -28,7 +28,6 @@ use std::time::{Duration, Instant};
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]
-#[allow(dead_code)]
 pub struct TestQuery {
     pub id: String,
     pub query: String,
@@ -40,7 +39,6 @@ pub struct TestQuery {
 
 /// Golden queries configuration
 #[derive(Debug, Clone, serde::Deserialize)]
-#[allow(dead_code)]
 pub struct GoldenQueriesConfig {
     pub version: String,
     pub description: String,
@@ -50,7 +48,6 @@ pub struct GoldenQueriesConfig {
 
 /// Query configuration
 #[derive(Debug, Clone, serde::Deserialize)]
-#[allow(dead_code)]
 pub struct QueryConfig {
     pub collection_name: String,
     pub timeout_ms: u64,
@@ -115,16 +112,19 @@ fn test_golden_queries_fixture_valid() {
     let config = load_golden_queries();
 
     assert_eq!(config.version, "0.1.2");
+    assert!(!config.description.is_empty(), "Config description should not be empty");
     assert!(!config.queries.is_empty(), "Should have test queries");
 
     for query in &config.queries {
         assert!(!query.id.is_empty(), "Query ID should not be empty");
         assert!(!query.query.is_empty(), "Query string should not be empty");
+        assert!(!query.description.is_empty(), "Description should not be empty");
         assert!(
             !query.expected_files.is_empty(),
             "Expected files should not be empty for query: {}",
             query.id
         );
+        assert!(query.min_results <= 100, "min_results should be reasonable");
         assert!(
             query.max_latency_ms > 0,
             "Max latency should be positive for query: {}",

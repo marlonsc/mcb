@@ -285,7 +285,7 @@ impl Violation for QualityViolation {
                 Some("Address the pending comment or create an issue to track it".to_string())
             }
             Self::DeadCodeWithoutJustification { .. } => {
-                Some("Add a comment explaining why this is marked dead (e.g., // Reserved for future admin API) or remove the annotation if actually used".to_string())
+                Some("Remove #[allow(dead_code)] and fix or remove the dead code; justifications are not permitted".to_string())
             }
             Self::UnusedStructField { .. } => {
                 Some("Remove the unused field or document why it's kept (e.g., for serialization format versioning)".to_string())
@@ -358,25 +358,20 @@ impl QualityValidator {
 
                 for (i, line) in lines.iter().enumerate() {
                     if dead_code_pattern.is_match(line) {
-                        // Check if there's a justification comment
-                        let has_justification = self.has_dead_code_justification(&lines, i);
-
-                        if !has_justification {
-                            // Find what item is being marked as dead
-                            if let Some(item_name) = self.find_dead_code_item(
-                                &lines,
-                                i,
-                                &struct_pattern,
-                                &fn_pattern,
-                                &field_pattern,
-                            ) {
-                                violations.push(QualityViolation::DeadCodeWithoutJustification {
-                                    file: entry.path().to_path_buf(),
-                                    line: i + 1,
-                                    item_name,
-                                    severity: Severity::Warning,
-                                });
-                            }
+                        // No justifications permitted: every #[allow(dead_code)] is a violation
+                        if let Some(item_name) = self.find_dead_code_item(
+                            &lines,
+                            i,
+                            &struct_pattern,
+                            &fn_pattern,
+                            &field_pattern,
+                        ) {
+                            violations.push(QualityViolation::DeadCodeWithoutJustification {
+                                file: entry.path().to_path_buf(),
+                                line: i + 1,
+                                item_name,
+                                severity: Severity::Warning,
+                            });
                         }
                     }
                 }
@@ -384,32 +379,6 @@ impl QualityValidator {
         }
 
         Ok(violations)
-    }
-
-    fn has_dead_code_justification(&self, lines: &[&str], line_idx: usize) -> bool {
-        // Check lines above and below for justification
-        let check_range_before = if line_idx >= 2 { line_idx - 2 } else { 0 };
-        let check_range_after = std::cmp::min(line_idx + 3, lines.len());
-
-        for i in check_range_before..check_range_after {
-            let line = lines[i].trim();
-            if line.contains("// ")
-                && (line.contains("Reserved for")
-                    || line.contains("Will be used")
-                    || line.contains("Future")
-                    || line.contains("Admin API")
-                    || line.contains("Versioning")
-                    || line.contains("Serialization")
-                    || line.contains("Format")
-                    || line.contains("Used by")
-                    || line.contains("Test fixture")
-                    || line.contains("serde"))
-            {
-                return true;
-            }
-        }
-
-        false
     }
 
     fn find_dead_code_item(
