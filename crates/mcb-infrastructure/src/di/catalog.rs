@@ -133,7 +133,11 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // ========================================================================
 
     let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
-        Arc::new(NullPerformanceMetrics);
+        if config.system.infrastructure.metrics.enabled {
+            Arc::new(PrometheusPerformanceMetrics)
+        } else {
+            Arc::new(NullPerformanceMetrics)
+        };
 
     // ========================================================================
     // Optionally wrap embedding provider with instrumentation (SOLID O/C)
