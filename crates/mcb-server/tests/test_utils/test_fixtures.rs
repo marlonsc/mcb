@@ -202,3 +202,23 @@ pub async fn create_test_mcp_server() -> McpServer {
         .build()
         .expect("Failed to build MCP server")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Smoke test so fixture helpers are not reported as dead code in the unit test target.
+    #[test]
+    fn fixture_helpers_used_in_unit_target() {
+        let (_temp, path) = create_temp_codebase();
+        assert!(path.join("lib.rs").exists());
+        let r = create_test_indexing_result(2, 10, 0);
+        assert_eq!(r.files_processed, 2);
+        let r2 = create_test_indexing_result_with_errors(1, 5, vec!["err".to_string()]);
+        assert_eq!(r2.errors.len(), 1);
+        let idle = create_idle_status();
+        assert!(!idle.is_indexing);
+        let prog = create_in_progress_status(0.5, "src/main.rs");
+        assert!(prog.is_indexing);
+    }
+}

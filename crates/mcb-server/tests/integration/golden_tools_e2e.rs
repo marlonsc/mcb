@@ -21,10 +21,10 @@ fn extract_text_content(content: &[Content]) -> String {
     content
         .iter()
         .filter_map(|c| {
-            if let Ok(json) = serde_json::to_value(c) {
-                if let Some(text) = json.get("text") {
-                    return text.as_str().map(|s| s.to_string());
-                }
+            if let Ok(json) = serde_json::to_value(c)
+                && let Some(text) = json.get("text")
+            {
+                return text.as_str().map(|s| s.to_string());
             }
             None
         })
