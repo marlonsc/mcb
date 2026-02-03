@@ -88,7 +88,19 @@ where
     file_hash_store: Arc<H>,
 }
 
-/// Trait for submodule collection (allows mocking)
+/// Trait for submodule collection (allows mocking).
+///
+/// # Example
+///
+/// ```ignore
+/// struct MockCollector;
+/// #[async_trait]
+/// impl SubmoduleCollector for MockCollector {
+///     async fn collect(&self, _: &Path, _: &str, _: usize) -> Result<Vec<SubmoduleInfo>> {
+///         Ok(Vec::new())
+///     }
+/// }
+/// ```
 #[async_trait::async_trait]
 pub trait SubmoduleCollector: Send + Sync {
     async fn collect(
