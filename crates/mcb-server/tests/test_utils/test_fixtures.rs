@@ -279,6 +279,7 @@ pub async fn create_test_mcp_server() -> McpServer {
         .with_search_service(services.search_service)
         .with_validation_service(validation_service)
         .with_memory_service(services.memory_service)
+        .with_agent_session_service(services.agent_session_service)
         .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")

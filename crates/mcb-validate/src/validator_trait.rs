@@ -57,6 +57,7 @@ impl ValidatorRegistry {
     }
 
     /// Register a validator (builder pattern)
+    #[must_use]
     pub fn with_validator(mut self, validator: Box<dyn Validator>) -> Self {
         self.register(validator);
         self

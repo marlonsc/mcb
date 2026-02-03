@@ -4,6 +4,7 @@
 //! Ensures all required dependencies are provided before server construction.
 
 use crate::McpServer;
+use mcb_application::ports::services::AgentSessionServiceInterface;
 use mcb_application::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     SearchServiceInterface, ValidationServiceInterface,
@@ -22,6 +23,7 @@ pub struct McpServerBuilder {
     search_service: Option<Arc<dyn SearchServiceInterface>>,
     validation_service: Option<Arc<dyn ValidationServiceInterface>>,
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
+    agent_session_service: Option<Arc<dyn AgentSessionServiceInterface>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
 }
 
@@ -85,6 +87,15 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the agent session service
+    pub fn with_agent_session_service(
+        mut self,
+        service: Arc<dyn AgentSessionServiceInterface>,
+    ) -> Self {
+        self.agent_session_service = Some(service);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -118,6 +129,9 @@ impl McpServerBuilder {
         let memory_service = self
             .memory_service
             .ok_or(BuilderError::MissingDependency("memory service"))?;
+        let agent_session_service = self
+            .agent_session_service
+            .ok_or(BuilderError::MissingDependency("agent session service"))?;
         let vcs_provider = self
             .vcs_provider
             .ok_or(BuilderError::MissingDependency("vcs provider"))?;
@@ -128,6 +142,7 @@ impl McpServerBuilder {
             search_service,
             validation_service,
             memory_service,
+            agent_session_service,
             vcs_provider,
         ))
     }

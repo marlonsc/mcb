@@ -5,7 +5,7 @@ use mcb_server::tools::registry::create_tool_list;
 #[test]
 fn test_tool_definitions_create_valid_tools() {
     let tools = create_tool_list().expect("should create tool list");
-    assert_eq!(tools.len(), 17);
+    assert_eq!(tools.len(), 23);
 
     let names: Vec<_> = tools.iter().map(|t| t.name.as_ref()).collect();
     // Core tools
@@ -29,6 +29,13 @@ fn test_tool_definitions_create_valid_tools() {
     assert!(names.contains(&"memory_get_observations"));
     assert!(names.contains(&"memory_inject_context"));
     assert!(names.contains(&"memory_search"));
+    // Agent session tracking tools
+    assert!(names.contains(&"create_agent_session"));
+    assert!(names.contains(&"get_agent_session"));
+    assert!(names.contains(&"update_agent_session"));
+    assert!(names.contains(&"list_agent_sessions"));
+    assert!(names.contains(&"store_tool_call"));
+    assert!(names.contains(&"store_delegation"));
 }
 
 #[test]

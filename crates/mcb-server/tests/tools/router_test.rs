@@ -46,7 +46,7 @@ fn test_tool_definitions_clear_index() {
 #[test]
 fn test_create_tool_list() {
     let tools = create_tool_list().expect("Should create tool list");
-    assert_eq!(tools.len(), 17, "Should have 17 tools");
+    assert_eq!(tools.len(), 23, "Should have 23 tools");
 
     let names: Vec<&str> = tools.iter().map(|t| &*t.name).collect();
     // Core tools
@@ -70,4 +70,11 @@ fn test_create_tool_list() {
     assert!(names.contains(&"memory_get_observations"));
     assert!(names.contains(&"memory_inject_context"));
     assert!(names.contains(&"memory_search"));
+    // Agent session tracking tools
+    assert!(names.contains(&"create_agent_session"));
+    assert!(names.contains(&"get_agent_session"));
+    assert!(names.contains(&"update_agent_session"));
+    assert!(names.contains(&"list_agent_sessions"));
+    assert!(names.contains(&"store_tool_call"));
+    assert!(names.contains(&"store_delegation"));
 }

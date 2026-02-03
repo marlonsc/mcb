@@ -1,5 +1,5 @@
-// Clippy allows for complex patterns in validation code
-// These allows are needed for mcb-validate which has complex parsing and validation logic
+#![allow(clippy::unused_self)]
+#![allow(clippy::unused_async)]
 
 //! Architecture Validation for MCP Context Browser
 //!

@@ -143,6 +143,7 @@ impl ValidationSummary {
 
 impl ValidationReport {
     /// Returns violation sections (title, violations) for dynamic report rendering.
+    #[allow(clippy::too_many_lines)]
     fn violation_sections(&self) -> Vec<ViolationSection<'_>> {
         vec![
             (
@@ -322,7 +323,7 @@ impl Reporter {
             report.summary.total_violations
         );
         for (label, count) in report.summary.summary_rows() {
-            let _ = writeln!(output, "  {label:<17} {}", count);
+            let _ = writeln!(output, "  {label:<17} {count}");
         }
         let _ = writeln!(output);
 

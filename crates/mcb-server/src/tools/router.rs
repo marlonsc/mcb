@@ -10,19 +10,22 @@ use std::sync::Arc;
 
 use crate::args::{
     AnalyzeComplexityArgs, AnalyzeImpactArgs, ClearIndexArgs, CompareBranchesArgs,
-    CreateSessionSummaryArgs, GetIndexingStatusArgs, GetSessionSummaryArgs, GetValidationRulesArgs,
-    IndexCodebaseArgs, IndexVcsRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
-    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemorySearchArgs, MemoryTimelineArgs,
-    SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs,
-    ValidateArchitectureArgs, ValidateFileArgs,
+    CreateAgentSessionArgs, CreateSessionSummaryArgs, GetAgentSessionArgs, GetIndexingStatusArgs,
+    GetSessionSummaryArgs, GetValidationRulesArgs, IndexCodebaseArgs, IndexVcsRepositoryArgs,
+    ListAgentSessionsArgs, ListRepositoriesArgs, ListValidatorsArgs, MemoryGetObservationsArgs,
+    MemoryInjectContextArgs, MemorySearchArgs, MemoryTimelineArgs, SearchBranchArgs,
+    SearchCodeArgs, SearchMemoriesArgs, StoreDelegationArgs, StoreObservationArgs,
+    StoreToolCallArgs, UpdateAgentSessionArgs, ValidateArchitectureArgs, ValidateFileArgs,
 };
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
-    CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexVcsRepositoryHandler,
+    CreateAgentSessionHandler, CreateSessionSummaryHandler, GetAgentSessionHandler,
+    GetIndexingStatusHandler, GetSessionSummaryHandler, GetValidationRulesHandler,
+    IndexCodebaseHandler, IndexVcsRepositoryHandler, ListAgentSessionsHandler,
     ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
     MemoryInjectContextHandler, MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler,
-    SearchCodeHandler, SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
+    SearchCodeHandler, SearchMemoriesHandler, StoreDelegationHandler, StoreObservationHandler,
+    StoreToolCallHandler, UpdateAgentSessionHandler, ValidateArchitectureHandler,
     ValidateFileHandler,
 };
 
@@ -73,6 +76,18 @@ pub struct ToolHandlers {
     pub memory_inject_context: Arc<MemoryInjectContextHandler>,
     /// Handler for token-efficient memory search (Step 1 - MEM-04a)
     pub memory_search: Arc<MemorySearchHandler>,
+    /// Handler for creating agent sessions
+    pub create_agent_session: Arc<CreateAgentSessionHandler>,
+    /// Handler for getting agent session details
+    pub get_agent_session: Arc<GetAgentSessionHandler>,
+    /// Handler for updating agent sessions
+    pub update_agent_session: Arc<UpdateAgentSessionHandler>,
+    /// Handler for listing agent sessions
+    pub list_agent_sessions: Arc<ListAgentSessionsHandler>,
+    /// Handler for storing tool calls
+    pub store_tool_call: Arc<StoreToolCallHandler>,
+    /// Handler for storing delegations
+    pub store_delegation: Arc<StoreDelegationHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -182,6 +197,30 @@ pub async fn route_tool_call(
         "memory_search" => {
             let args = parse_args::<MemorySearchArgs>(&request)?;
             handlers.memory_search.handle(Parameters(args)).await
+        }
+        "create_agent_session" => {
+            let args = parse_args::<CreateAgentSessionArgs>(&request)?;
+            handlers.create_agent_session.handle(Parameters(args)).await
+        }
+        "get_agent_session" => {
+            let args = parse_args::<GetAgentSessionArgs>(&request)?;
+            handlers.get_agent_session.handle(Parameters(args)).await
+        }
+        "update_agent_session" => {
+            let args = parse_args::<UpdateAgentSessionArgs>(&request)?;
+            handlers.update_agent_session.handle(Parameters(args)).await
+        }
+        "list_agent_sessions" => {
+            let args = parse_args::<ListAgentSessionsArgs>(&request)?;
+            handlers.list_agent_sessions.handle(Parameters(args)).await
+        }
+        "store_tool_call" => {
+            let args = parse_args::<StoreToolCallArgs>(&request)?;
+            handlers.store_tool_call.handle(Parameters(args)).await
+        }
+        "store_delegation" => {
+            let args = parse_args::<StoreDelegationArgs>(&request)?;
+            handlers.store_delegation.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

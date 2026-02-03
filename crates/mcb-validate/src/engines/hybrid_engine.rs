@@ -99,17 +99,20 @@ impl RuleViolation {
         }
     }
 
+    #[must_use]
     pub fn with_file(mut self, file: std::path::PathBuf) -> Self {
         self.file = Some(file);
         self
     }
 
+    #[must_use]
     pub fn with_location(mut self, line: usize, column: usize) -> Self {
         self.line = Some(line);
         self.column = Some(column);
         self
     }
 
+    #[must_use]
     pub fn with_context(mut self, context: impl Into<String>) -> Self {
         self.context = Some(context.into());
         self
@@ -190,6 +193,7 @@ impl HybridRuleEngine {
             }
         };
 
+        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -211,6 +215,7 @@ impl HybridRuleEngine {
 
         let violations = self.router.execute(rule_definition, context).await?;
 
+        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -351,6 +356,7 @@ impl HybridRuleEngine {
             }
         }
 
+        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {

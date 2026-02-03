@@ -200,6 +200,7 @@ impl Default for ArchitectureRulesConfig {
 
 /// Layer boundary configuration
 #[derive(Debug, Clone, Deserialize)]
+#[allow(clippy::struct_field_names)]
 pub struct LayerBoundariesConfig {
     /// Allowed internal dependencies for domain layer
     #[serde(default)]
@@ -395,6 +396,7 @@ impl Default for SolidRulesConfig {
 
 /// Validator enable/disable flags
 #[derive(Debug, Clone, Deserialize)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct ValidatorsConfig {
     #[serde(default = "default_true")]
     pub dependency: bool,

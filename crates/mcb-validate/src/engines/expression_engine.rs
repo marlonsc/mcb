@@ -37,16 +37,15 @@ impl ExpressionEngine {
     }
 
     /// Build context from rule context for expression evaluation
+    #[allow(clippy::unused_self, clippy::cast_possible_wrap)]
     fn build_eval_context(&self, rule_context: &RuleContext) -> HashMapContext {
         let mut ctx = HashMapContext::new();
 
-        // Add file count
         let _ = ctx.set_value(
             "file_count".to_string(),
             EvalValue::Int(rule_context.file_contents.len() as i64),
         );
 
-        // Add workspace root path length
         let _ = ctx.set_value(
             "workspace_path_len".to_string(),
             EvalValue::Int(rule_context.workspace_root.to_string_lossy().len() as i64),
@@ -225,7 +224,6 @@ impl RuleEngine for ExpressionEngine {
             .and_then(|v| v.as_str())
             .map_or(ViolationCategory::Quality, |c| match c {
                 "architecture" => ViolationCategory::Architecture,
-                "quality" => ViolationCategory::Quality,
                 "performance" => ViolationCategory::Performance,
                 _ => ViolationCategory::Quality,
             });

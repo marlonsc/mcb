@@ -12,6 +12,7 @@ use rmcp::model::{
     ServerCapabilities, ServerInfo,
 };
 
+use mcb_application::ports::services::AgentSessionServiceInterface;
 use mcb_application::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     SearchServiceInterface, ValidationServiceInterface,
@@ -20,11 +21,13 @@ use mcb_domain::ports::providers::VcsProvider;
 
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
-    CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexVcsRepositoryHandler,
+    CreateAgentSessionHandler, CreateSessionSummaryHandler, GetAgentSessionHandler,
+    GetIndexingStatusHandler, GetSessionSummaryHandler, GetValidationRulesHandler,
+    IndexCodebaseHandler, IndexVcsRepositoryHandler, ListAgentSessionsHandler,
     ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
     MemoryInjectContextHandler, MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler,
-    SearchCodeHandler, SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
+    SearchCodeHandler, SearchMemoriesHandler, StoreDelegationHandler, StoreObservationHandler,
+    StoreToolCallHandler, UpdateAgentSessionHandler, ValidateArchitectureHandler,
     ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
@@ -49,6 +52,7 @@ struct McpServices {
     context: Arc<dyn ContextServiceInterface>,
     search: Arc<dyn SearchServiceInterface>,
     memory: Arc<dyn MemoryServiceInterface>,
+    agent_session: Arc<dyn AgentSessionServiceInterface>,
     vcs: Arc<dyn VcsProvider>,
 }
 
@@ -60,6 +64,7 @@ impl McpServer {
         search_service: Arc<dyn SearchServiceInterface>,
         validation_service: Arc<dyn ValidationServiceInterface>,
         memory_service: Arc<dyn MemoryServiceInterface>,
+        agent_session_service: Arc<dyn AgentSessionServiceInterface>,
         vcs_provider: Arc<dyn VcsProvider>,
     ) -> Self {
         let handlers = ToolHandlers {
@@ -95,6 +100,18 @@ impl McpServer {
                 memory_service.clone(),
             )),
             memory_search: Arc::new(MemorySearchHandler::new(memory_service.clone())),
+            create_agent_session: Arc::new(CreateAgentSessionHandler::new(
+                agent_session_service.clone(),
+            )),
+            get_agent_session: Arc::new(GetAgentSessionHandler::new(agent_session_service.clone())),
+            update_agent_session: Arc::new(UpdateAgentSessionHandler::new(
+                agent_session_service.clone(),
+            )),
+            list_agent_sessions: Arc::new(ListAgentSessionsHandler::new(
+                agent_session_service.clone(),
+            )),
+            store_tool_call: Arc::new(StoreToolCallHandler::new(agent_session_service.clone())),
+            store_delegation: Arc::new(StoreDelegationHandler::new(agent_session_service.clone())),
         };
 
         Self {
@@ -103,6 +120,7 @@ impl McpServer {
                 context: context_service,
                 search: search_service,
                 memory: memory_service,
+                agent_session: agent_session_service,
                 vcs: vcs_provider,
             },
             handlers,
@@ -242,6 +260,30 @@ impl McpServer {
     /// Access to memory search handler (for HTTP transport)
     pub fn memory_search_handler(&self) -> Arc<MemorySearchHandler> {
         Arc::clone(&self.handlers.memory_search)
+    }
+
+    pub fn create_agent_session_handler(&self) -> Arc<CreateAgentSessionHandler> {
+        Arc::clone(&self.handlers.create_agent_session)
+    }
+
+    pub fn get_agent_session_handler(&self) -> Arc<GetAgentSessionHandler> {
+        Arc::clone(&self.handlers.get_agent_session)
+    }
+
+    pub fn update_agent_session_handler(&self) -> Arc<UpdateAgentSessionHandler> {
+        Arc::clone(&self.handlers.update_agent_session)
+    }
+
+    pub fn list_agent_sessions_handler(&self) -> Arc<ListAgentSessionsHandler> {
+        Arc::clone(&self.handlers.list_agent_sessions)
+    }
+
+    pub fn store_tool_call_handler(&self) -> Arc<StoreToolCallHandler> {
+        Arc::clone(&self.handlers.store_tool_call)
+    }
+
+    pub fn store_delegation_handler(&self) -> Arc<StoreDelegationHandler> {
+        Arc::clone(&self.handlers.store_delegation)
     }
 }
 
