@@ -1,4 +1,4 @@
-//! Git entities for repository, branch, and commit information.
+//! VCS entities for repository, branch, and commit information.
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -40,9 +40,9 @@ impl From<&str> for RepositoryId {
     }
 }
 
-/// Git repository metadata
+/// VCS repository metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GitRepository {
+pub struct VcsRepository {
     pub id: RepositoryId,
     pub path: PathBuf,
     pub default_branch: String,
@@ -50,40 +50,28 @@ pub struct GitRepository {
     pub remote_url: Option<String>,
 }
 
-/// Git branch information
+/// VCS branch information (includes a stable identifier used by the Hybrid Search phase). The ID
+/// is typically derived from branch metadata so the Phase 6 observers can point to a concrete
+/// branch even when names change.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GitBranch {
+pub struct VcsBranch {
+    pub id: String,
     pub name: String,
     pub head_commit: String,
     pub is_default: bool,
     pub upstream: Option<String>,
 }
 
-/// Git commit metadata
+/// VCS commit metadata (includes stable ID for Phase 6 observation tracking)
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GitCommit {
+pub struct VcsCommit {
+    pub id: String,
     pub hash: String,
     pub message: String,
     pub author: String,
     pub author_email: String,
     pub timestamp: i64,
     pub parent_hashes: Vec<String>,
-}
-
-impl GitCommit {
-    #[must_use]
-    pub fn short_hash(&self) -> &str {
-        if self.hash.len() >= 7 {
-            &self.hash[..7]
-        } else {
-            &self.hash
-        }
-    }
-
-    #[must_use]
-    pub fn first_line(&self) -> &str {
-        self.message.lines().next().unwrap_or(&self.message)
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -96,6 +84,7 @@ pub enum DiffStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileDiff {
+    pub id: String,
     pub path: PathBuf,
     pub status: DiffStatus,
     pub additions: usize,
@@ -104,6 +93,7 @@ pub struct FileDiff {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefDiff {
+    pub id: String,
     pub base_ref: String,
     pub head_ref: String,
     pub files: Vec<FileDiff>,

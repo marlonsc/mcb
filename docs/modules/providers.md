@@ -160,10 +160,10 @@ Provider tests are located in `crates/mcb-providers/tests/`.
 
 ## Project Alignment
 
-- **Phase context**: Sync provider feature work with `docs/context/project-state.md` and `.planning/STATE.md` so Phase 6 Hybrid Search, the 06-02 plan, and the release branch `release/v0.1.5` share the same provider contracts.
-- **Architecture guidance**: Use `docs/architecture/ARCHITECTURE.md` and `docs/context/technical-patterns.md` for linkme/async/error expectations when adding new providers.
-- **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` for validated requirements (MCP protocol, embeddings, vector stores) and v0.2.0 objectives (git-aware indexing, session memory, advanced browser) to keep provider health, routing, and config compatible.
-- **Integrations**: `docs/context/integrations.md` lists provider/vector-store matrices; updating that file alongside new provider capabilities keeps the documentation ecosystem coherent.
+-   **Phase context**: Sync provider feature work with `docs/context/project-state.md` and `.planning/STATE.md` so Phase 6 Hybrid Search, the 06-02 plan, and the release branch `release/v0.1.5` share the same provider contracts.
+-   **Architecture guidance**: Use `docs/architecture/ARCHITECTURE.md` and `docs/context/technical-patterns.md` for linkme/async/error expectations when adding new providers.
+-   **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` for validated requirements (MCP protocol, embeddings, vector stores) and v0.2.0 objectives (git-aware indexing, session memory, advanced browser) to keep provider health, routing, and config compatible.
+-   **Integrations**: `docs/context/integrations.md` lists provider/vector-store matrices; updating that file alongside new provider capabilities keeps the documentation ecosystem coherent.
 
 ---
 

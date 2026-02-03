@@ -6,6 +6,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use quick_xml::Reader;
 use quick_xml::events::Event;
+use tokio::fs::read_to_string;
 
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
@@ -98,7 +99,7 @@ impl MavenDetector {
                 }
                 Ok(Event::Eof) => break,
                 Err(_) => break,
-                _ => {}
+                Ok(_) => continue,
             }
         }
 
@@ -128,7 +129,7 @@ impl ProjectDetector for MavenDetector {
             return Ok(None);
         }
 
-        let content = match std::fs::read_to_string(&pom_path) {
+        let content = match read_to_string(&pom_path).await {
             Ok(c) => c,
             Err(e) => {
                 tracing::debug!(path = ?pom_path, error = %e, "Failed to read pom.xml");

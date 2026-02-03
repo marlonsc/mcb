@@ -150,7 +150,10 @@ impl SubmoduleService {
                     continue;
                 }
 
+                let submodule_id = format!("{}:{}", parent_id, path);
+
                 let info = SubmoduleInfo {
+                    id: submodule_id,
                     path: path.clone(),
                     url,
                     commit_hash,
@@ -215,44 +218,4 @@ pub async fn collect_submodules_with_depth(
     SubmoduleService::new(config)
         .collect_submodules(repo_path, parent_repo_id)
         .await
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::TempDir;
-
-    #[tokio::test]
-    async fn test_collect_submodules_empty_repo() {
-        // Create a temporary git repo without submodules
-        let temp = TempDir::new().unwrap();
-        let repo = Repository::init(temp.path()).unwrap();
-
-        // Create an initial commit
-        let sig = git2::Signature::now("Test", "test@test.com").unwrap();
-        let tree_id = repo.index().unwrap().write_tree().unwrap();
-        let tree = repo.find_tree(tree_id).unwrap();
-        repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])
-            .unwrap();
-
-        let result = collect_submodules(temp.path(), "test-repo").await;
-        assert!(result.is_ok());
-        assert!(result.unwrap().is_empty());
-    }
-
-    #[test]
-    fn test_submodule_info_collection_name() {
-        let info = SubmoduleInfo {
-            path: "libs/tree-sitter".to_string(),
-            url: "https://github.com/tree-sitter/tree-sitter".to_string(),
-            commit_hash: "abc123".to_string(),
-            parent_repo_id: "parent-repo".to_string(),
-            depth: 1,
-            name: "tree-sitter".to_string(),
-            is_initialized: true,
-        };
-
-        assert_eq!(info.collection_name("mcb"), "mcb/libs-tree-sitter");
-        assert_eq!(info.repo_id(), "parent-repo:libs/tree-sitter");
-    }
 }

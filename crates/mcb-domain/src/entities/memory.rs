@@ -1,6 +1,7 @@
 //! Memory entities for observation storage and session tracking.
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ObservationType {
@@ -39,13 +40,27 @@ impl std::str::FromStr for ObservationType {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObservationMetadata {
+    pub id: String,
     pub session_id: Option<String>,
     pub repo_id: Option<String>,
     pub file_path: Option<String>,
     pub branch: Option<String>,
     pub commit: Option<String>,
+}
+
+impl Default for ObservationMetadata {
+    fn default() -> Self {
+        Self {
+            id: Uuid::new_v4().to_string(),
+            session_id: None,
+            repo_id: None,
+            file_path: None,
+            branch: None,
+            commit: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,6 +88,7 @@ pub struct SessionSummary {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemorySearchResult {
+    pub id: String,
     pub observation: Observation,
     pub similarity_score: f32,
 }

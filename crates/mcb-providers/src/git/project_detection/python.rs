@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde::Deserialize;
+use tokio::fs::read_to_string;
 
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
@@ -60,7 +61,7 @@ impl ProjectDetector for PythonDetector {
 
         // Try pyproject.toml first (modern standard)
         if pyproject_path.exists() {
-            if let Ok(content) = std::fs::read_to_string(&pyproject_path) {
+            if let Ok(content) = read_to_string(&pyproject_path).await {
                 if let Ok(pyproject) = toml::from_str::<PyProject>(&content) {
                     if let Some(project) = pyproject.project {
                         return Ok(Some(ProjectType::Python {
@@ -80,7 +81,7 @@ impl ProjectDetector for PythonDetector {
 
         // Fall back to requirements.txt
         if requirements_path.exists() {
-            if let Ok(content) = std::fs::read_to_string(&requirements_path) {
+            if let Ok(content) = read_to_string(&requirements_path).await {
                 let dependencies = Self::parse_requirements(&content);
                 return Ok(Some(ProjectType::Python {
                     name: path

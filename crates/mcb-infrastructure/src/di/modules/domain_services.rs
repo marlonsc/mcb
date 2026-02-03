@@ -51,6 +51,11 @@ pub struct DomainServicesContainer {
     pub vcs_provider: Arc<dyn VcsProvider>,
 }
 
+/// Runtime dependencies required to assemble Phase 6 services (Memory Search + Hybrid Search).
+///
+/// Contains providers, repositories, caches, and event buses that map directly to the Phase 6 pipeline
+/// described in `.planning/STATE.md` and `docs/context/project-state.md` so injecting the right
+/// combination keeps the memory/indexing services aligned with the roadmap.
 pub struct ServiceDependencies {
     pub cache: SharedCacheProvider,
     pub crypto: CryptoService,

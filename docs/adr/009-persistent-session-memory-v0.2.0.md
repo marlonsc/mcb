@@ -7,7 +7,6 @@
 > **Amendment 2026-02-02**: Tool naming convention updated to use `memory_` prefix
 > for all memory-related MCP tools to avoid namespace collisions with code search
 > tools and ensure stable API surface for v1.0.0.
-
 > Not yet implemented. Target crate structure for v0.2.0:
 >
 > -   `crates/mcb-domain/src/memory.rs` - Memory domain types
@@ -70,16 +69,18 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 | `inject_context` | `memory_inject_context` | Avoids future collisions |
 
 **Existing tools retained** (already namespaced):
-- `store_observation` → alias for `memory_store_observation`
-- `search_memories` → alias for `memory_search`
-- `get_session_summary` → unchanged (session domain)
-- `create_session_summary` → unchanged (session domain)
+
+-   `store_observation` → alias for `memory_store_observation`
+-   `search_memories` → alias for `memory_search`
+-   `get_session_summary` → unchanged (session domain)
+-   `create_session_summary` → unchanged (session domain)
 
 **Compatibility policy**:
-1. Aliases kept for at least one major version cycle
-2. New tools MUST use `memory_` prefix
-3. Experimental tools marked in description until stable
-4. Response envelope includes `_api_version` field for client compatibility
+
+1.  Aliases kept for at least one major version cycle
+2.  New tools MUST use `memory_` prefix
+3.  Experimental tools marked in description until stable
+4.  Response envelope includes `_api_version` field for client compatibility
 
 ### Architecture Overview
 
@@ -1400,10 +1401,10 @@ fn reciprocal_rank_fusion(
 
 ### Search Flow
 
-1. **FTS retrieval**: `observations_fts MATCH ?` → ranked by BM25
-2. **Vector retrieval**: `VectorStoreProvider::search_similar("memories", query_embedding, limit)`
-3. **Fusion**: RRF merge with k=60
-4. **Return**: `ObservationIndex` with fused scores
+1.  **FTS retrieval**: `observations_fts MATCH ?` → ranked by BM25
+2.  **Vector retrieval**: `VectorStoreProvider::search_similar("memories", query_embedding, limit)`
+3.  **Fusion**: RRF merge with k=60
+4.  **Return**: `ObservationIndex` with fused scores
 
 ## Related ADRs
 

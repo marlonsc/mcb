@@ -3,7 +3,7 @@
 use crate::args::MemoryInjectContextArgs;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
-use mcb_domain::utils::git_context::GitContext;
+use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
@@ -30,11 +30,11 @@ struct ContextBundle {
     observation_ids: Vec<String>,
     context: String,
     estimated_tokens: usize,
-    git_context: GitBootstrap,
+    vcs_context: VcsBootstrap,
 }
 
 #[derive(Serialize)]
-struct GitBootstrap {
+struct VcsBootstrap {
     branch: Option<String>,
     commit: Option<String>,
 }
@@ -110,7 +110,7 @@ impl MemoryInjectContextHandler {
                 let context = context_parts.join("\n\n");
                 let estimated_tokens = context.len() / 4;
 
-                let git_ctx = GitContext::capture();
+                let vcs_ctx = VcsContext::capture();
 
                 let response = ContextBundle {
                     session_id: args.session_id,
@@ -118,9 +118,9 @@ impl MemoryInjectContextHandler {
                     observation_ids,
                     context,
                     estimated_tokens,
-                    git_context: GitBootstrap {
-                        branch: git_ctx.branch,
-                        commit: git_ctx.commit,
+                    vcs_context: VcsBootstrap {
+                        branch: vcs_ctx.branch,
+                        commit: vcs_ctx.commit,
                     },
                 };
 

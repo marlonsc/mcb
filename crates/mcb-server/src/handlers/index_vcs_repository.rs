@@ -1,6 +1,6 @@
-//! Handler for the `index_git_repository` MCP tool
+//! Handler for the `index_vcs_repository` MCP tool
 
-use crate::args::IndexGitRepositoryArgs;
+use crate::args::IndexVcsRepositoryArgs;
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -10,7 +10,9 @@ use std::path::Path;
 use std::sync::Arc;
 use validator::Validate;
 
-pub struct IndexGitRepositoryHandler {
+/// Handler for the MCP `index_vcs_repository` tool that wires the repository indexing phase to Phase 6
+/// by invoking the VCS provider, collecting branch/file/commit metrics, and returning a structured report.
+pub struct IndexVcsRepositoryHandler {
     vcs_provider: Arc<dyn VcsProvider>,
 }
 
@@ -24,14 +26,14 @@ struct IndexResult {
     commits_indexed: usize,
 }
 
-impl IndexGitRepositoryHandler {
+impl IndexVcsRepositoryHandler {
     pub fn new(vcs_provider: Arc<dyn VcsProvider>) -> Self {
         Self { vcs_provider }
     }
 
     pub async fn handle(
         &self,
-        Parameters(args): Parameters<IndexGitRepositoryArgs>,
+        Parameters(args): Parameters<IndexVcsRepositoryArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|e| McpError::invalid_params(e.to_string(), None))?;

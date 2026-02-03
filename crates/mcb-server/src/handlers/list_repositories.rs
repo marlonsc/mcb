@@ -7,6 +7,8 @@ use rmcp::model::{CallToolResult, Content};
 use serde::Serialize;
 use validator::Validate;
 
+/// Handler for `list-repositories` that exposes repository metadata to tooling dashboards so Phase 6
+/// (Memory Search) can keep `release/v0.1.5` repository visibility up to date.
 pub struct ListRepositoriesHandler;
 
 #[derive(Serialize)]

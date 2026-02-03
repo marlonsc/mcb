@@ -44,6 +44,7 @@
 **Tool:** `memory_inject_context`
 
 **Parameters:**
+
 ```json
 {
   "session_id": "sess-abc123",
@@ -55,6 +56,7 @@
 ```
 
 **Response:**
+
 ```json
 {
   "session_id": "sess-abc123",
@@ -72,29 +74,33 @@
 ## Implementation Checklist
 
 ### Handler Implementation (✅ DONE)
-- [x] `memory_inject_context` handler created
-- [x] GitBootstrap struct includes branch + commit
-- [x] Context formatted for prompt injection
-- [x] Token budgeting support
+
+-   [x] `memory_inject_context` handler created
+-   [x] GitBootstrap struct includes branch + commit
+-   [x] Context formatted for prompt injection
+-   [x] Token budgeting support
 
 ### Storage Layer (✅ DONE)
-- [x] ObservationMetadata includes commit field
-- [x] SqliteMemoryRepository supports git filtering
-- [x] MemoryFilter includes branch/commit fields
+
+-   [x] ObservationMetadata includes commit field
+-   [x] SqliteMemoryRepository supports git filtering
+-   [x] MemoryFilter includes branch/commit fields
 
 ### Context Tagging (✅ DONE)
-- [x] store_observation auto-tags with git context
-- [x] GitContext utility captures branch, commit, repo_id
-- [x] Observations can be filtered by git branch/commit
+
+-   [x] store_observation auto-tags with git context
+-   [x] GitContext utility captures branch, commit, repo_id
+-   [x] Observations can be filtered by git branch/commit
 
 ## Integration Points
 
 ### 1. MCP Server Integration
 
 The `memory_inject_context` tool is registered in the MCP server and available via:
-- HTTP endpoint (post to `/rpc`)
-- Stdio transport
-- Any MCP client (Claude, other AI models)
+
+-   HTTP endpoint (post to `/rpc`)
+-   Stdio transport
+-   Any MCP client (Claude, other AI models)
 
 ### 2. AI Model Integration
 
@@ -139,7 +145,7 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 | Layer | Operation | Avg Tokens | Count |
 |-------|-----------|-----------|-------|
 | 1 | memory_inject_context (index) | 50-100 | 1 |
-| 2 | Response context string | 1000-1500 | 1 |
+| 2 | Response context String | 1000-1500 | 1 |
 | 3 | Observation details (if needed) | 300-500 | per obs |
 
 **Total: ~1500-2000 tokens** vs **50,000+ tokens** for fetching all observations upfront
@@ -148,17 +154,18 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 ## Success Criteria (Phase 7)
 
-- [x] **MEM-05**: Context injection generates context for SessionStart ✓
-- [x] **MEM-06**: Observations tagged with branch and commit ✓
-- [x] **MEM-11**: MCP tool `inject_context` works end-to-end ✓
-- [ ] **Acceptance Test**: SessionStart hook integration test
-- [ ] **Documentation**: Integration guide for AI models
+-   [x] **MEM-05**: Context injection generates context for SessionStart ✓
+-   [x] **MEM-06**: Observations tagged with branch and commit ✓
+-   [x] **MEM-11**: MCP tool `inject_context` works end-to-end ✓
+-   [ ] **Acceptance Test**: SessionStart hook integration test
+-   [ ] **Documentation**: Integration guide for AI models
 
 ## Example Usage Scenarios
 
 ### Scenario 1: Architecture Decision Continuity
 
 **Previous Session:**
+
 ```
 [DECISION] Context: Migrated from FSTree to SQLite for memory persistence
 - Rationale: Need indexed search + dynamic filtering
@@ -166,13 +173,15 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 ```
 
 **Current SessionStart:**
-- AI automatically references this decision
-- Prevents re-discussing the same trade-offs
-- Builds on architectural choices already made
+
+-   AI automatically references this decision
+-   Prevents re-discussing the same trade-offs
+-   Builds on architectural choices already made
 
 ### Scenario 2: Code Context Awareness
 
 **Previous Session:**
+
 ```
 [CODE_CHANGE] Implemented memory::FTS5 integration
 - Files: crates/mcb-infrastructure/src/repositories/memory.rs
@@ -181,13 +190,15 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 ```
 
 **Current SessionStart:**
-- AI knows about recent code changes
-- Can reference specific implementations
-- Avoids duplicating work
+
+-   AI knows about recent code changes
+-   Can reference specific implementations
+-   Avoids duplicating work
 
 ### Scenario 3: Learning Continuity
 
 **Previous Session:**
+
 ```
 [LEARNING] git_commit field was needed for observation context
 - Issue: Couldn't filter by specific commit range
@@ -196,9 +207,10 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 ```
 
 **Current SessionStart:**
-- AI references this learning
-- Makes decisions based on precedent
-- Maintains consistency across sessions
+
+-   AI references this learning
+-   Makes decisions based on precedent
+-   Maintains consistency across sessions
 
 ## Configuration
 
@@ -218,32 +230,34 @@ See `mcb_application::ports::MemoryServiceInterface` for service-level configura
 ## Testing
 
 ### Unit Tests
-- ✓ GitContext captures branch/commit correctly
-- ✓ MemoryFilter applies git filters correctly
-- ✓ memory_inject_context returns proper format
+
+-   ✓ GitContext captures branch/commit correctly
+-   ✓ MemoryFilter applies git filters correctly
+-   ✓ memory_inject_context returns proper format
 
 ### Integration Tests (Phase 7 Task 7)
-- [ ] SessionStart hook calls memory_inject_context
-- [ ] Context is properly injected into prompt
-- [ ] Git context is available in response
-- [ ] Token budgeting works correctly
+
+-   [ ] SessionStart hook calls memory_inject_context
+-   [ ] Context is properly injected into prompt
+-   [ ] Git context is available in response
+-   [ ] Token budgeting works correctly
 
 ## Related Issues
 
-- **MEM-01**: SQLite observation storage (Phase 5) ✓
-- **MEM-02**: Session summaries (Phase 5) ✓
-- **MEM-03**: Hybrid search (Phase 6) ✓
-- **MEM-04**: Progressive disclosure (Phase 6) ✓
-- **MEM-05**: Context injection (Phase 7) ✓
-- **MEM-06**: Git tagging (Phase 7) ✓
-- **MEM-11**: inject_context tool (Phase 7) ✓
+-   **MEM-01**: SQLite observation storage (Phase 5) ✓
+-   **MEM-02**: Session summaries (Phase 5) ✓
+-   **MEM-03**: Hybrid search (Phase 6) ✓
+-   **MEM-04**: Progressive disclosure (Phase 6) ✓
+-   **MEM-05**: Context injection (Phase 7) ✓
+-   **MEM-06**: Git tagging (Phase 7) ✓
+-   **MEM-11**: inject_context tool (Phase 7) ✓
 
 ## Next Steps (Phase 8+)
 
-1. **Browser Integration** (Phase 8): Display memory context in code browser
-2. **Real-time Updates** (Phase 8): SSE streaming of memory during indexing
-3. **Multi-Model Support** (Phase 9): Optimize for GPT-4, Gemini, etc.
-4. **Semantic Compression** (Phase 10): Automatically compress old memory
+1.  **Browser Integration** (Phase 8): Display memory context in code browser
+2.  **Real-time Updates** (Phase 8): SSE streaming of memory during indexing
+3.  **Multi-Model Support** (Phase 9): Optimize for GPT-4, Gemini, etc.
+4.  **Semantic Compression** (Phase 10): Automatically compress old memory
 
 ---
 

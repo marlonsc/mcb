@@ -1,5 +1,5 @@
 //! Repository ports for data persistence.
 
-pub mod memory;
+pub mod memory_repository;
 
-pub use memory::MemoryRepository;
+pub use memory_repository::MemoryRepository;

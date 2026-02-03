@@ -1,6 +1,6 @@
 //! Version Control System provider port for repository operations.
 
-use crate::entities::git::{GitBranch, GitCommit, GitRepository, RefDiff, RepositoryId};
+use crate::entities::vcs::{RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};
 use crate::error::Result;
 use async_trait::async_trait;
 use std::path::{Path, PathBuf};
@@ -13,27 +13,27 @@ use std::path::{Path, PathBuf};
 #[async_trait]
 pub trait VcsProvider: Send + Sync {
     /// Open a repository at the given path
-    async fn open_repository(&self, path: &Path) -> Result<GitRepository>;
+    async fn open_repository(&self, path: &Path) -> Result<VcsRepository>;
 
     /// Get unique repository identifier
-    fn repository_id(&self, repo: &GitRepository) -> RepositoryId;
+    fn repository_id(&self, repo: &VcsRepository) -> RepositoryId;
 
     /// List all local branches in repository
-    async fn list_branches(&self, repo: &GitRepository) -> Result<Vec<GitBranch>>;
+    async fn list_branches(&self, repo: &VcsRepository) -> Result<Vec<VcsBranch>>;
 
     /// Get commit history for a branch with optional limit
     async fn commit_history(
         &self,
-        repo: &GitRepository,
+        repo: &VcsRepository,
         branch: &str,
         limit: Option<usize>,
-    ) -> Result<Vec<GitCommit>>;
+    ) -> Result<Vec<VcsCommit>>;
 
     /// List files in a branch at HEAD
-    async fn list_files(&self, repo: &GitRepository, branch: &str) -> Result<Vec<PathBuf>>;
+    async fn list_files(&self, repo: &VcsRepository, branch: &str) -> Result<Vec<PathBuf>>;
 
     /// Read file content from a branch at HEAD
-    async fn read_file(&self, repo: &GitRepository, branch: &str, path: &Path) -> Result<String>;
+    async fn read_file(&self, repo: &VcsRepository, branch: &str, path: &Path) -> Result<String>;
 
     /// VCS type name (e.g., "git", "mercurial", "svn")
     fn vcs_name(&self) -> &str;
@@ -41,7 +41,7 @@ pub trait VcsProvider: Send + Sync {
     /// Compare two refs and return the diff
     async fn diff_refs(
         &self,
-        repo: &GitRepository,
+        repo: &VcsRepository,
         base_ref: &str,
         head_ref: &str,
     ) -> Result<RefDiff>;

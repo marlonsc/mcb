@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 /// Information about a git submodule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubmoduleInfo {
+    /// Stable identifier for the submodule (parent repo + path)
+    pub id: String,
     /// Path relative to parent repository root
     pub path: String,
     /// Submodule URL (from .gitmodules)
@@ -19,22 +21,6 @@ pub struct SubmoduleInfo {
     pub name: String,
     /// Whether the submodule is initialized
     pub is_initialized: bool,
-}
-
-impl SubmoduleInfo {
-    /// Generate a collection name for this submodule
-    /// Format: parent_collection/submodule_path
-    #[must_use]
-    pub fn collection_name(&self, parent_collection: &str) -> String {
-        format!("{}/{}", parent_collection, self.path.replace('/', "-"))
-    }
-
-    /// Generate a unique repository ID for this submodule
-    /// Based on parent + path for stable identification
-    #[must_use]
-    pub fn repo_id(&self) -> String {
-        format!("{}:{}", self.parent_repo_id, self.path)
-    }
 }
 
 /// Configuration for submodule discovery

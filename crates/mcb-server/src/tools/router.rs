@@ -11,7 +11,7 @@ use std::sync::Arc;
 use crate::args::{
     AnalyzeComplexityArgs, AnalyzeImpactArgs, ClearIndexArgs, CompareBranchesArgs,
     CreateSessionSummaryArgs, GetIndexingStatusArgs, GetSessionSummaryArgs, GetValidationRulesArgs,
-    IndexCodebaseArgs, IndexGitRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
+    IndexCodebaseArgs, IndexVcsRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
     MemoryGetObservationsArgs, MemoryInjectContextArgs, MemorySearchArgs, MemoryTimelineArgs,
     SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs,
     ValidateArchitectureArgs, ValidateFileArgs,
@@ -19,7 +19,7 @@ use crate::args::{
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
     CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, IndexVcsRepositoryHandler,
     ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
     MemoryInjectContextHandler, MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler,
     SearchCodeHandler, SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
@@ -47,8 +47,8 @@ pub struct ToolHandlers {
     pub get_validation_rules: Arc<GetValidationRulesHandler>,
     /// Handler for complexity analysis
     pub analyze_complexity: Arc<AnalyzeComplexityHandler>,
-    /// Handler for git repository indexing
-    pub index_git_repository: Arc<IndexGitRepositoryHandler>,
+    /// Handler for VCS repository indexing
+    pub index_vcs_repository: Arc<IndexVcsRepositoryHandler>,
     /// Handler for branch-specific search
     pub search_branch: Arc<SearchBranchHandler>,
     /// Handler for listing indexed repositories
@@ -122,9 +122,9 @@ pub async fn route_tool_call(
             let args = parse_args::<AnalyzeComplexityArgs>(&request)?;
             handlers.analyze_complexity.handle(Parameters(args)).await
         }
-        "index_git_repository" => {
-            let args = parse_args::<IndexGitRepositoryArgs>(&request)?;
-            handlers.index_git_repository.handle(Parameters(args)).await
+        "index_vcs_repository" => {
+            let args = parse_args::<IndexVcsRepositoryArgs>(&request)?;
+            handlers.index_vcs_repository.handle(Parameters(args)).await
         }
         "search_branch" => {
             let args = parse_args::<SearchBranchArgs>(&request)?;

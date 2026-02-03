@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use regex::Regex;
+use tokio::fs::read_to_string;
 
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
@@ -22,13 +23,16 @@ pub struct GoDetector {
 }
 
 impl GoDetector {
-    #[must_use]
-    pub fn new(_config: &ProjectDetectorConfig) -> Self {
-        Self {
-            module_re: Regex::new(r"^module\s+(\S+)").expect("valid regex"),
-            go_version_re: Regex::new(r"^go\s+(\d+\.\d+)").expect("valid regex"),
-            require_re: Regex::new(r"^\s*(\S+)\s+v").expect("valid regex"),
-        }
+    pub fn new(_config: &ProjectDetectorConfig) -> std::result::Result<Self, regex::Error> {
+        let module_re = Regex::new(r"^module\s+(\S+)")?;
+        let go_version_re = Regex::new(r"^go\s+(\d+\.\d+)")?;
+        let require_re = Regex::new(r"^\s*(\S+)\s+v")?;
+
+        Ok(Self {
+            module_re,
+            go_version_re,
+            require_re,
+        })
     }
 }
 
@@ -40,7 +44,7 @@ impl ProjectDetector for GoDetector {
             return Ok(None);
         }
 
-        let content = match std::fs::read_to_string(&gomod_path) {
+        let content = match read_to_string(&gomod_path).await {
             Ok(c) => c,
             Err(e) => {
                 tracing::debug!(path = ?gomod_path, error = %e, "Failed to read go.mod");
@@ -121,7 +125,9 @@ impl ProjectDetector for GoDetector {
 fn go_factory(
     config: &ProjectDetectorConfig,
 ) -> std::result::Result<Arc<dyn ProjectDetector>, String> {
-    Ok(Arc::new(GoDetector::new(config)))
+    GoDetector::new(config)
+        .map(|detector| Arc::new(detector) as Arc<dyn ProjectDetector>)
+        .map_err(|e| format!("Failed to initialize Go detector: {e}"))
 }
 
 #[linkme::distributed_slice(PROJECT_DETECTORS)]

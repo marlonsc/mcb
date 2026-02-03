@@ -1,5 +1,5 @@
 //! Repository implementations for data persistence.
 
-pub mod memory;
+pub mod memory_repository;
 
-pub use memory::SqliteMemoryRepository;
+pub use memory_repository::SqliteMemoryRepository;

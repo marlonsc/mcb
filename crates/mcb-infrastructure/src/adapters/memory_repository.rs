@@ -1,5 +1,3 @@
-//! SQLite-based memory repository implementation.
-
 use async_trait::async_trait;
 use mcb_domain::{
     entities::memory::{
@@ -8,13 +6,15 @@ use mcb_domain::{
     },
     error::{Error, Result},
     ports::MemoryRepository,
-    ports::repositories::memory::FtsSearchResult,
+    ports::repositories::memory_repository::FtsSearchResult,
 };
 
 use sqlx::{Row, SqlitePool};
 use std::path::PathBuf;
 use tracing::{debug, info};
 
+/// SQLite-based memory repository used by Phase 6 (Memory Search) to store observations, session
+/// summaries, and FTS indexes so hybrid search pulls consistent data across configured vector stores.
 pub struct SqliteMemoryRepository {
     pool: SqlitePool,
 }
@@ -32,7 +32,9 @@ impl SqliteMemoryRepository {
             .map_err(|e| Error::memory_with_source("Failed to connect to SQLite", e))?;
 
         let repo = Self { pool };
-        repo.init_schema().await?;
+        repo.init_schema()
+            .await
+            .map_err(|e| Error::memory_with_source("Failed to initialize memory schema", e))?;
 
         info!("Memory repository initialized at {}", db_path.display());
         Ok(repo)
@@ -44,7 +46,9 @@ impl SqliteMemoryRepository {
             .map_err(|e| Error::memory_with_source("Failed to connect to in-memory SQLite", e))?;
 
         let repo = Self { pool };
-        repo.init_schema().await?;
+        repo.init_schema()
+            .await
+            .map_err(|e| Error::memory_with_source("Failed to initialize in-memory schema", e))?;
 
         debug!("In-memory repository initialized");
         Ok(repo)
@@ -226,7 +230,9 @@ impl MemoryRepository for SqliteMemoryRepository {
             .map_err(|e| Error::memory_with_source("Failed to get observation", e))?;
 
         match row {
-            Some(r) => Ok(Some(Self::row_to_observation(&r)?)),
+            Some(r) => Ok(Some(Self::row_to_observation(&r).map_err(|e| {
+                Error::memory_with_source("Failed to decode observation row", e)
+            })?)),
             None => Ok(None),
         }
     }
@@ -239,7 +245,9 @@ impl MemoryRepository for SqliteMemoryRepository {
             .map_err(|e| Error::memory_with_source("Failed to find by hash", e))?;
 
         match row {
-            Some(r) => Ok(Some(Self::row_to_observation(&r)?)),
+            Some(r) => Ok(Some(Self::row_to_observation(&r).map_err(|e| {
+                Error::memory_with_source("Failed to decode observation row", e)
+            })?)),
             None => Ok(None),
         }
     }
@@ -353,8 +361,10 @@ impl MemoryRepository for SqliteMemoryRepository {
 
         let mut results = Vec::new();
         for (i, row) in rows.iter().enumerate() {
-            let observation = Self::row_to_observation(row)?;
+            let observation = Self::row_to_observation(row)
+                .map_err(|e| Error::memory_with_source("Failed to decode observation row", e))?;
             results.push(MemorySearchResult {
+                id: observation.id.clone(),
                 observation,
                 similarity_score: 1.0 - (i as f32 * 0.1).min(0.9),
             });
@@ -386,7 +396,10 @@ impl MemoryRepository for SqliteMemoryRepository {
 
         let mut observations = Vec::new();
         for row in rows {
-            observations.push(Self::row_to_observation(&row)?);
+            observations.push(
+                Self::row_to_observation(&row)
+                    .map_err(|e| Error::memory_with_source("Failed to decode observation", e))?,
+            );
         }
 
         Ok(observations)
@@ -465,7 +478,10 @@ impl MemoryRepository for SqliteMemoryRepository {
         let mut timeline = Vec::new();
 
         for row in before_rows.iter().rev() {
-            timeline.push(Self::row_to_observation(row)?);
+            timeline.push(
+                Self::row_to_observation(row)
+                    .map_err(|e| Error::memory_with_source("Failed to decode observation", e))?,
+            );
         }
 
         if let Some(anchor_obs) = self.get_observation(anchor_id).await? {
@@ -473,7 +489,10 @@ impl MemoryRepository for SqliteMemoryRepository {
         }
 
         for row in after_rows {
-            timeline.push(Self::row_to_observation(&row)?);
+            timeline.push(
+                Self::row_to_observation(&row)
+                    .map_err(|e| Error::memory_with_source("Failed to decode observation", e))?,
+            );
         }
 
         Ok(timeline)

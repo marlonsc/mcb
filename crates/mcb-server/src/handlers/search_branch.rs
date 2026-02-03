@@ -9,6 +9,8 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// MCP handler for the `search-branch` tool. Coordinates memory search results with branch metadata
+/// so Hybrid Search (Phase 6) exposes diffs per branch while staying aligned with `.planning/STATE.md`.
 pub struct SearchBranchHandler {
     #[allow(dead_code)]
     vcs_provider: Arc<dyn VcsProvider>,

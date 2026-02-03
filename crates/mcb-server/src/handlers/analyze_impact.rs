@@ -1,7 +1,7 @@
 //! Handler for the `analyze_impact` MCP tool
 
 use crate::args::AnalyzeImpactArgs;
-use mcb_domain::entities::git::DiffStatus;
+use mcb_domain::entities::vcs::DiffStatus;
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;

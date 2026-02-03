@@ -12,6 +12,7 @@ use mcb_domain::entities::project::ProjectType;
 use mcb_domain::ports::providers::project_detection::{
     ProjectDetectorConfig, ProjectDetectorEntry,
 };
+use mcb_domain::utils::project_type::project_name;
 
 // Re-export detectors for direct use
 pub use cargo::CargoDetector;
@@ -45,7 +46,7 @@ pub async fn detect_all_projects(path: &Path) -> Vec<ProjectType> {
                 Ok(Some(project_type)) => {
                     tracing::debug!(
                         detector = entry.name,
-                        project = ?project_type.name(),
+                        project = ?project_name(&project_type),
                         "Project detected"
                     );
                     results.push(project_type);

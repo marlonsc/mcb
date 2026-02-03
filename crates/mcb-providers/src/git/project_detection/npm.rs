@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde::Deserialize;
+use tokio::fs::read_to_string;
 
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
@@ -41,7 +42,7 @@ impl ProjectDetector for NpmDetector {
             return Ok(None);
         }
 
-        let content = match std::fs::read_to_string(&package_path) {
+        let content = match read_to_string(&package_path).await {
             Ok(c) => c,
             Err(e) => {
                 tracing::debug!(path = ?package_path, error = %e, "Failed to read package.json");

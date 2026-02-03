@@ -72,10 +72,10 @@ Application tests are located in `crates/mcb-application/tests/`.
 
 ## Project Alignment
 
-- **Phase context**: Follow `docs/context/project-state.md` and `.planning/STATE.md` while advancing Phase 6 Hybrid Search (06-02 plan) so changes to use cases and chunking services deliver on the roadmap.
-- **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the Clean Architecture layering; `docs/context/technical-patterns.md` documents provider patterns used by this module.
-- **Roadmap signals**: `docs/developer/ROADMAP.md` outlines v0.2.0 goals (git-aware indexing, session memory, advanced browser) that require resilient application services.
-- **Operational metrics**: Coordinate behavior with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for test and validation metrics whenever you touch service tests.
+-   **Phase context**: Follow `docs/context/project-state.md` and `.planning/STATE.md` while advancing Phase 6 Hybrid Search (06-02 plan) so changes to use cases and chunking services deliver on the roadmap.
+-   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the Clean Architecture layering; `docs/context/technical-patterns.md` documents provider patterns used by this module.
+-   **Roadmap signals**: `docs/developer/ROADMAP.md` outlines v0.2.0 goals (git-aware indexing, session memory, advanced browser) that require resilient application services.
+-   **Operational metrics**: Coordinate behavior with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for test and validation metrics whenever you touch service tests.
 
 ---
 

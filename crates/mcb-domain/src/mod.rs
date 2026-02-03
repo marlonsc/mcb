@@ -63,5 +63,5 @@ pub use constants::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
-pub use utils::*;
+pub use utils::{compute_content_hash, project_type, vcs_context};
 pub use value_objects::*;

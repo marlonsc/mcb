@@ -3,12 +3,13 @@
 use crate::args::StoreObservationArgs;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::ObservationType;
-use mcb_domain::utils::git_context::GitContext;
+use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
 use serde::Serialize;
 use std::sync::Arc;
+use uuid::Uuid;
 use validator::Validate;
 
 pub struct StoreObservationHandler {
@@ -38,10 +39,10 @@ impl StoreObservationHandler {
             .parse()
             .map_err(|e: String| McpError::invalid_params(e, None))?;
 
-        let git_context = GitContext::capture();
+        let vcs_context = VcsContext::capture();
 
-        let branch = args.branch.or(git_context.branch);
-        let commit = args.commit.or(git_context.commit);
+        let branch = args.branch.or(vcs_context.branch);
+        let commit = args.commit.or(vcs_context.commit);
 
         match self
             .memory_service
@@ -50,8 +51,9 @@ impl StoreObservationHandler {
                 observation_type,
                 args.tags,
                 mcb_domain::entities::memory::ObservationMetadata {
+                    id: Uuid::new_v4().to_string(),
                     session_id: args.session_id,
-                    repo_id: args.repo_id.or(git_context.repo_id),
+                    repo_id: args.repo_id.or(vcs_context.repo_id),
                     file_path: args.file_path,
                     branch,
                     commit,
@@ -62,7 +64,7 @@ impl StoreObservationHandler {
             Ok(id) => {
                 let result = StoreResult {
                     observation_id: id,
-                    deduplicated: args.content.len() > 0,
+                    deduplicated: false,
                 };
 
                 let json = serde_json::to_string_pretty(&result)

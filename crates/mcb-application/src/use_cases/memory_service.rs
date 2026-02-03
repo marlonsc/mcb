@@ -70,11 +70,8 @@ impl MemoryServiceImpl {
         }
         true
     }
-}
 
-#[async_trait::async_trait]
-impl MemoryServiceInterface for MemoryServiceImpl {
-    async fn store_observation(
+    async fn store_observation_impl(
         &self,
         content: String,
         observation_type: ObservationType,
@@ -87,10 +84,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             return Ok(existing.id);
         }
 
-        // Store embedding in vector store for hybrid search
         let embedding = self.embedding_provider.embed(&content).await?;
 
-        let mut vector_metadata = std::collections::HashMap::new();
+        let mut vector_metadata = HashMap::new();
         vector_metadata.insert(
             "content".to_string(),
             serde_json::Value::String(content.clone()),
@@ -131,7 +127,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         Ok(observation.id)
     }
 
-    async fn search_memories(
+    async fn search_memories_impl(
         &self,
         query: &str,
         filter: Option<MemoryFilter>,
@@ -161,14 +157,16 @@ impl MemoryServiceInterface for MemoryServiceImpl {
 
         for (rank, fts_result) in fts_results.iter().enumerate() {
             let score = 1.0 / (RRF_K + rank as f32 + 1.0);
-            *rrf_scores.entry(fts_result.id.clone()).or_default() += score;
+            let key = fts_result.id.clone();
+            *rrf_scores.entry(key).or_default() += score;
         }
 
         for (rank, vec_result) in vector_results.iter().enumerate() {
             let content_hash = compute_content_hash(&vec_result.content);
             if let Ok(Some(obs)) = self.repository.find_by_hash(&content_hash).await {
                 let score = 1.0 / (RRF_K + rank as f32 + 1.0);
-                *rrf_scores.entry(obs.id.clone()).or_default() += score;
+                let key = obs.id.clone();
+                *rrf_scores.entry(key).or_default() += score;
             }
         }
 
@@ -176,6 +174,15 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         ranked.truncate(limit);
 
+        let applied_filter = filter.unwrap_or_default();
+        self.build_ranked_results(ranked, &applied_filter).await
+    }
+
+    async fn build_ranked_results(
+        &self,
+        ranked: Vec<(String, f32)>,
+        filter: &MemoryFilter,
+    ) -> Result<Vec<MemorySearchResult>> {
         let top_ids: Vec<String> = ranked.iter().map(|(id, _)| id.clone()).collect();
         let observations = self.repository.get_observations_by_ids(&top_ids).await?;
 
@@ -184,16 +191,16 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .map(|obs| (obs.id.clone(), obs))
             .collect();
 
-        let filter = filter.unwrap_or_default();
         let mut results = Vec::new();
         for (id, rrf_score) in ranked {
             if let Some(obs) = obs_map.get(&id) {
-                if !Self::matches_filter(obs, &filter) {
+                if !Self::matches_filter(obs, filter) {
                     continue;
                 }
                 let max_possible_rrf = 2.0 / (RRF_K + 1.0);
                 let normalized_score = (rrf_score / max_possible_rrf).min(1.0);
                 results.push(MemorySearchResult {
+                    id: id.clone(),
                     observation: obs.clone(),
                     similarity_score: normalized_score,
                 });
@@ -203,11 +210,34 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         Ok(results)
     }
 
-    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
-        self.repository.get_session_summary(session_id).await
+    fn build_memory_index(&self, results: Vec<MemorySearchResult>) -> Vec<MemorySearchIndex> {
+        const PREVIEW_LENGTH: usize = 120;
+
+        results
+            .into_iter()
+            .map(|r| {
+                let content_preview = if r.observation.content.len() > PREVIEW_LENGTH {
+                    format!("{}...", &r.observation.content[..PREVIEW_LENGTH])
+                } else {
+                    r.observation.content.clone()
+                };
+
+                MemorySearchIndex {
+                    id: r.observation.id,
+                    observation_type: r.observation.observation_type.as_str().to_string(),
+                    relevance_score: r.similarity_score,
+                    tags: r.observation.tags,
+                    content_preview,
+                    session_id: r.observation.metadata.session_id,
+                    repo_id: r.observation.metadata.repo_id,
+                    file_path: r.observation.metadata.file_path,
+                    created_at: r.observation.created_at,
+                }
+            })
+            .collect()
     }
 
-    async fn create_session_summary(
+    async fn create_session_summary_impl(
         &self,
         session_id: String,
         topics: Vec<String>,
@@ -229,15 +259,11 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         Ok(summary.id)
     }
 
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
-        self.repository.get_observation(id).await
-    }
-
-    async fn embed_content(&self, content: &str) -> Result<Embedding> {
+    async fn embed_content_impl(&self, content: &str) -> Result<Embedding> {
         self.embedding_provider.embed(content).await
     }
 
-    async fn get_timeline(
+    async fn get_timeline_impl(
         &self,
         anchor_id: &str,
         before: usize,
@@ -249,8 +275,80 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .await
     }
 
-    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids_impl(&self, ids: &[String]) -> Result<Vec<Observation>> {
         self.repository.get_observations_by_ids(ids).await
+    }
+
+    async fn memory_search_impl(
+        &self,
+        query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<MemorySearchIndex>> {
+        let results = self.search_memories_impl(query, filter, limit).await?;
+        Ok(self.build_memory_index(results))
+    }
+}
+
+#[async_trait::async_trait]
+impl MemoryServiceInterface for MemoryServiceImpl {
+    async fn store_observation(
+        &self,
+        content: String,
+        observation_type: ObservationType,
+        tags: Vec<String>,
+        metadata: ObservationMetadata,
+    ) -> Result<String> {
+        self.store_observation_impl(content, observation_type, tags, metadata)
+            .await
+    }
+
+    async fn search_memories(
+        &self,
+        query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<MemorySearchResult>> {
+        self.search_memories_impl(query, filter, limit).await
+    }
+
+    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
+        self.repository.get_session_summary(session_id).await
+    }
+
+    async fn create_session_summary(
+        &self,
+        session_id: String,
+        topics: Vec<String>,
+        decisions: Vec<String>,
+        next_steps: Vec<String>,
+        key_files: Vec<String>,
+    ) -> Result<String> {
+        self.create_session_summary_impl(session_id, topics, decisions, next_steps, key_files)
+            .await
+    }
+
+    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+        self.repository.get_observation(id).await
+    }
+
+    async fn embed_content(&self, content: &str) -> Result<Embedding> {
+        self.embed_content_impl(content).await
+    }
+
+    async fn get_timeline(
+        &self,
+        anchor_id: &str,
+        before: usize,
+        after: usize,
+        filter: Option<MemoryFilter>,
+    ) -> Result<Vec<Observation>> {
+        self.get_timeline_impl(anchor_id, before, after, filter)
+            .await
+    }
+
+    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+        self.get_observations_by_ids_impl(ids).await
     }
 
     async fn memory_search(
@@ -259,45 +357,6 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         filter: Option<MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<MemorySearchIndex>> {
-        const PREVIEW_LENGTH: usize = 120;
-
-        let results = self.search_memories(query, filter, limit).await?;
-
-        let index_results: Vec<MemorySearchIndex> = results
-            .into_iter()
-            .map(|r| {
-                let content_preview = if r.observation.content.len() > PREVIEW_LENGTH {
-                    format!("{}...", &r.observation.content[..PREVIEW_LENGTH])
-                } else {
-                    r.observation.content.clone()
-                };
-
-                MemorySearchIndex {
-                    id: r.observation.id,
-                    observation_type: r.observation.observation_type.as_str().to_string(),
-                    relevance_score: r.similarity_score,
-                    tags: r.observation.tags,
-                    content_preview,
-                    session_id: r.observation.metadata.session_id,
-                    repo_id: r.observation.metadata.repo_id,
-                    file_path: r.observation.metadata.file_path,
-                    created_at: r.observation.created_at,
-                }
-            })
-            .collect();
-
-        Ok(index_results)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_current_timestamp_is_reasonable() {
-        let ts = MemoryServiceImpl::current_timestamp();
-        assert!(ts > 1_700_000_000, "Timestamp should be after 2023");
-        assert!(ts < 2_000_000_000, "Timestamp should be before 2033");
+        self.memory_search_impl(query, filter, limit).await
     }
 }

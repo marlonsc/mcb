@@ -38,35 +38,11 @@ pub enum ProjectType {
     },
 }
 
-impl ProjectType {
-    /// Get the project name
-    #[must_use]
-    pub fn name(&self) -> &str {
-        match self {
-            ProjectType::Cargo { name, .. } => name,
-            ProjectType::Npm { name, .. } => name,
-            ProjectType::Python { name, .. } => name,
-            ProjectType::Go { module, .. } => module,
-            ProjectType::Maven { artifact_id, .. } => artifact_id,
-        }
-    }
-
-    /// Get the project type as a string identifier
-    #[must_use]
-    pub fn type_name(&self) -> &'static str {
-        match self {
-            ProjectType::Cargo { .. } => "cargo",
-            ProjectType::Npm { .. } => "npm",
-            ProjectType::Python { .. } => "python",
-            ProjectType::Go { .. } => "go",
-            ProjectType::Maven { .. } => "maven",
-        }
-    }
-}
-
 /// Detected project with location information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DetectedProject {
+    /// Stable identifier for the detected project (could be UUID)
+    pub id: String,
     /// Path relative to repository root
     pub path: String,
     /// Detected project type with metadata

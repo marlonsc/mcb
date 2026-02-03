@@ -10,6 +10,8 @@ use std::path::Path;
 use std::sync::Arc;
 use validator::Validate;
 
+/// Handler that compares two branches and surfaces diff metadata so Phase 6 tooling can reference branch
+/// drift within the Hybrid Search workflows described in `.planning/STATE.md`.
 pub struct CompareBranchesHandler {
     vcs_provider: Arc<dyn VcsProvider>,
 }

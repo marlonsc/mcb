@@ -101,10 +101,10 @@ Infrastructure tests are in `crates/mcb-infrastructure/tests/`.
 
 ## Project Alignment
 
-- **Phase context**: Align new domain work with `docs/context/project-state.md` and `.planning/STATE.md`, which track Phase 6 (Memory Search) progress and the Hybrid Search plan (`06-02-PLAN.md`).
-- **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the Clean Architecture layering that the core module serves, while `docs/context/technical-patterns.md` documents the provider registration and async/error expectations used throughout these crates.
-- **Roadmap signals**: `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` cover the validated requirements (MCP protocol tools, embedding/vector arrays) and the v0.2.0 objectives (git-aware indexing, session memory, advanced browser) that depend on these core abstractions.
-- **Operational anchors**: Use `docs/operations/CHANGELOG.md` and `docs/operations/CI_OPTIMIZATION_VALIDATION.md` for current metrics (test counts, architecture violations) when documenting behavior or tests relying on these types.
+-   **Phase context**: Align new domain work with `docs/context/project-state.md` and `.planning/STATE.md`, which track Phase 6 (Memory Search) progress and the Hybrid Search plan (`06-02-PLAN.md`).
+-   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the Clean Architecture layering that the core module serves, while `docs/context/technical-patterns.md` documents the provider registration and async/error expectations used throughout these crates.
+-   **Roadmap signals**: `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` cover the validated requirements (MCP protocol tools, embedding/vector arrays) and the v0.2.0 objectives (git-aware indexing, session memory, advanced browser) that depend on these core abstractions.
+-   **Operational anchors**: Use `docs/operations/CHANGELOG.md` and `docs/operations/CI_OPTIMIZATION_VALIDATION.md` for current metrics (test counts, architecture violations) when documenting behavior or tests relying on these types.
 
 ---
 

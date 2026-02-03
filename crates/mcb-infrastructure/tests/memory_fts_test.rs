@@ -1,6 +1,6 @@
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
-use mcb_infrastructure::repositories::memory::SqliteMemoryRepository;
+use mcb_infrastructure::repositories::memory_repository::SqliteMemoryRepository;
 use uuid::Uuid;
 
 #[tokio::test]

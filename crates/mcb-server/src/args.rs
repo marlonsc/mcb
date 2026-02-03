@@ -300,14 +300,14 @@ pub struct AnalyzeComplexityArgs {
     pub include_functions: bool,
 }
 
-/// Arguments for the `index_git_repository` tool
+/// Arguments for the `index_vcs_repository` tool
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
-#[schemars(description = "Parameters for indexing a git repository")]
-pub struct IndexGitRepositoryArgs {
-    /// Path to git repository
+#[schemars(description = "Parameters for indexing a VCS repository")]
+pub struct IndexVcsRepositoryArgs {
+    /// Path to VCS repository
     #[validate(length(min = 1, message = "Path cannot be empty"))]
     #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
-    #[schemars(description = "Absolute path to the git repository")]
+    #[schemars(description = "Absolute path to the VCS repository")]
     pub path: String,
 
     /// Branches to index (default: default branch only)
@@ -325,9 +325,9 @@ pub struct IndexGitRepositoryArgs {
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 #[schemars(description = "Parameters for searching code within a specific branch")]
 pub struct SearchBranchArgs {
-    /// Repository ID from index_git_repository
+    /// Repository ID from index_vcs_repository
     #[validate(length(min = 1, message = "repository_id cannot be empty"))]
-    #[schemars(description = "Repository ID returned by index_git_repository")]
+    #[schemars(description = "Repository ID returned by index_vcs_repository")]
     pub repository_id: String,
 
     /// Branch name to search

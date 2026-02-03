@@ -7,8 +7,8 @@ use mcb_application::domain_services::search::{
     SearchServiceInterface,
 };
 use mcb_domain::entities::CodeChunk;
-use mcb_domain::entities::git::{
-    DiffStatus, FileDiff, GitBranch, GitCommit, GitRepository, RefDiff, RepositoryId,
+use mcb_domain::entities::vcs::{
+    DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::VcsProvider;
@@ -464,9 +464,11 @@ impl ValidationServiceInterface for MockValidationService {
 // ============================================================================
 
 use mcb_domain::entities::memory::{
-    MemoryFilter, MemorySearchResult, Observation, ObservationType, SessionSummary,
+    MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationType,
+    SessionSummary,
 };
 use mcb_domain::ports::repositories::MemoryRepository;
+use mcb_domain::ports::repositories::memory_repository::FtsSearchResult;
 
 pub struct MockMemoryRepository {
     observations: Arc<Mutex<Vec<Observation>>>,
@@ -518,15 +520,16 @@ impl MemoryRepository for MockMemoryRepository {
         let results: Vec<MemorySearchResult> = obs
             .iter()
             .filter(|o| {
-                if let Some(ref session) = filter.session_id {
-                    if o.metadata.session_id.as_ref() != Some(session) {
-                        return false;
-                    }
+                if let Some(ref session) = filter.session_id
+                    && o.metadata.session_id.as_ref() != Some(session)
+                {
+                    return false;
                 }
                 true
             })
             .take(limit)
             .map(|o| MemorySearchResult {
+                id: o.id.clone(),
                 observation: o.clone(),
                 similarity_score: 0.9,
             })
@@ -542,40 +545,38 @@ impl MemoryRepository for MockMemoryRepository {
         Ok(())
     }
 
+    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
+        let summaries = self.summaries.lock().expect("Lock poisoned");
+        Ok(summaries
+            .iter()
+            .find(|s| s.session_id == session_id)
+            .cloned())
+    }
+
     async fn get_timeline(
         &self,
         anchor_id: &str,
-        depth_before: usize,
-        depth_after: usize,
+        before: usize,
+        after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
-        if self.should_fail.load(Ordering::SeqCst) {
-            let msg = self.error_message.lock().expect("Lock poisoned").clone();
-            return Err(mcb_domain::error::Error::internal(msg));
-        }
-
         let obs = self.observations.lock().expect("Lock poisoned");
         let anchor_idx = obs.iter().position(|o| o.id == anchor_id);
 
         match anchor_idx {
             None => Ok(vec![]),
             Some(idx) => {
-                let start = if idx > depth_before {
-                    idx - depth_before
-                } else {
-                    0
-                };
-                let end = std::cmp::min(idx + depth_after + 1, obs.len());
+                let start = idx.saturating_sub(before);
+                let end = std::cmp::min(idx + after + 1, obs.len());
 
                 let timeline: Vec<Observation> = obs[start..end]
                     .iter()
                     .filter(|o| {
-                        if let Some(ref f) = filter {
-                            if let Some(ref session) = f.session_id {
-                                if o.metadata.session_id.as_ref() != Some(session) {
-                                    return false;
-                                }
-                            }
+                        if let Some(ref f) = filter
+                            && let Some(ref session) = f.session_id
+                            && o.metadata.session_id.as_ref() != Some(session)
+                        {
+                            return false;
                         }
                         true
                     })
@@ -585,19 +586,6 @@ impl MemoryRepository for MockMemoryRepository {
                 Ok(timeline)
             }
         }
-    }
-
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
-        let observations = self.observations.lock().expect("Lock poisoned");
-        Ok(observations.iter().find(|o| o.id == id).cloned())
-    }
-
-    async fn embed_content(&self, _content: &str) -> Result<Embedding> {
-        Ok(Embedding {
-            vector: vec![0.0; 384],
-            model: "mock-model".to_string(),
-            dimensions: 384,
-        })
     }
 
     async fn search_fts(&self, _query: &str, limit: usize) -> Result<Vec<String>> {
@@ -630,46 +618,6 @@ impl MemoryRepository for MockMemoryRepository {
             .filter(|o| ids.contains(&o.id))
             .cloned()
             .collect())
-    }
-
-    async fn get_timeline(
-        &self,
-        anchor_id: &str,
-        depth_before: usize,
-        depth_after: usize,
-        filter: Option<MemoryFilter>,
-    ) -> Result<Vec<Observation>> {
-        let obs = self.observations.lock().expect("Lock poisoned");
-        let anchor_idx = obs.iter().position(|o| o.id == anchor_id);
-
-        match anchor_idx {
-            None => Ok(vec![]),
-            Some(idx) => {
-                let start = if idx > depth_before {
-                    idx - depth_before
-                } else {
-                    0
-                };
-                let end = std::cmp::min(idx + depth_after + 1, obs.len());
-
-                let timeline: Vec<Observation> = obs[start..end]
-                    .iter()
-                    .filter(|o| {
-                        if let Some(ref f) = filter {
-                            if let Some(ref session) = f.session_id {
-                                if o.metadata.session_id.as_ref() != Some(session) {
-                                    return false;
-                                }
-                            }
-                        }
-                        true
-                    })
-                    .cloned()
-                    .collect();
-
-                Ok(timeline)
-            }
-        }
     }
 }
 
@@ -747,17 +695,17 @@ impl MemoryServiceInterface for MockMemoryService {
         let results: Vec<MemorySearchResult> = observations
             .iter()
             .filter(|obs| {
-                if let Some(ref f) = filter {
-                    if let Some(ref session) = f.session_id {
-                        if obs.metadata.session_id.as_ref() != Some(session) {
-                            return false;
-                        }
-                    }
+                if let Some(ref f) = filter
+                    && let Some(ref session) = f.session_id
+                    && obs.metadata.session_id.as_ref() != Some(session)
+                {
+                    return false;
                 }
                 true
             })
             .take(limit)
             .map(|obs| MemorySearchResult {
+                id: obs.id.clone(),
                 observation: obs.clone(),
                 similarity_score: 0.95,
             })
@@ -776,6 +724,58 @@ impl MemoryServiceInterface for MockMemoryService {
             .iter()
             .find(|s| s.session_id == session_id)
             .cloned())
+    }
+
+    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+        let observations = self.observations.lock().expect("Lock poisoned");
+        Ok(observations.iter().find(|o| o.id == id).cloned())
+    }
+
+    async fn embed_content(&self, _content: &str) -> Result<Embedding> {
+        Ok(Embedding {
+            vector: vec![0.0; 384],
+            model: "mock-model".to_string(),
+            dimensions: 384,
+        })
+    }
+
+    async fn memory_search(
+        &self,
+        _query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<MemorySearchIndex>> {
+        let observations = self.observations.lock().expect("Lock poisoned");
+        let results: Vec<MemorySearchIndex> = observations
+            .iter()
+            .filter(|obs| {
+                if let Some(ref f) = filter
+                    && let Some(ref session) = f.session_id
+                    && obs.metadata.session_id.as_ref() != Some(session)
+                {
+                    return false;
+                }
+                true
+            })
+            .take(limit)
+            .map(|obs| MemorySearchIndex {
+                id: obs.id.clone(),
+                observation_type: format!("{:?}", obs.observation_type),
+                relevance_score: 0.9,
+                tags: obs.tags.clone(),
+                content_preview: obs
+                    .content
+                    .chars()
+                    .take(120)
+                    .chain(std::iter::once('…'))
+                    .collect::<String>(),
+                session_id: obs.metadata.session_id.clone(),
+                repo_id: None,
+                file_path: None,
+                created_at: obs.created_at,
+            })
+            .collect();
+        Ok(results)
     }
 
     async fn create_session_summary(
@@ -808,8 +808,8 @@ impl MemoryServiceInterface for MockMemoryService {
     async fn get_timeline(
         &self,
         anchor_id: &str,
-        depth_before: usize,
-        depth_after: usize,
+        before: usize,
+        after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
         if self.should_fail.load(Ordering::SeqCst) {
@@ -823,22 +823,17 @@ impl MemoryServiceInterface for MockMemoryService {
         match anchor_idx {
             None => Ok(vec![]),
             Some(idx) => {
-                let start = if idx > depth_before {
-                    idx - depth_before
-                } else {
-                    0
-                };
-                let end = std::cmp::min(idx + depth_after + 1, observations.len());
+                let start = idx.saturating_sub(before);
+                let end = std::cmp::min(idx + after + 1, observations.len());
 
                 let timeline: Vec<Observation> = observations[start..end]
                     .iter()
                     .filter(|obs| {
-                        if let Some(ref f) = filter {
-                            if let Some(ref session) = f.session_id {
-                                if obs.metadata.session_id.as_ref() != Some(session) {
-                                    return false;
-                                }
-                            }
+                        if let Some(ref f) = filter
+                            && let Some(ref session) = f.session_id
+                            && obs.metadata.session_id.as_ref() != Some(session)
+                        {
+                            return false;
                         }
                         true
                     })
@@ -897,11 +892,11 @@ impl Default for MockVcsProvider {
 
 #[async_trait]
 impl VcsProvider for MockVcsProvider {
-    async fn open_repository(&self, path: &Path) -> Result<GitRepository> {
+    async fn open_repository(&self, path: &Path) -> Result<VcsRepository> {
         if self.should_fail.load(Ordering::SeqCst) {
-            return Err(mcb_domain::error::Error::git("Mock failure"));
+            return Err(mcb_domain::error::Error::vcs("Mock failure"));
         }
-        Ok(GitRepository {
+        Ok(VcsRepository {
             id: RepositoryId::new("mock-repo-id".to_string()),
             path: path.to_path_buf(),
             default_branch: "main".to_string(),
@@ -910,12 +905,13 @@ impl VcsProvider for MockVcsProvider {
         })
     }
 
-    fn repository_id(&self, repo: &GitRepository) -> RepositoryId {
+    fn repository_id(&self, repo: &VcsRepository) -> RepositoryId {
         repo.id.clone()
     }
 
-    async fn list_branches(&self, _repo: &GitRepository) -> Result<Vec<GitBranch>> {
-        Ok(vec![GitBranch {
+    async fn list_branches(&self, _repo: &VcsRepository) -> Result<Vec<VcsBranch>> {
+        Ok(vec![VcsBranch {
+            id: uuid::Uuid::new_v4().to_string(),
             name: "main".to_string(),
             head_commit: "abc123".to_string(),
             is_default: true,
@@ -925,11 +921,12 @@ impl VcsProvider for MockVcsProvider {
 
     async fn commit_history(
         &self,
-        _repo: &GitRepository,
+        _repo: &VcsRepository,
         _branch: &str,
         _limit: Option<usize>,
-    ) -> Result<Vec<GitCommit>> {
-        Ok(vec![GitCommit {
+    ) -> Result<Vec<VcsCommit>> {
+        Ok(vec![VcsCommit {
+            id: uuid::Uuid::new_v4().to_string(),
             hash: "abc123".to_string(),
             message: "Initial commit".to_string(),
             author: "Test".to_string(),
@@ -939,13 +936,13 @@ impl VcsProvider for MockVcsProvider {
         }])
     }
 
-    async fn list_files(&self, _repo: &GitRepository, _branch: &str) -> Result<Vec<PathBuf>> {
+    async fn list_files(&self, _repo: &VcsRepository, _branch: &str) -> Result<Vec<PathBuf>> {
         Ok(vec![PathBuf::from("README.md")])
     }
 
     async fn read_file(
         &self,
-        _repo: &GitRepository,
+        _repo: &VcsRepository,
         _branch: &str,
         _path: &Path,
     ) -> Result<String> {
@@ -958,14 +955,16 @@ impl VcsProvider for MockVcsProvider {
 
     async fn diff_refs(
         &self,
-        _repo: &GitRepository,
+        _repo: &VcsRepository,
         base_ref: &str,
         head_ref: &str,
     ) -> Result<RefDiff> {
         Ok(RefDiff {
+            id: "mock-ref-diff-id".to_string(),
             base_ref: base_ref.to_string(),
             head_ref: head_ref.to_string(),
             files: vec![FileDiff {
+                id: "mock-file-diff-id".to_string(),
                 path: PathBuf::from("README.md"),
                 status: DiffStatus::Modified,
                 additions: 5,

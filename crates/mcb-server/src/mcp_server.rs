@@ -21,7 +21,7 @@ use mcb_domain::ports::providers::VcsProvider;
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
     CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexGitRepositoryHandler,
+    GetValidationRulesHandler, IndexCodebaseHandler, IndexVcsRepositoryHandler,
     ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
     MemoryInjectContextHandler, MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler,
     SearchCodeHandler, SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
@@ -77,7 +77,7 @@ impl McpServer {
                 validation_service.clone(),
             )),
             analyze_complexity: Arc::new(AnalyzeComplexityHandler::new(validation_service)),
-            index_git_repository: Arc::new(IndexGitRepositoryHandler::new(vcs_provider.clone())),
+            index_vcs_repository: Arc::new(IndexVcsRepositoryHandler::new(vcs_provider.clone())),
             search_branch: Arc::new(SearchBranchHandler::new(vcs_provider.clone())),
             list_repositories: Arc::new(ListRepositoriesHandler::new()),
             compare_branches: Arc::new(CompareBranchesHandler::new(vcs_provider.clone())),
@@ -176,8 +176,8 @@ impl McpServer {
     }
 
     /// Access to index git repository handler (for HTTP transport)
-    pub fn index_git_repository_handler(&self) -> Arc<IndexGitRepositoryHandler> {
-        Arc::clone(&self.handlers.index_git_repository)
+    pub fn index_vcs_repository_handler(&self) -> Arc<IndexVcsRepositoryHandler> {
+        Arc::clone(&self.handlers.index_vcs_repository)
     }
 
     /// Access to search branch handler (for HTTP transport)

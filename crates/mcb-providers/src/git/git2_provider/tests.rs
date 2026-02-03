@@ -1,57 +1,52 @@
 use super::Git2Provider;
 use mcb_domain::ports::providers::VcsProvider;
+use std::error::Error;
 use std::path::Path;
+use std::process::{Command, Stdio};
 use tempfile::TempDir;
+use tokio::fs::write as tokio_write;
 
-fn create_test_repo() -> TempDir {
-    let dir = TempDir::new().expect("Failed to create temp dir");
+type TestResult<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
 
-    std::process::Command::new("git")
-        .args(["init"])
-        .current_dir(dir.path())
-        .output()
-        .expect("Failed to init git repo");
+fn run_git(dir: &Path, args: &[&str]) -> TestResult<()> {
+    let status = Command::new("git")
+        .args(args)
+        .current_dir(dir)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()?;
 
-    std::process::Command::new("git")
-        .args(["config", "user.email", "test@example.com"])
-        .current_dir(dir.path())
-        .output()
-        .expect("Failed to set git email");
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("git {:?} failed", args).into())
+    }
+}
 
-    std::process::Command::new("git")
-        .args(["config", "user.name", "Test User"])
-        .current_dir(dir.path())
-        .output()
-        .expect("Failed to set git name");
+async fn create_test_repo() -> TestResult<TempDir> {
+    let dir = TempDir::new()?;
 
-    std::fs::write(dir.path().join("README.md"), "# Test Repo\n").expect("Failed to write file");
+    run_git(dir.path(), &["init"])?;
+    run_git(dir.path(), &["config", "user.email", "test@example.com"])?;
+    run_git(dir.path(), &["config", "user.name", "Test User"])?;
 
-    std::process::Command::new("git")
-        .args(["add", "."])
-        .current_dir(dir.path())
-        .output()
-        .expect("Failed to add files");
+    tokio_write(dir.path().join("README.md"), "# Test Repo\n").await?;
 
-    std::process::Command::new("git")
-        .args(["commit", "-m", "Initial commit"])
-        .current_dir(dir.path())
-        .output()
-        .expect("Failed to commit");
+    run_git(dir.path(), &["add", "."])?;
+    run_git(dir.path(), &["commit", "-m", "Initial commit"])?;
 
-    dir
+    Ok(dir)
 }
 
 #[tokio::test]
-async fn test_open_repository() {
-    let dir = create_test_repo();
+async fn test_open_repository() -> TestResult<()> {
+    let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
 
-    let repo = provider.open_repository(dir.path()).await;
-    assert!(repo.is_ok());
-
-    let repo = repo.unwrap();
+    let repo = provider.open_repository(dir.path()).await?;
     assert!(!repo.id.as_str().is_empty());
     assert!(!repo.branches.is_empty());
+    Ok(())
 }
 
 #[tokio::test]
@@ -64,131 +59,121 @@ async fn test_open_repository_not_found() {
 }
 
 #[tokio::test]
-async fn test_repository_id_stable() {
-    let dir = create_test_repo();
+async fn test_repository_id_stable() -> TestResult<()> {
+    let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
 
-    let repo1 = provider.open_repository(dir.path()).await.unwrap();
-    let repo2 = provider.open_repository(dir.path()).await.unwrap();
+    let repo1 = provider.open_repository(dir.path()).await?;
+    let repo2 = provider.open_repository(dir.path()).await?;
 
     assert_eq!(
         provider.repository_id(&repo1),
         provider.repository_id(&repo2)
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_list_branches() {
-    let dir = create_test_repo();
+async fn test_list_branches() -> TestResult<()> {
+    let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await.unwrap();
+    let repo = provider.open_repository(dir.path()).await?;
 
-    let branches = provider.list_branches(&repo).await.unwrap();
+    let branches = provider.list_branches(&repo).await?;
     assert!(!branches.is_empty());
     assert!(branches.iter().any(|b| b.is_default));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_commit_history() {
-    let dir = create_test_repo();
+async fn test_commit_history() -> TestResult<()> {
+    let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await.unwrap();
+    let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
         .commit_history(&repo, &repo.default_branch, None)
-        .await
-        .unwrap();
+        .await?;
 
     assert!(!commits.is_empty());
     assert!(commits[0].message.contains("Initial commit"));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_commit_history_with_limit() {
-    let dir = create_test_repo();
+async fn test_commit_history_with_limit() -> TestResult<()> {
+    let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await.unwrap();
+    let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
         .commit_history(&repo, &repo.default_branch, Some(1))
-        .await
-        .unwrap();
+        .await?;
 
     assert_eq!(commits.len(), 1);
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_list_files() {
-    let dir = create_test_repo();
+async fn test_list_files() -> TestResult<()> {
+    let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await.unwrap();
+    let repo = provider.open_repository(dir.path()).await?;
 
-    let files = provider
-        .list_files(&repo, &repo.default_branch)
-        .await
-        .unwrap();
+    let files = provider.list_files(&repo, &repo.default_branch).await?;
     assert!(files.iter().any(|f| f.to_string_lossy() == "README.md"));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_read_file() {
-    let dir = create_test_repo();
+async fn test_read_file() -> TestResult<()> {
+    let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await.unwrap();
+    let repo = provider.open_repository(dir.path()).await?;
 
     let content = provider
         .read_file(&repo, &repo.default_branch, Path::new("README.md"))
-        .await
-        .unwrap();
+        .await?;
 
     assert!(content.contains("# Test Repo"));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_read_file_not_found() {
-    let dir = create_test_repo();
+async fn test_read_file_not_found() -> TestResult<()> {
+    let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await.unwrap();
+    let repo = provider.open_repository(dir.path()).await?;
 
     let result = provider
         .read_file(&repo, &repo.default_branch, Path::new("nonexistent.txt"))
         .await;
 
     assert!(result.is_err());
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_diff_refs() {
-    let dir = create_test_repo();
+async fn test_diff_refs() -> TestResult<()> {
+    let dir = create_test_repo().await?;
 
-    std::fs::write(dir.path().join("new_file.txt"), "New content\n").expect("Failed to write");
+    tokio_write(dir.path().join("new_file.txt"), "New content\n").await?;
 
-    std::process::Command::new("git")
-        .args(["add", "."])
-        .current_dir(dir.path())
-        .output()
-        .expect("Failed to add");
-
-    std::process::Command::new("git")
-        .args(["commit", "-m", "Second commit"])
-        .current_dir(dir.path())
-        .output()
-        .expect("Failed to commit");
+    run_git(dir.path(), &["add", "."])?;
+    run_git(dir.path(), &["commit", "-m", "Second commit"])?;
 
     let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await.unwrap();
+    let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
         .commit_history(&repo, &repo.default_branch, Some(2))
-        .await
-        .unwrap();
+        .await?;
 
     assert!(commits.len() >= 2);
 
     let diff = provider
         .diff_refs(&repo, &commits[1].hash, &commits[0].hash)
-        .await
-        .unwrap();
+        .await?;
 
     assert!(!diff.files.is_empty());
     assert!(
@@ -196,4 +181,5 @@ async fn test_diff_refs() {
             .iter()
             .any(|f| f.path.to_string_lossy().contains("new_file"))
     );
+    Ok(())
 }
