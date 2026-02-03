@@ -6,8 +6,14 @@ use mcb_domain::entities::memory::{
 
 #[test]
 fn test_observation_type_from_str() {
-    assert_eq!("code".parse::<ObservationType>().unwrap(), ObservationType::Code);
-    assert_eq!("context".parse::<ObservationType>().unwrap(), ObservationType::Context);
+    assert_eq!(
+        "code".parse::<ObservationType>().unwrap(),
+        ObservationType::Code
+    );
+    assert_eq!(
+        "context".parse::<ObservationType>().unwrap(),
+        ObservationType::Context
+    );
     assert!("unknown".parse::<ObservationType>().is_err());
 }
 

@@ -412,10 +412,10 @@ impl MemoryRepository for SqliteMemoryRepository {
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
-        let anchor = self
-            .get_observation(anchor_id)
-            .await
-            .map_err(|e| Error::memory_with_source("get_timeline: failed to load anchor observation", e))?;
+        let anchor_res = self.get_observation(anchor_id).await;
+        let anchor = anchor_res.map_err(|e| {
+            Error::memory_with_source("get_timeline: failed to load anchor observation", e)
+        })?;
         let anchor_time = match anchor {
             Some(obs) => obs.created_at,
             None => return Ok(Vec::new()),

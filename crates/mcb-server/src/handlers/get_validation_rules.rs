@@ -48,8 +48,9 @@ impl GetValidationRulesHandler {
                     "filter": args.category.as_deref().unwrap_or("all")
                 });
 
-                let text = serde_json::to_string_pretty(&response)
-                    .map_err(|_| McpError::internal_error("Failed to load validation rules", None))?;
+                let text = serde_json::to_string_pretty(&response).map_err(|_| {
+                    McpError::internal_error("Failed to load validation rules", None)
+                })?;
 
                 Ok(CallToolResult::success(vec![Content::text(text)]))
             }

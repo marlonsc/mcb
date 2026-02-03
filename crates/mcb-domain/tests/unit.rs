@@ -43,3 +43,12 @@ mod metrics;
 
 #[path = "unit/vcs_context_tests.rs"]
 mod vcs_context_tests;
+
+#[path = "unit/memory_tests.rs"]
+mod memory_tests;
+
+#[path = "unit/project_tests.rs"]
+mod project_tests;
+
+#[path = "unit/submodule_tests.rs"]
+mod submodule_tests;
