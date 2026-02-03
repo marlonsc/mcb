@@ -1,4 +1,9 @@
 //! Row-to-entity conversion for the memory repository.
+//!
+//! TODO(architecture): This module directly uses `sqlx::sqlite::SqliteRow` instead of the
+//! domain `SqlRow` trait abstraction. The memory repository should be refactored to use
+//! `DatabaseExecutor` port (like other repositories) to maintain architectural consistency.
+//! See: mcb-domain/src/ports/infrastructure/database.rs
 
 use mcb_domain::entities::memory::{
     Observation, ObservationMetadata, ObservationType, SessionSummary,
