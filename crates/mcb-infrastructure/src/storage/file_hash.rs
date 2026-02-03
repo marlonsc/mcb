@@ -90,15 +90,14 @@ pub struct FileHashStore {
 impl FileHashStore {
     /// Create a new FileHashStore with given configuration
     pub async fn new(config: FileHashConfig) -> Result<Self> {
-        // Ensure parent directory exists for file-based databases
-        if let Some(path_str) = config.database_url.strip_prefix("sqlite:") {
-            if path_str != ":memory:" {
-                let path = Path::new(path_str);
-                if let Some(parent) = path.parent() {
-                    std::fs::create_dir_all(parent).map_err(|e| {
-                        Error::internal(format!("Failed to create database directory: {e}"))
-                    })?;
-                }
+        if let Some(path_str) = config.database_url.strip_prefix("sqlite:")
+            && path_str != ":memory:"
+        {
+            let path = Path::new(path_str);
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent).map_err(|e| {
+                    Error::internal(format!("Failed to create database directory: {e}"))
+                })?;
             }
         }
 

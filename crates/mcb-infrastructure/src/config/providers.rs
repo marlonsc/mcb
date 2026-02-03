@@ -100,24 +100,21 @@ impl ProviderConfigManager {
             });
         }
 
-        // Validate dimensions if specified
-        if let Some(dimensions) = config.dimensions {
-            if dimensions == 0 {
-                return Err(Error::Configuration {
-                    message: format!("Embedding provider '{}': dimensions cannot be 0", name),
-                    source: None,
-                });
-            }
+        if let Some(dimensions) = config.dimensions
+            && dimensions == 0
+        {
+            return Err(Error::Configuration {
+                message: format!("Embedding provider '{}': dimensions cannot be 0", name),
+                source: None,
+            });
         }
-
-        // Validate max tokens if specified
-        if let Some(max_tokens) = config.max_tokens {
-            if max_tokens == 0 {
-                return Err(Error::Configuration {
-                    message: format!("Embedding provider '{}': max_tokens cannot be 0", name),
-                    source: None,
-                });
-            }
+        if let Some(max_tokens) = config.max_tokens
+            && max_tokens == 0
+        {
+            return Err(Error::Configuration {
+                message: format!("Embedding provider '{}': max_tokens cannot be 0", name),
+                source: None,
+            });
         }
 
         Ok(())
@@ -125,37 +122,32 @@ impl ProviderConfigManager {
 
     /// Validate a single vector store provider configuration
     fn validate_vector_store_config(&self, name: &str, config: &VectorStoreConfig) -> Result<()> {
-        // Validate collection if specified
-        if let Some(ref collection) = config.collection {
-            if collection.trim().is_empty() {
-                return Err(Error::Configuration {
-                    message: format!(
-                        "Vector store provider '{}': collection cannot be empty",
-                        name
-                    ),
-                    source: None,
-                });
-            }
+        if let Some(ref collection) = config.collection
+            && collection.trim().is_empty()
+        {
+            return Err(Error::Configuration {
+                message: format!(
+                    "Vector store provider '{}': collection cannot be empty",
+                    name
+                ),
+                source: None,
+            });
         }
-
-        // Validate dimensions if specified
-        if let Some(dimensions) = config.dimensions {
-            if dimensions == 0 {
-                return Err(Error::Configuration {
-                    message: format!("Vector store provider '{}': dimensions cannot be 0", name),
-                    source: None,
-                });
-            }
+        if let Some(dimensions) = config.dimensions
+            && dimensions == 0
+        {
+            return Err(Error::Configuration {
+                message: format!("Vector store provider '{}': dimensions cannot be 0", name),
+                source: None,
+            });
         }
-
-        // Validate timeout if specified
-        if let Some(timeout_secs) = config.timeout_secs {
-            if timeout_secs == 0 {
-                return Err(Error::Configuration {
-                    message: format!("Vector store provider '{}': timeout_secs cannot be 0", name),
-                    source: None,
-                });
-            }
+        if let Some(timeout_secs) = config.timeout_secs
+            && timeout_secs == 0
+        {
+            return Err(Error::Configuration {
+                message: format!("Vector store provider '{}': timeout_secs cannot be 0", name),
+                source: None,
+            });
         }
 
         Ok(())

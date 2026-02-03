@@ -575,10 +575,10 @@ fn extract_text_content(content: &[rmcp::model::Content]) -> String {
         .iter()
         .filter_map(|c| {
             // Content can be serialized to JSON and we can extract text from there
-            if let Ok(json) = serde_json::to_value(c) {
-                if let Some(text) = json.get("text") {
-                    return text.as_str().map(|s| s.to_string());
-                }
+            if let Ok(json) = serde_json::to_value(c)
+                && let Some(text) = json.get("text")
+            {
+                return text.as_str().map(|s| s.to_string());
             }
             None
         })

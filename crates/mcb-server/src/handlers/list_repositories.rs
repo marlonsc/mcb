@@ -1,27 +1,23 @@
 //! Handler for the `list_repositories` MCP tool
+//!
+//! Listing indexed repositories is not yet implemented; this handler returns an honest
+//! "not implemented" response so clients do not treat an empty list as real data.
 
 use crate::args::ListRepositoriesArgs;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
 use serde::Serialize;
-use validator::Validate;
 
-/// Handler for `list-repositories` that exposes repository metadata to tooling dashboards so Phase 6
-/// (Memory Search) can keep `release/v0.1.5` repository visibility up to date.
+/// Handler for `list_repositories` that will expose repository metadata to tooling.
+///
+/// Until a backend is wired, the handler returns a structured "not implemented" response.
 pub struct ListRepositoriesHandler;
 
 #[derive(Serialize)]
-struct RepositoryInfo {
-    id: String,
-    path: String,
-    default_branch: String,
-}
-
-#[derive(Serialize)]
-struct ListResult {
-    repositories: Vec<RepositoryInfo>,
-    count: usize,
+struct ListRepositoriesNotImplementedResponse {
+    implemented: bool,
+    message: String,
 }
 
 impl ListRepositoriesHandler {
@@ -31,14 +27,12 @@ impl ListRepositoriesHandler {
 
     pub async fn handle(
         &self,
-        Parameters(args): Parameters<ListRepositoriesArgs>,
+        Parameters(_args): Parameters<ListRepositoriesArgs>,
     ) -> Result<CallToolResult, McpError> {
-        args.validate()
-            .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
-
-        let result = ListResult {
-            repositories: vec![],
-            count: 0,
+        let result = ListRepositoriesNotImplementedResponse {
+            implemented: false,
+            message: "List repositories is not implemented yet. No repository registry is wired."
+                .to_string(),
         };
 
         let json = serde_json::to_string_pretty(&result)

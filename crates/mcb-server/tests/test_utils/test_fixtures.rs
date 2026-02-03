@@ -68,7 +68,6 @@ pub fn golden_parse_indexing_stats(text: &str) -> Option<(usize, usize)> {
         .find(|l| l.contains("Files processed:"))?
         .split(':')
         .nth(1)?
-        .trim()
         .split_whitespace()
         .next()?
         .parse::<usize>()
@@ -78,7 +77,6 @@ pub fn golden_parse_indexing_stats(text: &str) -> Option<(usize, usize)> {
         .find(|l| l.contains("Chunks created:"))?
         .split(':')
         .nth(1)?
-        .trim()
         .split_whitespace()
         .next()?
         .parse::<usize>()

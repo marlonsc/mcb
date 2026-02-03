@@ -45,19 +45,19 @@ async fn golden_index_test_repository() {
         "index response must contain chunk/file/Index/Files/Path: {}",
         text
     );
-    if text.contains("Indexing Completed") {
-        if let Some((files, chunks)) = golden_parse_indexing_stats(&text) {
-            assert!(
-                files > 0,
-                "indexing completed must report files_processed > 0: {}",
-                text
-            );
-            assert!(
-                chunks > 0,
-                "indexing completed must report chunks_created > 0: {}",
-                text
-            );
-        }
+    if text.contains("Indexing Completed")
+        && let Some((files, chunks)) = golden_parse_indexing_stats(&text)
+    {
+        assert!(
+            files > 0,
+            "indexing completed must report files_processed > 0: {}",
+            text
+        );
+        assert!(
+            chunks > 0,
+            "indexing completed must report chunks_created > 0: {}",
+            text
+        );
     }
 }
 

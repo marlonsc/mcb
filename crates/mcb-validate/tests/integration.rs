@@ -34,3 +34,6 @@ mod integration_test;
 
 #[path = "integration/integration_yaml_metrics.rs"]
 mod yaml_metrics;
+
+#[path = "integration/ca009_tests.rs"]
+mod ca009;

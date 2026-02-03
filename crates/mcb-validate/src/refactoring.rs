@@ -106,12 +106,12 @@ pub enum RefactoringViolation {
 impl RefactoringViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::OrphanImport { severity, .. } => *severity,
-            Self::DuplicateDefinition { severity, .. } => *severity,
-            Self::MissingTestFile { severity, .. } => *severity,
-            Self::StaleReExport { severity, .. } => *severity,
-            Self::DeletedModuleReference { severity, .. } => *severity,
-            Self::RefactoringDeadCode { severity, .. } => *severity,
+            Self::OrphanImport { severity, .. }
+            | Self::DuplicateDefinition { severity, .. }
+            | Self::MissingTestFile { severity, .. }
+            | Self::StaleReExport { severity, .. }
+            | Self::DeletedModuleReference { severity, .. }
+            | Self::RefactoringDeadCode { severity, .. } => *severity,
         }
     }
 }
@@ -227,43 +227,43 @@ impl Violation for RefactoringViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::OrphanImport { severity, .. } => *severity,
-            Self::DuplicateDefinition { severity, .. } => *severity,
-            Self::MissingTestFile { severity, .. } => *severity,
-            Self::StaleReExport { severity, .. } => *severity,
-            Self::DeletedModuleReference { severity, .. } => *severity,
-            Self::RefactoringDeadCode { severity, .. } => *severity,
+            Self::OrphanImport { severity, .. }
+            | Self::DuplicateDefinition { severity, .. }
+            | Self::MissingTestFile { severity, .. }
+            | Self::StaleReExport { severity, .. }
+            | Self::DeletedModuleReference { severity, .. }
+            | Self::RefactoringDeadCode { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::OrphanImport { file, .. } => Some(file),
+            Self::OrphanImport { file, .. }
+            | Self::StaleReExport { file, .. }
+            | Self::RefactoringDeadCode { file, .. } => Some(file),
             Self::DuplicateDefinition { locations, .. } => locations.first(),
             Self::MissingTestFile { source_file, .. } => Some(source_file),
-            Self::StaleReExport { file, .. } => Some(file),
             Self::DeletedModuleReference {
                 referencing_file, ..
             } => Some(referencing_file),
-            Self::RefactoringDeadCode { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::OrphanImport { line, .. } => Some(*line),
-            Self::DuplicateDefinition { .. } => None,
-            Self::MissingTestFile { .. } => None,
-            Self::StaleReExport { line, .. } => Some(*line),
-            Self::DeletedModuleReference { line, .. } => Some(*line),
-            Self::RefactoringDeadCode { .. } => None,
+            Self::OrphanImport { line, .. }
+            | Self::StaleReExport { line, .. }
+            | Self::DeletedModuleReference { line, .. } => Some(*line),
+            Self::DuplicateDefinition { .. }
+            | Self::MissingTestFile { .. }
+            | Self::RefactoringDeadCode { .. } => None,
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::OrphanImport { suggestion, .. } => Some(suggestion.clone()),
-            Self::DuplicateDefinition { suggestion, .. } => Some(suggestion.clone()),
+            Self::OrphanImport { suggestion, .. }
+            | Self::DuplicateDefinition { suggestion, .. } => Some(suggestion.clone()),
             Self::MissingTestFile {
                 source_file,
                 expected_test,
@@ -481,6 +481,7 @@ impl RefactoringValidator {
     }
 
     /// Check for source files without corresponding test files
+    #[allow(clippy::too_many_lines)]
     pub fn validate_missing_test_files(&self) -> Result<Vec<RefactoringViolation>> {
         // Files that don't need dedicated tests (re-exports, utilities, infrastructure)
         const SKIP_FILES: &[&str] = &[

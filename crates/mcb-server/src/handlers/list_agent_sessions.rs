@@ -12,8 +12,9 @@ pub struct ListAgentSessionsHandler {
     service: Arc<dyn AgentSessionServiceInterface>,
 }
 
+/// API response item for list_agent_sessions (distinct from domain SessionSummary).
 #[derive(Serialize)]
-struct SessionSummary {
+struct AgentSessionListItem {
     id: String,
     agent_type: String,
     status: String,
@@ -23,7 +24,7 @@ struct SessionSummary {
 
 #[derive(Serialize)]
 struct ListResult {
-    sessions: Vec<SessionSummary>,
+    sessions: Vec<AgentSessionListItem>,
     count: usize,
 }
 
@@ -61,9 +62,9 @@ impl ListAgentSessionsHandler {
 
         match self.service.list_sessions(query).await {
             Ok(sessions) => {
-                let summaries: Vec<SessionSummary> = sessions
+                let summaries: Vec<AgentSessionListItem> = sessions
                     .into_iter()
-                    .map(|s| SessionSummary {
+                    .map(|s| AgentSessionListItem {
                         id: s.id,
                         agent_type: s.agent_type.as_str().to_string(),
                         status: s.status.as_str().to_string(),

@@ -65,12 +65,11 @@ impl ConfigLoader {
                 log_config_loaded(config_path, false);
             }
         } else {
-            // Try to find default config file
-            if let Some(default_path) = Self::find_default_config_path() {
-                if default_path.exists() {
-                    figment = figment.merge(Toml::file(&default_path));
-                    log_config_loaded(&default_path, true);
-                }
+            if let Some(default_path) = Self::find_default_config_path()
+                && default_path.exists()
+            {
+                figment = figment.merge(Toml::file(&default_path));
+                log_config_loaded(&default_path, true);
             }
         }
 

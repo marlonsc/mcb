@@ -61,11 +61,11 @@ pub enum PerformanceViolation {
 impl PerformanceViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::CloneInLoop { severity, .. } => *severity,
-            Self::AllocationInLoop { severity, .. } => *severity,
-            Self::ArcMutexOveruse { severity, .. } => *severity,
-            Self::InefficientIterator { severity, .. } => *severity,
-            Self::InefficientString { severity, .. } => *severity,
+            Self::CloneInLoop { severity, .. }
+            | Self::AllocationInLoop { severity, .. }
+            | Self::ArcMutexOveruse { severity, .. }
+            | Self::InefficientIterator { severity, .. }
+            | Self::InefficientString { severity, .. } => *severity,
         }
     }
 }
@@ -174,41 +174,41 @@ impl Violation for PerformanceViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::CloneInLoop { severity, .. } => *severity,
-            Self::AllocationInLoop { severity, .. } => *severity,
-            Self::ArcMutexOveruse { severity, .. } => *severity,
-            Self::InefficientIterator { severity, .. } => *severity,
-            Self::InefficientString { severity, .. } => *severity,
+            Self::CloneInLoop { severity, .. }
+            | Self::AllocationInLoop { severity, .. }
+            | Self::ArcMutexOveruse { severity, .. }
+            | Self::InefficientIterator { severity, .. }
+            | Self::InefficientString { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::CloneInLoop { file, .. } => Some(file),
-            Self::AllocationInLoop { file, .. } => Some(file),
-            Self::ArcMutexOveruse { file, .. } => Some(file),
-            Self::InefficientIterator { file, .. } => Some(file),
-            Self::InefficientString { file, .. } => Some(file),
+            Self::CloneInLoop { file, .. }
+            | Self::AllocationInLoop { file, .. }
+            | Self::ArcMutexOveruse { file, .. }
+            | Self::InefficientIterator { file, .. }
+            | Self::InefficientString { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::CloneInLoop { line, .. } => Some(*line),
-            Self::AllocationInLoop { line, .. } => Some(*line),
-            Self::ArcMutexOveruse { line, .. } => Some(*line),
-            Self::InefficientIterator { line, .. } => Some(*line),
-            Self::InefficientString { line, .. } => Some(*line),
+            Self::CloneInLoop { line, .. }
+            | Self::AllocationInLoop { line, .. }
+            | Self::ArcMutexOveruse { line, .. }
+            | Self::InefficientIterator { line, .. }
+            | Self::InefficientString { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::CloneInLoop { suggestion, .. } => Some(suggestion.clone()),
-            Self::AllocationInLoop { suggestion, .. } => Some(suggestion.clone()),
-            Self::ArcMutexOveruse { suggestion, .. } => Some(suggestion.clone()),
-            Self::InefficientIterator { suggestion, .. } => Some(suggestion.clone()),
-            Self::InefficientString { suggestion, .. } => Some(suggestion.clone()),
+            Self::CloneInLoop { suggestion, .. }
+            | Self::AllocationInLoop { suggestion, .. }
+            | Self::ArcMutexOveruse { suggestion, .. }
+            | Self::InefficientIterator { suggestion, .. }
+            | Self::InefficientString { suggestion, .. } => Some(suggestion.clone()),
         }
     }
 }
@@ -297,12 +297,12 @@ impl PerformanceValidator {
                         loop_depth = 1;
                     }
 
-                    // Track brace depth within loop
                     if in_loop {
-                        loop_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                        loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                        let o = line.chars().filter(|c| *c == '{').count();
+                        let c = line.chars().filter(|c| *c == '}').count();
+                        loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
+                        loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
 
-                        // Check for clone in loop
                         if clone_pattern.is_match(line) {
                             // Skip if it's a method definition
                             if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
@@ -409,10 +409,11 @@ impl PerformanceValidator {
                         loop_depth = 1;
                     }
 
-                    // Track brace depth within loop
                     if in_loop {
-                        loop_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                        loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                        let o = line.chars().filter(|c| *c == '{').count();
+                        let c = line.chars().filter(|c| *c == '}').count();
+                        loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
+                        loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
 
                         // Check for allocations in loop
                         for (pattern, alloc_type) in &compiled_patterns {

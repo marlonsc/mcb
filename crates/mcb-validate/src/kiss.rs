@@ -75,11 +75,11 @@ pub enum KissViolation {
 impl KissViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::StructTooManyFields { severity, .. } => *severity,
-            Self::FunctionTooManyParams { severity, .. } => *severity,
-            Self::BuilderTooComplex { severity, .. } => *severity,
-            Self::DeepNesting { severity, .. } => *severity,
-            Self::FunctionTooLong { severity, .. } => *severity,
+            Self::StructTooManyFields { severity, .. }
+            | Self::FunctionTooManyParams { severity, .. }
+            | Self::BuilderTooComplex { severity, .. }
+            | Self::DeepNesting { severity, .. }
+            | Self::FunctionTooLong { severity, .. } => *severity,
         }
     }
 }
@@ -198,31 +198,31 @@ impl Violation for KissViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::StructTooManyFields { severity, .. } => *severity,
-            Self::FunctionTooManyParams { severity, .. } => *severity,
-            Self::BuilderTooComplex { severity, .. } => *severity,
-            Self::DeepNesting { severity, .. } => *severity,
-            Self::FunctionTooLong { severity, .. } => *severity,
+            Self::StructTooManyFields { severity, .. }
+            | Self::FunctionTooManyParams { severity, .. }
+            | Self::BuilderTooComplex { severity, .. }
+            | Self::DeepNesting { severity, .. }
+            | Self::FunctionTooLong { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::StructTooManyFields { file, .. } => Some(file),
-            Self::FunctionTooManyParams { file, .. } => Some(file),
-            Self::BuilderTooComplex { file, .. } => Some(file),
-            Self::DeepNesting { file, .. } => Some(file),
-            Self::FunctionTooLong { file, .. } => Some(file),
+            Self::StructTooManyFields { file, .. }
+            | Self::FunctionTooManyParams { file, .. }
+            | Self::BuilderTooComplex { file, .. }
+            | Self::DeepNesting { file, .. }
+            | Self::FunctionTooLong { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::StructTooManyFields { line, .. } => Some(*line),
-            Self::FunctionTooManyParams { line, .. } => Some(*line),
-            Self::BuilderTooComplex { line, .. } => Some(*line),
-            Self::DeepNesting { line, .. } => Some(*line),
-            Self::FunctionTooLong { line, .. } => Some(*line),
+            Self::StructTooManyFields { line, .. }
+            | Self::FunctionTooManyParams { line, .. }
+            | Self::BuilderTooComplex { line, .. }
+            | Self::DeepNesting { line, .. }
+            | Self::FunctionTooLong { line, .. } => Some(*line),
         }
     }
 
@@ -305,12 +305,14 @@ impl KissValidator {
     }
 
     /// Set custom max struct fields
+    #[must_use]
     pub fn with_max_struct_fields(mut self, max: usize) -> Self {
         self.max_struct_fields = max;
         self
     }
 
     /// Set custom max function parameters
+    #[must_use]
     pub fn with_max_function_params(mut self, max: usize) -> Self {
         self.max_function_params = max;
         self
@@ -361,16 +363,14 @@ impl KissValidator {
                         test_brace_depth = brace_depth;
                     }
 
-                    // Track brace depth
-                    brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                    brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                    let open_c = line.chars().filter(|c| *c == '{').count();
+                    let close_c = line.chars().filter(|c| *c == '}').count();
+                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
 
-                    // Exit test module when braces close
                     if in_test_module && brace_depth < test_brace_depth {
                         in_test_module = false;
                     }
-
-                    // Skip test modules
                     if in_test_module {
                         continue;
                     }
@@ -462,16 +462,14 @@ impl KissValidator {
                         test_brace_depth = brace_depth;
                     }
 
-                    // Track brace depth
-                    brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                    brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                    let open_c = line.chars().filter(|c| *c == '{').count();
+                    let close_c = line.chars().filter(|c| *c == '}').count();
+                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
 
-                    // Exit test module when braces close
                     if in_test_module && brace_depth < test_brace_depth {
                         in_test_module = false;
                     }
-
-                    // Skip test modules
                     if in_test_module {
                         continue;
                     }
@@ -616,9 +614,8 @@ impl KissValidator {
 
                         // Check if too deep and not already reported nearby
                         if nesting_depth > self.max_nesting_depth {
-                            let nearby_reported = reported_lines
-                                .iter()
-                                .any(|&l| (l as isize - line_num as isize).abs() < 5);
+                            let nearby_reported =
+                                reported_lines.iter().any(|&l| l.abs_diff(line_num) < 5);
 
                             if !nearby_reported {
                                 violations.push(KissViolation::DeepNesting {
@@ -634,12 +631,10 @@ impl KissValidator {
                         }
                     }
 
-                    // Track brace depth for control flow
                     let open_braces = line.chars().filter(|c| *c == '{').count();
                     let close_braces = line.chars().filter(|c| *c == '}').count();
-
-                    brace_depth += open_braces as i32;
-                    brace_depth -= close_braces as i32;
+                    brace_depth += i32::try_from(open_braces).unwrap_or(i32::MAX);
+                    brace_depth -= i32::try_from(close_braces).unwrap_or(i32::MAX);
 
                     // Decrease nesting on closing braces
                     if close_braces > 0 && nesting_depth > 0 {
@@ -712,16 +707,14 @@ impl KissValidator {
                         test_brace_depth = brace_depth;
                     }
 
-                    // Track brace depth
-                    brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                    brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                    let open_c = line.chars().filter(|c| *c == '{').count();
+                    let close_c = line.chars().filter(|c| *c == '}').count();
+                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
 
-                    // Exit test module when braces close
                     if in_test_module && brace_depth < test_brace_depth {
                         in_test_module = false;
                     }
-
-                    // Skip test modules
                     if in_test_module {
                         continue;
                     }

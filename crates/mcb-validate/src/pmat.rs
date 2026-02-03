@@ -58,11 +58,11 @@ pub enum PmatViolation {
 impl PmatViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::HighComplexity { severity, .. } => *severity,
-            Self::DeadCode { severity, .. } => *severity,
-            Self::LowTdgScore { severity, .. } => *severity,
-            Self::PmatUnavailable { severity, .. } => *severity,
-            Self::PmatError { severity, .. } => *severity,
+            Self::HighComplexity { severity, .. }
+            | Self::DeadCode { severity, .. }
+            | Self::LowTdgScore { severity, .. }
+            | Self::PmatUnavailable { severity, .. }
+            | Self::PmatError { severity, .. } => *severity,
         }
     }
 }
@@ -143,21 +143,20 @@ impl Violation for PmatViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::HighComplexity { severity, .. } => *severity,
-            Self::DeadCode { severity, .. } => *severity,
-            Self::LowTdgScore { severity, .. } => *severity,
-            Self::PmatUnavailable { severity, .. } => *severity,
-            Self::PmatError { severity, .. } => *severity,
+            Self::HighComplexity { severity, .. }
+            | Self::DeadCode { severity, .. }
+            | Self::LowTdgScore { severity, .. }
+            | Self::PmatUnavailable { severity, .. }
+            | Self::PmatError { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::HighComplexity { file, .. } => Some(file),
-            Self::DeadCode { file, .. } => Some(file),
-            Self::LowTdgScore { file, .. } => Some(file),
-            Self::PmatUnavailable { .. } => None,
-            Self::PmatError { .. } => None,
+            Self::HighComplexity { file, .. }
+            | Self::DeadCode { file, .. }
+            | Self::LowTdgScore { file, .. } => Some(file),
+            Self::PmatUnavailable { .. } | Self::PmatError { .. } => None,
         }
     }
 
@@ -257,12 +256,14 @@ impl PmatValidator {
     }
 
     /// Set complexity threshold
+    #[must_use]
     pub fn with_complexity_threshold(mut self, threshold: u32) -> Self {
         self.complexity_threshold = threshold;
         self
     }
 
     /// Set TDG threshold
+    #[must_use]
     pub fn with_tdg_threshold(mut self, threshold: u32) -> Self {
         self.tdg_threshold = threshold;
         self

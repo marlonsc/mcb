@@ -59,11 +59,11 @@ pub enum PatternViolation {
 impl PatternViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::ConcreteTypeInDi { severity, .. } => *severity,
-            Self::MissingSendSync { severity, .. } => *severity,
-            Self::MissingAsyncTrait { severity, .. } => *severity,
-            Self::RawResultType { severity, .. } => *severity,
-            Self::MissingInterfaceBound { severity, .. } => *severity,
+            Self::ConcreteTypeInDi { severity, .. }
+            | Self::MissingSendSync { severity, .. }
+            | Self::MissingAsyncTrait { severity, .. }
+            | Self::RawResultType { severity, .. }
+            | Self::MissingInterfaceBound { severity, .. } => *severity,
         }
     }
 }
@@ -164,52 +164,55 @@ impl Violation for PatternViolation {
 
     fn category(&self) -> ViolationCategory {
         match self {
-            Self::ConcreteTypeInDi { .. } => ViolationCategory::DependencyInjection,
-            Self::MissingSendSync { .. } => ViolationCategory::Async,
-            Self::MissingAsyncTrait { .. } => ViolationCategory::Async,
+            Self::ConcreteTypeInDi { .. } | Self::MissingInterfaceBound { .. } => {
+                ViolationCategory::DependencyInjection
+            }
+            Self::MissingSendSync { .. } | Self::MissingAsyncTrait { .. } => {
+                ViolationCategory::Async
+            }
             Self::RawResultType { .. } => ViolationCategory::Quality,
-            Self::MissingInterfaceBound { .. } => ViolationCategory::DependencyInjection,
         }
     }
 
     fn severity(&self) -> Severity {
         match self {
-            Self::ConcreteTypeInDi { severity, .. } => *severity,
-            Self::MissingSendSync { severity, .. } => *severity,
-            Self::MissingAsyncTrait { severity, .. } => *severity,
-            Self::RawResultType { severity, .. } => *severity,
-            Self::MissingInterfaceBound { severity, .. } => *severity,
+            Self::ConcreteTypeInDi { severity, .. }
+            | Self::MissingSendSync { severity, .. }
+            | Self::MissingAsyncTrait { severity, .. }
+            | Self::RawResultType { severity, .. }
+            | Self::MissingInterfaceBound { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::ConcreteTypeInDi { file, .. } => Some(file),
-            Self::MissingSendSync { file, .. } => Some(file),
-            Self::MissingAsyncTrait { file, .. } => Some(file),
-            Self::RawResultType { file, .. } => Some(file),
-            Self::MissingInterfaceBound { file, .. } => Some(file),
+            Self::ConcreteTypeInDi { file, .. }
+            | Self::MissingSendSync { file, .. }
+            | Self::MissingAsyncTrait { file, .. }
+            | Self::RawResultType { file, .. }
+            | Self::MissingInterfaceBound { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::ConcreteTypeInDi { line, .. } => Some(*line),
-            Self::MissingSendSync { line, .. } => Some(*line),
-            Self::MissingAsyncTrait { line, .. } => Some(*line),
-            Self::RawResultType { line, .. } => Some(*line),
-            Self::MissingInterfaceBound { line, .. } => Some(*line),
+            Self::ConcreteTypeInDi { line, .. }
+            | Self::MissingSendSync { line, .. }
+            | Self::MissingAsyncTrait { line, .. }
+            | Self::RawResultType { line, .. }
+            | Self::MissingInterfaceBound { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::ConcreteTypeInDi { suggestion, .. } => Some(format!("Use {suggestion}")),
+            Self::ConcreteTypeInDi { suggestion, .. } | Self::RawResultType { suggestion, .. } => {
+                Some(format!("Use {suggestion}"))
+            }
             Self::MissingSendSync { missing_bound, .. } => {
                 Some(format!("Add {missing_bound} bounds to trait"))
             }
             Self::MissingAsyncTrait { .. } => Some("Add #[async_trait] attribute".to_string()),
-            Self::RawResultType { suggestion, .. } => Some(format!("Use {suggestion}")),
             Self::MissingInterfaceBound { .. } => {
                 Some("Add : Interface bound for Shaku DI".to_string())
             }

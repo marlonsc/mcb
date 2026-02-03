@@ -191,8 +191,8 @@ pub fn is_unauthenticated_route(path: &str) -> bool {
 
 /// Wrapper function for backwards compatibility
 ///
-/// In Rocket, authentication is handled via Request Guards rather than
-/// middleware. This function is kept for API compatibility but is a no-op.
+/// Registers `auth_config` with Rocket so the `AdminAuth` request guard can use it.
+/// In Rocket, authentication is enforced via Request Guards in route handlers, not middleware.
 /// Use the `AdminAuth` request guard directly in route handlers.
 ///
 /// # Migration

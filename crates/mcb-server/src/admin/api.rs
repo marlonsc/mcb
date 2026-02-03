@@ -178,10 +178,10 @@ impl AdminApi {
             admin_rocket(self.state, self.auth_config, self.browse_state).configure(rocket_config);
 
         rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Rocket launch failed: {}", e),
-            )) as Box<dyn std::error::Error + Send + Sync>
+            Box::new(std::io::Error::other(format!(
+                "Rocket launch failed: {}",
+                e
+            ))) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
         Ok(())
@@ -209,10 +209,10 @@ impl AdminApi {
             .ignite()
             .await
             .map_err(|e| {
-                Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Rocket ignite failed: {}", e),
-                )) as Box<dyn std::error::Error + Send + Sync>
+                Box::new(std::io::Error::other(format!(
+                    "Rocket ignite failed: {}",
+                    e
+                ))) as Box<dyn std::error::Error + Send + Sync>
             })?;
 
         // Spawn a task to handle the external shutdown signal
@@ -223,10 +223,10 @@ impl AdminApi {
         });
 
         rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Rocket launch failed: {}", e),
-            )) as Box<dyn std::error::Error + Send + Sync>
+            Box::new(std::io::Error::other(format!(
+                "Rocket launch failed: {}",
+                e
+            ))) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
         Ok(())

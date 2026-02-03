@@ -113,14 +113,14 @@
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Enabled</label>
-                            <select name="enabled" class="input-field">
+                            <select name="enabled" class="input-field" id="config-cache-enabled">
                                 <option value="true">Yes</option>
                                 <option value="false">No</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Max Size (bytes)</label>
-                            <input type="number" name="max_size" class="input-field" value="104857600" min="0">
+                            <input type="number" name="max_size" class="input-field" id="config-cache-max-size" min="0" placeholder="—">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-success">Apply Cache Settings</button>
@@ -142,15 +142,15 @@
                     <div class="grid grid-cols-3 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Host</label>
-                            <input type="text" name="host" class="input-field" value="127.0.0.1">
+                            <input type="text" name="host" id="config-server-host" class="input-field" placeholder="—">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Port</label>
-                            <input type="number" name="port" class="input-field" value="8080" min="1" max="65535">
+                            <input type="number" name="port" id="config-server-port" class="input-field" min="1" max="65535" placeholder="—">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Admin Port</label>
-                            <input type="number" name="admin_port" class="input-field" value="9090" min="1" max="65535">
+                            <input type="number" name="admin_port" id="config-server-admin-port" class="input-field" min="1" max="65535" placeholder="—">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-success">Apply Server Settings</button>
@@ -161,18 +161,37 @@
 
     <footer class="bg-gray-800 text-gray-400 py-4 mt-8">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-            MCP Context Browser v0.1.1 | Admin Panel
+            MCP Context Browser v0.1.5 | Admin Panel
         </div>
     </footer>
 
     <script>
-        // Format config display
+        function populateConfigForms(data) {
+            if (!data || !data.config) return;
+            const c = data.config;
+            if (c.cache) {
+                const enabledEl = document.getElementById('config-cache-enabled');
+                if (enabledEl) enabledEl.value = c.cache.enabled ? 'true' : 'false';
+                const maxSizeEl = document.getElementById('config-cache-max-size');
+                if (maxSizeEl && c.cache.max_size != null) maxSizeEl.value = String(c.cache.max_size);
+            }
+            if (c.server) {
+                const hostEl = document.getElementById('config-server-host');
+                if (hostEl && c.server.host != null) hostEl.value = c.server.host;
+                const portEl = document.getElementById('config-server-port');
+                if (portEl && c.server.port != null) portEl.value = String(c.server.port);
+                const adminPortEl = document.getElementById('config-server-admin-port');
+                if (adminPortEl && c.server.admin_port != null) adminPortEl.value = String(c.server.admin_port);
+            }
+        }
+
         document.body.addEventListener('htmx:afterSwap', function(evt) {
             if (evt.detail.target.id === 'config-display') {
                 try {
                     const data = JSON.parse(evt.detail.xhr.responseText);
                     const formatted = JSON.stringify(data, null, 2);
                     document.getElementById('config-display').innerHTML = `<pre>${escapeHtml(formatted)}</pre>`;
+                    populateConfigForms(data);
                 } catch (e) {
                     // Response might already be formatted, leave as-is
                 }

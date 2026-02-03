@@ -151,16 +151,15 @@ fn execution_matches(
     execution_type: &Option<ExecutionType>,
     success: Option<bool>,
 ) -> bool {
-    if let Some(kind) = execution_type {
-        if &execution.execution_type != kind {
-            return false;
-        }
+    if let Some(kind) = execution_type
+        && &execution.execution_type != kind
+    {
+        return false;
     }
-
-    if let Some(success_filter) = success {
-        if execution.success != success_filter {
-            return false;
-        }
+    if let Some(success_filter) = success
+        && execution.success != success_filter
+    {
+        return false;
     }
 
     true

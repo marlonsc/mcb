@@ -385,11 +385,8 @@ fn handle_sse(state: &State<HttpTransportState>) -> EventStream![] {
     let mut rx = state.event_tx.subscribe();
 
     EventStream! {
-        loop {
-            match rx.recv().await {
-                Ok(data) => yield Event::data(data),
-                Err(_) => break,
-            }
+        while let Ok(data) = rx.recv().await {
+            yield Event::data(data);
         }
     }
 }

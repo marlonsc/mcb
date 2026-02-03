@@ -71,7 +71,7 @@ pub mod session;
 pub mod tools;
 pub mod transport;
 
-// Placeholder modules removed - functionality handled by infrastructure layer
+// Legacy placeholder modules were removed; functionality lives in the infrastructure layer
 
 // Provider modules are included in mcb-infrastructure for clean architecture compliance
 

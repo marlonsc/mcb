@@ -43,6 +43,7 @@ impl StoreExecutionHandler {
             .map_err(|e: String| McpError::invalid_params(e, None))?;
 
         let execution_metadata = ExecutionMetadata {
+            id: Uuid::new_v4().to_string(),
             command: args.command.clone(),
             exit_code: args.exit_code,
             duration_ms: args.duration_ms,

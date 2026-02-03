@@ -52,6 +52,7 @@ struct McpServices {
     context: Arc<dyn ContextServiceInterface>,
     search: Arc<dyn SearchServiceInterface>,
     memory: Arc<dyn MemoryServiceInterface>,
+    #[allow(dead_code)] // Reserved for future agent session tools
     agent_session: Arc<dyn AgentSessionServiceInterface>,
     vcs: Arc<dyn VcsProvider>,
 }

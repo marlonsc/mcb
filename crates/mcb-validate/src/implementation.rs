@@ -380,6 +380,7 @@ impl ImplementationQualityValidator {
     }
 
     /// Detect hardcoded return values
+    #[allow(clippy::too_many_lines)]
     pub fn validate_hardcoded_returns(&self) -> Result<Vec<ImplementationViolation>> {
         let mut violations = Vec::new();
 
@@ -465,10 +466,11 @@ impl ImplementationQualityValidator {
                         let mut fn_end = i;
                         let mut fn_started = false;
 
-                        for j in i..lines.len() {
-                            let line = lines[j];
-                            let opens = line.chars().filter(|c| *c == '{').count() as i32;
-                            let closes = line.chars().filter(|c| *c == '}').count() as i32;
+                        for (j, line) in lines.iter().enumerate().skip(i) {
+                            let open_count = line.chars().filter(|c| *c == '{').count();
+                            let close_count = line.chars().filter(|c| *c == '}').count();
+                            let opens = i32::try_from(open_count).unwrap_or(i32::MAX);
+                            let closes = i32::try_from(close_count).unwrap_or(i32::MAX);
 
                             if opens > 0 {
                                 fn_started = true;
@@ -694,6 +696,7 @@ impl ImplementationQualityValidator {
     }
 
     /// Detect pass-through wrappers
+    #[allow(clippy::too_many_lines)]
     pub fn validate_pass_through_wrappers(&self) -> Result<Vec<ImplementationViolation>> {
         let mut violations = Vec::new();
 
@@ -778,7 +781,9 @@ impl ImplementationQualityValidator {
                     if in_fn {
                         let open = line.chars().filter(|c| *c == '{').count();
                         let close = line.chars().filter(|c| *c == '}').count();
-                        brace_depth += open as i32 - close as i32;
+                        let o = i32::try_from(open).unwrap_or(i32::MAX);
+                        let c = i32::try_from(close).unwrap_or(i32::MAX);
+                        brace_depth += o - c;
 
                         // Collect non-empty, non-attribute lines in function body
                         if !trimmed.is_empty()
@@ -905,7 +910,9 @@ impl ImplementationQualityValidator {
                     if in_fn {
                         let open = line.chars().filter(|c| *c == '{').count();
                         let close = line.chars().filter(|c| *c == '}').count();
-                        brace_depth += open as i32 - close as i32;
+                        let o = i32::try_from(open).unwrap_or(i32::MAX);
+                        let c = i32::try_from(close).unwrap_or(i32::MAX);
+                        brace_depth += o - c;
 
                         // Collect non-empty lines in function body
                         if !trimmed.is_empty() && !trimmed.starts_with("#[") {

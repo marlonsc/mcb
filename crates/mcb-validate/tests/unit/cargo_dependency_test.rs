@@ -4,7 +4,9 @@
 mod cargo_dependency_tests {
     use mcb_validate::ValidationConfig;
     use mcb_validate::engines::RuleContext;
+    use mcb_validate::engines::hybrid_engine::RuleEngine;
     use mcb_validate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
+    use serde_json::json;
     use std::collections::HashMap;
     use std::path::PathBuf;
 
@@ -26,10 +28,6 @@ mod cargo_dependency_tests {
         // Test the has_forbidden_dependency function
         // Since it's private, we'll test through the evaluate_condition method
         // by creating a test rule
-
-        use mcb_validate::engines::hybrid_engine::RuleEngine;
-        use serde_json::json;
-
         let rule_definition = json!({
             "type": "cargo_dependencies",
             "condition": "not_exists",
@@ -80,10 +78,6 @@ mcb-domain = "0.1.0"          # This should also be detected
         context.config = ValidationConfig::new(temp_dir.path());
 
         let engine = RustyRulesEngineWrapper::new();
-
-        use mcb_validate::engines::hybrid_engine::RuleEngine;
-        use serde_json::json;
-
         let rule_definition = json!({
             "type": "cargo_dependencies",
             "condition": "not_exists",

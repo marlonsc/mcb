@@ -1,4 +1,7 @@
 //! Handler for the `search_branch` MCP tool
+//!
+//! Branch-scoped search is not yet implemented; this handler returns an honest
+//! "not implemented" response so clients do not treat it as a real search result.
 
 use crate::args::SearchBranchArgs;
 use mcb_domain::ports::providers::VcsProvider;
@@ -10,18 +13,20 @@ use std::sync::Arc;
 use validator::Validate;
 
 /// Handler for the MCP `search_branch` tool (VCS branch-scoped code search).
+///
+/// The VCS provider is retained for a future implementation. Until then,
+/// the handler returns a structured "not implemented" response.
 pub struct SearchBranchHandler {
-    /// VCS provider; reserved for future branch-scoped search (handler currently returns stub).
     vcs_provider: Arc<dyn VcsProvider>,
 }
 
-/// Response shape for the search_branch tool (avoids duplicate name with domain SearchResult).
+/// Response shape for the search_branch tool when the feature is not implemented.
 #[derive(Serialize)]
-struct SearchBranchResponse {
+struct SearchBranchNotImplementedResponse {
+    implemented: bool,
     repository_id: String,
     branch: String,
     query: String,
-    files_searched: usize,
     message: String,
 }
 
@@ -42,15 +47,14 @@ impl SearchBranchHandler {
         args.validate()
             .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
-        let result = SearchBranchResponse {
+        let result = SearchBranchNotImplementedResponse {
+            implemented: false,
             repository_id: args.repository_id.clone(),
             branch: args.branch.clone(),
             query: args.query.clone(),
-            files_searched: 0,
-            message: format!(
-                "Search in branch '{}' is ready. Repository ID: {}. Query: '{}'. Limit: {}.",
-                args.branch, args.repository_id, args.query, args.limit
-            ),
+            message:
+                "Branch-scoped search is not implemented yet. Use search_code for workspace search."
+                    .to_string(),
         };
 
         let json = serde_json::to_string_pretty(&result)

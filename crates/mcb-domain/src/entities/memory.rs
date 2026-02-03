@@ -80,8 +80,12 @@ impl std::str::FromStr for ExecutionType {
 }
 
 /// Metadata for execution tracking stored on execution observations.
+/// Has identity per Clean Architecture (CA004) for traceability.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutionMetadata {
+    /// Entity identity for CA004 compliance and traceability.
+    #[serde(default)]
+    pub id: String,
     pub command: String,
     pub exit_code: Option<i32>,
     pub duration_ms: Option<i64>,

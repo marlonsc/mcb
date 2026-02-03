@@ -5,7 +5,7 @@ use mcb_server::tools::registry::create_tool_list;
 #[test]
 fn test_tool_definitions_create_valid_tools() {
     let tools = create_tool_list().expect("should create tool list");
-    assert_eq!(tools.len(), 23);
+    assert_eq!(tools.len(), 25);
 
     let names: Vec<_> = tools.iter().map(|t| t.name.as_ref()).collect();
     // Core tools

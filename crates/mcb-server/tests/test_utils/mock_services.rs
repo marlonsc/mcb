@@ -1112,11 +1112,13 @@ impl VcsProvider for MockVcsProvider {
 
 use mcb_application::ports::services::AgentSessionServiceInterface;
 
+#[allow(dead_code)] // Reserved for agent session tests
 pub struct MockAgentSessionService {
     sessions: Arc<Mutex<std::collections::HashMap<String, AgentSession>>>,
 }
 
 impl MockAgentSessionService {
+    #[allow(dead_code)] // Reserved for agent session tests
     pub fn new() -> Self {
         Self {
             sessions: Arc::new(Mutex::new(std::collections::HashMap::new())),
@@ -1159,15 +1161,15 @@ impl AgentSessionServiceInterface for MockAgentSessionService {
         let mut results: Vec<AgentSession> = sessions
             .values()
             .filter(|s| {
-                if let Some(ref status) = query.status {
-                    if &s.status != status {
-                        return false;
-                    }
+                if let Some(ref status) = query.status
+                    && &s.status != status
+                {
+                    return false;
                 }
-                if let Some(ref agent_type) = query.agent_type {
-                    if &s.agent_type != agent_type {
-                        return false;
-                    }
+                if let Some(ref agent_type) = query.agent_type
+                    && &s.agent_type != agent_type
+                {
+                    return false;
                 }
                 true
             })

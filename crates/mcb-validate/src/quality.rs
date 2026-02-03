@@ -82,18 +82,19 @@ pub enum QualityViolation {
 impl QualityViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::UnwrapInProduction { severity, .. } => *severity,
-            Self::ExpectInProduction { severity, .. } => *severity,
-            Self::PanicInProduction { severity, .. } => *severity,
-            Self::FileTooLarge { severity, .. } => *severity,
-            Self::TodoComment { severity, .. } => *severity,
-            Self::DeadCodeAllowNotPermitted { severity, .. } => *severity,
-            Self::UnusedStructField { severity, .. } => *severity,
-            Self::DeadFunctionUncalled { severity, .. } => *severity,
+            Self::UnwrapInProduction { severity, .. }
+            | Self::ExpectInProduction { severity, .. }
+            | Self::PanicInProduction { severity, .. }
+            | Self::FileTooLarge { severity, .. }
+            | Self::TodoComment { severity, .. }
+            | Self::DeadCodeAllowNotPermitted { severity, .. }
+            | Self::UnusedStructField { severity, .. }
+            | Self::DeadFunctionUncalled { severity, .. } => *severity,
         }
     }
 }
 
+#[allow(clippy::too_many_lines)]
 impl std::fmt::Display for QualityViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -229,49 +230,46 @@ impl Violation for QualityViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::UnwrapInProduction { severity, .. } => *severity,
-            Self::ExpectInProduction { severity, .. } => *severity,
-            Self::PanicInProduction { severity, .. } => *severity,
-            Self::FileTooLarge { severity, .. } => *severity,
-            Self::TodoComment { severity, .. } => *severity,
-            Self::DeadCodeAllowNotPermitted { severity, .. } => *severity,
-            Self::UnusedStructField { severity, .. } => *severity,
-            Self::DeadFunctionUncalled { severity, .. } => *severity,
+            Self::UnwrapInProduction { severity, .. }
+            | Self::ExpectInProduction { severity, .. }
+            | Self::PanicInProduction { severity, .. }
+            | Self::FileTooLarge { severity, .. }
+            | Self::TodoComment { severity, .. }
+            | Self::DeadCodeAllowNotPermitted { severity, .. }
+            | Self::UnusedStructField { severity, .. }
+            | Self::DeadFunctionUncalled { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&std::path::PathBuf> {
         match self {
-            Self::UnwrapInProduction { file, .. } => Some(file),
-            Self::ExpectInProduction { file, .. } => Some(file),
-            Self::PanicInProduction { file, .. } => Some(file),
-            Self::FileTooLarge { file, .. } => Some(file),
-            Self::TodoComment { file, .. } => Some(file),
-            Self::DeadCodeAllowNotPermitted { file, .. } => Some(file),
-            Self::UnusedStructField { file, .. } => Some(file),
-            Self::DeadFunctionUncalled { file, .. } => Some(file),
+            Self::UnwrapInProduction { file, .. }
+            | Self::ExpectInProduction { file, .. }
+            | Self::PanicInProduction { file, .. }
+            | Self::FileTooLarge { file, .. }
+            | Self::TodoComment { file, .. }
+            | Self::DeadCodeAllowNotPermitted { file, .. }
+            | Self::UnusedStructField { file, .. }
+            | Self::DeadFunctionUncalled { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::UnwrapInProduction { line, .. } => Some(*line),
-            Self::ExpectInProduction { line, .. } => Some(*line),
-            Self::PanicInProduction { line, .. } => Some(*line),
+            Self::UnwrapInProduction { line, .. }
+            | Self::ExpectInProduction { line, .. }
+            | Self::PanicInProduction { line, .. }
+            | Self::TodoComment { line, .. }
+            | Self::DeadCodeAllowNotPermitted { line, .. }
+            | Self::UnusedStructField { line, .. }
+            | Self::DeadFunctionUncalled { line, .. } => Some(*line),
             Self::FileTooLarge { .. } => None,
-            Self::TodoComment { line, .. } => Some(*line),
-            Self::DeadCodeAllowNotPermitted { line, .. } => Some(*line),
-            Self::UnusedStructField { line, .. } => Some(*line),
-            Self::DeadFunctionUncalled { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::UnwrapInProduction { .. } => {
-                Some("Use `?` operator or handle the error explicitly".to_string())
-            }
-            Self::ExpectInProduction { .. } => {
+            Self::UnwrapInProduction { .. } | Self::ExpectInProduction { .. } => {
                 Some("Use `?` operator or handle the error explicitly".to_string())
             }
             Self::PanicInProduction { .. } => {
@@ -321,6 +319,7 @@ impl QualityValidator {
     }
 
     /// Set custom max file lines
+    #[must_use]
     pub fn with_max_file_lines(mut self, max: usize) -> Self {
         self.max_file_lines = max;
         self
@@ -389,10 +388,8 @@ impl QualityValidator {
         fn_pattern: &Regex,
         field_pattern: &Regex,
     ) -> Option<String> {
-        // Look in next few lines for struct/fn/field name
-        for i in start_idx..std::cmp::min(start_idx + 5, lines.len()) {
-            let line = lines[i];
-
+        let end = std::cmp::min(start_idx + 5, lines.len());
+        for line in lines.iter().take(end).skip(start_idx) {
             if let Some(captures) = struct_pattern.captures(line)
                 && let Some(name) = captures.get(1)
             {
@@ -637,7 +634,6 @@ impl QualityValidator {
 
     /// Find pending comments (T.O.D.O./F.I.X.M.E./X.X.X./H.A.C.K.)
     pub fn find_todo_comments(&self) -> Result<Vec<QualityViolation>> {
-        let mut violations = Vec::new();
         const PENDING_TODO: &str = concat!("T", "O", "D", "O");
         const PENDING_FIXME: &str = concat!("F", "I", "X", "M", "E");
         const PENDING_XXX: &str = concat!("X", "X", "X");
@@ -647,7 +643,7 @@ impl QualityValidator {
         ))
         .unwrap();
 
-        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
+        let mut violations = Vec::new();
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .into_iter()

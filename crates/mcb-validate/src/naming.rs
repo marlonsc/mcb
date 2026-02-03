@@ -69,12 +69,12 @@ pub enum NamingViolation {
 impl NamingViolation {
     pub fn severity(&self) -> Severity {
         match self {
-            Self::BadTypeName { severity, .. } => *severity,
-            Self::BadFunctionName { severity, .. } => *severity,
-            Self::BadConstantName { severity, .. } => *severity,
-            Self::BadModuleName { severity, .. } => *severity,
-            Self::BadFileSuffix { severity, .. } => *severity,
-            Self::BadCaNaming { severity, .. } => *severity,
+            Self::BadTypeName { severity, .. }
+            | Self::BadFunctionName { severity, .. }
+            | Self::BadConstantName { severity, .. }
+            | Self::BadModuleName { severity, .. }
+            | Self::BadFileSuffix { severity, .. }
+            | Self::BadCaNaming { severity, .. } => *severity,
         }
     }
 }
@@ -196,34 +196,34 @@ impl Violation for NamingViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::BadTypeName { severity, .. } => *severity,
-            Self::BadFunctionName { severity, .. } => *severity,
-            Self::BadConstantName { severity, .. } => *severity,
-            Self::BadModuleName { severity, .. } => *severity,
-            Self::BadFileSuffix { severity, .. } => *severity,
-            Self::BadCaNaming { severity, .. } => *severity,
+            Self::BadTypeName { severity, .. }
+            | Self::BadFunctionName { severity, .. }
+            | Self::BadConstantName { severity, .. }
+            | Self::BadModuleName { severity, .. }
+            | Self::BadFileSuffix { severity, .. }
+            | Self::BadCaNaming { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::BadTypeName { file, .. } => Some(file),
-            Self::BadFunctionName { file, .. } => Some(file),
-            Self::BadConstantName { file, .. } => Some(file),
-            Self::BadModuleName { path, .. } => Some(path),
-            Self::BadFileSuffix { path, .. } => Some(path),
-            Self::BadCaNaming { path, .. } => Some(path),
+            Self::BadTypeName { file, .. }
+            | Self::BadFunctionName { file, .. }
+            | Self::BadConstantName { file, .. } => Some(file),
+            Self::BadModuleName { path, .. }
+            | Self::BadFileSuffix { path, .. }
+            | Self::BadCaNaming { path, .. } => Some(path),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::BadTypeName { line, .. } => Some(*line),
-            Self::BadFunctionName { line, .. } => Some(*line),
-            Self::BadConstantName { line, .. } => Some(*line),
-            Self::BadModuleName { .. } => None,
-            Self::BadFileSuffix { .. } => None,
-            Self::BadCaNaming { .. } => None,
+            Self::BadTypeName { line, .. }
+            | Self::BadFunctionName { line, .. }
+            | Self::BadConstantName { line, .. } => Some(*line),
+            Self::BadModuleName { .. } | Self::BadFileSuffix { .. } | Self::BadCaNaming { .. } => {
+                None
+            }
         }
     }
 
@@ -233,13 +233,13 @@ impl Violation for NamingViolation {
                 name,
                 expected_case,
                 ..
-            } => Some(format!("Rename '{name}' to {expected_case} format")),
-            Self::BadFunctionName {
+            }
+            | Self::BadFunctionName {
                 name,
                 expected_case,
                 ..
-            } => Some(format!("Rename '{name}' to {expected_case} format")),
-            Self::BadConstantName {
+            }
+            | Self::BadConstantName {
                 name,
                 expected_case,
                 ..
