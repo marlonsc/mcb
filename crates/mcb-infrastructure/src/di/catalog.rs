@@ -62,7 +62,7 @@ use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, warn};
 
 /// Build the dill Catalog with all application services
 ///
@@ -135,7 +135,19 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 
     let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
         if config.system.infrastructure.metrics.enabled {
-            Arc::new(PrometheusPerformanceMetrics)
+            match PrometheusPerformanceMetrics::try_new() {
+                Ok(metrics) => {
+                    info!("Prometheus metrics initialized successfully");
+                    Arc::new(metrics)
+                }
+                Err(e) => {
+                    warn!(
+                        "Failed to initialize Prometheus metrics: {}, falling back to null metrics",
+                        e
+                    );
+                    Arc::new(NullPerformanceMetrics)
+                }
+            }
         } else {
             Arc::new(NullPerformanceMetrics)
         };

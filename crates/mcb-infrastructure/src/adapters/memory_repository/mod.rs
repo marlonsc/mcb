@@ -2,6 +2,13 @@
 //!
 //! This adapter implements the domain port `MemoryRepository` using a SQLite pool
 //! supplied by `MemoryDatabaseProvider`. It does not open SQLite connections directly.
+//!
+//! ## Architecture Note
+//!
+//! TODO(architecture): This repository directly uses `sqlx` and `SqlitePool` instead of
+//! the domain `DatabaseExecutor` port. For architectural consistency with other repositories,
+//! it should be refactored to use the `DatabaseExecutor` abstraction layer.
+//! See: mcb-domain/src/ports/infrastructure/database.rs
 
 mod row_convert;
 
