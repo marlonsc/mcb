@@ -46,13 +46,26 @@ impl IndexingProgress {
         }
     }
 
+    fn with_counts(
+        files_processed: usize,
+        chunks_created: usize,
+        files_skipped: usize,
+        errors: Vec<String>,
+    ) -> Self {
+        Self {
+            files_processed,
+            chunks_created,
+            files_skipped,
+            errors,
+        }
+    }
+
     fn record_error(&mut self, context: &str, path: &Path, error: impl std::fmt::Display) {
         self.errors
             .push(format!("{} {}: {}", context, path.display(), error));
     }
 
-    // Reserved for sync indexing path - async path builds IndexingResult directly
-    #[allow(dead_code)]
+    /// Build final IndexingResult (used by sync path and tests).
     fn into_result(self, operation_id: Option<String>, status: &str) -> IndexingResult {
         IndexingResult {
             files_processed: self.files_processed,
@@ -309,11 +322,13 @@ impl IndexingServiceImpl {
 
         let duration_ms = start.elapsed().as_millis() as u64;
 
-        // Publish completion event
+        let result = IndexingProgress::with_counts(files_processed, chunks_created, 0, vec![])
+            .into_result(Some(operation_id.to_string()), "completed");
+
         if let Err(e) = event_bus
             .publish_event(DomainEvent::IndexingCompleted {
                 collection: collection.to_string(),
-                chunks: chunks_created,
+                chunks: result.chunks_created,
                 duration_ms,
             })
             .await
@@ -323,7 +338,7 @@ impl IndexingServiceImpl {
 
         info!(
             "Indexing completed: {} files, {} chunks in {}ms",
-            files_processed, chunks_created, duration_ms
+            result.files_processed, result.chunks_created, duration_ms
         );
     }
 }
