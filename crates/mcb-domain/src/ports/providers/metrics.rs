@@ -3,7 +3,7 @@
 //! Port for observability metrics collection providers. Implementations integrate
 //! with monitoring systems like Prometheus, OpenTelemetry, or custom backends.
 //!
-//! This port is distinct from [`MetricsAnalysisProvider`](super::metrics_analysis)
+//! This port is distinct from [`MetricsAnalysisProvider`](crate::ports::providers::metrics_analysis::MetricsAnalysisProvider)
 //! which analyzes code complexity. This port collects runtime observability metrics.
 //!
 //! ## Metric Types

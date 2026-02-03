@@ -250,7 +250,7 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
     }
 
     fn start_operation(&self, collection: &str, total_files: usize) -> String {
-        DefaultIndexingOperations::start_operation_impl(self, collection, total_files)
+        DefaultIndexingOperations::start_operation_internal(self, collection, total_files)
     }
 
     fn update_progress(&self, operation_id: &str, current_file: Option<String>, processed: usize) {
