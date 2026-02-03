@@ -37,7 +37,7 @@ impl VcsContext {
                 }
             });
         let repo_id = Command::new("git")
-            .args(["rev-parse", "--verify", "HEAD"])
+            .args(["config", "--get", "remote.origin.url"])
             .output()
             .ok()
             .and_then(|o| {
