@@ -226,13 +226,17 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join(".mcb")
         .join("memory.db");
-    let memory_repository = std::sync::Arc::new(
-        mcb_infrastructure::repositories::SqliteMemoryRepository::new(memory_db_path)
-            .await
-            .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?,
-    );
+    let memory_repository = mcb_providers::database::create_memory_repository(memory_db_path)
+        .await
+        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
+
+    let project_id = std::env::current_dir()
+        .ok()
+        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+        .unwrap_or_else(|| "default".to_string());
 
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
+        project_id,
         cache: shared_cache,
         crypto,
         config,

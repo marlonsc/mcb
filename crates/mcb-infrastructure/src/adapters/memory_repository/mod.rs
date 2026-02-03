@@ -1,191 +1,33 @@
+//! SQLite-based memory repository for Phase 6 (Memory Search).
+//!
+//! This adapter implements the domain port `MemoryRepository` using a SQLite pool
+//! supplied by `MemoryDatabaseProvider`. It does not open SQLite connections directly.
+
+mod row_convert;
+
 use async_trait::async_trait;
 use mcb_domain::{
-    entities::memory::{
-        MemoryFilter, MemorySearchResult, Observation, ObservationMetadata, ObservationType,
-        SessionSummary,
-    },
+    entities::memory::{MemoryFilter, MemorySearchResult, Observation, SessionSummary},
     error::{Error, Result},
     ports::MemoryRepository,
     ports::repositories::memory_repository::FtsSearchResult,
 };
-
 use sqlx::{Row, SqlitePool};
-use std::path::PathBuf;
-use tracing::{debug, info};
+use tracing::debug;
 
 /// SQLite-based memory repository used by Phase 6 (Memory Search) to store observations, session
 /// summaries, and FTS indexes so hybrid search pulls consistent data across configured vector stores.
+///
+/// The pool must be obtained from `MemoryDatabaseProvider`; the repository does not access SQLite
+/// directly.
 pub struct SqliteMemoryRepository {
     pool: SqlitePool,
 }
 
 impl SqliteMemoryRepository {
-    pub async fn new(db_path: PathBuf) -> Result<Self> {
-        if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| Error::memory_with_source("Failed to create db directory", e))?;
-        }
-
-        let db_url = format!("sqlite:{}?mode=rwc", db_path.display());
-        let pool = SqlitePool::connect(&db_url)
-            .await
-            .map_err(|e| Error::memory_with_source("Failed to connect to SQLite", e))?;
-
-        let repo = Self { pool };
-        repo.init_schema()
-            .await
-            .map_err(|e| Error::memory_with_source("Failed to initialize memory schema", e))?;
-
-        info!("Memory repository initialized at {}", db_path.display());
-        Ok(repo)
-    }
-
-    pub async fn in_memory() -> Result<Self> {
-        let pool = SqlitePool::connect("sqlite::memory:")
-            .await
-            .map_err(|e| Error::memory_with_source("Failed to connect to in-memory SQLite", e))?;
-
-        let repo = Self { pool };
-        repo.init_schema()
-            .await
-            .map_err(|e| Error::memory_with_source("Failed to initialize in-memory schema", e))?;
-
-        debug!("In-memory repository initialized");
-        Ok(repo)
-    }
-
-    async fn init_schema(&self) -> Result<()> {
-        sqlx::query(
-            r"
-            CREATE TABLE IF NOT EXISTS observations (
-                id TEXT PRIMARY KEY,
-                content TEXT NOT NULL,
-                content_hash TEXT UNIQUE NOT NULL,
-                tags TEXT,
-                observation_type TEXT,
-                metadata TEXT,
-                created_at INTEGER NOT NULL,
-                embedding_id TEXT
-            )
-            ",
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::memory_with_source("Failed to create observations table", e))?;
-
-        sqlx::query(
-            r"
-            CREATE TABLE IF NOT EXISTS session_summaries (
-                id TEXT PRIMARY KEY,
-                session_id TEXT NOT NULL,
-                topics TEXT,
-                decisions TEXT,
-                next_steps TEXT,
-                key_files TEXT,
-                created_at INTEGER NOT NULL
-            )
-            ",
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::memory_with_source("Failed to create session_summaries table", e))?;
-
-        sqlx::query(
-            "CREATE VIRTUAL TABLE IF NOT EXISTS observations_fts USING fts5(content, id UNINDEXED)",
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::memory_with_source("Failed to create observations_fts table", e))?;
-
-        sqlx::query(
-            r"
-            CREATE TRIGGER IF NOT EXISTS obs_ai AFTER INSERT ON observations BEGIN
-              INSERT INTO observations_fts(id, content) VALUES (new.id, new.content);
-            END;
-            ",
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::memory_with_source("Failed to create obs_ai trigger", e))?;
-
-        sqlx::query(
-            r"
-            CREATE TRIGGER IF NOT EXISTS obs_ad AFTER DELETE ON observations BEGIN
-              DELETE FROM observations_fts WHERE id = old.id;
-            END;
-            ",
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::memory_with_source("Failed to create obs_ad trigger", e))?;
-
-        sqlx::query(
-            r"
-            CREATE TRIGGER IF NOT EXISTS obs_au AFTER UPDATE ON observations BEGIN
-              DELETE FROM observations_fts WHERE id = old.id;
-              INSERT INTO observations_fts(id, content) VALUES (new.id, new.content);
-            END;
-            ",
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::memory_with_source("Failed to create obs_au trigger", e))?;
-
-        sqlx::query("CREATE INDEX IF NOT EXISTS idx_obs_hash ON observations(content_hash)")
-            .execute(&self.pool)
-            .await
-            .ok();
-
-        sqlx::query("CREATE INDEX IF NOT EXISTS idx_obs_created ON observations(created_at)")
-            .execute(&self.pool)
-            .await
-            .ok();
-
-        sqlx::query(
-            "CREATE INDEX IF NOT EXISTS idx_summary_session ON session_summaries(session_id)",
-        )
-        .execute(&self.pool)
-        .await
-        .ok();
-
-        debug!("Memory schema initialized");
-        Ok(())
-    }
-
-    fn row_to_observation(row: &sqlx::sqlite::SqliteRow) -> Result<Observation> {
-        let tags_json: Option<String> = row.try_get("tags").ok();
-        let tags: Vec<String> = tags_json
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default();
-
-        let obs_type_str: String = row
-            .try_get("observation_type")
-            .unwrap_or_else(|_| "context".to_string());
-        let observation_type = obs_type_str.parse().unwrap_or(ObservationType::Context);
-
-        let metadata_json: Option<String> = row.try_get("metadata").ok();
-        let metadata: ObservationMetadata = metadata_json
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default();
-
-        Ok(Observation {
-            id: row
-                .try_get("id")
-                .map_err(|e| Error::memory_with_source("Missing id", e))?,
-            content: row
-                .try_get("content")
-                .map_err(|e| Error::memory_with_source("Missing content", e))?,
-            content_hash: row
-                .try_get("content_hash")
-                .map_err(|e| Error::memory_with_source("Missing content_hash", e))?,
-            tags,
-            observation_type,
-            metadata,
-            created_at: row
-                .try_get("created_at")
-                .map_err(|e| Error::memory_with_source("Missing created_at", e))?,
-            embedding_id: row.try_get("embedding_id").ok(),
-        })
+    /// Create a repository that uses the given pool (from `MemoryDatabaseProvider`).
+    pub fn new(pool: SqlitePool) -> Self {
+        Self { pool }
     }
 }
 
@@ -230,7 +72,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             .map_err(|e| Error::memory_with_source("Failed to get observation", e))?;
 
         match row {
-            Some(r) => Ok(Some(Self::row_to_observation(&r).map_err(|e| {
+            Some(r) => Ok(Some(row_convert::row_to_observation(&r).map_err(|e| {
                 Error::memory_with_source("Failed to decode observation row", e)
             })?)),
             None => Ok(None),
@@ -245,7 +87,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             .map_err(|e| Error::memory_with_source("Failed to find by hash", e))?;
 
         match row {
-            Some(r) => Ok(Some(Self::row_to_observation(&r).map_err(|e| {
+            Some(r) => Ok(Some(row_convert::row_to_observation(&r).map_err(|e| {
                 Error::memory_with_source("Failed to decode observation row", e)
             })?)),
             None => Ok(None),
@@ -359,9 +201,9 @@ impl MemoryRepository for SqliteMemoryRepository {
             .await
             .map_err(|e| Error::memory_with_source("Failed to search observations", e))?;
 
-        let mut results = Vec::new();
+        let mut results = Vec::with_capacity(rows.len());
         for (i, row) in rows.iter().enumerate() {
-            let observation = Self::row_to_observation(row)
+            let observation = row_convert::row_to_observation(row)
                 .map_err(|e| Error::memory_with_source("Failed to decode observation row", e))?;
             results.push(MemorySearchResult {
                 id: observation.id.clone(),
@@ -397,7 +239,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         let mut observations = Vec::new();
         for row in rows {
             observations.push(
-                Self::row_to_observation(&row)
+                row_convert::row_to_observation(&row)
                     .map_err(|e| Error::memory_with_source("Failed to decode observation", e))?,
             );
         }
@@ -481,7 +323,7 @@ impl MemoryRepository for SqliteMemoryRepository {
 
         for row in before_rows.iter().rev() {
             timeline.push(
-                Self::row_to_observation(row)
+                row_convert::row_to_observation(row)
                     .map_err(|e| Error::memory_with_source("Failed to decode observation", e))?,
             );
         }
@@ -492,7 +334,7 @@ impl MemoryRepository for SqliteMemoryRepository {
 
         for row in after_rows {
             timeline.push(
-                Self::row_to_observation(&row)
+                row_convert::row_to_observation(&row)
                     .map_err(|e| Error::memory_with_source("Failed to decode observation", e))?,
             );
         }
@@ -546,36 +388,9 @@ impl MemoryRepository for SqliteMemoryRepository {
         .map_err(|e| Error::memory_with_source("Failed to get session summary", e))?;
 
         match row {
-            Some(r) => {
-                let topics_json: Option<String> = r.try_get("topics").ok();
-                let decisions_json: Option<String> = r.try_get("decisions").ok();
-                let next_steps_json: Option<String> = r.try_get("next_steps").ok();
-                let key_files_json: Option<String> = r.try_get("key_files").ok();
-
-                Ok(Some(SessionSummary {
-                    id: r
-                        .try_get("id")
-                        .map_err(|e| Error::memory_with_source("Missing id", e))?,
-                    session_id: r
-                        .try_get("session_id")
-                        .map_err(|e| Error::memory_with_source("Missing session_id", e))?,
-                    topics: topics_json
-                        .and_then(|s| serde_json::from_str(&s).ok())
-                        .unwrap_or_default(),
-                    decisions: decisions_json
-                        .and_then(|s| serde_json::from_str(&s).ok())
-                        .unwrap_or_default(),
-                    next_steps: next_steps_json
-                        .and_then(|s| serde_json::from_str(&s).ok())
-                        .unwrap_or_default(),
-                    key_files: key_files_json
-                        .and_then(|s| serde_json::from_str(&s).ok())
-                        .unwrap_or_default(),
-                    created_at: r
-                        .try_get("created_at")
-                        .map_err(|e| Error::memory_with_source("Missing created_at", e))?,
-                }))
-            }
+            Some(r) => Ok(Some(row_convert::row_to_session_summary(&r).map_err(
+                |e| Error::memory_with_source("Failed to decode session summary row", e),
+            )?)),
             None => Ok(None),
         }
     }

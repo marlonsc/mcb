@@ -200,12 +200,13 @@ where
                 };
 
                 // Add to all projects with parent link
+                let parent_id = Some(repo_id.clone());
                 for project_type in &sub_projects {
                     all_projects.push(DetectedProject {
                         id: Uuid::new_v4().to_string(),
                         path: submodule.path.clone(),
                         project_type: project_type.clone(),
-                        parent_repo_id: Some(repo_id.clone()),
+                        parent_repo_id: parent_id.clone(),
                     });
                 }
 

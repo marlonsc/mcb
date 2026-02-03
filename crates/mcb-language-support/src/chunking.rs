@@ -180,15 +180,16 @@ impl ChunkingStrategy for SemanticChunking {
 
         let mut chunks = Vec::new();
 
-        // Create chunks from functions
-        for func in &parsed.functions {
-            let chunk_content = Self::extract_lines(content, func.start_line, func.end_line);
+        // Create chunks from functions (consume parsed.functions to avoid cloning)
+        for func in parsed.functions {
             let line_count = func.end_line - func.start_line + 1;
 
             // Skip very small functions, they'll be included in module chunk
             if line_count < self.config.min_lines {
                 continue;
             }
+
+            let chunk_content = Self::extract_lines(content, func.start_line, func.end_line);
 
             // If function is too large, we still include it as one semantic unit
             // (breaking a function mid-way loses semantic coherence)
@@ -197,7 +198,7 @@ impl ChunkingStrategy for SemanticChunking {
                 start_line: func.start_line,
                 end_line: func.end_line,
                 chunk_type: ChunkType::Function,
-                name: Some(func.name.clone()),
+                name: Some(func.name),
             });
         }
 

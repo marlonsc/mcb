@@ -552,13 +552,12 @@ async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
-    let memory_repository = Arc::new(
-        mcb_infrastructure::repositories::SqliteMemoryRepository::in_memory()
-            .await
-            .expect("Failed to create memory repository"),
-    );
+    let memory_repository = mcb_providers::database::create_memory_repository_in_memory()
+        .await
+        .expect("Failed to create memory database");
 
     let deps = ServiceDependencies {
+        project_id: "test-project".to_string(),
         cache: shared_cache,
         crypto,
         config,

@@ -176,6 +176,7 @@ pub async fn create_test_mcp_server() -> McpServer {
     let memory_repository = Arc::new(crate::test_utils::mock_services::MockMemoryRepository::new());
 
     let deps = ServiceDependencies {
+        project_id: "test-project".to_string(),
         cache: shared_cache,
         crypto,
         config,

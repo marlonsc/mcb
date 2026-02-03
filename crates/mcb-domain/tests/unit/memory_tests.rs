@@ -49,6 +49,7 @@ fn test_memory_filter_construction() {
 fn test_observation_has_required_fields() {
     let o = Observation {
         id: "id1".to_string(),
+        project_id: "test-project".to_string(),
         content: "c".to_string(),
         content_hash: "h".to_string(),
         tags: vec![],

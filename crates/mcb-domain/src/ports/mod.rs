@@ -37,10 +37,10 @@ pub use admin::{
     ValidationOperationResult, ValidationOperationsInterface,
 };
 pub use infrastructure::{
-    AuthServiceInterface, DomainEventStream, EventBusProvider, LockGuard, LockProvider,
-    ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, SnapshotProvider,
-    StateStoreProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult, SystemMetrics,
-    SystemMetricsCollectorInterface,
+    AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, LockGuard,
+    LockProvider, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
+    SnapshotProvider, SqlParam, SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions,
+    SyncProvider, SyncResult, SystemMetrics, SystemMetricsCollectorInterface,
 };
 pub use providers::{
     CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats, CryptoProvider,

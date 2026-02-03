@@ -100,6 +100,16 @@ pub mod hybrid_search;
 #[cfg(feature = "hybrid-search")]
 pub use hybrid_search::{HybridSearchEngine, NullHybridSearchProvider};
 
+/// Database providers (memory repository backends)
+///
+/// Each backend (SQLite, PostgreSQL, MySQL) has its own submodule and
+/// implements the generic schema DDL in its dialect.
+#[cfg(feature = "memory-sqlite")]
+pub mod database;
+
+#[cfg(feature = "memory-sqlite")]
+pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+
 /// Git-related providers for repository operations
 ///
 /// Provides project type detection (Cargo, npm, Python, Go, Maven) and

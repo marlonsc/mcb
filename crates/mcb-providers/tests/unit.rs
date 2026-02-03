@@ -26,3 +26,7 @@ mod npm_tests;
 
 #[path = "unit/python_tests.rs"]
 mod python_tests;
+
+#[cfg(feature = "memory-sqlite")]
+#[path = "unit/ddl_tests.rs"]
+mod ddl_tests;

@@ -65,10 +65,11 @@ impl Default for ObservationMetadata {
     }
 }
 
-/// Stored observation with content, type, metadata, and optional embedding.
+/// Memory observation stored in SQLite with optional embedding reference for RAG search.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Observation {
     pub id: String,
+    pub project_id: String,
     pub content: String,
     pub content_hash: String,
     pub tags: Vec<String>,
@@ -78,10 +79,11 @@ pub struct Observation {
     pub embedding_id: Option<String>,
 }
 
-/// Session summary with topics, decisions, next steps, and key files.
+/// Summary of a conversation session with topics, decisions, and action items.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionSummary {
     pub id: String,
+    pub project_id: String,
     pub session_id: String,
     pub topics: Vec<String>,
     pub decisions: Vec<String>,

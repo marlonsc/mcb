@@ -57,6 +57,7 @@ pub struct DomainServicesContainer {
 /// described in `.planning/STATE.md` and `docs/context/project-state.md` so injecting the right
 /// combination keeps the memory/indexing services aligned with the roadmap.
 pub struct ServiceDependencies {
+    pub project_id: String,
     pub cache: SharedCacheProvider,
     pub crypto: CryptoService,
     pub config: AppConfig,
@@ -101,6 +102,7 @@ impl DomainServicesFactory {
         let vcs_provider: Arc<dyn VcsProvider> = Arc::new(Git2Provider::new());
 
         let memory_service: Arc<dyn MemoryServiceInterface> = Arc::new(MemoryServiceImpl::new(
+            deps.project_id.clone(),
             deps.memory_repository,
             deps.embedding_provider,
             deps.vector_store_provider,

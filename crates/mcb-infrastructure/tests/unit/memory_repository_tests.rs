@@ -1,21 +1,46 @@
-//! Tests for memory repository (REF003: dedicated test file).
-
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
-use mcb_infrastructure::repositories::memory_repository::SqliteMemoryRepository;
+use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
+use mcb_providers::database::{SqliteExecutor, create_memory_repository_in_memory};
+use std::sync::Arc;
+
+async fn create_test_project(executor: &SqliteExecutor, project_id: &str) {
+    let now = chrono::Utc::now().timestamp();
+    executor
+        .execute(
+            "INSERT INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            &[
+                SqlParam::String(project_id.to_string()),
+                SqlParam::String(project_id.to_string()),
+                SqlParam::String("/test".to_string()),
+                SqlParam::I64(now),
+                SqlParam::I64(now),
+            ],
+        )
+        .await
+        .unwrap();
+}
 
 #[tokio::test]
 async fn test_memory_repository_in_memory_creates() {
-    let repo = SqliteMemoryRepository::in_memory().await.unwrap();
+    let repo: Arc<dyn MemoryRepository> = create_memory_repository_in_memory().await.unwrap();
     let results = repo.search_fts("test", 1).await.unwrap();
     assert!(results.is_empty());
 }
 
 #[tokio::test]
 async fn test_memory_repository_store_and_get_observation() {
-    let repo = SqliteMemoryRepository::in_memory().await.unwrap();
+    let (repo, executor): (Arc<dyn MemoryRepository>, SqliteExecutor) =
+        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+            .await
+            .unwrap();
+
+    let project_id = "test-project";
+    create_test_project(&executor, project_id).await;
+
     let obs = Observation {
         id: "id1".to_string(),
+        project_id: project_id.to_string(),
         content: "content".to_string(),
         content_hash: "hash1".to_string(),
         tags: vec![],

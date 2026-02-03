@@ -23,7 +23,7 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
-default = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-all"]
+default = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-all", "memory-sqlite"]
 
 # === Embedding Providers ===
 embedding-all = ["embedding-openai", "embedding-ollama", "embedding-voyageai", "embedding-gemini", "embedding-fastembed", "embedding-anthropic"]
@@ -72,9 +72,12 @@ lang-php = ["dep:tree-sitter-php"]
 lang-swift = ["dep:tree-sitter-swift"]
 lang-kotlin = ["dep:tree-sitter-kotlin-ng"]
 
+# === Memory / Database (generic schema + SQLite adapter) ===
+memory-sqlite = ["dep:sqlx"]
+
 # === Convenience Feature Groups ===
-minimal = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-rust", "lang-python"]
-full = ["embedding-all", "vectorstore-all", "cache-all", "hybrid-search", "lang-all"]
+minimal = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-rust", "lang-python", "memory-sqlite"]
+full = ["embedding-all", "vectorstore-all", "cache-all", "hybrid-search", "lang-all", "memory-sqlite"]
 
 [dependencies]
 # Domain layer - contains provider port traits (Clean Architecture)
@@ -183,6 +186,9 @@ schemars = { workspace = true, optional = true }
 
 # Optional: NATS for distributed events
 async-nats = { workspace = true, optional = true }
+
+# Optional: SQLite for memory repository (uses generic schema from domain)
+sqlx = { workspace = true, optional = true }
 
 [dev-dependencies]
 tempfile = "3.10"

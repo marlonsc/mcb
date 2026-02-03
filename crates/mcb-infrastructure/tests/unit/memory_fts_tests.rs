@@ -1,16 +1,41 @@
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
-use mcb_infrastructure::repositories::memory_repository::SqliteMemoryRepository;
+use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
+use mcb_providers::database::SqliteExecutor;
+use std::sync::Arc;
 use uuid::Uuid;
+
+async fn create_test_project(executor: &SqliteExecutor, project_id: &str) {
+    let now = chrono::Utc::now().timestamp();
+    executor
+        .execute(
+            "INSERT INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            &[
+                SqlParam::String(project_id.to_string()),
+                SqlParam::String(project_id.to_string()),
+                SqlParam::String("/test".to_string()),
+                SqlParam::I64(now),
+                SqlParam::I64(now),
+            ],
+        )
+        .await
+        .unwrap();
+}
 
 #[tokio::test]
 async fn test_fts_search_flow() {
-    let repo = SqliteMemoryRepository::in_memory().await.unwrap();
+    let (repo, executor): (Arc<dyn MemoryRepository>, SqliteExecutor) =
+        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+            .await
+            .unwrap();
 
-    // 1. Insert observation "The quick brown fox"
+    let project_id = "test-project".to_string();
+    create_test_project(&executor, &project_id).await;
+
     let id = Uuid::new_v4().to_string();
     let obs = Observation {
         id: id.clone(),
+        project_id: project_id.clone(),
         content: "The quick brown fox".to_string(),
         content_hash: "hash1".to_string(),
         tags: vec![],

@@ -1,6 +1,16 @@
-//! Project entity representing a detected project within a repository.
+//! Project entities for repository management and detection.
 
 use serde::{Deserialize, Serialize};
+
+/// Registered project in MCB - serves as root entity linking collections, observations, and file hashes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Project {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
 
 /// Project type detected from manifest files
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

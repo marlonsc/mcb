@@ -34,6 +34,6 @@ pub use memory::{
     MemoryFilter, MemorySearchResult, Observation, ObservationMetadata, ObservationType,
     SessionSummary,
 };
-pub use project::{DetectedProject, ProjectType};
+pub use project::{DetectedProject, Project, ProjectType};
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
 pub use vcs::{DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};

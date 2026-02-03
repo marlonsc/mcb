@@ -21,8 +21,9 @@ use uuid::Uuid;
 const RRF_K: f32 = 60.0;
 const HYBRID_SEARCH_MULTIPLIER: usize = 3;
 
-/// Application service implementation for observation storage and semantic memory search.
+/// Hybrid memory service: SQLite for metadata/FTS + VectorStore for RAG embeddings.
 pub struct MemoryServiceImpl {
+    project_id: String,
     repository: Arc<dyn MemoryRepository>,
     embedding_provider: Arc<dyn EmbeddingProvider>,
     vector_store: Arc<dyn VectorStoreProvider>,
@@ -30,11 +31,13 @@ pub struct MemoryServiceImpl {
 
 impl MemoryServiceImpl {
     pub fn new(
+        project_id: String,
         repository: Arc<dyn MemoryRepository>,
         embedding_provider: Arc<dyn EmbeddingProvider>,
         vector_store: Arc<dyn VectorStoreProvider>,
     ) -> Self {
         Self {
+            project_id,
             repository,
             embedding_provider,
             vector_store,
@@ -116,6 +119,7 @@ impl MemoryServiceImpl {
 
         let observation = Observation {
             id: Uuid::new_v4().to_string(),
+            project_id: self.project_id.clone(),
             content,
             content_hash,
             tags,
@@ -250,6 +254,7 @@ impl MemoryServiceImpl {
     ) -> Result<String> {
         let summary = SessionSummary {
             id: Uuid::new_v4().to_string(),
+            project_id: self.project_id.clone(),
             session_id,
             topics,
             decisions,

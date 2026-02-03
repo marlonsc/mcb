@@ -17,9 +17,12 @@
 //! | [`LockProvider`] | Distributed lock coordination |
 //! | [`StateStoreProvider`] | Key-value state persistence |
 //! | [`ProviderRouter`] | Provider routing and selection services |
+//! | [`DatabaseExecutor`] | SQL execution (repositories use via DI, no direct driver) |
 
 /// Authentication service port
 pub mod auth;
+/// Database executor port (SQL execution abstraction)
+pub mod database;
 /// Event bus provider port
 pub mod events;
 /// Distributed lock provider port
@@ -39,6 +42,7 @@ pub mod sync;
 
 // Re-export infrastructure ports
 pub use auth::AuthServiceInterface;
+pub use database::{DatabaseExecutor, DatabaseProvider, SqlParam, SqlRow};
 pub use events::{DomainEventStream, EventBusProvider};
 pub use lock::{LockGuard, LockProvider};
 pub use metrics::{SystemMetrics, SystemMetricsCollectorInterface};

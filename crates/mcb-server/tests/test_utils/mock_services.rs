@@ -667,6 +667,7 @@ impl MemoryServiceInterface for MockMemoryService {
 
         let obs = Observation {
             id: uuid::Uuid::new_v4().to_string(),
+            project_id: "mock-project".to_string(),
             content,
             content_hash: "mock-hash".to_string(),
             tags,
@@ -793,6 +794,7 @@ impl MemoryServiceInterface for MockMemoryService {
 
         let summary = SessionSummary {
             id: uuid::Uuid::new_v4().to_string(),
+            project_id: "mock-project".to_string(),
             session_id,
             topics,
             decisions,
