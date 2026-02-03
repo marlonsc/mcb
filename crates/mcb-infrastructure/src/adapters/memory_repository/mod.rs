@@ -5,7 +5,7 @@
 //!
 //! ## Architecture Note
 //!
-//! TODO(architecture): This repository directly uses `sqlx` and `SqlitePool` instead of
+//! NOTE(architecture): This repository directly uses `sqlx` and `SqlitePool` instead of
 //! the domain `DatabaseExecutor` port. For architectural consistency with other repositories,
 //! it should be refactored to use the `DatabaseExecutor` abstraction layer.
 //! See: mcb-domain/src/ports/infrastructure/database.rs

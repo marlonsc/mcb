@@ -646,28 +646,28 @@ impl MockAgentRepository {
     }
 
     fn matches_query(session: &AgentSession, query: &AgentSessionQuery) -> bool {
-        if let Some(ref summary_id) = query.session_summary_id {
-            if session.session_summary_id != *summary_id {
-                return false;
-            }
+        if let Some(summary_id) = &query.session_summary_id
+            && session.session_summary_id != *summary_id
+        {
+            return false;
         }
 
-        if let Some(ref parent_id) = query.parent_session_id {
-            if session.parent_session_id.as_ref() != Some(parent_id) {
-                return false;
-            }
+        if let Some(parent_id) = &query.parent_session_id
+            && session.parent_session_id.as_ref() != Some(parent_id)
+        {
+            return false;
         }
 
-        if let Some(ref agent_type) = query.agent_type {
-            if &session.agent_type != agent_type {
-                return false;
-            }
+        if let Some(agent_type) = &query.agent_type
+            && &session.agent_type != agent_type
+        {
+            return false;
         }
 
-        if let Some(ref status) = query.status {
-            if &session.status != status {
-                return false;
-            }
+        if let Some(status) = &query.status
+            && &session.status != status
+        {
+            return false;
         }
 
         true
@@ -1101,57 +1101,5 @@ impl VcsProvider for MockVcsProvider {
             total_additions: 5,
             total_deletions: 2,
         })
-    }
-}
-
-// ============================================================================
-// Mock Agent Repository
-// ============================================================================
-
-use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
-use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
-
-pub struct MockAgentRepository;
-
-impl MockAgentRepository {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for MockAgentRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl AgentRepository for MockAgentRepository {
-    async fn create_session(&self, _session: &AgentSession) -> Result<()> {
-        Ok(())
-    }
-    async fn get_session(&self, _id: &str) -> Result<Option<AgentSession>> {
-        Ok(None)
-    }
-    async fn update_session(&self, _session: &AgentSession) -> Result<()> {
-        Ok(())
-    }
-    async fn list_sessions(&self, _query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
-        Ok(Vec::new())
-    }
-    async fn store_delegation(&self, _delegation: &Delegation) -> Result<()> {
-        Ok(())
-    }
-    async fn store_tool_call(&self, _tool_call: &ToolCall) -> Result<()> {
-        Ok(())
-    }
-    async fn store_checkpoint(&self, _checkpoint: &Checkpoint) -> Result<()> {
-        Ok(())
-    }
-    async fn get_checkpoint(&self, _id: &str) -> Result<Option<Checkpoint>> {
-        Ok(None)
-    }
-    async fn update_checkpoint(&self, _checkpoint: &Checkpoint) -> Result<()> {
-        Ok(())
     }
 }

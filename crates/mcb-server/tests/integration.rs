@@ -40,3 +40,17 @@ mod error_recovery_integration;
 // Operating modes integration tests (standalone, server, client)
 #[path = "integration/operating_modes_integration.rs"]
 mod operating_modes_integration;
+
+// Golden E2E complete (no ignore): workflow, index, MCP schema, search
+#[path = "integration/golden_e2e_complete.rs"]
+mod golden_e2e_complete;
+
+// Golden tests canonical location (repo root tests/golden) - all included so no tests are discarded
+#[path = "../../../tests/golden/test_end_to_end.rs"]
+mod golden_test_end_to_end;
+#[path = "../../../tests/golden/test_index_repository.rs"]
+mod golden_test_index_repository;
+#[path = "../../../tests/golden/test_mcp_schemas.rs"]
+mod golden_test_mcp_schemas;
+#[path = "../../../tests/golden/test_search_validation.rs"]
+mod golden_test_search_validation;

@@ -1,69 +1,10 @@
-//! Golden test: Search validation
+//! Legacy shim: search validation tests live in
+//! `crates/mcb-server/tests/integration/golden_tools_e2e.rs` and
+//! `golden_e2e_complete.rs`:
+//! - golden_search_returns_relevant_results
+//! - golden_search_ranking_is_correct
+//! - golden_search_handles_empty_query
+//! - golden_search_respects_limit_parameter
+//! - golden_search_filters_by_extension
 //!
-//! Verifies that search functionality:
-//! - Returns relevant results for known queries
-//! - Ranks results appropriately
-//! - Handles edge cases correctly
-//! - Respects search filters
-
-#[cfg(test)]
-mod tests {
-    use super::super::fixtures::{test_collection, test_repo_path};
-
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_search_returns_relevant_results() {
-        // TODO: Phase 4 - Implement after DI catalog available
-        // 1. Index test repository
-        // 2. Search for known query (e.g., "function that adds numbers")
-        // 3. Verify expected file in results
-        // 4. Verify relevance score > threshold
-
-        todo!("Implement in Phase 4")
-    }
-
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_search_ranking_is_correct() {
-        // TODO: Phase 4
-        // Verify most relevant result is ranked first
-        // Verify score decreases for less relevant results
-
-        todo!("Implement in Phase 4")
-    }
-
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_search_handles_empty_query() {
-        // TODO: Phase 4
-        // Verify graceful handling of empty query
-        // Verify appropriate error or empty results
-
-        todo!("Implement in Phase 4")
-    }
-
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_search_respects_limit_parameter() {
-        // TODO: Phase 4
-        // Search with limit=5
-        // Verify exactly 5 results returned (or fewer if not enough matches)
-
-        todo!("Implement in Phase 4")
-    }
-
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_search_filters_by_extension() {
-        // TODO: Phase 4
-        // Search with extensions filter (e.g., ["rs"])
-        // Verify only Rust files in results
-
-        todo!("Implement in Phase 4")
-    }
-}
+//! Run: `cargo test -p mcb-server golden_search`

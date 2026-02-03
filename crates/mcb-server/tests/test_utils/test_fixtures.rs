@@ -17,9 +17,87 @@ use mcb_infrastructure::di::modules::domain_services::{
 };
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tempfile::TempDir;
+
+// -----------------------------------------------------------------------------
+// Golden test helpers (shared by tests/golden and integration)
+// -----------------------------------------------------------------------------
+
+pub const GOLDEN_COLLECTION: &str = "mcb_golden_test";
+
+/// Path to sample_codebase fixture (used by golden tests).
+pub fn sample_codebase_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample_codebase")
+}
+
+/// Extract text content from CallToolResult for assertions.
+pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
+    res.content
+        .iter()
+        .filter_map(|x| {
+            if let Ok(v) = serde_json::to_value(x) {
+                v.get("text").and_then(|t| t.as_str()).map(String::from)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Parse "**Results found:** N" from search response text.
+pub fn golden_parse_results_found(text: &str) -> Option<usize> {
+    let prefix = "**Results found:**";
+    text.find(prefix).and_then(|i| {
+        let rest = text[i + prefix.len()..].trim_start();
+        let num_str: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+        num_str.parse().ok()
+    })
+}
+
+/// Count result lines (each has "📁") in search response.
+pub fn golden_count_result_entries(text: &str) -> usize {
+    text.lines().filter(|line| line.contains("📁")).count()
+}
+
+/// Parse "Files processed: N" and "Chunks created: M" from indexing success response.
+/// Returns (files_processed, chunks_created) or None if not found (e.g. "Indexing Started" message).
+pub fn golden_parse_indexing_stats(text: &str) -> Option<(usize, usize)> {
+    let files = text
+        .lines()
+        .find(|l| l.contains("Files processed:"))?
+        .split(':')
+        .nth(1)?
+        .trim()
+        .split_whitespace()
+        .next()?
+        .parse::<usize>()
+        .ok()?;
+    let chunks = text
+        .lines()
+        .find(|l| l.contains("Chunks created:"))?
+        .split(':')
+        .nth(1)?
+        .trim()
+        .split_whitespace()
+        .next()?
+        .parse::<usize>()
+        .ok()?;
+    Some((files, chunks))
+}
+
+/// Expected files in sample_codebase for search assertions.
+pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
+    "embedding.rs",
+    "vector_store.rs",
+    "handlers.rs",
+    "cache.rs",
+    "di.rs",
+    "error.rs",
+    "chunking.rs",
+];
 
 /// Create a temporary codebase directory with sample code files
 pub fn create_temp_codebase() -> (TempDir, PathBuf) {

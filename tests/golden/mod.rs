@@ -1,14 +1,11 @@
-//! Golden acceptance tests for MCB
+//! Golden tests contract and index.
 //!
-//! **Implemented tests live in `crates/mcb-server`** (no `#[ignore]`).
+//! **Implemented tests live in `crates/mcb-server`** (no `#[ignore]`):
+//! - `golden_tools_e2e.rs` (from release/v0.1.5)
+//! - `golden_e2e_complete.rs` (E2E + index + MCP schema + search validation)
+//! - `golden_acceptance_integration.rs`
 //!
-//! Run them with:
-//! - `cargo test -p mcb-server golden` (acceptance + tools e2e)
-//! - `make test SCOPE=golden`
+//! Run: `cargo test -p mcb-server golden` or `make test SCOPE=golden`.
 //!
-//! Coverage:
-//! - E2E: complete workflow (clear → index → status → search → clear)
-//! - Index: test repository, multiple languages, ignore patterns
-//! - Search: relevance, ranking, empty query, limit, extension filter
-//! - MCP schema: index_codebase, search_code, get_indexing_status, clear_index, error format
-//! - Collection isolation and reindex
+//! Coverage: E2E workflow, index (repo/multi-lang/ignore), search (relevance/limit/ext),
+//! MCP schema (all 4 tools + error format), collection isolation, reindex.

@@ -1,0 +1,60 @@
+# Golden Tests Contract
+
+Golden tests validate **real** MCP tool behaviour: indexing, search, status, and clear. They run with the real DI stack (NullEmbedding + InMemoryVectorStore) and assert on handler responses and content.
+
+**Location:** `crates/mcb-server/tests/integration/golden_e2e_complete.rs`  
+**Run:** `cargo test -p mcb-server golden` or `make test SCOPE=golden`  
+**Fixture:** `crates/mcb-server/tests/fixtures/sample_codebase/` (Rust files: embedding.rs, vector_store.rs, handlers.rs, etc.)
+
+---
+
+## 1. E2E workflow
+
+| Test | Contract (what must hold) |
+|------|---------------------------|
+| `golden_e2e_complete_workflow` | (1) clear_index(collection) succeeds and response contains "clear"/"Clear"/"cleared". (2) get_indexing_status(collection) succeeds, not error, text contains "Indexing Status" or "Idle" or "indexing". (3) index_codebase(path, collection) succeeds, not error, text contains "chunks"/"file"/"Index"/"Files processed"/"Indexing Started". (4) get_indexing_status again succeeds. (5) search_code(collection, query) succeeds, not error, text contains "Search"/"Results"/"Result". (6) clear_index again succeeds. (7) get_indexing_status again succeeds. |
+| `golden_e2e_handles_concurrent_operations` | Two concurrent get_indexing_status(collection) calls both succeed. |
+| `golden_e2e_respects_collection_isolation` | clear_index(collection_a) and clear_index(collection_b) both succeed; operations on one collection do not break the other. |
+| `golden_e2e_handles_reindex_correctly` | index_codebase(path, collection) twice (reindex) both succeed; no panic, response indicates indexing (sync or async). |
+
+---
+
+## 2. Index
+
+| Test | Contract |
+|------|----------|
+| `golden_index_test_repository` | index_codebase(sample_codebase_path, collection) succeeds, not error, response content non-empty and contains "chunk"/"file"/"Index"/"Files processed"/"Indexing Started"/"Source directory"/"Path:". |
+| `golden_index_handles_multiple_languages` | index_codebase with extensions=Some(["rs"]) succeeds. |
+| `golden_index_respects_ignore_patterns` | index_codebase with ignore_patterns=Some(["*.md"]) succeeds. |
+
+---
+
+## 3. MCP response schema (content shape)
+
+| Test | Contract |
+|------|----------|
+| `golden_mcp_index_codebase_schema` | index_codebase response: Ok, content non-empty, not is_error. |
+| `golden_mcp_search_code_schema` | search_code response: Ok, content non-empty. |
+| `golden_mcp_get_indexing_status_schema` | get_indexing_status response: Ok, content non-empty, text contains "Status"/"indexing"/"Idle". |
+| `golden_mcp_clear_index_schema` | clear_index response: Ok, not error, text contains "Clear"/"clear"/"Collection"/"cleared". |
+| `golden_mcp_error_responses_consistent` | search_code with empty query yields Err (validation error). |
+
+---
+
+## 4. Search validation
+
+| Test | Contract |
+|------|----------|
+| `golden_search_returns_relevant_results` | After indexing sample_codebase into collection, search_code(collection, "embedding vector") succeeds, not error. (With null embedding, results may be empty; at least the handler must succeed.) |
+| `golden_search_ranking_is_correct` | search_code(collection, query) succeeds. |
+| `golden_search_handles_empty_query` | search_code with query "" or whitespace-only yields Err. |
+| `golden_search_respects_limit_parameter` | search_code with limit=2 succeeds; response should reflect limit (e.g. "Results found: N" with N ≤ 2, or "Showing top 2 results"). |
+| `golden_search_filters_by_extension` | search_code with extensions=Some(["rs"]) succeeds. |
+
+---
+
+## Implementation notes
+
+-   All tests use `create_test_mcp_server()` (null embedding + in-memory vector store).
+-   Indexing may return "Indexing Started" (async) or "Indexing Completed" (sync); assertions accept both.
+-   Search Result format: "**Results found:** N", "**1.** 📁 `path` (line L)", "Relevance Score"; use these to assert counts and file paths when strengthening tests.

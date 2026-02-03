@@ -8,7 +8,7 @@ use serde::Deserialize;
 use validator::Validate;
 
 /// Arguments for the index_codebase tool
-#[derive(Debug, Deserialize, JsonSchema, Validate)]
+#[derive(Clone, Debug, Deserialize, JsonSchema, Validate)]
 #[schemars(description = "Parameters for indexing a codebase directory")]
 pub struct IndexCodebaseArgs {
     /// Path to the codebase directory to index

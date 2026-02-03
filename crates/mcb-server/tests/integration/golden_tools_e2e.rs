@@ -4,9 +4,7 @@
 //! and call the four core MCP handlers (index_codebase, search_code,
 //! get_indexing_status, clear_index) to validate behavior and response schemas.
 
-use mcb_server::args::{
-    ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs,
-};
+use mcb_server::args::{ClearIndexArgs, GetIndexingStatusArgs, IndexCodebaseArgs, SearchCodeArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::Content;
 use std::path::Path;
@@ -23,12 +21,13 @@ fn extract_text_content(content: &[Content]) -> String {
     content
         .iter()
         .filter_map(|c| {
-            if let Ok(json) = serde_json::to_value(c) {
-                if let Some(text) = json.get("text") {
-                    return text.as_str().map(|s| s.to_string());
-                }
+            if let Ok(json) = serde_json::to_value(c)
+                && let Some(text) = json.get("text")
+            {
+                text.as_str().map(|s| s.to_string())
+            } else {
+                None
             }
-            None
         })
         .collect::<Vec<_>>()
         .join("\n")
@@ -42,7 +41,11 @@ fn extract_text_content(content: &[Content]) -> String {
 async fn golden_e2e_complete_workflow() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
-    assert!(path.exists(), "sample_codebase fixture must exist: {:?}", path);
+    assert!(
+        path.exists(),
+        "sample_codebase fixture must exist: {:?}",
+        path
+    );
     let path_str = path.to_string_lossy().to_string();
     let coll = test_collection();
 
@@ -59,7 +62,11 @@ async fn golden_e2e_complete_workflow() {
     assert!(r.is_ok(), "clear_index should succeed");
     let resp = r.unwrap();
     let text = extract_text_content(&resp.content);
-    assert!(text.contains("cleared") || text.contains("Cleared"), "{}", text);
+    assert!(
+        text.contains("cleared") || text.contains("Cleared"),
+        "{}",
+        text
+    );
 
     // 2. Status (idle / empty)
     let status_args = GetIndexingStatusArgs {
@@ -90,8 +97,10 @@ async fn golden_e2e_complete_workflow() {
     assert!(!resp.is_error.unwrap_or(false));
     let text = extract_text_content(&resp.content);
     assert!(
-        text.contains("Files processed") || text.contains("Chunks created")
-            || text.contains("Indexing Started") || text.contains("started"),
+        text.contains("Files processed")
+            || text.contains("Chunks created")
+            || text.contains("Indexing Started")
+            || text.contains("started"),
         "{}",
         text
     );
@@ -157,20 +166,35 @@ async fn golden_index_test_repository() {
 
     let text = extract_text_content(&response.content);
     assert!(
-        text.contains("Files processed") || text.contains("Indexing Started") || text.contains("started"),
+        text.contains("Files processed")
+            || text.contains("Indexing Started")
+            || text.contains("started"),
         "response: {}",
         text
     );
     assert!(
-        text.contains("Chunks created") || text.contains("chunks") || text.contains("Path:") || text.contains("Operation ID"),
+        text.contains("Chunks created")
+            || text.contains("chunks")
+            || text.contains("Path:")
+            || text.contains("Operation ID"),
         "response: {}",
         text
     );
     assert!(
-        text.contains("Source directory") || text.contains("Path:") || text.contains(path.to_string_lossy().as_ref()),
+        text.contains("Source directory")
+            || text.contains("Path:")
+            || text.contains(path.to_string_lossy().as_ref()),
         "response: {}",
         text
     );
+    if text.contains("Indexing Completed") {
+        if let Some((files, chunks)) =
+            crate::test_utils::test_fixtures::golden_parse_indexing_stats(&text)
+        {
+            assert!(files > 0, "indexing must report files_processed > 0: {}", text);
+            assert!(chunks > 0, "indexing must report chunks_created > 0: {}", text);
+        }
+    }
 }
 
 #[tokio::test]
@@ -193,7 +217,10 @@ async fn golden_index_handles_multiple_languages() {
     assert!(!response.is_error.unwrap_or(false));
     let text = extract_text_content(&response.content);
     assert!(
-        text.contains("Files processed") || text.contains("Chunks") || text.contains("Indexing Started") || text.contains("started"),
+        text.contains("Files processed")
+            || text.contains("Chunks")
+            || text.contains("Indexing Started")
+            || text.contains("started"),
         "{}",
         text
     );
@@ -252,7 +279,10 @@ async fn golden_search_returns_relevant_results() {
     assert!(result.is_ok());
     let text = extract_text_content(&result.unwrap().content);
     assert!(
-        text.contains("Search") || text.contains("Results") || text.contains("results") || text.contains("Relevance"),
+        text.contains("Search")
+            || text.contains("Results")
+            || text.contains("results")
+            || text.contains("Relevance"),
         "{}",
         text
     );
@@ -331,10 +361,11 @@ async fn golden_search_respects_limit_parameter() {
         .await
         .unwrap();
 
+    let limit = 2usize;
     let result = search_h
         .handle(Parameters(SearchCodeArgs {
             query: "function".to_string(),
-            limit: 2,
+            limit,
             collection: Some(coll.to_string()),
             extensions: None,
             filters: None,
@@ -343,7 +374,15 @@ async fn golden_search_respects_limit_parameter() {
         .await;
     assert!(result.is_ok());
     let text = extract_text_content(&result.unwrap().content);
-    assert!(text.contains("2") || text.contains("Results") || text.contains("results"));
+    let n = crate::test_utils::test_fixtures::golden_parse_results_found(&text)
+        .unwrap_or_else(|| crate::test_utils::test_fixtures::golden_count_result_entries(&text));
+    assert!(
+        n <= limit,
+        "search must respect limit {}: got {} results, text: {}",
+        limit,
+        n,
+        text
+    );
 }
 
 #[tokio::test]
@@ -397,17 +436,26 @@ async fn golden_mcp_index_codebase_schema() {
         follow_symlinks: None,
         token: None,
     };
-    let result = server.index_codebase_handler().handle(Parameters(args)).await;
+    let result = server
+        .index_codebase_handler()
+        .handle(Parameters(args))
+        .await;
     assert!(result.is_ok());
     let response = result.unwrap();
     let text = extract_text_content(&response.content);
     assert!(
-        text.contains("Files processed") || text.contains("files") || text.contains("Indexing Started") || text.contains("started"),
+        text.contains("Files processed")
+            || text.contains("files")
+            || text.contains("Indexing Started")
+            || text.contains("started"),
         "{}",
         text
     );
     assert!(
-        text.contains("Chunks created") || text.contains("chunks") || text.contains("Operation ID") || text.contains("Path:"),
+        text.contains("Chunks created")
+            || text.contains("chunks")
+            || text.contains("Operation ID")
+            || text.contains("Path:"),
         "{}",
         text
     );
@@ -493,7 +541,10 @@ async fn golden_mcp_error_responses_consistent() {
         token: None,
     };
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok(), "handler returns Ok(CallToolResult) even on error");
+    assert!(
+        result.is_ok(),
+        "handler returns Ok(CallToolResult) even on error"
+    );
     let response = result.unwrap();
     assert!(
         response.is_error.unwrap_or(false),
@@ -594,8 +645,11 @@ async fn golden_e2e_handles_reindex_correctly() {
     assert!(r2.is_ok());
     let text = extract_text_content(&r2.unwrap().content);
     assert!(
-        text.contains("Files processed") || text.contains("Chunks") || text.contains("Completed")
-            || text.contains("Indexing Started") || text.contains("started"),
+        text.contains("Files processed")
+            || text.contains("Chunks")
+            || text.contains("Completed")
+            || text.contains("Indexing Started")
+            || text.contains("started"),
         "{}",
         text
     );
