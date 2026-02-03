@@ -62,6 +62,7 @@ impl MemoryInjectContextHandler {
             observation_types.map_err(|e| McpError::invalid_params(e, None))?;
 
         let filter = MemoryFilter {
+            id: None,
             session_id: Some(args.session_id.clone()),
             repo_id: args.repo_id,
             observation_type: None,

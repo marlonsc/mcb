@@ -49,7 +49,7 @@ struct McpServices {
     context: Arc<dyn ContextServiceInterface>,
     search: Arc<dyn SearchServiceInterface>,
     memory: Arc<dyn MemoryServiceInterface>,
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Reserved for future branch/compare tool wiring
     vcs: Arc<dyn VcsProvider>,
 }
 

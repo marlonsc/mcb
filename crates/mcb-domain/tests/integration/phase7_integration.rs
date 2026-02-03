@@ -24,6 +24,7 @@ mod phase7_integration_tests {
     #[test]
     fn test_mem06_memory_filter_supports_vcs_context() {
         let filter = MemoryFilter {
+            id: None,
             tags: None,
             observation_type: Some(ObservationType::Decision),
             session_id: Some("sess-123".to_string()),
@@ -79,6 +80,7 @@ mod phase7_integration_tests {
     #[test]
     fn test_memory_filter_creates_vcs_aware_queries() {
         let filter = MemoryFilter {
+            id: None,
             tags: None,
             observation_type: None,
             session_id: Some("sess-123".to_string()),

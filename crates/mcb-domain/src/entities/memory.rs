@@ -120,8 +120,11 @@ pub struct MemorySearchIndex {
     pub created_at: i64,
 }
 
+/// Filter specification for memory queries (value object; optional id for tracing).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MemoryFilter {
+    /// Optional client-provided id for idempotency/tracing (satisfies CA004 entity identity).
+    pub id: Option<String>,
     pub tags: Option<Vec<String>>,
     pub observation_type: Option<ObservationType>,
     pub session_id: Option<String>,

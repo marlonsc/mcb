@@ -72,11 +72,12 @@ impl MemoryTimelineHandler {
             .as_ref()
             .map(|s| s.parse::<ObservationType>())
             .transpose()
-            .map_err(|e: String| McpError::invalid_params(e.as_str(), None))?;
+            .map_err(|e: String| McpError::invalid_params(e, None))?;
 
         let filter =
             if args.session_id.is_some() || args.repo_id.is_some() || observation_type.is_some() {
                 Some(MemoryFilter {
+                    id: None,
                     session_id: args.session_id,
                     repo_id: args.repo_id,
                     observation_type,

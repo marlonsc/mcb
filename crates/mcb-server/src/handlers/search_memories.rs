@@ -58,6 +58,7 @@ impl SearchMemoriesHandler {
             || args.repo_id.is_some()
         {
             Some(MemoryFilter {
+                id: None,
                 tags: args.tags,
                 observation_type,
                 session_id: args.session_id,

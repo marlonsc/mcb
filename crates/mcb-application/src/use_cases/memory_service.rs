@@ -21,6 +21,7 @@ use uuid::Uuid;
 const RRF_K: f32 = 60.0;
 const HYBRID_SEARCH_MULTIPLIER: usize = 3;
 
+/// Application service implementation for observation storage and semantic memory search.
 pub struct MemoryServiceImpl {
     repository: Arc<dyn MemoryRepository>,
     embedding_provider: Arc<dyn EmbeddingProvider>,

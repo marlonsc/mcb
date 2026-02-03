@@ -51,16 +51,16 @@ impl AnalyzeImpactHandler {
         Parameters(args): Parameters<AnalyzeImpactArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+            .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
         let path = Path::new(&args.path);
 
         let repo = match self.vcs_provider.open_repository(path).await {
             Ok(r) => r,
-            Err(e) => {
-                return Ok(CallToolResult::error(vec![Content::text(format!(
-                    "Failed to open repository: {e}"
-                ))]));
+            Err(_) => {
+                return Ok(CallToolResult::error(vec![Content::text(
+                    "Failed to open repository",
+                )]));
             }
         };
 
@@ -129,7 +129,7 @@ impl AnalyzeImpactHandler {
         };
 
         let json = serde_json::to_string_pretty(&result)
-            .unwrap_or_else(|_| "Failed to serialize result".to_string());
+            .unwrap_or_else(|_| String::from("Failed to serialize result"));
 
         Ok(CallToolResult::success(vec![Content::text(json)]))
     }
