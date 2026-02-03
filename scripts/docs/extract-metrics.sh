@@ -70,6 +70,7 @@ get_embedding_list() {
         sed 's/ollama/Ollama/' | \
         sed 's/gemini/Gemini/' | \
         sed 's/fastembed/FastEmbed/' | \
+        sed 's/anthropic/Anthropic/' | \
         sed 's/null/Null/' | \
         tr '\n' ',' | \
         sed 's/,$//' | \
@@ -92,6 +93,8 @@ get_vector_store_list() {
         sed 's/^edgevec$/EdgeVec/' | \
         sed 's/^in_memory$/In-Memory/' | \
         sed 's/^encrypted$/Encrypted/' | \
+        sed 's/^pinecone$/Pinecone/' | \
+        sed 's/^qdrant$/Qdrant/' | \
         sed 's/^null$/Null/' | \
         tr '\n' ',' | \
         sed 's/,$//' | \

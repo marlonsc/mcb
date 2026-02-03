@@ -6,9 +6,9 @@
 
 ## Design Principles
 
-1. **Extend, don't replace** - Usar infraestrutura existente
-2. **Naming per ADR-009** - Tools: `agent_`, `quality_`, `memory_`, `project_`
-3. **Tables per MCB pattern** - Entity names sem prefixos genéricos
+1.  **Extend, don't replace** - Usar infraestrutura existente
+2.  **Naming per ADR-009** - Tools: `agent_`, `quality_`, `memory_`, `project_`
+3.  **Tables per MCB pattern** - Entity names sem prefixos genéricos
 
 ---
 
@@ -17,6 +17,7 @@
 ### 1.1 ObservationType Enum Extension
 
 **Existing** (mcb-domain/src/entities/memory.rs):
+
 ```rust
 pub enum ObservationType {
     Code,
@@ -28,6 +29,7 @@ pub enum ObservationType {
 ```
 
 **Add**:
+
 ```rust
 pub enum ObservationType {
     Code,
@@ -69,6 +71,7 @@ pub enum ExecutionType {
 ### 1.3 ErrorMetadata Extension
 
 **Add to Error observation metadata**:
+
 ```rust
 pub struct ErrorMetadata {
     // ... existing fields ...

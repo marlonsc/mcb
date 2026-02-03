@@ -13,7 +13,7 @@
 //! | [`AuthServiceInterface`] | Authentication and token services |
 //! | [`EventBusProvider`] | Event publish/subscribe services |
 //! | [`SystemMetricsCollectorInterface`] | System metrics collection |
-//! | [`PerformanceMetricsCollector`] | Provider performance metrics (Prometheus) |
+//! | [`PerformanceMetricsCollector`](crate::ports::infrastructure::performance::PerformanceMetricsCollector) | Provider performance metrics (Prometheus) |
 //! | [`LockProvider`] | Distributed lock coordination |
 //! | [`StateStoreProvider`] | Key-value state persistence |
 //! | [`ProviderRouter`] | Provider routing and selection services |

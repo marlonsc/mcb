@@ -1,6 +1,7 @@
 # Beads Data Model - Quick Reference
 
 ## Directory Structure
+
 ```
 .beads/
 ├── beads.db              # SQLite (primary storage)
@@ -13,51 +14,59 @@
 ## Core Tables
 
 ### issues (Main Table)
-- **id** (PK): Issue ID (e.g., mcb-123)
-- **title**: Issue title (≤500 chars)
-- **description, design, acceptance_criteria, notes**: Content fields
-- **status**: open, in_progress, blocked, deferred, closed, tombstone
-- **priority**: 0-4 (0=critical, 4=backlog)
-- **issue_type**: task, bug, feature, epic, chore, merge-request, molecule, gate, agent, role, rig, convoy, event
-- **assignee, owner, created_by**: People fields
-- **created_at, updated_at, closed_at**: Timestamps
-- **close_reason**: Reason for closure
-- **external_ref**: External reference (gh-123, jira-ABC)
-- **labels**: Via separate labels table
-- **dependencies**: Via separate dependencies table
-- **metadata**: Custom JSON data
+
+-   **id** (PK): Issue ID (e.g., mcb-123)
+-   **title**: Issue title (≤500 chars)
+-   **description, design, acceptance_criteria, notes**: Content fields
+-   **status**: open, in_progress, blocked, deferred, closed, tombstone
+-   **priority**: 0-4 (0=critical, 4=backlog)
+-   **issue_type**: task, bug, feature, epic, chore, merge-request, molecule, gate, agent, role, rig, convoy, event
+-   **assignee, owner, created_by**: People fields
+-   **created_at, updated_at, closed_at**: Timestamps
+-   **close_reason**: Reason for closure
+-   **external_ref**: External reference (gh-123, jira-ABC)
+-   **labels**: Via separate labels table
+-   **dependencies**: Via separate dependencies table
+-   **metadata**: Custom JSON data
 
 ### labels (Many-to-Many)
-- **issue_id** (FK)
-- **label** (string)
+
+-   **issue_id** (FK)
+-   **label** (String)
 
 ### dependencies (Relationships)
-- **issue_id** (FK): The dependent issue
-- **depends_on_id** (FK): What it depends on
-- **type**: blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for
-- **created_at, created_by**: Audit trail
+
+-   **issue_id** (FK): The dependent issue
+-   **depends_on_id** (FK): What it depends on
+-   **type**: blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for
+-   **created_at, created_by**: Audit trail
 
 ### comments (Discussion)
-- **id** (PK)
-- **issue_id** (FK)
-- **author, text, created_at**
+
+-   **id** (PK)
+-   **issue_id** (FK)
+-   **author, text, created_at**
 
 ### events (Audit Trail)
-- **id** (PK)
-- **issue_id** (FK)
-- **event_type, actor, old_value, new_value, created_at**
+
+-   **id** (PK)
+-   **issue_id** (FK)
+-   **event_type, actor, old_value, new_value, created_at**
 
 ## Views
 
 ### ready_issues
+
 Issues that are open and not blocked by any dependencies
 
 ### blocked_issues
+
 Issues that are blocked with count of blockers
 
 ## JSONL Format
 
 One JSON object per line:
+
 ```json
 {
   "id": "mcb-123",
@@ -81,10 +90,10 @@ One JSON object per line:
 
 ## Key Constraints
 
-- **Closed issues**: Must have closed_at timestamp
-- **Dependency cycles**: Prevented
-- **Ready issues**: open + not blocked
-- **Status transitions**: open → in_progress → closed (or blocked/deferred)
+-   **Closed issues**: Must have closed_at timestamp
+-   **Dependency cycles**: Prevented
+-   **Ready issues**: open + not blocked
+-   **Status transitions**: open → in_progress → closed (or blocked/deferred)
 
 ## CLI Commands Summary
 
@@ -114,30 +123,32 @@ sync-branch: "beads-sync"        # Git branch for syncing
 
 ## Git Integration
 
-1. **bd sync**: Export SQLite → JSONL → git commit → git push
-2. **Auto-sync**: Daemon auto-flushes on mutations (debounced)
-3. **Merge conflicts**: Intelligent JSONL merge driver
-4. **Worktrees**: `.git/beads-worktrees/beads-sync/` for parallel sync
+1.  **bd sync**: Export SQLite → JSONL → git commit → git push
+2.  **Auto-sync**: Daemon auto-flushes on mutations (debounced)
+3.  **Merge conflicts**: Intelligent JSONL merge driver
+4.  **Worktrees**: `.git/beads-worktrees/beads-sync/` for parallel sync
 
 ## Performance
 
-- List issues: < 10ms
-- Find ready issues: < 50ms
-- Dependency traversal: < 100ms
-- Database size: 1-10 MB per 100-1000 issues
+-   List issues: < 10ms
+-   Find ready issues: < 50ms
+-   Dependency traversal: < 100ms
+-   Database size: 1-10 MB per 100-1000 issues
 
 ## Migration to Relational DB
 
 ### Tables to Create
-1. issues (with all fields)
-2. labels (many-to-many)
-3. dependencies (relationships)
-4. comments (discussions)
-5. events (audit trail)
-6. config (settings)
-7. metadata (database metadata)
+
+1.  issues (with all fields)
+2.  labels (many-to-many)
+3.  dependencies (relationships)
+4.  comments (discussions)
+5.  events (audit trail)
+6.  config (settings)
+7.  metadata (database metadata)
 
 ### Key Relationships
+
 ```
 issues (1) ──→ (many) labels
 issues (1) ──→ (many) dependencies
@@ -146,10 +157,11 @@ issues (1) ──→ (many) events
 ```
 
 ### Data Type Mapping
-- Timestamps: DATETIME with timezone
-- JSON fields: TEXT (metadata, payload, agent_state, waiters)
-- Enums: TEXT (status, issue_type, priority, mol_type, work_type)
-- Booleans: INTEGER (0/1)
+
+-   Timestamps: DATETIME with timezone
+-   JSON fields: TEXT (metadata, payload, agent_state, waiters)
+-   Enums: TEXT (status, issue_type, priority, mol_type, work_type)
+-   Booleans: INTEGER (0/1)
 
 ## Important Indexes
 
@@ -166,18 +178,18 @@ CREATE INDEX idx_labels_label ON labels(label);
 
 ## Daemon Architecture
 
-- **Daemon mode** (default): Background RPC server via Unix socket
-- **No-daemon mode**: Direct database access
-- **No-db mode**: Load from JSONL, no SQLite
-- **Files**: daemon.pid, daemon.lock, daemon.log, bd.sock
+-   **Daemon mode** (default): Background RPC server via Unix socket
+-   **No-daemon mode**: Direct database access
+-   **No-db mode**: Load from JSONL, no SQLite
+-   **Files**: daemon.pid, daemon.lock, daemon.log, bd.sock
 
 ## Advanced Features
 
-- **Compaction**: Reduce history size with snapshots
-- **Federation**: Multi-repo support (experimental)
-- **Molecules**: Swarms, patrols, work items
-- **Gates**: Async coordination primitives
-- **Templates**: Reusable issue patterns
+-   **Compaction**: Reduce history size with snapshots
+-   **Federation**: Multi-repo support (experimental)
+-   **Molecules**: Swarms, patrols, work items
+-   **Gates**: Async coordination primitives
+-   **Templates**: Reusable issue patterns
 
 ## Troubleshooting
 
@@ -191,6 +203,6 @@ bd resolve-conflicts  # Resolve git conflicts
 
 ## References
 
-- **Repository**: [github.com/steveyegge/beads](https://github.com/steveyegge/beads)
-- **Docs**: [github.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
-- **Help**: `bd <command> --help`
+-   **Repository**: [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
+-   **Docs**: [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
+-   **Help**: `bd <command> --help`

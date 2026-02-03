@@ -11,7 +11,7 @@ pub use mcb_language_support::LanguageDetector;
 // Also expose LanguageId for callers who need it
 pub use mcb_language_support::LanguageId;
 
-/// Extension trait providing mcb-validate compatible API (returns Option<String>)
+/// Extension trait providing mcb-validate compatible API (returns `Option<String>`)
 ///
 /// The underlying mcb-language-support `LanguageDetector` has methods that return
 /// `Result<LanguageId, Error>` or `Option<LanguageId>`. This trait provides
