@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+/// Observation type for semantic memory (code, decision, context, error, summary).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ObservationType {
     Code,
@@ -40,6 +41,7 @@ impl std::str::FromStr for ObservationType {
     }
 }
 
+/// Metadata for an observation (session, repo, file, branch, commit).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObservationMetadata {
     pub id: String,
@@ -63,6 +65,7 @@ impl Default for ObservationMetadata {
     }
 }
 
+/// Stored observation with content, type, metadata, and optional embedding.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Observation {
     pub id: String,
@@ -75,6 +78,7 @@ pub struct Observation {
     pub embedding_id: Option<String>,
 }
 
+/// Session summary with topics, decisions, next steps, and key files.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionSummary {
     pub id: String,
@@ -86,6 +90,7 @@ pub struct SessionSummary {
     pub created_at: i64,
 }
 
+/// Memory search hit: observation plus similarity score.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemorySearchResult {
     pub id: String,

@@ -34,7 +34,7 @@ impl GetSessionSummaryHandler {
         Parameters(args): Parameters<GetSessionSummaryArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+            .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
         match self
             .memory_service
@@ -52,7 +52,7 @@ impl GetSessionSummaryHandler {
                 };
 
                 let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| "Failed to serialize summary".to_string());
+                    .unwrap_or_else(|_| String::from("Failed to serialize summary"));
 
                 Ok(CallToolResult::success(vec![Content::text(json)]))
             }
@@ -60,9 +60,9 @@ impl GetSessionSummaryHandler {
                 "No session summary found for session: {}",
                 args.session_id
             ))])),
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to get session summary: {e}"
-            ))])),
+            Err(_) => Ok(CallToolResult::error(vec![Content::text(
+                "Failed to get session summary",
+            )])),
         }
     }
 }

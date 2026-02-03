@@ -16,6 +16,8 @@ thoughts/
 .claude/
 .planning/
 .beads/
+.oc-memory/
+.sisyphus/
 .aider*
 GEMINI.md
 AGENTS.md

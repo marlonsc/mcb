@@ -114,13 +114,13 @@ impl MemoryTimelineHandler {
                 };
 
                 let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| "Failed to serialize results".to_string());
+                    .unwrap_or_else(|_| String::from("Failed to serialize results"));
 
                 Ok(CallToolResult::success(vec![Content::text(json)]))
             }
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to get timeline: {e}"
-            ))])),
+            Err(_) => Ok(CallToolResult::error(vec![Content::text(
+                "Failed to get timeline",
+            )])),
         }
     }
 }

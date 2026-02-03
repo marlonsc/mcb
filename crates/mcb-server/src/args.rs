@@ -483,11 +483,11 @@ fn default_timeline_depth() -> usize {
     5
 }
 
-/// Arguments for the `memory_timeline` tool (Step 2 of progressive disclosure).
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 #[schemars(
     description = "[EXPERIMENTAL] Get context around a specific observation in chronological order"
 )]
+/// Arguments for the `memory_timeline` tool (Step 2 of progressive disclosure).
 pub struct MemoryTimelineArgs {
     #[schemars(description = "Anchor observation ID to center the timeline around")]
     pub anchor_id: Option<String>,
@@ -524,11 +524,11 @@ pub struct MemoryGetObservationsArgs {
     pub ids: Vec<String>,
 }
 
-/// Arguments for the `memory_search` tool (token-efficient index - Step 1 of 3).
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 #[schemars(
     description = "Token-efficient memory search returning index only (IDs, types, scores, previews). Use memory_get_observations with returned IDs for full details."
 )]
+/// Arguments for the `memory_search` tool (token-efficient index - Step 1 of 3).
 pub struct MemorySearchArgs {
     #[validate(length(min = 1, max = 1000, message = "Query must be 1-1000 chars"))]
     #[schemars(description = "Search query for semantic matching")]

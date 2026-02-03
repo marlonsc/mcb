@@ -659,7 +659,7 @@ impl MemoryServiceInterface for MockMemoryService {
         observation_type: ObservationType,
         tags: Vec<String>,
         metadata: mcb_domain::entities::memory::ObservationMetadata,
-    ) -> Result<String> {
+    ) -> Result<(String, bool)> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -677,7 +677,7 @@ impl MemoryServiceInterface for MockMemoryService {
         };
         let id = obs.id.clone();
         self.observations.lock().expect("Lock poisoned").push(obs);
-        Ok(id)
+        Ok((id, false))
     }
 
     async fn search_memories(

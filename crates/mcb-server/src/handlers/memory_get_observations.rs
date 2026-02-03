@@ -44,7 +44,7 @@ impl MemoryGetObservationsHandler {
         Parameters(args): Parameters<MemoryGetObservationsArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+            .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
         match self.memory_service.get_observations_by_ids(&args.ids).await {
             Ok(observations) => {
@@ -70,7 +70,7 @@ impl MemoryGetObservationsHandler {
                 };
 
                 let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| "Failed to serialize results".to_string());
+                    .unwrap_or_else(|_| String::from("Failed to serialize results"));
 
                 Ok(CallToolResult::success(vec![Content::text(json)]))
             }

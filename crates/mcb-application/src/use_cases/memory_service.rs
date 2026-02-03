@@ -80,11 +80,11 @@ impl MemoryServiceImpl {
         observation_type: ObservationType,
         tags: Vec<String>,
         metadata: ObservationMetadata,
-    ) -> Result<String> {
+    ) -> Result<(String, bool)> {
         let content_hash = compute_content_hash(&content);
 
         if let Some(existing) = self.repository.find_by_hash(&content_hash).await? {
-            return Ok(existing.id);
+            return Ok((existing.id, true));
         }
 
         let embedding = self.embedding_provider.embed(&content).await?;
@@ -127,7 +127,7 @@ impl MemoryServiceImpl {
 
         self.repository.store_observation(&observation).await?;
 
-        Ok(observation.id)
+        Ok((observation.id, false))
     }
 
     async fn search_memories_impl(
@@ -301,7 +301,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         observation_type: ObservationType,
         tags: Vec<String>,
         metadata: ObservationMetadata,
-    ) -> Result<String> {
+    ) -> Result<(String, bool)> {
         self.store_observation_impl(content, observation_type, tags, metadata)
             .await
     }

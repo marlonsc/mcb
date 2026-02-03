@@ -48,15 +48,15 @@ impl GetValidationRulesHandler {
                     "filter": args.category.as_deref().unwrap_or("all")
                 });
 
-                let text = serde_json::to_string_pretty(&response)
-                    .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+                let text = serde_json::to_string_pretty(&response).map_err(|_| {
+                    McpError::internal_error("Failed to load validation rules", None)
+                })?;
 
                 Ok(CallToolResult::success(vec![Content::text(text)]))
             }
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Error getting validation rules: {}",
-                e
-            ))])),
+            Err(_) => Ok(CallToolResult::error(vec![Content::text(
+                "Error getting validation rules",
+            )])),
         }
     }
 }

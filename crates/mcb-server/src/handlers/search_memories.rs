@@ -43,7 +43,7 @@ impl SearchMemoriesHandler {
         Parameters(args): Parameters<SearchMemoriesArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+            .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
         let observation_type = args
             .observation_type
@@ -97,13 +97,13 @@ impl SearchMemoriesHandler {
                 };
 
                 let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| "Failed to serialize results".to_string());
+                    .unwrap_or_else(|_| String::from("Failed to serialize results"));
 
                 Ok(CallToolResult::success(vec![Content::text(json)]))
             }
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to search memories: {e}"
-            ))])),
+            Err(_) => Ok(CallToolResult::error(vec![Content::text(
+                "Failed to search memories",
+            )])),
         }
     }
 }

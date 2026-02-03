@@ -11,8 +11,8 @@ use validator::Validate;
 
 /// Handler for the MCP `search_branch` tool (VCS branch-scoped code search).
 pub struct SearchBranchHandler {
-    /// VCS provider for branch search; reserved for future branch-scoped search.
-    #[allow(dead_code)] // Reserved for future wire to search
+    /// VCS provider; reserved for future branch-scoped search (handler currently returns stub).
+    #[allow(dead_code)]
     vcs_provider: Arc<dyn VcsProvider>,
 }
 

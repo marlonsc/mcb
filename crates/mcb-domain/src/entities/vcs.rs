@@ -74,6 +74,7 @@ pub struct VcsCommit {
     pub parent_hashes: Vec<String>,
 }
 
+/// VCS file diff status (added, modified, deleted, renamed).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DiffStatus {
     Added,
@@ -93,6 +94,7 @@ impl std::fmt::Display for DiffStatus {
     }
 }
 
+/// Single file change in a VCS diff (path, status, additions/deletions).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileDiff {
     pub id: String,
@@ -102,6 +104,7 @@ pub struct FileDiff {
     pub deletions: usize,
 }
 
+/// Ref-level diff between base and head (files, total additions/deletions).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefDiff {
     pub id: String,

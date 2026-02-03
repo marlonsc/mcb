@@ -191,8 +191,8 @@ impl DefaultIndexingOperations {
         Arc::new(Self::new())
     }
 
-    /// Start tracking a new indexing operation
-    pub fn start_operation(&self, collection: &str, total_files: usize) -> String {
+    /// Start tracking a new indexing operation (inherent impl; trait delegates here).
+    pub fn start_operation_impl(&self, collection: &str, total_files: usize) -> String {
         let id = Uuid::new_v4().to_string();
         let operation = IndexingOperation {
             id: id.clone(),
@@ -250,7 +250,7 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
     }
 
     fn start_operation(&self, collection: &str, total_files: usize) -> String {
-        DefaultIndexingOperations::start_operation(self, collection, total_files)
+        DefaultIndexingOperations::start_operation_impl(self, collection, total_files)
     }
 
     fn update_progress(&self, operation_id: &str, current_file: Option<String>, processed: usize) {

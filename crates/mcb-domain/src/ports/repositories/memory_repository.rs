@@ -13,6 +13,7 @@ pub struct FtsSearchResult {
     pub rank: f64,
 }
 
+/// Port for observation storage (CRUD, FTS, timeline).
 #[async_trait]
 pub trait MemoryRepository: Send + Sync {
     async fn store_observation(&self, observation: &Observation) -> Result<()>;

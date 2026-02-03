@@ -220,15 +220,15 @@ pub use mcb_domain::entities::memory::{
 pub trait MemoryServiceInterface: Send + Sync {
     /// Store an observation with optional embedding for semantic search.
     ///
-    /// Returns the observation ID. If duplicate content is detected (same hash),
-    /// returns the existing observation's ID instead of creating a new one.
+    /// Returns `(observation_id, deduplicated)`. If duplicate content is detected (same hash),
+    /// returns the existing observation's ID and `deduplicated: true`.
     async fn store_observation(
         &self,
         content: String,
         observation_type: ObservationType,
         tags: Vec<String>,
         metadata: mcb_domain::entities::memory::ObservationMetadata,
-    ) -> Result<String>;
+    ) -> Result<(String, bool)>;
 
     /// Search memories using semantic similarity.
     ///

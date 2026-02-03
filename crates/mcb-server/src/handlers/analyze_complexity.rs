@@ -74,7 +74,7 @@ impl AnalyzeComplexityHandler {
                 });
 
                 let text = serde_json::to_string_pretty(&response)
-                    .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+                    .map_err(|_| McpError::internal_error("Analysis failed", None))?;
 
                 Ok(CallToolResult::success(vec![Content::text(text)]))
             }

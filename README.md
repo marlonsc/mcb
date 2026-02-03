@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.1.5-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.1.4)
+[![Version](https://img.shields.io/badge/version-0.1.5-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.1.5)
 
 **High-performance MCP server for semantic code search using vector embeddings**
 
@@ -11,7 +11,7 @@
 
 MCP Context Browser is a Model Context Protocol (MCP) server that provides semantic code search capabilities using vector embeddings. Transform natural language queries into code search across indexed codebases, enabling intelligent code discovery and analysis. Built with Clean Architecture principles in Rust with comprehensive provider support.
 
-**Current Version**: 0.1.4
+**Current Version**: 0.1.5
 
 See [`CLAUDE.md`](./CLAUDE.md) for development guide and [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md) for complete architecture documentation.
 
