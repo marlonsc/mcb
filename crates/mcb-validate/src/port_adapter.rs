@@ -277,6 +277,15 @@ impl PortAdapterValidator {
             if file_name == "mod.rs" || file_name == "lib.rs" {
                 continue;
             }
+            // Skip test files: adapter tests legitimately use the concrete type
+            if file_name == "tests.rs"
+                || path
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .map_or(false, |n| n == "tests")
+            {
+                continue;
+            }
 
             let content = std::fs::read_to_string(path)?;
             let current_adapter = file_name.trim_end_matches(".rs");

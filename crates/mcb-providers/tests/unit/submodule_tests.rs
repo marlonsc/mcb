@@ -1,9 +1,9 @@
 use git2::Repository;
 use tempfile::TempDir;
 
-use mcb_providers::git::submodule::{
-    SubmoduleInfo, collect_submodules, submodule_collection_name, submodule_repo_id,
-};
+use mcb_domain::entities::submodule::SubmoduleInfo;
+use mcb_domain::utils::submodule::{collection_name, repo_id};
+use mcb_providers::git::submodule::collect_submodules;
 
 #[tokio::test]
 async fn test_collect_submodules_empty_repo() {
@@ -34,9 +34,6 @@ fn test_submodule_info_collection_name() {
         is_initialized: true,
     };
 
-    assert_eq!(
-        submodule_collection_name(&info, "mcb"),
-        "mcb/libs-tree-sitter"
-    );
-    assert_eq!(submodule_repo_id(&info), "parent-repo:libs/tree-sitter");
+    assert_eq!(collection_name(&info, "mcb"), "mcb/libs-tree-sitter");
+    assert_eq!(repo_id(&info), "parent-repo:libs/tree-sitter");
 }

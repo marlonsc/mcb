@@ -15,6 +15,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// MCP handler for the `memory_search` tool (token-efficient semantic search over observations).
 pub struct MemorySearchHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }

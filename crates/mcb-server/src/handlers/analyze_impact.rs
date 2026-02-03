@@ -11,6 +11,7 @@ use std::path::Path;
 use std::sync::Arc;
 use validator::Validate;
 
+/// Handler for the MCP `analyze_impact` tool (VCS diff impact analysis).
 pub struct AnalyzeImpactHandler {
     vcs_provider: Arc<dyn VcsProvider>,
 }

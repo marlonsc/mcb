@@ -40,7 +40,9 @@ impl MemoryServiceImpl {
         }
     }
 
-    fn current_timestamp() -> i64 {
+    /// Current Unix timestamp; exposed for testing.
+    #[must_use]
+    pub fn current_timestamp() -> i64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs() as i64)

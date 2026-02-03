@@ -5,3 +5,6 @@
 #[cfg(feature = "hybrid-search")]
 #[path = "unit/hybrid_search_tests.rs"]
 mod hybrid_search_tests;
+
+#[path = "unit/submodule_tests.rs"]
+mod submodule_tests;

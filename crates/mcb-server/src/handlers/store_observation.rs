@@ -12,6 +12,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
 
+/// Handler for the MCP `store_observation` tool (semantic memory).
 pub struct StoreObservationHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }

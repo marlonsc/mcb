@@ -358,7 +358,7 @@ pub struct ListRepositoriesArgs {}
 pub struct CompareBranchesArgs {
     #[validate(length(min = 1, message = "path cannot be empty"))]
     #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
-    #[schemars(description = "Path to the git repository")]
+    #[schemars(description = "Path to the VCS repository")]
     pub path: String,
 
     #[validate(length(min = 1, message = "base_branch cannot be empty"))]
@@ -376,7 +376,7 @@ pub struct CompareBranchesArgs {
 pub struct AnalyzeImpactArgs {
     #[validate(length(min = 1, message = "path cannot be empty"))]
     #[validate(custom(function = "validate_file_path", message = "Invalid file path"))]
-    #[schemars(description = "Path to the git repository")]
+    #[schemars(description = "Path to the VCS repository")]
     pub path: String,
 
     #[validate(length(min = 1, message = "base_ref cannot be empty"))]
@@ -412,10 +412,10 @@ pub struct StoreObservationArgs {
     #[schemars(description = "File path related to this observation")]
     pub file_path: Option<String>,
 
-    #[schemars(description = "Git branch related to this observation")]
+    #[schemars(description = "VCS branch related to this observation")]
     pub branch: Option<String>,
 
-    #[schemars(description = "Git commit related to this observation")]
+    #[schemars(description = "VCS commit related to this observation")]
     pub commit: Option<String>,
 }
 

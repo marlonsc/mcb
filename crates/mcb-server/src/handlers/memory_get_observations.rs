@@ -9,6 +9,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// MCP handler for the `memory_get_observations` tool (fetch full observation details by IDs).
 pub struct MemoryGetObservationsHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }

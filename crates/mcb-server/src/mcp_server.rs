@@ -175,7 +175,7 @@ impl McpServer {
         Arc::clone(&self.handlers.analyze_complexity)
     }
 
-    /// Access to index git repository handler (for HTTP transport)
+    /// Access to index VCS repository handler (for HTTP transport)
     pub fn index_vcs_repository_handler(&self) -> Arc<IndexVcsRepositoryHandler> {
         Arc::clone(&self.handlers.index_vcs_repository)
     }

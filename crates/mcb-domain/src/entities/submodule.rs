@@ -1,8 +1,8 @@
-//! Submodule entity representing a git submodule within a repository.
+//! Submodule entity representing a VCS submodule within a repository.
 
 use serde::{Deserialize, Serialize};
 
-/// Information about a git submodule
+/// Information about a VCS submodule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubmoduleInfo {
     /// Stable identifier for the submodule (parent repo + path)

@@ -42,7 +42,7 @@ impl CompareBranchesHandler {
         Parameters(args): Parameters<CompareBranchesArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+            .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
         let path = Path::new(&args.path);
 
@@ -73,7 +73,7 @@ impl CompareBranchesHandler {
             .iter()
             .map(|f| FileChange {
                 path: f.path.to_string_lossy().to_string(),
-                status: format!("{:?}", f.status),
+                status: f.status.to_string(),
             })
             .collect();
 
@@ -87,7 +87,7 @@ impl CompareBranchesHandler {
         };
 
         let json = serde_json::to_string_pretty(&result)
-            .unwrap_or_else(|_| "Failed to serialize result".to_string());
+            .unwrap_or_else(|_| String::from("Failed to serialize result"));
 
         Ok(CallToolResult::success(vec![Content::text(json)]))
     }

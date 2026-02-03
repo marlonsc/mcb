@@ -52,3 +52,12 @@ mod snapshot_tests;
 #[cfg(feature = "test-utils")]
 #[path = "unit/sync_tests.rs"]
 mod sync_tests;
+
+#[path = "unit/file_hash_tests.rs"]
+mod file_hash_tests;
+
+#[path = "unit/fts_check_tests.rs"]
+mod fts_check_tests;
+
+#[path = "unit/memory_fts_tests.rs"]
+mod memory_fts_tests;

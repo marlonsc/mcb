@@ -10,6 +10,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// Handler for the MCP `search_memories` tool (semantic memory search).
 pub struct SearchMemoriesHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }

@@ -53,7 +53,7 @@ mod phase7_integration_tests {
     }
 
     #[test]
-    fn test_mem05_git_bootstrap_context_for_session_start() {
+    fn test_mem05_vcs_bootstrap_context_for_session_start() {
         let metadata1 = ObservationMetadata {
             id: Uuid::new_v4().to_string(),
             session_id: Some("sess-start".to_string()),
@@ -77,7 +77,7 @@ mod phase7_integration_tests {
     }
 
     #[test]
-    fn test_memory_filter_creates_git_aware_queries() {
+    fn test_memory_filter_creates_vcs_aware_queries() {
         let filter = MemoryFilter {
             tags: None,
             observation_type: None,

@@ -82,6 +82,17 @@ pub enum DiffStatus {
     Renamed,
 }
 
+impl std::fmt::Display for DiffStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Added => write!(f, "added"),
+            Self::Modified => write!(f, "modified"),
+            Self::Deleted => write!(f, "deleted"),
+            Self::Renamed => write!(f, "renamed"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileDiff {
     pub id: String,

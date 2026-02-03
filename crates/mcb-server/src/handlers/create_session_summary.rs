@@ -9,6 +9,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// Handler for the MCP `create_session_summary` tool (semantic memory).
 pub struct CreateSessionSummaryHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }

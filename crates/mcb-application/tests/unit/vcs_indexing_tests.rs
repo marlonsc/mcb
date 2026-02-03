@@ -1,15 +1,14 @@
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use tempfile::TempDir;
 use walkdir::WalkDir;
 
-use mcb_application::use_cases::vcs_indexing::{
-    FileHashService, ProjectDetectorService, SubmoduleCollector, VcsIndexingService,
-};
-use mcb_domain::entities::project::{ProjectType, SubmoduleInfo};
+use mcb_application::use_cases::vcs_indexing::{SubmoduleCollector, VcsIndexingService};
+use mcb_domain::entities::project::ProjectType;
+use mcb_domain::entities::submodule::SubmoduleInfo;
 use mcb_domain::error::Result;
+use mcb_domain::ports::services::{FileHashService, ProjectDetectorService};
 
 struct MockSubmoduleCollector;
 

@@ -11,6 +11,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// MCP handler for the `memory_inject_context` tool (inject VCS + session context for prompts).
 pub struct MemoryInjectContextHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }

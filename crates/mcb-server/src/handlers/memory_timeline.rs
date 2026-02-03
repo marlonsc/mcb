@@ -10,6 +10,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// Handler for the MCP `memory_timeline` tool (progressive disclosure step 2).
 pub struct MemoryTimelineHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }
@@ -40,7 +41,7 @@ impl MemoryTimelineHandler {
         Parameters(args): Parameters<MemoryTimelineArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+            .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
         let anchor_id = match (args.anchor_id, args.query) {
             (Some(id), _) => id,
@@ -49,7 +50,7 @@ impl MemoryTimelineHandler {
                     .memory_service
                     .search_memories(&query, None, 1)
                     .await
-                    .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+                    .map_err(|_| McpError::internal_error("Search failed", None))?;
 
                 results
                     .first()
@@ -71,7 +72,7 @@ impl MemoryTimelineHandler {
             .as_ref()
             .map(|s| s.parse::<ObservationType>())
             .transpose()
-            .map_err(|e: String| McpError::invalid_params(e, None))?;
+            .map_err(|e: String| McpError::invalid_params(e.as_str(), None))?;
 
         let filter =
             if args.session_id.is_some() || args.repo_id.is_some() || observation_type.is_some() {

@@ -40,3 +40,6 @@ mod performance;
 
 #[path = "unit/ports/providers/metrics_tests.rs"]
 mod metrics;
+
+#[path = "unit/vcs_context_tests.rs"]
+mod vcs_context_tests;

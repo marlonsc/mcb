@@ -9,15 +9,16 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
-/// MCP handler for the `search-branch` tool. Coordinates memory search results with branch metadata
-/// so Hybrid Search (Phase 6) exposes diffs per branch while staying aligned with `.planning/STATE.md`.
+/// Handler for the MCP `search_branch` tool (VCS branch-scoped code search).
 pub struct SearchBranchHandler {
-    #[allow(dead_code)]
+    /// VCS provider for branch search; reserved for future branch-scoped search.
+    #[allow(dead_code)] // Reserved for future wire to search
     vcs_provider: Arc<dyn VcsProvider>,
 }
 
+/// Response shape for the search_branch tool (avoids duplicate name with domain SearchResult).
 #[derive(Serialize)]
-struct SearchResult {
+struct SearchBranchResponse {
     repository_id: String,
     branch: String,
     query: String,
@@ -35,9 +36,9 @@ impl SearchBranchHandler {
         Parameters(args): Parameters<SearchBranchArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+            .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
-        let result = SearchResult {
+        let result = SearchBranchResponse {
             repository_id: args.repository_id.clone(),
             branch: args.branch.clone(),
             query: args.query.clone(),
@@ -49,7 +50,7 @@ impl SearchBranchHandler {
         };
 
         let json = serde_json::to_string_pretty(&result)
-            .unwrap_or_else(|_| "Failed to serialize result".to_string());
+            .unwrap_or_else(|_| String::from("Failed to serialize result"));
 
         Ok(CallToolResult::success(vec![Content::text(json)]))
     }
