@@ -112,13 +112,19 @@ fn test_golden_queries_fixture_valid() {
     let config = load_golden_queries();
 
     assert_eq!(config.version, "0.1.2");
-    assert!(!config.description.is_empty(), "Config description should not be empty");
+    assert!(
+        !config.description.is_empty(),
+        "Config description should not be empty"
+    );
     assert!(!config.queries.is_empty(), "Should have test queries");
 
     for query in &config.queries {
         assert!(!query.id.is_empty(), "Query ID should not be empty");
         assert!(!query.query.is_empty(), "Query string should not be empty");
-        assert!(!query.description.is_empty(), "Description should not be empty");
+        assert!(
+            !query.description.is_empty(),
+            "Description should not be empty"
+        );
         assert!(
             !query.expected_files.is_empty(),
             "Expected files should not be empty for query: {}",
