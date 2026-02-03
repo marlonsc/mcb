@@ -11,7 +11,6 @@ use reqwest::Client;
 use crate::constants::ERROR_MSG_REQUEST_TIMEOUT;
 
 /// Default timeout for HTTP requests (30 seconds)
-#[allow(dead_code)] // Reserved for future use
 pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Create an HTTP client with the specified timeout

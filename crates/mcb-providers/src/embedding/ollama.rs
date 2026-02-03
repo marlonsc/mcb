@@ -187,7 +187,7 @@ use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 fn ollama_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use super::helpers::{DEFAULT_EMBEDDING_TIMEOUT, http::create_default_client};
+    use super::helpers::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let base_url = config
         .base_url
@@ -202,7 +202,7 @@ fn ollama_factory(
     Ok(Arc::new(OllamaEmbeddingProvider::new(
         base_url,
         model,
-        DEFAULT_EMBEDDING_TIMEOUT,
+        DEFAULT_HTTP_TIMEOUT,
         http_client,
     )))
 }

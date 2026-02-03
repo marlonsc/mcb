@@ -191,7 +191,7 @@ CREATE TABLE phases (
     completed_at        INTEGER,
     created_at          INTEGER NOT NULL,
     updated_at          INTEGER NOT NULL,
-    
+
     UNIQUE(project_id, phase_number)
 );
 
@@ -236,7 +236,7 @@ CREATE TABLE issue_dependencies (
     depends_on_id       TEXT NOT NULL REFERENCES issues(id) ON DELETE CASCADE,
     dependency_type     TEXT NOT NULL DEFAULT 'blocks',
     created_at          INTEGER NOT NULL,
-    
+
     UNIQUE(issue_id, depends_on_id, dependency_type)
 );
 
@@ -281,7 +281,7 @@ CREATE TABLE quality_gate_configs (
     enabled             BOOLEAN DEFAULT TRUE,
     created_at          INTEGER NOT NULL,
     updated_at          INTEGER NOT NULL,
-    
+
     UNIQUE(project_id)
 );
 ```
@@ -312,7 +312,7 @@ ORDER BY i.priority, i.created_at;
 
 ```sql
 CREATE VIEW recent_executions AS
-SELECT 
+SELECT
     o.id,
     o.observation_type,
     json_extract(o.metadata, '$.execution_type') as execution_type,

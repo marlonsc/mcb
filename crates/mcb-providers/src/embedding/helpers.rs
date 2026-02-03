@@ -10,11 +10,6 @@
 //! | [`constructor`] | API key/URL validation, defaults |
 //! | [`http`] | HTTP client creation (re-exported from utils) |
 
-use std::time::Duration;
-
-/// Default timeout for embedding API requests (30 seconds)
-pub(crate) const DEFAULT_EMBEDDING_TIMEOUT: Duration = Duration::from_secs(30);
-
 /// Common constructor patterns used by embedding providers
 ///
 /// Provides re-usable patterns for provider initialization.
@@ -43,5 +38,7 @@ pub(crate) mod constructor {
 ///
 /// Re-exports from utils::http for backward compatibility.
 pub(crate) mod http {
-    pub(crate) use crate::utils::http::{create_default_client, create_http_provider_config};
+    pub(crate) use crate::utils::http::{
+        DEFAULT_HTTP_TIMEOUT, create_default_client, create_http_provider_config,
+    };
 }

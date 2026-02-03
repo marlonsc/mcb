@@ -451,7 +451,7 @@ use mcb_application::ports::registry::{
 fn pinecone_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    use crate::embedding::helpers::{DEFAULT_EMBEDDING_TIMEOUT, http::create_default_client};
+    use crate::embedding::helpers::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let api_key = config
         .api_key
@@ -466,7 +466,7 @@ fn pinecone_factory(
     Ok(Arc::new(PineconeVectorStoreProvider::new(
         api_key,
         host,
-        DEFAULT_EMBEDDING_TIMEOUT,
+        DEFAULT_HTTP_TIMEOUT,
         http_client,
     )))
 }

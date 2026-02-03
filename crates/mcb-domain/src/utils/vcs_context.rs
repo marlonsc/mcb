@@ -12,30 +12,28 @@ pub struct VcsContext {
 
 impl VcsContext {
     /// Capture VCS context from current environment (e.g. git).
+    ///
+    /// Optimized to batch git commands and reduce process spawning overhead.
     #[must_use]
     pub fn capture() -> Self {
-        let branch = Command::new("git")
-            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+        // Batch branch and commit lookup into a single git rev-parse invocation
+        let (branch, commit) = Command::new("git")
+            .args(["rev-parse", "--abbrev-ref", "HEAD", "HEAD"])
             .output()
             .ok()
             .and_then(|o| {
                 if o.status.success() {
-                    Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+                    let output = String::from_utf8_lossy(&o.stdout);
+                    let mut lines = output.lines();
+                    let branch = lines.next().map(|s| s.trim().to_string());
+                    let commit = lines.next().map(|s| s.trim().to_string());
+                    Some((branch, commit))
                 } else {
                     None
                 }
-            });
-        let commit = Command::new("git")
-            .args(["rev-parse", "HEAD"])
-            .output()
-            .ok()
-            .and_then(|o| {
-                if o.status.success() {
-                    Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
-                } else {
-                    None
-                }
-            });
+            })
+            .unwrap_or((None, None));
+
         let repo_id = Command::new("git")
             .args(["config", "--get", "remote.origin.url"])
             .output()
@@ -47,6 +45,7 @@ impl VcsContext {
                     None
                 }
             });
+
         Self {
             branch,
             commit,

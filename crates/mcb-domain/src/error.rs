@@ -182,10 +182,10 @@ pub enum Error {
         name: String,
     },
 
-    /// Memory operation error
-    #[error("Memory error: {message}")]
-    Memory {
-        /// Description of the memory error
+    /// Observation storage operation error
+    #[error("Observation storage error: {message}")]
+    ObservationStorage {
+        /// Description of the observation storage error
         message: String,
         /// Optional source error
         #[source]
@@ -437,22 +437,22 @@ impl Error {
     }
 }
 
-// Memory error creation methods
+// Observation storage error creation methods
 impl Error {
-    /// Create a memory error
+    /// Create an observation storage error
     pub fn memory<S: Into<String>>(message: S) -> Self {
-        Self::Memory {
+        Self::ObservationStorage {
             message: message.into(),
             source: None,
         }
     }
 
-    /// Create a memory error with source
+    /// Create an observation storage error with source
     pub fn memory_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
         message: S,
         source: E,
     ) -> Self {
-        Self::Memory {
+        Self::ObservationStorage {
             message: message.into(),
             source: Some(Box::new(source)),
         }
