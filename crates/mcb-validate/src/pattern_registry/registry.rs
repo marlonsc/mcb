@@ -148,7 +148,21 @@ pub fn default_rules_dir() -> PathBuf {
         return cwd_rules;
     }
 
-    // 4. Fallback
+    // 4. Check ~/.local/share/mcb/rules (make install target)
+    if let Some(home) = std::env::var_os("HOME") {
+        let xdg_rules = PathBuf::from(home).join(".local/share/mcb/rules");
+        if xdg_rules.exists() {
+            return xdg_rules;
+        }
+    }
+
+    // 5. Try /usr/share/mcb/rules (system-wide)
+    let system_rules = PathBuf::from("/usr/share/mcb/rules");
+    if system_rules.exists() {
+        return system_rules;
+    }
+
+    // 6. Fallback
     PathBuf::from("rules")
 }
 
