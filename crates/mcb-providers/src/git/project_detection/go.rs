@@ -124,10 +124,12 @@ impl ProjectDetector for GoDetector {
 
 fn go_factory(
     config: &ProjectDetectorConfig,
-) -> std::result::Result<Arc<dyn ProjectDetector>, String> {
+) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
     GoDetector::new(config)
         .map(|detector| Arc::new(detector) as Arc<dyn ProjectDetector>)
-        .map_err(|e| format!("Failed to initialize Go detector: {e}"))
+        .map_err(|e| {
+            mcb_domain::Error::configuration(format!("Failed to initialize Go detector: {e}"))
+        })
 }
 
 #[linkme::distributed_slice(PROJECT_DETECTORS)]

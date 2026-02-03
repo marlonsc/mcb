@@ -109,7 +109,7 @@ impl ProjectDetector for PythonDetector {
 
 fn python_factory(
     config: &ProjectDetectorConfig,
-) -> std::result::Result<Arc<dyn ProjectDetector>, String> {
+) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
     Ok(Arc::new(PythonDetector::new(config)))
 }
 

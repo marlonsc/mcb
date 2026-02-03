@@ -159,7 +159,7 @@ impl ProjectDetector for MavenDetector {
 
 fn maven_factory(
     config: &ProjectDetectorConfig,
-) -> std::result::Result<Arc<dyn ProjectDetector>, String> {
+) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
     Ok(Arc::new(MavenDetector::new(config)))
 }
 

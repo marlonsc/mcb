@@ -23,8 +23,7 @@ pub struct ProjectDetectorEntry {
     /// Marker files this detector looks for (e.g., ["Cargo.toml"])
     pub marker_files: &'static [&'static str],
     /// Factory function to create detector instance
-    pub factory:
-        fn(&ProjectDetectorConfig) -> std::result::Result<Arc<dyn ProjectDetector>, String>,
+    pub factory: fn(&ProjectDetectorConfig) -> Result<Arc<dyn ProjectDetector>>,
 }
 
 /// Project detector trait - implementations detect specific project types

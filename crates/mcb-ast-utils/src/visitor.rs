@@ -4,9 +4,18 @@
 
 use tree_sitter::Node;
 
-/// Visitor trait for AST node traversal
+/// Visitor trait for AST node traversal.
 ///
 /// Implement this trait to process specific node types during tree traversal.
+///
+/// # Example
+///
+/// ```ignore
+/// impl NodeVisitor for MyVisitor {
+///     type Context = ();
+///     fn visit(&mut self, node: Node<'_>, _source: &[u8], _ctx: &mut Self::Context) -> bool { true }
+/// }
+/// ```
 pub trait NodeVisitor {
     /// Context type passed through the traversal
     type Context;

@@ -83,7 +83,17 @@ pub struct ParsedFunctionMetrics {
     pub nexits: usize,
 }
 
-/// Async parser trait for source code analysis
+/// Async parser trait for source code analysis.
+///
+/// # Example
+///
+/// ```ignore
+/// #[async_trait]
+/// impl Parser for MyParser {
+///     async fn parse_file(&self, _path: &Path) -> Result<ParsedFile> { unimplemented!() }
+///     async fn parse_content(&self, _content: &[u8], _lang: LanguageId, _path: &Path) -> Result<ParsedFile> { unimplemented!() }
+/// }
+/// ```
 #[async_trait]
 pub trait Parser: Send + Sync {
     /// Parse source code from a file path

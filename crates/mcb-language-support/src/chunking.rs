@@ -76,7 +76,19 @@ impl Default for ChunkingConfig {
     }
 }
 
-/// Chunking strategy trait for language-specific implementations
+/// Chunking strategy trait for language-specific implementations.
+///
+/// # Example
+///
+/// ```ignore
+/// #[async_trait]
+/// impl ChunkingStrategy for MyStrategy {
+///     async fn chunk(&self, content: &str, lang: LanguageId, path: &Path) -> Result<Vec<ParsedChunk>> {
+///         Ok(Vec::new())
+///     }
+///     fn config(&self) -> &ChunkingConfig { &self.config }
+/// }
+/// ```
 #[async_trait]
 pub trait ChunkingStrategy: Send + Sync {
     /// Chunk source code into semantic units

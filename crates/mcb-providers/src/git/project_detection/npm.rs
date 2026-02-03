@@ -94,7 +94,7 @@ impl ProjectDetector for NpmDetector {
 
 fn npm_factory(
     config: &ProjectDetectorConfig,
-) -> std::result::Result<Arc<dyn ProjectDetector>, String> {
+) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
     Ok(Arc::new(NpmDetector::new(config)))
 }
 
