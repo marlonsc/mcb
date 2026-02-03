@@ -3,13 +3,37 @@
 # Pre-commit hook - Uses same Makefile verbs as CI
 # =============================================================================
 # Install: make install-hooks
+# Skip: SKIP_PRE_COMMIT=1 git commit ...
 # =============================================================================
 
 set -e
 
+# Allow skipping pre-commit for emergencies
+if [ "${SKIP_PRE_COMMIT:-}" = "1" ]; then
+    echo "⚠️  Pre-commit checks skipped (SKIP_PRE_COMMIT=1)"
+    exit 0
+fi
+
 echo "Running pre-commit checks..."
 
-# Same lint check as CI
+# =============================================================================
+# Same checks as CI pipeline (fast checks only)
+# =============================================================================
+
+echo "  → Lint (Rust 2024 compliance)..."
 make lint CI_MODE=1
 
-echo "Pre-commit checks passed!"
+echo "  → Security audit..."
+# Check if cargo-audit is installed, skip if not (CI will catch it)
+if command -v cargo-audit &> /dev/null; then
+    make audit
+else
+    echo "    ⚠️  cargo-audit not installed, skipping (install: cargo install cargo-audit)"
+fi
+
+echo "  → Architecture validation (quick mode)..."
+# Quick validation - skip test discovery for speed
+make validate STRICT=1 QUICK=1 2>/dev/null || make validate STRICT=1
+
+echo ""
+echo "✅ Pre-commit checks passed!"
