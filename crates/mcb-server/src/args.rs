@@ -483,6 +483,8 @@ pub struct CreateSessionSummaryArgs {
 
 pub mod memory;
 pub use memory::*;
+pub mod project;
+pub use project::*;
 
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 #[schemars(description = "Create an agent session record")]

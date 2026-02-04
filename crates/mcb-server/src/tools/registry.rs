@@ -11,11 +11,15 @@ use std::sync::Arc;
 use crate::args::{
     AnalyzeComplexityArgs, ClearIndexArgs, CreateAgentSessionArgs, CreateSessionSummaryArgs,
     GetAgentSessionArgs, GetIndexingStatusArgs, GetSessionSummaryArgs, GetValidationRulesArgs,
-    IndexCodebaseArgs, ListAgentSessionsArgs, ListValidatorsArgs, MemoryGetExecutionsArgs,
-    MemoryGetObservationsArgs, MemoryGetQualityGatesArgs, MemoryInjectContextArgs,
-    MemorySearchArgs, MemoryStoreExecutionArgs, MemoryStoreQualityGateArgs, MemoryTimelineArgs,
-    SearchCodeArgs, SearchMemoriesArgs, StoreDelegationArgs, StoreObservationArgs,
-    StoreToolCallArgs, UpdateAgentSessionArgs, ValidateArchitectureArgs, ValidateFileArgs,
+    IndexCodebaseArgs, ListAgentSessionsArgs, ListValidatorsArgs, MemoryGetErrorPatternsArgs,
+    MemoryGetExecutionsArgs, MemoryGetObservationsArgs, MemoryGetQualityGatesArgs,
+    MemoryInjectContextArgs, MemoryRecordErrorPatternArgs, MemorySearchArgs,
+    MemoryStoreExecutionArgs, MemoryStoreQualityGateArgs, MemoryTimelineArgs,
+    ProjectAddDependencyArgs, ProjectCreateIssueArgs, ProjectCreatePhaseArgs,
+    ProjectListDecisionsArgs, ProjectListIssuesArgs, ProjectListPhasesArgs,
+    ProjectRecordDecisionArgs, ProjectUpdateIssueArgs, ProjectUpdatePhaseArgs, SearchCodeArgs,
+    SearchMemoriesArgs, StoreDelegationArgs, StoreObservationArgs, StoreToolCallArgs,
+    UpdateAgentSessionArgs, ValidateArchitectureArgs, ValidateFileArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -203,6 +207,22 @@ impl ToolDefinitions {
         )
     }
 
+    pub fn memory_record_error_pattern() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_record_error_pattern",
+            "Record a new error pattern or match an existing one",
+            schemars::schema_for!(MemoryRecordErrorPatternArgs),
+        )
+    }
+
+    pub fn memory_get_error_patterns() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "memory_get_error_patterns",
+            "Retrieve error patterns with optional filters",
+            schemars::schema_for!(MemoryGetErrorPatternsArgs),
+        )
+    }
+
     pub fn create_agent_session() -> Result<Tool, McpError> {
         Self::create_tool(
             "create_agent_session",
@@ -248,6 +268,78 @@ impl ToolDefinitions {
             "store_delegation",
             "Store a delegation record between agent sessions",
             schemars::schema_for!(StoreDelegationArgs),
+        )
+    }
+
+    pub fn project_create_phase() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_create_phase",
+            "Create a new project phase",
+            schemars::schema_for!(ProjectCreatePhaseArgs),
+        )
+    }
+
+    pub fn project_update_phase() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_update_phase",
+            "Update phase status or details",
+            schemars::schema_for!(ProjectUpdatePhaseArgs),
+        )
+    }
+
+    pub fn project_list_phases() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_list_phases",
+            "List phases for a project",
+            schemars::schema_for!(ProjectListPhasesArgs),
+        )
+    }
+
+    pub fn project_create_issue() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_create_issue",
+            "Create a new project issue",
+            schemars::schema_for!(ProjectCreateIssueArgs),
+        )
+    }
+
+    pub fn project_update_issue() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_update_issue",
+            "Update issue status or details",
+            schemars::schema_for!(ProjectUpdateIssueArgs),
+        )
+    }
+
+    pub fn project_list_issues() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_list_issues",
+            "List issues with optional filters",
+            schemars::schema_for!(ProjectListIssuesArgs),
+        )
+    }
+
+    pub fn project_add_dependency() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_add_dependency",
+            "Add a dependency between issues",
+            schemars::schema_for!(ProjectAddDependencyArgs),
+        )
+    }
+
+    pub fn project_record_decision() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_record_decision",
+            "Record a project decision",
+            schemars::schema_for!(ProjectRecordDecisionArgs),
+        )
+    }
+
+    pub fn project_list_decisions() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "project_list_decisions",
+            "List decisions for a project",
+            schemars::schema_for!(ProjectListDecisionsArgs),
         )
     }
 
@@ -305,11 +397,22 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::memory_get_executions()?,
         ToolDefinitions::memory_store_quality_gate()?,
         ToolDefinitions::memory_get_quality_gates()?,
+        ToolDefinitions::memory_record_error_pattern()?,
+        ToolDefinitions::memory_get_error_patterns()?,
         ToolDefinitions::create_agent_session()?,
         ToolDefinitions::get_agent_session()?,
         ToolDefinitions::update_agent_session()?,
         ToolDefinitions::list_agent_sessions()?,
         ToolDefinitions::store_tool_call()?,
         ToolDefinitions::store_delegation()?,
+        ToolDefinitions::project_create_phase()?,
+        ToolDefinitions::project_update_phase()?,
+        ToolDefinitions::project_list_phases()?,
+        ToolDefinitions::project_create_issue()?,
+        ToolDefinitions::project_update_issue()?,
+        ToolDefinitions::project_list_issues()?,
+        ToolDefinitions::project_add_dependency()?,
+        ToolDefinitions::project_record_decision()?,
+        ToolDefinitions::project_list_decisions()?,
     ])
 }

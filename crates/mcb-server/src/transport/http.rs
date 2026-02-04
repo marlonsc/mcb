@@ -360,12 +360,23 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         memory_get_executions: state.server.memory_get_executions_handler(),
         memory_store_quality_gate: state.server.memory_store_quality_gate_handler(),
         memory_get_quality_gates: state.server.memory_get_quality_gates_handler(),
+        memory_record_error_pattern: state.server.memory_record_error_pattern_handler(),
+        memory_get_error_patterns: state.server.memory_get_error_patterns_handler(),
         create_agent_session: state.server.create_agent_session_handler(),
         get_agent_session: state.server.get_agent_session_handler(),
         update_agent_session: state.server.update_agent_session_handler(),
         list_agent_sessions: state.server.list_agent_sessions_handler(),
         store_tool_call: state.server.store_tool_call_handler(),
         store_delegation: state.server.store_delegation_handler(),
+        project_create_phase: state.server.project_create_phase_handler(),
+        project_update_phase: state.server.project_update_phase_handler(),
+        project_list_phases: state.server.project_list_phases_handler(),
+        project_create_issue: state.server.project_create_issue_handler(),
+        project_update_issue: state.server.project_update_issue_handler(),
+        project_list_issues: state.server.project_list_issues_handler(),
+        project_add_dependency: state.server.project_add_dependency_handler(),
+        project_record_decision: state.server.project_record_decision_handler(),
+        project_list_decisions: state.server.project_list_decisions_handler(),
     };
 
     match route_tool_call(call_request, &handlers).await {

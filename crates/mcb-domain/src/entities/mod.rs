@@ -36,9 +36,13 @@ pub use agent::{
 pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 pub use memory::{
-    ExecutionMetadata, ExecutionType, MemoryFilter, MemorySearchResult, Observation,
-    ObservationMetadata, ObservationType, QualityGateResult, QualityGateStatus, SessionSummary,
+    ErrorPattern, ErrorPatternCategory, ErrorPatternMatch, ExecutionMetadata, ExecutionType,
+    MemoryFilter, MemorySearchResult, Observation, ObservationMetadata, ObservationType,
+    QualityGateResult, QualityGateStatus, SessionSummary,
 };
-pub use project::{DetectedProject, Project, ProjectType};
+pub use project::{
+    DependencyType, DetectedProject, IssueStatus, IssueType, PhaseStatus, Project, ProjectDecision,
+    ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,
+};
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
 pub use vcs::{DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};

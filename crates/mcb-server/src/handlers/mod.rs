@@ -20,10 +20,15 @@ pub mod index_vcs_repository;
 pub mod list_agent_sessions;
 pub mod list_repositories;
 pub mod list_validators;
+pub mod memory_get_error_patterns;
 pub mod memory_get_observations;
 pub mod memory_inject_context;
+pub mod memory_record_error_pattern;
 pub mod memory_search;
 pub mod memory_timeline;
+pub mod project_decisions;
+pub mod project_issues;
+pub mod project_phases;
 pub mod search_branch;
 pub mod search_code;
 pub mod search_memories;
@@ -53,10 +58,20 @@ pub use index_vcs_repository::IndexVcsRepositoryHandler;
 pub use list_agent_sessions::ListAgentSessionsHandler;
 pub use list_repositories::ListRepositoriesHandler;
 pub use list_validators::ListValidatorsHandler;
+pub use memory_get_error_patterns::MemoryGetErrorPatternsHandler;
 pub use memory_get_observations::MemoryGetObservationsHandler;
 pub use memory_inject_context::MemoryInjectContextHandler;
+pub use memory_record_error_pattern::MemoryRecordErrorPatternHandler;
 pub use memory_search::MemorySearchHandler;
 pub use memory_timeline::MemoryTimelineHandler;
+pub use project_decisions::{ProjectListDecisionsHandler, ProjectRecordDecisionHandler};
+pub use project_issues::{
+    ProjectAddDependencyHandler, ProjectCreateIssueHandler, ProjectListIssuesHandler,
+    ProjectUpdateIssueHandler,
+};
+pub use project_phases::{
+    ProjectCreatePhaseHandler, ProjectListPhasesHandler, ProjectUpdatePhaseHandler,
+};
 pub use search_branch::SearchBranchHandler;
 pub use search_code::SearchCodeHandler;
 pub use search_memories::SearchMemoriesHandler;

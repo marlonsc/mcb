@@ -7,6 +7,8 @@
 //! vector stores (collections) and project org.
 
 pub mod agent;
+pub mod error_patterns;
+pub mod workflow;
 
 use super::memory::{COL_OBSERVATION_TYPE, ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 
@@ -359,6 +361,8 @@ impl ProjectSchema {
             },
         ];
         tables.extend(agent::tables());
+        tables.extend(error_patterns::tables());
+        tables.extend(workflow::tables());
         tables
     }
 
@@ -415,6 +419,8 @@ impl ProjectSchema {
             },
         ];
         indexes.extend(agent::indexes());
+        indexes.extend(error_patterns::indexes());
+        indexes.extend(workflow::indexes());
         indexes
     }
 
@@ -446,6 +452,8 @@ impl ProjectSchema {
             },
         ];
         fks.extend(agent::foreign_keys());
+        fks.extend(error_patterns::foreign_keys());
+        fks.extend(workflow::foreign_keys());
         fks
     }
 

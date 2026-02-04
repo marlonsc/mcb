@@ -25,9 +25,13 @@ use crate::handlers::{
     GetExecutionsHandler, GetIndexingStatusHandler, GetQualityGatesHandler,
     GetSessionSummaryHandler, GetValidationRulesHandler, IndexCodebaseHandler,
     IndexVcsRepositoryHandler, ListAgentSessionsHandler, ListRepositoriesHandler,
-    ListValidatorsHandler, MemoryGetObservationsHandler, MemoryInjectContextHandler,
-    MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler,
-    SearchMemoriesHandler, StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler,
+    ListValidatorsHandler, MemoryGetErrorPatternsHandler, MemoryGetObservationsHandler,
+    MemoryInjectContextHandler, MemoryRecordErrorPatternHandler, MemorySearchHandler,
+    MemoryTimelineHandler, ProjectAddDependencyHandler, ProjectCreateIssueHandler,
+    ProjectCreatePhaseHandler, ProjectListDecisionsHandler, ProjectListIssuesHandler,
+    ProjectListPhasesHandler, ProjectRecordDecisionHandler, ProjectUpdateIssueHandler,
+    ProjectUpdatePhaseHandler, SearchBranchHandler, SearchCodeHandler, SearchMemoriesHandler,
+    StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler,
     StoreQualityGateHandler, StoreToolCallHandler, UpdateAgentSessionHandler,
     ValidateArchitectureHandler, ValidateFileHandler,
 };
@@ -107,6 +111,12 @@ impl McpServer {
                 memory_service.clone(),
             )),
             memory_get_quality_gates: Arc::new(GetQualityGatesHandler::new(memory_service.clone())),
+            memory_record_error_pattern: Arc::new(MemoryRecordErrorPatternHandler::new(
+                memory_service.clone(),
+            )),
+            memory_get_error_patterns: Arc::new(MemoryGetErrorPatternsHandler::new(
+                memory_service.clone(),
+            )),
             create_agent_session: Arc::new(CreateAgentSessionHandler::new(
                 agent_session_service.clone(),
             )),
@@ -119,6 +129,15 @@ impl McpServer {
             )),
             store_tool_call: Arc::new(StoreToolCallHandler::new(agent_session_service.clone())),
             store_delegation: Arc::new(StoreDelegationHandler::new(agent_session_service.clone())),
+            project_create_phase: Arc::new(ProjectCreatePhaseHandler::new()),
+            project_update_phase: Arc::new(ProjectUpdatePhaseHandler::new()),
+            project_list_phases: Arc::new(ProjectListPhasesHandler::new()),
+            project_create_issue: Arc::new(ProjectCreateIssueHandler::new()),
+            project_update_issue: Arc::new(ProjectUpdateIssueHandler::new()),
+            project_list_issues: Arc::new(ProjectListIssuesHandler::new()),
+            project_add_dependency: Arc::new(ProjectAddDependencyHandler::new()),
+            project_record_decision: Arc::new(ProjectRecordDecisionHandler::new()),
+            project_list_decisions: Arc::new(ProjectListDecisionsHandler::new()),
         };
 
         Self {
@@ -292,6 +311,14 @@ impl McpServer {
         Arc::clone(&self.handlers.memory_get_quality_gates)
     }
 
+    pub fn memory_record_error_pattern_handler(&self) -> Arc<MemoryRecordErrorPatternHandler> {
+        Arc::clone(&self.handlers.memory_record_error_pattern)
+    }
+
+    pub fn memory_get_error_patterns_handler(&self) -> Arc<MemoryGetErrorPatternsHandler> {
+        Arc::clone(&self.handlers.memory_get_error_patterns)
+    }
+
     pub fn create_agent_session_handler(&self) -> Arc<CreateAgentSessionHandler> {
         Arc::clone(&self.handlers.create_agent_session)
     }
@@ -314,6 +341,42 @@ impl McpServer {
 
     pub fn store_delegation_handler(&self) -> Arc<StoreDelegationHandler> {
         Arc::clone(&self.handlers.store_delegation)
+    }
+
+    pub fn project_create_phase_handler(&self) -> Arc<ProjectCreatePhaseHandler> {
+        Arc::clone(&self.handlers.project_create_phase)
+    }
+
+    pub fn project_update_phase_handler(&self) -> Arc<ProjectUpdatePhaseHandler> {
+        Arc::clone(&self.handlers.project_update_phase)
+    }
+
+    pub fn project_list_phases_handler(&self) -> Arc<ProjectListPhasesHandler> {
+        Arc::clone(&self.handlers.project_list_phases)
+    }
+
+    pub fn project_create_issue_handler(&self) -> Arc<ProjectCreateIssueHandler> {
+        Arc::clone(&self.handlers.project_create_issue)
+    }
+
+    pub fn project_update_issue_handler(&self) -> Arc<ProjectUpdateIssueHandler> {
+        Arc::clone(&self.handlers.project_update_issue)
+    }
+
+    pub fn project_list_issues_handler(&self) -> Arc<ProjectListIssuesHandler> {
+        Arc::clone(&self.handlers.project_list_issues)
+    }
+
+    pub fn project_add_dependency_handler(&self) -> Arc<ProjectAddDependencyHandler> {
+        Arc::clone(&self.handlers.project_add_dependency)
+    }
+
+    pub fn project_record_decision_handler(&self) -> Arc<ProjectRecordDecisionHandler> {
+        Arc::clone(&self.handlers.project_record_decision)
+    }
+
+    pub fn project_list_decisions_handler(&self) -> Arc<ProjectListDecisionsHandler> {
+        Arc::clone(&self.handlers.project_list_decisions)
     }
 }
 

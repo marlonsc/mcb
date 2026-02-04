@@ -5,7 +5,7 @@ use mcb_server::tools::registry::create_tool_list;
 #[test]
 fn test_tool_definitions_create_valid_tools() {
     let tools = create_tool_list().expect("should create tool list");
-    assert_eq!(tools.len(), 27);
+    assert_eq!(tools.len(), 38);
 
     let names: Vec<_> = tools.iter().map(|t| t.name.as_ref()).collect();
     // Core tools
@@ -40,6 +40,19 @@ fn test_tool_definitions_create_valid_tools() {
     assert!(names.contains(&"list_agent_sessions"));
     assert!(names.contains(&"store_tool_call"));
     assert!(names.contains(&"store_delegation"));
+    // Error pattern tools (Phase 4)
+    assert!(names.contains(&"memory_record_error_pattern"));
+    assert!(names.contains(&"memory_get_error_patterns"));
+    // Project workflow tools (Phase 5)
+    assert!(names.contains(&"project_create_phase"));
+    assert!(names.contains(&"project_update_phase"));
+    assert!(names.contains(&"project_list_phases"));
+    assert!(names.contains(&"project_create_issue"));
+    assert!(names.contains(&"project_update_issue"));
+    assert!(names.contains(&"project_list_issues"));
+    assert!(names.contains(&"project_add_dependency"));
+    assert!(names.contains(&"project_record_decision"));
+    assert!(names.contains(&"project_list_decisions"));
 }
 
 #[test]

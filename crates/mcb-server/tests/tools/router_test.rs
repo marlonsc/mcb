@@ -46,7 +46,7 @@ fn test_tool_definitions_clear_index() {
 #[test]
 fn test_create_tool_list() {
     let tools = create_tool_list().expect("Should create tool list");
-    assert_eq!(tools.len(), 27, "Should have 27 tools");
+    assert_eq!(tools.len(), 38, "Should have 38 tools");
 
     let names: Vec<&str> = tools.iter().map(|t| &*t.name).collect();
     // Core tools

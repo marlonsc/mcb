@@ -12,12 +12,15 @@ use crate::args::{
     AnalyzeComplexityArgs, AnalyzeImpactArgs, ClearIndexArgs, CompareBranchesArgs,
     CreateAgentSessionArgs, CreateSessionSummaryArgs, GetAgentSessionArgs, GetIndexingStatusArgs,
     GetSessionSummaryArgs, GetValidationRulesArgs, IndexCodebaseArgs, IndexVcsRepositoryArgs,
-    ListAgentSessionsArgs, ListRepositoriesArgs, ListValidatorsArgs, MemoryGetExecutionsArgs,
-    MemoryGetObservationsArgs, MemoryGetQualityGatesArgs, MemoryInjectContextArgs,
-    MemorySearchArgs, MemoryStoreExecutionArgs, MemoryStoreQualityGateArgs, MemoryTimelineArgs,
-    SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreDelegationArgs,
-    StoreObservationArgs, StoreToolCallArgs, UpdateAgentSessionArgs, ValidateArchitectureArgs,
-    ValidateFileArgs,
+    ListAgentSessionsArgs, ListRepositoriesArgs, ListValidatorsArgs, MemoryGetErrorPatternsArgs,
+    MemoryGetExecutionsArgs, MemoryGetObservationsArgs, MemoryGetQualityGatesArgs,
+    MemoryInjectContextArgs, MemoryRecordErrorPatternArgs, MemorySearchArgs,
+    MemoryStoreExecutionArgs, MemoryStoreQualityGateArgs, MemoryTimelineArgs,
+    ProjectAddDependencyArgs, ProjectCreateIssueArgs, ProjectCreatePhaseArgs,
+    ProjectListDecisionsArgs, ProjectListIssuesArgs, ProjectListPhasesArgs,
+    ProjectRecordDecisionArgs, ProjectUpdateIssueArgs, ProjectUpdatePhaseArgs, SearchBranchArgs,
+    SearchCodeArgs, SearchMemoriesArgs, StoreDelegationArgs, StoreObservationArgs,
+    StoreToolCallArgs, UpdateAgentSessionArgs, ValidateArchitectureArgs, ValidateFileArgs,
 };
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
@@ -25,9 +28,13 @@ use crate::handlers::{
     GetExecutionsHandler, GetIndexingStatusHandler, GetQualityGatesHandler,
     GetSessionSummaryHandler, GetValidationRulesHandler, IndexCodebaseHandler,
     IndexVcsRepositoryHandler, ListAgentSessionsHandler, ListRepositoriesHandler,
-    ListValidatorsHandler, MemoryGetObservationsHandler, MemoryInjectContextHandler,
-    MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler,
-    SearchMemoriesHandler, StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler,
+    ListValidatorsHandler, MemoryGetErrorPatternsHandler, MemoryGetObservationsHandler,
+    MemoryInjectContextHandler, MemoryRecordErrorPatternHandler, MemorySearchHandler,
+    MemoryTimelineHandler, ProjectAddDependencyHandler, ProjectCreateIssueHandler,
+    ProjectCreatePhaseHandler, ProjectListDecisionsHandler, ProjectListIssuesHandler,
+    ProjectListPhasesHandler, ProjectRecordDecisionHandler, ProjectUpdateIssueHandler,
+    ProjectUpdatePhaseHandler, SearchBranchHandler, SearchCodeHandler, SearchMemoriesHandler,
+    StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler,
     StoreQualityGateHandler, StoreToolCallHandler, UpdateAgentSessionHandler,
     ValidateArchitectureHandler, ValidateFileHandler,
 };
@@ -87,6 +94,10 @@ pub struct ToolHandlers {
     pub memory_store_quality_gate: Arc<StoreQualityGateHandler>,
     /// Handler for retrieving quality gate results
     pub memory_get_quality_gates: Arc<GetQualityGatesHandler>,
+    /// Handler for recording error patterns
+    pub memory_record_error_pattern: Arc<MemoryRecordErrorPatternHandler>,
+    /// Handler for retrieving error patterns
+    pub memory_get_error_patterns: Arc<MemoryGetErrorPatternsHandler>,
     /// Handler for creating agent sessions
     pub create_agent_session: Arc<CreateAgentSessionHandler>,
     /// Handler for getting agent session details
@@ -99,6 +110,24 @@ pub struct ToolHandlers {
     pub store_tool_call: Arc<StoreToolCallHandler>,
     /// Handler for storing delegations
     pub store_delegation: Arc<StoreDelegationHandler>,
+    /// Handler for creating project phases
+    pub project_create_phase: Arc<ProjectCreatePhaseHandler>,
+    /// Handler for updating project phases
+    pub project_update_phase: Arc<ProjectUpdatePhaseHandler>,
+    /// Handler for listing project phases
+    pub project_list_phases: Arc<ProjectListPhasesHandler>,
+    /// Handler for creating project issues
+    pub project_create_issue: Arc<ProjectCreateIssueHandler>,
+    /// Handler for updating project issues
+    pub project_update_issue: Arc<ProjectUpdateIssueHandler>,
+    /// Handler for listing project issues
+    pub project_list_issues: Arc<ProjectListIssuesHandler>,
+    /// Handler for adding issue dependencies
+    pub project_add_dependency: Arc<ProjectAddDependencyHandler>,
+    /// Handler for recording project decisions
+    pub project_record_decision: Arc<ProjectRecordDecisionHandler>,
+    /// Handler for listing project decisions
+    pub project_list_decisions: Arc<ProjectListDecisionsHandler>,
 }
 
 /// Route a tool call request to the appropriate handler
@@ -237,6 +266,20 @@ pub async fn route_tool_call(
                 .handle(Parameters(args))
                 .await
         }
+        "memory_record_error_pattern" => {
+            let args = parse_args::<MemoryRecordErrorPatternArgs>(&request)?;
+            handlers
+                .memory_record_error_pattern
+                .handle(Parameters(args))
+                .await
+        }
+        "memory_get_error_patterns" => {
+            let args = parse_args::<MemoryGetErrorPatternsArgs>(&request)?;
+            handlers
+                .memory_get_error_patterns
+                .handle(Parameters(args))
+                .await
+        }
         "create_agent_session" => {
             let args = parse_args::<CreateAgentSessionArgs>(&request)?;
             handlers.create_agent_session.handle(Parameters(args)).await
@@ -260,6 +303,51 @@ pub async fn route_tool_call(
         "store_delegation" => {
             let args = parse_args::<StoreDelegationArgs>(&request)?;
             handlers.store_delegation.handle(Parameters(args)).await
+        }
+        "project_create_phase" => {
+            let args = parse_args::<ProjectCreatePhaseArgs>(&request)?;
+            handlers.project_create_phase.handle(Parameters(args)).await
+        }
+        "project_update_phase" => {
+            let args = parse_args::<ProjectUpdatePhaseArgs>(&request)?;
+            handlers.project_update_phase.handle(Parameters(args)).await
+        }
+        "project_list_phases" => {
+            let args = parse_args::<ProjectListPhasesArgs>(&request)?;
+            handlers.project_list_phases.handle(Parameters(args)).await
+        }
+        "project_create_issue" => {
+            let args = parse_args::<ProjectCreateIssueArgs>(&request)?;
+            handlers.project_create_issue.handle(Parameters(args)).await
+        }
+        "project_update_issue" => {
+            let args = parse_args::<ProjectUpdateIssueArgs>(&request)?;
+            handlers.project_update_issue.handle(Parameters(args)).await
+        }
+        "project_list_issues" => {
+            let args = parse_args::<ProjectListIssuesArgs>(&request)?;
+            handlers.project_list_issues.handle(Parameters(args)).await
+        }
+        "project_add_dependency" => {
+            let args = parse_args::<ProjectAddDependencyArgs>(&request)?;
+            handlers
+                .project_add_dependency
+                .handle(Parameters(args))
+                .await
+        }
+        "project_record_decision" => {
+            let args = parse_args::<ProjectRecordDecisionArgs>(&request)?;
+            handlers
+                .project_record_decision
+                .handle(Parameters(args))
+                .await
+        }
+        "project_list_decisions" => {
+            let args = parse_args::<ProjectListDecisionsArgs>(&request)?;
+            handlers
+                .project_list_decisions
+                .handle(Parameters(args))
+                .await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

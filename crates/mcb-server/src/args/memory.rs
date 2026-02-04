@@ -231,6 +231,103 @@ pub struct MemoryGetQualityGatesArgs {
     pub end_time: Option<i64>,
 }
 
+/// Arguments for the `memory_record_error_pattern` tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Record a new error pattern or match an existing one")]
+pub struct MemoryRecordErrorPatternArgs {
+    #[validate(length(min = 1, message = "project_id cannot be empty"))]
+    #[schemars(description = "Project ID for this error pattern")]
+    pub project_id: String,
+
+    #[validate(length(
+        min = 1,
+        max = 4000,
+        message = "pattern_signature must be 1-4000 chars"
+    ))]
+    #[schemars(description = "Normalized error signature for pattern matching")]
+    pub pattern_signature: String,
+
+    #[validate(length(min = 1, max = 4000, message = "description must be 1-4000 chars"))]
+    #[schemars(description = "Human-readable description of the error pattern")]
+    pub description: String,
+
+    #[validate(length(min = 1, message = "category cannot be empty"))]
+    #[schemars(
+        description = "Error pattern category: compilation, runtime, test, lint, build, config, network, other"
+    )]
+    pub category: String,
+
+    #[serde(default)]
+    #[schemars(description = "Known solutions or remediation steps")]
+    pub solutions: Vec<String>,
+
+    #[serde(default)]
+    #[schemars(description = "Files affected by this error pattern")]
+    pub affected_files: Vec<String>,
+
+    #[serde(default)]
+    #[schemars(description = "Tags for categorizing the pattern")]
+    pub tags: Vec<String>,
+
+    #[schemars(description = "Observation ID for the error occurrence")]
+    pub observation_id: Option<String>,
+
+    #[validate(range(min = 0, max = 1000))]
+    #[schemars(description = "Match confidence scaled by 1000 (e.g., 950 = 0.95)")]
+    pub confidence: Option<i64>,
+
+    #[schemars(description = "Index of the solution applied (if any)")]
+    pub solution_applied: Option<i32>,
+
+    #[schemars(description = "Whether the resolution was successful")]
+    pub resolution_successful: Option<bool>,
+
+    #[schemars(description = "Timestamp when the pattern was matched (epoch seconds)")]
+    pub matched_at: Option<i64>,
+
+    #[schemars(description = "Timestamp when the issue was resolved (epoch seconds)")]
+    pub resolved_at: Option<i64>,
+}
+
+/// Arguments for the `memory_get_error_patterns` tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Retrieve error patterns with optional filters")]
+pub struct MemoryGetErrorPatternsArgs {
+    #[serde(default = "crate::args::default_limit")]
+    #[validate(range(min = 1, max = 200))]
+    #[schemars(description = "Maximum number of patterns to return (default: 10)")]
+    pub limit: usize,
+
+    #[schemars(description = "Filter by project ID")]
+    pub project_id: Option<String>,
+
+    #[schemars(
+        description = "Filter by category: compilation, runtime, test, lint, build, config, network, other"
+    )]
+    pub category: Option<String>,
+
+    #[schemars(description = "Filter by tags")]
+    pub tags: Option<Vec<String>>,
+
+    #[schemars(description = "Filter by normalized pattern signature")]
+    pub pattern_signature: Option<String>,
+
+    #[schemars(description = "Filter by affected files")]
+    pub affected_files: Option<Vec<String>>,
+
+    #[schemars(description = "Filter by minimum occurrence count")]
+    pub min_occurrence_count: Option<i64>,
+
+    #[schemars(description = "Filter by maximum occurrence count")]
+    pub max_occurrence_count: Option<i64>,
+
+    #[schemars(description = "Filter by start timestamp (inclusive)")]
+    pub start_time: Option<i64>,
+
+    #[schemars(description = "Filter by end timestamp (inclusive)")]
+    pub end_time: Option<i64>,
+}
+
 /// Arguments for the `memory_inject_context` tool (SessionStart hook integration).
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 #[schemars(description = "[EXPERIMENTAL] Generate context bundle for session start injection")]
