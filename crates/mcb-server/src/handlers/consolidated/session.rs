@@ -106,11 +106,19 @@ impl SessionHandler {
                     .map(|d| d.as_secs() as i64)
                     .unwrap_or(0);
                 let session_id = format!("agent_{}", Uuid::new_v4());
+                let session_summary_id = match Self::get_required_str(data, "session_summary_id") {
+                    Ok(v) => v,
+                    Err(error_result) => return Ok(error_result),
+                };
+                let model = match Self::get_required_str(data, "model") {
+                    Ok(v) => v,
+                    Err(error_result) => return Ok(error_result),
+                };
                 let session = AgentSession {
                     id: session_id.clone(),
-                    session_summary_id: Self::get_required_str(data, "session_summary_id")?,
+                    session_summary_id,
                     agent_type: agent_type.clone(),
-                    model: Self::get_required_str(data, "model")?,
+                    model,
                     parent_session_id: Self::get_str(data, "parent_session_id"),
                     started_at: now,
                     ended_at: None,
@@ -199,10 +207,11 @@ impl SessionHandler {
                             session.delegations_count = Self::get_i64(data, "delegations_count")
                                 .or(session.delegations_count);
                         }
+                        let status_str = session.status.as_str().to_string();
                         match self.agent_service.update_session(session).await {
                             Ok(_) => ResponseFormatter::json_success(&serde_json::json!({
                                 "id": session_id,
-                                "status": session.status.as_str(),
+                                "status": &status_str,
                                 "updated": true,
                             })),
                             Err(_) => Ok(CallToolResult::error(vec![Content::text(

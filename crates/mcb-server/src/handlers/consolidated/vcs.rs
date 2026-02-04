@@ -99,12 +99,14 @@ impl VcsHandler {
             return Ok(PathBuf::from(path));
         }
         if let Some(repo_id) = args.repo_id.as_ref() {
-            if let Some(path) = vcs_repository_registry::lookup_repository_path(repo_id) {
-                return Ok(PathBuf::from(path));
+            match vcs_repository_registry::lookup_repository_path(repo_id) {
+                Ok(path) => return Ok(path),
+                Err(_) => {
+                    return Err(CallToolResult::error(vec![Content::text(format!(
+                        "Repository not found: {repo_id}"
+                    ))]));
+                }
             }
-            return Err(CallToolResult::error(vec![Content::text(format!(
-                "Repository not found: {repo_id}"
-            ))]));
         }
         Err(CallToolResult::error(vec![Content::text(
             "Missing repo_path or repo_id",
@@ -130,7 +132,10 @@ impl VcsHandler {
                 ResponseFormatter::json_success(&result)
             }
             VcsAction::IndexRepository => {
-                let path = Self::repo_path(&args)?;
+                let path = match Self::repo_path(&args) {
+                    Ok(p) => p,
+                    Err(error_result) => return Ok(error_result),
+                };
                 let repo = match self.vcs_provider.open_repository(Path::new(&path)).await {
                     Ok(repo) => repo,
                     Err(e) => {
@@ -170,18 +175,21 @@ impl VcsHandler {
                     0
                 };
                 let result = IndexResult {
-                    repository_id: repo.id.clone(),
-                    path: repo.path.clone(),
+                    repository_id: repo.id.to_string(),
+                    path: repo.path.to_string_lossy().to_string(),
                     default_branch: repo.default_branch.clone(),
                     branches_found: branches.clone(),
                     total_files,
                     commits_indexed,
                 };
-                vcs_repository_registry::record_repository(&repo.id, &repo.path);
+                let _ = vcs_repository_registry::record_repository(repo.id.as_str(), &repo.path);
                 ResponseFormatter::json_success(&result)
             }
             VcsAction::CompareBranches => {
-                let path = Self::repo_path(&args)?;
+                let path = match Self::repo_path(&args) {
+                    Ok(p) => p,
+                    Err(error_result) => return Ok(error_result),
+                };
                 let base = args
                     .base_branch
                     .clone()
@@ -210,7 +218,7 @@ impl VcsHandler {
                     .files
                     .iter()
                     .map(|file| BranchDiffFile {
-                        path: file.path.clone(),
+                        path: file.path.to_string_lossy().to_string(),
                         status: format!("{:?}", file.status).to_lowercase(),
                     })
                     .collect();
@@ -218,8 +226,8 @@ impl VcsHandler {
                     base_branch: base,
                     head_branch: head,
                     files_changed: diff.files.len(),
-                    additions: diff.additions,
-                    deletions: diff.deletions,
+                    additions: diff.total_additions,
+                    deletions: diff.total_deletions,
                     files,
                 };
                 ResponseFormatter::json_success(&result)
@@ -237,7 +245,10 @@ impl VcsHandler {
                     .target_branch
                     .clone()
                     .unwrap_or_else(|| "main".to_string());
-                let path = Self::repo_path(&args)?;
+                let path = match Self::repo_path(&args) {
+                    Ok(p) => p,
+                    Err(error_result) => return Ok(error_result),
+                };
                 let repo = match self.vcs_provider.open_repository(Path::new(&path)).await {
                     Ok(repo) => repo,
                     Err(e) => {
@@ -264,7 +275,7 @@ impl VcsHandler {
                         for (index, line) in content.lines().enumerate() {
                             if line.to_lowercase().contains(&query.to_lowercase()) {
                                 matches.push(BranchSearchMatch {
-                                    path: path.clone(),
+                                    path: path.to_string_lossy().to_string(),
                                     line: index + 1,
                                     snippet: line.trim().to_string(),
                                 });
@@ -276,7 +287,7 @@ impl VcsHandler {
                     }
                 }
                 let result = BranchSearchResponse {
-                    repository_id: repo.id.clone(),
+                    repository_id: repo.id.to_string(),
                     branch,
                     query: query.to_string(),
                     count: matches.len(),
@@ -285,7 +296,10 @@ impl VcsHandler {
                 ResponseFormatter::json_success(&result)
             }
             VcsAction::AnalyzeImpact => {
-                let path = Self::repo_path(&args)?;
+                let path = match Self::repo_path(&args) {
+                    Ok(p) => p,
+                    Err(error_result) => return Ok(error_result),
+                };
                 let base_ref = args
                     .base_branch
                     .clone()
@@ -326,12 +340,12 @@ impl VcsHandler {
                         _ => modified += 1,
                     }
                     impacted_files.push(ImpactFile {
-                        path: file.path.clone(),
+                        path: file.path.to_string_lossy().to_string(),
                         status: status.clone(),
                         impact: file.additions + file.deletions,
                     });
                 }
-                let total_changes = diff.additions + diff.deletions;
+                let total_changes = diff.total_additions + diff.total_deletions;
                 let impact_score = ((diff.files.len() as f64).ln_1p() * 10.0
                     + (total_changes as f64).ln_1p() * 5.0)
                     .min(100.0);

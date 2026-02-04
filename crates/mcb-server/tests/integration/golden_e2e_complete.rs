@@ -61,8 +61,32 @@ fn golden_queries_path() -> std::path::PathBuf {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct GoldenQuery {
+    id: String,
+    query: String,
+    description: String,
+    expected_files: Vec<String>,
+    max_latency_ms: u64,
+    min_results: u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GoldenQueriesFixture {
-    queries: Vec<String>,
+    version: String,
+    description: String,
+    queries: Vec<GoldenQuery>,
+    config: GoldenConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct GoldenConfig {
+    collection_name: String,
+    timeout_ms: u64,
+    relevance_threshold: f64,
+    top_k: u32,
 }
 
 fn load_golden_queries_fixture() -> GoldenQueriesFixture {
@@ -559,18 +583,22 @@ async fn golden_e2e_golden_queries_one_query() {
         "golden_queries.json must have queries"
     );
 
-    let query = fixture.queries[0].clone();
-    let r = server
-        .search_handler()
+    let query = &fixture.queries[0];
+    let search_h = server.search_handler();
+    let r = search_h
         .handle(Parameters(search_args(
-            &query,
+            &query.query,
             Some(collection.to_string()),
             Some(5),
         )))
         .await;
-    assert!(r.is_ok());
+    assert!(r.is_ok(), "Query '{}' should succeed: {:?}", query.id, r);
     let res = r.unwrap();
-    assert!(!res.is_error.unwrap_or(true));
+    assert!(
+        !res.is_error.unwrap_or(true),
+        "Query '{}' returned error",
+        query.id
+    );
 }
 
 #[tokio::test]
@@ -606,16 +634,20 @@ async fn golden_e2e_golden_queries_all_handlers_succeed() {
     );
 
     for query in fixture.queries.iter() {
-        let r = server
-            .search_handler()
+        let search_h = server.search_handler();
+        let r = search_h
             .handle(Parameters(search_args(
-                query,
+                &query.query,
                 Some(collection.to_string()),
                 Some(5),
             )))
             .await;
-        assert!(r.is_ok());
+        assert!(r.is_ok(), "Query '{}' should succeed: {:?}", query.id, r);
         let res = r.unwrap();
-        assert!(!res.is_error.unwrap_or(true));
+        assert!(
+            !res.is_error.unwrap_or(true),
+            "Query '{}' returned error",
+            query.id
+        );
     }
 }

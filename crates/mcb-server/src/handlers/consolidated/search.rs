@@ -32,8 +32,12 @@ impl SearchHandler {
         &self,
         Parameters(args): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
-        args.validate()
-            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
+        if let Err(e) = args.validate() {
+            return Ok(CallToolResult::error(vec![Content::text(format!(
+                "Invalid arguments: {}",
+                e
+            ))]));
+        }
 
         let query = args.query.trim();
         if query.is_empty() {
