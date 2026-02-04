@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Dependencies Planned**: sqlx (SQLite support)
 -   **Implementation Phases**: 10 phases for session memory (on top of 10 for git)
 -   **Estimated LOC**: ~3,000 for memory subsystem
--   **New MCP Tools**: 5 tools (search, timeline, get_observations, store_observation, inject_context)
+-   **MCP Tool Consolidation**: 38 legacy tools consolidated into 8 tools (index, search, validate, memory, session, agent, project, vcs)
 
 ---
 
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   All architecture validation errors resolved (0 errors, 4 warnings)
 -   Validation service properly wired through DI system
--   Tool count tests updated for new `validate_architecture` tool
+-   Tool count tests updated for new `validate (action=run, scope=project)` tool
 <!-- markdownlint-enable MD044 -->
 
 ### Impact Metrics
@@ -284,7 +284,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Provider Registration**: Compile-time (from runtime discovery)
 -   **Validation Coverage**: 12 architecture patterns automated
 -   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
--   **Test Coverage**: 1974+ tests maintained
+-   **Test Coverage**: 1920+ tests maintained
 -   **Architecture Compliance**: Automated validation of 7-crate clean architecture
 
 ### Next Steps (v0.1.3 or v0.2.0)
@@ -352,7 +352,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   **Clean Architecture**: Complete refactoring with trait-based dependency injection
--   **Test Suite**: Expanded to 1974+ tests organized by Clean Architecture layers
+-   **Test Suite**: Expanded to 1920+ tests organized by Clean Architecture layers
 -   **Configuration**: Modular configuration with cache and limits separated
 -   **Server Operations**: Extracted operations to dedicated module (`src/server/operations.rs`)
 -   **Metrics**: Dedicated metrics module (`src/server/metrics.rs`)
@@ -381,7 +381,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
 -   **Provider Support**: 7 embedding providers, 8 vector stores
 -   **Language Support**: 14 languages with AST parsing
--   **Test Coverage**: 1974+ tests
+-   **Test Coverage**: 1920+ tests
 
 ---
 

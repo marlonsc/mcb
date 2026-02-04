@@ -809,7 +809,7 @@ impl HookService {
         // Store observations via memory provider (ADR 009 integration)
         if let Some(memory) = &self.memory_provider {
             for obs in &final_output.observations {
-                if let Err(e) = memory.store_observation(obs).await {
+                if let Err(e) = memory.memory (action=store, resource=observation)(obs).await {
                     tracing::warn!("[HOOKS] Failed to store observation: {}", e);
                 }
             }
@@ -1137,7 +1137,7 @@ if let Some(git) = &self.git_provider {
 ### With ADR 009 (Memory)
 
 1.**Context retrieval**: Use `MemoryProvider.search_observations()` for context injection
-2.**Observation storage**: Store hook observations via `MemoryProvider.store_observation()`
+2.**Observation storage**: Store hook observations via `MemoryProvider.memory (action=store, resource=observation)()`
 3.**Shared types**: Reuse `Observation`, `ObservationType` from memory domain
 
 ## Related ADRs

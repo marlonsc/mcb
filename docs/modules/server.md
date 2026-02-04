@@ -24,12 +24,16 @@ Core MCP protocol server implementation with JSON-RPC handling.
 
 ### Tool Handlers (`handlers/`)
 
-MCP tool implementations:
+Consolidated MCP tool implementations:
 
--   `index_codebase.rs` - Index repository tool
--   `search_code.rs` - Semantic search tool
--   `get_indexing_status.rs` - Status query tool
--   `clear_index.rs` - Index clearing tool
+-   `index` - Index operations (start/status/clear)
+-   `search` - Unified search (code/memory)
+-   `validate` - Validation + complexity analysis
+-   `memory` - Memory storage, retrieval, timeline, inject
+-   `session` - Session lifecycle + summaries
+-   `agent` - Agent activity logging
+-   `project` - Project workflow operations
+-   `vcs` - Repository operations
 
 ### Admin API (`admin/`)
 
@@ -70,10 +74,16 @@ crates/mcb-server/src/
 │   ├── service.rs            # Admin service
 │   └── mod.rs
 ├── handlers/
-│   ├── index_codebase.rs     # Index tool
-│   ├── search_code.rs        # Search tool
-│   ├── get_indexing_status.rs # Status tool
-│   ├── clear_index.rs        # Clear tool
+│   ├── consolidated/           # Consolidated MCP tools
+│   │   ├── agent.rs
+│   │   ├── index.rs
+│   │   ├── memory.rs
+│   │   ├── project.rs
+│   │   ├── search.rs
+│   │   ├── session.rs
+│   │   ├── validate.rs
+│   │   ├── vcs.rs
+│   │   └── mod.rs
 │   └── mod.rs
 ├── transport/
 │   ├── http.rs               # HTTP server

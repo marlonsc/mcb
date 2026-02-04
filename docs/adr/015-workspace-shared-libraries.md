@@ -57,7 +57,7 @@ pub trait LanguageProcessor: Send + Sync {
     fn chunk_code(&self, source: &str) -> Result<Vec<CodeChunk>>;
 
     // Analysis (future capability - v0.3.0+)
-    fn analyze_complexity(&self, source: &str) -> Result<ComplexityMetrics>;
+    fn validate (action=analyze)(&self, source: &str) -> Result<ComplexityMetrics>;
     fn extract_functions(&self, source: &str) -> Result<Vec<FunctionInfo>>;
 }
 ```

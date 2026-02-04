@@ -1144,7 +1144,7 @@ sequenceDiagram
     participant VecProv as Vector Store Provider
     participant Metadata as Metadata Store
 
-    User->>MCP: index_codebase(repo_path)
+    User->>MCP: index (action=start)(repo_path)
     MCP->>IndexSvc: index_repository(repo_path)
 
     IndexSvc->>FileWalk: discover_files(repo_path)
@@ -1181,7 +1181,7 @@ sequenceDiagram
     participant VecProv as Vector Store Provider
     participant Ranker as Result Ranker
 
-    User->>MCP: search_code(query, limit)
+    User->>MCP: search (resource=code)(query, limit)
     MCP->>SearchSvc: search(collection, query, limit)
 
     SearchSvc->>Cache: get_cached_results(query)

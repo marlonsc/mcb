@@ -495,7 +495,7 @@ pub enum ImpactRelationship {
 
 impl ImpactAnalyzer {
     /// Analyze impact of changes between two refs
-    pub async fn analyze_impact(
+    pub async fn vcs (action=analyze_impact)(
         &self,
         repo_path: &Path,
         from: &str,
@@ -522,10 +522,10 @@ impl ImpactAnalyzer {
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `index_git_repository` | Index repository with branch awareness | path, branches?, include_submodules?, include_history? |
-| `search_branch` | Search within specific branch | query, repository?, branch?, limit? |
-| `compare_branches` | Compare code between branches | path, from_branch, to_branch |
-| `analyze_impact` | Analyze change impact | path, from_ref, to_ref |
-| `list_repositories` | List indexed repositories | - |
+| `vcs (action=search_branch)` | Search within specific branch | query, repository?, branch?, limit? |
+| `vcs (action=compare_branches)` | Compare code between branches | path, from_branch, to_branch |
+| `vcs (action=analyze_impact)` | Analyze change impact | path, from_ref, to_ref |
+| `vcs (action=list_repositories)` | List indexed repositories | - |
 
 ### Phase 10: Configuration
 

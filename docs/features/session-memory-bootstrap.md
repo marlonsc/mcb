@@ -17,7 +17,7 @@
    └─ Hook calls inject_context(session_id, repo_id, limit, filters)
 
 2. Memory Retrieval (3-layer workflow)
-   ├─ Layer 1: memory_inject_context returns index + bootstrap context
+   ├─ Layer 1: memory (action=inject, resource=observation) returns index + bootstrap context
    ├─ Context includes:
    │  ├─ observation_ids (for potential follow-up queries)
    │  ├─ context (formatted observations as string)
@@ -41,7 +41,7 @@
 
 ### Injecting Context at SessionStart
 
-**Tool:** `memory_inject_context`
+**Tool:** `memory (action=inject, resource=observation)`
 
 **Parameters:**
 
@@ -75,7 +75,7 @@
 
 ### Handler Implementation (✅ DONE)
 
--   [x] `memory_inject_context` handler created
+-   [x] `memory (action=inject, resource=observation)` handler created
 -   [x] GitBootstrap struct includes branch + commit
 -   [x] Context formatted for prompt injection
 -   [x] Token budgeting support
@@ -88,7 +88,7 @@
 
 ### Context Tagging (✅ DONE)
 
--   [x] store_observation auto-tags with git context
+-   [x] memory (action=store, resource=observation) auto-tags with git context
 -   [x] GitContext utility captures branch, commit, repo_id
 -   [x] Observations can be filtered by git branch/commit
 
@@ -96,7 +96,7 @@
 
 ### 1. MCP Server Integration
 
-The `memory_inject_context` tool is registered in the MCP server and available via:
+The `memory (action=inject, resource=observation)` tool is registered in the MCP server and available via:
 
 -   HTTP endpoint (post to `/rpc`)
 -   Stdio transport
@@ -144,7 +144,7 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 | Layer | Operation | Avg Tokens | Count |
 |-------|-----------|-----------|-------|
-| 1 | memory_inject_context (index) | 50-100 | 1 |
+| 1 | memory (action=inject, resource=observation) (index) | 50-100 | 1 |
 | 2 | Response context String | 1000-1500 | 1 |
 | 3 | Observation details (if needed) | 300-500 | per obs |
 
@@ -233,11 +233,11 @@ See `mcb_application::ports::MemoryServiceInterface` for service-level configura
 
 -   ✓ GitContext captures branch/commit correctly
 -   ✓ MemoryFilter applies git filters correctly
--   ✓ memory_inject_context returns proper format
+-   ✓ memory (action=inject, resource=observation) returns proper format
 
 ### Integration Tests (Phase 7 Task 7)
 
--   [ ] SessionStart hook calls memory_inject_context
+-   [ ] SessionStart hook calls memory (action=inject, resource=observation)
 -   [ ] Context is properly injected into prompt
 -   [ ] Git context is available in response
 -   [ ] Token budgeting works correctly

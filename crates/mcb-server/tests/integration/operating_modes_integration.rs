@@ -331,8 +331,8 @@ fn test_mcp_request_with_params() {
     let request = McpRequest {
         method: "tools/call".to_string(),
         params: Some(serde_json::json!({
-            "name": "search_code",
-            "arguments": {"query": "test"}
+            "name": "search",
+            "arguments": {"query": "test", "resource": "code"}
         })),
         id: Some(serde_json::json!(42)),
     };
@@ -641,22 +641,14 @@ async fn test_http_server_tools_list() {
         .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
         .collect();
 
-    assert!(
-        tool_names.contains(&"index_codebase"),
-        "Should have index_codebase"
-    );
-    assert!(
-        tool_names.contains(&"search_code"),
-        "Should have search_code"
-    );
-    assert!(
-        tool_names.contains(&"get_indexing_status"),
-        "Should have get_indexing_status"
-    );
-    assert!(
-        tool_names.contains(&"clear_index"),
-        "Should have clear_index"
-    );
+    assert!(tool_names.contains(&"index"), "Should have index");
+    assert!(tool_names.contains(&"search"), "Should have search");
+    assert!(tool_names.contains(&"validate"), "Should have validate");
+    assert!(tool_names.contains(&"memory"), "Should have memory");
+    assert!(tool_names.contains(&"session"), "Should have session");
+    assert!(tool_names.contains(&"agent"), "Should have agent");
+    assert!(tool_names.contains(&"project"), "Should have project");
+    assert!(tool_names.contains(&"vcs"), "Should have vcs");
 }
 
 #[tokio::test]
@@ -822,7 +814,7 @@ async fn test_http_server_with_session_header() {
 }
 
 #[tokio::test]
-async fn test_http_server_tools_call_get_indexing_status() {
+async fn test_http_server_tools_call_index_status() {
     let port = get_free_port();
     let server = Arc::new(create_test_mcp_server().await);
 
@@ -834,12 +826,13 @@ async fn test_http_server_tools_call_get_indexing_status() {
         .await
         .expect("Failed to create test client");
 
-    // Call get_indexing_status tool
+    // Call index tool with status action
     let request = McpRequest {
         method: "tools/call".to_string(),
         params: Some(serde_json::json!({
-            "name": "get_indexing_status",
+            "name": "index",
             "arguments": {
+                "action": "status",
                 "collection": "test-collection"
             }
         })),

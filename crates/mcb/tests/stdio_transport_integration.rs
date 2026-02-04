@@ -268,22 +268,14 @@ fn test_stdio_roundtrip_tools_list() {
         .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
         .collect();
 
-    assert!(
-        tool_names.contains(&"index_codebase"),
-        "Missing index_codebase tool"
-    );
-    assert!(
-        tool_names.contains(&"search_code"),
-        "Missing search_code tool"
-    );
-    assert!(
-        tool_names.contains(&"get_indexing_status"),
-        "Missing get_indexing_status tool"
-    );
-    assert!(
-        tool_names.contains(&"clear_index"),
-        "Missing clear_index tool"
-    );
+    assert!(tool_names.contains(&"index"), "Missing index tool");
+    assert!(tool_names.contains(&"search"), "Missing search tool");
+    assert!(tool_names.contains(&"validate"), "Missing validate tool");
+    assert!(tool_names.contains(&"memory"), "Missing memory tool");
+    assert!(tool_names.contains(&"session"), "Missing session tool");
+    assert!(tool_names.contains(&"agent"), "Missing agent tool");
+    assert!(tool_names.contains(&"project"), "Missing project tool");
+    assert!(tool_names.contains(&"vcs"), "Missing vcs tool");
 
     drop(stdin);
     let _ = child.kill();

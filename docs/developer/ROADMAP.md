@@ -73,7 +73,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 -   ✅ Phase 3: Rule Engines verified (30/30 tests pass)
 -   ✅ Phases 4–7: Metrics, Duplication, Architecture (CA001–CA009), Integration verified
 -   ✅ 12 migration validation rules (YAML files in rules/migration/)
--   ✅ 750+ mcb-validate tests; 1974+ tests project-wide
+-   ✅ 750+ mcb-validate tests; 1920+ tests project-wide
 
 **Admin UI Code Browser:**
 
@@ -89,7 +89,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 **Maintained from v0.1.1:**
 
--   ✅ 1974+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 1920+ tests with comprehensive coverage (100% pass rate)
 -   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 8 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
 -   ✅ 14 languages with AST parsing support
@@ -98,11 +98,11 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 #### Technical Metrics
 
 -   **Source Files**: 340+ Rust files
--   **Test Suite**: 1974+ tests passing
+-   **Test Suite**: 1920+ tests passing
 -   **Crates**: 8 (7 + mcb-validate)
 -   **Validation Rules**: 12 YAML migration rules; CA001–CA009 architecture rules
 -   **Provider Registration**: Compile-time via linkme (inventory removed)
--   **mcb-validate Status**: Phases 1–7 verified (1974+ tests)
+-   **mcb-validate Status**: Phases 1–7 verified (1920+ tests)
 
 ---
 
@@ -122,7 +122,7 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 -   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 8 vector stores (In-Memory, Encrypted, Null)
 -   ✅ Claude-context environment variable compatibility
--   ✅ 1974+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 1920+ tests with comprehensive coverage (100% pass rate)
 -   ✅ JWT authentication and rate limiting
 -   ✅ Clean architecture with trait-based dependency injection
 -   ✅ HTTP transport foundation for future enhancements
@@ -205,10 +205,10 @@ Transform MCP Context Browser into a comprehensive development platform combinin
 | Tool | Purpose |
 |------|---------|
 | `index_git_repository` | Index repository with branch awareness |
-| `search_branch` | Search within specific branch |
-| `compare_branches` | Compare code between branches |
-| `analyze_impact` | Analyze change impact between refs |
-| `list_repositories` | List indexed repositories |
+| `vcs (action=search_branch)` | Search within specific branch |
+| `vcs (action=compare_branches)` | Compare code between branches |
+| `vcs (action=analyze_impact)` | Analyze change impact between refs |
+| `vcs (action=list_repositories)` | List indexed repositories |
 
 #### New MCP Tools - Memory
 
@@ -217,7 +217,7 @@ Transform MCP Context Browser into a comprehensive development platform combinin
 | `search` | Step 1: Search memory index (token-efficient) |
 | `timeline` | Step 2: Get chronological context around results |
 | `get_observations` | Step 3: Fetch full details for filtered IDs |
-| `store_observation` | Store tool observation (PostToolUse hook) |
+| `memory (action=store, resource=observation)` | Store tool observation (PostToolUse hook) |
 | `inject_context` | Generate context for SessionStart hook |
 
 #### Technical Details
@@ -402,7 +402,7 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
-| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 1974+ tests |
+| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 1920+ tests |
 | v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
 | v0.3.0 | Future | Advanced code intelligence |
 | v0.4.0 | Future | Enterprise features |

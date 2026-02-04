@@ -223,7 +223,7 @@ pub struct MemorySearchResult {
 /// only essential metadata to minimize token usage.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemorySearchIndex {
-    /// Observation ID (use with memory_get_observations for full details)
+    /// Observation ID (use memory action=get, resource=observation for full details)
     pub id: String,
     /// Observation type (code, decision, context, error, summary)
     pub observation_type: String,

@@ -71,11 +71,11 @@ Replace GSD/Beads with complete CRUD operations:
 
 ```
 project_create          → Create project
-project_create_phase    → Create phase
-project_update_phase    → Update status/progress
-project_create_issue    → Create issue
-project_update_issue    → Update issue
-project_add_dependency  → Add blocker
+project (action=create, resource=phase)    → Create phase
+project (action=update, resource=phase)    → Update status/progress
+project (action=create, resource=issue)    → Create issue
+project (action=update, resource=issue)    → Update issue
+project (action=add_dependency, resource=dependency)  → Add blocker
 project_get_state       → Current state
 project_get_ready_work  → Issues without blockers
 project_log_decision    → Log decision

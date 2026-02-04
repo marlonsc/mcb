@@ -137,7 +137,7 @@ fn build_search_response_message(
 fn append_empty_search_response(message: &mut String) {
     message.push_str("❌ **No Results Found**\n\n");
     message.push_str("**Possible Reasons:**\n");
-    message.push_str("• Codebase not indexed yet (run `index_codebase` first)\n");
+    message.push_str("• Codebase not indexed yet (run `index` action=start first)\n");
     message.push_str("• Query terms not present in the codebase\n");
     message.push_str("• Try different keywords or more general terms\n\n");
     message.push_str("**Search Tips:**\n");
@@ -276,7 +276,7 @@ fn build_indexing_success_message(
         }
     } else {
         message.push_str("\n🎯 **Next Steps:**\n");
-        message.push_str("• Use `search_code` for semantic queries\n");
+        message.push_str("• Use `search` with resource=code for semantic queries\n");
         message.push_str(
             "• Try queries like \"find authentication functions\" or \"show error handling\"\n",
         );
@@ -294,8 +294,8 @@ fn build_indexing_started_message(result: &IndexingResult, path: &Path) -> Strin
          🔑 **Operation ID:** `{}`\n\
          📊 **Status:** {}\n\n\
          💡 **Note:** Indexing is running in the background.\n\
-         Use `get_indexing_status` to check progress.\n\
-         Once complete, use `search_code` to query the index.",
+         Use `index` action=status to check progress.\n\
+         Once complete, use `search` (resource=code) to query the index.",
         path.display(),
         operation_id,
         result.status

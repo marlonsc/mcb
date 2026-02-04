@@ -266,9 +266,9 @@ async fn test_tools_list_has_input_schemas() {
     }
 }
 
-/// Test that index_codebase tool schema has required 'path' field
+/// Test that index tool schema has required 'action' field
 #[tokio::test]
-async fn test_index_codebase_schema_has_required_path() {
+async fn test_index_schema_has_required_action() {
     let port = get_free_port();
     let server = Arc::new(create_test_mcp_server().await);
 
@@ -300,8 +300,8 @@ async fn test_index_codebase_schema_has_required_path() {
     let tools = result.get("tools").unwrap().as_array().unwrap();
     let index_tool = tools
         .iter()
-        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("index_codebase"))
-        .expect("Should have index_codebase tool");
+        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("index"))
+        .expect("Should have index tool");
 
     let schema = index_tool.get("inputSchema").unwrap();
 
@@ -309,7 +309,7 @@ async fn test_index_codebase_schema_has_required_path() {
     let required = schema.get("required");
     assert!(
         required.is_some(),
-        "index_codebase schema should have 'required' field"
+        "index schema should have 'required' field"
     );
 
     let required_array = required
@@ -317,15 +317,15 @@ async fn test_index_codebase_schema_has_required_path() {
         .as_array()
         .expect("required should be array");
     assert!(
-        required_array.iter().any(|v| v.as_str() == Some("path")),
-        "index_codebase schema should require 'path' field. Required: {:?}",
+        required_array.iter().any(|v| v.as_str() == Some("action")),
+        "index schema should require 'action' field. Required: {:?}",
         required_array
     );
 }
 
-/// Test that search_code tool schema has required 'query' field
+/// Test that search tool schema has required 'query' field
 #[tokio::test]
-async fn test_search_code_schema_has_required_query() {
+async fn test_search_schema_has_required_query() {
     let port = get_free_port();
     let server = Arc::new(create_test_mcp_server().await);
 
@@ -357,8 +357,8 @@ async fn test_search_code_schema_has_required_query() {
     let tools = result.get("tools").unwrap().as_array().unwrap();
     let search_tool = tools
         .iter()
-        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("search_code"))
-        .expect("Should have search_code tool");
+        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("search"))
+        .expect("Should have search tool");
 
     let schema = search_tool.get("inputSchema").unwrap();
 
@@ -366,7 +366,7 @@ async fn test_search_code_schema_has_required_query() {
     let required = schema.get("required");
     assert!(
         required.is_some(),
-        "search_code schema should have 'required' field"
+        "search schema should have 'required' field"
     );
 
     let required_array = required
@@ -375,7 +375,7 @@ async fn test_search_code_schema_has_required_query() {
         .expect("required should be array");
     assert!(
         required_array.iter().any(|v| v.as_str() == Some("query")),
-        "search_code schema should require 'query' field. Required: {:?}",
+        "search schema should require 'query' field. Required: {:?}",
         required_array
     );
 }

@@ -13,9 +13,9 @@ The product delivers semantic code search by combining vector embeddings, git co
 
 **Used in:** `README.md` "MCP Tools"
 
--   `index_codebase`: ingest a repository and store embeddings in the selected vector store.
--   `search_code`: answer natural-language prompts by matching vectors in the index.
--   `get_indexing_status` / `clear_index`: observe and reset collections, keeping search data predictable.
+-   `index (action=start)`: ingest a repository and store embeddings in the selected vector store.
+-   `search (resource=code)`: answer natural-language prompts by matching vectors in the index.
+-   `index (action=status)` / `index (action=clear)`: observe and reset collections, keeping search data predictable.
 **When to use:** Build API surfaces and CLI workflows around these MCP tools so every search operation stays traceable and testable.
 
 ### Phase-driven memory search

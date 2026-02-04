@@ -233,7 +233,7 @@ pub async fn handle_index_request(&self, request: IndexRequest) -> Result<IndexR
     // Use timeout for external operations
     let result = tokio::time::timeout(
         Duration::from_secs(30),
-        self.indexing_service.index_codebase(&request.path)
+        self.indexing_service.index (action=start)(&request.path)
     ).await
     .map_err(|_| Error::timeout("Indexing timed out"))??;
 
@@ -328,7 +328,7 @@ As MCB evolves to include CPU-intensive code analysis features (v0.3.0+), the as
 ```rust
 #[async_trait]
 pub trait CodeAnalyzer: Send + Sync {
-    async fn analyze_complexity(&self, path: &Path) -> Result<ComplexityReport> {
+    async fn validate (action=analyze)(&self, path: &Path) -> Result<ComplexityReport> {
         // 1. Read file (I/O - Tokio)
         let content = tokio::fs::read_to_string(path).await?;
 

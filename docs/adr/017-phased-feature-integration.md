@@ -71,7 +71,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 -   Port SATD detector
 -   Analysis adapters in mcb-providers
 
-**Tools**: 9 (+analyze_complexity, +tdg_score, +satd_detect)
+**Tools**: 9 (+validate (action=analyze), +tdg_score, +satd_detect)
 **Tests**: 1500+ (includes PMAT tests)
 
 ### Phase 4: v0.4.0 - Extended Analysis

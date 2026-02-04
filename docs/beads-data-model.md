@@ -386,7 +386,7 @@ CREATE VIEW blocked_issues AS
 ```json
 {
   "id": "mcb-7xi",
-  "title": "MEM-04a: Implement memory_search tool (token-efficient index)",
+  "title": "MEM-04a: Implement memory (action=list, resource=observation) tool (token-efficient index)",
   "status": "closed",
   "priority": 2,
   "issue_type": "task",
@@ -395,7 +395,7 @@ CREATE VIEW blocked_issues AS
   "created_by": "Marlon Costa",
   "updated_at": "2026-02-02T16:51:40.515480751-03:00",
   "closed_at": "2026-02-02T16:51:40.515480751-03:00",
-  "close_reason": "Implementada ferramenta memory_search",
+  "close_reason": "Implementada ferramenta memory (action=list, resource=observation)",
   "labels": ["memory", "phase-6"],
   "dependencies": [
     {

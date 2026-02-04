@@ -3,83 +3,8 @@
 //! Implementations of MCP tool calls using domain services.
 //! Each handler translates MCP protocol requests into domain service calls.
 
-pub mod analyze_complexity;
-pub mod analyze_impact;
-pub mod clear_index;
-pub mod compare_branches;
-pub mod create_agent_session;
-pub mod create_session_summary;
-pub mod get_agent_session;
-pub mod get_executions;
-pub mod get_indexing_status;
-pub mod get_quality_gates;
-pub mod get_session_summary;
-pub mod get_validation_rules;
-pub mod index_codebase;
-pub mod index_vcs_repository;
-pub mod list_agent_sessions;
-pub mod list_repositories;
-pub mod list_validators;
-pub mod memory_get_error_patterns;
-pub mod memory_get_observations;
-pub mod memory_inject_context;
-pub mod memory_record_error_pattern;
-pub mod memory_search;
-pub mod memory_timeline;
-pub mod project_decisions;
-pub mod project_issues;
-pub mod project_phases;
-pub mod search_branch;
-pub mod search_code;
-pub mod search_memories;
-pub mod store_delegation;
-pub mod store_execution;
-pub mod store_observation;
-pub mod store_quality_gate;
-pub mod store_tool_call;
-pub mod update_agent_session;
-pub mod validate_architecture;
-pub mod validate_file;
-
-pub use analyze_complexity::AnalyzeComplexityHandler;
-pub use analyze_impact::AnalyzeImpactHandler;
-pub use clear_index::ClearIndexHandler;
-pub use compare_branches::CompareBranchesHandler;
-pub use create_agent_session::CreateAgentSessionHandler;
-pub use create_session_summary::CreateSessionSummaryHandler;
-pub use get_agent_session::GetAgentSessionHandler;
-pub use get_executions::GetExecutionsHandler;
-pub use get_indexing_status::GetIndexingStatusHandler;
-pub use get_quality_gates::GetQualityGatesHandler;
-pub use get_session_summary::GetSessionSummaryHandler;
-pub use get_validation_rules::GetValidationRulesHandler;
-pub use index_codebase::IndexCodebaseHandler;
-pub use index_vcs_repository::IndexVcsRepositoryHandler;
-pub use list_agent_sessions::ListAgentSessionsHandler;
-pub use list_repositories::ListRepositoriesHandler;
-pub use list_validators::ListValidatorsHandler;
-pub use memory_get_error_patterns::MemoryGetErrorPatternsHandler;
-pub use memory_get_observations::MemoryGetObservationsHandler;
-pub use memory_inject_context::MemoryInjectContextHandler;
-pub use memory_record_error_pattern::MemoryRecordErrorPatternHandler;
-pub use memory_search::MemorySearchHandler;
-pub use memory_timeline::MemoryTimelineHandler;
-pub use project_decisions::{ProjectListDecisionsHandler, ProjectRecordDecisionHandler};
-pub use project_issues::{
-    ProjectAddDependencyHandler, ProjectCreateIssueHandler, ProjectListIssuesHandler,
-    ProjectUpdateIssueHandler,
+pub mod consolidated;
+pub use consolidated::{
+    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
+    ValidateHandler, VcsHandler,
 };
-pub use project_phases::{
-    ProjectCreatePhaseHandler, ProjectListPhasesHandler, ProjectUpdatePhaseHandler,
-};
-pub use search_branch::SearchBranchHandler;
-pub use search_code::SearchCodeHandler;
-pub use search_memories::SearchMemoriesHandler;
-pub use store_delegation::StoreDelegationHandler;
-pub use store_execution::StoreExecutionHandler;
-pub use store_observation::StoreObservationHandler;
-pub use store_quality_gate::StoreQualityGateHandler;
-pub use store_tool_call::StoreToolCallHandler;
-pub use update_agent_session::UpdateAgentSessionHandler;
-pub use validate_architecture::ValidateArchitectureHandler;
-pub use validate_file::ValidateFileHandler;

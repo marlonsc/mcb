@@ -272,7 +272,7 @@ pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>>
 
 -   MCP server: `MCPServer`
 -   Transport: `HttpTransport`, `StdioTransport`
--   Handlers: `index_codebase`, `search_code`, `get_indexing_status`, `clear_index`
+-   Handlers: `index (action=start)`, `search (resource=code)`, `index (action=status)`, `index (action=clear)`
 
 **Module Structure**:
 
