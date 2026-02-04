@@ -17,6 +17,10 @@ async fn golden_index_repository_success() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
 
@@ -36,6 +40,10 @@ async fn golden_index_repository_with_extensions() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: Some(vec!["rs".to_string()]),
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
 
@@ -55,6 +63,10 @@ async fn golden_index_repository_exclude_dirs() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: Some(vec!["target".to_string()]),
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
 

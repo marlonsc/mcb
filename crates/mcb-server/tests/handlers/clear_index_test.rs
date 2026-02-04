@@ -16,6 +16,10 @@ async fn test_clear_index_success() {
         collection: Some("test_collection".to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
 
     let result = handler.handle(Parameters(args)).await;
@@ -36,6 +40,10 @@ async fn test_clear_index_missing_collection() {
         collection: None,
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
 
     let result = handler.handle(Parameters(args)).await;

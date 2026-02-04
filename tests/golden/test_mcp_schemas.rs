@@ -14,6 +14,10 @@ async fn golden_mcp_index_schema() {
             collection: Some("default".to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "index must succeed");
@@ -35,6 +39,9 @@ async fn golden_mcp_search_schema() {
             min_score: None,
             tags: None,
             session_id: None,
+            extensions: None,
+            filters: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");

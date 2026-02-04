@@ -8,7 +8,7 @@ use crate::test_utils::test_fixtures::create_test_search_results;
 
 #[tokio::test]
 async fn test_search_code_success() {
-    let search_results = create_test_search_results();
+    let search_results = create_test_search_results(5);
     let search_service = MockSearchService::new().with_results(search_results);
     let memory_service = MockMemoryService::new();
     let handler = SearchHandler::new(Arc::new(search_service), Arc::new(memory_service));
@@ -21,6 +21,9 @@ async fn test_search_code_success() {
         min_score: None,
         tags: None,
         session_id: None,
+        extensions: None,
+        filters: None,
+        token: None,
     };
 
     let result = handler.handle(Parameters(args)).await;
@@ -44,6 +47,9 @@ async fn test_search_code_empty_query() {
         min_score: None,
         tags: None,
         session_id: None,
+        extensions: None,
+        filters: None,
+        token: None,
     };
 
     let result = handler.handle(Parameters(args)).await;

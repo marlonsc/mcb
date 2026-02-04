@@ -19,6 +19,10 @@ async fn golden_e2e_complete_workflow() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "index clear should succeed: {:?}", r);
@@ -36,6 +40,10 @@ async fn golden_e2e_complete_workflow() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "index status should succeed: {:?}", r);
@@ -53,6 +61,10 @@ async fn golden_e2e_complete_workflow() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "index should succeed: {:?}", r);
@@ -72,6 +84,10 @@ async fn golden_e2e_complete_workflow() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
 
@@ -84,6 +100,9 @@ async fn golden_e2e_complete_workflow() {
             min_score: None,
             tags: None,
             session_id: None,
+            extensions: None,
+            filters: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "search should succeed: {:?}", r);
@@ -103,6 +122,10 @@ async fn golden_e2e_complete_workflow() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok());
@@ -114,6 +137,10 @@ async fn golden_e2e_complete_workflow() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok());
@@ -129,6 +156,10 @@ async fn golden_e2e_handles_concurrent_operations() {
         collection: Some("default".to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     }));
     let r2 = status_h.handle(Parameters(IndexArgs {
         action: IndexAction::Status,
@@ -136,6 +167,10 @@ async fn golden_e2e_handles_concurrent_operations() {
         collection: Some("default".to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     }));
     let (a, b) = tokio::join!(r1, r2);
     assert!(a.is_ok());
@@ -153,6 +188,10 @@ async fn golden_e2e_respects_collection_isolation() {
             collection: Some("collection_a".to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await
         .expect("clear a");
@@ -163,6 +202,10 @@ async fn golden_e2e_respects_collection_isolation() {
             collection: Some("collection_b".to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await
         .expect("clear b");
@@ -180,6 +223,10 @@ async fn golden_e2e_handles_reindex_correctly() {
         collection: Some(collection.to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
     let r1 = index_h.handle(Parameters(args.clone())).await;
     assert!(r1.is_ok());
