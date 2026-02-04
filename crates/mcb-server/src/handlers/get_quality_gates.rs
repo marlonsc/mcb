@@ -1,10 +1,10 @@
-//! Handler for the `memory_get_executions` MCP tool
+//! Handler for the `memory_get_quality_gates` MCP tool
 
-use crate::args::MemoryGetExecutionsArgs;
+use crate::args::MemoryGetQualityGatesArgs;
 use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{
-    ExecutionMetadata, ExecutionType, MemoryFilter, ObservationType,
+    MemoryFilter, ObservationType, QualityGateResult, QualityGateStatus,
 };
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -13,25 +13,20 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
-/// Handler for the MCP `memory_get_executions` tool.
-pub struct GetExecutionsHandler {
+/// Handler for the MCP `memory_get_quality_gates` tool.
+pub struct GetQualityGatesHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }
 
 #[derive(Serialize)]
-struct ExecutionItem {
+struct QualityGateItem {
     observation_id: String,
     created_at: i64,
-    command: String,
-    execution_type: String,
-    success: bool,
-    exit_code: Option<i32>,
-    duration_ms: Option<i64>,
-    coverage: Option<f32>,
-    files_affected: Vec<String>,
-    output_summary: Option<String>,
-    warnings_count: Option<i32>,
-    errors_count: Option<i32>,
+    gate_name: String,
+    status: String,
+    message: Option<String>,
+    timestamp: chrono::DateTime<chrono::Utc>,
+    execution_id: Option<String>,
     session_id: Option<String>,
     repo_id: Option<String>,
     branch: Option<String>,
@@ -39,27 +34,27 @@ struct ExecutionItem {
 }
 
 #[derive(Serialize)]
-struct ExecutionResponse {
+struct QualityGateResponse {
     count: usize,
-    executions: Vec<ExecutionItem>,
+    quality_gates: Vec<QualityGateItem>,
 }
 
-impl GetExecutionsHandler {
+impl GetQualityGatesHandler {
     pub fn new(memory_service: Arc<dyn MemoryServiceInterface>) -> Self {
         Self { memory_service }
     }
 
     pub async fn handle(
         &self,
-        Parameters(args): Parameters<MemoryGetExecutionsArgs>,
+        Parameters(args): Parameters<MemoryGetQualityGatesArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|_| McpError::invalid_params("Invalid parameters", None))?;
 
-        let execution_type_filter = args
-            .execution_type
+        let status_filter = args
+            .status
             .as_ref()
-            .map(|value| value.parse::<ExecutionType>())
+            .map(|value| value.parse::<QualityGateStatus>())
             .transpose()
             .map_err(|e: String| McpError::invalid_params(e, None))?;
 
@@ -73,7 +68,7 @@ impl GetExecutionsHandler {
         let filter = MemoryFilter {
             id: None,
             tags: None,
-            observation_type: Some(ObservationType::Execution),
+            observation_type: Some(ObservationType::QualityGate),
             session_id: args.session_id.clone(),
             repo_id: args.repo_id.clone(),
             time_range,
@@ -81,7 +76,7 @@ impl GetExecutionsHandler {
             commit: args.commit.clone(),
         };
 
-        let query = build_execution_query(&execution_type_filter);
+        let query = build_quality_gate_query(&args.gate_name);
         let fetch_limit = args.limit.saturating_mul(5);
 
         match self
@@ -90,28 +85,28 @@ impl GetExecutionsHandler {
             .await
         {
             Ok(results) => {
-                let mut items: Vec<ExecutionItem> = results
+                let mut items: Vec<QualityGateItem> = results
                     .into_iter()
                     .filter_map(|result| {
                         let obs = result.observation;
-                        let execution = obs.metadata.execution?;
-                        if !execution_matches(&execution, &execution_type_filter, args.success) {
+                        let quality_gate = obs.metadata.quality_gate?;
+                        if !quality_gate_matches(
+                            &quality_gate,
+                            &args.gate_name,
+                            &status_filter,
+                            &args.execution_id,
+                        ) {
                             return None;
                         }
 
-                        Some(ExecutionItem {
+                        Some(QualityGateItem {
                             observation_id: obs.id,
                             created_at: obs.created_at,
-                            command: execution.command,
-                            execution_type: execution.execution_type.as_str().to_string(),
-                            success: execution.success,
-                            exit_code: execution.exit_code,
-                            duration_ms: execution.duration_ms,
-                            coverage: execution.coverage,
-                            files_affected: execution.files_affected,
-                            output_summary: execution.output_summary,
-                            warnings_count: execution.warnings_count,
-                            errors_count: execution.errors_count,
+                            gate_name: quality_gate.gate_name,
+                            status: quality_gate.status.as_str().to_string(),
+                            message: quality_gate.message,
+                            timestamp: quality_gate.timestamp,
+                            execution_id: quality_gate.execution_id,
                             session_id: obs.metadata.session_id,
                             repo_id: obs.metadata.repo_id,
                             branch: obs.metadata.branch,
@@ -123,38 +118,46 @@ impl GetExecutionsHandler {
                 items.sort_by(|a, b| b.created_at.cmp(&a.created_at));
                 items.truncate(args.limit);
 
-                let response = ExecutionResponse {
+                let response = QualityGateResponse {
                     count: items.len(),
-                    executions: items,
+                    quality_gates: items,
                 };
                 ResponseFormatter::json_success(&response)
             }
             Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to get executions: {e}"
+                "Failed to get quality gates: {e}"
             ))])),
         }
     }
 }
 
-fn build_execution_query(execution_type: &Option<ExecutionType>) -> String {
-    match execution_type {
-        Some(kind) => format!("execution {}", kind.as_str()),
-        None => "execution".to_string(),
+fn build_quality_gate_query(gate_name: &Option<String>) -> String {
+    match gate_name {
+        Some(name) => format!("quality gate {name}"),
+        None => "quality gate".to_string(),
     }
 }
 
-fn execution_matches(
-    execution: &ExecutionMetadata,
-    execution_type: &Option<ExecutionType>,
-    success: Option<bool>,
+fn quality_gate_matches(
+    quality_gate: &QualityGateResult,
+    gate_name: &Option<String>,
+    status: &Option<QualityGateStatus>,
+    execution_id: &Option<String>,
 ) -> bool {
-    if let Some(kind) = execution_type
-        && &execution.execution_type != kind
+    if let Some(name) = gate_name
+        && &quality_gate.gate_name != name
     {
         return false;
     }
-    if let Some(success_filter) = success
-        && execution.success != success_filter
+
+    if let Some(status_filter) = status
+        && &quality_gate.status != status_filter
+    {
+        return false;
+    }
+
+    if let Some(execution_filter) = execution_id
+        && quality_gate.execution_id.as_ref() != Some(execution_filter)
     {
         return false;
     }

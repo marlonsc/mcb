@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <script src="/ui/shared.js"></script>
     <style>
         .status-healthy { color: #16a34a; }
         .status-degraded { color: #ca8a04; }
@@ -74,17 +75,17 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="card" id="health-card">
                 <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Status</h3>
-                <p class="mt-2 text-3xl font-semibold text-gray-500" id="status-value">--</p>
+                <p class="mt-2 text-3xl font-semibold text-gray-500" id="status-value">Loading...</p>
             </div>
 
             <div class="card" id="uptime-card">
                 <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Uptime</h3>
-                <p class="mt-2 text-3xl font-semibold text-gray-900" id="uptime-value">--</p>
+                <p class="mt-2 text-3xl font-semibold text-gray-900" id="uptime-value">Loading...</p>
             </div>
 
             <div class="card" id="active-ops-card">
                 <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Active Operations</h3>
-                <p class="mt-2 text-3xl font-semibold text-gray-900" id="active-ops-value">--</p>
+                <p class="mt-2 text-3xl font-semibold text-gray-900" id="active-ops-value">Loading...</p>
             </div>
         </div>
 
@@ -94,19 +95,19 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
                     <p class="text-sm text-gray-500">Total Queries</p>
-                    <p class="text-2xl font-semibold" id="metric-total-queries">--</p>
+                    <p class="text-2xl font-semibold" id="metric-total-queries">Loading...</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Success Rate</p>
-                    <p class="text-2xl font-semibold" id="metric-success-rate">--</p>
+                    <p class="text-2xl font-semibold" id="metric-success-rate">Loading...</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Cache Hit Rate</p>
-                    <p class="text-2xl font-semibold" id="metric-cache-hit">--</p>
+                    <p class="text-2xl font-semibold" id="metric-cache-hit">Loading...</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Avg Response Time</p>
-                    <p class="text-2xl font-semibold" id="metric-avg-response">--</p>
+                    <p class="text-2xl font-semibold" id="metric-avg-response">Loading...</p>
                 </div>
             </div>
         </div>
@@ -343,18 +344,12 @@
             log.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Event log cleared</p>';
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         // =========================================================================
         // Services Management
         // =========================================================================
         async function refreshServices() {
             try {
-                const response = await fetch('/services');
+                const response = await adminFetch('/services');
                 const services = await response.json();
                 renderServices(services);
             } catch (e) {
@@ -372,11 +367,14 @@
                 return;
             }
 
-            container.innerHTML = services.map(service => `
+            container.innerHTML = services.map(service => {
+                const stateLower = String(service.state || '').toLowerCase();
+                const safeStateClass = ['running', 'stopped', 'starting', 'stopping'].includes(stateLower) ? stateLower : 'stopped';
+                return `
                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                         <span class="font-medium">${escapeHtml(service.name)}</span>
-                        <span class="ml-2 text-sm status-${service.state.toLowerCase()}">${service.state}</span>
+                        <span class="ml-2 text-sm status-${safeStateClass}">${escapeHtml(String(service.state || ''))}</span>
                     </div>
                     <div class="space-x-2">
                         <button class="btn btn-success btn-sm"
@@ -395,12 +393,13 @@
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function controlService(name, action) {
             try {
-                const response = await fetch(`/services/${encodeURIComponent(name)}/${action}`, {
+                const response = await adminFetch(`/services/${encodeURIComponent(name)}/${action}`, {
                     method: 'POST'
                 });
 
@@ -419,7 +418,7 @@
 
         async function healthCheckAll() {
             try {
-                const response = await fetch('/services/health');
+                const response = await adminFetch('/services/health');
                 const checks = await response.json();
 
                 checks.forEach(check => {
@@ -449,7 +448,7 @@
 
             // Load metrics
             try {
-                const metricsResponse = await fetch('/metrics');
+                const metricsResponse = await adminFetch('/metrics');
                 const metrics = await metricsResponse.json();
                 document.getElementById('metric-total-queries').textContent = metrics.total_queries;
                 const successRate = metrics.total_queries > 0
@@ -464,17 +463,6 @@
 
             // Load services
             refreshServices();
-        }
-
-        function formatUptime(seconds) {
-            const days = Math.floor(seconds / 86400);
-            const hours = Math.floor((seconds % 86400) / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = Math.floor(seconds % 60);
-            if (days > 0) return `${days}d ${hours}h ${mins}m`;
-            if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
-            if (mins > 0) return `${mins}m ${secs}s`;
-            return `${secs}s`;
         }
 
         // =========================================================================

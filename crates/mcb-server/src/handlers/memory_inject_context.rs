@@ -1,6 +1,7 @@
 //! Handler for the `memory_inject_context` MCP tool
 
 use crate::args::MemoryInjectContextArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
 use mcb_domain::utils::vcs_context::VcsContext;
@@ -125,11 +126,7 @@ impl MemoryInjectContextHandler {
                         commit: vcs_ctx.commit,
                     },
                 };
-
-                let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| String::from("Failed to serialize results"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&response)
             }
             Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
                 "Failed to inject context: {e}"

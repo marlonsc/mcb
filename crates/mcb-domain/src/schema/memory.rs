@@ -32,6 +32,9 @@ pub struct TableDef {
     pub columns: Vec<ColumnDef>,
 }
 
+/// Column name for observation type in observations table (single source of truth for ORG002).
+pub const COL_OBSERVATION_TYPE: &str = "observation_type";
+
 /// FTS (full-text search) definition for a content table.
 #[derive(Debug, Clone)]
 pub struct FtsDef {
@@ -112,7 +115,7 @@ impl MemorySchema {
                             auto_increment: false,
                         },
                         ColumnDef {
-                            name: "observation_type".to_string(),
+                            name: COL_OBSERVATION_TYPE.to_string(),
                             type_: ColumnType::Text,
                             primary_key: false,
                             unique: false,

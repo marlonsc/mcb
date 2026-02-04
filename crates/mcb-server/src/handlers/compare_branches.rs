@@ -1,6 +1,7 @@
 //! Handler for the `compare_branches` MCP tool
 
 use crate::args::CompareBranchesArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -85,10 +86,6 @@ impl CompareBranchesHandler {
             deletions: diff.total_deletions,
             files,
         };
-
-        let json = serde_json::to_string_pretty(&result)
-            .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-        Ok(CallToolResult::success(vec![Content::text(json)]))
+        ResponseFormatter::json_success(&result)
     }
 }

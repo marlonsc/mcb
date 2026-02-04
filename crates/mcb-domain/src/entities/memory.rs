@@ -1,9 +1,10 @@
 //! Memory entities for observation storage and session tracking.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Observation type for semantic memory (code, decision, context, error, summary, execution).
+/// Observation type for semantic memory (code, decision, context, error, summary, execution, quality_gate).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ObservationType {
     Code,
@@ -12,6 +13,7 @@ pub enum ObservationType {
     Error,
     Summary,
     Execution,
+    QualityGate,
 }
 
 impl ObservationType {
@@ -24,6 +26,7 @@ impl ObservationType {
             Self::Error => "error",
             Self::Summary => "summary",
             Self::Execution => "execution",
+            Self::QualityGate => "quality_gate",
         }
     }
 }
@@ -39,6 +42,7 @@ impl std::str::FromStr for ObservationType {
             "error" => Ok(Self::Error),
             "summary" => Ok(Self::Summary),
             "execution" => Ok(Self::Execution),
+            "quality_gate" => Ok(Self::QualityGate),
             _ => Err(format!("Unknown observation type: {s}")),
         }
     }
@@ -51,6 +55,41 @@ pub enum ExecutionType {
     Lint,
     Build,
     CI,
+}
+
+/// Status for quality gates.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum QualityGateStatus {
+    Passed,
+    Failed,
+    Warning,
+    Skipped,
+}
+
+impl QualityGateStatus {
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Passed => "passed",
+            Self::Failed => "failed",
+            Self::Warning => "warning",
+            Self::Skipped => "skipped",
+        }
+    }
+}
+
+impl std::str::FromStr for QualityGateStatus {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "passed" => Ok(Self::Passed),
+            "failed" => Ok(Self::Failed),
+            "warning" => Ok(Self::Warning),
+            "skipped" => Ok(Self::Skipped),
+            _ => Err(format!("Unknown quality gate status: {s}")),
+        }
+    }
 }
 
 impl ExecutionType {
@@ -98,6 +137,20 @@ pub struct ExecutionMetadata {
     pub errors_count: Option<i32>,
 }
 
+/// Quality gate result metadata stored on quality gate observations.
+/// Has identity per Clean Architecture (CA004) for traceability.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QualityGateResult {
+    /// Entity identity for CA004 compliance and traceability.
+    #[serde(default)]
+    pub id: String,
+    pub gate_name: String,
+    pub status: QualityGateStatus,
+    pub message: Option<String>,
+    pub timestamp: DateTime<Utc>,
+    pub execution_id: Option<String>,
+}
+
 /// Metadata for an observation (session, repo, file, branch, commit).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObservationMetadata {
@@ -109,6 +162,8 @@ pub struct ObservationMetadata {
     pub commit: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub execution: Option<ExecutionMetadata>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quality_gate: Option<QualityGateResult>,
 }
 
 impl Default for ObservationMetadata {
@@ -121,6 +176,7 @@ impl Default for ObservationMetadata {
             branch: None,
             commit: None,
             execution: None,
+            quality_gate: None,
         }
     }
 }

@@ -10,6 +10,7 @@ use std::sync::Arc;
 use mcb_domain::ports::services::ValidationServiceInterface;
 
 use crate::args::ListValidatorsArgs;
+use crate::formatter::ResponseFormatter;
 
 /// Handler for listing available validators
 #[derive(Clone)]
@@ -35,11 +36,7 @@ impl ListValidatorsHandler {
                     "count": validators.len(),
                     "description": "Available validators for architecture validation"
                 });
-
-                let text = serde_json::to_string_pretty(&response)
-                    .map_err(|_| McpError::internal_error("Failed to list validators", None))?;
-
-                Ok(CallToolResult::success(vec![Content::text(text)]))
+                ResponseFormatter::json_success(&response)
             }
             Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
                 "Error listing validators: {}",

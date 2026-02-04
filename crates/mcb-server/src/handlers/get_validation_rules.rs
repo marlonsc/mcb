@@ -11,6 +11,7 @@ use validator::Validate;
 use mcb_domain::ports::services::ValidationServiceInterface;
 
 use crate::args::GetValidationRulesArgs;
+use crate::formatter::ResponseFormatter;
 
 /// Handler for getting validation rules
 #[derive(Clone)]
@@ -47,12 +48,7 @@ impl GetValidationRulesHandler {
                     "count": rules.len(),
                     "filter": args.category.as_deref().unwrap_or("all")
                 });
-
-                let res = serde_json::to_string_pretty(&response);
-                #[rustfmt::skip]
-                let text = res.map_err(|_| McpError::internal_error("Failed to serialize validation rules", None))?;
-
-                Ok(CallToolResult::success(vec![Content::text(text)]))
+                ResponseFormatter::json_success(&response)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Error getting validation rules",

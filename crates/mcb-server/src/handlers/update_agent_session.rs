@@ -1,4 +1,5 @@
 use crate::args::UpdateAgentSessionArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -7,6 +8,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// MCP handler for updating an existing agent session.
 pub struct UpdateAgentSessionHandler {
     service: Arc<dyn AgentSessionServiceInterface>,
 }
@@ -65,11 +67,7 @@ impl UpdateAgentSessionHandler {
                             status: final_status,
                             updated: true,
                         };
-
-                        let json = serde_json::to_string_pretty(&result)
-                            .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                        Ok(CallToolResult::success(vec![Content::text(json)]))
+                        ResponseFormatter::json_success(&result)
                     }
                     Err(_) => Ok(CallToolResult::error(vec![Content::text(
                         "Failed to update agent session",

@@ -27,7 +27,7 @@ pub mod search;
 pub mod types;
 
 // Re-export commonly used value objects
-pub use browse::{CollectionInfo, FileInfo};
+pub use browse::{CollectionInfo, FileInfo, FileTreeNode};
 pub use config::{CacheConfig, EmbeddingConfig, VectorStoreConfig};
 pub use embedding::Embedding;
 pub use search::SearchResult;

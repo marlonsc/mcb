@@ -1,6 +1,8 @@
 //! Handler for the `index_vcs_repository` MCP tool
 
 use crate::args::IndexVcsRepositoryArgs;
+use crate::formatter::ResponseFormatter;
+use crate::vcs_repository_registry;
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -91,10 +93,11 @@ impl IndexVcsRepositoryHandler {
             total_files,
             commits_indexed,
         };
-
-        let json = serde_json::to_string_pretty(&result)
-            .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-        Ok(CallToolResult::success(vec![Content::text(json)]))
+        if let Err(e) = vcs_repository_registry::record_repository(repo.id.as_str(), &repo.path) {
+            return Ok(CallToolResult::error(vec![Content::text(format!(
+                "Failed to record repository mapping: {e}"
+            ))]));
+        }
+        ResponseFormatter::json_success(&result)
     }
 }

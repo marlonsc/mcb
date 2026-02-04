@@ -1,6 +1,7 @@
 //! Handler for the `get_session_summary` MCP tool
 
 use crate::args::GetSessionSummaryArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -50,11 +51,7 @@ impl GetSessionSummaryHandler {
                     key_files: summary.key_files,
                     created_at: summary.created_at,
                 };
-
-                let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| String::from("Failed to serialize summary"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&response)
             }
             Ok(None) => Ok(CallToolResult::error(vec![Content::text(format!(
                 "No session summary found for session: {}",

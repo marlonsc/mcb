@@ -1,4 +1,5 @@
 use crate::args::StoreToolCallArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::services::AgentSessionServiceInterface;
 use mcb_domain::entities::agent::ToolCall;
 use rmcp::ErrorData as McpError;
@@ -9,6 +10,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use validator::Validate;
 
+/// MCP handler for storing a tool call in an agent session.
 pub struct StoreToolCallHandler {
     service: Arc<dyn AgentSessionServiceInterface>,
 }
@@ -57,11 +59,7 @@ impl StoreToolCallHandler {
                     session_id: args.session_id,
                     tool_name: args.tool_name,
                 };
-
-                let json = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&result)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Failed to store tool call",

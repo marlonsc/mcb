@@ -1,6 +1,7 @@
 //! Handler for the `analyze_impact` MCP tool
 
 use crate::args::AnalyzeImpactArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_domain::entities::vcs::DiffStatus;
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
@@ -127,11 +128,7 @@ impl AnalyzeImpactHandler {
             },
             impacted_files,
         };
-
-        let json = serde_json::to_string_pretty(&result)
-            .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-        Ok(CallToolResult::success(vec![Content::text(json)]))
+        ResponseFormatter::json_success(&result)
     }
 
     fn calculate_impact_score(files_changed: usize, total_changes: usize) -> f64 {

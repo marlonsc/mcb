@@ -1395,6 +1395,13 @@ impl OrganizationValidator {
         let allowed_methods = [
             "new",
             "default",
+            "definition", // Canonical schema factory (CA: data definition, not business logic)
+            "tables",
+            "fts_def",
+            "indexes",
+            "foreign_keys",
+            "unique_constraints", // Schema builder helpers (data definition)
+            "capture", // VcsContext::capture() - environment snapshot, not business logic
             "from",
             "into",
             "as_ref",

@@ -1,4 +1,5 @@
 use crate::args::ListAgentSessionsArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::services::{AgentSessionQuery, AgentSessionServiceInterface};
 use mcb_domain::entities::agent::{AgentSessionStatus, AgentType};
 use rmcp::ErrorData as McpError;
@@ -8,6 +9,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// MCP handler for listing agent sessions with optional filters.
 pub struct ListAgentSessionsHandler {
     service: Arc<dyn AgentSessionServiceInterface>,
 }
@@ -78,11 +80,7 @@ impl ListAgentSessionsHandler {
                     sessions: summaries,
                     count,
                 };
-
-                let json = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&result)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Failed to list agent sessions",

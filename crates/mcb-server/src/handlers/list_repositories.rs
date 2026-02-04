@@ -1,23 +1,24 @@
 //! Handler for the `list_repositories` MCP tool
 //!
-//! Listing indexed repositories is not yet implemented; this handler returns an honest
-//! "not implemented" response so clients do not treat an empty list as real data.
+//! **Data flow**: Uses `collection_mapping::list_collections()` to return indexed
+//! collection names (user-friendly names from the mapping). Collections represent
+//! indexed codebases.
 
 use crate::args::ListRepositoriesArgs;
+use crate::collection_mapping;
+use crate::formatter::ResponseFormatter;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde::Serialize;
 
-/// Handler for `list_repositories` that will expose repository metadata to tooling.
-///
-/// Until a backend is wired, the handler returns a structured "not implemented" response.
+/// Handler for `list_repositories` that returns indexed collection names.
 pub struct ListRepositoriesHandler;
 
 #[derive(Serialize)]
-struct ListRepositoriesNotImplementedResponse {
-    implemented: bool,
-    message: String,
+struct ListRepositoriesResponse {
+    repositories: Vec<String>,
+    count: usize,
 }
 
 impl ListRepositoriesHandler {
@@ -29,16 +30,15 @@ impl ListRepositoriesHandler {
         &self,
         Parameters(_args): Parameters<ListRepositoriesArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let result = ListRepositoriesNotImplementedResponse {
-            implemented: false,
-            message: "List repositories is not implemented yet. No repository registry is wired."
-                .to_string(),
+        let repositories = collection_mapping::list_collections().map_err(|e| {
+            McpError::internal_error(format!("Failed to list collections: {}", e), None)
+        })?;
+        let count = repositories.len();
+        let result = ListRepositoriesResponse {
+            repositories,
+            count,
         };
-
-        let json = serde_json::to_string_pretty(&result)
-            .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-        Ok(CallToolResult::success(vec![Content::text(json)]))
+        ResponseFormatter::json_success(&result)
     }
 }
 

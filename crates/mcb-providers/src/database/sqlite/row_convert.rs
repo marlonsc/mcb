@@ -6,6 +6,7 @@ use mcb_domain::entities::memory::{
 };
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::SqlRow;
+use mcb_domain::schema::COL_OBSERVATION_TYPE;
 
 /// Helper function to extract a required string field from a row.
 fn required_string(row: &dyn SqlRow, field_name: &str) -> Result<String> {
@@ -21,7 +22,7 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
         .unwrap_or_default();
 
     let obs_type_str: String = row
-        .try_get_string("observation_type")?
+        .try_get_string(COL_OBSERVATION_TYPE)?
         .unwrap_or_else(|| "context".to_string());
     let observation_type = obs_type_str.parse().unwrap_or(ObservationType::Context);
 

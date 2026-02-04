@@ -6,6 +6,7 @@
 
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use serde::Serialize;
 use std::path::Path;
 use std::time::Duration;
 
@@ -59,6 +60,15 @@ impl ResponseFormatter {
     pub fn format_indexing_status(status: &IndexingStatus) -> CallToolResult {
         let message = build_indexing_status_message(status);
         CallToolResult::success(vec![Content::text(message)])
+    }
+
+    /// Build a successful MCP tool result from a JSON-serializable value.
+    ///
+    /// Use this to avoid repeating serialization and `CallToolResult::success` in handlers.
+    pub fn json_success<T: Serialize>(value: &T) -> Result<CallToolResult, McpError> {
+        let json = serde_json::to_string_pretty(value)
+            .unwrap_or_else(|_| String::from("Failed to serialize result"));
+        Ok(CallToolResult::success(vec![Content::text(json)]))
     }
 
     /// Format clear index response

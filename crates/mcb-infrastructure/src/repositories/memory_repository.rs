@@ -1,2 +1,2 @@
-//! Compatibility re-export for legacy paths.
-pub use crate::adapters::memory_repository::*;
+//! Re-export from mcb-providers (single definition; REF002 consolidation).
+pub use mcb_providers::database::SqliteMemoryRepository;

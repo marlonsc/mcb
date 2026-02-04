@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <script src="/ui/shared.js"></script>
     <style>
         .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
         .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; cursor: pointer; border: none; }
@@ -97,12 +98,14 @@
             if (evt.detail.target.id === 'health-content') {
                 try {
                     const data = JSON.parse(evt.detail.xhr.responseText);
+                    const safeStatus = ['healthy', 'degraded', 'unhealthy', 'unknown'].includes(String(data.status || '').toLowerCase())
+                        ? String(data.status).toLowerCase() : 'unknown';
                     let html = `
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div class="card">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Overall Status</h2>
                                 <div class="flex items-center justify-between">
-                                    <span class="status-badge status-${data.status}">${data.status.toUpperCase()}</span>
+                                    <span class="status-badge status-${safeStatus}">${escapeHtml(String(data.status || '').toUpperCase())}</span>
                                     <span class="text-gray-500">Uptime: ${formatUptime(data.uptime_seconds)}</span>
                                 </div>
                             </div>
@@ -119,15 +122,19 @@
                             <div class="card">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Dependencies</h2>
                                 <div>
-                                    ${data.dependencies.map(dep => `
+                                    ${data.dependencies.map(dep => {
+                                        const depSafe = ['healthy', 'degraded', 'unhealthy', 'unknown'].includes(String(dep.status || '').toLowerCase())
+                                            ? String(dep.status).toLowerCase() : 'unknown';
+                                        return `
                                         <div class="dependency-row">
                                             <div>
-                                                <p class="font-medium">${dep.name}</p>
-                                                ${dep.message ? `<p class="text-sm text-gray-500">${dep.message}</p>` : ''}
+                                                <p class="font-medium">${escapeHtml(dep.name || '')}</p>
+                                                ${dep.message ? `<p class="text-sm text-gray-500">${escapeHtml(dep.message)}</p>` : ''}
                                             </div>
-                                            <span class="status-badge status-${dep.status.toLowerCase()}">${dep.status}</span>
+                                            <span class="status-badge status-${depSafe}">${escapeHtml(String(dep.status || ''))}</span>
                                         </div>
-                                    `).join('')}
+                                    `;
+                                    }).join('')}
                                 </div>
                             </div>
                         `;
@@ -174,16 +181,6 @@
             }
         });
 
-        function formatUptime(seconds) {
-            const days = Math.floor(seconds / 86400);
-            const hours = Math.floor((seconds % 86400) / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = Math.floor(seconds % 60);
-            if (days > 0) return `${days}d ${hours}h ${mins}m`;
-            if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
-            if (mins > 0) return `${mins}m ${secs}s`;
-            return `${secs}s`;
-        }
     </script>
 </body>
 </html>

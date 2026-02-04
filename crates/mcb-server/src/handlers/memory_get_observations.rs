@@ -1,6 +1,7 @@
 //! Handler for the `memory_get_observations` MCP tool
 
 use crate::args::MemoryGetObservationsArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -68,11 +69,7 @@ impl MemoryGetObservationsHandler {
                     count: details.len(),
                     observations: details,
                 };
-
-                let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| String::from("Failed to serialize results"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&response)
             }
             Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
                 "Failed to get observations: {e}"

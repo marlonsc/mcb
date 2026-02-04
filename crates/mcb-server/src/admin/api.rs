@@ -1,6 +1,16 @@
 //! Admin API server
 //!
-//! HTTP server for the admin API running on a separate port.
+//! HTTP server for the admin API running on a separate port (see `AdminApiConfig`).
+//!
+//! ## Wiring
+//!
+//! The default server startup in `init.rs` does **not** start this admin server. For the admin
+//! web UI and REST API to be available, the application must explicitly build and start `AdminApi`:
+//!
+//! - **Config (GET/PATCH /config)**: Call `.with_config_watcher(config_watcher, config_path)` so
+//!   `AdminState` has a config watcher; otherwise GET /config returns 503 and PATCH is unusable.
+//! - **Browse (GET /collections, ...)**: Call `.with_browse_state(browse_state)` so browse routes
+//!   are mounted; otherwise /collections returns 404.
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 

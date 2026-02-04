@@ -358,6 +358,8 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         memory_search: state.server.memory_search_handler(),
         memory_store_execution: state.server.memory_store_execution_handler(),
         memory_get_executions: state.server.memory_get_executions_handler(),
+        memory_store_quality_gate: state.server.memory_store_quality_gate_handler(),
+        memory_get_quality_gates: state.server.memory_get_quality_gates_handler(),
         create_agent_session: state.server.create_agent_session_handler(),
         get_agent_session: state.server.get_agent_session_handler(),
         update_agent_session: state.server.update_agent_session_handler(),

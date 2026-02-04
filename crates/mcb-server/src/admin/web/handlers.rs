@@ -16,6 +16,7 @@ const INDEXING_HTML: &str = include_str!("templates/indexing.html");
 const BROWSE_HTML: &str = include_str!("templates/browse.html");
 const BROWSE_COLLECTION_HTML: &str = include_str!("templates/browse_collection.html");
 const BROWSE_FILE_HTML: &str = include_str!("templates/browse_file.html");
+const SHARED_JS: &str = include_str!("templates/shared.js");
 
 /// Dashboard page handler
 #[get("/")]
@@ -54,6 +55,12 @@ pub fn favicon() -> (ContentType, &'static str) {
         ContentType::SVG,
         r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>"#,
     )
+}
+
+/// Shared JavaScript utilities for admin UI
+#[get("/ui/shared.js")]
+pub fn shared_js() -> (ContentType, &'static str) {
+    (ContentType::JavaScript, SHARED_JS)
 }
 
 /// Browse collections page handler

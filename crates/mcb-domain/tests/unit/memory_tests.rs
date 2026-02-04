@@ -6,17 +6,18 @@ use mcb_domain::entities::memory::{
 
 #[test]
 fn test_observation_type_from_str() {
+    assert_eq!("code".parse::<ObservationType>(), Ok(ObservationType::Code));
     assert_eq!(
-        "code".parse::<ObservationType>().unwrap(),
-        ObservationType::Code
+        "context".parse::<ObservationType>(),
+        Ok(ObservationType::Context)
     );
     assert_eq!(
-        "context".parse::<ObservationType>().unwrap(),
-        ObservationType::Context
+        "execution".parse::<ObservationType>(),
+        Ok(ObservationType::Execution)
     );
     assert_eq!(
-        "execution".parse::<ObservationType>().unwrap(),
-        ObservationType::Execution
+        "quality_gate".parse::<ObservationType>(),
+        Ok(ObservationType::QualityGate)
     );
     assert!("unknown".parse::<ObservationType>().is_err());
 }
@@ -26,6 +27,7 @@ fn test_observation_type_as_str() {
     assert_eq!(ObservationType::Code.as_str(), "code");
     assert_eq!(ObservationType::Summary.as_str(), "summary");
     assert_eq!(ObservationType::Execution.as_str(), "execution");
+    assert_eq!(ObservationType::QualityGate.as_str(), "quality_gate");
 }
 
 #[test]

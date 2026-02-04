@@ -22,13 +22,14 @@ use mcb_domain::ports::providers::VcsProvider;
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
     CreateAgentSessionHandler, CreateSessionSummaryHandler, GetAgentSessionHandler,
-    GetExecutionsHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexVcsRepositoryHandler,
-    ListAgentSessionsHandler, ListRepositoriesHandler, ListValidatorsHandler,
-    MemoryGetObservationsHandler, MemoryInjectContextHandler, MemorySearchHandler,
-    MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler, SearchMemoriesHandler,
-    StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler, StoreToolCallHandler,
-    UpdateAgentSessionHandler, ValidateArchitectureHandler, ValidateFileHandler,
+    GetExecutionsHandler, GetIndexingStatusHandler, GetQualityGatesHandler,
+    GetSessionSummaryHandler, GetValidationRulesHandler, IndexCodebaseHandler,
+    IndexVcsRepositoryHandler, ListAgentSessionsHandler, ListRepositoriesHandler,
+    ListValidatorsHandler, MemoryGetObservationsHandler, MemoryInjectContextHandler,
+    MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler,
+    SearchMemoriesHandler, StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler,
+    StoreQualityGateHandler, StoreToolCallHandler, UpdateAgentSessionHandler,
+    ValidateArchitectureHandler, ValidateFileHandler,
 };
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
@@ -52,7 +53,6 @@ struct McpServices {
     context: Arc<dyn ContextServiceInterface>,
     search: Arc<dyn SearchServiceInterface>,
     memory: Arc<dyn MemoryServiceInterface>,
-    #[allow(dead_code)] // Reserved for future agent session tools
     agent_session: Arc<dyn AgentSessionServiceInterface>,
     vcs: Arc<dyn VcsProvider>,
 }
@@ -103,6 +103,10 @@ impl McpServer {
             memory_search: Arc::new(MemorySearchHandler::new(memory_service.clone())),
             memory_store_execution: Arc::new(StoreExecutionHandler::new(memory_service.clone())),
             memory_get_executions: Arc::new(GetExecutionsHandler::new(memory_service.clone())),
+            memory_store_quality_gate: Arc::new(StoreQualityGateHandler::new(
+                memory_service.clone(),
+            )),
+            memory_get_quality_gates: Arc::new(GetQualityGatesHandler::new(memory_service.clone())),
             create_agent_session: Arc::new(CreateAgentSessionHandler::new(
                 agent_session_service.clone(),
             )),
@@ -153,6 +157,11 @@ impl McpServer {
     /// Access to memory service
     pub fn memory_service(&self) -> Arc<dyn MemoryServiceInterface> {
         Arc::clone(&self.services.memory)
+    }
+
+    /// Access to agent session service
+    pub fn agent_session_service(&self) -> Arc<dyn AgentSessionServiceInterface> {
+        Arc::clone(&self.services.agent_session)
     }
 
     /// Access to index codebase handler (for HTTP transport)
@@ -273,6 +282,14 @@ impl McpServer {
     /// Access to memory get executions handler (for HTTP transport)
     pub fn memory_get_executions_handler(&self) -> Arc<GetExecutionsHandler> {
         Arc::clone(&self.handlers.memory_get_executions)
+    }
+
+    pub fn memory_store_quality_gate_handler(&self) -> Arc<StoreQualityGateHandler> {
+        Arc::clone(&self.handlers.memory_store_quality_gate)
+    }
+
+    pub fn memory_get_quality_gates_handler(&self) -> Arc<GetQualityGatesHandler> {
+        Arc::clone(&self.handlers.memory_get_quality_gates)
     }
 
     pub fn create_agent_session_handler(&self) -> Arc<CreateAgentSessionHandler> {

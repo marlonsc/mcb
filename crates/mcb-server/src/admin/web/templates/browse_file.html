@@ -22,7 +22,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-swift.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-kotlin.min.js"></script>
+    <script src="/ui/shared.js"></script>
     <style>
+        :root { color-scheme: light dark; }
         .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .chunk-header { background: #1e293b; color: white; padding: 0.75rem 1rem; font-size: 0.875rem; }
         .chunk-header .chunk-lines { color: #94a3b8; }
@@ -34,6 +36,17 @@
         .btn-secondary { background: #f3f4f6; color: #374151; }
         .btn-secondary:hover { background: #e5e7eb; }
         .chunk-id { font-family: monospace; font-size: 0.75rem; color: #64748b; }
+        
+        @media (prefers-color-scheme: dark) {
+            body { background: #111827; color: #f3f4f6; }
+            .card { background: #1f2937; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+            .text-gray-900 { color: #f3f4f6; }
+            .text-gray-600 { color: #d1d5db; }
+            .text-gray-500 { color: #9ca3af; }
+            a.text-blue-600 { color: #60a5fa; }
+            .btn-secondary { background: #374151; color: #f3f4f6; }
+            .btn-secondary:hover { background: #4b5563; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -113,7 +126,7 @@
             const container = document.getElementById('chunks-container');
 
             try {
-                const response = await fetch(`/collections/${encodeURIComponent(collectionName)}/chunks/${encodeURIComponent(filePath)}`);
+                const response = await adminFetch(`/collections/${encodeURIComponent(collectionName)}/chunks/${encodeURIComponent(filePath)}`);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -122,6 +135,7 @@
                 renderChunks(data.chunks, data.language);
             } catch (e) {
                 console.error('Error loading chunks:', e);
+                document.getElementById('chunk-count').textContent = '—';
                 container.innerHTML = `
                     <div class="card p-8 text-center">
                         <p class="text-red-500 font-medium">Error loading chunks</p>
@@ -188,12 +202,6 @@
             return map[lang] || 'text';
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         function copyChunk(idx) {
             const code = document.getElementById(`code-${idx}`);
             navigator.clipboard.writeText(code.textContent).then(() => {
@@ -204,6 +212,56 @@
                 setTimeout(() => btn.textContent = original, 1500);
             });
         }
+
+        // Keyboard navigation for chunks
+        let selectedChunk = -1;
+        
+        function selectChunk(index) {
+            const chunks = document.querySelectorAll('#chunks-container .card');
+            if (chunks.length === 0) return;
+            
+            index = Math.max(0, Math.min(index, chunks.length - 1));
+            
+            if (selectedChunk >= 0 && chunks[selectedChunk]) {
+                chunks[selectedChunk].classList.remove('ring-2', 'ring-blue-500');
+            }
+            
+            selectedChunk = index;
+            chunks[selectedChunk].classList.add('ring-2', 'ring-blue-500');
+            chunks[selectedChunk].scrollIntoView({ block: 'center' });
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            const chunks = document.querySelectorAll('#chunks-container .card');
+            if (chunks.length === 0) return;
+            
+            switch (e.key) {
+                case 'j':
+                case 'ArrowDown':
+                    selectChunk(selectedChunk + 1);
+                    e.preventDefault();
+                    break;
+                case 'k':
+                case 'ArrowUp':
+                    selectChunk(selectedChunk - 1);
+                    e.preventDefault();
+                    break;
+                case 'g':
+                    if (e.shiftKey) {
+                        selectChunk(chunks.length - 1);
+                    } else {
+                        selectChunk(0);
+                    }
+                    e.preventDefault();
+                    break;
+                case 'c':
+                    if (selectedChunk >= 0) copyChunk(selectedChunk);
+                    break;
+                case 'Escape':
+                    window.history.back();
+                    break;
+            }
+        });
 
         // Load on page ready
         document.addEventListener('DOMContentLoaded', loadChunks);

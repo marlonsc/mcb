@@ -13,6 +13,7 @@ use validator::Validate;
 use mcb_domain::ports::services::ValidationServiceInterface;
 
 use crate::args::AnalyzeComplexityArgs;
+use crate::formatter::ResponseFormatter;
 
 /// Handler for code complexity analysis
 #[derive(Clone)]
@@ -72,11 +73,7 @@ impl AnalyzeComplexityHandler {
                     "functions": report.functions,
                     "analysis_time_ms": timer.elapsed().as_millis()
                 });
-
-                let text = serde_json::to_string_pretty(&response)
-                    .map_err(|_| McpError::internal_error("Analysis failed", None))?;
-
-                Ok(CallToolResult::success(vec![Content::text(text)]))
+                ResponseFormatter::json_success(&response)
             }
             Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
                 "Error analyzing complexity for {}: {}",

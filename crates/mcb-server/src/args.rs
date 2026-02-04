@@ -397,7 +397,7 @@ pub struct StoreObservationArgs {
     pub content: String,
 
     #[schemars(
-        description = "Type of observation: code, decision, context, error, summary, execution"
+        description = "Type of observation: code, decision, context, error, summary, execution, quality_gate"
     )]
     pub observation_type: String,
 

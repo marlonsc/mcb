@@ -1,4 +1,5 @@
 use crate::args::StoreDelegationArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::services::AgentSessionServiceInterface;
 use mcb_domain::entities::agent::Delegation;
 use rmcp::ErrorData as McpError;
@@ -9,6 +10,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use validator::Validate;
 
+/// MCP handler for storing a delegation (parent-child session link) in agent session tracking.
 pub struct StoreDelegationHandler {
     service: Arc<dyn AgentSessionServiceInterface>,
 }
@@ -60,10 +62,7 @@ impl StoreDelegationHandler {
                     child_session_id: args.child_session_id,
                 };
 
-                let json = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&result)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Failed to store delegation",

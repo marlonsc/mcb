@@ -1,6 +1,7 @@
 //! Handler for the `memory_store_execution` MCP tool
 
 use crate::args::MemoryStoreExecutionArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{
     ExecutionMetadata, ExecutionType, ObservationMetadata, ObservationType,
@@ -78,6 +79,7 @@ impl StoreExecutionHandler {
                     branch,
                     commit,
                     execution: Some(execution_metadata),
+                    quality_gate: None,
                 },
             )
             .await
@@ -87,11 +89,7 @@ impl StoreExecutionHandler {
                     observation_id: id,
                     deduplicated,
                 };
-
-                let json = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&result)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Failed to store execution",

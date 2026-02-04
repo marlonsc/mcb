@@ -32,6 +32,7 @@ pub fn web_rocket() -> Rocket<Build> {
             handlers::browse_page,
             handlers::browse_collection_page,
             handlers::browse_file_page,
+            handlers::shared_js,
             handlers::favicon,
         ],
     )
@@ -48,6 +49,7 @@ pub fn web_routes() -> Vec<rocket::Route> {
         handlers::browse_page,
         handlers::browse_collection_page,
         handlers::browse_file_page,
+        handlers::shared_js,
         handlers::favicon,
     ]
 }

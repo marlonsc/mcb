@@ -290,6 +290,7 @@ pub trait MemoryServiceInterface: Send + Sync {
     ) -> Result<Vec<mcb_domain::entities::memory::MemorySearchIndex>>;
 }
 
+/// Port for agent session lifecycle and delegation tracking (create, list, end sessions).
 #[async_trait]
 pub trait AgentSessionServiceInterface: Send + Sync {
     async fn create_session(&self, session: AgentSession) -> Result<String>;

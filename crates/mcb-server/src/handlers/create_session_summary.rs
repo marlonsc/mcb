@@ -1,6 +1,7 @@
 //! Handler for the `create_session_summary` MCP tool
 
 use crate::args::CreateSessionSummaryArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -48,11 +49,7 @@ impl CreateSessionSummaryHandler {
                     summary_id: id,
                     session_id: args.session_id,
                 };
-
-                let json = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&result)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Failed to create session summary",

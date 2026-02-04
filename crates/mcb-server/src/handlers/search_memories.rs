@@ -1,6 +1,7 @@
 //! Handler for the `search_memories` MCP tool
 
 use crate::args::SearchMemoriesArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
 use rmcp::ErrorData as McpError;
@@ -95,11 +96,7 @@ impl SearchMemoriesHandler {
                     count: items.len(),
                     results: items,
                 };
-
-                let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| String::from("Failed to serialize results"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&response)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Failed to search memories",

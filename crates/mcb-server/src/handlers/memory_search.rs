@@ -6,6 +6,7 @@
 //! 3. memory_get_observations: Fetch full details for specific IDs
 
 use crate::args::MemorySearchArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
 use rmcp::ErrorData as McpError;
@@ -106,11 +107,7 @@ impl MemorySearchHandler {
                     hint: "Use memory_timeline(anchor_id=ID) for context, memory_get_observations(ids=[...]) for full details".to_string(),
                     results: items,
                 };
-
-                let json = serde_json::to_string_pretty(&response)
-                    .unwrap_or_else(|_| String::from("Failed to serialize results"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&response)
             }
             Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
                 "Failed to search memories: {e}"

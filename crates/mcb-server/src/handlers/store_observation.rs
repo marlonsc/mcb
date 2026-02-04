@@ -1,6 +1,7 @@
 //! Handler for the `store_observation` MCP tool
 
 use crate::args::StoreObservationArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::ObservationType;
 use mcb_domain::utils::vcs_context::VcsContext;
@@ -59,6 +60,7 @@ impl StoreObservationHandler {
                     branch,
                     commit,
                     execution: None,
+                    quality_gate: None,
                 },
             )
             .await
@@ -68,11 +70,7 @@ impl StoreObservationHandler {
                     observation_id: id,
                     deduplicated,
                 };
-
-                let json = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&result)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Failed to store observation",

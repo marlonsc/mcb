@@ -7,6 +7,6 @@
 //! - All provider implementations are in mcb-providers crate
 //! - Repository interfaces are in mcb-domain crate
 //! - Real implementations are injected at runtime via factory pattern
-
-pub mod memory_repository;
-pub use memory_repository::SqliteMemoryRepository;
+//!
+//! SqliteMemoryRepository lives in mcb-providers (database/sqlite); use
+//! `mcb_providers::database::create_memory_repository_with_executor` for DI.

@@ -1,5 +1,6 @@
 //! Memory tool argument types (timeline, observations, search, inject context).
 
+use chrono::{DateTime, Utc};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use validator::Validate;
@@ -66,7 +67,7 @@ pub struct MemorySearchArgs {
     pub tags: Option<Vec<String>>,
 
     #[schemars(
-        description = "Filter by observation type: code, decision, context, error, summary, execution"
+        description = "Filter by observation type: code, decision, context, error, summary, execution, quality_gate"
     )]
     pub observation_type: Option<String>,
 
@@ -146,6 +147,76 @@ pub struct MemoryGetExecutionsArgs {
 
     #[schemars(description = "Filter by success status")]
     pub success: Option<bool>,
+
+    #[schemars(description = "Filter by branch")]
+    pub branch: Option<String>,
+
+    #[schemars(description = "Filter by commit")]
+    pub commit: Option<String>,
+
+    #[schemars(description = "Filter by start timestamp (inclusive)")]
+    pub start_time: Option<i64>,
+
+    #[schemars(description = "Filter by end timestamp (inclusive)")]
+    pub end_time: Option<i64>,
+}
+
+/// Arguments for the `memory_store_quality_gate` tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Store quality gate results in semantic memory")]
+pub struct MemoryStoreQualityGateArgs {
+    #[validate(length(min = 1, max = 200, message = "Gate name must be 1-200 chars"))]
+    #[schemars(description = "Quality gate name")]
+    pub gate_name: String,
+
+    #[schemars(description = "Quality gate status: passed, failed, warning, skipped")]
+    pub status: String,
+
+    #[schemars(description = "Optional message or notes for this gate")]
+    pub message: Option<String>,
+
+    #[schemars(description = "Timestamp for the gate result (RFC3339)")]
+    pub timestamp: DateTime<Utc>,
+
+    #[schemars(description = "Optional execution ID related to this gate")]
+    pub execution_id: Option<String>,
+
+    #[schemars(description = "Session ID to associate with this quality gate")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Repository ID for context")]
+    pub repo_id: Option<String>,
+
+    #[schemars(description = "VCS branch related to this quality gate")]
+    pub branch: Option<String>,
+
+    #[schemars(description = "VCS commit related to this quality gate")]
+    pub commit: Option<String>,
+}
+
+/// Arguments for the `memory_get_quality_gates` tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[schemars(description = "Retrieve quality gate results with optional filters")]
+pub struct MemoryGetQualityGatesArgs {
+    #[serde(default = "crate::args::default_limit")]
+    #[validate(range(min = 1, max = 200))]
+    #[schemars(description = "Maximum number of gate results to return (default: 10)")]
+    pub limit: usize,
+
+    #[schemars(description = "Filter by session ID")]
+    pub session_id: Option<String>,
+
+    #[schemars(description = "Filter by repository ID")]
+    pub repo_id: Option<String>,
+
+    #[schemars(description = "Filter by gate name")]
+    pub gate_name: Option<String>,
+
+    #[schemars(description = "Filter by status: passed, failed, warning, skipped")]
+    pub status: Option<String>,
+
+    #[schemars(description = "Filter by execution ID")]
+    pub execution_id: Option<String>,
 
     #[schemars(description = "Filter by branch")]
     pub branch: Option<String>,

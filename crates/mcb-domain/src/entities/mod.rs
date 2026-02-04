@@ -37,7 +37,7 @@ pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 pub use memory::{
     ExecutionMetadata, ExecutionType, MemoryFilter, MemorySearchResult, Observation,
-    ObservationMetadata, ObservationType, SessionSummary,
+    ObservationMetadata, ObservationType, QualityGateResult, QualityGateStatus, SessionSummary,
 };
 pub use project::{DetectedProject, Project, ProjectType};
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};

@@ -2,6 +2,7 @@ use crate::entities::Project;
 use crate::error::Result;
 use async_trait::async_trait;
 
+/// Port for project persistence (CRUD operations on Project entities).
 #[async_trait]
 pub trait ProjectRepository: Send + Sync {
     async fn create(&self, project: &Project) -> Result<()>;

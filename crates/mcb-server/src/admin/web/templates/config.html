@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <script src="/ui/shared.js"></script>
     <style>
         .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
         .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; cursor: pointer; border: none; }
@@ -100,16 +101,7 @@
 
             <div class="config-section">
                 <h4>Cache Configuration</h4>
-                <form hx-patch="/config/cache"
-                      hx-swap="none"
-                      _="on htmx:afterRequest
-                         if event.detail.successful
-                           put '<div class=\"notification notification-success\">Cache configuration updated!</div>' into #notification-area
-                           trigger configReloaded
-                         else
-                           put '<div class=\"notification notification-error\">Failed to update cache configuration</div>' into #notification-area
-                         end
-                         wait 3s then put '' into #notification-area">
+                <form id="config-cache-form" onsubmit="return applyConfigSection(event, 'cache');">
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Enabled</label>
@@ -129,16 +121,7 @@
 
             <div class="config-section">
                 <h4>Server Configuration</h4>
-                <form hx-patch="/config/server"
-                      hx-swap="none"
-                      _="on htmx:afterRequest
-                         if event.detail.successful
-                           put '<div class=\"notification notification-success\">Server configuration updated!</div>' into #notification-area
-                           trigger configReloaded
-                         else
-                           put '<div class=\"notification notification-error\">Failed to update server configuration</div>' into #notification-area
-                         end
-                         wait 3s then put '' into #notification-area">
+                <form id="config-server-form" onsubmit="return applyConfigSection(event, 'server');">
                     <div class="grid grid-cols-3 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Host</label>
@@ -185,6 +168,57 @@
             }
         }
 
+        async function applyConfigSection(evt, section) {
+            evt.preventDefault();
+            const notification = document.getElementById('notification-area');
+            let values;
+            if (section === 'cache') {
+                const maxSizeEl = document.getElementById('config-cache-max-size');
+                const maxSize = maxSizeEl && maxSizeEl.value !== '' ? parseInt(maxSizeEl.value, 10) : null;
+                if (maxSize === null || isNaN(maxSize) || maxSize < 0) {
+                    notification.innerHTML = '<div class="notification notification-error">Max size is required and must be a non-negative number.</div>';
+                    setTimeout(function() { notification.innerHTML = ''; }, 3000);
+                    return false;
+                }
+                values = {
+                    enabled: document.getElementById('config-cache-enabled').value === 'true',
+                    max_size: maxSize
+                };
+            } else if (section === 'server') {
+                const hostEl = document.getElementById('config-server-host');
+                const portEl = document.getElementById('config-server-port');
+                const adminPortEl = document.getElementById('config-server-admin-port');
+                const host = hostEl && hostEl.value ? hostEl.value.trim() : '';
+                const port = portEl && portEl.value !== '' ? parseInt(portEl.value, 10) : null;
+                const adminPort = adminPortEl && adminPortEl.value !== '' ? parseInt(adminPortEl.value, 10) : null;
+                if (!host || port === null || port < 1 || port > 65535 || adminPort === null || adminPort < 1 || adminPort > 65535) {
+                    notification.innerHTML = '<div class="notification notification-error">Host, port and admin port are required; ports must be 1-65535.</div>';
+                    setTimeout(function() { notification.innerHTML = ''; }, 3000);
+                    return false;
+                }
+                values = { host: host, port: port, admin_port: adminPort };
+            } else {
+                return false;
+            }
+            try {
+                const response = await adminFetch('/config/' + section, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ values: values })
+                });
+                const data = await response.json().catch(function() { return {}; });
+                if (response.ok && data.success) {
+                    notification.innerHTML = '<div class="notification notification-success">' + escapeHtml(data.message || 'Configuration updated.') + '</div>';
+                    document.body.dispatchEvent(new CustomEvent('configReloaded'));
+                } else {
+                    notification.innerHTML = '<div class="notification notification-error">' + escapeHtml(data.message || 'Failed to update configuration.') + '</div>';
+                }
+            } catch (e) {
+                notification.innerHTML = '<div class="notification notification-error">Request failed: ' + escapeHtml(String(e.message)) + '</div>';
+            }
+            setTimeout(function() { notification.innerHTML = ''; }, 3000);
+            return false;
+        }
+
         document.body.addEventListener('htmx:afterSwap', function(evt) {
             if (evt.detail.target.id === 'config-display') {
                 try {
@@ -198,11 +232,6 @@
             }
         });
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
     </script>
 </body>
 </html>

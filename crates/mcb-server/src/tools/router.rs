@@ -13,21 +13,23 @@ use crate::args::{
     CreateAgentSessionArgs, CreateSessionSummaryArgs, GetAgentSessionArgs, GetIndexingStatusArgs,
     GetSessionSummaryArgs, GetValidationRulesArgs, IndexCodebaseArgs, IndexVcsRepositoryArgs,
     ListAgentSessionsArgs, ListRepositoriesArgs, ListValidatorsArgs, MemoryGetExecutionsArgs,
-    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemorySearchArgs, MemoryStoreExecutionArgs,
-    MemoryTimelineArgs, SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreDelegationArgs,
+    MemoryGetObservationsArgs, MemoryGetQualityGatesArgs, MemoryInjectContextArgs,
+    MemorySearchArgs, MemoryStoreExecutionArgs, MemoryStoreQualityGateArgs, MemoryTimelineArgs,
+    SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreDelegationArgs,
     StoreObservationArgs, StoreToolCallArgs, UpdateAgentSessionArgs, ValidateArchitectureArgs,
     ValidateFileArgs,
 };
 use crate::handlers::{
     AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
     CreateAgentSessionHandler, CreateSessionSummaryHandler, GetAgentSessionHandler,
-    GetExecutionsHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexVcsRepositoryHandler,
-    ListAgentSessionsHandler, ListRepositoriesHandler, ListValidatorsHandler,
-    MemoryGetObservationsHandler, MemoryInjectContextHandler, MemorySearchHandler,
-    MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler, SearchMemoriesHandler,
-    StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler, StoreToolCallHandler,
-    UpdateAgentSessionHandler, ValidateArchitectureHandler, ValidateFileHandler,
+    GetExecutionsHandler, GetIndexingStatusHandler, GetQualityGatesHandler,
+    GetSessionSummaryHandler, GetValidationRulesHandler, IndexCodebaseHandler,
+    IndexVcsRepositoryHandler, ListAgentSessionsHandler, ListRepositoriesHandler,
+    ListValidatorsHandler, MemoryGetObservationsHandler, MemoryInjectContextHandler,
+    MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler, SearchCodeHandler,
+    SearchMemoriesHandler, StoreDelegationHandler, StoreExecutionHandler, StoreObservationHandler,
+    StoreQualityGateHandler, StoreToolCallHandler, UpdateAgentSessionHandler,
+    ValidateArchitectureHandler, ValidateFileHandler,
 };
 
 /// Handler references for tool routing
@@ -81,6 +83,10 @@ pub struct ToolHandlers {
     pub memory_store_execution: Arc<StoreExecutionHandler>,
     /// Handler for retrieving execution history
     pub memory_get_executions: Arc<GetExecutionsHandler>,
+    /// Handler for storing quality gate results
+    pub memory_store_quality_gate: Arc<StoreQualityGateHandler>,
+    /// Handler for retrieving quality gate results
+    pub memory_get_quality_gates: Arc<GetQualityGatesHandler>,
     /// Handler for creating agent sessions
     pub create_agent_session: Arc<CreateAgentSessionHandler>,
     /// Handler for getting agent session details
@@ -214,6 +220,20 @@ pub async fn route_tool_call(
             let args = parse_args::<MemoryGetExecutionsArgs>(&request)?;
             handlers
                 .memory_get_executions
+                .handle(Parameters(args))
+                .await
+        }
+        "memory_store_quality_gate" => {
+            let args = parse_args::<MemoryStoreQualityGateArgs>(&request)?;
+            handlers
+                .memory_store_quality_gate
+                .handle(Parameters(args))
+                .await
+        }
+        "memory_get_quality_gates" => {
+            let args = parse_args::<MemoryGetQualityGatesArgs>(&request)?;
+            handlers
+                .memory_get_quality_gates
                 .handle(Parameters(args))
                 .await
         }

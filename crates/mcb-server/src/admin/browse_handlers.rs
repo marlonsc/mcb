@@ -18,6 +18,8 @@ use rocket::{State, get};
 use std::sync::Arc;
 
 use super::auth::AdminAuth;
+use mcb_domain::value_objects::FileTreeNode;
+
 use super::models::{
     ChunkDetailResponse, ChunkListResponse, CollectionInfoResponse, CollectionListResponse,
     FileInfoResponse, FileListResponse,
@@ -224,6 +226,83 @@ pub async fn get_file_chunks(
         collection: name.to_string(),
         total,
     }))
+}
+
+/// Get file tree for a collection
+///
+/// Returns a hierarchical tree structure of all indexed files in the
+/// collection, organized by directory. Useful for tree view navigation.
+#[get("/collections/<name>/tree")]
+pub async fn get_collection_tree(
+    _auth: AdminAuth,
+    state: &State<BrowseState>,
+    name: &str,
+) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
+    let files = state
+        .browser
+        .list_file_paths(name, 10000)
+        .await
+        .map_err(|e| {
+            let error_msg = e.to_string();
+            if error_msg.contains("not found") || error_msg.contains("does not exist") {
+                (
+                    Status::NotFound,
+                    Json(BrowseErrorResponse::not_found("Collection")),
+                )
+            } else {
+                (
+                    Status::InternalServerError,
+                    Json(BrowseErrorResponse::internal(error_msg)),
+                )
+            }
+        })?;
+
+    let mut root = FileTreeNode::directory(name, "");
+
+    for file in files {
+        let parts: Vec<&str> = file.path.split('/').collect();
+        insert_into_tree(&mut root, &parts, &file);
+    }
+
+    root.sort_children();
+    Ok(Json(root))
+}
+
+fn insert_into_tree(
+    node: &mut FileTreeNode,
+    parts: &[&str],
+    file: &mcb_domain::value_objects::FileInfo,
+) {
+    if parts.is_empty() {
+        return;
+    }
+
+    let name = parts[0];
+    let is_file = parts.len() == 1;
+
+    if is_file {
+        let file_node = FileTreeNode::file(name, &file.path, file.chunk_count, &file.language);
+        node.add_child(file_node);
+    } else {
+        let current_path = if node.path.is_empty() {
+            name.to_string()
+        } else {
+            format!("{}/{}", node.path, name)
+        };
+
+        let child_idx = node
+            .children
+            .iter()
+            .position(|c| c.name == name && c.is_dir);
+
+        if let Some(idx) = child_idx {
+            insert_into_tree(&mut node.children[idx], &parts[1..], file);
+        } else {
+            let mut dir_node = FileTreeNode::directory(name, &current_path);
+            insert_into_tree(&mut dir_node, &parts[1..], file);
+            node.add_child(dir_node);
+        }
+    }
 }
 
 // Tests moved to tests/unit/browse_handlers_tests.rs per test organization standards

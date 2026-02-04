@@ -70,6 +70,7 @@ pub mod mcp_server;
 pub mod session;
 pub mod tools;
 pub mod transport;
+pub mod vcs_repository_registry;
 
 // Legacy placeholder modules were removed; functionality lives in the infrastructure layer
 

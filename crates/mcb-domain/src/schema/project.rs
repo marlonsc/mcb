@@ -8,7 +8,7 @@
 
 pub mod agent;
 
-use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
+use super::memory::{COL_OBSERVATION_TYPE, ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 
 /// Foreign key: (from_table.from_column) REFERENCES to_table(to_column).
 #[derive(Debug, Clone)]
@@ -192,7 +192,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "observation_type".to_string(),
+                        name: COL_OBSERVATION_TYPE.to_string(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,

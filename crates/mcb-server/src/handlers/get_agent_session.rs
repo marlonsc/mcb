@@ -1,4 +1,5 @@
 use crate::args::GetAgentSessionArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -7,6 +8,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use validator::Validate;
 
+/// MCP handler for retrieving an agent session by ID.
 pub struct GetAgentSessionHandler {
     service: Arc<dyn AgentSessionServiceInterface>,
 }
@@ -59,11 +61,7 @@ impl GetAgentSessionHandler {
                     tool_calls_count: session.tool_calls_count,
                     delegations_count: session.delegations_count,
                 };
-
-                let json = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&result)
             }
             Ok(None) => Ok(CallToolResult::error(vec![Content::text(
                 "Agent session not found",

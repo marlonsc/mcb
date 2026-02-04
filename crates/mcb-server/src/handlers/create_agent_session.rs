@@ -1,4 +1,5 @@
 use crate::args::CreateAgentSessionArgs;
+use crate::formatter::ResponseFormatter;
 use mcb_application::ports::services::AgentSessionServiceInterface;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
 use rmcp::ErrorData as McpError;
@@ -9,6 +10,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use validator::Validate;
 
+/// MCP handler for creating a new agent session.
 pub struct CreateAgentSessionHandler {
     service: Arc<dyn AgentSessionServiceInterface>,
 }
@@ -68,11 +70,7 @@ impl CreateAgentSessionHandler {
                     agent_type: agent_type.as_str().to_string(),
                     status: "active".to_string(),
                 };
-
-                let json = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| String::from("Failed to serialize result"));
-
-                Ok(CallToolResult::success(vec![Content::text(json)]))
+                ResponseFormatter::json_success(&result)
             }
             Err(_) => Ok(CallToolResult::error(vec![Content::text(
                 "Failed to create agent session",
