@@ -278,8 +278,8 @@ async fn golden_index_respects_ignore_patterns() {
 #[tokio::test]
 async fn golden_mcp_index_codebase_schema() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let r = server
-        .index_handler()
+    let index_h = server.index_handler();
+    let r = index_h
         .handle(Parameters(index_args(
             IndexAction::Status,
             None,
@@ -294,8 +294,8 @@ async fn golden_mcp_index_codebase_schema() {
 #[tokio::test]
 async fn golden_mcp_search_code_schema() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let r = server
-        .search_handler()
+    let search_h = server.search_handler();
+    let r = search_h
         .handle(Parameters(search_args(
             "test",
             Some("default".to_string()),
@@ -342,9 +342,8 @@ async fn golden_mcp_clear_index_schema() {
 #[tokio::test]
 async fn golden_mcp_error_responses_consistent() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let r = server
-        .search_handler()
-        .handle(Parameters(search_args("", None, Some(5))));
+    let search_h = server.search_handler();
+    let r = search_h.handle(Parameters(search_args("", None, Some(5))));
     let result = r.await;
     assert!(result.is_ok());
     let response = result.unwrap();
@@ -419,9 +418,8 @@ async fn golden_search_ranking_is_correct() {
 #[tokio::test]
 async fn golden_search_handles_empty_query() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let r = server
-        .search_handler()
-        .handle(Parameters(search_args("   ", None, Some(5))));
+    let search_h = server.search_handler();
+    let r = search_h.handle(Parameters(search_args("   ", None, Some(5))));
     let result = r.await;
     assert!(result.is_ok());
     let response = result.unwrap();
