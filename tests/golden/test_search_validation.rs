@@ -19,6 +19,10 @@ async fn golden_search_returns_relevant_results() {
             collection: Some(GOLDEN_COLLECTION.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await
         .expect("index");
@@ -29,10 +33,13 @@ async fn golden_search_returns_relevant_results() {
             query: "embedding vector".to_string(),
             resource: SearchResource::Code,
             collection: Some(GOLDEN_COLLECTION.to_string()),
+            extensions: None,
+            filters: None,
             limit: Some(10),
             min_score: None,
             tags: None,
             session_id: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed after index");
@@ -76,6 +83,10 @@ async fn golden_search_ranking_is_correct() {
             collection: Some(collection.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await
         .expect("index for ranking test");
@@ -86,10 +97,13 @@ async fn golden_search_ranking_is_correct() {
             query: "handler".to_string(),
             resource: SearchResource::Code,
             collection: Some(collection.to_string()),
+            extensions: None,
+            filters: None,
             limit: Some(5),
             min_score: None,
             tags: None,
             session_id: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");
@@ -112,10 +126,13 @@ async fn golden_search_handles_empty_query() {
         query: "   ".to_string(),
         resource: SearchResource::Code,
         collection: None,
+        extensions: None,
+        filters: None,
         limit: Some(5),
         min_score: None,
         tags: None,
         session_id: None,
+        token: None,
     }));
     let result = r.await;
     assert!(result.is_ok());
@@ -136,6 +153,10 @@ async fn golden_search_respects_limit_parameter() {
             collection: Some(collection.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await
         .expect("index for limit test");
@@ -147,10 +168,13 @@ async fn golden_search_respects_limit_parameter() {
             query: "function code".to_string(),
             resource: SearchResource::Code,
             collection: Some(collection.to_string()),
+            extensions: None,
+            filters: None,
             limit: Some(limit as u32),
             min_score: None,
             tags: None,
             session_id: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");
@@ -176,8 +200,12 @@ async fn golden_search_respects_index_extensions() {
             action: IndexAction::Start,
             path: Some(path.to_string_lossy().to_string()),
             collection: Some(collection.to_string()),
-            extensions: Some(vec!["rs".to_string()]),
+            extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await
         .expect("index for extension filter test");
@@ -188,10 +216,13 @@ async fn golden_search_respects_index_extensions() {
             query: "function".to_string(),
             resource: SearchResource::Code,
             collection: Some(collection.to_string()),
+            extensions: None,
+            filters: None,
             limit: Some(5),
             min_score: None,
             tags: None,
             session_id: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "search with indexed extensions must succeed");

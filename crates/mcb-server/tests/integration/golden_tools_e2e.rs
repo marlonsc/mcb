@@ -56,6 +56,10 @@ async fn golden_e2e_complete_workflow() {
         collection: Some(coll.to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok(), "index clear should succeed");
@@ -74,6 +78,10 @@ async fn golden_e2e_complete_workflow() {
         collection: Some(coll.to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
     let r = index_h.handle(Parameters(status_args)).await;
     assert!(r.is_ok());
@@ -91,6 +99,10 @@ async fn golden_e2e_complete_workflow() {
         collection: Some(coll.to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
     let r = index_h.handle(Parameters(index_args)).await;
     assert!(r.is_ok(), "index should succeed");
@@ -111,10 +123,13 @@ async fn golden_e2e_complete_workflow() {
         query: "embedding or vector".to_string(),
         resource: SearchResource::Code,
         collection: Some(coll.to_string()),
+        extensions: None,
+        filters: None,
         limit: Some(5),
         min_score: None,
         tags: None,
         session_id: None,
+        token: None,
     };
     let r = search_h.handle(Parameters(search_args)).await;
     assert!(r.is_ok());
@@ -133,6 +148,10 @@ async fn golden_e2e_complete_workflow() {
         collection: Some(coll.to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok());
@@ -151,6 +170,10 @@ async fn golden_index_test_repository() {
         collection: Some(test_collection().to_string()),
         extensions: None,
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
 
     let result = handler.handle(Parameters(args)).await;
@@ -179,6 +202,10 @@ async fn golden_index_handles_multiple_languages() {
         collection: Some("golden_multi_lang".to_string()),
         extensions: Some(vec!["rs".to_string()]),
         exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
     };
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
@@ -208,6 +235,10 @@ async fn golden_search_returns_relevant_results() {
             collection: Some(collection.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await
         .expect("index");
@@ -218,10 +249,13 @@ async fn golden_search_returns_relevant_results() {
             query: "embedding vector".to_string(),
             resource: SearchResource::Code,
             collection: Some(collection.to_string()),
+            extensions: None,
+            filters: None,
             limit: Some(10),
             min_score: None,
             tags: None,
             session_id: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed after index");
@@ -235,10 +269,13 @@ async fn golden_search_handles_empty_query() {
         query: "   ".to_string(),
         resource: SearchResource::Code,
         collection: None,
+        extensions: None,
+        filters: None,
         limit: Some(5),
         min_score: None,
         tags: None,
         session_id: None,
+        token: None,
     }));
     let result = r.await;
     assert!(result.is_ok());
@@ -259,6 +296,10 @@ async fn golden_search_respects_limit_parameter() {
             collection: Some(collection.to_string()),
             extensions: None,
             exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
         }))
         .await
         .expect("index for limit test");
@@ -269,10 +310,13 @@ async fn golden_search_respects_limit_parameter() {
             query: "function code".to_string(),
             resource: SearchResource::Code,
             collection: Some(collection.to_string()),
+            extensions: None,
+            filters: None,
             limit: Some(2),
             min_score: None,
             tags: None,
             session_id: None,
+            token: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");
