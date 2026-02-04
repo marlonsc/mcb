@@ -32,3 +32,6 @@ mod vcs_registry_tests;
 
 #[path = "unit/fixtures_smoke.rs"]
 mod fixtures_smoke;
+
+#[path = "unit/vcs_repository_registry_test.rs"]
+mod vcs_repository_registry_test;

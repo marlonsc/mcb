@@ -44,7 +44,6 @@ impl MemoryServiceImpl {
         }
     }
 
-    /// Current Unix timestamp; exposed for testing.
     #[must_use]
     pub fn current_timestamp() -> i64 {
         SystemTime::now()
@@ -76,7 +75,9 @@ impl MemoryServiceImpl {
         }
         true
     }
+}
 
+impl MemoryServiceImpl {
     async fn store_observation_impl(
         &self,
         content: String,
@@ -133,7 +134,9 @@ impl MemoryServiceImpl {
 
         Ok((observation.id, false))
     }
+}
 
+impl MemoryServiceImpl {
     async fn search_memories_impl(
         &self,
         query: &str,
@@ -216,7 +219,9 @@ impl MemoryServiceImpl {
 
         Ok(results)
     }
+}
 
+impl MemoryServiceImpl {
     fn build_memory_index(&self, results: Vec<MemorySearchResult>) -> Vec<MemorySearchIndex> {
         const PREVIEW_LENGTH: usize = 120;
 

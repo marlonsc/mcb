@@ -1080,6 +1080,10 @@ impl SolidValidator {
             "Session",
             "Route",
             "Endpoint",
+            "Memory",
+            "Observation",
+            "Filter",
+            "Pattern",
         ];
 
         // Check if structs share related purpose suffixes (Config, State, Error, etc.)

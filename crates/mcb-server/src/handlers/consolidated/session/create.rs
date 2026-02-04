@@ -1,0 +1,71 @@
+use super::helpers::SessionHelpers;
+use crate::args::SessionArgs;
+use crate::formatter::ResponseFormatter;
+use mcb_application::ports::services::AgentSessionServiceInterface;
+use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus};
+use rmcp::ErrorData as McpError;
+use rmcp::model::{CallToolResult, Content};
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
+
+pub async fn create_session(
+    agent_service: &Arc<dyn AgentSessionServiceInterface>,
+    args: &SessionArgs,
+) -> Result<CallToolResult, McpError> {
+    let agent_type = match args.agent_type.as_ref() {
+        Some(value) => SessionHelpers::parse_agent_type(value)?,
+        None => {
+            return Ok(CallToolResult::error(vec![Content::text(
+                "Missing agent_type for create",
+            )]));
+        }
+    };
+    let data = match SessionHelpers::json_map(&args.data) {
+        Some(data) => data,
+        None => {
+            return Ok(CallToolResult::error(vec![Content::text(
+                "Missing data payload for create",
+            )]));
+        }
+    };
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let session_id = format!("agent_{}", Uuid::new_v4());
+    let session_summary_id = match SessionHelpers::get_required_str(data, "session_summary_id") {
+        Ok(v) => v,
+        Err(error_result) => return Ok(error_result),
+    };
+    let model = match SessionHelpers::get_required_str(data, "model") {
+        Ok(v) => v,
+        Err(error_result) => return Ok(error_result),
+    };
+    let session = AgentSession {
+        id: session_id.clone(),
+        session_summary_id,
+        agent_type: agent_type.clone(),
+        model,
+        parent_session_id: SessionHelpers::get_str(data, "parent_session_id"),
+        started_at: now,
+        ended_at: None,
+        duration_ms: None,
+        status: AgentSessionStatus::Active,
+        prompt_summary: SessionHelpers::get_str(data, "prompt_summary"),
+        result_summary: None,
+        token_count: None,
+        tool_calls_count: None,
+        delegations_count: None,
+    };
+    match agent_service.create_session(session).await {
+        Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
+            "session_id": id,
+            "agent_type": agent_type.as_str(),
+            "status": "active",
+        })),
+        Err(_) => Ok(CallToolResult::error(vec![Content::text(
+            "Failed to create agent session",
+        )])),
+    }
+}

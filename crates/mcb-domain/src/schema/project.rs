@@ -365,7 +365,9 @@ impl ProjectSchema {
         tables.extend(workflow::tables());
         tables
     }
+}
 
+impl ProjectSchema {
     fn fts_def() -> Option<FtsDef> {
         Some(FtsDef {
             virtual_table_name: "observations_fts".to_string(),
@@ -423,7 +425,9 @@ impl ProjectSchema {
         indexes.extend(workflow::indexes());
         indexes
     }
+}
 
+impl ProjectSchema {
     fn foreign_keys() -> Vec<ForeignKeyDef> {
         let mut fks = vec![
             ForeignKeyDef {

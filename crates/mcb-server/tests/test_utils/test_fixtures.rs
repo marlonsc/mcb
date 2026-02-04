@@ -62,6 +62,7 @@ pub fn golden_count_result_entries(text: &str) -> usize {
 
 /// Parse "Files processed: N" and "Chunks created: M" from indexing success response.
 /// Returns (files_processed, chunks_created) or None if not found (e.g. "Indexing Started" message).
+#[allow(dead_code)]
 pub fn golden_parse_indexing_stats(text: &str) -> Option<(usize, usize)> {
     let files = text
         .lines()
@@ -157,6 +158,7 @@ pub fn create_test_indexing_result(
 }
 
 /// Create a test indexing result with specific error messages
+#[allow(dead_code)]
 pub fn create_test_indexing_result_with_errors(
     files_processed: usize,
     chunks_created: usize,
@@ -173,6 +175,7 @@ pub fn create_test_indexing_result_with_errors(
 }
 
 /// Create an idle indexing status (not indexing)
+#[allow(dead_code)]
 pub fn create_idle_status() -> IndexingStatus {
     IndexingStatus {
         is_indexing: false,
@@ -184,6 +187,7 @@ pub fn create_idle_status() -> IndexingStatus {
 }
 
 /// Create an in-progress indexing status
+#[allow(dead_code)]
 pub fn create_in_progress_status(progress: f64, current_file: &str) -> IndexingStatus {
     IndexingStatus {
         is_indexing: true,

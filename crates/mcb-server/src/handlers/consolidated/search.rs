@@ -1,3 +1,5 @@
+//! Search handler for code and memory search operations.
+
 use crate::args::{SearchArgs, SearchResource};
 use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
@@ -11,6 +13,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use validator::Validate;
 
+/// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]
 pub struct SearchHandler {
     search_service: Arc<dyn SearchServiceInterface>,
@@ -112,7 +115,13 @@ impl SearchHandler {
                             "query": query,
                             "count": results.len(),
                             "results": results,
-                        }))?;
+                        }))
+                        .map_err(|e| {
+                            McpError::internal_error(
+                                format!("Failed to format memory search results: {e}"),
+                                None,
+                            )
+                        })?;
                         Ok(response)
                     }
                     Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(

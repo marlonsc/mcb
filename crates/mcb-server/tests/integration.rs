@@ -22,8 +22,8 @@ pub use helpers::{
 mod golden_acceptance_integration;
 
 // Golden MCP tools e2e (no ignore)
-#[path = "integration/golden_tools_e2e.rs"]
-mod golden_tools_e2e;
+#[path = "integration/golden_tools_e2e_integration.rs"]
+mod golden_tools_e2e_integration;
 
 // Browse API integration tests
 #[path = "integration/browse_api_integration.rs"]
@@ -42,8 +42,8 @@ mod error_recovery_integration;
 mod operating_modes_integration;
 
 // Golden E2E complete (no ignore): workflow, index, MCP schema, search
-#[path = "integration/golden_e2e_complete.rs"]
-mod golden_e2e_complete;
+#[path = "integration/golden_e2e_complete_integration.rs"]
+mod golden_e2e_complete_integration;
 
 // Golden tests canonical location (repo root tests/golden) - all included so no tests are discarded
 #[path = "../../../tests/golden/test_end_to_end.rs"]

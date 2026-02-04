@@ -192,11 +192,10 @@ where
                 // Generate hierarchical collection name
                 let sub_collection = format!("{}/{}", collection, submodule.path.replace('/', "-"));
 
-                // Detect projects in submodule
-                let sub_projects = if options.detect_projects {
+                let sub_projects: Vec<_> = if options.detect_projects {
                     self.project_detector.detect_all(&sub_path).await
                 } else {
-                    Vec::new()
+                    vec![]
                 };
 
                 // Add to all projects with parent link
@@ -240,7 +239,14 @@ where
             duration_ms,
         })
     }
+}
 
+impl<S, P, H> VcsIndexingService<S, P, H>
+where
+    S: SubmoduleCollector,
+    P: ProjectDetectorService,
+    H: FileHashService,
+{
     /// Derive collection name from repository path
     pub fn derive_collection_name(path: &Path) -> String {
         path.file_name()
@@ -253,7 +259,14 @@ where
     fn derive_repo_id(path: &Path) -> String {
         Self::derive_collection_name(path)
     }
+}
 
+impl<S, P, H> VcsIndexingService<S, P, H>
+where
+    S: SubmoduleCollector,
+    P: ProjectDetectorService,
+    H: FileHashService,
+{
     /// Index directory with incremental support (only changed files)
     async fn index_directory_incremental(
         &self,

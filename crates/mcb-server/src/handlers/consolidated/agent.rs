@@ -1,3 +1,5 @@
+//! Agent handler for tool call and delegation logging.
+
 use crate::args::{AgentAction, AgentArgs};
 use crate::formatter::ResponseFormatter;
 use mcb_application::ports::services::AgentSessionServiceInterface;
@@ -11,6 +13,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 use validator::Validate;
 
+/// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]
 pub struct AgentHandler {
     agent_service: Arc<dyn AgentSessionServiceInterface>,

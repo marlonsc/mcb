@@ -1,3 +1,5 @@
+//! Index handler for codebase indexing operations.
+
 use crate::args::{IndexAction, IndexArgs};
 use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
@@ -10,6 +12,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use validator::Validate;
 
+/// Handler for codebase indexing MCP tool operations.
 #[derive(Clone)]
 pub struct IndexHandler {
     indexing_service: Arc<dyn IndexingServiceInterface>,

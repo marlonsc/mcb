@@ -55,3 +55,6 @@ mod submodule_tests;
 
 #[path = "unit/vcs_tests.rs"]
 mod vcs_tests;
+
+#[path = "unit/agent_test.rs"]
+mod agent_test;

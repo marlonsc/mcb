@@ -1226,11 +1226,13 @@ mod constructibility {
     use super::*;
 
     #[test]
-    fn all_mocks_constructible() {
-        let _ = MockSearchService::new()
+    fn test_all_mocks_constructible() {
+        let search = MockSearchService::new()
             .with_results(vec![])
             .with_failure("ok");
-        let _ = MockIndexingService::new()
+        assert!(search.results.lock().unwrap().is_empty());
+
+        let indexing = MockIndexingService::new()
             .with_result(IndexingResult {
                 files_processed: 0,
                 chunks_created: 0,
@@ -1246,11 +1248,22 @@ mod constructibility {
                 total_files: 0,
                 processed_files: 0,
             });
-        let _ = MockContextService::new()
+        assert!(
+            indexing
+                .indexing_result
+                .lock()
+                .unwrap()
+                .as_ref()
+                .is_some_and(|r| !r.status.is_empty())
+        );
+
+        let context = MockContextService::new()
             .with_search_results(vec![])
             .with_dimensions(128)
             .with_failure("ok");
-        let _ = MockValidationService::new()
+        assert_eq!(context.dimensions, 128);
+
+        let validation = MockValidationService::new()
             .with_report(ValidationReport {
                 total_violations: 0,
                 errors: 0,
@@ -1261,8 +1274,15 @@ mod constructibility {
             })
             .with_validators(vec![])
             .with_failure("ok");
-        let _ = MockValidationService::with_violations(vec![]);
-        let _ = MockMemoryService::new();
-        let _ = MockVcsProvider::new().with_failure();
+        assert!(validation.report.lock().unwrap().passed);
+
+        let validation_alt = MockValidationService::with_violations(vec![]);
+        assert!(validation_alt.report.lock().unwrap().violations.is_empty());
+
+        let memory = MockMemoryService::new();
+        assert!(memory.observations.lock().unwrap().is_empty());
+
+        let vcs = MockVcsProvider::new().with_failure();
+        assert!(vcs.should_fail.load(Ordering::SeqCst));
     }
 }

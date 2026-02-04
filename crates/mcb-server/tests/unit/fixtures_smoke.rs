@@ -10,17 +10,35 @@ use crate::test_utils::test_fixtures::{
 
 #[test]
 fn test_fixtures_referenced() {
-    let _ = GOLDEN_COLLECTION;
-    let _ = SAMPLE_CODEBASE_FILES;
-    let _ = sample_codebase_path();
-    let _ = golden_parse_results_found("**Results found:** 0");
-    let _ = golden_count_result_entries("📁 foo");
-    let _ = golden_parse_indexing_stats("Files processed: 1\nChunks created: 2");
-    let _ = golden_content_to_string;
+    assert!(!GOLDEN_COLLECTION.is_empty());
+    assert!(!SAMPLE_CODEBASE_FILES.is_empty());
+    assert!(
+        sample_codebase_path()
+            .to_string_lossy()
+            .contains("sample_codebase")
+    );
+    assert_eq!(golden_parse_results_found("**Results found:** 5"), Some(5));
+    assert_eq!(golden_count_result_entries("📁 foo\n📁 bar"), 2);
+
+    let stats = golden_parse_indexing_stats("Files processed: 1\nChunks created: 2");
+    assert_eq!(stats, Some((1, 2)));
+
+    let _ = golden_content_to_string as fn(&rmcp::model::CallToolResult) -> String;
+
     let (_temp, path) = create_temp_codebase();
-    let _ = path;
-    let _ = create_test_indexing_result(1, 2, 0);
-    let _ = create_test_indexing_result_with_errors(1, 2, vec![]);
-    let _ = create_idle_status();
-    let _ = create_in_progress_status(0.5, "x");
+    assert!(path.exists());
+
+    let result = create_test_indexing_result(1, 2, 0);
+    assert_eq!(result.files_processed, 1);
+    assert_eq!(result.chunks_created, 2);
+
+    let result_err = create_test_indexing_result_with_errors(1, 2, vec!["err".to_string()]);
+    assert!(!result_err.errors.is_empty());
+
+    let idle = create_idle_status();
+    assert!(!idle.is_indexing);
+
+    let progress = create_in_progress_status(0.5, "x");
+    assert!(progress.is_indexing);
+    assert_eq!(progress.progress, 0.5);
 }

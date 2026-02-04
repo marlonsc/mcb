@@ -1,3 +1,5 @@
+//! Validate handler for code validation operations.
+
 use crate::args::{ValidateAction, ValidateArgs, ValidateScope};
 use crate::formatter::ResponseFormatter;
 use mcb_domain::ports::services::ValidationServiceInterface;
@@ -9,6 +11,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use validator::Validate;
 
+/// Handler for code validation MCP tool operations.
 #[derive(Clone)]
 pub struct ValidateHandler {
     validation_service: Arc<dyn ValidationServiceInterface>,
@@ -112,7 +115,7 @@ impl ValidateHandler {
             }
             ValidateAction::Analyze => {
                 let path_str = args.path.as_ref().ok_or_else(|| {
-                    McpError::invalid_params("Missing required parameter: path", None)
+                    McpError::invalid_params("Missing required parameter: path for analyze", None)
                 })?;
                 let path = PathBuf::from(path_str);
                 if !path.exists() || !path.is_file() {

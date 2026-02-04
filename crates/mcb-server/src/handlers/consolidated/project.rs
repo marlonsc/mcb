@@ -1,9 +1,12 @@
+//! Project handler for project workflow operations.
+
 use crate::args::ProjectArgs;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
 use validator::Validate;
 
+/// Handler for project workflow MCP tool operations.
 #[derive(Default)]
 pub struct ProjectHandler;
 

@@ -37,8 +37,8 @@ pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 pub use memory::{
     ErrorPattern, ErrorPatternCategory, ErrorPatternMatch, ExecutionMetadata, ExecutionType,
-    MemoryFilter, MemorySearchResult, Observation, ObservationMetadata, ObservationType,
-    QualityGateResult, QualityGateStatus, SessionSummary,
+    MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
+    ObservationType, QualityGateResult, QualityGateStatus, SessionSummary,
 };
 pub use project::{
     DependencyType, DetectedProject, IssueStatus, IssueType, PhaseStatus, Project, ProjectDecision,

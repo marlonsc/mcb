@@ -96,7 +96,7 @@ fn load_golden_queries_fixture() -> GoldenQueriesFixture {
 }
 
 #[tokio::test]
-async fn golden_e2e_complete_workflow() {
+async fn test_golden_e2e_complete_workflow() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     assert!(
@@ -182,7 +182,7 @@ async fn golden_e2e_complete_workflow() {
 }
 
 #[tokio::test]
-async fn golden_e2e_handles_concurrent_operations() {
+async fn test_golden_e2e_handles_concurrent_operations() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let status_h = server.index_handler();
     let r1 = status_h.handle(Parameters(index_args(
@@ -201,7 +201,7 @@ async fn golden_e2e_handles_concurrent_operations() {
 }
 
 #[tokio::test]
-async fn golden_e2e_respects_collection_isolation() {
+async fn test_golden_e2e_respects_collection_isolation() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let clear = server.index_handler();
     clear
@@ -223,7 +223,7 @@ async fn golden_e2e_respects_collection_isolation() {
 }
 
 #[tokio::test]
-async fn golden_e2e_handles_reindex_correctly() {
+async fn test_golden_e2e_handles_reindex_correctly() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let index_h = server.index_handler();

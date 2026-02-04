@@ -64,3 +64,6 @@ mod memory_fts_tests;
 
 #[path = "unit/memory_repository_tests.rs"]
 mod memory_repository_tests;
+
+#[path = "unit/memory_provider_test.rs"]
+mod memory_provider_test;

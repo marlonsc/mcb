@@ -1,6 +1,7 @@
 # ADR-033: MCP Handler Consolidation
 
 ## Status
+
 Accepted
 
 ## Context
@@ -97,9 +98,9 @@ struct ProjectArgs {
 
 ### Migration Path
 
-1. **Phase 1**: Add new consolidated tools alongside existing
-2. **Phase 2**: Deprecate old tools (mark as [DEPRECATED] in description)
-3. **Phase 3**: Remove deprecated tools after 1 release cycle
+1.  **Phase 1**: Add new consolidated tools alongside existing
+2.  **Phase 2**: Deprecate old tools (mark as [DEPRECATED] in description)
+3.  **Phase 3**: Remove deprecated tools after 1 release cycle
 
 ### Tool Count Reduction
 
@@ -117,19 +118,22 @@ struct ProjectArgs {
 ## Consequences
 
 ### Positive
-- Dramatically reduced cognitive load (38 → 8 tools)
-- Consistent action/resource pattern across all tools
-- Easier to add new resources without new tools
-- Better discoverability through unified interfaces
+
+-   Dramatically reduced cognitive load (38 → 8 tools)
+-   Consistent action/resource pattern across all tools
+-   Easier to add new resources without new tools
+-   Better discoverability through unified interfaces
 
 ### Negative
-- Migration effort required
-- Slightly more complex individual tool schemas
-- Potential breaking change for existing integrations
+
+-   Migration effort required
+-   Slightly more complex individual tool schemas
+-   Potential breaking change for existing integrations
 
 ### Neutral
-- Same underlying functionality
-- Handler code restructured but logic preserved
+
+-   Same underlying functionality
+-   Handler code restructured but logic preserved
 
 ## Implementation
 
