@@ -10,8 +10,6 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR-046: Integration with ADR-034-037 & Policies
-
 **Status**: Proposed  
 **Date**: 2026-02-05  
 **Deciders**: MCB Architecture Team  
