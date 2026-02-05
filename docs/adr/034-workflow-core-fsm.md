@@ -48,7 +48,10 @@ Use a hand-written `#[derive(Serialize, Deserialize)]` enum for workflow states 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Workflow session states. Each variant carries context-specific data.
+/// Workflow session states (12-state production model). Each variant carries context-specific data.
+///
+/// **Decision (Voted 2026-02-05):** 12-state model approved for production-ready feature set.
+/// Includes Suspended, Timeout, Cancelled, and Abandoned states for comprehensive workflow management.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "state", content = "data")]
 pub enum WorkflowState {
@@ -82,6 +85,26 @@ pub enum WorkflowState {
         error: String,
         recoverable: bool,
     },
+    /// Session paused by operator (resume possible).
+    Suspended {
+        reason: String,
+        suspended_at: DateTime<Utc>,
+    },
+    /// Workflow deadline exceeded.
+    Timeout {
+        deadline: DateTime<Utc>,
+        exceeded_by_ms: u64,
+    },
+    /// Session cancelled by operator or policy.
+    Cancelled {
+        reason: String,
+        cancelled_by: String,
+    },
+    /// Session abandoned (no activity for N days, operator approval required to resume).
+    Abandoned {
+        last_activity: DateTime<Utc>,
+        days_inactive: u32,
+    },
 }
 
 impl std::fmt::Display for WorkflowState {
@@ -95,14 +118,19 @@ impl std::fmt::Display for WorkflowState {
             Self::PhaseComplete { .. } => write!(f, "phase_complete"),
             Self::Completed => write!(f, "completed"),
             Self::Failed { .. } => write!(f, "failed"),
+            Self::Suspended { .. } => write!(f, "suspended"),
+            Self::Timeout { .. } => write!(f, "timeout"),
+            Self::Cancelled { .. } => write!(f, "cancelled"),
+            Self::Abandoned { .. } => write!(f, "abandoned"),
         }
     }
 }
 
-/// Events that trigger state transitions.
+/// Events that trigger state transitions (extended for 12-state model).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "trigger", content = "data")]
 pub enum TransitionTrigger {
+    // Original triggers (7-state)
     ContextDiscovered { context_snapshot_id: String },
     StartPlanning { phase_id: String },
     StartExecution { phase_id: String },
@@ -115,6 +143,13 @@ pub enum TransitionTrigger {
     EndSession,
     Error { message: String },
     Recover,
+    
+    // New triggers (extended states)
+    Suspend { reason: String },                    // → Suspended
+    Resume,                                        // Suspended → Planning|Executing
+    TimeoutDetected { deadline: DateTime<Utc> },  // → Timeout
+    Cancel { reason: String, by: String },        // → Cancelled
+    MarkAbandoned { days_inactive: u32 },         // → Abandoned (auto)
 }
 
 /// Recorded transition with full audit context.

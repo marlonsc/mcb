@@ -846,6 +846,33 @@ pub struct ProjectContext {
     pub discovered_at: DateTime<Utc>,
 }
 
+/// Context freshness indicator.
+/// 
+/// **Decision (Voted 2026-02-05):** Explicit freshness tracking (ADR-039).
+/// Prevents race conditions in distributed workflows by tracking context age.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum ContextFreshness {
+    /// 0-5 seconds old (just discovered)
+    Fresh,
+    /// 5-30 seconds old (normal cache)
+    Acceptable,
+    /// > 30 seconds old (should rediscover)
+    Stale,
+    /// Context partially unavailable (e.g., tracker offline)
+    StaleWithRisk { age_ms: u64 },
+}
+
+impl ContextFreshness {
+    /// Check if context is acceptable for a given operation
+    pub fn is_acceptable(&self, max_age_ms: u64) -> bool {
+        match self {
+            Self::Fresh | Self::Acceptable => true,
+            Self::Stale => false,
+            Self::StaleWithRisk { age_ms } => age_ms < max_age_ms,
+        }
+    }
+}
+
 /// Git repository state via `git2`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitContext {

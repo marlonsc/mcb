@@ -48,7 +48,7 @@ make test
 
 ## 🧪 Testing
 
-The project has 2006+ tests with comprehensive coverage:
+The project has 2011+ tests with comprehensive coverage:
 
 ```bash
 
