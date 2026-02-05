@@ -80,12 +80,7 @@ async fn test_validate_run_missing_path() {
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Missing path should return error"
-    );
+    assert!(result.is_err(), "Missing path should return McpError");
 }
 
 #[tokio::test]
@@ -295,10 +290,5 @@ async fn test_validate_analyze_missing_path() {
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Missing path should return error"
-    );
+    assert!(result.is_err(), "Missing path should return McpError");
 }
