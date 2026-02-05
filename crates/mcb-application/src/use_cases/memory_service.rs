@@ -73,6 +73,16 @@ impl MemoryServiceImpl {
         {
             return false;
         }
+        if let Some(ref branch) = filter.branch
+            && obs.metadata.branch.as_ref() != Some(branch)
+        {
+            return false;
+        }
+        if let Some(ref commit) = filter.commit
+            && obs.metadata.commit.as_ref() != Some(commit)
+        {
+            return false;
+        }
         true
     }
 }

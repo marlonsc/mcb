@@ -398,4 +398,100 @@ mod rrf_tests {
         assert_eq!(results.len(), 1, "Filter should exclude session-2");
         assert_eq!(results[0].id, "obs-a");
     }
+
+    #[tokio::test]
+    async fn test_filter_by_branch() {
+        let mut obs_a = make_observation("obs-a", "feature branch work");
+        obs_a.metadata.branch = Some("feature/auth".to_string());
+
+        let mut obs_b = make_observation("obs-b", "main branch work");
+        obs_b.metadata.branch = Some("main".to_string());
+
+        let fts_results = vec![
+            FtsSearchResult {
+                id: "obs-a".to_string(),
+                rank: -2.0,
+            },
+            FtsSearchResult {
+                id: "obs-b".to_string(),
+                rank: -1.5,
+            },
+        ];
+
+        let repo = Arc::new(MockMemoryRepo {
+            observations: vec![obs_a, obs_b],
+            fts_results,
+        });
+
+        let vector_store = Arc::new(MockVectorStore { results: vec![] });
+        let embedding_provider = Arc::new(MockEmbedding);
+
+        let service = MemoryServiceImpl::new(
+            "test-project".to_string(),
+            repo,
+            embedding_provider,
+            vector_store,
+        );
+
+        let filter = MemoryFilter {
+            branch: Some("feature/auth".to_string()),
+            ..Default::default()
+        };
+
+        let results = service
+            .search_memories("branch work", Some(filter), 10)
+            .await
+            .expect("search with branch filter should succeed");
+
+        assert_eq!(results.len(), 1, "Filter should exclude main branch");
+        assert_eq!(results[0].id, "obs-a");
+    }
+
+    #[tokio::test]
+    async fn test_filter_by_commit() {
+        let mut obs_a = make_observation("obs-a", "commit abc observation");
+        obs_a.metadata.commit = Some("abc123".to_string());
+
+        let mut obs_b = make_observation("obs-b", "commit def observation");
+        obs_b.metadata.commit = Some("def456".to_string());
+
+        let fts_results = vec![
+            FtsSearchResult {
+                id: "obs-a".to_string(),
+                rank: -2.0,
+            },
+            FtsSearchResult {
+                id: "obs-b".to_string(),
+                rank: -1.5,
+            },
+        ];
+
+        let repo = Arc::new(MockMemoryRepo {
+            observations: vec![obs_a, obs_b],
+            fts_results,
+        });
+
+        let vector_store = Arc::new(MockVectorStore { results: vec![] });
+        let embedding_provider = Arc::new(MockEmbedding);
+
+        let service = MemoryServiceImpl::new(
+            "test-project".to_string(),
+            repo,
+            embedding_provider,
+            vector_store,
+        );
+
+        let filter = MemoryFilter {
+            commit: Some("abc123".to_string()),
+            ..Default::default()
+        };
+
+        let results = service
+            .search_memories("commit observation", Some(filter), 10)
+            .await
+            .expect("search with commit filter should succeed");
+
+        assert_eq!(results.len(), 1, "Filter should exclude def456 commit");
+        assert_eq!(results[0].id, "obs-a");
+    }
 }
