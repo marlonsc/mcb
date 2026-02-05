@@ -147,21 +147,17 @@ impl MemoryServiceImpl {
 
         let query_embedding = self.embedding_provider.embed(query).await?;
 
-        let fts_results = self
-            .repository
-            .search_fts_ranked(query, candidate_limit)
-            .await?;
-
-        let vector_results = self
-            .vector_store
-            .search_similar(
+        let (fts_result, vector_result) = tokio::join!(
+            self.repository.search_fts_ranked(query, candidate_limit),
+            self.vector_store.search_similar(
                 "memories",
                 query_embedding.vector.as_slice(),
                 candidate_limit,
                 None,
-            )
-            .await
-            .unwrap_or_default();
+            ),
+        );
+        let fts_results = fts_result?;
+        let vector_results = vector_result.unwrap_or_default();
 
         let mut rrf_scores: HashMap<String, f32> = HashMap::new();
 
