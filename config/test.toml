@@ -1,0 +1,20 @@
+# Test-only configuration override
+# Used when running integration tests to avoid external service dependencies
+
+[logging]
+level = "WARN"
+
+[providers.embedding.default]
+type = "null"
+
+[providers.vector_store.default]
+type = "in-memory"
+
+[providers.cache.default]
+type = "null"
+
+[providers.language_chunking.default]
+type = "null"
+
+[cache]
+enabled = false

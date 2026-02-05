@@ -47,11 +47,18 @@ fn get_mcb_path() -> PathBuf {
     );
 }
 
+/// Spawn mcb with test-safe configuration (no external service dependencies)
+fn create_test_command(mcb_path: &PathBuf) -> std::process::Command {
+    let mut cmd = Command::new(mcb_path);
+    cmd.arg("--config").arg("config/test.toml");
+    cmd
+}
+
 /// Helper to spawn mcb binary with stdio transport
 fn spawn_mcb_stdio() -> std::process::Child {
     let mcb_path = get_mcb_path();
 
-    Command::new(&mcb_path)
+    create_test_command(&mcb_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
