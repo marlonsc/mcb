@@ -37,7 +37,7 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 -   **Clean Architecture**: 8 crates (domain, application, infrastructure, providers, server, validate) per Clean Architecture layers
 -   **Provider Ecosystem**: 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 8 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
 -   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
--   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2012+ tests project-wide
+-   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2011+ tests project-wide
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
 
 ## Architecture
@@ -149,7 +149,7 @@ See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for con
 
 ## Testing
 
-2012+ tests covering all layers:
+2011+ tests covering all layers:
 
 ```bash
 make test           # All tests
@@ -163,7 +163,7 @@ Test organization:
 -   **Application layer**: Service and use case tests
 -   **Infrastructure layer**: DI, config, cache tests
 -   **Providers**: Embedding and vector store provider tests
--   **mcb-validate**: Architecture validation (Phases 1–7, 2012+ tests)
+-   **mcb-validate**: Architecture validation (Phases 1–7, 2011+ tests)
 
 See [`docs/INTEGRATION_TESTS.md`](./docs/INTEGRATION_TESTS.md) for testing documentation.
 
