@@ -36,17 +36,17 @@ lint: ## Check code quality (FIX=1 to auto-fix, CI_MODE=1 for Rust 2024)
 ifeq ($(FIX),1)
 	@echo "Auto-fixing code..."
 	cargo fmt
-	cargo clippy --fix --allow-dirty --all-targets --features "full"
+	cargo clippy --fix --allow-dirty --all-targets
 else ifeq ($(CI_MODE),1)
 	@echo "CI lint with Rust 2024 checks..."
 	cargo fmt --all -- --check
-	RUSTFLAGS="$(RUST_2024_LINTS)" cargo clippy --all-targets --features "full" -- -D warnings \
+	RUSTFLAGS="$(RUST_2024_LINTS)" cargo clippy --all-targets -- -D warnings \
 		-D clippy::multiple_unsafe_ops_per_block \
 		-D clippy::undocumented_unsafe_blocks
 else
 	@echo "Checking code quality..."
 	cargo fmt --all -- --check
-	cargo clippy --all-targets --features "full" -- -D warnings
+	cargo clippy --all-targets -- -D warnings
 endif
 
 # =============================================================================

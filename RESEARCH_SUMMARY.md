@@ -9,13 +9,15 @@
 ## 🎯 ACHADOS PRINCIPAIS
 
 ### 1. **Domain Model é Simples**
-- **Project**: `{ id, name, version, path, created_at, updated_at }`
-- **ProjectDependency**: `{ id, from_id, to_id, version_req, is_dev, created_at }`
-- **ProjectMetadata**: Denormalized Cargo.toml data
+
+-   **Project**: `{ id, name, version, path, created_at, updated_at }`
+-   **ProjectDependency**: `{ id, from_id, to_id, version_req, is_dev, created_at }`
+-   **ProjectMetadata**: Denormalized Cargo.toml data
 
 **Fonte**: Vibe-Kanban (BloopAI), Shuttle, Sway (FuelLabs)
 
 ### 2. **Database Schema é Straightforward**
+
 ```sql
 -- 3 tabelas principais
 projects (id, name, version, path, created_at, updated_at)
@@ -30,6 +32,7 @@ idx_deps_from, idx_deps_to
 **Otimização**: Circular dependency detection via recursive CTE (SQL)
 
 ### 3. **Rust Architecture Segue Clean Architecture**
+
 ```
 mcb-domain/
   ├── entities/ (Project, ProjectDependency, ProjectMetadata)
@@ -46,19 +49,21 @@ mcb-server/
 ```
 
 ### 4. **API Patterns são Consistentes**
-- **GET /projects** → List all
-- **GET /projects/{id}** → Get with dependencies
-- **POST /projects/{id}/dependencies** → Add dependency
-- **GET /projects/{id}/dependencies** → List dependencies
-- **POST /projects/{id}/analyze** → Analyze for issues
+
+-   **GET /projects** → List all
+-   **GET /projects/{id}** → Get with dependencies
+-   **POST /projects/{id}/dependencies** → Add dependency
+-   **GET /projects/{id}/dependencies** → List dependencies
+-   **POST /projects/{id}/analyze** → Analyze for issues
 
 **Fonte**: Vibe-Kanban routes, Shuttle API, Ockam orchestrator
 
 ### 5. **Testing é Essencial**
-- Mock providers para unit tests
-- Real database para integration tests
-- Circular dependency detection tests
-- Performance tests para large graphs (1000+ projects)
+
+-   Mock providers para unit tests
+-   Real database para integration tests
+-   Circular dependency detection tests
+-   Performance tests para large graphs (1000+ projects)
 
 ---
 
@@ -78,6 +83,7 @@ mcb-server/
 ## 🔍 PADRÕES REAIS ENCONTRADOS
 
 ### Sway (FuelLabs) - Manifest Management
+
 ```rust
 pub enum Source {
     Member(member::Source),
@@ -87,9 +93,11 @@ pub enum Source {
     Registry(reg::Source),
 }
 ```
+
 **Lição**: Suportar múltiplas fontes de dependência (git, path, registry)
 
 ### Vibe-Kanban - Minimal Model
+
 ```rust
 pub struct Project {
     pub id: Uuid,
@@ -104,9 +112,11 @@ pub struct ProjectRepo {
     pub repo_id: Uuid,
 }
 ```
+
 **Lição**: Keep entities small, use junction tables for M:N relationships
 
 ### Shuttle - Rich API Response
+
 ```rust
 pub struct ProjectResponse {
     pub id: String,
@@ -118,6 +128,7 @@ pub struct ProjectResponse {
     pub uris: Vec<String>,
 }
 ```
+
 **Lição**: API responses podem ser richer que domain entities (DTO pattern)
 
 ---
@@ -139,35 +150,36 @@ pub struct ProjectResponse {
 **Arquivo**: `/home/marlonsc/mcb/docs/research/PROJECT_MANAGEMENT_RESEARCH.md`
 
 Contém:
-- ✅ Domain model completo (código Rust)
-- ✅ Database schema (SQL)
-- ✅ Trait definitions (ports)
-- ✅ Service implementation
-- ✅ Provider implementation
-- ✅ MCP tool handlers
-- ✅ Testing patterns
-- ✅ Implementation timeline
-- ✅ Real-world examples com links GitHub
+
+-   ✅ Domain model completo (código Rust)
+-   ✅ Database schema (SQL)
+-   ✅ Trait definitions (ports)
+-   ✅ Service implementation
+-   ✅ Provider implementation
+-   ✅ MCP tool handlers
+-   ✅ Testing patterns
+-   ✅ Implementation timeline
+-   ✅ Real-world examples com links GitHub
 
 ---
 
 ## 🚀 PRÓXIMOS PASSOS
 
-1. **Criar ADR-030**: "Project Management Domain Model"
-2. **Criar ADR-031**: "Project Dependency Tracking"
-3. **Criar feature branch**: `feature/project-management`
-4. **Criar beads issues**: 5 issues (um por fase)
-5. **Start Phase 1**: Domain entities em `mcb-domain`
+1.  **Criar ADR-030**: "Project Management Domain Model"
+2.  **Criar ADR-031**: "Project Dependency Tracking"
+3.  **Criar feature branch**: `feature/project-management`
+4.  **Criar beads issues**: 5 issues (um por fase)
+5.  **Start Phase 1**: Domain entities em `mcb-domain`
 
 ---
 
 ## 📖 REFERÊNCIAS
 
-- **Sway**: https://github.com/FuelLabs/sway/blob/master/forc-pkg/src/manifest/mod.rs
-- **Vibe-Kanban**: https://github.com/BloopAI/vibe-kanban/blob/main/crates/db/src/models/project.rs
-- **Shuttle**: https://github.com/shuttle-hq/shuttle/blob/main/common/src/models/project.rs
-- **Rocket**: https://github.com/SergioBenitez/Rocket/blob/master/examples/databases/db/sqlx/migrations/
-- **Ockam**: https://github.com/build-trust/ockam/blob/develop/implementations/rust/ockam/ockam_api/src/orchestrator/project/
+-   **Sway**: <https://github.com/FuelLabs/sway/blob/master/forc-pkg/src/manifest/mod.rs>
+-   **Vibe-Kanban**: <https://github.com/BloopAI/vibe-kanban/blob/main/crates/db/src/models/project.rs>
+-   **Shuttle**: <https://github.com/shuttle-hq/shuttle/blob/main/common/src/models/project.rs>
+-   **Rocket**: <https://github.com/SergioBenitez/Rocket/blob/master/examples/databases/db/sqlx/migrations/>
+-   **Ockam**: <https://github.com/build-trust/ockam/blob/develop/implementations/rust/ockam/ockam_api/src/orchestrator/project/>
 
 ---
 

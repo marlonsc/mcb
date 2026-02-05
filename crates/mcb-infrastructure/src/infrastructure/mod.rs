@@ -37,11 +37,8 @@ pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 // Prometheus metrics - exported for /metrics endpoint
 pub use prometheus_metrics::{PrometheusPerformanceMetrics, export_metrics};
 
-// Test utilities - exported only when test-utils feature is enabled
+// Test utilities - exported for testing infrastructure services
 // These are null implementations used for testing infrastructure services
-#[cfg(feature = "test-utils")]
 pub use auth::NullAuthService;
-#[cfg(feature = "test-utils")]
 pub use snapshot::NullSnapshotProvider;
-#[cfg(feature = "test-utils")]
 pub use sync::NullSyncProvider;

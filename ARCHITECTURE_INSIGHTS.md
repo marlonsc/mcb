@@ -383,7 +383,7 @@ Event Source
 
 ### Should-Have (Production)
 
-5.  **Git worktree orchestration** (multi-agent support)
+1.  **Git worktree orchestration** (multi-agent support)
 2.  **Policy enforcement at admission** (compliance)
 3.  **Event broadcasting + DLQ** (async processing)
 

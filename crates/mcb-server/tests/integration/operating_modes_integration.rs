@@ -20,6 +20,7 @@ use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_infrastructure::di::modules::domain_services::{
     DomainServicesFactory, ServiceDependencies,
 };
+use mcb_providers::git::Git2Provider;
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::session::SessionManager;
@@ -552,13 +553,18 @@ async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
-    let (memory_repository, db_executor) =
+    let (memory_repository, shared_executor) =
         mcb_providers::database::create_memory_repository_in_memory_with_executor()
             .await
             .expect("Failed to create memory database");
     let agent_repository = mcb_providers::database::create_agent_repository_from_executor(
-        std::sync::Arc::new(db_executor),
+        std::sync::Arc::clone(&shared_executor),
     );
+    let project_repository = mcb_providers::database::create_project_repository_from_executor(
+        std::sync::Arc::clone(&shared_executor),
+    );
+    let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
+        std::sync::Arc::new(Git2Provider::new());
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
@@ -572,6 +578,8 @@ async fn create_test_mcp_server() -> McpServer {
         event_bus,
         memory_repository,
         agent_repository,
+        project_repository: project_repository.clone(),
+        vcs_provider,
     };
 
     let services = DomainServicesFactory::create_services(deps)
@@ -586,6 +594,7 @@ async fn create_test_mcp_server() -> McpServer {
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
         .with_vcs_provider(services.vcs_provider)
+        .with_project_repository(project_repository)
         .build()
         .expect("Failed to build MCP server")
 }

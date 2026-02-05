@@ -2,161 +2,184 @@
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
 use crate::formatter::ResponseFormatter;
+use mcb_domain::ports::repositories::ProjectRepository;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
-use serde_json::{Value, json};
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use serde_json::json;
+use std::sync::Arc;
 use validator::Validate;
 
-/// In-memory project storage for workflow operations.
-/// In a production system, this would be backed by a persistent database.
+/// Handler for project workflow MCP tool operations.
 #[derive(Clone)]
-struct ProjectStore {
-    projects: Arc<RwLock<HashMap<String, ProjectData>>>,
+pub struct ProjectHandler {
+    repository: Arc<dyn ProjectRepository>,
 }
 
-#[derive(Clone, Debug)]
-struct ProjectData {
-    phases: Vec<PhaseData>,
-    issues: Vec<IssueData>,
-    dependencies: Vec<DependencyData>,
-    decisions: Vec<DecisionData>,
-}
+impl ProjectHandler {
+    pub fn new(repository: Arc<dyn ProjectRepository>) -> Self {
+        Self { repository }
+    }
 
-#[derive(Clone, Debug)]
-struct PhaseData {
-    id: String,
-    name: String,
-    status: String,
-}
+    pub async fn handle(
+        &self,
+        Parameters(args): Parameters<ProjectArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        args.validate()
+            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
 
-#[derive(Clone, Debug)]
-struct IssueData {
-    id: String,
-    title: String,
-    phase_id: Option<String>,
-    status: String,
-    priority: i32,
-}
+        let result = match args.action {
+            ProjectAction::Create => self.handle_create(&args).await,
+            ProjectAction::Update => self.handle_update(&args).await,
+            ProjectAction::List => self.handle_list(&args).await,
+            ProjectAction::AddDependency => self.handle_add_dependency(&args).await,
+        };
 
-#[derive(Clone, Debug)]
-struct DependencyData {
-    from_id: String,
-    to_id: String,
-    dependency_type: String,
-}
-
-#[derive(Clone, Debug)]
-struct DecisionData {
-    id: String,
-    title: String,
-    rationale: String,
-}
-
-impl ProjectStore {
-    fn new() -> Self {
-        Self {
-            projects: Arc::new(RwLock::new(HashMap::new())),
+        match result {
+            Ok(response) => ResponseFormatter::json_success(&response),
+            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
+                "Project operation failed: {}",
+                e
+            ))])),
         }
     }
 
-    fn create_project(&self, project_id: String, _data: Option<Value>) -> Result<Value, String> {
-        let mut projects = self.projects.write().map_err(|e| e.to_string())?;
+    async fn handle_create(&self, args: &ProjectArgs) -> Result<serde_json::Value, String> {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| e.to_string())?
+            .as_secs() as i64;
 
-        if projects.contains_key(&project_id) {
-            return Err(format!("Project '{}' already exists", project_id));
-        }
-
-        let project = ProjectData {
-            phases: Vec::new(),
-            issues: Vec::new(),
-            dependencies: Vec::new(),
-            decisions: Vec::new(),
+        let project = mcb_domain::entities::project::Project {
+            id: args.project_id.clone(),
+            name: args.project_id.clone(),
+            path: String::new(),
+            created_at: now,
+            updated_at: now,
         };
 
-        projects.insert(project_id.clone(), project);
+        self.repository
+            .create(&project)
+            .await
+            .map_err(|e| e.to_string())?;
 
         Ok(json!({
             "status": "success",
-            "message": format!("Project '{}' created successfully", project_id),
-            "project_id": project_id
+            "message": format!("Project '{}' created successfully", args.project_id),
+            "project_id": args.project_id
         }))
     }
 
-    fn update_project(
-        &self,
-        project_id: String,
-        resource: ProjectResource,
-        resource_id: Option<String>,
-        data: Option<Value>,
-    ) -> Result<Value, String> {
-        let mut projects = self.projects.write().map_err(|e| e.to_string())?;
-
-        let project = projects
-            .get_mut(&project_id)
-            .ok_or_else(|| format!("Project '{}' not found", project_id))?;
-
-        match resource {
+    async fn handle_update(&self, args: &ProjectArgs) -> Result<serde_json::Value, String> {
+        match args.resource {
             ProjectResource::Phase => {
-                let phase_id = resource_id.ok_or("Phase ID required for update")?;
-                let name = data
+                let phase_id = args
+                    .resource_id
+                    .as_ref()
+                    .ok_or("Phase ID required for update")?;
+                let phase = self
+                    .repository
+                    .get_phase(phase_id)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .ok_or_else(|| format!("Phase '{}' not found", phase_id))?;
+
+                let name = args
+                    .data
                     .as_ref()
                     .and_then(|d| d.get("name"))
                     .and_then(|n| n.as_str())
-                    .ok_or("Phase name required")?
-                    .to_string();
+                    .ok_or("Phase name required")?;
 
-                if let Some(phase) = project.phases.iter_mut().find(|p| p.id == phase_id) {
-                    phase.name = name;
-                    Ok(json!({
-                        "status": "success",
-                        "message": format!("Phase '{}' updated", phase_id)
-                    }))
-                } else {
-                    Err(format!("Phase '{}' not found", phase_id))
-                }
+                let mut updated_phase = phase;
+                updated_phase.name = name.to_string();
+                updated_phase.updated_at = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map_err(|e| e.to_string())?
+                    .as_secs() as i64;
+
+                self.repository
+                    .update_phase(&updated_phase)
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                Ok(json!({
+                    "status": "success",
+                    "message": format!("Phase '{}' updated", phase_id)
+                }))
             }
             ProjectResource::Issue => {
-                let issue_id = resource_id.ok_or("Issue ID required for update")?;
-                let status = data
+                let issue_id = args
+                    .resource_id
+                    .as_ref()
+                    .ok_or("Issue ID required for update")?;
+                let issue = self
+                    .repository
+                    .get_issue(issue_id)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .ok_or_else(|| format!("Issue '{}' not found", issue_id))?;
+
+                let mut updated_issue = issue;
+
+                if let Some(status_str) = args
+                    .data
                     .as_ref()
                     .and_then(|d| d.get("status"))
                     .and_then(|s| s.as_str())
-                    .map(|s| s.to_string());
-
-                if let Some(issue) = project.issues.iter_mut().find(|i| i.id == issue_id) {
-                    if let Some(new_status) = status {
-                        issue.status = new_status;
-                    }
-                    Ok(json!({
-                        "status": "success",
-                        "message": format!("Issue '{}' updated", issue_id)
-                    }))
-                } else {
-                    Err(format!("Issue '{}' not found", issue_id))
+                {
+                    updated_issue.status = status_str
+                        .parse()
+                        .map_err(|_| format!("Invalid status: {}", status_str))?;
                 }
+
+                updated_issue.updated_at = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map_err(|e| e.to_string())?
+                    .as_secs() as i64;
+
+                self.repository
+                    .update_issue(&updated_issue)
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                Ok(json!({
+                    "status": "success",
+                    "message": format!("Issue '{}' updated", issue_id)
+                }))
             }
             ProjectResource::Decision => {
-                let decision_id = resource_id.ok_or("Decision ID required for update")?;
-                let title = data
+                let decision_id = args
+                    .resource_id
+                    .as_ref()
+                    .ok_or("Decision ID required for update")?;
+                let decision = self
+                    .repository
+                    .get_decision(decision_id)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .ok_or_else(|| format!("Decision '{}' not found", decision_id))?;
+
+                let mut updated_decision = decision;
+
+                if let Some(title) = args
+                    .data
                     .as_ref()
                     .and_then(|d| d.get("title"))
                     .and_then(|t| t.as_str())
-                    .map(|s| s.to_string());
-
-                if let Some(decision) = project.decisions.iter_mut().find(|d| d.id == decision_id) {
-                    if let Some(new_title) = title {
-                        decision.title = new_title;
-                    }
-                    Ok(json!({
-                        "status": "success",
-                        "message": format!("Decision '{}' updated", decision_id)
-                    }))
-                } else {
-                    Err(format!("Decision '{}' not found", decision_id))
+                {
+                    updated_decision.title = title.to_string();
                 }
+
+                self.repository
+                    .create_decision(&updated_decision)
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                Ok(json!({
+                    "status": "success",
+                    "message": format!("Decision '{}' updated", decision_id)
+                }))
             }
             ProjectResource::Dependency => {
                 Err("Use add_dependency action for dependency updates".to_string())
@@ -164,64 +187,60 @@ impl ProjectStore {
         }
     }
 
-    fn list_resources(
-        &self,
-        project_id: String,
-        resource: ProjectResource,
-        phase_id: Option<String>,
-        status: Option<String>,
-        priority: Option<i32>,
-        limit: Option<u32>,
-    ) -> Result<Value, String> {
-        let projects = self.projects.read().map_err(|e| e.to_string())?;
+    async fn handle_list(&self, args: &ProjectArgs) -> Result<serde_json::Value, String> {
+        let limit = args.limit.unwrap_or(100) as usize;
 
-        let project = projects
-            .get(&project_id)
-            .ok_or_else(|| format!("Project '{}' not found", project_id))?;
-
-        let limit = limit.unwrap_or(100) as usize;
-
-        match resource {
+        match args.resource {
             ProjectResource::Phase => {
-                let phases: Vec<_> = project
-                    .phases
+                let phases = self
+                    .repository
+                    .list_phases(&args.project_id)
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                let items: Vec<_> = phases
                     .iter()
                     .take(limit)
                     .map(|p| {
                         json!({
                             "id": p.id,
                             "name": p.name,
-                            "status": p.status
+                            "status": p.status.as_str()
                         })
                     })
                     .collect();
 
                 Ok(json!({
                     "resource": "phases",
-                    "count": phases.len(),
-                    "items": phases
+                    "count": items.len(),
+                    "items": items
                 }))
             }
             ProjectResource::Issue => {
-                let issues: Vec<_> = project
-                    .issues
+                let issues = self
+                    .repository
+                    .list_issues(&args.project_id)
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                let items: Vec<_> = issues
                     .iter()
                     .filter(|i| {
-                        if let Some(ref phase) = phase_id {
+                        if let Some(ref phase) = args.phase_id {
                             i.phase_id.as_ref() == Some(phase)
                         } else {
                             true
                         }
                     })
                     .filter(|i| {
-                        if let Some(ref s) = status {
-                            &i.status == s
+                        if let Some(ref s) = args.status {
+                            i.status.as_str() == s
                         } else {
                             true
                         }
                     })
                     .filter(|i| {
-                        if let Some(p) = priority {
+                        if let Some(p) = args.priority {
                             i.priority == p
                         } else {
                             true
@@ -233,7 +252,7 @@ impl ProjectStore {
                             "id": i.id,
                             "title": i.title,
                             "phase_id": i.phase_id,
-                            "status": i.status,
+                            "status": i.status.as_str(),
                             "priority": i.priority
                         })
                     })
@@ -241,169 +260,108 @@ impl ProjectStore {
 
                 Ok(json!({
                     "resource": "issues",
-                    "count": issues.len(),
-                    "items": issues
+                    "count": items.len(),
+                    "items": items
                 }))
             }
             ProjectResource::Decision => {
-                let decisions: Vec<_> = project
-                    .decisions
+                let decisions = self
+                    .repository
+                    .list_decisions(&args.project_id)
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                let items: Vec<_> = decisions
                     .iter()
                     .take(limit)
                     .map(|d| {
                         json!({
                             "id": d.id,
                             "title": d.title,
-                            "rationale": d.rationale
+                            "context": d.context
                         })
                     })
                     .collect();
 
                 Ok(json!({
                     "resource": "decisions",
-                    "count": decisions.len(),
-                    "items": decisions
+                    "count": items.len(),
+                    "items": items
                 }))
             }
             ProjectResource::Dependency => {
-                let dependencies: Vec<_> = project
-                    .dependencies
+                let dependencies = self
+                    .repository
+                    .list_dependencies(&args.project_id)
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                let items: Vec<_> = dependencies
                     .iter()
                     .take(limit)
                     .map(|d| {
                         json!({
-                            "from_id": d.from_id,
-                            "to_id": d.to_id,
-                            "type": d.dependency_type
+                            "from_id": d.from_issue_id,
+                            "to_id": d.to_issue_id,
+                            "type": d.dependency_type.as_str()
                         })
                     })
                     .collect();
 
                 Ok(json!({
                     "resource": "dependencies",
-                    "count": dependencies.len(),
-                    "items": dependencies
+                    "count": items.len(),
+                    "items": items
                 }))
             }
         }
     }
 
-    fn add_dependency(
-        &self,
-        project_id: String,
-        from_id: String,
-        to_id: String,
-        data: Option<Value>,
-    ) -> Result<Value, String> {
-        let mut projects = self.projects.write().map_err(|e| e.to_string())?;
+    async fn handle_add_dependency(&self, args: &ProjectArgs) -> Result<serde_json::Value, String> {
+        let from_id = args
+            .resource_id
+            .as_ref()
+            .ok_or("from_id (resource_id) required for add_dependency")?;
 
-        let project = projects
-            .get_mut(&project_id)
-            .ok_or_else(|| format!("Project '{}' not found", project_id))?;
+        let to_id = args
+            .data
+            .as_ref()
+            .and_then(|d| d.get("to_id"))
+            .and_then(|t| t.as_str())
+            .ok_or("to_id required in data for add_dependency")?;
 
-        let dependency_type = data
+        let dependency_type_str = args
+            .data
             .as_ref()
             .and_then(|d| d.get("type"))
             .and_then(|t| t.as_str())
-            .unwrap_or("depends_on")
-            .to_string();
+            .unwrap_or("blocks");
 
-        let dependency = DependencyData {
-            from_id: from_id.clone(),
-            to_id: to_id.clone(),
+        let dependency_type = dependency_type_str
+            .parse()
+            .map_err(|_| format!("Invalid dependency type: {}", dependency_type_str))?;
+
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| e.to_string())?
+            .as_secs() as i64;
+
+        let dependency = mcb_domain::entities::project::ProjectDependency {
+            id: uuid::Uuid::new_v4().to_string(),
+            from_issue_id: from_id.clone(),
+            to_issue_id: to_id.to_string(),
             dependency_type,
+            created_at: now,
         };
 
-        project.dependencies.push(dependency);
+        self.repository
+            .add_dependency(&dependency)
+            .await
+            .map_err(|e| e.to_string())?;
 
         Ok(json!({
             "status": "success",
             "message": format!("Dependency added: {} -> {}", from_id, to_id)
         }))
-    }
-}
-
-/// Handler for project workflow MCP tool operations.
-#[derive(Clone)]
-pub struct ProjectHandler {
-    store: ProjectStore,
-}
-
-impl ProjectHandler {
-    pub fn new() -> Self {
-        Self {
-            store: ProjectStore::new(),
-        }
-    }
-
-    pub async fn handle(
-        &self,
-        Parameters(args): Parameters<ProjectArgs>,
-    ) -> Result<CallToolResult, McpError> {
-        args.validate()
-            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
-
-        let result = match args.action {
-            ProjectAction::Create => self
-                .store
-                .create_project(args.project_id, args.data)
-                .map_err(|e| e.to_string()),
-            ProjectAction::Update => self
-                .store
-                .update_project(args.project_id, args.resource, args.resource_id, args.data)
-                .map_err(|e| e.to_string()),
-            ProjectAction::List => self
-                .store
-                .list_resources(
-                    args.project_id,
-                    args.resource,
-                    args.phase_id,
-                    args.status,
-                    args.priority,
-                    args.limit,
-                )
-                .map_err(|e| e.to_string()),
-            ProjectAction::AddDependency => {
-                let from_id = match args.resource_id {
-                    Some(id) => id,
-                    None => {
-                        return Ok(CallToolResult::error(vec![Content::text(
-                            "from_id (resource_id) required for add_dependency".to_string(),
-                        )]));
-                    }
-                };
-                let to_id = match args
-                    .data
-                    .as_ref()
-                    .and_then(|d| d.get("to_id"))
-                    .and_then(|t| t.as_str())
-                {
-                    Some(id) => id.to_string(),
-                    None => {
-                        return Ok(CallToolResult::error(vec![Content::text(
-                            "to_id required in data for add_dependency".to_string(),
-                        )]));
-                    }
-                };
-
-                self.store
-                    .add_dependency(args.project_id, from_id, to_id, args.data)
-                    .map_err(|e| e.to_string())
-            }
-        };
-
-        match result {
-            Ok(response) => ResponseFormatter::json_success(&response),
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Project operation failed: {}",
-                e
-            ))])),
-        }
-    }
-}
-
-impl Default for ProjectHandler {
-    fn default() -> Self {
-        Self::new()
     }
 }

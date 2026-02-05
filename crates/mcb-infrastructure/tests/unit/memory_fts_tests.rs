@@ -1,11 +1,10 @@
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_providers::database::SqliteExecutor;
 use std::sync::Arc;
 use uuid::Uuid;
 
-async fn create_test_project(executor: &SqliteExecutor, project_id: &str) {
+async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &str) {
     let now = chrono::Utc::now().timestamp();
     executor
         .execute(
@@ -24,13 +23,13 @@ async fn create_test_project(executor: &SqliteExecutor, project_id: &str) {
 
 #[tokio::test]
 async fn test_fts_search_flow() {
-    let (repo, executor): (Arc<dyn MemoryRepository>, SqliteExecutor) =
+    let (repo, executor): (Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>) =
         mcb_providers::database::create_memory_repository_in_memory_with_executor()
             .await
             .unwrap();
 
     let project_id = "test-project".to_string();
-    create_test_project(&executor, &project_id).await;
+    create_test_project(executor.as_ref(), &project_id).await;
 
     let id = Uuid::new_v4().to_string();
     let obs = Observation {

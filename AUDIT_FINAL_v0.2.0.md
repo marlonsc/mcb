@@ -22,6 +22,7 @@
 ## ✅ FASE 1: QUALITY GATES (100% PASS)
 
 ### Resultados Numéricos
+
 ```
 ✅ 2110+ testes: ALL PASS
 ✅ Clippy: 0 warnings
@@ -41,38 +42,45 @@
 ### MCP Tools - Status Detalhado
 
 #### ✅ Production Ready (2/8)
-- **index** - IndexArgs → CallToolResult | tests: Y | docs: Y | schemas: N | **READY**
-- **search** - SearchArgs → CallToolResult | tests: Y | docs: Y | schemas: N | **READY**
+
+-   **index** - IndexArgs → CallToolResult | tests: Y | docs: Y | schemas: N | **READY**
+-   **search** - SearchArgs → CallToolResult | tests: Y | docs: Y | schemas: N | **READY**
 
 #### ⚠️ Implemented but Not Tested (4/8)
-- **validate** - ValidateArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS**
-- **memory** - MemoryArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS** (5 actions)
-- **session** - SessionArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS** (5 actions)
-- **agent** - AgentArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS**
+
+-   **validate** - ValidateArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS**
+-   **memory** - MemoryArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS** (5 Actions)
+-   **session** - SessionArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS** (5 Actions)
+-   **agent** - AgentArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS**
 
 #### 🔴 Not Implemented (2/8)
-- **project** - ProjectArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **STUB - Returns "not implemented yet"**
-- **vcs** - VcsArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS** (5 actions)
+
+-   **project** - ProjectArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **STUB - Returns "not implemented yet"**
+-   **vcs** - VcsArgs → CallToolResult | tests: ❌ N | docs: Y | schemas: N | **NO TESTS** (5 Actions)
 
 ### Critical Issues
 
 **ISSUE #1: project Handler é um STUB**
+
 ```rust
 // crates/mcb-server/src/handlers/consolidated/project.rs
 // Todas as 4 ações (create, update, list, add_dependency) retornam erro:
 // "project handler not implemented yet"
 ```
-- **Impact**: Users cannot manage projects via MCP
-- **Decision**: Remove from v0.2.0 OR implement fully
+
+-   **Impact**: Users cannot manage projects via MCP
+-   **Decision**: Remove from v0.2.0 OR implement fully
 
 **ISSUE #2: error_pattern Memory Resource Not Implemented**
-- Returns "not implemented yet"
-- Impact: Cannot store error patterns in memory
+
+-   Returns "not implemented yet"
+-   Impact: Cannot store error patterns in memory
 
 **ISSUE #3: Output Schemas Missing**
-- All 8 tools have input schemas (JsonSchema) ✅
-- All 8 tools have output_schema: None ❌
-- Impact: MCP clients don't know response format
+
+-   All 8 tools have input schemas (JsonSchema) ✅
+-   All 8 tools have output_schema: None ❌
+-   Impact: MCP clients don't know response format
 
 ### Test Coverage Gap Analysis
 
@@ -101,6 +109,7 @@ Total: 6/8 tools without dedicated tests
 ### Critical Finding: Admin Server NOT Started
 
 **THE PROBLEM**:
+
 ```
 The Admin UI code is 100% IMPLEMENTED but NOT WIRED into server startup
 ```
@@ -108,21 +117,24 @@ The Admin UI code is 100% IMPLEMENTED but NOT WIRED into server startup
 ### Admin UI Status
 
 #### ✅ Fully Implemented (5 screens)
-- **Dashboard** - Real-time metrics, event log, SSE updates ✅
-- **Configuration** - Cache/server settings forms ✅
-- **Health Status** - System health, dependencies ✅
-- **Indexing** - Operation status, progress tracking ✅
-- **Browse** - Collection browser, file viewer ✅
+
+-   **Dashboard** - Real-time metrics, event log, SSE updates ✅
+-   **Configuration** - Cache/server settings forms ✅
+-   **Health Status** - System health, dependencies ✅
+-   **Indexing** - Operation status, progress tracking ✅
+-   **Browse** - Collection browser, file viewer ✅
 
 #### ✅ API Endpoints Fully Implemented
-- 20+ endpoints for health, config, collections, browse, etc
-- Proper error handling, authentication (X-Admin-Key header)
-- SSE for real-time updates
+
+-   20+ endpoints for health, config, collections, browse, etc
+-   Proper error handling, authentication (X-Admin-Key header)
+-   SSE for real-time updates
 
 #### ✅ Form Validation
-- All fields validated (cache settings, server config)
-- Error messages implemented
-- Success/error notifications
+
+-   All fields validated (cache settings, server config)
+-   Error messages implemented
+-   Success/error notifications
 
 #### 🔴 **NOT STARTED**: The Admin API Server
 
@@ -139,10 +151,11 @@ The Admin UI code is 100% IMPLEMENTED but NOT WIRED into server startup
 ### Blockers for Release
 
 To enable admin UI:
-1. Instantiate `AdminApi` in init.rs
-2. Start it alongside main server
-3. Wire dependencies (AppContext, config, etc)
-4. Test all 5 screens end-to-end
+
+1.  Instantiate `AdminApi` in init.rs
+2.  Start it alongside main server
+3.  Wire dependencies (AppContext, config, etc)
+4.  Test all 5 screens end-to-end
 
 **Effort**: ~30 min to implement, ~1 hour to test thoroughly
 
@@ -185,27 +198,30 @@ To enable admin UI:
 
 ## 🎯 RESUMO FINAL - DECISÃO PARA v0.2.0
 
-### O que BLOQUEIA release:
+### O que BLOQUEIA release
 
 **🔴 BLOQUEADOR 1: Admin Server Not Started**
-- Tempo para corrigir: ~1 hora
-- Risco: ALTO (feature não funciona)
-- Recomendação: FIX AGORA antes de release
-- Impacto: Sem fix, admin UI é inacessível
+
+-   Tempo para corrigir: ~1 hora
+-   Risco: ALTO (feature não funciona)
+-   Recomendação: FIX AGORA antes de release
+-   Impacto: Sem fix, admin UI é inacessível
 
 **🔴 BLOQUEADOR 2: Project Handler é Stub**
-- Tempo para corrigir: ~2 horas (implementar ou remover)
-- Risco: MÉDIO (feature não documentada, pode não ser required)
-- Recomendação: DECIDIR - remove do v0.2.0 ou implementa?
-- Impacto: Se user tenta usar, retorna erro
+
+-   Tempo para corrigir: ~2 horas (implementar ou remover)
+-   Risco: MÉDIO (feature não documentada, pode não ser required)
+-   Recomendação: DECIDIR - remove do v0.2.0 ou implementa?
+-   Impacto: Se user tenta usar, retorna erro
 
 **🟡 BLOQUEADOR 3: Missing Tests para 6/8 MCP Tools**
-- Tempo para corrigir: ~4-6 horas
-- Risco: BAIXO-MÉDIO (ferramentas funcionam, só não auditadas)
-- Recomendação: Pode ficar para v0.3.0 com aviso, ou fix agora
-- Impacto: Tools funcionam mas sem coverage de testes
 
-### O que ESTÁ OK:
+-   Tempo para corrigir: ~4-6 horas
+-   Risco: BAIXO-MÉDIO (ferramentas funcionam, só não auditadas)
+-   Recomendação: Pode ficar para v0.3.0 com aviso, ou fix agora
+-   Impacto: Tools funcionam mas sem coverage de testes
+
+### O que ESTÁ OK
 
 ✅ Quality gates 100% pass  
 ✅ Data integrity verified  
@@ -218,6 +234,7 @@ To enable admin UI:
 ## 🚀 RECOMENDAÇÃO EXECUTIVA
 
 ### Opção A: RELEASE v0.2.0 AGORA (Conservative)
+
 ```
 Fix Bloqueador #1 (Admin Server startup): 1h
 Fix Bloqueador #2 (Project Handler - remove do v0.2.0): 30 min
@@ -229,6 +246,7 @@ Confiança: 70% → 85%
 ```
 
 ### Opção B: FIX TUDO (Recommended)
+
 ```
 Fix Bloqueador #1 (Admin Server startup): 1h
 Fix Bloqueador #2 (Project Handler): 2h
@@ -240,6 +258,7 @@ Confiança: 70% → 100%
 ```
 
 ### Opção C: Mini-Projeto para v0.3.0
+
 ```
 Create parallel branch: feature/v0.3.0
 Release v0.2.0 com Opção A (quick fixes)
@@ -278,4 +297,3 @@ Com **~9 horas**, pode chegar a 100% confiança (Opção B).
 **Minha recomendação**: Opção B - 9 horas de work focado agora é melhor que 2 dias de bugs depois.
 
 Você quer que eu **execute os fixes em paralelo usando sisyphus-junior**?
-

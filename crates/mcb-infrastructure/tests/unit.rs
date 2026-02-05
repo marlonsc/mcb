@@ -35,21 +35,17 @@ mod config_figment_tests;
 #[path = "unit/prometheus_metrics_tests.rs"]
 mod prometheus_metrics_tests;
 
-// Validation service tests - require validation feature
-#[cfg(feature = "validation")]
+// Validation service tests
 #[path = "unit/validation_service_tests.rs"]
 mod validation_service_tests;
 
-// Infrastructure service tests (require test-utils feature)
-#[cfg(feature = "test-utils")]
+// Infrastructure service tests
 #[path = "unit/auth_tests.rs"]
 mod auth_tests;
 
-#[cfg(feature = "test-utils")]
 #[path = "unit/snapshot_tests.rs"]
 mod snapshot_tests;
 
-#[cfg(feature = "test-utils")]
 #[path = "unit/sync_tests.rs"]
 mod sync_tests;
 

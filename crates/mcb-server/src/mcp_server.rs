@@ -17,6 +17,7 @@ use mcb_application::{
     SearchServiceInterface, ValidationServiceInterface,
 };
 use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::repositories::ProjectRepository;
 
 use crate::handlers::{
     AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
@@ -59,6 +60,7 @@ impl McpServer {
         memory_service: Arc<dyn MemoryServiceInterface>,
         agent_session_service: Arc<dyn AgentSessionServiceInterface>,
         vcs_provider: Arc<dyn VcsProvider>,
+        project_repository: Arc<dyn ProjectRepository>,
     ) -> Self {
         let hook_processor = HookProcessor::new(Some(memory_service.clone()));
 
@@ -75,7 +77,7 @@ impl McpServer {
                 memory_service.clone(),
             )),
             agent: Arc::new(AgentHandler::new(agent_session_service.clone())),
-            project: Arc::new(ProjectHandler::new()),
+            project: Arc::new(ProjectHandler::new(project_repository)),
             vcs: Arc::new(VcsHandler::new(vcs_provider.clone())),
             hook_processor: Arc::new(hook_processor),
         };

@@ -38,7 +38,7 @@ use crate::di::provider_resolvers::{
 };
 use crate::infrastructure::{
     PrometheusPerformanceMetrics,
-    admin::{NullIndexingOperations, NullPerformanceMetrics},
+    admin::{AtomicPerformanceMetrics, DefaultIndexingOperations},
     auth::NullAuthService,
     events::TokioBroadcastEventBus,
     lifecycle::DefaultShutdownCoordinator,
@@ -132,24 +132,28 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // Create Infrastructure Services (needed before handles for decorator)
     // ========================================================================
 
-    let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
-        if config.system.infrastructure.metrics.enabled {
-            match PrometheusPerformanceMetrics::try_new() {
-                Ok(metrics) => {
-                    info!("Prometheus metrics initialized successfully");
-                    Arc::new(metrics)
-                }
-                Err(e) => {
-                    warn!(
-                        "Failed to initialize Prometheus metrics: {}, falling back to null metrics",
-                        e
-                    );
-                    Arc::new(NullPerformanceMetrics)
-                }
+    let performance_metrics: Arc<dyn PerformanceMetricsInterface> = if config
+        .system
+        .infrastructure
+        .metrics
+        .enabled
+    {
+        match PrometheusPerformanceMetrics::try_new() {
+            Ok(metrics) => {
+                info!("Prometheus metrics initialized successfully");
+                Arc::new(metrics)
             }
-        } else {
-            Arc::new(NullPerformanceMetrics)
-        };
+            Err(e) => {
+                warn!(
+                    "Failed to initialize Prometheus metrics: {}, falling back to atomic metrics",
+                    e
+                );
+                Arc::new(AtomicPerformanceMetrics::new())
+            }
+        }
+    } else {
+        Arc::new(AtomicPerformanceMetrics::new())
+    };
 
     // ========================================================================
     // Optionally wrap embedding provider with instrumentation (SOLID O/C)

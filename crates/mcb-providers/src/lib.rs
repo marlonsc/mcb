@@ -8,9 +8,9 @@
 //!
 //! | Category | Port | Implementations |
 //! |----------|------|-----------------|
-//! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed, Null |
-//! | Vector Store | `VectorStoreProvider` | InMemory, Encrypted, Null, EdgeVec, Filesystem, Milvus |
-//! | Cache | `CacheProvider` | Moka, Redis, Null |
+//! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed |
+//! | Vector Store | `VectorStoreProvider` | InMemory, Encrypted, EdgeVec, Filesystem, Milvus |
+//! | Cache | `CacheProvider` | Moka, Redis |
 //! | Events | `EventPublisher` | Tokio, Nats, Null |
 //! | Hybrid Search | `HybridSearchProvider` | HybridSearchEngine, Null |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
@@ -42,7 +42,6 @@ pub use mcb_domain::ports::providers::{
 };
 
 // Re-export CryptoProvider from domain (for encrypted vector store)
-#[cfg(feature = "vectorstore-encrypted")]
 pub use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 
 /// Provider-specific constants
@@ -92,21 +91,17 @@ pub mod language;
 ///
 /// Implements `HybridSearchProvider` trait for combined BM25 + semantic search.
 /// Provides BM25 text ranking algorithm and hybrid score fusion.
-#[cfg(feature = "hybrid-search")]
 pub mod hybrid_search;
 
-// Re-export hybrid search providers when feature is enabled
-#[cfg(feature = "hybrid-search")]
+// Re-export hybrid search providers
 pub use hybrid_search::{HybridSearchEngine, NullHybridSearchProvider};
 
 /// Database providers (memory repository backends)
 ///
 /// Each backend (SQLite, PostgreSQL, MySQL) has its own submodule and
 /// implements the generic schema DDL in its dialect.
-#[cfg(feature = "memory-sqlite")]
 pub mod database;
 
-#[cfg(feature = "memory-sqlite")]
 pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 
 /// Git-related providers for repository operations

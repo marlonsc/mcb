@@ -22,63 +22,6 @@ path = "src/lib.rs"
 # Provider functionality is covered by unit tests instead.
 doctest = false
 
-[features]
-default = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-all", "memory-sqlite"]
-
-# === Embedding Providers ===
-embedding-all = ["embedding-openai", "embedding-ollama", "embedding-voyageai", "embedding-gemini", "embedding-fastembed", "embedding-anthropic"]
-embedding-anthropic = []
-embedding-openai = []
-embedding-ollama = []
-embedding-voyageai = []
-embedding-gemini = []
-embedding-fastembed = ["dep:fastembed"]
-
-# === Vector Store Providers ===
-
-vectorstore-all = ["vectorstore-memory", "vectorstore-encrypted", "vectorstore-filesystem", "vectorstore-edgevec", "vectorstore-milvus", "vectorstore-pinecone", "vectorstore-qdrant"]
-vectorstore-memory = []
-vectorstore-pinecone = []
-vectorstore-qdrant = []
-vectorstore-encrypted = ["dep:aes-gcm"]
-vectorstore-filesystem = []
-vectorstore-edgevec = ["dep:edgevec", "dep:schemars"]
-vectorstore-milvus = ["dep:milvus-sdk-rust"]
-
-# === Hybrid Search Providers ===
-hybrid-search = []  # BM25 + semantic hybrid search
-
-# === Cache Providers ===
-cache-all = ["cache-moka", "cache-redis"]
-cache-moka = ["dep:moka"]
-cache-redis = ["dep:redis"]
-
-# === Event Providers ===
-events-nats = ["dep:async-nats"]
-
-# === Language Chunking Providers ===
-lang-all = ["lang-rust", "lang-python", "lang-javascript", "lang-typescript", "lang-go", "lang-java", "lang-c", "lang-cpp", "lang-csharp", "lang-ruby", "lang-php", "lang-swift", "lang-kotlin"]
-lang-rust = ["dep:tree-sitter-rust"]
-lang-python = ["dep:tree-sitter-python"]
-lang-javascript = ["dep:tree-sitter-javascript"]
-lang-typescript = ["dep:tree-sitter-typescript"]
-lang-go = ["dep:tree-sitter-go"]
-lang-java = ["dep:tree-sitter-java"]
-lang-c = ["dep:tree-sitter-c"]
-lang-cpp = ["dep:tree-sitter-cpp"]
-lang-csharp = ["dep:tree-sitter-c-sharp"]
-lang-ruby = ["dep:tree-sitter-ruby"]
-lang-php = ["dep:tree-sitter-php"]
-lang-swift = ["dep:tree-sitter-swift"]
-lang-kotlin = ["dep:tree-sitter-kotlin-ng"]
-
-# === Memory / Database (generic schema + SQLite adapter) ===
-memory-sqlite = ["dep:sqlx"]
-
-# === Convenience Feature Groups ===
-minimal = ["embedding-ollama", "vectorstore-memory", "cache-moka", "hybrid-search", "lang-rust", "lang-python", "memory-sqlite"]
-full = ["embedding-all", "vectorstore-all", "cache-all", "hybrid-search", "lang-all", "memory-sqlite"]
-
 [dependencies]
 # Domain layer - contains provider port traits (Clean Architecture)
 mcb-domain = { path = "../mcb-domain" }
@@ -148,47 +91,47 @@ toml = { workspace = true }
 # Tree-sitter core (always needed for chunking)
 tree-sitter = { workspace = true }
 
-# Optional: Tree-sitter language parsers
-tree-sitter-rust = { workspace = true, optional = true }
-tree-sitter-python = { workspace = true, optional = true }
-tree-sitter-javascript = { workspace = true, optional = true }
-tree-sitter-typescript = { workspace = true, optional = true }
-tree-sitter-go = { workspace = true, optional = true }
-tree-sitter-java = { workspace = true, optional = true }
-tree-sitter-c = { workspace = true, optional = true }
-tree-sitter-cpp = { workspace = true, optional = true }
-tree-sitter-c-sharp = { workspace = true, optional = true }
-tree-sitter-ruby = { workspace = true, optional = true }
-tree-sitter-php = { workspace = true, optional = true }
-tree-sitter-swift = { workspace = true, optional = true }
-tree-sitter-kotlin-ng = { workspace = true, optional = true }
+# Tree-sitter language parsers
+tree-sitter-rust = { workspace = true }
+tree-sitter-python = { workspace = true }
+tree-sitter-javascript = { workspace = true }
+tree-sitter-typescript = { workspace = true }
+tree-sitter-go = { workspace = true }
+tree-sitter-java = { workspace = true }
+tree-sitter-c = { workspace = true }
+tree-sitter-cpp = { workspace = true }
+tree-sitter-c-sharp = { workspace = true }
+tree-sitter-ruby = { workspace = true }
+tree-sitter-php = { workspace = true }
+tree-sitter-swift = { workspace = true }
+tree-sitter-kotlin-ng = { workspace = true }
 
-# Optional: FastEmbed (heavy ML dependency)
-fastembed = { workspace = true, optional = true }
+# FastEmbed (heavy ML dependency)
+fastembed = { workspace = true }
 
-# Optional: Encryption for encrypted vector store
-aes-gcm = { workspace = true, optional = true }
+# Encryption for encrypted vector store
+aes-gcm = { workspace = true }
 
-# Optional: Moka cache
-moka = { workspace = true, optional = true }
+# Moka cache
+moka = { workspace = true }
 
-# Optional: Redis cache
-redis = { workspace = true, optional = true }
+# Redis cache
+redis = { workspace = true }
 
-# Optional: EdgeVec high-performance vector store
-edgevec = { workspace = true, optional = true }
+# EdgeVec high-performance vector store
+edgevec = { workspace = true }
 
-# Optional: Milvus cloud vector database (has upstream lifetime bug in v0.2.0)
-milvus-sdk-rust = { workspace = true, optional = true }
+# Milvus cloud vector database (has upstream lifetime bug in v0.2.0)
+milvus-sdk-rust = { workspace = true }
 
-# Optional: JSON Schema generation (for EdgeVec config)
-schemars = { workspace = true, optional = true }
+# JSON Schema generation (for EdgeVec config)
+schemars = { workspace = true }
 
-# Optional: NATS for distributed events
-async-nats = { workspace = true, optional = true }
+# NATS for distributed events
+async-nats = { workspace = true }
 
-# Optional: SQLite for memory repository (uses generic schema from domain)
-sqlx = { workspace = true, optional = true }
+# SQLite for memory repository (uses generic schema from domain)
+sqlx = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3.10"

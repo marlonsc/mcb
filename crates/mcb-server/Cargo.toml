@@ -128,7 +128,7 @@ async-stream = { workspace = true }
 libc = "0.2"
 
 # Providers - MUST be in dependencies (not dev-dependencies) for linkme inventory registration
-mcb-providers = { path = "../mcb-providers", features = ["full"] }
+mcb-providers = { path = "../mcb-providers" }
 
 [dev-dependencies]
 tempfile = "3.10"

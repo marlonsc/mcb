@@ -27,20 +27,14 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
+use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
 use mcb_domain::ports::services::ValidationServiceInterface;
-use mcb_providers::git::Git2Provider;
 use std::sync::Arc;
 
 use super::super::bootstrap::AppContext;
 
-// Use infrastructure validation service when validation feature is enabled
-#[cfg(feature = "validation")]
+// Use infrastructure validation service
 use crate::validation::InfraValidationService;
-
-// Use null validation from domain when validation feature is disabled
-#[cfg(not(feature = "validation"))]
-use mcb_domain::ports::services::NullValidationService;
 
 /// Domain services container
 #[derive(Clone)]
@@ -71,6 +65,8 @@ pub struct ServiceDependencies {
     pub event_bus: Arc<dyn EventBusProvider>,
     pub memory_repository: Arc<dyn MemoryRepository>,
     pub agent_repository: Arc<dyn AgentRepository>,
+    pub project_repository: Arc<dyn ProjectRepository>,
+    pub vcs_provider: Arc<dyn VcsProvider>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
@@ -95,15 +91,8 @@ impl DomainServicesFactory {
                 deps.event_bus,
             ));
 
-        #[cfg(feature = "validation")]
         let validation_service: Arc<dyn ValidationServiceInterface> =
             Arc::new(InfraValidationService::new());
-
-        #[cfg(not(feature = "validation"))]
-        let validation_service: Arc<dyn ValidationServiceInterface> =
-            Arc::new(NullValidationService::new());
-
-        let vcs_provider: Arc<dyn VcsProvider> = Arc::new(Git2Provider::new());
 
         let memory_service: Arc<dyn MemoryServiceInterface> = Arc::new(MemoryServiceImpl::new(
             deps.project_id.clone(),
@@ -122,7 +111,7 @@ impl DomainServicesFactory {
             validation_service,
             memory_service,
             agent_session_service,
-            vcs_provider,
+            vcs_provider: deps.vcs_provider,
         })
     }
 

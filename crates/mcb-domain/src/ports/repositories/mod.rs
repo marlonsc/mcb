@@ -6,4 +6,4 @@ pub mod project_repository;
 
 pub use agent_repository::AgentRepository;
 pub use memory_repository::MemoryRepository;
-pub use project_repository::ProjectRepository;
+pub use project_repository::{IssueFilter, ProjectRepository};

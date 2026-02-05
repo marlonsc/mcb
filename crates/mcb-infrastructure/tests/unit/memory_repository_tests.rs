@@ -1,10 +1,10 @@
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_providers::database::{SqliteExecutor, create_memory_repository_in_memory};
+use mcb_providers::database::create_memory_repository_in_memory;
 use std::sync::Arc;
 
-async fn create_test_project(executor: &SqliteExecutor, project_id: &str) {
+async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &str) {
     let now = chrono::Utc::now().timestamp();
     executor
         .execute(
@@ -30,13 +30,13 @@ async fn test_memory_repository_in_memory_creates() {
 
 #[tokio::test]
 async fn test_memory_repository_store_and_get_observation() {
-    let (repo, executor): (Arc<dyn MemoryRepository>, SqliteExecutor) =
+    let (repo, executor): (Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>) =
         mcb_providers::database::create_memory_repository_in_memory_with_executor()
             .await
             .unwrap();
 
     let project_id = "test-project";
-    create_test_project(&executor, project_id).await;
+    create_test_project(executor.as_ref(), project_id).await;
 
     let obs = Observation {
         id: "id1".to_string(),

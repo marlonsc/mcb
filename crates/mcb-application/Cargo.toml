@@ -56,9 +56,6 @@ futures = { workspace = true }
 # File system traversal for git indexing
 walkdir = { workspace = true }
 
-[features]
-default = []
-
 [dev-dependencies]
 tempfile = "3.10"
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

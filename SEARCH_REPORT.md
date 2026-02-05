@@ -321,34 +321,39 @@ HANDLERS:                       8 consolidated handlers
 ## 13. Actionable Next Steps
 
 1.  **Create ADR-034 Implementation**:
-   -   Add workflow entities (state, transition, session)
-   -   Create WorkflowEngine provider trait
-   -   Add SQLite persistence layer
-   -   Create transition history repository
 
-2.  **Create ADR-035/036 Implementation**:
-   -   Add ContextScoutProvider trait
-   -   Add PolicyGuardProvider trait
-   -   Implement context discovery logic
-   -   Implement policy evaluation
+-   Add workflow entities (state, transition, session)
+-   Create WorkflowEngine provider trait
+-   Add SQLite persistence layer
+-   Create transition history repository
 
-3.  **Create ADR-037 Implementation**:
-   -   Create WorkflowService in mcb-application
-   -   Implement WorkflowEngine in mcb-providers
-   -   Wire up MCP `ProjectAction::Workflow` routing
-   -   Add event broadcasting for workflow state changes
-   -   Update DI catalog with workflow components
+1.  **Create ADR-035/036 Implementation**:
 
-4.  **Testing**:
-   -   Unit tests for WorkflowState transitions
-   -   Integration tests for session persistence
-   -   E2E tests for MCP workflow tool
-   -   Stress tests for concurrent sessions
+-   Add ContextScoutProvider trait
+-   Add PolicyGuardProvider trait
+-   Implement context discovery logic
+-   Implement policy evaluation
 
-5.  **Documentation**:
-   -   Update ARCHITECTURE.md with workflow layer
-   -   Add workflow examples to QUICKSTART.md
-   -   Document recovery procedures
+1.  **Create ADR-037 Implementation**:
+
+-   Create WorkflowService in mcb-application
+-   Implement WorkflowEngine in mcb-providers
+-   Wire up MCP `ProjectAction::Workflow` routing
+-   Add event broadcasting for workflow state changes
+-   Update DI catalog with workflow components
+
+1.  **Testing**:
+
+-   Unit tests for WorkflowState transitions
+-   Integration tests for session persistence
+-   E2E tests for MCP workflow tool
+-   Stress tests for concurrent sessions
+
+1.  **Documentation**:
+
+-   Update ARCHITECTURE.md with workflow layer
+-   Add workflow examples to QUICKSTART.md
+-   Document recovery procedures
 
 ---
 

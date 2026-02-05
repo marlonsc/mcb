@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Success Criteria
 
--   2206+ tests passing (unit, integration, end-to-end)
+-   2266+ tests passing (unit, integration, end-to-end)
 -   85%+ code coverage minimum
 -   Zero architecture violations
 -   Complete documentation and v0.3.0 → v0.4.0 migration guide
@@ -124,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   801+ lines added, 874+ lines removed
 -   0 architecture violations
 -   0 lint errors
--   2206+ tests passing
+-   2266+ tests passing
 
 ---
 
@@ -321,7 +321,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   **Linkme Distributed Slices**: Compile-time provider registration replacing inventory runtime registration
 -   **4 Pure Linkme Registries**: Embedding, vector store, cache, and language provider registries
--   **15 Migrated Providers**: All providers (6 embedding, 3 cache, 8 vector stores, 14 languages) using linkme pattern
+-   **15 Migrated Providers**: All providers (6 embedding, 3 cache, 7 vector stores, 14 languages) using linkme pattern
 -   **Zero Runtime Overhead**: Provider discovery at compile-time instead of runtime
 
 #### Validation Rules
@@ -401,7 +401,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Provider Registration**: Compile-time (from runtime discovery)
 -   **Validation Coverage**: 12 architecture patterns automated
 -   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
--   **Test Coverage**: 2206+ tests maintained
+-   **Test Coverage**: 2266+ tests maintained
 -   **Architecture Compliance**: Automated validation of 7-crate clean architecture
 
 ### Next Steps (v0.1.3 or v0.2.0)
@@ -469,7 +469,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   **Clean Architecture**: Complete refactoring with trait-based dependency injection
--   **Test Suite**: Expanded to 2206+ tests organized by Clean Architecture layers
+-   **Test Suite**: Expanded to 2266+ tests organized by Clean Architecture layers
 -   **Configuration**: Modular configuration with cache and limits separated
 -   **Server Operations**: Extracted operations to dedicated module (`src/server/operations.rs`)
 -   **Metrics**: Dedicated metrics module (`src/server/metrics.rs`)
@@ -496,9 +496,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   **Startup Time**: Instant (from npm/npx overhead)
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
--   **Provider Support**: 7 embedding providers, 8 vector stores
+-   **Provider Support**: 6 embedding providers, 7 vector stores
 -   **Language Support**: 14 languages with AST parsing
--   **Test Coverage**: 2206+ tests
+-   **Test Coverage**: 2266+ tests
 
 ---
 

@@ -49,7 +49,7 @@ use crate::di::provider_resolvers::{
     VectorStoreProviderResolver,
 };
 use crate::infrastructure::{
-    admin::{DefaultIndexingOperations, NullPerformanceMetrics},
+    admin::{AtomicPerformanceMetrics, DefaultIndexingOperations},
     auth::NullAuthService,
     events::TokioBroadcastEventBus,
     lifecycle::DefaultShutdownCoordinator,
@@ -346,7 +346,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     let shutdown_coordinator: Arc<dyn ShutdownCoordinator> =
         Arc::new(DefaultShutdownCoordinator::new());
     let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
-        Arc::new(NullPerformanceMetrics);
+        Arc::new(AtomicPerformanceMetrics::new());
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 

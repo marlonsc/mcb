@@ -4,6 +4,9 @@ use mcb_domain::entities::agent::{AgentSession, Checkpoint, CheckpointType};
 use mcb_domain::entities::memory::{
     Observation, ObservationMetadata, ObservationType, SessionSummary,
 };
+use mcb_domain::entities::project::{
+    Project, ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase,
+};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::SqlRow;
 use mcb_domain::schema::COL_OBSERVATION_TYPE;
@@ -154,5 +157,129 @@ pub fn row_to_checkpoint(row: &dyn SqlRow) -> Result<Checkpoint> {
             .ok_or_else(|| Error::memory("Missing created_at"))?,
         restored_at: row.try_get_i64("restored_at")?,
         expired,
+    })
+}
+
+/// Build a `Project` from a port row.
+pub fn row_to_project(row: &dyn SqlRow) -> Result<Project> {
+    Ok(Project {
+        id: required_string(row, "id")?,
+        name: required_string(row, "name")?,
+        path: required_string(row, "path")?,
+        created_at: row
+            .try_get_i64("created_at")?
+            .ok_or_else(|| Error::memory("Missing created_at"))?,
+        updated_at: row
+            .try_get_i64("updated_at")?
+            .ok_or_else(|| Error::memory("Missing updated_at"))?,
+    })
+}
+
+/// Build a `ProjectPhase` from a port row.
+pub fn row_to_project_phase(row: &dyn SqlRow) -> Result<ProjectPhase> {
+    let status_str = row
+        .try_get_string("status")?
+        .ok_or_else(|| Error::memory("Missing status"))?;
+    let status = status_str
+        .parse()
+        .map_err(|e| Error::memory(format!("Invalid phase status: {e}")))?;
+
+    Ok(ProjectPhase {
+        id: required_string(row, "id")?,
+        project_id: required_string(row, "project_id")?,
+        name: required_string(row, "name")?,
+        description: required_string(row, "description")?,
+        sequence: row
+            .try_get_i64("sequence")?
+            .ok_or_else(|| Error::memory("Missing sequence"))? as i32,
+        status,
+        started_at: row.try_get_i64("started_at")?,
+        completed_at: row.try_get_i64("completed_at")?,
+        created_at: row
+            .try_get_i64("created_at")?
+            .ok_or_else(|| Error::memory("Missing created_at"))?,
+        updated_at: row
+            .try_get_i64("updated_at")?
+            .ok_or_else(|| Error::memory("Missing updated_at"))?,
+    })
+}
+
+/// Build a `ProjectIssue` from a port row.
+pub fn row_to_project_issue(row: &dyn SqlRow) -> Result<ProjectIssue> {
+    let issue_type_str = row
+        .try_get_string("issue_type")?
+        .ok_or_else(|| Error::memory("Missing issue_type"))?;
+    let issue_type = issue_type_str
+        .parse()
+        .map_err(|e| Error::memory(format!("Invalid issue_type: {e}")))?;
+
+    let status_str = row
+        .try_get_string("status")?
+        .ok_or_else(|| Error::memory("Missing status"))?;
+    let status = status_str
+        .parse()
+        .map_err(|e| Error::memory(format!("Invalid issue status: {e}")))?;
+
+    let labels_json: Option<String> = row.try_get_string("labels")?;
+    let labels: Vec<String> = labels_json
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default();
+
+    Ok(ProjectIssue {
+        id: required_string(row, "id")?,
+        project_id: required_string(row, "project_id")?,
+        phase_id: row.try_get_string("phase_id")?,
+        title: required_string(row, "title")?,
+        description: required_string(row, "description")?,
+        issue_type,
+        status,
+        priority: row
+            .try_get_i64("priority")?
+            .ok_or_else(|| Error::memory("Missing priority"))? as i32,
+        assignee: row.try_get_string("assignee")?,
+        labels,
+        created_at: row
+            .try_get_i64("created_at")?
+            .ok_or_else(|| Error::memory("Missing created_at"))?,
+        updated_at: row
+            .try_get_i64("updated_at")?
+            .ok_or_else(|| Error::memory("Missing updated_at"))?,
+        closed_at: row.try_get_i64("closed_at")?,
+    })
+}
+
+/// Build a `ProjectDependency` from a port row.
+pub fn row_to_project_dependency(row: &dyn SqlRow) -> Result<ProjectDependency> {
+    let dep_type_str = row
+        .try_get_string("dependency_type")?
+        .ok_or_else(|| Error::memory("Missing dependency_type"))?;
+    let dependency_type = dep_type_str
+        .parse()
+        .map_err(|e| Error::memory(format!("Invalid dependency_type: {e}")))?;
+
+    Ok(ProjectDependency {
+        id: required_string(row, "id")?,
+        from_issue_id: required_string(row, "from_issue_id")?,
+        to_issue_id: required_string(row, "to_issue_id")?,
+        dependency_type,
+        created_at: row
+            .try_get_i64("created_at")?
+            .ok_or_else(|| Error::memory("Missing created_at"))?,
+    })
+}
+
+/// Build a `ProjectDecision` from a port row.
+pub fn row_to_project_decision(row: &dyn SqlRow) -> Result<ProjectDecision> {
+    Ok(ProjectDecision {
+        id: required_string(row, "id")?,
+        project_id: required_string(row, "project_id")?,
+        issue_id: row.try_get_string("issue_id")?,
+        title: required_string(row, "title")?,
+        context: required_string(row, "context")?,
+        decision: required_string(row, "decision")?,
+        consequences: required_string(row, "consequences")?,
+        created_at: row
+            .try_get_i64("created_at")?
+            .ok_or_else(|| Error::memory("Missing created_at"))?,
     })
 }

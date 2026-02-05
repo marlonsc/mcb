@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use crate::test_utils::mock_services::{
     MockAgentSessionService, MockContextService, MockIndexingService, MockMemoryService,
-    MockSearchService, MockValidationService, MockVcsProvider,
+    MockProjectRepository, MockSearchService, MockValidationService, MockVcsProvider,
 };
 
 #[test]
@@ -17,6 +17,7 @@ fn test_builder_all_services_provided() {
     let memory_service = Arc::new(MockMemoryService::new());
     let agent_session_service = Arc::new(MockAgentSessionService::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
@@ -26,6 +27,7 @@ fn test_builder_all_services_provided() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(result.is_ok());
@@ -39,6 +41,7 @@ fn test_builder_missing_indexing_service() {
     let memory_service = Arc::new(MockMemoryService::new());
     let agent_session_service = Arc::new(MockAgentSessionService::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let result = McpServerBuilder::new()
         .with_context_service(context_service)
@@ -47,6 +50,7 @@ fn test_builder_missing_indexing_service() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(result.is_err());
@@ -66,6 +70,7 @@ fn test_builder_missing_context_service() {
     let memory_service = Arc::new(MockMemoryService::new());
     let agent_session_service = Arc::new(MockAgentSessionService::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
@@ -74,6 +79,7 @@ fn test_builder_missing_context_service() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(result.is_err());
@@ -93,6 +99,7 @@ fn test_builder_missing_search_service() {
     let memory_service = Arc::new(MockMemoryService::new());
     let agent_session_service = Arc::new(MockAgentSessionService::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
@@ -101,6 +108,7 @@ fn test_builder_missing_search_service() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(result.is_err());
@@ -120,6 +128,7 @@ fn test_builder_missing_validation_service() {
     let memory_service = Arc::new(MockMemoryService::new());
     let agent_session_service = Arc::new(MockAgentSessionService::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
@@ -128,6 +137,7 @@ fn test_builder_missing_validation_service() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(result.is_err());
@@ -155,6 +165,7 @@ fn test_try_build_success() {
     let memory_service = Arc::new(MockMemoryService::new());
     let agent_session_service = Arc::new(MockAgentSessionService::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let server = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
@@ -164,6 +175,7 @@ fn test_try_build_success() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(server.is_ok());
@@ -177,6 +189,7 @@ fn test_builder_missing_vcs_provider() {
     let validation_service = Arc::new(MockValidationService::new());
     let memory_service = Arc::new(MockMemoryService::new());
     let agent_session_service = Arc::new(MockAgentSessionService::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
@@ -185,6 +198,7 @@ fn test_builder_missing_vcs_provider() {
         .with_validation_service(validation_service)
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(result.is_err());
@@ -204,6 +218,7 @@ fn test_builder_missing_memory_service() {
     let validation_service = Arc::new(MockValidationService::new());
     let agent_session_service = Arc::new(MockAgentSessionService::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
@@ -212,6 +227,7 @@ fn test_builder_missing_memory_service() {
         .with_validation_service(validation_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(result.is_err());
@@ -231,6 +247,7 @@ fn test_builder_missing_agent_session_service() {
     let validation_service = Arc::new(MockValidationService::new());
     let memory_service = Arc::new(MockMemoryService::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
+    let project_repository = Arc::new(MockProjectRepository::new());
 
     let result = McpServerBuilder::new()
         .with_indexing_service(indexing_service)
@@ -239,12 +256,42 @@ fn test_builder_missing_agent_session_service() {
         .with_validation_service(validation_service)
         .with_memory_service(memory_service)
         .with_vcs_provider(vcs_provider)
+        .with_project_repository(project_repository)
         .try_build();
 
     assert!(result.is_err());
     match result {
         Err(BuilderError::MissingDependency(dep)) => {
             assert_eq!(dep, "agent session service");
+        }
+        _ => panic!("Expected MissingDependency error"),
+    }
+}
+
+#[test]
+fn test_builder_missing_project_repository() {
+    let indexing_service = Arc::new(MockIndexingService::new());
+    let context_service = Arc::new(MockContextService::new());
+    let search_service = Arc::new(MockSearchService::new());
+    let validation_service = Arc::new(MockValidationService::new());
+    let memory_service = Arc::new(MockMemoryService::new());
+    let agent_session_service = Arc::new(MockAgentSessionService::new());
+    let vcs_provider = Arc::new(MockVcsProvider::new());
+
+    let result = McpServerBuilder::new()
+        .with_indexing_service(indexing_service)
+        .with_context_service(context_service)
+        .with_search_service(search_service)
+        .with_validation_service(validation_service)
+        .with_memory_service(memory_service)
+        .with_agent_session_service(agent_session_service)
+        .with_vcs_provider(vcs_provider)
+        .try_build();
+
+    assert!(result.is_err());
+    match result {
+        Err(BuilderError::MissingDependency(dep)) => {
+            assert_eq!(dep, "project repository");
         }
         _ => panic!("Expected MissingDependency error"),
     }

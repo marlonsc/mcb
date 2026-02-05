@@ -51,8 +51,7 @@ pub mod routing;
 pub mod storage;
 pub mod utils;
 
-// Architecture validation (feature-gated)
-#[cfg(feature = "validation")]
+// Architecture validation
 pub mod validation;
 
 // DI bridge modules (re-exports for module composition)

@@ -67,15 +67,17 @@
 ```
 
 **Dependency Direction**: **Strictly Inward Only**
-- mcb-server → mcb-infrastructure → {mcb-application, mcb-providers} → mcb-domain
-- mcb-application depends ONLY on mcb-domain
-- mcb-providers depends on mcb-domain + mcb-application (registry only)
-- NO circular dependencies
-- NO external dependencies in mcb-domain
+
+-   mcb-server → mcb-infrastructure → {mcb-application, mcb-providers} → mcb-domain
+-   mcb-application depends ONLY on mcb-domain
+-   mcb-providers depends on mcb-domain + mcb-application (registry only)
+-   NO circular dependencies
+-   NO external dependencies in mcb-domain
 
 ### 1.2 Ports & Providers (ADR-029 + ADR-023)
 
 **Port Definition** (Single Source of Truth):
+
 ```
 mcb-domain/src/ports/
 ├── providers/              # External integrations
@@ -94,6 +96,7 @@ mcb-domain/src/ports/
 ```
 
 **Provider Registration** (Compile-Time via linkme):
+
 ```
 mcb-application/src/ports/registry/embedding.rs:
   → #[linkme::distributed_slice] EMBEDDING_PROVIDERS
@@ -102,6 +105,7 @@ mcb-application/src/ports/registry/embedding.rs:
 ```
 
 **Runtime Resolution** (dill DI Container):
+
 ```
 CatalogBuilder::new()
   → lookup provider from registry
@@ -114,6 +118,7 @@ CatalogBuilder::new()
 ### 1.3 DI Pattern (ADR-029: Hexagonal Architecture with dill)
 
 **Handle Pattern** (Runtime Provider Switching):
+
 ```rust
 pub struct Handle<T: ?Sized + Send + Sync> {
     inner: RwLock<Arc<T>>,
@@ -131,10 +136,11 @@ impl<T: ?Sized + Send + Sync> Handle<T> {
 ```
 
 **Why?**
-- Enables runtime provider switching via admin API
-- No restart needed when changing providers
-- Type-safe trait object access
-- Minimal overhead (RwLock read is cheap)
+
+-   Enables runtime provider switching via admin API
+-   No restart needed when changing providers
+-   Type-safe trait object access
+-   Minimal overhead (RwLock read is cheap)
 
 ### 1.4 Service Layer
 
@@ -169,11 +175,13 @@ impl ContextServiceImpl {
 ### 1.5 Configuration (ADR-025: Figment)
 
 **Pattern**: Merge multiple sources (precedence order)
+
 ```
 Environment Variables (MCB_*) > User Config File > Default Config File
 ```
 
 **Example**:
+
 ```rust
 let figment = Figment::new()
     .merge(Toml::file("config/default.toml"))
@@ -185,14 +193,15 @@ let config: AppConfig = figment.extract()?;
 ### 1.6 Rust Idioms in MCB
 
 **Always Used**:
-- `Arc<dyn Trait>` for trait objects (NOT `Box<dyn>`)
-- `Result<T>` with `?` operator (NO `unwrap()` in production)
-- `#[async_trait]` for async trait methods
-- `#[derive(Serialize, Deserialize)]` on entities
-- `thiserror` for custom error types
-- Tokio for async runtime (never `std::thread::sleep`)
-- `#[tokio::test]` for async tests
-- `#[linkme::distributed_slice]` for provider registration
+
+-   `Arc<dyn Trait>` for trait objects (NOT `Box<dyn>`)
+-   `Result<T>` with `?` operator (NO `unwrap()` in production)
+-   `#[async_trait]` for async trait methods
+-   `#[derive(Serialize, Deserialize)]` on entities
+-   `thiserror` for custom error types
+-   Tokio for async runtime (never `std::thread::sleep`)
+-   `#[tokio::test]` for async tests
+-   `#[linkme::distributed_slice]` for provider registration
 
 ---
 
@@ -215,6 +224,7 @@ Layer 1: Data Sources (VCS + Memory + Indexing)
 ### 2.2 New Entities & Ports (ADR-041)
 
 **Entities** (mcb-domain/src/entities/context.rs):
+
 ```rust
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ContextSnapshot {
@@ -495,6 +505,7 @@ mcb-infrastructure/src/
 ### 4.2 Corrected Trait Signatures
 
 **ContextRepository** (mcb-domain/ports/infrastructure/context.rs):
+
 ```rust
 #[async_trait]
 pub trait ContextRepository: Send + Sync {
@@ -511,6 +522,7 @@ pub trait ContextRepository: Send + Sync {
 ```
 
 **SemanticExtractorProvider** (mcb-domain/ports/providers/semantic_extractor.rs):
+
 ```rust
 #[async_trait]
 pub trait SemanticExtractorProvider: Send + Sync {
@@ -523,6 +535,7 @@ pub trait SemanticExtractorProvider: Send + Sync {
 ```
 
 **FullTextSearchProvider** (mcb-domain/ports/providers/full_text_search.rs):
+
 ```rust
 #[async_trait]
 pub trait FullTextSearchProvider: Send + Sync {
@@ -544,6 +557,7 @@ pub trait FullTextSearchProvider: Send + Sync {
 ### 4.3 Corrected Service Implementation
 
 **ContextSearchService** (mcb-application/use_cases/context_search.rs):
+
 ```rust
 pub struct ContextSearchService {
     // Compose multiple ports (not expose as trait)
@@ -592,6 +606,7 @@ impl ContextSearchService {
 ### 4.4 Corrected DI Wiring
 
 **In mcb-infrastructure/di/catalog.rs**:
+
 ```rust
 pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // ... existing setup ...
@@ -640,6 +655,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 ### 4.5 Configuration Addition
 
 **In config/default.toml**:
+
 ```toml
 [context]
 # Context snapshots TTL (keep 24 hours)
@@ -686,24 +702,27 @@ stale_max_seconds = 300
 ### 5.2 Verification Checklist
 
 **Before Week 1 Starts**:
-- [ ] ADR-035 interface locked + documented
-- [ ] All 9 corrections reviewed by architecture team
-- [ ] File structure approved
-- [ ] Trait signatures finalized
-- [ ] Configuration schema approved
+
+-   [ ] ADR-035 interface locked + documented
+-   [ ] All 9 corrections reviewed by architecture team
+-   [ ] File structure approved
+-   [ ] Trait signatures finalized
+-   [ ] Configuration schema approved
 
 **During Week 1 (Graph Infrastructure)**:
-- [ ] `make validate` shows 0 CA violations
-- [ ] All new ports in mcb-domain
-- [ ] All implementations in mcb-providers
-- [ ] All services in mcb-application
-- [ ] DI wiring in mcb-infrastructure
+
+-   [ ] `make validate` shows 0 CA violations
+-   [ ] All new ports in mcb-domain
+-   [ ] All implementations in mcb-providers
+-   [ ] All services in mcb-application
+-   [ ] DI wiring in mcb-infrastructure
 
 **During Weeks 2-4**:
-- [ ] 70+ tests, 85%+ coverage
-- [ ] `make test` passes all
-- [ ] `make lint` clean
-- [ ] Performance targets met (<1ms graph, <500ms search)
+
+-   [ ] 70+ tests, 85%+ coverage
+-   [ ] `make test` passes all
+-   [ ] `make lint` clean
+-   [ ] Performance targets met (<1ms graph, <500ms search)
 
 ---
 
@@ -774,32 +793,36 @@ Week 1: Graph Infrastructure
 ## Part 7: Success Criteria
 
 **Architecture Compliance**:
-- ✅ Zero CA (Clean Architecture) violations on all 9 corrections
-- ✅ All ports in mcb-domain (single source of truth)
-- ✅ All implementations in correct layer (providers, application, infrastructure)
-- ✅ Strict dependency direction (inward only)
-- ✅ No circular dependencies
+
+-   ✅ Zero CA (Clean Architecture) violations on all 9 corrections
+-   ✅ All ports in mcb-domain (single source of truth)
+-   ✅ All implementations in correct layer (providers, application, infrastructure)
+-   ✅ Strict dependency direction (inward only)
+-   ✅ No circular dependencies
 
 **Code Quality**:
-- ✅ 70+ tests, 85%+ coverage on domain layer
-- ✅ `make fmt`, `make lint`, `make test` all passing
-- ✅ `make validate` zero violations
-- ✅ No `unwrap()` or `expect()` in production code
-- ✅ All async operations properly `.await`ed
+
+-   ✅ 70+ tests, 85%+ coverage on domain layer
+-   ✅ `make fmt`, `make lint`, `make test` all passing
+-   ✅ `make validate` zero violations
+-   ✅ No `unwrap()` or `expect()` in production code
+-   ✅ All async operations properly `.await`ed
 
 **Performance**:
-- ✅ Graph extraction <1ms per file
-- ✅ Hybrid search <500ms per query
-- ✅ Context snapshots <10ms creation
-- ✅ Memory <100MB for 24h history
-- ✅ Time-travel queries <20ms
+
+-   ✅ Graph extraction <1ms per file
+-   ✅ Hybrid search <500ms per query
+-   ✅ Context snapshots <10ms creation
+-   ✅ Memory <100MB for 24h history
+-   ✅ Time-travel queries <20ms
 
 **Integration**:
-- ✅ FSM ↔ Context ↔ Policies fully integrated
-- ✅ Compensation rollback working
-- ✅ MCP tools exposed + functional
-- ✅ Beads task context flowing through
-- ✅ All 4 layers (graph, search, versioning, policies) working together
+
+-   ✅ FSM ↔ Context ↔ Policies fully integrated
+-   ✅ Compensation rollback working
+-   ✅ MCP tools exposed + functional
+-   ✅ Beads task context flowing through
+-   ✅ All 4 layers (graph, search, versioning, policies) working together
 
 ---
 
@@ -811,11 +834,12 @@ Week 1: Graph Infrastructure
 
 **Action**: Implement 9 corrections in Week 1 of Phase 9, then proceed with graph infrastructure per timeline.
 
-**Next**: 
-1. ✅ Share this alignment document with architecture team
-2. ✅ Get approval on 9 corrections
-3. ✅ Lock ADR-035 dependency
-4. ✅ Begin Phase 9 Week 1 with corrected implementation
+**Next**:
+
+1.  ✅ Share this alignment document with architecture team
+2.  ✅ Get approval on 9 corrections
+3.  ✅ Lock ADR-035 dependency
+4.  ✅ Begin Phase 9 Week 1 with corrected implementation
 
 ---
 

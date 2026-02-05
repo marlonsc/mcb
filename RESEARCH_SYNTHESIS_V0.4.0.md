@@ -18,34 +18,37 @@
 ## 🔬 Research Agents Deployed
 
 ### **Agent 1: Librarian A — Scientific Papers**
+
 **Duration**: 1m 48s  
 **Output**: 20+ peer-reviewed papers on integrated context, RAG, knowledge graphs
 
-#### Key Findings:
-- **Knowledge Graphs for Code**: Prometheus (2021), GRACE (2023), CPG (unified code graphs)
-  - *Insight*: Structured relationships > unstructured text for code understanding
-  
-- **RAG Architecture**: cAST, CodeRAG-Bench, "Retrieval-Augmented Generation for AI-Generated Code"
-  - *Insight*: Multi-stage chunking + semantic search + graph context = 18-25% improvement (REPOFUSE pattern)
-  
-- **Lightweight Understanding**: AST-T5, tree-sitter-graph (GitHub-maintained)
-  - *Insight*: Structure-aware models achieve 90%+ accuracy without expensive LLMs
-  
-- **Temporal/Freshness**: T-GRAG, Zep (memory DB), CIK-LLM (continuous knowledge)
-  - *Insight*: Explicit freshness tracking prevents stale context bugs
+#### Key Findings
 
-- **Multi-source Integration**: Knowledge fusion, federated learning, context composition
-  - *Insight*: Different sources (VCS, memory, code, workflow) need explicit fusion strategy
+-   **Knowledge Graphs for Code**: Prometheus (2021), GRACE (2023), CPG (unified code graphs)
+    -   *Insight*: Structured relationships > unstructured text for code understanding
+  
+-   **RAG Architecture**: cAST, CodeRAG-Bench, "Retrieval-Augmented Generation for AI-Generated Code"
+    -   *Insight*: Multi-stage chunking + semantic search + graph context = 18-25% improvement (REPOFUSE pattern)
+  
+-   **Lightweight Understanding**: AST-T5, tree-sitter-graph (GitHub-maintained)
+    -   *Insight*: Structure-aware models achieve 90%+ accuracy without expensive LLMs
+  
+-   **Temporal/Freshness**: T-GRAG, Zep (memory DB), CIK-LLM (continuous knowledge)
+    -   *Insight*: Explicit freshness tracking prevents stale context bugs
+
+-   **Multi-source Integration**: Knowledge fusion, federated learning, context composition
+    -   *Insight*: Different sources (VCS, memory, code, workflow) need explicit fusion strategy
 
 **Consensus**: *Structure > Text. Multi-source essential. Temporal freshness critical.*
 
 ---
 
 ### **Agent 2: Librarian B — Rust Ecosystem**
+
 **Duration**: 1m 24s  
 **Output**: 25+ production-grade Rust crates validated for 2024-2026
 
-#### Core Tech Stack Identified:
+#### Core Tech Stack Identified
 
 | Domain | Crates | MVP Use | Production Ready |
 |--------|--------|---------|------------------|
@@ -54,7 +57,7 @@
 | **Code Analysis** | tree-sitter-graph, tree-sitter | Semantic extraction | ✅ (GitHub-maintained) |
 | **ML/Rules** | rhai, candle, ort | Rules (MVP), models (v0.5.0) | ✅ rhai, 🚧 candle |
 | **Versioning** | im, rpds, diamond-types | Immutable snapshots | ✅ (im: battle-tested) |
-| **Concurrency** | dashmap, rayon, tokio | Lock-free, parallelism | ✅ (all stable) |
+| **Concurrency** | dashmap, rayon, Tokio | Lock-free, parallelism | ✅ (all stable) |
 | **Persistence** | SQLite, serde | Storage, serialization | ✅ (rusqlite production) |
 
 **Critical Finding**: All 25+ crates are actively maintained (2024+), have clear documentation, can run embedded (no external services for core).
@@ -64,10 +67,11 @@
 ---
 
 ### **Agent 3: Explore A — MCB Codebase Patterns**
+
 **Duration**: < 2m  
 **Output**: Deep analysis of existing MCB infrastructure for v0.4.0 integration
 
-#### What Already Exists (Can Leverage):
+#### What Already Exists (Can Leverage)
 
 ```
 ✅ Memory System (mcb-memory)
@@ -95,7 +99,7 @@
    - Ready for semantic extraction
 ```
 
-#### What Needs Adding (v0.4.0 MVP):
+#### What Needs Adding (v0.4.0 MVP)
 
 ```
 ❌ Knowledge Graph (petgraph DAG)
@@ -110,10 +114,11 @@
 ---
 
 ### **Agent 4: Explore B — ADR-034-037 Foundation**
+
 **Duration**: ~1m (still running, partial output used)  
 **Output**: Deep mapping of ADR-034-037 data structures available for v0.4.0
 
-#### ADR-034-037 Provides (From Phase 8):
+#### ADR-034-037 Provides (From Phase 8)
 
 | ADR | Component | Data Available | v0.4.0 Use |
 |-----|-----------|-----------------|-----------|
@@ -124,7 +129,7 @@
 
 **Critical Assumption**: ADR-034-037 **MUST stabilize** before Phase 9 Week 1. Contractual interfaces locked.
 
-#### FSM State Map:
+#### FSM State Map
 
 ```
 Planning → (freshness: Stale OK, scope: Project)
@@ -189,10 +194,11 @@ ADR-046: Integration with ADR-034-037 & Policies
 ```
 
 **All 6 ADRs**:
-- Internally consistent (no contradictions)
-- Support academic + production findings
-- Implementable in 4 weeks (MVP scope)
-- Ready for Phase 9 execution
+
+-   Internally consistent (no contradictions)
+-   Support academic + production findings
+-   Implementable in 4 weeks (MVP scope)
+-   Ready for Phase 9 execution
 
 ---
 
@@ -201,12 +207,13 @@ ADR-046: Integration with ADR-034-037 & Policies
 ### **Week 1: Graph Infrastructure**
 
 **Tasks** (7-8 issues):
-- [ ] Implement CodeNode + CodeGraph entities
-- [ ] Implement TreeSitterGraphExtractor (tree-sitter-graph wrapper)
-- [ ] Implement petgraph DAG builder + slotmap arena
-- [ ] Implement graph persistence (SQLite serialization)
-- [ ] Implement traversal API (callers, dependencies, impact, related)
-- [ ] Integration: graph ↔ indexing (indexed code → graph)
+
+-   [ ] Implement CodeNode + CodeGraph entities
+-   [ ] Implement TreeSitterGraphExtractor (tree-sitter-graph wrapper)
+-   [ ] Implement petgraph DAG builder + slotmap arena
+-   [ ] Implement graph persistence (SQLite serialization)
+-   [ ] Implement traversal API (callers, dependencies, impact, related)
+-   [ ] Integration: graph ↔ indexing (indexed code → graph)
 
 **Tests**: 15+ (graph construction, extraction, traversal, incremental)  
 **Deliverable**: CodeGraph extracted from 14 languages, <1ms per file
@@ -216,13 +223,14 @@ ADR-046: Integration with ADR-034-037 & Policies
 ### **Week 2: Hybrid Search Engine**
 
 **Tasks** (7-8 issues):
-- [ ] Integrate tantivy for FTS indexing
-- [ ] Integrate vecstore for vector search
-- [ ] Implement RRF fusion (multi-signal ranking)
-- [ ] Implement HybridSearchEngine
-- [ ] Implement freshness weighting
-- [ ] Implement graph expansion ("find related code")
-- [ ] Integration: search ↔ graph + memory
+
+-   [ ] Integrate tantivy for FTS indexing
+-   [ ] Integrate vecstore for vector search
+-   [ ] Implement RRF fusion (multi-signal ranking)
+-   [ ] Implement HybridSearchEngine
+-   [ ] Implement freshness weighting
+-   [ ] Implement graph expansion ("find related code")
+-   [ ] Integration: search ↔ graph + memory
 
 **Tests**: 15+ (FTS, vector, fusion, freshness, graph expansion)  
 **Deliverable**: HybridSearchEngine <500ms per query on 100k nodes
@@ -232,12 +240,13 @@ ADR-046: Integration with ADR-034-037 & Policies
 ### **Week 3: Versioning & Snapshots**
 
 **Tasks** (7-8 issues):
-- [ ] Implement ContextSnapshot entity
-- [ ] Implement VersionedContextStore (im::Vector + DashMap)
-- [ ] Implement TTL garbage collection
-- [ ] Implement TimelineQuery (time-travel API)
-- [ ] Implement StalenessComputer (time + signals)
-- [ ] Integration: snapshots ↔ freshness tracking
+
+-   [ ] Implement ContextSnapshot entity
+-   [ ] Implement VersionedContextStore (im::Vector + DashMap)
+-   [ ] Implement TTL garbage collection
+-   [ ] Implement TimelineQuery (time-travel API)
+-   [ ] Implement StalenessComputer (time + signals)
+-   [ ] Integration: snapshots ↔ freshness tracking
 
 **Tests**: 20+ (versioning, staleness, GC, time-travel, immutability)  
 **Deliverable**: Time-travel queries working, <100MB memory for 24h
@@ -247,28 +256,30 @@ ADR-046: Integration with ADR-034-037 & Policies
 ### **Week 4: Integration & Tools**
 
 **Tasks** (10+ issues):
-- [ ] Implement ContextRepository port (data source)
-- [ ] Implement ContextService (composition)
-- [ ] Implement MCP tools (context_search, context_snapshot, etc.)
-- [ ] Integrate with ADR-034 FSM (state gates freshness)
-- [ ] Integrate with ADR-036 policies (scope enforcement)
-- [ ] Implement ContextValidationResult + compliance checking
-- [ ] Implement CompensationHandler (rollback via snapshots)
-- [ ] Implement WorkflowEventBus + subscribers
-- [ ] Integration tests (full workflow + context + policies)
-- [ ] Performance benchmarking
+
+-   [ ] Implement ContextRepository port (data source)
+-   [ ] Implement ContextService (composition)
+-   [ ] Implement MCP tools (context_search, context_snapshot, etc.)
+-   [ ] Integrate with ADR-034 FSM (state gates freshness)
+-   [ ] Integrate with ADR-036 policies (scope enforcement)
+-   [ ] Implement ContextValidationResult + compliance checking
+-   [ ] Implement CompensationHandler (rollback via snapshots)
+-   [ ] Implement WorkflowEventBus + subscribers
+-   [ ] Integration tests (full workflow + context + policies)
+-   [ ] Performance benchmarking
 
 **Tests**: 20+ (integration, tools, FSM, policies, compensation, E2E)  
 **Deliverable**: All 4 layers working together, MCP tools exposed
 
 ---
 
-### **Total Scope**:
-- **70+ tests** across all weeks
-- **85%+ coverage** on domain layer
-- **25+ Rust crates** integrated
-- **14 languages** supported
-- **0 breaking changes** to existing APIs
+### **Total Scope**
+
+-   **70+ tests** across all weeks
+-   **85%+ coverage** on domain layer
+-   **25+ Rust crates** integrated
+-   **14 languages** supported
+-   **0 breaking changes** to existing APIs
 
 ---
 
@@ -288,53 +299,58 @@ ADR-046: Integration with ADR-034-037 & Policies
 
 ## ✅ Success Criteria (from 6 ADRs)
 
-- ✅ 5-layer architecture fully integrated
-- ✅ Graph extraction < 1ms per file
-- ✅ Hybrid search < 500ms per query
-- ✅ Time-travel < 20ms on 1000+ snapshots
-- ✅ Memory < 100MB for 24h history
-- ✅ FSM state gates context freshness
-- ✅ Policies enforce scope boundaries
-- ✅ Compensation triggers rollback
-- ✅ 70+ tests, 85%+ coverage
-- ✅ All 25+ Rust crates integrated
-- ✅ 0 breaking changes to MCB APIs
+-   ✅ 5-layer architecture fully integrated
+-   ✅ Graph extraction < 1ms per file
+-   ✅ Hybrid search < 500ms per query
+-   ✅ Time-travel < 20ms on 1000+ snapshots
+-   ✅ Memory < 100MB for 24h history
+-   ✅ FSM state gates context freshness
+-   ✅ Policies enforce scope boundaries
+-   ✅ Compensation triggers rollback
+-   ✅ 70+ tests, 85%+ coverage
+-   ✅ All 25+ Rust crates integrated
+-   ✅ 0 breaking changes to MCB APIs
 
 ---
 
 ## 📚 Next Actions
 
-### **This Week (Feb 5-9)**:
-1. ✅ Finalize ADRs (done)
-2. ✅ Commit to git (done — commit 6a31684)
-3. [ ] Architecture review (team sign-off)
-4. [ ] Coordinate Phase 8 → Phase 9 handoff
+### **This Week (Feb 5-9)**
 
-### **Week of Feb 10-14**:
-1. [ ] Create Beads issues (30-40 tasks)
-2. [ ] Break down 4 weeks into atomic issues
-3. [ ] Link to ADR-041-046 for context
-4. [ ] Assign to team members
+1.  ✅ Finalize ADRs (done)
+2.  ✅ Commit to git (done — commit 6a31684)
+3.  [ ] Architecture review (team sign-off)
+4.  [ ] Coordinate Phase 8 → Phase 9 handoff
 
-### **Week of Feb 17+**:
-1. [ ] Begin Phase 9 Week 1 (graph infrastructure)
-2. [ ] Weekly checkpoint reviews
-3. [ ] Adapt based on Phase 8 completion status
+### **Week of Feb 10-14**
+
+1.  [ ] Create Beads issues (30-40 tasks)
+2.  [ ] Break down 4 weeks into atomic issues
+3.  [ ] Link to ADR-041-046 for context
+4.  [ ] Assign to team members
+
+### **Week of Feb 17+**
+
+1.  [ ] Begin Phase 9 Week 1 (graph infrastructure)
+2.  [ ] Weekly checkpoint reviews
+3.  [ ] Adapt based on Phase 8 completion status
 
 ---
 
 ## 🎓 For Future Sessions
 
 **Context for resumption**:
-- All 6 ADRs in `/docs/adr/041-046-*.md`
-- Phase 9 execution plan in `.planning/V0.4.0-ARCHITECTURE-PLAN.md` (not committed due to `.gitignore`)
-- Research synthesis stored in MCB memory (tags: `v0.4.0`, `adr-041-046`, `research-complete`)
+
+-   All 6 ADRs in `/docs/adr/041-046-*.md`
+-   Phase 9 execution plan in `.planning/V0.4.0-ARCHITECTURE-PLAN.md` (not committed due to `.gitignore`)
+-   Research synthesis stored in MCB memory (tags: `v0.4.0`, `adr-041-046`, `research-complete`)
 
 **Key assumptions to remember**:
-- Tree-sitter-graph maturity needs Week 1 validation
-- ADR-034-037 must be stable before Phase 9
-- RRF weights (BM25 vs semantic vs graph) need tuning Week 4
-- 24-hour context history with TTL GC is the snapshot policy
+
+-   Tree-sitter-graph maturity needs Week 1 validation
+-   ADR-034-037 must be stable before Phase 9
+-   RRF weights (BM25 vs semantic vs graph) need tuning Week 4
+-   24-hour context history with TTL GC is the snapshot policy
 
 ---
 

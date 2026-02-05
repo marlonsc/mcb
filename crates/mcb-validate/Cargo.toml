@@ -46,8 +46,8 @@ anyhow.workspace = true
 # Date/time for timestamps
 chrono.workspace = true
 
-# CLI (optional)
-clap = { workspace = true, optional = true }
+# CLI
+clap = { workspace = true }
 
 # Rule Engines - Core do sistema
 rust-rule-engine.workspace = true
@@ -94,12 +94,3 @@ tracing.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
-
-[features]
-default = []
-cli = ["clap"]
-
-# Binary will be added when CLI feature is implemented
-# [[bin]]
-# name = "mcb-validate"
-# required-features = ["cli"]

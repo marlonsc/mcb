@@ -38,6 +38,7 @@ use std::sync::Arc;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::{AppConfig, OperatingMode, TransportMode};
 use mcb_infrastructure::crypto::CryptoService;
+use mcb_providers::git::Git2Provider;
 use tracing::{error, info, warn};
 
 use crate::McpServer;
@@ -249,12 +250,18 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
             .await
             .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
     let agent_repository =
-        mcb_providers::database::create_agent_repository_from_executor(db_executor);
+        mcb_providers::database::create_agent_repository_from_executor(db_executor.clone());
+
+    let project_repository =
+        mcb_providers::database::create_project_repository_from_executor(db_executor);
 
     let project_id = std::env::current_dir()
         .ok()
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
         .unwrap_or_else(|| "default".to_string());
+
+    let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
+        std::sync::Arc::new(Git2Provider::new());
 
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         project_id,
@@ -268,6 +275,8 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         event_bus,
         memory_repository,
         agent_repository,
+        project_repository: project_repository.clone(),
+        vcs_provider,
     };
     let services =
         mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(
@@ -283,6 +292,7 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .with_memory_service(services.memory_service)
         .with_vcs_provider(services.vcs_provider)
         .with_agent_session_service(services.agent_session_service)
+        .with_project_repository(project_repository)
         .try_build()
         .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
 }
