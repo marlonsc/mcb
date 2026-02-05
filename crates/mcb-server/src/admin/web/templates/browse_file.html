@@ -7,23 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="/ui/theme.css">
-    <!-- Prism Core only - theme handled by theme.css -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
-    <!-- Language support -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-swift.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-kotlin.min.js"></script>
     <script src="/ui/shared.js"></script>
     <script>
         // Theme initialization (runs before Alpine)
@@ -175,9 +158,6 @@
             }
 
             container.innerHTML = chunks.map((chunk, idx) => {
-                const lang = (chunk.language || defaultLang || 'text').toLowerCase();
-                const prismLang = getPrismLanguage(lang);
-
                 return `
                     <div class="card overflow-hidden" id="chunk-${idx}">
                         <div class="chunk-header flex items-center justify-between">
@@ -189,34 +169,10 @@
                                 Copy
                             </button>
                         </div>
-                        <pre class="chunk-code line-numbers" data-start="${chunk.start_line}"><code class="language-${prismLang}" id="code-${idx}">${escapeHtml(chunk.content)}</code></pre>
+                        <pre class="chunk-code" style="background: var(--bg-code); color: var(--text-primary);">${chunk.highlighted_html}</pre>
                     </div>
                 `;
             }).join('');
-
-            // Re-run Prism highlighting
-            Prism.highlightAll();
-        }
-
-        function getPrismLanguage(lang) {
-            const map = {
-                'rust': 'rust',
-                'python': 'python',
-                'javascript': 'javascript',
-                'typescript': 'typescript',
-                'go': 'go',
-                'java': 'java',
-                'c': 'c',
-                'cpp': 'cpp',
-                'c++': 'cpp',
-                'csharp': 'csharp',
-                'c#': 'csharp',
-                'ruby': 'ruby',
-                'php': 'php',
-                'swift': 'swift',
-                'kotlin': 'kotlin'
-            };
-            return map[lang] || 'clike';
         }
 
         function copyChunk(idx) {

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Tree - MCP Context Browser Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="/ui/theme.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="/ui/shared.js"></script>
+    <script>
+        (function() {
+            const saved = localStorage.getItem('mcb-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+    <style>
+        .tree-item { padding: 0.25rem 0; }
+        .tree-node { display: flex; align-items: center; padding: 0.25rem 0.5rem; cursor: pointer; border-radius: 0.25rem; }
+        .tree-node:hover { background: var(--bg-secondary); }
+        .tree-node.selected { background: var(--accent); color: white; }
+        .tree-toggle { width: 1.25rem; display: flex; align-items: center; justify-content: center; }
+        .tree-children { padding-left: 1.25rem; border-left: 1px solid var(--border-color); }
+        .tree-icon { width: 1.25rem; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; }
+        .language-badge { display: inline-block; font-size: 0.65rem; padding: 0.125rem 0.375rem; border-radius: 0.25rem; background: var(--accent); color: white; margin-left: 0.5rem; }
+        .chunk-count { font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.375rem; }
+    </style>
+</head>
+<body class="min-h-screen bg-primary text-primary">
+    <nav class="nav-theme">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold">MCP Context Browser</span>
+                    <span class="ml-2 text-sm text-gray-400">Admin</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Dashboard</a>
+                    <a href="/ui/browse" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Browse</a>
+                    <button x-data="{ 
+                        theme: localStorage.getItem('mcb-theme') || 'auto',
+                        toggle() {
+                            const next = { auto: 'light', light: 'dark', dark: 'auto' };
+                            this.theme = next[this.theme];
+                            if (this.theme === 'auto') {
+                                localStorage.removeItem('mcb-theme');
+                                document.documentElement.removeAttribute('data-theme');
+                            } else {
+                                localStorage.setItem('mcb-theme', this.theme);
+                                document.documentElement.setAttribute('data-theme', this.theme);
+                            }
+                        }
+                    }" @click="toggle()" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">
+                        <span x-show="theme === 'auto'">Auto</span>
+                        <span x-show="theme === 'light'">Light</span>  
+                        <span x-show="theme === 'dark'">Dark</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-primary">Browse Collection Tree</h1>
+            <p class="mt-2 text-secondary">Navigate your indexed codebase with keyboard shortcuts</p>
+        </div>
+
+        <div x-data="treeApp()" class="grid grid-cols-4 gap-8">
+            <!-- Sidebar: Collections -->
+            <div class="col-span-1 border-r border-border-color pr-4">
+                <h2 class="text-lg font-semibold mb-4">Collections</h2>
+                <div class="space-y-1">
+                    <template x-for="coll in collections" :key="coll.name">
+                        <div class="tree-node" 
+                            @click="selectCollection(coll.name)"
+                            :class="{ 'selected': selectedCollection === coll.name }">
+                            <span x-text="coll.name"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Main: File Tree -->
+            <div class="col-span-3">
+                <div class="mb-4">
+                    <input type="text" 
+                        x-model="searchQuery"
+                        @input="filterTree()"
+                        placeholder="Search files (Ctrl+F)..."
+                        class="w-full px-3 py-2 border border-border-color rounded-md bg-bg-primary text-primary focus:outline-none focus:ring-2 focus:ring-accent">
+                </div>
+
+                <div x-show="!selectedCollection" class="text-center py-8 text-secondary">
+                    Select a collection to browse
+                </div>
+
+                <div x-show="selectedCollection && !tree" class="text-center py-8 text-secondary">
+                    Loading...
+                </div>
+
+                <div x-show="selectedCollection && tree" class="space-y-1 font-mono text-sm">
+                    <template x-for="node in filteredTree" :key="node.path">
+                        <div :style="`padding-left: ${node.depth * 20}px`" class="tree-item">
+                            <div class="tree-node" 
+                                @click.prevent="toggleNode(node)"
+                                @keydown.enter.prevent="selectNode(node)"
+                                @keydown.arrow-right.prevent="expandNode(node)"
+                                @keydown.arrow-left.prevent="collapseNode(node)"
+                                :class="{ 'selected': selectedNode?.path === node.path }"
+                                :tabindex="0">
+                                
+                                <!-- Toggle for directories -->
+                                <div x-show="node.is_dir" class="tree-toggle">
+                                    <span x-show="!node.expanded">▶</span>
+                                    <span x-show="node.expanded">▼</span>
+                                </div>
+                                <div x-show="!node.is_dir" class="tree-toggle"></div>
+
+                                <!-- Icon -->
+                                <div class="tree-icon">
+                                    <span x-show="node.is_dir">📁</span>
+                                    <span x-show="!node.is_dir">📄</span>
+                                </div>
+
+                                <!-- Name -->
+                                <span x-text="node.name"></span>
+
+                                <!-- Language badge and chunk count (files only) -->
+                                <template x-if="!node.is_dir && node.language">
+                                    <span class="language-badge" x-text="node.language.toUpperCase()"></span>
+                                </template>
+                                <template x-if="!node.is_dir && node.chunk_count">
+                                    <span class="chunk-count" x-text="`(${node.chunk_count} chunks)`"></span>
+                                </template>
+                            </div>
+
+                            <!-- Children (collapsed/expanded) -->
+                            <template x-if="node.is_dir && node.expanded && node.children">
+                                <div class="tree-children">
+                                    <template x-for="child in node.children" :key="child.path">
+                                        <div :style="`padding-left: ${(child.depth - node.depth - 1) * 20}px`" class="tree-item">
+                                            <div class="tree-node"
+                                                @click="toggleNode(child)"
+                                                :class="{ 'selected': selectedNode?.path === child.path }">
+                                                
+                                                <div x-show="child.is_dir" class="tree-toggle">
+                                                    <span x-show="!child.expanded">▶</span>
+                                                    <span x-show="child.expanded">▼</span>
+                                                </div>
+                                                <div x-show="!child.is_dir" class="tree-toggle"></div>
+
+                                                <div class="tree-icon">
+                                                    <span x-show="child.is_dir">📁</span>
+                                                    <span x-show="!child.is_dir">📄</span>
+                                                </div>
+
+                                                <span x-text="child.name"></span>
+                                                
+                                                <template x-if="!child.is_dir && child.language">
+                                                    <span class="language-badge" x-text="child.language.toUpperCase()"></span>
+                                                </template>
+                                                <template x-if="!child.is_dir && child.chunk_count">
+                                                    <span class="chunk-count" x-text="`(${child.chunk_count} chunks)`"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Keyboard shortcuts help -->
+                <div class="mt-8 p-4 bg-bg-secondary rounded-md text-sm text-secondary">
+                    <p class="font-semibold mb-2">Keyboard Shortcuts:</p>
+                    <ul class="space-y-1 text-xs">
+                        <li><kbd>↑/↓</kbd> Navigate | <kbd>→</kbd> Expand | <kbd>←</kbd> Collapse</li>
+                        <li><kbd>Enter</kbd> Open file | <kbd>Ctrl+F</kbd> Search</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function treeApp() {
+            return {
+                collections: [],
+                selectedCollection: null,
+                tree: null,
+                filteredTree: null,
+                searchQuery: '',
+                selectedNode: null,
+
+                async init() {
+                    // Load collections
+                    try {
+                        const res = await fetch('/api/admin/collections');
+                        const data = await res.json();
+                        this.collections = data.collections || [];
+                    } catch (e) {
+                        console.error('Failed to load collections:', e);
+                    }
+                },
+
+                async selectCollection(name) {
+                    this.selectedCollection = name;
+                    this.searchQuery = '';
+                    this.tree = null;
+                    this.filteredTree = null;
+                    
+                    try {
+                        const res = await fetch(`/api/admin/collections/${name}/tree`);
+                        const data = await res.json();
+                        this.tree = data.tree || [];
+                        this.addDepthMetadata(this.tree);
+                        this.filterTree();
+                    } catch (e) {
+                        console.error('Failed to load tree:', e);
+                    }
+                },
+
+                addDepthMetadata(nodes, depth = 0) {
+                    nodes.forEach(node => {
+                        node.depth = depth;
+                        node.expanded = depth < 2; // Expand first 2 levels by default
+                        if (node.children) {
+                            this.addDepthMetadata(node.children, depth + 1);
+                        }
+                    });
+                },
+
+                filterTree() {
+                    if (!this.tree) return;
+                    
+                    if (!this.searchQuery) {
+                        this.filteredTree = this.tree;
+                        return;
+                    }
+
+                    const query = this.searchQuery.toLowerCase();
+                    this.filteredTree = this.filterNodes(this.tree, query);
+                },
+
+                filterNodes(nodes, query) {
+                    return nodes.filter(node => {
+                        const matches = node.name.toLowerCase().includes(query);
+                        if (node.children) {
+                            node.children = this.filterNodes(node.children, query);
+                            return matches || node.children.length > 0;
+                        }
+                        return matches;
+                    });
+                },
+
+                toggleNode(node) {
+                    if (node.is_dir) {
+                        node.expanded = !node.expanded;
+                    } else {
+                        this.selectNode(node);
+                    }
+                    this.selectedNode = node;
+                },
+
+                expandNode(node) {
+                    if (node.is_dir) {
+                        node.expanded = true;
+                    }
+                },
+
+                collapseNode(node) {
+                    if (node.is_dir) {
+                        node.expanded = false;
+                    }
+                },
+
+                selectNode(node) {
+                    if (!node.is_dir) {
+                        // Navigate to file viewer
+                        window.location.href = `/ui/browse/collections/${this.selectedCollection}/files/${encodeURIComponent(node.path)}`;
+                    }
+                }
+            };
+        }
+
+        // Initialize on page load
+        document.addEventListener('alpine:init', () => {
+            console.log('Tree app initialized');
+        });
+    </script>
+</body>
+</html>

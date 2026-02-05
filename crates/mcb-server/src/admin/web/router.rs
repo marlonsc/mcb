@@ -19,6 +19,7 @@ use super::handlers;
 /// - GET `/ui/browse` - Browse collections page
 /// - GET `/ui/browse/<collection>` - Browse collection files page
 /// - GET `/ui/browse/<collection>/file` - Browse file chunks page
+/// - GET `/ui/browse/tree` - Browse tree view page (Wave 3)
 /// - GET `/favicon.ico` - Favicon
 pub fn web_rocket() -> Rocket<Build> {
     rocket::build().mount(
@@ -32,6 +33,7 @@ pub fn web_rocket() -> Rocket<Build> {
             handlers::browse_page,
             handlers::browse_collection_page,
             handlers::browse_file_page,
+            handlers::browse_tree_page,
             handlers::shared_js,
             handlers::theme_css,
             handlers::favicon,
@@ -50,6 +52,7 @@ pub fn web_routes() -> Vec<rocket::Route> {
         handlers::browse_page,
         handlers::browse_collection_page,
         handlers::browse_file_page,
+        handlers::browse_tree_page,
         handlers::shared_js,
         handlers::theme_css,
         handlers::favicon,

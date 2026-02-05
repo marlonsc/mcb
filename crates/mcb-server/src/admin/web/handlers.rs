@@ -16,6 +16,7 @@ const INDEXING_HTML: &str = include_str!("templates/indexing.html");
 const BROWSE_HTML: &str = include_str!("templates/browse.html");
 const BROWSE_COLLECTION_HTML: &str = include_str!("templates/browse_collection.html");
 const BROWSE_FILE_HTML: &str = include_str!("templates/browse_file.html");
+const BROWSE_TREE_HTML: &str = include_str!("templates/browse_tree.html");
 const SHARED_JS: &str = include_str!("templates/shared.js");
 const THEME_CSS: &str = include_str!("templates/theme.css");
 
@@ -86,4 +87,10 @@ pub fn browse_collection_page(_collection: &str) -> RawHtml<&'static str> {
 #[get("/ui/browse/<_collection>/file")]
 pub fn browse_file_page(_collection: &str) -> RawHtml<&'static str> {
     RawHtml(BROWSE_FILE_HTML)
+}
+
+/// Browse tree view page handler (Phase 8b Wave 3)
+#[get("/ui/browse/tree")]
+pub fn browse_tree_page() -> RawHtml<&'static str> {
+    RawHtml(BROWSE_TREE_HTML)
 }

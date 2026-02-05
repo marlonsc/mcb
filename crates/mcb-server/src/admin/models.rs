@@ -137,6 +137,8 @@ pub struct ChunkDetailResponse {
     pub id: String,
     /// Code content
     pub content: String,
+    /// Server-rendered HTML with tree-sitter highlighting and CSS classes
+    pub highlighted_html: String,
     /// File path
     pub file_path: String,
     /// Starting line number

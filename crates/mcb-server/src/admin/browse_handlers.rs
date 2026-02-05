@@ -207,9 +207,13 @@ pub async fn get_file_chunks(
             let line_count = c.content.lines().count() as u32;
             let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
 
+            // Generate server-side highlighting via highlight_code module
+            let highlighted_html = super::web::highlight::highlight_code(&c.content, &c.language);
+
             ChunkDetailResponse {
                 id: c.id,
                 content: c.content,
+                highlighted_html,
                 file_path: c.file_path,
                 start_line: c.start_line,
                 end_line,
