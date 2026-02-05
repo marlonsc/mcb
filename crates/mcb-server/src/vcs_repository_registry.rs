@@ -62,6 +62,9 @@ impl FileLockGuard {
         {
             use std::os::unix::io::AsRawFd;
             let fd = file.as_raw_fd();
+            // SAFETY: fd is a valid file descriptor obtained from AsRawFd trait.
+            // libc::LOCK_EX is a valid flock operation constant.
+            // flock only modifies kernel state, not memory safety.
             let result = unsafe { libc::flock(fd, libc::LOCK_EX) };
             if result != 0 {
                 return Err(Error::io("Failed to acquire file lock"));
@@ -77,6 +80,9 @@ impl Drop for FileLockGuard {
     fn drop(&mut self) {
         use std::os::unix::io::AsRawFd;
         let fd = self._file.as_raw_fd();
+        // SAFETY: fd is a valid file descriptor obtained from AsRawFd trait.
+        // libc::LOCK_UN is a valid flock operation constant for unlocking.
+        // This call reverts the lock acquired in new().
         unsafe { libc::flock(fd, libc::LOCK_UN) };
     }
 }
