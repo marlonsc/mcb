@@ -954,6 +954,279 @@ fn sqlite_workflow_factory(
 | `mcb-providers` | `src/workflow/transitions.rs` | `try_transition()` logic |
 | `mcb-infrastructure` | `src/config/workflow.rs` | `WorkflowConfig` (Figment) |
 
+## Refinements (ADR-034 Phase 2)
+
+### Refinement 1: Database Provider Pattern
+
+**Rationale**: Workflow state persistence requires abstraction to support multiple backends (SQLite for development, PostgreSQL for production). This refinement introduces a `DatabaseProvider` port following the established provider pattern (ADR-029, ADR-023).
+
+**Port Definition** (`mcb-domain/src/ports/providers/database.rs`):
+
+```rust
+use async_trait::async_trait;
+use sqlx::sqlite::SqlitePool;
+
+pub struct DatabaseConnectionConfig {
+    pub url: String,
+    pub max_connections: u32,
+    pub enable_wal: bool,  // SQLite WAL mode for concurrent reads
+}
+
+#[async_trait]
+pub trait DatabaseProvider: Send + Sync {
+    /// Get connection pool (implementation-specific)
+    async fn get_pool(&self) -> Result<SqlitePool, WorkflowError>;
+
+    /// Execute DDL (schema creation) with idempotency guarantee
+    async fn ensure_schema(&self) -> Result<(), WorkflowError>;
+
+    /// Health check
+    async fn health_check(&self) -> Result<(), WorkflowError>;
+}
+```
+
+**Implementation** (`mcb-providers/src/database/sqlite.rs`):
+
+```rust
+#[linkme::distributed_slice(DATABASE_PROVIDERS)]
+static SQLITE_DB: DatabaseProviderEntry = DatabaseProviderEntry {
+    name: "sqlite",
+    description: "SQLite workflow database with WAL mode",
+    factory: sqlite_db_factory,
+};
+
+async fn sqlite_db_factory(config: &Figment) -> Result<Arc<dyn DatabaseProvider>> {
+    let db_config: DatabaseConnectionConfig = config.extract_inner("workflow.database")?;
+    
+    let pool = SqlitePool::connect_lazy(&db_config.url)?;
+    pool.acquire().await?;  // Verify connection
+    
+    // Enable WAL mode and transaction isolation
+    sqlx::query("PRAGMA journal_mode = WAL;")
+        .execute(&pool)
+        .await?;
+    sqlx::query("PRAGMA transaction_isolation = DEFERRED;")
+        .execute(&pool)
+        .await?;
+    
+    Ok(Arc::new(SqliteDatabase { pool }))
+}
+```
+
+**Registration**: Providers auto-register via linkme into `mcb-application/src/registry/database.rs::DATABASE_PROVIDERS`.
+
+---
+
+### Refinement 2: Compensation and Rollback Logic
+
+**Problem**: When a workflow transitions fail during execution (e.g., task fails verification → rollback to Executing), there must be a clear strategy for compensating side effects.
+
+**Classification**: MCB workflows operate under human supervision — not autonomous agents. Compensation is **hybrid**:
+- **Automatic**: Safe operations (in-memory state, git revert)
+- **Manual**: High-risk operations (external API calls, database mutations) → prompt operator for approval
+
+**Compensation Entity** (`mcb-domain/src/entities/workflow.rs`):
+
+```rust
+/// Side effect produced during task execution
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutionEffect {
+    pub task_id: String,
+    pub effect_type: EffectType,
+    pub timestamp: DateTime<Utc>,
+    pub reversible: bool,  // Can this effect be rolled back?
+    pub compensation_required: bool,  // Needs operator approval?
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum EffectType {
+    GitCommit { hash: String, message: String },
+    FileModification { path: String, old_hash: String, new_hash: String },
+    ExternalApiCall { service: String, id: String },
+    DatabaseMutation { table: String, operation: String },
+}
+
+impl ExecutionEffect {
+    /// Compute compensation action (if reversible)
+    pub fn compensation(&self) -> Option<CompensationAction> {
+        match &self.effect_type {
+            EffectType::GitCommit { hash, .. } => {
+                Some(CompensationAction::GitRevert { hash: hash.clone() })
+            }
+            EffectType::FileModification { path, old_hash, .. } => {
+                Some(CompensationAction::RestoreFile { path: path.clone(), hash: old_hash.clone() })
+            }
+            EffectType::ExternalApiCall { .. } | EffectType::DatabaseMutation { .. } => {
+                None  // Requires manual intervention
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "action")]
+pub enum CompensationAction {
+    GitRevert { hash: String },
+    RestoreFile { path: String, hash: String },
+    ManualReview { reason: String, operator_decision_required: bool },
+}
+```
+
+**Transition with Compensation** (`mcb-providers/src/workflow/transitions.rs`):
+
+```rust
+pub async fn transition_with_compensation(
+    session: &mut WorkflowSession,
+    trigger: TransitionTrigger,
+    effects: Vec<ExecutionEffect>,
+) -> Result<Transition> {
+    match transition(&mut session.clone(), trigger.clone()) {
+        Ok(transition) => Ok(transition),
+        Err(WorkflowError::VerificationFailed { reason }) => {
+            // Verification failed → compute compensations
+            let mut compensations = Vec::new();
+            let mut manual_needed = false;
+            
+            for effect in effects {
+                if let Some(comp) = effect.compensation() {
+                    compensations.push(comp);
+                } else if effect.compensation_required {
+                    manual_needed = true;
+                }
+            }
+            
+            if manual_needed {
+                // Transition to ManualReview state (requires operator decision)
+                session.current_state = WorkflowState::Failed {
+                    error: reason,
+                    recoverable: true,  // Operator can decide recovery
+                };
+            } else {
+                // Auto-execute compensations
+                for comp in compensations {
+                    execute_compensation(comp).await?;
+                }
+                // Re-attempt transition
+                transition(session, TransitionTrigger::Recover)?;
+            }
+            
+            Err(WorkflowError::VerificationFailed { reason })
+        }
+        Err(e) => Err(e),
+    }
+}
+```
+
+**Schema** (`workflow_effects` table):
+
+```sql
+CREATE TABLE workflow_effects (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    effect_type TEXT NOT NULL,  -- JSON serialized EffectType
+    reversible BOOLEAN NOT NULL,
+    compensation_required BOOLEAN NOT NULL,
+    timestamp DATETIME NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES workflow_sessions(id)
+);
+
+CREATE INDEX idx_effects_by_session ON workflow_effects(session_id);
+```
+
+---
+
+### Refinement 3: Transaction Isolation and Concurrency Control
+
+**Problem (from Critical Analysis)**: SQLite concurrent access not properly specified. Two concurrent `transition()` calls on the same session could violate FSM invariants (race condition on state update).
+
+**Solution**: Define explicit concurrency model with transaction isolation levels.
+
+**Concurrency Model**:
+
+1. **Per-session mutual exclusion**: Only one thread may call `transition()` per session concurrently.
+   - Enforced via RwLock in `SqliteWorkflowEngine`
+   - **Implementation**: `Arc<RwLock<WorkflowSession>>`
+
+2. **SQLite transaction isolation**: Use SERIALIZABLE isolation for `workflow_sessions` updates.
+   - **Schema change**: Add `version` column for optimistic concurrency detection.
+
+```sql
+ALTER TABLE workflow_sessions ADD COLUMN version INTEGER DEFAULT 0;
+
+-- Transition updates must increment version atomically
+UPDATE workflow_sessions
+  SET state_data = ?, version = version + 1, updated_at = NOW()
+  WHERE id = ? AND version = ?;  -- Detects concurrent writes
+```
+
+3. **Multi-session parallelism**: Different sessions may transition in parallel (no global lock).
+   - SQLite WAL mode enables concurrent reads from one writer.
+   - Use connection pool to service multiple sessions simultaneously.
+
+**Implementation** (`mcb-providers/src/workflow/sqlite_workflow.rs`):
+
+```rust
+pub struct SqliteWorkflowEngine {
+    pool: SqlitePool,
+    session_locks: Arc<DashMap<String, Arc<RwLock<()>>>>,  // Per-session lock
+}
+
+impl SqliteWorkflowEngine {
+    pub async fn transition_atomic(
+        &self,
+        session_id: &str,
+        trigger: TransitionTrigger,
+    ) -> Result<Transition> {
+        // Acquire per-session write lock
+        let lock = self.session_locks
+            .entry(session_id.to_string())
+            .or_insert_with(|| Arc::new(RwLock::new(())))
+            .clone();
+        
+        let _guard = lock.write().await;  // Exclusive access for this session
+        
+        // Load session (read)
+        let mut session = self.load_session(session_id).await?;
+        
+        // Compute new state
+        let transition = mcb_providers::workflow::transitions::transition(
+            &mut session,
+            trigger,
+        )?;
+        
+        // Atomic write with version check (optimistic concurrency)
+        let rows_affected = sqlx::query(
+            "UPDATE workflow_sessions 
+             SET state_data = ?, version = version + 1, updated_at = NOW()
+             WHERE id = ? AND version = ?",
+        )
+        .bind(serde_json::to_string(&transition.to_state)?)
+        .bind(session_id)
+        .bind(session.version)
+        .execute(&self.pool)
+        .await?
+        .rows_affected();
+        
+        if rows_affected == 0 {
+            return Err(WorkflowError::OptimisticLockConflict {
+                session_id: session_id.to_string(),
+            });
+        }
+        
+        // Log transition
+        self.log_transition(transition.clone()).await?;
+        
+        Ok(transition)
+    }
+}
+```
+
+**Testing**: Verify that concurrent transitions on the same session are serialized; concurrent transitions on different sessions run in parallel.
+
+---
+
 ## Consequences
 
 ### Positive
