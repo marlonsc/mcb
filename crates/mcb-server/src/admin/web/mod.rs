@@ -18,6 +18,7 @@
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 pub mod handlers;
+pub mod highlight;
 pub mod router;
 
 // Re-export public functions
