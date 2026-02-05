@@ -4,6 +4,7 @@
 //! providing structured representations of indexed collections and files.
 
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// Information about an indexed collection
 ///
@@ -187,6 +188,149 @@ impl FileTreeNode {
         for child in &mut self.children {
             child.sort_children();
         }
+    }
+
+    /// Traverse the tree and call a callback for each node
+    ///
+    /// Performs a depth-first traversal of the tree, calling the provided callback
+    /// for each node (including the root).
+    ///
+    /// # Arguments
+    ///
+    /// * `callback` - Function to call for each node
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use mcb_domain::value_objects::FileTreeNode;
+    ///
+    /// let mut root = FileTreeNode::directory("src", "src");
+    /// root.add_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+    ///
+    /// let mut count = 0;
+    /// root.traverse(&mut |_node| {
+    ///     count += 1;
+    /// });
+    /// assert_eq!(count, 2); // root + 1 child
+    /// ```
+    pub fn traverse(&self, callback: &mut dyn FnMut(&FileTreeNode)) {
+        callback(self);
+        for child in &self.children {
+            child.traverse(callback);
+        }
+    }
+
+    /// Convert tree to ANSI-formatted string with colors and tree structure
+    ///
+    /// Returns a string representation of the tree with ANSI color codes for
+    /// terminal display. Directories are shown in blue, files in default color.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use mcb_domain::value_objects::FileTreeNode;
+    ///
+    /// let mut root = FileTreeNode::directory("src", "src");
+    /// root.add_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+    ///
+    /// let ansi = root.to_ansi();
+    /// assert!(ansi.contains("src"));
+    /// assert!(ansi.contains("lib.rs"));
+    /// ```
+    pub fn to_ansi(&self) -> String {
+        let mut output = String::new();
+        self.format_ansi(&mut output, "", true);
+        output
+    }
+
+    fn format_ansi(&self, output: &mut String, prefix: &str, is_last: bool) {
+        let connector = if is_last { "└── " } else { "├── " };
+        let color = if self.is_dir { "\x1b[34m" } else { "\x1b[0m" };
+        let reset = "\x1b[0m";
+
+        output.push_str(prefix);
+        output.push_str(connector);
+        output.push_str(color);
+        output.push_str(&self.name);
+        output.push_str(reset);
+
+        if let Some(count) = self.chunk_count {
+            output.push_str(&format!(" ({})", count));
+        }
+        output.push('\n');
+
+        let new_prefix = format!("{}{}", prefix, if is_last { "    " } else { "│   " });
+
+        for (i, child) in self.children.iter().enumerate() {
+            let is_last_child = i == self.children.len() - 1;
+            child.format_ansi(output, &new_prefix, is_last_child);
+        }
+    }
+
+    /// Convert tree to HTML-formatted string with nesting
+    ///
+    /// Returns an HTML representation of the tree using nested `<ul>` and `<li>` elements.
+    /// Directories are marked with a folder icon, files with a file icon.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use mcb_domain::value_objects::FileTreeNode;
+    ///
+    /// let mut root = FileTreeNode::directory("src", "src");
+    /// root.add_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+    ///
+    /// let html = root.to_html();
+    /// assert!(html.contains("<ul>"));
+    /// assert!(html.contains("src"));
+    /// assert!(html.contains("lib.rs"));
+    /// ```
+    pub fn to_html(&self) -> String {
+        let mut output = String::new();
+        self.format_html(&mut output);
+        output
+    }
+
+    fn format_html(&self, output: &mut String) {
+        let icon = if self.is_dir { "📁" } else { "📄" };
+        let name_html = html_escape(&self.name);
+
+        output.push_str("<ul>\n");
+        output.push_str("<li>");
+        output.push_str(icon);
+        output.push(' ');
+        output.push_str(&name_html);
+
+        if let Some(count) = self.chunk_count {
+            output.push_str(&format!(" <span style=\"color: #888;\">({})</span>", count));
+        }
+
+        if !self.children.is_empty() {
+            output.push('\n');
+            for child in &self.children {
+                child.format_html(output);
+            }
+            output.push_str("</li>\n");
+            output.push_str("</ul>\n");
+        } else {
+            output.push_str("</li>\n");
+            output.push_str("</ul>\n");
+        }
+    }
+}
+
+/// HTML escape a string to prevent XSS
+fn html_escape(text: &str) -> String {
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
+}
+
+impl fmt::Display for FileTreeNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_ansi())
     }
 }
 

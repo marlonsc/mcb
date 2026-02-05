@@ -274,6 +274,141 @@ impl HighlightService for HighlightServiceImpl {
     }
 }
 
+/// Public function to highlight code and return HTML with syntax highlighting
+///
+/// This is the main entry point for syntax highlighting. It uses the internal
+/// HighlightServiceImpl to perform tree-sitter based highlighting and converts
+/// the result to HTML with CSS classes.
+///
+/// # Arguments
+///
+/// * `code` - The source code to highlight
+/// * `language` - The programming language (e.g., "rust", "python", "javascript")
+///
+/// # Returns
+///
+/// HTML string with syntax highlighting applied via CSS classes (hl-keyword, hl-string, etc.)
+/// Returns empty string for empty input or unsupported languages.
+///
+/// # Example
+///
+/// ```ignore
+/// let html = highlight_code("fn main() {}", "rust");
+/// assert!(html.contains("<span class=\"hl-keyword\">fn</span>"));
+/// ```
+pub fn highlight_code(code: &str, language: &str) -> String {
+    if code.is_empty() {
+        return String::new();
+    }
+
+    let code_owned = code.to_string();
+    let language_owned = language.to_string();
+    let service = HighlightServiceImpl::new();
+
+    // Use blocking call since this is a sync function
+    match std::thread::spawn(move || {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async { service.highlight(&code_owned, &language_owned).await })
+    })
+    .join()
+    {
+        Ok(Ok(highlighted)) => convert_highlighted_code_to_html(&highlighted),
+        Ok(Err(_)) => {
+            // Fallback to HTML-escaped plain text for unsupported languages
+            html_escape(code)
+        }
+        Err(_) => {
+            // Thread panic fallback
+            html_escape(code)
+        }
+    }
+}
+
+/// Public function to highlight code chunks and return HTML
+///
+/// Highlights multiple code chunks and returns HTML with syntax highlighting.
+/// Useful for highlighting multiple code blocks from the same file.
+///
+/// # Arguments
+///
+/// * `chunks` - Vector of (code, language) tuples
+///
+/// # Returns
+///
+/// Vector of HTML strings with syntax highlighting applied
+pub fn highlight_chunks(chunks: Vec<(&str, &str)>) -> Vec<String> {
+    chunks
+        .into_iter()
+        .map(|(code, language)| highlight_code(code, language))
+        .collect()
+}
+
+/// Convert HighlightedCode to HTML with CSS classes
+fn convert_highlighted_code_to_html(highlighted: &HighlightedCode) -> String {
+    if highlighted.original.is_empty() {
+        return String::new();
+    }
+
+    let mut html = String::new();
+    let mut last_end = 0;
+
+    // Sort spans by start position for proper nesting
+    let mut sorted_spans = highlighted.spans.clone();
+    sorted_spans.sort_by_key(|s| s.start);
+
+    for span in sorted_spans {
+        // Add unspanned text before this span
+        if last_end < span.start {
+            let text = &highlighted.original[last_end..span.start];
+            html.push_str(&html_escape(text));
+        }
+
+        // Add the highlighted span
+        let class = category_to_css_class(span.category);
+        let text = &highlighted.original[span.start..span.end];
+        html.push_str(&format!(
+            "<span class=\"{}\">{}</span>",
+            class,
+            html_escape(text)
+        ));
+
+        last_end = span.end;
+    }
+
+    // Add remaining unspanned text
+    if last_end < highlighted.original.len() {
+        let text = &highlighted.original[last_end..];
+        html.push_str(&html_escape(text));
+    }
+
+    html
+}
+
+/// Map highlight category to CSS class name
+fn category_to_css_class(category: HighlightCategory) -> &'static str {
+    match category {
+        HighlightCategory::Keyword => "hl-keyword",
+        HighlightCategory::String => "hl-string",
+        HighlightCategory::Comment => "hl-comment",
+        HighlightCategory::Function => "hl-function",
+        HighlightCategory::Variable => "hl-variable",
+        HighlightCategory::Type => "hl-type",
+        HighlightCategory::Number => "hl-number",
+        HighlightCategory::Operator => "hl-operator",
+        HighlightCategory::Punctuation => "hl-punctuation",
+        HighlightCategory::Other => "hl-other",
+    }
+}
+
+/// HTML escape a string to prevent XSS
+fn html_escape(text: &str) -> String {
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

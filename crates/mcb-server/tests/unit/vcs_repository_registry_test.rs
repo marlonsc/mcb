@@ -11,7 +11,13 @@ fn test_record_and_lookup_repository() {
 
     let resolved = vcs_repository_registry::lookup_repository_path(repo_id);
     assert!(resolved.is_ok());
-    assert_eq!(resolved.unwrap(), repo_path);
+    // Canonicalize both paths for comparison (handles symlinks, trailing slashes, etc)
+    let resolved_canonical = resolved
+        .unwrap()
+        .canonicalize()
+        .expect("canonicalize resolved");
+    let expected_canonical = repo_path.canonicalize().expect("canonicalize expected");
+    assert_eq!(resolved_canonical, expected_canonical);
 }
 
 #[test]
