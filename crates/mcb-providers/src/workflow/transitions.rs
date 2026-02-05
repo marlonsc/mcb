@@ -1,0 +1,184 @@
+//! FSM transition logic and state validation rules for ADR-034 Workflow.
+//!
+//! Implements the state machine rules that govern valid transitions
+//! and side effects for the 8-state workflow model.
+
+use mcb_domain::entities::{TransitionTrigger, WorkflowSession, WorkflowState};
+
+type Result<T> = std::result::Result<T, String>;
+
+/// Apply a transition trigger to a workflow session, validating FSM rules.
+///
+/// Returns the target state if transition is valid, error otherwise.
+pub fn apply_transition(
+    session: &mut WorkflowSession,
+    trigger: TransitionTrigger,
+) -> Result<WorkflowState> {
+    let new_state = match (&session.current_state, &trigger) {
+        // Initializing → Ready (must have context)
+        (WorkflowState::Initializing, TransitionTrigger::ContextDiscovered { context_id }) => {
+            WorkflowState::Ready {
+                context_id: context_id.clone(),
+            }
+        }
+
+        // Ready → Planning
+        (WorkflowState::Ready { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
+            WorkflowState::Planning {
+                phase_id: phase_id.clone(),
+            }
+        }
+
+        // Ready → Executing (skip planning)
+        (WorkflowState::Ready { .. }, TransitionTrigger::StartExecution { phase_id }) => {
+            WorkflowState::Executing {
+                phase_id: phase_id.clone(),
+                task_id: None,
+            }
+        }
+
+        // Planning → Executing
+        (WorkflowState::Planning { phase_id }, TransitionTrigger::StartExecution { .. }) => {
+            WorkflowState::Executing {
+                phase_id: phase_id.clone(),
+                task_id: None,
+            }
+        }
+
+        // Executing → Executing (claim task)
+        (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::ClaimTask { task_id }) => {
+            WorkflowState::Executing {
+                phase_id: phase_id.clone(),
+                task_id: Some(task_id.clone()),
+            }
+        }
+
+        // Executing → Executing (complete task, clear task_id)
+        (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::CompleteTask { .. }) => {
+            WorkflowState::Executing {
+                phase_id: phase_id.clone(),
+                task_id: None,
+            }
+        }
+
+        // Executing → Verifying
+        (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::StartVerification) => {
+            WorkflowState::Verifying {
+                phase_id: phase_id.clone(),
+            }
+        }
+
+        // Verifying → PhaseComplete (verification passed)
+        (WorkflowState::Verifying { phase_id }, TransitionTrigger::VerificationPassed) => {
+            WorkflowState::PhaseComplete {
+                phase_id: phase_id.clone(),
+            }
+        }
+
+        // Verifying → Executing (verification failed, retry)
+        (WorkflowState::Verifying { phase_id }, TransitionTrigger::VerificationFailed { .. }) => {
+            WorkflowState::Executing {
+                phase_id: phase_id.clone(),
+                task_id: None,
+            }
+        }
+
+        // PhaseComplete → Planning (start next phase)
+        (WorkflowState::PhaseComplete { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
+            WorkflowState::Planning {
+                phase_id: phase_id.clone(),
+            }
+        }
+
+        // PhaseComplete → Completed
+        (WorkflowState::PhaseComplete { .. }, TransitionTrigger::EndSession) => {
+            WorkflowState::Completed
+        }
+
+        // Any state → Failed (error trigger)
+        (_, TransitionTrigger::Error { message }) => WorkflowState::Failed {
+            error: message.clone(),
+            recoverable: true,
+        },
+
+        // Failed → Executing (recovery)
+        (WorkflowState::Failed { .. }, TransitionTrigger::Recover) => {
+            // Return to last known good executing state
+            WorkflowState::Executing {
+                phase_id: "unknown".to_string(),
+                task_id: None,
+            }
+        }
+
+        // Failed → Completed (give up)
+        (WorkflowState::Failed { .. }, TransitionTrigger::EndSession) => WorkflowState::Completed,
+
+        // Completed → (no transitions allowed)
+        (WorkflowState::Completed, _) => {
+            return Err("Cannot transition from terminal state Completed".to_string());
+        }
+
+        // Invalid transition
+        (from, trigger) => {
+            return Err(format!(
+                "Invalid FSM transition: {} + {} not allowed",
+                from, trigger
+            ));
+        }
+    };
+
+    Ok(new_state)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn initializing_to_ready() {
+        let mut session = WorkflowSession::new("s1".to_string(), "p1".to_string());
+        let trigger = TransitionTrigger::ContextDiscovered {
+            context_id: "ctx-1".to_string(),
+        };
+
+        let new_state = apply_transition(&mut session, trigger).expect("transition failed");
+
+        match new_state {
+            WorkflowState::Ready { context_id } => {
+                assert_eq!(context_id, "ctx-1");
+            }
+            _ => panic!("Expected Ready state"),
+        }
+    }
+
+    #[test]
+    fn ready_to_planning() {
+        let mut session = WorkflowSession::new("s1".to_string(), "p1".to_string());
+        session.current_state = WorkflowState::Ready {
+            context_id: "ctx-1".to_string(),
+        };
+
+        let trigger = TransitionTrigger::StartPlanning {
+            phase_id: "phase-1".to_string(),
+        };
+        let new_state = apply_transition(&mut session, trigger).expect("transition failed");
+
+        match new_state {
+            WorkflowState::Planning { phase_id } => {
+                assert_eq!(phase_id, "phase-1");
+            }
+            _ => panic!("Expected Planning state"),
+        }
+    }
+
+    #[test]
+    fn terminal_state_no_transitions() {
+        let mut session = WorkflowSession::new("s1".to_string(), "p1".to_string());
+        session.current_state = WorkflowState::Completed;
+
+        let trigger = TransitionTrigger::EndSession;
+        let result = apply_transition(&mut session, trigger);
+
+        assert!(result.is_err());
+    }
+}
