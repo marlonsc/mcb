@@ -370,6 +370,11 @@ pub struct VcsArgs {
     #[schemars(description = "Whether to include commit history when indexing")]
     pub include_commits: Option<bool>,
 
+    #[schemars(
+        description = "Commit history depth (default: 50 from config, or 1000 if no config)"
+    )]
+    pub depth: Option<usize>,
+
     #[schemars(description = "Limit for search or list actions")]
     pub limit: Option<u32>,
 }

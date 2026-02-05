@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
+[![Version](https://img.shields.io/badge/version-0.1.5-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
 [![Roadmap](https://img.shields.io/badge/roadmap-v0.3.0%20%2B%20v0.4.0-lightgreen)](./RELEASE_ROADMAP_v0.3.0-v0.4.0.md)
 
 **High-performance MCP server for semantic code search using vector embeddings**
@@ -39,7 +39,7 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 -   **Clean Architecture**: 8 crates (domain, application, infrastructure, providers, server, validate) per Clean Architecture layers
 -   **Provider Ecosystem**: 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 8 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
 -   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
--   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2040+ tests project-wide
+-   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2042+ tests project-wide
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
 -   **Workflow System** (v0.3.0): FSM-based task orchestration with context awareness and policy enforcement
 -   **Integrated Context** (v0.4.0 - Planned): Knowledge graph, hybrid search, freshness tracking, time-travel queries (blocked on v0.3.0)
@@ -180,7 +180,7 @@ See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for con
 
 ## Testing
 
-2040+ tests covering all layers:
+2042+ tests covering all layers:
 
 ```bash
 make test           # All tests
@@ -194,7 +194,7 @@ Test organization:
 -   **Application layer**: Service and use case tests
 -   **Infrastructure layer**: DI, config, cache tests
 -   **Providers**: Embedding and vector store provider tests
--   **mcb-validate**: Architecture validation (Phases 1–7, 2040+ tests)
+-   **mcb-validate**: Architecture validation (Phases 1–7, 2042+ tests)
 
 See [`docs/INTEGRATION_TESTS.md`](./docs/INTEGRATION_TESTS.md) for testing documentation.
 

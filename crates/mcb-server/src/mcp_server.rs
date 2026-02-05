@@ -22,6 +22,7 @@ use crate::handlers::{
     AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
     ValidateHandler, VcsHandler,
 };
+use crate::hooks::HookProcessor;
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
 /// Core MCP server implementation
@@ -59,6 +60,8 @@ impl McpServer {
         agent_session_service: Arc<dyn AgentSessionServiceInterface>,
         vcs_provider: Arc<dyn VcsProvider>,
     ) -> Self {
+        let hook_processor = HookProcessor::new(Some(memory_service.clone()));
+
         let handlers = ToolHandlers {
             index: Arc::new(IndexHandler::new(indexing_service.clone())),
             search: Arc::new(SearchHandler::new(
@@ -74,6 +77,7 @@ impl McpServer {
             agent: Arc::new(AgentHandler::new(agent_session_service.clone())),
             project: Arc::new(ProjectHandler),
             vcs: Arc::new(VcsHandler::new(vcs_provider.clone())),
+            hook_processor: Arc::new(hook_processor),
         };
 
         Self {

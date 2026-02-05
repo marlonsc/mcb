@@ -3,9 +3,10 @@ use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
 use crate::vcs_repository_registry;
 use mcb_domain::ports::providers::VcsProvider;
+use mcb_infrastructure::config::McpContextConfig;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub async fn index_repository(
@@ -24,6 +25,13 @@ pub async fn index_repository(
             ))]));
         }
     };
+
+    // Load config from repository path
+    let config = McpContextConfig::load_from_path_or_default(Path::new(&path));
+
+    // Determine depth: args.depth > config.git.depth > default 1000
+    let depth = args.depth.unwrap_or(config.git.depth);
+
     let branches = args
         .branches
         .clone()
@@ -31,7 +39,10 @@ pub async fn index_repository(
     let mut total_files = 0;
     for branch in &branches {
         match vcs_provider.list_files(&repo, branch).await {
-            Ok(files) => total_files += files.len(),
+            Ok(files) => {
+                let filtered_files = filter_files_by_patterns(&files, &config.git.ignore_patterns);
+                total_files += filtered_files.len();
+            }
             Err(e) => {
                 return Ok(CallToolResult::error(vec![Content::text(format!(
                     "Failed to list files in branch {branch}: {e}"
@@ -42,7 +53,10 @@ pub async fn index_repository(
     let commits_indexed = if args.include_commits.unwrap_or(false) {
         let mut count = 0;
         for branch in &branches {
-            if let Ok(commits) = vcs_provider.commit_history(&repo, branch, Some(1000)).await {
+            if let Ok(commits) = vcs_provider
+                .commit_history(&repo, branch, Some(depth))
+                .await
+            {
                 count += commits.len();
             }
         }
@@ -60,4 +74,45 @@ pub async fn index_repository(
     };
     let _ = vcs_repository_registry::record_repository(repo.id.as_str(), &repo.path);
     ResponseFormatter::json_success(&result)
+}
+
+/// Filter files by ignore patterns (gitignore-style)
+fn filter_files_by_patterns(files: &[PathBuf], patterns: &[String]) -> Vec<PathBuf> {
+    if patterns.is_empty() {
+        return files.to_vec();
+    }
+
+    files
+        .iter()
+        .filter(|file| !should_ignore_file(file, patterns))
+        .cloned()
+        .collect()
+}
+
+/// Check if a file should be ignored based on patterns
+fn should_ignore_file(file: &Path, patterns: &[String]) -> bool {
+    let file_str = file.to_string_lossy();
+
+    for pattern in patterns {
+        // Handle directory patterns (ending with /)
+        if pattern.ends_with('/') {
+            let dir_pattern = &pattern[..pattern.len() - 1];
+            if file_str.contains(dir_pattern) {
+                return true;
+            }
+        }
+        // Handle wildcard patterns (*.ext)
+        else if pattern.starts_with('*') {
+            let ext = &pattern[1..];
+            if file_str.ends_with(ext) {
+                return true;
+            }
+        }
+        // Handle exact matches and path patterns
+        else if file_str.contains(pattern) || file_str.ends_with(pattern) {
+            return true;
+        }
+    }
+
+    false
 }

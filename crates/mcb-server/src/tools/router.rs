@@ -6,6 +6,7 @@ use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
 use std::sync::Arc;
+use tracing::warn;
 
 use crate::args::{
     AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
@@ -14,6 +15,7 @@ use crate::handlers::{
     AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
     ValidateHandler, VcsHandler,
 };
+use crate::hooks::{HookProcessor, PostToolUseContext};
 
 /// Handler references for tool routing
 #[derive(Clone)]
@@ -26,16 +28,20 @@ pub struct ToolHandlers {
     pub agent: Arc<AgentHandler>,
     pub project: Arc<ProjectHandler>,
     pub vcs: Arc<VcsHandler>,
+    pub hook_processor: Arc<HookProcessor>,
 }
 
 /// Route a tool call request to the appropriate handler
 ///
 /// Parses the request arguments and delegates to the matching handler.
+/// After tool execution, automatically triggers PostToolUse hook for memory operations.
 pub async fn route_tool_call(
     request: CallToolRequestParams,
     handlers: &ToolHandlers,
 ) -> Result<CallToolResult, McpError> {
-    match request.name.as_ref() {
+    let tool_name = request.name.clone();
+
+    let result = match request.name.as_ref() {
         "index" => {
             let args = parse_args::<IndexArgs>(&request)?;
             handlers.index.handle(Parameters(args)).await
@@ -72,7 +78,26 @@ pub async fn route_tool_call(
             format!("Unknown tool: {}", request.name),
             None,
         )),
+    }?;
+
+    if let Err(e) = trigger_post_tool_use_hook(&tool_name, &result, &handlers.hook_processor).await
+    {
+        warn!("PostToolUse hook failed (non-fatal): {}", e);
     }
+
+    Ok(result)
+}
+
+async fn trigger_post_tool_use_hook(
+    tool_name: &str,
+    result: &CallToolResult,
+    hook_processor: &HookProcessor,
+) -> Result<(), String> {
+    let context = PostToolUseContext::new(tool_name.to_string(), result.clone());
+    hook_processor
+        .process_post_tool_use(context)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// Parse request arguments into the expected type

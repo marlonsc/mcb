@@ -65,6 +65,7 @@ pub mod collection_mapping;
 pub mod constants;
 pub mod formatter;
 pub mod handlers;
+pub mod hooks;
 pub mod init;
 pub mod mcp_server;
 pub mod session;
