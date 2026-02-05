@@ -75,7 +75,7 @@ impl McpServer {
                 memory_service.clone(),
             )),
             agent: Arc::new(AgentHandler::new(agent_session_service.clone())),
-            project: Arc::new(ProjectHandler),
+            project: Arc::new(ProjectHandler::new()),
             vcs: Arc::new(VcsHandler::new(vcs_provider.clone())),
             hook_processor: Arc::new(hook_processor),
         };
