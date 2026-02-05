@@ -1570,41 +1570,7 @@ pub enum TransitionTrigger {
 ```
 
 This enables **context-aware policies** that adapt to project state, not just static rules.
-
 ---
-### 8. Configuration (Figment)
-
-```toml
-# config/default.toml — [policies] section
-
-[policies]
-# Global enable/disable for all policy evaluation.
-enabled = true
-# fail_fast = true stops on first error. false collects all violations.
-fail_fast = false
-
-[policies.wip_limit]
-enabled = true
-severity = "error"
-max_in_progress = 3
-
-[policies.clean_worktree]
-enabled = true
-severity = "warning"
-allow_untracked = true
-
-[policies.branch_naming]
-enabled = false
-severity = "warning"
-pattern = "^(main|develop|feature/|fix/|release/|hotfix/)"
-expected_format = "feature/*, fix/*, release/*"
-
-[policies.require_tests]
-enabled = false
-severity = "error"
-test_command = "make test"
-timeout_seconds = 300
-```
 
 ### 8. Configuration (Figment)
 
@@ -1918,7 +1884,7 @@ impl PolicyGuardProvider for ConfigurablePolicyGuard {
 }
 ```
 
-### 8. Provider Registration (linkme)
+### 10. Provider Registration (linkme)
 
 ```rust
 // mcb-application/src/registry/guard.rs
@@ -1954,7 +1920,7 @@ fn configurable_guard_factory(
 }
 ```
 
-### 9. Module Locations
+### 11. Module Locations
 
 | Crate | Path | Content |
 |-------|------|---------|
@@ -1963,13 +1929,20 @@ fn configurable_guard_factory(
 | `mcb-domain` | `src/ports/providers/policy.rs` | `Policy` trait (individual policies) |
 | `mcb-application` | `src/registry/guard.rs` | `GUARD_PROVIDERS` slice |
 | `mcb-providers` | `src/guard/mod.rs` | Module root + linkme registration |
-| `mcb-providers` | `src/guard/provider.rs` | `ConfigurablePolicyGuard` |
+| `mcb-providers` | `src/guard/provider.rs` | `ConfigurablePolicyGuard` (all 11 policies) |
 | `mcb-providers` | `src/guard/composition.rs` | `AllPolicies`, `AnyPolicy` combinators |
-| `mcb-providers` | `src/guard/policies/wip_limit.rs` | `WipLimitPolicy` |
-| `mcb-providers` | `src/guard/policies/clean_worktree.rs` | `CleanWorktreePolicy` |
-| `mcb-providers` | `src/guard/policies/branch_naming.rs` | `BranchNamingPolicy` |
-| `mcb-providers` | `src/guard/policies/require_tests.rs` | `RequireTestsPolicy` |
-| `mcb-infrastructure` | `src/config/policies.rs` | `PoliciesConfig`, per-policy settings |
+| `mcb-providers` | `src/guard/policies/wip_limit.rs` | `WipLimitPolicy` (policy #1) |
+| `mcb-providers` | `src/guard/policies/clean_worktree.rs` | `CleanWorktreePolicy` (policy #2) |
+| `mcb-providers` | `src/guard/policies/branch_naming.rs` | `BranchNamingPolicy` (policy #3) |
+| `mcb-providers` | `src/guard/policies/commit_message_format.rs` | `CommitMessageFormatPolicy` (policy #6) |
+| `mcb-providers` | `src/guard/policies/require_tests.rs` | `RequireTestsPolicy` (policy #4) |
+| `mcb-providers` | `src/guard/policies/code_coverage.rs` | `CodeCoveragePolicy` (policy #8) |
+| `mcb-providers` | `src/guard/policies/security_scan.rs` | `SecurityScanPolicy` (policy #9) |
+| `mcb-providers` | `src/guard/policies/code_review_gate.rs` | `CodeReviewGatePolicy` (policy #7) |
+| `mcb-providers` | `src/guard/policies/changelog_check.rs` | `ChangelogCheckPolicy` (policy #5) |
+| `mcb-providers` | `src/guard/policies/version_bump.rs` | `VersionBumpPolicy` (policy #10) |
+| `mcb-providers` | `src/guard/policies/documentation_update.rs` | `DocumentationUpdatePolicy` (policy #11) |
+| `mcb-infrastructure` | `src/config/policies.rs` | `PoliciesConfig` + 11 policy settings structs |
 
 ## Consequences
 
@@ -1985,8 +1958,8 @@ fn configurable_guard_factory(
 ### Negative
 
 -   **Runtime evaluation cost**: Each transition evaluates all applicable policies. Mitigated by `applies_to()` filter and fail-fast mode.
--   **Test command execution**: `RequireTestsPolicy` spawns a subprocess (e.g., `make test`). This is slow (seconds-to-minutes). Only triggered on `StartVerification`.
--   **Config complexity**: 4 policies with individual settings adds config surface area. Mitigated by sensible defaults and disabled-by-default for non-essential policies.
+-   **Test command execution**: `RequireTestsPolicy` spawns a subprocess (e.g., `cargo test`). This is slow (seconds-to-minutes). Only triggered on `StartVerification`.
+-   **Config complexity**: 11 policies with individual settings adds config surface area. Mitigated by sensible defaults and disabled-by-default for non-essential policies (e.g., `version_bump`, `documentation_update`).
 -   **No runtime policy addition**: Policies are built at startup from config. Adding a new policy requires restart. Runtime dynamic policies deferred.
 
 ## Alternatives Considered
@@ -2003,7 +1976,7 @@ fn configurable_guard_factory(
 -   **Description:** Store policy configurations in SQLite and evaluate dynamically.
 -   **Pros:** Runtime reconfiguration without restart. Policy versioning.
 -   **Cons:** Adds query overhead per evaluation. Config is already in `mcb.toml` (Figment standard).
--   **Rejection reason:** Over-engineering for 4 built-in policies. File-based config is sufficient and matches ADR-025 convention.
+-   **Rejection reason:** Over-engineering for 11 built-in policies. File-based config is sufficient and matches ADR-025 convention.
 
 ### Alternative 3: Hard-Coded Checks (No Policy Framework)
 
@@ -2019,17 +1992,19 @@ fn configurable_guard_factory(
 1.  Add `policy.rs` entities to `mcb-domain/src/entities/`
 2.  Add `policy_guard.rs` and `policy.rs` ports to `mcb-domain/src/ports/providers/`
 3.  Add `GUARD_PROVIDERS` slice to `mcb-application/src/registry/`
-4.  Add `guard/` module to `mcb-providers/src/` with provider, composition, and 4 built-in policies
-5.  Add `PoliciesConfig` to `mcb-infrastructure/src/config/`
-6.  Add `[policies]` section to `config/default.toml`
+4.  Add `guard/` module to `mcb-providers/src/` with provider, composition, and **11 built-in policies**
+5.  Add `PoliciesConfig` and 11 settings structs to `mcb-infrastructure/src/config/`
+6.  Add `[policies]` section to `config/default.toml` with configurations for all 11 policies
 
 ### Testing
 
--   Unit tests: Each policy with pass/fail cases.
--   Unit tests: `PolicyResult::merge()`, `format_violations()`.
--   Unit tests: `AllPolicies` (fail-fast and collect-all), `AnyPolicy`.
--   Integration tests: `ConfigurablePolicyGuard` with real config.
--   Estimated: ~45 tests.
+-   Unit tests: Each of the 11 policies with pass/fail cases (minimum 2 tests per policy = 22 tests)
+-   Unit tests: `PolicyResult::merge()`, `format_violations()`, severity handling
+-   Unit tests: `AllPolicies` (fail-fast and collect-all modes), `AnyPolicy` combinator
+-   Unit tests: Deny-wins semantics, ERROR vs WARNING enforcement
+-   Integration tests: `ConfigurablePolicyGuard` with real config, all 11 policies enabled/disabled
+-   Integration tests: Lifecycle points (compile-time, pre-commit, pre-transition, CI-time, post-merge)
+-   Estimated: **~80+ tests** (11 policies × 2 + integration + composition + semantics)
 
 ### Performance Targets
 
@@ -2038,8 +2013,16 @@ fn configurable_guard_factory(
 | `WipLimitPolicy.check()` | < 1ms (reads from `TrackerContext`, no I/O) |
 | `CleanWorktreePolicy.check()` | < 1ms (reads from `GitContext`, no I/O) |
 | `BranchNamingPolicy.check()` | < 1ms (regex match) |
-| `RequireTestsPolicy.check()` | < test suite time (subprocess) |
-| Full `evaluate()` (3 fast policies) | < 5ms |
+| `CommitMessageFormatPolicy.check()` | < 1ms (regex match) |
+| `CodeCoveragePolicy.check()` | < 1ms (reads from coverage report cache) |
+| `SecurityScanPolicy.check()` | < test suite time (subprocess: `cargo audit`, `cargo deny`) |
+| `RequireTestsPolicy.check()` | < test suite time (subprocess: runs full test suite) |
+| `CodeReviewGatePolicy.check()` | < 100ms (GitHub API call) |
+| `ChangelogCheckPolicy.check()` | < 1ms (file read + text check) |
+| `VersionBumpPolicy.check()` | < 1ms (file read + version parse) |
+| `DocumentationUpdatePolicy.check()` | < 1ms (file pattern matching) |
+| **Full `evaluate()` (all fast policies)** | **< 20ms** (11 policies, excluding subprocess) |
+| **Full `evaluate()` (with CI checks)** | **< test suite time + 100ms** (depends on test execution) |
 
 ### Security
 
