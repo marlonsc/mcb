@@ -49,6 +49,10 @@ mod golden_e2e_complete_integration;
 #[path = "integration/golden_highlight_service_e2e.rs"]
 mod golden_highlight_service_e2e;
 
+// Hook processor integration tests
+#[path = "integration/hooks_integration.rs"]
+mod hooks_integration;
+
 // Golden tests canonical location (repo root tests/golden) - all included so no tests are discarded
 #[path = "../../../tests/golden/test_end_to_end.rs"]
 mod golden_test_end_to_end;

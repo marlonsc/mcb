@@ -102,8 +102,7 @@ fn should_ignore_file(file: &Path, patterns: &[String]) -> bool {
             }
         }
         // Handle wildcard patterns (*.ext)
-        else if pattern.starts_with('*') {
-            let ext = &pattern[1..];
+        else if let Some(ext) = pattern.strip_prefix('*') {
             if file_str.ends_with(ext) {
                 return true;
             }

@@ -63,7 +63,7 @@ pub struct HookContext {
 
 impl PostToolUseContext {
     pub fn new(tool_name: String, tool_output: CallToolResult) -> Self {
-        let status = if tool_output.is_error {
+        let status = if tool_output.is_error.unwrap_or(false) {
             ToolExecutionStatus::Error
         } else {
             ToolExecutionStatus::Success

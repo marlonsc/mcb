@@ -162,6 +162,11 @@ impl McpServer {
     pub fn vcs_handler(&self) -> Arc<VcsHandler> {
         Arc::clone(&self.handlers.vcs)
     }
+
+    /// Access to hook processor (for automatic memory operations)
+    pub fn hook_processor(&self) -> Arc<HookProcessor> {
+        Arc::clone(&self.handlers.hook_processor)
+    }
 }
 
 impl ServerHandler for McpServer {

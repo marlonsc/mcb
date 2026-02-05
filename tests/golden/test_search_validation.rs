@@ -430,7 +430,7 @@ async fn golden_collection_isolation_multiple_searches() {
     }
 
     assert!(
-        col_a_count >= 0 && col_b_count >= 0,
+        col_a_count > 0 && col_b_count > 0,
         "both collections should have valid result counts"
     );
 }

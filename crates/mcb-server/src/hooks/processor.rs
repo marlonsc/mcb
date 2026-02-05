@@ -30,16 +30,18 @@ impl HookProcessor {
             context.tool_name, context.status
         );
 
-        let mut metadata = mcb_domain::entities::memory::ObservationMetadata::default();
-        metadata.session_id = context.session_id.clone();
+        let metadata = mcb_domain::entities::memory::ObservationMetadata {
+            session_id: context.session_id.clone(),
+            ..Default::default()
+        };
 
         let mut tags = vec!["tool".to_string(), context.tool_name.clone()];
-        if context.tool_output.is_error {
+        if context.tool_output.is_error.unwrap_or(false) {
             tags.push("error".to_string());
         }
 
         memory_service
-            .store_observation(content, ObservationType::ToolExecution, tags, metadata)
+            .store_observation(content, ObservationType::Execution, tags, metadata)
             .await
             .map_err(|e| HookError::FailedToStoreObservation(e.to_string()))?;
 
