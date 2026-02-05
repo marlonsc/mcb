@@ -205,12 +205,7 @@ async fn test_agent_log_tool_empty_session_id() {
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Empty session_id should return error"
-    );
+    assert!(result.is_err(), "Empty session_id should return McpError");
 }
 
 #[tokio::test]
