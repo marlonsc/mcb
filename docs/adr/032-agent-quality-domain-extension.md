@@ -1,12 +1,12 @@
 ---
 adr: 32
 title: Agent & Quality Domain Extension (MCB-Only)
-status: PROPOSED
+status: SUPERSEDED
 created: '2026-02-03'
 updated: 2026-02-05
 related: [9, 13, 29]
 supersedes: []
-superseded_by: []
+superseded_by: [34]
 implementation_status: Incomplete
 ---
 

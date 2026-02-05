@@ -1,7 +1,7 @@
 ---
 adr: 24
 title: Shaku to dill DI Migration
-status: PROPOSED
+status: SUPERSEDED
 created: 
 updated: 2026-02-05
 related: [2, 12, 13, 27]

@@ -1,7 +1,7 @@
 ---
 adr: 27
 title: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
-status: PROPOSED
+status: ACCEPTED
 created: 
 updated: 2026-02-05
 related: [8, 13, 24]

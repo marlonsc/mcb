@@ -1,7 +1,7 @@
 ---
 adr: 10
 title: Hooks Subsystem with Agent-Backed Processing
-status: IMPLEMENTED
+status: PROPOSED
 created: 
 updated: 2026-02-05
 related: [1, 2, 7, 8, 9, 12, 13]

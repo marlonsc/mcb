@@ -1,7 +1,7 @@
 ---
 adr: 14
 title: Multi-Domain Architecture Strategy
-status: IMPLEMENTED
+status: ACCEPTED
 created: 
 updated: 2026-02-05
 related: [12, 13]

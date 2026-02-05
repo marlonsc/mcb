@@ -1,7 +1,7 @@
 ---
 adr: 8
 title: Git-Aware Semantic Indexing v0.2.0
-status: IMPLEMENTED
+status: PROPOSED
 created: 
 updated: 2026-02-05
 related: [1, 2, 3, 9, 12, 13]

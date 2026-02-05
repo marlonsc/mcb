@@ -1,12 +1,12 @@
 ---
 adr: 12
 title: Two-Layer Dependency Injection Strategy
-status: ACCEPTED
+status: SUPERSEDED
 created: 
 updated: 2026-02-05
 related: [1, 2, 3, 6, 7, 8, 9, 10, 13, 24]
 supersedes: []
-superseded_by: []
+superseded_by: [29]
 implementation_status: Incomplete
 ---
 

@@ -1,7 +1,7 @@
 ---
 adr: 9
 title: Persistent Session Memory v0.2.0
-status: IMPLEMENTED
+status: PROPOSED
 created: 
 updated: 2026-02-05
 related: [1, 2, 3, 7, 8, 10, 12, 13]
