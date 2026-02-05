@@ -193,7 +193,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 -   ✅ Phase 3: Rule Engines verified (30/30 tests pass)
 -   ✅ Phases 4–7: Metrics, Duplication, Architecture (CA001–CA009), Integration verified
 -   ✅ 12 migration validation rules (YAML files in rules/migration/)
--   ✅ 750+ mcb-validate tests; 2248+ tests project-wide
+-   ✅ 750+ mcb-validate tests; 2206+ tests project-wide
 
 **Admin UI Code Browser:**
 
@@ -209,7 +209,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 **Maintained from v0.1.1:**
 
--   ✅ 2248+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 2206+ tests with comprehensive coverage (100% pass rate)
 -   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 8 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
 -   ✅ 14 languages with AST parsing support
@@ -218,11 +218,11 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 #### Technical Metrics
 
 -   **Source Files**: 340+ Rust files
--   **Test Suite**: 2248+ tests passing
+-   **Test Suite**: 2206+ tests passing
 -   **Crates**: 8 (7 + mcb-validate)
 -   **Validation Rules**: 12 YAML migration rules; CA001–CA009 architecture rules
 -   **Provider Registration**: Compile-time via linkme (inventory removed)
--   **mcb-validate Status**: Phases 1–7 verified (2248+ tests)
+-   **mcb-validate Status**: Phases 1–7 verified (2206+ tests)
 
 ---
 
@@ -243,7 +243,7 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 -   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 -   ✅ 8 vector stores (In-Memory, Encrypted, Null)
 -   ✅ Claude-context environment variable compatibility
--   ✅ 2248+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 2206+ tests with comprehensive coverage (100% pass rate)
 -   ✅ JWT authentication and rate limiting
 -   ✅ Clean architecture with trait-based dependency injection
 -   ✅ HTTP transport foundation for future enhancements
@@ -483,7 +483,7 @@ mcb search --query "API docs" --policy api_docs
 
 #### Success Metrics
 
--   2248+ tests passing (unit, integration, end-to-end)
+-   2206+ tests passing (unit, integration, end-to-end)
 -   Knowledge graph: <1s for 10,000 nodes
 -   Hybrid search: <500ms average query time
 -   Snapshot creation: <5s for large codebases
@@ -554,7 +554,7 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
-| v0.1.4 | Released | Complete RCA integration, atty security fix, dependency updates, 2248+ tests |
+| v0.1.4 | Released | Complete RCA integration, atty security fix, dependency updates, 2206+ tests |
 | v0.2.0 | **Current** | Documentation updates for v0.4.0 planning |
 | v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
 | v0.3.0 | Future | Advanced code intelligence (Phase 8: Workflow FSM, Freshness, Policies) |
