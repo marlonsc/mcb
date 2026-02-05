@@ -140,6 +140,373 @@ pub struct WorkflowSession {
 }
 ```
 
+### 2.1 Database Provider Abstraction
+
+Rather than coupling directly to SQLite, the workflow engine depends on an abstract `DatabaseProvider` trait that enables multiple backend implementations (SQLite MVP → PostgreSQL Phase 2 → other backends).
+
+**Rationale:** Database independence allows migration between backends without refactoring the workflow domain. Using a provider trait aligns with ADR-029 (dill dependency injection) and ADR-023 (linkme provider registration), enabling compile-time discovery of database implementations.
+
+**Port Trait Definition:**
+
+```rust
+// mcb-domain/src/ports/database_provider.rs
+
+use crate::entities::workflow::{Transition, WorkflowSession, WorkflowState};
+use crate::errors::WorkflowError;
+use async_trait::async_trait;
+
+/// Session filter criteria for queries.
+#[derive(Debug, Clone)]
+pub struct SessionFilter {
+    pub project_id: Option<String>,
+    pub state: Option<WorkflowState>,
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
+}
+
+/// Database provider trait for workflow persistence.
+///
+/// Abstracts SQLite, PostgreSQL, or other backends. Registered via linkme.
+/// Consumed by WorkflowEngine implementations in mcb-providers.
+#[async_trait]
+pub trait DatabaseProvider: Send + Sync {
+    /// Create a new workflow session in the database.
+    async fn create_session(
+        &self,
+        session: &WorkflowSession,
+    ) -> Result<(), WorkflowError>;
+
+    /// Update session state atomically.
+    async fn update_session(
+        &self,
+        id: &str,
+        state: &WorkflowState,
+    ) -> Result<(), WorkflowError>;
+
+    /// Record a state transition in the audit log (append-only).
+    async fn record_transition(
+        &self,
+        transition: &Transition,
+    ) -> Result<(), WorkflowError>;
+
+    /// Record a workflow event in the immutable log.
+    async fn record_event(
+        &self,
+        event: &WorkflowEvent,
+    ) -> Result<(), WorkflowError>;
+
+    /// Find sessions matching filter criteria.
+    async fn find_sessions(
+        &self,
+        filter: SessionFilter,
+    ) -> Result<Vec<WorkflowSession>, WorkflowError>;
+
+    /// Retrieve transition history for a session (newest first).
+    async fn get_transitions(
+        &self,
+        session_id: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<Transition>, WorkflowError>;
+
+    /// Reconstruct session state at a specific timestamp (time travel).
+    async fn state_at_timestamp(
+        &self,
+        session_id: &str,
+        timestamp: chrono::DateTime<chrono::Utc>,
+    ) -> Result<Option<WorkflowState>, WorkflowError>;
+}
+
+/// Workflow event logged in append-only event store.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "event_type", content = "data")]
+pub enum WorkflowEvent {
+    StateTransition {
+        session_id: String,
+        from_state: WorkflowState,
+        to_state: WorkflowState,
+        trigger: TransitionTrigger,
+    },
+    CompensationAction {
+        session_id: String,
+        action: CompensationAction,
+    },
+    GuardEvaluation {
+        session_id: String,
+        policy: String,
+        result: bool,
+    },
+    Error {
+        session_id: String,
+        message: String,
+    },
+}
+```
+
+**Location:** `mcb-domain/src/ports/database_provider.rs`
+
+**Provider Registration (linkme):**
+
+```rust
+// mcb-application/src/registry/database.rs
+
+use mcb_domain::ports::database_provider::DatabaseProvider;
+use std::sync::Arc;
+
+pub struct DatabaseProviderEntry {
+    pub name: &'static str,
+    pub description: &'static str,
+    pub factory: fn(&figment::Figment) -> Result<Arc<dyn DatabaseProvider>, Box<dyn std::error::Error + Send + Sync>>,
+}
+
+#[linkme::distributed_slice]
+pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
+```
+
+**References:**
+
+-   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — Handle-based DI pattern
+-   [ADR-023: Provider Registration with linkme](./023-provider-registration-linkme.md) — Compile-time plugin discovery
+
+---
+
+### 2.2 Operator Ownership & Compensation Model
+
+MCB workflows are not autonomous agents — they operate under human supervision. Each workflow session is owned by an operator (human or bot), associated with a Beads task, and embedded within a project context. The compensation model is hybrid: automatic rollback for safe operations, manual review for high-risk changes.
+
+**Extended WorkflowSession Entity:**
+
+```rust
+// mcb-domain/src/entities/workflow.rs (extended)
+
+/// Agent execution handle.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AgentHandle {
+    pub id: String,              // Agent instance ID
+    pub name: String,            // Agent type (e.g., "claude-code")
+    pub status: AgentStatus,     // Running, paused, completed, failed
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum AgentStatus {
+    Running,
+    Paused { reason: String },
+    Completed { output: Option<String> },
+    Failed { error: String },
+}
+
+/// Compensation strategy for session failures.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum CompensationPlan {
+    /// Automatic rollback via git reset/revert. No operator intervention.
+    AutoRevert {
+        target_branch: String,
+    },
+    /// Operator reviews and decides: commit, amend, revert, or manual fix.
+    ManualReview {
+        reason: String,
+    },
+    /// Automatic attempt to merge PR if all CI checks pass.
+    ApproveAndMerge {
+        pr_url: String,
+        auto_merge_enabled: bool,
+    },
+}
+
+/// Compensation action executed during recovery.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompensationAction {
+    pub id: String,
+    pub session_id: String,
+    pub plan: CompensationPlan,
+    pub action_type: CompensationActionType,
+    pub executed_at: DateTime<Utc>,
+    pub result: CompensationResult,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CompensationActionType {
+    GitReset { target_ref: String },
+    GitRevert { commit_hash: String },
+    PRMerge { pr_id: String },
+    ManualReviewNeeded,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CompensationResult {
+    Success,
+    Pending { reason: String },
+    Failed { error: String },
+}
+
+/// Extended workflow session with operator and compensation context.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowSession {
+    pub id: String,
+    pub project_id: String,           // GSD project (mcb-workspace)
+    pub operator_id: String,          // Human operator or bot (e.g., "claude", "user-123")
+    pub task_id: String,              // Beads task ID for tracking
+    pub current_state: WorkflowState,
+    pub agents: Vec<AgentHandle>,     // Parallel agents executing subtasks
+    pub branch: String,               // Git branch or worktree for this session
+    pub compensation: CompensationPlan, // Recovery strategy
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+```
+
+**Compensation Semantics:**
+
+-   **AutoRevert**: Session uses a feature branch. On error, `git reset --hard` to safe commit. Fast, reversible. Best for exploratory work.
+-   **ManualReview**: Session pauses on error. Operator logs in, reviews git diff, decides: amend, revert, or fix manually. Slow but safest.
+-   **ApproveAndMerge**: Session attempts to merge PR if CI passes. If CI fails, escalate to ManualReview. Best for auto-commit PRs.
+
+**Location:** `mcb-domain/src/entities/workflow.rs` (extended), `mcb-domain/src/entities/compensation.rs` (new module)
+
+---
+
+### 2.3 Hybrid Transaction Model
+
+The workflow engine uses **two complementary persistence layers**: per-operation ACID transactions (SQLite) + append-only event log (immutable audit trail). This hybrid approach provides both ACID compliance and unbounded temporal history.
+
+**Hybrid Transaction Pattern:**
+
+1.  **Per-Operation Transactions**: Every `transition()` call wraps read + validate + write in a SQLite transaction (10-20ms per operation).
+   -   Ensures no lost updates if multiple sessions compete for the same resource.
+   -   Provides rollback on validation failure.
+
+2.  **Append-Only Event Log**: After every transition, write immutable event to `workflow_events` table.
+   -   Never updated or deleted — only INSERT.
+   -   Enables time-travel queries without replaying mutations.
+   -   Supports compliance audits and post-mortem analysis.
+
+**SQL Schema:**
+
+```sql
+-- State table: mutable, current state only
+CREATE TABLE IF NOT EXISTS workflow_sessions (
+    id                TEXT PRIMARY KEY,
+    operator_id       TEXT NOT NULL,                    -- Human or bot
+    task_id           TEXT NOT NULL,                    -- Beads task reference
+    project_id        TEXT NOT NULL,                    -- Project context
+    branch            TEXT NOT NULL,                    -- Git branch/worktree
+    current_state     TEXT NOT NULL,                    -- Display name: "initializing", "ready", etc.
+    state_data        TEXT NOT NULL,                    -- JSON: full WorkflowState serde
+    compensation_plan TEXT NOT NULL,                    -- JSON: CompensationPlan serde
+    created_at        INTEGER NOT NULL,                 -- Unix timestamp
+    updated_at        INTEGER NOT NULL
+);
+
+CREATE INDEX idx_workflow_sessions_project
+    ON workflow_sessions(project_id);
+CREATE INDEX idx_workflow_sessions_operator
+    ON workflow_sessions(operator_id);
+CREATE INDEX idx_workflow_sessions_task
+    ON workflow_sessions(task_id);
+CREATE INDEX idx_workflow_sessions_state
+    ON workflow_sessions(current_state);
+
+-- Append-only event log: immutable history
+CREATE TABLE IF NOT EXISTS workflow_events (
+    id              TEXT PRIMARY KEY,
+    session_id      TEXT NOT NULL REFERENCES workflow_sessions(id),
+    event_type      TEXT NOT NULL,                      -- StateTransition, CompensationAction, Error, etc.
+    from_state      TEXT,                               -- Display name (nullable for non-transition events)
+    to_state        TEXT,                               -- Display name
+    trigger         TEXT,                               -- JSON: full TransitionTrigger serde
+    data            TEXT NOT NULL,                      -- JSON: full event payload
+    timestamp       INTEGER NOT NULL                    -- Unix timestamp (immutable)
+);
+
+CREATE INDEX idx_workflow_events_session
+    ON workflow_events(session_id, timestamp);
+CREATE INDEX idx_workflow_events_type
+    ON workflow_events(event_type);
+
+-- Compensation log: tracks recovery actions
+CREATE TABLE IF NOT EXISTS workflow_compensations (
+    id              TEXT PRIMARY KEY,
+    session_id      TEXT NOT NULL REFERENCES workflow_sessions(id),
+    plan            TEXT NOT NULL,                      -- JSON: CompensationPlan serde
+    action_type     TEXT NOT NULL,                      -- GitReset, GitRevert, PRMerge, etc.
+    result          TEXT NOT NULL,                      -- JSON: CompensationResult serde
+    executed_at     INTEGER NOT NULL
+);
+
+CREATE INDEX idx_workflow_compensations_session
+    ON workflow_compensations(session_id);
+```
+
+**Rationale for Hybrid Model:**
+
+| Concern | Per-Operation TX | Append-Only Log | Coverage |
+|---------|------------------|-----------------|----------|
+| **Consistency** | ✅ ACID per-operation | Immutable writes only | Complete |
+| **Durability** | ✅ WAL mode | ✅ INSERT-only, no rewrites | Complete |
+| **Isolation** | ✅ SQLite serialization | N/A (read-only) | Complete |
+| **Auditability** | Limited (no history) | ✅ Full history | Complete |
+| **Time-Travel** | ❌ Lost on update | ✅ Replay events | Complete |
+| **Compliance** | ✅ Current state | ✅ Immutable trail | Complete |
+
+**Time-Travel Implementation:**
+
+```rust
+// mcb-providers/src/workflow/sqlite_workflow.rs
+
+impl WorkflowEngine for SqliteWorkflowEngine {
+    async fn state_at(
+        &self,
+        session_id: &str,
+        timestamp: DateTime<Utc>,
+    ) -> Result<WorkflowState, WorkflowError> {
+        // 1. Fetch initial state from session creation
+        let initial_state = sqlx::query_scalar::<_, String>(
+            "SELECT state_data FROM workflow_sessions WHERE id = ?"
+        )
+        .bind(session_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        let mut state: WorkflowState = serde_json::from_str(&initial_state)
+            .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        // 2. Replay all transitions up to timestamp
+        let events = sqlx::query_as::<_, (String, String)>(
+            "SELECT trigger, event_type FROM workflow_events
+             WHERE session_id = ? AND timestamp <= ?
+             ORDER BY timestamp ASC"
+        )
+        .bind(session_id)
+        .bind(timestamp.timestamp())
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        for (trigger_json, event_type) in events {
+            if event_type == "StateTransition" {
+                let trigger: TransitionTrigger = serde_json::from_str(&trigger_json)
+                    .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+                // Create temporary session for transition validation
+                let mut tmp = WorkflowSession {
+                    id: session_id.to_string(),
+                    current_state: state.clone(),
+                    ..Default::default()
+                };
+                tmp.try_transition(trigger)?;
+                state = tmp.current_state;
+            }
+        }
+
+        Ok(state)
+    }
+}
+```
+
+**Location:** `mcb-domain/src/ports/database_provider.rs` (schema + trait definitions), `mcb-providers/src/workflow/sqlite_workflow.rs` (implementation)
+
+---
+
 ### 3. Transition Matrix
 
 Valid transitions are enforced at runtime. Invalid transitions return `WorkflowError::InvalidTransition`.
