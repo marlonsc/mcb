@@ -67,9 +67,9 @@
             <p class="mt-2 text-secondary">Navigate your indexed codebase with keyboard shortcuts</p>
         </div>
 
-        <div x-data="treeApp()" class="grid grid-cols-4 gap-8">
+        <div x-data="treeApp()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <!-- Sidebar: Collections -->
-            <div class="col-span-1 border-r border-border-color pr-4">
+            <div class="col-span-1 md:col-span-1 lg:col-span-1 border-r border-border-color pr-4">
                 <h2 class="text-lg font-semibold mb-4">Collections</h2>
                 <div class="space-y-1">
                     <template x-for="coll in collections" :key="coll.name">
@@ -83,7 +83,7 @@
             </div>
 
             <!-- Main: File Tree -->
-            <div class="col-span-3">
+            <div class="col-span-1 md:col-span-1 lg:col-span-3">
                 <div class="mb-4">
                     <input type="text" 
                         x-model="searchQuery"
