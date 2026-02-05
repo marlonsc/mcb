@@ -1561,7 +1561,7 @@ fn default_timeout() -> u64 { 3600 }
 fn default_channel_capacity() -> usize { 256 }
 ```
 
-### 8. Module Locations
+### 12. Module Locations
 
 | Crate | Path | Content |
 |-------|------|---------|
