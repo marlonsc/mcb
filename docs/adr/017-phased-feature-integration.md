@@ -1,3 +1,15 @@
+---
+adr: 17
+title: Phased Feature Integration Roadmap
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [12, 13, 16, 20]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 017: Phased Feature Integration Roadmap
 
 ## Status

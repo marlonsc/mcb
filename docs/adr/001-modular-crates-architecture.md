@@ -1,3 +1,15 @@
+---
+adr: 1
+title: Modular Crates Architecture
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [2, 3, 4, 5]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR 001: Modular Crates Architecture
 
 ## Status

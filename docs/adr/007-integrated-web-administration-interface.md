@@ -1,3 +1,15 @@
+---
+adr: 7
+title: Integrated Web Administration Interface
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 6, 8, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR 007: Integrated Web Administration Interface
 
 ## Status

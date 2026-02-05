@@ -1,3 +1,15 @@
+---
+adr: 41
+title: Integrated Context System Architecture v0.4.0
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR-041: Integrated Context System Architecture v0.4.0
 
 **Status**: Proposed  

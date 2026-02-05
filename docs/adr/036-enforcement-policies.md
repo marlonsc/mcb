@@ -1,3 +1,15 @@
+---
+adr: 36
+title: Enforcement Layer — Policies and Guards
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: [23, 25, 29]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR-036: Enforcement Layer — Policies and Guards
 
 ## Status

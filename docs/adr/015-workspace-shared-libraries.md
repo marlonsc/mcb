@@ -1,3 +1,15 @@
+---
+adr: 15
+title: Workspace Structure for Shared Libraries
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [13, 14]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 015: Workspace Structure for Shared Libraries
 
 ## Status

@@ -1,3 +1,15 @@
+---
+adr: 9
+title: Persistent Session Memory v0.2.0
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 3, 7, 8, 10, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Partial
+---
+
 # ADR 009: Persistent Session Memory v0.2.0
 
 ## Status
@@ -1410,7 +1422,7 @@ fn reciprocal_rank_fusion(
 
 -   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - MemoryProvider follows trait-based DI
 -   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage operations
--   [ADR-030: Multi-Provider Strategy](030-multi-provider-strategy.md) - Memory provider routing
+-   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Memory provider routing
 -   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Memory dashboard UI
 -   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git-tagged observations
 -   [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - Hook observation storage

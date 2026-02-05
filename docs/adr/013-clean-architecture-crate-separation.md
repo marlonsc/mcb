@@ -1,3 +1,15 @@
+---
+adr: 13
+title: Clean Architecture Crate Separation
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 3, 6, 7, 11, 12, 27, 31]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 013: Clean Architecture Crate Separation
 
 ## Status
@@ -335,7 +347,7 @@ async fn test_full_indexing_flow() {
 -   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider trait patterns
 -   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async patterns per layer
 -   [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider interface
--   [ADR-030: Multi-Provider Strategy](030-multi-provider-strategy.md) - mcb-providers organization
+-   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - mcb-providers organization
 -   [ADR-031: Documentation Excellence](031-documentation-excellence.md) - Documentation per crate
 -   [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality standards per layer
 -   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - mcb-server admin module

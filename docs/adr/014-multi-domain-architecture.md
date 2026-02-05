@@ -1,3 +1,15 @@
+---
+adr: 14
+title: Multi-Domain Architecture Strategy
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR 014: Multi-Domain Architecture Strategy
 
 ## Status

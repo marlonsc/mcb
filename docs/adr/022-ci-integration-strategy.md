@@ -1,3 +1,15 @@
+---
+adr: 22
+title: Continuous Integration Strategy
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [13, 17, 20]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 022: Continuous Integration Strategy
 
 ## Status

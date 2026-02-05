@@ -1,3 +1,15 @@
+---
+adr: 42
+title: Knowledge Graph for Code Context and Relationships
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR-042: Knowledge Graph for Code Context and Relationships
 
 **Status**: Proposed  

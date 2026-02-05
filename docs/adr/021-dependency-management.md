@@ -1,3 +1,15 @@
+---
+adr: 21
+title: Dependency Management Strategy
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [13, 15, 17]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 021: Dependency Management Strategy
 
 ## Status

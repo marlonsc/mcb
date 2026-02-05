@@ -1,3 +1,15 @@
+---
+adr: 4
+title: Event Bus (Local and Distributed)
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR 004: Event Bus (Local and Distributed)
 
 ## Status

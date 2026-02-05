@@ -1,3 +1,15 @@
+---
+adr: 33
+title: MCP Handler Consolidation
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR-033: MCP Handler Consolidation
 
 ## Status

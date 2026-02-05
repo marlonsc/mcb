@@ -1,3 +1,15 @@
+---
+adr: 46
+title: Integration with ADR-034-037 & Policies
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR-046: Integration with ADR-034-037 & Policies
 
 **Status**: Proposed  

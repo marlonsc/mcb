@@ -1,3 +1,15 @@
+---
+adr: 35
+title: Context Scout — Project State Discovery
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: [23, 25, 29]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR-035: Context Scout — Project State Discovery
 
 ## Status

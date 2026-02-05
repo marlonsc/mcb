@@ -1,3 +1,15 @@
+---
+adr: 45
+title: Context Versioning & Freshness Tracking
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR-045: Context Versioning & Freshness Tracking
 
 **Status**: Proposed  

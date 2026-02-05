@@ -1,3 +1,15 @@
+---
+adr: 10
+title: Hooks Subsystem with Agent-Backed Processing
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 7, 8, 9, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Partial
+---
+
 # ADR 010: Hooks Subsystem with Agent-Backed Processing
 
 ## Status

@@ -1,3 +1,15 @@
+---
+adr: 19
+title: Error Handling Strategy
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [13, 16]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 019: Error Handling Strategy
 
 ## Status

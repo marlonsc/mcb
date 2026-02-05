@@ -1,3 +1,15 @@
+---
+adr: 8
+title: Git-Aware Semantic Indexing v0.2.0
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 3, 9, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 008: Git-Aware Semantic Indexing v0.2.0
 
 ## Status
@@ -626,7 +638,7 @@ git2 = "0.20"
 
 -   [ADR-001: Provider Pattern Architecture](001-modular-crates-architecture.md) - Provider patterns for GitProvider
 -   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async git operations
--   [ADR-030: Multi-Provider Strategy](030-multi-provider-strategy.md) - Provider routing
+-   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing
 -   [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Git-tagged memory entries
 -   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for git providers
 -   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization

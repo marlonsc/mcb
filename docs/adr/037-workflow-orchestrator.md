@@ -1,3 +1,15 @@
+---
+adr: 37
+title: Workflow Orchestrator — Coordination and MCP Integration
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: [23, 25, 29, 33]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR-037: Workflow Orchestrator — Coordination and MCP Integration
 
 ## Status

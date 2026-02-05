@@ -1,3 +1,15 @@
+---
+adr: 43
+title: Hybrid Search & Discovery for Context
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR-043: Hybrid Search & Discovery for Context
 
 **Status**: Proposed  

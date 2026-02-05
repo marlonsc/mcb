@@ -1,3 +1,15 @@
+---
+adr: 44
+title: Lightweight Discovery Models for Context Routing
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR-044: Lightweight Discovery Models for Context Routing
 
 **Status**: Proposed  

@@ -1,3 +1,15 @@
+---
+adr: 28
+title: Advanced Code Browser UI v0.2.0
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [7, 8, 26]
+supersedes: []
+superseded_by: []
+implementation_status: Partial
+---
+
 # ADR 028: Advanced Code Browser UI v0.2.0
 
 ## Status

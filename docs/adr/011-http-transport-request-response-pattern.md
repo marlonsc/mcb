@@ -1,3 +1,15 @@
+---
+adr: 11
+title: HTTP Transport - Request-Response Pattern Over SSE Streaming
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 7, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
 # ADR 011: HTTP Transport - Request-Response Pattern Over SSE Streaming
 
 ## Status

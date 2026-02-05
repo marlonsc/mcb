@@ -1,3 +1,15 @@
+---
+adr: 25
+title: Figment Configuration Migration
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [13, 21]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 025: Figment Configuration Migration
 
 ## Status

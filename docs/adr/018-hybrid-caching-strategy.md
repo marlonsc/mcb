@@ -1,3 +1,15 @@
+---
+adr: 18
+title: Hybrid Caching Strategy
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [1, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
 # ADR 018: Hybrid Caching Strategy
 
 ## Status
