@@ -11,42 +11,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-#### v0.3.0 - Workflow System Implementation - Q1 2026
+#### v0.3.0 - Workflow System Implementation - IN DEVELOPMENT
+
+**Status**: Phase 8 (ADR-034-037 implementation)  
+**Target**: TBD (blocks v0.4.0)  
+**Key Architecture**: ADR-034 (FSM), ADR-035 (Freshness), ADR-036 (Policies), ADR-037 (Orchestrator)
 
 **Specification & Implementation Phase**
 
 ### Added (Planned)
 
--   **Workflow FSM** (ADR-034): State machine for task orchestration with transitions and state persistence
--   **Context Scout** (ADR-035): Context gathering, search, and relevance ranking
--   **Policy Engine** (ADR-036): Workflow validation with enforcement policies and audit trails
--   **Task Orchestrator** (ADR-037): Multi-layer coordination with task dependencies and execution planning
+-   **Workflow FSM** (ADR-034): 12-state machine for task orchestration with transitions, state metadata, compensation handlers
+-   **Context Scout** (ADR-035): Freshness tracking (Fresh/Acceptable/Stale/StaleWithRisk) with staleness signals
+-   **Policy Engine** (ADR-036): 11+ policies for workflow validation, scope filtering, enforcement
+-   **Task Orchestrator** (ADR-037): Multi-layer coordination with compensation, event broadcasting, Beads integration
 -   **Execution Tiers** (ADR-038): Hierarchical execution (immediate, scheduled, deferred)
 
 ### Unblocks
 
--   v0.4.0 Integrated Context System implementation
--   Multi-agent collaboration infrastructure
--   Session lifecycle management framework
+-   ✅ v0.4.0 Integrated Context System (READY to execute upon v0.3.0 release)
 
 ---
 
-#### v0.4.0 - Integrated Context System - Q2 2026
+#### v0.4.0 - Integrated Context System 📋 PLANNED (blocked on v0.3.0)
 
-**Multi-Agent Context Collaboration**
+**Status**: PLANNED (blocked on v0.3.0 completion)  
+**Target**: Feb 17 - Mar 16, 2026 (4 weeks execution upon v0.3.0 release)  
+**Key Architecture**: ADR-041-046 (Phase 9 Context System)  
+**Unlock Criteria**: 7-point gate requiring v0.3.0 release (see `.planning/PHASE-8-9-DEPENDENCY-MAP.md`)
+
+**Multi-Source Integrated Context**
 
 ### Added (Planned)
 
--   **Multi-Agent Context Aggregation**: Combine contexts from multiple agents
--   **Context Merging**: Conflict resolution and intelligent context synthesis
--   **Session Lifecycle**: Session creation, persistence, and cleanup
--   **Global Memory Patterns**: Hierarchical memory organization and access
--   **Integrated Planning**: Hierarchical planning with context awareness
+-   **Knowledge Graph** (ADR-042): petgraph-based relationships (calls, imports, extends) with tree-sitter-graph extraction
+-   **Hybrid Search** (ADR-043): RRF fusion of semantic embeddings + BM25 keyword ranking with freshness weighting
+-   **Freshness Tracking** (ADR-045): Temporal metadata, immutable snapshots, time-travel queries, TTL garbage collection
+-   **Lightweight Discovery Models** (ADR-044): AST-based routing (Stage 1), rhai rules (Stage 2), optional ML (v0.5.0)
+-   **Context Versioning** (ADR-045): Immutable snapshots at commits/tags, temporal query API
+-   **FSM & Policy Integration** (ADR-046): Workflow state gates freshness requirements, policies scope boundaries, compensation rollback
+
+### Architecture
+
+-   **5-Layer System**: VCS → Indexing → Memory → Graph → Search → Policies
+-   **Embedded-First**: petgraph, tantivy, vecstore locally (no Neo4j in MVP)
+-   **Tech Stack**: 25+ Rust crates (petgraph, tree-sitter-graph, tantivy, rhai, im, dill)
+-   **Integration**: Full FSM + policy gating + event streaming + MCP tools
+
+### Execution Phase
+
+-   **Week 1**: Graph infrastructure + corrections (6 days, 18-25 hours)
+-   **Week 2**: Hybrid search engine (<500ms target)
+-   **Week 3**: Context versioning + snapshots (<100MB memory)
+-   **Week 4**: FSM integration + validation + compensation
 
 ### Dependencies
 
--   ✅ v0.3.0 Workflow System (FSM, Scout, Policies, Orchestrator, Tiers)
--   ✅ API stability freeze (locked after v0.3.0)
+-   ⏳ **v0.3.0 MUST release** (Feb 17, 2026 unlock date)
+-   ✅ ADR-034-037 locked (no post-release changes)
+-   ✅ ContextFreshness enum stable (CRITICAL)
+-   ✅ 35 Beads issues created + ready to claim
+
+### Success Criteria
+
+-   70+ tests passing (unit, integration, end-to-end)
+-   85%+ code coverage minimum
+-   Zero architecture violations
+-   Complete documentation and v0.3.0 → v0.4.0 migration guide
 
 ---
 

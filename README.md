@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.1.5-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
 [![Roadmap](https://img.shields.io/badge/roadmap-v0.3.0%20%2B%20v0.4.0-lightgreen)](./RELEASE_ROADMAP_v0.3.0-v0.4.0.md)
 
 **High-performance MCP server for semantic code search using vector embeddings**
@@ -42,7 +42,7 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 -   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2040+ tests project-wide
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
 -   **Workflow System** (v0.3.0): FSM-based task orchestration with context awareness and policy enforcement
--   **Integrated Context** (v0.4.0): Multi-agent collaboration with context merging and session lifecycle
+-   **Integrated Context** (v0.4.0 - Planned): Knowledge graph, hybrid search, freshness tracking, time-travel queries (blocked on v0.3.0)
 
 ## Architecture
 
@@ -90,7 +90,12 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 - **ADR-038**: Multi-Tier Execution – Hierarchical execution tiers
 
 **Integrated Context (v0.4.0 - Planned)**:
-- **ADR-041-046**: Context System Architecture – Multi-agent collaboration, context merging, session lifecycle
+- **ADR-041**: Context System Architecture – 5-layer integrated context (graph → search → versioning → policies)
+- **ADR-042**: Knowledge Graph – petgraph-based relationships, tree-sitter semantic extraction
+- **ADR-043**: Hybrid Search – RRF fusion of semantic + BM25 ranking with freshness weighting
+- **ADR-044**: Lightweight Discovery Models – AST-based routing, rhai rules, optional ML
+- **ADR-045**: Context Versioning – Immutable snapshots, time-travel queries, TTL garbage collection
+- **ADR-046**: FSM & Policy Integration – Workflow gating, scope boundaries, compensation rollback
 
 **Planned (v0.2.0+)**:
 - **ADR-008**: Git-Aware Semantic Indexing – Repository context and multi-branch support
