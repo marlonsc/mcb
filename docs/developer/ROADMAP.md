@@ -308,42 +308,66 @@ Enhance semantic code search with deep code intelligence features, enabling adva
 
 ---
 
-### v0.4.0 - Enterprise Features 📋 FUTURE
+### v0.4.0 - Integrated Context System 📋 PLANNED
 
-**Status**: Conceptual
-**Priority**: Medium
+**Status**: Planning Complete (ADR-041-046)
+**Priority**: High
 **Dependencies**: v0.3.0 completion
-**Key Architecture**: ADR-041 (Multi-Tenancy), ADR-042 (RBAC), ADR-043 (SSO Integration)
+**Timeline**: Feb 17 - Mar 16, 2026 (4 weeks)
+**Key Architecture**: ADR-041-046 (Context Architecture, Knowledge Graph, Hybrid Search, Versioning, Integration)
 
 #### Vision
 
-Transform MCP Context Browser into an enterprise-ready platform with multi-tenancy, advanced security, compliance features, and comprehensive administrative capabilities suitable for large organizations.
+Implement an integrated context system with knowledge graphs, freshness tracking, and time-travel queries. This system enables intelligent, adaptive code search with temporal awareness and policy-driven context discovery.
 
 #### Objectives
 
 | Feature | Description | Benefit |
 |---------|-------------|---------|
-|**Multi-Tenant Support**| Isolated workspaces with resource quotas | Support multiple teams/projects |
-|**Advanced RBAC**| Role-based access control with team permissions | Granular security control |
-|**SSO Integration**| SAML 2.0, OIDC, Active Directory support | Enterprise authentication |
-|**Enhanced Audit Logging**| Comprehensive activity tracking with retention | Compliance and security |
-|**Cost Tracking**| Per-tenant API usage and cost allocation | Budget management |
-|**Admin Dashboard**| Web-based administrative interface | Centralized management |
+|**Knowledge Graph**| Code relationships (calls, imports, extends) | Understand code structure and dependencies |
+|**Freshness Tracking**| Temporal metadata and staleness signals | Find current, relevant code patterns |
+|**Time-Travel Queries**| Query code as it existed at specific commits | Understand code evolution and regressions |
+|**Hybrid Search**| RRF fusion of semantic + keyword search | Better relevance through dual ranking |
+|**Context Snapshots**| Immutable captures of code state | Enable temporal queries and versioning |
+|**Policy-Driven Discovery**| Freshness and validation policies | Enforce context quality standards |
 
 #### Technical Approach
 
--   **Multi-Tenancy Architecture**: Tenant isolation at database and provider level
--   **Authentication Layer**: OAuth2/OIDC integration with configurable providers
--   **Audit System**: Structured logging with tamper-proof audit trail
--   **Metrics per Tenant**: Prometheus labels for tenant-specific monitoring
--   **Web Admin UI**: Expand ADR-007 admin interface with tenant management
+-   **5-Layer Architecture**: Code indexing → Graph → Hybrid search → Versioning → Integration
+-   **Knowledge Graph**: petgraph-based with relationship types (calls, imports, extends, implements)
+-   **Hybrid Search**: RRF (Reciprocal Rank Fusion) combining semantic embeddings + BM25 keyword search
+-   **Snapshot Versioning**: Immutable captures at commits/tags with temporal query support
+-   **Policy Enforcement**: Freshness gates and validation at FSM state boundaries
+-   **MCP Integration**: Enhanced search, index, memory, session tools with new parameters
+
+#### New Capabilities
+
+**Freshness-Aware Search**:
+```bash
+mcb search --query "authenticate" --freshness-max-age 7
+# Returns only patterns < 7 days old with staleness warnings
+```
+
+**Time-Travel Queries**:
+```bash
+mcb search --query "auth" --snapshot v0.2.0
+# Show authentication patterns as they existed in v0.2.0
+```
+
+**Policy-Driven Context**:
+```bash
+mcb search --query "API docs" --policy api_docs
+# Apply "API docs must be < 7 days old" policy
+```
 
 #### Success Metrics
 
--   Tenant isolation: 100% (no cross-tenant data leakage)
--   SSO integration: <5 min setup time
--   Audit completeness: 100% of API calls logged
--   Admin UI availability: 99.9% uptime
+-   70+ tests passing (unit, integration, end-to-end)
+-   Knowledge graph: <1s for 10,000 nodes
+-   Hybrid search: <500ms average query time
+-   Snapshot creation: <5s for large codebases
+-   Zero architecture violations
+-   Complete documentation and migration guide
 
 ---
 
@@ -409,10 +433,11 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
-| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 2040+ tests |
+| v0.1.4 | Released | Complete RCA integration, atty security fix, dependency updates, 2040+ tests |
+| v0.1.5 | **Current** | Documentation updates for v0.4.0 planning |
 | v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
-| v0.3.0 | Future | Advanced code intelligence |
-| v0.4.0 | Future | Enterprise features |
+| v0.3.0 | Future | Advanced code intelligence (Phase 8: Workflow FSM, Freshness, Policies) |
+| v0.4.0 | **Planned** | Integrated Context System (Phase 9: Knowledge Graph, Hybrid Search, Versioning) |
 | v1.0.0 | Future | Production enterprise |
 
 ---

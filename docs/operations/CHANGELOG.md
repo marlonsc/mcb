@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
--   **YAML Frontmatter**: All ADRs now include standardized frontmatter (adr, title, status, created, updated, related, supersedes, superseded_by, implementation_status)
+-   **YAML Frontmatter**: All ADRs now include standardized frontmatter (ADR, title, status, created, updated, related, supersedes, superseded_by, implementation_status)
 -   **ADR Archive Structure**: New `docs/adr/archive/` directory for superseded decisions (ADR-012, ADR-024, ADR-032)
 -   **Consolidated ADRs**: ADR-003 & ADR-030 merged into unified "Provider Architecture & Routing" decision
 -   **Cross-Reference Updates**: All internal ADR links updated (ADR-024 → ADR-029, ADR-030 → ADR-003)

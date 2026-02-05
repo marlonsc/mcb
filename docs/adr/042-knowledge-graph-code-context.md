@@ -22,10 +22,10 @@ implementation_status: Incomplete
 
 ADR-041 defines a 5-layer context system. Layer 3 is the **Knowledge Graph** that models code structure, relationships, and dependencies. This ADR specifies:
 
-1. What relationships to represent
-2. How to extract them efficiently (tree-sitter-graph)
-3. How to store them (petgraph DAG + slotmap)
-4. How to query them (graph traversal for context reasoning)
+1.  What relationships to represent
+2.  How to extract them efficiently (tree-sitter-graph)
+3.  How to store them (petgraph DAG + slotmap)
+4.  How to query them (graph traversal for context reasoning)
 
 ## Decision
 
@@ -74,10 +74,11 @@ pub struct CodeGraph {
 ```
 
 **Rationale**:
-- **Multiple edge types** enable different reasoning (calls vs data flows vs imports)
-- **DAG structure** prevents circular dependency bugs
-- **Freshness tracking** integrates with ADR-035
-- **Metrics embedded** enable complexity-based filtering
+
+-   **Multiple edge types** enable different reasoning (calls vs data flows vs imports)
+-   **DAG structure** prevents circular dependency bugs
+-   **Freshness tracking** integrates with ADR-035
+-   **Metrics embedded** enable complexity-based filtering
 
 ### 2. Extraction Strategy: tree-sitter-graph + Manual Walks
 
@@ -132,10 +133,11 @@ impl SemanticExtractor for TreeSitterGraphExtractor {
 ```
 
 **Rationale**:
-- **tree-sitter-graph** is a DSL for extracting semantic relationships (maintained by GitHub)
-- **Caching** by file hash avoids re-extraction on identical files
-- **Incremental updates** on file change: re-extract changed file + 1-hop neighbors
-- **No expensive ML**: Pure AST analysis at <1ms per file
+
+-   **tree-sitter-graph** is a DSL for extracting semantic relationships (maintained by GitHub)
+-   **Caching** by file hash avoids re-extraction on identical files
+-   **Incremental updates** on file change: re-extract changed file + 1-hop neighbors
+-   **No expensive ML**: Pure AST analysis at <1ms per file
 
 ### 3. Storage: petgraph DAG + slotmap Arena
 
@@ -182,10 +184,11 @@ impl GraphPersistence for SqliteGraphStore {
 ```
 
 **Rationale**:
-- **petgraph**: Mature, well-tested graph library with algorithms (DFS, shortest path, etc.)
-- **slotmap**: Generational indices prevent use-after-free bugs
-- **JSON serialization**: Human-readable, easy debugging, Serde integration
-- **SQLite storage**: Persistent, queryable, no external service
+
+-   **petgraph**: Mature, well-tested graph library with algorithms (DFS, shortest path, etc.)
+-   **slotmap**: Generational indices prevent use-after-free bugs
+-   **JSON serialization**: Human-readable, easy debugging, Serde integration
+-   **SQLite storage**: Persistent, queryable, no external service
 
 ### 4. Traversal API: Graph-Aware Context Reasoning
 
@@ -236,21 +239,24 @@ impl ContextGraphTraversal for PetgraphCodeGraph {
 ```
 
 **Rationale**:
-- **Traversal enables reasoning**: Search queries can expand to related code
-- **Impact analysis**: Determine what breaks when a module changes
-- **Contextual expansion**: Find similar code patterns across codebase
-- **Depth limits** prevent explosion (< 100 results for depth 2-3)
+
+-   **Traversal enables reasoning**: Search queries can expand to related code
+-   **Impact analysis**: Determine what breaks when a module changes
+-   **Contextual expansion**: Find similar code patterns across codebase
+-   **Depth limits** prevent explosion (< 100 results for depth 2-3)
 
 ## Integration with ADR-041 & ADR-043
 
 **ADR-041 (Context System)**:
-- ContextSnapshot.graph contains CodeGraph
-- Freshness propagates: stale graph → demote search results from old code
+
+-   ContextSnapshot.graph contains CodeGraph
+-   Freshness propagates: stale graph → demote search results from old code
 
 **ADR-043 (Hybrid Search)**:
-- Graph traversal enables "find related code" queries
-- Graph ranking signal: higher rank if reachable from search result
-- Example: "Search for auth handler" → find callers + data flows + tests
+
+-   Graph traversal enables "find related code" queries
+-   Graph ranking signal: higher rank if reachable from search Result
+-   Example: "Search for auth handler" → find callers + data flows + tests
 
 ## Incremental Updates (Optimization)
 
@@ -286,20 +292,20 @@ impl IncrementalGraphBuilder {
 
 ## Testing
 
-- **Unit tests** (8): Node creation, edge addition, DAG cycle detection
-- **Extraction tests** (12): Tree-sitter-graph on 5+ languages, symbol accuracy
-- **Traversal tests** (10): Reachability, impact analysis, depth limits
-- **Incremental tests** (5): Delta computation, correctness vs full rebuild
+-   **Unit tests** (8): Node creation, edge addition, DAG cycle detection
+-   **Extraction tests** (12): Tree-sitter-graph on 5+ languages, symbol accuracy
+-   **Traversal tests** (10): Reachability, impact analysis, depth limits
+-   **Incremental tests** (5): Delta computation, correctness vs full rebuild
 
 **Target**: 35+ tests, 90%+ coverage on graph logic
 
 ## Success Criteria
 
-- ✅ Extract relationships from code <1ms per file
-- ✅ Support 14 languages (via tree-sitter-graph + manual rules)
-- ✅ Traversal algorithms complete in <100ms for 10k-node graphs
-- ✅ Incremental updates 10x faster than full rebuild
-- ✅ No circular dependencies in DAG (enforced at type level)
+-   ✅ Extract relationships from code <1ms per file
+-   ✅ Support 14 languages (via tree-sitter-graph + manual rules)
+-   ✅ Traversal algorithms complete in <100ms for 10k-node graphs
+-   ✅ Incremental updates 10x faster than full rebuild
+-   ✅ No circular dependencies in DAG (enforced at type level)
 
 ---
 

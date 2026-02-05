@@ -22,22 +22,22 @@ implementation_status: Incomplete
 
 MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.4.0 must unify these into an **integrated context system** that combines:
 
-- VCS data (git history, branches, commits)
-- Code indexing (AST chunks, relationships)  
-- Session history (workflow state + transitions)
-- Chat memories (observations + tags + session context)
-- Project hierarchy (plans, tasks, scopes from Beads)
-- Policies (context boundaries, access control)
+-   VCS data (git history, branches, commits)
+-   Code indexing (AST chunks, relationships)  
+-   Session history (workflow state + transitions)
+-   Chat memories (observations + tags + session context)
+-   Project hierarchy (plans, tasks, scopes from Beads)
+-   Policies (context boundaries, access control)
 
 into a **single queryable knowledge base** with explicit freshness tracking, versioning, and search.
 
 **Problem Statement**:
 
-1. **No unified context**: Code search, git history, memory, and workflow state are separate systems. Queries cannot reason across all information sources.
-2. **No freshness guarantees**: Caches expire, git state changes, but consumers don't know context age or staleness.
-3. **No versioning**: Context snapshots lost between sessions. Cannot time-travel to "how did code look at 14:30?"
-4. **No semantic relationships**: Code chunks are independent; no graph of dependencies, calls, data flows.
-5. **Scope boundary enforcement**: No way to isolate context by task/scope/policy without manual filtering.
+1.  **No unified context**: Code search, git history, memory, and workflow state are separate systems. Queries cannot reason across all information sources.
+2.  **No freshness guarantees**: Caches expire, git state changes, but consumers don't know context age or staleness.
+3.  **No versioning**: Context snapshots lost between sessions. Cannot time-travel to "how did code look at 14:30?"
+4.  **No semantic relationships**: Code chunks are independent; no graph of dependencies, calls, data flows.
+5.  **Scope boundary enforcement**: No way to isolate context by task/scope/policy without manual filtering.
 
 ## Decision
 
@@ -62,11 +62,12 @@ into a **single queryable knowledge base** with explicit freshness tracking, ver
 └─────────────────────────────────────────┘
 ```
 
-**Rationale**: 
-- Clear separation of concerns (data → graph → search → policies)
-- Each layer has well-defined ports/interfaces
-- Can be implemented, tested, deployed independently
-- Follows existing MCB Clean Architecture (ADR-013)
+**Rationale**:
+
+-   Clear separation of concerns (data → graph → search → policies)
+-   Each layer has well-defined ports/interfaces
+-   Can be implemented, tested, deployed independently
+-   Follows existing MCB Clean Architecture (ADR-013)
 
 ### 2. Core Data Model
 
@@ -159,24 +160,29 @@ pub trait ContextService: Send + Sync {
 ### Layer Breakdown
 
 **Layer 1: Data Sources**  
-- Existing: Memory system, VCS provider, code indexing  
-- Changes: Add session_id FK, freshness tracking, last_modified timestamps
+
+-   Existing: Memory system, VCS provider, code indexing  
+-   Changes: Add session_id FK, freshness tracking, last_modified timestamps
 
 **Layer 2: Versioning (ADR-045)**  
-- New: ContextRepository storing immutable snapshots  
-- Technology: SQLite (primary) + im::Vector (in-memory cache) + serde for serialization
+
+-   New: ContextRepository storing immutable snapshots  
+-   Technology: SQLite (primary) + im::Vector (in-memory cache) + serde for serialization
 
 **Layer 3: Knowledge Graph (ADR-042)**  
-- New: CodeGraph built via tree-sitter-graph + petgraph  
-- Technology: petgraph DAG + daggy + slotmap
+
+-   New: CodeGraph built via tree-sitter-graph + petgraph  
+-   Technology: petgraph DAG + daggy + slotmap
 
 **Layer 4: Search (ADR-043)**  
-- New: HybridSearcher composing tantivy + vecstore + graph  
-- Technology: tantivy (FTS) + vecstore (HNSW vectors) + RRF fusion
+
+-   New: HybridSearcher composing tantivy + vecstore + graph  
+-   Technology: tantivy (FTS) + vecstore (HNSW vectors) + RRF fusion
 
 **Layer 5: Policies (ADR-046)**  
-- Integration: ContextValidationResult checks policies  
-- Technology: Policy trait (existing from ADR-036)
+
+-   Integration: ContextValidationResult checks policies  
+-   Technology: Policy trait (existing from ADR-036)
 
 ### Crate Structure
 
@@ -225,11 +231,11 @@ mcb-server/
 
 ## Testing Strategy
 
-- **Unit tests** (30): ContextSnapshot creation, versioning invariants, scope filtering
-- **Integration tests** (15): FSM + context flow, policy gating, compensation
-- **Graph tests** (10): Semantic extraction, traversal, cycle detection
-- **Search tests** (10): RRF fusion, freshness ranking, hybrid queries
-- **Temporal tests** (5): Time-travel queries, TTL invalidation
+-   **Unit tests** (30): ContextSnapshot creation, versioning invariants, scope filtering
+-   **Integration tests** (15): FSM + context flow, policy gating, compensation
+-   **Graph tests** (10): Semantic extraction, traversal, cycle detection
+-   **Search tests** (10): RRF fusion, freshness ranking, hybrid queries
+-   **Temporal tests** (5): Time-travel queries, TTL invalidation
 
 **Target**: 70+ tests, 85%+ coverage on domain layer
 
@@ -244,12 +250,12 @@ mcb-server/
 
 ## Success Criteria
 
-- ✅ 5-layer architecture fully integrated
-- ✅ 70+ tests with 85%+ coverage
-- ✅ Time-travel queries working (get context at specific timestamp)
-- ✅ Freshness propagating through search results
-- ✅ Policies enforcing scope boundaries
-- ✅ Compensation triggering context re-validation on failure
+-   ✅ 5-layer architecture fully integrated
+-   ✅ 70+ tests with 85%+ coverage
+-   ✅ Time-travel queries working (get context at specific timestamp)
+-   ✅ Freshness propagating through search results
+-   ✅ Policies enforcing scope boundaries
+-   ✅ Compensation triggering context re-validation on failure
 
 ---
 

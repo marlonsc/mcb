@@ -24,10 +24,10 @@ ADR-035 defines freshness as explicit metadata: Fresh / Acceptable / Stale / Sta
 
 But questions remain:
 
-1. **How to capture context at a point in time?** Code changes, git state changes, but we need "context as it was at 14:30:00"
-2. **How to track changes?** When code is modified, which context becomes stale?
-3. **How to version?** Store snapshots or compute on-demand?
-4. **How to scale?** 1000+ snapshots in a day = memory pressure
+1.  **How to capture context at a point in time?** Code changes, git state changes, but we need "context as it was at 14:30:00"
+2.  **How to track changes?** When code is modified, which context becomes stale?
+3.  **How to version?** Store snapshots or compute on-demand?
+4.  **How to scale?** 1000+ snapshots in a day = memory pressure
 
 **This ADR specifies versioning strategy and staleness propagation.**
 
@@ -134,10 +134,11 @@ impl VersionedContextStore {
 ```
 
 **Rationale**:
-- **im::Vector**: Provides copy-on-write semantics. New snapshots don't copy old history.
-- **TTL policy**: Automatic cleanup prevents unbounded growth (keep 24h, archive older)
-- **Immutable**: No mutation, prevents consistency bugs
-- **DashMap**: Lock-free staleness tracking (high throughput)
+
+-   **im::Vector**: Provides copy-on-write semantics. New snapshots don't copy old history.
+-   **TTL policy**: Automatic cleanup prevents unbounded growth (keep 24h, archive older)
+-   **Immutable**: No mutation, prevents consistency bugs
+-   **DashMap**: Lock-free staleness tracking (high throughput)
 
 ### 2. Staleness Computation
 
@@ -286,35 +287,38 @@ println!("Memory changes: {} new observations", timeline.memory_changes.new_obse
 ### 4. Integration with ADR-034-037
 
 **Workflow FSM (ADR-034)**:
-- Each FSM state transition tagged with context snapshot
-- On "Execute" state entry: capture snapshot (for rollback if needed)
-- Compensation handler invalidates snapshots if rolled back
+
+-   Each FSM state transition tagged with context snapshot
+-   On "Execute" state entry: capture snapshot (for rollback if needed)
+-   Compensation handler invalidates snapshots if rolled back
 
 **Context Scout (ADR-035)**:
-- Freshness enum embedded in every snapshot
-- Staleness signals trigger context re-discovery
+
+-   Freshness enum embedded in every snapshot
+-   Staleness signals trigger context re-discovery
 
 **Policies (ADR-036)**:
-- Policy evaluation results tied to snapshot (reproducible)
-- Historical policy compliance queries: "Was code compliant at 14:30?"
+
+-   Policy evaluation results tied to snapshot (reproducible)
+-   Historical policy compliance queries: "Was code compliant at 14:30?"
 
 ## Testing
 
-- **Unit tests** (8): Snapshot creation, TTL GC, time-travel queries
-- **Immutability tests** (3): No accidental mutations, thread-safe
-- **Staleness tests** (7): Time-based, signal-based, composite
-- **Time-travel tests** (5): Correctness of historical queries
-- **Performance tests** (4): Snapshot creation <10ms, GC <100ms
+-   **Unit tests** (8): Snapshot creation, TTL GC, time-travel queries
+-   **Immutability tests** (3): No accidental mutations, thread-safe
+-   **Staleness tests** (7): Time-based, signal-based, composite
+-   **Time-travel tests** (5): Correctness of historical queries
+-   **Performance tests** (4): Snapshot creation <10ms, GC <100ms
 
 **Target**: 27+ tests, 85%+ coverage
 
 ## Success Criteria
 
-- ✅ Snapshot creation <10ms
-- ✅ Time-travel query <20ms for 1000+ snapshots
-- ✅ Memory usage < 100MB for 24h history (auto-GC)
-- ✅ Staleness signals working (time + git + manual)
-- ✅ Historical policy compliance queryable
+-   ✅ Snapshot creation <10ms
+-   ✅ Time-travel query <20ms for 1000+ snapshots
+-   ✅ Memory usage < 100MB for 24h history (auto-GC)
+-   ✅ Staleness signals working (time + git + manual)
+-   ✅ Historical policy compliance queryable
 
 ---
 

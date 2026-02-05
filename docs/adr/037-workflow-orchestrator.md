@@ -119,24 +119,30 @@ pub struct MultiTierConcurrency {
 
 #### Execution Flow
 
-1. **Project Creation**: Operator creates or opens a project (workspace root)
-2. **Plan Discovery**: WorkflowService queries Beads for plans/phases in this project
-3. **Task Selection**: Operator selects a task from Beads (ready, no blockers)
-4. **Session Start**: Create WorkflowSession with:
-   - `task_id` (reference to Beads task, not copy)
-   - `operator_id` (current human operator)
-   - `state: Initializing`
-5. **Context Discovery**: ContextScoutProvider discovers Git, project structure, dependencies
-6. **Policy Evaluation**: PolicyGuardProvider evaluates concurrency, branching, merge policies
-7. **Agent Pool Start**: Spawn agents (bounded, configurable pool size)
-8. **Agents Execute**: Multiple agents run in parallel within session
-   - Code changes, tests, commits happen in isolated worktrees
-   - Each agent heartbeats to session manager
-9. **Operator Gate**: On completion, await operator approval:
-   - Review changes, run tests, approve merge
-   - Or: trigger compensation (AutoRevert, ManualReview, ApproveAndMerge)
-10. **State Transition**: Execute FSM transition (Ready → Executing → Completed or Failed)
-11. **Cleanup**: Close session, cleanup worktrees, record final state
+1.  **Project Creation**: Operator creates or opens a project (workspace root)
+2.  **Plan Discovery**: WorkflowService queries Beads for plans/phases in this project
+3.  **Task Selection**: Operator selects a task from Beads (ready, no blockers)
+4.  **Session Start**: Create WorkflowSession with:
+
+-   `task_id` (reference to Beads task, not copy)
+-   `operator_id` (current human operator)
+-   `state: Initializing`
+
+1.  **Context Discovery**: ContextScoutProvider discovers Git, project structure, dependencies
+2.  **Policy Evaluation**: PolicyGuardProvider evaluates concurrency, branching, merge policies
+3.  **Agent Pool Start**: Spawn agents (bounded, configurable pool size)
+4.  **Agents Execute**: Multiple agents run in parallel within session
+
+-   Code changes, tests, commits happen in isolated worktrees
+-   Each agent heartbeats to session manager
+
+1.  **Operator Gate**: On completion, await operator approval:
+
+-   Review changes, run tests, approve merge
+-   Or: trigger compensation (AutoRevert, ManualReview, ApproveAndMerge)
+
+1.  **State Transition**: Execute FSM transition (Ready → Executing → Completed or Failed)
+2.  **Cleanup**: Close session, cleanup worktrees, record final state
 
 ---
 
@@ -249,10 +255,11 @@ pub enum WorkflowEvent {
 **Technology**: Redis, RabbitMQ, or NATS (pluggable via provider trait)
 
 **Consumers**:
-- External webhooks (Slack, GitHub, PagerDuty notifications)
-- Dashboard real-time updates
-- Analytics/monitoring systems
-- Audit trail subscribers
+
+-   External webhooks (Slack, GitHub, PagerDuty notifications)
+-   Dashboard real-time updates
+-   Analytics/monitoring systems
+-   Audit trail subscribers
 
 ```rust
 pub trait EventQueueProvider: Send + Sync {
@@ -275,6 +282,7 @@ impl EventQueueProvider for RedisEventQueue {
 ```
 
 **Topic Structure**:
+
 ```
 workflow.sessions.created
 workflow.sessions.started
@@ -298,10 +306,11 @@ workflow.agents.failed
 **Storage**: `workflow_events` table (SQLite, PostgreSQL, or configurable SQL dialect)
 
 **Properties**:
-- Immutable: events are INSERT-only, never UPDATE/DELETE
-- Indexed: Fast queries by session_id, timestamp, event_type
-- Ordered: Timestamp ordering enables time-travel debugging
-- Complete: Every state change and decision recorded
+
+-   Immutable: events are INSERT-only, never UPDATE/DELETE
+-   Indexed: Fast queries by session_id, timestamp, event_type
+-   Ordered: Timestamp ordering enables time-travel debugging
+-   Complete: Every state change and decision recorded
 
 ```sql
 CREATE TABLE workflow_events (
@@ -321,6 +330,7 @@ CREATE TABLE workflow_events (
 ```
 
 **Query Examples**:
+
 ```sql
 -- Timeline of a session
 SELECT * FROM workflow_events 
@@ -562,10 +572,10 @@ pub async fn transition(
 
 Workflow does **NOT** update Beads task status. Beads is the source of truth for task metadata:
 
-- If operator closes session as "completed", Beads task status is updated via:
-  - Manual operator action in OpenCode UI
-  - Separate Beads API call (not from Workflow)
-  - Not automatic from Workflow completion
+-   If operator closes session as "completed", Beads task status is updated via:
+    -   Manual operator action in OpenCode UI
+    -   Separate Beads API call (not from Workflow)
+    -   Not automatic from Workflow completion
 
 This preserves the separation: Beads is task-oriented (planning), Workflow is execution-oriented (doing).
 

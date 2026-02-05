@@ -418,13 +418,15 @@ The workflow engine uses **two complementary persistence layers**: per-operation
 **Hybrid Transaction Pattern:**
 
 1.  **Per-Operation Transactions**: Every `transition()` call wraps read + validate + write in a SQLite transaction (10-20ms per operation).
-   -   Ensures no lost updates if multiple sessions compete for the same resource.
-   -   Provides rollback on validation failure.
 
-2.  **Append-Only Event Log**: After every transition, write immutable event to `workflow_events` table.
-   -   Never updated or deleted — only INSERT.
-   -   Enables time-travel queries without replaying mutations.
-   -   Supports compliance audits and post-mortem analysis.
+-   Ensures no lost updates if multiple sessions compete for the same resource.
+-   Provides rollback on validation failure.
+
+1.  **Append-Only Event Log**: After every transition, write immutable event to `workflow_events` table.
+
+-   Never updated or deleted — only INSERT.
+-   Enables time-travel queries without replaying mutations.
+-   Supports compliance audits and post-mortem analysis.
 
 **SQL Schema:**
 
@@ -1069,8 +1071,9 @@ async fn sqlite_db_factory(config: &Figment) -> Result<Arc<dyn DatabaseProvider>
 **Problem**: When a workflow transitions fail during execution (e.g., task fails verification → rollback to Executing), there must be a clear strategy for compensating side effects.
 
 **Classification**: MCB workflows operate under human supervision — not autonomous agents. Compensation is **hybrid**:
-- **Automatic**: Safe operations (in-memory state, git revert)
-- **Manual**: High-risk operations (external API calls, database mutations) → prompt operator for approval
+
+-   **Automatic**: Safe operations (in-memory state, git revert)
+-   **Manual**: High-risk operations (external API calls, database mutations) → prompt operator for approval
 
 **Compensation Entity** (`mcb-domain/src/entities/workflow.rs`):
 
@@ -1192,12 +1195,14 @@ CREATE INDEX idx_effects_by_session ON workflow_effects(session_id);
 
 **Concurrency Model**:
 
-1. **Per-session mutual exclusion**: Only one thread may call `transition()` per session concurrently.
-   - Enforced via RwLock in `SqliteWorkflowEngine`
-   - **Implementation**: `Arc<RwLock<WorkflowSession>>`
+1.  **Per-session mutual exclusion**: Only one thread may call `transition()` per session concurrently.
 
-2. **SQLite transaction isolation**: Use SERIALIZABLE isolation for `workflow_sessions` updates.
-   - **Schema change**: Add `version` column for optimistic concurrency detection.
+-   Enforced via RwLock in `SqliteWorkflowEngine`
+-   **Implementation**: `Arc<RwLock<WorkflowSession>>`
+
+1.  **SQLite transaction isolation**: Use SERIALIZABLE isolation for `workflow_sessions` updates.
+
+-   **Schema change**: Add `version` column for optimistic concurrency detection.
 
 ```sql
 ALTER TABLE workflow_sessions ADD COLUMN version INTEGER DEFAULT 0;
@@ -1208,9 +1213,10 @@ UPDATE workflow_sessions
   WHERE id = ? AND version = ?;  -- Detects concurrent writes
 ```
 
-3. **Multi-session parallelism**: Different sessions may transition in parallel (no global lock).
-   - SQLite WAL mode enables concurrent reads from one writer.
-   - Use connection pool to service multiple sessions simultaneously.
+1.  **Multi-session parallelism**: Different sessions may transition in parallel (no global lock).
+
+-   SQLite WAL mode enables concurrent reads from one writer.
+-   Use connection pool to service multiple sessions simultaneously.
 
 **Implementation** (`mcb-providers/src/workflow/sqlite_workflow.rs`):
 

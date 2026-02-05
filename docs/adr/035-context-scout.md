@@ -823,10 +823,12 @@ pub struct GitContext {
 
 1.  Worktree exists but is orphaned (no active session references it)
 2.  On next `WorkflowService.initialize()` or periodic cleanup task:
-   -   Scan `.worktrees/` directory
-   -   For each worktree without corresponding in-progress session:
-     -   `vcs.remove_worktree()` (prune unused worktrees)
-3.  Operator can retry task with new session ID → new worktree created
+
+-   Scan `.worktrees/` directory
+-   For each worktree without corresponding in-progress session:
+    -   `vcs.remove_worktree()` (prune unused worktrees)
+
+1.  Operator can retry task with new session ID → new worktree created
 
 ---
 

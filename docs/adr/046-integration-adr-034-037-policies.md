@@ -24,10 +24,10 @@ ADR-041-045 define the integrated context system layers. ADR-046 **bridges** thi
 
 Key integration points:
 
-1. **FSM gates context freshness requirements** (state determines what freshness is acceptable)
-2. **Policies define context boundaries** (scope isolation, access control)
-3. **Compensation triggers context re-validation** (if operation fails, re-check context)
-4. **Context snapshots enable rollback** (time-travel to pre-operation state)
+1.  **FSM gates context freshness requirements** (state determines what freshness is acceptable)
+2.  **Policies define context boundaries** (scope isolation, access control)
+3.  **Compensation triggers context re-validation** (if operation fails, re-check context)
+4.  **Context snapshots enable rollback** (time-travel to pre-operation state)
 
 ## Decision
 
@@ -402,31 +402,31 @@ impl ContextToolHandler {
 
 ## Integration Checklist
 
-- ✅ FSM state determines context freshness requirements
-- ✅ Policies enforce scope boundaries (ScopeLevel)
-- ✅ Compensation uses context snapshots for rollback
-- ✅ Events published for all major state changes
-- ✅ MCP tools provide unified query interface
-- ✅ Beads task context flows through all layers
+-   ✅ FSM state determines context freshness requirements
+-   ✅ Policies enforce scope boundaries (ScopeLevel)
+-   ✅ Compensation uses context snapshots for rollback
+-   ✅ Events published for all major state changes
+-   ✅ MCP tools provide unified query interface
+-   ✅ Beads task context flows through all layers
 
 ## Testing
 
-- **State transition tests** (8): Freshness checks, policy validation
-- **Compensation tests** (6): Rollback correctness, policy re-evaluation
-- **Event flow tests** (5): Subscribers reactive, event ordering
-- **Integration tests** (10): Full workflow + context + policies
-- **MCP tool tests** (5): Tool handlers, result accuracy
+-   **State transition tests** (8): Freshness checks, policy validation
+-   **Compensation tests** (6): Rollback correctness, policy re-evaluation
+-   **Event flow tests** (5): Subscribers reactive, event ordering
+-   **Integration tests** (10): Full workflow + context + policies
+-   **MCP tool tests** (5): Tool handlers, Result accuracy
 
 **Target**: 34+ tests, 80%+ coverage
 
 ## Success Criteria
 
-- ✅ FSM ↔ Context validation working (state gates freshness)
-- ✅ Policies enforced at all transition points
-- ✅ Compensation triggers on policy failure + rolls back correctly
-- ✅ Context snapshots enable time-travel recovery
-- ✅ All workflow events published + logged
-- ✅ MCP tools provide transparent access to all layers
+-   ✅ FSM ↔ Context validation working (state gates freshness)
+-   ✅ Policies enforced at all transition points
+-   ✅ Compensation triggers on policy failure + rolls back correctly
+-   ✅ Context snapshots enable time-travel recovery
+-   ✅ All workflow events published + logged
+-   ✅ MCP tools provide transparent access to all layers
 
 ---
 

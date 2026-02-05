@@ -44,6 +44,24 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 -   [ADR 030: Multi-Provider Strategy](030-multi-provider-strategy.md) - **CONSOLIDATED into ADR-003** (see [ADR 003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md))
 -   [ADR 031: Documentation Excellence](031-documentation-excellence.md) - Documentation standards and automation
 
+### Phase 8-9: v0.3→v0.4.0 (Workflow + Integrated Context System)
+
+#### Phase 8: Workflow FSM & Policies (v0.3.0)
+
+-   [ADR 034: Workflow FSM](034-workflow-fsm.md) - State machine for context workflows
+-   [ADR 035: Freshness Tracking](035-freshness-tracking.md) - Temporal metadata and staleness signals
+-   [ADR 036: Policies & Validation](036-policies-validation.md) - Policy enforcement framework
+-   [ADR 037: Compensation & Orchestration](037-compensation-orchestration.md) - Rollback and recovery patterns
+
+#### Phase 9: Integrated Context System (v0.4.0)
+
+-   [ADR 041: Context Architecture](phase-9/README.md#adr-041-context-architecture) - 5-layer context system design
+-   [ADR 042: Knowledge Graph](phase-9/README.md#adr-042-knowledge-graph) - Graph structure and relationships
+-   [ADR 043: Hybrid Search Engine](phase-9/README.md#adr-043-hybrid-search-engine) - RRF fusion algorithm
+-   [ADR 044: Model Selection](phase-9/README.md#adr-044-model-selection) - Embedding and search model choices
+-   [ADR 045: Context Versioning](phase-9/README.md#adr-045-context-versioning) - Snapshot and temporal queries
+-   [ADR 046: Integration Patterns](phase-9/README.md#adr-046-integration-patterns) - MCP tool integration
+
 ### Implementation Timeline v0.1.2
 
 #### Phase 1: Foundation (Week 1-2)
@@ -85,6 +103,17 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 | Implemented | Completed in codebase |
 | Deprecated | No longer relevant |
 | Superseded | Replaced by another ADR |
+
+## ADR Count
+
+**Total ADRs**: 46 (ADR-001 through ADR-046)
+
+- **Core Architecture**: ADR-001-007 (7 ADRs)
+- **v0.2.0 Features**: ADR-008-010 (3 ADRs)
+- **Infrastructure**: ADR-011-022 (12 ADRs)
+- **v0.1.2 Refactoring**: ADR-023-031 (9 ADRs)
+- **Phase 8 (Workflow)**: ADR-034-037 (4 ADRs)
+- **Phase 9 (Context)**: ADR-041-046 (6 ADRs)
 
 ## Creating New ADRs
 

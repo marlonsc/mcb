@@ -22,10 +22,10 @@ implementation_status: Incomplete
 
 ADR-042 builds a knowledge graph of code relationships. ADR-043 specifies the **search engine** that queries this graph alongside:
 
-- Full-text search (tantivy BM25 on code content)
-- Vector embeddings (semantic similarity via existing MCB vector stores)
-- Graph traversal (related code discovery)
-- Freshness weighting (prefer recent context)
+-   Full-text search (tantivy BM25 on code content)
+-   Vector embeddings (semantic similarity via existing MCB vector stores)
+-   Graph traversal (related code discovery)
+-   Freshness weighting (prefer recent context)
 
 into a unified **hybrid search** that returns ranked results with explicit provenance.
 
@@ -273,22 +273,22 @@ impl UnifiedSearchEngine {
 
 ## Testing
 
-- **FTS tests** (5): tantivy indexing, query parsing, rank accuracy
-- **Semantic tests** (5): Vector search, similarity computation
-- **Graph traversal tests** (5): BFS/DFS, distance computation
-- **RRF fusion tests** (8): Weight combinations, rank preservation
-- **Freshness tests** (3): Penalty application, floor filtering
-- **E2E search tests** (10): Real queries, result quality
+-   **FTS tests** (5): tantivy indexing, query parsing, rank accuracy
+-   **Semantic tests** (5): Vector search, similarity computation
+-   **Graph traversal tests** (5): BFS/DFS, distance computation
+-   **RRF fusion tests** (8): Weight combinations, rank preservation
+-   **Freshness tests** (3): Penalty application, floor filtering
+-   **E2E search tests** (10): Real queries, Result quality
 
 **Target**: 36+ tests, 85%+ coverage on search engine
 
 ## Success Criteria
 
-- ✅ Search completes in <500ms for 100k nodes
-- ✅ RRF fusion balanced (no single signal dominates)
-- ✅ Top-3 results highly relevant (manual review)
-- ✅ Freshness penalties working (stale results demoted)
-- ✅ Graph expansion discovering related code (validation query)
+-   ✅ Search completes in <500ms for 100k nodes
+-   ✅ RRF fusion balanced (no single signal dominates)
+-   ✅ Top-3 results highly relevant (manual review)
+-   ✅ Freshness penalties working (stale results demoted)
+-   ✅ Graph expansion discovering related code (validation query)
 
 ---
 

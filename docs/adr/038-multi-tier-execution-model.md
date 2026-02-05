@@ -94,6 +94,7 @@ All five entities work together to form a complete execution hierarchy:
 **Purpose**: Top-level scope for all workflow activity. Coordinates configuration and multi-tenant isolation.
 
 **Fields**:
+
 -   `id: String` — Unique project identifier
 -   `name: String` — Display name
 -   `root_path: PathBuf` — Filesystem root (git repository)
@@ -102,11 +103,13 @@ All five entities work together to form a complete execution hierarchy:
 -   `archived_at: Option<DateTime<Utc>>`
 
 **Responsibility**:
+
 -   Configuration loading and validation
 -   Multi-plan coordination (ensure no conflicts)
 -   Operator role assignment (RBAC)
 
 **Lifecycle**:
+
 1.  **Created**: Operator initializes project via MCP `project:init` tool
 2.  **Active**: Plans and sessions execute within project scope
 3.  **Archived**: No new sessions created; read-only for historical queries
@@ -118,6 +121,7 @@ All five entities work together to form a complete execution hierarchy:
 **Purpose**: From Beads — logical grouping of tasks by phase (e.g., "Phase 1: Architecture Cleanup", "Phase 2: Git Foundation").
 
 **Fields**:
+
 -   `id: String` — Unique to Beads
 -   `project_id: String` — Foreign key to project
 -   `phase_name: String` — e.g., "01-architecture-cleanup"
@@ -126,16 +130,19 @@ All five entities work together to form a complete execution hierarchy:
 -   `created_at: DateTime<Utc>`
 
 **Responsibility**:
+
 -   Grouping tasks by logical phase
 -   Tracking phase-level metrics (tasks completed / total)
 -   Enforcing phase ordering (implicit: phases ordered by creation date)
 
 **Lifecycle**:
+
 1.  **Open**: Defined in Beads, no active sessions yet
 2.  **InProgress**: ≥1 task has active session
 3.  **Closed**: All tasks completed; operator marks via MCP
 
 **Integration with Workflow**:
+
 -   Workflow engine reads plans from Beads via `TrackerProvider` (ADR-035)
 -   When task transitioned to InProgress, plan automatically transitions to InProgress
 -   When last task in plan completed, plan is marked closed
@@ -147,6 +154,7 @@ All five entities work together to form a complete execution hierarchy:
 **Purpose**: From Beads — atomic unit of work. Entirely managed by Beads; workflow engine only **consumes** task metadata.
 
 **Fields** (from Beads schema):
+
 -   `id: String` — Beads issue ID
 -   `plan_id: String` — Belongs to phase
 -   `title: String` — Work description
@@ -155,11 +163,13 @@ All five entities work together to form a complete execution hierarchy:
 -   `created_at, closed_at: DateTime<Utc>`
 
 **Responsibility**:
+
 -   Describing the work to be done (NOT implementing it)
 -   Tracking work status via Beads CLI (`bd update <id> --status=in_progress`)
 -   Managing task dependencies and blockers
 
 **Lifecycle** (entirely in Beads):
+
 ```
 Open
   → InProgress          (operator runs `bd update <id> --status=in_progress`)
@@ -170,11 +180,13 @@ Open
 ```
 
 **Workflow Integration**:
+
 -   When task status = Open: MCP `project:ready_tasks` returns it
 -   Operator picks task → workflow creates Session
 -   Session state drives task status updates (no direct task mutations by workflow engine)
 
 **Constraints**:
+
 -   **Read-only in workflow engine**: Workflow NEVER mutates task data directly
 -   Task state is single source of truth (stored in Beads)
 -   Workflow reads task state; may trigger Beads status update via orchestrator
@@ -186,6 +198,7 @@ Open
 **Purpose**: Execution context for a single task by one operator. Encapsulates the entire workflow from start (code changes) to finish (code merged).
 
 **Fields**:
+
 -   `id: String` — UUID, unique session identifier
 -   `task_id: String` — Foreign key (1:1 mapping to task, but session can outlive task in error recovery scenarios)
 -   `operator_id: String` — Operator making decisions
@@ -199,6 +212,7 @@ Open
 -   `created_at, started_at, completed_at: DateTime<Utc>`
 
 **Responsibility**:
+
 -   Holding workflow state and transitions (FSM)
 -   Coordinating agents to execute task
 -   Recording all decisions (operator approval, rejections)
@@ -250,6 +264,7 @@ OR at any point:
 **Purpose**: Human decision-maker. Approves code changes, overrides policies, manages session lifecycle.
 
 **Fields**:
+
 -   `id: String` — User ID (from OIDC or auth system)
 -   `name: String` — Display name
 -   `email: String` — Email address
@@ -259,17 +274,20 @@ OR at any point:
 -   `active_session_ids: Vec<String>` — Currently assigned sessions
 
 **Responsibility**:
+
 -   Making decisions (approve code, request changes, reject)
 -   Overriding policies (with audit logging)
 -   Resuming interrupted sessions
 -   Managing compensation flow
 
 **Constraints**:
+
 -   **Single decision at a time**: Operator can have multiple assigned sessions, but only processes ONE decision concurrently (implicit bottleneck)
 -   **Can't double-approve**: Once a decision is recorded, subsequent calls are idempotent (return same decision)
 -   **Can override**: Can approve despite policy failures (requires explicit `override_reason`)
 
 **Lifecycle**:
+
 ```
 Idle
   ↓ (task opened)
@@ -289,6 +307,7 @@ Rejecting → back to Assigned/Idle
 **Purpose**: AI agents executing work within a session (e.g., code changes, test execution, documentation).
 
 **Fields**:
+
 -   `id: String` — Agent identifier
 -   `session_id: String` — Session this agent is part of
 -   `agent_type: AgentType` — CodeWriter | Tester | Documenter | CustomAgent
@@ -297,16 +316,19 @@ Rejecting → back to Assigned/Idle
 -   `started_at, completed_at: Option<DateTime<Utc>>`
 
 **Responsibility**:
+
 -   Executing assigned work (code changes, tests)
 -   Reporting progress to session
 -   Contributing to worktree changes
 
 **Constraints**:
+
 -   **Multiple agents per session**: Up to 8 concurrent (configurable)
 -   **Shared worktree**: All agents modify same worktree; changes are cumulative
 -   **No blocking between agents**: Agents run in parallel; operator or session FSM enforces synchronization points
 
 **Lifecycle**:
+
 ```
 Queued       (waiting for resources)
   ↓
@@ -358,6 +380,7 @@ Managed entirely by Beads. Workflow engine is a **consumer** only.
 ```
 
 **Beads Transitions** (operators):
+
 -   Open → InProgress: `bd update <id> --status=in_progress`
 -   InProgress → PendingReview: auto (triggered by session state change)
 -   PendingReview → Approved: `project:decide approve` (MCP)
@@ -427,12 +450,13 @@ OR at any point:
 ```
 
 **Transition Guards** (from ADR-036 — policies):
+
 -   Ready → Planning: WIP limit check, phase not blocked
 -   Planning → Executing: All prerequisites satisfied
 -   Executing → Verifying: Agents completed (or timeout)
 -   Verifying → AwaitingMerge: All policy checks pass (tests, reviews, security scans)
 -   AwaitingMerge → Merged: (can be skipped if auto-merge enabled)
--   * → Failed: At any point if error or operator rejection
+-   -   → Failed: At any point if error or operator rejection
 
 #### 2.3 OperatorState (Decision Loop)
 
@@ -477,6 +501,7 @@ Operator progresses through a sequence of decisions:
 ```
 
 **Constraints**:
+
 -   **Atomic decisions**: Operator can't split a decision (approve partial code)
 -   **Idempotent**: Same decision can be submitted twice without side effects
 -   **Timeout**: If operator doesn't decide for 72 hours, session auto-fails (configurable, triggers ManualReview compensation)
@@ -525,6 +550,7 @@ Work-in-Progress limit controls max concurrent tasks per plan.
 **Default WIP**: 3 concurrent tasks per plan
 
 **Enforcement** (in ContextScout + PolicyGuard):
+
 ```rust
 let in_progress_count = context.tracker.count_issues(
     plan_id: phase_id,
@@ -543,6 +569,7 @@ If WIP limit reached, next `Ready` → `Planning` transition is blocked until an
 Only 1 session can be active per task. If a session fails/crashes, a new session can be created for the same task (recovery scenario).
 
 **Enforcement** (in WorkflowEngine):
+
 ```rust
 let existing = session_repo.find_by_task(task_id).await?;
 if existing.state != WorkflowState::Completed && existing.state != WorkflowState::Failed {
@@ -555,6 +582,7 @@ if existing.state != WorkflowState::Completed && existing.state != WorkflowState
 Multiple agents can run in parallel within the same session. All modifications are to the same worktree; changes accumulate.
 
 **Bounded by**:
+
 -   Agent pool size (default: 8)
 -   System resources (CPU, memory)
 -   Session timeout (default: 24 hours)
@@ -574,6 +602,7 @@ Session A (task_id = beads-123)
 ```
 
 **Synchronization**:
+
 -   Agents don't synchronize with each other (free-for-all)
 -   Session FSM synchronizes agents (waits for all to complete before Verifying)
 -   Operator reviews final combined output
@@ -592,8 +621,8 @@ Operator processes decisions one at a time (implicit bottleneck).
 |-------|---|---|---|
 | Project | ∞ | System resources | No |
 | Plan | ∞ | Task dependencies | No |
-| Task | 1 (exclusive) | Design | Per-task mutex |
-| Session | Limited by WIP | Policy (default 3 per plan) | Per-session mutex |
+| Task | 1 (exclusive) | Design | Per-task Mutex |
+| Session | Limited by WIP | Policy (default 3 per plan) | Per-session Mutex |
 | Agent | 8 | Agent pool size | Per-session (coordinated) |
 | Operator | 1 decision at a time | Human speed | Implicit (sequential processing) |
 
@@ -604,12 +633,14 @@ Each session gets **exclusive ownership** of a Git worktree, enabling true isola
 #### 4.1 Worktree Lifecycle
 
 **Naming Convention**:
+
 ```
 .worktrees/{session_id}
 e.g., .worktrees/sess-a1b2c3d4-e5f6-7890-abcd-ef1234567890
 ```
 
 **Branch Naming Convention**:
+
 ```
 feature/{task_id}/{session_id}
 e.g., feature/beads-123/sess-a1b2c3d4
@@ -698,11 +729,14 @@ Compensation: AutoRevert
   3. Session → Failed → Completed
 ```
 
-**Merge Conflict Avoidance**: 
+**Merge Conflict Avoidance**:
+
 -   If main has moved ahead, rebase worktree branch before merge:
+
     ```
     git rebase origin/main
     ```
+
 -   If conflicts, operator decides: resolve manually (RequestChanges) or reject (AutoRevert).
 
 #### 4.4 Operator Testing
@@ -725,6 +759,7 @@ The operator is the bottleneck and decision-maker. The workflow accommodates thr
 #### 5.1 Compensation Strategies (from ADR-034)
 
 **Strategy 1: AutoRevert**
+
 -   Automatic rollback on error
 -   Git reset --hard to main
 -   Used for agent failures (test failures, syntax errors)
@@ -732,16 +767,18 @@ The operator is the bottleneck and decision-maker. The workflow accommodates thr
 -   Session → Failed → Completed (no recovery)
 
 **Strategy 2: ManualReview**
+
 -   Human operator decides next step
 -   Operator reviews error, code, logs
 -   Three options:
-    1. **Retry**: Re-run agents from Executing
-    2. **Fix**: Modify code manually, resubmit
-    3. **Abort**: Reject and rollback
+    1.  **Retry**: Re-run agents from Executing
+    2.  **Fix**: Modify code manually, resubmit
+    3.  **Abort**: Reject and rollback
 -   Used for policy failures, merge conflicts, unclear errors
 -   Operator overhead: ~10-30 minutes per incident
 
 **Strategy 3: ApproveAndMerge**
+
 -   Automatic approval and merge (dangerous)
 -   Used for non-blocking policies (warnings)
 -   Minimal operator involvement
@@ -776,6 +813,7 @@ project:decide <session_id> {
 ```
 
 **Decision 1: Approve**
+
 ```
 Preconditions:
   - Tests pass (RequireTests policy)
@@ -796,6 +834,7 @@ Override example:
 ```
 
 **Decision 2: RequestChanges**
+
 ```
 Preconditions:
   - None (operator can request changes at any time)
@@ -814,6 +853,7 @@ Example:
 ```
 
 **Decision 3: Reject**
+
 ```
 Preconditions:
   - Code has blocker issue (security, correctness, etc.)
@@ -994,18 +1034,21 @@ CREATE TABLE session_agents (
 ### Implementation Roadmap
 
 **Phase 1: Core Entities & FSM (Weeks 1-2, 40 hours)**
+
 -   Implement `Project`, `Session`, `Operator`, `Agent` entities
 -   Implement `WorkflowState` enum + `transition()` logic
 -   Implement `SessionRepository` (SQLite CRUD)
 -   Write domain tests (50+ test cases)
 
 **Phase 2: Providers & Services (Weeks 3-4, 60 hours)**
+
 -   Implement `VcsProvider` (git2-based worktree management)
 -   Implement `ContextScout` (project state discovery)
 -   Implement `PolicyGuard` (enforcement of policies)
 -   Write provider tests (60+ test cases)
 
 **Phase 3: Orchestration & MCP (Weeks 5-6, 50 hours)**
+
 -   Implement `WorkflowOrchestrator` (MCP integration)
 -   Implement event broadcasting (3 channels)
 -   Implement operator decision flow (approve/reject/request changes)
