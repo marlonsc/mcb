@@ -284,7 +284,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Provider Registration**: Compile-time (from runtime discovery)
 -   **Validation Coverage**: 12 architecture patterns automated
 -   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
--   **Test Coverage**: 2011+ tests maintained
+-   **Test Coverage**: 2040+ tests maintained
 -   **Architecture Compliance**: Automated validation of 7-crate clean architecture
 
 ### Next Steps (v0.1.3 or v0.2.0)
@@ -352,7 +352,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   **Clean Architecture**: Complete refactoring with trait-based dependency injection
--   **Test Suite**: Expanded to 2011+ tests organized by Clean Architecture layers
+-   **Test Suite**: Expanded to 2040+ tests organized by Clean Architecture layers
 -   **Configuration**: Modular configuration with cache and limits separated
 -   **Server Operations**: Extracted operations to dedicated module (`src/server/operations.rs`)
 -   **Metrics**: Dedicated metrics module (`src/server/metrics.rs`)
@@ -381,7 +381,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
 -   **Provider Support**: 7 embedding providers, 8 vector stores
 -   **Language Support**: 14 languages with AST parsing
--   **Test Coverage**: 2011+ tests
+-   **Test Coverage**: 2040+ tests
 
 ---
 
