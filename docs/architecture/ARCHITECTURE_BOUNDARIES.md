@@ -1,6 +1,6 @@
 # Architecture Boundaries - Layer Rules and Module Ownership
 
-**Version**: v0.1.5
+**Version**: v0.2.0
 **Status**: Baseline Documentation
 **Last Updated**: 2026-01-28
 
@@ -534,7 +534,7 @@ make validate QUICK=1  # Fast validation
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v0.1.5 | 2026-01-28 | Baseline documentation for architecture boundaries |
+| v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
 
 ---
 

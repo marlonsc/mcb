@@ -5,7 +5,7 @@
 
 ## Overview
 
-Phase 8-9 "Workflow FSM + Integrated Context System" is planned for v0.3.0-v0.4.0 (Feb 17 - Mar 16, 2026). The project has completed v0.1.5 documentation updates and is preparing for Phase 8 implementation with workflow state machines, freshness tracking, and policy enforcement.
+Phase 8-9 "Workflow FSM + Integrated Context System" is planned for v0.3.0-v0.4.0 (Feb 17 - Mar 16, 2026). The project has completed v0.2.0 documentation updates and is preparing for Phase 8 implementation with workflow state machines, freshness tracking, and policy enforcement.
 
 ## Current Phase
 
@@ -24,7 +24,7 @@ Phase 8-9 "Workflow FSM + Integrated Context System" is planned for v0.3.0-v0.4.
 
 ## Roadmap Signals
 
--   **v0.1.5** (Current): Documentation updates for v0.4.0 planning
+-   **v0.2.0** (Current): Documentation updates for v0.4.0 planning
 -   **v0.3.0** (Phase 8): Workflow FSM, Freshness Tracking, Policies, Compensation (ADR-034-037)
 -   **v0.4.0** (Phase 9): Integrated Context System with Knowledge Graph, Hybrid Search, Versioning (ADR-041-046)
 -   **v0.2.0** (Future): Git-aware indexing, session memory, advanced code browser

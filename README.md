@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.1.5-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
 [![Roadmap](https://img.shields.io/badge/roadmap-v0.3.0%20%2B%20v0.4.0-lightgreen)](./RELEASE_ROADMAP_v0.3.0-v0.4.0.md)
 
 **High-performance MCP server for semantic code search using vector embeddings**

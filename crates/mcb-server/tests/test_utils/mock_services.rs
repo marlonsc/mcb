@@ -107,6 +107,7 @@ pub struct MockAgentSessionService {
 }
 
 impl MockAgentSessionService {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             sessions: Arc::new(Mutex::new(std::collections::HashMap::new())),

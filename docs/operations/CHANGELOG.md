@@ -156,11 +156,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.5] - 2026-01-31
+## [0.2.0] - 2026-01-31
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.5** delivers new providers, health endpoints, and code quality improvements following DRY/SOLID principles. This release adds Anthropic embedding, Pinecone and Qdrant vector store providers, plus Kubernetes-ready health endpoints.
+**MCP Context Browser v0.2.0** delivers new providers, health endpoints, and code quality improvements following DRY/SOLID principles. This release adds Anthropic embedding, Pinecone and Qdrant vector store providers, plus Kubernetes-ready health endpoints.
 
 <!-- markdownlint-disable MD044 -->
 ### Added

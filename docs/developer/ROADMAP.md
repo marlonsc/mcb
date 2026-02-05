@@ -555,7 +555,7 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
 | v0.1.4 | Released | Complete RCA integration, atty security fix, dependency updates, 2060+ tests |
-| v0.1.5 | **Current** | Documentation updates for v0.4.0 planning |
+| v0.2.0 | **Current** | Documentation updates for v0.4.0 planning |
 | v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
 | v0.3.0 | Future | Advanced code intelligence (Phase 8: Workflow FSM, Freshness, Policies) |
 | v0.4.0 | **Planned** | Integrated Context System (Phase 9: Knowledge Graph, Hybrid Search, Versioning) |
