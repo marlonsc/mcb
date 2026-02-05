@@ -1606,8 +1606,98 @@ test_command = "make test"
 timeout_seconds = 300
 ```
 
+### 8. Configuration (Figment)
+
+```toml
+# config/default.toml — [policies] section (all 11 policies)
+
+[policies]
+# Global enable/disable for all policy evaluation.
+enabled = true
+# fail_fast = true stops on first error. false collects all violations.
+fail_fast = false
+
+# Pre-Transition Policies (FSM Guard)
+[policies.wip_limit]
+enabled = true
+severity = "error"
+max_in_progress = 3
+
+[policies.clean_worktree]
+enabled = true
+severity = "error"
+allow_untracked = true
+
+# Pre-Commit Policies (Git Hook)
+[policies.branch_naming]
+enabled = true
+severity = "error"
+pattern = "^(feature|fix|release|docs|chore|test|refactor)/[a-z0-9-]+$"
+expected_format = "feature/*, fix/*, release/*, docs/*, etc."
+
+[policies.commit_message_format]
+enabled = true
+severity = "error"
+format = "conventional"
+types = ["feat", "fix", "docs", "style", "refactor", "test", "chore", "perf"]
+require_scope = false
+example = "feat(guards): add WIP limit policy"
+
+# CI-Time Policies (GitHub Actions)
+[policies.require_tests]
+enabled = true
+severity = "error"
+test_command = "cargo test --release"
+timeout_seconds = 300
+
+[policies.code_coverage]
+enabled = true
+severity = "error"
+threshold = 70
+tool = "cargo-tarpaulin"
+scope = "changed-lines"
+
+[policies.security_scan]
+enabled = true
+severity = "error"
+audit_enabled = true
+deny_enabled = true
+fail_on = "warnings"
+
+# Pre-Merge / Post-Merge Policies
+[policies.code_review_gate]
+enabled = true
+severity = "error"
+min_approvals = 1
+require_dismissal = true
+
+[policies.changelog_check]
+enabled = true
+severity = "warning"
+changelog_file = "CHANGELOG.md"
+
+[policies.version_bump]
+enabled = false  # Optional; enable for strict version control
+severity = "warning"
+format = "semantic"
+file = "Cargo.toml"
+
+[policies.documentation_update]
+enabled = false  # Optional; enable to require docs updates
+severity = "warning"
+required_docs = ["README.md", "ARCHITECTURE.md"]
+code_patterns = ["src/**/*.rs", "Cargo.toml"]
+```
+
+**Configuration Notes**:
+- **Pre-Transition**: `wip_limit`, `clean_worktree` — applied before FSM transition
+- **Pre-Commit**: `branch_naming`, `commit_message_format` — applied by git pre-commit hook
+- **CI-Time**: `require_tests`, `code_coverage`, `security_scan` — applied during GitHub Actions
+- **Pre-Merge**: `code_review_gate` — applied before merge on GitHub
+- **Post-Merge**: `changelog_check`, `version_bump`, `documentation_update` — applied after merge to main
+
 ```rust
-// mcb-infrastructure/src/config/policies.rs
+// mcb-infrastructure/src/config/policies.rs — Updated for 11 policies
 
 use mcb_domain::entities::policy::Severity;
 use serde::Deserialize;
@@ -1621,7 +1711,14 @@ pub struct PoliciesConfig {
     pub wip_limit: Option<PolicyEntryConfig<WipLimitSettings>>,
     pub clean_worktree: Option<PolicyEntryConfig<CleanWorktreeSettings>>,
     pub branch_naming: Option<PolicyEntryConfig<BranchNamingSettings>>,
+    pub commit_message_format: Option<PolicyEntryConfig<CommitMessageSettings>>,
     pub require_tests: Option<PolicyEntryConfig<RequireTestsSettings>>,
+    pub code_coverage: Option<PolicyEntryConfig<CodeCoverageSettings>>,
+    pub security_scan: Option<PolicyEntryConfig<SecurityScanSettings>>,
+    pub code_review_gate: Option<PolicyEntryConfig<CodeReviewSettings>>,
+    pub changelog_check: Option<PolicyEntryConfig<ChangelogSettings>>,
+    pub version_bump: Option<PolicyEntryConfig<VersionBumpSettings>>,
+    pub documentation_update: Option<PolicyEntryConfig<DocsUpdateSettings>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -1637,6 +1734,7 @@ pub struct PolicyEntryConfig<S> {
 fn default_true() -> bool { true }
 fn default_error() -> Severity { Severity::Error }
 
+// Settings structs for each policy
 #[derive(Debug, Clone, Deserialize)]
 pub struct WipLimitSettings { pub max_in_progress: u32 }
 
@@ -1650,13 +1748,58 @@ pub struct BranchNamingSettings {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct CommitMessageSettings {
+    pub format: String,           // "conventional" or "custom"
+    pub types: Vec<String>,       // ["feat", "fix", "docs", ...]
+    pub require_scope: bool,
+    pub example: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct RequireTestsSettings {
     pub test_command: String,
     pub timeout_seconds: u64,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CodeCoverageSettings {
+    pub threshold: u32,
+    pub tool: String,             // "cargo-tarpaulin" or "cargo-llvm-cov"
+    pub scope: String,            // "changed-lines" or "all"
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SecurityScanSettings {
+    pub audit_enabled: bool,
+    pub deny_enabled: bool,
+    pub fail_on: String,          // "warnings" or "denies"
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CodeReviewSettings {
+    pub min_approvals: u32,
+    pub require_dismissal: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ChangelogSettings {
+    pub changelog_file: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct VersionBumpSettings {
+    pub format: String,           // "semantic" or "calver"
+    pub file: String,             // Usually "Cargo.toml"
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DocsUpdateSettings {
+    pub required_docs: Vec<String>,
+    pub code_patterns: Vec<String>,
+}
 ```
 
-### 7. Guard Provider Implementation
+### 9. Guard Provider Implementation
 
 ```rust
 // mcb-providers/src/guard/provider.rs
