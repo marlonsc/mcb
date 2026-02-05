@@ -114,12 +114,6 @@ impl MockAgentSessionService {
     }
 }
 
-impl Default for MockAgentSessionService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[async_trait]
 impl AgentSessionServiceInterface for MockAgentSessionService {
     async fn create_session(&self, session: AgentSession) -> Result<String> {

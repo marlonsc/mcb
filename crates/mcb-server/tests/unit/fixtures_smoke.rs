@@ -2,10 +2,9 @@
 //! so they are not reported as dead code. Integration tests use them; this keeps unit build clean.
 
 use crate::test_utils::test_fixtures::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, create_idle_status, create_in_progress_status,
-    create_temp_codebase, create_test_indexing_result, create_test_indexing_result_with_errors,
-    golden_content_to_string, golden_count_result_entries, golden_parse_indexing_stats,
-    golden_parse_results_found, sample_codebase_path,
+    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, create_temp_codebase, create_test_indexing_result,
+    golden_content_to_string, golden_count_result_entries, golden_parse_results_found,
+    sample_codebase_path,
 };
 
 #[test]
@@ -20,9 +19,6 @@ fn test_fixtures_referenced() {
     assert_eq!(golden_parse_results_found("**Results found:** 5"), Some(5));
     assert_eq!(golden_count_result_entries("📁 foo\n📁 bar"), 2);
 
-    let stats = golden_parse_indexing_stats("Files processed: 1\nChunks created: 2");
-    assert_eq!(stats, Some((1, 2)));
-
     let _ = golden_content_to_string as fn(&rmcp::model::CallToolResult) -> String;
 
     let (_temp, path) = create_temp_codebase();
@@ -31,14 +27,4 @@ fn test_fixtures_referenced() {
     let result = create_test_indexing_result(1, 2, 0);
     assert_eq!(result.files_processed, 1);
     assert_eq!(result.chunks_created, 2);
-
-    let result_err = create_test_indexing_result_with_errors(1, 2, vec!["err".to_string()]);
-    assert!(!result_err.errors.is_empty());
-
-    let idle = create_idle_status();
-    assert!(!idle.is_indexing);
-
-    let progress = create_in_progress_status(0.5, "x");
-    assert!(progress.is_indexing);
-    assert_eq!(progress.progress, 0.5);
 }

@@ -4,7 +4,7 @@
 
 use crate::test_utils::mock_services::{MockAgentRepository, MockMemoryRepository};
 use mcb_application::ValidationService;
-use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
+use mcb_application::domain_services::search::IndexingResult;
 use mcb_domain::SearchResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::types::AppConfig;
@@ -58,30 +58,6 @@ pub fn golden_parse_results_found(text: &str) -> Option<usize> {
 /// Count result lines (each has "📁") in search response.
 pub fn golden_count_result_entries(text: &str) -> usize {
     text.lines().filter(|line| line.contains("📁")).count()
-}
-
-/// Parse "Files processed: N" and "Chunks created: M" from indexing success response.
-/// Returns (files_processed, chunks_created) or None if not found (e.g. "Indexing Started" message).
-pub fn golden_parse_indexing_stats(text: &str) -> Option<(usize, usize)> {
-    let files = text
-        .lines()
-        .find(|l| l.contains("Files processed:"))?
-        .split(':')
-        .nth(1)?
-        .split_whitespace()
-        .next()?
-        .parse::<usize>()
-        .ok()?;
-    let chunks = text
-        .lines()
-        .find(|l| l.contains("Chunks created:"))?
-        .split(':')
-        .nth(1)?
-        .split_whitespace()
-        .next()?
-        .parse::<usize>()
-        .ok()?;
-    Some((files, chunks))
 }
 
 /// Expected files in sample_codebase for search assertions.
@@ -153,44 +129,6 @@ pub fn create_test_indexing_result(
         errors,
         operation_id: None,
         status: "completed".to_string(),
-    }
-}
-
-/// Create a test indexing result with specific error messages
-pub fn create_test_indexing_result_with_errors(
-    files_processed: usize,
-    chunks_created: usize,
-    errors: Vec<String>,
-) -> IndexingResult {
-    IndexingResult {
-        files_processed,
-        chunks_created,
-        files_skipped: 0,
-        errors,
-        operation_id: None,
-        status: "completed".to_string(),
-    }
-}
-
-/// Create an idle indexing status (not indexing)
-pub fn create_idle_status() -> IndexingStatus {
-    IndexingStatus {
-        is_indexing: false,
-        progress: 0.0,
-        current_file: None,
-        total_files: 0,
-        processed_files: 0,
-    }
-}
-
-/// Create an in-progress indexing status
-pub fn create_in_progress_status(progress: f64, current_file: &str) -> IndexingStatus {
-    IndexingStatus {
-        is_indexing: true,
-        progress,
-        current_file: Some(current_file.to_string()),
-        total_files: 100,
-        processed_files: (progress * 100.0) as usize,
     }
 }
 
