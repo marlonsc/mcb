@@ -10,15 +10,18 @@ fn with_temp_config_dir<T>(f: impl FnOnce() -> T) -> T {
     let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
     let temp = tempdir().expect("tempdir");
     let prev = env::var("XDG_CONFIG_HOME").ok();
+    // SAFETY: We hold the ENV_LOCK mutex, ensuring exclusive access to environment variables
     unsafe {
         env::set_var("XDG_CONFIG_HOME", temp.path());
     }
     let result = f();
     if let Some(value) = prev {
+        // SAFETY: We hold the ENV_LOCK mutex, ensuring exclusive access to environment variables
         unsafe {
             env::set_var("XDG_CONFIG_HOME", value);
         }
     } else {
+        // SAFETY: We hold the ENV_LOCK mutex, ensuring exclusive access to environment variables
         unsafe {
             env::remove_var("XDG_CONFIG_HOME");
         }

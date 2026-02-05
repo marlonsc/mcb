@@ -57,6 +57,10 @@ mod highlight_integration;
 #[path = "integration/hooks_integration.rs"]
 mod hooks_integration;
 
+// Admin API integration tests
+#[path = "integration/admin_api_integration.rs"]
+mod admin_api_integration;
+
 // Golden tests canonical location (repo root tests/golden) - all included so no tests are discarded
 #[path = "../../../tests/golden/test_end_to_end.rs"]
 mod golden_test_end_to_end;
