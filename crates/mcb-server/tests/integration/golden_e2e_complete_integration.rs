@@ -61,6 +61,7 @@ fn golden_queries_path() -> std::path::PathBuf {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GoldenQuery {
     id: String,
     query: String,
@@ -71,6 +72,7 @@ struct GoldenQuery {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GoldenQueriesFixture {
     version: String,
     description: String,
@@ -79,6 +81,7 @@ struct GoldenQueriesFixture {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GoldenConfig {
     collection_name: String,
     timeout_ms: u64,

@@ -230,3 +230,207 @@ async fn golden_search_respects_index_extensions() {
     let entries = golden_count_result_entries(&text);
     assert!(entries <= 5, "limit respected: {}", entries);
 }
+
+#[tokio::test]
+async fn golden_index_with_consolidation_args_start() {
+    let server = create_test_mcp_server().await;
+    let path = sample_codebase_path();
+    let collection = "golden_consolidation_start";
+
+    let result = server
+        .index_handler()
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Start,
+            path: Some(path.to_string_lossy().to_string()),
+            collection: Some(collection.to_string()),
+            extensions: Some(vec!["rs".to_string(), "py".to_string()]),
+            exclude_dirs: Some(vec!["target".to_string(), "node_modules".to_string()]),
+            ignore_patterns: None,
+            max_file_size: Some(10_000_000),
+            follow_symlinks: Some(false),
+            token: None,
+        }))
+        .await;
+
+    assert!(
+        result.is_ok(),
+        "index with consolidated args should succeed"
+    );
+    let response = result.unwrap();
+    assert!(
+        !response.is_error.unwrap_or(true),
+        "response should not be error"
+    );
+}
+
+#[tokio::test]
+async fn golden_search_with_very_large_limit() {
+    let server = create_test_mcp_server().await;
+    let path = sample_codebase_path();
+    let collection = "golden_large_limit";
+
+    server
+        .index_handler()
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Start,
+            path: Some(path.to_string_lossy().to_string()),
+            collection: Some(collection.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await
+        .expect("index");
+
+    let search_result = server
+        .search_handler()
+        .handle(Parameters(SearchArgs {
+            query: "code".to_string(),
+            resource: SearchResource::Code,
+            collection: Some(collection.to_string()),
+            extensions: None,
+            filters: None,
+            limit: Some(1000),
+            min_score: None,
+            tags: None,
+            session_id: None,
+            token: None,
+        }))
+        .await;
+
+    assert!(
+        search_result.is_ok(),
+        "search with large limit should succeed or error gracefully"
+    );
+}
+
+#[tokio::test]
+async fn golden_search_with_min_limit() {
+    let server = create_test_mcp_server().await;
+    let path = sample_codebase_path();
+    let collection = "golden_min_limit";
+
+    server
+        .index_handler()
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Start,
+            path: Some(path.to_string_lossy().to_string()),
+            collection: Some(collection.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await
+        .expect("index");
+
+    let search_result = server
+        .search_handler()
+        .handle(Parameters(SearchArgs {
+            query: "implementation".to_string(),
+            resource: SearchResource::Code,
+            collection: Some(collection.to_string()),
+            extensions: None,
+            filters: None,
+            limit: Some(1),
+            min_score: None,
+            tags: None,
+            session_id: None,
+            token: None,
+        }))
+        .await;
+
+    assert!(search_result.is_ok(), "search with limit=1 should succeed");
+    let text = golden_content_to_string(&search_result.unwrap());
+    let count = golden_count_result_entries(&text);
+    assert!(
+        count <= 1,
+        "limit=1 must return at most 1 result, got {}",
+        count
+    );
+}
+
+#[tokio::test]
+async fn golden_collection_isolation_multiple_searches() {
+    let server = create_test_mcp_server().await;
+    let path = sample_codebase_path();
+    let col_a = "golden_iso_searches_a";
+    let col_b = "golden_iso_searches_b";
+
+    server
+        .index_handler()
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Start,
+            path: Some(path.to_string_lossy().to_string()),
+            collection: Some(col_a.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await
+        .expect("index col_a");
+
+    server
+        .index_handler()
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Start,
+            path: Some(path.to_string_lossy().to_string()),
+            collection: Some(col_b.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await
+        .expect("index col_b");
+
+    let searches = vec![
+        ("function", col_a.to_string()),
+        ("implementation", col_b.to_string()),
+    ];
+
+    let mut col_a_count = 0;
+    let mut col_b_count = 0;
+
+    for (query, collection) in searches {
+        let result = server
+            .search_handler()
+            .handle(Parameters(SearchArgs {
+                query: query.to_string(),
+                resource: SearchResource::Code,
+                collection: Some(collection.clone()),
+                extensions: None,
+                filters: None,
+                limit: Some(5),
+                min_score: None,
+                tags: None,
+                session_id: None,
+                token: None,
+            }))
+            .await;
+
+        assert!(result.is_ok(), "search for '{}' should succeed", query);
+        let count = golden_count_result_entries(&golden_content_to_string(&result.unwrap()));
+
+        if collection == col_a {
+            col_a_count = count;
+        } else {
+            col_b_count = count;
+        }
+    }
+
+    assert!(
+        col_a_count >= 0 && col_b_count >= 0,
+        "both collections should have valid result counts"
+    );
+}

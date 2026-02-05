@@ -109,6 +109,12 @@ pub trait BrowseService: Send + Sync {
 /// Concrete browse service implementation
 pub struct BrowseServiceImpl {}
 
+impl Default for BrowseServiceImpl {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BrowseServiceImpl {
     pub fn new() -> Self {
         Self {}

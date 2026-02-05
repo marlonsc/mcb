@@ -126,7 +126,7 @@ impl AgentSessionServiceInterface for MockAgentSessionService {
         Ok(session.id.clone())
     }
 
-    async fn get_session(&self, session_id: &str) -> Result<Option<AgentSession>> {
+    async fn get_session(&self, _session_id: &str) -> Result<Option<AgentSession>> {
         Ok(None)
     }
 

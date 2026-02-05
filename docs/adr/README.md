@@ -108,12 +108,12 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 
 **Total ADRs**: 46 (ADR-001 through ADR-046)
 
-- **Core Architecture**: ADR-001-007 (7 ADRs)
-- **v0.2.0 Features**: ADR-008-010 (3 ADRs)
-- **Infrastructure**: ADR-011-022 (12 ADRs)
-- **v0.1.2 Refactoring**: ADR-023-031 (9 ADRs)
-- **Phase 8 (Workflow)**: ADR-034-037 (4 ADRs)
-- **Phase 9 (Context)**: ADR-041-046 (6 ADRs)
+-   **Core Architecture**: ADR-001-007 (7 ADRs)
+-   **v0.2.0 Features**: ADR-008-010 (3 ADRs)
+-   **Infrastructure**: ADR-011-022 (12 ADRs)
+-   **v0.1.2 Refactoring**: ADR-023-031 (9 ADRs)
+-   **Phase 8 (Workflow)**: ADR-034-037 (4 ADRs)
+-   **Phase 9 (Context)**: ADR-041-046 (6 ADRs)
 
 ## Creating New ADRs
 

@@ -343,18 +343,21 @@ Implement an integrated context system with knowledge graphs, freshness tracking
 #### New Capabilities
 
 **Freshness-Aware Search**:
+
 ```bash
 mcb search --query "authenticate" --freshness-max-age 7
 # Returns only patterns < 7 days old with staleness warnings
 ```
 
 **Time-Travel Queries**:
+
 ```bash
 mcb search --query "auth" --snapshot v0.2.0
 # Show authentication patterns as they existed in v0.2.0
 ```
 
 **Policy-Driven Context**:
+
 ```bash
 mcb search --query "API docs" --policy api_docs
 # Apply "API docs must be < 7 days old" policy
@@ -362,7 +365,7 @@ mcb search --query "API docs" --policy api_docs
 
 #### Success Metrics
 
--   70+ tests passing (unit, integration, end-to-end)
+-   2040+ tests passing (unit, integration, end-to-end)
 -   Knowledge graph: <1s for 10,000 nodes
 -   Hybrid search: <500ms average query time
 -   Snapshot creation: <5s for large codebases
