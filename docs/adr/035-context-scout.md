@@ -35,20 +35,790 @@ Today, context discovery is scattered:
 
 ## Decision
 
-### 1. Use `git2` (Not `gix`)
+### 1. VCS Provider Abstraction (Trait-Based Design)
 
-MCB already depends on `git2` for code indexing. Using `gix` (gitoxide) would add a second git library to the dependency tree for marginal benefit.
+All VCS operations **must** go through the `VcsProvider` trait. No direct `git2` calls anywhere in the codebase (except within the trait implementation). This enables:
 
-| Aspect | git2 | gix |
-|--------|------|-----|
-| Already in MCB deps | Yes | No |
-| API maturity | Stable, well-documented | Newer, more verbose |
-| Performance | Good for repo sizes MCB targets | 500-1000x faster for huge monorepos |
-| Async | No (use `spawn_blocking`) | Partial |
+-   **MVP**: `Git2Provider` (using `git2` already in deps, non-async FFI calls wrapped in `spawn_blocking()`)
+-   **Phase 2+**: Alternative implementations (GitHub API, GitLab API, Mercurial, etc.) without changing consumer code
+-   **Modularity**: Clear separation between VCS abstraction and workflow logic
 
-`git2` operations are blocking (libgit2 FFI). All calls are wrapped in `tokio::task::spawn_blocking()` to avoid blocking the Tokio runtime.
+#### VcsProvider Trait Definition
 
-### 2. Domain Entities
+```rust
+// mcb-domain/src/ports/providers/vcs.rs
+
+use async_trait::async_trait;
+use std::path::{Path, PathBuf};
+use serde::{Deserialize, Serialize};
+
+/// Merge strategy for pull requests
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+pub enum MergeStrategy {
+    Merge,       // Regular 3-way merge
+    Squash,      // Squash all commits
+    Rebase,      // Rebase onto target branch
+}
+
+/// PR state filter
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+pub enum PrState {
+    Open,
+    Closed,
+    All,
+}
+
+/// Webhook event type
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+pub enum WebhookEvent {
+    Push,
+    PullRequest,
+    PullRequestReview,
+    Issue,
+    Commit,
+}
+
+/// Pull request summary
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PullRequest {
+    pub id: u64,
+    pub title: String,
+    pub from_branch: String,
+    pub to_branch: String,
+    pub state: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Repository state
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+pub enum RepoState {
+    Clean,
+    Merge,
+    Rebase,
+    RebaseMerge,
+    CherryPick,
+    Bisect,
+    Revert,
+}
+
+/// Full abstraction for version control operations
+/// 
+/// All VCS operations flow through this trait. Implementations may use:
+/// - git2 library (MVP)
+/// - GitHub/GitLab HTTP APIs (Phase 2+)
+/// - Other VCS systems (Mercurial, Fossil, etc.)
+///
+/// CRITICAL: Consumers never call VCS backends directly.
+/// All VCS work routes through trait methods.
+#[async_trait]
+pub trait VcsProvider: Send + Sync {
+    // ============ Read Operations ============
+    
+    /// Current branch name (e.g., "release/v0.3.0")
+    async fn get_current_branch(&self) -> Result<String, WorkflowError>;
+    
+    /// List of staged files (index changes)
+    async fn get_staged_files(&self) -> Result<Vec<String>, WorkflowError>;
+    
+    /// List of unstaged modified files (working tree changes)
+    async fn get_unstaged_files(&self) -> Result<Vec<String>, WorkflowError>;
+    
+    /// List of untracked files
+    async fn get_untracked_files(&self) -> Result<Vec<String>, WorkflowError>;
+    
+    /// Commit history (most recent first)
+    /// 
+    /// # Arguments
+    /// * `limit` - Maximum number of commits to return
+    /// * `branch` - Optional: branch to query (default: HEAD)
+    async fn get_commit_history(
+        &self,
+        limit: usize,
+        branch: Option<&str>,
+    ) -> Result<Vec<CommitSummary>, WorkflowError>;
+    
+    /// Repository state (clean, merge in progress, etc.)
+    async fn get_repo_state(&self) -> Result<RepoState, WorkflowError>;
+    
+    /// Count of stash entries
+    async fn get_stash_count(&self) -> Result<u32, WorkflowError>;
+    
+    // ============ Write Operations ============
+    
+    /// Create a new branch
+    /// 
+    /// # Arguments
+    /// * `name` - Branch name (e.g., "feature/new-auth")
+    /// * `from` - Source branch (default: current HEAD)
+    async fn create_branch(
+        &self,
+        name: &str,
+        from: Option<&str>,
+    ) -> Result<(), WorkflowError>;
+    
+    /// Create a worktree (isolated working directory for branch)
+    /// 
+    /// Each workflow session gets its own worktree for isolation.
+    /// Worktree path is typically: `{repo_root}/.worktrees/{session_id}`
+    ///
+    /// # Arguments
+    /// * `path` - Path where worktree will be created
+    /// * `branch` - Branch to check out (creates if doesn't exist)
+    async fn create_worktree(
+        &self,
+        path: &Path,
+        branch: &str,
+    ) -> Result<(), WorkflowError>;
+    
+    /// Remove a worktree
+    async fn remove_worktree(&self, path: &Path) -> Result<(), WorkflowError>;
+    
+    /// Stage files for commit
+    async fn stage_files(&self, paths: &[String]) -> Result<(), WorkflowError>;
+    
+    /// Commit staged changes
+    /// 
+    /// # Arguments
+    /// * `message` - Commit message
+    /// * `author_name` - Committer name (optional)
+    /// * `author_email` - Committer email (optional)
+    ///
+    /// Returns: commit hash
+    async fn commit(
+        &self,
+        message: &str,
+        author_name: Option<&str>,
+        author_email: Option<&str>,
+    ) -> Result<String, WorkflowError>;
+    
+    /// Push branch to remote
+    /// 
+    /// # Arguments
+    /// * `branch` - Branch name to push
+    /// * `force` - Force push (use carefully)
+    async fn push(&self, branch: &str, force: bool) -> Result<(), WorkflowError>;
+    
+    /// Pull updates from remote
+    async fn pull(&self, branch: Option<&str>) -> Result<(), WorkflowError>;
+    
+    // ============ Pull Request Operations ============
+    
+    /// Create a pull request
+    /// 
+    /// # Arguments
+    /// * `from_branch` - Source branch (feature branch)
+    /// * `to_branch` - Target branch (typically main/master)
+    /// * `title` - PR title
+    /// * `body` - PR description
+    /// * `labels` - Optional: labels (e.g., ["enhancement", "review-needed"])
+    /// * `assignees` - Optional: assignee usernames
+    ///
+    /// Returns: PR metadata
+    async fn create_pr(
+        &self,
+        from_branch: &str,
+        to_branch: &str,
+        title: &str,
+        body: &str,
+        labels: Option<&[String]>,
+        assignees: Option<&[String]>,
+    ) -> Result<PullRequest, WorkflowError>;
+    
+    /// Merge a pull request
+    /// 
+    /// # Arguments
+    /// * `pr_id` - Pull request ID
+    /// * `strategy` - Merge strategy (merge, squash, rebase)
+    async fn merge_pr(
+        &self,
+        pr_id: u64,
+        strategy: MergeStrategy,
+    ) -> Result<(), WorkflowError>;
+    
+    /// List pull requests
+    /// 
+    /// # Arguments
+    /// * `state` - Filter by state (open, closed, all)
+    /// * `limit` - Max results
+    async fn list_prs(
+        &self,
+        state: PrState,
+        limit: usize,
+    ) -> Result<Vec<PullRequest>, WorkflowError>;
+    
+    // ============ Webhook Operations (Phase 2+) ============
+    
+    /// Register webhook for events
+    /// 
+    /// # Arguments
+    /// * `url` - Webhook target URL
+    /// * `events` - Events to subscribe to
+    /// * `secret` - Optional: HMAC secret for signature verification
+    async fn register_webhook(
+        &self,
+        url: &str,
+        events: &[WebhookEvent],
+        secret: Option<&str>,
+    ) -> Result<String, WorkflowError>; // Returns webhook ID
+    
+    /// Unregister webhook
+    async fn unregister_webhook(&self, id: &str) -> Result<(), WorkflowError>;
+}
+```
+
+#### Design Rationale
+
+| Aspect | Decision | Why |
+|--------|----------|-----|
+| **Trait-based** | All consumers use `VcsProvider` trait | Enables multiple backends without code changes |
+| **Async throughout** | `async fn` everywhere | Aligns with MCB's async-first architecture |
+| **No git2 exposure** | git2 only in implementation | Prevents coupling to library details |
+| **spawn_blocking for git2** | Git2Provider wraps FFI calls | git2 is blocking; isolates threads from async runtime |
+| **Full GitOps scope** | Read + Write + PR + Webhooks | Covers workflow needs in Phases 1–3 |
+
+#### Implementation: Git2Provider (MVP)
+
+```rust
+// mcb-providers/src/vcs/git2_provider.rs
+
+use git2::{Repository, Status, StatusOptions};
+use mcb_domain::ports::providers::vcs::*;
+use mcb_domain::errors::WorkflowError;
+use std::path::{Path, PathBuf};
+use async_trait::async_trait;
+
+/// VCS provider using git2 library
+/// All git2 operations are blocking FFI calls wrapped in spawn_blocking()
+pub struct Git2Provider {
+    repo_path: PathBuf,
+}
+
+impl Git2Provider {
+    pub fn new(repo_path: impl Into<PathBuf>) -> Self {
+        Self {
+            repo_path: repo_path.into(),
+        }
+    }
+    
+    /// Open repository (internal, runs on blocking thread)
+    fn open_repo(&self) -> Result<Repository, WorkflowError> {
+        Repository::open(&self.repo_path).map_err(|e| {
+            WorkflowError::ContextError {
+                message: format!("Failed to open repo: {}", e),
+            }
+        })
+    }
+}
+
+#[async_trait]
+impl VcsProvider for Git2Provider {
+    async fn get_current_branch(&self) -> Result<String, WorkflowError> {
+        let repo_path = self.repo_path.clone();
+        tokio::task::spawn_blocking(move || {
+            let repo = Repository::open(&repo_path)
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to open repo: {}", e),
+                })?;
+            
+            match repo.head() {
+                Ok(head) => {
+                    Ok(head.shorthand()
+                        .unwrap_or("HEAD")
+                        .to_string())
+                },
+                Err(e) if e.code() == git2::ErrorCode::UnbornBranch => {
+                    Ok("(unborn)".to_string())
+                },
+                Err(e) => Err(WorkflowError::ContextError {
+                    message: format!("Failed to get HEAD: {}", e),
+                }),
+            }
+        })
+        .await
+        .map_err(|e| WorkflowError::ContextError {
+            message: format!("Task panicked: {}", e),
+        })?
+    }
+    
+    async fn get_staged_files(&self) -> Result<Vec<String>, WorkflowError> {
+        let repo_path = self.repo_path.clone();
+        tokio::task::spawn_blocking(move || {
+            let repo = Repository::open(&repo_path)
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to open repo: {}", e),
+                })?;
+            
+            let mut opts = StatusOptions::new();
+            opts.include_untracked(false);
+            
+            let statuses = repo.statuses(Some(&mut opts))
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to get status: {}", e),
+                })?;
+            
+            let mut staged = Vec::new();
+            for entry in statuses.iter() {
+                let s = entry.status();
+                if s.contains(Status::INDEX_NEW | Status::INDEX_MODIFIED | 
+                            Status::INDEX_DELETED | Status::INDEX_RENAMED |
+                            Status::INDEX_TYPECHANGE) {
+                    if let Some(path) = entry.path() {
+                        staged.push(path.to_string());
+                    }
+                }
+            }
+            Ok(staged)
+        })
+        .await
+        .map_err(|e| WorkflowError::ContextError {
+            message: format!("Task panicked: {}", e),
+        })?
+    }
+    
+    async fn get_unstaged_files(&self) -> Result<Vec<String>, WorkflowError> {
+        let repo_path = self.repo_path.clone();
+        tokio::task::spawn_blocking(move || {
+            let repo = Repository::open(&repo_path)
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to open repo: {}", e),
+                })?;
+            
+            let mut opts = StatusOptions::new();
+            opts.include_untracked(false);
+            
+            let statuses = repo.statuses(Some(&mut opts))
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to get status: {}", e),
+                })?;
+            
+            let mut unstaged = Vec::new();
+            for entry in statuses.iter() {
+                let s = entry.status();
+                if s.contains(Status::WT_MODIFIED | Status::WT_DELETED | Status::WT_TYPECHANGE) {
+                    if let Some(path) = entry.path() {
+                        unstaged.push(path.to_string());
+                    }
+                }
+            }
+            Ok(unstaged)
+        })
+        .await
+        .map_err(|e| WorkflowError::ContextError {
+            message: format!("Task panicked: {}", e),
+        })?
+    }
+    
+    async fn get_untracked_files(&self) -> Result<Vec<String>, WorkflowError> {
+        let repo_path = self.repo_path.clone();
+        tokio::task::spawn_blocking(move || {
+            let repo = Repository::open(&repo_path)
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to open repo: {}", e),
+                })?;
+            
+            let mut opts = StatusOptions::new();
+            opts.include_untracked(true);
+            
+            let statuses = repo.statuses(Some(&mut opts))
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to get status: {}", e),
+                })?;
+            
+            let mut untracked = Vec::new();
+            for entry in statuses.iter() {
+                if entry.status().contains(Status::WT_NEW) {
+                    if let Some(path) = entry.path() {
+                        untracked.push(path.to_string());
+                    }
+                }
+            }
+            Ok(untracked)
+        })
+        .await
+        .map_err(|e| WorkflowError::ContextError {
+            message: format!("Task panicked: {}", e),
+        })?
+    }
+    
+    async fn get_commit_history(
+        &self,
+        limit: usize,
+        branch: Option<&str>,
+    ) -> Result<Vec<CommitSummary>, WorkflowError> {
+        let repo_path = self.repo_path.clone();
+        let branch = branch.map(String::from);
+        
+        tokio::task::spawn_blocking(move || {
+            let repo = Repository::open(&repo_path)
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to open repo: {}", e),
+                })?;
+            
+            let head_oid = repo.head()
+                .ok()
+                .and_then(|h| h.target())
+                .ok_or_else(|| WorkflowError::ContextError {
+                    message: "No commits found".to_string(),
+                })?;
+            
+            let mut revwalk = repo.revwalk()
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to walk history: {}", e),
+                })?;
+            
+            revwalk.push(head_oid)
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to push to revwalk: {}", e),
+                })?;
+            
+            revwalk.simplify_first_parent()
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to simplify: {}", e),
+                })?;
+            
+            let mut commits = Vec::with_capacity(limit);
+            for oid in revwalk.take(limit) {
+                let oid = oid.map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to get OID: {}", e),
+                })?;
+                
+                let commit = repo.find_commit(oid)
+                    .map_err(|e| WorkflowError::ContextError {
+                        message: format!("Failed to find commit: {}", e),
+                    })?;
+                
+                let hash = oid.to_string();
+                let short_hash = hash[..7.min(hash.len())].to_string();
+                let message = commit.summary().unwrap_or("").to_string();
+                let author = commit.author().name().unwrap_or("unknown").to_string();
+                let time = commit.time();
+                let timestamp = chrono::DateTime::from_timestamp(time.seconds(), 0)
+                    .unwrap_or_default()
+                    .with_timezone(&chrono::Utc);
+                
+                commits.push(CommitSummary {
+                    hash,
+                    short_hash,
+                    message,
+                    author,
+                    timestamp,
+                });
+            }
+            
+            Ok(commits)
+        })
+        .await
+        .map_err(|e| WorkflowError::ContextError {
+            message: format!("Task panicked: {}", e),
+        })?
+    }
+    
+    async fn get_repo_state(&self) -> Result<RepoState, WorkflowError> {
+        let repo_path = self.repo_path.clone();
+        tokio::task::spawn_blocking(move || {
+            let repo = Repository::open(&repo_path)
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to open repo: {}", e),
+                })?;
+            
+            Ok(match repo.state() {
+                git2::RepositoryState::Clean => RepoState::Clean,
+                git2::RepositoryState::Merge => RepoState::Merge,
+                git2::RepositoryState::Rebase => RepoState::Rebase,
+                git2::RepositoryState::RebaseMerge => RepoState::RebaseMerge,
+                git2::RepositoryState::CherryPick => RepoState::CherryPick,
+                git2::RepositoryState::Bisect => RepoState::Bisect,
+                git2::RepositoryState::Revert => RepoState::Revert,
+            })
+        })
+        .await
+        .map_err(|e| WorkflowError::ContextError {
+            message: format!("Task panicked: {}", e),
+        })?
+    }
+    
+    async fn get_stash_count(&self) -> Result<u32, WorkflowError> {
+        let repo_path = self.repo_path.clone();
+        tokio::task::spawn_blocking(move || {
+            let repo = Repository::open(&repo_path)
+                .map_err(|e| WorkflowError::ContextError {
+                    message: format!("Failed to open repo: {}", e),
+                })?;
+            
+            let mut count = 0u32;
+            repo.stash_foreach(|_, _, _| {
+                count += 1;
+                true
+            })
+            .map_err(|e| WorkflowError::ContextError {
+                message: format!("Failed to count stashes: {}", e),
+            })?;
+            
+            Ok(count)
+        })
+        .await
+        .map_err(|e| WorkflowError::ContextError {
+            message: format!("Task panicked: {}", e),
+        })?
+    }
+    
+    // Write operations...
+    async fn create_branch(
+        &self,
+        name: &str,
+        from: Option<&str>,
+    ) -> Result<(), WorkflowError> {
+        // TODO: Implementation following spawn_blocking pattern
+        unimplemented!("create_branch")
+    }
+    
+    async fn create_worktree(
+        &self,
+        path: &Path,
+        branch: &str,
+    ) -> Result<(), WorkflowError> {
+        // TODO: Implementation using git2::Repository::open_worktree or git2-sys raw calls
+        unimplemented!("create_worktree")
+    }
+    
+    async fn remove_worktree(&self, path: &Path) -> Result<(), WorkflowError> {
+        // TODO: Implementation
+        unimplemented!("remove_worktree")
+    }
+    
+    async fn stage_files(&self, paths: &[String]) -> Result<(), WorkflowError> {
+        // TODO: Implementation
+        unimplemented!("stage_files")
+    }
+    
+    async fn commit(
+        &self,
+        message: &str,
+        author_name: Option<&str>,
+        author_email: Option<&str>,
+    ) -> Result<String, WorkflowError> {
+        // TODO: Implementation
+        unimplemented!("commit")
+    }
+    
+    async fn push(&self, branch: &str, force: bool) -> Result<(), WorkflowError> {
+        // TODO: Implementation
+        unimplemented!("push")
+    }
+    
+    async fn pull(&self, branch: Option<&str>) -> Result<(), WorkflowError> {
+        // TODO: Implementation
+        unimplemented!("pull")
+    }
+    
+    async fn create_pr(
+        &self,
+        from_branch: &str,
+        to_branch: &str,
+        title: &str,
+        body: &str,
+        labels: Option<&[String]>,
+        assignees: Option<&[String]>,
+    ) -> Result<PullRequest, WorkflowError> {
+        // Phase 2+: GitHub/GitLab API via separate provider
+        unimplemented!("create_pr - requires Phase 2 implementation")
+    }
+    
+    async fn merge_pr(
+        &self,
+        pr_id: u64,
+        strategy: MergeStrategy,
+    ) -> Result<(), WorkflowError> {
+        // Phase 2+: GitHub/GitLab API
+        unimplemented!("merge_pr - requires Phase 2 implementation")
+    }
+    
+    async fn list_prs(
+        &self,
+        state: PrState,
+        limit: usize,
+    ) -> Result<Vec<PullRequest>, WorkflowError> {
+        // Phase 2+: GitHub/GitLab API
+        unimplemented!("list_prs - requires Phase 2 implementation")
+    }
+    
+    async fn register_webhook(
+        &self,
+        url: &str,
+        events: &[WebhookEvent],
+        secret: Option<&str>,
+    ) -> Result<String, WorkflowError> {
+        // Phase 2+: GitHub/GitLab API
+        unimplemented!("register_webhook - requires Phase 2 implementation")
+    }
+    
+    async fn unregister_webhook(&self, id: &str) -> Result<(), WorkflowError> {
+        // Phase 2+: GitHub/GitLab API
+        unimplemented!("unregister_webhook - requires Phase 2 implementation")
+    }
+}
+```
+
+**Key Implementation Patterns:**
+
+1.  **spawn_blocking() for git2 FFI**: All git2 calls run on Tokio's blocking thread pool
+2.  **No direct git2 exposure**: Other crates never import `git2`
+3.  **Trait-based dispatch**: Consumers depend only on `VcsProvider` trait
+4.  **Phase 2+ extensibility**: PR/webhook operations can be implemented by GitHub/GitLab providers later
+
+---
+
+### 2. Worktree Lifecycle
+
+Each `WorkflowSession` gets a dedicated git worktree, providing **process isolation**, **safety**, and **easy rollback** for operator work.
+
+#### Worktree Structure
+
+```
+{repo_root}/.worktrees/
+├── {session_id_1}/
+│   ├── .git
+│   ├── src/
+│   └── ...
+├── {session_id_2}/
+│   ├── .git
+│   ├── src/
+│   └── ...
+└── ...
+```
+
+Each worktree is a **lightweight, linked checkout** of a specific branch, not a full clone. The `.git` directory is a reference to the main repo's `.git/` via `git worktree` mechanism.
+
+#### Lifecycle: 7-Step Workflow
+
+**1. Create** (Task assigned to operator)
+
+```rust
+let worktree_path = format!("{}.worktrees/{}", repo_root, session.id);
+vcs.create_worktree(&worktree_path, &session.branch)?;
+// Result: isolated directory with branch checked out
+```
+
+**2. Use** (Operator makes changes)
+
+```
+All operator changes (writes, modifications, new files) happen WITHIN the worktree.
+Main working directory remains untouched.
+Other sessions' worktrees are unaffected.
+```
+
+**3. Commit** (Operator commits work)
+
+```rust
+vcs.stage_files(&modified_files)?;
+let commit_hash = vcs.commit("Message", Some(author_name), Some(author_email))?;
+// Commit recorded in worktree's branch
+```
+
+**4. Push** (Send to remote)
+
+```rust
+vcs.push(&session.branch, false)?;
+// Branch pushed to origin (or configured remote)
+```
+
+**5. PR** (Create pull request for review)
+
+```rust
+let pr = vcs.create_pr(
+    &session.branch,
+    "main",
+    "Feature: New authentication",
+    "Implements OAuth2 support",
+    Some(&["feature".to_string()]),
+    Some(&["reviewer@example.com".to_string()]),
+)?;
+// PR created on GitHub/GitLab/etc (Phase 2+)
+```
+
+**6. Merge** (On approval)
+
+```rust
+vcs.merge_pr(pr.id, MergeStrategy::Merge)?;
+// PR merged by VCS system
+// Worktree's branch now matches main
+```
+
+**7. Cleanup** (After merge)
+
+```rust
+vcs.remove_worktree(&worktree_path)?;
+// Worktree directory removed
+// Session marked complete
+// No dangling branches or temp files left
+```
+
+#### Concurrency & Isolation
+
+**Multiple Sessions = Multiple Worktrees:**
+
+```
+Session A: task-auth
+  ↓ operator starts task
+  ↓ create_worktree(".worktrees/sess-A", "feature/auth")
+  ↓ operator edits src/auth.rs (in ".worktrees/sess-A/")
+  ↓ operator commits & pushes
+  ↓ PR created
+  ↓ PR merged
+  ↓ remove_worktree(".worktrees/sess-A")
+
+Session B: task-api (running in parallel)
+  ↓ operator starts task
+  ↓ create_worktree(".worktrees/sess-B", "feature/api")
+  ↓ operator edits src/api.rs (in ".worktrees/sess-B/")
+  ↓ (main directory unchanged, no conflicts)
+  ↓ ...
+
+Result: No interference. Both sessions progress independently.
+```
+
+#### Benefits
+
+| Benefit | Why It Matters |
+|---------|----------------|
+| **Isolation** | Multiple sessions work independently without merge conflicts in main repo |
+| **Safety** | Entire worktree can be discarded if needed; main repo unaffected |
+| **Rollback** | If task fails, just `remove_worktree()` and retry with new session |
+| **Clarity** | Each session's state is self-contained; easy to debug |
+| **Performance** | Worktrees are lightweight (git 2.25+ uses reflinks for efficiency) |
+| **Testing** | Operator can `git log`, `git diff`, run tests locally in worktree before push |
+
+#### Worktree Status in ProjectContext
+
+```rust
+// mcb-domain/src/entities/context.rs - addition to GitContext
+
+pub struct GitContext {
+    // ...existing fields...
+    
+    /// Active worktrees (path → branch mapping)
+    pub active_worktrees: std::collections::HashMap<PathBuf, String>,
+    
+    /// Worktree cleanup needed (orphaned worktrees after crash)
+    pub needs_worktree_cleanup: bool,
+}
+```
+
+#### Operator Error Handling
+
+**Scenario: Operator crashes or session is cancelled mid-flight**
+
+1.  Worktree exists but is orphaned (no active session references it)
+2.  On next `WorkflowService.initialize()` or periodic cleanup task:
+   -   Scan `.worktrees/` directory
+   -   For each worktree without corresponding in-progress session:
+     -   `vcs.remove_worktree()` (prune unused worktrees)
+3.  Operator can retry task with new session ID → new worktree created
+
+---
+
+### 3. Domain Entities
 
 ```rust
 // mcb-domain/src/entities/context.rs
@@ -158,7 +928,7 @@ pub struct ProjectConfig {
 }
 ```
 
-### 3. Port Trait
+### 4. Port Trait (ContextScoutProvider - Legacy Section)
 
 ```rust
 // mcb-domain/src/ports/providers/context_scout.rs
@@ -188,7 +958,7 @@ pub trait ContextScoutProvider: Send + Sync {
 }
 ```
 
-### 4. Git Discovery Implementation
+### 5. Git Discovery Implementation
 
 ```rust
 // mcb-providers/src/context/git_discovery.rs
@@ -324,7 +1094,7 @@ fn discover_recent_commits(
 }
 ```
 
-### 5. Tracker Discovery Implementation
+### 6. Tracker Discovery Implementation
 
 ```rust
 // mcb-providers/src/context/tracker_discovery.rs
@@ -442,7 +1212,7 @@ async fn calculate_progress(
 }
 ```
 
-### 6. Caching Strategy
+### 7. Caching Strategy
 
 Use `moka` (already in MCB for cache provider) with TTL-based invalidation:
 
@@ -551,7 +1321,7 @@ impl ContextScoutProvider for CachedContextScout {
 }
 ```
 
-### 7. Configuration
+### 8. Configuration
 
 ```toml
 # config/default.toml — [context] section
@@ -586,7 +1356,7 @@ fn default_cache_ttl() -> u64 { 30 }
 fn default_max_commits() -> usize { 10 }
 ```
 
-### 8. Provider Registration (linkme)
+### 9. Provider Registration (linkme)
 
 ```rust
 // mcb-application/src/registry/context.rs
@@ -624,7 +1394,7 @@ fn cached_scout_factory(
 }
 ```
 
-### 9. Issue/Phase SQLite Tables
+### 10. Issue/Phase SQLite Tables
 
 These tables are written by the orchestrator (ADR-037) and read by the Context Scout:
 
@@ -690,14 +1460,18 @@ WHERE i.status = 'open'
   );
 ```
 
-### 10. Module Locations
+### 11. Module Locations
 
 | Crate | Path | Content |
 |-------|------|---------|
+| `mcb-domain` | `src/ports/providers/vcs.rs` | `VcsProvider` trait (read, write, PR, webhooks), `MergeStrategy`, `PrState`, `RepoState`, `PullRequest` |
 | `mcb-domain` | `src/entities/context.rs` | `ProjectContext`, `GitContext`, `TrackerContext`, `CommitSummary`, `IssueSummary`, `PhaseSummary`, `ProjectConfig` |
 | `mcb-domain` | `src/ports/providers/context_scout.rs` | `ContextScoutProvider` trait |
+| `mcb-application` | `src/registry/vcs.rs` | `VCS_PROVIDERS` linkme slice |
 | `mcb-application` | `src/registry/context.rs` | `CONTEXT_PROVIDERS` slice |
-| `mcb-providers` | `src/context/mod.rs` | Module root + linkme registration |
+| `mcb-providers` | `src/vcs/mod.rs` | Module root + linkme registration for VcsProvider |
+| `mcb-providers` | `src/vcs/git2_provider.rs` | `Git2Provider` implementation (MVP, uses spawn_blocking) |
+| `mcb-providers` | `src/context/mod.rs` | Module root + linkme registration for ContextScout |
 | `mcb-providers` | `src/context/git_discovery.rs` | `discover_git_status()` using git2 |
 | `mcb-providers` | `src/context/tracker_discovery.rs` | `discover_tracker_state()` using sqlx |
 | `mcb-providers` | `src/context/cached_scout.rs` | `CachedContextScout` with moka TTL |
@@ -707,6 +1481,9 @@ WHERE i.status = 'open'
 
 ### Positive
 
+-   **VCS Provider Abstraction**: All VCS operations flow through `VcsProvider` trait (never direct git2). Enables MVP with git2 + Phase 2+ with GitHub/GitLab APIs.
+-   **Worktree Isolation**: Each workflow session gets dedicated worktree. Multiple sessions work independently without conflicts.
+-   **Worktree Safety**: Entire worktree can be discarded if task fails; main repo unaffected. Enables easy rollback and retry.
 -   **Zero shell dependencies**: All discovery via `git2` FFI and direct SQLite — no `git`, `bd`, or `.planning/` commands.
 -   **Typed state**: `ProjectContext` with strong types eliminates String parsing errors.
 -   **Performant**: Moka cache with 30s TTL. Cold: 5–20ms (git2). Warm: < 1ms.
@@ -716,7 +1493,9 @@ WHERE i.status = 'open'
 
 ### Negative
 
--   **git2 blocking FFI**: Requires `spawn_blocking()` wrapper, adding complexity. Cannot be fully async.
+-   **VcsProvider spawn_blocking complexity**: git2 is blocking FFI. All calls wrapped in `spawn_blocking()` adds complexity. Cannot be fully async (git2 limitation, not trait design).
+-   **Worktree cleanup**: Must handle orphaned worktrees (crashed sessions). Requires periodic cleanup task or init-time scan.
+-   **Worktree per session overhead**: Each session allocates new worktree. For high-volume sessions, disk usage may grow. Cleanup task mitigates this.
 -   **Cache staleness**: 30s TTL means state could be up to 30s stale. Mitigated by manual `invalidate_cache()`.
 -   **Shared SQLite pool**: Context Scout reads from the same SQLite DB the workflow engine writes. Must handle concurrent access via WAL mode.
 -   **No file watcher**: Does not react to filesystem changes in real-time. Polling-based via TTL. File watcher (notify crate) deferred to future enhancement.

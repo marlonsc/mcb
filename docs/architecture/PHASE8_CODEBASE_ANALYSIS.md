@@ -9,6 +9,7 @@
 ## 📊 ESTRUTURA GERAL DO PROJETO
 
 ### File Structure Overview
+
 ```
 crates/
 ├── mcb/                      (379 LOC)      - Facade crate (re-exports API)
@@ -25,6 +26,7 @@ TOTAL: 102.6K LOC
 ```
 
 ### Dependency Direction (Strict Inward Only)
+
 ```
 mcb-server (MCP Protocol)
     ↓
@@ -61,6 +63,7 @@ pub struct ProjectHandler { /* ... */ }
 ```
 
 #### Tool Registry (8 Tools)
+
 | Tool | Purpose | Handler | Lines |
 |------|---------|---------|-------|
 | `index` | Index operations | IndexHandler | ~150 |
@@ -77,6 +80,7 @@ pub struct ProjectHandler { /* ... */ }
 ### 2. Key Handler Patterns
 
 #### Pattern 1: Dependency Injection in Handler
+
 ```rust
 // mcb-server/src/handlers/consolidated/search.rs
 pub struct SearchHandler {
@@ -100,6 +104,7 @@ impl SearchHandler {
 **Design Decision**: Handlers are stateless wrappers around trait-based services.
 
 #### Pattern 2: VCS Context Injection (Phase 7)
+
 ```rust
 // mcb-server/src/handlers/consolidated/memory/inject.rs
 pub async fn inject_context(
@@ -122,11 +127,13 @@ pub async fn inject_context(
 ```
 
 **File**: `mcb-domain/src/utils/vcs_context.rs` (65 LOC)
-- Uses `OnceLock` for caching (single git invocation)
-- Batches git commands: `git rev-parse --abbrev-ref HEAD HEAD`
-- Captures: `branch`, `commit`, `repo_id`
+
+-   Uses `OnceLock` for caching (single git invocation)
+-   Batches git commands: `git rev-parse --abbrev-ref HEAD HEAD`
+-   Captures: `branch`, `commit`, `repo_id`
 
 ### 3. MCP Tool Arguments & Validation
+
 ```rust
 // mcb-server/src/args.rs (consolidated)
 pub enum SearchResource { Code, Memory }
@@ -153,6 +160,7 @@ impl SearchArgs {
 ## 🔌 GIT INTEGRATION POINTS (PHASE 7)
 
 ### VcsContext (Location: `mcb-domain/src/utils/vcs_context.rs`)
+
 ```rust
 #[derive(Clone)]
 pub struct VcsContext {
@@ -171,6 +179,7 @@ impl VcsContext {
 ```
 
 ### Integration with Memory (inject_context)
+
 ```rust
 // mcb-server/src/handlers/consolidated/memory/inject.rs
 // VcsContext embedded in memory observation metadata:
@@ -185,6 +194,7 @@ impl VcsContext {
 ```
 
 ### Branch/Commit Filtering in Memory
+
 ```rust
 // mcb-domain/src/entities/memory.rs
 pub struct MemoryFilter {
@@ -207,6 +217,7 @@ fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
 ```
 
 ### VCS Provider (Abstraction)
+
 ```rust
 // mcb-domain/src/ports/providers/vcs.rs
 pub trait VcsProvider: Send + Sync {
@@ -228,6 +239,7 @@ impl VcsProvider for Git2Provider { /* ... */ }
 ## 💾 MEMORY + SEARCH INTEGRATION
 
 ### MemoryServiceImpl (Hybrid SQLite + VectorStore)
+
 **File**: `mcb-application/src/use_cases/memory_service.rs` (382 LOC)
 
 ```rust
@@ -242,14 +254,17 @@ pub struct MemoryServiceImpl {
 }
 ```
 
-#### Key Methods:
-1. **store_observation**: 
-   - Computes content hash
-   - Generates embedding
-   - Inserts into vector store
-   - Stores in SQLite repo
+#### Key Methods
 
-2. **search_memories_impl** (RRF Fusion):
+1.  **store_observation**:
+
+-   Computes content hash
+-   Generates embedding
+-   Inserts into vector store
+-   Stores in SQLite repo
+
+1.  **search_memories_impl** (RRF Fusion):
+
    ```rust
    // Fetch more candidates initially (3x multiplier)
    let candidate_limit = limit * HYBRID_SEARCH_MULTIPLIER;
@@ -269,6 +284,7 @@ pub struct MemoryServiceImpl {
    ```
 
 ### SearchServiceImpl (Context Service Delegate)
+
 **File**: `mcb-application/src/use_cases/search_service.rs` (98 LOC)
 
 ```rust
@@ -286,6 +302,7 @@ impl SearchServiceInterface for SearchServiceImpl {
 ```
 
 ### ContextServiceImpl (Embeddings + Vector Store)
+
 **File**: `mcb-application/src/use_cases/context_service.rs` (155 LOC)
 
 ```rust
@@ -328,6 +345,7 @@ impl ContextServiceInterface for ContextServiceImpl {
 ```
 
 ### Observation Metadata & Filtering
+
 ```rust
 // mcb-domain/src/entities/memory.rs
 pub struct ObservationMetadata {
@@ -359,6 +377,7 @@ pub struct MemoryFilter {
 **Location**: `mcb-domain/src/ports/`
 
 #### Embedding Provider Port
+
 ```rust
 // mcb-domain/src/ports/providers/embedding.rs
 pub trait EmbeddingProvider: Send + Sync {
@@ -377,14 +396,16 @@ pub struct Embedding {
 ```
 
 **Implementations in mcb-providers/src/embedding/**:
-- `NullEmbeddingProvider` (Testing)
-- `OllamaEmbeddingProvider` (Local)
-- `OpenAIEmbeddingProvider` (Cloud)
-- `VoyageAIEmbeddingProvider` (Cloud)
-- `GeminiEmbeddingProvider` (Cloud)
-- `FastEmbedProvider` (Local, optional feature)
+
+-   `NullEmbeddingProvider` (Testing)
+-   `OllamaEmbeddingProvider` (Local)
+-   `OpenAIEmbeddingProvider` (Cloud)
+-   `VoyageAIEmbeddingProvider` (Cloud)
+-   `GeminiEmbeddingProvider` (Cloud)
+-   `FastEmbedProvider` (Local, optional feature)
 
 #### Vector Store Provider Port
+
 ```rust
 // mcb-domain/src/ports/providers/vector_store.rs
 pub trait VectorStoreProvider: VectorStoreAdmin + Send + Sync {
@@ -410,13 +431,15 @@ pub trait VectorStoreProvider: VectorStoreAdmin + Send + Sync {
 ```
 
 **Implementations in mcb-providers/src/vector_store/**:
-- `InMemoryVectorStore` (Testing)
-- `NullVectorStore` (Development)
-- `MilvusVectorStore` (Production)
-- `EdgeVecVectorStore` (Edge computing)
-- Others: Encrypted, Filesystem
+
+-   `InMemoryVectorStore` (Testing)
+-   `NullVectorStore` (Development)
+-   `MilvusVectorStore` (Production)
+-   `EdgeVecVectorStore` (Edge computing)
+-   Others: Encrypted, Filesystem
 
 #### Cache Provider Port
+
 ```rust
 // mcb-domain/src/ports/providers/cache.rs
 pub trait CacheProvider: Send + Sync + std::fmt::Debug {
@@ -428,15 +451,17 @@ pub trait CacheProvider: Send + Sync + std::fmt::Debug {
 ```
 
 **Implementations in mcb-providers/src/cache/**:
-- `MokaCache` (In-memory, high-performance)
-- `RedisCache` (Distributed)
-- `NullCache` (Development)
+
+-   `MokaCache` (In-memory, high-performance)
+-   `RedisCache` (Distributed)
+-   `NullCache` (Development)
 
 ### 2. Application Layer Services
 
 **Location**: `mcb-application/src/use_cases/` & `mcb-application/src/domain_services/`
 
 #### Trait Interfaces (Domain Services)
+
 ```rust
 // mcb-application/src/domain_services/search.rs
 pub trait ContextServiceInterface: Send + Sync {
@@ -463,6 +488,7 @@ pub trait MemoryServiceInterface: Send + Sync {
 ```
 
 #### Service Implementations
+
 ```rust
 // mcb-application/src/use_cases/
 pub struct ContextServiceImpl { /* ... */ }
@@ -559,6 +585,7 @@ impl MCPServer {
 ## 📋 CURRENT FILE STRUCTURE (CRATES)
 
 ### mcb-server (8.9K LOC)
+
 ```
 src/
 ├── handlers/consolidated/          (1.5K LOC)
@@ -601,6 +628,7 @@ tests/ (131 test files)
 ```
 
 ### mcb-application (3.1K LOC)
+
 ```
 src/
 ├── use_cases/
@@ -626,6 +654,7 @@ src/
 ```
 
 ### mcb-domain (8.3K LOC)
+
 ```
 src/
 ├── entities/
@@ -654,6 +683,7 @@ tests/ (unit tests for entities, value objects)
 ```
 
 ### mcb-infrastructure (9.5K LOC)
+
 ```
 src/
 ├── di/
@@ -680,6 +710,7 @@ src/
 ```
 
 ### mcb-providers (14.4K LOC)
+
 ```
 src/
 ├── embedding/                      (Multiple providers)
@@ -717,6 +748,7 @@ src/
 ### Test Organization (131 Test Files)
 
 #### 1. Unit Tests (Handler Level)
+
 **File**: `mcb-server/tests/handlers/search_code_test.rs`
 
 ```rust
@@ -741,13 +773,15 @@ async fn test_search_code_success() {
 }
 ```
 
-**Pattern**: 
-- Create mock services
-- Wrap in Arc<dyn Trait>
-- Pass to handler constructor
-- Test handler.handle() method
+**Pattern**:
+
+-   Create mock services
+-   Wrap in Arc<dyn Trait>
+-   Pass to handler constructor
+-   Test handler.handle() method
 
 #### 2. Integration Tests (Full Stack)
+
 **File**: `mcb-server/tests/integration/golden_acceptance_integration.rs`
 
 ```rust
@@ -786,12 +820,14 @@ async fn test_golden_queries() {
 ```
 
 **Pattern**:
-- Real providers (Null + In-Memory)
-- Golden fixtures (queries, expected files)
-- End-to-end flow: index → search → verify
-- Latency + result quality assertions
+
+-   Real providers (Null + In-Memory)
+-   Golden fixtures (queries, expected files)
+-   End-to-end flow: index → search → verify
+-   Latency + Result quality assertions
 
 #### 3. Mock Services (Test Utils)
+
 **File**: `mcb-server/tests/test_utils/mock_services.rs`
 
 ```rust
@@ -826,40 +862,47 @@ impl SearchServiceInterface for MockSearchService {
 ```
 
 **Pattern**:
-- Builder pattern for configuration
-- Clone results for reusability
-- Implement trait with optional behavior
+
+-   Builder pattern for configuration
+-   Clone results for reusability
+-   Implement trait with optional behavior
 
 #### 4. Feature Tests
-- **Validation feature**: Architecture validation tests
-- **Embedding features**: Provider-specific tests
-- **Vector store features**: Backend-specific tests
+
+-   **Validation feature**: Architecture validation tests
+-   **Embedding features**: Provider-specific tests
+-   **Vector store features**: Backend-specific tests
 
 ---
 
 ## 🔧 TECHNICAL DECISIONS (ADRs)
 
 ### ADR-001: Modular Crates Architecture
+
 **Decision**: 8 independent crates per Clean Architecture layers  
 **Rationale**: Strict dependency direction, testability, independent deployment  
 **Impact**: Enables swapping providers (Ollama ↔ OpenAI) without code changes
 
 ### ADR-002: Async-First Architecture
+
 **Decision**: Tokio throughout, async_trait for dynamic dispatch  
 **Rationale**: High-concurrency MCP server, parallel search (FTS + vector)  
 **Impact**: All I/O is non-blocking; required for RRF fusion
 
 ### ADR-023: Linkme Provider Registration
+
 **Decision**: Compile-time provider discovery (replaces Inventory)  
 **Rationale**: Zero runtime overhead, type-safe, no reflection  
 **Impact**: Providers auto-register via `#[linkme::distributed_slice]`
 
 ### ADR-029: Hexagonal Architecture with dill
+
 **Decision**: DI container with handles (runtime-swappable)  
 **Rationale**: Testability, configuration-driven provider selection  
 **Impact**: Providers can be swapped via env vars (no code rebuild)
 
 ### ADR-013: RRF (Reciprocal Rank Fusion)
+
 **Decision**: Hybrid search with k=60 parameter  
 **Rationale**: Combines BM25 (FTS) + semantic (vectors) without weighting tuning  
 **Impact**: MemoryServiceImpl::search_memories achieves both precision + recall
@@ -888,6 +931,7 @@ impl SearchServiceInterface for MockSearchService {
 ### Pattern 1: Adding a New Embedding Provider
 
 **Step 1**: Create implementation in `mcb-providers/src/embedding/newprovider.rs`
+
 ```rust
 pub struct NewEmbeddingProvider {
     client: Arc<NewClient>,
@@ -909,6 +953,7 @@ impl EmbeddingProvider for NewEmbeddingProvider {
 ```
 
 **Step 2**: Add linkme registration
+
 ```rust
 #[cfg(feature = "embedding-newprovider")]
 pub struct NewEmbeddingProvider { /* ... */ }
@@ -923,12 +968,14 @@ fn register_new() -> (&'static str, ProviderFactory) {
 ```
 
 **Step 3**: Add feature flag in `Cargo.toml`
+
 ```toml
 [features]
 embedding-newprovider = []
 ```
 
 **Step 4**: Use via config
+
 ```bash
 export EMBEDDING_PROVIDER=newprovider
 ```
@@ -936,6 +983,7 @@ export EMBEDDING_PROVIDER=newprovider
 ### Pattern 2: Adding a New Vector Store
 
 **Step 1**: Create implementation in `mcb-providers/src/vector_store/newstore.rs`
+
 ```rust
 pub struct NewVectorStore {
     client: Arc<NewClient>,
@@ -967,6 +1015,7 @@ impl VectorStoreProvider for NewVectorStore {
 **Step 2**: Register with linkme (same pattern as embeddings)
 
 **Step 3**: Use via config
+
 ```bash
 export VECTOR_STORE_PROVIDER=newstore
 ```
@@ -974,6 +1023,7 @@ export VECTOR_STORE_PROVIDER=newstore
 ### Pattern 3: Adding Memory Filtering
 
 **Step 1**: Extend `MemoryFilter` in `mcb-domain/src/entities/memory.rs`
+
 ```rust
 pub struct MemoryFilter {
     pub session_id: Option<String>,
@@ -984,6 +1034,7 @@ pub struct MemoryFilter {
 ```
 
 **Step 2**: Update `matches_filter` in `MemoryServiceImpl`
+
 ```rust
 fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
     // Existing checks...
@@ -1010,6 +1061,7 @@ fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
 **Current** (Phase 7): Captures `branch`, `commit`, `repo_id`
 
 **Extension**: Add author, message, timestamp
+
 ```rust
 // mcb-domain/src/utils/vcs_context.rs
 #[derive(Clone)]
@@ -1035,6 +1087,7 @@ impl VcsContext {
 **Current**: k=60, multiplier=3
 
 **To adjust for use case**:
+
 ```rust
 // mcb-application/src/use_cases/memory_service.rs
 const RRF_K: f32 = 60.0;  // Increase for more balanced fusion
@@ -1049,17 +1102,20 @@ const HYBRID_SEARCH_MULTIPLIER: usize = 3;  // Increase for more candidates
 
 **Example: Adding Milvus support**
 
-1. **Trait already exists**: `VectorStoreProvider` in domain
-2. **Implement in providers**:
+1.  **Trait already exists**: `VectorStoreProvider` in domain
+2.  **Implement in providers**:
+
    ```rust
    pub struct MilvusVectorStore {
        client: Arc<MilvusClient>,
    }
    impl VectorStoreProvider for MilvusVectorStore { /* ... */ }
    ```
-3. **Register with linkme**: Auto-discoverable
-4. **Configure via env**: `VECTOR_STORE_PROVIDER=milvus`
-5. **Factory in infrastructure**:
+
+1.  **Register with linkme**: Auto-discoverable
+2.  **Configure via env**: `VECTOR_STORE_PROVIDER=milvus`
+3.  **Factory in infrastructure**:
+
    ```rust
    match provider_name {
        "milvus" => Arc::new(MilvusVectorStore::new(config)?),
@@ -1098,14 +1154,14 @@ Providers Layer (mcb-providers)
 
 ## 🎓 NEXT STEPS FOR LIBRARY INTEGRATION
 
-1. **Choose Target**: Ollama (embeddings), Milvus (vector store), Redis (cache)?
-2. **Create Implementation**: New file in `mcb-providers/src/{target}/`
-3. **Add Trait Methods**: Implement all required trait methods
-4. **Register with Linkme**: Add `#[linkme::distributed_slice]` macro
-5. **Add Feature Flag**: In `Cargo.toml` with optional dependency
-6. **Test**: Unit tests in provider crate, integration tests with golden fixtures
-7. **Configure**: Via `PROVIDER_NAME` environment variable
-8. **Document**: Update `docs/CONFIGURATION.md` with new option
+1.  **Choose Target**: Ollama (embeddings), Milvus (vector store), Redis (cache)?
+2.  **Create Implementation**: New file in `mcb-providers/src/{target}/`
+3.  **Add Trait Methods**: Implement all required trait methods
+4.  **Register with Linkme**: Add `#[linkme::distributed_slice]` macro
+5.  **Add Feature Flag**: In `Cargo.toml` with optional dependency
+6.  **Test**: Unit tests in provider crate, integration tests with golden fixtures
+7.  **Configure**: Via `PROVIDER_NAME` environment variable
+8.  **Document**: Update `docs/CONFIGURATION.md` with new Option
 
 ---
 

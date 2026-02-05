@@ -1,4 +1,5 @@
 # HTML & TEMPLATE ANALYSIS REPORT
+
 ## MCP Context Browser (mcb) - Comprehensive Scan
 
 ---
@@ -30,16 +31,18 @@
 ### **Legacy/Reference Templates** (NOT ACTIVE)
 
 Located in `/reference/legacy/server/admin/web/templates/`:
-- admin.js (418 lines) - OLD admin interface
-- admin.css (934 lines) - OLD styling
-- base.html, dashboard.html, configuration.html, etc. (8+ files)
-- **Status**: Reference only, not compiled into binary
+
+-   admin.js (418 lines) - OLD admin interface
+-   admin.css (934 lines) - OLD styling
+-   base.html, dashboard.html, configuration.html, etc. (8+ files)
+-   **Status**: Reference only, not compiled into binary
 
 ---
 
 ## 2. TEMPLATE ARCHITECTURE ANALYSIS
 
 ### **Architecture Pattern**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ STATIC HTML EMBEDDING (include_str! at compile time)        │
@@ -63,26 +66,29 @@ Located in `/reference/legacy/server/admin/web/templates/`:
 ### **Static vs Dynamic HTML**
 
 **Static HTML (Server-Rendered):**
-- 7 main page templates (index, config, health, indexing, browse, browse_collection, browse_file)
-- Embedded at **compile time** via `include_str!("templates/x.html")`
-- Zero template engines (no Askama, Handlebars, Minijinja)
-- Served as-is with **no server-side variable substitution**
+
+-   7 main page templates (index, config, health, indexing, browse, browse_collection, browse_file)
+-   Embedded at **compile time** via `include_str!("templates/x.html")`
+-   Zero template engines (no Askama, Handlebars, Minijinja)
+-   Served as-is with **no server-side variable substitution**
 
 **Dynamic HTML (Client-Generated):**
-- Data loaded via AJAX/fetch to JSON endpoints
-- JavaScript generates HTML in browser using template literals
-- Examples:
-  - Services list rendered from JSON in `index.html` (lines 370-397)
-  - Health status cards generated in `health.html` (lines 103-148)
-  - Indexing operations rendered in `indexing.html` (lines 82-136)
-  - Collections grid in `browse.html` (lines 121-161)
+
+-   Data loaded via AJAX/fetch to JSON endpoints
+-   JavaScript generates HTML in browser using template literals
+-   Examples:
+    -   Services list rendered from JSON in `index.html` (lines 370-397)
+    -   Health status cards generated in `health.html` (lines 103-148)
+    -   Indexing operations rendered in `indexing.html` (lines 82-136)
+    -   Collections grid in `browse.html` (lines 121-161)
 
 ### **Template Engine Usage: ZERO**
-- ✗ No Askama template engine
-- ✗ No Handlebars
-- ✗ No Minijinja
-- ✗ No Tera
-- ✗ No Jinja2
+
+-   ✗ No Askama template engine
+-   ✗ No Handlebars
+-   ✗ No Minijinja
+-   ✗ No Tera
+-   ✗ No Jinja2
 
 **Why:** Static templates + client-side JS rendering = simpler deployment, no runtime dependencies
 
@@ -113,10 +119,11 @@ pub fn config_page() -> RawHtml<&'static str> {
 ```
 
 **Pattern Summary:**
-- **Response Type**: `RawHtml<&'static str>` (Rocket framework)
-- **String Handling**: Direct `include_str!()` macro (compile-time)
-- **No Format Macros**: Zero `format!()` or string concatenation in handlers
-- **No Hardcoded HTML in .rs Files**: All HTML in separate `.html` files
+
+-   **Response Type**: `RawHtml<&'static str>` (Rocket framework)
+-   **String Handling**: Direct `include_str!()` macro (compile-time)
+-   **No Format Macros**: Zero `format!()` or String concatenation in handlers
+-   **No Hardcoded HTML in .rs Files**: All HTML in separate `.html` files
 
 ### **Data Handlers** (JSON endpoints for JS)
 
@@ -144,11 +151,11 @@ pub fn list_services() -> Json<Vec<ServiceInfo>> {
 
 ### **API Handlers** (in browse_handlers.rs, config_handlers.rs, lifecycle_handlers.rs)
 
-- **Collections List**: `/collections` → JSON array
-- **Collection Files**: `/collections/{name}/files` → JSON with metadata
-- **File Chunks**: `/collections/{name}/chunks` → JSON with code content
-- **Config Display**: `/config` → JSON configuration
-- **Health Extended**: `/health/extended` → JSON with dependencies
+-   **Collections List**: `/collections` → JSON array
+-   **Collection Files**: `/collections/{name}/files` → JSON with metadata
+-   **File Chunks**: `/collections/{name}/chunks` → JSON with code content
+-   **Config Display**: `/config` → JSON configuration
+-   **Health Extended**: `/health/extended` → JSON with dependencies
 
 **Pattern:** All handlers return JSON, never HTML. JavaScript generates HTML from data.
 
@@ -159,14 +166,16 @@ pub fn list_services() -> Json<Vec<ServiceInfo>> {
 ### **HTML Structure in Templates**
 
 **Type 1: Static Structure (same on every page)**
-- Navigation bar (duplicated 7 times, ~20 lines each)
-- Footer (duplicated 7 times, ~4 lines each)
-- CSS/JS includes (duplicated, Tailwind CDN)
-- **Total Duplication: ~170 lines** (9% of total HTML)
+
+-   Navigation bar (duplicated 7 times, ~20 lines each)
+-   Footer (duplicated 7 times, ~4 lines each)
+-   CSS/JS includes (duplicated, Tailwind CDN)
+-   **Total Duplication: ~170 lines** (9% of total HTML)
 
 **Type 2: Client-Side Template Generation**
 
 Example from `index.html` (lines 370-397):
+
 ```javascript
 container.innerHTML = services.map(service => {
     const stateLower = String(service.state || '').toLowerCase();
@@ -189,37 +198,41 @@ container.innerHTML = services.map(service => {
 }).join('');
 ```
 
-**Inline Styles:** 
-- `index.html`: 43 lines of `<style>` (lines 12-42)
-- `config.html`: 29 lines of `<style>` (lines 11-28)
-- `health.html`: 24 lines of `<style>` (lines 11-23)
-- `indexing.html`: 24 lines of `<style>` (lines 11-24)
-- `browse.html`: 27 lines of `<style>` (lines 19-27)
-- `browse_collection.html`: 27 lines of `<style>` (lines 19-27)
-- `browse_file.html`: 35 lines of `<style>` (lines 19-35)
-- **Total: ~209 lines of embedded CSS** (11% of total HTML)
+**Inline Styles:**
+
+-   `index.html`: 43 lines of `<style>` (lines 12-42)
+-   `config.html`: 29 lines of `<style>` (lines 11-28)
+-   `health.html`: 24 lines of `<style>` (lines 11-23)
+-   `indexing.html`: 24 lines of `<style>` (lines 11-24)
+-   `browse.html`: 27 lines of `<style>` (lines 19-27)
+-   `browse_collection.html`: 27 lines of `<style>` (lines 19-27)
+-   `browse_file.html`: 35 lines of `<style>` (lines 19-35)
+-   **Total: ~209 lines of embedded CSS** (11% of total HTML)
 
 ---
 
 ## 5. STATIC ASSETS SERVED
 
 ### **CSS Files**
-- **theme.css** (158 lines): Dark/light theme system with CSS variables
-  - `:root[data-theme="dark"]` styling
-  - Color variables: `--bg-primary`, `--text-secondary`, etc.
-  - No duplication of Tailwind
+
+-   **theme.css** (158 lines): Dark/light theme system with CSS variables
+    -   `:root[data-theme="dark"]` styling
+    -   Color variables: `--bg-primary`, `--text-secondary`, etc.
+    -   No duplication of Tailwind
 
 ### **JavaScript Files**
-- **shared.js** (62 lines): 
-  - `adminFetch()` - auth-aware HTTP client
-  - `escapeHtml()` - XSS prevention
-  - `formatUptime()` - human-readable time format
+
+-   **shared.js** (62 lines):
+    -   `adminFetch()` - auth-aware HTTP client
+    -   `escapeHtml()` - XSS prevention
+    -   `formatUptime()` - human-readable time format
 
 ### **CDN Dependencies** (NOT served locally)
-- **Tailwind CSS** (CDN): Used in all 7 templates
-- **HTMX 1.9.10** (CDN): Server-driven DOM updates
-- **Alpine.js 3.13.3** (CDN): Reactive components (theme toggle)
-- **Hyperscript** (CDN): Event-driven behavior
+
+-   **Tailwind CSS** (CDN): Used in all 7 templates
+-   **HTMX 1.9.10** (CDN): Server-driven DOM updates
+-   **Alpine.js 3.13.3** (CDN): Reactive components (theme toggle)
+-   **Hyperscript** (CDN): Event-driven behavior
 
 ---
 
@@ -228,34 +241,39 @@ container.innerHTML = services.map(service => {
 ### **Unused Files: layout.html**
 
 **File:** `/crates/mcb-server/src/admin/web/templates/layout.html`
-- **Lines**: 71
-- **Status**: DEAD/UNUSED
-- **Evidence**: 
-  - Included in `handlers.rs` via `const LAYOUT_HTML` but never referenced
-  - Not served by any GET handler
-  - Appears to be leftover template from previous refactor
-  - **Recommendation**: DELETE
+
+-   **Lines**: 71
+-   **Status**: DEAD/UNUSED
+-   **Evidence**:
+    -   Included in `handlers.rs` via `const LAYOUT_HTML` but never referenced
+    -   Not served by any GET handler
+    -   Appears to be leftover template from previous refactor
+    -   **Recommendation**: DELETE
 
 ### **Unused Partials: NONE**
-- No partial templates found
-- No fragment HTML files
-- All templates are complete pages
+
+-   No partial templates found
+-   No fragment HTML files
+-   All templates are complete pages
 
 ### **Unused CSS: MINIMAL**
-- All CSS in theme.css is actively used by templates
-- Tailwind CDN not customized (good practice for CDN)
-- **Redundancy**: theme.css replicates some Tailwind utility classes (could reduce)
+
+-   All CSS in theme.css is actively used by templates
+-   Tailwind CDN not customized (good practice for CDN)
+-   **Redundancy**: theme.css replicates some Tailwind utility classes (could reduce)
 
 ### **Unused JavaScript: MINIMAL**
-- shared.js is referenced in all templates that need admin features
-- Legacy admin.js (reference folder) not compiled
-- Some unused functions in theme toggle logic (minor, negligible)
+
+-   shared.js is referenced in all templates that need admin features
+-   Legacy admin.js (reference folder) not compiled
+-   Some unused functions in theme toggle logic (minor, negligible)
 
 ### **Dead Code Estimate**
-- **layout.html**: 71 lines (ready to delete)
-- **Duplicate nav/footer**: ~170 lines (could be eliminated with layout template or web components)
-- **Unused theme.css defaults**: ~15 lines (negligible)
-- **TOTAL DELETABLE**: ~256 lines (13.5% of HTML)
+
+-   **layout.html**: 71 lines (ready to delete)
+-   **Duplicate nav/footer**: ~170 lines (could be eliminated with layout template or web components)
+-   **Unused theme.css defaults**: ~15 lines (negligible)
+-   **TOTAL DELETABLE**: ~256 lines (13.5% of HTML)
 
 ---
 
@@ -264,14 +282,16 @@ container.innerHTML = services.map(service => {
 ### **Current Hardcoded Data**
 
 **Dashboard (index.html)**
-- Status badge styles (hardcoded in `<style>`)
-- Service card layout (hardcoded structure, dynamic data)
-- Metric display format (hardcoded, dynamic values)
+
+-   Status badge styles (hardcoded in `<style>`)
+-   Service card layout (hardcoded structure, dynamic data)
+-   Metric display format (hardcoded, dynamic values)
 
 **Browse Pages (browse.html, browse_collection.html, browse_file.html)**
-- Language badges with hardcoded color classes
-- File icons (SVG hardcoded in template literals)
-- Layout structure (could be data-driven)
+
+-   Language badges with hardcoded color classes
+-   File icons (SVG hardcoded in template literals)
+-   Layout structure (could be data-driven)
 
 ### **Screens That Could Be Data-Driven**
 
@@ -286,6 +306,7 @@ container.innerHTML = services.map(service => {
 ### **Client-Side Rendering Opportunities**
 
 **Current:** Browse files page
+
 ```javascript
 // Already client-side rendered
 list.innerHTML = files.map(file => `
@@ -294,21 +315,25 @@ list.innerHTML = files.map(file => `
     </a>
 `).join('');
 ```
+
 ✅ Already optimal
 
 **Current:** Services list
+
 ```javascript
 // Already client-side rendered from JSON
 container.innerHTML = services.map(service => `
     <div class="flex items-center justify-between">...</div>
 `).join('');
 ```
+
 ✅ Already optimal
 
 ### **Server-Side Rendering (NOT NEEDED)**
-- Current approach (static HTML + client-side JS) is ideal for a single-page admin dashboard
-- SSR would add complexity without benefit
-- HTMX handles server-driven updates efficiently
+
+-   Current approach (static HTML + client-side JS) is ideal for a single-page admin dashboard
+-   SSR would add complexity without benefit
+-   HTMX handles server-driven updates efficiently
 
 ---
 
@@ -331,16 +356,18 @@ pub fn theme_css() -> (ContentType, &'static str) {
 ```
 
 **Analysis:**
-- ✅ Simple, zero runtime cost
-- ✅ No allocations
-- ✅ Security: No interpolation = no injection vectors
-- ✗ Static: Can't customize per request
+
+-   ✅ Simple, zero runtime cost
+-   ✅ No allocations
+-   ✅ Security: No interpolation = no injection vectors
+-   ✗ Static: Can't customize per request
 
 ---
 
 ### **Example 2: Dynamic HTML from JSON (client-side)**
 
 From `health.html` (lines 98-154):
+
 ```javascript
 document.body.addEventListener('htmx:afterSwap', function(evt) {
     if (evt.detail.target.id === 'health-content') {
@@ -378,11 +405,12 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
 ```
 
 **Analysis:**
-- ✅ Secure: Uses `escapeHtml()` to prevent XSS
-- ✅ Dynamic: Generates HTML from server data
-- ✅ Type-safe: Validates status before using in class name (`safeStatus`)
-- ✗ Complex: String concatenation (could use template library)
-- ✗ No XSS on class attribute: `status-${safeStatus}` whitelist validated
+
+-   ✅ Secure: Uses `escapeHtml()` to prevent XSS
+-   ✅ Dynamic: Generates HTML from server data
+-   ✅ Type-safe: Validates status before using in class name (`safeStatus`)
+-   ✗ Complex: String concatenation (could use template library)
+-   ✗ No XSS on class attribute: `status-${safeStatus}` whitelist validated
 
 ---
 
@@ -406,10 +434,11 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
 ```
 
 **Analysis:**
-- ✅ Declarative (HTMX attributes handle behavior)
-- ✅ Hyperscript (`_="..."`) for event handling
-- ✗ HTML-in-HTML templates (notification markup as string)
-- ✓ Works but could be cleaner with `<template>` elements
+
+-   ✅ Declarative (HTMX attributes handle behavior)
+-   ✅ Hyperscript (`_="..."`) for event handling
+-   ✗ HTML-in-HTML templates (notification markup as String)
+-   ✓ Works but could be cleaner with `<template>` elements
 
 ---
 
@@ -442,17 +471,19 @@ grid.innerHTML = collections.map(coll => `
 ```
 
 **Analysis:**
-- ✅ Modern (ES6 template literals)
-- ✅ Readable
-- ✅ Uses `escapeHtml()` correctly
-- ✓ Performance: Single render pass
-- ✗ No TypeScript: untyped `coll` object
+
+-   ✅ Modern (ES6 template literals)
+-   ✅ Readable
+-   ✅ Uses `escapeHtml()` correctly
+-   ✓ Performance: Single render pass
+-   ✗ No TypeScript: untyped `coll` object
 
 ---
 
 ### **Example 5: Anti-Pattern - Duplication (navigation)**
 
 **index.html (lines 46-65):**
+
 ```html
 <nav class="bg-gray-800 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -474,20 +505,22 @@ grid.innerHTML = collections.map(coll => `
 ```
 
 **Also in:**
-- config.html (lines 31-47)
-- health.html (lines 26-42)
-- indexing.html (lines 27-43)
-- browse.html (lines 30-65)
-- browse_collection.html (lines 30-65)
-- browse_file.html (lines 38-74)
+
+-   config.html (lines 31-47)
+-   health.html (lines 26-42)
+-   indexing.html (lines 27-43)
+-   browse.html (lines 30-65)
+-   browse_collection.html (lines 30-65)
+-   browse_file.html (lines 38-74)
 
 **Problem:** 7 identical copies with ~20 lines each = **~140 lines of duplication**
 
 **Solution Options:**
-1. **Web Components** (lightweight, no build step)
-2. **Custom Rocket templates** (add Askama dependency)
-3. **Server-side template inclusion** (fragments)
-4. **JavaScript shared component** (dynamic load)
+
+1.  **Web Components** (lightweight, no build step)
+2.  **Custom Rocket templates** (add Askama dependency)
+3.  **Server-side template inclusion** (fragments)
+4.  **JavaScript shared component** (dynamic load)
 
 ---
 
@@ -509,10 +542,11 @@ pub fn health_check() -> Json<AdminHealthResponse> { Json(...) }
 ```
 
 **Types Used:**
-- `RawHtml<&'static str>` - HTML responses
-- `Json<T>` - JSON data responses
-- `(ContentType, &'static str)` - CSS/JS
-- `&'static str` - Plain text responses
+
+-   `RawHtml<&'static str>` - HTML responses
+-   `Json<T>` - JSON data responses
+-   `(ContentType, &'static str)` - CSS/JS
+-   `&'static str` - Plain text responses
 
 **Pattern:** Simple, idiomatic Rocket - no custom wrappers needed
 
@@ -523,15 +557,18 @@ pub fn health_check() -> Json<AdminHealthResponse> { Json(...) }
 ### **Priority 1: Quick Wins (No Breaking Changes)**
 
 #### Task 1.1: Delete layout.html
-- **Impact**: Remove 71 lines of dead code
-- **Time**: 5 minutes
-- **File**: `handlers.rs` - remove const, `templates/layout.html` - delete file
+
+-   **Impact**: Remove 71 lines of dead code
+-   **Time**: 5 minutes
+-   **File**: `handlers.rs` - remove const, `templates/layout.html` - delete file
 
 #### Task 1.2: Extract Common Navigation
-- **Impact**: Reduce duplication by ~140 lines (7.4% of HTML)
-- **Time**: 30 minutes
-- **Approach**: Create `shared_nav.html` partial
-- **Implementation**:
+
+-   **Impact**: Reduce duplication by ~140 lines (7.4% of HTML)
+-   **Time**: 30 minutes
+-   **Approach**: Create `shared_nav.html` partial
+-   **Implementation**:
+
   ```javascript
   // In shared.js
   document.addEventListener('DOMContentLoaded', () => {
@@ -541,24 +578,28 @@ pub fn health_check() -> Json<AdminHealthResponse> { Json(...) }
   ```
 
 #### Task 1.3: Extract Common Footer
-- **Impact**: Reduce duplication by ~28 lines
-- **Time**: 10 minutes
-- **Approach**: Same as navigation - JavaScript injection
+
+-   **Impact**: Reduce duplication by ~28 lines
+-   **Time**: 10 minutes
+-   **Approach**: Same as navigation - JavaScript injection
 
 ### **Priority 2: Medium Effort (Low Risk)**
 
 #### Task 2.1: Extract Inline Styles to theme.css
-- **Impact**: Reduce file sizes, improve maintainability
-- **Current**: 209 lines of embedded `<style>` across 7 files
-- **Target**: Move to theme.css, reference via class names
-- **Time**: 1-2 hours
-- **Files affected**: All 7 templates
+
+-   **Impact**: Reduce file sizes, improve maintainability
+-   **Current**: 209 lines of embedded `<style>` across 7 files
+-   **Target**: Move to theme.css, reference via class names
+-   **Time**: 1-2 hours
+-   **Files affected**: All 7 templates
 
 #### Task 2.2: Add TypeScript for Template Literals
-- **Impact**: Type-safe dynamic HTML generation
-- **Time**: 3-4 hours
-- **Files**: Create `src/admin/web/templates/types.ts`
-- **Pattern**:
+
+-   **Impact**: Type-safe dynamic HTML generation
+-   **Time**: 3-4 hours
+-   **Files**: Create `src/admin/web/templates/types.ts`
+-   **Pattern**:
+
   ```typescript
   interface Collection {
       name: string;
@@ -575,23 +616,26 @@ pub fn health_check() -> Json<AdminHealthResponse> { Json(...) }
 ### **Priority 3: Major Refactors (Consider Later)**
 
 #### Task 3.1: Add Askama Template Engine
-- **Why**: Eliminate duplication, type-safe templates, partial inclusion
-- **Cost**: New dependency, compile complexity
-- **Benefit**: ~30% reduction in code
-- **Recommendation**: NOT URGENT - current approach works well
+
+-   **Why**: Eliminate duplication, type-safe templates, partial inclusion
+-   **Cost**: New dependency, compile complexity
+-   **Benefit**: ~30% reduction in code
+-   **Recommendation**: NOT URGENT - current approach works well
 
 #### Task 3.2: Component Library Migration
-- **What**: Web Components for nav, footer, cards
-- **Why**: Reusable, no build step required
-- **Effort**: 8-10 hours
-- **Benefit**: Cleaner code, easier maintenance
-- **Recommend for next refactor cycle**
+
+-   **What**: Web Components for nav, footer, cards
+-   **Why**: Reusable, no build step required
+-   **Effort**: 8-10 hours
+-   **Benefit**: Cleaner code, easier maintenance
+-   **Recommend for next refactor cycle**
 
 #### Task 3.3: Move from Tailwind CDN to PostCSS
-- **Why**: Smaller bundle, JIT compilation
-- **Cost**: Build step complexity
-- **Current**: Fine as-is (Tailwind CDN is fast)
-- **Recommendation**: Skip for now
+
+-   **Why**: Smaller bundle, JIT compilation
+-   **Cost**: Build step complexity
+-   **Current**: Fine as-is (Tailwind CDN is fast)
+-   **Recommendation**: Skip for now
 
 ---
 
@@ -600,6 +644,7 @@ pub fn health_check() -> Json<AdminHealthResponse> { Json(...) }
 ### **Step 1: Create Shared Navigation Component**
 
 **File:** `crates/mcb-server/src/admin/web/templates/nav.html`
+
 ```html
 <nav class="bg-gray-800 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -621,6 +666,7 @@ pub fn health_check() -> Json<AdminHealthResponse> { Json(...) }
 ```
 
 **File:** `templates/nav.js`
+
 ```javascript
 const NAV_HTML = `...from nav.html...`;
 
@@ -649,6 +695,7 @@ document.addEventListener('DOMContentLoaded', initNav);
 ### **Step 2: Update All Templates**
 
 Remove 140 lines of nav duplication, replace with:
+
 ```html
 <nav id="main-nav"></nav>
 <script src="/ui/nav.js"></script>
@@ -657,15 +704,17 @@ Remove 140 lines of nav duplication, replace with:
 ### **Step 3: Consolidate Footer**
 
 Same pattern as navigation:
-- Create `footer.html` (4 lines)
-- Create `footer.js` (10 lines)
-- Replace 7 instances of footer duplication
+
+-   Create `footer.html` (4 lines)
+-   Create `footer.js` (10 lines)
+-   Replace 7 instances of footer duplication
 
 ### **Results**
-- **Before**: 1,891 lines HTML + 62 lines shared.js = 1,953 lines
-- **After**: ~1,680 lines HTML + 120 lines JS = 1,800 lines
-- **Reduction**: 153 lines (7.8%)
-- **Benefit**: Single source of truth for nav/footer
+
+-   **Before**: 1,891 lines HTML + 62 lines shared.js = 1,953 lines
+-   **After**: ~1,680 lines HTML + 120 lines JS = 1,800 lines
+-   **Reduction**: 153 lines (7.8%)
+-   **Benefit**: Single source of truth for nav/footer
 
 ---
 
@@ -678,17 +727,19 @@ Static HTML (compile-time) + JavaScript (client-side) + HTMX (server updates)
 ```
 
 **Strengths:**
-- ✅ Simple architecture
-- ✅ No template engine dependency
-- ✅ Fast load times (static content)
-- ✅ Excellent for SPAs/dashboards
-- ✅ Security: XSS prevention via `escapeHtml()`
-- ✅ No runtime server overhead
+
+-   ✅ Simple architecture
+-   ✅ No template engine dependency
+-   ✅ Fast load times (static content)
+-   ✅ Excellent for SPAs/dashboards
+-   ✅ Security: XSS prevention via `escapeHtml()`
+-   ✅ No runtime server overhead
 
 **Weaknesses:**
-- ✗ Duplication of nav/footer (7x)
-- ✗ Inline styles in 7 files
-- ✗ No type safety on dynamic data
+
+-   ✗ Duplication of nav/footer (7x)
+-   ✗ Inline styles in 7 files
+-   ✗ No type safety on dynamic data
 
 ---
 
@@ -703,25 +754,27 @@ Static HTML (compile-time) + JavaScript (client-side) + HTMX (server updates)
 ```
 
 **Benefits:**
-- ✅ Eliminates duplication
-- ✅ Smaller bundle sizes
-- ✅ Type safety
-- ✅ Easier to maintain
-- ✅ Better code organization
+
+-   ✅ Eliminates duplication
+-   ✅ Smaller bundle sizes
+-   ✅ Type safety
+-   ✅ Easier to maintain
+-   ✅ Better code organization
 
 **Cost:**
-- Requires build step (optional)
-- More tooling (TypeScript, bundler)
-- Marginal performance impact
+
+-   Requires build step (optional)
+-   More tooling (TypeScript, bundler)
+-   Marginal performance impact
 
 ---
 
 ### **Roadmap: Immediate (Next Sprint)**
 
-1. ✅ Delete `layout.html` (5 min)
-2. ✅ Extract nav/footer to shared components (45 min)
-3. ✅ Move inline `<style>` to theme.css (90 min)
-4. ✅ Add TypeScript types for data objects (2 hours)
+1.  ✅ Delete `layout.html` (5 min)
+2.  ✅ Extract nav/footer to shared components (45 min)
+3.  ✅ Move inline `<style>` to theme.css (90 min)
+4.  ✅ Add TypeScript types for data objects (2 hours)
 
 **Total:** 3-4 hours, ~200 lines removed, 0 functionality changes
 
@@ -729,10 +782,10 @@ Static HTML (compile-time) + JavaScript (client-side) + HTMX (server updates)
 
 ### **Roadmap: Future (Next Quarter)**
 
-1. Consider Askama for template inheritance
-2. Add Web Components for complex UI
-3. Implement CSS-in-JS for dynamic themes
-4. Add automated testing for HTML generation
+1.  Consider Askama for template inheritance
+2.  Add Web Components for complex UI
+3.  Implement CSS-in-JS for dynamic themes
+4.  Add automated testing for HTML generation
 
 ---
 
@@ -757,23 +810,26 @@ Static HTML (compile-time) + JavaScript (client-side) + HTMX (server updates)
 ## RECOMMENDATIONS
 
 ### **HIGH PRIORITY (Do First)**
-1. **Delete layout.html** - Dead code removal
-2. **Extract nav/footer** - Reduce duplication by 7.4%
-3. **Consolidate inline styles** - Improve maintainability
+
+1.  **Delete layout.html** - Dead code removal
+2.  **Extract nav/footer** - Reduce duplication by 7.4%
+3.  **Consolidate inline styles** - Improve maintainability
 
 ### **MEDIUM PRIORITY (Plan for Next Sprint)**
-1. Add TypeScript for type-safe templates
-2. Implement automated HTML generation tests
-3. Optimize bundle size (gzip, minification)
+
+1.  Add TypeScript for type-safe templates
+2.  Implement automated HTML generation tests
+3.  Optimize bundle size (gzip, minification)
 
 ### **LOW PRIORITY (Consider Later)**
-1. Add Askama template engine (only if duplication increases)
-2. Migrate to Web Components (if more complex UIs added)
-3. Implement server-side rendering (not needed for admin UI)
+
+1.  Add Askama template engine (only if duplication increases)
+2.  Migrate to Web Components (if more complex UIs added)
+3.  Implement server-side rendering (not needed for admin UI)
 
 ### **DO NOT DO**
-- ✗ Don't add template engine until duplication is critical
-- ✗ Don't move from client-side to server-side rendering
-- ✗ Don't replace HTMX with a heavier framework
-- ✗ Don't make templates more complex than they need to be
 
+-   ✗ Don't add template engine until duplication is critical
+-   ✗ Don't move from client-side to server-side rendering
+-   ✗ Don't replace HTMX with a heavier framework
+-   ✗ Don't make templates more complex than they need to be

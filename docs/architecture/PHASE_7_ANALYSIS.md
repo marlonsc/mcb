@@ -350,30 +350,35 @@ pub trait MemoryRepository: Send + Sync {
 **Key Methods**:
 
 1.  **Store with deduplication** (lines 29-65):
-   -   Serializes tags/metadata to JSON
-   -   Uses SQLite `ON CONFLICT(content_hash)` to handle duplicates
-   -   Upserts on hash collision
 
-2.  **Find by hash** (lines 84-99):
-   -   Single point lookup for deduplication check
-   -   Enables `store_observation_impl` early return
+-   Serializes tags/metadata to JSON
+-   Uses SQLite `ON CONFLICT(content_hash)` to handle duplicates
+-   Upserts on hash collision
 
-3.  **Search FTS ranked** (lines 120-138):
-   -   Queries FTS5 virtual table with BM25 ranking
-   -   Returns `Vec<FtsSearchResult>` with both id and rank score
-   -   Critical for RRF algorithm (needs ranks)
+1.  **Find by hash** (lines 84-99):
 
-4.  **Timeline query** (lines 225-300):
-   -   Fetches `before` items (DESC order, then reversed)
-   -   Includes anchor observation
-   -   Fetches `after` items (ASC order)
-   -   Applies MemoryFilter to all results
-   -   Progressive disclosure pattern
+-   Single point lookup for deduplication check
+-   Enables `store_observation_impl` early return
 
-5.  **Get observations by IDs** (lines 201-223):
-   -   Batch query using dynamic SQL (IN clause)
-   -   Essential for RRF post-ranking fetch
-   -   Prevents N+1 queries
+1.  **Search FTS ranked** (lines 120-138):
+
+-   Queries FTS5 virtual table with BM25 ranking
+-   Returns `Vec<FtsSearchResult>` with both id and rank score
+-   Critical for RRF algorithm (needs ranks)
+
+1.  **Timeline query** (lines 225-300):
+
+-   Fetches `before` items (DESC order, then reversed)
+-   Includes anchor observation
+-   Fetches `after` items (ASC order)
+-   Applies MemoryFilter to all results
+-   Progressive disclosure pattern
+
+1.  **Get observations by IDs** (lines 201-223):
+
+-   Batch query using dynamic SQL (IN clause)
+-   Essential for RRF post-ranking fetch
+-   Prevents N+1 queries
 
 **DatabaseExecutor Port** (`crates/mcb-domain/src/ports/infrastructure/database.rs:40-68`):
 
@@ -738,12 +743,14 @@ pub struct ServiceDependencies {
 ### Test Categories
 
 1.  **Timestamp Tests** (1 test):
-   -   Verifies Unix timestamp generation (validates 1_700_000_000 < ts < 2_000_000_000)
 
-2.  **RRF Algorithm Tests** (3 tests):
-   -   `test_rrf_hybrid_search_combines_fts_and_vector()`: Verifies FTS + vector score combination
-   -   `test_rrf_fallback_to_fts_when_vector_empty()`: Graceful degradation when vector store empty
-   -   `test_rrf_respects_memory_filter()`: Filter application post-RRF
+-   Verifies Unix timestamp generation (validates 1_700_000_000 < ts < 2_000_000_000)
+
+1.  **RRF Algorithm Tests** (3 tests):
+
+-   `test_rrf_hybrid_search_combines_fts_and_vector()`: Verifies FTS + vector score combination
+-   `test_rrf_fallback_to_fts_when_vector_empty()`: Graceful degradation when vector store empty
+-   `test_rrf_respects_memory_filter()`: Filter application post-RRF
 
 ### Mock Infrastructure
 
@@ -1022,18 +1029,23 @@ pub struct ObservationMetadata {
 ## 13. TECHNICAL DEBT & FUTURE WORK
 
 1.  **Vector store persistence** (currently in-memory for tests)
-   -   Consider persistent backend (Qdrant, Milvus)
 
-2.  **Performance optimization**
-   -   FTS5 index tuning for large datasets
-   -   Vector store batch inserts
+-   Consider persistent backend (Qdrant, Milvus)
 
-3.  **Monitoring & observability**
-   -   Metrics for search latency, RRF scores
-   -   Trace RRF merging logic
+1.  **Performance optimization**
 
-4.  **Error pattern detection** (MEM-04)
-   -   ErrorPattern entity defined but not fully integrated
+-   FTS5 index tuning for large datasets
+-   Vector store batch inserts
 
-5.  **Execution tracking** (MEM-02)
-   -   ExecutionMetadata defined but limited usage
+1.  **Monitoring & observability**
+
+-   Metrics for search latency, RRF scores
+-   Trace RRF merging logic
+
+1.  **Error pattern detection** (MEM-04)
+
+-   ErrorPattern entity defined but not fully integrated
+
+1.  **Execution tracking** (MEM-02)
+
+-   ExecutionMetadata defined but limited usage

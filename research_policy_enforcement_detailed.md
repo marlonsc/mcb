@@ -9,17 +9,21 @@ This research analyzes policy enforcement patterns, composable rules frameworks,
 ## KEY FINDINGS
 
 ### 1. Conflict Resolution is Critical
+
 Most systems lack explicit conflict resolution strategy. The safest default is **deny-wins semantics**: any deny blocks access regardless of other policies. This prevents accidental security bypasses.
 
 ### 2. Three Composition Patterns Dominate
-- **GitLab**: Hierarchical inheritance (parent → group → project)
-- **OPA**: Module-based imports with rule definitions
-- **Sentinel**: Policy packs with explicit merge strategies
+
+-   **GitLab**: Hierarchical inheritance (parent → group → project)
+-   **OPA**: Module-based imports with rule definitions
+-   **Sentinel**: Policy packs with explicit merge strategies
 
 ### 3. Testing & Debugging Often Overlooked
+
 Production systems need: unit tests, integration tests, dry-run modes, and rich error messages with remediation guidance.
 
 ### 4. WIP Limits & Clean Worktrees Need Policy Integration
+
 These workflow constraints should be enforceable via pre-commit hooks integrated with CI gates, not just advisory.
 
 ---
@@ -27,18 +31,21 @@ These workflow constraints should be enforceable via pre-commit hooks integrated
 ## 1. POLICY GUARD PATTERNS
 
 ### GitHub Actions Approach
-- Policies define which actions can run
-- Rulesets control deployments (newer)
-- Multiple policies combine as AND gates (all must pass)
-- Status checks are enforcement mechanism
+
+-   Policies define which Actions can run
+-   Rulesets control deployments (newer)
+-   Multiple policies combine as AND gates (all must pass)
+-   Status checks are enforcement mechanism
 
 ### GitLab Approach (Pipeline Execution Policies)
-- Inject mandatory jobs into developer pipelines
-- NOT skippable by developers
-- Multiple policies apply in sequence
-- All applicable policies execute
+
+-   Inject mandatory jobs into developer pipelines
+-   NOT skippable by developers
+-   Multiple policies apply in sequence
+-   All applicable policies execute
 
 ### Key Pattern Insight
+
 Policy enforcement should be **mutation-based** (inject/modify) rather than **advisory** (warn/fail softly). Developers should not be able to bypass critical policies.
 
 ---
@@ -48,6 +55,7 @@ Policy enforcement should be **mutation-based** (inject/modify) rather than **ad
 ### OPA/Rego Pattern
 
 **Logical AND** (implicit):
+
 ```rego
 allow {
     input.user.admin == true
@@ -56,12 +64,14 @@ allow {
 ```
 
 **Logical OR** (multiple definitions):
+
 ```rego
 allow { input.user.admin == true }
 allow { input.user.role == "moderator" }
 ```
 
 **Negation**:
+
 ```rego
 allow {
     not input.user.blocked
@@ -70,15 +80,17 @@ allow {
 ```
 
 ### Dynamic Composition
-- Load policies based on request attributes (team, environment)
-- Evaluate all applicable rules
-- Combine results via denial-of-service logic
+
+-   Load policies based on request attributes (team, environment)
+-   Evaluate all applicable rules
+-   Combine results via denial-of-service logic
 
 ---
 
 ## 3. CONFLICT RESOLUTION STRATEGIES
 
 ### Recommended: Deny-Wins Semantics
+
 ```
 Allow + Allow = Allow
 Allow + Deny = Deny ← Most conservative
@@ -86,16 +98,18 @@ Deny + Deny = Deny
 ```
 
 ### Implementation
-1. Validate policies don't have conflicting intent (pre-commit)
-2. Test policy combinations (integration tests)
-3. Use explicit priority when needed
-4. Document all override exceptions
+
+1.  Validate policies don't have conflicting intent (pre-commit)
+2.  Test policy combinations (integration tests)
+3.  Use explicit priority when needed
+4.  Document all override exceptions
 
 ---
 
 ## 4. WORKFLOW CONSTRAINTS
 
 ### WIP (Work-In-Progress) Limits
+
 ```yaml
 wip_limits:
   in_progress: 3
@@ -106,6 +120,7 @@ wip_limits:
 ```
 
 Enforcement via pre-commit hook:
+
 ```bash
 active_prs=$(gh pr list --state open --json number | jq length)
 if [ $active_prs -ge $WIP_LIMIT ]; then
@@ -115,6 +130,7 @@ fi
 ```
 
 ### Clean Worktree Verification
+
 ```bash
 if ! git diff --quiet --exit-code; then
   echo "ERROR: Uncommitted changes detected"
@@ -128,6 +144,7 @@ fi
 ### Branch Naming Validation
 
 Production regex pattern:
+
 ```regex
 ^(?!.*--)(
   (main|master|develop|staging|release)$
@@ -137,9 +154,10 @@ Production regex pattern:
 ```
 
 Prevents:
-- Double hyphens
-- Hyphens at start/end
-- Arbitrary branch names
+
+-   Double hyphens
+-   Hyphens at start/end
+-   Arbitrary branch names
 
 ### Test Gating Integration
 
@@ -164,18 +182,21 @@ ALL required tests must pass. Configuration per branch.
 ### YAML vs TOML
 
 **YAML Benefits**:
-- Human-readable
-- Comments allowed
-- Nested structures
-- Wide tool support
+
+-   Human-readable
+-   Comments allowed
+-   Nested structures
+-   Wide tool support
 
 **TOML Benefits**:
-- No whitespace significance
-- Simpler grammar
-- Better validation
-- Type-safe by default
+
+-   No whitespace significance
+-   Simpler grammar
+-   Better validation
+-   Type-safe by default
 
 ### Configuration Example (YAML)
+
 ```yaml
 policies:
   - name: branch_naming
@@ -197,22 +218,26 @@ policies:
 ### Runtime vs Compile-Time
 
 **Runtime** (dynamic reload):
-- Pros: Update without redeployment, A/B testing
-- Cons: Performance overhead, harder debugging
+
+-   Pros: Update without redeployment, A/B testing
+-   Cons: Performance overhead, harder debugging
 
 **Compile-Time** (build-time):
-- Pros: Consistency, type checking, optimized
-- Cons: Requires rebuild, slower iteration
+
+-   Pros: Consistency, type checking, optimized
+-   Cons: Requires rebuild, slower iteration
 
 **Recommended**: Hybrid approach
-- Critical security policies → compile-time
-- Feature flags/allowlists → runtime with 30s reload
+
+-   Critical security policies → compile-time
+-   Feature flags/allowlists → runtime with 30s reload
 
 ---
 
 ## 6. TESTING & DEBUGGING
 
 ### Unit Test Pattern (OPA)
+
 ```rego
 package policy.test
 
@@ -226,6 +251,7 @@ test_invalid_branch_denied {
 ```
 
 ### Integration Test Pattern
+
 ```yaml
 tests:
   - name: "High coverage passes"
@@ -240,17 +266,20 @@ tests:
 
 ### Debugging Infrastructure
 
-1. **Verbose output**:
+1.  **Verbose output**:
+
 ```bash
 opa eval -d policy/ -i input.json -f pretty --explain full
 ```
 
-2. **Policy dry-run**:
+1.  **Policy dry-run**:
+
 ```bash
 git commit --dry-run  # Test before actual commit
 ```
 
-3. **Rich error messages**:
+1.  **Rich error messages**:
+
 ```json
 {
   "status": "policy_violation",
@@ -278,45 +307,52 @@ git commit --dry-run  # Test before actual commit
 
 ## 8. CRITICAL GAPS IN ADR-036
 
-### Missing or Incomplete:
+### Missing or Incomplete
 
-1. **Explicit Conflict Resolution Rule**
-   - Currently undefined
-   - Should specify deny-wins or alternative
-   - Document all overrides
+1.  **Explicit Conflict Resolution Rule**
 
-2. **Plugin Architecture**
-   - File discovery not defined
-   - Loading order not specified
-   - Module import mechanism unclear
-   - Hot-reload behavior undefined
+-   Currently undefined
+-   Should specify deny-wins or alternative
+-   Document all overrides
 
-3. **Testing Framework**
-   - No unit test specification
-   - Integration test pattern missing
-   - Regression test requirements unclear
+1.  **Plugin Architecture**
 
-4. **Error Messaging**
-   - No structured error format
-   - Remediation guidance missing
-   - Debug information levels undefined
+-   File discovery not defined
+-   Loading order not specified
+-   Module import mechanism unclear
+-   Hot-reload behavior undefined
 
-5. **Configuration Validation**
-   - Schema enforcement not specified
-   - Pre-commit validation of policies missing
-   - CI gate for policy changes not defined
+1.  **Testing Framework**
 
-6. **Policy Lifecycle**
-   - No versioning strategy
-   - Deprecation process undefined
-   - Migration path missing
-   - Rollback procedures not specified
+-   No unit test specification
+-   Integration test pattern missing
+-   Regression test requirements unclear
+
+1.  **Error Messaging**
+
+-   No structured error format
+-   Remediation guidance missing
+-   Debug information levels undefined
+
+1.  **Configuration Validation**
+
+-   Schema enforcement not specified
+-   Pre-commit validation of policies missing
+-   CI gate for policy changes not defined
+
+1.  **Policy Lifecycle**
+
+-   No versioning strategy
+-   Deprecation process undefined
+-   Migration path missing
+-   Rollback procedures not specified
 
 ---
 
 ## 9. RECOMMENDED ADDITIONS TO ADR-036
 
 ### 1. Conflict Resolution (REQUIRED)
+
 ```yaml
 enforcement:
   conflict_resolution: deny_wins  # Default safe
@@ -327,6 +363,7 @@ enforcement:
 ```
 
 ### 2. Plugin Architecture
+
 ```yaml
 policy_engine:
   plugin_discovery:
@@ -343,6 +380,7 @@ policy_engine:
 ```
 
 ### 3. Configuration Format Standard
+
 ```yaml
 policy_spec:
   version: "1.0"
@@ -365,6 +403,7 @@ policy_spec:
 ```
 
 ### 4. Error Messaging Framework
+
 ```yaml
 policy:
   errors:
@@ -379,6 +418,7 @@ policy:
 ```
 
 ### 5. Testing Standard
+
 ```yaml
 testing:
   unit_test_framework: opa_test_v1
@@ -389,6 +429,7 @@ testing:
 ```
 
 ### 6. Policy Lifecycle
+
 ```yaml
 versioning:
   strategy: semver
@@ -403,24 +444,28 @@ versioning:
 ## 10. IMPLEMENTATION ROADMAP
 
 ### Phase 1: Foundation
-- [ ] Define conflict resolution semantics
-- [ ] Document plugin architecture
-- [ ] Create configuration schema
+
+-   [ ] Define conflict resolution semantics
+-   [ ] Document plugin architecture
+-   [ ] Create configuration schema
 
 ### Phase 2: Tooling
-- [ ] Implement testing framework
-- [ ] Add error messaging system
-- [ ] Create dry-run mode
+
+-   [ ] Implement testing framework
+-   [ ] Add error messaging system
+-   [ ] Create dry-run mode
 
 ### Phase 3: Lifecycle
-- [ ] Add versioning support
-- [ ] Implement deprecation process
-- [ ] Create rollback mechanisms
+
+-   [ ] Add versioning support
+-   [ ] Implement deprecation process
+-   [ ] Create rollback mechanisms
 
 ### Phase 4: Integration
-- [ ] Pre-commit hook enforcement
-- [ ] CI gate integration
-- [ ] Git workflow enforcement
+
+-   [ ] Pre-commit hook enforcement
+-   [ ] CI gate integration
+-   [ ] Git workflow enforcement
 
 ---
 
@@ -473,11 +518,11 @@ testing:
 ## 12. CONCLUSION
 
 Modern policy enforcement requires:
-1. **Clear semantics** (deny-wins conflict resolution)
-2. **Composable architecture** (module-based, hierarchical)
-3. **Robust testing** (unit + integration + regression)
-4. **Developer experience** (rich errors, remediation guidance)
-5. **Lifecycle management** (versioning, deprecation, migration)
+
+1.  **Clear semantics** (deny-wins conflict resolution)
+2.  **Composable architecture** (module-based, hierarchical)
+3.  **Robust testing** (unit + integration + regression)
+4.  **Developer experience** (rich errors, remediation guidance)
+5.  **Lifecycle management** (versioning, deprecation, migration)
 
 ADR-036 should adopt these patterns from proven systems (OPA, GitLab, Sentinel) while adding the missing pieces (testing, lifecycle, debugging) to create a complete enforcement framework.
-

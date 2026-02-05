@@ -1,15 +1,17 @@
 # MCP Consolidation - Quick Reference Card
 
 ## 📊 The Numbers
-- **50+** MCP endpoints (8 handlers)
-- **15+** Admin HTTP endpoints
-- **9** single-use response types (dead weight)
-- **10** high-ROI reuse opportunities
-- **~30%** boilerplate reduction possible
+
+-   **50+** MCP endpoints (8 handlers)
+-   **15+** Admin HTTP endpoints
+-   **9** single-use response types (dead weight)
+-   **10** high-ROI reuse opportunities
+-   **~30%** boilerplate reduction possible
 
 ## 🎯 Top 3 Immediate Wins
 
 ### #1: Index Status Wrapper (30 min) - ⭐⭐⭐ ROI
+
 ```
 MCP:  IndexHandler::handle(IndexAction::Status) → JSON
 Admin: GET /indexing (currently calls service directly)
@@ -17,6 +19,7 @@ Admin: GET /indexing (currently calls service directly)
 ```
 
 ### #2: Collection Search (2 hours) - ⭐⭐⭐ ROI  
+
 ```
 MCP:  SearchHandler::handle(SearchResource::Code) → results
 Admin: (Currently no search endpoint)
@@ -25,6 +28,7 @@ Admin: (Currently no search endpoint)
 ```
 
 ### #3: Response Type Consolidation (4 hours) - ⭐⭐ ROI
+
 ```
 Current: AdminHealthResponse, IndexingStatusResponse, ... (9 types)
 Target:  ApiResponse<T> wrapper
@@ -35,18 +39,21 @@ Target:  ApiResponse<T> wrapper
 ## 📋 Handler Patterns
 
 ### MCP (Standard Pattern)
+
 ```rust
 pub struct IndexHandler { service: Arc<dyn ServiceInterface> }
 pub async fn handle(&self, Parameters(args): Parameters<Args>) -> Result<CallToolResult, McpError>
 ```
 
 ### Admin HTTP (Rocket)
+
 ```rust
 #[get("/endpoint")]
 pub fn handler(_auth: AdminAuth, state: &State<AdminState>) -> Json<Response>
 ```
 
 ### Key Differences
+
 | Aspect | MCP | Admin |
 |--------|-----|-------|
 | Transport | MCP protocol | HTTP |
@@ -73,31 +80,36 @@ Legend: ✅✅ Ready to use | ✅ Minor work | ⚠️ Medium adaptation | ❌ Se
 ## 📂 Files to Modify (By Phase)
 
 ### Phase 1: Quick Wins (4 hrs)
-- [ ] `admin/handlers.rs` - index status wrapper
-- [ ] `admin/search_handlers.rs` - NEW
-- [ ] `admin/validate_handlers.rs` - NEW
-- [ ] `admin/routes.rs` - add routes
+
+-   [ ] `admin/handlers.rs` - index status wrapper
+-   [ ] `admin/search_handlers.rs` - NEW
+-   [ ] `admin/validate_handlers.rs` - NEW
+-   [ ] `admin/routes.rs` - add routes
 
 ### Phase 2: Consolidation (4 hrs)
-- [ ] `admin/models.rs` - `ApiResponse<T>` wrapper
-- [ ] `admin/handlers.rs` - refactor (10+ endpoints)
-- [ ] `admin/lifecycle_handlers.rs` - refactor
-- [ ] `admin/browse_handlers.rs` - refactor
+
+-   [ ] `admin/models.rs` - `ApiResponse<T>` wrapper
+-   [ ] `admin/handlers.rs` - refactor (10+ endpoints)
+-   [ ] `admin/lifecycle_handlers.rs` - refactor
+-   [ ] `admin/browse_handlers.rs` - refactor
 
 ### Phase 3: Extensions (6 hrs)
-- [ ] `admin/memory_handlers.rs` - NEW (memory browsing)
-- [ ] `admin/session_handlers.rs` - NEW (session browsing)
-- [ ] `admin/vcs_handlers.rs` - NEW (VCS browsing)
-- [ ] `admin/routes.rs` - mount new routes
+
+-   [ ] `admin/memory_handlers.rs` - NEW (memory browsing)
+-   [ ] `admin/session_handlers.rs` - NEW (session browsing)
+-   [ ] `admin/vcs_handlers.rs` - NEW (VCS browsing)
+-   [ ] `admin/routes.rs` - mount new routes
 
 ### Phase 4: Strategic (8+ hrs)
-- [ ] `handlers/consolidated/project.rs` - implement
-- [ ] Create unified service facade
-- [ ] Add pagination + filtering
+
+-   [ ] `handlers/consolidated/project.rs` - implement
+-   [ ] Create unified service facade
+-   [ ] Add pagination + filtering
 
 ## 🎭 Response Type Consolidation
 
 ### Dead Weight (Single-Use)
+
 ```
 ❌ AdminHealthResponse (only in /health)
 ❌ IndexingStatusResponse (only in /indexing)
@@ -111,6 +123,7 @@ Legend: ✅✅ Ready to use | ✅ Minor work | ⚠️ Medium adaptation | ❌ Se
 ```
 
 ### Proposed Wrapper
+
 ```rust
 pub struct ApiResponse<T: Serialize> {
     pub success: bool,
@@ -124,6 +137,7 @@ pub struct ApiResponse<T: Serialize> {
 ## 🔄 Error Handling Patterns
 
 ### MCP Style
+
 ```rust
 args.validate()
     .map_err(|e| McpError::invalid_params(format!("Invalid: {}", e), None))?;
@@ -134,6 +148,7 @@ if query.is_empty() {
 ```
 
 ### Admin HTTP Style
+
 ```rust
 let Some(resource) = &state.optional else {
     return Err((Status::ServiceUnavailable, Json(error)));
@@ -148,20 +163,23 @@ match service.operation().await {
 ## 📈 ROI Ranking
 
 ### Tier 1: Quick Wins (< 2 hrs, high impact)
-1. ⭐⭐⭐ Index Status Wrapper
-2. ⭐⭐⭐ Collection Search
-3. ⭐⭐ Validation Endpoints
-4. ⭐⭐ Complexity Analysis
+
+1.  ⭐⭐⭐ Index Status Wrapper
+2.  ⭐⭐⭐ Collection Search
+3.  ⭐⭐ Validation Endpoints
+4.  ⭐⭐ Complexity Analysis
 
 ### Tier 2: Medium Effort (2-4 hrs)
-5. ⭐⭐⭐ Response Type Consolidation
-6. ⭐⭐ Memory Browsing
-7. ⭐⭐ VCS Operations
-8. ⭐⭐ Session Browsing
+
+1.  ⭐⭐⭐ Response Type Consolidation
+2.  ⭐⭐ Memory Browsing
+3.  ⭐⭐ VCS Operations
+4.  ⭐⭐ Session Browsing
 
 ### Tier 3: Strategic (4+ hrs)
-9. ⭐⭐⭐ Project Handler
-10. ⭐⭐⭐⭐ Unified Facade
+
+1.  ⭐⭐⭐ Project Handler
+2.  ⭐⭐⭐⭐ Unified Facade
 
 ## ✅ Success Metrics
 
@@ -175,11 +193,11 @@ match service.operation().await {
 
 ## 🚀 Next Steps
 
-1. **Review** - Approve consolidation strategy
-2. **Break Down** - Create GitHub issues for each phase
-3. **Implement** - Start Phase 1 (quick wins)
-4. **Test** - Validate each phase
-5. **Document** - Update API docs
+1.  **Review** - Approve consolidation strategy
+2.  **Break Down** - Create GitHub issues for each phase
+3.  **Implement** - Start Phase 1 (quick wins)
+4.  **Test** - Validate each phase
+5.  **Document** - Update API docs
 
 ---
 

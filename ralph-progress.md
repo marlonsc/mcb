@@ -33,8 +33,10 @@ Regra: nenhum número ou status na UI deve ser estático quando representar dado
 
 -   **Task**: Corrigir dados falsos na interface web admin (formulários de config e versão).
 -   **Alterações**:
+
   1.  **config.html**: Formulário Server sem valores fixos (127.0.0.1, 8080, 9090); ids adicionados (config-server-host, config-server-port, config-server-admin-port); placeholders "—"; preenchimento via `populateConfigForms(data)` já existente. Footer config: v0.1.1 → v0.1.5.
   2.  **mcb-validate**: Removido `reporter.rs` duplicado (mantido `reporter/mod.rs`); clippy em `ca009_tests.rs` (uninlined_format_args) corrigido.
+
 -   **Verify**: `make fmt` ✓, `make lint` ✓, `make test` ✓, `make validate QUICK=1` ✓.
 -   **Learnings**: Formulários de config devem refletir dados reais da API; um único módulo `reporter` (diretório) evita conflito reporter.rs vs reporter/mod.rs.
 
@@ -91,8 +93,10 @@ Regra: nenhum número ou status na UI deve ser estático quando representar dado
 
 -   **Task**: Corrigir violações de Clean Architecture e DI no projeto.
 -   **Alterações**:
+
   1.  **CA004**: Entidade `ExecutionMetadata` sem campo de identidade – adicionado `id: String` em `mcb-domain/src/entities/memory.rs` com `#[serde(default)]` para compatibilidade; construção em `store_execution.rs` passa a usar `Uuid::new_v4().to_string()`.
   2.  **CA009**: Teste de integração esperava violações; composition root (`mcb-infrastructure/src/di/`) é permitido importar `mcb_application`. Teste atualizado para esperar 0 violações CA009 quando fora de `di/` não importa application. Módulo `ca009` incluído em `tests/integration.rs`.
+
 -   **Verify**: `make lint` ✓, `cargo test -p mcb-validate ca009` ✓, `test_full_validation_report`: categoria Architecture sem violações (antes 1 CA004).
 -   **Learnings**: Entidades no domain devem ter identidade (id/uuid) para CA004; composition root é exceção permitida para CA009.
 
@@ -100,8 +104,10 @@ Regra: nenhum número ou status na UI deve ser estático quando representar dado
 
 -   **Task**: Deixar explícito o fluxo de dados e o limite de desenvolvimento nos handlers que retornam "not implemented", para que quem for implementar entenda onde falta port/use case.
 -   **Alterações**:
+
   1.  **list_repositories.rs**: Doc do módulo explica que não existe port na camada de aplicação (registry de repositórios) ainda; doc do struct deixa claro "no injected port".
   2.  **search_branch.rs**: Doc do módulo explica data flow (handler recebe `VcsProvider`; branch-scoped search exigiria VCS + search, use case não implementado).
+
 -   **Verify**: `make lint CI_MODE=1` ✓.
 -   **Learnings**: Documentar "por que não há dados" (falta de port vs. port existente mas use case não implementado) evita código falso e guia implementação futura.
 
@@ -123,8 +129,10 @@ Regra: nenhum número ou status na UI deve ser estático quando representar dado
 
 -   **Task**: Remover QUAL020 (allow(dead_code) em agent_session) e ORG016 (domain com métodos não permitidos).
 -   **Alterações**:
+
   1.  **QUAL020**: Removido `#[allow(dead_code)]` do campo `agent_session` em `McpServices`; adicionado getter `agent_session_service()` em `mcp_server.rs` para o campo ser usado.
   2.  **ORG016**: Permitidos no validador (domain trait-only) os métodos de definição de schema e snapshot: `definition`, `tables`, `fts_def`, `indexes`, `foreign_keys`, `unique_constraints`, `capture` em `organization.rs`.
+
 -   **Verify**: `make lint` ✓; report: Quality 2→1 (QUAL020 resolvido), Organization 9→1 (ORG016 resolvidos; resta ORG002).
 -   **Learnings**: Campos injetados devem ter getter se expostos; domain pode ter factories de dados (schema, capture) na allow-list do ORG016.
 
@@ -146,8 +154,10 @@ Regra: nenhum número ou status na UI deve ser estático quando representar dado
 
 -   **Task**: Deixar explícito o wiring faltante e a duplicação na interface web admin.
 -   **Alterações**:
+
   1.  **admin/API.rs**: Doc do módulo explica que o init padrão não inicia o AdminApi; para a UI admin e REST (config, browse) funcionarem é preciso construir e iniciar `AdminApi` com `.with_config_watcher(...)` e `.with_browse_state(...)`.
   2.  **admin/web/mod.rs**: Secção "Duplication" documenta que nav e footer estão duplicados nos templates (index, config, health, indexing, browse, browse_collection, browse_file) e que mudanças de estrutura devem ser replicadas em todos.
+
 -   **Verify**: `make fmt` ✓, `make lint` ✓, `make test` ✓, `make validate QUICK=1` ✓.
 -   **Learnings**: Documentar wiring ausente evita expectativa de que a UI "funcione" sem iniciar o admin server; documentar duplicação guia manutenção consistente da nav/footer.
 
@@ -162,10 +172,12 @@ Regra: nenhum número ou status na UI deve ser estático quando representar dado
 
 -   **Task**: UI admin chamava endpoints protegidos sem `X-Admin-Key` (fluxo falho quando auth habilitado) e duplicava funções utilitárias em vários templates.
 -   **Alterações**:
+
   1.  **shared.js**: Novo arquivo com `adminFetch`, `escapeHtml`, `formatUptime` e injeção automática do header `X-Admin-Key` via `htmx:configRequest`. A chave é lida de `localStorage` e solicitada via `prompt` quando ausente.
   2.  **handlers.rs + router.rs**: Adicionado endpoint `/ui/shared.js` para servir o script.
   3.  **Templates**: Incluído `<script src="/ui/shared.js"></script>` em index/config/health/indexing/browse/browse_collection/browse_file. Substituídos `fetch` por `adminFetch` em chamadas a endpoints protegidos.
   4.  **Remoção de duplicações**: Removidas funções duplicadas `escapeHtml` e `formatUptime` dos templates; agora são globais via shared.js.
+
 -   **Verify**: `make lint` ✓, `make test SCOPE=all` ✓.
 -   **Learnings**: Sem header de auth, o UI fica "funcionando" só visualmente; centralizar utilitários evita drift entre templates e garante wiring consistente.
 
@@ -180,11 +192,13 @@ Regra: nenhum número ou status na UI deve ser estático quando representar dado
 
 -   **Task**: Implementar wiring faltante para `search_branch` (resolver repository_id → path e executar busca).
 -   **Alterações**:
+
   1.  **vcs_repository_registry.rs**: Novo registry `repository_id -> path` em `~/.config/mcb/vcs_repository_registry.json` com lock (flock).
   2.  **index_vcs_repository.rs**: Registra o repository_id após abrir o repo.
   3.  **search_branch.rs**: Implementado search real (lista arquivos no branch, lê conteúdo, busca substring e retorna resultados).
   4.  **tests/unit/vcs_registry_tests.rs**: Testes para record/lookup com `XDG_CONFIG_HOME` temporário (unsafe set_var em Rust 2024).
   5.  **tests/unit.rs**: Inclui o novo módulo de testes.
+
 -   **Verify**: `make lint` ✓, `cargo test -p mcb-server --test unit` ✓.
 -   **Learnings**: search_branch precisa de registry persistente para resolver repository_id; wiring simples baseado em VcsProvider já entrega funcionalidade correta.
 
@@ -192,10 +206,12 @@ Regra: nenhum número ou status na UI deve ser estático quando representar dado
 
 -   **Task**: Remover definição duplicada de `SqliteMemoryRepository` (existia em mcb-infrastructure e mcb-providers).
 -   **Alterações**:
+
   1.  Removidos `adapters/memory_repository/mod.rs` e `row_convert.rs` em mcb-infrastructure (implementação antiga com SqlitePool; runtime já usa providers).
   2.  `adapters/mod.rs`: removidos `pub mod memory_repository` e re-export; doc atualizada.
   3.  `repositories/memory_repository.rs`: passou a re-exportar `mcb_providers::database::SqliteMemoryRepository` (única definição).
   4.  git2_provider_tests.rs: corrigido clippy `size_of_ref` (`size_of_val(erased)` em vez de `size_of_val(&erased)`).
+
 -   **Verify**: `make lint` ✓; Refactoring 7→6 violações (REF002 SqliteMemoryRepository resolvido).
 -   **Learnings**: Uma única definição em providers + re-export em infrastructure elimina REF002; runtime já usava providers.
 

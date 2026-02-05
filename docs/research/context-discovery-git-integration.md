@@ -9,9 +9,9 @@
 
 Analysis of ADR-035 (Context Scout) against production-grade context management patterns reveals **three critical gaps**:
 
-1. **External Tracker Integration**: ADR-035 assumes all state in SQLite; doesn't address GitHub/GitLab/Jira APIs
-2. **Race Condition Prevention**: No handling of concurrent read-only queries on git2 + SQLite simultaneously
-3. **Cache Invalidation Signals**: TTL-only caching misses event-driven invalidation opportunities
+1.  **External Tracker Integration**: ADR-035 assumes all state in SQLite; doesn't address GitHub/GitLab/Jira APIs
+2.  **Race Condition Prevention**: No handling of concurrent read-only queries on git2 + SQLite simultaneously
+3.  **Cache Invalidation Signals**: TTL-only caching misses event-driven invalidation opportunities
 
 **Recommendation**: Extend ADR-035 with tracker integration layer + event invalidation hook.
 
@@ -30,16 +30,18 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 | Concurrency | `spawn_blocking()` wrapper | Isolate from Tokio runtime |
 
 **Strengths:**
-- ✅ Zero shell dependencies (reproducible, secure)
-- ✅ Typed entities (`ProjectContext`, `GitContext`)
-- ✅ Efficient warm cache (< 1ms)
-- ✅ Reuses existing deps (git2, moka, sqlx)
+
+-   ✅ Zero shell dependencies (reproducible, secure)
+-   ✅ Typed entities (`ProjectContext`, `GitContext`)
+-   ✅ Efficient warm cache (< 1ms)
+-   ✅ Reuses existing deps (git2, moka, sqlx)
 
 **Gaps:**
-- ❌ No external tracker support (GitHub, GitLab, Jira)
-- ❌ No event-driven cache invalidation
-- ❌ Race conditions between git2 (blocking) + SQLite (concurrent)
-- ❌ No stale data detection/refresh strategies
+
+-   ❌ No external tracker support (GitHub, GitLab, Jira)
+-   ❌ No event-driven cache invalidation
+-   ❌ Race conditions between git2 (blocking) + SQLite (concurrent)
+-   ❌ No stale data detection/refresh strategies
 
 ---
 
@@ -59,10 +61,11 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 | **In MCB deps** | ✅ Yes | ❌ No |
 
 **Decision Rationale (ADR-035):**
-- git2 already in dependency tree → lower binary size
-- MCB targets small-to-medium repos where 5-20ms is acceptable
-- gix requires new FFI surface + maintenance burden
-- **Verdict:** Correct choice for MCB's scale
+
+-   git2 already in dependency tree → lower binary size
+-   MCB targets small-to-medium repos where 5-20ms is acceptable
+-   gix requires new FFI surface + maintenance burden
+-   **Verdict:** Correct choice for MCB's scale
 
 **Production Consideration:**
 For **large monorepos** (100K+ files), gix could reduce cold start from 500ms → 5ms. ADR-035 acknowledges this but defers.
@@ -93,8 +96,9 @@ tokio::task::spawn_blocking(move || {
 ### The Problem
 
 ADR-035 reads from two sources simultaneously:
-1. **git2**: Blocking FFI, spawned on Tokio blocking thread
-2. **SQLite**: Async via sqlx, can overlap with git2 operations
+
+1.  **git2**: Blocking FFI, spawned on Tokio blocking thread
+2.  **SQLite**: Async via sqlx, can overlap with git2 operations
 
 ```rust
 // This can cause stale composite context
@@ -109,24 +113,28 @@ async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
 
 ### Race Condition Scenarios
 
-1. **Git-Tracker Skew**: User commits while `discover()` is running
-   - Git shows new commit
-   - Tracker shows old issue status
-   - Context is inconsistent
+1.  **Git-Tracker Skew**: User commits while `discover()` is running
 
-2. **Concurrent Session Writes**: Two OpenCode sessions discover simultaneously
-   - git2 can read concurrently (OK)
-   - SQLite WAL mode allows one writer + many readers
-   - But both sessions see same stale context, cache it, diverge
+-   Git shows new commit
+-   Tracker shows old issue status
+-   Context is inconsistent
 
-3. **Index/State Mismatch**: git status queried before index is written
-   - Git sees uncommitted file
-   - Index not yet synced
-   - Status incorrect
+1.  **Concurrent Session Writes**: Two OpenCode sessions discover simultaneously
+
+-   git2 can read concurrently (OK)
+-   SQLite WAL mode allows one writer + many readers
+-   But both sessions see same stale context, cache it, diverge
+
+1.  **Index/State Mismatch**: git status queried before index is written
+
+-   Git sees uncommitted file
+-   Index not yet synced
+-   Status incorrect
 
 ### Production Mitigations
 
 **Pattern 1: Snapshot Isolation**
+
 ```rust
 // Capture git state once, use consistently
 pub async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
@@ -147,6 +155,7 @@ pub async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
 ```
 
 **Pattern 2: Versioned Context**
+
 ```rust
 pub struct ProjectContext {
     pub id: String,                  // UUID
@@ -157,6 +166,7 @@ pub struct ProjectContext {
 ```
 
 **Pattern 3: Change Signals**
+
 ```rust
 // Invalidate cache when git index changes
 fs::watch(repo_path/.git/index)?
@@ -180,9 +190,9 @@ pub async fn tracker_state(&self, project_id: &str) -> Result<TrackerContext> {
 
 **Problem**: ADR-035 assumes all tracker data is in MCB's SQLite. But in reality:
 
-- **GitHub/GitLab**: Issues live on external platform
-- **Jira Cloud**: 100% API-driven
-- **Beads**: Uses external tracker database (Beads CLI JSON)
+-   **GitHub/GitLab**: Issues live on external platform
+-   **Jira Cloud**: 100% API-driven
+-   **Beads**: Uses external tracker database (Beads CLI JSON)
 
 ### Production Pattern: Tracker Abstraction
 
@@ -221,15 +231,17 @@ impl IssueTrackerProvider for SqliteProvider {
 
 ### Rate Limiting & Error Handling
 
-**GitHub API:** 
-- **Rate limit**: 60 req/hr unauthenticated, 5,000/hr authenticated
-- **Response headers**: `X-RateLimit-Remaining`, `X-RateLimit-Reset`
-- **Strategy**: Read headers, back off when approaching limit
+**GitHub API:**
+
+-   **Rate limit**: 60 req/hr unauthenticated, 5,000/hr authenticated
+-   **Response headers**: `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+-   **Strategy**: Read headers, back off when approaching limit
 
 **Jira Cloud:**
-- **Rate limit**: Points-based (new as of 2026-03), ~1000 points/hour
-- **Response headers**: `RateLimit-Limit`, `RateLimit-Remaining`
-- **Strategy**: Points-based backpressure
+
+-   **Rate limit**: Points-based (new as of 2026-03), ~1000 points/hour
+-   **Response headers**: `RateLimit-Limit`, `RateLimit-Remaining`
+-   **Strategy**: Points-based backpressure
 
 **Pattern: Adaptive Backoff**
 
@@ -416,16 +428,18 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 ### Where ADR-035 Differs from Claude-mem
 
 **Claude-mem (TypeScript + Node):**
-- ✅ Local SQLite for everything
-- ✅ Chroma for semantic search (separate service)
-- ✅ Session isolation per workspace
-- ❌ No external API integration (intentional design)
+
+-   ✅ Local SQLite for everything
+-   ✅ Chroma for semantic search (separate service)
+-   ✅ Session isolation per workspace
+-   ❌ No external API integration (intentional design)
 
 **MCB (Rust + Tokio):**
-- ✅ Can integrate with external APIs
-- ✅ Vector stores already abstracted (moka, encrypted, etc.)
-- ✅ Async-first architecture suits tracker polling
-- ❌ ADR-035 doesn't leverage this capability
+
+-   ✅ Can integrate with external APIs
+-   ✅ Vector stores already abstracted (moka, encrypted, etc.)
+-   ✅ Async-first architecture suits tracker polling
+-   ❌ ADR-035 doesn't leverage this capability
 
 ---
 
@@ -453,11 +467,12 @@ pub trait IssueTrackerProvider: Send + Sync {
 ```
 
 **Implementations:**
-- `GitHubIssueProvider` — GitHub Issues API v3
-- `GitLabIssueProvider` — GitLab Issues API
-- `JiraProvider` — Jira Cloud REST API
-- `SqliteProvider` — Local SQLite (ADR-035 baseline)
-- `CompositeProvider` — Try GitHub, fall back to SQLite
+
+-   `GitHubIssueProvider` — GitHub Issues API v3
+-   `GitLabIssueProvider` — GitLab Issues API
+-   `JiraProvider` — Jira Cloud REST API
+-   `SqliteProvider` — Local SQLite (ADR-035 baseline)
+-   `CompositeProvider` — Try GitHub, fall back to SQLite
 
 ### Enhancement 2: Event-Driven Invalidation
 
@@ -622,28 +637,31 @@ pub trait TrackerWithFallback: IssueTrackerProvider {
 
 ### Memory Footprint
 
-- `moka` cache with 50 git + 20 tracker entries: ~10MB
-- Rate limiter state per tracker: ~1KB
-- Event watch (notify crate): ~2MB if enabled
+-   `moka` cache with 50 git + 20 tracker entries: ~10MB
+-   Rate limiter state per tracker: ~1KB
+-   Event watch (notify crate): ~2MB if enabled
 
 ---
 
 ## 9. Implementation Recommendations
 
 ### Phase 1: Foundation (Minimal)
-1. Add `IssueTrackerProvider` trait to `mcb-domain`
-2. Implement `SqliteTrackerProvider` (refactored ADR-035)
-3. Enhance error handling for tracker failures
+
+1.  Add `IssueTrackerProvider` trait to `mcb-domain`
+2.  Implement `SqliteTrackerProvider` (refactored ADR-035)
+3.  Enhance error handling for tracker failures
 
 ### Phase 2: External Integration (Optional)
-1. `GitHubTrackerProvider` via `octokit` or `github-rest`
-2. `JiraProvider` via `jira-rs` or REST client
-3. Rate limiter + fallback pattern
+
+1.  `GitHubTrackerProvider` via `octokit` or `github-rest`
+2.  `JiraProvider` via `jira-rs` or REST client
+3.  Rate limiter + fallback pattern
 
 ### Phase 3: Optimization (Future)
-1. File watcher for git index changes
-2. Event-driven invalidation signals
-3. Composite snapshot consistency tracking
+
+1.  File watcher for git index changes
+2.  Event-driven invalidation signals
+3.  Composite snapshot consistency tracking
 
 ---
 
@@ -669,30 +687,33 @@ All production tools separate **local repo discovery** (git2 or gix) from **exte
 
 ### ADR-035 Assessment: **SOUND FOUNDATION, INCOMPLETE SCOPE**
 
-**Verdict:** 
-- ✅ Git discovery implementation is production-grade
-- ✅ Caching strategy appropriate for stated use case
-- ✅ Error handling and type safety good
-- ❌ Scope limited to MCB's own SQLite (no external trackers)
-- ❌ Missing event-driven invalidation signals
-- ❌ Rate limiting not addressed
+**Verdict:**
+
+-   ✅ Git discovery implementation is production-grade
+-   ✅ Caching strategy appropriate for stated use case
+-   ✅ Error handling and type safety good
+-   ❌ Scope limited to MCB's own SQLite (no external trackers)
+-   ❌ Missing event-driven invalidation signals
+-   ❌ Rate limiting not addressed
 
 ### Recommended Next Steps
 
-1. **ADR-035A: Tracker Provider Abstraction**
-   - Extend `ContextScoutProvider` with tracker trait
-   - Support pluggable GitHub/GitLab/Jira providers
-   - Define fallback behavior for external outages
+1.  **ADR-035A: Tracker Provider Abstraction**
 
-2. **ADR-035B: Cache Invalidation Signals**
-   - Event-driven invalidation (file watch + manual signals)
-   - Composite snapshot consistency tracking
-   - Differential TTL by data stability
+-   Extend `ContextScoutProvider` with tracker trait
+-   Support pluggable GitHub/GitLab/Jira providers
+-   Define fallback behavior for external outages
 
-3. **ADR-035C: Rate Limiting & Resilience**
-   - Adaptive rate limiter for external APIs
-   - Circuit breaker pattern
-   - Graceful degradation when tracker unavailable
+1.  **ADR-035B: Cache Invalidation Signals**
+
+-   Event-driven invalidation (file watch + manual signals)
+-   Composite snapshot consistency tracking
+-   Differential TTL by data stability
+
+1.  **ADR-035C: Rate Limiting & Resilience**
+
+-   Adaptive rate limiter for external APIs
+-   Circuit breaker pattern
+-   Graceful degradation when tracker unavailable
 
 These enhancements would make ADR-035 suitable for **production multi-tracker deployments** while maintaining backward compatibility with the current SQLite-only baseline.
-

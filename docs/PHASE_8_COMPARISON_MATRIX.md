@@ -85,7 +85,7 @@
 ╚════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-**Winner**: **tui-tree-widget** (only interactive option, native Ratatui integration)
+**Winner**: **tui-tree-widget** (only interactive Option, native Ratatui integration)
 
 ---
 
@@ -297,13 +297,14 @@ Annual maintenance cost: ~2-3 dev-weeks vs. 0 weeks
 **Decision**: USE LIBRARIES, NOT CUSTOM CODE
 
 **Justification**:
-1. ✅ Saves 3500+ LOC and 6-10 weeks
-2. ✅ Production-tested (GitHub, VS Code, bat, ripgrep)
-3. ✅ Lower maintenance burden
-4. ✅ Better performance than custom implementations
-5. ✅ Security updates automatic
-6. ✅ Active community support
-7. ⚠️ Minor: Learning curve (manageable, <1 week)
+
+1.  ✅ Saves 3500+ LOC and 6-10 weeks
+2.  ✅ Production-tested (GitHub, VS Code, bat, ripgrep)
+3.  ✅ Lower maintenance burden
+4.  ✅ Better performance than custom implementations
+5.  ✅ Security updates automatic
+6.  ✅ Active community support
+7.  ⚠️ Minor: Learning curve (manageable, <1 week)
 
 **Timeline**: Phase 8 → 1-2 weeks (vs. 8-12 weeks custom)
 
@@ -313,65 +314,70 @@ Annual maintenance cost: ~2-3 dev-weeks vs. 0 weeks
 
 ### 6.1 Week 1: Core Integration
 
-- [ ] Set up Ratatui + Crossterm
-- [ ] Create basic terminal app shell
-- [ ] Integrate tui-tree-widget for file browser
-- [ ] Add nu-ansi-term for colors
-- [ ] Basic testing framework
+-   [ ] Set up Ratatui + Crossterm
+-   [ ] Create basic terminal app shell
+-   [ ] Integrate tui-tree-widget for file browser
+-   [ ] Add nu-ansi-term for colors
+-   [ ] Basic testing framework
 
 ### 6.2 Week 2: Advanced Features
 
-- [ ] Integrate tree-sitter-highlight
-- [ ] Set up language grammars
-- [ ] Implement streaming rendering
-- [ ] Memory subsystem integration
-- [ ] Git command display
-- [ ] Performance profiling
+-   [ ] Integrate tree-sitter-highlight
+-   [ ] Set up language grammars
+-   [ ] Implement streaming rendering
+-   [ ] Memory subsystem integration
+-   [ ] Git command display
+-   [ ] Performance profiling
 
 ### 6.3 Week 3+: Optimization & Polish
 
-- [ ] Incremental rendering optimization
-- [ ] WebSocket for remote browsing (optional)
-- [ ] MCP Apps integration (future)
-- [ ] UI polish and accessibility
-- [ ] Documentation
+-   [ ] Incremental rendering optimization
+-   [ ] WebSocket for remote browsing (optional)
+-   [ ] MCP Apps integration (future)
+-   [ ] UI polish and accessibility
+-   [ ] Documentation
 
 ---
 
 ## 7. RISK ASSESSMENT
 
 ### Low Risk ✅
-- Ratatui, Crossterm (mature, widely used)
-- tree-sitter-highlight (GitHub.com production)
-- nu-ansi-term (12.8M/mo downloads)
+
+-   Ratatui, Crossterm (mature, widely used)
+-   tree-sitter-highlight (GitHub.com production)
+-   nu-ansi-term (12.8M/mo downloads)
 
 ### Medium Risk ⚠️
-- API changes in major versions (tui-tree-widget)
-- Performance under extreme load (not tested yet)
-- Platform-specific issues (Windows, macOS)
+
+-   API changes in major versions (tui-tree-widget)
+-   Performance under extreme load (not tested yet)
+-   Platform-specific issues (Windows, macOS)
 
 ### Mitigation
-- Pin major versions in Cargo.toml
-- Performance testing in Phase 8 plan
-- Early cross-platform testing
+
+-   Pin major versions in Cargo.toml
+-   Performance testing in Phase 8 plan
+-   Early cross-platform testing
 
 ---
 
 ## 8. REFERENCES
 
 ### Official Documentation
-- https://ratatui.rs - Ratatui official
-- https://tree-sitter.github.io - Tree-sitter docs
-- https://modelcontextprotocol.io - MCP official spec
+
+-   <https://ratatui.rs> - Ratatui official
+-   <https://tree-sitter.github.io> - Tree-sitter docs
+-   <https://modelcontextprotocol.io> - MCP official spec
 
 ### Comparison Sources
-- https://lib.rs - Rust library registry
-- https://crates.io - Cargo package manager
-- https://github.com/ratatui/awesome-ratatui - Awesome Ratatui list
+
+-   <https://lib.rs> - Rust library registry
+-   <https://crates.io> - Cargo package manager
+-   <https://github.com/ratatui/awesome-ratatui> - Awesome Ratatui list
 
 ### Production Usage
-- GitHub.com (tree-sitter-highlight)
-- VS Code (tree-sitter)
-- bat (code display library)
-- ripgrep (search tool)
 
+-   GitHub.com (tree-sitter-highlight)
+-   VS Code (tree-sitter)
+-   bat (code display library)
+-   ripgrep (search tool)

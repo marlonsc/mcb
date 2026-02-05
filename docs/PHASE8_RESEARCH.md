@@ -2,11 +2,12 @@
 
 **Research Date**: 2026-02-05  
 **Status**: Complete ✅  
-**Focus Areas**: 
-- MCP tool design best practices
-- Service orchestration patterns
-- Session management strategies
-- ADR-037 design analysis
+**Focus Areas**:
+
+-   MCP tool design best practices
+-   Service orchestration patterns
+-   Session management strategies
+-   ADR-037 design analysis
 
 ---
 
@@ -16,26 +17,30 @@ This research synthesizes best practices from **real MCP implementations** (Clau
 
 ### Key Findings
 
-1. **Single vs. Multi-Action Tools**: The "Six-Tool Pattern" + "Toolhost Pattern" are production standards
-   - Not 18+ separate tools (context explosion)
-   - 6 consolidated tools: 2 universal + 2 domain + 2 write ops
-   - Reduces context overhead by ~70%
+1.  **Single vs. Multi-Action Tools**: The "Six-Tool Pattern" + "Toolhost Pattern" are production standards
 
-2. **Service Orchestration**: Async FSM + event-driven broadcast + guarded transitions are industry best practices
-   - ADR-034 (FSM) + ADR-035 (Context) + ADR-036 (Policies) → ADR-037 (Orchestrator)
-   - Tokio broadcast for event notifications
-   - SQLite transactions for consistency
+-   Not 18+ separate tools (context explosion)
+-   6 consolidated tools: 2 universal + 2 domain + 2 write ops
+-   Reduces context overhead by ~70%
 
-3. **Session Management**: Hybrid stateless (for AI) + stateful (persistent) backends are optimal
-   - LLMs are stateless: always pass session_id
-   - Backend maintains state: SQLite + Redis cache
-   - Cleanup tasks every 60 seconds, max sessions cap
+1.  **Service Orchestration**: Async FSM + event-driven broadcast + guarded transitions are industry best practices
 
-4. **ADR-037 Design**: Excellent—follows best practices with 4 minor optimization opportunities
-   - ✅ Core design is sound
-   - 🔧 Context caching (100ms TTL)
-   - 🛡️ Error recovery suggestions
-   - 📊 Telemetry for monitoring
+-   ADR-034 (FSM) + ADR-035 (Context) + ADR-036 (Policies) → ADR-037 (Orchestrator)
+-   Tokio broadcast for event notifications
+-   SQLite transactions for consistency
+
+1.  **Session Management**: Hybrid stateless (for AI) + stateful (persistent) backends are optimal
+
+-   LLMs are stateless: always pass session_id
+-   Backend maintains state: SQLite + Redis cache
+-   Cleanup tasks every 60 seconds, max sessions cap
+
+1.  **ADR-037 Design**: Excellent—follows best practices with 4 minor optimization opportunities
+
+-   ✅ Core design is sound
+-   🔧 Context caching (100ms TTL)
+-   🛡️ Error recovery suggestions
+-   📊 Telemetry for monitoring
 
 ---
 
@@ -46,6 +51,7 @@ This research synthesizes best practices from **real MCP implementations** (Clau
 **Research Sources**: MCPBundles, Vercel, Speakeasy, Klavis AI
 
 **Pattern**:
+
 ```
 ✅ DO: 6 consolidated tools
 ├─ Universal (OpenAI-compatible)
@@ -60,15 +66,17 @@ This research synthesizes best practices from **real MCP implementations** (Clau
 ```
 
 **Why NOT 18+ Separate Tools**:
-- **Context Tax**: Each tool definition = 5-7% context window (Cursor/Claude Code: 15-18 tools already consume 5-7% before your first prompt)
-- **Cognitive Load**: AI wastes reasoning deciding "which variant?" vs solving problems
-- **Maintenance Burden**: Changes require 3-4 tool updates
+
+-   **Context Tax**: Each tool definition = 5-7% context window (Cursor/Claude Code: 15-18 tools already consume 5-7% before your first prompt)
+-   **Cognitive Load**: AI wastes reasoning deciding "which variant?" vs solving problems
+-   **Maintenance Burden**: Changes require 3-4 tool updates
 
 **Real Numbers**:
-- Cursor: 18 tools exposed
-- Claude Code: 15 tools exposed
-- Single tool definition: 200-400 tokens per tool
-- Total tax: ~3000-5600 tokens = 5-7% of 8K context window
+
+-   Cursor: 18 tools exposed
+-   Claude Code: 15 tools exposed
+-   Single tool definition: 200-400 tokens per tool
+-   Total tax: ~3000-5600 tokens = 5-7% of 8K context window
 
 ### 1.2 Action Naming Conventions
 
@@ -97,10 +105,11 @@ pub enum WorkflowAction {
 ```
 
 **Why This Works**:
-- Actions describe intent ("what to accomplish")
-- Single tool with enum = more efficient than 9 separate tools
-- Simple schema: `{ "action": string, ...parameters }`
-- AI understands when to use each action from descriptions
+
+-   Actions describe intent ("what to accomplish")
+-   Single tool with enum = more efficient than 9 separate tools
+-   Simple schema: `{ "action": string, ...parameters }`
+-   AI understands when to use each action from descriptions
 
 ### 1.3 Tool Documentation: The Description Tax
 
@@ -118,9 +127,10 @@ pub enum WorkflowAction {
 ```
 
 **Impact**:
-- Good descriptions: AI auto-discovers advanced features
-- Lazy descriptions: AI ignores parameters, defaults only
-- Structured types: No hallucinated values (`Literal["asc", "desc"]`)
+
+-   Good descriptions: AI auto-discovers advanced features
+-   Lazy descriptions: AI ignores parameters, defaults only
+-   Structured types: No hallucinated values (`Literal["asc", "desc"]`)
 
 ### 1.4 Error Handling: Errors as Teaching Moments
 
@@ -182,10 +192,11 @@ pub async fn transition(
 ```
 
 **Benefits**:
-- **Separation of Concerns**: Each provider independent
-- **Guarded Transitions**: Policies enforced BEFORE state change (no bypass)
-- **Event-Driven**: Subscribers decouple from service
-- **Async-First**: Tokio broadcast, no blocking
+
+-   **Separation of Concerns**: Each provider independent
+-   **Guarded Transitions**: Policies enforced BEFORE state change (no bypass)
+-   **Event-Driven**: Subscribers decouple from service
+-   **Async-First**: Tokio broadcast, no blocking
 
 ### 2.2 Handle-Based Dependency Injection
 
@@ -229,10 +240,11 @@ pub async fn register_workflow(
 ```
 
 **Why dill + linkme + handles**:
-- Compile-time discovery: linkme auto-finds implementations
-- Runtime switching: Change providers without restart
-- Zero global state: Catalog injected everywhere
-- Clean Architecture: DI in infrastructure layer
+
+-   Compile-time discovery: linkme auto-finds implementations
+-   Runtime switching: Change providers without restart
+-   Zero global state: Catalog injected everywhere
+-   Clean Architecture: DI in infrastructure layer
 
 ### 2.3 Session Management: Max Sessions + Timeout
 
@@ -268,6 +280,7 @@ impl SessionManager {
 ```
 
 **Configuration**:
+
 ```toml
 [orchestrator]
 max_sessions = 10              # Prevent resource exhaustion
@@ -303,9 +316,10 @@ pub struct WorkflowArgs {
 ```
 
 **Key Pattern**:
-- **LLM is stateless**: Each tool call provides explicit session_id
-- **Backend is stateful**: SQLite for persistence, Redis for cache
-- **Tool responses return full status**: LLM reads current state, decides next
+
+-   **LLM is stateless**: Each tool call provides explicit session_id
+-   **Backend is stateful**: SQLite for persistence, Redis for cache
+-   **Tool responses return full status**: LLM reads current state, decides next
 
 ### 3.2 Stateless vs. Stateful Tool Design
 
@@ -317,8 +331,9 @@ pub struct WorkflowArgs {
 | **AI Friendliness** | Simpler | More complex |
 
 **Best Practice**: **Mix both**
-- Stateless discovery: `discover_context(project_root)` → context snapshot
-- Stateful transitions: `transition(session_id, trigger)` → new state
+
+-   Stateless discovery: `discover_context(project_root)` → context snapshot
+-   Stateful transitions: `transition(session_id, trigger)` → new state
 
 ### 3.3 Session Isolation & ACID Semantics
 
@@ -362,10 +377,11 @@ pub async fn transition(
 ```
 
 **Properties**:
-- **Isolation**: Concurrent readers don't see partial updates
-- **Durability**: Committed transitions survive crashes
-- **Serializability**: SQLite WAL mode enforces one writer
-- **No lost updates**: Last-write-wins semantics
+
+-   **Isolation**: Concurrent readers don't see partial updates
+-   **Durability**: Committed transitions survive crashes
+-   **Serializability**: SQLite WAL mode enforces one writer
+-   **No lost updates**: Last-write-wins semantics
 
 ---
 
@@ -375,7 +391,7 @@ pub async fn transition(
 
 | Decision | Rationale | Impact |
 |----------|-----------|--------|
-| Single `workflow` tool | Follows ADR-033 consolidation. 9 actions, not 9 tools. | -70% context overhead |
+| Single `workflow` tool | Follows ADR-033 consolidation. 9 Actions, not 9 tools. | -70% context overhead |
 | Guarded transitions | Policy evaluation BEFORE state change. | Zero bypass paths |
 | Broadcast events | Subscribers decouple from service. | Extensibility |
 | Handle-based DI | Runtime switching without restart. | Testability |
@@ -391,6 +407,7 @@ pub async fn transition(
 **Problem**: If LLM makes 5 tool calls in 1 second, each discovers context = 5-30ms overhead
 
 **Solution A - Context Caching**:
+
 ```rust
 pub struct CachedContextScout {
     inner: Arc<dyn ContextScoutProvider>,
@@ -418,6 +435,7 @@ impl CachedContextScout {
 ```
 
 **Solution B - Discovery on Session Start**:
+
 ```rust
 pub async fn start_session(
     &self,
@@ -440,6 +458,7 @@ pub async fn start_session(
 **Current**: 256-item ring buffer, events dropped silently if full
 
 **Solution**:
+
 ```rust
 // Check subscribers before sending
 if self.event_tx.receiver_count() > 0 {
@@ -461,6 +480,7 @@ pub struct WorkflowService {
 **Problem**: LLM passes old context snapshot → policy sees stale state
 
 **Solution**:
+
 ```rust
 pub async fn transition(
     &self,
@@ -493,6 +513,7 @@ pub async fn transition(
 **Problem**: "tests failing" requires different action than "dirty worktree"
 
 **Solution**:
+
 ```rust
 #[derive(Debug, Serialize)]
 pub struct PolicyViolationError {
@@ -523,9 +544,10 @@ pub struct PolicyViolationError {
 | Event broadcast | < 1ms | ✅ Yes (Tokio ~100µs) |
 
 **Real-World Data** (Temporal.io, Netflix Conductor, Uber Cadence):
-- SQLite single-writer: 5-20ms per transition
-- Git context discovery: 20-40ms cold, 1ms warm
-- Policy evaluation (regex + checks): 5-10ms
+
+-   SQLite single-writer: 5-20ms per transition
+-   Git context discovery: 20-40ms cold, 1ms warm
+-   Policy evaluation (regex + checks): 5-10ms
 
 **Recommendation**: Increase targets to 60ms for variance margin.
 
@@ -576,93 +598,104 @@ Store only transitions, reconstruct state on demand.
 ## 6. Real-World MCP Implementations
 
 ### Claude Code (Anthropic)
-- **Tools**: 15 exposed (~5.9% context overhead)
-- **Pattern**: Stateless discovery + stateful execution
-- **Session tracking**: Implicit (codebase = context)
+
+-   **Tools**: 15 exposed (~5.9% context overhead)
+-   **Pattern**: Stateless discovery + stateful execution
+-   **Session tracking**: Implicit (codebase = context)
 
 ### OpenAI ChatGPT Deep Research
-- **Tools**: 8-10 tools
-- **Pattern**: Mandatory `fetch`/`search` + rich list ops
-- **Write ops**: None (read-only)
+
+-   **Tools**: 8-10 tools
+-   **Pattern**: Mandatory `fetch`/`search` + rich list ops
+-   **Write ops**: None (read-only)
 
 ### Vercel Builder
-- **Tools**: 6-8 tools
-- **Pattern**: Progressive discovery (semantic search router)
-- **No tool explosion**: Context-efficient
+
+-   **Tools**: 6-8 tools
+-   **Pattern**: Progressive discovery (semantic search router)
+-   **No tool explosion**: Context-efficient
 
 ### Speakeasy
-- **Pattern**: Workflow-based (atomic operations)
-- **Example**: `deploy_project(repo, domain, env_vars)` instead of separate ops
+
+-   **Pattern**: Workflow-based (atomic operations)
+-   **Example**: `deploy_project(repo, domain, env_vars)` instead of separate ops
 
 ---
 
 ## 7. Key Recommendations
 
 ### For ADR-037 Implementation
-1. ✅ **As-is**: Core design is sound
-2. 🔧 **Optimize**: Add context caching (100ms TTL)
-3. 🛡️ **Harden**: Error recovery suggestions in PolicyViolationError
-4. 📊 **Monitor**: Emit metrics for context age, evaluation time, event loss
+
+1.  ✅ **As-is**: Core design is sound
+2.  🔧 **Optimize**: Add context caching (100ms TTL)
+3.  🛡️ **Harden**: Error recovery suggestions in PolicyViolationError
+4.  📊 **Monitor**: Emit metrics for context age, evaluation time, event loss
 
 ### For MCP Tool Design
-1. Use **Six-Tool Pattern** (not more, fewer)
-2. Write **teaching descriptions** (every parameter explains WHEN to use)
-3. Use **action enums** (single tool > 9 separate tools)
-4. Provide **error remediation** (hints help LLM recover)
+
+1.  Use **Six-Tool Pattern** (not more, fewer)
+2.  Write **teaching descriptions** (every parameter explains WHEN to use)
+3.  Use **action enums** (single tool > 9 separate tools)
+4.  Provide **error remediation** (hints help LLM recover)
 
 ### For Session Management
-1. **Stateless AI + Stateful Backend**: LLM always passes session_id
-2. **Hybrid storage**: SQLite persistence + Redis hot cache
-3. **Cleanup tasks**: Background cleanup every 60 seconds
-4. **Max sessions cap**: Prevent resource exhaustion
+
+1.  **Stateless AI + Stateful Backend**: LLM always passes session_id
+2.  **Hybrid storage**: SQLite persistence + Redis hot cache
+3.  **Cleanup tasks**: Background cleanup every 60 seconds
+4.  **Max sessions cap**: Prevent resource exhaustion
 
 ### For Service Orchestration
-1. **Event-driven broadcast**: Tokio broadcast for subscribers
-2. **Guarded transitions**: Policies enforced before state change
-3. **Handle-based DI**: Allow runtime provider switching
-4. **ACID transactions**: SQLite for consistency
+
+1.  **Event-driven broadcast**: Tokio broadcast for subscribers
+2.  **Guarded transitions**: Policies enforced before state change
+3.  **Handle-based DI**: Allow runtime provider switching
+4.  **ACID transactions**: SQLite for consistency
 
 ---
 
 ## 8. References & Sources
 
 **Best Practices**:
-- Klavis AI: "Less is More: 4 Design Patterns for Building Better MCP Servers"
-- MCPBundles: "The Six-Tool Pattern: MCP Server Design That Scales"
-- Speakeasy: "A Practical Guide to Agentic Application Architectures"
-- Vercel: "The Second Wave of MCP: Building for LLMs, Not Developers"
+
+-   Klavis AI: "Less is More: 4 Design Patterns for Building Better MCP Servers"
+-   MCPBundles: "The Six-Tool Pattern: MCP Server Design That Scales"
+-   Speakeasy: "A Practical Guide to Agentic Application Architectures"
+-   Vercel: "The Second Wave of MCP: Building for LLMs, Not Developers"
 
 **Industry Standards**:
-- Temporal.io: Async FSM + event sourcing for workflows
-- Netflix Conductor: Decider pattern for orchestration
-- Uber Cadence: Multi-layer architecture (engine, context, policies)
+
+-   Temporal.io: Async FSM + event sourcing for workflows
+-   Netflix Conductor: Decider pattern for orchestration
+-   Uber Cadence: Multi-layer architecture (engine, context, policies)
 
 **Your Project**:
-- ADR-034: Workflow Core FSM
-- ADR-035: Context Scout
-- ADR-036: Enforcement Policies
-- ADR-037: Workflow Orchestrator
+
+-   ADR-034: Workflow Core FSM
+-   ADR-035: Context Scout
+-   ADR-036: Enforcement Policies
+-   ADR-037: Workflow Orchestrator
 
 ---
 
 ## Research Completeness ✅
 
-- ✅ Single vs. multi-action tool design
-- ✅ Action naming conventions
-- ✅ Tool documentation standards
-- ✅ Error handling patterns
-- ✅ Service orchestration (FSM + event broadcast)
-- ✅ Service lifecycle management
-- ✅ Dependency injection patterns
-- ✅ Session context tracking
-- ✅ Stateless vs. stateful design
-- ✅ Cleanup & timeout patterns
-- ✅ Session isolation & concurrency
-- ✅ ADR-037 design analysis
-- ✅ 4 optimization opportunities identified
-- ✅ Performance targets vs. reality
-- ✅ Alternative architectures (actors, event sourcing)
-- ✅ Real-world MCP implementations (Claude, OpenAI, Vercel, Speakeasy)
-- ✅ Key recommendations for implementation
+-   ✅ Single vs. multi-action tool design
+-   ✅ Action naming conventions
+-   ✅ Tool documentation standards
+-   ✅ Error handling patterns
+-   ✅ Service orchestration (FSM + event broadcast)
+-   ✅ Service lifecycle management
+-   ✅ Dependency injection patterns
+-   ✅ Session context tracking
+-   ✅ Stateless vs. stateful design
+-   ✅ Cleanup & timeout patterns
+-   ✅ Session isolation & concurrency
+-   ✅ ADR-037 design analysis
+-   ✅ 4 optimization opportunities identified
+-   ✅ Performance targets vs. reality
+-   ✅ Alternative architectures (actors, event sourcing)
+-   ✅ Real-world MCP implementations (Claude, OpenAI, Vercel, Speakeasy)
+-   ✅ Key recommendations for implementation
 
 **Total**: 17 research areas covered with real examples from production systems.

@@ -10,24 +10,25 @@
 
 MCB follows **Clean Architecture** across 8 crates with a rich trait-based port/adapter pattern. The search discovered:
 
-- **42 public trait definitions** across domain, application, and infrastructure layers
-- **3 state enums** implementing FSM patterns (ServiceState, PortServiceState, and domain workflow)
-- **7 action enums** for MCP tool routing (IndexAction, ValidateAction, MemoryAction, etc.)
-- **8 handler structs** for consolidated MCP tool dispatching
-- **13+ provider traits** (embedding, vector stores, cache, crypto, validation, VCS, etc.)
-- **Linkme distributed_slice** registrations for compile-time provider discovery
-- **No existing WorkflowService/WorkflowSession** yet (ADR-034/037 proposed but not implemented)
-- **Event system** with DomainEvent enum and EventPublisher trait
+-   **42 public trait definitions** across domain, application, and infrastructure layers
+-   **3 state enums** implementing FSM patterns (ServiceState, PortServiceState, and domain workflow)
+-   **7 action enums** for MCP tool routing (IndexAction, ValidateAction, MemoryAction, etc.)
+-   **8 handler structs** for consolidated MCP tool dispatching
+-   **13+ provider traits** (embedding, vector stores, cache, crypto, validation, VCS, etc.)
+-   **Linkme distributed_slice** registrations for compile-time provider discovery
+-   **No existing WorkflowService/WorkflowSession** yet (ADR-034/037 proposed but not implemented)
+-   **Event system** with DomainEvent enum and EventPublisher trait
 
 ### Key Finding
 
 **ADR-034 and ADR-037 are documented but NOT YET IMPLEMENTED**. The codebase has:
-- ✅ Event system (EventPublisher trait, DomainEvent enum)
-- ✅ Entity types (AgentSession, ToolCall, etc.)
-- ✅ Session-related handlers (SessionHandler)
-- ❌ WorkflowEngine provider
-- ❌ WorkflowService orchestrator
-- ❌ WorkflowSession entity with FSM state
+
+-   ✅ Event system (EventPublisher trait, DomainEvent enum)
+-   ✅ Entity types (AgentSession, ToolCall, etc.)
+-   ✅ Session-related handlers (SessionHandler)
+-   ❌ WorkflowEngine provider
+-   ❌ WorkflowService orchestrator
+-   ❌ WorkflowSession entity with FSM state
 
 ---
 
@@ -36,6 +37,7 @@ MCB follows **Clean Architecture** across 8 crates with a rich trait-based port/
 ### 1.1 Domain Layer Traits (`mcb-domain/src/ports`)
 
 #### Services (Domain Business Logic)
+
 | Trait | File | Purpose |
 |-------|------|---------|
 | `ValidationServiceInterface` | `ports/services.rs` | Architecture validation (delegates to mcb-validate) |
@@ -43,6 +45,7 @@ MCB follows **Clean Architecture** across 8 crates with a rich trait-based port/
 | `FileHashService` | `ports/services.rs` | Track file changes via hash state |
 
 #### Providers (External Integrations)
+
 | Trait | File | Purpose |
 |-------|------|---------|
 | `EmbeddingProvider` | `ports/providers/embedding.rs` | Text → vector embeddings (OpenAI, Ollama, etc.) |
@@ -62,6 +65,7 @@ MCB follows **Clean Architecture** across 8 crates with a rich trait-based port/
 | `VcsProvider` | `ports/providers/vcs.rs` | Version control integration (git, etc.) |
 
 #### Infrastructure Providers
+
 | Trait | File | Purpose |
 |-------|------|---------|
 | `DatabaseProvider` | `ports/infrastructure/database.rs` | SQL database backend |
@@ -79,6 +83,7 @@ MCB follows **Clean Architecture** across 8 crates with a rich trait-based port/
 | `PerformanceMetricsCollector` | `ports/infrastructure/performance.rs` | Performance metrics (latency, etc.) |
 
 #### Admin/Lifecycle Ports
+
 | Trait | File | Purpose |
 |-------|------|---------|
 | `PerformanceMetricsInterface` | `ports/admin.rs` | Admin metrics exposure |
@@ -88,6 +93,7 @@ MCB follows **Clean Architecture** across 8 crates with a rich trait-based port/
 | `ShutdownCoordinator` | `ports/admin.rs` | Graceful shutdown coordination |
 
 #### Repository Ports
+
 | Trait | File | Purpose |
 |-------|------|---------|
 | `MemoryRepository` | `ports/repositories/memory_repository.rs` | Persist observations/sessions |
@@ -129,6 +135,7 @@ MCB follows **Clean Architecture** across 8 crates with a rich trait-based port/
 **Current State**: No transition history or rollback mechanisms found in codebase.
 
 **ADR-034 Proposes**:
+
 ```rust
 pub struct Transition {
     pub id: String,
@@ -193,21 +200,24 @@ Located in `mcb-server/src/handlers/consolidated/`:
 All providers use `#[linkme::distributed_slice]` for compile-time discovery:
 
 #### Embedding Providers (`EMBEDDING_PROVIDERS`)
-- Null (fallback)
-- FastEmbed
+
+-   Null (fallback)
+-   FastEmbed
 
 #### Vector Store Providers (`VECTOR_STORE_PROVIDERS`)
-- In-memory
-- Encrypted
-- Filesystem
-- Milvus
-- EdgeVec
-- Null
+
+-   In-memory
+-   Encrypted
+-   Filesystem
+-   Milvus
+-   EdgeVec
+-   Null
 
 #### Cache Providers (`CACHE_PROVIDERS`)
-- Moka
-- Redis
-- Null
+
+-   Moka
+-   Redis
+-   Null
 
 ---
 
@@ -218,17 +228,18 @@ All providers use `#[linkme::distributed_slice]` for compile-time discovery:
 Located: `mcb-domain/src/events/domain_events.rs`
 
 **Event Categories**:
-- Indexing (4 events)
-- Sync (1 event)
-- Cache (1 event)
-- Snapshot (1 event)
-- File Watcher (1 event)
-- Service Lifecycle (1 event)
-- Configuration (1 event)
-- Health (1 event)
-- Metrics (1 event)
-- Search (1 event)
-- Validation (3 events)
+
+-   Indexing (4 events)
+-   Sync (1 event)
+-   Cache (1 event)
+-   Snapshot (1 event)
+-   File Watcher (1 event)
+-   Service Lifecycle (1 event)
+-   Configuration (1 event)
+-   Health (1 event)
+-   Metrics (1 event)
+-   Search (1 event)
+-   Validation (3 events)
 
 **Total: 16+ domain events**
 
@@ -309,35 +320,35 @@ HANDLERS:                       8 consolidated handlers
 
 ## 13. Actionable Next Steps
 
-1. **Create ADR-034 Implementation**:
-   - Add workflow entities (state, transition, session)
-   - Create WorkflowEngine provider trait
-   - Add SQLite persistence layer
-   - Create transition history repository
+1.  **Create ADR-034 Implementation**:
+   -   Add workflow entities (state, transition, session)
+   -   Create WorkflowEngine provider trait
+   -   Add SQLite persistence layer
+   -   Create transition history repository
 
-2. **Create ADR-035/036 Implementation**:
-   - Add ContextScoutProvider trait
-   - Add PolicyGuardProvider trait
-   - Implement context discovery logic
-   - Implement policy evaluation
+2.  **Create ADR-035/036 Implementation**:
+   -   Add ContextScoutProvider trait
+   -   Add PolicyGuardProvider trait
+   -   Implement context discovery logic
+   -   Implement policy evaluation
 
-3. **Create ADR-037 Implementation**:
-   - Create WorkflowService in mcb-application
-   - Implement WorkflowEngine in mcb-providers
-   - Wire up MCP `ProjectAction::Workflow` routing
-   - Add event broadcasting for workflow state changes
-   - Update DI catalog with workflow components
+3.  **Create ADR-037 Implementation**:
+   -   Create WorkflowService in mcb-application
+   -   Implement WorkflowEngine in mcb-providers
+   -   Wire up MCP `ProjectAction::Workflow` routing
+   -   Add event broadcasting for workflow state changes
+   -   Update DI catalog with workflow components
 
-4. **Testing**:
-   - Unit tests for WorkflowState transitions
-   - Integration tests for session persistence
-   - E2E tests for MCP workflow tool
-   - Stress tests for concurrent sessions
+4.  **Testing**:
+   -   Unit tests for WorkflowState transitions
+   -   Integration tests for session persistence
+   -   E2E tests for MCP workflow tool
+   -   Stress tests for concurrent sessions
 
-5. **Documentation**:
-   - Update ARCHITECTURE.md with workflow layer
-   - Add workflow examples to QUICKSTART.md
-   - Document recovery procedures
+5.  **Documentation**:
+   -   Update ARCHITECTURE.md with workflow layer
+   -   Add workflow examples to QUICKSTART.md
+   -   Document recovery procedures
 
 ---
 
