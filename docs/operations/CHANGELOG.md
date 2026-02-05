@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
+#### v0.2.0 - Documentation Refactoring - 2026-02-05
+
+**Phase 2: Documentation Consolidation & ADR Standardization**
+
+### Added
+
+-   **YAML Frontmatter**: All ADRs now include standardized frontmatter (adr, title, status, created, updated, related, supersedes, superseded_by, implementation_status)
+-   **ADR Archive Structure**: New `docs/adr/archive/` directory for superseded decisions (ADR-012, ADR-024, ADR-032)
+-   **Consolidated ADRs**: ADR-003 & ADR-030 merged into unified "Provider Architecture & Routing" decision
+-   **Cross-Reference Updates**: All internal ADR links updated (ADR-024 → ADR-029, ADR-030 → ADR-003)
+
+### Changed
+
+-   **ADR Status Standardization**: All ADRs now use 5-value status set: IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED
+-   **Documentation Structure**: Improved navigation with frontmatter-based indexing
+-   **Supersession Chains**: Updated chains (ADR-012→024→029, ADR-032→034)
+
+### Fixed
+
+-   Removed deprecated Shaku DI references from ADR-002
+-   Updated all supersession chains for clarity
+-   Standardized ADR metadata across all 46 decisions
+
+### Deprecated
+
+-   ADR-012 (Shaku DI Strategy) - Use ADR-029 instead
+-   ADR-024 (Simplified DI) - Use ADR-029 instead
+-   ADR-032 (Agent/Quality Domain) - Use ADR-034 instead
+
+---
+
 #### v0.2.0 Planning - 2026-01-12
 
 -   **ADR-009**: Persistent Session Memory architecture decision record

@@ -12,6 +12,7 @@ This roadmap outlines the development of MCP Context Browser, a drop-in replacem
 
 **Status**: Released
 **Release Date**: January 28, 2026
+**Key Architecture**: ADR-001 (Modular Crates), ADR-002 (Async-First), ADR-029 (Hexagonal DI)
 
 MCP Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes security vulnerabilities, and updates dependencies.
 
@@ -53,6 +54,7 @@ MCP Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes
 
 **Status**: Released
 **Release Date**: January 18, 2026
+**Key Architecture**: ADR-023 (Linkme Migration), ADR-027 (Architecture Evolution)
 
 MCP Context Browser v0.1.2 modernizes provider registration using compile-time linkme distributed slices and introduces the mcb-validate crate scaffolding.
 
@@ -112,6 +114,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 **Status**: Production-Ready
 **Release Date**: January 11, 2026
+**Key Architecture**: ADR-001 (Modular Crates), ADR-002 (Async-First), ADR-013 (Clean Architecture)
 
 MCP Context Browser v0.1.0 is the first stable release, providing a complete drop-in replacement for Claude-context with superior performance and expanded capabilities.
 
@@ -138,6 +141,7 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 **Status**: Planning Complete (ADR-008, ADR-009, ADR-028)
 **Priority**: High
 **Estimated Effort**: 25 phases (10 git + 10 memory + 5 browser)
+**Key Architecture**: ADR-008 (Git-Aware Indexing), ADR-009 (Session Memory), ADR-028 (Code Browser), ADR-034-038 (Workflow System)
 
 #### Vision
 
@@ -271,6 +275,7 @@ Transform MCP Context Browser into a comprehensive development platform combinin
 **Status**: Conceptual
 **Priority**: Medium
 **Dependencies**: v0.2.0 completion
+**Key Architecture**: ADR-039 (Symbol Extraction), ADR-040 (Call Graph Analysis)
 
 #### Vision
 
@@ -308,6 +313,7 @@ Enhance semantic code search with deep code intelligence features, enabling adva
 **Status**: Conceptual
 **Priority**: Medium
 **Dependencies**: v0.3.0 completion
+**Key Architecture**: ADR-041 (Multi-Tenancy), ADR-042 (RBAC), ADR-043 (SSO Integration)
 
 #### Vision
 
@@ -346,6 +352,7 @@ Transform MCP Context Browser into an enterprise-ready platform with multi-tenan
 **Status**: Conceptual
 **Priority**: High
 **Dependencies**: v0.4.0 completion
+**Key Architecture**: ADR-044 (HA Architecture), ADR-045 (Disaster Recovery), ADR-046 (Compliance Framework)
 
 #### Vision
 

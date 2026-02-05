@@ -65,13 +65,25 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 
 ### Key Architectural Decisions
 
--   **ADR-001**: Modular Crates Architecture – 8 crates, separation of concerns
--   **ADR-002**: Async-First Architecture – Tokio throughout
--   **ADR-029**: Hexagonal Architecture with dill – DI, handles, linkme registry (replaces Shaku)
--   **ADR-013**: Clean Architecture Crate Separation – Port/Adapter pattern
--   **ADR-023**: Inventory to Linkme Migration – Compile-time provider registration
+**Foundation (v0.1.0+)**:
+- **ADR-001**: Modular Crates Architecture – 8 crates, separation of concerns
+- **ADR-002**: Async-First Architecture – Tokio throughout
+- **ADR-013**: Clean Architecture Crate Separation – Port/Adapter pattern
 
-See [`docs/adr/`](./docs/adr/) for complete Architecture Decision Records and [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md) for detailed architecture documentation.
+**Dependency Injection (v0.1.2+)**:
+- **ADR-029**: Hexagonal Architecture with dill – DI IoC container, handles, linkme registry (replaces Shaku)
+- **ADR-023**: Inventory to Linkme Migration – Compile-time provider registration
+
+**Provider Architecture (v0.1.0+)**:
+- **ADR-003**: Unified Provider Architecture & Routing – Consolidated embedding and vector store strategies
+- **ADR-030**: Multi-Provider Strategy – Failover and cost optimization (superseded by ADR-003)
+
+**Planned (v0.2.0+)**:
+- **ADR-008**: Git-Aware Semantic Indexing – Repository context and multi-branch support
+- **ADR-009**: Persistent Session Memory – Cross-session observation storage
+- **ADR-034-038**: Workflow System – FSM, context discovery, policy enforcement, orchestration, multi-tier
+
+See [`docs/adr/`](./docs/adr/) for complete Architecture Decision Records (46 total) and [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md) for detailed architecture documentation.
 
 ## Usage
 
