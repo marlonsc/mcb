@@ -19,9 +19,6 @@ struct ProjectStore {
 
 #[derive(Clone, Debug)]
 struct ProjectData {
-    id: String,
-    name: String,
-    description: Option<String>,
     phases: Vec<PhaseData>,
     issues: Vec<IssueData>,
     dependencies: Vec<DependencyData>,
@@ -65,30 +62,14 @@ impl ProjectStore {
         }
     }
 
-    fn create_project(&self, project_id: String, data: Option<Value>) -> Result<Value, String> {
+    fn create_project(&self, project_id: String, _data: Option<Value>) -> Result<Value, String> {
         let mut projects = self.projects.write().map_err(|e| e.to_string())?;
 
         if projects.contains_key(&project_id) {
             return Err(format!("Project '{}' already exists", project_id));
         }
 
-        let name = data
-            .as_ref()
-            .and_then(|d| d.get("name"))
-            .and_then(|n| n.as_str())
-            .unwrap_or(&project_id)
-            .to_string();
-
-        let description = data
-            .as_ref()
-            .and_then(|d| d.get("description"))
-            .and_then(|d| d.as_str())
-            .map(|s| s.to_string());
-
         let project = ProjectData {
-            id: project_id.clone(),
-            name,
-            description,
             phases: Vec::new(),
             issues: Vec::new(),
             dependencies: Vec::new(),
