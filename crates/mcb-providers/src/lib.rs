@@ -114,7 +114,3 @@ pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 /// Provides project type detection (Cargo, npm, Python, Go, Maven) and
 /// submodule discovery with recursive traversal.
 pub mod git;
-/// Workflow FSM provider for ADR-034
-///
-/// Implements state machine transitions and session management
-pub mod workflow;

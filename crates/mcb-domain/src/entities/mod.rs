@@ -28,8 +28,6 @@ pub mod project;
 pub mod submodule;
 /// VCS repository, branch, and commit entities
 pub mod vcs;
-/// Workflow FSM entities for session state management
-pub mod workflow;
 
 // Re-export commonly used entities
 pub use agent::{
@@ -48,4 +46,3 @@ pub use project::{
 };
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
 pub use vcs::{DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};
-pub use workflow::{Transition, TransitionTrigger, WorkflowSession, WorkflowState};
