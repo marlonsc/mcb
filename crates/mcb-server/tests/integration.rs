@@ -49,6 +49,10 @@ mod golden_e2e_complete_integration;
 #[path = "integration/golden_highlight_service_e2e.rs"]
 mod golden_highlight_service_e2e;
 
+// Highlight service wiring integration tests
+#[path = "integration/highlight_integration.rs"]
+mod highlight_integration;
+
 // Hook processor integration tests
 #[path = "integration/hooks_integration.rs"]
 mod hooks_integration;

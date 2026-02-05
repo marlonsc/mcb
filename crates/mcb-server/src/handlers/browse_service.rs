@@ -5,7 +5,10 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use thiserror::Error;
+
+use super::HighlightService;
 
 /// Browse service errors
 #[derive(Debug, Error)]
@@ -107,7 +110,9 @@ pub trait BrowseService: Send + Sync {
 }
 
 /// Concrete browse service implementation
-pub struct BrowseServiceImpl {}
+pub struct BrowseServiceImpl {
+    highlight_service: Arc<super::HighlightServiceImpl>,
+}
 
 impl Default for BrowseServiceImpl {
     fn default() -> Self {
@@ -117,7 +122,13 @@ impl Default for BrowseServiceImpl {
 
 impl BrowseServiceImpl {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            highlight_service: Arc::new(super::HighlightServiceImpl::new()),
+        }
+    }
+
+    pub fn with_highlight_service(highlight_service: Arc<super::HighlightServiceImpl>) -> Self {
+        Self { highlight_service }
     }
 }
 
@@ -141,12 +152,10 @@ impl BrowseService for BrowseServiceImpl {
     }
 
     async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode> {
-        // Phase 8b will implement full highlighting using tree-sitter
-        Ok(HighlightedCode {
-            original: code.to_string(),
-            spans: vec![],
-            language: language.to_string(),
-        })
+        self.highlight_service
+            .highlight(code, language)
+            .await
+            .map_err(|e| BrowseError::HighlightingFailed(e.to_string()))
     }
 }
 
@@ -624,8 +633,8 @@ mod tests {
 
         assert_eq!(result.original, code);
         assert_eq!(result.language, "rust");
-        // Phase 8b will add actual spans
-        assert_eq!(result.spans.len(), 0);
+        // Phase 8b: HighlightService now provides actual spans
+        assert!(!result.spans.is_empty());
     }
 
     #[tokio::test]
