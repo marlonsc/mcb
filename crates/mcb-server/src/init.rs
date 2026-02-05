@@ -42,6 +42,7 @@ use tracing::{error, info, warn};
 
 use crate::McpServer;
 use crate::McpServerBuilder;
+use crate::admin::{AdminApi, AdminApiConfig};
 use crate::transport::http::{HttpTransport, HttpTransportConfig};
 use crate::transport::stdio::StdioServerExt;
 
@@ -113,8 +114,24 @@ async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Er
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let server = create_mcp_server(config).await?;
+    let server = create_mcp_server(config.clone()).await?;
     info!("MCP server initialized successfully");
+
+    // Create and spawn admin API server
+    let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
+    let admin_api = AdminApi::new(
+        AdminApiConfig::default(),
+        app_context.performance(),
+        app_context.indexing(),
+        app_context.event_bus(),
+    );
+
+    tokio::spawn(async move {
+        if let Err(e) = admin_api.start().await {
+            error!(error = %e, "Admin API server failed");
+        }
+    });
+    info!("Admin API server spawned on port 9090");
 
     // In server mode, we prefer hybrid or http transport
     match transport_mode {
