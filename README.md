@@ -3,7 +3,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.1.5-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.1.5)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
+[![Roadmap](https://img.shields.io/badge/roadmap-v0.3.0%20%2B%20v0.4.0-lightgreen)](./RELEASE_ROADMAP_v0.3.0-v0.4.0.md)
 
 **High-performance MCP server for semantic code search using vector embeddings**
 
@@ -11,7 +12,8 @@
 
 MCP Context Browser is a Model Context Protocol (MCP) server that provides semantic code search capabilities using vector embeddings. Transform natural language queries into code search across indexed codebases, enabling intelligent code discovery and analysis. Built with Clean Architecture principles in Rust with comprehensive provider support.
 
-**Current Version**: 0.1.5
+**Current Version**: 0.2.0  
+**In Development**: v0.3.0 (Workflow System), v0.4.0 (Integrated Context System)
 
 See [`CLAUDE.md`](./CLAUDE.md) for development guide and [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md) for complete architecture documentation.
 
@@ -39,6 +41,8 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 -   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
 -   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2040+ tests project-wide
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
+-   **Workflow System** (v0.3.0): FSM-based task orchestration with context awareness and policy enforcement
+-   **Integrated Context** (v0.4.0): Multi-agent collaboration with context merging and session lifecycle
 
 ## Architecture
 
@@ -74,9 +78,19 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 - **ADR-029**: Hexagonal Architecture with dill – DI IoC container, handles, linkme registry (replaces Shaku)
 - **ADR-023**: Inventory to Linkme Migration – Compile-time provider registration
 
-**Provider Architecture (v0.1.0+)**:
+**Provider Architecture (v0.2.0+)**:
 - **ADR-003**: Unified Provider Architecture & Routing – Consolidated embedding and vector store strategies
-- **ADR-030**: Multi-Provider Strategy – Failover and cost optimization (superseded by ADR-003)
+- **ADR-030**: Multi-Provider Strategy (superseded by ADR-003)
+
+**Workflow System (v0.3.0 - In Development)**:
+- **ADR-034**: Workflow Core FSM – State machine for task orchestration
+- **ADR-035**: Context Scout Architecture – Context gathering and search
+- **ADR-036**: Enforcement Policies – Policy engine for workflow validation
+- **ADR-037**: Orchestrator Pattern – Multi-layer task coordination
+- **ADR-038**: Multi-Tier Execution – Hierarchical execution tiers
+
+**Integrated Context (v0.4.0 - Planned)**:
+- **ADR-041-046**: Context System Architecture – Multi-agent collaboration, context merging, session lifecycle
 
 **Planned (v0.2.0+)**:
 - **ADR-008**: Git-Aware Semantic Indexing – Repository context and multi-branch support

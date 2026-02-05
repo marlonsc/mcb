@@ -8,7 +8,125 @@ This roadmap outlines the development of MCP Context Browser, a drop-in replacem
 
 ## Current Status
 
-### v0.1.4 - RCA Integration + Security Fixes 🚀 CURRENT
+### v0.2.0 - Documentation Refactoring 🎉 RELEASED
+
+**Status**: Released
+**Release Date**: February 5, 2026
+**Key Architecture**: ADR-003 (Consolidated Provider), ADR-029 (Hexagonal DI)
+
+MCP Context Browser v0.2.0 completes documentation refactoring with ADR consolidation, YAML metadata standardization, and cross-reference updates.
+
+#### Achievements
+
+**Documentation Consolidation:**
+
+-   ✅ 44 ADRs with standardized YAML frontmatter (adr, title, status, created, updated, related, supersedes, superseded_by, implementation_status)
+-   ✅ 3 deprecated ADRs archived to `docs/adr/archive/` (ADR-012, ADR-024, ADR-032)
+-   ✅ ADR-003 + ADR-030 consolidated into unified "Provider Architecture & Routing"
+-   ✅ 5-value status set standardized (IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED)
+
+**Cross-Reference Updates:**
+
+-   ✅ All Shaku references removed (→ ADR-029 dill-based DI)
+-   ✅ ADR-024 → ADR-029 migration documented
+-   ✅ ADR-030 → ADR-003 consolidation verified
+-   ✅ ADR-032 → ADR-034 supersession mapped
+
+**Metrics:**
+
+-   ADRs: 44 with metadata, 3 archived, 1 consolidation
+-   Tests: 2040+ passing
+-   Code: 7 commits, 801+ lines added, 874+ lines removed (net cleanup)
+-   Violations: 0 architecture, 0 lint errors
+
+---
+
+### v0.3.0 - Workflow System Implementation 🚀 IN DEVELOPMENT
+
+**Status**: Planning/Spec Finalization
+**Target Date**: Q1 2026 (4-8 weeks)
+**Key Architecture**: ADR-034 (FSM), ADR-035 (Scout), ADR-036 (Policies), ADR-037 (Orchestrator), ADR-038 (Tiers)
+
+MCP Context Browser v0.3.0 implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
+
+#### Planned Achievements
+
+**Workflow Core (ADR-034-038):**
+
+-   WorkflowFSM state machine for task orchestration
+-   ContextScout for context gathering and search
+-   PolicyEngine for workflow validation and enforcement
+-   TaskOrchestrator for multi-layer task coordination
+-   ExecutionTiers for hierarchical execution management
+
+**Infrastructure:**
+
+-   5 new workflow system modules/crates
+-   Unit tests (target: 95%+ coverage)
+-   Integration tests with existing providers
+-   Complete rustdoc API documentation
+
+**Quality & Release:**
+
+-   `make quality` passes (0 errors)
+-   `make validate` passes (0 violations)
+-   Performance benchmarks
+-   Migration guide from v0.2.0
+
+**Estimated Effort**: 4-8 weeks (parallelizable features)
+
+#### Unblocks
+
+-   ✅ v0.4.0 Integrated Context System (depends on workflow APIs)
+-   ✅ Multi-agent collaboration infrastructure
+-   ✅ Session lifecycle management
+
+---
+
+### v0.4.0 - Integrated Context System 🎨 PLANNED
+
+**Status**: Design Phase (Parallel to v0.3.0)
+**Target Date**: Q2 2026 (after v0.3.0)
+**Key Architecture**: ADR-041-046 (Context System), depends on v0.3.0 APIs
+
+MCP Context Browser v0.4.0 implements integrated context system with multi-agent collaboration, context merging, and session lifecycle management.
+
+#### Planned Achievements
+
+**Context System:**
+
+-   Multi-agent context aggregation
+-   Context merging and conflict resolution
+-   Session-based lifecycle management
+-   Global memory patterns
+-   Hierarchical planning support
+
+**Integration:**
+
+-   Workflow FSM extensions (v0.3.0 compatibility)
+-   Context Scout multi-agent support
+-   Policy-aware context merging
+-   Task orchestration with context awareness
+
+**Quality & Release:**
+
+-   Full integration test suite
+-   Performance benchmarks (context merging)
+-   Documentation + examples
+-   Migration guide from v0.3.0
+
+**Estimated Effort**: 6-10 weeks (dependent on v0.3.0)
+
+#### Coordination
+
+-   **Sync**: Weekly with v0.3.0 agent
+-   **API Lock-in**: Week 6 (v0.3.0 finalizes interfaces)
+-   **Implementation Start**: Week 8 (post v0.3.0 release)
+-   **Timeline**: Q2 2026 release
+
+---
+
+### v0.1.4 - RCA Integration + Security Fixes ✅ PREVIOUS
 
 **Status**: Released
 **Release Date**: January 28, 2026

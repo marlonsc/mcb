@@ -11,9 +11,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-#### v0.2.0 - Documentation Refactoring - 2026-02-05
+#### v0.3.0 - Workflow System Implementation - Q1 2026
 
-**Phase 2: Documentation Consolidation & ADR Standardization**
+**Specification & Implementation Phase**
+
+### Added (Planned)
+
+-   **Workflow FSM** (ADR-034): State machine for task orchestration with transitions and state persistence
+-   **Context Scout** (ADR-035): Context gathering, search, and relevance ranking
+-   **Policy Engine** (ADR-036): Workflow validation with enforcement policies and audit trails
+-   **Task Orchestrator** (ADR-037): Multi-layer coordination with task dependencies and execution planning
+-   **Execution Tiers** (ADR-038): Hierarchical execution (immediate, scheduled, deferred)
+
+### Unblocks
+
+-   v0.4.0 Integrated Context System implementation
+-   Multi-agent collaboration infrastructure
+-   Session lifecycle management framework
+
+---
+
+#### v0.4.0 - Integrated Context System - Q2 2026
+
+**Multi-Agent Context Collaboration**
+
+### Added (Planned)
+
+-   **Multi-Agent Context Aggregation**: Combine contexts from multiple agents
+-   **Context Merging**: Conflict resolution and intelligent context synthesis
+-   **Session Lifecycle**: Session creation, persistence, and cleanup
+-   **Global Memory Patterns**: Hierarchical memory organization and access
+-   **Integrated Planning**: Hierarchical planning with context awareness
+
+### Dependencies
+
+-   ✅ v0.3.0 Workflow System (FSM, Scout, Policies, Orchestrator, Tiers)
+-   ✅ API stability freeze (locked after v0.3.0)
+
+---
+
+## [v0.2.0] - Documentation Refactoring - 2026-02-05
+
+**Release**: ✅ RELEASED
 
 ### Added
 
@@ -21,24 +60,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **ADR Archive Structure**: New `docs/adr/archive/` directory for superseded decisions (ADR-012, ADR-024, ADR-032)
 -   **Consolidated ADRs**: ADR-003 & ADR-030 merged into unified "Provider Architecture & Routing" decision
 -   **Cross-Reference Updates**: All internal ADR links updated (ADR-024 → ADR-029, ADR-030 → ADR-003)
+-   **Release Roadmap**: v0.3.0 → v0.4.0 coordination strategy documented
 
 ### Changed
 
 -   **ADR Status Standardization**: All ADRs now use 5-value status set: IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED
 -   **Documentation Structure**: Improved navigation with frontmatter-based indexing
 -   **Supersession Chains**: Updated chains (ADR-012→024→029, ADR-032→034)
+-   **Version Badges**: Updated to v0.2.0
+-   **README**: Added Key Architectural Decisions section
+-   **ROADMAP**: Added v0.3.0 and v0.4.0 planned phases
 
 ### Fixed
 
 -   Removed deprecated Shaku DI references from ADR-002
 -   Updated all supersession chains for clarity
 -   Standardized ADR metadata across all 46 decisions
+-   Fixed markdown linting issues
 
 ### Deprecated
 
 -   ADR-012 (Shaku DI Strategy) - Use ADR-029 instead
 -   ADR-024 (Simplified DI) - Use ADR-029 instead
 -   ADR-032 (Agent/Quality Domain) - Use ADR-034 instead
+
+### Metrics
+
+-   44 ADRs with YAML metadata
+-   3 ADRs archived
+-   1 major consolidation (ADR-003/030)
+-   5 commits
+-   801+ lines added, 874+ lines removed
+-   0 architecture violations
+-   0 lint errors
+-   2040+ tests passing
 
 ---
 
