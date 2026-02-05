@@ -132,10 +132,11 @@ async fn store_observation_impl(
 }
 ```
 
-**Impact**: 
-- Eliminates duplicate observations without explicit client logic
-- Returns tuple `(id, deduplicated)` for client awareness
-- Optimistic check before expensive embedding generation
+**Impact**:
+
+-   Eliminates duplicate observations without explicit client logic
+-   Returns tuple `(id, deduplicated)` for client awareness
+-   Optimistic check before expensive embedding generation
 
 ---
 
@@ -146,6 +147,7 @@ async fn store_observation_impl(
 **Location**: `crates/mcb-application/src/use_cases/memory_service.rs:149-228`
 
 **Key Constants**:
+
 ```rust
 const RRF_K: f32 = 60.0;
 const HYBRID_SEARCH_MULTIPLIER: usize = 3;
@@ -205,10 +207,11 @@ ranked.truncate(limit);
 ```
 
 **Benefits**:
-- Parallelizes network/IO bound operations (tokio::join!)
-- Balances keyword (FTS) + semantic (vector) relevance
-- RRF with k=60 prevents rank bias (favors items in both lists)
-- Graceful fallback if vector store empty
+
+-   Parallelizes network/IO bound operations (Tokio::join!)
+-   Balances keyword (FTS) + semantic (vector) relevance
+-   RRF with k=60 prevents rank bias (favors items in both lists)
+-   Graceful fallback if vector store empty
 
 ---
 
@@ -304,9 +307,10 @@ pub async fn inject_context(
 ```
 
 **Benefits**:
-- Observations scoped to git branches/commits for multi-branch workflows
-- Enables "current context" queries (branch-specific memory)
-- OnceLock caching prevents repeated git process spawning
+
+-   Observations scoped to git branches/commits for multi-branch workflows
+-   Enables "current context" queries (branch-specific memory)
+-   OnceLock caching prevents repeated git process spawning
 
 ---
 
@@ -340,36 +344,36 @@ pub trait MemoryRepository: Send + Sync {
 }
 ```
 
-**Implementation: SqliteMemoryRepository** 
+**Implementation: SqliteMemoryRepository**
 (`crates/mcb-providers/src/database/sqlite/memory_repository.rs:360 lines`)
 
 **Key Methods**:
 
-1. **Store with deduplication** (lines 29-65):
-   - Serializes tags/metadata to JSON
-   - Uses SQLite `ON CONFLICT(content_hash)` to handle duplicates
-   - Upserts on hash collision
+1.  **Store with deduplication** (lines 29-65):
+   -   Serializes tags/metadata to JSON
+   -   Uses SQLite `ON CONFLICT(content_hash)` to handle duplicates
+   -   Upserts on hash collision
 
-2. **Find by hash** (lines 84-99):
-   - Single point lookup for deduplication check
-   - Enables `store_observation_impl` early return
+2.  **Find by hash** (lines 84-99):
+   -   Single point lookup for deduplication check
+   -   Enables `store_observation_impl` early return
 
-3. **Search FTS ranked** (lines 120-138):
-   - Queries FTS5 virtual table with BM25 ranking
-   - Returns `Vec<FtsSearchResult>` with both id and rank score
-   - Critical for RRF algorithm (needs ranks)
+3.  **Search FTS ranked** (lines 120-138):
+   -   Queries FTS5 virtual table with BM25 ranking
+   -   Returns `Vec<FtsSearchResult>` with both id and rank score
+   -   Critical for RRF algorithm (needs ranks)
 
-4. **Timeline query** (lines 225-300):
-   - Fetches `before` items (DESC order, then reversed)
-   - Includes anchor observation
-   - Fetches `after` items (ASC order)
-   - Applies MemoryFilter to all results
-   - Progressive disclosure pattern
+4.  **Timeline query** (lines 225-300):
+   -   Fetches `before` items (DESC order, then reversed)
+   -   Includes anchor observation
+   -   Fetches `after` items (ASC order)
+   -   Applies MemoryFilter to all results
+   -   Progressive disclosure pattern
 
-5. **Get observations by IDs** (lines 201-223):
-   - Batch query using dynamic SQL (IN clause)
-   - Essential for RRF post-ranking fetch
-   - Prevents N+1 queries
+5.  **Get observations by IDs** (lines 201-223):
+   -   Batch query using dynamic SQL (IN clause)
+   -   Essential for RRF post-ranking fetch
+   -   Prevents N+1 queries
 
 **DatabaseExecutor Port** (`crates/mcb-domain/src/ports/infrastructure/database.rs:40-68`):
 
@@ -396,9 +400,10 @@ pub enum SqlParam {
 ```
 
 **Benefits**:
-- Zero dependency on sqlx types in repository code
-- Swappable implementations (SQLite, Postgres, etc.)
-- Clean architecture compliance (domain free of infra details)
+
+-   Zero dependency on sqlx types in repository code
+-   Swappable implementations (SQLite, Postgres, etc.)
+-   Clean architecture compliance (domain free of infra details)
 
 ---
 
@@ -492,10 +497,11 @@ pub async fn handle(&self, Parameters(args): Parameters<MemoryArgs>)
 ```
 
 **Benefits**:
-- Stateless context injection (no session server dependency)
-- Captures git context at tool invocation time
-- Token budget aware (max_tokens parameter)
-- Returns IDs for progressive disclosure (step 1 of 3-layer workflow)
+
+-   Stateless context injection (no session server dependency)
+-   Captures git context at tool invocation time
+-   Token budget aware (max_tokens parameter)
+-   Returns IDs for progressive disclosure (step 1 of 3-layer workflow)
 
 ---
 
@@ -532,9 +538,9 @@ Results scoped to current branch/commit
 
 **Location**: `crates/mcb-providers/src/git/git2_provider.rs`
 
-- Used via DI in `DomainServicesFactory::create_services()`
-- Integrated with VCS indexing for repository analysis
-- Supports branch listing, commit history, diff detection
+-   Used via DI in `DomainServicesFactory::create_services()`
+-   Integrated with VCS indexing for repository analysis
+-   Supports branch listing, commit history, diff detection
 
 ---
 
@@ -621,10 +627,11 @@ pub struct ServiceDependencies {
 ```
 
 **Benefits**:
-- Runtime factory (not compile-time DI)
-- Constructor injection (no setters, immutability)
-- Dependency graph explicit (clear assembly order)
-- Testable (inject mocks)
+
+-   Runtime factory (not compile-time DI)
+-   Constructor injection (no setters, immutability)
+-   Dependency graph explicit (clear assembly order)
+-   Testable (inject mocks)
 
 ---
 
@@ -671,49 +678,56 @@ pub struct ServiceDependencies {
 
 ## 5. RECENT ARCHITECTURAL DECISIONS (Phase 7)
 
-### Decision 1: Parallel Hybrid Search (tokio::join!)
-- **Commit**: `5ccdb9a` (Feb 5, 2026)
-- **What**: Changed FTS + vector searches from sequential to parallel
-- **Why**: Minimize latency when both branches fast (network/IO bound)
-- **Impact**: ~50% faster hybrid search, better resource utilization
+### Decision 1: Parallel Hybrid Search (Tokio::join!)
+
+-   **Commit**: `5ccdb9a` (Feb 5, 2026)
+-   **What**: Changed FTS + vector searches from sequential to parallel
+-   **Why**: Minimize latency when both branches fast (network/IO bound)
+-   **Impact**: ~50% faster hybrid search, better resource utilization
 
 ### Decision 2: RRF with k=60
-- **Commit**: `5ccdb9a`
-- **What**: Reciprocal Rank Fusion algorithm with k=60 constant
-- **Why**: Balances keyword (FTS) + semantic (vector) relevance
-- **Formula**: score = 1/(k + rank + 1)
-- **Impact**: Items appearing in both lists ranked higher; avoids rank bias
+
+-   **Commit**: `5ccdb9a`
+-   **What**: Reciprocal Rank Fusion algorithm with k=60 constant
+-   **Why**: Balances keyword (FTS) + semantic (vector) relevance
+-   **Formula**: score = 1/(k + rank + 1)
+-   **Impact**: Items appearing in both lists ranked higher; avoids rank bias
 
 ### Decision 3: 3x Candidate Multiplier
-- **Commit**: `5ccdb9a`
-- **Location**: `memory_service.rs:156`
-- **What**: Fetch limit * 3 candidates for post-filtering
-- **Why**: Filters (branch, commit, session_id) applied AFTER RRF
-- **Impact**: Ensures enough results survive filtering
+
+-   **Commit**: `5ccdb9a`
+-   **Location**: `memory_service.rs:156`
+-   **What**: Fetch limit * 3 candidates for post-filtering
+-   **Why**: Filters (branch, commit, session_id) applied AFTER RRF
+-   **Impact**: Ensures enough results survive filtering
 
 ### Decision 4: Branch/Commit Filtering
-- **Commit**: `350013e` (Feb 5, 2026)
-- **What**: Added branch/commit checks to MemoryFilter + matches_filter()
-- **Why**: Support multi-branch workflows; enable "current context" queries
-- **Impact**: Observations scoped to git context
+
+-   **Commit**: `350013e` (Feb 5, 2026)
+-   **What**: Added branch/commit checks to MemoryFilter + matches_filter()
+-   **Why**: Support multi-branch workflows; enable "current context" queries
+-   **Impact**: Observations scoped to git context
 
 ### Decision 5: Content Hash Deduplication
-- **Pattern**: SHA-256 hash, ON CONFLICT upsert in SQLite
-- **Why**: Automatic deduplication without client logic
-- **Impact**: `store_observation()` returns (id, deduplicated) tuple
+
+-   **Pattern**: SHA-256 hash, ON CONFLICT upsert in SQLite
+-   **Why**: Automatic deduplication without client logic
+-   **Impact**: `store_observation()` returns (id, deduplicated) tuple
 
 ### Decision 6: DatabaseExecutor Port
-- **Pattern**: Abstract SQL execution layer (no sqlx types in repos)
-- **Why**: Clean Architecture; enable provider swapping
-- **Impact**: Testable, mockable repository implementations
+
+-   **Pattern**: Abstract SQL execution layer (no sqlx types in repos)
+-   **Why**: Clean Architecture; enable provider swapping
+-   **Impact**: Testable, mockable repository implementations
 
 ### Decision 7: REF002 Consolidation
-- **Pattern**: Single definition principle (re-export from providers)
-- **Locations**: 
-  - `mcb-application/src/domain_services/memory.rs` → `ports/services::MemoryServiceInterface`
-  - `mcb-infrastructure/src/repositories/memory_repository.rs` → `mcb-providers::SqliteMemoryRepository`
-- **Why**: Single source of truth; avoid duplication
-- **Impact**: Reduced maintenance burden, clear ownership
+
+-   **Pattern**: Single definition principle (re-export from providers)
+-   **Locations**:
+    -   `mcb-application/src/domain_services/memory.rs` → `ports/services::MemoryServiceInterface`
+    -   `mcb-infrastructure/src/repositories/memory_repository.rs` → `mcb-providers::SqliteMemoryRepository`
+-   **Why**: Single source of truth; avoid duplication
+-   **Impact**: Reduced maintenance burden, clear ownership
 
 ---
 
@@ -723,29 +737,32 @@ pub struct ServiceDependencies {
 
 ### Test Categories
 
-1. **Timestamp Tests** (1 test):
-   - Verifies Unix timestamp generation (validates 1_700_000_000 < ts < 2_000_000_000)
+1.  **Timestamp Tests** (1 test):
+   -   Verifies Unix timestamp generation (validates 1_700_000_000 < ts < 2_000_000_000)
 
-2. **RRF Algorithm Tests** (3 tests):
-   - `test_rrf_hybrid_search_combines_fts_and_vector()`: Verifies FTS + vector score combination
-   - `test_rrf_fallback_to_fts_when_vector_empty()`: Graceful degradation when vector store empty
-   - `test_rrf_respects_memory_filter()`: Filter application post-RRF
+2.  **RRF Algorithm Tests** (3 tests):
+   -   `test_rrf_hybrid_search_combines_fts_and_vector()`: Verifies FTS + vector score combination
+   -   `test_rrf_fallback_to_fts_when_vector_empty()`: Graceful degradation when vector store empty
+   -   `test_rrf_respects_memory_filter()`: Filter application post-RRF
 
 ### Mock Infrastructure
 
 **MockEmbedding** (lines 31-53):
-- Returns constant 3-dim embedding [0.1, 0.2, 0.3]
-- Implements EmbeddingProvider trait
+
+-   Returns constant 3-dim embedding [0.1, 0.2, 0.3]
+-   Implements EmbeddingProvider trait
 
 **MockVectorStore** (lines 57-117):
-- Stores `Vec<SearchResult>` for testing
-- Implements VectorStoreProvider trait
-- Returns configurable search results
+
+-   Stores `Vec<SearchResult>` for testing
+-   Implements VectorStoreProvider trait
+-   Returns configurable search results
 
 **MockMemoryRepo** (lines 121-206):
-- Stores `Vec<Observation>` + FTS results
-- Implements MemoryRepository trait
-- Simulates SQLite behavior in-memory
+
+-   Stores `Vec<Observation>` + FTS results
+-   Implements MemoryRepository trait
+-   Simulates SQLite behavior in-memory
 
 ### Test Pattern: Arrange-Act-Assert
 
@@ -850,24 +867,29 @@ MemoryHandler
 **Pattern**: Define in ONE place, re-export everywhere
 
 **Example 1: MemoryServiceInterface**
-- Definition: `crates/mcb-application/src/ports/services.rs:219-291`
-- Re-export: `crates/mcb-application/src/domain_services/memory.rs:5`
+
+-   Definition: `crates/mcb-application/src/ports/services.rs:219-291`
+-   Re-export: `crates/mcb-application/src/domain_services/memory.rs:5`
+
   ```rust
   pub use crate::ports::services::MemoryServiceInterface;
   ```
 
 **Example 2: SqliteMemoryRepository**
-- Definition: `crates/mcb-providers/src/database/sqlite/memory_repository.rs`
-- Re-export: `crates/mcb-infrastructure/src/repositories/memory_repository.rs:2`
+
+-   Definition: `crates/mcb-providers/src/database/sqlite/memory_repository.rs`
+-   Re-export: `crates/mcb-infrastructure/src/repositories/memory_repository.rs:2`
+
   ```rust
   pub use mcb_providers::database::SqliteMemoryRepository;
   ```
 
 **Benefits**:
-- Single source of truth
-- Reduced maintenance (change once, everywhere updated)
-- Clear ownership (defines where it's authored)
-- No orphaned re-implementations
+
+-   Single source of truth
+-   Reduced maintenance (change once, everywhere updated)
+-   Clear ownership (defines where it's authored)
+-   No orphaned re-implementations
 
 ---
 
@@ -937,28 +959,33 @@ pub struct ObservationMetadata {
 ## 11. RECENT REFACTORINGS AND CONSOLIDATIONS
 
 ### 1. Handler Consolidation
-- **Before**: Separate handlers per action (store, get, list, etc.)
-- **After**: Single `MemoryHandler` with internal module per action
-- **Impact**: Unified routing, shared validation
+
+-   **Before**: Separate handlers per action (store, get, list, etc.)
+-   **After**: Single `MemoryHandler` with internal module per action
+-   **Impact**: Unified routing, shared validation
 
 ### 2. Service Interface Consolidation
-- **Pattern**: All service traits in `ports/services.rs`
-- **Re-exports**: Domain and infrastructure re-export from ports
-- **Impact**: Clear port/adapter boundary
+
+-   **Pattern**: All service traits in `ports/services.rs`
+-   **Re-exports**: Domain and infrastructure re-export from ports
+-   **Impact**: Clear port/adapter boundary
 
 ### 3. Database Abstraction
-- **Pattern**: `DatabaseExecutor` port (no sqlx types in repos)
-- **Impact**: Testable, swappable implementations
+
+-   **Pattern**: `DatabaseExecutor` port (no sqlx types in repos)
+-   **Impact**: Testable, swappable implementations
 
 ### 4. DI Factory Pattern
-- **Pattern**: `DomainServicesFactory::create_services()` (runtime)
-- **Impact**: Runtime provider swapping, explicit dependency graph
+
+-   **Pattern**: `DomainServicesFactory::create_services()` (runtime)
+-   **Impact**: Runtime provider swapping, explicit dependency graph
 
 ---
 
 ## 12. SUMMARY: PHASE 7 DELIVERABLES
 
 ### Features Completed
+
 ✅ **MEM-05**: Context injection with `inject_context` tool
 ✅ **MEM-06**: Git-tagged observations (branch/commit filtering)
 ✅ **MEM-07**: Hybrid FTS5 + vector search
@@ -968,19 +995,22 @@ pub struct ObservationMetadata {
 ✅ **MEM-11**: Session summaries
 
 ### Architecture Patterns
+
 ✅ DatabaseExecutor port (driver-agnostic SQL)
-✅ Parallel tokio::join! for hybrid search
+✅ Parallel Tokio::join! for hybrid search
 ✅ REF002 consolidation (single definitions)
 ✅ Constructor injection via DI factory
 ✅ Content hashing for deduplication
 ✅ VcsContext capture with git tagging
 
 ### Test Coverage
+
 ✅ 400+ unit tests (RRF, filtering, fallback)
 ✅ Mock implementations (EmbeddingProvider, VectorStore, Repository)
 ✅ Comprehensive edge case coverage
 
 ### Integration Points
+
 ✅ MCP tool handlers → MemoryServiceInterface
 ✅ Git context capture (VcsContext)
 ✅ Parallel search coordination
@@ -991,20 +1021,19 @@ pub struct ObservationMetadata {
 
 ## 13. TECHNICAL DEBT & FUTURE WORK
 
-1. **Vector store persistence** (currently in-memory for tests)
-   - Consider persistent backend (Qdrant, Milvus)
+1.  **Vector store persistence** (currently in-memory for tests)
+   -   Consider persistent backend (Qdrant, Milvus)
 
-2. **Performance optimization**
-   - FTS5 index tuning for large datasets
-   - Vector store batch inserts
+2.  **Performance optimization**
+   -   FTS5 index tuning for large datasets
+   -   Vector store batch inserts
 
-3. **Monitoring & observability**
-   - Metrics for search latency, RRF scores
-   - Trace RRF merging logic
+3.  **Monitoring & observability**
+   -   Metrics for search latency, RRF scores
+   -   Trace RRF merging logic
 
-4. **Error pattern detection** (MEM-04)
-   - ErrorPattern entity defined but not fully integrated
+4.  **Error pattern detection** (MEM-04)
+   -   ErrorPattern entity defined but not fully integrated
 
-5. **Execution tracking** (MEM-02)
-   - ExecutionMetadata defined but limited usage
-
+5.  **Execution tracking** (MEM-02)
+   -   ExecutionMetadata defined but limited usage

@@ -1,0 +1,684 @@
+# ADR-034: Workflow Core — Finite State Machine and Persistence
+
+## Status
+
+**Proposed** — 2026-02-05
+
+-   **Deciders:** Project team
+-   **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
+-   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-provider-registration-linkme.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-thiserror.md) (thiserror), [ADR-013](./013-clean-architecture-crates.md) (Clean Architecture)
+-   **Series:** ADR-034 → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
+
+## Context
+
+MCB currently provides semantic code search (indexing, embedding, vector store). The `oh-my-opencode` workflow layer depends on external shell scripts, markdown skill files, and disconnected tools (Beads CLI, GSD `.planning/` files) that have no shared state, no type safety, and no persistence across sessions.
+
+ADR-032 proposed extending MCB's domain with 24 MCP tools and 9 SQLite tables for agent/quality/project tracking. This ADR supersedes that proposal with a narrower, layered approach: four sequential ADRs (034–037) that each define one architectural concern and expose traits consumed by the next layer.
+
+**This ADR** defines the foundational layer: a finite state machine (FSM) for workflow sessions with SQLite-backed persistence and transition history.
+
+### Problem Statement
+
+1.  **No session continuity** — Workflow state is lost between OpenCode sessions. A resumed session cannot know where the previous session stopped.
+2.  **No transition audit** — There is no record of what state transitions occurred, who triggered them, or why they failed.
+3.  **No state validation** — Invalid transitions (e.g., executing before planning) are not enforced at the type level.
+4.  **No time travel** — Impossible to reconstruct what the workflow state was at a specific point in time.
+
+### Requirements
+
+-   Persist workflow state across process restarts
+-   Enforce valid transitions at runtime with clear error messages
+-   Log every transition with before/after state and trigger
+-   Support state reconstruction from transition history ("time travel")
+-   Fit within the existing Clean Architecture crate hierarchy (no new crates)
+
+## Decision
+
+### 1. Enum-Based Manual FSM (Runtime)
+
+Use a hand-written `#[derive(Serialize, Deserialize)]` enum for workflow states with `match`-based transition logic. No external FSM crate.
+
+**Rationale:** Evaluated `statig` (no serde support), `smlang-rs` (macro-generated code less transparent), `sm` (no async, no serde). The enum-based approach provides native serde for SQLite persistence, full `async` compatibility, transparent code for `mcb-validate` architecture rules, and direct compatibility with `Arc<dyn Trait>`.
+
+### 2. Domain Entities
+
+```rust
+// mcb-domain/src/entities/workflow.rs
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+/// Workflow session states. Each variant carries context-specific data.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "state", content = "data")]
+pub enum WorkflowState {
+    /// Session created, awaiting context discovery.
+    Initializing,
+    /// Context discovered, ready to plan or execute.
+    Ready {
+        context_snapshot_id: String,
+    },
+    /// Planning phase in progress.
+    Planning {
+        phase_id: String,
+    },
+    /// Executing tasks within a phase.
+    Executing {
+        phase_id: String,
+        task_id: Option<String>,
+    },
+    /// Verifying phase completion.
+    Verifying {
+        phase_id: String,
+    },
+    /// Phase completed, ready for next phase.
+    PhaseComplete {
+        phase_id: String,
+    },
+    /// Session ended normally.
+    Completed,
+    /// Error state with recovery information.
+    Failed {
+        error: String,
+        recoverable: bool,
+    },
+}
+
+impl std::fmt::Display for WorkflowState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Initializing => write!(f, "initializing"),
+            Self::Ready { .. } => write!(f, "ready"),
+            Self::Planning { .. } => write!(f, "planning"),
+            Self::Executing { .. } => write!(f, "executing"),
+            Self::Verifying { .. } => write!(f, "verifying"),
+            Self::PhaseComplete { .. } => write!(f, "phase_complete"),
+            Self::Completed => write!(f, "completed"),
+            Self::Failed { .. } => write!(f, "failed"),
+        }
+    }
+}
+
+/// Events that trigger state transitions.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "trigger", content = "data")]
+pub enum TransitionTrigger {
+    ContextDiscovered { context_snapshot_id: String },
+    StartPlanning { phase_id: String },
+    StartExecution { phase_id: String },
+    ClaimTask { task_id: String },
+    CompleteTask { task_id: String },
+    StartVerification,
+    VerificationPassed,
+    VerificationFailed { reason: String },
+    CompletePhase,
+    EndSession,
+    Error { message: String },
+    Recover,
+}
+
+/// Recorded transition with full audit context.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Transition {
+    pub id: String,
+    pub session_id: String,
+    pub from_state: WorkflowState,
+    pub to_state: WorkflowState,
+    pub trigger: TransitionTrigger,
+    pub guard_result: Option<String>,
+    pub timestamp: DateTime<Utc>,
+}
+
+/// Workflow session entity.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowSession {
+    pub id: String,
+    pub project_id: String,
+    pub current_state: WorkflowState,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+```
+
+### 3. Transition Matrix
+
+Valid transitions are enforced at runtime. Invalid transitions return `WorkflowError::InvalidTransition`.
+
+```
+From \ Trigger         │ CtxDisc │ StartPlan │ StartExec │ ClaimTask │ ComplTask │ StartVer │ VerPass │ VerFail │ CompPhase │ EndSess │ Error │ Recover
+───────────────────────┼─────────┼───────────┼───────────┼───────────┼───────────┼──────────┼─────────┼─────────┼───────────┼─────────┼───────┼────────
+Initializing           │ Ready   │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │   ✗
+Ready                  │    ✗    │ Planning  │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │   ✗
+Planning               │    ✗    │     ✗     │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │   ✗
+Executing              │    ✗    │     ✗     │     ✗     │ Executing │ Executing │ Verify   │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │   ✗
+Verifying              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │ PhComp  │ Exec    │     ✗     │ Compl   │ Fail  │   ✗
+PhaseComplete          │    ✗    │ Planning  │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │  Compl    │ Compl   │ Fail  │   ✗
+Failed (recoverable)   │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │   ✗   │ Ready
+Failed (unrecoverable) │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │   ✗   │   ✗
+Completed              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │   ✗
+```
+
+### 4. Transition Implementation
+
+```rust
+// mcb-providers/src/workflow/transitions.rs
+
+impl WorkflowSession {
+    /// Attempt a state transition. Returns error if transition is invalid.
+    pub fn try_transition(
+        &mut self,
+        trigger: TransitionTrigger,
+    ) -> Result<Transition, WorkflowError> {
+        let from_state = self.current_state.clone();
+
+        let to_state = match (&self.current_state, &trigger) {
+            // Initializing
+            (WorkflowState::Initializing, TransitionTrigger::ContextDiscovered { context_snapshot_id }) => {
+                WorkflowState::Ready { context_snapshot_id: context_snapshot_id.clone() }
+            }
+
+            // Ready → Planning or Executing
+            (WorkflowState::Ready { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
+                WorkflowState::Planning { phase_id: phase_id.clone() }
+            }
+            (WorkflowState::Ready { .. }, TransitionTrigger::StartExecution { phase_id }) => {
+                WorkflowState::Executing { phase_id: phase_id.clone(), task_id: None }
+            }
+
+            // Planning → Executing
+            (WorkflowState::Planning { .. }, TransitionTrigger::StartExecution { phase_id }) => {
+                WorkflowState::Executing { phase_id: phase_id.clone(), task_id: None }
+            }
+
+            // Executing → Executing (claim/complete task) or Verifying
+            (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::ClaimTask { task_id }) => {
+                WorkflowState::Executing { phase_id: phase_id.clone(), task_id: Some(task_id.clone()) }
+            }
+            (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::CompleteTask { .. }) => {
+                WorkflowState::Executing { phase_id: phase_id.clone(), task_id: None }
+            }
+            (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::StartVerification) => {
+                WorkflowState::Verifying { phase_id: phase_id.clone() }
+            }
+
+            // Verifying → PhaseComplete or back to Executing
+            (WorkflowState::Verifying { phase_id, .. }, TransitionTrigger::VerificationPassed) => {
+                WorkflowState::PhaseComplete { phase_id: phase_id.clone() }
+            }
+            (WorkflowState::Verifying { phase_id, .. }, TransitionTrigger::VerificationFailed { .. }) => {
+                WorkflowState::Executing { phase_id: phase_id.clone(), task_id: None }
+            }
+
+            // PhaseComplete → next Planning/Executing or Completed
+            (WorkflowState::PhaseComplete { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
+                WorkflowState::Planning { phase_id: phase_id.clone() }
+            }
+            (WorkflowState::PhaseComplete { .. }, TransitionTrigger::StartExecution { phase_id }) => {
+                WorkflowState::Executing { phase_id: phase_id.clone(), task_id: None }
+            }
+            (WorkflowState::PhaseComplete { .. }, TransitionTrigger::CompletePhase) => {
+                WorkflowState::Completed
+            }
+
+            // Failed (recoverable) → Ready
+            (WorkflowState::Failed { recoverable: true, .. }, TransitionTrigger::Recover) => {
+                WorkflowState::Ready { context_snapshot_id: String::new() }
+            }
+
+            // Any state → Failed (on Error trigger)
+            (state, TransitionTrigger::Error { message }) if !matches!(state, WorkflowState::Completed | WorkflowState::Failed { .. }) => {
+                WorkflowState::Failed { error: message.clone(), recoverable: true }
+            }
+
+            // Any non-terminal state → Completed (on EndSession)
+            (state, TransitionTrigger::EndSession) if !matches!(state, WorkflowState::Completed) => {
+                WorkflowState::Completed
+            }
+
+            // Invalid transition
+            (from, trigger) => {
+                return Err(WorkflowError::InvalidTransition {
+                    from: from.to_string(),
+                    trigger: format!("{trigger:?}"),
+                });
+            }
+        };
+
+        let transition = Transition {
+            id: uuid::Uuid::new_v4().to_string(),
+            session_id: self.id.clone(),
+            from_state,
+            to_state: to_state.clone(),
+            trigger,
+            guard_result: None,
+            timestamp: Utc::now(),
+        };
+
+        self.current_state = to_state;
+        self.updated_at = Utc::now();
+
+        Ok(transition)
+    }
+}
+```
+
+### 5. Port Trait
+
+```rust
+// mcb-domain/src/ports/providers/workflow.rs
+
+use crate::entities::workflow::{
+    Transition, TransitionTrigger, WorkflowSession, WorkflowState,
+};
+use crate::errors::WorkflowError;
+
+/// Port for the workflow state machine engine.
+///
+/// Implementations handle persistence (SQLite) and transition validation.
+/// Consumed by ADR-037 orchestrator via `Arc<dyn WorkflowEngine>`.
+#[async_trait::async_trait]
+pub trait WorkflowEngine: Send + Sync {
+    /// Create a new workflow session.
+    async fn create_session(
+        &self,
+        project_id: &str,
+    ) -> Result<WorkflowSession, WorkflowError>;
+
+    /// Get current state of a session.
+    async fn current_state(
+        &self,
+        session_id: &str,
+    ) -> Result<WorkflowState, WorkflowError>;
+
+    /// Attempt a state transition. Persists atomically.
+    async fn transition(
+        &self,
+        session_id: &str,
+        trigger: TransitionTrigger,
+    ) -> Result<Transition, WorkflowError>;
+
+    /// Transition history for a session (newest first).
+    async fn history(
+        &self,
+        session_id: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<Transition>, WorkflowError>;
+
+    /// Reconstruct state at a specific point in time.
+    async fn state_at(
+        &self,
+        session_id: &str,
+        timestamp: chrono::DateTime<chrono::Utc>,
+    ) -> Result<WorkflowState, WorkflowError>;
+
+    /// List active (non-completed, non-failed) sessions.
+    async fn active_sessions(&self) -> Result<Vec<WorkflowSession>, WorkflowError>;
+}
+```
+
+### 6. Error Types
+
+```rust
+// mcb-domain/src/errors/workflow.rs
+
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum WorkflowError {
+    #[error("Invalid transition from '{from}' via trigger '{trigger}'")]
+    InvalidTransition { from: String, trigger: String },
+
+    #[error("Session not found: {session_id}")]
+    SessionNotFound { session_id: String },
+
+    #[error("Persistence error: {message}")]
+    Persistence { message: String },
+
+    #[error("Guard policy violated: {message}")]
+    PolicyViolation { message: String },
+
+    #[error("Context discovery failed: {message}")]
+    ContextError { message: String },
+
+    #[error("Session already completed: {session_id}")]
+    SessionCompleted { session_id: String },
+}
+```
+
+### 7. SQLite Persistence Schema
+
+```sql
+-- Workflow session state
+CREATE TABLE IF NOT EXISTS workflow_sessions (
+    id          TEXT PRIMARY KEY,
+    project_id  TEXT NOT NULL,
+    state       TEXT NOT NULL,         -- Display name: "initializing", "ready", etc.
+    state_data  TEXT NOT NULL,         -- JSON: full WorkflowState serde
+    created_at  INTEGER NOT NULL,      -- Unix timestamp (project convention)
+    updated_at  INTEGER NOT NULL
+);
+
+CREATE INDEX idx_workflow_sessions_project
+    ON workflow_sessions(project_id);
+CREATE INDEX idx_workflow_sessions_state
+    ON workflow_sessions(state);
+
+-- Transition audit log (append-only)
+CREATE TABLE IF NOT EXISTS workflow_transitions (
+    id          TEXT PRIMARY KEY,
+    session_id  TEXT NOT NULL REFERENCES workflow_sessions(id),
+    from_state  TEXT NOT NULL,         -- Display name
+    to_state    TEXT NOT NULL,         -- Display name
+    trigger     TEXT NOT NULL,         -- JSON: full TransitionTrigger serde
+    guard_result TEXT,                 -- JSON: PolicyResult if guards were evaluated
+    created_at  INTEGER NOT NULL
+);
+
+CREATE INDEX idx_workflow_transitions_session
+    ON workflow_transitions(session_id, created_at);
+```
+
+### 8. SQLite Provider Implementation (Skeleton)
+
+```rust
+// mcb-providers/src/workflow/sqlite_workflow.rs
+
+use mcb_domain::ports::providers::workflow::WorkflowEngine;
+use sqlx::SqlitePool;
+
+pub struct SqliteWorkflowEngine {
+    pool: SqlitePool,
+}
+
+#[async_trait::async_trait]
+impl WorkflowEngine for SqliteWorkflowEngine {
+    async fn create_session(
+        &self,
+        project_id: &str,
+    ) -> Result<WorkflowSession, WorkflowError> {
+        let session = WorkflowSession {
+            id: uuid::Uuid::new_v4().to_string(),
+            project_id: project_id.to_string(),
+            current_state: WorkflowState::Initializing,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let state_data = serde_json::to_string(&session.current_state)
+            .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        sqlx::query(
+            "INSERT INTO workflow_sessions (id, project_id, state, state_data, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?)"
+        )
+        .bind(&session.id)
+        .bind(&session.project_id)
+        .bind(session.current_state.to_string())
+        .bind(&state_data)
+        .bind(session.created_at.timestamp())
+        .bind(session.updated_at.timestamp())
+        .execute(&self.pool)
+        .await
+        .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        Ok(session)
+    }
+
+    async fn transition(
+        &self,
+        session_id: &str,
+        trigger: TransitionTrigger,
+    ) -> Result<Transition, WorkflowError> {
+        // Load session, apply transition, persist atomically
+        let mut tx = self.pool.begin().await
+            .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        // 1. Load current session
+        let row = sqlx::query("SELECT state_data FROM workflow_sessions WHERE id = ?")
+            .bind(session_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?
+            .ok_or_else(|| WorkflowError::SessionNotFound {
+                session_id: session_id.to_string(),
+            })?;
+
+        let state_json: String = row.get("state_data");
+        let current_state: WorkflowState = serde_json::from_str(&state_json)
+            .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        // 2. Build in-memory session and apply transition
+        let mut session = WorkflowSession {
+            id: session_id.to_string(),
+            project_id: String::new(),
+            current_state,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let transition = session.try_transition(trigger)?;
+
+        // 3. Persist new state
+        let new_state_data = serde_json::to_string(&session.current_state)
+            .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        sqlx::query(
+            "UPDATE workflow_sessions SET state = ?, state_data = ?, updated_at = ? WHERE id = ?"
+        )
+        .bind(session.current_state.to_string())
+        .bind(&new_state_data)
+        .bind(session.updated_at.timestamp())
+        .bind(session_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        // 4. Log transition
+        let trigger_json = serde_json::to_string(&transition.trigger)
+            .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        sqlx::query(
+            "INSERT INTO workflow_transitions (id, session_id, from_state, to_state, trigger, guard_result, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(&transition.id)
+        .bind(session_id)
+        .bind(transition.from_state.to_string())
+        .bind(transition.to_state.to_string())
+        .bind(&trigger_json)
+        .bind(&transition.guard_result)
+        .bind(transition.timestamp.timestamp())
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        // 5. Commit
+        tx.commit().await
+            .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        Ok(transition)
+    }
+
+    async fn state_at(
+        &self,
+        session_id: &str,
+        timestamp: chrono::DateTime<chrono::Utc>,
+    ) -> Result<WorkflowState, WorkflowError> {
+        // Reconstruct state by replaying transitions up to timestamp
+        let rows = sqlx::query(
+            "SELECT trigger FROM workflow_transitions
+             WHERE session_id = ? AND created_at <= ?
+             ORDER BY created_at ASC"
+        )
+        .bind(session_id)
+        .bind(timestamp.timestamp())
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+
+        let mut session = WorkflowSession {
+            id: session_id.to_string(),
+            project_id: String::new(),
+            current_state: WorkflowState::Initializing,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        for row in rows {
+            let trigger_json: String = row.get("trigger");
+            let trigger: TransitionTrigger = serde_json::from_str(&trigger_json)
+                .map_err(|e| WorkflowError::Persistence { message: e.to_string() })?;
+            session.try_transition(trigger)?;
+        }
+
+        Ok(session.current_state)
+    }
+
+    // ... remaining methods follow same pattern
+}
+```
+
+### 9. Provider Registration (linkme)
+
+```rust
+// mcb-application/src/registry/workflow.rs
+
+use mcb_domain::ports::providers::workflow::WorkflowEngine;
+use std::sync::Arc;
+
+pub struct WorkflowProviderEntry {
+    pub name: &'static str,
+    pub description: &'static str,
+    pub factory: fn(&figment::Figment) -> Result<Arc<dyn WorkflowEngine>, Box<dyn std::error::Error + Send + Sync>>,
+}
+
+#[linkme::distributed_slice]
+pub static WORKFLOW_PROVIDERS: [WorkflowProviderEntry] = [..];
+```
+
+```rust
+// mcb-providers/src/workflow/sqlite_workflow.rs
+
+#[linkme::distributed_slice(WORKFLOW_PROVIDERS)]
+static SQLITE_WORKFLOW: WorkflowProviderEntry = WorkflowProviderEntry {
+    name: "sqlite",
+    description: "SQLite-backed workflow state machine with transition history",
+    factory: sqlite_workflow_factory,
+};
+
+fn sqlite_workflow_factory(
+    config: &figment::Figment,
+) -> Result<Arc<dyn WorkflowEngine>, Box<dyn std::error::Error + Send + Sync>> {
+    let workflow_config: WorkflowConfig = config.extract_inner("workflow")?;
+    let pool = SqlitePool::connect_lazy(&workflow_config.database_url)?;
+    Ok(Arc::new(SqliteWorkflowEngine { pool }))
+}
+```
+
+### 10. Module Locations
+
+| Crate | Path | Content |
+|-------|------|---------|
+| `mcb-domain` | `src/entities/workflow.rs` | `WorkflowState`, `TransitionTrigger`, `Transition`, `WorkflowSession` |
+| `mcb-domain` | `src/ports/providers/workflow.rs` | `WorkflowEngine` trait |
+| `mcb-domain` | `src/errors/workflow.rs` | `WorkflowError` enum |
+| `mcb-application` | `src/registry/workflow.rs` | `WORKFLOW_PROVIDERS` slice, `WorkflowProviderEntry` |
+| `mcb-providers` | `src/workflow/mod.rs` | Module root |
+| `mcb-providers` | `src/workflow/sqlite_workflow.rs` | `SqliteWorkflowEngine` + linkme registration |
+| `mcb-providers` | `src/workflow/transitions.rs` | `try_transition()` logic |
+| `mcb-infrastructure` | `src/config/workflow.rs` | `WorkflowConfig` (Figment) |
+
+## Consequences
+
+### Positive
+
+-   **Session continuity**: Workflow state survives process restarts via SQLite.
+-   **Full audit trail**: Every transition is recorded with trigger, timestamps, and guard results.
+-   **Time travel**: State at any point in time can be reconstructed from the transition log.
+-   **Type-safe state**: `WorkflowState` enum prevents invalid state representations at compile time.
+-   **Clean Architecture**: Port trait in `mcb-domain`, implementation in `mcb-providers` — zero architectural violations.
+-   **Zero new crates**: Distributed across existing crate hierarchy.
+-   **Foundation for ADR-035/036/037**: `WorkflowEngine` trait is consumed by context scout (035), policy guard (036), and orchestrator (037).
+
+### Negative
+
+-   **Boilerplate**: Enum-based FSM requires manual `match` logic (~150 lines for transition matrix). Declarative crates like `smlang-rs` would reduce this.
+-   **Runtime-only validation**: Invalid transitions detected at runtime, not compile time. Mitigated by comprehensive test coverage.
+-   **SQLite dependency**: `sqlx` async SQLite driver adds ~50KB to binary and requires `libsqlite3`.
+-   **Single-writer constraint**: SQLite WAL mode supports one writer at a time. Concurrent sessions on the same database require careful transaction management.
+
+## Alternatives Considered
+
+### Alternative 1: statig (Hierarchical State Machine Crate)
+
+-   **Description:** Proc-macro based FSM with hierarchical states, entry/exit Actions, and async support. 3M+ downloads.
+-   **Pros:** Hierarchical states reduce duplication. Compile-time state machine generation. Entry/exit hooks.
+-   **Cons:** No built-in serde support — must manually serialize states. Macro-generated code harder for `mcb-validate` to analyze.
+-   **Rejection reason:** Lack of native serialization makes SQLite persistence painful. The transparency loss from macros conflicts with architecture validation.
+
+### Alternative 2: smlang-rs (Declarative DSL)
+
+-   **Description:** `statemachine!{}` macro with declarative transition table syntax, built-in serde via `states_attr`, and first-class guard support.
+-   **Pros:** Clean declarative syntax. Built-in serde. Explicit guard expressions. Good async support.
+-   **Cons:** No hierarchical states. 526K downloads (less ecosystem validation). Macro generates less transparent code.
+-   **Rejection reason:** Viable alternative. Rejected for transparency — enum-based approach is fully visible to `mcb-validate` and requires no macro understanding for contributors.
+
+### Alternative 3: sm (Typestate Pattern)
+
+-   **Description:** Compile-time typestate FSM using generic types. Invalid transitions caught at compile time.
+-   **Pros:** Strongest compile-time guarantees. Zero runtime overhead.
+-   **Cons:** No async support. No serialization. Lower maintenance activity.
+-   **Rejection reason:** Incompatible with async-first requirement and SQLite persistence.
+
+### Alternative 4: In-Memory Only (No SQLite)
+
+-   **Description:** Keep state in `HashMap<String, WorkflowSession>` with no persistence.
+-   **Pros:** Simpler implementation. No SQLite dependency.
+-   **Cons:** State lost on restart. No audit trail. No time travel.
+-   **Rejection reason:** Session continuity across restarts is a core requirement.
+
+## Implementation Notes
+
+### Code Changes
+
+1.  Add `workflow.rs` entities to `mcb-domain/src/entities/`
+2.  Add `workflow.rs` port trait to `mcb-domain/src/ports/providers/`
+3.  Add `WorkflowError` to `mcb-domain/src/errors/`
+4.  Add `WORKFLOW_PROVIDERS` slice to `mcb-application/src/registry/`
+5.  Add `workflow/` module to `mcb-providers/src/` with SQLite implementation
+6.  Add `WorkflowConfig` to `mcb-infrastructure/src/config/`
+7.  Add `[workflow]` section to `config/default.toml`
+
+### Migration
+
+-   New tables only (`workflow_sessions`, `workflow_transitions`). No existing tables modified.
+-   Migration SQL embedded in provider initialization with `CREATE TABLE IF NOT EXISTS`.
+
+### Testing
+
+-   Unit tests: Transition matrix (every valid transition + every invalid transition rejected).
+-   Unit tests: Serde round-trip for every `WorkflowState` variant.
+-   Integration tests: SQLite persistence (create → transition → reload → verify state).
+-   Integration tests: Time travel (create → N transitions → reconstruct at T).
+-   Estimated: ~60 tests.
+
+### Performance Targets
+
+-   State read: < 5ms (single row lookup by primary key)
+-   Transition (read + validate + write + log): < 20ms (single SQLite transaction)
+-   Time travel (replay N transitions): < 50ms for N ≤ 100
+-   SQLite WAL mode for concurrent reads during writes
+
+### Security
+
+-   No user-facing credentials in workflow state.
+-   `state_data` JSON may contain project paths — ensure no secrets leak into transition logs.
+
+## References
+
+-   [statig crate](https://crates.io/crates/statig) — Hierarchical state machine (evaluated, not selected)
+-   [smlang-rs](https://crates.io/crates/smlang) — Declarative FSM macro (evaluated, not selected)
+-   [sqlx](https://crates.io/crates/sqlx) — Async SQLite driver
+-   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
+-   [ADR-023: Provider Registration with linkme](./023-provider-registration-linkme.md) — Auto-registration
+-   [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md) — Superseded
+-   [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) — Schema reference
