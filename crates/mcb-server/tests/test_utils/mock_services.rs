@@ -96,6 +96,79 @@ impl SearchServiceInterface for MockSearchService {
 }
 
 // ============================================================================
+// Mock Agent Session Service (stub for Phase 9 - unapproved)
+// ============================================================================
+
+use mcb_application::ports::services::AgentSessionServiceInterface;
+
+#[allow(dead_code)]
+pub struct MockAgentSessionService {
+    sessions: Arc<Mutex<std::collections::HashMap<String, AgentSession>>>,
+}
+
+impl MockAgentSessionService {
+    pub fn new() -> Self {
+        Self {
+            sessions: Arc::new(Mutex::new(std::collections::HashMap::new())),
+        }
+    }
+}
+
+impl Default for MockAgentSessionService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl AgentSessionServiceInterface for MockAgentSessionService {
+    async fn create_session(&self, session: AgentSession) -> Result<String> {
+        Ok(session.id.clone())
+    }
+
+    async fn get_session(&self, session_id: &str) -> Result<Option<AgentSession>> {
+        Ok(None)
+    }
+
+    async fn update_session(&self, _session: AgentSession) -> Result<()> {
+        Ok(())
+    }
+
+    async fn list_sessions(&self, _query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
+        Ok(vec![])
+    }
+
+    async fn end_session(
+        &self,
+        _session_id: &str,
+        _status: AgentSessionStatus,
+        _result_summary: Option<String>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    async fn store_delegation(&self, delegation: Delegation) -> Result<String> {
+        Ok(delegation.id)
+    }
+
+    async fn store_tool_call(&self, tool_call: ToolCall) -> Result<String> {
+        Ok(tool_call.id)
+    }
+
+    async fn store_checkpoint(&self, checkpoint: Checkpoint) -> Result<String> {
+        Ok(checkpoint.id)
+    }
+
+    async fn get_checkpoint(&self, _id: &str) -> Result<Option<Checkpoint>> {
+        Ok(None)
+    }
+
+    async fn restore_checkpoint(&self, _id: &str) -> Result<()> {
+        Ok(())
+    }
+}
+
+// ============================================================================
 // Mock Indexing Service
 // ============================================================================
 
@@ -1103,121 +1176,6 @@ impl VcsProvider for MockVcsProvider {
             total_additions: 5,
             total_deletions: 2,
         })
-    }
-}
-
-// ============================================================================
-// Mock Agent Session Service
-// ============================================================================
-
-use mcb_application::ports::services::AgentSessionServiceInterface;
-
-#[allow(dead_code)] // Reserved for agent session tests
-pub struct MockAgentSessionService {
-    sessions: Arc<Mutex<std::collections::HashMap<String, AgentSession>>>,
-}
-
-impl MockAgentSessionService {
-    #[allow(dead_code)] // Reserved for agent session tests
-    pub fn new() -> Self {
-        Self {
-            sessions: Arc::new(Mutex::new(std::collections::HashMap::new())),
-        }
-    }
-}
-
-impl Default for MockAgentSessionService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl AgentSessionServiceInterface for MockAgentSessionService {
-    async fn create_session(&self, session: AgentSession) -> Result<String> {
-        let id = session.id.clone();
-        self.sessions
-            .lock()
-            .expect("Lock poisoned")
-            .insert(id.clone(), session);
-        Ok(id)
-    }
-
-    async fn get_session(&self, session_id: &str) -> Result<Option<AgentSession>> {
-        let sessions = self.sessions.lock().expect("Lock poisoned");
-        Ok(sessions.get(session_id).cloned())
-    }
-
-    async fn update_session(&self, session: AgentSession) -> Result<()> {
-        self.sessions
-            .lock()
-            .expect("Lock poisoned")
-            .insert(session.id.clone(), session);
-        Ok(())
-    }
-
-    async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
-        let sessions = self.sessions.lock().expect("Lock poisoned");
-        let mut results: Vec<AgentSession> = sessions
-            .values()
-            .filter(|s| {
-                if let Some(ref status) = query.status
-                    && &s.status != status
-                {
-                    return false;
-                }
-                if let Some(ref agent_type) = query.agent_type
-                    && &s.agent_type != agent_type
-                {
-                    return false;
-                }
-                true
-            })
-            .cloned()
-            .collect();
-        if let Some(limit) = query.limit {
-            results.truncate(limit);
-        }
-        Ok(results)
-    }
-
-    async fn end_session(
-        &self,
-        session_id: &str,
-        status: AgentSessionStatus,
-        result_summary: Option<String>,
-    ) -> Result<()> {
-        let mut sessions = self.sessions.lock().expect("Lock poisoned");
-        if let Some(session) = sessions.get_mut(session_id) {
-            session.status = status;
-            session.ended_at = Some(chrono::Utc::now().timestamp());
-            session.result_summary = result_summary;
-            Ok(())
-        } else {
-            Err(mcb_domain::error::Error::not_found(format!(
-                "session: {session_id}"
-            )))
-        }
-    }
-
-    async fn store_delegation(&self, delegation: Delegation) -> Result<String> {
-        Ok(delegation.id)
-    }
-
-    async fn store_tool_call(&self, tool_call: ToolCall) -> Result<String> {
-        Ok(tool_call.id)
-    }
-
-    async fn store_checkpoint(&self, checkpoint: Checkpoint) -> Result<String> {
-        Ok(checkpoint.id)
-    }
-
-    async fn get_checkpoint(&self, _id: &str) -> Result<Option<Checkpoint>> {
-        Ok(None)
-    }
-
-    async fn restore_checkpoint(&self, _id: &str) -> Result<()> {
-        Ok(())
     }
 }
 

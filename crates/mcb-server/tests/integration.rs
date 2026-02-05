@@ -45,6 +45,10 @@ mod operating_modes_integration;
 #[path = "integration/golden_e2e_complete_integration.rs"]
 mod golden_e2e_complete_integration;
 
+// Golden highlight service tests (Phase 8b)
+#[path = "integration/golden_highlight_service_e2e.rs"]
+mod golden_highlight_service_e2e;
+
 // Golden tests canonical location (repo root tests/golden) - all included so no tests are discarded
 #[path = "../../../tests/golden/test_end_to_end.rs"]
 mod golden_test_end_to_end;
