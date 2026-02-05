@@ -5,17 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Files - MCP Context Browser Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="/ui/theme.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="/ui/shared.js"></script>
+    <script>
+        // Theme initialization (runs before Alpine)
+        (function() {
+            const saved = localStorage.getItem('mcb-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
     <style>
-        :root { color-scheme: light dark; }
-        .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .file-row { padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; }
+        .card { background: var(--card-bg); border-radius: 0.5rem; box-shadow: 0 1px 3px var(--card-shadow); }
+        .file-row { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
         .file-row:last-child { border-bottom: none; }
-        .file-row:hover { background: #f9fafb; }
+        .file-row:hover { background: var(--bg-secondary); }
         .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; cursor: pointer; }
-        .btn-primary { background: #2563eb; color: white; }
-        .btn-primary:hover { background: #1d4ed8; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
         .lang-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
         .lang-rust { background: #fef3c7; color: #92400e; }
         .lang-python { background: #dbeafe; color: #1d4ed8; }
@@ -24,24 +32,10 @@
         .lang-go { background: #d1fae5; color: #047857; }
         .lang-java { background: #fee2e2; color: #991b1b; }
         .lang-default { background: #f3f4f6; color: #374151; }
-        
-        @media (prefers-color-scheme: dark) {
-            body { background: #111827; color: #f3f4f6; }
-            .card { background: #1f2937; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-            .file-row { border-color: #374151; }
-            .file-row:hover { background: #374151; }
-            .file-row .text-gray-900 { color: #f3f4f6; }
-            .file-row .text-gray-500 { color: #9ca3af; }
-            input[type="text"] { background: #374151; border-color: #4b5563; color: #f3f4f6; }
-            input[type="text"]::placeholder { color: #9ca3af; }
-            .text-gray-900 { color: #f3f4f6; }
-            .text-gray-600 { color: #d1d5db; }
-            a.text-blue-600 { color: #60a5fa; }
-        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-gray-800 text-white">
+<body class="min-h-screen bg-primary text-primary">
+    <nav class="nav-theme">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
@@ -49,11 +43,31 @@
                     <span class="ml-2 text-sm text-gray-400">Admin</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Dashboard</a>
-                    <a href="/ui/config" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Config</a>
-                    <a href="/ui/health" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Health</a>
-                    <a href="/ui/indexing" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Indexing</a>
-                    <a href="/ui/browse" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-900">Browse</a>
+                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Dashboard</a>
+                    <a href="/ui/config" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Config</a>
+                    <a href="/ui/health" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Health</a>
+                    <a href="/ui/indexing" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Indexing</a>
+                    <a href="/ui/browse" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-900 text-white">Browse</a>
+                    
+                    <!-- Theme Toggle -->
+                    <button x-data="{ 
+                        theme: localStorage.getItem('mcb-theme') || 'auto',
+                        toggle() {
+                            const next = { auto: 'light', light: 'dark', dark: 'auto' };
+                            this.theme = next[this.theme];
+                            if (this.theme === 'auto') {
+                                localStorage.removeItem('mcb-theme');
+                                document.documentElement.removeAttribute('data-theme');
+                            } else {
+                                localStorage.setItem('mcb-theme', this.theme);
+                                document.documentElement.setAttribute('data-theme', this.theme);
+                            }
+                        }
+                    }" @click="toggle()" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white" title="Toggle Theme">
+                        <span x-show="theme === 'auto'">Auto</span>
+                        <span x-show="theme === 'light'">Light</span>  
+                        <span x-show="theme === 'dark'">Dark</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -64,24 +78,24 @@
         <nav class="mb-4 text-sm">
             <ol class="flex items-center space-x-2">
                 <li><a href="/ui/browse" class="text-blue-600 hover:underline">Collections</a></li>
-                <li><span class="text-gray-400">/</span></li>
-                <li class="text-gray-900 font-medium" id="collection-name">Loading...</li>
+                <li><span class="text-secondary">/</span></li>
+                <li class="text-primary font-medium" id="collection-name">Loading...</li>
             </ol>
         </nav>
 
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900" id="page-title">Files</h1>
-            <p class="mt-2 text-gray-600" id="page-subtitle">Browse indexed files in this collection</p>
+            <h1 class="text-3xl font-bold text-primary" id="page-title">Files</h1>
+            <p class="mt-2 text-secondary" id="page-subtitle">Browse indexed files in this collection</p>
         </div>
 
         <!-- Files List -->
         <div class="card">
-            <div class="flex items-center justify-between p-4 border-b">
+            <div class="flex items-center justify-between p-4 border-b border-theme">
                 <div class="flex items-center space-x-4">
                     <input type="text" id="search-input" placeholder="Filter files..."
-                           class="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           class="border border-theme rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-primary text-primary"
                            oninput="filterFiles()">
-                    <span id="file-count" class="text-sm text-gray-500">Loading...</span>
+                    <span id="file-count" class="text-sm text-secondary">Loading...</span>
                 </div>
                 <button class="btn btn-primary" onclick="loadFiles()">
                     Refresh
@@ -90,13 +104,13 @@
 
             <div id="files-list">
                 <div class="file-row flex items-center justify-center py-8">
-                    <p class="text-gray-500">Loading files...</p>
+                    <p class="text-secondary">Loading files...</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="bg-gray-800 text-gray-400 py-4 mt-8">
+    <footer class="nav-theme py-4 mt-8">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm">
             MCP Context Browser v0.1.5 | Browse Indexed Code
         </div>
@@ -113,7 +127,7 @@
 
         async function loadFiles() {
             const list = document.getElementById('files-list');
-            list.innerHTML = '<div class="file-row flex items-center justify-center py-8"><p class="text-gray-500">Loading...</p></div>';
+            list.innerHTML = '<div class="file-row flex items-center justify-center py-8"><p class="text-secondary">Loading...</p></div>';
 
             try {
                 const response = await adminFetch(`/collections/${encodeURIComponent(collectionName)}/files?limit=1000`);
@@ -130,7 +144,7 @@
                 list.innerHTML = `
                     <div class="file-row flex flex-col items-center justify-center py-8">
                         <p class="text-red-500 font-medium">Error loading files</p>
-                        <p class="text-gray-500 text-sm mt-2">${escapeHtml(e.message)}</p>
+                        <p class="text-secondary text-sm mt-2">${escapeHtml(e.message)}</p>
                     </div>
                 `;
             }
@@ -151,7 +165,7 @@
             if (!files || files.length === 0) {
                 list.innerHTML = `
                     <div class="file-row flex flex-col items-center justify-center py-8">
-                        <p class="text-gray-500">No files found</p>
+                        <p class="text-secondary">No files found</p>
                     </div>
                 `;
                 return;
@@ -161,17 +175,17 @@
                 <a href="/ui/browse/${encodeURIComponent(collectionName)}/file?path=${encodeURIComponent(file.path)}"
                    class="file-row flex items-center justify-between block">
                     <div class="flex items-center space-x-3 min-w-0">
-                        <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        <span class="truncate text-gray-900">${escapeHtml(file.path)}</span>
+                        <span class="truncate text-primary">${escapeHtml(file.path)}</span>
                     </div>
                     <div class="flex items-center space-x-4 flex-shrink-0 ml-4">
                         <span class="lang-badge ${getLangClass(file.language)}">${escapeHtml(file.language)}</span>
-                        <span class="text-sm text-gray-500">${file.chunk_count} chunks</span>
-                        ${file.size_bytes ? `<span class="text-sm text-gray-400">${formatSize(file.size_bytes)}</span>` : ''}
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span class="text-sm text-secondary">${file.chunk_count} chunks</span>
+                        ${file.size_bytes ? `<span class="text-sm text-muted">${formatSize(file.size_bytes)}</span>` : ''}
+                        <svg class="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                     </div>
@@ -208,11 +222,11 @@
             
             // Remove previous selection
             if (selectedIndex >= 0 && rows[selectedIndex]) {
-                rows[selectedIndex].classList.remove('bg-blue-50', 'ring-2', 'ring-blue-500');
+                rows[selectedIndex].classList.remove('bg-selected', 'ring-2', 'ring-blue-500');
             }
             
             selectedIndex = index;
-            rows[selectedIndex].classList.add('bg-blue-50', 'ring-2', 'ring-blue-500');
+            rows[selectedIndex].classList.add('bg-selected', 'ring-2', 'ring-blue-500');
             rows[selectedIndex].scrollIntoView({ block: 'nearest' });
         }
         
