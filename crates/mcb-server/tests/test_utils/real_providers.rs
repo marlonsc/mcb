@@ -75,11 +75,20 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore] // Slow test - downloads ~100MB model on first run
+    #[ignore] // Slow test - downloads model on first run
     async fn test_real_embedding_provider_creation() {
         let provider = create_real_embedding_provider().expect("create provider");
         assert_eq!(provider.provider_name(), "fastembed");
         assert!(provider.dimensions() > 0);
+    }
+
+    #[tokio::test]
+    #[ignore] // Slow test - downloads model on first run
+    async fn test_real_embedding_provider_with_model() {
+        let provider =
+            create_real_embedding_provider_with_model(fastembed::EmbeddingModel::BGESmallENV15)
+                .expect("create provider with model");
+        assert_eq!(provider.provider_name(), "fastembed");
     }
 
     #[tokio::test]

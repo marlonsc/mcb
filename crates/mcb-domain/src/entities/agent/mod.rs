@@ -1,3 +1,7 @@
+//! Agent domain entities
+//!
+//! Includes agent sessions, checkpoints, and tool call history.
+
 mod checkpoint;
 mod delegation;
 mod session;

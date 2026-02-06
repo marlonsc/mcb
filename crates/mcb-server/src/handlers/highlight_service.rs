@@ -6,14 +6,13 @@
 //! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
 
 use crate::constants::HIGHLIGHT_NAMES;
-use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::browse::HighlightService;
+use mcb_domain::ports::browse::{HighlightError, HighlightResult, HighlightService};
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
 use std::sync::Arc;
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
 
-/// Language-specific highlighting configuration (server-side only; distinct from chunking config in mcb-providers).
+/// Language-specific highlighting configuration
 struct HighlightLanguageConfig {
     name: &'static str,
     language: Language,
@@ -31,7 +30,6 @@ impl HighlightLanguageConfig {
 }
 
 /// Maps tree-sitter highlight names to our category enum.
-/// Public for unit tests in tests/unit/highlight_service_tests.rs.
 pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
     match name {
         "keyword" => HighlightCategory::Keyword,
@@ -124,17 +122,14 @@ impl HighlightServiceImpl {
                 tree_sitter_swift::LANGUAGE.into(),
                 tree_sitter_swift::HIGHLIGHTS_QUERY,
             )),
-            _ => {
-                // Unsupported language; caller may fall back to plain text
-                None
-            }
+            _ => None,
         }
     }
 
     /// Create highlight configuration from language config
     fn create_highlight_config(
         lang_config: HighlightLanguageConfig,
-    ) -> Result<HighlightConfiguration> {
+    ) -> HighlightResult<HighlightConfiguration> {
         let mut config = HighlightConfiguration::new(
             lang_config.language,
             lang_config.name,
@@ -142,14 +137,18 @@ impl HighlightServiceImpl {
             "",
             "",
         )
-        .map_err(|e| Error::Highlight(format!("Config error: {}", e)))?;
+        .map_err(|e| HighlightError::ConfigurationError(e.to_string()))?;
 
         config.configure(&HIGHLIGHT_NAMES);
         Ok(config)
     }
 
     /// Highlight code using tree-sitter
-    fn highlight_code_internal(&self, code: &str, language: &str) -> Result<HighlightedCode> {
+    fn highlight_code_internal(
+        &self,
+        code: &str,
+        language: &str,
+    ) -> HighlightResult<HighlightedCode> {
         if code.is_empty() {
             return Ok(HighlightedCode {
                 original: code.to_string(),
@@ -158,10 +157,8 @@ impl HighlightServiceImpl {
             });
         }
 
-        let lang_config =
-            Self::get_language_config(language).ok_or_else(|| Error::InvalidArgument {
-                message: format!("Unsupported language: {}", language),
-            })?;
+        let lang_config = Self::get_language_config(language)
+            .ok_or_else(|| HighlightError::UnsupportedLanguage(language.to_string()))?;
 
         let config = Self::create_highlight_config(lang_config)?;
 
@@ -169,7 +166,7 @@ impl HighlightServiceImpl {
 
         let highlights = highlighter
             .highlight(&config, code.as_bytes(), None, |_: &str| None)
-            .map_err(|e| Error::Highlight(format!("Parsing failed: {}", e)))?;
+            .map_err(|e| HighlightError::HighlightingFailed(e.to_string()))?;
 
         let mut spans = Vec::new();
         let mut position = 0;
@@ -196,7 +193,7 @@ impl HighlightServiceImpl {
                     }
                 }
                 Err(e) => {
-                    return Err(Error::Highlight(format!("Event error: {}", e)));
+                    return Err(HighlightError::HighlightingFailed(e.to_string()));
                 }
             }
         }
@@ -209,6 +206,29 @@ impl HighlightServiceImpl {
     }
 }
 
+/// Standalone function to highlight code into HTML (backward compatibility)
+pub fn highlight_code(code: &str, language: &str) -> String {
+    let service = HighlightServiceImpl::new();
+    match service.highlight_code_internal(code, language) {
+        Ok(highlighted) => convert_highlighted_code_to_html(&highlighted),
+        Err(_) => html_escape(code),
+    }
+}
+
+/// Standalone function to highlight multiple chunks into HTML (backward compatibility)
+pub fn highlight_chunks(chunks: Vec<String>, language: &str) -> Vec<String> {
+    let service = HighlightServiceImpl::new();
+    chunks
+        .into_iter()
+        .map(
+            |chunk| match service.highlight_code_internal(&chunk, language) {
+                Ok(highlighted) => convert_highlighted_code_to_html(&highlighted),
+                Err(_) => html_escape(&chunk),
+            },
+        )
+        .collect()
+}
+
 impl Default for HighlightServiceImpl {
     fn default() -> Self {
         Self::new()
@@ -217,61 +237,22 @@ impl Default for HighlightServiceImpl {
 
 #[async_trait::async_trait]
 impl HighlightService for HighlightServiceImpl {
-    async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode> {
+    async fn highlight(&self, code: &str, language: &str) -> HighlightResult<HighlightedCode> {
         let code = code.to_string();
         let language = language.to_string();
         let highlighter = Arc::clone(&self.highlighter);
 
-        // Offload to blocking thread
         tokio::task::spawn_blocking(move || {
             let service = HighlightServiceImpl { highlighter };
             service.highlight_code_internal(&code, &language)
         })
         .await
-        .map_err(|e| Error::Highlight(format!("Blocking task failed: {}", e)))?
+        .map_err(|e| HighlightError::HighlightingFailed(format!("Blocking task failed: {}", e)))?
     }
-}
-
-/// Public function to highlight code and return HTML with syntax highlighting
-pub fn highlight_code(code: &str, language: &str) -> String {
-    if code.is_empty() {
-        return String::new();
-    }
-
-    let code_owned = code.to_string();
-    let language_owned = language.to_string();
-    let service = HighlightServiceImpl::new();
-
-    // Use blocking call since this is a sync function
-    match std::thread::spawn(move || {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(_) => {
-                return Err(Error::Internal {
-                    message: "Runtime init".to_string(),
-                });
-            }
-        };
-        rt.block_on(async { service.highlight(&code_owned, &language_owned).await })
-    })
-    .join()
-    {
-        Ok(Ok(highlighted)) => convert_highlighted_code_to_html(&highlighted),
-        Ok(Err(_)) => html_escape(code),
-        Err(_) => html_escape(code),
-    }
-}
-
-/// Public function to highlight code chunks and return HTML
-pub fn highlight_chunks(chunks: Vec<(&str, &str)>) -> Vec<String> {
-    chunks
-        .into_iter()
-        .map(|(code, language)| highlight_code(code, language))
-        .collect()
 }
 
 /// Convert HighlightedCode to HTML with CSS classes
-fn convert_highlighted_code_to_html(highlighted: &HighlightedCode) -> String {
+pub fn convert_highlighted_code_to_html(highlighted: &HighlightedCode) -> String {
     if highlighted.original.is_empty() {
         return String::new();
     }
@@ -279,18 +260,15 @@ fn convert_highlighted_code_to_html(highlighted: &HighlightedCode) -> String {
     let mut html = String::new();
     let mut last_end = 0;
 
-    // Sort spans by start position for proper nesting
     let mut sorted_spans = highlighted.spans.clone();
     sorted_spans.sort_by_key(|s| s.start);
 
     for span in sorted_spans {
-        // Add unspanned text before this span
         if last_end < span.start {
             let text = &highlighted.original[last_end..span.start];
             html.push_str(&html_escape(text));
         }
 
-        // Add the highlighted span
         let class = category_to_css_class(span.category);
         let text = &highlighted.original[span.start..span.end];
         html.push_str(&format!(
@@ -302,7 +280,6 @@ fn convert_highlighted_code_to_html(highlighted: &HighlightedCode) -> String {
         last_end = span.end;
     }
 
-    // Add remaining unspanned text
     if last_end < highlighted.original.len() {
         let text = &highlighted.original[last_end..];
         html.push_str(&html_escape(text));
@@ -311,7 +288,6 @@ fn convert_highlighted_code_to_html(highlighted: &HighlightedCode) -> String {
     html
 }
 
-/// Map highlight category to CSS class name
 fn category_to_css_class(category: HighlightCategory) -> &'static str {
     match category {
         HighlightCategory::Keyword => "hl-keyword",
@@ -327,7 +303,6 @@ fn category_to_css_class(category: HighlightCategory) -> &'static str {
     }
 }
 
-/// HTML escape a string to prevent XSS
 fn html_escape(text: &str) -> String {
     text.replace('&', "&amp;")
         .replace('<', "&lt;")

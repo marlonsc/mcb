@@ -3,8 +3,9 @@
 //! Provides trait-based interface for browsing file trees and highlighting code.
 //! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
 
-use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::browse::{BrowseService, HighlightService};
+use mcb_domain::ports::browse::{
+    BrowseError, BrowseResult, BrowseService, HighlightResult, HighlightService,
+};
 use mcb_domain::value_objects::browse::{FileNode, HighlightedCode};
 use std::path::Path;
 use std::sync::Arc;
@@ -22,35 +23,34 @@ impl BrowseServiceImpl {
 
 #[async_trait::async_trait]
 impl BrowseService for BrowseServiceImpl {
-    async fn get_file_tree(&self, root: &Path, max_depth: usize) -> Result<FileNode> {
+    async fn get_file_tree(&self, root: &Path, max_depth: usize) -> BrowseResult<FileNode> {
         if !root.exists() {
-            return Err(Error::not_found(root.to_string_lossy()));
+            return Err(BrowseError::PathNotFound(root.to_path_buf()));
         }
 
         self.walk_directory_boxed(root, 0, max_depth).await
     }
 
-    async fn get_code(&self, path: &Path) -> Result<String> {
+    async fn get_code(&self, path: &Path) -> BrowseResult<String> {
         if !path.exists() {
-            return Err(Error::not_found(path.to_string_lossy()));
+            return Err(BrowseError::PathNotFound(path.to_path_buf()));
         }
 
         tokio::fs::read_to_string(path)
             .await
-            .map_err(|e| Error::io_with_source("Read code", e))
+            .map_err(BrowseError::Io)
     }
 
-    async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode> {
-        self.highlight_service
-            .highlight(code, language)
-            .await
-            .map_err(|e| Error::Browse(format!("Highlighting failed: {}", e)))
+    async fn highlight(&self, code: &str, language: &str) -> HighlightResult<HighlightedCode> {
+        self.highlight_service.highlight(code, language).await
     }
 
-    async fn get_highlighted_code(&self, path: &Path) -> Result<HighlightedCode> {
+    async fn get_highlighted_code(&self, path: &Path) -> BrowseResult<HighlightedCode> {
         let code = self.get_code(path).await?;
         let lang = detect_language(path).unwrap_or_else(|| "text".to_string());
-        self.highlight(&code, &lang).await
+        self.highlight(&code, &lang)
+            .await
+            .map_err(|e| BrowseError::HighlightingFailed(e.to_string()))
     }
 }
 
@@ -60,12 +60,11 @@ impl BrowseServiceImpl {
         path: &Path,
         depth: usize,
         max_depth: usize,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<FileNode>> + Send + '_>> {
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = BrowseResult<FileNode>> + Send + '_>>
+    {
         let path = path.to_path_buf();
         Box::pin(async move {
-            let metadata = tokio::fs::metadata(&path)
-                .await
-                .map_err(|e| Error::io_with_source("Walk dir", e))?;
+            let metadata = tokio::fs::metadata(&path).await.map_err(BrowseError::Io)?;
             let name = path
                 .file_name()
                 .and_then(|n| n.to_str())
@@ -76,9 +75,7 @@ impl BrowseServiceImpl {
             let language = if is_dir { None } else { detect_language(&path) };
 
             let children = if is_dir && depth < max_depth {
-                let mut entries = tokio::fs::read_dir(&path)
-                    .await
-                    .map_err(|e| Error::io_with_source("Read dir", e))?;
+                let mut entries = tokio::fs::read_dir(&path).await.map_err(BrowseError::Io)?;
                 let mut children = Vec::new();
 
                 while let Ok(Some(entry)) = entries.next_entry().await {

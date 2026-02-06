@@ -97,7 +97,7 @@ pub trait VectorStoreAdmin: Send + Sync {
 /// }
 /// ```
 #[async_trait]
-pub trait VectorStoreProvider: VectorStoreAdmin + Send + Sync {
+pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sync {
     /// Create a new vector collection with specified dimensions
     ///
     /// # Arguments

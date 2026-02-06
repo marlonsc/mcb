@@ -72,6 +72,26 @@ impl VectorStoreBrowser for MockVectorStoreBrowser {
     }
 }
 
+/// Mock HighlightService for testing
+pub struct MockHighlightService;
+
+#[async_trait]
+impl mcb_domain::ports::browse::HighlightService for MockHighlightService {
+    async fn highlight(
+        &self,
+        code: &str,
+        language: &str,
+    ) -> mcb_domain::ports::browse::HighlightResult<
+        mcb_domain::value_objects::browse::HighlightedCode,
+    > {
+        Ok(mcb_domain::value_objects::browse::HighlightedCode {
+            original: code.to_string(),
+            spans: Vec::new(),
+            language: language.to_string(),
+        })
+    }
+}
+
 // ============================================================================
 // Mock Implementations
 // ============================================================================
@@ -189,6 +209,7 @@ async fn test_list_collections_empty() {
     let browser = MockVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -215,6 +236,7 @@ async fn test_list_collections_with_data() {
     let browser = MockVectorStoreBrowser::new().with_collections(collections);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -242,6 +264,7 @@ async fn test_list_files_in_collection() {
     let browser = MockVectorStoreBrowser::new().with_files(files);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -283,6 +306,7 @@ async fn test_get_file_chunks() {
     let browser = MockVectorStoreBrowser::new().with_chunks(chunks);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -305,6 +329,7 @@ async fn test_browse_requires_auth() {
     let browser = MockVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -325,6 +350,7 @@ async fn test_browse_invalid_auth() {
     let browser = MockVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -474,6 +500,7 @@ async fn test_e2e_real_store_list_collections() {
     // Create browse state with real store
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -515,6 +542,7 @@ async fn test_e2e_real_store_list_files() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -573,6 +601,7 @@ async fn test_e2e_real_store_get_file_chunks() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -647,6 +676,7 @@ async fn test_e2e_real_store_navigate_full_flow() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -733,6 +763,7 @@ async fn test_e2e_real_store_collection_not_found() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -762,6 +793,7 @@ async fn test_e2e_real_store_multiple_collections() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;

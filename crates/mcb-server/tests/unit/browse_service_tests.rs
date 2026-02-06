@@ -309,9 +309,10 @@ async fn test_get_file_tree_nonexistent_path() {
         .await;
 
     assert!(result.is_err());
+    assert!(result.is_err());
     match result.unwrap_err() {
         BrowseError::PathNotFound(_) => {}
-        _ => panic!("Expected PathNotFound error"),
+        e => panic!("Expected PathNotFound error, got: {:?}", e),
     }
 }
 

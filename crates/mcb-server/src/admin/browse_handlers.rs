@@ -11,6 +11,7 @@
 //! | `/collections/:name/files` | GET | List files in a collection |
 //! | `/collections/:name/files/*path/chunks` | GET | Get chunks for a file |
 
+use mcb_domain::ports::browse::HighlightService;
 use mcb_domain::ports::providers::VectorStoreBrowser;
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -30,6 +31,8 @@ use mcb_domain::value_objects::FileTreeNode;
 pub struct BrowseState {
     /// Vector store browser for collection/file navigation
     pub browser: Arc<dyn VectorStoreBrowser>,
+    /// Highlight service for code syntax highlighting
+    pub highlight_service: Arc<dyn HighlightService>,
 }
 
 /// Error response for browse operations
@@ -200,28 +203,40 @@ pub async fn get_file_chunks(
             }
         })?;
 
-    let chunk_responses: Vec<ChunkDetailResponse> = chunks
-        .into_iter()
-        .map(|c| {
-            // Estimate end line from content
-            let line_count = c.content.lines().count() as u32;
-            let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
+    let mut chunk_responses = Vec::with_capacity(chunks.len());
+    for c in chunks {
+        // Estimate end line from content
+        let line_count = c.content.lines().count() as u32;
+        let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
 
-            // Generate server-side highlighting via highlight_code module
-            let highlighted_html = super::web::highlight::highlight_code(&c.content, &c.language);
+        // Generate server-side highlighting via injected service
+        let highlighted = state
+            .highlight_service
+            .highlight(&c.content, &c.language)
+            .await
+            .unwrap_or_else(|_| {
+                // Fallback to plain code on error
+                mcb_domain::value_objects::browse::HighlightedCode {
+                    original: c.content.clone(),
+                    spans: Vec::new(),
+                    language: c.language.clone(),
+                }
+            });
 
-            ChunkDetailResponse {
-                id: c.id,
-                content: c.content,
-                highlighted_html,
-                file_path: c.file_path,
-                start_line: c.start_line,
-                end_line,
-                language: c.language,
-                score: c.score,
-            }
-        })
-        .collect();
+        let highlighted_html =
+            crate::handlers::highlight_service::convert_highlighted_code_to_html(&highlighted);
+
+        chunk_responses.push(ChunkDetailResponse {
+            id: c.id,
+            content: c.content,
+            highlighted_html,
+            file_path: c.file_path,
+            start_line: c.start_line,
+            end_line,
+            language: c.language,
+            score: c.score,
+        });
+    }
 
     let total = chunk_responses.len();
     Ok(Json(ChunkListResponse {

@@ -3,7 +3,6 @@
 //! REST API for file tree browsing and code highlighting.
 //! Part of Phase 8a (Web-first rendering with agnóstico service).
 
-use crate::handlers::browse_service::BrowseServiceImpl;
 use mcb_domain::ports::browse::BrowseService;
 use mcb_domain::value_objects::browse::{FileNode, HighlightedCode};
 use rocket::{State, post, serde::json::Json};

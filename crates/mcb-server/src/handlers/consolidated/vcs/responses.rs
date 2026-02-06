@@ -1,7 +1,6 @@
 use crate::args::VcsArgs;
 use crate::vcs_repository_registry;
 use mcb_domain::entities::vcs::RepositoryId;
-use mcb_domain::error::Error;
 use rmcp::model::{CallToolResult, Content};
 use serde::Serialize;
 use std::path::PathBuf;

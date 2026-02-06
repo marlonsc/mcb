@@ -115,17 +115,24 @@ async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Er
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let server = create_mcp_server(config.clone()).await?;
+    let (server, app_context) = create_mcp_server(config.clone()).await?;
     info!("MCP server initialized successfully");
 
+    // Create BrowseState for Web UI
+    let highlight_service = Arc::new(crate::handlers::HighlightServiceImpl::new());
+    let browse_state = crate::admin::BrowseState {
+        browser: app_context.vector_store_handle().get(),
+        highlight_service,
+    };
+
     // Create and spawn admin API server
-    let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
     let admin_api = AdminApi::new(
         AdminApiConfig::default(),
         app_context.performance(),
         app_context.indexing(),
         app_context.event_bus(),
-    );
+    )
+    .with_browse_state(browse_state);
 
     tokio::spawn(async move {
         if let Err(e) = admin_api.start().await {
@@ -172,7 +179,7 @@ async fn run_standalone(config: AppConfig) -> Result<(), Box<dyn std::error::Err
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let server = create_mcp_server(config).await?;
+    let (server, _app_context) = create_mcp_server(config).await?;
     info!("MCP server initialized successfully");
 
     start_transport(server, transport_mode, &http_host, http_port).await
@@ -223,7 +230,10 @@ fn load_config(config_path: Option<&Path>) -> Result<AppConfig, Box<dyn std::err
 // =============================================================================
 
 /// Create and configure the MCP server with all services
-async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::error::Error>> {
+async fn create_mcp_server(
+    config: AppConfig,
+) -> Result<(McpServer, mcb_infrastructure::di::bootstrap::AppContext), Box<dyn std::error::Error>>
+{
     // Create AppContext with resolved providers
     let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
 
@@ -283,7 +293,7 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         )
         .await?;
 
-    McpServerBuilder::new()
+    let server = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
@@ -293,7 +303,9 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .with_agent_session_service(services.agent_session_service)
         .with_project_repository(project_repository)
         .try_build()
-        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
+        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
+
+    Ok((server, app_context))
 }
 
 // =============================================================================

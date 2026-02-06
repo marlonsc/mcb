@@ -1,3 +1,7 @@
+//! Memory domain entities
+//!
+//! Includes observations, execution history, and memory search results.
+
 mod error_pattern;
 mod execution;
 mod observation;

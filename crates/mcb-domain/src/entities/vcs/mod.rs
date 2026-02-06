@@ -1,3 +1,7 @@
+//! Version Control System (VCS) domain entities
+//!
+//! Includes repositories, branches, commits, and diffs.
+
 mod branch;
 mod commit;
 mod diff;
