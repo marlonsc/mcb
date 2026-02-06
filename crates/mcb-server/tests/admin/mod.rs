@@ -2,6 +2,8 @@
 //!
 //! Integration tests for the admin HTTP API endpoints.
 
+pub mod harness;
+
 mod api_test;
 mod auth_integration_test;
 mod auth_test;
