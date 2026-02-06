@@ -41,12 +41,12 @@ async fn test_di_container_builder() {
 async fn test_provider_selection_from_config() {
     // Test that providers are correctly selected based on configuration
 
-    // Test with null providers (default)
+    // Test with local providers (fastembed, memory)
     let mut config = AppConfig::default();
     config.providers.embedding.configs.insert(
         "default".to_string(),
         EmbeddingConfig {
-            provider: "null".to_string(),
+            provider: "fastembed".to_string(),
             model: "test".to_string(),
             api_key: None,
             base_url: None,
@@ -57,7 +57,7 @@ async fn test_provider_selection_from_config() {
     config.providers.vector_store.configs.insert(
         "default".to_string(),
         VectorStoreConfig {
-            provider: "null".to_string(),
+            provider: "edgevec".to_string(),
             address: None,
             token: None,
             collection: Some("test".to_string()),
@@ -68,13 +68,16 @@ async fn test_provider_selection_from_config() {
 
     let app_context = init_app(config)
         .await
-        .expect("Should initialize with null providers");
+        .expect("Should initialize with local providers");
 
     // Verify correct providers were selected via handles
-    assert_eq!(app_context.embedding_handle().get().provider_name(), "null");
+    assert_eq!(
+        app_context.embedding_handle().get().provider_name(),
+        "fastembed"
+    );
     assert_eq!(
         app_context.vector_store_handle().get().provider_name(),
-        "null"
+        "edgevec"
     );
     assert_eq!(app_context.cache_handle().get().provider_name(), "moka"); // default cache
     assert_eq!(

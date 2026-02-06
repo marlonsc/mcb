@@ -52,6 +52,7 @@ struct McpServices {
 
 impl McpServer {
     /// Create a new MCP server with injected dependencies
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         indexing_service: Arc<dyn IndexingServiceInterface>,
         context_service: Arc<dyn ContextServiceInterface>,

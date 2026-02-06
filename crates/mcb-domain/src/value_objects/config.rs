@@ -35,7 +35,7 @@ pub struct EmbeddingConfig {
 /// Defines which storage system to use and connection parameters.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct VectorStoreConfig {
-    /// Provider name (filesystem, in-memory, milvus, edgevec)
+    /// Provider name (edgevec, milvus, qdrant, pinecone)
     pub provider: VectorStoreProviderKind,
     /// Server address for remote providers (e.g., Milvus)
     pub address: Option<String>,

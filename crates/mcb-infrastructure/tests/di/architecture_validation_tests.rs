@@ -33,7 +33,7 @@ fn test_all_expected_embedding_providers_registered() {
     let provider_names: Vec<&str> = providers.iter().map(|(name, _)| *name).collect();
 
     // Expected providers that should always be registered
-    let expected = ["null", "ollama", "openai"];
+    let expected = ["fastembed", "ollama", "openai"];
 
     for exp in expected {
         assert!(
@@ -51,7 +51,7 @@ fn test_all_expected_vector_store_providers_registered() {
     let provider_names: Vec<&str> = providers.iter().map(|(name, _)| *name).collect();
 
     // Expected providers that should always be registered
-    let expected = ["memory", "null"];
+    let expected = ["edgevec"];
 
     for exp in expected {
         assert!(
@@ -69,7 +69,7 @@ fn test_all_expected_cache_providers_registered() {
     let provider_names: Vec<&str> = providers.iter().map(|(name, _)| *name).collect();
 
     // Expected providers that should always be registered
-    let expected = ["null", "moka"];
+    let expected = ["moka"];
 
     for exp in expected {
         assert!(
@@ -113,7 +113,7 @@ async fn test_config_provider_names_match_resolved_providers() {
         .embedding
         .provider
         .clone()
-        .unwrap_or_else(|| "null".to_string());
+        .unwrap_or_else(|| "fastembed".to_string());
 
     // Initialize app and get resolved provider
     let ctx = init_app(config).await.expect("init_app should succeed");
@@ -169,26 +169,26 @@ async fn test_multiple_handles_reference_same_underlying_provider() {
 fn test_provider_factories_return_working_providers() {
     // Test that factory functions create working providers, not just return Ok
 
-    // Embedding provider
-    let embedding_config = EmbeddingProviderConfig::new("null");
+    // Embedding provider (local FastEmbed)
+    let embedding_config = EmbeddingProviderConfig::new("fastembed");
     let embedding = resolve_embedding_provider(&embedding_config).expect("Should resolve");
     assert_eq!(
         embedding.dimensions(),
         384,
-        "Null embedding should have 384 dimensions"
+        "FastEmbed should have 384 dimensions"
     );
 
-    // Cache provider
-    let cache_config = CacheProviderConfig::new("null");
+    // Cache provider (local Moka)
+    let cache_config = CacheProviderConfig::new("moka");
     let cache = resolve_cache_provider(&cache_config).expect("Should resolve");
-    assert_eq!(cache.provider_name(), "null", "Should be null cache");
+    assert_eq!(cache.provider_name(), "moka", "Should be moka cache");
 
     // Vector store provider
     let vs_config = VectorStoreProviderConfig::new("memory");
     let vs = resolve_vector_store_provider(&vs_config).expect("Should resolve");
     assert!(
-        vs.provider_name() == "memory" || vs.provider_name() == "in_memory",
-        "Should be memory vector store"
+        vs.provider_name() == "edgevec",
+        "Should be edgevec vector store"
     );
 
     // Language provider

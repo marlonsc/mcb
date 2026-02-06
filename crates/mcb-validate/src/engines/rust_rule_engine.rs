@@ -68,21 +68,3 @@ impl Clone for RustRuleEngineWrapper {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_wrapper_creation() {
-        let _wrapper = RustRuleEngineWrapper::new();
-        // Wrapper creates without panic
-    }
-
-    #[test]
-    fn test_wrapper_clone() {
-        let wrapper = RustRuleEngineWrapper::new();
-        let _cloned = wrapper.clone();
-        // Clone works without panic
-    }
-}

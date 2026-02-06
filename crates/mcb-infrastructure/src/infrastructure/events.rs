@@ -1,8 +1,9 @@
 //! Event Bus Infrastructure
 //!
 //! Provides Tokio-based event bus for internal infrastructure use.
-//! For testing, use NullEventBusProvider from mcb-providers.
+//! For testing, use TokioEventBusProvider (in-process broadcast).
 
+use crate::constants::EVENT_BUS_DEFAULT_CAPACITY;
 use async_trait::async_trait;
 use futures::stream;
 use mcb_domain::error::Result;
@@ -11,9 +12,6 @@ use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tracing::{debug, warn};
-
-/// Default channel capacity
-const DEFAULT_CAPACITY: usize = 1024;
 
 /// Event bus provider using tokio broadcast channels
 ///
@@ -27,7 +25,7 @@ pub struct TokioBroadcastEventBus {
 impl TokioBroadcastEventBus {
     /// Create a new tokio event bus with default capacity (1024)
     pub fn new() -> Self {
-        Self::with_capacity(DEFAULT_CAPACITY)
+        Self::with_capacity(EVENT_BUS_DEFAULT_CAPACITY)
     }
 
     /// Create with custom capacity

@@ -18,8 +18,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
-const RRF_K: f32 = 60.0;
-const HYBRID_SEARCH_MULTIPLIER: usize = 3;
+use crate::constants::{HYBRID_SEARCH_MULTIPLIER, OBSERVATION_PREVIEW_LENGTH, RRF_K};
 
 /// Hybrid memory service: SQLite for metadata/FTS + VectorStore for RAG embeddings.
 pub struct MemoryServiceImpl {
@@ -229,13 +228,14 @@ impl MemoryServiceImpl {
 
 impl MemoryServiceImpl {
     fn build_memory_index(&self, results: Vec<MemorySearchResult>) -> Vec<MemorySearchIndex> {
-        const PREVIEW_LENGTH: usize = 120;
-
         results
             .into_iter()
             .map(|r| {
-                let content_preview = if r.observation.content.len() > PREVIEW_LENGTH {
-                    format!("{}...", &r.observation.content[..PREVIEW_LENGTH])
+                let content_preview = if r.observation.content.len() > OBSERVATION_PREVIEW_LENGTH {
+                    format!(
+                        "{}...",
+                        &r.observation.content[..OBSERVATION_PREVIEW_LENGTH]
+                    )
                 } else {
                     r.observation.content.clone()
                 };

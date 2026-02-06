@@ -12,7 +12,7 @@
 
 dev: ## Development server with auto-reload
 	@echo "Starting development server..."
-	cargo watch -x 'run --features full' 2>/dev/null || cargo run --features full
+	cargo watch -x 'run' 2>/dev/null || cargo run
 
 # =============================================================================
 # DOCKER - Docker service operations

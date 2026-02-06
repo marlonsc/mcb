@@ -1,15 +1,15 @@
 //! Real Provider Test Utilities
 //!
 //! Provides factory functions for creating real (not mocked) provider instances
-//! for integration testing. Uses NullEmbeddingProvider and InMemoryVectorStoreProvider
-//! which are actual implementations, not mocks.
+//! for integration testing. Uses FastEmbedProvider and EdgeVecVectorStoreProvider
+//! which are local implementations, not mocks.
 //!
 //! ## Key Principle
 //!
-//! Tests should use real providers, not mocks, to validate actual behavior.
-//! - `NullEmbeddingProvider`: Deterministic hash-based embeddings (no external deps)
-//! - `InMemoryVectorStoreProvider`: Real in-memory storage with actual search
-//! - `NullCacheProvider`: Real no-op cache (not a mock)
+//! Tests should use real local providers, not mocks, to validate actual behavior.
+//! - `FastEmbedProvider`: Local ONNX embeddings (no external API)
+//! - `EdgeVecVectorStoreProvider`: Local HNSW storage with actual search
+//! - `MokaCacheProvider`: Local in-memory cache (not a mock)
 //!
 //! ## Usage
 //!
@@ -38,10 +38,10 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Create a test AppContext with real providers
+/// Create a test AppContext with real local providers
 ///
-/// Uses NullEmbeddingProvider and InMemoryVectorStoreProvider (or NullVectorStore
-/// depending on config). These are real implementations, not mocks.
+/// Uses FastEmbedProvider and EdgeVecVectorStoreProvider (depending on config).
+/// These are real local implementations, not mocks.
 ///
 /// # Important
 ///
@@ -109,7 +109,7 @@ impl FullStackTestContext {
         // Extract texts for embedding
         let texts: Vec<String> = chunks.iter().map(|c| c.content.clone()).collect();
 
-        // Generate real embeddings (NullEmbeddingProvider uses deterministic hash)
+        // Generate real embeddings (FastEmbedProvider - local ONNX)
         let embeddings = self.embed_texts(&texts).await?;
 
         // Build metadata from chunks
@@ -309,12 +309,12 @@ mod tests {
         assert_eq!(
             embedding.dimensions(),
             384,
-            "Null provider has 384 dimensions"
+            "FastEmbed provider has 384 dimensions"
         );
         assert_eq!(
             embedding.provider_name(),
-            "null",
-            "Should use null provider"
+            "fastembed",
+            "Should use fastembed (local) provider"
         );
     }
 

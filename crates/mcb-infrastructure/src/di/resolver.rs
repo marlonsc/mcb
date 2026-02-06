@@ -226,14 +226,14 @@ fn vector_store_config_to_registry(config: &VectorStoreConfig) -> VectorStorePro
     }
 }
 
-/// Default embedding config for testing
+/// Default embedding config for testing (uses local FastEmbed)
 fn default_embedding_config() -> EmbeddingProviderConfig {
-    EmbeddingProviderConfig::new("null")
+    EmbeddingProviderConfig::new("fastembed")
 }
 
-/// Default vector store config for testing
+/// Default vector store config for testing (local EdgeVec HNSW)
 fn default_vector_store_config() -> VectorStoreProviderConfig {
-    VectorStoreProviderConfig::new("memory")
+    VectorStoreProviderConfig::new("edgevec")
 }
 
 /// List all available providers across all categories

@@ -55,6 +55,7 @@ fn default_include_submodules() -> bool {
     true
 }
 
+/// Default Git configuration: main/HEAD branches, depth 50, submodules included.
 impl Default for GitConfig {
     fn default() -> Self {
         Self {
@@ -97,35 +98,5 @@ impl McpContextConfig {
     /// Load configuration, returning default if file not found
     pub fn load_from_path_or_default(path: &Path) -> Self {
         Self::load_from_path(path).unwrap_or_default()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_git_config() {
-        let config = GitConfig::default();
-        assert_eq!(config.branches, vec!["main", "HEAD"]);
-        assert_eq!(config.depth, 50);
-        assert!(config.ignore_patterns.is_empty());
-        assert!(config.include_submodules);
-    }
-
-    #[test]
-    fn test_parse_git_config_from_toml() {
-        let toml_str = r#"
-[git]
-branches = ["main", "develop"]
-depth = 100
-ignore_patterns = ["*.log", "target/"]
-include_submodules = false
-"#;
-        let config: McpContextConfig = toml::from_str(toml_str).unwrap();
-        assert_eq!(config.git.branches, vec!["main", "develop"]);
-        assert_eq!(config.git.depth, 100);
-        assert_eq!(config.git.ignore_patterns, vec!["*.log", "target/"]);
-        assert!(!config.git.include_submodules);
     }
 }

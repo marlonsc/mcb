@@ -1,6 +1,6 @@
 //! Tests for search domain services
 //!
-//! These tests use real providers (NullEmbeddingProvider, InMemoryVectorStoreProvider)
+//! These tests use real providers (FastEmbedProvider, MokaCacheProvider, EdgeVecVectorStoreProvider)
 //! to validate actual search behavior, not mocked responses.
 //!
 //! ## Key Principle
@@ -19,17 +19,24 @@ use mcb_application::ports::services::ContextServiceInterface;
 use mcb_application::use_cases::{ContextServiceImpl, SearchServiceImpl};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
-use mcb_providers::cache::NullCacheProvider;
-use mcb_providers::embedding::NullEmbeddingProvider;
-use mcb_providers::vector_store::InMemoryVectorStoreProvider;
+use mcb_providers::cache::MokaCacheProvider;
+use mcb_providers::embedding::FastEmbedProvider;
+use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 use serde_json::json;
 use std::sync::Arc;
 
 /// Create a real ContextServiceImpl with actual test providers
 fn create_real_context_service() -> Arc<dyn ContextServiceInterface> {
-    let cache: Arc<dyn CacheProvider> = Arc::new(NullCacheProvider::new());
-    let embedding: Arc<dyn EmbeddingProvider> = Arc::new(NullEmbeddingProvider::new());
-    let vector_store: Arc<dyn VectorStoreProvider> = Arc::new(InMemoryVectorStoreProvider::new());
+    let cache: Arc<dyn CacheProvider> = Arc::new(MokaCacheProvider::new());
+    let embedding: Arc<dyn EmbeddingProvider> =
+        Arc::new(FastEmbedProvider::new().expect("FastEmbed init for tests"));
+    let vector_store: Arc<dyn VectorStoreProvider> = Arc::new(
+        EdgeVecVectorStoreProvider::new(EdgeVecConfig {
+            dimensions: 384,
+            ..Default::default()
+        })
+        .expect("EdgeVec init for tests"),
+    );
 
     Arc::new(ContextServiceImpl::new(cache, embedding, vector_store))
 }
@@ -142,7 +149,7 @@ async fn test_search_service_returns_results_after_indexing() {
         .await
         .expect("Search should succeed");
 
-    // With NullEmbeddingProvider's deterministic hashing, we should get results
+    // With FastEmbedProvider (local), we should get results
     // The key assertion: we're testing REAL search behavior, not mocked responses
     assert!(
         !results.is_empty(),
@@ -181,11 +188,11 @@ async fn test_search_service_empty_collection_returns_empty() {
 async fn test_context_service_embedding_dimensions() {
     let context_service = create_real_context_service();
 
-    // NullEmbeddingProvider has 384 dimensions
+    // FastEmbedProvider (AllMiniLML6V2) has 384 dimensions
     let dimensions = context_service.embedding_dimensions();
     assert_eq!(
         dimensions, 384,
-        "NullEmbeddingProvider should have 384 dimensions"
+        "FastEmbedProvider should have 384 dimensions"
     );
 }
 
@@ -201,7 +208,8 @@ async fn test_context_service_embed_text() {
 
     assert_eq!(embedding.dimensions, 384);
     assert_eq!(embedding.vector.len(), 384);
-    assert_eq!(embedding.model, "null-test");
+    // FastEmbed AllMiniLML6V2 model
+    assert!(!embedding.model.is_empty());
 }
 
 #[tokio::test]

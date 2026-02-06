@@ -12,6 +12,9 @@ mod architecture_rules;
 #[path = "unit/ast_test.rs"]
 mod ast;
 
+#[path = "unit/ast_query_tests.rs"]
+mod ast_query_tests;
+
 #[path = "unit/async_patterns_test.rs"]
 mod async_patterns;
 
@@ -71,3 +74,24 @@ mod unwrap_detector;
 
 #[path = "unit/yaml_loader_test.rs"]
 mod yaml_loader;
+
+#[path = "unit/yaml_validator_tests.rs"]
+mod yaml_validator_tests;
+
+#[path = "unit/rust_rule_engine_tests.rs"]
+mod rust_rule_engine_tests;
+
+#[path = "unit/validator_engine_tests.rs"]
+mod validator_engine_tests;
+
+#[path = "unit/router_tests.rs"]
+mod router_tests;
+
+#[path = "unit/file_matcher_tests.rs"]
+mod file_matcher_tests;
+
+#[path = "unit/language_detector_tests.rs"]
+mod language_detector_tests;
+
+#[path = "unit/rule_filters_tests.rs"]
+mod rule_filters_tests;

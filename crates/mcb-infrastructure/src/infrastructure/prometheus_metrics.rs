@@ -18,6 +18,7 @@
 use std::sync::OnceLock;
 use std::time::Duration;
 
+use crate::constants::{METRICS_BATCH_SIZE_BUCKETS, METRICS_LATENCY_BUCKETS};
 use mcb_domain::ports::admin::{PerformanceMetricsData, PerformanceMetricsInterface};
 use mcb_domain::ports::infrastructure::PerformanceMetricsCollector;
 use prometheus::{
@@ -26,14 +27,6 @@ use prometheus::{
 
 /// Global metrics registry holder
 static METRICS: OnceLock<Result<PrometheusMetricsInner, String>> = OnceLock::new();
-
-/// Latency histogram buckets: 1ms to 10s
-const LATENCY_BUCKETS: &[f64] = &[
-    0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
-];
-
-/// Batch size histogram buckets: 1 to 1000
-const BATCH_SIZE_BUCKETS: &[f64] = &[1.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0];
 
 /// Inner metrics structure holding all Prometheus metrics
 struct PrometheusMetricsInner {
@@ -80,7 +73,7 @@ impl PrometheusMetricsInner {
             name,
             help,
             &["provider", "success"],
-            LATENCY_BUCKETS.to_vec()
+            METRICS_LATENCY_BUCKETS.to_vec()
         )
         .map_err(|e| format!("Failed to register {name}: {e}"))
     }
@@ -103,7 +96,7 @@ impl PrometheusMetricsInner {
             "mcb_batch_embedding_size",
             "Batch embedding size distribution",
             &["provider"],
-            BATCH_SIZE_BUCKETS.to_vec()
+            METRICS_BATCH_SIZE_BUCKETS.to_vec()
         )
         .map_err(|e| format!("Failed to register batch size histogram: {e}"))
     }

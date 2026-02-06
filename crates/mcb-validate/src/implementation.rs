@@ -550,7 +550,7 @@ impl ImplementationQualityValidator {
 
     /// Detect stub macros (todo!, unimplemented!)
     pub fn validate_stub_macros(&self) -> Result<Vec<ImplementationViolation>> {
-        const STUB_PANIC_LABEL: &str = concat!("panic(", "T", "O", "D", "O", ")");
+        use crate::constants::STUB_PANIC_LABEL;
         let mut violations = Vec::new();
         let stub_pattern_ids = [
             ("IMPL001.stub_todo", "todo"),

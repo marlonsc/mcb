@@ -18,12 +18,12 @@ use rocket::{State, get};
 use std::sync::Arc;
 
 use super::auth::AdminAuth;
-use mcb_domain::value_objects::FileTreeNode;
-
 use super::models::{
     ChunkDetailResponse, ChunkListResponse, CollectionInfoResponse, CollectionListResponse,
     FileInfoResponse, FileListResponse,
 };
+use crate::constants::LIST_FILE_PATHS_LIMIT;
+use mcb_domain::value_objects::FileTreeNode;
 
 /// Browse handler state containing the vector store browser
 #[derive(Clone)]
@@ -244,7 +244,7 @@ pub async fn get_collection_tree(
 ) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
     let files = state
         .browser
-        .list_file_paths(name, 10000)
+        .list_file_paths(name, LIST_FILE_PATHS_LIMIT)
         .await
         .map_err(|e| {
             let error_msg = e.to_string();

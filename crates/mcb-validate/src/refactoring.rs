@@ -8,6 +8,10 @@
 //! - Deleted module references
 //! - Dead code from refactoring
 
+use crate::constants::{
+    GENERIC_TYPE_NAMES, KNOWN_MIGRATION_PAIRS, REFACTORING_SKIP_DIR_PATTERNS,
+    REFACTORING_SKIP_FILES, UTILITY_TYPES,
+};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
@@ -15,41 +19,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-
-/// Known migration patterns that are expected during refactoring.
-/// These are pairs of crates where duplicates are expected temporarily.
-const KNOWN_MIGRATION_PAIRS: &[(&str, &str)] = &[
-    ("mcb-providers", "mcb-infrastructure"),
-    ("mcb-domain", "mcb-infrastructure"), // Domain types may be mirrored in infrastructure
-];
-
-/// Utility types that are intentionally duplicated to avoid cross-crate dependencies.
-/// These are common patterns that don't indicate incomplete migration.
-const UTILITY_TYPES: &[&str] = &[
-    "JsonExt",           // JSON extension trait
-    "HttpResponseUtils", // HTTP response helpers
-    "CacheStats",        // Cache statistics (implementation-specific)
-    "TimedOperation",    // Timing utilities
-];
-
-/// Generic type names that are expected to appear in multiple places.
-/// These include common patterns like Error/Result as well as layer-specific
-/// config types that are intentionally different per CA layer.
-const GENERIC_TYPE_NAMES: &[&str] = &[
-    "Error",
-    "Result",
-    "Config",
-    "Builder",
-    "Context",
-    "State",
-    "Options",
-    "Params",
-    "Settings",
-    "Message", // Common for actor patterns
-    "Request",
-    "Response",
-    "CacheConfig", // Layer-specific config schemas are valid in CA
-];
 
 /// Refactoring completeness violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -483,57 +452,6 @@ impl RefactoringValidator {
     /// Check for source files without corresponding test files
     #[allow(clippy::too_many_lines)]
     pub fn validate_missing_test_files(&self) -> Result<Vec<RefactoringViolation>> {
-        // Files that don't need dedicated tests (re-exports, utilities, infrastructure)
-        const SKIP_FILES: &[&str] = &[
-            // Standard files
-            "mod",
-            "lib",
-            "main",
-            "prelude",
-            "constants",
-            "types",
-            "error",
-            "errors",
-            "helpers",
-            "utils",
-            "common",
-            "config",
-            "builder",
-            "factory",
-            // Domain service interfaces (tested via integration)
-            "indexing",
-            "search_repository",
-            // Server infrastructure (tested via e2e/integration tests)
-            "metrics",
-            "components",
-            "operations",
-            "rate_limit_middleware",
-            "security",
-            "mcp_server",
-            "init",
-        ];
-
-        // Directory patterns that are tested via integration tests
-        // These directories have tests in tests/{dir_name}/ subdirectories
-        const SKIP_DIR_PATTERNS: &[&str] = &[
-            "providers",
-            "adapters",
-            "language",
-            "embedding",
-            "vector_store",
-            "cache",
-            "hybrid_search",
-            "events",
-            "chunking",
-            "http",
-            "di",
-            "admin",    // Admin handlers have tests in tests/admin/
-            "handlers", // Handlers have tests in tests/handlers/
-            "config",   // Config modules have tests in tests/config/
-            "tools",    // Tools have tests in tests/tools/
-            "utils",    // Utilities have tests in tests/utils/
-            "ports",    // Port traits have tests in tests/ports/
-        ];
         let mut violations = Vec::new();
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -586,7 +504,7 @@ impl RefactoringValidator {
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
                 // Skip common files that don't need dedicated tests
-                if SKIP_FILES.contains(&file_name) {
+                if REFACTORING_SKIP_FILES.contains(&file_name) {
                     continue;
                 }
 
@@ -595,7 +513,7 @@ impl RefactoringValidator {
                 let path_str = relative.to_string_lossy();
 
                 // Skip files in directories that are tested via integration tests
-                let in_skip_dir = SKIP_DIR_PATTERNS
+                let in_skip_dir = REFACTORING_SKIP_DIR_PATTERNS
                     .iter()
                     .any(|pattern| path_str.contains(pattern));
                 if in_skip_dir {

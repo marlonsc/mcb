@@ -475,12 +475,10 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
+use crate::constants::QDRANT_DEFAULT_PORT;
 use mcb_application::ports::registry::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
-
-/// Qdrant default server port
-const QDRANT_DEFAULT_PORT: u16 = 6333;
 
 /// Factory function for creating Qdrant vector store provider instances.
 fn qdrant_factory(

@@ -4,24 +4,11 @@
 //! check language support for AST chunking, and retrieve language-specific
 //! configuration values.
 
-use super::common::constants::*;
-
-/// Extension to language mapping table
-const EXTENSION_LANG_MAP: &[(&[&str], &str)] = &[
-    (&["rs"], LANG_RUST),
-    (&["py", "pyw", "pyi"], LANG_PYTHON),
-    (&["js", "mjs", "cjs", "jsx"], LANG_JAVASCRIPT),
-    (&["ts", "tsx", "mts", "cts"], LANG_TYPESCRIPT),
-    (&["go"], LANG_GO),
-    (&["java"], LANG_JAVA),
-    (&["c", "h"], LANG_C),
-    (&["cpp", "cc", "cxx", "hpp", "hxx", "hh"], LANG_CPP),
-    (&["cs"], LANG_CSHARP),
-    (&["rb", "rake", "gemspec"], LANG_RUBY),
-    (&["php", "phtml"], LANG_PHP),
-    (&["swift"], LANG_SWIFT),
-    (&["kt", "kts"], LANG_KOTLIN),
-];
+use super::common::constants::{
+    CHUNK_SIZE_GENERIC, EXTENSION_LANG_MAP, LANG_C, LANG_CHUNK_SIZE_MAP, LANG_CPP, LANG_CSHARP,
+    LANG_GO, LANG_JAVA, LANG_JAVASCRIPT, LANG_KOTLIN, LANG_PHP, LANG_PYTHON, LANG_RUBY, LANG_RUST,
+    LANG_SWIFT, LANG_TYPESCRIPT, LANG_UNKNOWN,
+};
 
 /// Detect language from file extension
 ///
@@ -55,22 +42,6 @@ pub fn is_language_supported(language: &str) -> bool {
             | LANG_KOTLIN
     )
 }
-
-/// Language to chunk size mapping table
-const LANG_CHUNK_SIZE_MAP: &[(&[&str], usize)] = &[
-    (&[LANG_RUST], CHUNK_SIZE_RUST),
-    (&[LANG_PYTHON], CHUNK_SIZE_PYTHON),
-    (&[LANG_JAVASCRIPT, LANG_TYPESCRIPT], CHUNK_SIZE_JAVASCRIPT),
-    (&[LANG_GO], CHUNK_SIZE_GO),
-    (&[LANG_JAVA], CHUNK_SIZE_JAVA),
-    (&[LANG_C], CHUNK_SIZE_C),
-    (&[LANG_CPP], CHUNK_SIZE_CPP),
-    (&[LANG_CSHARP], CHUNK_SIZE_CSHARP),
-    (&[LANG_RUBY], CHUNK_SIZE_RUBY),
-    (&[LANG_PHP], CHUNK_SIZE_PHP),
-    (&[LANG_SWIFT], CHUNK_SIZE_SWIFT),
-    (&[LANG_KOTLIN], CHUNK_SIZE_KOTLIN),
-];
 
 /// Get the chunk size for a specific language
 pub fn get_chunk_size(language: &str) -> usize {

@@ -4,7 +4,8 @@
 //! Supports production-scale vector storage with automatic indexing and distributed search.
 
 use crate::constants::{
-    MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST, MILVUS_METADATA_VARCHAR_MAX_LENGTH,
+    MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST,
+    MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
 };
 use crate::utils::JsonExt;
 use async_trait::async_trait;
@@ -23,9 +24,6 @@ use std::collections::HashMap;
 pub struct MilvusVectorStoreProvider {
     client: Client,
 }
-
-/// Default connection timeout in seconds
-const DEFAULT_TIMEOUT_SECS: u64 = 10;
 
 impl MilvusVectorStoreProvider {
     /// Helper method to convert Milvus errors to domain errors
@@ -54,7 +52,7 @@ impl MilvusVectorStoreProvider {
             format!("http://{}", address)
         };
 
-        let timeout = timeout_secs.unwrap_or(DEFAULT_TIMEOUT_SECS);
+        let timeout = timeout_secs.unwrap_or(MILVUS_DEFAULT_TIMEOUT_SECS);
         let timeout_duration = std::time::Duration::from_secs(timeout);
 
         let client = tokio::time::timeout(timeout_duration, Client::new(endpoint.clone()))
@@ -626,8 +624,6 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             })?;
 
         // Use pagination to avoid gRPC message size limits (4MB default)
-        // Batch size of 100 keeps responses well under the limit
-        const BATCH_SIZE: usize = 100;
         let mut all_results = Vec::new();
         let mut offset = 0i64;
 
@@ -640,7 +636,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                 break;
             }
 
-            let batch_limit = remaining.min(BATCH_SIZE) as i64;
+            let batch_limit = remaining.min(MILVUS_QUERY_BATCH_SIZE) as i64;
             let query_options = QueryOptions::new()
                 .limit(batch_limit)
                 .offset(offset)

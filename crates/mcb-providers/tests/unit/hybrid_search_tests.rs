@@ -6,9 +6,7 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::providers::HybridSearchProvider;
 use mcb_domain::value_objects::SearchResult;
 use mcb_providers::constants::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
-use mcb_providers::hybrid_search::{
-    BM25Params, BM25Scorer, HybridSearchEngine, NullHybridSearchProvider,
-};
+use mcb_providers::hybrid_search::{BM25Params, BM25Scorer, HybridSearchEngine};
 
 // ============================================================================
 // Test Helpers
@@ -240,59 +238,4 @@ async fn test_search_without_index() {
 
     assert_eq!(results.len(), 2);
     assert_eq!(results[0].file_path, "a.rs");
-}
-
-// ============================================================================
-// Null Hybrid Search Provider Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_null_provider_index() {
-    let provider = NullHybridSearchProvider::new();
-    let chunks = vec![create_test_chunk("fn test() {}", "test.rs", 1)];
-
-    // Should succeed without error
-    let result = provider.index_chunks("test", &chunks).await;
-    assert!(result.is_ok(), "Null provider index should always succeed");
-}
-
-#[tokio::test]
-async fn test_null_provider_search_passthrough() {
-    let provider = NullHybridSearchProvider::new();
-
-    let semantic_results = vec![
-        create_test_search_result("a.rs", 1, 0.9),
-        create_test_search_result("b.rs", 1, 0.8),
-        create_test_search_result("c.rs", 1, 0.7),
-    ];
-
-    let results = provider
-        .search("test", "query", semantic_results.clone(), 2)
-        .await
-        .unwrap();
-
-    // Should return first 2 results unchanged
-    assert_eq!(results.len(), 2);
-    assert_eq!(results[0].file_path, "a.rs");
-    assert!((results[0].score - 0.9).abs() < f64::EPSILON);
-    assert_eq!(results[1].file_path, "b.rs");
-}
-
-#[tokio::test]
-async fn test_null_provider_clear() {
-    let provider = NullHybridSearchProvider::new();
-
-    // Should succeed without error
-    let result = provider.clear_collection("test").await;
-    assert!(result.is_ok(), "Null provider clear should always succeed");
-}
-
-#[tokio::test]
-async fn test_null_provider_stats() {
-    let provider = NullHybridSearchProvider::new();
-
-    let stats = provider.get_stats().await;
-
-    assert_eq!(stats.get("provider"), Some(&serde_json::json!("null")));
-    assert_eq!(stats.get("bm25_enabled"), Some(&serde_json::json!(false)));
 }

@@ -6,23 +6,19 @@
 //!
 //! | Provider | Type | Description |
 //! |----------|------|-------------|
-//! | NullEventBusProvider | Testing | Discards all events |
 //! | TokioEventBusProvider | In-Process | Tokio broadcast channels |
 //! | NatsEventBusProvider | Distributed | NATS for multi-process systems |
 //!
 //! ## Provider Selection Guide
 //!
-//! - **Testing**: Use `NullEventBusProvider` to discard events
 //! - **Single Instance**: Use `TokioEventBusProvider` for in-process events
 //! - **Distributed**: Use `NatsEventBusProvider` for multi-process/node systems
 
 pub mod nats;
-pub mod null;
 pub mod tokio;
 
 // Re-export providers
 pub use nats::{NatsEventBusProvider, NatsEventPublisher};
-pub use null::{NullEventBusProvider, NullEventPublisher};
 pub use tokio::{TokioEventBusProvider, TokioEventPublisher};
 
 // Re-export port trait from application layer

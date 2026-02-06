@@ -81,20 +81,20 @@ async fn test_init_app_creates_working_context() {
     let embedding = ctx.embedding_handle().get();
     assert_eq!(
         embedding.provider_name(),
-        "null",
-        "Default should be null provider"
+        "fastembed",
+        "Default should be fastembed (local) provider"
     );
     assert_eq!(
         embedding.dimensions(),
         384,
-        "Null provider has 384 dimensions"
+        "FastEmbed provider has 384 dimensions"
     );
 
     // Verify vector store handle returns a real provider
     let vector_store = ctx.vector_store_handle().get();
     assert!(
-        vector_store.provider_name() == "in_memory" || vector_store.provider_name() == "memory",
-        "Default should be in-memory vector store"
+        vector_store.provider_name() == "edgevec",
+        "Default should be edgevec vector store"
     );
 }
 
@@ -136,8 +136,8 @@ async fn test_embedding_generates_real_vectors() {
             i
         );
         assert_eq!(
-            emb.model, "null-test",
-            "Embedding {} should be from null-test model",
+            emb.model, "FastEmbed model",
+            "Embedding should have model name",
             i
         );
     }
@@ -203,7 +203,7 @@ async fn test_full_index_and_search_flow() {
         .await
         .expect("Search should succeed");
 
-    // Validate: we should find results (with deterministic NullEmbeddingProvider)
+    // Validate: we should find results (with local FastEmbedProvider)
     assert!(
         !results.is_empty(),
         "Search should return results after indexing real data"

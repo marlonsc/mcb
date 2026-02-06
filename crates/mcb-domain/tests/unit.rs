@@ -58,3 +58,6 @@ mod vcs_tests;
 
 #[path = "unit/agent_test.rs"]
 mod agent_test;
+
+#[path = "unit/workflow_tests.rs"]
+mod workflow_tests;

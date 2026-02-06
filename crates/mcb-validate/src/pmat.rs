@@ -7,17 +7,12 @@
 //!
 //! This validator is optional - it only runs if the `pmat` binary is available.
 
+use crate::constants::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Command;
-
-/// Default complexity threshold
-pub const DEFAULT_COMPLEXITY_THRESHOLD: u32 = 15;
-
-/// Default TDG score threshold (0-100, higher is worse)
-pub const DEFAULT_TDG_THRESHOLD: u32 = 50;
 
 /// PMAT violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

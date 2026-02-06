@@ -19,6 +19,7 @@
 //! - Database passwords
 //! - Encryption keys
 
+use crate::constants::VALID_SECTIONS;
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use mcb_infrastructure::config::data::AppConfig;
 use mcb_infrastructure::config::types::{CacheSystemConfig, LimitsConfig, MetricsConfig};
@@ -355,16 +356,6 @@ impl ConfigSectionUpdateResponse {
         }
     }
 }
-
-/// Valid configuration sections for updates
-pub const VALID_SECTIONS: &[&str] = &[
-    "server",
-    "logging",
-    "cache",
-    "metrics",
-    "limits",
-    "resilience",
-];
 
 /// Check if a section name is valid for updates
 pub fn is_valid_section(section: &str) -> bool {

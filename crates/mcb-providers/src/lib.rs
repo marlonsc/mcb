@@ -9,10 +9,10 @@
 //! | Category | Port | Implementations |
 //! |----------|------|-----------------|
 //! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed |
-//! | Vector Store | `VectorStoreProvider` | InMemory, Encrypted, EdgeVec, Filesystem, Milvus |
+//! | Vector Store | `VectorStoreProvider` | EdgeVec, Encrypted, Milvus, Pinecone, Qdrant |
 //! | Cache | `CacheProvider` | Moka, Redis |
-//! | Events | `EventPublisher` | Tokio, Nats, Null |
-//! | Hybrid Search | `HybridSearchProvider` | HybridSearchEngine, Null |
+//! | Events | `EventPublisher` | Tokio, Nats |
+//! | Hybrid Search | `HybridSearchProvider` | HybridSearchEngine |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
 //!
 //! ## Feature Flags
@@ -94,7 +94,7 @@ pub mod language;
 pub mod hybrid_search;
 
 // Re-export hybrid search providers
-pub use hybrid_search::{HybridSearchEngine, NullHybridSearchProvider};
+pub use hybrid_search::HybridSearchEngine;
 
 /// Database providers (memory repository backends)
 ///

@@ -21,6 +21,12 @@ mod mcp_error_handling_tests;
 #[path = "unit/browse_handlers_tests.rs"]
 mod browse_handlers_tests;
 
+#[path = "unit/browse_service_tests.rs"]
+mod browse_service_tests;
+
+#[path = "unit/highlight_service_tests.rs"]
+mod highlight_service_tests;
+
 #[path = "unit/mcp_protocol_tests.rs"]
 mod mcp_protocol_tests;
 
@@ -35,3 +41,6 @@ mod fixtures_smoke;
 
 #[path = "unit/vcs_repository_registry_test.rs"]
 mod vcs_repository_registry_test;
+
+#[path = "unit/processor_tests.rs"]
+mod processor_tests;

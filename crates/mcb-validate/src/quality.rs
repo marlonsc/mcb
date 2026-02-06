@@ -632,14 +632,13 @@ impl QualityValidator {
         Ok(violations)
     }
 
-    /// Find pending comments (T.O.D.O./F.I.X.M.E./X.X.X./H.A.C.K.)
+    /// Find pending comments (TODO/FIXME/XXX/HACK)
     pub fn find_todo_comments(&self) -> Result<Vec<QualityViolation>> {
-        const PENDING_TODO: &str = concat!("T", "O", "D", "O");
-        const PENDING_FIXME: &str = concat!("F", "I", "X", "M", "E");
-        const PENDING_XXX: &str = concat!("X", "X", "X");
-        const PENDING_HACK: &str = concat!("H", "A", "C", "K");
+        use crate::constants::{
+            PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
+        };
         let todo_pattern = Regex::new(&format!(
-            r"(?i)({PENDING_TODO}|{PENDING_FIXME}|{PENDING_XXX}|{PENDING_HACK}):?\s*(.*)"
+            r"(?i)({PENDING_LABEL_TODO}|{PENDING_LABEL_FIXME}|{PENDING_LABEL_XXX}|{PENDING_LABEL_HACK}):?\s*(.*)"
         ))
         .unwrap();
 

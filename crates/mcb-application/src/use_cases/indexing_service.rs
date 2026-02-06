@@ -18,11 +18,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use tracing::{debug, info, warn};
 
-/// Directories to skip during indexing
-const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target", "__pycache__"];
-
-/// Supported file extensions for indexing
-const SUPPORTED_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "java", "cpp", "c", "go"];
+use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS, SUPPORTED_EXTENSIONS};
 
 /// Accumulator for indexing progress and errors
 ///
@@ -167,9 +163,6 @@ impl IndexingServiceImpl {
             .chunk(content, &path.to_string_lossy())
     }
 }
-
-/// Progress update interval (publish event every N files)
-const PROGRESS_UPDATE_INTERVAL: usize = 10;
 
 #[async_trait::async_trait]
 impl IndexingServiceInterface for IndexingServiceImpl {

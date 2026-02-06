@@ -12,11 +12,9 @@ use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as
 use serde_json::Value;
 
 use crate::Result;
+use crate::constants::INTERNAL_DEP_PREFIX;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
 use crate::violation_trait::{Severity, ViolationCategory};
-
-/// Prefix for internal workspace dependencies (mcb-*)
-const INTERNAL_DEP_PREFIX: &str = "mcb-";
 
 /// RETE Engine wrapper for rust-rule-engine library
 pub struct ReteEngine {

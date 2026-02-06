@@ -175,34 +175,3 @@ impl WorkflowSession {
         self.current_state.is_error()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn workflow_state_display() {
-        assert_eq!(WorkflowState::Initializing.to_string(), "initializing");
-        assert_eq!(
-            WorkflowState::Ready {
-                context_id: "ctx-1".to_string()
-            }
-            .to_string(),
-            "ready"
-        );
-    }
-
-    #[test]
-    fn workflow_state_is_terminal() {
-        assert!(!WorkflowState::Initializing.is_terminal());
-        assert!(WorkflowState::Completed.is_terminal());
-    }
-
-    #[test]
-    fn workflow_session_new() {
-        let session = WorkflowSession::new("sess-1".to_string(), "proj-1".to_string());
-        assert_eq!(session.id, "sess-1");
-        assert_eq!(session.current_state, WorkflowState::Initializing);
-        assert!(!session.is_complete());
-    }
-}

@@ -38,7 +38,7 @@ use std::sync::Arc;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::{AppConfig, OperatingMode, TransportMode};
 use mcb_infrastructure::crypto::CryptoService;
-use mcb_providers::git::Git2Provider;
+use mcb_infrastructure::di::default_vcs_provider;
 use tracing::{error, info, warn};
 
 use crate::McpServer;
@@ -260,8 +260,7 @@ async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
         .unwrap_or_else(|| "default".to_string());
 
-    let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
-        std::sync::Arc::new(Git2Provider::new());
+    let vcs_provider = default_vcs_provider();
 
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         project_id,

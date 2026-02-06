@@ -1,7 +1,7 @@
 //! Golden Acceptance Tests for v0.1.2
 //!
 //! This module validates the core functionality of MCP Context Browser using
-//! real providers (NullEmbeddingProvider + InMemoryVectorStore) for deterministic testing.
+//! real local providers (FastEmbedProvider + EdgeVec) for testing.
 //!
 //! ## Key Principle
 //!
@@ -203,7 +203,7 @@ fn test_sample_codebase_files_exist() {
 }
 
 // ============================================================================
-// Real Provider Tests (using NullEmbedding + InMemoryVectorStore)
+// Real Provider Tests (using FastEmbed + EdgeVec)
 // ============================================================================
 
 #[tokio::test]
@@ -244,7 +244,7 @@ async fn test_golden_index_real_files() {
 
     assert!(
         embed_time < Duration::from_millis(500),
-        "Embedding should be fast with NullProvider: {:?}",
+        "Embedding should be fast with FastEmbed: {:?}",
         embed_time
     );
 
@@ -365,9 +365,9 @@ async fn test_golden_search_validates_expected_files() {
 
 /// Test that validates all golden queries find their expected files.
 ///
-/// Uses NullEmbeddingProvider with keyword-based embeddings that enable
+/// Uses FastEmbedProvider (local) with embeddings that enable
 /// semantic-like matching without requiring external embedding services.
-/// The provider generates distinctive vectors based on domain keywords
+/// The provider generates vectors based on domain keywords
 /// (embedding, vector_store, handler, cache, di, error, chunking, etc.)
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() {

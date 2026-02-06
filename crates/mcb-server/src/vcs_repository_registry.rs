@@ -3,16 +3,12 @@
 //! Stores a mapping of repository_id -> path so tools like search_branch can
 //! resolve a repository without requiring the path in every call.
 
+use crate::constants::{VCS_LOCK_FILENAME, VCS_REGISTRY_FILENAME};
 use mcb_domain::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
-
-/// Registry file name (stored under ~/.config/mcb)
-const REGISTRY_FILENAME: &str = "vcs_repository_registry.json";
-/// Lock file name to serialize registry writes
-const LOCK_FILENAME: &str = "vcs_repository_registry.lock";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Registry {
@@ -30,13 +26,13 @@ impl Registry {
 fn registry_path() -> Result<PathBuf> {
     let config_dir =
         dirs::config_dir().ok_or_else(|| Error::io("Unable to determine config directory"))?;
-    Ok(config_dir.join("mcb").join(REGISTRY_FILENAME))
+    Ok(config_dir.join("mcb").join(VCS_REGISTRY_FILENAME))
 }
 
 fn lock_path() -> Result<PathBuf> {
     let config_dir =
         dirs::config_dir().ok_or_else(|| Error::io("Unable to determine config directory"))?;
-    Ok(config_dir.join("mcb").join(LOCK_FILENAME))
+    Ok(config_dir.join("mcb").join(VCS_LOCK_FILENAME))
 }
 
 struct FileLockGuard {

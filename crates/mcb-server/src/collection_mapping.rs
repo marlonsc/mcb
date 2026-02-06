@@ -15,16 +15,11 @@
 //! }
 //! ```
 
+use crate::constants::{COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME};
 use mcb_domain::error::{Error, Result};
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::path::PathBuf;
-
-/// Collection name mapping file name
-const MAPPING_FILENAME: &str = "collection_mapping.json";
-
-/// Lock file for atomic operations
-const LOCK_FILENAME: &str = "collection_mapping.lock";
 
 /// Gets the default mapping file path (~/.config/mcb/collection_mapping.json)
 fn get_mapping_file_path() -> Result<PathBuf> {
@@ -32,7 +27,7 @@ fn get_mapping_file_path() -> Result<PathBuf> {
         dirs::config_dir().ok_or_else(|| Error::io("Unable to determine config directory"))?;
 
     let mcb_config = config_dir.join("mcb");
-    Ok(mcb_config.join(MAPPING_FILENAME))
+    Ok(mcb_config.join(COLLECTION_MAPPING_FILENAME))
 }
 
 /// Gets the lock file path
@@ -41,7 +36,7 @@ fn get_lock_file_path() -> Result<PathBuf> {
         dirs::config_dir().ok_or_else(|| Error::io("Unable to determine config directory"))?;
 
     let mcb_config = config_dir.join("mcb");
-    Ok(mcb_config.join(LOCK_FILENAME))
+    Ok(mcb_config.join(COLLECTION_MAPPING_LOCK_FILENAME))
 }
 
 /// RAII guard for file locking

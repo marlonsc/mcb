@@ -77,8 +77,8 @@ impl EmbeddingProviderResolver {
                 resolve_embedding_provider(&registry_config)
             }
         } else {
-            // Fallback to null provider if no default configured
-            resolve_embedding_provider(&EmbeddingProviderConfig::new("null"))
+            // Fallback to fastembed (local provider) if no default configured
+            resolve_embedding_provider(&EmbeddingProviderConfig::new("fastembed"))
         }
     }
 
@@ -155,8 +155,8 @@ impl VectorStoreProviderResolver {
                 resolve_vector_store_provider(&registry_config)
             }
         } else {
-            // Fallback to memory provider if no default configured
-            resolve_vector_store_provider(&VectorStoreProviderConfig::new("memory"))
+            // Fallback to edgevec (local HNSW) if no default configured
+            resolve_vector_store_provider(&VectorStoreProviderConfig::new("edgevec"))
         }
     }
 

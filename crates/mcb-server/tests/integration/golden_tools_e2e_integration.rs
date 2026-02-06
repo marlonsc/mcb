@@ -1,5 +1,5 @@
 //!
-//! These tests use the real DI stack (NullEmbedding + InMemoryVectorStore)
+//! These tests use the real DI stack (FastEmbed + EdgeVec)
 //! and call the consolidated MCP handlers (index, search) to validate behavior.
 
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};

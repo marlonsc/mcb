@@ -6,15 +6,20 @@
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use mcb_providers::embedding::FastEmbedProvider;
-use mcb_providers::vector_store::InMemoryVectorStoreProvider;
+use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 use std::sync::Arc;
 
-/// Create a real in-memory vector store provider for testing
+/// Create a real EdgeVec vector store provider for testing
 ///
-/// This is a real implementation that stores vectors in memory using concurrent hash maps.
-/// Suitable for tests that need to verify actual vector storage and search behavior.
+/// Local HNSW vector store suitable for tests that need actual vector storage and search.
 pub fn create_real_vector_store() -> Arc<dyn VectorStoreProvider> {
-    Arc::new(InMemoryVectorStoreProvider::new())
+    Arc::new(
+        EdgeVecVectorStoreProvider::new(EdgeVecConfig {
+            dimensions: 384,
+            ..Default::default()
+        })
+        .expect("EdgeVec init for tests"),
+    )
 }
 
 /// Create a real FastEmbed provider for testing
@@ -47,7 +52,7 @@ mod tests {
     #[tokio::test]
     async fn test_real_vector_store_creation() {
         let store = create_real_vector_store();
-        assert_eq!(store.provider_name(), "in_memory");
+        assert_eq!(store.provider_name(), "edgevec");
     }
 
     #[tokio::test]

@@ -36,6 +36,7 @@
 //! - `mcb-domain`: For domain entities, value objects, and core business rules
 //! - Pure Rust libraries for async, serialization, etc.
 
+pub mod constants;
 pub mod decorators;
 pub mod domain_services;
 pub mod ports;

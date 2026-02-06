@@ -20,14 +20,15 @@ enabled = true
 [admin]
 enabled = true
 
-[providers.embedding.default]
-type = "null"
+[providers.embedding.configs.default]
+provider = "fastembed"
+model = "AllMiniLML6V2"
 
-[providers.vector_store.default]
-type = "in-memory"
+[providers.vector_store.configs.default]
+provider = "edgevec"
 
 [providers.cache.default]
-type = "null"
+type = "moka"
 
 [providers.language_chunking.default]
 type = "null"

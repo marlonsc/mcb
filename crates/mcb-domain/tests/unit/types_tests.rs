@@ -45,8 +45,8 @@ mod tests {
         let store: VectorStoreProviderKind = "qdrant".to_string();
         assert_eq!(store, "qdrant");
 
-        let filesystem: VectorStoreProviderKind = "filesystem".to_string();
-        assert_eq!(filesystem, "filesystem");
+        let edgevec: VectorStoreProviderKind = "edgevec".to_string();
+        assert_eq!(edgevec, "edgevec");
 
         let custom: VectorStoreProviderKind = "my-vector-db".to_string();
         assert_eq!(custom, "my-vector-db");

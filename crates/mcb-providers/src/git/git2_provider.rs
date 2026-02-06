@@ -382,6 +382,3 @@ impl VcsProvider for Git2Provider {
         })
     }
 }
-
-#[cfg(test)]
-mod tests;

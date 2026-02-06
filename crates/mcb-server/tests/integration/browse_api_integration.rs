@@ -345,11 +345,12 @@ async fn test_browse_invalid_auth() {
 }
 
 // ============================================================================
-// Real End-to-End Tests with InMemoryVectorStore
+// Real End-to-End Tests with EdgeVecVectorStore
 // ============================================================================
 
+use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::value_objects::Embedding;
-use mcb_providers::vector_store::in_memory::InMemoryVectorStoreProvider;
+use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 
 /// Helper to create metadata for a code chunk
 fn create_chunk_metadata(
@@ -379,10 +380,8 @@ fn create_dummy_embedding(dimensions: usize) -> Embedding {
     }
 }
 
-/// Populate an in-memory vector store with test data simulating real indexed code
-async fn populate_test_store(store: &InMemoryVectorStoreProvider, collection: &str) {
-    use mcb_domain::ports::providers::VectorStoreProvider;
-
+/// Populate vector store with test data simulating real indexed code
+async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) {
     // Create collection
     store
         .create_collection(collection, 384)
@@ -500,7 +499,7 @@ async fn test_e2e_real_store_list_collections() {
     assert_eq!(collection["name"], "test_project");
     assert_eq!(collection["vector_count"], 8, "Should have 8 chunks total");
     assert_eq!(collection["file_count"], 4, "Should have 4 unique files");
-    assert_eq!(collection["provider"], "in_memory");
+    assert_eq!(collection["provider"], "edgevec");
 }
 
 #[tokio::test]
@@ -563,7 +562,7 @@ async fn test_e2e_real_store_list_files() {
 
 #[tokio::test]
 async fn test_e2e_real_store_get_file_chunks() {
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
     populate_test_store(&store, "test_project").await;
 
     let browse_state = BrowseState {
@@ -723,7 +722,7 @@ async fn test_e2e_real_store_navigate_full_flow() {
 
 #[tokio::test]
 async fn test_e2e_real_store_collection_not_found() {
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
     populate_test_store(&store, "existing_collection").await;
 
     let browse_state = BrowseState {
@@ -749,7 +748,7 @@ async fn test_e2e_real_store_collection_not_found() {
 
 #[tokio::test]
 async fn test_e2e_real_store_multiple_collections() {
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
 
     // Create multiple collections
     populate_test_store(&store, "project_alpha").await;

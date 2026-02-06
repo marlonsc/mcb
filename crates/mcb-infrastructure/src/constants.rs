@@ -496,5 +496,26 @@ pub const TS_NODE_METHOD_DECLARATION: &str = "method_declaration";
 
 /// Tree-sitter node type: class declaration (JS, Java, C#, PHP, Swift, Kotlin)
 pub const TS_NODE_CLASS_DECLARATION: &str = "class_declaration";
+
+// ============================================================================
+// PROMETHEUS METRICS CONSTANTS
+// ============================================================================
+
+/// Latency histogram buckets (seconds): 1ms to 10s
+pub const METRICS_LATENCY_BUCKETS: &[f64] = &[
+    0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
+];
+
+/// Batch size histogram buckets
+pub const METRICS_BATCH_SIZE_BUCKETS: &[f64] =
+    &[1.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0];
+
+// ============================================================================
+// EVENT BUS CONSTANTS
+// ============================================================================
+
+/// Default broadcast channel capacity for event bus
+pub const EVENT_BUS_DEFAULT_CAPACITY: usize = 1024;
+
 // Re-export domain constants for convenience
 pub use mcb_domain::constants::*;

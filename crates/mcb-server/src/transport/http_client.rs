@@ -14,10 +14,7 @@ use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use super::types::{McpRequest, McpResponse};
-
-/// JSON-RPC 2.0 error codes
-const JSONRPC_PARSE_ERROR: i32 = -32700;
-const JSONRPC_INTERNAL_ERROR: i32 = -32603;
+use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
 
 /// MCP client transport configuration
 ///

@@ -71,7 +71,7 @@ jwt_expiration = 3600     # Token expiration in seconds (1 hour)
 # EMBEDDING PROVIDERS - AI Model for Semantic Search
 # ============================================================================
 #
-# Available providers: openai, ollama, gemini, voyageai, fastembed, null
+# Available providers: openai, ollama, gemini, voyageai, fastembed
 # Provider selection is runtime-configurable via this setting
 [providers.embedding.default]
 type = "fastembed"
@@ -89,13 +89,10 @@ api_key = "sk-your-openai-key-here"
 # ============================================================================
 # VECTOR STORE - Where Embeddings are Stored
 # ============================================================================
-# DEFAULT: filesystem (lightweight, works offline, no external service needed)
-# Filesystem is the default because it's self-contained and always available
-[providers.vector_store.default]
-type = "filesystem"               # Use filesystem for vector storage (local, no external service)
-
-[providers.vector_store.filesystem]
-address = "./data/vectors"         # Default filesystem path (relative to working directory)
+# DEFAULT: edgevec (local HNSW, works offline, no external service needed)
+[providers.vector_store.configs.default]
+provider = "edgevec"
+dimensions = 384                  # Match FastEmbed AllMiniLML6V2
 
 # ============================================================================
 # HYBRID SEARCH - Combined BM25 + Vector Search

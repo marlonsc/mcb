@@ -8,6 +8,7 @@
 //! - mcb-server: mcb-domain, mcb-application, and mcb-infrastructure (transport layer)
 //! - mcb: All crates (facade that re-exports entire public API)
 
+use crate::constants::ALLOWED_DEPS;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
@@ -15,66 +16,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use walkdir::WalkDir;
-
-/// Allowed dependencies for each crate in Clean Architecture
-///
-/// Architecture layers:
-/// - mcb-domain: Pure domain layer (entities, value objects, events) - no internal deps
-/// - mcb-application: Use cases and business logic orchestration (ports included) - depends on mcb-domain
-/// - mcb-providers: Adapter implementations of application ports - depends on mcb-domain and mcb-application
-/// - mcb-infrastructure: DI composition root and cross-cutting concerns - depends on mcb-domain, mcb-application, and mcb-providers
-/// - mcb-server: Transport layer - depends on mcb-domain, mcb-application, and mcb-infrastructure
-/// - mcb: Facade crate that re-exports the entire public API
-/// - mcb-validate: Development tool, not part of runtime dependency graph
-const ALLOWED_DEPS: &[(&str, &[&str])] = &[
-    ("mcb-domain", &[]),
-    ("mcb-application", &["mcb-domain"]),
-    ("mcb-providers", &["mcb-domain", "mcb-application"]),
-    (
-        "mcb-infrastructure",
-        // Note: mcb-validate is an optional dependency for architecture validation feature
-        // This dependency is behind the "validation" feature flag and is not a runtime dependency
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-providers",
-            "mcb-validate",
-        ],
-    ),
-    (
-        "mcb-server",
-        // Note: mcb-providers dependency is required for linkme compile-time registration
-        // The `extern crate mcb_providers;` in main.rs forces linkme to register all providers
-        // This is a compile-time requirement, not a runtime dependency violation
-        // Providers are still accessed only through mcb-infrastructure's DI system at runtime
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-infrastructure",
-            "mcb-providers",
-        ],
-    ),
-    (
-        "mcb",
-        // Note: mcb-validate is allowed for `mcb validate` CLI subcommand
-        // This is a compile-time dependency that enables the validation CLI
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-infrastructure",
-            "mcb-server",
-            "mcb-providers",
-            "mcb-validate",
-        ],
-    ),
-    // mcb-validate: Development tool with shared language/AST utilities
-    // mcb-language-support and mcb-ast-utils are shared infrastructure crates
-    // that provide language detection and AST traversal utilities
-    ("mcb-validate", &["mcb-language-support", "mcb-ast-utils"]),
-    // Shared infrastructure crates - no dependencies on main architecture
-    ("mcb-language-support", &[]),
-    ("mcb-ast-utils", &["mcb-language-support"]),
-];
 
 /// Dependency violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

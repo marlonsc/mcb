@@ -46,8 +46,22 @@ mod linters_tests {
     async fn test_linter_engine_execution() {
         let engine = LinterEngine::new();
 
-        // Test with non-existent files (should not panic)
         let result = engine.check_files(&[]).await;
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_linter_type_supported_extension() {
+        assert_eq!(LinterType::Ruff.supported_extension(), "py");
+        assert_eq!(LinterType::Clippy.supported_extension(), "rs");
+    }
+
+    #[test]
+    fn test_linter_type_matches_extension() {
+        assert!(LinterType::Ruff.matches_extension(Some("py")));
+        assert!(!LinterType::Ruff.matches_extension(Some("rs")));
+        assert!(LinterType::Clippy.matches_extension(Some("rs")));
+        assert!(!LinterType::Clippy.matches_extension(Some("py")));
+        assert!(!LinterType::Ruff.matches_extension(None));
     }
 }

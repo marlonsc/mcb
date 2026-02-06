@@ -21,9 +21,9 @@ fn test_provider_config_manager() {
 
     let mut vector_store_configs = HashMap::new();
     vector_store_configs.insert(
-        "filesystem".to_string(),
+        "edgevec".to_string(),
         VectorStoreConfig {
-            provider: "filesystem".to_string(),
+            provider: "edgevec".to_string(),
             address: None,
             token: None,
             collection: Some("test".to_string()),
@@ -61,11 +61,11 @@ fn test_config_validation() {
 fn test_provider_config_builder() {
     let manager = ProviderConfigBuilder::new()
         .with_openai_embedding("openai", "test-key")
-        .with_filesystem_vector_store("fs")
+        .with_edgevec_vector_store("edgevec")
         .build();
 
     assert!(manager.has_embedding_provider("openai"));
-    assert!(manager.has_vector_store_provider("fs"));
+    assert!(manager.has_vector_store_provider("edgevec"));
 
     let embedding_config = manager.get_embedding_config("openai").unwrap();
     assert_eq!(embedding_config.model, "text-embedding-ada-002");

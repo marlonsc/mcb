@@ -203,14 +203,14 @@ impl ProviderConfigBuilder {
         self.with_embedding_provider(name, config)
     }
 
-    /// Add a default filesystem vector store
-    pub fn with_filesystem_vector_store<S: Into<String>>(self, name: S) -> Self {
+    /// Add a default edgevec vector store
+    pub fn with_edgevec_vector_store<S: Into<String>>(self, name: S) -> Self {
         let config = VectorStoreConfig {
-            provider: "filesystem".to_string(),
+            provider: "edgevec".to_string(),
             address: None,
             token: None,
             collection: Some("mcb_vectors".to_string()),
-            dimensions: None,
+            dimensions: Some(384),
             timeout_secs: Some(30),
         };
 

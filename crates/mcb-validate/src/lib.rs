@@ -28,6 +28,9 @@
 //! let report = validator.validate_all()?;
 //! ```
 
+// === Centralized Constants ===
+pub mod constants;
+
 // === Centralized Thresholds (Phase 2 DRY) ===
 pub mod thresholds;
 

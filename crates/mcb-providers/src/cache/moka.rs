@@ -30,7 +30,7 @@ use std::time::Duration;
 /// Supports configurable capacity and TTL.
 ///
 /// Created at runtime via factory pattern.
-/// For testing, use `NullCacheProvider`.
+/// For testing, use `MokaCacheProvider::new()` (local in-memory).
 #[derive(Clone)]
 pub struct MokaCacheProvider {
     cache: Cache<String, Vec<u8>>,

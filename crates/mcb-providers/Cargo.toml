@@ -133,6 +133,10 @@ async-nats = { workspace = true }
 # SQLite for memory repository (uses generic schema from domain)
 sqlx = { workspace = true }
 
+[features]
+default = []
+hybrid-search = []
+
 [dev-dependencies]
 tempfile = "3.10"
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

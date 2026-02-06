@@ -38,7 +38,7 @@ use crate::di::provider_resolvers::{
 };
 use crate::infrastructure::{
     PrometheusPerformanceMetrics,
-    admin::{AtomicPerformanceMetrics, DefaultIndexingOperations},
+    admin::{AtomicPerformanceMetrics, NullIndexingOperations},
     auth::NullAuthService,
     events::TokioBroadcastEventBus,
     lifecycle::DefaultShutdownCoordinator,
