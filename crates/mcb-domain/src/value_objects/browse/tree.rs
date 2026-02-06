@@ -54,12 +54,8 @@ impl FileTreeNode {
         self
     }
 
-    /// Add a child node to this directory (in-place)
-    pub fn add_child(&mut self, child: FileTreeNode) {
-        self.children.push(child);
-    }
-
     /// Sort children: directories first, then files, alphabetically
+    #[must_use]
     pub fn sorted(mut self) -> Self {
         self.sort_children();
         self

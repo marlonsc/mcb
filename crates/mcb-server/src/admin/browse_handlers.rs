@@ -210,18 +210,18 @@ pub async fn get_file_chunks(
         let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
 
         // Generate server-side highlighting via injected service
-        let highlighted = state
+        let highlighted = match state
             .highlight_service
             .highlight(&c.content, &c.language)
             .await
-            .unwrap_or_else(|_| {
-                // Fallback to plain code on error
-                mcb_domain::value_objects::browse::HighlightedCode {
-                    original: c.content.clone(),
-                    spans: Vec::new(),
-                    language: c.language.clone(),
-                }
-            });
+        {
+            Ok(h) => h,
+            Err(_) => mcb_domain::value_objects::browse::HighlightedCode::new(
+                c.content.clone(),
+                Vec::new(),
+                c.language.clone(),
+            ),
+        };
 
         let highlighted_html =
             crate::handlers::highlight_service::convert_highlighted_code_to_html(&highlighted);

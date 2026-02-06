@@ -60,6 +60,7 @@ impl VcsRepository {
         }
     }
 
+    #[must_use]
     pub fn id(&self) -> &RepositoryId {
         &self.id
     }

@@ -36,7 +36,7 @@ use std::time::Duration;
 pub type MetricLabels = HashMap<String, String>;
 
 /// Result type for metrics operations
-pub type MetricsResult<T> = Result<T, MetricsError>;
+pub type MetricsResult<T> = crate::Result<T>;
 
 /// Errors that can occur during metrics operations
 #[derive(Debug, Clone, thiserror::Error)]
