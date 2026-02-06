@@ -1,0 +1,16 @@
+FROM rust:1.77-slim
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    netcat-traditional \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY . .
+
+# Pre-fetch dependencies
+RUN cargo fetch
+
+CMD ["make", "test"]
