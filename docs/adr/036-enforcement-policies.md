@@ -1,9 +1,9 @@
 ---
 adr: 36
 title: Enforcement Layer — Policies and Guards
-status: PROPOSED
+status: ACCEPTED
 created: 
-updated: 2026-02-05
+updated: 2026-02-06
 related: [23, 25, 29]
 supersedes: []
 superseded_by: []

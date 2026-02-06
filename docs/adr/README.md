@@ -17,7 +17,7 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 -   [ADR 006: Code Audit and Architecture Improvements](006-code-audit-and-improvements.md)
 -   [ADR 007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md)
 
-### v0.2.0 Features (Planned)
+### v0.3.0 Features (Planned)
 
 -   [ADR 008: Git-Aware Semantic Indexing v0.2.0](008-git-aware-semantic-indexing-v0.2.0.md)
 -   [ADR 009: Persistent Session Memory v0.2.0](009-persistent-session-memory-v0.2.0.md)
@@ -46,12 +46,14 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 
 ### Phase 8-9: v0.3→v0.4.0 (Workflow + Integrated Context System)
 
-#### Phase 8: Workflow FSM & Policies (v0.3.0)
+#### Phase 8: Workflow FSM & Policies (v0.3.0) — ACCEPTED
 
--   [ADR 034: Workflow FSM](034-workflow-fsm.md) - State machine for context workflows
--   [ADR 035: Freshness Tracking](035-freshness-tracking.md) - Temporal metadata and staleness signals
--   [ADR 036: Policies & Validation](036-policies-validation.md) - Policy enforcement framework
--   [ADR 037: Compensation & Orchestration](037-compensation-orchestration.md) - Rollback and recovery patterns
+-   [ADR 033: MCP Handler Consolidation](033-mcp-handler-consolidation.md) - Handler registration and routing patterns
+-   [ADR 034: Workflow Core FSM](034-workflow-core-fsm.md) - Finite state machine and persistence
+-   [ADR 035: Context Scout](035-context-scout.md) - Project state discovery
+-   [ADR 036: Enforcement Policies](036-enforcement-policies.md) - Policy enforcement framework
+-   [ADR 037: Workflow Orchestrator](037-workflow-orchestrator.md) - Coordination and MCP integration
+-   [ADR 038: Multi-Tier Execution Model](038-multi-tier-execution-model.md) - Integration of ADR-034–037
 
 #### Phase 9: Integrated Context System (v0.4.0)
 

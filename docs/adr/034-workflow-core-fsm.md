@@ -1,9 +1,9 @@
 ---
 adr: 34
 title: Workflow Core — Finite State Machine and Persistence
-status: PROPOSED
+status: ACCEPTED
 created: 
-updated: 2026-02-05
+updated: 2026-02-06
 related: [13, 19, 23, 25, 29]
 supersedes: [32]
 superseded_by: []

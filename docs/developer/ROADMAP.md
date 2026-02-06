@@ -254,145 +254,78 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 
 ## Upcoming Releases
 
-### v0.2.0 - Git-Aware Indexing + Session Memory + Advanced Browser 🚧 PLANNED
+### v0.3.0 - Workflow System + Feature Implementation 🚀 IN DEVELOPMENT
 
-**Status**: Planning Complete (ADR-008, ADR-009, ADR-028)
+**Status**: Planning/Spec Finalization
+**Target Date**: Q1 2026 (4-8 weeks)
 **Priority**: High
-**Estimated Effort**: 25 phases (10 git + 10 memory + 5 browser)
-**Key Architecture**: ADR-008 (Git-Aware Indexing), ADR-009 (Session Memory), ADR-028 (Code Browser), ADR-034-038 (Workflow System)
+**Key Architecture**: ADR-008 (Git-Aware Indexing), ADR-009 (Session Memory), ADR-028 (Code Browser), ADR-034 (FSM), ADR-035 (Scout), ADR-036 (Policies), ADR-037 (Orchestrator), ADR-038 (Tiers)
 
 #### Vision
 
-Transform MCP Context Browser into a comprehensive development platform combining git-aware semantic search with persistent cross-session memory and IDE-like code browsing, enabling powerful code navigation and context preservation across Claude Code sessions.
+Transform MCP Context Browser into a comprehensive development platform combining FSM-based task orchestration with git-aware semantic search, persistent cross-session memory, and IDE-like code browsing.
 
 #### Objectives
 
-1.**Git-Aware Semantic Indexing**(ADR-008)
+**Workflow Core (ADR-034-038):**
+
+-   WorkflowFSM state machine for task orchestration
+-   ContextScout for context gathering and search
+-   PolicyEngine for workflow validation and enforcement
+-   TaskOrchestrator for multi-layer task coordination
+-   ExecutionTiers for hierarchical execution management
+
+**Git-Aware Semantic Indexing (ADR-008):**
 
 -   Project-relative indexing (portable)
 -   Multi-branch support with commit history
 -   Change impact analysis
 -   Monorepo and submodule support
 
-2.**Persistent Session Memory**(ADR-009)
+**Persistent Session Memory (ADR-009):**
 
 -   Cross-session observation storage
 -   Semantic search over past decisions and work
 -   Token-efficient progressive disclosure (3-layer workflow)
 -   Context injection for session continuity
 
-3.**Advanced Code Browser UI**(ADR-028)
+**Advanced Code Browser UI (ADR-028):**
 
 -   Tree view navigation with collapsible directories
 -   Full syntax highlighting with chunk boundary markers
--   Inline search Result highlighting
+-   Inline search result highlighting
 -   Keyboard shortcuts and dark mode
 -   Real-time SSE updates during indexing
 
-#### New Capabilities - Git Integration
+#### Infrastructure
 
-| Capability | Description |
-|------------|-------------|
-| Repository ID | Portable identification via root commit hash |
-| Multi-Branch Indexing | Index main, HEAD, and current branch (configurable) |
-| Commit History | Last 50 commits indexed by default |
-| Submodule Support | Recursive indexing as separate projects |
-| Project Detection | Auto-detect Cargo, npm, Python, Go, Maven projects in monorepos |
-| Impact Analysis | Semantic analysis of change impact between refs |
+-   5+ new workflow system modules
+-   Unit tests (target: 95%+ coverage)
+-   Integration tests with existing providers
+-   Complete rustdoc API documentation
 
-#### New Capabilities - Session Memory
+#### Quality & Release
 
-| Capability | Description |
-|------------|-------------|
-| Observation Storage | Persistent storage of tool outputs with metadata |
-| Session Summaries | Comprehensive session-level summaries |
-| Hybrid Search | Search memory using BM25 + vector embeddings |
-| Progressive Disclosure | 3-layer workflow: search → timeline → get_observations (10x token savings) |
-| Context Injection | Automatic context generation for SessionStart hooks |
-| Git-Tagged Memory | Observations tagged with git context (branch, commit) |
+-   `make quality` passes (0 errors)
+-   `make validate` passes (0 violations)
+-   Performance benchmarks
+-   Migration guide from v0.2.0
 
-#### New Capabilities - Code Browser
+**Estimated Effort**: 4-8 weeks (parallelizable features)
 
-| Capability | Description |
-|------------|-------------|
-| Tree View Navigation | Collapsible directory tree for large codebases |
-| Enhanced Code Display | Tree-sitter highlighting with chunk boundaries |
-| Search Integration | Inline semantic search results with similarity scores |
-| Keyboard Navigation | Vim-like shortcuts (j/k scroll, Enter to open) |
-| Real-time Updates | SSE events for indexing progress and updates |
-| Dark Mode | CSS variable-based theming |
+#### Unblocks
 
-#### New MCP Tools - Git
-
-| Tool | Purpose |
-|------|---------|
-| `index_git_repository` | Index repository with branch awareness |
-| `vcs (action=search_branch)` | Search within specific branch |
-| `vcs (action=compare_branches)` | Compare code between branches |
-| `vcs (action=analyze_impact)` | Analyze change impact between refs |
-| `vcs (action=list_repositories)` | List indexed repositories |
-
-#### New MCP Tools - Memory
-
-| Tool | Purpose |
-|------|---------|
-| `search` | Step 1: Search memory index (token-efficient) |
-| `timeline` | Step 2: Get chronological context around results |
-| `get_observations` | Step 3: Fetch full details for filtered IDs |
-| `memory (action=store, resource=observation)` | Store tool observation (PostToolUse hook) |
-| `inject_context` | Generate context for SessionStart hook |
-
-#### Technical Details
-
-**Git Integration:**
-
--   **New Dependency**: git2 (libgit2 bindings)
--   **New Files**: ~12 source files
--   **Estimated LOC**: ~2500
--   **ADR**: [008-git-aware-semantic-indexing-v0.2.0](../adr/008-git-aware-semantic-indexing-v0.2.0.md)
-
-**Session Memory:**
-
--   **New Dependency**: sqlx (SQLite support)
--   **New Files**: ~15 source files
--   **Estimated LOC**: ~3000
--   **ADR**: [009-persistent-session-memory-v0.2.0](../adr/009-persistent-session-memory-v0.2.0.md)
-
-**Code Browser:**
-
--   **New Dependencies**: Alpine.js (CDN)
--   **New Files**: ~6 source files
--   **Estimated LOC**: ~1500
--   **ADR**: [028-advanced-code-browser-v020](../adr/028-advanced-code-browser-v020.md)
--   **Foundation**: v0.1.2 basic browse (already implemented)
-
-#### Configuration Defaults
-
-**Git Settings:**
-
-| Setting | Default | Override |
-|---------|---------|----------|
-| Branches | main, HEAD, current | Per-repo via `.mcp-context.toml` |
-| History depth | 50 commits | Per-repo |
-| Submodules | Recursive indexing | Per-repo |
-
-**Memory Settings:**
-
-| Setting | Default | Override |
-|---------|---------|----------|
-| Database | ~/.mcb/memory.db | Global config |
-| Observation types | decision, bugfix, feature | Per-project |
-| Observation limit | 20 | Per-request |
-| Date range | 30 days | Per-request |
-| SDK compression | Disabled | Opt-in |
+-   ✅ v0.4.0 Integrated Context System (depends on workflow APIs)
+-   ✅ Multi-agent collaboration infrastructure
+-   ✅ Session lifecycle management
 
 ---
 
-### v0.3.0 - Advanced Code Intelligence 📋 FUTURE
+### Future - Advanced Code Intelligence 📋 CONCEPTUAL
 
 **Status**: Conceptual
 **Priority**: Medium
-**Dependencies**: v0.2.0 completion
+**Dependencies**: v0.3.0 completion
 **Key Architecture**: ADR-039 (Symbol Extraction), ADR-040 (Call Graph Analysis)
 
 #### Vision
@@ -555,10 +488,9 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
 | v0.1.4 | Released | Complete RCA integration, atty security fix, dependency updates, 2339+ tests |
-| v0.2.0 | **Current** | Documentation updates for v0.4.0 planning |
-| v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
-| v0.3.0 | Future | Advanced code intelligence (Phase 8: Workflow FSM, Freshness, Policies) |
-| v0.4.0 | **Planned** | Integrated Context System (Phase 9: Knowledge Graph, Hybrid Search, Versioning) |
+| v0.2.0 | **Released** | Documentation refactoring, ADR consolidation, architecture audit |
+| v0.3.0 | **In Development** | Workflow System (ADR-034-038), Git indexing, Session memory, Code browser |
+| v0.4.0 | Planned | Integrated Context System (Phase 9: Knowledge Graph, Hybrid Search, Versioning) |
 | v1.0.0 | Future | Production enterprise |
 
 ---

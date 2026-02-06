@@ -1,8 +1,8 @@
-# MCB Workflow v0.2.0 — Unified Implementation Plan
+# MCB Workflow v0.3.0 — Unified Implementation Plan
 
-**Document**: Single source of truth for v0.2.0 workflow implementation  
-**Version**: 1.0  
-**Last Updated**: 2025-01-21  
+**Document**: Single source of truth for v0.3.0 workflow implementation  
+**Version**: 1.1  
+**Last Updated**: 2026-02-06  
 **Status**: READY FOR TEAM REVIEW
 
 ---

@@ -1,9 +1,9 @@
 ---
 adr: 38
 title: Multi-Tier Execution Model — Integration of ADR-034–037
-status: PROPOSED
+status: ACCEPTED
 created: 
-updated: 2026-02-05
+updated: 2026-02-06
 related: [13, 23, 25, 29, 33]
 supersedes: []
 superseded_by: []
