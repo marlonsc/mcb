@@ -71,8 +71,8 @@ async fn test_open_repository() -> TestResult<()> {
     let provider = Git2Provider::new();
 
     let repo = provider.open_repository(dir.path()).await?;
-    assert!(!repo.id.as_str().is_empty());
-    assert!(!repo.branches.is_empty());
+    assert!(!repo.id().as_str().is_empty());
+    assert!(!repo.branches().is_empty());
     Ok(())
 }
 
@@ -119,7 +119,7 @@ async fn test_commit_history() -> TestResult<()> {
     let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
-        .commit_history(&repo, &repo.default_branch, None)
+        .commit_history(&repo, repo.default_branch(), None)
         .await?;
 
     assert!(!commits.is_empty());
@@ -134,7 +134,7 @@ async fn test_commit_history_with_limit() -> TestResult<()> {
     let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
-        .commit_history(&repo, &repo.default_branch, Some(1))
+        .commit_history(&repo, repo.default_branch(), Some(1))
         .await?;
 
     assert_eq!(commits.len(), 1);
@@ -147,7 +147,7 @@ async fn test_list_files() -> TestResult<()> {
     let provider = Git2Provider::new();
     let repo = provider.open_repository(dir.path()).await?;
 
-    let files = provider.list_files(&repo, &repo.default_branch).await?;
+    let files = provider.list_files(&repo, repo.default_branch()).await?;
     assert!(files.iter().any(|f| f.to_string_lossy() == "README.md"));
     Ok(())
 }
@@ -159,7 +159,7 @@ async fn test_read_file() -> TestResult<()> {
     let repo = provider.open_repository(dir.path()).await?;
 
     let content = provider
-        .read_file(&repo, &repo.default_branch, Path::new("README.md"))
+        .read_file(&repo, repo.default_branch(), Path::new("README.md"))
         .await?;
 
     assert!(content.contains("# Test Repo"));
@@ -173,7 +173,7 @@ async fn test_read_file_not_found() -> TestResult<()> {
     let repo = provider.open_repository(dir.path()).await?;
 
     let result = provider
-        .read_file(&repo, &repo.default_branch, Path::new("nonexistent.txt"))
+        .read_file(&repo, repo.default_branch(), Path::new("nonexistent.txt"))
         .await;
 
     assert!(result.is_err());
@@ -193,7 +193,7 @@ async fn test_diff_refs() -> TestResult<()> {
     let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
-        .commit_history(&repo, &repo.default_branch, Some(2))
+        .commit_history(&repo, repo.default_branch(), Some(2))
         .await?;
 
     assert!(commits.len() >= 2);

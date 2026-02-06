@@ -46,10 +46,9 @@ pub enum Error {
     #[error("Base64 decode error: {0}")]
     Base64(#[from] base64::DecodeError),
 
-    /// Generic string-based error
-    #[error("String error: {0}")]
-    String(String),
-
+    // /// Generic string-based error
+    // #[error("String error: {0}")]
+    // String(String),
     /// Invalid regular expression pattern
     #[error("Invalid regex pattern '{pattern}': {message}")]
     InvalidRegex {
@@ -205,6 +204,14 @@ pub enum Error {
         /// Content hash of duplicate
         content_hash: String,
     },
+
+    /// Browse operation error
+    #[error("Browse error: {0}")]
+    Browse(String),
+
+    /// Highlighting operation error
+    #[error("Highlighting error: {0}")]
+    Highlight(String),
 }
 
 // Basic error creation methods
@@ -471,20 +478,5 @@ impl Error {
     }
 }
 
-impl From<&str> for Error {
-    fn from(s: &str) -> Self {
-        Self::String(s.to_string())
-    }
-}
-
-// Note: nix::errno::Errno conversion removed for domain purity
-// Infrastructure layer should handle OS-specific error conversions
-
-impl From<String> for Error {
-    fn from(s: String) -> Self {
-        Self::String(s)
-    }
-}
-
-// Note: External crate error conversions removed for domain purity
-// Infrastructure layer should handle these conversions
+// Note: OS-specific and external crate error conversions are excluded for domain purity.
+// The infrastructure layer is responsible for these conversions.

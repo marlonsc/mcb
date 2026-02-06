@@ -35,7 +35,7 @@ pub async fn index_repository(
     let branches = args
         .branches
         .clone()
-        .unwrap_or_else(|| vec![repo.default_branch.clone()]);
+        .unwrap_or_else(|| vec![repo.default_branch().to_string()]);
     let mut total_files = 0;
     for branch in &branches {
         match vcs_provider.list_files(&repo, branch).await {
@@ -65,14 +65,14 @@ pub async fn index_repository(
         0
     };
     let result = IndexResult {
-        repository_id: repo.id.to_string(),
-        path: repo.path.to_string_lossy().to_string(),
-        default_branch: repo.default_branch.clone(),
+        repository_id: repo.id().to_string(),
+        path: repo.path().to_string_lossy().to_string(),
+        default_branch: repo.default_branch().to_string(),
         branches_found: branches.clone(),
         total_files,
         commits_indexed,
     };
-    let _ = vcs_repository_registry::record_repository(repo.id.as_str(), &repo.path);
+    let _ = vcs_repository_registry::record_repository(repo.id(), repo.path());
     ResponseFormatter::json_success(&result)
 }
 

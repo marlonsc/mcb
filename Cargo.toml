@@ -16,7 +16,7 @@ members = [
 edition = "2024"
 rust-version = "1.92"
 license = "MIT"
-repository = "https://github.com/anthropics/mcb"
+repository = "https://github.com/marlonsc/mcb"
 
 [workspace.lints.rust]
 # Safety lints
@@ -42,9 +42,6 @@ tokio = { version = "1.49", features = ["full"] }
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-
-# Byte manipulation (RUSTSEC-2026-0007: require >=1.11.1)
-bytes = "1.11.1"
 
 # Error handling
 anyhow = "1.0"
@@ -119,9 +116,6 @@ rocket = { version = "0.5", features = ["json"] }
 # System metrics
 sysinfo = "0.38"
 nix = { version = "0.31", features = ["fs"] }
-
-# Code analysis and AST parsing
-complexity = "0.2"  # Cognitive complexity for Rust (syn-based)
 tree-sitter = "0.26"
 tree-sitter-c = "0.24"
 tree-sitter-cpp = "0.23"
@@ -160,7 +154,13 @@ schemars = "1.2"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "0.14", features = ["server", "client", "macros", "transport-io", "transport-child-process"] }
+rmcp = { version = "0.14", features = [
+    "server",
+    "client",
+    "macros",
+    "transport-io",
+    "transport-child-process",
+] }
 
 # Advanced Multi-Provider Strategy
 prometheus = "0.14"
@@ -189,7 +189,9 @@ humantime = "2.1"
 async-nats = "0.46"
 
 # Local embeddings without external services
-fastembed = { version = "5.8", default-features = false, features = ["default"] }
+fastembed = { version = "5.8", default-features = false, features = [
+    "default",
+] }
 
 # Optional provider - moved to individual crate dependencies since workspace deps can't be optional
 
@@ -217,9 +219,6 @@ tracing-appender = "0.2"
 
 # Benchmarking
 criterion = "0.8.1"
-
-# Plugin registration
-linkme = "0.3"
 
 # Dependency Injection (IoC Container)
 dill = "0.15"

@@ -137,7 +137,7 @@ async fn test_embedding_generates_real_vectors() {
         );
         assert_eq!(
             emb.model, "FastEmbed model",
-            "Embedding should have model name",
+            "Embedding should have model name for index {}",
             i
         );
     }

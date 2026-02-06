@@ -5,27 +5,13 @@
 //!
 //! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
 
-use super::browse_service::{HighlightCategory, HighlightSpan, HighlightedCode};
 use crate::constants::HIGHLIGHT_NAMES;
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::browse::HighlightService;
+use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
 use std::sync::Arc;
-use thiserror::Error;
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
-
-/// Highlight service errors
-#[derive(Debug, Error)]
-pub enum HighlightError {
-    #[error("Unsupported language: {0}")]
-    UnsupportedLanguage(String),
-
-    #[error("Highlighting failed: {0}")]
-    HighlightingFailed(String),
-
-    #[error("Configuration error: {0}")]
-    ConfigurationError(String),
-}
-
-pub type Result<T> = std::result::Result<T, HighlightError>;
 
 /// Language-specific highlighting configuration (server-side only; distinct from chunking config in mcb-providers).
 struct HighlightLanguageConfig {
@@ -59,19 +45,6 @@ pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
         "punctuation" => HighlightCategory::Punctuation,
         _ => HighlightCategory::Other,
     }
-}
-
-/// Highlight service trait (agnóstico interface)
-pub trait HighlightService: Send + Sync {
-    /// Highlight code with given language
-    ///
-    /// Returns structured highlight spans with byte offsets.
-    /// Falls back to empty spans if highlighting fails.
-    fn highlight(
-        &self,
-        code: &str,
-        language: &str,
-    ) -> impl std::future::Future<Output = Result<HighlightedCode>> + Send;
 }
 
 /// Concrete highlight service implementation using tree-sitter
@@ -169,7 +142,7 @@ impl HighlightServiceImpl {
             "",
             "",
         )
-        .map_err(|e| HighlightError::ConfigurationError(e.to_string()))?;
+        .map_err(|e| Error::Highlight(format!("Config error: {}", e)))?;
 
         config.configure(&HIGHLIGHT_NAMES);
         Ok(config)
@@ -185,19 +158,18 @@ impl HighlightServiceImpl {
             });
         }
 
-        let lang_config = Self::get_language_config(language)
-            .ok_or_else(|| HighlightError::UnsupportedLanguage(language.to_string()))?;
+        let lang_config =
+            Self::get_language_config(language).ok_or_else(|| Error::InvalidArgument {
+                message: format!("Unsupported language: {}", language),
+            })?;
 
         let config = Self::create_highlight_config(lang_config)?;
 
-        let mut highlighter = self
-            .highlighter
-            .lock()
-            .map_err(|_| HighlightError::HighlightingFailed("Mutex lock failed".to_string()))?;
+        let mut highlighter = self.highlighter.blocking_lock();
 
         let highlights = highlighter
-            .highlight(&config, code.as_bytes(), None, |_| None)
-            .map_err(|e| HighlightError::HighlightingFailed(e.to_string()))?;
+            .highlight(&config, code.as_bytes(), None, |_: &str| None)
+            .map_err(|e| Error::Highlight(format!("Parsing failed: {}", e)))?;
 
         let mut spans = Vec::new();
         let mut position = 0;
@@ -224,7 +196,7 @@ impl HighlightServiceImpl {
                     }
                 }
                 Err(e) => {
-                    return Err(HighlightError::HighlightingFailed(e.to_string()));
+                    return Err(Error::Highlight(format!("Event error: {}", e)));
                 }
             }
         }
@@ -243,49 +215,24 @@ impl Default for HighlightServiceImpl {
     }
 }
 
+#[async_trait::async_trait]
 impl HighlightService for HighlightServiceImpl {
-    fn highlight(
-        &self,
-        code: &str,
-        language: &str,
-    ) -> impl std::future::Future<Output = Result<HighlightedCode>> + Send {
+    async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode> {
         let code = code.to_string();
         let language = language.to_string();
         let highlighter = Arc::clone(&self.highlighter);
 
-        async move {
-            tokio::task::spawn_blocking(move || {
-                let service = HighlightServiceImpl { highlighter };
-                service.highlight_code_internal(&code, &language)
-            })
-            .await
-            .map_err(|e| HighlightError::HighlightingFailed(e.to_string()))?
-        }
+        // Offload to blocking thread
+        tokio::task::spawn_blocking(move || {
+            let service = HighlightServiceImpl { highlighter };
+            service.highlight_code_internal(&code, &language)
+        })
+        .await
+        .map_err(|e| Error::Highlight(format!("Blocking task failed: {}", e)))?
     }
 }
 
 /// Public function to highlight code and return HTML with syntax highlighting
-///
-/// This is the main entry point for syntax highlighting. It uses the internal
-/// HighlightServiceImpl to perform tree-sitter based highlighting and converts
-/// the result to HTML with CSS classes.
-///
-/// # Arguments
-///
-/// * `code` - The source code to highlight
-/// * `language` - The programming language (e.g., "rust", "python", "javascript")
-///
-/// # Returns
-///
-/// HTML string with syntax highlighting applied via CSS classes (hl-keyword, hl-string, etc.)
-/// Returns empty string for empty input or unsupported languages.
-///
-/// # Example
-///
-/// ```ignore
-/// let html = highlight_code("fn main() {}", "rust");
-/// assert!(html.contains("<span class=\"hl-keyword\">fn</span>"));
-/// ```
 pub fn highlight_code(code: &str, language: &str) -> String {
     if code.is_empty() {
         return String::new();
@@ -300,9 +247,9 @@ pub fn highlight_code(code: &str, language: &str) -> String {
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
             Err(_) => {
-                return Err(HighlightError::HighlightingFailed(
-                    "Runtime init".to_string(),
-                ));
+                return Err(Error::Internal {
+                    message: "Runtime init".to_string(),
+                });
             }
         };
         rt.block_on(async { service.highlight(&code_owned, &language_owned).await })
@@ -316,17 +263,6 @@ pub fn highlight_code(code: &str, language: &str) -> String {
 }
 
 /// Public function to highlight code chunks and return HTML
-///
-/// Highlights multiple code chunks and returns HTML with syntax highlighting.
-/// Useful for highlighting multiple code blocks from the same file.
-///
-/// # Arguments
-///
-/// * `chunks` - Vector of (code, language) tuples
-///
-/// # Returns
-///
-/// Vector of HTML strings with syntax highlighting applied
 pub fn highlight_chunks(chunks: Vec<(&str, &str)>) -> Vec<String> {
     chunks
         .into_iter()

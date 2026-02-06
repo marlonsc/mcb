@@ -65,7 +65,7 @@ pub async fn search_branch(
         }
     }
     let result = BranchSearchResponse {
-        repository_id: repo.id.to_string(),
+        repository_id: repo.id().to_string(),
         branch,
         query: query.to_string(),
         count: matches.len(),

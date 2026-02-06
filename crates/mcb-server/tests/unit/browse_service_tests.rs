@@ -2,11 +2,12 @@
 //!
 //! Moved from inline tests in src/handlers/browse_service.rs.
 
-use mcb_server::handlers::browse_service::{
-    BrowseError, BrowseServiceImpl, detect_language, should_skip_path,
-};
+use mcb_domain::ports::browse::{BrowseError, BrowseService};
+use mcb_server::handlers::browse_service::{BrowseServiceImpl, detect_language, should_skip_path};
+use mcb_server::handlers::highlight_service::HighlightServiceImpl;
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 use tempfile::TempDir;
 
 // ============================================================================
@@ -173,7 +174,7 @@ async fn test_walk_directory_single_file() {
     let file_path = temp_dir.path().join("test.rs");
     fs::write(&file_path, "fn main() {}").unwrap();
 
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service
         .get_file_tree(temp_dir.path(), 1)
         .await
@@ -199,7 +200,7 @@ async fn test_walk_directory_multiple_files() {
     fs::write(temp_dir.path().join("lib.rs"), "pub fn helper() {}").unwrap();
     fs::write(temp_dir.path().join("README.md"), "# Project").unwrap();
 
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service
         .get_file_tree(temp_dir.path(), 1)
         .await
@@ -222,7 +223,7 @@ async fn test_walk_directory_nested() {
     fs::create_dir(&src_dir).unwrap();
     fs::write(src_dir.join("main.rs"), "fn main() {}").unwrap();
 
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service
         .get_file_tree(temp_dir.path(), 2)
         .await
@@ -250,7 +251,7 @@ async fn test_walk_directory_max_depth_limit() {
     fs::create_dir(&nested_dir).unwrap();
     fs::write(nested_dir.join("deep.rs"), "code").unwrap();
 
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
 
     let result = service
         .get_file_tree(temp_dir.path(), 1)
@@ -269,7 +270,7 @@ async fn test_walk_directory_skips_node_modules() {
     fs::create_dir(temp_dir.path().join("node_modules")).unwrap();
     fs::write(temp_dir.path().join("package.json"), "{}").unwrap();
 
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service
         .get_file_tree(temp_dir.path(), 2)
         .await
@@ -286,7 +287,7 @@ async fn test_walk_directory_skips_hidden_dirs() {
     fs::create_dir(temp_dir.path().join(".git")).unwrap();
     fs::write(temp_dir.path().join("source.rs"), "code").unwrap();
 
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service
         .get_file_tree(temp_dir.path(), 2)
         .await
@@ -302,7 +303,7 @@ async fn test_walk_directory_skips_hidden_dirs() {
 
 #[tokio::test]
 async fn test_get_file_tree_nonexistent_path() {
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service
         .get_file_tree(Path::new("/nonexistent/path/12345"), 1)
         .await;
@@ -316,7 +317,7 @@ async fn test_get_file_tree_nonexistent_path() {
 
 #[tokio::test]
 async fn test_get_code_nonexistent_file() {
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service.get_code(Path::new("/nonexistent/file.rs")).await;
 
     assert!(result.is_err());
@@ -329,7 +330,7 @@ async fn test_get_code_success() {
     let content = "fn main() { println!(\"hello\"); }";
     fs::write(&file_path, content).unwrap();
 
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service.get_code(&file_path).await;
 
     assert!(result.is_ok());
@@ -342,7 +343,7 @@ async fn test_get_code_success() {
 
 #[tokio::test]
 async fn test_highlight_basic() {
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let code = "fn main() {}";
     let result = service
         .highlight(code, "rust")
@@ -361,7 +362,7 @@ async fn test_get_highlighted_code() {
     let content = "fn main() {}";
     fs::write(&file_path, content).unwrap();
 
-    let service = BrowseServiceImpl::new();
+    let service = BrowseServiceImpl::new(Arc::new(HighlightServiceImpl::new()));
     let result = service
         .get_highlighted_code(&file_path)
         .await

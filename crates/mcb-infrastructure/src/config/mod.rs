@@ -7,6 +7,7 @@
 pub mod data;
 pub mod loader;
 pub mod mcp_context_config;
+pub mod paths;
 pub mod providers;
 pub mod server;
 pub mod types;
@@ -15,6 +16,7 @@ pub mod watcher;
 pub use data::*;
 pub use loader::*;
 pub use mcp_context_config::*;
+pub use paths::*;
 pub use providers::*;
 pub use server::*;
 pub use watcher::*;

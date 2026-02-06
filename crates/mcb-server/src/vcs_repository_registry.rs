@@ -3,8 +3,9 @@
 //! Stores a mapping of repository_id -> path so tools like search_branch can
 //! resolve a repository without requiring the path in every call.
 
-use crate::constants::{VCS_LOCK_FILENAME, VCS_REGISTRY_FILENAME};
+use mcb_domain::entities::vcs::RepositoryId;
 use mcb_domain::error::{Error, Result};
+use mcb_infrastructure::config::{vcs_registry_lock_path, vcs_registry_path};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::OpenOptions;
@@ -24,20 +25,18 @@ impl Registry {
 }
 
 fn registry_path() -> Result<PathBuf> {
-    let config_dir =
-        dirs::config_dir().ok_or_else(|| Error::io("Unable to determine config directory"))?;
-    Ok(config_dir.join("mcb").join(VCS_REGISTRY_FILENAME))
+    vcs_registry_path()
 }
 
 fn lock_path() -> Result<PathBuf> {
-    let config_dir =
-        dirs::config_dir().ok_or_else(|| Error::io("Unable to determine config directory"))?;
-    Ok(config_dir.join("mcb").join(VCS_LOCK_FILENAME))
+    vcs_registry_lock_path()
 }
 
 struct FileLockGuard {
     _file: std::fs::File,
 }
+
+use fs2::FileExt;
 
 impl FileLockGuard {
     fn acquire() -> Result<Self> {
@@ -54,32 +53,10 @@ impl FileLockGuard {
             .open(&lock_path)
             .map_err(|e| Error::io(format!("Failed to open lock file: {e}")))?;
 
-        #[cfg(unix)]
-        {
-            use std::os::unix::io::AsRawFd;
-            let fd = file.as_raw_fd();
-            // SAFETY: fd is a valid file descriptor obtained from AsRawFd trait.
-            // libc::LOCK_EX is a valid flock operation constant.
-            // flock only modifies kernel state, not memory safety.
-            let result = unsafe { libc::flock(fd, libc::LOCK_EX) };
-            if result != 0 {
-                return Err(Error::io("Failed to acquire file lock"));
-            }
-        }
+        file.lock_exclusive()
+            .map_err(|e| Error::io(format!("Failed to acquire file lock: {e}")))?;
 
         Ok(Self { _file: file })
-    }
-}
-
-#[cfg(unix)]
-impl Drop for FileLockGuard {
-    fn drop(&mut self) {
-        use std::os::unix::io::AsRawFd;
-        let fd = self._file.as_raw_fd();
-        // SAFETY: fd is a valid file descriptor obtained from AsRawFd trait.
-        // libc::LOCK_UN is a valid flock operation constant for unlocking.
-        // This call reverts the lock acquired in new().
-        unsafe { libc::flock(fd, libc::LOCK_UN) };
     }
 }
 
@@ -108,24 +85,25 @@ fn save_registry(path: &Path, registry: &Registry) -> Result<()> {
 }
 
 /// Record the repository path for a given repository_id.
-pub fn record_repository(repository_id: &str, path: &Path) -> Result<()> {
+pub fn record_repository(repository_id: &RepositoryId, path: &Path) -> Result<()> {
     let _guard = FileLockGuard::acquire()?;
     let registry_path = registry_path()?;
     let mut registry = load_registry(&registry_path)?;
-    registry
-        .repositories
-        .insert(repository_id.to_string(), path.display().to_string());
+    registry.repositories.insert(
+        repository_id.as_str().to_string(),
+        path.display().to_string(),
+    );
     save_registry(&registry_path, &registry)
 }
 
 /// Resolve a repository path by repository_id.
-pub fn lookup_repository_path(repository_id: &str) -> Result<PathBuf> {
+pub fn lookup_repository_path(repository_id: &RepositoryId) -> Result<PathBuf> {
     let _guard = FileLockGuard::acquire()?;
     let registry_path = registry_path()?;
     let registry = load_registry(&registry_path)?;
     registry
         .repositories
-        .get(repository_id)
+        .get(repository_id.as_str())
         .map(PathBuf::from)
         .ok_or_else(|| {
             Error::io(format!(

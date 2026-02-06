@@ -12,7 +12,11 @@
 //!
 //! Run with: `cargo test -p mcb-server --test highlight_integration`
 
-use mcb_server::handlers::browse_service::{BrowseService, BrowseServiceImpl, HighlightCategory};
+use mcb_domain::ports::browse::BrowseService;
+use mcb_domain::value_objects::browse::HighlightCategory;
+use mcb_server::handlers::browse_service::BrowseServiceImpl;
+use mcb_server::handlers::highlight_service::HighlightServiceImpl;
+use std::sync::Arc;
 use std::time::Instant;
 
 // ============================================================================
@@ -21,7 +25,8 @@ use std::time::Instant;
 
 #[tokio::test]
 async fn test_highlight_returns_spans_rust() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
     let code = r#"fn factorial(n: u32) -> u32 {
     match n {
         0 | 1 => 1,
@@ -82,7 +87,8 @@ async fn test_highlight_returns_spans_rust() {
 
 #[tokio::test]
 async fn test_highlight_all_12_languages() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     // Test cases for all 12 supported languages
     let test_cases = vec![
@@ -153,7 +159,8 @@ async fn test_highlight_all_12_languages() {
 
 #[tokio::test]
 async fn test_highlight_span_positions_correct() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     // Simple code with known structure
     let code = "fn main() {}";
@@ -196,7 +203,8 @@ async fn test_highlight_span_positions_correct() {
 
 #[tokio::test]
 async fn test_highlight_unsupported_language_graceful() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     // Test with unsupported language
     let result = service.highlight("let x = 42;", "unknownlang123").await;
@@ -226,7 +234,8 @@ async fn test_highlight_unsupported_language_graceful() {
 
 #[tokio::test]
 async fn test_highlight_empty_code() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     let result = service
         .highlight("", "rust")
@@ -249,7 +258,8 @@ async fn test_highlight_empty_code() {
 
 #[tokio::test]
 async fn test_highlight_performance_100_lines() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     // Generate ~100-line Rust code
     let mut code = String::new();
@@ -294,7 +304,8 @@ async fn test_highlight_performance_100_lines() {
 
 #[tokio::test]
 async fn test_highlight_performance_10k_lines() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     // Generate ~10k-line Rust code
     let mut code = String::new();
@@ -339,7 +350,8 @@ async fn test_highlight_performance_10k_lines() {
 
 #[tokio::test]
 async fn test_highlight_categories_present() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     // Code with various elements
     let code = r#"// Comment
@@ -399,7 +411,8 @@ fn hello() {
 
 #[tokio::test]
 async fn test_highlight_complex_multiline_code() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     let code = r#"impl Iterator for MyIterator {
     type Item = i32;
@@ -449,7 +462,8 @@ async fn test_highlight_complex_multiline_code() {
 
 #[tokio::test]
 async fn test_highlight_case_insensitive_language() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
     let code = "fn main() {}";
 
     // Test lowercase
@@ -494,7 +508,8 @@ async fn test_highlight_case_insensitive_language() {
 
 #[tokio::test]
 async fn test_highlight_language_aliases() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     let test_cases = vec![
         ("js", "const x = 42;", "javascript"),
@@ -537,7 +552,8 @@ async fn test_highlight_language_aliases() {
 
 #[tokio::test]
 async fn test_highlight_edge_cases_no_panic() {
-    let service = BrowseServiceImpl::new();
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let service = BrowseServiceImpl::new(highlight_service);
 
     let edge_cases = vec![
         ("rust", ""),                         // Empty

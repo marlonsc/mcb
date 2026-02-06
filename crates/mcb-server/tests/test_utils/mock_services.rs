@@ -1326,17 +1326,17 @@ impl VcsProvider for MockVcsProvider {
         if self.should_fail.load(Ordering::SeqCst) {
             return Err(mcb_domain::error::Error::vcs("Mock failure"));
         }
-        Ok(VcsRepository {
-            id: RepositoryId::new("mock-repo-id".to_string()),
-            path: path.to_path_buf(),
-            default_branch: "main".to_string(),
-            branches: vec!["main".to_string()],
-            remote_url: None,
-        })
+        Ok(VcsRepository::new(
+            RepositoryId::new("mock-repo-id".to_string()),
+            path.to_path_buf(),
+            "main".to_string(),
+            vec!["main".to_string()],
+            None,
+        ))
     }
 
     fn repository_id(&self, repo: &VcsRepository) -> RepositoryId {
-        repo.id.clone()
+        repo.id().clone()
     }
 
     async fn list_branches(&self, _repo: &VcsRepository) -> Result<Vec<VcsBranch>> {

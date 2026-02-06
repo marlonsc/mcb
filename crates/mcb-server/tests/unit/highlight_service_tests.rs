@@ -2,10 +2,9 @@
 //!
 //! Moved from inline tests in src/handlers/highlight_service.rs.
 
-use mcb_server::handlers::browse_service::HighlightCategory;
-use mcb_server::handlers::highlight_service::{
-    HighlightError, HighlightServiceImpl, map_highlight_to_category,
-};
+use mcb_domain::ports::browse::{HighlightError, HighlightService};
+use mcb_domain::value_objects::browse::HighlightCategory;
+use mcb_server::handlers::highlight_service::{HighlightServiceImpl, map_highlight_to_category};
 use std::time::Instant;
 
 #[tokio::test]

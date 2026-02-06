@@ -27,7 +27,10 @@ pub mod search;
 pub mod types;
 
 // Re-export commonly used value objects
-pub use browse::{CollectionInfo, FileInfo, FileTreeNode};
+pub use browse::{
+    CollectionInfo, FileInfo, FileNode, FileTreeNode, HighlightCategory, HighlightSpan,
+    HighlightedCode,
+};
 pub use config::{CacheConfig, EmbeddingConfig, VectorStoreConfig};
 pub use embedding::Embedding;
 pub use search::SearchResult;

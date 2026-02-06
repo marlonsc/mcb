@@ -3,7 +3,9 @@
 //! REST API for file tree browsing and code highlighting.
 //! Part of Phase 8a (Web-first rendering with agnóstico service).
 
-use crate::handlers::browse_service::{BrowseService, BrowseServiceImpl};
+use crate::handlers::browse_service::BrowseServiceImpl;
+use mcb_domain::ports::browse::BrowseService;
+use mcb_domain::value_objects::browse::{FileNode, HighlightedCode};
 use rocket::{State, post, serde::json::Json};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -27,7 +29,7 @@ fn default_max_depth() -> usize {
 #[serde(crate = "rocket::serde")]
 pub struct GetTreeResponse {
     pub success: bool,
-    pub tree: Option<crate::handlers::browse_service::FileNode>,
+    pub tree: Option<FileNode>,
     pub error: Option<String>,
 }
 
@@ -44,14 +46,14 @@ pub struct HighlightRequest {
 #[serde(crate = "rocket::serde")]
 pub struct HighlightResponse {
     pub success: bool,
-    pub highlighted: Option<crate::handlers::browse_service::HighlightedCode>,
+    pub highlighted: Option<HighlightedCode>,
     pub error: Option<String>,
 }
 
 /// Get file tree from root path
 #[post("/api/browse/tree", format = "json", data = "<req>")]
 pub async fn get_tree(
-    service: &State<Arc<BrowseServiceImpl>>,
+    service: &State<Arc<dyn BrowseService>>,
     req: Json<GetTreeRequest>,
 ) -> Json<GetTreeResponse> {
     match service.get_file_tree(&req.root, req.max_depth).await {
@@ -71,7 +73,7 @@ pub async fn get_tree(
 /// Highlight code with given language
 #[post("/api/browse/highlight", format = "json", data = "<req>")]
 pub async fn highlight(
-    service: &State<Arc<BrowseServiceImpl>>,
+    service: &State<Arc<dyn BrowseService>>,
     req: Json<HighlightRequest>,
 ) -> Json<HighlightResponse> {
     match service.highlight(&req.code, &req.language).await {

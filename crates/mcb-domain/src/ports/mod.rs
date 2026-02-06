@@ -20,6 +20,8 @@
 
 /// Administrative interfaces for system management and monitoring
 pub mod admin;
+/// Browse and highlight service ports
+pub mod browse;
 /// Infrastructure service ports
 pub mod infrastructure;
 /// External service provider ports
@@ -35,6 +37,9 @@ pub use admin::{
     IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsData,
     PerformanceMetricsInterface, PortServiceState, ShutdownCoordinator, ValidationOperation,
     ValidationOperationResult, ValidationOperationsInterface,
+};
+pub use browse::{
+    BrowseError, BrowseResult, BrowseService, HighlightError, HighlightResult, HighlightService,
 };
 pub use infrastructure::{
     AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, LockGuard,

@@ -43,21 +43,17 @@ pub const VALID_SECTIONS: &[&str] = &[
 // VCS REGISTRY
 // ============================================================================
 
-/// VCS repository registry file name (stored under ~/.config/mcb)
-pub const VCS_REGISTRY_FILENAME: &str = "vcs_repository_registry.json";
+// ============================================================================
+// VCS REGISTRY
+// ============================================================================
 
-/// VCS registry lock file name for serialized writes
-pub const VCS_LOCK_FILENAME: &str = "vcs_repository_registry.lock";
+// Constraints moved to mcb_infrastructure::config::paths
 
 // ============================================================================
 // COLLECTION MAPPING
 // ============================================================================
 
-/// Collection name mapping file name (~/.config/mcb)
-pub const COLLECTION_MAPPING_FILENAME: &str = "collection_mapping.json";
-
-/// Collection mapping lock file for atomic operations
-pub const COLLECTION_MAPPING_LOCK_FILENAME: &str = "collection_mapping.lock";
+// Constraints moved to mcb_infrastructure::config::paths
 
 // ============================================================================
 // HIGHLIGHT SERVICE

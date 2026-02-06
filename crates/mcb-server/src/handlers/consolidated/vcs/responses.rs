@@ -1,5 +1,7 @@
 use crate::args::VcsArgs;
 use crate::vcs_repository_registry;
+use mcb_domain::entities::vcs::RepositoryId;
+use mcb_domain::error::Error;
 use rmcp::model::{CallToolResult, Content};
 use serde::Serialize;
 use std::path::PathBuf;
@@ -82,7 +84,8 @@ pub fn repo_path(args: &VcsArgs) -> Result<PathBuf, CallToolResult> {
         return Ok(PathBuf::from(path));
     }
     if let Some(repo_id) = args.repo_id.as_ref() {
-        match vcs_repository_registry::lookup_repository_path(repo_id) {
+        let id = RepositoryId::from(repo_id.as_str());
+        match vcs_repository_registry::lookup_repository_path(&id) {
             Ok(path) => return Ok(path),
             Err(_) => {
                 return Err(CallToolResult::error(vec![Content::text(format!(

@@ -3,139 +3,28 @@
 //! Provides trait-based interface for browsing file trees and highlighting code.
 //! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
 
-use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::browse::{BrowseService, HighlightService};
+use mcb_domain::value_objects::browse::{FileNode, HighlightedCode};
+use std::path::Path;
 use std::sync::Arc;
-use thiserror::Error;
-
-use super::HighlightService;
-
-/// Browse service errors
-#[derive(Debug, Error)]
-pub enum BrowseError {
-    #[error("I/O error: {0}")]
-    Io(#[from] std::io::Error),
-
-    #[error("Path not found: {0}")]
-    PathNotFound(PathBuf),
-
-    #[error("Unsupported language: {0}")]
-    UnsupportedLanguage(String),
-
-    #[error("Tree parsing failed: {0}")]
-    TreeParsingFailed(String),
-
-    #[error("Highlighting failed: {0}")]
-    HighlightingFailed(String),
-}
-
-pub type Result<T> = std::result::Result<T, BrowseError>;
-
-/// File tree node structure (agnóstico, used by all renderers)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FileNode {
-    pub path: PathBuf,
-    pub name: String,
-    pub is_dir: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<FileNode>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub language: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub lines: Option<usize>,
-}
-
-/// Highlighted code spans (agnóstico format)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HighlightSpan {
-    pub start: usize,
-    pub end: usize,
-    pub category: HighlightCategory,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub enum HighlightCategory {
-    Keyword,
-    String,
-    Comment,
-    Function,
-    Variable,
-    Type,
-    Number,
-    Operator,
-    Punctuation,
-    Other,
-}
-
-/// Highlighted code result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HighlightedCode {
-    pub original: String,
-    pub spans: Vec<HighlightSpan>,
-    pub language: String,
-}
-
-/// Browse service trait (agnóstico interface)
-pub trait BrowseService: Send + Sync {
-    /// Get file tree from given root path
-    fn get_file_tree(
-        &self,
-        root: &Path,
-        max_depth: usize,
-    ) -> impl std::future::Future<Output = Result<FileNode>> + Send;
-
-    /// Get raw code from file
-    fn get_code(&self, path: &Path) -> impl std::future::Future<Output = Result<String>> + Send;
-
-    /// Highlight code with given language
-    fn highlight(
-        &self,
-        code: &str,
-        language: &str,
-    ) -> impl std::future::Future<Output = Result<HighlightedCode>> + Send;
-
-    /// Get code with highlighting
-    fn get_highlighted_code(
-        &self,
-        path: &Path,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<HighlightedCode>> + Send + '_>>
-    {
-        let path = path.to_path_buf();
-        Box::pin(async move {
-            let code = self.get_code(&path).await?;
-            let lang = detect_language(&path).unwrap_or_else(|| "text".to_string());
-            self.highlight(&code, &lang).await
-        })
-    }
-}
 
 /// Concrete browse service implementation
 pub struct BrowseServiceImpl {
-    highlight_service: Arc<super::HighlightServiceImpl>,
-}
-
-impl Default for BrowseServiceImpl {
-    fn default() -> Self {
-        Self::new()
-    }
+    highlight_service: Arc<dyn HighlightService>,
 }
 
 impl BrowseServiceImpl {
-    pub fn new() -> Self {
-        Self {
-            highlight_service: Arc::new(super::HighlightServiceImpl::new()),
-        }
-    }
-
-    pub fn with_highlight_service(highlight_service: Arc<super::HighlightServiceImpl>) -> Self {
+    pub fn new(highlight_service: Arc<dyn HighlightService>) -> Self {
         Self { highlight_service }
     }
 }
 
+#[async_trait::async_trait]
 impl BrowseService for BrowseServiceImpl {
     async fn get_file_tree(&self, root: &Path, max_depth: usize) -> Result<FileNode> {
         if !root.exists() {
-            return Err(BrowseError::PathNotFound(root.to_path_buf()));
+            return Err(Error::not_found(root.to_string_lossy()));
         }
 
         self.walk_directory_boxed(root, 0, max_depth).await
@@ -143,19 +32,25 @@ impl BrowseService for BrowseServiceImpl {
 
     async fn get_code(&self, path: &Path) -> Result<String> {
         if !path.exists() {
-            return Err(BrowseError::PathNotFound(path.to_path_buf()));
+            return Err(Error::not_found(path.to_string_lossy()));
         }
 
         tokio::fs::read_to_string(path)
             .await
-            .map_err(BrowseError::Io)
+            .map_err(|e| Error::io_with_source("Read code", e))
     }
 
     async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode> {
         self.highlight_service
             .highlight(code, language)
             .await
-            .map_err(|e| BrowseError::HighlightingFailed(e.to_string()))
+            .map_err(|e| Error::Browse(format!("Highlighting failed: {}", e)))
+    }
+
+    async fn get_highlighted_code(&self, path: &Path) -> Result<HighlightedCode> {
+        let code = self.get_code(path).await?;
+        let lang = detect_language(path).unwrap_or_else(|| "text".to_string());
+        self.highlight(&code, &lang).await
     }
 }
 
@@ -168,7 +63,9 @@ impl BrowseServiceImpl {
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<FileNode>> + Send + '_>> {
         let path = path.to_path_buf();
         Box::pin(async move {
-            let metadata = tokio::fs::metadata(&path).await?;
+            let metadata = tokio::fs::metadata(&path)
+                .await
+                .map_err(|e| Error::io_with_source("Walk dir", e))?;
             let name = path
                 .file_name()
                 .and_then(|n| n.to_str())
@@ -179,10 +76,12 @@ impl BrowseServiceImpl {
             let language = if is_dir { None } else { detect_language(&path) };
 
             let children = if is_dir && depth < max_depth {
-                let mut entries = tokio::fs::read_dir(&path).await?;
+                let mut entries = tokio::fs::read_dir(&path)
+                    .await
+                    .map_err(|e| Error::io_with_source("Read dir", e))?;
                 let mut children = Vec::new();
 
-                while let Some(entry) = entries.next_entry().await? {
+                while let Ok(Some(entry)) = entries.next_entry().await {
                     let entry_path = entry.path();
 
                     if should_skip_path(&entry_path) {

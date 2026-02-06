@@ -352,6 +352,12 @@ use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::value_objects::Embedding;
 use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 
+/// Creates a test vector store instance (EdgeVec in-memory)
+fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
+    EdgeVecVectorStoreProvider::new(EdgeVecConfig::default())
+        .expect("Failed to create test vector store")
+}
+
 /// Helper to create metadata for a code chunk
 fn create_chunk_metadata(
     file_path: &str,
@@ -460,7 +466,7 @@ async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) 
 #[tokio::test]
 async fn test_e2e_real_store_list_collections() {
     // Create real in-memory store
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
 
     // Populate with test data
     populate_test_store(&store, "test_project").await;
@@ -504,7 +510,7 @@ async fn test_e2e_real_store_list_collections() {
 
 #[tokio::test]
 async fn test_e2e_real_store_list_files() {
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
     populate_test_store(&store, "test_project").await;
 
     let browse_state = BrowseState {
@@ -636,7 +642,7 @@ async fn test_e2e_real_store_navigate_full_flow() {
     // 3. Select a file and view chunks
     // 4. Validate data at each step
 
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
     populate_test_store(&store, "my_rust_project").await;
 
     let browse_state = BrowseState {

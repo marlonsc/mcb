@@ -97,21 +97,21 @@ impl VcsProvider for Git2Provider {
         let branches = Self::list_branch_names(&repo)?;
         let remote_url = Self::get_remote_url(&repo);
 
-        Ok(VcsRepository {
+        Ok(VcsRepository::new(
             id,
-            path: path.to_path_buf(),
+            path.to_path_buf(),
             default_branch,
             branches,
             remote_url,
-        })
+        ))
     }
 
     fn repository_id(&self, repo: &VcsRepository) -> RepositoryId {
-        repo.id.clone()
+        repo.id().clone()
     }
 
     async fn list_branches(&self, repo: &VcsRepository) -> Result<Vec<VcsBranch>> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let branches = git_repo
             .branches(Some(BranchType::Local))
@@ -135,7 +135,7 @@ impl VcsProvider for Git2Provider {
                 .map(|c| c.id().to_string())
                 .unwrap_or_default();
 
-            let is_default = name == repo.default_branch;
+            let is_default = name == repo.default_branch();
 
             let upstream = branch
                 .upstream()
@@ -143,7 +143,7 @@ impl VcsProvider for Git2Provider {
                 .and_then(|u| u.name().ok().flatten().map(String::from));
 
             result.push(VcsBranch {
-                id: format!("{}::{}", repo.id, name),
+                id: format!("{}::{}", repo.id(), name),
                 name,
                 head_commit,
                 is_default,
@@ -160,7 +160,7 @@ impl VcsProvider for Git2Provider {
         branch: &str,
         limit: Option<usize>,
     ) -> Result<Vec<VcsCommit>> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let branch_ref = git_repo
             .find_branch(branch, BranchType::Local)
@@ -206,7 +206,7 @@ impl VcsProvider for Git2Provider {
             let parent_hashes: Vec<String> = commit.parent_ids().map(|id| id.to_string()).collect();
 
             commits.push(VcsCommit {
-                id: format!("{}:{}", repo.id, oid),
+                id: format!("{}:{}", repo.id(), oid),
                 hash: oid.to_string(),
                 message: commit.message().unwrap_or("").to_string(),
                 author: author.name().unwrap_or("Unknown").to_string(),
@@ -220,7 +220,7 @@ impl VcsProvider for Git2Provider {
     }
 
     async fn list_files(&self, repo: &VcsRepository, branch: &str) -> Result<Vec<PathBuf>> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let branch_ref = git_repo
             .find_branch(branch, BranchType::Local)
@@ -257,7 +257,7 @@ impl VcsProvider for Git2Provider {
     }
 
     async fn read_file(&self, repo: &VcsRepository, branch: &str, path: &Path) -> Result<String> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let branch_ref = git_repo
             .find_branch(branch, BranchType::Local)
@@ -308,7 +308,7 @@ impl VcsProvider for Git2Provider {
         base_ref: &str,
         head_ref: &str,
     ) -> Result<RefDiff> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let base_obj = git_repo
             .revparse_single(base_ref)

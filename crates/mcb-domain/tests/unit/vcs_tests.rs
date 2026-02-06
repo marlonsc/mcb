@@ -17,15 +17,15 @@ fn test_repository_id_from_str() {
 
 #[test]
 fn test_vcs_repository_has_required_fields() {
-    let repo = VcsRepository {
-        id: RepositoryId::new("r1".to_string()),
-        path: PathBuf::from("/tmp/repo"),
-        default_branch: "main".to_string(),
-        branches: vec!["main".to_string()],
-        remote_url: Some("https://example.com".to_string()),
-    };
-    assert_eq!(repo.id.as_str(), "r1");
-    assert_eq!(repo.default_branch, "main");
+    let repo = VcsRepository::new(
+        RepositoryId::new("r1".to_string()),
+        PathBuf::from("/tmp/repo"),
+        "main".to_string(),
+        vec!["main".to_string()],
+        Some("https://example.com".to_string()),
+    );
+    assert_eq!(repo.id().as_str(), "r1");
+    assert_eq!(repo.default_branch(), "main");
 }
 
 #[test]
