@@ -1,9 +1,9 @@
 ---
 adr: 35
 title: Context Scout — Project State Discovery
-status: PROPOSED
+status: ACCEPTED
 created: 
-updated: 2026-02-05
+updated: 2026-02-06
 related: [23, 25, 29]
 supersedes: []
 superseded_by: []
@@ -14,7 +14,7 @@ implementation_status: Complete
 
 ## Status
 
-**Proposed** — 2026-02-05
+**Accepted** — 2026-02-06 (locked for Phase 9 dependency)
 
 -   **Deciders:** Project team
 -   **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM)
