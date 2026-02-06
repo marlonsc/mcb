@@ -6,6 +6,8 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use std::sync::Arc;
 
+use mcb_domain::constants::keys as schema;
+
 pub async fn update_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
@@ -22,7 +24,7 @@ pub async fn update_session(
     let status = match args.status.as_ref() {
         Some(status) => Some(SessionHelpers::parse_status(status)?),
         None => data
-            .and_then(|d| SessionHelpers::get_str(d, "status"))
+            .and_then(|d| SessionHelpers::get_str(d, schema::STATUS))
             .map(|status| SessionHelpers::parse_status(&status))
             .transpose()?,
     };
@@ -32,20 +34,21 @@ pub async fn update_session(
                 session.status = status;
             }
             if let Some(data) = data {
-                session.result_summary =
-                    SessionHelpers::get_str(data, "result_summary").or(session.result_summary);
+                session.result_summary = SessionHelpers::get_str(data, schema::RESULT_SUMMARY)
+                    .or(session.result_summary);
                 session.token_count =
-                    SessionHelpers::get_i64(data, "token_count").or(session.token_count);
-                session.tool_calls_count =
-                    SessionHelpers::get_i64(data, "tool_calls_count").or(session.tool_calls_count);
-                session.delegations_count = SessionHelpers::get_i64(data, "delegations_count")
-                    .or(session.delegations_count);
+                    SessionHelpers::get_i64(data, schema::TOKEN_COUNT).or(session.token_count);
+                session.tool_calls_count = SessionHelpers::get_i64(data, schema::TOOL_CALLS_COUNT)
+                    .or(session.tool_calls_count);
+                session.delegations_count =
+                    SessionHelpers::get_i64(data, schema::DELEGATIONS_COUNT)
+                        .or(session.delegations_count);
             }
             let status_str = session.status.as_str().to_string();
             match agent_service.update_session(session).await {
                 Ok(_) => ResponseFormatter::json_success(&serde_json::json!({
-                    "id": session_id,
-                    "status": &status_str,
+                    schema::ID: session_id,
+                    schema::STATUS: &status_str,
                     "updated": true,
                 })),
                 Err(_) => Ok(CallToolResult::error(vec![Content::text(

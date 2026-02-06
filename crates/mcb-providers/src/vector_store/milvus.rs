@@ -937,7 +937,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
+use mcb_domain::registry::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
 

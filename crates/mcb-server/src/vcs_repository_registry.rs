@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Registry {
-    repositories: HashMap<String, String>,
+    repositories: HashMap<RepositoryId, PathBuf>,
 }
 
 impl Registry {
@@ -89,10 +89,9 @@ pub fn record_repository(repository_id: &RepositoryId, path: &Path) -> Result<()
     let _guard = FileLockGuard::acquire()?;
     let registry_path = registry_path()?;
     let mut registry = load_registry(&registry_path)?;
-    registry.repositories.insert(
-        repository_id.as_str().to_string(),
-        path.display().to_string(),
-    );
+    registry
+        .repositories
+        .insert(repository_id.clone(), path.to_path_buf());
     save_registry(&registry_path, &registry)
 }
 
@@ -103,11 +102,7 @@ pub fn lookup_repository_path(repository_id: &RepositoryId) -> Result<PathBuf> {
     let registry = load_registry(&registry_path)?;
     registry
         .repositories
-        .get(repository_id.as_str())
-        .map(PathBuf::from)
-        .ok_or_else(|| {
-            Error::io(format!(
-                "Repository id not found in registry: {repository_id}"
-            ))
-        })
+        .get(repository_id)
+        .cloned()
+        .ok_or_else(|| Error::repository_not_found(repository_id.to_string()))
 }

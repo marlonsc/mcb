@@ -3,11 +3,11 @@
 //! Application service for code intelligence and semantic operations.
 //! Orchestrates embeddings, vector storage, and caching for semantic code understanding.
 
-use crate::domain_services::search::ContextServiceInterface;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{CacheEntryConfig, EmbeddingProvider, VectorStoreProvider};
-use mcb_domain::value_objects::{Embedding, SearchResult};
+use mcb_domain::ports::services::ContextServiceInterface;
+use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -39,7 +39,7 @@ fn build_chunk_metadata(chunk: &CodeChunk) -> HashMap<String, serde_json::Value>
 
 /// Context service implementation - manages embeddings and vector storage
 pub struct ContextServiceImpl {
-    cache: Arc<dyn crate::ports::providers::cache::CacheProvider>,
+    cache: Arc<dyn mcb_domain::ports::providers::cache::CacheProvider>,
     embedding_provider: Arc<dyn EmbeddingProvider>,
     vector_store_provider: Arc<dyn VectorStoreProvider>,
 }
@@ -47,7 +47,7 @@ pub struct ContextServiceImpl {
 impl ContextServiceImpl {
     /// Create new context service with injected dependencies
     pub fn new(
-        cache: Arc<dyn crate::ports::providers::cache::CacheProvider>,
+        cache: Arc<dyn mcb_domain::ports::providers::cache::CacheProvider>,
         embedding_provider: Arc<dyn EmbeddingProvider>,
         vector_store_provider: Arc<dyn VectorStoreProvider>,
     ) -> Self {
@@ -75,21 +75,23 @@ impl ContextServiceImpl {
 
 #[async_trait::async_trait]
 impl ContextServiceInterface for ContextServiceImpl {
-    async fn initialize(&self, collection: &str) -> Result<()> {
+    async fn initialize(&self, collection: &CollectionId) -> Result<()> {
+        let name = collection.as_str();
         // Create collection if it doesn't exist
-        if !self.collection_exists(collection).await? {
+        if !self.collection_exists(name).await? {
             let dimensions = self.embedding_provider.dimensions();
             self.vector_store_provider
-                .create_collection(collection, dimensions)
+                .create_collection(name, dimensions)
                 .await?;
         }
 
         // Track initialization in cache
-        self.cache_set(&cache_keys::collection(collection), "\"initialized\"")
+        self.cache_set(&cache_keys::collection(name), "\"initialized\"")
             .await
     }
 
-    async fn store_chunks(&self, collection: &str, chunks: &[CodeChunk]) -> Result<()> {
+    async fn store_chunks(&self, collection: &CollectionId, chunks: &[CodeChunk]) -> Result<()> {
+        let name = collection.as_str();
         // Generate embeddings for each chunk
         let texts: Vec<String> = chunks.iter().map(|c| c.content.clone()).collect();
         let embeddings = self.embedding_provider.embed_batch(&texts).await?;
@@ -99,12 +101,12 @@ impl ContextServiceInterface for ContextServiceImpl {
 
         // Insert into vector store
         self.vector_store_provider
-            .insert_vectors(collection, &embeddings, metadata)
+            .insert_vectors(name, &embeddings, metadata)
             .await?;
 
         // Update collection metadata in cache
         self.cache_set(
-            &cache_keys::collection_meta(collection),
+            &cache_keys::collection_meta(name),
             &chunks.len().to_string(),
         )
         .await
@@ -112,13 +114,13 @@ impl ContextServiceInterface for ContextServiceImpl {
 
     async fn search_similar(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         query: &str,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
         let query_embedding = self.embedding_provider.embed(query).await?;
         self.vector_store_provider
-            .search_similar(collection, &query_embedding.vector, limit, None)
+            .search_similar(collection.as_str(), &query_embedding.vector, limit, None)
             .await
     }
 
@@ -126,20 +128,17 @@ impl ContextServiceInterface for ContextServiceImpl {
         self.embedding_provider.embed(text).await
     }
 
-    async fn clear_collection(&self, collection: &str) -> Result<()> {
+    async fn clear_collection(&self, collection: &CollectionId) -> Result<()> {
+        let name = collection.as_str();
         // Delete collection from vector store if it exists
-        if self.collection_exists(collection).await? {
-            self.vector_store_provider
-                .delete_collection(collection)
-                .await?;
+        if self.collection_exists(name).await? {
+            self.vector_store_provider.delete_collection(name).await?;
         }
 
         // Clear cache metadata
+        self.cache.delete(&cache_keys::collection(name)).await?;
         self.cache
-            .delete(&cache_keys::collection(collection))
-            .await?;
-        self.cache
-            .delete(&cache_keys::collection_meta(collection))
+            .delete(&cache_keys::collection_meta(name))
             .await?;
         Ok(())
     }

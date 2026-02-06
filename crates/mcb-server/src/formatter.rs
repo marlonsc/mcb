@@ -10,8 +10,8 @@ use serde::Serialize;
 use std::path::Path;
 use std::time::Duration;
 
-use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
 use mcb_application::ports::services::ValidationReport;
+use mcb_application::ports::services::{IndexingResult, IndexingStatus};
 use mcb_domain::SearchResult;
 
 /// Response formatter for MCP server tools
@@ -286,7 +286,11 @@ fn build_indexing_success_message(
 }
 
 fn build_indexing_started_message(result: &IndexingResult, path: &Path) -> String {
-    let operation_id = result.operation_id.as_deref().unwrap_or("unknown");
+    let operation_id = result
+        .operation_id
+        .as_ref()
+        .map(|id| id.as_str())
+        .unwrap_or("unknown");
 
     format!(
         "🚀 **Indexing Started**\n\n\

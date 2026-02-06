@@ -4,6 +4,7 @@
 //! These traits break the circular dependency where infrastructure/di
 //! previously imported from server layer.
 
+use crate::value_objects::{CollectionId, OperationId};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -83,9 +84,9 @@ pub trait PerformanceMetricsInterface: Send + Sync {
 #[derive(Debug, Clone)]
 pub struct IndexingOperation {
     /// Operation ID
-    pub id: String,
+    pub id: OperationId,
     /// Collection being indexed
-    pub collection: String,
+    pub collection: CollectionId,
     /// Current file being processed
     pub current_file: Option<String>,
     /// Total files to process
@@ -132,13 +133,13 @@ pub struct IndexingOperation {
 /// ```
 pub trait IndexingOperationsInterface: Send + Sync {
     /// Get the map of ongoing indexing operations
-    fn get_operations(&self) -> HashMap<String, IndexingOperation>;
+    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation>;
 
     /// Start tracking a new indexing operation
     ///
     /// Returns a unique operation ID that can be used to update progress
     /// and complete the operation.
-    fn start_operation(&self, collection: &str, total_files: usize) -> String;
+    fn start_operation(&self, collection: &CollectionId, total_files: usize) -> OperationId;
 
     /// Update progress for an ongoing operation
     ///
@@ -146,12 +147,17 @@ pub trait IndexingOperationsInterface: Send + Sync {
     /// * `operation_id` - The ID returned by `start_operation`
     /// * `current_file` - Optional path of the file currently being processed
     /// * `processed` - Number of files processed so far
-    fn update_progress(&self, operation_id: &str, current_file: Option<String>, processed: usize);
+    fn update_progress(
+        &self,
+        operation_id: &OperationId,
+        current_file: Option<String>,
+        processed: usize,
+    );
 
     /// Complete and remove an operation from tracking
     ///
     /// After calling this, the operation will no longer appear in `get_operations()`.
-    fn complete_operation(&self, operation_id: &str);
+    fn complete_operation(&self, operation_id: &OperationId);
 }
 
 // ============================================================================
@@ -308,7 +314,7 @@ pub struct ExtendedHealthResponse {
 #[derive(Debug, Clone)]
 pub struct ValidationOperation {
     /// Operation ID
-    pub id: String,
+    pub id: OperationId,
     /// Workspace being validated
     pub workspace: String,
     /// Validators being run
@@ -389,10 +395,10 @@ pub struct ValidationOperationResult {
 /// ```
 pub trait ValidationOperationsInterface: Send + Sync {
     /// Get the map of ongoing validation operations
-    fn get_operations(&self) -> HashMap<String, ValidationOperation>;
+    fn get_operations(&self) -> HashMap<OperationId, ValidationOperation>;
 
     /// Get a specific operation by ID
-    fn get_operation(&self, operation_id: &str) -> Option<ValidationOperation>;
+    fn get_operation(&self, operation_id: &OperationId) -> Option<ValidationOperation>;
 
     /// Start tracking a new validation operation
     ///
@@ -402,7 +408,7 @@ pub trait ValidationOperationsInterface: Send + Sync {
     ///
     /// # Returns
     /// A unique operation ID that can be used to update progress
-    fn start_operation(&self, workspace: &str, validators: &[String]) -> String;
+    fn start_operation(&self, workspace: &str, validators: &[String]) -> OperationId;
 
     /// Update progress for an ongoing operation
     ///
@@ -413,7 +419,7 @@ pub trait ValidationOperationsInterface: Send + Sync {
     /// * `total` - Total number of files to process
     fn update_progress(
         &self,
-        operation_id: &str,
+        operation_id: &OperationId,
         current_file: Option<String>,
         processed: usize,
         total: usize,
@@ -427,13 +433,13 @@ pub trait ValidationOperationsInterface: Send + Sync {
     /// # Arguments
     /// * `operation_id` - The operation ID
     /// * `result` - The validation result
-    fn complete_operation(&self, operation_id: &str, result: ValidationOperationResult);
+    fn complete_operation(&self, operation_id: &OperationId, result: ValidationOperationResult);
 
     /// Cancel an ongoing operation
     ///
     /// Removes the operation from tracking without storing a result.
-    fn cancel_operation(&self, operation_id: &str);
+    fn cancel_operation(&self, operation_id: &OperationId);
 
     /// Check if an operation is still in progress
-    fn is_in_progress(&self, operation_id: &str) -> bool;
+    fn is_in_progress(&self, operation_id: &OperationId) -> bool;
 }

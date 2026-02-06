@@ -3,7 +3,6 @@
 //! Application service for observation storage and semantic memory search.
 
 use crate::ports::EmbeddingProvider;
-use crate::ports::services::MemoryServiceInterface;
 use mcb_domain::entities::memory::{
     MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
     ObservationType, SessionSummary,
@@ -11,6 +10,7 @@ use mcb_domain::entities::memory::{
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::ports::repositories::MemoryRepository;
+use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::compute_content_hash;
 use mcb_domain::value_objects::Embedding;
 use std::collections::HashMap;

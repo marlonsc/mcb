@@ -178,10 +178,8 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
 
 /// Factory function for creating Ollama embedding provider instances.
 fn ollama_factory(

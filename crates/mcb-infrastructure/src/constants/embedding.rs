@@ -16,3 +16,7 @@ pub const VOYAGEAI_MAX_INPUT_TOKENS: usize = 16000;
 pub const VOYAGEAI_MAX_OUTPUT_TOKENS: usize = 16000;
 pub const OPENAI_TOKEN_CACHE_TTL_SECS: u64 = 7200;
 pub const OPENAI_MAX_TOKENS_PER_REQUEST: usize = 8191;
+
+pub const PROVIDER_OPENAI: &str = "openai";
+pub const PROVIDER_EDGEVEC: &str = "edgevec";
+pub const MODEL_OPENAI_ADA: &str = "text-embedding-ada-002";

@@ -1,0 +1,67 @@
+use serde::{Deserialize, Serialize};
+use std::fmt;
+
+macro_rules! define_id {
+    ($name:ident, $doc:expr) => {
+        #[doc = $doc]
+        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+        pub struct $name(String);
+
+        impl $name {
+            /// Create a new instance
+            pub fn new<S: Into<String>>(id: S) -> Self {
+                Self(id.into())
+            }
+
+            /// Get the string representation
+            pub fn as_str(&self) -> &str {
+                &self.0
+            }
+
+            /// Convert into string
+            pub fn into_string(self) -> String {
+                self.0
+            }
+        }
+
+        impl fmt::Display for $name {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+
+        impl From<String> for $name {
+            fn from(s: String) -> Self {
+                Self::new(s)
+            }
+        }
+
+        impl From<&str> for $name {
+            fn from(s: &str) -> Self {
+                Self::new(s)
+            }
+        }
+
+        impl AsRef<str> for $name {
+            fn as_ref(&self) -> &str {
+                self.as_str()
+            }
+        }
+    };
+}
+
+define_id!(CollectionId, "Strong typed identifier for a collection");
+define_id!(ChunkId, "Strong typed identifier for a code chunk");
+define_id!(RepositoryId, "Strong typed identifier for a VCS repository");
+define_id!(
+    SessionId,
+    "Strong typed identifier for an agent or workflow session"
+);
+define_id!(
+    ObservationId,
+    "Strong typed identifier for a memory observation"
+);
+define_id!(
+    OperationId,
+    "Strong typed identifier for an indexing operation"
+);

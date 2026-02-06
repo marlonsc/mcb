@@ -12,16 +12,8 @@
 //! - **services.rs** - Application service interfaces (context, search, indexing)
 //! - **admin.rs** - Administrative interfaces for system management
 
-/// Administrative interfaces for system management and monitoring
 pub mod admin;
-/// Infrastructure service ports
 pub mod infrastructure;
-/// External service provider ports
-pub mod providers;
-/// Provider registry for dynamic provider discovery
-pub mod registry;
-/// Application service interfaces
-pub mod services;
 
 // Re-export commonly used port traits for convenience
 pub use admin::{
@@ -36,17 +28,32 @@ pub use infrastructure::{
     StateStoreProvider, SyncCoordinator, SyncOptions, SyncResult, SystemMetrics,
     SystemMetricsCollectorInterface,
 };
-pub use providers::{EmbeddingProvider, HybridSearchProvider, VectorStoreProvider};
-pub use registry::{
-    CacheProviderConfig, CacheProviderEntry, EmbeddingProviderConfig, EmbeddingProviderEntry,
-    LanguageProviderConfig, LanguageProviderEntry, VectorStoreProviderConfig,
+
+// ============================================================================
+// Domain Re-exports (Clean Architecture)
+// ============================================================================
+
+pub use mcb_domain::ports::providers;
+pub use mcb_domain::ports::services;
+
+pub use mcb_domain::registry::{
+    CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry, EMBEDDING_PROVIDERS,
+    EmbeddingProviderConfig, EmbeddingProviderEntry, LANGUAGE_PROVIDERS, LanguageProviderConfig,
+    LanguageProviderEntry, VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig,
     VectorStoreProviderEntry, list_cache_providers, list_embedding_providers,
     list_language_providers, list_vector_store_providers, resolve_cache_provider,
     resolve_embedding_provider, resolve_language_provider, resolve_vector_store_provider,
 };
-pub use services::{
-    BatchIndexingServiceInterface, ChunkingOrchestratorInterface, ContextServiceInterface,
-    IndexingResult, IndexingServiceInterface, IndexingStats, IndexingStatus,
-    MemoryServiceInterface, SearchServiceInterface, ValidationReport, ValidationServiceInterface,
+
+pub use mcb_domain::ports::services::{
+    AgentSessionServiceInterface, BatchIndexingServiceInterface, ChunkingOrchestratorInterface,
+    ComplexityReport, ContextServiceInterface, FileHashService, FunctionComplexity, IndexingResult,
+    IndexingServiceInterface, IndexingStats, IndexingStatus, MemoryServiceInterface, RuleInfo,
+    SearchFilters, SearchServiceInterface, ValidationReport, ValidationServiceInterface,
     ViolationEntry,
+};
+
+pub use mcb_domain::ports::providers::{
+    CacheProvider, CryptoProvider, EmbeddingProvider, HybridSearchProvider,
+    LanguageChunkingProvider, ProjectDetector, VectorStoreProvider,
 };

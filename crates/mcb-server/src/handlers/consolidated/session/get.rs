@@ -5,6 +5,8 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use std::sync::Arc;
 
+use mcb_domain::constants::keys as schema;
+
 pub async fn get_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
@@ -19,20 +21,20 @@ pub async fn get_session(
     };
     match agent_service.get_session(session_id).await {
         Ok(Some(session)) => ResponseFormatter::json_success(&serde_json::json!({
-            "id": session.id,
-            "session_summary_id": session.session_summary_id,
-            "agent_type": session.agent_type.as_str(),
-            "model": session.model,
-            "parent_session_id": session.parent_session_id,
-            "started_at": session.started_at,
-            "ended_at": session.ended_at,
-            "duration_ms": session.duration_ms,
-            "status": session.status.as_str(),
-            "prompt_summary": session.prompt_summary,
-            "result_summary": session.result_summary,
-            "token_count": session.token_count,
-            "tool_calls_count": session.tool_calls_count,
-            "delegations_count": session.delegations_count,
+            schema::ID: session.id,
+            schema::SESSION_SUMMARY_ID: session.session_summary_id,
+            schema::AGENT_TYPE: session.agent_type.as_str(),
+            schema::MODEL: session.model,
+            schema::PARENT_SESSION_ID: session.parent_session_id,
+            schema::STARTED_AT: session.started_at,
+            schema::ENDED_AT: session.ended_at,
+            schema::DURATION_MS: session.duration_ms,
+            schema::STATUS: session.status.as_str(),
+            schema::PROMPT_SUMMARY: session.prompt_summary,
+            schema::RESULT_SUMMARY: session.result_summary,
+            schema::TOKEN_COUNT: session.token_count,
+            schema::TOOL_CALLS_COUNT: session.tool_calls_count,
+            schema::DELEGATIONS_COUNT: session.delegations_count,
         })),
         Ok(None) => Ok(CallToolResult::error(vec![Content::text(
             "Agent session not found",

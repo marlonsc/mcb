@@ -103,6 +103,19 @@ pub enum Error {
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
 
+    /// Missing configuration field
+    #[error("Missing configuration: {0}")]
+    ConfigMissing(String),
+
+    /// Invalid configuration value
+    #[error("Invalid configuration for '{key}': {message}")]
+    ConfigInvalid {
+        /// The configuration key that is invalid
+        key: String,
+        /// Reason why it is invalid
+        message: String,
+    },
+
     /// Authentication-related error
     #[error("Authentication error: {message}")]
     Authentication {

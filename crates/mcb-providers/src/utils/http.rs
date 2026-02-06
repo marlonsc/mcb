@@ -132,7 +132,7 @@ pub(crate) struct HttpProviderConfig {
 /// )))
 /// ```
 pub(crate) fn create_http_provider_config(
-    config: &mcb_application::ports::registry::EmbeddingProviderConfig,
+    config: &mcb_domain::registry::EmbeddingProviderConfig,
     provider_name: &str,
     default_model: &str,
 ) -> Result<HttpProviderConfig, String> {

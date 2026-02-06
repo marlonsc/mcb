@@ -8,6 +8,7 @@ use mcb_domain::ports::admin::{
     IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
     PerformanceMetricsInterface,
 };
+use mcb_domain::value_objects::{CollectionId, OperationId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
@@ -175,7 +176,7 @@ impl PerformanceMetricsInterface for NullPerformanceMetrics {
 /// Thread-safe implementation using DashMap for concurrent access.
 pub struct DefaultIndexingOperations {
     /// Active indexing operations by ID
-    operations: Arc<DashMap<String, IndexingOperation>>,
+    operations: Arc<DashMap<OperationId, IndexingOperation>>,
 }
 
 impl DefaultIndexingOperations {
@@ -192,11 +193,15 @@ impl DefaultIndexingOperations {
     }
 
     /// Start tracking a new indexing operation (inherent impl; trait delegates here).
-    pub fn start_operation_internal(&self, collection: &str, total_files: usize) -> String {
-        let id = Uuid::new_v4().to_string();
+    pub fn start_operation_internal(
+        &self,
+        collection: &CollectionId,
+        total_files: usize,
+    ) -> OperationId {
+        let id = OperationId::new(Uuid::new_v4().to_string());
         let operation = IndexingOperation {
             id: id.clone(),
-            collection: collection.to_string(),
+            collection: collection.clone(),
             current_file: None,
             total_files,
             processed_files: 0,
@@ -209,7 +214,7 @@ impl DefaultIndexingOperations {
     /// Update progress for an operation
     pub fn update_progress(
         &self,
-        operation_id: &str,
+        operation_id: &OperationId,
         current_file: Option<String>,
         processed: usize,
     ) {
@@ -220,7 +225,7 @@ impl DefaultIndexingOperations {
     }
 
     /// Complete and remove an operation
-    pub fn complete_operation(&self, operation_id: &str) {
+    pub fn complete_operation(&self, operation_id: &OperationId) {
         self.operations.remove(operation_id);
     }
 
@@ -242,22 +247,27 @@ impl Default for DefaultIndexingOperations {
 }
 
 impl IndexingOperationsInterface for DefaultIndexingOperations {
-    fn get_operations(&self) -> HashMap<String, IndexingOperation> {
+    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         self.operations
             .iter()
             .map(|entry| (entry.key().clone(), entry.value().clone()))
             .collect()
     }
 
-    fn start_operation(&self, collection: &str, total_files: usize) -> String {
+    fn start_operation(&self, collection: &CollectionId, total_files: usize) -> OperationId {
         self.start_operation_internal(collection, total_files)
     }
 
-    fn update_progress(&self, operation_id: &str, current_file: Option<String>, processed: usize) {
+    fn update_progress(
+        &self,
+        operation_id: &OperationId,
+        current_file: Option<String>,
+        processed: usize,
+    ) {
         DefaultIndexingOperations::update_progress(self, operation_id, current_file, processed);
     }
 
-    fn complete_operation(&self, operation_id: &str) {
+    fn complete_operation(&self, operation_id: &OperationId) {
         DefaultIndexingOperations::complete_operation(self, operation_id);
     }
 }
@@ -271,24 +281,24 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
 pub struct NullIndexingOperations;
 
 impl IndexingOperationsInterface for NullIndexingOperations {
-    fn get_operations(&self) -> HashMap<String, IndexingOperation> {
+    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         HashMap::new()
     }
 
-    fn start_operation(&self, _collection: &str, _total_files: usize) -> String {
-        String::new() // no-op
+    fn start_operation(&self, _collection: &CollectionId, _total_files: usize) -> OperationId {
+        OperationId::new("") // no-op
     }
 
     fn update_progress(
         &self,
-        _operation_id: &str,
+        _operation_id: &OperationId,
         _current_file: Option<String>,
         _processed: usize,
     ) {
         // no-op
     }
 
-    fn complete_operation(&self, _operation_id: &str) {
+    fn complete_operation(&self, _operation_id: &OperationId) {
         // no-op
     }
 }

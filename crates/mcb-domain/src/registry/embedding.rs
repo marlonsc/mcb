@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::EmbeddingProvider;
+use crate::ports::providers::EmbeddingProvider;
 
 /// Configuration for embedding provider creation
 ///
@@ -111,7 +111,7 @@ pub static EMBEDDING_PROVIDERS: [EmbeddingProviderEntry] = [..];
 /// # Example
 ///
 /// ```no_run
-/// use mcb_application::ports::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+/// use crate::ports::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 ///
 /// fn get_provider() -> Result<(), String> {
 ///     let config = EmbeddingProviderConfig::new("null")

@@ -476,7 +476,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
 // ============================================================================
 
 use crate::constants::QDRANT_DEFAULT_PORT;
-use mcb_application::ports::registry::{
+use mcb_domain::registry::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
 

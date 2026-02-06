@@ -56,6 +56,8 @@ pub trait BrowseService: Send + Sync {
     async fn get_highlighted_code(&self, path: &Path) -> Result<HighlightedCode>;
 }
 
+pub type BrowseServiceInterface = dyn BrowseService;
+
 /// Highlight service trait (agnóstico interface)
 #[async_trait::async_trait]
 pub trait HighlightService: Send + Sync {
@@ -65,3 +67,5 @@ pub trait HighlightService: Send + Sync {
     /// Falls back to empty spans if highlighting fails.
     async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode>;
 }
+
+pub type HighlightServiceInterface = dyn HighlightService;

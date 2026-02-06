@@ -30,3 +30,13 @@ pub struct HighlightedCode {
     pub spans: Vec<HighlightSpan>,
     pub language: String,
 }
+
+impl HighlightedCode {
+    pub fn new(original: String, spans: Vec<HighlightSpan>, language: String) -> Self {
+        Self {
+            original,
+            spans,
+            language,
+        }
+    }
+}

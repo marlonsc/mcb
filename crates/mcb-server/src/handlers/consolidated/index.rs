@@ -3,7 +3,8 @@
 use crate::args::{IndexAction, IndexArgs};
 use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
-use mcb_application::domain_services::search::IndexingServiceInterface;
+use mcb_application::ports::services::IndexingServiceInterface;
+use mcb_domain::value_objects::CollectionId;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -23,7 +24,7 @@ impl IndexHandler {
         Self { indexing_service }
     }
 
-    fn validate_request(args: &IndexArgs) -> Result<(PathBuf, String), CallToolResult> {
+    fn validate_request(args: &IndexArgs) -> Result<(PathBuf, CollectionId), CallToolResult> {
         let path_str = args.path.as_ref().ok_or_else(|| {
             CallToolResult::error(vec![rmcp::model::Content::text(
                 "Missing required parameter: path",
@@ -52,7 +53,7 @@ impl IndexHandler {
                 ));
             }
         };
-        Ok((path, milvus_collection))
+        Ok((path, CollectionId::new(milvus_collection)))
     }
 
     pub async fn handle(
@@ -80,7 +81,7 @@ impl IndexHandler {
                         timer.elapsed(),
                     )),
                     Err(e) => Ok(ResponseFormatter::format_indexing_error(
-                        &e.to_string(),
+                        &format!("Indexing failed: {}", e),
                         &path,
                     )),
                 }
@@ -100,14 +101,11 @@ impl IndexHandler {
                         ));
                     }
                 };
-                match self
-                    .indexing_service
-                    .clear_collection(&milvus_collection)
-                    .await
-                {
+                let collection_id = CollectionId::new(milvus_collection.clone());
+                match self.indexing_service.clear_collection(&collection_id).await {
                     Ok(()) => Ok(ResponseFormatter::format_clear_index(&milvus_collection)),
                     Err(e) => Ok(ResponseFormatter::format_indexing_error(
-                        &e.to_string(),
+                        &format!("Failed to clear collection {}: {}", milvus_collection, e),
                         &PathBuf::from("."),
                     )),
                 }

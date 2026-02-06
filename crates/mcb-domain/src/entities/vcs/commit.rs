@@ -2,12 +2,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VcsCommit {
-    pub id: String,
+    id: String,
     hash: String,
-    pub message: String,
+    message: String,
     author: String,
-    pub author_email: String,
-    pub timestamp: i64,
+    author_email: String,
+    timestamp: i64,
     parent_hashes: Vec<String>,
 }
 

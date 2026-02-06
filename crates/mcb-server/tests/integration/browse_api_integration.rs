@@ -8,7 +8,7 @@ use mcb_application::ports::admin::{
     PerformanceMetricsInterface,
 };
 use mcb_application::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
-use mcb_domain::ports::browse::{HighlightResult, HighlightService};
+use mcb_domain::ports::browse::{HighlightError, HighlightService};
 use mcb_domain::ports::providers::VectorStoreBrowser;
 use mcb_domain::value_objects::browse::HighlightedCode;
 use mcb_domain::value_objects::{CollectionInfo, FileInfo, SearchResult};
@@ -82,7 +82,11 @@ pub struct MockHighlightService;
 
 #[async_trait]
 impl HighlightService for MockHighlightService {
-    async fn highlight(&self, code: &str, language: &str) -> HighlightResult<HighlightedCode> {
+    async fn highlight(
+        &self,
+        code: &str,
+        language: &str,
+    ) -> std::result::Result<HighlightedCode, HighlightError> {
         Ok(HighlightedCode {
             original: code.to_string(),
             spans: Vec::new(),

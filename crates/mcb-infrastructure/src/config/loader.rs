@@ -78,8 +78,8 @@ impl ConfigLoader {
         // Prefix is MCP__ (double underscore) to match mcp-config.json env format
         // lowercase(true) converts PROVIDERS__EMBEDDING to providers.embedding
         figment = figment.merge(
-            Env::prefixed(&format!("{}__", self.env_prefix))
-                .split("__")
+            Env::prefixed(&format!("{}{}", self.env_prefix, CONFIG_ENV_SEPARATOR))
+                .split(CONFIG_ENV_SEPARATOR)
                 .lowercase(true),
         );
 
@@ -179,17 +179,17 @@ fn validate_app_config(config: &AppConfig) -> Result<()> {
 
 fn validate_server_config(config: &AppConfig) -> Result<()> {
     if config.server.network.port == 0 {
-        return Err(Error::Configuration {
+        return Err(Error::ConfigInvalid {
+            key: "server.network.port".to_string(),
             message: "Server port cannot be 0".to_string(),
-            source: None,
         });
     }
     if config.server.ssl.https
         && (config.server.ssl.ssl_cert_path.is_none() || config.server.ssl.ssl_key_path.is_none())
     {
-        return Err(Error::Configuration {
+        return Err(Error::ConfigInvalid {
+            key: "server.ssl".to_string(),
             message: "SSL certificate and key paths are required when HTTPS is enabled".to_string(),
-            source: None,
         });
     }
     Ok(())
@@ -198,14 +198,17 @@ fn validate_server_config(config: &AppConfig) -> Result<()> {
 fn validate_auth_config(config: &AppConfig) -> Result<()> {
     if config.auth.enabled {
         if config.auth.jwt.secret.is_empty() {
-            return Err(Error::Configuration {
+            return Err(Error::ConfigInvalid {
+                key: "auth.jwt.secret".to_string(),
                 message: "JWT secret cannot be empty when authentication is enabled".to_string(),
-                source: None,
             });
         }
-        if config.auth.jwt.secret.len() < 32 {
+        if config.auth.jwt.secret.len() < MIN_JWT_SECRET_LENGTH {
             return Err(Error::Configuration {
-                message: "JWT secret should be at least 32 characters long".to_string(),
+                message: format!(
+                    "JWT secret should be at least {} characters long",
+                    MIN_JWT_SECRET_LENGTH
+                ),
                 source: None,
             });
         }

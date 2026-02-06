@@ -195,10 +195,8 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
 
 /// Factory function for creating Gemini embedding provider instances.
 fn gemini_factory(

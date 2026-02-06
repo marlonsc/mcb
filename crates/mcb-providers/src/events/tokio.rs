@@ -30,9 +30,9 @@
 use crate::constants::EVENTS_TOKIO_DEFAULT_CAPACITY;
 use async_trait::async_trait;
 use futures::stream;
-use mcb_application::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
+use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tracing::{debug, warn};

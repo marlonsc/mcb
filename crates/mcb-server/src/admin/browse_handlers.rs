@@ -303,23 +303,17 @@ fn insert_into_tree(
         let file_node = FileTreeNode::file(name, &file.path, file.chunk_count, &file.language);
         node.add_child(file_node);
     } else {
-        let current_path = if node.path.is_empty() {
-            name.to_string()
-        } else {
-            format!("{}/{}", node.path, name)
-        };
-
-        let child_idx = node
-            .children
-            .iter()
-            .position(|c| c.name == name && c.is_dir);
-
         if let Some(idx) = child_idx {
             insert_into_tree(&mut node.children[idx], &parts[1..], file);
         } else {
+            let current_path = if node.path.is_empty() {
+                name.to_string()
+            } else {
+                format!("{}/{}", node.path, name)
+            };
             let mut dir_node = FileTreeNode::directory(name, &current_path);
             insert_into_tree(&mut dir_node, &parts[1..], file);
-            node.add_child(dir_node);
+            node.children.push(dir_node);
         }
     }
 }

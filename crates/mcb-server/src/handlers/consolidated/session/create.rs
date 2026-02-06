@@ -9,6 +9,8 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
+use mcb_domain::constants::keys as schema;
+
 pub async fn create_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
@@ -34,11 +36,12 @@ pub async fn create_session(
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0);
     let session_id = format!("agent_{}", Uuid::new_v4());
-    let session_summary_id = match SessionHelpers::get_required_str(data, "session_summary_id") {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let model = match SessionHelpers::get_required_str(data, "model") {
+    let session_summary_id =
+        match SessionHelpers::get_required_str(data, schema::SESSION_SUMMARY_ID) {
+            Ok(v) => v,
+            Err(error_result) => return Ok(error_result),
+        };
+    let model = match SessionHelpers::get_required_str(data, schema::MODEL) {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
@@ -47,12 +50,12 @@ pub async fn create_session(
         session_summary_id,
         agent_type: agent_type.clone(),
         model,
-        parent_session_id: SessionHelpers::get_str(data, "parent_session_id"),
+        parent_session_id: SessionHelpers::get_str(data, schema::PARENT_SESSION_ID),
         started_at: now,
         ended_at: None,
         duration_ms: None,
         status: AgentSessionStatus::Active,
-        prompt_summary: SessionHelpers::get_str(data, "prompt_summary"),
+        prompt_summary: SessionHelpers::get_str(data, schema::PROMPT_SUMMARY),
         result_summary: None,
         token_count: None,
         tool_calls_count: None,

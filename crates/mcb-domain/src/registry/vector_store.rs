@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VectorStoreProvider;
+use crate::ports::providers::VectorStoreProvider;
 
 /// Configuration for vector store provider creation
 ///

@@ -10,13 +10,13 @@
 //! ```
 
 use crate::config::AppConfig;
-use mcb_application::ports::registry::{
+use mcb_domain::ports::providers::{
+    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+};
+use mcb_domain::registry::{
     CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig,
     VectorStoreProviderConfig, resolve_cache_provider, resolve_embedding_provider,
     resolve_language_provider, resolve_vector_store_provider,
-};
-use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use std::sync::Arc;
@@ -92,7 +92,7 @@ impl EmbeddingProviderResolver {
 
     /// List available embedding providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_application::ports::registry::list_embedding_providers()
+        mcb_domain::registry::list_embedding_providers()
     }
 }
 
@@ -170,7 +170,7 @@ impl VectorStoreProviderResolver {
 
     /// List available vector store providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_application::ports::registry::list_vector_store_providers()
+        mcb_domain::registry::list_vector_store_providers()
     }
 }
 
@@ -227,7 +227,7 @@ impl CacheProviderResolver {
 
     /// List available cache providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_application::ports::registry::list_cache_providers()
+        mcb_domain::registry::list_cache_providers()
     }
 }
 
@@ -273,7 +273,7 @@ impl LanguageProviderResolver {
 
     /// List available language providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_application::ports::registry::list_language_providers()
+        mcb_domain::registry::list_language_providers()
     }
 }
 

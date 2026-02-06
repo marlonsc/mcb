@@ -3,10 +3,9 @@
 //! Application service for semantic search operations.
 //! Orchestrates search functionality using context service for semantic understanding.
 
-use crate::domain_services::search::{ContextServiceInterface, SearchServiceInterface};
-use crate::ports::services::SearchFilters;
 use mcb_domain::error::Result;
-use mcb_domain::value_objects::SearchResult;
+use mcb_domain::ports::services::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
+use mcb_domain::value_objects::{CollectionId, SearchResult};
 use std::sync::Arc;
 
 /// Search service implementation - delegates to context service
@@ -67,7 +66,7 @@ impl SearchServiceImpl {
 impl SearchServiceInterface for SearchServiceImpl {
     async fn search(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         query: &str,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
@@ -78,7 +77,7 @@ impl SearchServiceInterface for SearchServiceImpl {
 
     async fn search_with_filters(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         query: &str,
         limit: usize,
         filters: Option<&SearchFilters>,

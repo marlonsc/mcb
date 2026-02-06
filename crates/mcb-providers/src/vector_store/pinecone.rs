@@ -442,7 +442,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use mcb_application::ports::registry::{
+use mcb_domain::registry::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
 

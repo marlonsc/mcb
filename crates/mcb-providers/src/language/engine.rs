@@ -11,9 +11,9 @@ use super::{
     RustProcessor, SwiftProcessor,
 };
 use async_trait::async_trait;
-use mcb_application::domain_services::chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::services::chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
 use mcb_domain::value_objects::Language;
 use std::collections::HashMap;
 use std::path::Path;
@@ -299,10 +299,8 @@ impl mcb_domain::ports::providers::LanguageChunkingProvider for UniversalLanguag
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
-    LANGUAGE_PROVIDERS, LanguageProviderConfig, LanguageProviderEntry,
-};
 use mcb_domain::ports::providers::LanguageChunkingProvider as LanguageProviderPort;
+use mcb_domain::registry::{LANGUAGE_PROVIDERS, LanguageProviderConfig, LanguageProviderEntry};
 
 /// Factory function for creating universal language chunking provider instances.
 fn universal_language_factory(

@@ -3,11 +3,7 @@
 //! Consolidated configuration for system concerns:
 //! auth, event_bus, backup, sync, snapshot, daemon, and operations.
 
-use crate::constants::auth::{
-    API_KEY_HEADER, DEFAULT_ADMIN_KEY_HEADER, JWT_DEFAULT_EXPIRATION_SECS,
-    JWT_REFRESH_EXPIRATION_SECS,
-};
-use crate::constants::event_bus::DEFAULT_NATS_CLIENT_NAME;
+use crate::constants::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -186,11 +182,11 @@ impl Default for EventBusConfig {
     fn default() -> Self {
         Self {
             provider: EventBusProvider::Tokio,
-            capacity: 1024,
+            capacity: EVENT_BUS_DEFAULT_CAPACITY,
             nats_url: None,
             nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_string()),
-            connection_timeout_ms: 5000,
-            max_reconnect_attempts: 5,
+            connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
+            max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
     }
 }
@@ -309,7 +305,7 @@ impl Default for SyncConfig {
             batch_size: SYNC_BATCH_SIZE,
             debounce_delay_ms: SYNC_DEBOUNCE_DELAY_MS,
             timeout_secs: SYNC_TIMEOUT_SECS,
-            max_concurrent: 10,
+            max_concurrent: SYNC_MAX_CONCURRENT,
         }
     }
 }

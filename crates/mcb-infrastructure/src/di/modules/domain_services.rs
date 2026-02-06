@@ -13,10 +13,10 @@ use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
 use mcb_application::domain_services::memory::MemoryServiceInterface;
-use mcb_application::domain_services::search::{
+use mcb_application::ports::services::AgentSessionServiceInterface;
+use mcb_application::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
 };
-use mcb_application::ports::services::AgentSessionServiceInterface;
 use mcb_application::use_cases::{
     AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl,
     SearchServiceImpl,

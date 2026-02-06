@@ -11,10 +11,10 @@
 // Force linkme registration of all providers from mcb-providers
 extern crate mcb_providers;
 
-use mcb_application::ports::registry::cache::*;
-use mcb_application::ports::registry::embedding::*;
-use mcb_application::ports::registry::language::*;
-use mcb_application::ports::registry::vector_store::*;
+use mcb_domain::registry::cache::*;
+use mcb_domain::registry::embedding::*;
+use mcb_domain::registry::language::*;
+use mcb_domain::registry::vector_store::*;
 
 // ============================================================================
 // Embedding Registry Tests - Real Provider Resolution

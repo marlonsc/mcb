@@ -1,6 +1,7 @@
 //! Agent session schema elements for the project schema.
 
 use super::ForeignKeyDef;
+use crate::constants::keys;
 use crate::schema::memory::{ColumnDef, ColumnType, IndexDef, TableDef};
 
 pub fn tables() -> Vec<TableDef> {
@@ -9,7 +10,7 @@ pub fn tables() -> Vec<TableDef> {
             name: "agent_sessions".to_string(),
             columns: vec![
                 ColumnDef {
-                    name: "id".to_string(),
+                    name: keys::ID.to_string(),
                     type_: ColumnType::Text,
                     primary_key: true,
                     unique: false,
@@ -17,7 +18,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "session_summary_id".to_string(),
+                    name: keys::SESSION_SUMMARY_ID.to_string(),
                     type_: ColumnType::Text,
                     primary_key: false,
                     unique: false,
@@ -25,7 +26,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "agent_type".to_string(),
+                    name: keys::AGENT_TYPE.to_string(),
                     type_: ColumnType::Text,
                     primary_key: false,
                     unique: false,
@@ -33,7 +34,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "model".to_string(),
+                    name: keys::MODEL.to_string(),
                     type_: ColumnType::Text,
                     primary_key: false,
                     unique: false,
@@ -41,7 +42,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "parent_session_id".to_string(),
+                    name: keys::PARENT_SESSION_ID.to_string(),
                     type_: ColumnType::Text,
                     primary_key: false,
                     unique: false,
@@ -49,7 +50,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "started_at".to_string(),
+                    name: keys::STARTED_AT.to_string(),
                     type_: ColumnType::Integer,
                     primary_key: false,
                     unique: false,
@@ -57,7 +58,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "ended_at".to_string(),
+                    name: keys::ENDED_AT.to_string(),
                     type_: ColumnType::Integer,
                     primary_key: false,
                     unique: false,
@@ -65,7 +66,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "duration_ms".to_string(),
+                    name: keys::DURATION_MS.to_string(),
                     type_: ColumnType::Integer,
                     primary_key: false,
                     unique: false,
@@ -73,7 +74,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "status".to_string(),
+                    name: keys::STATUS.to_string(),
                     type_: ColumnType::Text,
                     primary_key: false,
                     unique: false,
@@ -81,7 +82,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "prompt_summary".to_string(),
+                    name: keys::PROMPT_SUMMARY.to_string(),
                     type_: ColumnType::Text,
                     primary_key: false,
                     unique: false,
@@ -89,7 +90,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "result_summary".to_string(),
+                    name: keys::RESULT_SUMMARY.to_string(),
                     type_: ColumnType::Text,
                     primary_key: false,
                     unique: false,
@@ -97,7 +98,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "token_count".to_string(),
+                    name: keys::TOKEN_COUNT.to_string(),
                     type_: ColumnType::Integer,
                     primary_key: false,
                     unique: false,
@@ -105,7 +106,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "tool_calls_count".to_string(),
+                    name: keys::TOOL_CALLS_COUNT.to_string(),
                     type_: ColumnType::Integer,
                     primary_key: false,
                     unique: false,
@@ -113,7 +114,7 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
-                    name: "delegations_count".to_string(),
+                    name: keys::DELEGATIONS_COUNT.to_string(),
                     type_: ColumnType::Integer,
                     primary_key: false,
                     unique: false,

@@ -3,9 +3,10 @@
 use crate::args::{SearchArgs, SearchResource};
 use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
-use mcb_application::domain_services::search::SearchServiceInterface;
 use mcb_application::ports::MemoryServiceInterface;
+use mcb_application::ports::services::SearchServiceInterface;
 use mcb_domain::entities::memory::MemoryFilter;
+use mcb_domain::value_objects::CollectionId;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
@@ -63,9 +64,10 @@ impl SearchHandler {
                 };
                 let timer = Instant::now();
                 let limit = args.limit.unwrap_or(10) as usize;
+                let collection_id = CollectionId::new(milvus_collection);
                 match self
                     .search_service
-                    .search(&milvus_collection, query, limit)
+                    .search(&collection_id, query, limit)
                     .await
                 {
                     Ok(results) => ResponseFormatter::format_search_response(
@@ -75,8 +77,8 @@ impl SearchHandler {
                         limit,
                     ),
                     Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                        "Search error: {}",
-                        e
+                        "Search failed for query '{}': {}",
+                        query, e
                     ))])),
                 }
             }
@@ -125,8 +127,8 @@ impl SearchHandler {
                         Ok(response)
                     }
                     Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                        "Memory search error: {}",
-                        e
+                        "Memory search failed for query '{}': {}",
+                        query, e
                     ))])),
                 }
             }

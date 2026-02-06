@@ -51,6 +51,8 @@ pub mod error;
 pub mod events;
 /// External provider port interfaces
 pub mod ports;
+/// Provider auto-registration registry
+pub mod registry;
 /// Repository interfaces
 pub mod repositories;
 /// Generic schema definitions for persistence (backend-agnostic model)

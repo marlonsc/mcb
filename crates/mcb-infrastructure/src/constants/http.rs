@@ -1,4 +1,5 @@
 pub const DEFAULT_HTTP_PORT: u16 = 8080;
+pub const DEFAULT_ADMIN_PORT: u16 = 9090;
 pub const DEFAULT_HTTPS_PORT: u16 = 8443;
 pub const DEFAULT_SERVER_HOST: &str = "127.0.0.1";
 pub const REQUEST_TIMEOUT_SECS: u64 = 30;
@@ -14,3 +15,4 @@ pub const HTTP_HEADER_CONTENT_TYPE: &str = "Content-Type";
 pub const HTTP_HEADER_ACCEPT: &str = "Accept";
 pub const HTTP_HEADER_USER_AGENT: &str = "User-Agent";
 pub const CONTENT_TYPE_JSON: &str = "application/json";
+pub const DEFAULT_CORS_ORIGIN: &str = "*";

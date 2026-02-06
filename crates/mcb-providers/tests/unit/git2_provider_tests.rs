@@ -108,7 +108,7 @@ async fn test_list_branches() -> TestResult<()> {
 
     let branches = provider.list_branches(&repo).await?;
     assert!(!branches.is_empty());
-    assert!(branches.iter().any(|b| b.is_default));
+    assert!(branches.iter().any(|b| b.is_default()));
     Ok(())
 }
 
@@ -123,7 +123,7 @@ async fn test_commit_history() -> TestResult<()> {
         .await?;
 
     assert!(!commits.is_empty());
-    assert!(commits[0].message.contains("Initial commit"));
+    assert!(commits[0].message().contains("Initial commit"));
     Ok(())
 }
 
@@ -199,7 +199,7 @@ async fn test_diff_refs() -> TestResult<()> {
     assert!(commits.len() >= 2);
 
     let diff = provider
-        .diff_refs(&repo, &commits[1].hash, &commits[0].hash)
+        .diff_refs(&repo, commits[1].hash(), commits[0].hash())
         .await?;
 
     assert!(!diff.files.is_empty());

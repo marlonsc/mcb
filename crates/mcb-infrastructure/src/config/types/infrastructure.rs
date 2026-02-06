@@ -3,12 +3,7 @@
 //! Consolidated configuration for infrastructure concerns:
 //! logging, limits, cache, metrics, and resilience.
 
-use crate::constants::cache::{
-    CACHE_DEFAULT_SIZE_LIMIT, CACHE_DEFAULT_TTL_SECS, DEFAULT_CACHE_NAMESPACE, REDIS_POOL_SIZE,
-};
-use crate::constants::logging::{DEFAULT_LOG_LEVEL, LOG_MAX_FILES, LOG_ROTATION_SIZE};
-use crate::constants::metrics::{METRICS_COLLECTION_INTERVAL_SECS, METRICS_PATH, METRICS_PREFIX};
-use crate::constants::resources::{DEFAULT_CPU_LIMIT, DEFAULT_DISK_IO_LIMIT, DEFAULT_MEMORY_LIMIT};
+use crate::constants::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -82,8 +77,8 @@ impl Default for LimitsConfig {
             memory_limit: DEFAULT_MEMORY_LIMIT,
             cpu_limit: DEFAULT_CPU_LIMIT,
             disk_io_limit: DEFAULT_DISK_IO_LIMIT,
-            max_connections: 1000,
-            max_requests_per_connection: 100,
+            max_connections: DEFAULT_MAX_CONNECTIONS,
+            max_requests_per_connection: DEFAULT_MAX_REQUESTS_PER_CONNECTION,
         }
     }
 }
@@ -229,8 +224,8 @@ impl Default for ResilienceConfig {
             circuit_breaker_success_threshold: CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
             rate_limiter_rps: RATE_LIMITER_DEFAULT_RPS,
             rate_limiter_burst: RATE_LIMITER_DEFAULT_BURST,
-            retry_attempts: 3,
-            retry_delay_ms: 1000,
+            retry_attempts: DEFAULT_RETRY_ATTEMPTS,
+            retry_delay_ms: DEFAULT_RETRY_DELAY_MS,
         }
     }
 }

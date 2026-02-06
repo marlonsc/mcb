@@ -1,12 +1,12 @@
 //! Agent Session Service Use Case
 
-use crate::ports::services::AgentSessionServiceInterface;
 use async_trait::async_trait;
 use mcb_domain::entities::agent::{
     AgentSession, AgentSessionStatus, Checkpoint, Delegation, ToolCall,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
+use mcb_domain::ports::services::AgentSessionServiceInterface;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 

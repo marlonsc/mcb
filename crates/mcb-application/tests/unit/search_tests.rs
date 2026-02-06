@@ -13,12 +13,12 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
-use mcb_application::domain_services::search::SearchServiceInterface;
 use mcb_application::ports::providers::CacheProvider;
-use mcb_application::ports::services::ContextServiceInterface;
+use mcb_application::ports::services::{ContextServiceInterface, SearchServiceInterface};
 use mcb_application::use_cases::{ContextServiceImpl, SearchServiceImpl};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
+use mcb_domain::value_objects::CollectionId;
 use mcb_providers::cache::MokaCacheProvider;
 use mcb_providers::embedding::FastEmbedProvider;
 use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
@@ -129,14 +129,14 @@ async fn test_search_service_returns_results_after_indexing() {
 
     // Initialize collection
     context_service
-        .initialize("test_collection")
+        .initialize(&CollectionId::new("test_collection"))
         .await
         .expect("Should initialize collection");
 
     // Store real chunks
     let chunks = create_test_chunks();
     context_service
-        .store_chunks("test_collection", &chunks)
+        .store_chunks(&CollectionId::new("test_collection"), &chunks)
         .await
         .expect("Should store chunks");
 
@@ -145,7 +145,11 @@ async fn test_search_service_returns_results_after_indexing() {
 
     // Search for content - should find results from real vector store
     let results = search_service
-        .search("test_collection", "configuration settings", 10)
+        .search(
+            &CollectionId::new("test_collection"),
+            "configuration settings",
+            10,
+        )
         .await
         .expect("Search should succeed");
 
@@ -164,7 +168,7 @@ async fn test_search_service_empty_collection_returns_empty() {
 
     // Initialize but don't populate
     context_service
-        .initialize("empty_collection")
+        .initialize(&CollectionId::new("empty_collection"))
         .await
         .expect("Should initialize collection");
 
@@ -173,7 +177,7 @@ async fn test_search_service_empty_collection_returns_empty() {
 
     // Search in empty collection
     let results = search_service
-        .search("empty_collection", "anything", 10)
+        .search(&CollectionId::new("empty_collection"), "anything", 10)
         .await
         .expect("Search should succeed");
 
@@ -218,20 +222,24 @@ async fn test_context_service_stores_and_retrieves_chunks() {
 
     // Initialize collection
     context_service
-        .initialize("store_test")
+        .initialize(&CollectionId::new("store_test"))
         .await
         .expect("Should initialize");
 
     // Store chunks
     let chunks = create_test_chunks();
     context_service
-        .store_chunks("store_test", &chunks)
+        .store_chunks(&CollectionId::new("store_test"), &chunks)
         .await
         .expect("Should store chunks");
 
     // Search and verify we can retrieve data
     let results = context_service
-        .search_similar("store_test", "authenticate user token", 5)
+        .search_similar(
+            &CollectionId::new("store_test"),
+            "authenticate user token",
+            5,
+        )
         .await
         .expect("Should search");
 
@@ -259,31 +267,31 @@ async fn test_context_service_clear_collection() {
 
     // Initialize and populate
     context_service
-        .initialize("clear_test")
+        .initialize(&CollectionId::new("clear_test"))
         .await
         .expect("init");
     context_service
-        .store_chunks("clear_test", &create_test_chunks())
+        .store_chunks(&CollectionId::new("clear_test"), &create_test_chunks())
         .await
         .expect("store");
 
     // Verify data exists
     let before_clear = context_service
-        .search_similar("clear_test", "config", 5)
+        .search_similar(&CollectionId::new("clear_test"), "config", 5)
         .await
         .expect("search before clear");
     assert!(!before_clear.is_empty(), "Should have data before clear");
 
     // Clear collection
     context_service
-        .clear_collection("clear_test")
+        .clear_collection(&CollectionId::new("clear_test"))
         .await
         .expect("Should clear collection");
 
     // After clear, collection is deleted - searching should fail or return empty
     // depending on implementation
     let after_clear = context_service
-        .search_similar("clear_test", "config", 5)
+        .search_similar(&CollectionId::new("clear_test"), "config", 5)
         .await;
 
     // Either error (collection deleted) or empty results is valid
@@ -307,20 +315,24 @@ async fn test_full_search_flow_validates_architecture() {
 
     // Step 1: Initialize
     context_service
-        .initialize("architecture_test")
+        .initialize(&CollectionId::new("architecture_test"))
         .await
         .expect("Initialize should work through real providers");
 
     // Step 2: Store chunks (exercises embedding → vector store flow)
     let chunks = create_test_chunks();
     context_service
-        .store_chunks("architecture_test", &chunks)
+        .store_chunks(&CollectionId::new("architecture_test"), &chunks)
         .await
         .expect("Store should work through real providers");
 
     // Step 3: Search (exercises embedding → vector search → results flow)
     let results = search_service
-        .search("architecture_test", "request handler", 5)
+        .search(
+            &CollectionId::new("architecture_test"),
+            "request handler",
+            5,
+        )
         .await
         .expect("Search should work through real providers");
 

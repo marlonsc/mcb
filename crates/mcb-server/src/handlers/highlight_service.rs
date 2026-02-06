@@ -6,7 +6,7 @@
 //! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
 
 use crate::constants::HIGHLIGHT_NAMES;
-use mcb_domain::ports::browse::{HighlightError, HighlightResult, HighlightService};
+use mcb_domain::ports::browse::{HighlightError, HighlightService};
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
 use std::sync::Arc;
 use tree_sitter::Language;
@@ -58,78 +58,78 @@ impl HighlightServiceImpl {
     }
 
     /// Get language configuration for supported languages
-    fn get_language_config(language: &str) -> Option<HighlightLanguageConfig> {
+    fn get_language_config(language: &str) -> Result<HighlightLanguageConfig, HighlightError> {
         let normalized = language.trim().to_lowercase();
 
         match normalized.as_str() {
-            "rust" => Some(HighlightLanguageConfig::new(
+            "rust" => Ok(HighlightLanguageConfig::new(
                 "rust",
                 tree_sitter_rust::LANGUAGE.into(),
                 tree_sitter_rust::HIGHLIGHTS_QUERY,
             )),
-            "python" => Some(HighlightLanguageConfig::new(
+            "python" => Ok(HighlightLanguageConfig::new(
                 "python",
                 tree_sitter_python::LANGUAGE.into(),
                 tree_sitter_python::HIGHLIGHTS_QUERY,
             )),
-            "javascript" | "js" => Some(HighlightLanguageConfig::new(
+            "javascript" | "js" => Ok(HighlightLanguageConfig::new(
                 "javascript",
                 tree_sitter_javascript::LANGUAGE.into(),
                 tree_sitter_javascript::HIGHLIGHT_QUERY,
             )),
-            "typescript" | "ts" => Some(HighlightLanguageConfig::new(
+            "typescript" | "ts" => Ok(HighlightLanguageConfig::new(
                 "typescript",
                 tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
                 tree_sitter_typescript::HIGHLIGHTS_QUERY,
             )),
-            "tsx" => Some(HighlightLanguageConfig::new(
+            "tsx" => Ok(HighlightLanguageConfig::new(
                 "tsx",
                 tree_sitter_typescript::LANGUAGE_TSX.into(),
                 tree_sitter_typescript::HIGHLIGHTS_QUERY,
             )),
-            "go" => Some(HighlightLanguageConfig::new(
+            "go" => Ok(HighlightLanguageConfig::new(
                 "go",
                 tree_sitter_go::LANGUAGE.into(),
                 tree_sitter_go::HIGHLIGHTS_QUERY,
             )),
-            "java" => Some(HighlightLanguageConfig::new(
+            "java" => Ok(HighlightLanguageConfig::new(
                 "java",
                 tree_sitter_java::LANGUAGE.into(),
                 tree_sitter_java::HIGHLIGHTS_QUERY,
             )),
-            "c" => Some(HighlightLanguageConfig::new(
+            "c" => Ok(HighlightLanguageConfig::new(
                 "c",
                 tree_sitter_c::LANGUAGE.into(),
                 tree_sitter_c::HIGHLIGHT_QUERY,
             )),
-            "cpp" | "c++" => Some(HighlightLanguageConfig::new(
+            "cpp" | "c++" => Ok(HighlightLanguageConfig::new(
                 "cpp",
                 tree_sitter_cpp::LANGUAGE.into(),
                 tree_sitter_cpp::HIGHLIGHT_QUERY,
             )),
-            "ruby" => Some(HighlightLanguageConfig::new(
+            "ruby" => Ok(HighlightLanguageConfig::new(
                 "ruby",
                 tree_sitter_ruby::LANGUAGE.into(),
                 tree_sitter_ruby::HIGHLIGHTS_QUERY,
             )),
-            "php" => Some(HighlightLanguageConfig::new(
+            "php" => Ok(HighlightLanguageConfig::new(
                 "php",
                 tree_sitter_php::LANGUAGE_PHP.into(),
                 tree_sitter_php::HIGHLIGHTS_QUERY,
             )),
-            "swift" => Some(HighlightLanguageConfig::new(
+            "swift" => Ok(HighlightLanguageConfig::new(
                 "swift",
                 tree_sitter_swift::LANGUAGE.into(),
                 tree_sitter_swift::HIGHLIGHTS_QUERY,
             )),
-            _ => None,
+            _ => Err(HighlightError::UnsupportedLanguage(language.to_string())),
         }
     }
 
     /// Create highlight configuration from language config
     fn create_highlight_config(
         lang_config: HighlightLanguageConfig,
-    ) -> HighlightResult<HighlightConfiguration> {
+    ) -> Result<HighlightConfiguration, HighlightError> {
         let mut config = HighlightConfiguration::new(
             lang_config.language,
             lang_config.name,
@@ -148,7 +148,7 @@ impl HighlightServiceImpl {
         &self,
         code: &str,
         language: &str,
-    ) -> HighlightResult<HighlightedCode> {
+    ) -> Result<HighlightedCode, HighlightError> {
         if code.is_empty() {
             return Ok(HighlightedCode {
                 original: code.to_string(),
@@ -157,8 +157,7 @@ impl HighlightServiceImpl {
             });
         }
 
-        let lang_config = Self::get_language_config(language)
-            .ok_or_else(|| HighlightError::UnsupportedLanguage(language.to_string()))?;
+        let lang_config = Self::get_language_config(language)?;
 
         let config = Self::create_highlight_config(lang_config)?;
 
@@ -237,17 +236,19 @@ impl Default for HighlightServiceImpl {
 
 #[async_trait::async_trait]
 impl HighlightService for HighlightServiceImpl {
-    async fn highlight(&self, code: &str, language: &str) -> HighlightResult<HighlightedCode> {
+    async fn highlight(&self, code: &str, language: &str) -> mcb_domain::Result<HighlightedCode> {
         let code = code.to_string();
         let language = language.to_string();
         let highlighter = Arc::clone(&self.highlighter);
 
-        tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || {
             let service = HighlightServiceImpl { highlighter };
             service.highlight_code_internal(&code, &language)
         })
         .await
-        .map_err(|e| HighlightError::HighlightingFailed(format!("Blocking task failed: {}", e)))?
+        .map_err(|e| HighlightError::HighlightingFailed(format!("Blocking task failed: {}", e)))?;
+
+        result.map_err(mcb_domain::Error::from)
     }
 }
 

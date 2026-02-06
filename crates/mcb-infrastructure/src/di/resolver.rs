@@ -48,15 +48,15 @@
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
-    CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig,
-    VectorStoreProviderConfig, resolve_cache_provider, resolve_embedding_provider,
-    resolve_language_provider, resolve_vector_store_provider,
-};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{
     CacheProvider as CacheProviderTrait, EmbeddingProvider, LanguageChunkingProvider,
     VectorStoreProvider,
+};
+use mcb_domain::registry::{
+    CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig,
+    VectorStoreProviderConfig, resolve_cache_provider, resolve_embedding_provider,
+    resolve_language_provider, resolve_vector_store_provider,
 };
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
@@ -244,10 +244,10 @@ fn default_vector_store_config() -> VectorStoreProviderConfig {
 /// Struct containing lists of available providers by category
 pub fn list_available_providers() -> AvailableProviders {
     AvailableProviders {
-        embedding: mcb_application::ports::registry::list_embedding_providers(),
-        vector_store: mcb_application::ports::registry::list_vector_store_providers(),
-        cache: mcb_application::ports::registry::list_cache_providers(),
-        language: mcb_application::ports::registry::list_language_providers(),
+        embedding: mcb_domain::registry::list_embedding_providers(),
+        vector_store: mcb_domain::registry::list_vector_store_providers(),
+        cache: mcb_domain::registry::list_cache_providers(),
+        language: mcb_domain::registry::list_language_providers(),
     }
 }
 

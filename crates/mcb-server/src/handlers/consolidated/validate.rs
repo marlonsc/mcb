@@ -61,7 +61,7 @@ impl ValidateHandler {
                             timer.elapsed(),
                         )),
                         Err(e) => Ok(ResponseFormatter::format_validation_error(
-                            &e.to_string(),
+                            &format!("Validation failed for file {}: {}", path.display(), e),
                             &path,
                         )),
                     },
@@ -76,7 +76,7 @@ impl ValidateHandler {
                             timer.elapsed(),
                         )),
                         Err(e) => Ok(ResponseFormatter::format_validation_error(
-                            &e.to_string(),
+                            &format!("Project validation failed for {}: {}", path.display(), e),
                             &path,
                         )),
                     },

@@ -19,13 +19,10 @@ pub mod chunking;
 pub mod indexing;
 /// Memory domain service interface
 pub mod memory;
-/// Search and context domain service interfaces
-pub mod search;
-
-// Re-export domain service interfaces
-pub use chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
-pub use memory::MemoryServiceInterface;
-pub use search::{
+// Re-export domain service interfaces from ports
+pub use crate::ports::services::{
     ChunkingOrchestratorInterface, ContextServiceInterface, IndexingResult,
     IndexingServiceInterface, IndexingStatus, SearchServiceInterface,
 };
+pub use chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
+pub use memory::MemoryServiceInterface;

@@ -86,10 +86,7 @@ pub async fn run(
 /// Legacy entry point for backwards compatibility
 ///
 /// Runs in standalone mode (equivalent to `run(config_path, false)` with standalone config)
-#[deprecated(since = "0.2.0", note = "Use `run(config_path, server_mode)` instead")]
-pub async fn run_server(config_path: Option<&Path>) -> Result<(), Box<dyn std::error::Error>> {
-    run(config_path, false).await
-}
+// DELETED
 
 // =============================================================================
 // Operating Modes

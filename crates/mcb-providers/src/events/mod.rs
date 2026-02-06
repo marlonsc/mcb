@@ -22,7 +22,7 @@ pub use nats::{NatsEventBusProvider, NatsEventPublisher};
 pub use tokio::{TokioEventBusProvider, TokioEventPublisher};
 
 // Re-export port trait from application layer
-pub use mcb_application::ports::infrastructure::{DomainEventStream, EventBusProvider};
+pub use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 
 // Re-export domain event types
 pub use mcb_domain::events::DomainEvent;

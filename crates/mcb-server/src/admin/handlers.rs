@@ -13,6 +13,7 @@ use mcb_application::ports::admin::{
 };
 use mcb_application::ports::infrastructure::EventBusProvider;
 use mcb_application::ports::providers::CacheProvider;
+use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use mcb_infrastructure::infrastructure::ServiceManager;
 use rocket::http::Status;
@@ -123,8 +124,8 @@ pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResp
             };
 
             IndexingOperationStatus {
-                id: op.id.clone(),
-                collection: op.collection.clone(),
+                id: op.id.to_string(),
+                collection: op.collection.to_string(),
                 current_file: op.current_file.clone(),
                 progress_percent: progress,
                 processed_files: op.processed_files,
@@ -336,7 +337,7 @@ fn current_timestamp() -> u64 {
 /// Build dependency health checks from metrics and operations
 fn build_dependency_checks(
     metrics: &PerformanceMetricsData,
-    operations: &std::collections::HashMap<String, IndexingOperation>,
+    operations: &std::collections::HashMap<OperationId, IndexingOperation>,
     now: u64,
 ) -> Vec<DependencyHealthCheck> {
     vec![
@@ -366,7 +367,7 @@ fn build_embedding_health(metrics: &PerformanceMetricsData, now: u64) -> Depende
 
 /// Build vector store health check
 fn build_vector_store_health(
-    operations: &std::collections::HashMap<String, IndexingOperation>,
+    operations: &std::collections::HashMap<OperationId, IndexingOperation>,
     now: u64,
 ) -> DependencyHealthCheck {
     DependencyHealthCheck {

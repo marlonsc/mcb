@@ -26,11 +26,6 @@ doctest = false
 # Domain layer - contains provider port traits (Clean Architecture)
 mcb-domain = { path = "../mcb-domain" }
 
-# Application layer - for registry and admin/infrastructure ports
-# Required for: linkme registry auto-registration, admin ports, infrastructure ports.
-# NOTE: Provider traits (EmbeddingProvider, VectorStoreProvider, etc.) are in mcb-domain.
-mcb-application = { path = "../mcb-application" }
-
 # Core async runtime
 tokio = { workspace = true }
 

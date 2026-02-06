@@ -55,6 +55,12 @@ chrono = { workspace = true }
 # Async stream traits for event ports
 futures = { workspace = true }
 
+# Plugin registration
+linkme = "0.3"
+
+# HTTP Client types for providers
+reqwest = { workspace = true }
+
 [dev-dependencies]
 # Testing utilities
 tempfile = "3.10"

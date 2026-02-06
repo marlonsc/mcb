@@ -102,7 +102,7 @@ pub struct ServerConfig {
 
 /// Default admin port (9090)
 fn default_admin_port() -> u16 {
-    9090
+    DEFAULT_ADMIN_PORT
 }
 
 // Default implementations for config structs
@@ -140,7 +140,7 @@ impl Default for ServerCorsConfig {
     fn default() -> Self {
         Self {
             cors_enabled: true,
-            cors_origins: vec!["*".to_string()],
+            cors_origins: vec![DEFAULT_CORS_ORIGIN.to_string()],
         }
     }
 }
