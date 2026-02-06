@@ -111,7 +111,7 @@ pub static EMBEDDING_PROVIDERS: [EmbeddingProviderEntry] = [..];
 /// # Example
 ///
 /// ```no_run
-/// use crate::ports::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+/// use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 ///
 /// fn get_provider() -> Result<(), String> {
 ///     let config = EmbeddingProviderConfig::new("null")

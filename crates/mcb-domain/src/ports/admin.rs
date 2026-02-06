@@ -122,7 +122,8 @@ pub struct IndexingOperation {
 ///
 /// fn start_indexing(tracker: Arc<dyn IndexingOperationsInterface>) {
 ///     // Start tracking a new operation
-///     let operation_id = tracker.start_operation("my-collection", 100);
+///     let collection = mcb_domain::CollectionId::new("my-collection".to_string());
+///     let operation_id = tracker.start_operation(&collection, 100);
 ///
 ///     // Update progress as files are processed
 ///     tracker.update_progress(&operation_id, Some("src/main.rs".to_string()), 50);

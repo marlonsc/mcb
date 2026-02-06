@@ -29,8 +29,8 @@
 //! ### Registering a Provider (in mcb-providers)
 //!
 //! ```no_run
-//! use crate::ports::registry::embedding::{EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
-//! use crate::ports::providers::EmbeddingProvider;
+//! use mcb_domain::registry::embedding::{EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
+//! use mcb_domain::ports::providers::EmbeddingProvider;
 //! use std::sync::Arc;
 //!
 //! // Providers register via #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
@@ -40,7 +40,7 @@
 //! ### Resolving a Provider (in mcb-infrastructure)
 //!
 //! ```no_run
-//! use crate::ports::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+//! use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 //!
 //! fn get_provider() -> Result<(), String> {
 //!     let config = EmbeddingProviderConfig::new("null");
