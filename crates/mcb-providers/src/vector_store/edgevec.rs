@@ -720,40 +720,44 @@ impl EdgeVecActor {
             .collect()
     }
 
-    fn handle_list_file_paths(&self, collection: &str, limit: usize) -> Vec<FileInfo> {
-        let mut files = Vec::new();
-        if let Some(collection_metadata) = self.metadata_store.get(collection) {
-            let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
+    fn handle_list_file_paths(&self, collection: &str, limit: usize) -> Result<Vec<FileInfo>> {
+        let collection_metadata = self
+            .metadata_store
+            .get(collection)
+            .ok_or_else(|| Error::internal(format!("Collection '{}' not found", collection)))?;
 
-            for meta_val in collection_metadata.values() {
-                if let Some(meta) = meta_val.as_object()
-                    && let Some(file_path) = meta.get("file_path").and_then(|v| v.as_str())
-                {
-                    let language = meta
-                        .get("language")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("unknown")
-                        .to_string();
+        let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
 
-                    let entry = file_map
-                        .entry(file_path.to_string())
-                        .or_insert((0, language));
-                    entry.0 += 1;
-                }
+        for meta_val in collection_metadata.values() {
+            if let Some(meta) = meta_val.as_object()
+                && let Some(file_path) = meta.get("file_path").and_then(|v| v.as_str())
+            {
+                let language = meta
+                    .get("language")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                let entry = file_map
+                    .entry(file_path.to_string())
+                    .or_insert((0, language));
+                entry.0 += 1;
             }
-
-            files = file_map
-                .into_iter()
-                .take(limit)
-                .map(|(path, (chunk_count, language))| {
-                    FileInfo::new(path, chunk_count, language, None)
-                })
-                .collect();
         }
-        files
+
+        let files = file_map
+            .into_iter()
+            .take(limit)
+            .map(|(path, (chunk_count, language))| FileInfo::new(path, chunk_count, language, None))
+            .collect();
+        Ok(files)
     }
 
-    fn handle_get_chunks_by_file(&self, collection: &str, file_path: &str) -> Vec<SearchResult> {
+    fn handle_get_chunks_by_file(
+        &self,
+        collection: &str,
+        file_path: &str,
+    ) -> Result<Vec<SearchResult>> {
         let mut results = Vec::new();
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for (ext_id, meta_val) in collection_metadata.iter() {
@@ -781,7 +785,7 @@ impl EdgeVecActor {
         }
         // Sort by start_line
         results.sort_by_key(|r| r.start_line);
-        results
+        Ok(results)
     }
 }
 
@@ -869,14 +873,14 @@ impl EdgeVecActor {
                 limit,
                 tx,
             } => {
-                let _ = tx.send(Ok(self.handle_list_file_paths(&collection, limit)));
+                let _ = tx.send(self.handle_list_file_paths(&collection, limit));
             }
             BrowseMessage::GetChunksByFile {
                 collection,
                 file_path,
                 tx,
             } => {
-                let _ = tx.send(Ok(self.handle_get_chunks_by_file(&collection, &file_path)));
+                let _ = tx.send(self.handle_get_chunks_by_file(&collection, &file_path));
             }
         }
     }
