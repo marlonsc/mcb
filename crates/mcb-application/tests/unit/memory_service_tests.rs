@@ -18,7 +18,7 @@ mod rrf_tests {
         SessionSummary,
     };
     use mcb_domain::error::Result;
-    use mcb_domain::ports::providers::vector_store::VectorStoreAdmin;
+    use mcb_domain::ports::providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
     use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
     use mcb_domain::utils::compute_content_hash;
     use mcb_domain::value_objects::{Embedding, SearchResult};
@@ -74,6 +74,29 @@ mod rrf_tests {
 
         fn provider_name(&self) -> &str {
             "mock"
+        }
+    }
+
+    #[async_trait]
+    impl VectorStoreBrowser for MockVectorStore {
+        async fn list_collections(&self) -> Result<Vec<mcb_domain::value_objects::CollectionInfo>> {
+            Ok(vec![])
+        }
+
+        async fn list_file_paths(
+            &self,
+            _collection: &str,
+            _limit: usize,
+        ) -> Result<Vec<mcb_domain::value_objects::FileInfo>> {
+            Ok(vec![])
+        }
+
+        async fn get_chunks_by_file(
+            &self,
+            _collection: &str,
+            _file_path: &str,
+        ) -> Result<Vec<SearchResult>> {
+            Ok(vec![])
         }
     }
 

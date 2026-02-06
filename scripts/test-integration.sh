@@ -4,8 +4,8 @@
 
 set -e
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Color codes
 GREEN='\033[0;32m'
@@ -15,120 +15,119 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 log_info() {
-    echo -e "${BLUE}ℹ${NC} $*"
+	echo -e "${BLUE}ℹ${NC} $*"
 }
 
 log_success() {
-    echo -e "${GREEN}✅${NC} $*"
+	echo -e "${GREEN}✅${NC} $*"
 }
 
 log_error() {
-    echo -e "${RED}❌${NC} $*"
+	echo -e "${RED}❌${NC} $*"
 }
 
 log_warn() {
-    echo -e "${YELLOW}⚠️${NC} $*"
+	echo -e "${YELLOW}⚠️${NC} $*"
 }
 
 # Check if docker is available
-if ! command -v docker &> /dev/null; then
-    log_error "Docker is not installed. Please install Docker to run integration tests."
-    exit 1
+if ! command -v docker &>/dev/null; then
+	log_error "Docker is not installed. Please install Docker to run integration tests."
+	exit 1
 fi
 
 # Check if docker-compose is available
-if ! command -v docker-compose &> /dev/null; then
-    log_error "docker-compose is not installed. Please install docker-compose to run integration tests."
-    exit 1
+if ! command -v docker-compose &>/dev/null; then
+	log_error "docker-compose is not installed. Please install docker-compose to run integration tests."
+	exit 1
 fi
 
 cd "$PROJECT_ROOT"
 
 case "${1:-}" in
-    start)
-        log_info "Starting Redis and NATS services..."
-        docker-compose -f docker-compose.testing.yml up -d
+start)
+	log_info "Starting infrastructure services (Redis, NATS, etc.)..."
+	docker-compose up -d redis nats
 
-        log_info "Waiting for services to be healthy..."
-        sleep 5
+	log_info "Waiting for services to be healthy..."
+	sleep 5
 
-        # Check Redis
-        if docker-compose -f docker-compose.testing.yml exec -T redis redis-cli ping > /dev/null 2>&1; then
-            log_success "Redis is healthy"
-        else
-            log_error "Redis failed to start"
-            docker-compose -f docker-compose.testing.yml logs redis
-            exit 1
-        fi
+	# Check Redis
+	if docker-compose exec -T redis redis-cli ping >/dev/null 2>&1; then
+		log_success "Redis is healthy"
+	else
+		log_error "Redis failed to start"
+		docker-compose logs redis
+		exit 1
+	fi
 
-        # Check NATS
-        if docker-compose -f docker-compose.testing.yml exec -T nats wget --spider -q http://localhost:8222/healthz > /dev/null 2>&1; then
-            log_success "NATS is healthy"
-        else
-            log_warn "NATS health check inconclusive (may still be starting)"
-        fi
-        ;;
+	# Check NATS
+	if docker-compose exec -T nats wget --spider -q http://localhost:8222/healthz >/dev/null 2>&1; then
+		log_success "NATS is healthy"
+	else
+		log_warn "NATS health check inconclusive (may still be starting)"
+	fi
+	;;
 
-    stop)
-        log_info "Stopping services..."
-        docker-compose -f docker-compose.testing.yml down -v
-        log_success "Services stopped and volumes cleaned"
-        ;;
+stop)
+	log_info "Stopping infrastructure services..."
+	docker-compose stop redis nats
+	log_success "Services stopped"
+	;;
 
-    restart)
-        log_info "Restarting services..."
-        docker-compose -f docker-compose.testing.yml restart
-        sleep 3
-        log_success "Services restarted"
-        ;;
+restart)
+	log_info "Restarting services..."
+	docker-compose restart redis nats
+	sleep 3
+	log_success "Services restarted"
+	;;
 
-    logs)
-        docker-compose -f docker-compose.testing.yml logs -f
-        ;;
+logs)
+	docker-compose logs -f redis nats
+	;;
 
-    test)
-        log_info "Starting Redis and NATS services..."
-        docker-compose -f docker-compose.testing.yml up -d
+test)
+	log_info "Starting all infrastructure services..."
+	docker-compose up -d
 
-        log_info "Waiting for services to be ready..."
-        sleep 5
+	log_info "Waiting for services to be ready..."
+	sleep 5
 
-        log_info "Running tests (make test)..."
-        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:6379}"
-        export NATS_URL="${NATS_URL:-nats://127.0.0.1:4222}"
-        if make test; then
-            log_success "All tests passed"
-        else
-            log_error "Tests failed"
-            docker-compose -f docker-compose.testing.yml down -v
-            exit 1
-        fi
-        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	log_info "Running tests (make test)..."
+	log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:6379}"
+	export NATS_URL="${NATS_URL:-nats://127.0.0.1:4222}"
+	if make test; then
+		log_success "All tests passed"
+	else
+		log_error "Tests failed"
+		exit 1
+	fi
+	log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-        log_info "Cleaning up services..."
-        docker-compose -f docker-compose.testing.yml down -v
-        log_success "Cleanup complete"
-        ;;
+	log_info "Cleaning up services..."
+	docker-compose down -v
+	log_success "Cleanup complete"
+	;;
 
-    *)
-        echo "Integration Test Runner"
-        echo ""
-        echo "Usage: $0 {start|stop|restart|logs|test}"
-        echo ""
-        echo "Commands:"
-        echo "  start    - Start Redis and NATS services"
-        echo "  stop     - Stop services and remove volumes"
-        echo "  restart  - Restart running services"
-        echo "  logs     - View service logs (follow mode)"
-        echo "  test     - Start services, run tests, and cleanup"
-        echo ""
-        echo "Examples:"
-        echo "  $0 start                 # Start services"
-        echo "  $0 test                  # Full test cycle"
-        echo "  $0 logs                  # View logs"
-        echo "  $0 stop                  # Stop services"
-        echo ""
-        exit 0
-        ;;
+*)
+	echo "Integration Test Runner"
+	echo ""
+	echo "Usage: $0 {start|stop|restart|logs|test}"
+	echo ""
+	echo "Commands:"
+	echo "  start    - Start Redis and NATS services"
+	echo "  stop     - Stop services and remove volumes"
+	echo "  restart  - Restart running services"
+	echo "  logs     - View service logs (follow mode)"
+	echo "  test     - Start services, run tests, and cleanup"
+	echo ""
+	echo "Examples:"
+	echo "  $0 start                 # Start services"
+	echo "  $0 test                  # Full test cycle"
+	echo "  $0 logs                  # View logs"
+	echo "  $0 stop                  # Stop services"
+	echo ""
+	exit 0
+	;;
 esac

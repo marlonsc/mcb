@@ -3,6 +3,7 @@
 //! Traits for browsing file trees and syntax highlighting.
 //! These define the contract for the browse service implementation.
 
+use crate::error::Result;
 use crate::value_objects::browse::{FileNode, HighlightedCode};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -23,9 +24,6 @@ pub enum BrowseError {
     HighlightingFailed(String),
 }
 
-/// Result type for browse operations
-pub type BrowseResult<T> = std::result::Result<T, BrowseError>;
-
 /// Error type for highlighting operations
 #[derive(Error, Debug)]
 pub enum HighlightError {
@@ -42,23 +40,20 @@ pub enum HighlightError {
     HighlightingFailed(String),
 }
 
-/// Result type for highlighting operations
-pub type HighlightResult<T> = std::result::Result<T, HighlightError>;
-
 /// Browse service trait (agnóstico interface)
 #[async_trait::async_trait]
 pub trait BrowseService: Send + Sync {
     /// Get file tree from given root path
-    async fn get_file_tree(&self, root: &Path, max_depth: usize) -> BrowseResult<FileNode>;
+    async fn get_file_tree(&self, root: &Path, max_depth: usize) -> Result<FileNode>;
 
     /// Get raw code from file
-    async fn get_code(&self, path: &Path) -> BrowseResult<String>;
+    async fn get_code(&self, path: &Path) -> Result<String>;
 
     /// Highlight code with given language
-    async fn highlight(&self, code: &str, language: &str) -> HighlightResult<HighlightedCode>;
+    async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode>;
 
     /// Get code with highlighting
-    async fn get_highlighted_code(&self, path: &Path) -> BrowseResult<HighlightedCode>;
+    async fn get_highlighted_code(&self, path: &Path) -> Result<HighlightedCode>;
 }
 
 /// Highlight service trait (agnóstico interface)
@@ -68,5 +63,5 @@ pub trait HighlightService: Send + Sync {
     ///
     /// Returns structured highlight spans with byte offsets.
     /// Falls back to empty spans if highlighting fails.
-    async fn highlight(&self, code: &str, language: &str) -> HighlightResult<HighlightedCode>;
+    async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode>;
 }

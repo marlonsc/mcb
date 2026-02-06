@@ -84,7 +84,7 @@ main() {
 		log_error "$failed service(s) failed health check"
 		echo ""
 		echo "Debugging steps:"
-		echo "  1. Check service logs: docker-compose -f docker-compose-testing.yml logs <service>"
+		echo "  1. Check service logs: docker-compose logs <service>"
 		echo "  2. List running containers: docker ps"
 		echo "  3. Check network: docker network ls"
 		echo ""

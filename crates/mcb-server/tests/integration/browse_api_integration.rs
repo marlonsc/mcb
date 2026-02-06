@@ -8,10 +8,11 @@ use mcb_application::ports::admin::{
     PerformanceMetricsInterface,
 };
 use mcb_application::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
-use mcb_domain::error::Result;
-use mcb_domain::events::DomainEvent;
+use mcb_domain::ports::browse::{HighlightResult, HighlightService};
 use mcb_domain::ports::providers::VectorStoreBrowser;
+use mcb_domain::value_objects::browse::HighlightedCode;
 use mcb_domain::value_objects::{CollectionInfo, FileInfo, SearchResult};
+use mcb_domain::{DomainEvent, Result as DomainResult};
 use mcb_server::admin::auth::AdminAuthConfig;
 use mcb_server::admin::browse_handlers::BrowseState;
 use mcb_server::admin::handlers::AdminState;
@@ -55,11 +56,15 @@ impl MockVectorStoreBrowser {
 
 #[async_trait]
 impl VectorStoreBrowser for MockVectorStoreBrowser {
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+    async fn list_collections(&self) -> DomainResult<Vec<CollectionInfo>> {
         Ok(self.collections.clone())
     }
 
-    async fn list_file_paths(&self, _collection: &str, limit: usize) -> Result<Vec<FileInfo>> {
+    async fn list_file_paths(
+        &self,
+        _collection: &str,
+        limit: usize,
+    ) -> DomainResult<Vec<FileInfo>> {
         Ok(self.files.iter().take(limit).cloned().collect())
     }
 
@@ -67,7 +72,7 @@ impl VectorStoreBrowser for MockVectorStoreBrowser {
         &self,
         _collection: &str,
         _file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
+    ) -> DomainResult<Vec<SearchResult>> {
         Ok(self.chunks.clone())
     }
 }
@@ -76,15 +81,9 @@ impl VectorStoreBrowser for MockVectorStoreBrowser {
 pub struct MockHighlightService;
 
 #[async_trait]
-impl mcb_domain::ports::browse::HighlightService for MockHighlightService {
-    async fn highlight(
-        &self,
-        code: &str,
-        language: &str,
-    ) -> mcb_domain::ports::browse::HighlightResult<
-        mcb_domain::value_objects::browse::HighlightedCode,
-    > {
-        Ok(mcb_domain::value_objects::browse::HighlightedCode {
+impl HighlightService for MockHighlightService {
+    async fn highlight(&self, code: &str, language: &str) -> HighlightResult<HighlightedCode> {
+        Ok(HighlightedCode {
             original: code.to_string(),
             spans: Vec::new(),
             language: language.to_string(),
@@ -152,11 +151,11 @@ struct MockEventBus;
 
 #[async_trait]
 impl EventBusProvider for MockEventBus {
-    async fn publish_event(&self, _event: DomainEvent) -> Result<()> {
+    async fn publish_event(&self, _event: DomainEvent) -> DomainResult<()> {
         Ok(())
     }
 
-    async fn subscribe_events(&self) -> Result<DomainEventStream> {
+    async fn subscribe_events(&self) -> DomainResult<DomainEventStream> {
         // Return an empty stream
         Ok(Box::pin(futures::stream::empty()))
     }
@@ -165,11 +164,11 @@ impl EventBusProvider for MockEventBus {
         false
     }
 
-    async fn publish(&self, _topic: &str, _payload: &[u8]) -> Result<()> {
+    async fn publish(&self, _topic: &str, _payload: &[u8]) -> DomainResult<()> {
         Ok(())
     }
 
-    async fn subscribe(&self, _topic: &str) -> Result<String> {
+    async fn subscribe(&self, _topic: &str) -> DomainResult<String> {
         Ok("mock-subscription".to_string())
     }
 }

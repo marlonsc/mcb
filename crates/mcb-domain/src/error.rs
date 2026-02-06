@@ -207,11 +207,11 @@ pub enum Error {
 
     /// Browse operation error
     #[error("Browse error: {0}")]
-    Browse(String),
+    Browse(#[from] crate::ports::browse::BrowseError),
 
     /// Highlighting operation error
     #[error("Highlighting error: {0}")]
-    Highlight(String),
+    Highlight(#[from] crate::ports::browse::HighlightError),
 }
 
 // Basic error creation methods
