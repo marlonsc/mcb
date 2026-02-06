@@ -18,6 +18,7 @@ extern crate mcb_providers;
 
 use mcb_domain::entities::CodeChunk;
 // Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use serde_json::json;
@@ -222,7 +223,7 @@ async fn test_golden_index_real_files() {
 
     // Step 1: Create collection
     let create_result = vector_store
-        .create_collection(collection, embedding.dimensions())
+        .create_collection(&CollectionId::new(collection), embedding.dimensions())
         .await;
     assert!(
         create_result.is_ok(),
@@ -265,7 +266,7 @@ async fn test_golden_index_real_files() {
 
     // Step 4: Insert into vector store
     let ids = vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert should succeed");
 
@@ -290,7 +291,7 @@ async fn test_golden_search_validates_expected_files() {
 
     // Setup: Create collection and index real files
     vector_store
-        .create_collection(collection, embedding.dimensions())
+        .create_collection(&CollectionId::new(collection), embedding.dimensions())
         .await
         .expect("Create collection");
 
@@ -308,7 +309,7 @@ async fn test_golden_search_validates_expected_files() {
         .collect();
 
     vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -323,7 +324,7 @@ async fn test_golden_search_validates_expected_files() {
 
     let results = vector_store
         .search_similar(
-            collection,
+            &CollectionId::new(collection),
             &query_embedding[0].vector,
             golden_config.config.top_k,
             None,
@@ -383,7 +384,7 @@ async fn test_golden_all_queries_find_expected_files() {
 
     // Setup collection with real files
     vector_store
-        .create_collection(collection, embedding.dimensions())
+        .create_collection(&CollectionId::new(collection), embedding.dimensions())
         .await
         .expect("Create collection");
 
@@ -401,7 +402,7 @@ async fn test_golden_all_queries_find_expected_files() {
         .collect();
 
     vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -419,7 +420,7 @@ async fn test_golden_all_queries_find_expected_files() {
 
         let results = vector_store
             .search_similar(
-                collection,
+                &CollectionId::new(collection),
                 &query_embedding[0].vector,
                 golden_config.config.top_k,
                 None,
@@ -498,7 +499,7 @@ async fn test_golden_full_workflow_end_to_end() {
 
     // Create collection
     vector_store
-        .create_collection(collection, embedding.dimensions())
+        .create_collection(&CollectionId::new(collection), embedding.dimensions())
         .await
         .expect("Create collection");
 
@@ -517,7 +518,7 @@ async fn test_golden_full_workflow_end_to_end() {
         .collect();
 
     let ids = vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -534,7 +535,7 @@ async fn test_golden_full_workflow_end_to_end() {
 
         let results = vector_store
             .search_similar(
-                collection,
+                &CollectionId::new(collection),
                 &query_embedding[0].vector,
                 golden_config.config.top_k,
                 None,

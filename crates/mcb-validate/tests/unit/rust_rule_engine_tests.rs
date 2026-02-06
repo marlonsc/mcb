@@ -1,6 +1,6 @@
 //! Unit tests for Rust rule engine wrapper.
 //!
-//! Moved from inline tests in src/engines/rust_rule_engine.rs.
+//! Moved from inline tests in `src/engines/rust_rule_engine.rs`.
 
 use mcb_validate::engines::RustRuleEngineWrapper;
 

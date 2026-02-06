@@ -1,6 +1,6 @@
-//! Unit tests for FilePatternMatcher.
+//! Unit tests for `FilePatternMatcher`.
 //!
-//! Moved from inline tests in src/filters/file_matcher.rs.
+//! Moved from inline tests in `src/filters/file_matcher.rs`.
 
 use mcb_validate::filters::FilePatternMatcher;
 use std::path::Path;

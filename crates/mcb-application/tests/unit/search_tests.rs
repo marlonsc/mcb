@@ -93,10 +93,13 @@ impl EmbeddingProvider for MockEmbeddingProvider {
     }
 }
 
+type VectorData = (Embedding, HashMap<String, Value>);
+type StorageMap = HashMap<String, Vec<VectorData>>;
+
 #[derive(Debug)]
 struct MockVectorStoreProvider {
     // In-memory storage for simple retrieval validation
-    storage: Arc<Mutex<HashMap<String, Vec<(Embedding, HashMap<String, Value>)>>>>,
+    storage: Arc<Mutex<StorageMap>>,
 }
 impl MockVectorStoreProvider {
     fn new() -> Self {

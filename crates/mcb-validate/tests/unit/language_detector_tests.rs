@@ -1,6 +1,6 @@
 //! Unit tests for language detection (filters).
 //!
-//! Moved from inline tests in src/filters/language_detector.rs.
+//! Moved from inline tests in `src/filters/language_detector.rs`.
 
 use mcb_validate::filters::LanguageDetector;
 use std::path::Path;

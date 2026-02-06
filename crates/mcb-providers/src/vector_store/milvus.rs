@@ -775,11 +775,9 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let mut collections = Vec::new();
 
         for name in collection_names {
+            let collection_id = CollectionId::new(name);
             // Get stats for each collection
-            let stats = self
-                .get_stats(&CollectionId::new(&name))
-                .await
-                .unwrap_or_default();
+            let stats = self.get_stats(&collection_id).await.unwrap_or_default();
             let vector_count = stats
                 .get("vectors_count")
                 .and_then(|v| v.as_u64())
@@ -788,7 +786,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
             // For now, we don't have a quick way to count unique files without querying all data
             // In a future optimization, we could cache this or use Milvus aggregation
             collections.push(CollectionInfo::new(
-                CollectionId::new(name),
+                collection_id,
                 vector_count,
                 0, // file_count will be populated when listing files
                 None,

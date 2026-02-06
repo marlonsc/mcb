@@ -1646,6 +1646,7 @@ pub enum TransitionTrigger {
 ```
 
 This enables **context-aware policies** that adapt to project state, not just static rules
+
 ---
 
 ### 8. Configuration (Figment)

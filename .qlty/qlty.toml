@@ -69,7 +69,6 @@ name = "bandit"
 
 [[plugin]]
 name = "clippy"
-version = "0.1.92"
 
 [[plugin]]
 name = "hadolint"
@@ -86,9 +85,6 @@ name = "radarlint-iac"
 mode = "monitor"
 
 [[plugin]]
-name = "radarlint-js"
-
-[[plugin]]
 name = "radarlint-python"
 mode = "comment"
 
@@ -98,10 +94,12 @@ mode = "comment"
 
 [[plugin]]
 name = "ruff"
-version = "1.92.0"
 drivers = [
   "lint",
 ]
+
+[[plugin]]
+name = "rustfmt"
 
 [[plugin]]
 name = "shellcheck"
@@ -115,3 +113,6 @@ drivers = [
 
 [[plugin]]
 name = "trufflehog"
+
+[[plugin]]
+name = "zizmor"

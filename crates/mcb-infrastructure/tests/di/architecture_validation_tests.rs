@@ -165,8 +165,8 @@ async fn test_multiple_handles_reference_same_underlying_provider() {
 // Provider Factory Validation
 // ============================================================================
 
-#[test]
-fn test_provider_factories_return_working_providers() {
+#[tokio::test]
+async fn test_provider_factories_return_working_providers() {
     // Test that factory functions create working providers, not just return Ok
 
     // Embedding provider (local FastEmbed)
@@ -184,7 +184,7 @@ fn test_provider_factories_return_working_providers() {
     assert_eq!(cache.provider_name(), "moka", "Should be moka cache");
 
     // Vector store provider
-    let vs_config = VectorStoreProviderConfig::new("memory");
+    let vs_config = VectorStoreProviderConfig::new("edgevec");
     let vs = resolve_vector_store_provider(&vs_config).expect("Should resolve");
     assert!(
         vs.provider_name() == "edgevec",

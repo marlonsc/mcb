@@ -1,6 +1,6 @@
 //! Tests for authentication infrastructure
 
-use mcb_application::ports::infrastructure::AuthServiceInterface;
+use mcb_domain::ports::infrastructure::auth::AuthServiceInterface;
 use mcb_infrastructure::infrastructure::NullAuthService;
 
 #[test]

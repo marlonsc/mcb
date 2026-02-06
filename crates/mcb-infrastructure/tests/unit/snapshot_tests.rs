@@ -1,6 +1,6 @@
 //! Tests for snapshot infrastructure
 
-use mcb_application::ports::infrastructure::SnapshotProvider;
+use mcb_domain::ports::infrastructure::snapshot::SnapshotProvider;
 use mcb_infrastructure::infrastructure::NullSnapshotProvider;
 use std::path::Path;
 

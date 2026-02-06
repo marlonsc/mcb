@@ -61,8 +61,8 @@ mod embedding_registry_tests {
         );
     }
 
-    #[test]
-    fn test_resolve_fastembed_provider() {
+    #[tokio::test]
+    async fn test_resolve_fastembed_provider() {
         // Create config for fastembed (local) provider
         let config = EmbeddingProviderConfig::new("fastembed");
 
@@ -172,8 +172,8 @@ mod vector_store_registry_tests {
         );
     }
 
-    #[test]
-    fn test_resolve_edgevec_vector_store_provider() {
+    #[tokio::test]
+    async fn test_resolve_edgevec_vector_store_provider() {
         let config = VectorStoreProviderConfig::new("edgevec");
 
         let result = resolve_vector_store_provider(&config);
@@ -356,8 +356,8 @@ mod integration_tests {
         );
     }
 
-    #[test]
-    fn test_local_providers_available_for_testing() {
+    #[tokio::test]
+    async fn test_local_providers_available_for_testing() {
         // Local providers should be available for testing scenarios
         let embedding = resolve_embedding_provider(&EmbeddingProviderConfig::new("fastembed"));
         let cache = resolve_cache_provider(&CacheProviderConfig::new("moka"));

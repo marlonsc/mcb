@@ -31,7 +31,7 @@ extern crate mcb_providers;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
-use mcb_domain::value_objects::{Embedding, SearchResult};
+use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use serde_json::json;
@@ -93,8 +93,9 @@ impl FullStackTestContext {
 
     /// Create collection in vector store
     pub async fn create_collection(&self, name: &str, dimensions: usize) -> Result<()> {
+        let collection_id = CollectionId::new(name);
         self.vector_store()
-            .create_collection(name, dimensions)
+            .create_collection(&collection_id, dimensions)
             .await
     }
 
@@ -131,8 +132,9 @@ impl FullStackTestContext {
             .collect();
 
         // Insert into vector store - returns Vec<String> of IDs
+        let collection_id = CollectionId::new(collection);
         self.vector_store()
-            .insert_vectors(collection, &embeddings, metadata)
+            .insert_vectors(&collection_id, &embeddings, metadata)
             .await
     }
 
@@ -148,8 +150,9 @@ impl FullStackTestContext {
         let query_embedding = &query_embeddings[0];
 
         // Search vector store using search_similar
+        let collection_id = CollectionId::new(collection);
         self.vector_store()
-            .search_similar(collection, &query_embedding.vector, limit, None)
+            .search_similar(&collection_id, &query_embedding.vector, limit, None)
             .await
             .map(|results| {
                 results.into_iter().next().unwrap_or_else(|| SearchResult {
@@ -175,8 +178,9 @@ impl FullStackTestContext {
         let query_embedding = &query_embeddings[0];
 
         // Search vector store using search_similar
+        let collection_id = CollectionId::new(collection);
         self.vector_store()
-            .search_similar(collection, &query_embedding.vector, limit, None)
+            .search_similar(&collection_id, &query_embedding.vector, limit, None)
             .await
     }
 }

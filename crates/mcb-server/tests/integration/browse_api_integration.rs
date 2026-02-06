@@ -3,12 +3,12 @@
 //! Tests the REST API for browsing indexed collections, files, and chunks.
 
 use async_trait::async_trait;
-use mcb_application::ports::admin::{
+use mcb_domain::ports::admin::{
     IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
     PerformanceMetricsInterface,
 };
-use mcb_application::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
 use mcb_domain::ports::browse::HighlightService;
+use mcb_domain::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
 use mcb_domain::ports::providers::VectorStoreBrowser;
 use mcb_domain::value_objects::browse::HighlightedCode;
 use mcb_domain::value_objects::{
@@ -64,7 +64,7 @@ impl VectorStoreBrowser for MockVectorStoreBrowser {
 
     async fn list_file_paths(
         &self,
-        _collection: &str,
+        _collection: &CollectionId,
         limit: usize,
     ) -> DomainResult<Vec<FileInfo>> {
         Ok(self.files.iter().take(limit).cloned().collect())
@@ -72,7 +72,7 @@ impl VectorStoreBrowser for MockVectorStoreBrowser {
 
     async fn get_chunks_by_file(
         &self,
-        _collection: &str,
+        _collection: &CollectionId,
         _file_path: &str,
     ) -> DomainResult<Vec<SearchResult>> {
         Ok(self.chunks.clone())
@@ -385,8 +385,11 @@ use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 
 /// Creates a test vector store instance (EdgeVec in-memory)
 fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
-    EdgeVecVectorStoreProvider::new(EdgeVecConfig::default())
-        .expect("Failed to create test vector store")
+    let config = EdgeVecConfig {
+        dimensions: 384,
+        ..Default::default()
+    };
+    EdgeVecVectorStoreProvider::new(config).expect("Failed to create test vector store")
 }
 
 /// Helper to create metadata for a code chunk
@@ -419,9 +422,10 @@ fn create_dummy_embedding(dimensions: usize) -> Embedding {
 
 /// Populate vector store with test data simulating real indexed code
 async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) {
+    let collection_id = CollectionId::new(collection);
     // Create collection
     store
-        .create_collection(collection, 384)
+        .create_collection(&collection_id, 384)
         .await
         .expect("Failed to create collection");
 
@@ -489,7 +493,7 @@ async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) 
         .collect();
 
     store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&collection_id, &embeddings, metadata)
         .await
         .expect("Failed to insert vectors");
 }

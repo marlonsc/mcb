@@ -1,6 +1,6 @@
-//! Unit tests for AST query (AstQueryBuilder, AstQueryPatterns).
+//! Unit tests for AST query (`AstQueryBuilder`, `AstQueryPatterns`).
 //!
-//! Moved from inline tests in src/ast/query.rs.
+//! Moved from inline tests in `src/ast/query.rs`.
 
 use mcb_validate::ast::query::{AstQueryBuilder, AstQueryPatterns, QueryCondition};
 

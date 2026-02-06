@@ -1,6 +1,6 @@
-//! Unit tests for RuleEngineRouter.
+//! Unit tests for `RuleEngineRouter`.
 //!
-//! Moved from inline tests in src/engines/router.rs.
+//! Moved from inline tests in `src/engines/router.rs`.
 
 use mcb_validate::engines::{RoutedEngine, RuleEngineRouter};
 use serde_json::json;

@@ -1,6 +1,6 @@
 //! Tests for sync infrastructure
 
-use mcb_application::ports::infrastructure::SyncProvider;
+use mcb_domain::ports::SyncProvider;
 use mcb_infrastructure::infrastructure::NullSyncProvider;
 use std::path::Path;
 use std::time::Duration;

@@ -13,6 +13,7 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::types::{AppConfig, ModeConfig, OperatingMode};
 use mcb_infrastructure::crypto::CryptoService;
@@ -508,20 +509,20 @@ async fn test_session_isolation_with_vector_store() {
 
     // Both should be able to create their own collections
     vector_store
-        .create_collection(&coll_a, 384)
+        .create_collection(&CollectionId::new(&coll_a), 384)
         .await
         .expect("Create A");
     vector_store
-        .create_collection(&coll_b, 384)
+        .create_collection(&CollectionId::new(&coll_b), 384)
         .await
         .expect("Create B");
 
     // Verify they're separate (search one, verify empty in other)
     let results_a = vector_store
-        .search_similar(&coll_a, &vec![0.0; 384], 10, None)
+        .search_similar(&CollectionId::new(&coll_a), &vec![0.0; 384], 10, None)
         .await;
     let results_b = vector_store
-        .search_similar(&coll_b, &vec![0.0; 384], 10, None)
+        .search_similar(&CollectionId::new(&coll_b), &vec![0.0; 384], 10, None)
         .await;
 
     // Both should succeed (collections exist) and be empty (no data inserted)

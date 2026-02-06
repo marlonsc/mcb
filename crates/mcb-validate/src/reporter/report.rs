@@ -1,4 +1,4 @@
-//! ValidationReport and Reporter implementation.
+//! `ValidationReport` and `Reporter` implementation.
 
 use crate::violation_trait::Violation;
 use crate::{

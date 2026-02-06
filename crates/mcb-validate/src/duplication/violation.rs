@@ -1,4 +1,4 @@
-//! DuplicationViolation implementation.
+//! `DuplicationViolation` implementation.
 
 use std::path::PathBuf;
 

@@ -48,6 +48,7 @@ pub fn create_real_embedding_provider_with_model(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mcb_domain::value_objects::CollectionId;
 
     #[tokio::test]
     async fn test_real_vector_store_creation() {
@@ -60,17 +61,29 @@ mod tests {
         let store = create_real_vector_store();
 
         // Create collection
-        store.create_collection("test", 384).await.expect("create");
+        store
+            .create_collection(&CollectionId::new("test"), 384)
+            .await
+            .expect("create");
 
         // Verify collection exists
-        let exists = store.collection_exists("test").await.expect("check exists");
+        let exists = store
+            .collection_exists(&CollectionId::new("test"))
+            .await
+            .expect("check exists");
         assert!(exists);
 
         // Delete collection
-        store.delete_collection("test").await.expect("delete");
+        store
+            .delete_collection(&CollectionId::new("test"))
+            .await
+            .expect("delete");
 
         // Verify collection is gone
-        let exists = store.collection_exists("test").await.expect("check exists");
+        let exists = store
+            .collection_exists(&CollectionId::new("test"))
+            .await
+            .expect("check exists");
         assert!(!exists);
     }
 

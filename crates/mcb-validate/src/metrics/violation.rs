@@ -1,4 +1,4 @@
-//! MetricViolation implementation.
+//! `MetricViolation` implementation.
 
 use std::path::PathBuf;
 

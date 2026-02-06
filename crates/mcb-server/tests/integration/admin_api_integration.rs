@@ -5,11 +5,11 @@
 //! - POST /admin/provider/switch - Switch to a different provider
 
 use futures::Stream;
-use mcb_application::ports::admin::{
+use mcb_domain::events::DomainEvent;
+use mcb_domain::ports::admin::{
     IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
     PerformanceMetricsInterface,
 };
-use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use mcb_server::admin::{AdminApi, AdminApiConfig};

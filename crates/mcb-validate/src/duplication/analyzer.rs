@@ -1,4 +1,4 @@
-//! DuplicationAnalyzer and DuplicationStats implementation.
+//! `DuplicationAnalyzer` and `DuplicationStats` implementation.
 
 use std::fs;
 use std::path::{Path, PathBuf};

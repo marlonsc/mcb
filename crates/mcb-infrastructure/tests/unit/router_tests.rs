@@ -3,7 +3,7 @@
 //! Tests the InMemoryHealthMonitor state transitions and DefaultProviderRouter
 //! provider selection logic based on health status.
 
-use mcb_application::ports::infrastructure::routing::{
+use mcb_domain::ports::infrastructure::routing::{
     ProviderContext, ProviderHealthStatus, ProviderRouter,
 };
 use mcb_infrastructure::routing::{
