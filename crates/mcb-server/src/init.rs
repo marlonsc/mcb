@@ -83,11 +83,6 @@ pub async fn run(
     }
 }
 
-/// Legacy entry point for backwards compatibility
-///
-/// Runs in standalone mode (equivalent to `run(config_path, false)` with standalone config)
-// DELETED
-
 // =============================================================================
 // Operating Modes
 // =============================================================================

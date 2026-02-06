@@ -8,10 +8,12 @@ use mcb_application::ports::admin::{
     PerformanceMetricsInterface,
 };
 use mcb_application::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
-use mcb_domain::ports::browse::{HighlightError, HighlightService};
+use mcb_domain::ports::browse::HighlightService;
 use mcb_domain::ports::providers::VectorStoreBrowser;
 use mcb_domain::value_objects::browse::HighlightedCode;
-use mcb_domain::value_objects::{CollectionInfo, FileInfo, SearchResult};
+use mcb_domain::value_objects::{
+    CollectionId, CollectionInfo, FileInfo, OperationId, SearchResult,
+};
 use mcb_domain::{DomainEvent, Result as DomainResult};
 use mcb_server::admin::auth::AdminAuthConfig;
 use mcb_server::admin::browse_handlers::BrowseState;
@@ -86,7 +88,7 @@ impl HighlightService for MockHighlightService {
         &self,
         code: &str,
         language: &str,
-    ) -> std::result::Result<HighlightedCode, HighlightError> {
+    ) -> std::result::Result<HighlightedCode, mcb_domain::error::Error> {
         Ok(HighlightedCode {
             original: code.to_string(),
             spans: Vec::new(),
@@ -128,24 +130,24 @@ impl PerformanceMetricsInterface for MockMetrics {
 struct MockIndexing;
 
 impl IndexingOperationsInterface for MockIndexing {
-    fn get_operations(&self) -> HashMap<String, IndexingOperation> {
+    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         HashMap::new()
     }
 
-    fn start_operation(&self, _collection: &str, _total_files: usize) -> String {
-        "mock-operation-id".to_string()
+    fn start_operation(&self, _collection: &CollectionId, _total_files: usize) -> OperationId {
+        OperationId::new("mock-operation-id")
     }
 
     fn update_progress(
         &self,
-        _operation_id: &str,
+        _operation_id: &OperationId,
         _current_file: Option<String>,
         _processed: usize,
     ) {
         // No-op for mock
     }
 
-    fn complete_operation(&self, _operation_id: &str) {
+    fn complete_operation(&self, _operation_id: &OperationId) {
         // No-op for mock
     }
 }

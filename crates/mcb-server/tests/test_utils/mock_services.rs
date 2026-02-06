@@ -2,10 +2,6 @@
 //! Some methods are only used by specific tests; avoid #[allow(dead_code)].
 
 use async_trait::async_trait;
-use mcb_application::domain_services::search::{
-    ContextServiceInterface, IndexingResult, IndexingServiceInterface, IndexingStatus,
-    SearchServiceInterface,
-};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::entities::agent::{
     AgentSession, AgentSessionStatus, Checkpoint, Delegation, ToolCall,
@@ -16,7 +12,9 @@ use mcb_domain::entities::vcs::{
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
-use mcb_domain::value_objects::{Embedding, SearchResult};
+use mcb_domain::ports::services::{ContextServiceInterface, SearchServiceInterface};
+use mcb_domain::ports::services::{IndexingResult, IndexingServiceInterface, IndexingStatus};
+use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -70,7 +68,7 @@ impl Default for MockSearchService {
 impl SearchServiceInterface for MockSearchService {
     async fn search(
         &self,
-        _collection: &str,
+        _collection: &CollectionId,
         _query: &str,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
@@ -85,10 +83,10 @@ impl SearchServiceInterface for MockSearchService {
 
     async fn search_with_filters(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         query: &str,
         limit: usize,
-        _filters: Option<&mcb_application::ports::services::SearchFilters>,
+        _filters: Option<&mcb_domain::ports::services::SearchFilters>,
     ) -> Result<Vec<SearchResult>> {
         // Mock ignores filters and delegates to search
         self.search(collection, query, limit).await
@@ -99,7 +97,7 @@ impl SearchServiceInterface for MockSearchService {
 // Mock Agent Session Service (stub for Phase 9 - unapproved)
 // ============================================================================
 
-use mcb_application::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::services::AgentSessionServiceInterface;
 
 #[allow(dead_code)]
 pub struct MockAgentSessionService {
@@ -225,7 +223,11 @@ impl Default for MockIndexingService {
 
 #[async_trait]
 impl IndexingServiceInterface for MockIndexingService {
-    async fn index_codebase(&self, _path: &Path, _collection: &str) -> Result<IndexingResult> {
+    async fn index_codebase(
+        &self,
+        _path: &Path,
+        _collection: &CollectionId,
+    ) -> Result<IndexingResult> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -246,7 +248,7 @@ impl IndexingServiceInterface for MockIndexingService {
         self.status.lock().expect("Lock poisoned").clone()
     }
 
-    async fn clear_collection(&self, _collection: &str) -> Result<()> {
+    async fn clear_collection(&self, _collection: &CollectionId) -> Result<()> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -310,7 +312,7 @@ impl Default for MockContextService {
 
 #[async_trait]
 impl ContextServiceInterface for MockContextService {
-    async fn initialize(&self, _collection: &str) -> Result<()> {
+    async fn initialize(&self, _collection: &CollectionId) -> Result<()> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -318,7 +320,7 @@ impl ContextServiceInterface for MockContextService {
         Ok(())
     }
 
-    async fn store_chunks(&self, _collection: &str, _chunks: &[CodeChunk]) -> Result<()> {
+    async fn store_chunks(&self, _collection: &CollectionId, _chunks: &[CodeChunk]) -> Result<()> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -328,7 +330,7 @@ impl ContextServiceInterface for MockContextService {
 
     async fn search_similar(
         &self,
-        _collection: &str,
+        _collection: &CollectionId,
         _query: &str,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
@@ -354,7 +356,7 @@ impl ContextServiceInterface for MockContextService {
         })
     }
 
-    async fn clear_collection(&self, _collection: &str) -> Result<()> {
+    async fn clear_collection(&self, _collection: &CollectionId) -> Result<()> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -381,9 +383,7 @@ impl ContextServiceInterface for MockContextService {
 // Mock Validation Service
 // ============================================================================
 
-use mcb_application::ports::services::{
-    ValidationReport, ValidationServiceInterface, ViolationEntry,
-};
+use mcb_domain::ports::services::{ValidationReport, ValidationServiceInterface, ViolationEntry};
 
 /// Mock implementation of ValidationServiceInterface for testing
 pub struct MockValidationService {
@@ -504,7 +504,7 @@ impl ValidationServiceInterface for MockValidationService {
     async fn get_rules(
         &self,
         _category: Option<&str>,
-    ) -> Result<Vec<mcb_application::ports::services::RuleInfo>> {
+    ) -> Result<Vec<mcb_domain::ports::services::RuleInfo>> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -516,12 +516,12 @@ impl ValidationServiceInterface for MockValidationService {
         &self,
         file_path: &Path,
         _include_functions: bool,
-    ) -> Result<mcb_application::ports::services::ComplexityReport> {
+    ) -> Result<mcb_domain::ports::services::ComplexityReport> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
         }
-        Ok(mcb_application::ports::services::ComplexityReport {
+        Ok(mcb_domain::ports::services::ComplexityReport {
             file: file_path.to_string_lossy().to_string(),
             cyclomatic: 0.0,
             cognitive: 0.0,
@@ -1340,13 +1340,13 @@ impl VcsProvider for MockVcsProvider {
     }
 
     async fn list_branches(&self, _repo: &VcsRepository) -> Result<Vec<VcsBranch>> {
-        Ok(vec![VcsBranch {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "main".to_string(),
-            head_commit: "abc123".to_string(),
-            is_default: true,
-            upstream: None,
-        }])
+        Ok(vec![VcsBranch::new(
+            uuid::Uuid::new_v4().to_string(),
+            "main".to_string(),
+            "abc123".to_string(),
+            true,
+            None,
+        )])
     }
 
     async fn commit_history(
@@ -1355,15 +1355,15 @@ impl VcsProvider for MockVcsProvider {
         _branch: &str,
         _limit: Option<usize>,
     ) -> Result<Vec<VcsCommit>> {
-        Ok(vec![VcsCommit {
-            id: uuid::Uuid::new_v4().to_string(),
-            hash: "abc123".to_string(),
-            message: "Initial commit".to_string(),
-            author: "Test".to_string(),
-            author_email: "test@test.com".to_string(),
-            timestamp: 0,
-            parent_hashes: vec![],
-        }])
+        Ok(vec![VcsCommit::new(
+            uuid::Uuid::new_v4().to_string(),
+            "abc123".to_string(),
+            "Initial commit".to_string(),
+            "Test".to_string(),
+            "test@test.com".to_string(),
+            0,
+            vec![],
+        )])
     }
 
     async fn list_files(&self, _repo: &VcsRepository, _branch: &str) -> Result<Vec<PathBuf>> {

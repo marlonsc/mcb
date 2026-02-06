@@ -10,7 +10,6 @@ fn test_current_timestamp_reports_recent_time() {
 #[cfg(test)]
 mod rrf_tests {
     use async_trait::async_trait;
-    use mcb_application::ports::services::MemoryServiceInterface;
     use mcb_application::ports::{EmbeddingProvider, VectorStoreProvider};
     use mcb_application::use_cases::memory_service::MemoryServiceImpl;
     use mcb_domain::entities::memory::{
@@ -20,6 +19,7 @@ mod rrf_tests {
     use mcb_domain::error::Result;
     use mcb_domain::ports::providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
     use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
+    use mcb_domain::ports::services::MemoryServiceInterface;
     use mcb_domain::utils::compute_content_hash;
     use mcb_domain::value_objects::{Embedding, SearchResult};
     use serde_json::Value;

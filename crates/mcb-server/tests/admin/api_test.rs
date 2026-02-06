@@ -11,6 +11,7 @@ use mcb_application::ports::{
 };
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use mcb_server::admin::{auth::AdminAuthConfig, handlers::AdminState, routes::admin_rocket};
 use rocket::http::Status;
@@ -151,7 +152,7 @@ async fn test_indexing_endpoint_with_operations() {
     };
 
     // Start an indexing operation
-    let op_id = indexing.start_operation("test-collection", 50);
+    let op_id = indexing.start_operation(&CollectionId::new("test-collection"), 50);
     indexing.update_progress(&op_id, Some("src/main.rs".to_string()), 10);
 
     let client = Client::tracked(admin_rocket(
@@ -276,8 +277,8 @@ async fn test_health_with_active_operations() {
     };
 
     // Start two indexing operations
-    indexing.start_operation("coll-1", 100);
-    indexing.start_operation("coll-2", 200);
+    indexing.start_operation(&CollectionId::new("coll-1"), 100);
+    indexing.start_operation(&CollectionId::new("coll-2"), 200);
 
     let client = Client::tracked(admin_rocket(
         state,

@@ -1,6 +1,6 @@
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
-use mcb_application::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use std::sync::Arc;

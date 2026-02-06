@@ -1,9 +1,10 @@
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::ObservationMetadata;
+use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::vcs_context::VcsContext;
+use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use std::sync::Arc;
@@ -72,7 +73,14 @@ pub async fn get_observations(
             "Missing observation ids",
         )]));
     }
-    match memory_service.get_observations_by_ids(&ids).await {
+    match memory_service
+        .get_observations_by_ids(
+            &ids.iter()
+                .map(|id| ObservationId::new(id.clone()))
+                .collect::<Vec<_>>(),
+        )
+        .await
+    {
         Ok(observations) => {
             let observations: Vec<_> = observations
                 .into_iter()

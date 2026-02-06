@@ -6,13 +6,13 @@
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 //! Authentication guards added in v0.1.2.
 
-use mcb_application::ports::admin::{
+use mcb_domain::ports::admin::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
     IndexingOperationsInterface, PerformanceMetricsData, PerformanceMetricsInterface,
     ShutdownCoordinator,
 };
-use mcb_application::ports::infrastructure::EventBusProvider;
-use mcb_application::ports::providers::CacheProvider;
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::providers::CacheProvider;
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use mcb_infrastructure::infrastructure::ServiceManager;
@@ -442,10 +442,8 @@ pub struct CacheErrorResponse {
 pub async fn get_cache_stats(
     _auth: AdminAuth,
     state: &State<AdminState>,
-) -> Result<
-    Json<mcb_application::ports::providers::cache::CacheStats>,
-    (Status, Json<CacheErrorResponse>),
-> {
+) -> Result<Json<mcb_domain::ports::providers::cache::CacheStats>, (Status, Json<CacheErrorResponse>)>
+{
     let Some(cache) = &state.cache else {
         return Err((
             Status::ServiceUnavailable,

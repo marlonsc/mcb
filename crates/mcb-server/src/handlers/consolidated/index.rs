@@ -3,7 +3,7 @@
 use crate::args::{IndexAction, IndexArgs};
 use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
-use mcb_application::ports::services::IndexingServiceInterface;
+use mcb_domain::ports::services::IndexingServiceInterface;
 use mcb_domain::value_objects::CollectionId;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;

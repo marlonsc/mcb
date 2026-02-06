@@ -4,13 +4,13 @@
 //! Ensures all required dependencies are provided before server construction.
 
 use crate::McpServer;
-use mcb_application::ports::services::AgentSessionServiceInterface;
 use mcb_application::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     SearchServiceInterface, ValidationServiceInterface,
 };
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::repositories::ProjectRepository;
+use mcb_domain::ports::services::AgentSessionServiceInterface;
 use std::sync::Arc;
 
 /// Builder for MCP Server with dependency injection

@@ -2,6 +2,7 @@
 //!
 //! Moved from inline tests in src/handlers/browse_service.rs.
 
+use mcb_domain::error::Error;
 use mcb_domain::ports::browse::{BrowseError, BrowseService};
 use mcb_server::handlers::browse_service::{BrowseServiceImpl, detect_language, should_skip_path};
 use mcb_server::handlers::highlight_service::HighlightServiceImpl;
@@ -311,8 +312,8 @@ async fn test_get_file_tree_nonexistent_path() {
     assert!(result.is_err());
     assert!(result.is_err());
     match result.unwrap_err() {
-        BrowseError::PathNotFound(_) => {}
-        e => panic!("Expected PathNotFound error, got: {:?}", e),
+        Error::Browse(BrowseError::PathNotFound(_)) => {}
+        e => panic!("Expected Browse(PathNotFound) error, got: {:?}", e),
     }
 }
 

@@ -27,7 +27,8 @@ pub mod config;
 pub mod crypto;
 /// Embedding provider port
 pub mod embedding;
-
+/// HTTP client provider port
+pub mod http;
 /// Hybrid search provider port
 pub mod hybrid_search;
 /// Language chunking provider port
@@ -50,7 +51,7 @@ pub use cache::{CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, 
 pub use config::ProviderConfigManagerInterface;
 pub use crypto::{CryptoProvider, EncryptedData};
 pub use embedding::EmbeddingProvider;
-
+pub use http::{HttpClientConfig, HttpClientProvider};
 pub use hybrid_search::{HybridSearchProvider, HybridSearchResult};
 pub use language_chunking::LanguageChunkingProvider;
 pub use metrics::{

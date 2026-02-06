@@ -11,6 +11,7 @@ use mcb_application::ports::admin::{
 };
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::value_objects::{CollectionId, OperationId};
 use mcb_server::admin::{AdminApi, AdminApiConfig};
 use serde_json::json;
 use std::collections::HashMap;
@@ -50,23 +51,23 @@ struct MockIndexing;
 
 #[async_trait::async_trait]
 impl IndexingOperationsInterface for MockIndexing {
-    fn get_operations(&self) -> HashMap<String, IndexingOperation> {
+    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         HashMap::new()
     }
 
-    fn start_operation(&self, _collection: &str, _total_files: usize) -> String {
-        "op-123".to_string()
+    fn start_operation(&self, _collection: &CollectionId, _total_files: usize) -> OperationId {
+        OperationId::new("op-123")
     }
 
     fn update_progress(
         &self,
-        _operation_id: &str,
+        _operation_id: &OperationId,
         _current_file: Option<String>,
         _processed: usize,
     ) {
     }
 
-    fn complete_operation(&self, _operation_id: &str) {}
+    fn complete_operation(&self, _operation_id: &OperationId) {}
 }
 
 /// Mock implementation of EventBusProvider for testing

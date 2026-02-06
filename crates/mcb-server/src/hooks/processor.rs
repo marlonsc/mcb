@@ -1,6 +1,6 @@
 use super::types::{HookError, HookResult, PostToolUseContext, SessionStartContext};
-use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
+use mcb_domain::ports::services::MemoryServiceInterface;
 use std::sync::Arc;
 use tracing::debug;
 

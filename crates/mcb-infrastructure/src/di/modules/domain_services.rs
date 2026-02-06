@@ -12,11 +12,6 @@
 use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
-use mcb_application::domain_services::memory::MemoryServiceInterface;
-use mcb_application::ports::services::AgentSessionServiceInterface;
-use mcb_application::ports::services::{
-    ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
-};
 use mcb_application::use_cases::{
     AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl,
     SearchServiceImpl,
@@ -28,7 +23,10 @@ use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
-use mcb_domain::ports::services::ValidationServiceInterface;
+use mcb_domain::ports::services::{
+    AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
+    MemoryServiceInterface, SearchServiceInterface, ValidationServiceInterface,
+};
 use std::sync::Arc;
 
 use super::super::bootstrap::AppContext;

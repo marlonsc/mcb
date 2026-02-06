@@ -17,6 +17,7 @@ use mcb_application::ports::{
 };
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use mcb_server::admin::{auth::AdminAuthConfig, handlers::AdminState, routes::admin_rocket};
 use rocket::http::{Header, Status};
@@ -438,7 +439,7 @@ async fn test_indexing_public_no_auth_required() {
     let indexing = Arc::new(DefaultIndexingOperations::new());
 
     // Start an indexing operation to verify we get real data
-    let op_id = indexing.start_operation("test-collection", 100);
+    let op_id = indexing.start_operation(&CollectionId::new("test-collection"), 100);
     indexing.update_progress(&op_id, Some("src/main.rs".to_string()), 25);
 
     let state = AdminState {

@@ -1,8 +1,8 @@
 //! Session handler implementation.
 
 use crate::args::{SessionAction, SessionArgs};
-use mcb_application::ports::MemoryServiceInterface;
-use mcb_application::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;

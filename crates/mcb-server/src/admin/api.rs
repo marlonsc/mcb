@@ -14,8 +14,8 @@
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
-use mcb_application::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
-use mcb_application::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
+use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use rocket::config::{Config as RocketConfig, LogLevel};
 use std::net::IpAddr;

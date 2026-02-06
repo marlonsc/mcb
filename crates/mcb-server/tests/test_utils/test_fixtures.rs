@@ -6,8 +6,8 @@ use crate::test_utils::mock_services::{
     MockAgentRepository, MockMemoryRepository, MockProjectRepository, MockVcsProvider,
 };
 use mcb_application::ValidationService;
-use mcb_application::domain_services::search::IndexingResult;
 use mcb_domain::SearchResult;
+use mcb_domain::ports::services::IndexingResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::types::AppConfig;
 use mcb_infrastructure::crypto::CryptoService;

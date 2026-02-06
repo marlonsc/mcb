@@ -6,7 +6,7 @@
 //! Phase 2 of v0.1.2: These tests verify that errors return `is_error: Some(true)`
 //! and contain proper troubleshooting information.
 
-use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
+use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use std::path::Path;
 use std::time::Duration;

@@ -3,7 +3,7 @@ use crate::entities::memory::{
     ObservationType, SessionSummary,
 };
 use crate::error::Result;
-use crate::value_objects::Embedding;
+use crate::value_objects::{Embedding, ObservationId, SessionId};
 use async_trait::async_trait;
 
 /// Memory Service Interface
@@ -22,7 +22,7 @@ pub trait MemoryServiceInterface: Send + Sync {
         observation_type: ObservationType,
         tags: Vec<String>,
         metadata: ObservationMetadata,
-    ) -> Result<(String, bool)>;
+    ) -> Result<(ObservationId, bool)>;
 
     /// Search memories using semantic similarity.
     ///
@@ -35,14 +35,14 @@ pub trait MemoryServiceInterface: Send + Sync {
     ) -> Result<Vec<MemorySearchResult>>;
 
     /// Get a session summary by session ID.
-    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>>;
+    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>>;
 
     /// Create or update a session summary.
     ///
     /// Summarizes the key topics, decisions, and next steps from a session.
     async fn create_session_summary(
         &self,
-        session_id: String,
+        session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
@@ -50,7 +50,7 @@ pub trait MemoryServiceInterface: Send + Sync {
     ) -> Result<String>;
 
     /// Get an observation by ID.
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>>;
+    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;
 
     /// Generate embedding for content (for external use).
     async fn embed_content(&self, content: &str) -> Result<Embedding>;
@@ -58,14 +58,14 @@ pub trait MemoryServiceInterface: Send + Sync {
     /// Get observations in timeline order around an anchor (for progressive disclosure).
     async fn get_timeline(
         &self,
-        anchor_id: &str,
+        anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>>;
 
     /// Get multiple observations by IDs (for progressive disclosure step 3).
-    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>>;
+    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>>;
 
     /// Token-efficient memory search - returns index only (no full content).
     ///

@@ -303,6 +303,7 @@ fn insert_into_tree(
         let file_node = FileTreeNode::file(name, &file.path, file.chunk_count, &file.language);
         node.add_child(file_node);
     } else {
+        let child_idx = node.children.iter().position(|c| c.name == name);
         if let Some(idx) = child_idx {
             insert_into_tree(&mut node.children[idx], &parts[1..], file);
         } else {
@@ -313,7 +314,7 @@ fn insert_into_tree(
             };
             let mut dir_node = FileTreeNode::directory(name, &current_path);
             insert_into_tree(&mut dir_node, &parts[1..], file);
-            node.children.push(dir_node);
+            node.add_child(dir_node);
         }
     }
 }

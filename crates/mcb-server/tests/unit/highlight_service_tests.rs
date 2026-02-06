@@ -2,6 +2,7 @@
 //!
 //! Moved from inline tests in src/handlers/highlight_service.rs.
 
+use mcb_domain::error::Error;
 use mcb_domain::ports::browse::{HighlightError, HighlightService};
 use mcb_domain::value_objects::browse::HighlightCategory;
 use mcb_server::handlers::highlight_service::{HighlightServiceImpl, map_highlight_to_category};
@@ -168,8 +169,10 @@ async fn test_highlight_unsupported_language() {
 
     assert!(result.is_err());
     match result.unwrap_err() {
-        HighlightError::UnsupportedLanguage(lang) => assert_eq!(lang, "brainfuck"),
-        _ => panic!("Expected UnsupportedLanguage error"),
+        Error::Highlight(HighlightError::UnsupportedLanguage(lang)) => {
+            assert_eq!(lang, "brainfuck")
+        }
+        _ => panic!("Expected Highlight(UnsupportedLanguage) error"),
     }
 }
 

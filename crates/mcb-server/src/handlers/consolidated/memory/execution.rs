@@ -1,10 +1,10 @@
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::{
     ExecutionMetadata, MemoryFilter, ObservationMetadata, ObservationType,
 };
+use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};

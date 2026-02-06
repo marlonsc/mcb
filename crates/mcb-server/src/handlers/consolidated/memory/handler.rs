@@ -1,7 +1,7 @@
 //! Memory handler implementation.
 
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
-use mcb_application::ports::MemoryServiceInterface;
+use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};

@@ -10,9 +10,9 @@ use serde::Serialize;
 use std::path::Path;
 use std::time::Duration;
 
-use mcb_application::ports::services::ValidationReport;
-use mcb_application::ports::services::{IndexingResult, IndexingStatus};
 use mcb_domain::SearchResult;
+use mcb_domain::ports::services::ValidationReport;
+use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
 
 /// Response formatter for MCP server tools
 pub struct ResponseFormatter;

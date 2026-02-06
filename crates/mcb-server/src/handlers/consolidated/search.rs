@@ -3,9 +3,9 @@
 use crate::args::{SearchArgs, SearchResource};
 use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
-use mcb_application::ports::MemoryServiceInterface;
-use mcb_application::ports::services::SearchServiceInterface;
 use mcb_domain::entities::memory::MemoryFilter;
+use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::services::SearchServiceInterface;
 use mcb_domain::value_objects::CollectionId;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;

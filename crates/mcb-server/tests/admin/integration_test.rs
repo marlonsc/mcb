@@ -13,6 +13,7 @@ use mcb_application::ports::{
 };
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use mcb_server::admin::{auth::AdminAuthConfig, handlers::AdminState, routes::admin_rocket};
 use rocket::http::Status;
@@ -115,8 +116,8 @@ async fn test_full_admin_stack_integration() {
     );
 
     // 5. Start indexing operations and verify
-    let op1 = indexing.start_operation("project-alpha", 100);
-    let _op2 = indexing.start_operation("project-beta", 200);
+    let op1 = indexing.start_operation(&CollectionId::new("project-alpha"), 100);
+    let _op2 = indexing.start_operation(&CollectionId::new("project-beta"), 200);
     indexing.update_progress(&op1, Some("src/main.rs".to_string()), 25);
 
     // 6. Verify indexing endpoint shows operations
@@ -235,9 +236,9 @@ async fn test_indexing_lifecycle_integration() {
     .expect("valid rocket instance");
 
     // Start 3 concurrent operations
-    let op1 = indexing.start_operation("repo-1", 50);
-    let op2 = indexing.start_operation("repo-2", 100);
-    let op3 = indexing.start_operation("repo-3", 150);
+    let op1 = indexing.start_operation(&CollectionId::new("repo-1"), 50);
+    let op2 = indexing.start_operation(&CollectionId::new("repo-2"), 100);
+    let op3 = indexing.start_operation(&CollectionId::new("repo-3"), 150);
 
     // Verify all 3 are tracked
     let response = client.get("/indexing").dispatch().await;

@@ -12,7 +12,7 @@ use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::ports::repositories::MemoryRepository;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::compute_content_hash;
-use mcb_domain::value_objects::Embedding;
+use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -257,7 +257,7 @@ impl MemoryServiceImpl {
 
     async fn create_session_summary_impl(
         &self,
-        session_id: String,
+        session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
@@ -266,7 +266,7 @@ impl MemoryServiceImpl {
         let summary = SessionSummary {
             id: Uuid::new_v4().to_string(),
             project_id: self.project_id.clone(),
-            session_id,
+            session_id: session_id.into_string(),
             topics,
             decisions,
             next_steps,
@@ -317,9 +317,11 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         observation_type: ObservationType,
         tags: Vec<String>,
         metadata: ObservationMetadata,
-    ) -> Result<(String, bool)> {
-        self.store_observation_impl(content, observation_type, tags, metadata)
-            .await
+    ) -> Result<(ObservationId, bool)> {
+        let (id, new) = self
+            .store_observation_impl(content, observation_type, tags, metadata)
+            .await?;
+        Ok((ObservationId::new(id), new))
     }
 
     async fn search_memories(
@@ -331,13 +333,15 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         self.search_memories_impl(query, filter, limit).await
     }
 
-    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
-        self.repository.get_session_summary(session_id).await
+    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
+        self.repository
+            .get_session_summary(session_id.as_str())
+            .await
     }
 
     async fn create_session_summary(
         &self,
-        session_id: String,
+        session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
@@ -347,8 +351,8 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .await
     }
 
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
-        self.repository.get_observation(id).await
+    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
+        self.repository.get_observation(id.as_str()).await
     }
 
     async fn embed_content(&self, content: &str) -> Result<Embedding> {
@@ -357,17 +361,18 @@ impl MemoryServiceInterface for MemoryServiceImpl {
 
     async fn get_timeline(
         &self,
-        anchor_id: &str,
+        anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
-        self.get_timeline_impl(anchor_id, before, after, filter)
+        self.get_timeline_impl(anchor_id.as_str(), before, after, filter)
             .await
     }
 
-    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
-        self.get_observations_by_ids_impl(ids).await
+    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
+        let id_strings: Vec<String> = ids.iter().map(|id| id.as_str().to_string()).collect();
+        self.get_observations_by_ids_impl(&id_strings).await
     }
 
     async fn memory_search(

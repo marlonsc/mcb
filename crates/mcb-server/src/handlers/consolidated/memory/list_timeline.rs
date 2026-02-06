@@ -1,7 +1,8 @@
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use mcb_application::ports::MemoryServiceInterface;
 use mcb_domain::entities::memory::MemoryFilter;
+use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use std::sync::Arc;
@@ -95,7 +96,12 @@ pub async fn get_timeline(
     let depth_before = args.depth_before.unwrap_or(5);
     let depth_after = args.depth_after.unwrap_or(5);
     match memory_service
-        .get_timeline(&anchor_id, depth_before, depth_after, Some(filter))
+        .get_timeline(
+            &ObservationId::new(&anchor_id),
+            depth_before,
+            depth_after,
+            Some(filter),
+        )
         .await
     {
         Ok(timeline) => {

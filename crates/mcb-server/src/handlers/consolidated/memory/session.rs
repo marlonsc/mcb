@@ -1,7 +1,8 @@
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use mcb_application::ports::MemoryServiceInterface;
+use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use std::sync::Arc;
@@ -35,7 +36,13 @@ pub async fn store_session(
     let next_steps = MemoryHelpers::get_string_list(data, "next_steps");
     let key_files = MemoryHelpers::get_string_list(data, "key_files");
     match memory_service
-        .create_session_summary(session_id.clone(), topics, decisions, next_steps, key_files)
+        .create_session_summary(
+            SessionId::new(&session_id),
+            topics,
+            decisions,
+            next_steps,
+            key_files,
+        )
         .await
     {
         Ok(summary_id) => ResponseFormatter::json_success(&serde_json::json!({
@@ -61,7 +68,10 @@ pub async fn get_session(
             )]));
         }
     };
-    match memory_service.get_session_summary(session_id).await {
+    match memory_service
+        .get_session_summary(&SessionId::new(session_id))
+        .await
+    {
         Ok(Some(summary)) => ResponseFormatter::json_success(&serde_json::json!({
             "session_id": summary.session_id,
             "topics": summary.topics,
