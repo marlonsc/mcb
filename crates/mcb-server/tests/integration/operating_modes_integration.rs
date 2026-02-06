@@ -561,9 +561,6 @@ async fn create_test_mcp_server() -> McpServer {
     let agent_repository = mcb_providers::database::create_agent_repository_from_executor(
         std::sync::Arc::clone(&shared_executor),
     );
-    let project_repository = mcb_providers::database::create_project_repository_from_executor(
-        std::sync::Arc::clone(&shared_executor),
-    );
     let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
         std::sync::Arc::new(Git2Provider::new());
 
@@ -579,7 +576,6 @@ async fn create_test_mcp_server() -> McpServer {
         event_bus,
         memory_repository,
         agent_repository,
-        project_repository: project_repository.clone(),
         vcs_provider,
     };
 
@@ -595,7 +591,6 @@ async fn create_test_mcp_server() -> McpServer {
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
         .with_vcs_provider(services.vcs_provider)
-        .with_project_repository(project_repository)
         .build()
         .expect("Failed to build MCP server")
 }

@@ -254,9 +254,6 @@ async fn create_mcp_server(
     let agent_repository =
         mcb_providers::database::create_agent_repository_from_executor(db_executor.clone());
 
-    let project_repository =
-        mcb_providers::database::create_project_repository_from_executor(db_executor);
-
     let project_id = std::env::current_dir()
         .ok()
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
@@ -276,7 +273,6 @@ async fn create_mcp_server(
         event_bus,
         memory_repository,
         agent_repository,
-        project_repository: project_repository.clone(),
         vcs_provider,
     };
     let services =
@@ -293,7 +289,6 @@ async fn create_mcp_server(
         .with_memory_service(services.memory_service)
         .with_vcs_provider(services.vcs_provider)
         .with_agent_session_service(services.agent_session_service)
-        .with_project_repository(project_repository)
         .try_build()
         .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
 

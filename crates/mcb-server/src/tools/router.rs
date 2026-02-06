@@ -9,11 +9,11 @@ use std::sync::Arc;
 use tracing::warn;
 
 use crate::args::{
-    AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
+    AgentArgs, IndexArgs, MemoryArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
 };
 use crate::handlers::{
-    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
-    ValidateHandler, VcsHandler,
+    AgentHandler, IndexHandler, MemoryHandler, SearchHandler, SessionHandler, ValidateHandler,
+    VcsHandler,
 };
 use crate::hooks::{HookProcessor, PostToolUseContext};
 
@@ -26,7 +26,6 @@ pub struct ToolHandlers {
     pub memory: Arc<MemoryHandler>,
     pub session: Arc<SessionHandler>,
     pub agent: Arc<AgentHandler>,
-    pub project: Arc<ProjectHandler>,
     pub vcs: Arc<VcsHandler>,
     pub hook_processor: Arc<HookProcessor>,
 }
@@ -65,10 +64,6 @@ pub async fn route_tool_call(
         "agent" => {
             let args = parse_args::<AgentArgs>(&request)?;
             handlers.agent.handle(Parameters(args)).await
-        }
-        "project" => {
-            let args = parse_args::<ProjectArgs>(&request)?;
-            handlers.project.handle(Parameters(args)).await
         }
         "vcs" => {
             let args = parse_args::<VcsArgs>(&request)?;

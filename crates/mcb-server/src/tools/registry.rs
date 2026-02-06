@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::args::{
-    AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
+    AgentArgs, IndexArgs, MemoryArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -63,14 +63,6 @@ impl ToolDefinitions {
         )
     }
 
-    pub fn project() -> Result<Tool, McpError> {
-        Self::create_tool(
-            "project",
-            "Project tracking operations",
-            schemars::schema_for!(ProjectArgs),
-        )
-    }
-
     pub fn vcs() -> Result<Tool, McpError> {
         Self::create_tool(
             "vcs",
@@ -118,7 +110,6 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::memory()?,
         ToolDefinitions::session()?,
         ToolDefinitions::agent()?,
-        ToolDefinitions::project()?,
         ToolDefinitions::vcs()?,
     ])
 }

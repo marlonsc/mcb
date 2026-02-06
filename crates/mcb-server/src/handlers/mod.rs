@@ -9,7 +9,7 @@ pub mod consolidated;
 pub mod highlight_service;
 
 pub use consolidated::{
-    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
-    ValidateHandler, VcsHandler,
+    AgentHandler, IndexHandler, MemoryHandler, SearchHandler, SessionHandler, ValidateHandler,
+    VcsHandler,
 };
 pub use highlight_service::HighlightServiceImpl;

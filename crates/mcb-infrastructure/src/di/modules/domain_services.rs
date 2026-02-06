@@ -22,7 +22,7 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
+use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
 use mcb_domain::ports::services::{
     AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
     MemoryServiceInterface, SearchServiceInterface, ValidationServiceInterface,
@@ -63,7 +63,6 @@ pub struct ServiceDependencies {
     pub event_bus: Arc<dyn EventBusProvider>,
     pub memory_repository: Arc<dyn MemoryRepository>,
     pub agent_repository: Arc<dyn AgentRepository>,
-    pub project_repository: Arc<dyn ProjectRepository>,
     pub vcs_provider: Arc<dyn VcsProvider>,
 }
 

@@ -5,7 +5,6 @@
 
 use crate::McpServer;
 use mcb_domain::ports::providers::VcsProvider;
-use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
@@ -26,7 +25,6 @@ pub struct McpServerBuilder {
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
     agent_session_service: Option<Arc<dyn AgentSessionServiceInterface>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
-    project_repository: Option<Arc<dyn ProjectRepository>>,
 }
 
 impl McpServerBuilder {
@@ -98,15 +96,6 @@ impl McpServerBuilder {
         self
     }
 
-    /// Set the project repository
-    ///
-    /// # Arguments
-    /// * `repository` - Implementation of the project repository port
-    pub fn with_project_repository(mut self, repository: Arc<dyn ProjectRepository>) -> Self {
-        self.project_repository = Some(repository);
-        self
-    }
-
     /// Build the MCP server
     ///
     /// # Returns
@@ -146,9 +135,6 @@ impl McpServerBuilder {
         let vcs_provider = self
             .vcs_provider
             .ok_or(BuilderError::MissingDependency("vcs provider"))?;
-        let project_repository = self
-            .project_repository
-            .ok_or(BuilderError::MissingDependency("project repository"))?;
 
         Ok(McpServer::new(
             indexing_service,
@@ -158,7 +144,6 @@ impl McpServerBuilder {
             memory_service,
             agent_session_service,
             vcs_provider,
-            project_repository,
         ))
     }
 }

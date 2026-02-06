@@ -274,59 +274,6 @@ pub struct AgentArgs {
 }
 
 // =============================================================================
-// Project Tool - Consolidates all project_* tools (9 → 1)
-// =============================================================================
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ProjectAction {
-    Create,
-    Update,
-    List,
-    AddDependency,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ProjectResource {
-    Phase,
-    Issue,
-    Dependency,
-    Decision,
-}
-
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
-pub struct ProjectArgs {
-    #[schemars(description = "Action: create, update, list, add_dependency")]
-    pub action: ProjectAction,
-
-    #[schemars(description = "Resource type: phase, issue, dependency, decision")]
-    pub resource: ProjectResource,
-
-    #[schemars(description = "Project ID")]
-    #[validate(length(min = 1))]
-    pub project_id: String,
-
-    #[schemars(description = "Resource ID (for update action)")]
-    pub resource_id: Option<String>,
-
-    #[schemars(description = "Data payload for create/update (JSON object)")]
-    pub data: Option<serde_json::Value>,
-
-    #[schemars(description = "Filter by phase ID (for issues)")]
-    pub phase_id: Option<String>,
-
-    #[schemars(description = "Filter by status")]
-    pub status: Option<String>,
-
-    #[schemars(description = "Filter by priority (0-4)")]
-    pub priority: Option<i32>,
-
-    #[schemars(description = "Maximum results for list")]
-    pub limit: Option<u32>,
-}
-
-// =============================================================================
 // VCS Tool - Consolidates VCS tools (index_vcs_repository, compare_branches,
 // search_branch, list_repositories, analyze_impact)
 // =============================================================================

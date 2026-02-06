@@ -3,7 +3,7 @@
 //! Provides factory functions for creating test data and temporary directories.
 
 use crate::test_utils::mock_services::{
-    MockAgentRepository, MockMemoryRepository, MockProjectRepository, MockVcsProvider,
+    MockAgentRepository, MockMemoryRepository, MockVcsProvider,
 };
 use mcb_application::ValidationService;
 use mcb_domain::SearchResult;
@@ -190,7 +190,6 @@ pub async fn create_test_mcp_server() -> McpServer {
 
     let memory_repository = Arc::new(MockMemoryRepository::new());
     let agent_repository = Arc::new(MockAgentRepository::new());
-    let project_repository = Arc::new(MockProjectRepository::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
 
     let deps = ServiceDependencies {
@@ -205,7 +204,6 @@ pub async fn create_test_mcp_server() -> McpServer {
         event_bus,
         memory_repository,
         agent_repository,
-        project_repository: project_repository.clone(),
         vcs_provider,
     };
 
@@ -223,7 +221,6 @@ pub async fn create_test_mcp_server() -> McpServer {
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
         .with_vcs_provider(services.vcs_provider)
-        .with_project_repository(project_repository)
         .build()
         .expect("Failed to build MCP server")
 }
