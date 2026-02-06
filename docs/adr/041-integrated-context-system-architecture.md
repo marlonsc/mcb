@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR-041: Integrated Context System Architecture v0.4.0
+## ADR-041: Integrated Context System Architecture v0.4.0
 
 **Status**: Proposed  
 **Date**: 2026-02-05  

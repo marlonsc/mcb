@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 026: API Routing Refactor (Rocket vs Poem)
+## ADR 026: API Routing Refactor (Rocket vs Poem)
 
 ## Status
 

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 005: Context Cache Support (Moka and Redis)
+## ADR 005: Context Cache Support (Moka and Redis)
 
 ## Status
 

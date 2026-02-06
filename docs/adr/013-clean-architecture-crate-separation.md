@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 013: Clean Architecture Crate Separation
+## ADR 013: Clean Architecture Crate Separation
 
 ## Status
 

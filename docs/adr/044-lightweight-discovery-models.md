@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR-044: Lightweight Discovery Models for Context Routing
+## ADR-044: Lightweight Discovery Models for Context Routing
 
 **Status**: Proposed  
 **Date**: 2026-02-05  

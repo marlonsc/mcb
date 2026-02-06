@@ -53,8 +53,8 @@ impl SearchHandler {
         match args.resource {
             SearchResource::Code => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
-                let milvus_collection = match map_collection_name(collection_name) {
-                    Ok(name) => name,
+                let collection_id = match map_collection_name(collection_name) {
+                    Ok(id) => id,
                     Err(e) => {
                         return Ok(CallToolResult::error(vec![Content::text(format!(
                             "Failed to map collection name '{}': {}",
@@ -64,7 +64,6 @@ impl SearchHandler {
                 };
                 let timer = Instant::now();
                 let limit = args.limit.unwrap_or(10) as usize;
-                let collection_id = CollectionId::new(milvus_collection);
                 match self
                     .search_service
                     .search(&collection_id, query, limit)

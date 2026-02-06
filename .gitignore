@@ -39,7 +39,7 @@ oracle/
 
 # Docs exclusions (plans, archive, backups)
 docs/plans/
-docs/archive/
+!docs/adr/archive/*
 docs/**/*backup*
 docs/**/*bak*
 docs/**/*old*
@@ -63,9 +63,9 @@ Thumbs.db
 *.backup
 *.backup*
 *.disabled
-*.archive/
+*.archive
+*.archived
 *.obsolete
-archive/
 *.new
 *.old
 *.broken

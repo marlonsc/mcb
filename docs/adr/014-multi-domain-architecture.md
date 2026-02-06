@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 014: Multi-Domain Architecture Strategy
+## ADR 014: Multi-Domain Architecture Strategy
 
 ## Status
 

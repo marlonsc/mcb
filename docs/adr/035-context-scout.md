@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR-035: Context Scout — Project State Discovery
+## ADR-035: Context Scout — Project State Discovery
 
 ## Status
 

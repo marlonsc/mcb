@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-# ADR 010: Hooks Subsystem with Agent-Backed Processing
+## ADR 010: Hooks Subsystem with Agent-Backed Processing
 
 ## Status
 

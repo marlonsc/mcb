@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 019: Error Handling Strategy
+## ADR 019: Error Handling Strategy
 
 ## Status
 

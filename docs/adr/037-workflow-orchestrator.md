@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR-037: Workflow Orchestrator — Coordination and MCP Integration
+## ADR-037: Workflow Orchestrator — Coordination and MCP Integration
 
 ## Status
 

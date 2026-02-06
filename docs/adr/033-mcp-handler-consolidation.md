@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR-033: MCP Handler Consolidation
+## ADR-033: MCP Handler Consolidation
 
 ## Status
 

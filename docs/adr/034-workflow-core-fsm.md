@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR-034: Workflow Core — Finite State Machine and Persistence
+## ADR-034: Workflow Core — Finite State Machine and Persistence
 
 ## Status
 

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 006: Code Audit and Architecture Improvements
+## ADR 006: Code Audit and Architecture Improvements
 
 ## Status
 

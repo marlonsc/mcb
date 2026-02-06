@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 003: Unified Provider Architecture & Routing
+## ADR 003: Unified Provider Architecture & Routing
 
 ## Status
 

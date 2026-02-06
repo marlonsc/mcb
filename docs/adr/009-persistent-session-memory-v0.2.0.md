@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-# ADR 009: Persistent Session Memory v0.2.0
+## ADR 009: Persistent Session Memory v0.2.0
 
 ## Status
 

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 022: Continuous Integration Strategy
+## ADR 022: Continuous Integration Strategy
 
 ## Status
 

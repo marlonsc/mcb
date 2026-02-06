@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 004: Event Bus (Local and Distributed)
+## ADR 004: Event Bus (Local and Distributed)
 
 ## Status
 

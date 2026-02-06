@@ -44,8 +44,8 @@ impl IndexHandler {
             ));
         }
         let collection_name = args.collection.as_deref().unwrap_or("default");
-        let milvus_collection = match map_collection_name(collection_name) {
-            Ok(name) => name,
+        let collection_id = match map_collection_name(collection_name) {
+            Ok(id) => id,
             Err(e) => {
                 return Err(ResponseFormatter::format_indexing_error(
                     &format!("Failed to map collection name '{}': {}", collection_name, e),
@@ -53,7 +53,7 @@ impl IndexHandler {
                 ));
             }
         };
-        Ok((path, CollectionId::new(milvus_collection)))
+        Ok((path, collection_id))
     }
 
     pub async fn handle(
@@ -65,14 +65,14 @@ impl IndexHandler {
 
         match args.action {
             IndexAction::Start => {
-                let (path, milvus_collection) = match Self::validate_request(&args) {
+                let (path, collection_id) = match Self::validate_request(&args) {
                     Ok(value) => value,
                     Err(error_result) => return Ok(error_result),
                 };
                 let timer = Instant::now();
                 match self
                     .indexing_service
-                    .index_codebase(&path, &milvus_collection)
+                    .index_codebase(&path, &collection_id)
                     .await
                 {
                     Ok(result) => Ok(ResponseFormatter::format_indexing_success(
@@ -93,7 +93,7 @@ impl IndexHandler {
             IndexAction::Clear => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
                 let milvus_collection = match map_collection_name(collection_name) {
-                    Ok(name) => name,
+                    Ok(id) => id,
                     Err(e) => {
                         return Ok(ResponseFormatter::format_indexing_error(
                             &format!("Failed to map collection name '{}': {}", collection_name, e),
@@ -101,11 +101,20 @@ impl IndexHandler {
                         ));
                     }
                 };
-                let collection_id = CollectionId::new(milvus_collection.clone());
-                match self.indexing_service.clear_collection(&collection_id).await {
-                    Ok(()) => Ok(ResponseFormatter::format_clear_index(&milvus_collection)),
+                match self
+                    .indexing_service
+                    .clear_collection(&milvus_collection)
+                    .await
+                {
+                    Ok(()) => Ok(ResponseFormatter::format_clear_index(
+                        milvus_collection.as_str(),
+                    )),
                     Err(e) => Ok(ResponseFormatter::format_indexing_error(
-                        &format!("Failed to clear collection {}: {}", milvus_collection, e),
+                        &format!(
+                            "Failed to clear collection {}: {}",
+                            milvus_collection.as_str(),
+                            e
+                        ),
                         &PathBuf::from("."),
                     )),
                 }

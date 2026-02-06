@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 030: Multi-Provider Strategy
+## ADR 030: Multi-Provider Strategy
 
 ## Status
 

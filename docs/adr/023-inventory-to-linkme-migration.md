@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 023: Inventory to Linkme Migration
+## ADR 023: Inventory to Linkme Migration
 
 ## Status
 

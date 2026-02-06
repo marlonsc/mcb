@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 017: Phased Feature Integration Roadmap
+## ADR 017: Phased Feature Integration Roadmap
 
 ## Status
 

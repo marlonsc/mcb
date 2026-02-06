@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 011: HTTP Transport - Request-Response Pattern Over SSE Streaming
+## ADR 011: HTTP Transport - Request-Response Pattern Over SSE Streaming
 
 ## Status
 

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 018: Hybrid Caching Strategy
+## ADR 018: Hybrid Caching Strategy
 
 ## Status
 

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 016: Integration Points and Adapter Pattern
+## ADR 016: Integration Points and Adapter Pattern
 
 ## Status
 

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 001: Modular Crates Architecture
+## ADR 001: Modular Crates Architecture
 
 ## Status
 

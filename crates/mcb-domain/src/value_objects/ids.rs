@@ -47,6 +47,12 @@ macro_rules! define_id {
                 self.as_str()
             }
         }
+
+        impl From<$name> for String {
+            fn from(id: $name) -> Self {
+                id.0
+            }
+        }
     };
 }
 

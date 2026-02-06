@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR-036: Enforcement Layer — Policies and Guards
+## ADR-036: Enforcement Layer — Policies and Guards
 
 ## Status
 
@@ -1607,7 +1607,7 @@ pub struct Violation {
 | version_bump | "Version not bumped" | "Update Cargo.toml using semantic versioning" |
 | documentation_update | "Docs not updated" | "Update README.md or ARCHITECTURE.md" |
 
-#### 7.7 Policy Evaluation Context
+### 7.7 Policy Evaluation Context
 
 Policies receive **rich context** for evaluation:
 

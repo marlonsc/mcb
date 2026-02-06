@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR-042: Knowledge Graph for Code Context and Relationships
+## ADR-042: Knowledge Graph for Code Context and Relationships
 
 **Status**: Proposed  
 **Date**: 2026-02-05  

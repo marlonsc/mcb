@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 008: Git-Aware Semantic Indexing v0.2.0
+## ADR 008: Git-Aware Semantic Indexing v0.2.0
 
 ## Status
 

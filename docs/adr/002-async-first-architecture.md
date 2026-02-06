@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 002: Async-First Architecture
+## ADR 002: Async-First Architecture
 
 ## Status
 

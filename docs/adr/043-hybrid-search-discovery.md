@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR-043: Hybrid Search & Discovery for Context
+## ADR-043: Hybrid Search & Discovery for Context
 
 **Status**: Proposed  
 **Date**: 2026-02-05  

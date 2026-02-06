@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 025: Figment Configuration Migration
+## ADR 025: Figment Configuration Migration
 
 ## Status
 

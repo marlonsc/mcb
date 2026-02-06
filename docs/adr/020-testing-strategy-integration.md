@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 020: Testing Strategy for Integrated Code
+## ADR 020: Testing Strategy for Integrated Code
 
 ## Status
 

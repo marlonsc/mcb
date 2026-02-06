@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR-038: Multi-Tier Execution Model — Integration of ADR-034–037
+## ADR-038: Multi-Tier Execution Model — Integration of ADR-034–037
 
 ## Status
 

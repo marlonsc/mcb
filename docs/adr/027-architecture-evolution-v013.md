@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 027: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
+## ADR 027: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
 
 ## Status
 

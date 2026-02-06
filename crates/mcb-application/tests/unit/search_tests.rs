@@ -107,13 +107,13 @@ impl MockVectorStoreProvider {
 }
 #[async_trait]
 impl VectorStoreAdmin for MockVectorStoreProvider {
-    async fn collection_exists(&self, _name: &str) -> Result<bool> {
+    async fn collection_exists(&self, _name: &CollectionId) -> Result<bool> {
         Ok(true)
     }
-    async fn get_stats(&self, _collection: &str) -> Result<HashMap<String, Value>> {
+    async fn get_stats(&self, _collection: &CollectionId) -> Result<HashMap<String, Value>> {
         Ok(HashMap::new())
     }
-    async fn flush(&self, _collection: &str) -> Result<()> {
+    async fn flush(&self, _collection: &CollectionId) -> Result<()> {
         Ok(())
     }
     fn provider_name(&self) -> &str {
@@ -125,12 +125,16 @@ impl VectorStoreBrowser for MockVectorStoreProvider {
     async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
         Ok(vec![])
     }
-    async fn list_file_paths(&self, _collection: &str, _limit: usize) -> Result<Vec<FileInfo>> {
+    async fn list_file_paths(
+        &self,
+        _collection: &CollectionId,
+        _limit: usize,
+    ) -> Result<Vec<FileInfo>> {
         Ok(vec![])
     }
     async fn get_chunks_by_file(
         &self,
-        _collection: &str,
+        _collection: &CollectionId,
         _file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         Ok(vec![])
@@ -138,17 +142,17 @@ impl VectorStoreBrowser for MockVectorStoreProvider {
 }
 #[async_trait]
 impl VectorStoreProvider for MockVectorStoreProvider {
-    async fn create_collection(&self, _name: &str, _dimensions: usize) -> Result<()> {
+    async fn create_collection(&self, _name: &CollectionId, _dimensions: usize) -> Result<()> {
         Ok(())
     }
-    async fn delete_collection(&self, name: &str) -> Result<()> {
+    async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
         let mut store = self.storage.lock().await;
-        store.remove(name);
+        store.remove(name.as_str());
         Ok(())
     }
     async fn insert_vectors(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, Value>>,
     ) -> Result<Vec<String>> {
@@ -163,13 +167,13 @@ impl VectorStoreProvider for MockVectorStoreProvider {
     }
     async fn search_similar(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         _query_vector: &[f32],
         _limit: usize,
         _filter: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
         let store = self.storage.lock().await;
-        if let Some(entries) = store.get(collection) {
+        if let Some(entries) = store.get(collection.as_str()) {
             // Return basic search results from stored entries
             let results = entries
                 .iter()
@@ -194,17 +198,21 @@ impl VectorStoreProvider for MockVectorStoreProvider {
         }
         Ok(vec![])
     }
-    async fn delete_vectors(&self, _collection: &str, _ids: &[String]) -> Result<()> {
+    async fn delete_vectors(&self, _collection: &CollectionId, _ids: &[String]) -> Result<()> {
         Ok(())
     }
     async fn get_vectors_by_ids(
         &self,
-        _collection: &str,
+        _collection: &CollectionId,
         _ids: &[String],
     ) -> Result<Vec<SearchResult>> {
         Ok(vec![])
     }
-    async fn list_vectors(&self, _collection: &str, _limit: usize) -> Result<Vec<SearchResult>> {
+    async fn list_vectors(
+        &self,
+        _collection: &CollectionId,
+        _limit: usize,
+    ) -> Result<Vec<SearchResult>> {
         Ok(vec![])
     }
 }

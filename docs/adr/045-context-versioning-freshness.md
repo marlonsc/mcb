@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR-045: Context Versioning & Freshness Tracking
+## ADR-045: Context Versioning & Freshness Tracking
 
 **Status**: Proposed  
 **Date**: 2026-02-05  

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 021: Dependency Management Strategy
+## ADR 021: Dependency Management Strategy
 
 ## Status
 

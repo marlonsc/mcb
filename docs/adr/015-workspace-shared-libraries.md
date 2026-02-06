@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-# ADR 015: Workspace Structure for Shared Libraries
+## ADR 015: Workspace Structure for Shared Libraries
 
 ## Status
 

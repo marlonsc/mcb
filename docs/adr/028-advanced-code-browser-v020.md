@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-# ADR 028: Advanced Code Browser UI v0.2.0
+## ADR 028: Advanced Code Browser UI v0.2.0
 
 ## Status
 

@@ -21,8 +21,8 @@ fn test_generate_milvus_name_format() {
     let input = unique_name("test-collection-unit");
     let result = collection_mapping::map_collection_name(&input).unwrap();
     // Should have underscores instead of hyphens and a timestamp suffix
-    assert!(result.contains("test_collection_unit_"));
-    assert!(!result.contains('-')); // No hyphens in output
+    assert!(result.as_str().contains("test_collection_unit_"));
+    assert!(!result.as_str().contains('-')); // No hyphens in output
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn test_generate_milvus_name_lowercase() {
     let input = unique_name("TestUpperCase");
     let result = collection_mapping::map_collection_name(&input).unwrap();
     // Should be lowercase
-    assert!(!result.contains(|c: char| c.is_uppercase()));
+    assert!(!result.as_str().contains(|c: char| c.is_uppercase()));
 }
 
 #[test]
@@ -38,8 +38,8 @@ fn test_generate_milvus_name_hyphens_converted() {
     let input = unique_name("my-project-hyphens");
     let result = collection_mapping::map_collection_name(&input).unwrap();
     // Hyphens should be converted to underscores
-    assert!(!result.contains('-'));
-    assert!(result.contains('_'));
+    assert!(!result.as_str().contains('-'));
+    assert!(result.as_str().contains('_'));
 }
 
 #[test]

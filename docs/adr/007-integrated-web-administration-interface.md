@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 007: Integrated Web Administration Interface
+## ADR 007: Integrated Web Administration Interface
 
 ## Status
 
