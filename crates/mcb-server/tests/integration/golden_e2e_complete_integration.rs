@@ -508,7 +508,7 @@ async fn test_golden_search_filters_by_extension() {
 }
 
 #[tokio::test]
-async fn golden_e2e_golden_queries_setup() {
+async fn test_golden_e2e_golden_queries_setup() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_queries_e2e";
@@ -552,7 +552,7 @@ async fn golden_e2e_golden_queries_setup() {
 }
 
 #[tokio::test]
-async fn golden_e2e_golden_queries_one_query() {
+async fn test_golden_e2e_golden_queries_one_query() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_queries_one";
@@ -602,7 +602,7 @@ async fn golden_e2e_golden_queries_one_query() {
 }
 
 #[tokio::test]
-async fn golden_e2e_golden_queries_all_handlers_succeed() {
+async fn test_golden_e2e_golden_queries_all_handlers_succeed() {
     let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_queries_all";

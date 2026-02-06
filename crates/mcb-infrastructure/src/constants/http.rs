@@ -1,0 +1,16 @@
+pub const DEFAULT_HTTP_PORT: u16 = 8080;
+pub const DEFAULT_HTTPS_PORT: u16 = 8443;
+pub const DEFAULT_SERVER_HOST: &str = "127.0.0.1";
+pub const REQUEST_TIMEOUT_SECS: u64 = 30;
+pub const CONNECTION_TIMEOUT_SECS: u64 = 10;
+pub const MAX_REQUEST_BODY_SIZE: usize = 10 * 1024 * 1024;
+pub const HEALTH_CHECK_PATH: &str = "/health";
+pub const METRICS_PATH: &str = "/metrics";
+pub const HTTP_REQUEST_TIMEOUT_SECS: u64 = 30;
+pub const HTTP_CLIENT_IDLE_TIMEOUT_SECS: u64 = 90;
+pub const HTTP_KEEPALIVE_SECS: u64 = 60;
+pub const HTTP_MAX_IDLE_PER_HOST: usize = 10;
+pub const HTTP_HEADER_CONTENT_TYPE: &str = "Content-Type";
+pub const HTTP_HEADER_ACCEPT: &str = "Accept";
+pub const HTTP_HEADER_USER_AGENT: &str = "User-Agent";
+pub const CONTENT_TYPE_JSON: &str = "application/json";

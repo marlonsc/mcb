@@ -139,14 +139,16 @@ mod vector_store_registry_tests {
 
     #[test]
     fn test_config_builder() {
+        let milvus_uri = std::env::var("MILVUS_ADDRESS")
+            .unwrap_or_else(|_| "http://localhost:19530".to_string());
         let config = VectorStoreProviderConfig::new("milvus")
-            .with_uri("http://localhost:19530")
+            .with_uri(&milvus_uri)
             .with_collection("embeddings")
             .with_dimensions(384)
             .with_encryption("secret-key");
 
         assert_eq!(config.provider, "milvus");
-        assert_eq!(config.uri, Some("http://localhost:19530".to_string()));
+        assert_eq!(config.uri, Some(milvus_uri));
         assert_eq!(config.collection, Some("embeddings".to_string()));
         assert_eq!(config.dimensions, Some(384));
         assert_eq!(config.encrypted, Some(true));
@@ -205,14 +207,16 @@ mod cache_registry_tests {
 
     #[test]
     fn test_config_builder() {
+        let redis_uri =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
         let config = CacheProviderConfig::new("redis")
-            .with_uri("redis://localhost:6379")
+            .with_uri(&redis_uri)
             .with_max_size(10000)
             .with_ttl_secs(3600)
             .with_namespace("mcb");
 
         assert_eq!(config.provider, "redis");
-        assert_eq!(config.uri, Some("redis://localhost:6379".to_string()));
+        assert_eq!(config.uri, Some(redis_uri));
         assert_eq!(config.max_size, Some(10000));
         assert_eq!(config.ttl_secs, Some(3600));
         assert_eq!(config.namespace, Some("mcb".to_string()));

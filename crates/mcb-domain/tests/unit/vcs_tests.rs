@@ -30,13 +30,13 @@ fn test_vcs_repository_has_required_fields() {
 
 #[test]
 fn test_vcs_branch_has_id_and_name() {
-    let branch = VcsBranch {
-        id: "b1".to_string(),
-        name: "feature".to_string(),
-        head_commit: "c1".to_string(),
-        is_default: false,
-        upstream: None,
-    };
-    assert_eq!(branch.id, "b1");
-    assert_eq!(branch.name, "feature");
+    let branch = VcsBranch::new(
+        "b1".to_string(),
+        "feature".to_string(),
+        "c1".to_string(),
+        false,
+        None,
+    );
+    assert_eq!(branch.id(), "b1");
+    assert_eq!(branch.name(), "feature");
 }

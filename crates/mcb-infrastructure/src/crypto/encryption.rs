@@ -1,6 +1,6 @@
 //! Encryption/decryption service using AES-GCM
 
-use crate::constants::*;
+use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 use aes_gcm::{
     Aes256Gcm, Key, Nonce,
     aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore},

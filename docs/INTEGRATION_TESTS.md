@@ -54,7 +54,6 @@ docker-compose up -d redis nats
 make docker
 ```
 
-
 **Option C: System services**
 
 ```bash
@@ -216,7 +215,6 @@ make test
 # Stop services
 make docker-down
 ```
-
 
 ## Service Detection
 

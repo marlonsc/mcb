@@ -29,18 +29,20 @@
 **Tasks**:
 
 1.  **Task 1.1**: Wire AdminApi em `crates/mcb-server/src/init.rs`
-   -   Arquivo: `init.rs` linha 277-302 (criar_MCP_server)
-   -   Ação: Adicionar `AppContext` field `admin_api_handle: Arc<AdminApi>`
-   -   Ação: Spawn `tokio::spawn(admin_api_handle.start())` antes de return
-   -   Verify: Admin server listening on port 9090
-   -   Done: `/admin` endpoint responde 200
 
-2.  **Task 1.2**: Add integration test for Admin API startup
-   -   Arquivo: `crates/mcb-server/tests/handlers/admin_integration.rs` (NEW)
-   -   Ação: Test GET /admin/provider/current
-   -   Ação: Test POST /admin/provider/switch
-   -   Verify: Endpoints retornam JSON válido
-   -   Done: 2 testes passando
+-   Arquivo: `init.rs` linha 277-302 (criar_MCP_server)
+-   Ação: Adicionar `AppContext` field `admin_api_handle: Arc<AdminApi>`
+-   Ação: Spawn `tokio::spawn(admin_api_handle.start())` antes de return
+-   Verify: Admin server listening on port 9090
+-   Done: `/admin` endpoint responde 200
+
+1.  **Task 1.2**: Add integration test for Admin API startup
+
+-   Arquivo: `crates/mcb-server/tests/handlers/admin_integration.rs` (NEW)
+-   Ação: Test GET /admin/provider/current
+-   Ação: Test POST /admin/provider/switch
+-   Verify: Endpoints retornam JSON válido
+-   Done: 2 testes passando
 
 **Beads Issues**:
 
@@ -76,9 +78,10 @@ mcb-infrastructure/src/
 **Tasks**:
 
 1.  **Task 2.1**: Create ProjectRepository PORT in mcb-domain
-   -   Arquivo: `crates/mcb-domain/src/ports/repositories/project_repository.rs`
-   -   Entidade: Project, ProjectPhase, ProjectIssue, ProjectDependency (usar entities já existentes)
-   -   Métodos (trait):
+
+-   Arquivo: `crates/mcb-domain/src/ports/repositories/project_repository.rs`
+-   Entidade: Project, ProjectPhase, ProjectIssue, ProjectDependency (usar entities já existentes)
+-   Métodos (trait):
 
      ```rust
      async fn create_project(&self, project: &Project) -> Result<()>;
@@ -94,36 +97,40 @@ mcb-infrastructure/src/
      async fn list_dependencies(&self, project_id: &str) -> Result<Vec<ProjectDependency>>;
      ```
 
-   -   Verify: Trait compila sem erros
-   -   Done: PORT definida em mcb-domain
+-   Verify: Trait compila sem erros
+-   Done: PORT definida em mcb-domain
 
-2.  **Task 2.2**: Implement SQLite ProjectRepository in mcb-providers
-   -   Arquivo: `crates/mcb-providers/src/repositories/sqlite_project_repository.rs`
-   -   Schema: Usar `schema::project::{projects, collections, observations, session_summaries, file_hashes}` já definido
-   -   DDL: Usar `ProjectSchema::definition().generate_ddl()` (implementar para SQLite)
-   -   Métodos: Implementar trait inteiro com queries
-   -   Verify: `cargo build --release` sem erros
-   -   Done: 20+ SQLite queries implementadas
+1.  **Task 2.2**: Implement SQLite ProjectRepository in mcb-providers
 
-3.  **Task 2.3**: Add #[linkme::distributed_slice] registration (Provider Registry)
-   -   Arquivo: `crates/mcb-application/src/registry.rs`
-   -   Ação: Adicionar nova distributed_slice `PROJECT_REPOSITORIES`
-   -   Arquivo: `crates/mcb-providers/src/repositories/mod.rs`
-   -   Ação: Registrar `SqliteProjectRepository` na slice
-   -   Verify: `cargo build` sucesso
-   -   Done: Provider auto-registered
+-   Arquivo: `crates/mcb-providers/src/repositories/sqlite_project_repository.rs`
+-   Schema: Usar `schema::project::{projects, collections, observations, session_summaries, file_hashes}` já definido
+-   DDL: Usar `ProjectSchema::definition().generate_ddl()` (implementar para SQLite)
+-   Métodos: Implementar trait inteiro com queries
+-   Verify: `cargo build --release` sem erros
+-   Done: 20+ SQLite queries implementadas
 
-4.  **Task 2.4**: Wire ProjectRepositoryHandle em DI Catalog
-   -   Arquivo: `crates/mcb-infrastructure/src/di/catalog.rs`
-   -   Ação: Adicionar `ProjectRepositoryHandle` com `RwLock<Arc<dyn ProjectRepository>>`
-   -   Ação: Atualizar `AppContext` para incluir `project_repo_handle`
-   -   Verify: DI container builds
-   -   Done: ProjectRepository acessível via AppContext
+1.  **Task 2.3**: Add #[linkme::distributed_slice] registration (Provider Registry)
 
-5.  **Task 2.5**: Implement PostgreSQL ProjectRepository (bonus, se tempo permitir)
-   -   Arquivo: `crates/mcb-providers/src/repositories/postgres_project_repository.rs`
-   -   Replicar SQLite impl com sqlx::PgPool
-   -   Register na slice
+-   Arquivo: `crates/mcb-application/src/registry.rs`
+-   Ação: Adicionar nova distributed_slice `PROJECT_REPOSITORIES`
+-   Arquivo: `crates/mcb-providers/src/repositories/mod.rs`
+-   Ação: Registrar `SqliteProjectRepository` na slice
+-   Verify: `cargo build` sucesso
+-   Done: Provider auto-registered
+
+1.  **Task 2.4**: Wire ProjectRepositoryHandle em DI Catalog
+
+-   Arquivo: `crates/mcb-infrastructure/src/di/catalog.rs`
+-   Ação: Adicionar `ProjectRepositoryHandle` com `RwLock<Arc<dyn ProjectRepository>>`
+-   Ação: Atualizar `AppContext` para incluir `project_repo_handle`
+-   Verify: DI container builds
+-   Done: ProjectRepository acessível via AppContext
+
+1.  **Task 2.5**: Implement PostgreSQL ProjectRepository (bonus, se tempo permitir)
+
+-   Arquivo: `crates/mcb-providers/src/repositories/postgres_project_repository.rs`
+-   Replicar SQLite impl com sqlx::PgPool
+-   Register na slice
 
 **Beads Issues**:
 
@@ -142,16 +149,18 @@ mcb-infrastructure/src/
 **Tasks**:
 
 1.  **Task 3.1**: Refactor ProjectHandler para usar ProjectRepositoryHandle
-   -   Arquivo: `crates/mcb-server/src/handlers/consolidated/project.rs`
-   -   Ação: Remover `ProjectStore` (HashMap)
-   -   Ação: Injetar `Arc<ProjectRepositoryHandle>` via AppContext
-   -   Métodos: Atualizar `create()`, `update()`, `list_resources()`, `add_dependency()` para usar repository
-   -   Verify: Handler compila sem errors
-   -   Done: 410 linhas → 350 linhas (menos boilerplate in-memory)
 
-2.  **Task 3.2**: Add ProjectRepository unit tests
-   -   Arquivo: `crates/mcb-domain/tests/unit/project_repository_tests.rs` (NEW)
-   -   Testes:
+-   Arquivo: `crates/mcb-server/src/handlers/consolidated/project.rs`
+-   Ação: Remover `ProjectStore` (HashMap)
+-   Ação: Injetar `Arc<ProjectRepositoryHandle>` via AppContext
+-   Métodos: Atualizar `create()`, `update()`, `list_resources()`, `add_dependency()` para usar repository
+-   Verify: Handler compila sem errors
+-   Done: 410 linhas → 350 linhas (menos boilerplate in-memory)
+
+1.  **Task 3.2**: Add ProjectRepository unit tests
+
+-   Arquivo: `crates/mcb-domain/tests/unit/project_repository_tests.rs` (NEW)
+-   Testes:
 
      ```rust
      #[tokio::test] async fn test_create_project { }
@@ -168,12 +177,13 @@ mcb-infrastructure/src/
      #[tokio::test] async fn test_foreign_key_projects { }
      ```
 
-   -   Verify: 12+ testes passing
-   -   Done: 100% coverage da ProjectRepository
+-   Verify: 12+ testes passing
+-   Done: 100% coverage da ProjectRepository
 
-3.  **Task 3.3**: Add ProjectHandler integration tests
-   -   Arquivo: `crates/mcb-server/tests/handlers/project_handler_integration.rs` (NEW)
-   -   Testes E2E:
+1.  **Task 3.3**: Add ProjectHandler integration tests
+
+-   Arquivo: `crates/mcb-server/tests/handlers/project_handler_integration.rs` (NEW)
+-   Testes E2E:
 
      ```rust
      #[tokio::test] async fn test_create_project_verb { }
@@ -184,8 +194,8 @@ mcb-infrastructure/src/
      #[tokio::test] async fn test_filter_issues { }
      ```
 
-   -   Verify: 6+ testes passing
-   -   Done: E2E project flows tested
+-   Verify: 6+ testes passing
+-   Done: E2E project flows tested
 
 **Beads Issues**:
 
@@ -202,46 +212,51 @@ mcb-infrastructure/src/
 **Tasks**:
 
 1.  **Task 4.1**: Wire ProjectHandler em MCP server (if not already)
-   -   Arquivo: `crates/mcb-server/src/handlers/mod.rs`
-   -   Verify: ProjectHandler is registered in MCP tool registry
-   -   Done: Project verb accessible via MCP
 
-2.  **Task 4.2**: E2E Test: All 8 MCP Verbs
-   -   **Test**: POST /MCP/tools/index (start indexing)
-   -   **Test**: GET /MCP/tools/search (semantic search)
-   -   **Test**: POST /MCP/tools/validate (lint + architecture)
-   -   **Test**: POST /MCP/tools/memory (store + retrieve)
-   -   **Test**: GET /MCP/tools/session (list sessions)
-   -   **Test**: POST /MCP/tools/agent (log activity)
-   -   **Test**: POST /MCP/tools/project (create + list) ← NEW
-   -   **Test**: GET /MCP/tools/vcs (git status)
-   -   Verify: 8/8 verbs respond 200
-   -   Done: All verbs working
+-   Arquivo: `crates/mcb-server/src/handlers/mod.rs`
+-   Verify: ProjectHandler is registered in MCP tool registry
+-   Done: Project verb accessible via MCP
 
-3.  **Task 4.3**: Admin UI: Project data appearing
-   -   Browser: Open <http://localhost:9090/admin>
-   -   Click: "Projects" tab
-   -   Verify: Projects list showing
-   -   Verify: Phases sub-table showing
-   -   Verify: Issues sub-table showing with priority colors
-   -   Done: Admin UI rendering data real
+1.  **Task 4.2**: E2E Test: All 8 MCP Verbs
 
-4.  **Task 4.4**: Run `make quality`
-   -   `make fmt` → 0 warnings
-   -   `make lint` → 0 clippy errors
-   -   `make test` → 100+ tests passing (59 handlers + 30 project + 6 E2E)
-   -   `make validate` → 0 architecture violations
-   -   `make docs-lint` → Markdown clean
-   -   Verify: All checks ✅
-   -   Done: Quality gate passed
+-   **Test**: POST /MCP/tools/index (start indexing)
+-   **Test**: GET /MCP/tools/search (semantic search)
+-   **Test**: POST /MCP/tools/validate (lint + architecture)
+-   **Test**: POST /MCP/tools/memory (store + retrieve)
+-   **Test**: GET /MCP/tools/session (list sessions)
+-   **Test**: POST /MCP/tools/agent (log activity)
+-   **Test**: POST /MCP/tools/project (create + list) ← NEW
+-   **Test**: GET /MCP/tools/vcs (git status)
+-   Verify: 8/8 verbs respond 200
+-   Done: All verbs working
 
-5.  **Task 4.5**: Prepare v0.2.0 Release
-   -   Arquivo: CHANGELOG.md
-   -   Ação: Add v0.2.0 entry with features (Project handler, Admin API, E2E validation)
-   -   Arquivo: docs/operations/CHANGELOG.md
-   -   Ação: Add v0.2.0 summary
-   -   Verify: CHANGELOG updated
-   -   Done: Release notes ready
+1.  **Task 4.3**: Admin UI: Project data appearing
+
+-   Browser: Open <http://localhost:9090/admin>
+-   Click: "Projects" tab
+-   Verify: Projects list showing
+-   Verify: Phases sub-table showing
+-   Verify: Issues sub-table showing with priority colors
+-   Done: Admin UI rendering data real
+
+1.  **Task 4.4**: Run `make quality`
+
+-   `make fmt` → 0 warnings
+-   `make lint` → 0 clippy errors
+-   `make test` → 100+ tests passing (59 handlers + 30 project + 6 E2E)
+-   `make validate` → 0 architecture violations
+-   `make docs-lint` → Markdown clean
+-   Verify: All checks ✅
+-   Done: Quality gate passed
+
+1.  **Task 4.5**: Prepare v0.2.0 Release
+
+-   Arquivo: CHANGELOG.md
+-   Ação: Add v0.2.0 entry with features (Project handler, Admin API, E2E validation)
+-   Arquivo: docs/operations/CHANGELOG.md
+-   Ação: Add v0.2.0 summary
+-   Verify: CHANGELOG updated
+-   Done: Release notes ready
 
 **Beads Issues**:
 

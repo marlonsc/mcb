@@ -21,11 +21,13 @@
 
 -   **12 Beads issues created** (all closed, all tasks done)
 -   **5 major changes executed**:
+
   1.  ✅ Archived 3 deprecated ADRs (012, 024, 032) → `docs/adr/archive/`
   2.  ✅ Consolidated ADR-003 + ADR-030 → unified "Provider Architecture & Routing"
   3.  ✅ Added YAML frontmatter to all 44 ADRs (metadata standardization)
   4.  ✅ Normalized ADR status values to 5-value set (IMPLEMENTED/ACCEPTED/PROPOSED/SUPERSEDED/ARCHIVED)
   5.  ✅ Updated cross-references (Shaku → dill, ADR-024 → ADR-029, etc.)
+
 -   **5 commits pushed**:
     -   `feat(adr): consolidate provider ADRs + add YAML metadata`
     -   `feat(adr): standardize status values to 5-value set`

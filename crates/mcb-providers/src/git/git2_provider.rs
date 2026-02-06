@@ -142,13 +142,13 @@ impl VcsProvider for Git2Provider {
                 .ok()
                 .and_then(|u| u.name().ok().flatten().map(String::from));
 
-            result.push(VcsBranch {
-                id: format!("{}::{}", repo.id(), name),
+            result.push(VcsBranch::new(
+                format!("{}::{}", repo.id(), name),
                 name,
                 head_commit,
                 is_default,
                 upstream,
-            });
+            ));
         }
 
         Ok(result)
@@ -205,15 +205,15 @@ impl VcsProvider for Git2Provider {
             let author = commit.author();
             let parent_hashes: Vec<String> = commit.parent_ids().map(|id| id.to_string()).collect();
 
-            commits.push(VcsCommit {
-                id: format!("{}:{}", repo.id(), oid),
-                hash: oid.to_string(),
-                message: commit.message().unwrap_or("").to_string(),
-                author: author.name().unwrap_or("Unknown").to_string(),
-                author_email: author.email().unwrap_or("").to_string(),
-                timestamp: commit.time().seconds(),
+            commits.push(VcsCommit::new(
+                format!("{}:{}", repo.id(), oid),
+                oid.to_string(),
+                commit.message().unwrap_or("").to_string(),
+                author.name().unwrap_or("Unknown").to_string(),
+                author.email().unwrap_or("").to_string(),
+                commit.time().seconds(),
                 parent_hashes,
-            });
+            ));
         }
 
         Ok(commits)

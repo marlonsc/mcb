@@ -3,7 +3,11 @@
 //! Consolidated configuration for system concerns:
 //! auth, event_bus, backup, sync, snapshot, daemon, and operations.
 
-use crate::constants::*;
+use crate::constants::auth::{
+    API_KEY_HEADER, DEFAULT_ADMIN_KEY_HEADER, JWT_DEFAULT_EXPIRATION_SECS,
+    JWT_REFRESH_EXPIRATION_SECS,
+};
+use crate::constants::event_bus::DEFAULT_NATS_CLIENT_NAME;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

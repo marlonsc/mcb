@@ -1,0 +1,3 @@
+pub const DB_POOL_SIZE: u32 = 10;
+pub const DB_CONNECTION_TIMEOUT_SECS: u64 = 30;
+pub const DB_QUERY_TIMEOUT_SECS: u64 = 60;

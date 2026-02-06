@@ -3,7 +3,12 @@
 //! Consolidated configuration for infrastructure concerns:
 //! logging, limits, cache, metrics, and resilience.
 
-use crate::constants::*;
+use crate::constants::cache::{
+    CACHE_DEFAULT_SIZE_LIMIT, CACHE_DEFAULT_TTL_SECS, DEFAULT_CACHE_NAMESPACE, REDIS_POOL_SIZE,
+};
+use crate::constants::logging::{DEFAULT_LOG_LEVEL, LOG_MAX_FILES, LOG_ROTATION_SIZE};
+use crate::constants::metrics::{METRICS_COLLECTION_INTERVAL_SECS, METRICS_PATH, METRICS_PREFIX};
+use crate::constants::resources::{DEFAULT_CPU_LIMIT, DEFAULT_DISK_IO_LIMIT, DEFAULT_MEMORY_LIMIT};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
