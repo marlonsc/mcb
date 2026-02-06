@@ -21,7 +21,7 @@ mod rrf_tests {
     use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
     use mcb_domain::ports::services::MemoryServiceInterface;
     use mcb_domain::utils::compute_content_hash;
-    use mcb_domain::value_objects::{Embedding, SearchResult};
+    use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
     use serde_json::Value;
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -60,15 +60,15 @@ mod rrf_tests {
 
     #[async_trait]
     impl VectorStoreAdmin for MockVectorStore {
-        async fn collection_exists(&self, _name: &str) -> Result<bool> {
+        async fn collection_exists(&self, _name: &CollectionId) -> Result<bool> {
             Ok(true)
         }
 
-        async fn get_stats(&self, _collection: &str) -> Result<HashMap<String, Value>> {
+        async fn get_stats(&self, _collection: &CollectionId) -> Result<HashMap<String, Value>> {
             Ok(HashMap::new())
         }
 
-        async fn flush(&self, _collection: &str) -> Result<()> {
+        async fn flush(&self, _collection: &CollectionId) -> Result<()> {
             Ok(())
         }
 
@@ -85,7 +85,7 @@ mod rrf_tests {
 
         async fn list_file_paths(
             &self,
-            _collection: &str,
+            _collection: &CollectionId,
             _limit: usize,
         ) -> Result<Vec<mcb_domain::value_objects::FileInfo>> {
             Ok(vec![])
@@ -93,7 +93,7 @@ mod rrf_tests {
 
         async fn get_chunks_by_file(
             &self,
-            _collection: &str,
+            _collection: &CollectionId,
             _file_path: &str,
         ) -> Result<Vec<SearchResult>> {
             Ok(vec![])
@@ -102,17 +102,17 @@ mod rrf_tests {
 
     #[async_trait]
     impl VectorStoreProvider for MockVectorStore {
-        async fn create_collection(&self, _name: &str, _dimensions: usize) -> Result<()> {
+        async fn create_collection(&self, _name: &CollectionId, _dimensions: usize) -> Result<()> {
             Ok(())
         }
 
-        async fn delete_collection(&self, _name: &str) -> Result<()> {
+        async fn delete_collection(&self, _name: &CollectionId) -> Result<()> {
             Ok(())
         }
 
         async fn insert_vectors(
             &self,
-            _collection: &str,
+            _collection: &CollectionId,
             _vectors: &[Embedding],
             _metadata: Vec<HashMap<String, Value>>,
         ) -> Result<Vec<String>> {
@@ -121,7 +121,7 @@ mod rrf_tests {
 
         async fn search_similar(
             &self,
-            _collection: &str,
+            _collection: &CollectionId,
             _query_vector: &[f32],
             _limit: usize,
             _filter: Option<&str>,
@@ -129,13 +129,13 @@ mod rrf_tests {
             Ok(self.results.clone())
         }
 
-        async fn delete_vectors(&self, _collection: &str, _ids: &[String]) -> Result<()> {
+        async fn delete_vectors(&self, _collection: &CollectionId, _ids: &[String]) -> Result<()> {
             Ok(())
         }
 
         async fn get_vectors_by_ids(
             &self,
-            _collection: &str,
+            _collection: &CollectionId,
             _ids: &[String],
         ) -> Result<Vec<SearchResult>> {
             Ok(vec![])
@@ -143,7 +143,7 @@ mod rrf_tests {
 
         async fn list_vectors(
             &self,
-            _collection: &str,
+            _collection: &CollectionId,
             _limit: usize,
         ) -> Result<Vec<SearchResult>> {
             Ok(vec![])

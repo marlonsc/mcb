@@ -2,23 +2,25 @@
 //!
 //! Application service for observation storage and semantic memory search.
 
-use crate::ports::EmbeddingProvider;
 use mcb_domain::entities::memory::{
     MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
     ObservationType, SessionSummary,
 };
 use mcb_domain::error::Result;
+use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::ports::repositories::MemoryRepository;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::compute_content_hash;
-use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
+use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
-use crate::constants::{HYBRID_SEARCH_MULTIPLIER, OBSERVATION_PREVIEW_LENGTH, RRF_K};
+use crate::constants::{
+    HYBRID_SEARCH_MULTIPLIER, MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH, RRF_K,
+};
 
 /// Hybrid memory service: SQLite for metadata/FTS + VectorStore for RAG embeddings.
 pub struct MemoryServiceImpl {
@@ -120,9 +122,10 @@ impl MemoryServiceImpl {
             );
         }
 
+        let collection_id = CollectionId::new(crate::constants::MEMORY_COLLECTION_NAME);
         let ids = self
             .vector_store
-            .insert_vectors("memories", &[embedding], vec![vector_metadata])
+            .insert_vectors(&collection_id, &[embedding], vec![vector_metadata])
             .await?;
 
         let embedding_id = ids.first().cloned();
@@ -155,11 +158,12 @@ impl MemoryServiceImpl {
         let candidate_limit = limit * HYBRID_SEARCH_MULTIPLIER;
 
         let query_embedding = self.embedding_provider.embed(query).await?;
+        let collection_id = CollectionId::new(MEMORY_COLLECTION_NAME);
 
         let (fts_result, vector_result) = tokio::join!(
             self.repository.search_fts_ranked(query, candidate_limit),
             self.vector_store.search_similar(
-                "memories",
+                &collection_id,
                 query_embedding.vector.as_slice(),
                 candidate_limit,
                 None,

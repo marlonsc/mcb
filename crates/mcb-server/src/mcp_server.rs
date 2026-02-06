@@ -11,13 +11,13 @@ use rmcp::model::{
     ServerCapabilities, ServerInfo,
 };
 
-use mcb_application::{
-    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    SearchServiceInterface, ValidationServiceInterface,
-};
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::services::{
+    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
+    SearchServiceInterface, ValidationServiceInterface,
+};
 
 use crate::handlers::{
     AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,

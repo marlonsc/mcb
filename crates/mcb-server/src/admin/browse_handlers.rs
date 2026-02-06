@@ -13,6 +13,7 @@
 
 use mcb_domain::ports::browse::HighlightService;
 use mcb_domain::ports::providers::VectorStoreBrowser;
+use mcb_domain::value_objects::CollectionId;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get};
@@ -86,7 +87,7 @@ pub async fn list_collections(
     let collection_responses: Vec<CollectionInfoResponse> = collections
         .into_iter()
         .map(|c| CollectionInfoResponse {
-            name: c.name,
+            name: c.id.into_string(),
             vector_count: c.vector_count,
             file_count: c.file_count,
             last_indexed: c.last_indexed,
@@ -122,10 +123,11 @@ pub async fn list_collection_files(
     limit: Option<usize>,
 ) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
     let limit = limit.unwrap_or(100);
+    let collection = CollectionId::new(name);
 
     let files = state
         .browser
-        .list_file_paths(name, limit)
+        .list_file_paths(&collection, limit)
         .await
         .map_err(|e| {
             // Check if it's a collection not found error
@@ -183,10 +185,11 @@ pub async fn get_file_chunks(
     path: std::path::PathBuf,
 ) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
     let file_path = path.to_string_lossy().to_string();
+    let collection_id = CollectionId::new(name);
 
     let chunks = state
         .browser
-        .get_chunks_by_file(name, &file_path)
+        .get_chunks_by_file(&collection_id, &file_path)
         .await
         .map_err(|e| {
             let error_msg = e.to_string();
@@ -257,9 +260,10 @@ pub async fn get_collection_tree(
     state: &State<BrowseState>,
     name: &str,
 ) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
+    let collection_id = CollectionId::new(name);
     let files = state
         .browser
-        .list_file_paths(name, LIST_FILE_PATHS_LIMIT)
+        .list_file_paths(&collection_id, LIST_FILE_PATHS_LIMIT)
         .await
         .map_err(|e| {
             let error_msg = e.to_string();

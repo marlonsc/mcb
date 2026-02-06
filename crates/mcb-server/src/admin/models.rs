@@ -89,7 +89,7 @@ pub struct CollectionInfoResponse {
     pub file_count: u64,
     /// Unix timestamp of last indexing (if available)
     pub last_indexed: Option<u64>,
-    /// Provider name (e.g., "milvus", "in_memory")
+    /// Provider name (e.g., "milvus", "qdrant")
     pub provider: String,
 }
 

@@ -38,11 +38,9 @@
 
 pub mod constants;
 pub mod decorators;
-pub mod domain_services;
 pub mod ports;
 pub mod use_cases;
 
 pub use decorators::*;
-pub use domain_services::*;
 pub use ports::*;
 pub use use_cases::*;

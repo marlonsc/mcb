@@ -4,35 +4,10 @@
 //! Ports are organized by their purpose and enable dependency injection
 //! with clear separation of concerns.
 //!
-//! ## Organization
-//!
-//! - **providers/** - External service providers (embeddings, vector stores, search)
-//! - **infrastructure/** - Infrastructure services (sync, snapshots)
-//! - **registry/** - Auto-registration system for plugin providers
-//! - **services.rs** - Application service interfaces (context, search, indexing)
-//! - **admin.rs** - Administrative interfaces for system management
+//! Note: Most port definitions have been moved to mcb-domain.
+//! This module primarily exists to expose domain ports to the application use cases.
 
-pub mod admin;
-pub mod infrastructure;
-
-// Re-export commonly used port traits for convenience
-pub use admin::{
-    DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
-    IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsData,
-    PerformanceMetricsInterface, PortServiceState, ShutdownCoordinator,
-};
-pub use infrastructure::snapshot::SyncProvider;
-pub use infrastructure::{
-    AuthServiceInterface, DomainEventStream, EventBusProvider, LockGuard, LockProvider,
-    ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, SnapshotProvider,
-    StateStoreProvider, SyncCoordinator, SyncOptions, SyncResult, SystemMetrics,
-    SystemMetricsCollectorInterface,
-};
-
-// ============================================================================
-// Domain Re-exports (Clean Architecture)
-// ============================================================================
-
+// Re-export ports from domain
 pub use mcb_domain::ports::providers;
 pub use mcb_domain::ports::services;
 

@@ -59,7 +59,7 @@ impl ContextServiceImpl {
     }
 
     /// Check if collection exists in vector store
-    async fn collection_exists(&self, collection: &str) -> Result<bool> {
+    async fn collection_exists(&self, collection: &CollectionId) -> Result<bool> {
         self.vector_store_provider
             .collection_exists(collection)
             .await
@@ -78,10 +78,10 @@ impl ContextServiceInterface for ContextServiceImpl {
     async fn initialize(&self, collection: &CollectionId) -> Result<()> {
         let name = collection.as_str();
         // Create collection if it doesn't exist
-        if !self.collection_exists(name).await? {
+        if !self.collection_exists(collection).await? {
             let dimensions = self.embedding_provider.dimensions();
             self.vector_store_provider
-                .create_collection(name, dimensions)
+                .create_collection(collection, dimensions)
                 .await?;
         }
 
@@ -101,7 +101,7 @@ impl ContextServiceInterface for ContextServiceImpl {
 
         // Insert into vector store
         self.vector_store_provider
-            .insert_vectors(name, &embeddings, metadata)
+            .insert_vectors(collection, &embeddings, metadata)
             .await?;
 
         // Update collection metadata in cache
@@ -120,7 +120,7 @@ impl ContextServiceInterface for ContextServiceImpl {
     ) -> Result<Vec<SearchResult>> {
         let query_embedding = self.embedding_provider.embed(query).await?;
         self.vector_store_provider
-            .search_similar(collection.as_str(), &query_embedding.vector, limit, None)
+            .search_similar(collection, &query_embedding.vector, limit, None)
             .await
     }
 
@@ -131,8 +131,10 @@ impl ContextServiceInterface for ContextServiceImpl {
     async fn clear_collection(&self, collection: &CollectionId) -> Result<()> {
         let name = collection.as_str();
         // Delete collection from vector store if it exists
-        if self.collection_exists(name).await? {
-            self.vector_store_provider.delete_collection(name).await?;
+        if self.collection_exists(collection).await? {
+            self.vector_store_provider
+                .delete_collection(collection)
+                .await?;
         }
 
         // Clear cache metadata

@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::value_objects::{CollectionInfo, Embedding, FileInfo, SearchResult};
+use crate::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use async_trait::async_trait;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -13,16 +13,18 @@ use std::collections::HashMap;
 ///
 /// ```no_run
 /// use mcb_domain::ports::providers::vector_store::VectorStoreAdmin;
+/// use mcb_domain::value_objects::CollectionId;
 /// use std::sync::Arc;
 ///
 /// async fn check_collection(provider: Arc<dyn VectorStoreAdmin>) -> mcb_domain::Result<()> {
+///     let id = CollectionId::new("code_embeddings");
 ///     // Check if a collection exists
-///     if provider.collection_exists("code_embeddings").await? {
-///         let stats = provider.get_stats("code_embeddings").await?;
+///     if provider.collection_exists(&id).await? {
+///         let stats = provider.get_stats(&id).await?;
 ///         println!("Collection stats: {:?}", stats);
 ///
 ///         // Flush pending writes
-///         provider.flush("code_embeddings").await?;
+///         provider.flush(&id).await?;
 ///     }
 ///     Ok(())
 /// }
@@ -32,29 +34,29 @@ pub trait VectorStoreAdmin: Send + Sync {
     /// Check if a collection exists
     ///
     /// # Arguments
-    /// * `name` - Name of the collection to check
+    /// * `collection` - ID of the collection to check
     ///
     /// # Returns
     /// Ok(true) if collection exists, Ok(false) if it doesn't exist, Error if check failed
-    async fn collection_exists(&self, name: &str) -> Result<bool>;
+    async fn collection_exists(&self, collection: &CollectionId) -> Result<bool>;
 
     /// Get statistics about a collection
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to get stats for
+    /// * `collection` - ID of the collection to get stats for
     ///
     /// # Returns
     /// Ok(hashmap) containing various statistics about the collection
-    async fn get_stats(&self, collection: &str) -> Result<HashMap<String, Value>>;
+    async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>>;
 
     /// Flush pending operations for a collection
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to flush
+    /// * `collection` - ID of the collection to flush
     ///
     /// # Returns
     /// Ok(()) if flush completed successfully, Error if flush failed
-    async fn flush(&self, collection: &str) -> Result<()>;
+    async fn flush(&self, collection: &CollectionId) -> Result<()>;
 
     /// Get the name/identifier of this vector store provider
     ///
@@ -65,7 +67,8 @@ pub trait VectorStoreAdmin: Send + Sync {
     /// Health check for the provider (default implementation)
     async fn health_check(&self) -> Result<()> {
         // Default implementation - try a simple operation
-        self.collection_exists("__health_check__").await?;
+        self.collection_exists(&CollectionId::new("__health_check__"))
+            .await?;
         Ok(())
     }
 }
@@ -81,15 +84,17 @@ pub trait VectorStoreAdmin: Send + Sync {
 ///
 /// ```no_run
 /// use mcb_domain::ports::providers::vector_store::VectorStoreProvider;
+/// use mcb_domain::value_objects::CollectionId;
 /// use std::sync::Arc;
 ///
 /// async fn index_code(provider: Arc<dyn VectorStoreProvider>) -> mcb_domain::Result<()> {
+///     let id = CollectionId::new("rust_code");
 ///     // Create a collection for code embeddings
-///     provider.create_collection("rust_code", 384).await?;
+///     provider.create_collection(&id, 384).await?;
 ///
 ///     // Search for similar code
 ///     let query_vec = vec![0.1f32; 384];
-///     let results = provider.search_similar("rust_code", &query_vec, 10, None).await?;
+///     let results = provider.search_similar(&id, &query_vec, 10, None).await?;
 ///     for result in results {
 ///         println!("Found: {} (score: {})", result.file_path, result.score);
 ///     }
@@ -101,26 +106,26 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// Create a new vector collection with specified dimensions
     ///
     /// # Arguments
-    /// * `name` - Name of the collection to create
+    /// * `collection` - ID of the collection to create
     /// * `dimensions` - Number of dimensions for vectors in this collection
     ///
     /// # Returns
     /// Ok(()) if collection was created successfully, Error if creation failed
-    async fn create_collection(&self, name: &str, dimensions: usize) -> Result<()>;
+    async fn create_collection(&self, collection: &CollectionId, dimensions: usize) -> Result<()>;
 
     /// Delete an existing vector collection
     ///
     /// # Arguments
-    /// * `name` - Name of the collection to delete
+    /// * `collection` - ID of the collection to delete
     ///
     /// # Returns
     /// Ok(()) if collection was deleted successfully, Error if deletion failed
-    async fn delete_collection(&self, name: &str) -> Result<()>;
+    async fn delete_collection(&self, collection: &CollectionId) -> Result<()>;
 
     /// Insert vectors into a collection with associated metadata
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to insert into
+    /// * `collection` - ID of the collection to insert into
     /// * `vectors` - Slice of embedding vectors to insert
     /// * `metadata` - Vector of metadata maps, one per vector
     ///
@@ -128,7 +133,7 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// Ok(vector_of_ids) containing the IDs assigned to each inserted vector
     async fn insert_vectors(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, Value>>,
     ) -> Result<Vec<String>>;
@@ -136,7 +141,7 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// Search for vectors similar to a query vector
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to search in
+    /// * `collection` - ID of the collection to search in
     /// * `query_vector` - The query vector to find similar vectors for
     /// * `limit` - Maximum number of results to return
     /// * `filter` - Optional filter expression to restrict search scope
@@ -145,7 +150,7 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// Ok(vector_of_results) containing the search results ordered by similarity
     async fn search_similar(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         query_vector: &[f32],
         limit: usize,
         filter: Option<&str>,
@@ -154,36 +159,40 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// Delete vectors by their IDs
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to delete from
+    /// * `collection` - ID of the collection to delete from
     /// * `ids` - Slice of vector IDs to delete
     ///
     /// # Returns
     /// Ok(()) if all vectors were deleted successfully, Error if deletion failed
-    async fn delete_vectors(&self, collection: &str, ids: &[String]) -> Result<()>;
+    async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()>;
 
     /// Retrieve vectors by their IDs
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to retrieve from
+    /// * `collection` - ID of the collection to retrieve from
     /// * `ids` - Slice of vector IDs to retrieve
     ///
     /// # Returns
     /// Ok(vector_of_results) containing the requested vectors with their metadata
     async fn get_vectors_by_ids(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         ids: &[String],
     ) -> Result<Vec<SearchResult>>;
 
     /// List vectors in a collection with pagination
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to list vectors from
+    /// * `collection` - ID of the collection to list vectors from
     /// * `limit` - Maximum number of vectors to return
     ///
     /// # Returns
     /// Ok(vector_of_results) containing the vectors in the collection
-    async fn list_vectors(&self, collection: &str, limit: usize) -> Result<Vec<SearchResult>>;
+    async fn list_vectors(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>>;
 }
 
 /// Vector Store Browse Operations for Admin UI
@@ -196,17 +205,19 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
 ///
 /// ```no_run
 /// use mcb_domain::ports::providers::vector_store::VectorStoreBrowser;
+/// use mcb_domain::value_objects::CollectionId;
 /// use std::sync::Arc;
 ///
 /// async fn browse_collections(provider: Arc<dyn VectorStoreBrowser>) -> mcb_domain::Result<()> {
 ///     // List all indexed collections
 ///     let collections = provider.list_collections().await?;
 ///     for coll in collections {
-///         println!("Collection: {} ({} vectors)", coll.name, coll.vector_count);
+///         println!("Collection: {} ({} vectors)", coll.id, coll.vector_count);
 ///     }
 ///
 ///     // List files in a collection
-///     let files = provider.list_file_paths("my-project", 100).await?;
+///     let id = CollectionId::new("my-project");
+///     let files = provider.list_file_paths(&id, 100).await?;
 ///     for file in files {
 ///         println!("File: {}", file.path);
 ///     }
@@ -230,12 +241,16 @@ pub trait VectorStoreBrowser: Send + Sync {
     /// useful for building file browser UIs.
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to list files from
+    /// * `collection` - ID of the collection to list files from
     /// * `limit` - Maximum number of files to return
     ///
     /// # Returns
     /// Ok(vector_of_file_info) containing info about indexed files
-    async fn list_file_paths(&self, collection: &str, limit: usize) -> Result<Vec<FileInfo>>;
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>>;
 
     /// Get all chunks for a specific file path
     ///
@@ -243,14 +258,14 @@ pub trait VectorStoreBrowser: Send + Sync {
     /// file, ordered by line number.
     ///
     /// # Arguments
-    /// * `collection` - Name of the collection to search in
+    /// * `collection` - ID of the collection to search in
     /// * `file_path` - Path of the file to get chunks for
     ///
     /// # Returns
     /// Ok(vector_of_results) containing chunks from the specified file
     async fn get_chunks_by_file(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         file_path: &str,
     ) -> Result<Vec<SearchResult>>;
 }

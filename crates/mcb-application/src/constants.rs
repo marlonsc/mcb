@@ -15,6 +15,9 @@ pub const HYBRID_SEARCH_MULTIPLIER: usize = 3;
 /// Max length for observation content preview in search results
 pub const OBSERVATION_PREVIEW_LENGTH: usize = 120;
 
+/// Name of the vector collection for storing observations
+pub const MEMORY_COLLECTION_NAME: &str = "memories";
+
 // ============================================================================
 // INDEXING
 // ============================================================================

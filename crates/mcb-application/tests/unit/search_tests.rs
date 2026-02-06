@@ -305,30 +305,30 @@ async fn test_search_service_returns_results_after_indexing() {
     let context_service = create_mock_context_service();
 
     // Initialize collection
-    context_service
+    let init_res: Result<()> = context_service
         .initialize(&CollectionId::new("test_collection"))
-        .await
-        .expect("Should initialize collection");
+        .await;
+    init_res.expect("Should initialize collection");
 
     // Store real chunks
     let chunks = create_test_chunks();
-    context_service
+    let store_res: Result<()> = context_service
         .store_chunks(&CollectionId::new("test_collection"), &chunks)
-        .await
-        .expect("Should store chunks");
+        .await;
+    store_res.expect("Should store chunks");
 
     // Create search service
     let search_service = SearchServiceImpl::new(context_service);
 
     // Search for content - should find results from real vector store
-    let results = search_service
+    let search_res: Result<Vec<SearchResult>> = search_service
         .search(
             &CollectionId::new("test_collection"),
             "configuration settings",
             10,
         )
-        .await
-        .expect("Search should succeed");
+        .await;
+    let results = search_res.expect("Search should succeed");
 
     // With FastEmbedProvider (local), we should get results
     // The key assertion: we're testing REAL search behavior, not mocked responses
@@ -344,19 +344,19 @@ async fn test_search_service_empty_collection_returns_empty() {
     let context_service = create_mock_context_service();
 
     // Initialize but don't populate
-    context_service
+    let init_res: Result<()> = context_service
         .initialize(&CollectionId::new("empty_collection"))
-        .await
-        .expect("Should initialize collection");
+        .await;
+    init_res.expect("Should initialize collection");
 
     // Create search service
     let search_service = SearchServiceImpl::new(context_service);
 
     // Search in empty collection
-    let results = search_service
+    let search_res: Result<Vec<SearchResult>> = search_service
         .search(&CollectionId::new("empty_collection"), "anything", 10)
-        .await
-        .expect("Search should succeed");
+        .await;
+    let results = search_res.expect("Search should succeed");
 
     // Empty collection should return empty results
     assert!(
@@ -382,10 +382,8 @@ async fn test_context_service_embed_text() {
     let context_service = create_mock_context_service();
 
     // Test real embedding generation
-    let embedding = context_service
-        .embed_text("test query for embedding")
-        .await
-        .expect("Should generate embedding");
+    let result: Result<Embedding> = context_service.embed_text("test query for embedding").await;
+    let embedding = result.expect("Should generate embedding");
 
     assert_eq!(embedding.dimensions, 384);
     assert_eq!(embedding.vector.len(), 384);
@@ -398,27 +396,27 @@ async fn test_context_service_stores_and_retrieves_chunks() {
     let context_service = create_mock_context_service();
 
     // Initialize collection
-    context_service
+    let init_res: Result<()> = context_service
         .initialize(&CollectionId::new("store_test"))
-        .await
-        .expect("Should initialize");
+        .await;
+    init_res.expect("Should initialize");
 
     // Store chunks
     let chunks = create_test_chunks();
-    context_service
+    let store_res: Result<()> = context_service
         .store_chunks(&CollectionId::new("store_test"), &chunks)
-        .await
-        .expect("Should store chunks");
+        .await;
+    store_res.expect("Should store chunks");
 
     // Search and verify we can retrieve data
-    let results = context_service
+    let search_res: Result<Vec<SearchResult>> = context_service
         .search_similar(
             &CollectionId::new("store_test"),
             "authenticate user token",
             5,
         )
-        .await
-        .expect("Should search");
+        .await;
+    let results = search_res.expect("Should search");
 
     // Should find results - validates the full store → search flow
     assert!(
@@ -443,27 +441,27 @@ async fn test_context_service_clear_collection() {
     let context_service = create_mock_context_service();
 
     // Initialize and populate
-    context_service
+    let init_res: Result<()> = context_service
         .initialize(&CollectionId::new("clear_test"))
-        .await
-        .expect("init");
-    context_service
+        .await;
+    init_res.expect("init");
+    let store_res: Result<()> = context_service
         .store_chunks(&CollectionId::new("clear_test"), &create_test_chunks())
-        .await
-        .expect("store");
+        .await;
+    store_res.expect("store");
 
     // Verify data exists
-    let before_clear = context_service
+    let search_res: Result<Vec<SearchResult>> = context_service
         .search_similar(&CollectionId::new("clear_test"), "config", 5)
-        .await
-        .expect("search before clear");
+        .await;
+    let before_clear = search_res.expect("search before clear");
     assert!(!before_clear.is_empty(), "Should have data before clear");
 
     // Clear collection
-    context_service
+    let clear_res: Result<()> = context_service
         .clear_collection(&CollectionId::new("clear_test"))
-        .await
-        .expect("Should clear collection");
+        .await;
+    clear_res.expect("Should clear collection");
 
     // After clear, collection is deleted - searching should fail or return empty
     // depending on implementation
@@ -491,27 +489,27 @@ async fn test_full_search_flow_validates_architecture() {
     let search_service = SearchServiceImpl::new(context_service.clone());
 
     // Step 1: Initialize
-    context_service
+    let init_res: Result<()> = context_service
         .initialize(&CollectionId::new("architecture_test"))
-        .await
-        .expect("Initialize should work through real providers");
+        .await;
+    init_res.expect("Initialize should work through real providers");
 
     // Step 2: Store chunks (exercises embedding → vector store flow)
     let chunks = create_test_chunks();
-    context_service
+    let store_res: Result<()> = context_service
         .store_chunks(&CollectionId::new("architecture_test"), &chunks)
-        .await
-        .expect("Store should work through real providers");
+        .await;
+    store_res.expect("Store should work through real providers");
 
     // Step 3: Search (exercises embedding → vector search → results flow)
-    let results = search_service
+    let search_res: Result<Vec<SearchResult>> = search_service
         .search(
             &CollectionId::new("architecture_test"),
             "request handler",
             5,
         )
-        .await
-        .expect("Search should work through real providers");
+        .await;
+    let results = search_res.expect("Search should work through real providers");
 
     // Validate results come from actual data, not mocks
     assert!(

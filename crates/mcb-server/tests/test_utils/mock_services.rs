@@ -15,6 +15,7 @@ use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSe
 use mcb_domain::ports::services::{ContextServiceInterface, SearchServiceInterface};
 use mcb_domain::ports::services::{IndexingResult, IndexingServiceInterface, IndexingStatus};
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
+use mcb_domain::value_objects::{ObservationId, SessionId};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -27,11 +28,11 @@ use std::sync::{Arc, Mutex};
 /// Mock implementation of SearchServiceInterface for testing
 pub struct MockSearchService {
     /// Pre-configured results to return
-    results: Arc<Mutex<Vec<SearchResult>>>,
+    pub results: Arc<Mutex<Vec<SearchResult>>>,
     /// Whether the next call should fail
-    should_fail: Arc<AtomicBool>,
+    pub should_fail: Arc<AtomicBool>,
     /// Error message to return on failure
-    error_message: Arc<Mutex<String>>,
+    pub error_message: Arc<Mutex<String>>,
 }
 
 impl MockSearchService {
@@ -168,13 +169,13 @@ impl AgentSessionServiceInterface for MockAgentSessionService {
 /// Mock implementation of IndexingServiceInterface for testing
 pub struct MockIndexingService {
     /// Pre-configured indexing result
-    indexing_result: Arc<Mutex<Option<IndexingResult>>>,
+    pub indexing_result: Arc<Mutex<Option<IndexingResult>>>,
     /// Current status to return
-    status: Arc<Mutex<IndexingStatus>>,
+    pub status: Arc<Mutex<IndexingStatus>>,
     /// Whether the next indexing call should fail
-    should_fail: Arc<AtomicBool>,
+    pub should_fail: Arc<AtomicBool>,
     /// Error message to return on failure
-    error_message: Arc<Mutex<String>>,
+    pub error_message: Arc<Mutex<String>>,
 }
 
 impl MockIndexingService {
@@ -264,13 +265,13 @@ impl IndexingServiceInterface for MockIndexingService {
 /// Mock implementation of ContextServiceInterface for testing
 pub struct MockContextService {
     /// Pre-configured search results
-    search_results: Arc<Mutex<Vec<SearchResult>>>,
+    pub search_results: Arc<Mutex<Vec<SearchResult>>>,
     /// Embedding dimensions
-    dimensions: usize,
+    pub dimensions: usize,
     /// Whether the next call should fail
-    should_fail: Arc<AtomicBool>,
+    pub should_fail: Arc<AtomicBool>,
     /// Error message to return on failure
-    error_message: Arc<Mutex<String>>,
+    pub error_message: Arc<Mutex<String>>,
 }
 
 impl MockContextService {
@@ -388,13 +389,13 @@ use mcb_domain::ports::services::{ValidationReport, ValidationServiceInterface, 
 /// Mock implementation of ValidationServiceInterface for testing
 pub struct MockValidationService {
     /// Pre-configured validation report
-    report: Arc<Mutex<ValidationReport>>,
+    pub report: Arc<Mutex<ValidationReport>>,
     /// List of available validators
-    validators: Arc<Mutex<Vec<String>>>,
+    pub validators: Arc<Mutex<Vec<String>>>,
     /// Whether the next call should fail
-    should_fail: Arc<AtomicBool>,
+    pub should_fail: Arc<AtomicBool>,
     /// Error message to return on failure
-    error_message: Arc<Mutex<String>>,
+    pub error_message: Arc<Mutex<String>>,
 }
 
 impl MockValidationService {
@@ -544,8 +545,8 @@ use mcb_domain::ports::repositories::MemoryRepository;
 use mcb_domain::ports::repositories::memory_repository::FtsSearchResult;
 
 pub struct MockMemoryRepository {
-    observations: Arc<Mutex<Vec<Observation>>>,
-    summaries: Arc<Mutex<Vec<SessionSummary>>>,
+    pub observations: Arc<Mutex<Vec<Observation>>>,
+    pub summaries: Arc<Mutex<Vec<SessionSummary>>>,
 }
 
 impl MockMemoryRepository {
@@ -1053,7 +1054,7 @@ impl ProjectRepository for MockProjectRepository {
 // Mock Memory Service
 // ============================================================================
 
-use mcb_application::domain_services::memory::MemoryServiceInterface;
+use mcb_domain::ports::services::MemoryServiceInterface;
 
 pub struct MockMemoryService {
     should_fail: Arc<AtomicBool>,
@@ -1087,7 +1088,7 @@ impl MemoryServiceInterface for MockMemoryService {
         observation_type: ObservationType,
         tags: Vec<String>,
         metadata: mcb_domain::entities::memory::ObservationMetadata,
-    ) -> Result<(String, bool)> {
+    ) -> Result<(ObservationId, bool)> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -1106,7 +1107,7 @@ impl MemoryServiceInterface for MockMemoryService {
         };
         let id = obs.id.clone();
         self.observations.lock().expect("Lock poisoned").push(obs);
-        Ok((id, false))
+        Ok((ObservationId::new(id), false))
     }
 
     async fn search_memories(
@@ -1142,7 +1143,7 @@ impl MemoryServiceInterface for MockMemoryService {
         Ok(results)
     }
 
-    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
+    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -1151,13 +1152,13 @@ impl MemoryServiceInterface for MockMemoryService {
         let summaries = self.summaries.lock().expect("Lock poisoned");
         Ok(summaries
             .iter()
-            .find(|s| s.session_id == session_id)
+            .find(|s| s.session_id == session_id.as_str())
             .cloned())
     }
 
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         let observations = self.observations.lock().expect("Lock poisoned");
-        Ok(observations.iter().find(|o| o.id == id).cloned())
+        Ok(observations.iter().find(|o| o.id == id.as_str()).cloned())
     }
 
     async fn embed_content(&self, _content: &str) -> Result<Embedding> {
@@ -1209,7 +1210,7 @@ impl MemoryServiceInterface for MockMemoryService {
 
     async fn create_session_summary(
         &self,
-        session_id: String,
+        session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
@@ -1223,7 +1224,7 @@ impl MemoryServiceInterface for MockMemoryService {
         let summary = SessionSummary {
             id: uuid::Uuid::new_v4().to_string(),
             project_id: "mock-project".to_string(),
-            session_id,
+            session_id: session_id.into_string(),
             topics,
             decisions,
             next_steps,
@@ -1237,7 +1238,7 @@ impl MemoryServiceInterface for MockMemoryService {
 
     async fn get_timeline(
         &self,
-        anchor_id: &str,
+        anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
@@ -1248,7 +1249,7 @@ impl MemoryServiceInterface for MockMemoryService {
         }
 
         let observations = self.observations.lock().expect("Lock poisoned");
-        let anchor_idx = observations.iter().position(|o| o.id == anchor_id);
+        let anchor_idx = observations.iter().position(|o| o.id == anchor_id.as_str());
 
         match anchor_idx {
             None => Ok(vec![]),
@@ -1275,7 +1276,7 @@ impl MemoryServiceInterface for MockMemoryService {
         }
     }
 
-    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -1284,7 +1285,7 @@ impl MemoryServiceInterface for MockMemoryService {
         let observations = self.observations.lock().expect("Lock poisoned");
         let results: Vec<Observation> = observations
             .iter()
-            .filter(|obs| ids.contains(&obs.id))
+            .filter(|obs| ids.iter().any(|id| id.as_str() == obs.id))
             .cloned()
             .collect();
 
@@ -1298,7 +1299,7 @@ impl MemoryServiceInterface for MockMemoryService {
 
 /// Mock VCS provider for testing
 pub struct MockVcsProvider {
-    should_fail: AtomicBool,
+    pub should_fail: AtomicBool,
 }
 
 impl MockVcsProvider {

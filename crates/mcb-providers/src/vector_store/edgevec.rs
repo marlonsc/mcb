@@ -17,7 +17,7 @@ use crate::utils::JsonExt;
 use edgevec::hnsw::VectorId;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
-use mcb_domain::value_objects::{CollectionInfo, Embedding, FileInfo, SearchResult};
+use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 
 /// EdgeVec vector store configuration
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -209,7 +209,7 @@ enum EdgeVecMessage {
 /// EdgeVec vector store provider implementation using Actor pattern
 pub struct EdgeVecVectorStoreProvider {
     sender: mpsc::Sender<EdgeVecMessage>,
-    collection: String,
+    collection: CollectionId,
 }
 
 impl EdgeVecVectorStoreProvider {
@@ -225,12 +225,12 @@ impl EdgeVecVectorStoreProvider {
 
         Ok(Self {
             sender: tx,
-            collection: "default".to_string(),
+            collection: CollectionId::new("default"),
         })
     }
 
     /// Create a new EdgeVec provider with custom collection
-    pub fn with_collection(config: EdgeVecConfig, collection: String) -> Result<Self> {
+    pub fn with_collection(config: EdgeVecConfig, collection: CollectionId) -> Result<Self> {
         let mut provider = Self::new(config)?;
         provider.collection = collection;
         Ok(provider)
@@ -239,12 +239,12 @@ impl EdgeVecVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
-    async fn collection_exists(&self, name: &str) -> Result<bool> {
+    async fn collection_exists(&self, collection: &CollectionId) -> Result<bool> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
             .send(EdgeVecMessage::Query(QueryMessage::CollectionExists {
-                name: name.to_string(),
+                name: collection.to_string(),
                 tx,
             }))
             .await;
@@ -252,7 +252,10 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
-    async fn get_stats(&self, collection: &str) -> Result<HashMap<String, serde_json::Value>> {
+    async fn get_stats(
+        &self,
+        collection: &CollectionId,
+    ) -> Result<HashMap<String, serde_json::Value>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
@@ -265,7 +268,7 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
-    async fn flush(&self, _collection: &str) -> Result<()> {
+    async fn flush(&self, _collection: &CollectionId) -> Result<()> {
         Ok(())
     }
 
@@ -276,12 +279,12 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreProvider for EdgeVecVectorStoreProvider {
-    async fn create_collection(&self, name: &str, _dimensions: usize) -> Result<()> {
+    async fn create_collection(&self, collection: &CollectionId, _dimensions: usize) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
             .send(EdgeVecMessage::Core(CoreMessage::CreateCollection {
-                name: name.to_string(),
+                name: collection.to_string(),
                 tx,
             }))
             .await;
@@ -289,12 +292,12 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
-    async fn delete_collection(&self, name: &str) -> Result<()> {
+    async fn delete_collection(&self, collection: &CollectionId) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
             .send(EdgeVecMessage::Core(CoreMessage::DeleteCollection {
-                name: name.to_string(),
+                name: collection.to_string(),
                 tx,
             }))
             .await;
@@ -304,7 +307,7 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
 
     async fn insert_vectors(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
@@ -324,7 +327,7 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
 
     async fn search_similar(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         query_vector: &[f32],
         limit: usize,
         _filter: Option<&str>,
@@ -343,7 +346,7 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
-    async fn delete_vectors(&self, collection: &str, ids: &[String]) -> Result<()> {
+    async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
@@ -359,7 +362,7 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
 
     async fn get_vectors_by_ids(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         ids: &[String],
     ) -> Result<Vec<SearchResult>> {
         let (tx, rx) = oneshot::channel();
@@ -375,7 +378,11 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
-    async fn list_vectors(&self, collection: &str, limit: usize) -> Result<Vec<SearchResult>> {
+    async fn list_vectors(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
@@ -404,7 +411,11 @@ impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
             .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
     }
 
-    async fn list_file_paths(&self, collection: &str, limit: usize) -> Result<Vec<FileInfo>> {
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .sender
@@ -420,7 +431,7 @@ impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
 
     async fn get_chunks_by_file(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         let (tx, rx) = oneshot::channel();
@@ -698,7 +709,13 @@ impl EdgeVecActor {
                     .collect();
                 let file_count = file_paths.len() as u64;
 
-                CollectionInfo::new(name, vector_count, file_count, None, "edgevec")
+                CollectionInfo::new(
+                    CollectionId::new(name),
+                    vector_count,
+                    file_count,
+                    None,
+                    "edgevec",
+                )
             })
             .collect()
     }

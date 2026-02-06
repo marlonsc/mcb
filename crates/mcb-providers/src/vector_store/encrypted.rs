@@ -23,7 +23,7 @@ use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
-use mcb_domain::value_objects::{CollectionInfo, Embedding, FileInfo, SearchResult};
+use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -107,11 +107,11 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
 
 #[async_trait]
 impl<P: VectorStoreProvider> VectorStoreAdmin for EncryptedVectorStoreProvider<P> {
-    async fn collection_exists(&self, name: &str) -> Result<bool> {
+    async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
         self.inner.collection_exists(name).await
     }
 
-    async fn get_stats(&self, collection: &str) -> Result<HashMap<String, Value>> {
+    async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>> {
         let mut stats = self.inner.get_stats(collection).await?;
         stats.insert("encryption_enabled".to_string(), serde_json::json!(true));
         stats.insert(
@@ -121,7 +121,7 @@ impl<P: VectorStoreProvider> VectorStoreAdmin for EncryptedVectorStoreProvider<P
         Ok(stats)
     }
 
-    async fn flush(&self, collection: &str) -> Result<()> {
+    async fn flush(&self, collection: &CollectionId) -> Result<()> {
         self.inner.flush(collection).await
     }
 
@@ -132,17 +132,17 @@ impl<P: VectorStoreProvider> VectorStoreAdmin for EncryptedVectorStoreProvider<P
 
 #[async_trait]
 impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvider<P> {
-    async fn create_collection(&self, name: &str, dimensions: usize) -> Result<()> {
+    async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
         self.inner.create_collection(name, dimensions).await
     }
 
-    async fn delete_collection(&self, name: &str) -> Result<()> {
+    async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
         self.inner.delete_collection(name).await
     }
 
     async fn insert_vectors(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, Value>>,
     ) -> Result<Vec<String>> {
@@ -165,7 +165,7 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
 
     async fn search_similar(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         query_vector: &[f32],
         limit: usize,
         filter: Option<&str>,
@@ -178,20 +178,24 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
             .await
     }
 
-    async fn delete_vectors(&self, collection: &str, ids: &[String]) -> Result<()> {
+    async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()> {
         self.inner.delete_vectors(collection, ids).await
     }
 
     async fn get_vectors_by_ids(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         ids: &[String],
     ) -> Result<Vec<SearchResult>> {
         // Delegate to inner provider - SearchResult fields are extracted from stored metadata
         self.inner.get_vectors_by_ids(collection, ids).await
     }
 
-    async fn list_vectors(&self, collection: &str, limit: usize) -> Result<Vec<SearchResult>> {
+    async fn list_vectors(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>> {
         // Delegate to inner provider - SearchResult fields are extracted from stored metadata
         self.inner.list_vectors(collection, limit).await
     }
@@ -210,14 +214,18 @@ impl<P: VectorStoreProvider + VectorStoreBrowser> VectorStoreBrowser
         self.inner.list_collections().await
     }
 
-    async fn list_file_paths(&self, collection: &str, limit: usize) -> Result<Vec<FileInfo>> {
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
         // Delegate to inner provider
         self.inner.list_file_paths(collection, limit).await
     }
 
     async fn get_chunks_by_file(
         &self,
-        collection: &str,
+        collection: &CollectionId,
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         // Delegate to inner provider

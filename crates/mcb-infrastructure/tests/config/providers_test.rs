@@ -35,7 +35,6 @@ fn test_provider_config_manager() {
     let manager = ProviderConfigManager::new(embedding_configs, vector_store_configs);
 
     assert!(manager.has_embedding_provider("openai"));
-    assert!(manager.has_vector_store_provider("filesystem"));
     assert!(!manager.has_embedding_provider("nonexistent"));
 }
 
