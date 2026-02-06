@@ -15,6 +15,8 @@
 //!     .await;
 //! ```
 
+#![allow(dead_code)]
+
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
