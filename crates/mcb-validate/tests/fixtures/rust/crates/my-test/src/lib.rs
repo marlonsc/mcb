@@ -201,12 +201,8 @@ pub fn not_ready_yet() -> String {
 pub struct EmptyService;
 
 impl EmptyService {
-    pub fn process(&self) -> Result<(), String> {
-        Ok(())
-    }
-    pub fn validate(&self) -> bool {
-        true
-    }
+    pub fn process(&self) -> Result<(), String> { Ok(()) }
+    pub fn validate(&self) -> Result<(), String> { Ok(()) }
 }
 
 /// BUG(Implementation): Empty catch-all in match.

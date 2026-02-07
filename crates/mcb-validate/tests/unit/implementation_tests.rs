@@ -13,9 +13,9 @@ use crate::test_utils::*;
 fn test_empty_method_detection() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
 
-    // my-test/src/lib.rs has EmptyService with stub methods:
+    // my-test/src/lib.rs has EmptyService with single-line stub methods:
     //   process(&self) -> Result<(), String> { Ok(()) }
-    //   validate(&self) -> bool { true }
+    //   validate(&self) -> Result<(), String> { Ok(()) }
     let validator = ImplementationQualityValidator::new(&root);
     let violations = validator.validate_empty_methods().unwrap();
 
