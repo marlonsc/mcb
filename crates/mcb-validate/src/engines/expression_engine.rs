@@ -30,6 +30,7 @@ impl Default for ExpressionEngine {
 }
 
 impl ExpressionEngine {
+    /// Create a new expression engine instance.
     pub fn new() -> Self {
         Self {
             cached_contexts: HashMap::new(),

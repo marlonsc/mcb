@@ -57,6 +57,7 @@ impl Default for RuleEngineRouter {
 }
 
 impl RuleEngineRouter {
+    /// Create a new rule engine router with all available engines.
     pub fn new() -> Self {
         Self {
             rete_engine: ReteEngine::new(),

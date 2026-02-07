@@ -28,6 +28,7 @@ impl Default for RustRuleEngineWrapper {
 }
 
 impl RustRuleEngineWrapper {
+    /// Create a new Rust rule engine wrapper.
     pub fn new() -> Self {
         Self {
             rete_engine: ReteEngine::new(),
