@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 
-use crate::entities::memory::{MemoryFilter, MemorySearchResult, Observation, SessionSummary};
+use crate::entities::memory::{MemoryFilter, Observation, SessionSummary};
 use crate::error::Result;
 use crate::value_objects::ids::{ObservationId, SessionId};
 
@@ -23,7 +23,7 @@ pub trait MemoryRepository: Send + Sync {
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>>;
 
     /// Full-text search returning IDs with BM25 rank scores for hybrid fusion
-    async fn search_fts_ranked(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>>;
+    async fn search(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>>;
 
     async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
 

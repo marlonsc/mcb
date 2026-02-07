@@ -505,7 +505,7 @@ use crate::constants::QDRANT_DEFAULT_PORT;
 fn qdrant_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    use crate::embedding::helpers::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
+    use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let base_url = config
         .uri

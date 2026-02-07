@@ -26,7 +26,7 @@ async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &str) 
 #[tokio::test]
 async fn test_memory_repository_in_memory_creates() {
     let repo: Arc<dyn MemoryRepository> = create_memory_repository_in_memory().await.unwrap();
-    let results = repo.search_fts("test", 1).await.unwrap();
+    let results = repo.search("test", 1).await.unwrap();
     assert!(results.is_empty());
 }
 

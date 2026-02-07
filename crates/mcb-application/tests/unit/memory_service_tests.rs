@@ -15,8 +15,7 @@ mod rrf_tests {
     use async_trait::async_trait;
     use mcb_application::use_cases::memory_service::MemoryServiceImpl;
     use mcb_domain::entities::memory::{
-        MemoryFilter, MemorySearchResult, Observation, ObservationMetadata, ObservationType,
-        SessionSummary,
+        MemoryFilter, Observation, ObservationMetadata, ObservationType, SessionSummary,
     };
     use mcb_domain::error::Result;
     use mcb_domain::ports::providers::EmbeddingProvider;

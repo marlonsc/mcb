@@ -183,7 +183,7 @@ use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, Embeddi
 fn ollama_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use super::helpers::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
+    use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let base_url = config
         .base_url

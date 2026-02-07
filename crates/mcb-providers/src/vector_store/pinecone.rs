@@ -468,7 +468,7 @@ use mcb_domain::registry::{
 fn pinecone_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    use crate::embedding::helpers::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
+    use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let api_key = config
         .api_key

@@ -181,7 +181,7 @@ impl MemoryServiceImpl {
         let collection_id = CollectionId::new(MEMORY_COLLECTION_NAME);
 
         let (fts_result, vector_result) = tokio::join!(
-            self.repository.search_fts_ranked(query, candidate_limit),
+            self.repository.search(query, candidate_limit),
             self.vector_store.search_similar(
                 &collection_id,
                 query_embedding.vector.as_slice(),

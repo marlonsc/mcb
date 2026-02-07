@@ -8,6 +8,8 @@ license.workspace = true
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+autobenches = false
+autotests = false
 
 [lints]
 workspace = true
@@ -100,6 +102,16 @@ tokio.workspace = true
 # Logging
 tracing.workspace = true
 criterion.workspace = true
+
+# Explicit test targets — prevents test_utils.rs and test_constants.rs
+# from being auto-discovered as standalone test binaries.
+[[test]]
+name = "unit"
+path = "tests/unit.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration.rs"
 
 [dev-dependencies]
 tempfile.workspace = true

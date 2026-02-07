@@ -488,9 +488,11 @@ pub fn create_rule_context() -> mcb_validate::engines::RuleContext {
     use std::collections::HashMap;
     use std::path::PathBuf;
 
+    const WORKSPACE_PATH: &str = "/test/workspace";
+
     mcb_validate::engines::RuleContext {
-        workspace_root: PathBuf::from(super::test_constants::TEST_WORKSPACE_PATH),
-        config: mcb_validate::ValidationConfig::new(super::test_constants::TEST_WORKSPACE_PATH),
+        workspace_root: PathBuf::from(WORKSPACE_PATH),
+        config: mcb_validate::ValidationConfig::new(WORKSPACE_PATH),
         ast_data: HashMap::new(),
         cargo_data: HashMap::new(),
         file_contents: HashMap::new(),
@@ -532,13 +534,29 @@ pub fn create_rule_context_with_files(
 /// let loader = YamlRuleLoader::with_variables(rules_dir, Some(vars)).unwrap();
 /// ```
 pub fn build_yaml_variables() -> serde_yaml::Value {
+    const PROJECT_PREFIX: &str = "my";
+    const CRATE_LAYER_MAPPINGS: &[(&str, &str, &str)] = &[
+        ("domain", "my-domain", "my_domain"),
+        ("application", "my-application", "my_application"),
+        ("providers", "my-providers", "my_providers"),
+        ("infrastructure", "my-infrastructure", "my_infrastructure"),
+        ("server", "my-server", "my_server"),
+        ("validate", "my-validate", "my_validate"),
+        (
+            "language_support",
+            "my-language-support",
+            "my_language_support",
+        ),
+        ("ast_utils", "my-ast-utils", "my_ast_utils"),
+    ];
+
     let mut variables = serde_yaml::Mapping::new();
     variables.insert(
         serde_yaml::Value::String("project_prefix".to_string()),
-        serde_yaml::Value::String(super::test_constants::PROJECT_PREFIX.to_string()),
+        serde_yaml::Value::String(PROJECT_PREFIX.to_string()),
     );
 
-    for (key, crate_name, module_name) in super::test_constants::CRATE_LAYER_MAPPINGS {
+    for &(key, crate_name, module_name) in CRATE_LAYER_MAPPINGS {
         variables.insert(
             serde_yaml::Value::String(format!("{key}_crate")),
             serde_yaml::Value::String(crate_name.to_string()),
@@ -620,13 +638,22 @@ pub fn create_facts(entries: &[(&str, rust_rule_engine::Value)]) -> rust_rule_en
 /// ]);
 /// ```
 pub fn cargo_toml_with_deps(crate_name: &str, deps: &[(&str, &str)]) -> String {
+    const CARGO_TOML_TEMPLATE: &str = r#"[package]
+name = "{crate_name}"
+version = "{version}"
+
+[dependencies]
+{deps}
+"#;
+    const DEFAULT_VERSION: &str = "0.1.0";
+
     let deps_str: Vec<String> = deps
         .iter()
         .map(|(name, version)| format!("{name} = \"{version}\""))
         .collect();
 
-    super::test_constants::CARGO_TOML_TEMPLATE
+    CARGO_TOML_TEMPLATE
         .replace("{crate_name}", crate_name)
-        .replace("{version}", super::test_constants::DEFAULT_VERSION)
+        .replace("{version}", DEFAULT_VERSION)
         .replace("{deps}", &deps_str.join("\n"))
 }

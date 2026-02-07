@@ -54,33 +54,6 @@ impl MemoryRepository for MockMemoryRepository {
         Ok(obs.iter().find(|o| o.content_hash == content_hash).cloned())
     }
 
-    async fn search(
-        &self,
-        _query_embedding: &[f32],
-        filter: MemoryFilter,
-        limit: usize,
-    ) -> Result<Vec<MemorySearchResult>> {
-        let obs = self.observations.lock().expect("Lock poisoned");
-        let results: Vec<MemorySearchResult> = obs
-            .iter()
-            .filter(|o| {
-                if let Some(ref session) = filter.session_id
-                    && o.metadata.session_id.as_ref() != Some(session)
-                {
-                    return false;
-                }
-                true
-            })
-            .take(limit)
-            .map(|o| MemorySearchResult {
-                id: o.id.clone(),
-                observation: o.clone(),
-                similarity_score: 0.9,
-            })
-            .collect();
-        Ok(results)
-    }
-
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()> {
         self.summaries
             .lock()
@@ -132,12 +105,7 @@ impl MemoryRepository for MockMemoryRepository {
         }
     }
 
-    async fn search_fts(&self, _query: &str, limit: usize) -> Result<Vec<String>> {
-        let obs = self.observations.lock().expect("Lock poisoned");
-        Ok(obs.iter().take(limit).map(|o| o.id.clone()).collect())
-    }
-
-    async fn search_fts_ranked(&self, _query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
+    async fn search(&self, _query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
         let obs = self.observations.lock().expect("Lock poisoned");
         Ok(obs
             .iter()

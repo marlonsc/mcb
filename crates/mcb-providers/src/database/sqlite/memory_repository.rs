@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use mcb_domain::entities::memory::{MemoryFilter, MemorySearchResult, Observation, SessionSummary};
+use mcb_domain::entities::memory::{MemoryFilter, Observation, SessionSummary};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
@@ -100,7 +100,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         }
     }
 
-    async fn search_fts_ranked(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
+    async fn search(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
         let rows = self
             .executor
             .query_all(

@@ -47,12 +47,12 @@ async fn test_fts_search_flow() {
     };
     repo.store_observation(&obs).await.unwrap();
 
-    // 2. Search FTS for "fox" -> returns ID
-    let results = repo.search_fts("fox", 10).await.unwrap();
-    assert!(results.contains(&id), "Should find 'fox'");
+    // 2. Search FTS for "fox" -> returns ID with rank
+    let results = repo.search("fox", 10).await.unwrap();
+    assert!(results.iter().any(|r| r.id == id), "Should find 'fox'");
 
     // 3. Search FTS for "dog" -> returns empty
-    let results = repo.search_fts("dog", 10).await.unwrap();
+    let results = repo.search("dog", 10).await.unwrap();
     assert!(results.is_empty(), "Should not find 'dog'");
 
     // 4. Delete observation
@@ -61,6 +61,6 @@ async fn test_fts_search_flow() {
         .unwrap();
 
     // 5. Search FTS for "fox" -> returns empty (verifies trigger)
-    let results = repo.search_fts("fox", 10).await.unwrap();
+    let results = repo.search("fox", 10).await.unwrap();
     assert!(results.is_empty(), "Should not find 'fox' after delete");
 }

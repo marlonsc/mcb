@@ -189,7 +189,7 @@ use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, Embeddi
 fn anthropic_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use super::helpers::http::create_http_provider_config;
+    use crate::utils::http::create_http_provider_config;
 
     let cfg = create_http_provider_config(config, "Anthropic", "voyage-3")?;
 

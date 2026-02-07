@@ -15,13 +15,8 @@
 //!
 //! ## Subcommands
 //!
-//! - `mcb serve` - Start MCP server (default when no subcommand)
+//! - `mcb serve` - Start MCP server
 //! - `mcb validate` - Run architecture validation
-//!
-//! ## Backwards Compatibility
-//!
-//! - Bare `mcb` (no subcommand) defaults to `serve`
-//! - `mcb --server` continues to work (deprecated, use `mcb serve --server`)
 
 // Force-link mcb-providers to ensure linkme inventory registrations are included
 extern crate mcb_providers;
@@ -39,16 +34,7 @@ use cli::{ServeArgs, ValidateArgs};
 pub struct Cli {
     /// Subcommand to execute.
     #[command(subcommand)]
-    pub command: Option<Command>,
-
-    // Legacy flags for backwards compatibility (when no subcommand is used)
-    /// Path to configuration file (deprecated: use `mcb serve --config`)
-    #[arg(short, long, global = true)]
-    pub config: Option<std::path::PathBuf>,
-
-    /// Run as server daemon (deprecated: use `mcb serve --server`)
-    #[arg(long, global = true)]
-    pub server: bool,
+    pub command: Command,
 }
 
 /// Available subcommands
@@ -63,34 +49,19 @@ pub enum Command {
 }
 
 /// Main entry point for the MCP Context Browser
-///
-/// Dispatches to the appropriate mode based on CLI subcommand:
-/// - No subcommand / `serve`: Run as MCP server
-/// - `validate`: Run architecture validation
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match cli.command {
-        Some(Command::Serve(args)) => args.execute().await,
-        Some(Command::Validate(args)) => {
+        Command::Serve(args) => args.execute().await,
+        Command::Validate(args) => {
             let result = args.execute()?;
 
-            // Exit code: 1 if validation failed
-            // Normal mode: errors only
-            // Strict mode: errors OR warnings
             if result.failed() {
                 std::process::exit(1);
             }
             Ok(())
-        }
-        None => {
-            // No subcommand: default to serve with legacy flags
-            let args = ServeArgs {
-                config: cli.config,
-                server: cli.server,
-            };
-            args.execute().await
         }
     }
 }
