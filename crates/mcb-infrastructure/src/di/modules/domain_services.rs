@@ -49,6 +49,26 @@ pub struct DomainServicesContainer {
 }
 
 /// Runtime dependencies required to assemble Phase 6 services (Memory Search + Hybrid Search).
+///
+/// Contains all infrastructure components needed to construct domain service implementations
+/// at runtime. These dependencies are gathered from the application context and passed to
+/// the factory for service assembly.
+///
+/// # Fields
+///
+/// * `project_id` - Unique identifier for the current project
+/// * `cache` - Shared cache provider for service-level caching
+/// * `crypto` - Cryptographic service for secure operations
+/// * `config` - Application configuration
+/// * `embedding_provider` - Provider for generating vector embeddings
+/// * `vector_store_provider` - Provider for vector storage and retrieval
+/// * `language_chunker` - Provider for language-aware code chunking
+/// * `indexing_ops` - Interface for indexing operations
+/// * `event_bus` - Event bus for domain events
+/// * `memory_repository` - Repository for memory persistence
+/// * `agent_repository` - Repository for agent session data
+/// * `vcs_provider` - Version control system provider
+/// * `project_service` - Service for project detection and management
 pub struct ServiceDependencies {
     pub project_id: String,
     pub cache: SharedCacheProvider,
@@ -69,6 +89,23 @@ pub struct ServiceDependencies {
 pub struct DomainServicesFactory;
 
 impl DomainServicesFactory {
+    /// Creates all domain services from runtime dependencies.
+    ///
+    /// Assembles the complete set of domain service implementations using constructor injection.
+    /// This factory method is called at runtime to create services that require dynamic configuration
+    /// (embedding provider, vector store, cache).
+    ///
+    /// # Arguments
+    ///
+    /// * `deps` - Runtime dependencies including providers, repositories, and configuration
+    ///
+    /// # Returns
+    ///
+    /// A `DomainServicesContainer` with all services initialized and ready for use.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if service initialization fails.
     pub async fn create_services(deps: ServiceDependencies) -> Result<DomainServicesContainer> {
         let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(
             deps.cache.into(),

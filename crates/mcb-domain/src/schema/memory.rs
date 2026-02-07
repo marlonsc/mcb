@@ -16,10 +16,15 @@ pub enum ColumnType {
 /// A single column definition.
 #[derive(Debug, Clone)]
 pub struct ColumnDef {
+    /// Column name.
     pub name: String,
+    /// Column data type.
     pub type_: ColumnType,
+    /// Whether this column is a primary key.
     pub primary_key: bool,
+    /// Whether this column has a unique constraint.
     pub unique: bool,
+    /// Whether this column disallows NULL values.
     pub not_null: bool,
     /// Auto-increment (e.g. INTEGER PRIMARY KEY AUTOINCREMENT in SQLite).
     pub auto_increment: bool,
@@ -28,7 +33,9 @@ pub struct ColumnDef {
 /// A table definition.
 #[derive(Debug, Clone)]
 pub struct TableDef {
+    /// Table name.
     pub name: String,
+    /// List of column definitions for this table.
     pub columns: Vec<ColumnDef>,
 }
 
@@ -38,25 +45,35 @@ pub const COL_OBSERVATION_TYPE: &str = "observation_type";
 /// FTS (full-text search) definition for a content table.
 #[derive(Debug, Clone)]
 pub struct FtsDef {
+    /// Name of the virtual FTS table.
     pub virtual_table_name: String,
+    /// Name of the content table being indexed.
     pub content_table: String,
+    /// Columns from the content table to include in the FTS index.
     pub content_columns: Vec<String>,
+    /// Column name that uniquely identifies rows in the content table.
     pub id_column: String,
 }
 
 /// Index definition.
 #[derive(Debug, Clone)]
 pub struct IndexDef {
+    /// Index name.
     pub name: String,
+    /// Table name this index is on.
     pub table: String,
+    /// Columns included in this index.
     pub columns: Vec<String>,
 }
 
 /// Complete memory schema: same model for any backend.
 #[derive(Debug, Clone)]
 pub struct MemorySchema {
+    /// List of table definitions.
     pub tables: Vec<TableDef>,
+    /// Optional full-text search definition.
     pub fts: Option<FtsDef>,
+    /// List of index definitions.
     pub indexes: Vec<IndexDef>,
 }
 
