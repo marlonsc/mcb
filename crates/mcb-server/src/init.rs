@@ -37,7 +37,6 @@ use std::sync::Arc;
 
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::{AppConfig, OperatingMode, TransportMode};
-use mcb_infrastructure::crypto::CryptoService;
 use tracing::{error, info, warn};
 
 use crate::McpServer;
@@ -236,7 +235,7 @@ async fn create_mcp_server(
 
     // Create shared cache provider (conversion for domain services factory)
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
-    let crypto = create_crypto_service(&config).await?;
+    let crypto = (*app_context.crypto_service()).clone();
 
     let indexing_ops = app_context.indexing();
     let event_bus = app_context.event_bus();
@@ -407,24 +406,4 @@ async fn run_hybrid_transport(
     }
 
     Ok(())
-}
-
-// =============================================================================
-// Crypto Service Creation
-// =============================================================================
-
-/// Create crypto service from configuration
-///
-/// Uses JWT secret from config if available (32+ bytes), otherwise generates a random key.
-async fn create_crypto_service(
-    config: &AppConfig,
-) -> Result<CryptoService, Box<dyn std::error::Error>> {
-    // AES-GCM requires exactly 32 bytes for the key
-    let master_key = if config.auth.jwt.secret.len() >= 32 {
-        config.auth.jwt.secret.as_bytes()[..32].to_vec()
-    } else {
-        CryptoService::generate_master_key()
-    };
-
-    CryptoService::new(master_key).map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
 }

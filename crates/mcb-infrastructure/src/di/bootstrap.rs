@@ -4,6 +4,7 @@
 //! and direct infrastructure service storage.
 
 use crate::config::AppConfig;
+use crate::crypto::CryptoService;
 use crate::di::admin::{
     CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
     LanguageAdminInterface, LanguageAdminService, VectorStoreAdminInterface,
@@ -83,6 +84,7 @@ pub struct AppContext {
     // Infrastructure Services
     // ========================================================================
     highlight_service: Arc<HighlightServiceImpl>,
+    crypto_service: Arc<CryptoService>,
 }
 
 impl AppContext {
@@ -189,6 +191,11 @@ impl AppContext {
     /// Get highlight service
     pub fn highlight_service(&self) -> Arc<HighlightServiceImpl> {
         self.highlight_service.clone()
+    }
+
+    /// Get crypto service
+    pub fn crypto_service(&self) -> Arc<CryptoService> {
+        self.crypto_service.clone()
     }
 }
 
@@ -306,6 +313,12 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
     let highlight_service = Arc::new(HighlightServiceImpl::new());
 
+    // ========================================================================
+    // Create Crypto Service
+    // ========================================================================
+
+    let crypto_service = Arc::new(create_crypto_service(&config)?);
+
     info!("Created domain services and repositories");
 
     Ok(AppContext {
@@ -331,6 +344,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         vcs_provider,
         project_service,
         highlight_service,
+        crypto_service,
     })
 }
 
@@ -344,4 +358,15 @@ pub type DiContainer = AppContext;
 
 pub async fn create_test_container() -> Result<AppContext> {
     init_test_app().await
+}
+
+/// Create crypto service from configuration
+fn create_crypto_service(config: &AppConfig) -> Result<CryptoService> {
+    let master_key = if config.auth.jwt.secret.len() >= 32 {
+        config.auth.jwt.secret.as_bytes()[..32].to_vec()
+    } else {
+        CryptoService::generate_master_key()
+    };
+
+    CryptoService::new(master_key)
 }

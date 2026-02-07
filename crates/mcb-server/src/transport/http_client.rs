@@ -223,5 +223,8 @@ impl HttpClientTransport {
     }
 }
 
-// Tests moved to crates/mcb-server/tests/integration/operating_modes_integration.rs
-// See: test_http_client_* tests for coverage
+#[cfg(test)]
+mod tests {
+    // Integration tests are located in tests/integration/operating_modes_integration.rs
+    // See: test_http_client_* tests for coverage
+}

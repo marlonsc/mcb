@@ -324,4 +324,7 @@ fn insert_into_tree(
     }
 }
 
-// Tests moved to tests/unit/browse_handlers_tests.rs per test organization standards
+#[cfg(test)]
+mod tests {
+    // Unit tests are located in tests/unit/browse_handlers_tests.rs
+}

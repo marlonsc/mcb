@@ -47,13 +47,9 @@ pub const VALID_SECTIONS: &[&str] = &[
 // VCS REGISTRY
 // ============================================================================
 
-// Constraints moved to mcb_infrastructure::config::paths
-
 // ============================================================================
 // COLLECTION MAPPING
 // ============================================================================
-
-// Constraints moved to mcb_infrastructure::config::paths
 
 // ============================================================================
 // HIGHLIGHT SERVICE
