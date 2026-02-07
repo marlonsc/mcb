@@ -22,9 +22,9 @@ pub enum CleanArchitectureViolation {
     DomainContainsImplementation {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number where the implementation was found.
         line: usize,
-        /// Type of implementation found (e.g., function body).
+        /// Type of implementation found (e.g., "function body", "struct implementation").
         impl_type: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -33,11 +33,11 @@ pub enum CleanArchitectureViolation {
     HandlerCreatesService {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number where the direct creation was found.
         line: usize,
         /// Name of the service being created directly.
         service_name: String,
-        /// Context description of the violation.
+        /// Context description of the violation for better debugging.
         context: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -46,11 +46,11 @@ pub enum CleanArchitectureViolation {
     PortMissingComponentDerive {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number where the missing derive should be.
         line: usize,
-        /// Name of the struct implementing the port.
+        /// Name of the struct that is missing the DI component registration.
         struct_name: String,
-        /// Name of the trait being implemented.
+        /// Name of the trait (port) being implemented.
         trait_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -59,9 +59,9 @@ pub enum CleanArchitectureViolation {
     EntityMissingIdentity {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number of the entity struct definition.
         line: usize,
-        /// Name of the entity struct.
+        /// Name of the entity struct missing an identity field.
         entity_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -70,11 +70,11 @@ pub enum CleanArchitectureViolation {
     ValueObjectMutable {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number of the mutable method definition.
         line: usize,
         /// Name of the value object struct.
         vo_name: String,
-        /// Name of the mutable method.
+        /// Name of the mutable method (e.g., using `&mut self`).
         method_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -83,9 +83,9 @@ pub enum CleanArchitectureViolation {
     ServerImportsProviderDirectly {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number of the incorrect import.
         line: usize,
-        /// The forbidden import path.
+        /// The forbidden import path (e.g., `use mcb_providers::...`).
         import_path: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -96,11 +96,11 @@ pub enum CleanArchitectureViolation {
     InfrastructureImportsConcreteService {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number of the incorrect import.
         line: usize,
-        /// The forbidden import path.
+        /// The full forbidden import path.
         import_path: String,
-        /// Name of the concrete type being imported.
+        /// Name of the concrete implementation type being imported.
         concrete_type: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -111,11 +111,11 @@ pub enum CleanArchitectureViolation {
     ApplicationWrongPortImport {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number of the incorrect import.
         line: usize,
-        /// The incorrect import path.
+        /// The incorrect import path found.
         import_path: String,
-        /// The expected import path.
+        /// The expected/correct import path.
         should_be: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -133,11 +133,11 @@ pub enum CleanArchitectureViolation {
     InfrastructureImportsApplication {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number of the incorrect import.
         line: usize,
-        /// The forbidden import path.
+        /// The forbidden import path crossing layers in the wrong direction.
         import_path: String,
-        /// Suggested remediation action.
+        /// Suggested remediation action to fix the layer violation.
         suggestion: String,
         /// Severity level of the violation.
         severity: Severity,

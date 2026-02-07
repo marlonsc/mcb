@@ -51,6 +51,7 @@ pub enum PmatViolation {
 }
 
 impl PmatViolation {
+    /// Returns the severity level of this violation
     pub fn severity(&self) -> Severity {
         match self {
             Self::HighComplexity { severity, .. }
@@ -63,6 +64,7 @@ impl PmatViolation {
 }
 
 impl std::fmt::Display for PmatViolation {
+    /// Formats the violation as a human-readable string
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::HighComplexity {
@@ -122,6 +124,7 @@ impl std::fmt::Display for PmatViolation {
 }
 
 impl Violation for PmatViolation {
+    /// Returns the unique identifier for this violation type
     fn id(&self) -> &str {
         match self {
             Self::HighComplexity { .. } => "PMAT001",
@@ -132,10 +135,12 @@ impl Violation for PmatViolation {
         }
     }
 
+    /// Returns the violation category
     fn category(&self) -> ViolationCategory {
         ViolationCategory::Pmat
     }
 
+    /// Returns the severity level of this violation
     fn severity(&self) -> Severity {
         match self {
             Self::HighComplexity { severity, .. }
@@ -146,6 +151,7 @@ impl Violation for PmatViolation {
         }
     }
 
+    /// Returns the file path where the violation was detected
     fn file(&self) -> Option<&PathBuf> {
         match self {
             Self::HighComplexity { file, .. }
@@ -155,6 +161,7 @@ impl Violation for PmatViolation {
         }
     }
 
+    /// Returns the line number where the violation was detected
     fn line(&self) -> Option<usize> {
         match self {
             Self::DeadCode { line, .. } => Some(*line),
@@ -162,6 +169,7 @@ impl Violation for PmatViolation {
         }
     }
 
+    /// Returns a suggestion for fixing this violation
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::HighComplexity {
@@ -195,10 +203,13 @@ impl Violation for PmatViolation {
 /// PMAT complexity result from JSON output
 #[derive(Debug, Deserialize)]
 struct ComplexityResult {
+    /// File path containing the function
     #[serde(default)]
     file: Option<String>,
+    /// Function name
     #[serde(default)]
     function: Option<String>,
+    /// Cyclomatic complexity value
     #[serde(default)]
     complexity: Option<u32>,
 }
@@ -206,12 +217,16 @@ struct ComplexityResult {
 /// PMAT dead code result from JSON output
 #[derive(Debug, Deserialize)]
 struct DeadCodeResult {
+    /// File path containing the dead code
     #[serde(default)]
     file: Option<String>,
+    /// Line number of the dead code
     #[serde(default)]
     line: Option<usize>,
+    /// Type of item (function, struct, etc.)
     #[serde(default)]
     item_type: Option<String>,
+    /// Name of the dead code item
     #[serde(default)]
     name: Option<String>,
 }
@@ -219,8 +234,10 @@ struct DeadCodeResult {
 /// PMAT TDG result from JSON output
 #[derive(Debug, Deserialize)]
 struct TdgResult {
+    /// File path being analyzed
     #[serde(default)]
     file: Option<String>,
+    /// Technical Debt Gradient score
     #[serde(default)]
     score: Option<u32>,
 }
@@ -234,12 +251,12 @@ pub struct PmatValidator {
 }
 
 impl PmatValidator {
-    /// Create a new PMAT validator
+    /// Creates a new PMAT validator with default configuration
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Create a validator with custom configuration
+    /// Creates a validator with custom configuration
     pub fn with_config(config: ValidationConfig) -> Self {
         let pmat_available = Self::check_pmat_available();
         Self {
@@ -250,21 +267,21 @@ impl PmatValidator {
         }
     }
 
-    /// Set complexity threshold
+    /// Sets the cyclomatic complexity threshold (builder pattern)
     #[must_use]
     pub fn with_complexity_threshold(mut self, threshold: u32) -> Self {
         self.complexity_threshold = threshold;
         self
     }
 
-    /// Set TDG threshold
+    /// Sets the Technical Debt Gradient threshold (builder pattern)
     #[must_use]
     pub fn with_tdg_threshold(mut self, threshold: u32) -> Self {
         self.tdg_threshold = threshold;
         self
     }
 
-    /// Check if PMAT is available
+    /// Checks if the PMAT binary is available in the system PATH
     fn check_pmat_available() -> bool {
         Command::new("pmat")
             .arg("--version")
@@ -273,12 +290,12 @@ impl PmatValidator {
             .unwrap_or(false)
     }
 
-    /// Check if PMAT is available for this validator instance
+    /// Returns whether PMAT is available for this validator instance
     pub fn is_available(&self) -> bool {
         self.pmat_available
     }
 
-    /// Run all PMAT validations
+    /// Runs all PMAT validations and returns detected violations
     pub fn validate_all(&self) -> Result<Vec<PmatViolation>> {
         let mut violations = Vec::new();
 
@@ -297,7 +314,7 @@ impl PmatValidator {
         Ok(violations)
     }
 
-    /// Run complexity analysis using PMAT
+    /// Runs cyclomatic complexity analysis using PMAT
     pub fn validate_complexity(&self) -> Result<Vec<PmatViolation>> {
         let mut violations = Vec::new();
 
@@ -363,7 +380,7 @@ impl PmatValidator {
         Ok(violations)
     }
 
-    /// Run dead code analysis using PMAT
+    /// Runs dead code analysis using PMAT
     pub fn validate_dead_code(&self) -> Result<Vec<PmatViolation>> {
         let mut violations = Vec::new();
 
@@ -425,7 +442,7 @@ impl PmatValidator {
         Ok(violations)
     }
 
-    /// Run TDG analysis using PMAT
+    /// Runs Technical Debt Gradient analysis using PMAT
     pub fn validate_tdg(&self) -> Result<Vec<PmatViolation>> {
         let mut violations = Vec::new();
 
@@ -487,14 +504,17 @@ impl PmatValidator {
 }
 
 impl crate::validator_trait::Validator for PmatValidator {
+    /// Returns the validator name
     fn name(&self) -> &'static str {
         "pmat"
     }
 
+    /// Returns the validator description
     fn description(&self) -> &'static str {
         "PMAT integration for cyclomatic complexity, dead code detection, and TDG scoring"
     }
 
+    /// Executes validation and returns violations as trait objects
     fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
         let violations = self.validate_all()?;
         Ok(violations
@@ -503,6 +523,7 @@ impl crate::validator_trait::Validator for PmatValidator {
             .collect())
     }
 
+    /// Returns whether this validator is enabled by default (only if PMAT is available)
     fn enabled_by_default(&self) -> bool {
         // Only enable by default if PMAT is available
         self.pmat_available

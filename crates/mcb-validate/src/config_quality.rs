@@ -22,9 +22,9 @@ pub enum ConfigQualityViolation {
         file: PathBuf,
         /// Line number of the violation.
         line: usize,
-        /// The hardcoded string value.
+        /// The hardcoded string value found in the configuration.
         string_value: String,
-        /// Context describing where the string is used.
+        /// Context describing where the hardcoded string is used (e.g., "HTTP header").
         context: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -35,9 +35,9 @@ pub enum ConfigQualityViolation {
         file: PathBuf,
         /// Line number of the violation.
         line: usize,
-        /// The magic number value.
+        /// The magic number value found.
         number: String,
-        /// Context describing where the number is used.
+        /// Context describing where the magic number is used.
         context: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -46,9 +46,9 @@ pub enum ConfigQualityViolation {
     UndocumentedDefault {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number where the `Default` implementation begins.
         line: usize,
-        /// Name of the struct with the undocumented default.
+        /// Name of the struct that has an undocumented `Default` implementation.
         struct_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -57,9 +57,9 @@ pub enum ConfigQualityViolation {
     UndocumentedConfigField {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number where the configuration field is defined.
         line: usize,
-        /// Name of the undocumented field.
+        /// Name of the configuration field that is missing documentation.
         field_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -70,7 +70,7 @@ pub enum ConfigQualityViolation {
         file: PathBuf,
         /// Line number of the violation.
         line: usize,
-        /// The hardcoded namespace string.
+        /// The hardcoded namespace string found.
         namespace: String,
         /// Severity level of the violation.
         severity: Severity,

@@ -14,44 +14,44 @@ use walkdir::WalkDir;
 pub enum PortAdapterViolation {
     /// Adapter lacks a corresponding port implementation
     AdapterMissingPortImpl {
-        /// Name of the adapter
+        /// Name of the adapter that is missing an implementation of its corresponding port.
         adapter_name: String,
-        /// File containing the adapter
+        /// File where the adapter is defined.
         file: PathBuf,
-        /// Line number of the definition
+        /// Line number where the adapter definition begins.
         line: usize,
     },
     /// Adapter depends on another concrete adapter instead of a port
     AdapterUsesAdapter {
-        /// Name of the source adapter
+        /// Name of the adapter that contains the violation.
         adapter_name: String,
-        /// Name of the referenced adapter
+        /// Name of the concrete adapter being incorrectly referenced.
         other_adapter: String,
-        /// File containing the violation
+        /// File where the incorrect usage occurred.
         file: PathBuf,
-        /// Line number of the usage
+        /// Line number where the incorrect usage occurred.
         line: usize,
     },
     /// Port has too many methods (violates ISP)
     PortTooLarge {
-        /// Name of the trait/port
+        /// Name of the port (trait) that has too many methods.
         trait_name: String,
-        /// Number of methods found
+        /// The total number of methods found in the port.
         method_count: usize,
-        /// File containing the port
+        /// File where the port is defined.
         file: PathBuf,
-        /// Line number of the start of the trait
+        /// Line number where the port definition begins.
         line: usize,
     },
     /// Port has too few methods (may indicate over-fragmentation)
     PortTooSmall {
-        /// Name of the trait/port
+        /// Name of the port (trait) that has too few methods.
         trait_name: String,
-        /// Number of methods found
+        /// The total number of methods found in the port.
         method_count: usize,
-        /// File containing the port
+        /// File where the port is defined.
         file: PathBuf,
-        /// Line number of the start of the trait
+        /// Line number where the port definition begins.
         line: usize,
     },
 }

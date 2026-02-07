@@ -16,43 +16,40 @@ use walkdir::WalkDir;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ErrorBoundaryViolation {
     /// Error crossing layer without context
-    /// Error crossing layer without context
     MissingErrorContext {
-        /// File containing the violation
+        /// File containing the violation.
         file: PathBuf,
-        /// Line number of the propagation
+        /// Line number where the error propagation occurred.
         line: usize,
-        /// Description of the error pattern detected
+        /// Description of the error pattern detected (e.g., "?" operator usage).
         error_pattern: String,
-        /// Recommended fix (e.g., add context)
+        /// Recommended fix for the violation.
         suggestion: String,
-        /// Severity of the violation
+        /// Severity of the violation.
         severity: Severity,
     },
-    /// Infrastructure error type used in domain layer
     /// Infrastructure error type used in domain layer
     WrongLayerError {
-        /// File containing the violation
+        /// File containing the violation.
         file: PathBuf,
-        /// Line number of the usage
+        /// Line number where the incorrect error type was used.
         line: usize,
-        /// The infrastructure error type detected
+        /// The infrastructure error type detected (e.g., "std::io::Error").
         error_type: String,
-        /// The layer where it was used incorrectly
+        /// The architectural layer where the violation occurred.
         layer: String,
-        /// Severity of the violation
+        /// Severity of the violation.
         severity: Severity,
     },
     /// Internal error details leaked to external API
-    /// Internal error details leaked to external API
     LeakedInternalError {
-        /// File containing the violation
+        /// File containing the violation.
         file: PathBuf,
-        /// Line number of the leak
+        /// Line number where the internal error leak occurred.
         line: usize,
-        /// Description of the leak pattern detected
+        /// Description of the leak pattern detected (e.g., Debug formatting).
         pattern: String,
-        /// Severity of the violation
+        /// Severity of the violation.
         severity: Severity,
     },
 }

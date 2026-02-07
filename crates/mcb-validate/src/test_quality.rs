@@ -22,7 +22,7 @@ pub enum TestQualityViolation {
         file: PathBuf,
         /// Line number of the violation.
         line: usize,
-        /// Name of the ignored test.
+        /// Name of the ignored test function.
         test_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -33,7 +33,7 @@ pub enum TestQualityViolation {
         file: PathBuf,
         /// Line number of the violation.
         line: usize,
-        /// Name of the function containing todo!().
+        /// Name of the function in the test fixture containing the todo!() macro.
         function_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -44,7 +44,7 @@ pub enum TestQualityViolation {
         file: PathBuf,
         /// Line number of the violation.
         line: usize,
-        /// Name of the empty test.
+        /// Name of the test function that has an empty body.
         test_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -55,7 +55,7 @@ pub enum TestQualityViolation {
         file: PathBuf,
         /// Line number of the violation.
         line: usize,
-        /// Name of the undocumented test.
+        /// Name of the test function that is missing documentation.
         test_name: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -66,7 +66,7 @@ pub enum TestQualityViolation {
         file: PathBuf,
         /// Line number of the violation.
         line: usize,
-        /// Name of the stubbed test.
+        /// Name of the test function that contains a stub assertion.
         test_name: String,
         /// Severity level of the violation.
         severity: Severity,

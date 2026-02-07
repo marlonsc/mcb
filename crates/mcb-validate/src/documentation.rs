@@ -139,7 +139,10 @@ impl Violation for DocumentationViolation {
     }
 }
 
-/// Documentation validator
+/// Validates documentation completeness for public items in Rust crates.
+///
+/// Ensures all public items (structs, enums, traits, functions) have rustdoc comments (///)
+/// and that module-level documentation exists. Optionally checks for example code in trait documentation.
 pub struct DocumentationValidator {
     config: ValidationConfig,
 }
@@ -331,6 +334,10 @@ impl DocumentationValidator {
         Ok(violations)
     }
 
+    /// Checks if a line has a documentation comment above it.
+    ///
+    /// Looks backwards from the item line to find a `///` doc comment,
+    /// skipping attributes and empty lines.
     fn has_doc_comment(&self, lines: &[&str], item_line: usize) -> bool {
         let doc_pattern = Regex::new(r"^\s*///").unwrap();
         let attr_pattern = Regex::new(r"^\s*#\[").unwrap();
@@ -367,6 +374,10 @@ impl DocumentationValidator {
         }
     }
 
+    /// Extracts the complete documentation comment section for an item.
+    ///
+    /// Collects all consecutive `///` lines above the item, skipping attributes,
+    /// and returns them as a single string for analysis.
     fn get_doc_comment_section(&self, lines: &[&str], item_line: usize) -> String {
         let doc_pattern = Regex::new(r"^\s*///(.*)").unwrap();
         let attr_pattern = Regex::new(r"^\s*#\[").unwrap();
@@ -408,6 +419,7 @@ impl DocumentationValidator {
         doc_lines.join("\n")
     }
 
+    /// Retrieves the source directories for all crates in the workspace.
     fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {
         self.config.get_source_dirs()
     }

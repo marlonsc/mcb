@@ -1,6 +1,7 @@
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
+use anyhow::Context;
 use mcb_domain::entities::memory::{
     ExecutionMetadata, MemoryFilter, ObservationMetadata, ObservationType,
 };
@@ -129,7 +130,11 @@ pub async fn get_executions(
             let mut executions: Vec<_> = results
                 .into_iter()
                 .filter_map(|result| {
-                    let execution = result.observation.metadata.execution?;
+                    let execution = result
+                        .observation
+                        .metadata
+                        .execution
+                        .context("missing execution metadata in observation")?;
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "command": execution.command,

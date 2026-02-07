@@ -18,60 +18,58 @@ use walkdir::WalkDir;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AsyncViolation {
     /// Blocking call in async function
-    /// Blocking call in async function
     BlockingInAsync {
-        /// File containing the violation
+        /// File containing the violation.
         file: PathBuf,
-        /// Line number of the blocking call
+        /// Line number where the blocking call was detected.
         line: usize,
-        /// Description of the blocking call detected
+        /// Description of the blocking call detected (e.g., "std::thread::sleep").
         blocking_call: String,
-        /// Recommended non-blocking alternative
+        /// Recommended non-blocking alternative (e.g., "Use tokio::time::sleep").
         suggestion: String,
-        /// Severity of the violation
+        /// Severity of the violation.
         severity: Severity,
     },
-    /// `block_on()` used in async context
     /// `block_on()` used in async context
     BlockOnInAsync {
-        /// File containing the violation
+        /// File containing the violation.
         file: PathBuf,
-        /// Line number of the block_on call
+        /// Line number where the `block_on` call was detected.
         line: usize,
-        /// Context snippet of the call
+        /// Context snippet of the call for easier identification.
         context: String,
-        /// Severity of the violation
+        /// Severity of the violation.
         severity: Severity,
     },
-    /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
     /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
     WrongMutexType {
-        /// File containing the violation
+        /// File containing the violation.
         file: PathBuf,
-        /// Line number of the mutex usage
+        /// Line number where the incorrect mutex usage was detected.
         line: usize,
-        /// The type of mutex being used
+        /// The type of mutex being used (e.g., "std::sync::Mutex").
         mutex_type: String,
-        /// Recommended async-safe alternative
+        /// Recommended async-safe alternative.
         suggestion: String,
-        /// Severity of the violation
+        /// Severity of the violation.
         severity: Severity,
     },
     /// Spawn without awaiting `JoinHandle`
-    /// Spawn without awaiting `JoinHandle`
     UnawaitedSpawn {
-        /// File containing the violation
+        /// File containing the violation.
         file: PathBuf,
-        /// Line number of the spawn
+        /// Line number where the unawaited spawn was detected.
         line: usize,
-        /// Context snippet of the spawn
+        /// Context snippet of the spawn call.
         context: String,
-        /// Severity of the violation
+        /// Severity of the violation.
         severity: Severity,
     },
 }
 
+/// Helper methods for async violations.
 impl AsyncViolation {
+    /// Returns the severity level of this violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::BlockingInAsync { severity, .. }
@@ -82,6 +80,7 @@ impl AsyncViolation {
     }
 }
 
+/// Display implementation for async violations.
 impl std::fmt::Display for AsyncViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -149,6 +148,7 @@ impl std::fmt::Display for AsyncViolation {
     }
 }
 
+/// Violation trait implementation for async violations.
 impl Violation for AsyncViolation {
     fn id(&self) -> &str {
         match self {
@@ -639,6 +639,7 @@ impl AsyncPatternValidator {
     }
 }
 
+/// Validator trait implementation for async pattern validation.
 impl crate::validator_trait::Validator for AsyncPatternValidator {
     fn name(&self) -> &'static str {
         "async_patterns"

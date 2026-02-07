@@ -385,6 +385,11 @@ impl QualityValidator {
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
                 .filter(|e| !e.path().to_string_lossy().contains("/tests/"))
             {
+                // Skip deleted files
+                if !entry.path().exists() {
+                    continue;
+                }
+
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();
 
@@ -636,6 +641,11 @@ impl QualityValidator {
                         && !e.path().to_string_lossy().ends_with("_test.rs")
                 })
             {
+                // Skip deleted files
+                if !entry.path().exists() {
+                    continue;
+                }
+
                 let path_str = entry.path().to_string_lossy();
 
                 // Skip mcb-providers vector store implementations (ADR-029)
@@ -680,6 +690,11 @@ impl QualityValidator {
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
+                // Skip deleted files - check existence before reading
+                if !entry.path().exists() {
+                    continue;
+                }
+
                 let content = std::fs::read_to_string(entry.path())?;
 
                 for (line_num, line) in content.lines().enumerate() {

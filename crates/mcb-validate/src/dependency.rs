@@ -22,23 +22,35 @@ use walkdir::WalkDir;
 pub enum DependencyViolation {
     /// Forbidden dependency in Cargo.toml
     ForbiddenCargoDepedency {
+        /// Name of the crate that contains the forbidden dependency.
         crate_name: String,
+        /// Name of the crate that is forbidden as a dependency.
         forbidden_dep: String,
+        /// Path to the Cargo.toml file containing the violation.
         location: PathBuf,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Forbidden use statement in source code
     ForbiddenUseStatement {
+        /// Name of the crate where the violation was found.
         crate_name: String,
+        /// Name of the crate whose items are being incorrectly imported.
         forbidden_dep: String,
+        /// Path to the source file containing the violation.
         file: PathBuf,
+        /// Line number where the forbidden `use` statement occurs.
         line: usize,
+        /// The content of the line containing the violation.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Circular dependency detected
     CircularDependency {
+        /// The sequence of crates forming the dependency cycle.
         cycle: Vec<String>,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
@@ -150,7 +162,10 @@ impl Violation for DependencyViolation {
     }
 }
 
-/// Dependency validator
+/// Validates Clean Architecture dependency rules across crates.
+///
+/// Ensures that crates only depend on allowed layers according to Clean Architecture principles.
+/// Validates both Cargo.toml dependencies and use statements in source code.
 pub struct DependencyValidator {
     config: ValidationConfig,
     allowed_deps: HashMap<String, HashSet<String>>,
@@ -341,7 +356,16 @@ impl DependencyValidator {
     }
 }
 
-/// DFS cycle detection; free function to avoid `only_used_in_recursion`.
+/// Detects cycles in the dependency graph using depth-first search.
+///
+/// Recursively traverses the dependency graph to find circular dependencies.
+/// Returns the cycle path if found, or None if no cycle exists from this node.
+///
+/// # Arguments
+/// * `graph` - The dependency graph mapping crate names to their dependencies
+/// * `node` - The current node being visited
+/// * `visited` - Set of nodes already fully explored
+/// * `path` - Current path being explored (used to detect cycles)
 fn find_cycle_impl(
     graph: &HashMap<String, HashSet<String>>,
     node: &str,

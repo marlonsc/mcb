@@ -221,7 +221,7 @@ pub async fn get_file_chunks(
             Ok(h) => h,
             Err(_) => mcb_domain::value_objects::browse::HighlightedCode::new(
                 c.content.clone(),
-                Vec::new(),
+                vec![],
                 c.language.clone(),
             ),
         };

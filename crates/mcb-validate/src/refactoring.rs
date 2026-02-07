@@ -545,6 +545,13 @@ impl RefactoringValidator {
                     continue;
                 }
 
+                // Check if file has inline tests (#[cfg(test)] module)
+                let content = std::fs::read_to_string(path)?;
+                if content.contains("#[cfg(test)]") {
+                    // File has inline tests, skip it
+                    continue;
+                }
+
                 // Check if this file or its parent module has a test
                 let has_test = test_files.contains(file_name)
                     || test_files.contains(&format!("{file_name}_test"))

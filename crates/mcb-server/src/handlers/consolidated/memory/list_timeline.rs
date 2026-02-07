@@ -1,5 +1,6 @@
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
+use anyhow::Context;
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;
@@ -68,9 +69,7 @@ pub async fn get_timeline(
         let results = memory_service
             .search_memories(&query, None, 1)
             .await
-            .map_err(|e| {
-                McpError::internal_error(format!("Failed to find anchor from query: {e}"), None)
-            })?;
+            .context("failed to search memories for timeline anchor")?;
         if let Some(first) = results.first() {
             first.observation.id.clone()
         } else {

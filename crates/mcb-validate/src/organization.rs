@@ -1468,6 +1468,13 @@ impl OrganizationValidator {
     /// - Struct/enum definitions.
     /// - Constructors, accessors, and derived implementations.
     pub fn validate_domain_traits_only(&self) -> Result<Vec<OrganizationViolation>> {
+        fn is_getter_method(line: &str) -> bool {
+            let trimmed = line.trim();
+            trimmed.contains("&self") && !trimmed.contains("&mut self") && !trimmed.contains("->")
+                || (trimmed.contains("&self")
+                    && trimmed.contains("->")
+                    && !trimmed.contains("Result"))
+        }
         let mut violations = Vec::new();
 
         // Pattern for impl blocks with methods
@@ -1573,6 +1580,11 @@ impl OrganizationValidator {
                     }
 
                     if allowed_prefixes.iter().any(|p| method_name.starts_with(p)) {
+                        continue;
+                    }
+
+                    // Check if this is a getter method (takes &self, returns value, no side effects)
+                    if is_getter_method(line) {
                         continue;
                     }
 

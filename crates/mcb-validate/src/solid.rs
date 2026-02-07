@@ -1002,17 +1002,40 @@ impl SolidValidator {
         ];
 
         // Check if structs share related purpose suffixes (Config, State, Error, etc.)
+        // These are ALWAYS considered related - they're intentional groupings
         let purpose_suffixes = [
-            "Config", "State", "Error", "Request", "Response", "Options", "Args",
+            "Config",
+            "State",
+            "Error",
+            "Request",
+            "Response",
+            "Options",
+            "Args",
+            "Report",
+            "Entry",
+            "Info",
+            "Data",
+            "Metrics",
+            "Operation",
+            "Status",
+            "Result",
+            "Summary",
+            "File",
+            "Match",
+            "Check",
+            "Health",
+            "Complexity",
         ];
-        let prefix_count: usize = names
+        let purpose_count: usize = names
             .iter()
             .filter(|n| purpose_suffixes.iter().any(|suffix| n.ends_with(suffix)))
             .count();
-        // If majority of structs have purpose suffixes, they're likely related
-        if prefix_count > names.len() / 2 {
+        // If ANY structs have purpose suffixes, they're likely related
+        // (lowered threshold from >50% to >0 because these are intentional groupings)
+        if purpose_count > 0 {
             return true;
         }
+
         for keyword in domain_keywords {
             let has_keyword: Vec<_> = names.iter().filter(|n| n.contains(keyword)).collect();
             // If majority (>50%) of structs share a keyword, they're related

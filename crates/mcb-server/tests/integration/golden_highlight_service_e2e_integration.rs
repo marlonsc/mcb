@@ -54,7 +54,7 @@ fn language_test_cases() -> Vec<LanguageTestCase> {
 }
 
 #[test]
-fn golden_highlight_all_languages() {
+fn test_golden_highlight_all_languages() {
     let test_cases = language_test_cases();
     for case in test_cases {
         let result = highlight_code(case.code, case.language, &get_service());
@@ -78,7 +78,7 @@ fn golden_highlight_all_languages() {
 }
 
 #[test]
-fn golden_highlight_categories() {
+fn test_golden_highlight_categories() {
     // Verify highlighting produces at least some category spans for code
     let test_snippets = vec![
         ("rust", "fn foo() {}"),
@@ -101,13 +101,13 @@ fn golden_highlight_categories() {
 }
 
 #[test]
-fn golden_highlight_empty_input() {
+fn test_golden_highlight_empty_input() {
     let result = highlight_code("", "rust", &get_service());
     assert_eq!(result, "", "Empty input should produce empty output");
 }
 
 #[test]
-fn golden_highlight_whitespace_only() {
+fn test_golden_highlight_whitespace_only() {
     let result = highlight_code("   \n\n  ", "rust", &get_service());
     // Should handle gracefully (may produce empty or whitespace wrapper)
     assert!(

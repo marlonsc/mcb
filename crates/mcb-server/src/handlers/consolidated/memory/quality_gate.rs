@@ -1,6 +1,7 @@
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
+use anyhow::Context;
 use chrono::TimeZone;
 use mcb_domain::entities::memory::{
     MemoryFilter, ObservationMetadata, ObservationType, QualityGateResult,
@@ -110,7 +111,11 @@ pub async fn get_quality_gates(
             let mut gates: Vec<_> = results
                 .into_iter()
                 .filter_map(|result| {
-                    let gate = result.observation.metadata.quality_gate?;
+                    let gate = result
+                        .observation
+                        .metadata
+                        .quality_gate
+                        .context("missing quality gate metadata in observation")?;
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "gate_name": gate.gate_name,
