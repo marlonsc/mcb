@@ -20,10 +20,12 @@ pub struct VcsHandler {
 }
 
 impl VcsHandler {
+    /// Create a new VcsHandler.
     pub fn new(vcs_provider: Arc<dyn VcsProvider>) -> Self {
         Self { vcs_provider }
     }
 
+    /// Handle a VCS tool request.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<VcsArgs>,

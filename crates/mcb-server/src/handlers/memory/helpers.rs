@@ -2,6 +2,8 @@ use mcb_domain::entities::memory::{ExecutionType, ObservationType, QualityGateSt
 use rmcp::model::{CallToolResult, Content};
 use serde_json::{Map, Value};
 
+use crate::utils::json;
+
 /// Helper utilities for memory handler operations.
 ///
 /// Provides static methods for extracting, parsing, and validating data from JSON objects
@@ -9,85 +11,48 @@ use serde_json::{Map, Value};
 pub struct MemoryHelpers;
 
 impl MemoryHelpers {
-    /// Extracts a JSON object map from an optional JSON value.
-    ///
-    /// Returns a reference to the underlying map if the value is an object, or `None` otherwise.
+    /// Extract a JSON map from an optional value.
     pub fn json_map(data: &Option<Value>) -> Option<&Map<String, Value>> {
-        data.as_ref().and_then(|value| value.as_object())
+        json::json_map(data)
     }
 
-    /// Extracts a string value from a JSON object by key.
-    ///
-    /// Returns the string value if the key exists and contains a string, or `None` otherwise.
+    /// Extract a string value from a map.
     pub fn get_str(data: &Map<String, Value>, key: &str) -> Option<String> {
-        data.get(key)
-            .and_then(|value| value.as_str())
-            .map(str::to_string)
+        json::get_str(data, key)
     }
 
-    /// Extracts an i64 integer value from a JSON object by key.
-    ///
-    /// Returns the integer value if the key exists and contains an i64, or `None` otherwise.
+    /// Extract an i64 value from a map.
     pub fn get_i64(data: &Map<String, Value>, key: &str) -> Option<i64> {
-        data.get(key).and_then(|value| value.as_i64())
+        json::get_i64(data, key)
     }
 
-    /// Extracts an i32 integer value from a JSON object by key.
-    ///
-    /// Returns the integer value if the key exists and can be converted to i32, or `None` otherwise.
+    /// Extract an i32 value from a map.
     pub fn get_i32(data: &Map<String, Value>, key: &str) -> Option<i32> {
-        data.get(key)
-            .and_then(|value| value.as_i64())
-            .and_then(|v| v.try_into().ok())
+        json::get_i32(data, key)
     }
 
-    /// Extracts an f32 floating-point value from a JSON object by key.
-    ///
-    /// Returns the floating-point value if the key exists and contains a number, or `None` otherwise.
+    /// Extract an f32 value from a map.
     pub fn get_f32(data: &Map<String, Value>, key: &str) -> Option<f32> {
-        data.get(key)
-            .and_then(|value| value.as_f64())
-            .map(|v| v as f32)
+        json::get_f32(data, key)
     }
 
-    /// Extracts a boolean value from a JSON object by key.
-    ///
-    /// Returns the boolean value if the key exists and contains a boolean, or `None` otherwise.
+    /// Extract a boolean value from a map.
     pub fn get_bool(data: &Map<String, Value>, key: &str) -> Option<bool> {
-        data.get(key).and_then(|value| value.as_bool())
+        json::get_bool(data, key)
     }
 
-    /// Extracts a list of strings from a JSON object by key.
-    ///
-    /// Returns a vector of strings extracted from a JSON array. Non-string items are filtered out.
-    /// Returns an empty vector if the key doesn't exist or is not an array.
+    /// Extract a list of strings from a map.
     pub fn get_string_list(data: &Map<String, Value>, key: &str) -> Vec<String> {
-        data.get(key)
-            .and_then(|value| value.as_array())
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(|item| item.as_str().map(str::to_string))
-                    .collect()
-            })
-            .unwrap_or_default()
+        json::get_string_list(data, key)
     }
 
-    /// Extracts a required string value from a JSON object by key.
-    ///
-    /// Returns the string value if the key exists and contains a string.
-    /// Returns an error result if the key is missing or does not contain a string.
+    /// Extract a required string value from a map.
     pub fn get_required_str(
         data: &Map<String, Value>,
         key: &str,
     ) -> Result<String, CallToolResult> {
-        Self::get_str(data, key).ok_or_else(|| {
-            CallToolResult::error(vec![Content::text(format!(
-                "Missing required field: {key}"
-            ))])
-        })
+        json::get_required_str(data, key)
     }
-
     /// Parses a string into an `ObservationType`.
     ///
     /// Accepts case-insensitive strings: "code", "decision", "context", "error", "summary", "execution", "quality_gate".

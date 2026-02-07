@@ -20,10 +20,12 @@ pub struct ValidateHandler {
 }
 
 impl ValidateHandler {
+    /// Create a new ValidateHandler.
     pub fn new(validation_service: Arc<dyn ValidationServiceInterface>) -> Self {
         Self { validation_service }
     }
 
+    /// Handle a validate tool request.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<ValidateArgs>,

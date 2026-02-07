@@ -1,6 +1,6 @@
 //! System configuration types
 //!
-//! Consolidated configuration for system concerns:
+//! configuration for system concerns:
 //! auth, event_bus, backup, sync, snapshot, daemon, and operations.
 
 use std::path::PathBuf;

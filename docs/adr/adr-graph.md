@@ -29,7 +29,7 @@ digraph {
     _24 [label="ADR 024: Simplified Dependency Injection"; URL="024-simplified-dependency-injection.html"];
     _27 [label="ADR 027: Architecture Evolution v0.1.3"; URL="027-architecture-evolution-v013.html"];
     _29 [label="ADR 029: Hexagonal Architecture with dill"; URL="029-hexagonal-architecture-dill.html"];
-    _30 [label="ADR 030: Multi-Provider Strategy (CONSOLIDATED into ADR-003)"; URL="030-multi-provider-strategy.html"];
+    _30 [label="ADR 030: Multi-Provider Strategy (into ADR-003)"; URL="030-multi-provider-strategy.html"];
     _31 [label="ADR 031: Documentation Excellence"; URL="031-documentation-excellence.html"];
     _10 ->_27 [style="dotted", weight=1];
     _13 ->_27 [label="extends", style="dashed"];

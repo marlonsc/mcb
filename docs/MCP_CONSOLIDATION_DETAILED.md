@@ -2,21 +2,21 @@
 
 **Generated**: 2025-02-05  
 **Project**: MCB (MCP Context Browser)  
-**Scope**: Mapping MCP consolidated endpoints for Admin UI reuse
+**Scope**: Mapping MCP endpoints for Admin UI reuse
 
 ---
 
-## 1. MCP CONSOLIDATED HANDLERS INVENTORY
+## 1. MCP HANDLERS INVENTORY
 
 ### Overview
 
 -   **Total MCP Handlers**: 8 major handlers (Agent, Index, Memory, Project, Search, Session, Validate, VCS)
--   **Total Endpoints**: 50+ MCP tool methods across consolidated handlers
+-   **Total Endpoints**: 50+ MCP tool methods across handlers
 -   **Architecture**: Async-first, MCP protocol-based handlers returning `CallToolResult`
 
 ### 1.1 INDEX HANDLER
 
-**Location**: `handlers/consolidated/index.rs`  
+**Location**: `handlers/index.rs`  
 **Dependencies**: `IndexingServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -47,7 +47,7 @@ pub async fn handle(
 
 ### 1.2 SEARCH HANDLER
 
-**Location**: `handlers/consolidated/search.rs`  
+**Location**: `handlers/search.rs`  
 **Dependencies**: `SearchServiceInterface`, `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -78,7 +78,7 @@ pub async fn handle(
 
 ### 1.3 VALIDATE HANDLER
 
-**Location**: `handlers/consolidated/validate.rs`  
+**Location**: `handlers/validate.rs`  
 **Dependencies**: `ValidationServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -109,7 +109,7 @@ pub async fn handle(
 
 ### 1.4 AGENT HANDLER
 
-**Location**: `handlers/consolidated/agent.rs`  
+**Location**: `handlers/agent.rs`  
 **Dependencies**: `AgentSessionServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -139,7 +139,7 @@ pub async fn handle(
 
 ### 1.5 SESSION HANDLER
 
-**Location**: `handlers/consolidated/session/mod.rs`  
+**Location**: `handlers/session/mod.rs`  
 **Dependencies**: `AgentSessionServiceInterface`, `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -173,7 +173,7 @@ pub async fn handle(
 
 ### 1.6 MEMORY HANDLER
 
-**Location**: `handlers/consolidated/memory/mod.rs`  
+**Location**: `handlers/memory/mod.rs`  
 **Dependencies**: `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -212,7 +212,7 @@ pub async fn handle(
 
 ### 1.7 VCS HANDLER
 
-**Location**: `handlers/consolidated/vcs/mod.rs`  
+**Location**: `handlers/vcs/mod.rs`  
 **Dependencies**: `VcsProvider`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -246,7 +246,7 @@ pub async fn handle(
 
 ### 1.8 PROJECT HANDLER
 
-**Location**: `handlers/consolidated/project.rs`  
+**Location**: `handlers/project.rs`  
 **Status**: NOT YET IMPLEMENTED
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -790,7 +790,7 @@ pub struct ApiResult<T: Serialize> {
 -   **Reuse**: Admin `/services/*` endpoints already work
 -   **Effort**: 8 hours (full project handler implementation)
 -   **Benefit**: MCP users can manage services, admin UI delegates to MCP
--   **Files to Change**: `handlers/consolidated/project.rs`
+-   **Files to Change**: `handlers/project.rs`
 -   **Risk**: High (new feature, API stability)
 -   **ROI**: ✅ HIGH (long-term)
 
@@ -803,7 +803,7 @@ pub struct ApiResult<T: Serialize> {
 #### **MCP Handler Pattern 1: Index (Stateless Service)**
 
 ```rust
-// File: handlers/consolidated/index.rs:15-25
+// File: handlers/index.rs:15-25
 pub struct IndexHandler {
     indexing_service: Arc<dyn IndexingServiceInterface>,
 }
@@ -830,7 +830,7 @@ impl IndexHandler {
 #### **MCP Handler Pattern 2: Search (Multi-Service)**
 
 ```rust
-// File: handlers/consolidated/search.rs:17-32
+// File: handlers/search.rs:17-32
 pub struct SearchHandler {
     search_service: Arc<dyn SearchServiceInterface>,
     memory_service: Arc<dyn MemoryServiceInterface>,
@@ -866,7 +866,7 @@ impl SearchHandler {
 #### **MCP Handler Pattern 3: Memory (Complex Submodule)**
 
 ```rust
-// File: handlers/consolidated/memory/mod.rs:23-53
+// File: handlers/memory/mod.rs:23-53
 pub struct MemoryHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }
@@ -906,7 +906,7 @@ impl MemoryHandler {
 #### **MCP Handler Pattern 4: Session (Delegated Handlers)**
 
 ```rust
-// File: handlers/consolidated/session/mod.rs:27-60
+// File: handlers/session/mod.rs:27-60
 pub struct SessionHandler {
     agent_service: Arc<dyn AgentSessionServiceInterface>,
     memory_service: Arc<dyn MemoryServiceInterface>,
@@ -1214,7 +1214,7 @@ Legend:
 2.  **Admin UI** has 15+ HTTP endpoints for monitoring, config, and browsing
 3.  **Minimal overlap** in current implementations; opportunities for reuse
 4.  **Handler patterns** are consistent and well-structured (good foundation for refactoring)
-5.  **Response types** could be consolidated with ~2 hours of refactoring
+5.  **Response types** could be with ~2 hours of refactoring
 
 ### Top 3 Immediate Actions
 

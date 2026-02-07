@@ -454,6 +454,8 @@ pub struct ArchitectureValidator {
     visibility: VisibilityValidator,
     layer_flow: LayerFlowValidator,
     port_adapter: PortAdapterValidator,
+    // Configuration
+    file_config: FileConfig,
 }
 
 impl ArchitectureValidator {
@@ -482,6 +484,9 @@ impl ArchitectureValidator {
     /// ```
     pub fn with_config(config: ValidationConfig) -> Self {
         let root = config.workspace_root.clone();
+        // Load file configuration (rules)
+        let file_config = FileConfig::load_or_default(&root);
+
         Self {
             dependency: DependencyValidator::with_config(config.clone()),
             quality: QualityValidator::with_config(config.clone()),
@@ -505,13 +510,14 @@ impl ArchitectureValidator {
             // Clean Architecture validator (CA001-CA009)
             clean_architecture: CleanArchitectureValidator::with_config(config.clone()),
             // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
-            visibility: VisibilityValidator::new(),
-            layer_flow: LayerFlowValidator::new(),
-            port_adapter: PortAdapterValidator::new(),
+            visibility: VisibilityValidator::with_config(&file_config.rules.visibility),
+            layer_flow: LayerFlowValidator::with_config(&file_config.rules.layer_flow),
+            port_adapter: PortAdapterValidator::with_config(&file_config.rules.port_adapter),
             config: ValidationConfig {
                 workspace_root: root,
                 ..config
             },
+            file_config,
         }
     }
 

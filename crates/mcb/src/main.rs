@@ -37,6 +37,7 @@ use cli::{ServeArgs, ValidateArgs};
 #[command(about = "MCP Context Browser - Semantic Code Search Server")]
 #[command(version)]
 pub struct Cli {
+    /// Subcommand to execute.
     #[command(subcommand)]
     pub command: Option<Command>,
 

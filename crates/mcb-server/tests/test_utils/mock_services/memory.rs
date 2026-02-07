@@ -167,10 +167,10 @@ impl MemoryRepository for MockMemoryRepository {
 }
 
 pub struct MockMemoryService {
-    should_fail: Arc<AtomicBool>,
-    error_message: Arc<Mutex<String>>,
-    observations: Arc<Mutex<Vec<Observation>>>,
-    summaries: Arc<Mutex<Vec<SessionSummary>>>,
+    pub should_fail: Arc<AtomicBool>,
+    pub error_message: Arc<Mutex<String>>,
+    pub observations: Arc<Mutex<Vec<Observation>>>,
+    pub summaries: Arc<Mutex<Vec<SessionSummary>>>,
 }
 
 impl MockMemoryService {

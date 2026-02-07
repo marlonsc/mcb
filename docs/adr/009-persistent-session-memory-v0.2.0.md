@@ -77,7 +77,7 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 | `search` | `memory (action=list, resource=observation)` | Avoids collision with `search (resource=code)` |
 | `timeline` | `memory (action=timeline, resource=observation)` | Explicit memory domain |
 | `get_observations` | `memory (action=get, resource=observation)` | Consistent namespace |
-| `memory (action=store, resource=observation)` | `memory (action=store, resource=observation)` | Matches consolidated tool |
+| `memory (action=store, resource=observation)` | `memory (action=store, resource=observation)` | Matches tool |
 | `inject_context` | `memory (action=inject, resource=observation)` | Avoids future collisions |
 
 **Existing tools retained** (already namespaced):

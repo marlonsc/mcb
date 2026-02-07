@@ -48,48 +48,23 @@ pub const GENERIC_TYPE_NAMES: &[&str] = &[
     "CacheConfig",
 ];
 
-// ============================================================================
-// DEPENDENCY GRAPH (CLEAN ARCHITECTURE)
-// ============================================================================
-
-/// Allowed dependencies per crate for Clean Architecture layer boundaries
-pub const ALLOWED_DEPS: &[(&str, &[&str])] = &[
-    ("mcb-domain", &[]),
-    ("mcb-application", &["mcb-domain"]),
-    ("mcb-providers", &["mcb-domain", "mcb-application"]),
-    (
-        "mcb-infrastructure",
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-providers",
-            "mcb-validate",
-        ],
-    ),
-    (
-        "mcb-server",
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-infrastructure",
-            "mcb-providers",
-        ],
-    ),
-    (
-        "mcb",
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-infrastructure",
-            "mcb-server",
-            "mcb-providers",
-            "mcb-validate",
-        ],
-    ),
-    ("mcb-validate", &["mcb-language-support", "mcb-ast-utils"]),
-    ("mcb-language-support", &[]),
-    ("mcb-ast-utils", &["mcb-language-support"]),
+/// File names to skip for test completeness checks
+pub const REFACTORING_SKIP_FILES: &[&str] = &[
+    "mod",
+    "lib",
+    "main",
+    "constants",
+    "thresholds",
+    "error",
+    "types",
 ];
+
+/// Directory patterns to skip for test completeness checks (tested via integration)
+pub const REFACTORING_SKIP_DIR_PATTERNS: &[&str] = &["/di/", "/config/", "/models/", "/ports/"];
+
+// ============================================================================
+// RETE ENGINE
+// ============================================================================
 
 // ============================================================================
 // RETE ENGINE
@@ -99,56 +74,8 @@ pub const ALLOWED_DEPS: &[(&str, &[&str])] = &[
 pub const INTERNAL_DEP_PREFIX: &str = "mcb-";
 
 // ============================================================================
-// REFACTORING (missing test files)
+// DUPLICATION (clone detection)
 // ============================================================================
-
-/// Source file stems that don't require dedicated unit test files
-pub const REFACTORING_SKIP_FILES: &[&str] = &[
-    "mod",
-    "lib",
-    "main",
-    "prelude",
-    "constants",
-    "types",
-    "error",
-    "errors",
-    "helpers",
-    "utils",
-    "common",
-    "config",
-    "builder",
-    "factory",
-    "indexing",
-    "search_repository",
-    "metrics",
-    "components",
-    "operations",
-    "rate_limit_middleware",
-    "security",
-    "mcp_server",
-    "init",
-];
-
-/// Directory names that are tested via integration tests
-pub const REFACTORING_SKIP_DIR_PATTERNS: &[&str] = &[
-    "providers",
-    "adapters",
-    "language",
-    "embedding",
-    "vector_store",
-    "cache",
-    "hybrid_search",
-    "events",
-    "chunking",
-    "http",
-    "di",
-    "admin",
-    "handlers",
-    "config",
-    "tools",
-    "utils",
-    "ports",
-];
 
 // ============================================================================
 // DUPLICATION (clone detection)

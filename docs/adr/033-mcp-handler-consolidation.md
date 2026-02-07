@@ -18,7 +18,7 @@ Accepted
 
 ## Context
 
-The MCP server has grown to 38 tools, creating cognitive overhead for users and maintenance burden. Many tools follow CRUD patterns that can be consolidated using parameterization.
+The MCP server has grown to 38 tools, creating cognitive overhead for users and maintenance burden. Many tools follow CRUD patterns that can be using parameterization.
 
 ### Current Tool Inventory (38 tools)
 
@@ -49,7 +49,7 @@ Consolidate to **8 tools** using resource-action parameterization pattern:
 | `project` | project_* (9 tools) | action: create, update, list; resource: phase, issue, dependency, decision |
 | `vcs` | vcs_* (5 tools) | action: list_repositories, index_repository, compare_branches, search_branch, analyze_impact |
 
-### Consolidated Tool Schemas
+### Tool Schemas
 
 ```rust
 // 1. index - Codebase indexing operations
@@ -110,7 +110,7 @@ struct ProjectArgs {
 
 ### Migration Path
 
-1.  **Phase 1**: Add new consolidated tools alongside existing
+1.  **Phase 1**: Add new tools alongside existing
 2.  **Phase 2**: Deprecate old tools (mark as [DEPRECATED] in description)
 3.  **Phase 3**: Remove deprecated tools after 1 release cycle
 

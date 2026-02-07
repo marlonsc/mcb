@@ -39,7 +39,7 @@ For a faster dev install, use `make install-debug`. If you prefer to run without
 -   **Clean Architecture**: 8 crates (domain, application, infrastructure, providers, server, validate) per Clean Architecture layers
 -   **Provider Ecosystem**: 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 6 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
 -   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
--   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2245+ tests project-wide
+-   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2239+ tests project-wide
 -   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
 -   **Workflow System** (v0.3.0): FSM-based task orchestration with context awareness and policy enforcement
 -   **Integrated Context** (v0.4.0 - Planned): Knowledge graph, hybrid search, freshness tracking, time-travel queries (blocked on v0.3.0)
@@ -82,7 +82,7 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 
 **Provider Architecture (v0.2.0+)**:
 
--   **ADR-003**: Unified Provider Architecture & Routing – Consolidated embedding and vector store strategies
+-   **ADR-003**: Unified Provider Architecture & Routing – embedding and vector store strategies
 -   **ADR-030**: Multi-Provider Strategy (superseded by ADR-003)
 
 **Workflow System (v0.3.0 - In Development)**:
@@ -133,7 +133,7 @@ make validate
 
 ### MCP Tools
 
-The server exposes 8 consolidated MCP tools:
+The server exposes 8 MCP tools:
 
 | Tool | Purpose |
 |------|---------|
@@ -186,7 +186,7 @@ See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for con
 
 ## Testing
 
-2245+ tests covering all layers:
+2239+ tests covering all layers:
 
 ```bash
 make test           # All tests
@@ -200,7 +200,7 @@ Test organization:
 -   **Application layer**: Service and use case tests
 -   **Infrastructure layer**: DI, config, cache tests
 -   **Providers**: Embedding and vector store provider tests
--   **mcb-validate**: Architecture validation (Phases 1–7, 2245+ tests)
+-   **mcb-validate**: Architecture validation (Phases 1–7, 2239+ tests)
 
 See [`docs/INTEGRATION_TESTS.md`](./docs/INTEGRATION_TESTS.md) for testing documentation.
 

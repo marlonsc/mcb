@@ -1,0 +1,31 @@
+_template: "cargo_dependency_check"
+id: "CA010"
+name: "Providers Layer Boundaries"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Providers crate only depends on domain and application"
+rationale: "Providers implement domain interfaces using application use cases"
+
+crate_name: "mcb-providers"
+forbidden_prefixes: []
+allowed_dependencies: ["mcb-domain", "mcb-application"]
+
+config:
+  crate_name: "mcb-providers"
+  forbidden_prefixes: []
+  allowed_dependencies: ["mcb-domain", "mcb-application"]
+
+rule: |
+  rule ProvidersBoundaries "Providers Layer Boundaries" {
+      when
+          Facts.crate_name == "mcb-providers" &&
+          (Facts.crate_mcb_providers_depends_on_mcb_infrastructure == true ||
+           Facts.crate_mcb_providers_depends_on_mcb_server == true)
+      then
+          Facts.violation_triggered = true;
+          Facts.violation_message = "Providers layer can only depend on domain and application layers";
+          Facts.violation_rule_name = "CA010";
+  }

@@ -1,11 +1,9 @@
+//! Argument types and validators for MCP tool requests.
 //!
-//! Argument types for MCP tools.
-//! Consolidated tool arguments live in the `consolidated` module.
+//! This module provides request argument types for all MCP tools and validation
+//! functions to ensure input safety and correctness.
 
 use validator::ValidationError;
-
-pub mod consolidated;
-pub use consolidated::*;
 
 pub(crate) fn validate_file_path(path: &str) -> Result<(), ValidationError> {
     if path.contains("..") || path.contains('\0') {
@@ -32,3 +30,12 @@ pub(crate) fn validate_collection_name(collection: &str) -> Result<(), Validatio
     }
     Ok(())
 }
+
+/// Consolidated argument types.
+pub mod consolidated;
+
+pub use consolidated::{
+    AgentAction, AgentArgs, IndexAction, IndexArgs, MemoryAction, MemoryArgs, MemoryResource,
+    ProjectAction, ProjectArgs, ProjectResource, SearchArgs, SearchResource, SessionAction,
+    SessionArgs, ValidateAction, ValidateArgs, ValidateScope, VcsAction, VcsArgs,
+};

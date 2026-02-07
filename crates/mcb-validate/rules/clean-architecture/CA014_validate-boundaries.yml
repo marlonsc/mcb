@@ -1,0 +1,31 @@
+_template: "cargo_dependency_check"
+id: "CA014"
+name: "Validator Crate Boundaries"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "mcb-validate depends on language support and AST utilities"
+rationale: "Validation logic needs AST analysis but should not depend on other domain layers to avoid circularity"
+
+crate_name: "mcb-validate"
+forbidden_prefixes: []
+allowed_dependencies: ["mcb-language-support", "mcb-ast-utils"]
+
+config:
+  crate_name: "mcb-validate"
+  forbidden_prefixes: []
+  allowed_dependencies: ["mcb-language-support", "mcb-ast-utils"]
+
+rule: |
+  rule ValidatorBoundaries "Validator Crate Boundaries" {
+      when
+          Facts.crate_name == "mcb-validate" &&
+          (Facts.crate_mcb_validate_depends_on_mcb_domain == true ||
+           Facts.crate_mcb_validate_depends_on_mcb_application == true)
+      then
+          Facts.violation_triggered = true;
+          Facts.violation_message = "Validator crate cannot depend on main domain or application layers";
+          Facts.violation_rule_name = "CA014";
+  }

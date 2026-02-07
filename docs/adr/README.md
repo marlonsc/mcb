@@ -41,7 +41,7 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 -   [ADR 027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Onion/Clean enhancement with bounded contexts, engine contracts, incremental indexing - **Proposed**
 -   [ADR 028: Advanced Code Browser v0.2.0](028-advanced-code-browser-v020.md)
 -   [ADR 029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI IoC container; handle-based pattern
--   [ADR 030: Multi-Provider Strategy](030-multi-provider-strategy.md) - **CONSOLIDATED into ADR-003** (see [ADR 003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md))
+-   [ADR 030: Multi-Provider Strategy](030-multi-provider-strategy.md) - **into ADR-003** (see [ADR 003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md))
 -   [ADR 031: Documentation Excellence](031-documentation-excellence.md) - Documentation standards and automation
 
 ### Phase 8-9: v0.3→v0.4.0 (Workflow + Integrated Context System)

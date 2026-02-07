@@ -22,6 +22,7 @@ pub struct IndexHandler {
 }
 
 impl IndexHandler {
+    /// Create a new IndexHandler.
     pub fn new(indexing_service: Arc<dyn IndexingServiceInterface>) -> Self {
         Self { indexing_service }
     }
@@ -58,6 +59,7 @@ impl IndexHandler {
         Ok((path, collection_id))
     }
 
+    /// Handle an index tool request.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<IndexArgs>,

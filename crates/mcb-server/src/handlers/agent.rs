@@ -8,12 +8,13 @@ use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
-use serde_json::{Map, Value};
+
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
 use crate::formatter::ResponseFormatter;
+use crate::utils::json::{get_bool, get_i64, get_str};
 
 /// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]
@@ -22,28 +23,12 @@ pub struct AgentHandler {
 }
 
 impl AgentHandler {
+    /// Create a new AgentHandler.
     pub fn new(agent_service: Arc<dyn AgentSessionServiceInterface>) -> Self {
         Self { agent_service }
     }
 
-    fn json_map(data: &Value) -> Option<&Map<String, Value>> {
-        data.as_object()
-    }
-
-    fn get_str(data: &Map<String, Value>, key: &str) -> Option<String> {
-        data.get(key)
-            .and_then(|value| value.as_str())
-            .map(str::to_string)
-    }
-
-    fn get_i64(data: &Map<String, Value>, key: &str) -> Option<i64> {
-        data.get(key).and_then(|value| value.as_i64())
-    }
-
-    fn get_bool(data: &Map<String, Value>, key: &str) -> Option<bool> {
-        data.get(key).and_then(|value| value.as_bool())
-    }
-
+    /// Handle an agent tool request.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<AgentArgs>,
@@ -51,7 +36,11 @@ impl AgentHandler {
         args.validate()
             .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
 
-        let data = match Self::json_map(&args.data) {
+        if args.session_id.to_string().is_empty() {
+            return Err(McpError::invalid_params("session_id is required", None));
+        }
+
+        let data = match args.data.as_object() {
             Some(data) => data,
             None => {
                 return Ok(CallToolResult::error(vec![Content::text(
@@ -66,7 +55,7 @@ impl AgentHandler {
 
         match args.action {
             AgentAction::LogTool => {
-                let tool_name = match Self::get_str(data, "tool_name") {
+                let tool_name = match get_str(data, "tool_name") {
                     Some(value) => value,
                     None => {
                         return Ok(CallToolResult::error(vec![Content::text(
@@ -76,12 +65,12 @@ impl AgentHandler {
                 };
                 let tool_call = ToolCall {
                     id: format!("tc_{}", Uuid::new_v4()),
-                    session_id: args.session_id.as_str().to_string(),
+                    session_id: args.session_id.to_string(),
                     tool_name: tool_name.clone(),
-                    params_summary: Self::get_str(data, "params_summary"),
-                    success: Self::get_bool(data, "success").unwrap_or(true),
-                    error_message: Self::get_str(data, "error_message"),
-                    duration_ms: Self::get_i64(data, "duration_ms"),
+                    params_summary: get_str(data, "params_summary"),
+                    success: get_bool(data, "success").unwrap_or(true),
+                    error_message: get_str(data, "error_message"),
+                    duration_ms: get_i64(data, "duration_ms"),
                     created_at: now,
                 };
                 match self.agent_service.store_tool_call(tool_call).await {
@@ -96,7 +85,7 @@ impl AgentHandler {
                 }
             }
             AgentAction::LogDelegation => {
-                let child_session_id = match Self::get_str(data, "child_session_id") {
+                let child_session_id = match get_str(data, "child_session_id") {
                     Some(value) => value,
                     None => {
                         return Ok(CallToolResult::error(vec![Content::text(
@@ -106,15 +95,15 @@ impl AgentHandler {
                 };
                 let delegation = Delegation {
                     id: format!("del_{}", Uuid::new_v4()),
-                    parent_session_id: args.session_id.as_str().to_string(),
+                    parent_session_id: args.session_id.to_string(),
                     child_session_id: child_session_id.clone(),
-                    prompt: Self::get_str(data, "prompt").unwrap_or_default(),
-                    prompt_embedding_id: Self::get_str(data, "prompt_embedding_id"),
-                    result: Self::get_str(data, "result"),
-                    success: Self::get_bool(data, "success").unwrap_or(true),
+                    prompt: get_str(data, "prompt").unwrap_or_default(),
+                    prompt_embedding_id: get_str(data, "prompt_embedding_id"),
+                    result: get_str(data, "result"),
+                    success: get_bool(data, "success").unwrap_or(true),
                     created_at: now,
                     completed_at: None,
-                    duration_ms: Self::get_i64(data, "duration_ms"),
+                    duration_ms: get_i64(data, "duration_ms"),
                 };
                 match self.agent_service.store_delegation(delegation).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({

@@ -27,6 +27,9 @@ crate_name: "mcb-infrastructure"
 forbidden_imports:
   - "mcb_application"
 
+config:
+  composition_root_skip_patterns: ["/di/"]
+
 rule: |
   rule InfrastructureNoApplication "Infrastructure Must Not Import Application" {
       when

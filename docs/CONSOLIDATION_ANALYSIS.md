@@ -5,7 +5,7 @@
 
 ## Key Metrics
 
--   **50+ MCP Endpoints**: Across 8 consolidated handlers
+-   **50+ MCP Endpoints**: Across 8 handlers
 -   **15+ Admin HTTP Endpoints**: Health, config, lifecycle, browse
 -   **10+ Response Types**: Many single-use (dead weight)
 -   **Reuse Opportunities**: 10 high-value refactoring targets identified
@@ -14,7 +14,7 @@
 
 ### What MCP Provides
 
-8 consolidated handlers offering:
+8 handlers offering:
 
 -   **Index**: Start, status, clear operations
 -   **Search**: Code + memory semantic search
@@ -210,7 +210,7 @@ let Some(resource) = &state.resource else {
 
 ### Phase 4: Strategic (8+ hours)
 
--   Implement `handlers/consolidated/project.rs` - Full project handler
+-   Implement `handlers/project.rs` - Full project handler
 -   Create unified service facade pattern
 -   Add role-based filtering & pagination
 

@@ -13,6 +13,7 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::test_utils::mock_services::{MockProjectService, MockVcsProvider};
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::types::{AppConfig, ModeConfig, OperatingMode};
@@ -21,7 +22,6 @@ use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_infrastructure::di::modules::domain_services::{
     DomainServicesFactory, ServiceDependencies,
 };
-use mcb_providers::git::Git2Provider;
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::session::SessionManager;
@@ -562,10 +562,10 @@ async fn create_test_mcp_server() -> McpServer {
         std::sync::Arc::clone(&shared_executor),
     );
     let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
-        std::sync::Arc::new(Git2Provider::new());
+        std::sync::Arc::new(MockVcsProvider::new());
 
     let project_service: std::sync::Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
-        std::sync::Arc::new(mcb_infrastructure::project::ProjectService::new());
+        std::sync::Arc::new(MockProjectService::new());
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
@@ -594,6 +594,7 @@ async fn create_test_mcp_server() -> McpServer {
         .with_validation_service(services.validation_service)
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
+        .with_project_service(services.project_service)
         .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")

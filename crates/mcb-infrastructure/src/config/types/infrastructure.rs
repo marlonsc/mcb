@@ -1,6 +1,6 @@
 //! Infrastructure configuration types
 //!
-//! Consolidated configuration for infrastructure concerns:
+//! configuration for infrastructure concerns:
 //! logging, limits, cache, metrics, and resilience.
 
 use std::path::PathBuf;

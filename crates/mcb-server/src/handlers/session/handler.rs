@@ -22,6 +22,7 @@ pub struct SessionHandler {
 }
 
 impl SessionHandler {
+    /// Create a new SessionHandler.
     pub fn new(
         agent_service: Arc<dyn AgentSessionServiceInterface>,
         memory_service: Arc<dyn MemoryServiceInterface>,
@@ -32,6 +33,7 @@ impl SessionHandler {
         }
     }
 
+    /// Handle a session tool request.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<SessionArgs>,

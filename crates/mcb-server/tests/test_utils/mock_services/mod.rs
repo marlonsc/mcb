@@ -4,6 +4,7 @@ pub mod agent;
 pub mod context;
 pub mod indexing;
 pub mod memory;
+pub mod project;
 pub mod search;
 pub mod validation;
 pub mod vcs;
@@ -12,6 +13,7 @@ pub use agent::{MockAgentRepository, MockAgentSessionService};
 pub use context::MockContextService;
 pub use indexing::MockIndexingService;
 pub use memory::{MockMemoryRepository, MockMemoryService};
+pub use project::MockProjectService;
 pub use search::MockSearchService;
 pub use validation::MockValidationService;
 pub use vcs::MockVcsProvider;
@@ -85,5 +87,7 @@ mod constructibility {
 
         let vcs = MockVcsProvider::new().with_failure();
         assert!(vcs.should_fail.load(Ordering::SeqCst));
+
+        let _project = MockProjectService::new();
     }
 }

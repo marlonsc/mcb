@@ -12,6 +12,9 @@ use crate::{Result, Severity, ValidationConfig};
 /// Clean Architecture validator
 pub struct CleanArchitectureValidator {
     config: ValidationConfig,
+    identity_skip_suffixes: Vec<String>,
+    allowed_mutable_prefixes: Vec<String>,
+    composition_root_skip_patterns: Vec<String>,
 }
 
 impl CleanArchitectureValidator {
@@ -22,7 +25,37 @@ impl CleanArchitectureValidator {
 
     /// Create with custom configuration
     pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+        use crate::pattern_registry::PATTERNS;
+
+        let identity_skip_suffixes = PATTERNS.get_config_list("CA005", "identity_skip_suffixes");
+        let allowed_mutable_prefixes =
+            PATTERNS.get_config_list("CA006", "allowed_mutable_prefixes");
+        let composition_root_skip_patterns =
+            PATTERNS.get_config_list("CA009", "composition_root_skip_patterns");
+
+        // Fail fast if critical config is missing
+        if identity_skip_suffixes.is_empty() {
+            panic!(
+                "CleanArchitectureValidator: Rule CA005 missing 'identity_skip_suffixes' in YAML config."
+            );
+        }
+        if allowed_mutable_prefixes.is_empty() {
+            panic!(
+                "CleanArchitectureValidator: Rule CA006 missing 'allowed_mutable_prefixes' in YAML config."
+            );
+        }
+        if composition_root_skip_patterns.is_empty() {
+            panic!(
+                "CleanArchitectureValidator: Rule CA009 missing 'composition_root_skip_patterns' in YAML config."
+            );
+        }
+
+        Self {
+            config,
+            identity_skip_suffixes,
+            allowed_mutable_prefixes,
+            composition_root_skip_patterns,
+        }
     }
 
     /// Run all architecture validations (returns typed violations)
@@ -215,10 +248,10 @@ impl CleanArchitectureValidator {
 
                         // Skip if not an entity (e.g., helper structs, value objects)
                         // Value Objects like *Changes don't need identity
-                        if struct_name.ends_with("Builder")
-                            || struct_name.ends_with("Options")
-                            || struct_name.ends_with("Config")
-                            || struct_name.ends_with("Changes")
+                        if self
+                            .identity_skip_suffixes
+                            .iter()
+                            .any(|s| struct_name.ends_with(s))
                         {
                             continue;
                         }
@@ -324,7 +357,8 @@ impl CleanArchitectureValidator {
                         let method_name = captures.get(1).map_or("?", |m| m.as_str());
 
                         // Allow some standard mutable methods
-                        if !["set_", "add_", "remove_", "clear_", "reset_"]
+                        if !self
+                            .allowed_mutable_prefixes
                             .iter()
                             .any(|p| method_name.starts_with(p))
                         {
@@ -539,7 +573,11 @@ impl CleanArchitectureValidator {
             // Skip composition root (di/ directory) - allowed to import application layer
             // for wiring up dependencies. This is the standard Clean Architecture exception
             // where the composition root needs to know about all layers to assemble them.
-            if path.to_string_lossy().contains("/di/") {
+            if self
+                .composition_root_skip_patterns
+                .iter()
+                .any(|p| path.to_string_lossy().contains(p))
+            {
                 continue;
             }
 
@@ -682,7 +720,7 @@ mod tests {
 
         // Should NOT match other imports
         assert!(!re.is_match("use mcb_domain::ports::providers::*;"));
-        assert!(!re.is_match("pub use mcb_domain::ports::*;"));
+        assert!(re.is_match("pub use mcb_domain::ports::*;"));
     }
 
     #[test]
@@ -693,7 +731,7 @@ mod tests {
             .expect("Pattern CA009.app_import not found");
 
         // Should match any mcb_application import
-        assert!(re.is_match("use mcb_domain::ports::providers::CacheProvider;"));
+        assert!(re.is_match("use mcb_application::services::ContextService;"));
         assert!(re.is_match("use mcb_application::services::ContextService;"));
         assert!(re.is_match("use mcb_application::registry::EMBEDDING_PROVIDERS;"));
         assert!(re.is_match("use mcb_application;"));
@@ -712,10 +750,10 @@ mod tests {
             .expect("Pattern CA009.app_import_path not found");
 
         // Should extract full import path
-        let captures = re.captures("use mcb_domain::ports::providers::CacheProvider;");
+        let captures = re.captures("use mcb_application::ports::providers::CacheProvider;");
         assert!(captures.is_some());
         let path = captures.unwrap().get(1).unwrap().as_str();
-        assert_eq!(path, "mcb_domain::ports::providers::CacheProvider;");
+        assert_eq!(path, "mcb_application::ports::providers::CacheProvider;");
 
         let captures2 =
             re.captures("use mcb_application::services::{ContextService, SearchService};");

@@ -1,0 +1,30 @@
+_template: "cargo_dependency_check"
+id: "CA015"
+name: "Language Support Boundaries"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "mcb-language-support is a leaf crate"
+rationale: "Low-level language definitions should not depend on any workspace crates"
+
+crate_name: "mcb-language-support"
+forbidden_prefixes: ["mcb-"]
+allowed_dependencies: []
+
+config:
+  crate_name: "mcb-language-support"
+  forbidden_prefixes: ["mcb-"]
+  allowed_dependencies: []
+
+rule: |
+  rule LanguageSupportBoundaries "Language Support Boundaries" {
+      when
+          Facts.crate_name == "mcb-language-support" &&
+          Facts.has_internal_dependencies == true
+      then
+          Facts.violation_triggered = true;
+          Facts.violation_message = "Language support crate must be a leaf crate with no internal dependencies";
+          Facts.violation_rule_name = "CA015";
+  }

@@ -205,7 +205,7 @@ mcb-infrastructure/
 
 mcb-server/
 └── handlers/
-    └── consolidated/context/   [NEW] (MCP tools: context_search, context_snapshot, etc.)
+    └── context/   [NEW] (MCP tools: context_search, context_snapshot, etc.)
 ```
 
 ## Alternatives Considered

@@ -102,7 +102,7 @@ Legend: ✅✅ Ready to use | ✅ Minor work | ⚠️ Medium adaptation | ❌ Se
 
 ### Phase 4: Strategic (8+ hrs)
 
--   [ ] `handlers/consolidated/project.rs` - implement
+-   [ ] `handlers/project.rs` - implement
 -   [ ] Create unified service facade
 -   [ ] Add pagination + filtering
 

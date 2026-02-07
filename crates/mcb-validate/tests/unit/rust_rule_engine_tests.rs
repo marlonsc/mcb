@@ -2,15 +2,15 @@
 //!
 //! Moved from inline tests in `src/engines/rust_rule_engine.rs`.
 
-use mcb_validate::engines::RustRuleEngineWrapper;
+use mcb_validate::engines::ReteEngine;
 
 #[test]
 fn test_wrapper_creation() {
-    let _wrapper = RustRuleEngineWrapper::new();
+    let _wrapper = ReteEngine::new();
 }
 
 #[test]
 fn test_wrapper_clone() {
-    let wrapper = RustRuleEngineWrapper::new();
+    let wrapper = ReteEngine::new();
     let _cloned = wrapper.clone();
 }

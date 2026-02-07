@@ -15,7 +15,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
-use crate::constants::ALLOWED_DEPS;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -182,13 +181,33 @@ impl DependencyValidator {
 
     /// Create a validator with custom configuration for multi-directory support
     pub fn with_config(config: ValidationConfig) -> Self {
+        use crate::pattern_registry::PATTERNS;
         let mut allowed_deps = HashMap::new();
-        for (crate_name, deps) in ALLOWED_DEPS {
-            allowed_deps.insert(
-                crate_name.to_string(),
-                deps.iter().map(std::string::ToString::to_string).collect(),
+
+        // Load from YAML rules CA001-CA016
+        // We look for any CA rules that have crate_name and allowed_dependencies in their config
+        for i in 1..=20 {
+            // Check both CAXXX and LAYERXXX (legacy mapping)
+            let ids = [format!("CA{:03}", i), format!("LAYER{:03}", i)];
+            for rule_id in ids {
+                if let Some(config_val) = PATTERNS.get_config(&rule_id)
+                    && let Some(crate_name) = config_val.get("crate_name").and_then(|v| v.as_str())
+                {
+                    let deps: HashSet<String> = PATTERNS
+                        .get_config_list(&rule_id, "allowed_dependencies")
+                        .into_iter()
+                        .collect();
+                    allowed_deps.insert(crate_name.to_string(), deps);
+                }
+            }
+        }
+
+        if allowed_deps.is_empty() {
+            panic!(
+                "DependencyValidator: No allowed dependencies found in YAML rules CA001-CA016. Configuration is required in crates/mcb-validate/rules/."
             );
         }
+
         Self {
             config,
             allowed_deps,

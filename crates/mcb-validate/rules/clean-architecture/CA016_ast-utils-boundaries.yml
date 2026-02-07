@@ -1,0 +1,31 @@
+_template: "cargo_dependency_check"
+id: "CA016"
+name: "AST Utils Boundaries"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "mcb-ast-utils only depends on language support"
+rationale: "AST utilities are generic and should not depend on architectural layers"
+
+crate_name: "mcb-ast-utils"
+forbidden_prefixes: []
+allowed_dependencies: ["mcb-language-support"]
+
+config:
+  crate_name: "mcb-ast-utils"
+  forbidden_prefixes: []
+  allowed_dependencies: ["mcb-language-support"]
+
+rule: |
+  rule AstUtilsBoundaries "AST Utils Boundaries" {
+      when
+          Facts.crate_name == "mcb-ast-utils" &&
+          (Facts.crate_mcb_ast_utils_depends_on_mcb_domain == true ||
+           Facts.crate_mcb_ast_utils_depends_on_mcb_application == true)
+      then
+          Facts.violation_triggered = true;
+          Facts.violation_message = "AST utilities can only depend on language support crate";
+          Facts.violation_rule_name = "CA016";
+  }

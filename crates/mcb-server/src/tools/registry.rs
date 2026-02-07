@@ -16,6 +16,7 @@ use crate::args::{
 pub struct ToolDefinitions;
 
 impl ToolDefinitions {
+    /// Define the `index` tool.
     pub fn index() -> Result<Tool, McpError> {
         Self::create_tool(
             "index",
@@ -24,6 +25,7 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `search` tool.
     pub fn search() -> Result<Tool, McpError> {
         Self::create_tool(
             "search",
@@ -32,6 +34,7 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `validate` tool.
     pub fn validate() -> Result<Tool, McpError> {
         Self::create_tool(
             "validate",
@@ -40,6 +43,7 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `memory` tool.
     pub fn memory() -> Result<Tool, McpError> {
         Self::create_tool(
             "memory",
@@ -48,6 +52,7 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `session` tool.
     pub fn session() -> Result<Tool, McpError> {
         Self::create_tool(
             "session",
@@ -56,6 +61,7 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `agent` tool.
     pub fn agent() -> Result<Tool, McpError> {
         Self::create_tool(
             "agent",
@@ -64,6 +70,7 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `project` tool.
     pub fn project() -> Result<Tool, McpError> {
         Self::create_tool(
             "project",
@@ -72,6 +79,7 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `vcs` tool.
     pub fn vcs() -> Result<Tool, McpError> {
         Self::create_tool(
             "vcs",

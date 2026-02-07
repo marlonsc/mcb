@@ -1,8 +1,8 @@
 //! Contract: docs/testing/GOLDEN_TESTS_CONTRACT.md.
 
 use crate::test_utils::test_fixtures::{
-    create_test_mcp_server, golden_content_to_string, golden_count_result_entries,
-    golden_parse_results_found, sample_codebase_path, GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES,
+    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, create_test_mcp_server, golden_content_to_string,
+    golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
@@ -252,10 +252,7 @@ async fn golden_index_with_consolidation_args_start() {
         }))
         .await;
 
-    assert!(
-        result.is_ok(),
-        "index with consolidated args should succeed"
-    );
+    assert!(result.is_ok(), "index with args should succeed");
     let response = result.unwrap();
     assert!(
         !response.is_error.unwrap_or(true),

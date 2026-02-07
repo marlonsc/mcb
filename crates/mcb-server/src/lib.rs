@@ -69,6 +69,7 @@ pub mod mcp_server;
 pub mod session;
 pub mod tools;
 pub mod transport;
+pub mod utils;
 pub mod vcs_repository_registry;
 
 // Re-export core types for public API

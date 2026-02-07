@@ -1,3 +1,7 @@
+//! Processor implementation for hook events.
+//!
+//! Handles the execution logic for various lifecycle hooks.
+
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
@@ -6,15 +10,22 @@ use tracing::debug;
 
 use super::types::{HookError, HookResult, PostToolUseContext, SessionStartContext};
 
+/// Processor for tool execution hooks.
+///
+/// Handles lifecycle events like pre/post tool execution and session start.
 pub struct HookProcessor {
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
 }
 
 impl HookProcessor {
+    /// Create a new HookProcessor with optional memory service.
     pub fn new(memory_service: Option<Arc<dyn MemoryServiceInterface>>) -> Self {
         Self { memory_service }
     }
 
+    /// Process the PostToolUse hook event.
+    ///
+    /// Stores tool execution results as observations in memory.
     pub async fn process_post_tool_use(&self, context: PostToolUseContext) -> HookResult<()> {
         let memory_service = self
             .memory_service
@@ -54,6 +65,9 @@ impl HookProcessor {
         Ok(())
     }
 
+    /// Process the SessionStart hook event.
+    ///
+    /// Injects relevant context from previous sessions.
     pub async fn process_session_start(&self, context: SessionStartContext) -> HookResult<()> {
         let memory_service = self
             .memory_service

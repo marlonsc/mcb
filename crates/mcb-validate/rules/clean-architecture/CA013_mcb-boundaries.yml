@@ -1,0 +1,45 @@
+_template: "cargo_dependency_check"
+id: "CA013"
+name: "Main Crate Boundaries"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Main mcb crate can depend on all architectural layers"
+rationale: "The main crate acts as a facade re-exporting the entire public API"
+
+crate_name: "mcb"
+forbidden_prefixes: []
+allowed_dependencies:
+  [
+    "mcb-domain",
+    "mcb-application",
+    "mcb-infrastructure",
+    "mcb-server",
+    "mcb-providers",
+    "mcb-validate",
+  ]
+
+config:
+  crate_name: "mcb"
+  forbidden_prefixes: []
+  allowed_dependencies:
+    [
+      "mcb-domain",
+      "mcb-application",
+      "mcb-infrastructure",
+      "mcb-server",
+      "mcb-providers",
+      "mcb-validate",
+    ]
+
+rule: |
+  rule MainCrateBoundaries "Main Crate Boundaries" {
+      when
+          Facts.crate_name == "mcb" &&
+          Facts.has_internal_dependencies == false
+      then
+          // This would be weird but not necessarily a violation unless we want to enforce it has at least some
+          // For now, no negative rules for the facade crate
+  }

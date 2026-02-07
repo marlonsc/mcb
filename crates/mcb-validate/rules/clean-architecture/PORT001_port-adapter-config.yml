@@ -1,0 +1,28 @@
+schema: "rule/v1"
+id: "PORT001"
+name: "Port/Adapter Configuration"
+category: "architecture"
+severity: "warning"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Configuration for Hexagonal Architecture validation"
+rationale: "Externalized thresholds for port sizes and adapter suffixes"
+
+config:
+  max_port_methods: 10
+  adapter_suffixes:
+    - "Provider"
+    - "Repository"
+    - "Adapter"
+    - "Client"
+  ports_dir: "crates/mcb-application/src/ports"
+  providers_dir: "crates/mcb-providers/src"
+
+rule: |
+  rule PortAdapterConfig "Port/Adapter Configuration" {
+      when
+          True
+      then
+          // Provides configuration for PortAdapterValidator
+  }

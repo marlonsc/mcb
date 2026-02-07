@@ -21,14 +21,23 @@ use crate::hooks::{HookProcessor, PostToolUseContext};
 /// Handler references for tool routing
 #[derive(Clone)]
 pub struct ToolHandlers {
+    /// Handler for coding implementation tasks.
     pub index: Arc<IndexHandler>,
+    /// Handler for search operations.
     pub search: Arc<SearchHandler>,
+    /// Handler for validation operations.
     pub validate: Arc<ValidateHandler>,
+    /// Handler for memory operations.
     pub memory: Arc<MemoryHandler>,
+    /// Handler for session management.
     pub session: Arc<SessionHandler>,
+    /// Handler for agent operations.
     pub agent: Arc<AgentHandler>,
+    /// Handler for project management.
     pub project: Arc<ProjectHandler>,
+    /// Handler for VCS operations.
     pub vcs: Arc<VcsHandler>,
+    /// Processor for tool execution hooks.
     pub hook_processor: Arc<HookProcessor>,
 }
 

@@ -15,10 +15,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
-use crate::constants::{
-    GENERIC_TYPE_NAMES, KNOWN_MIGRATION_PAIRS, REFACTORING_SKIP_DIR_PATTERNS,
-    REFACTORING_SKIP_FILES, UTILITY_TYPES,
-};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -297,6 +293,11 @@ impl Violation for RefactoringViolation {
 /// Refactoring completeness validator
 pub struct RefactoringValidator {
     config: ValidationConfig,
+    generic_type_names: HashSet<String>,
+    utility_types: HashSet<String>,
+    known_migration_pairs: Vec<(String, String)>,
+    skip_files: HashSet<String>,
+    skip_dir_patterns: Vec<String>,
 }
 
 impl RefactoringValidator {
@@ -307,7 +308,57 @@ impl RefactoringValidator {
 
     /// Create a validator with custom configuration
     pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+        use crate::pattern_registry::PATTERNS;
+
+        let rule_id = "REF001";
+
+        let generic_type_names: HashSet<String> = PATTERNS
+            .get_config_list(rule_id, "generic_type_names")
+            .into_iter()
+            .collect();
+        let utility_types: HashSet<String> = PATTERNS
+            .get_config_list(rule_id, "utility_types")
+            .into_iter()
+            .collect();
+        let skip_files: HashSet<String> = PATTERNS
+            .get_config_list(rule_id, "refactoring_skip_files")
+            .into_iter()
+            .collect();
+        let skip_dir_patterns = PATTERNS.get_config_list(rule_id, "refactoring_skip_dir_patterns");
+
+        let known_migration_pairs = PATTERNS
+            .get_config(rule_id)
+            .and_then(|v| v.get("known_migration_pairs"))
+            .and_then(|v| v.as_sequence())
+            .map(|seq| {
+                seq.iter()
+                    .filter_map(|v| v.as_sequence())
+                    .filter_map(|pair| {
+                        if pair.len() == 2 {
+                            Some((pair[0].as_str()?.to_string(), pair[1].as_str()?.to_string()))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<(String, String)>>()
+            })
+            .unwrap_or_default();
+
+        // Fail fast if config is missing
+        if generic_type_names.is_empty() {
+            panic!(
+                "RefactoringValidator: Rule {rule_id} missing 'generic_type_names' in YAML config."
+            );
+        }
+
+        Self {
+            config,
+            generic_type_names,
+            utility_types,
+            known_migration_pairs,
+            skip_files,
+            skip_dir_patterns,
+        }
     }
 
     /// Run all refactoring validations
@@ -358,7 +409,7 @@ impl RefactoringValidator {
                     let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                     // Skip generic names that are expected to appear in multiple places
-                    if GENERIC_TYPE_NAMES.contains(&type_name) {
+                    if self.generic_type_names.contains(type_name) {
                         continue;
                     }
 
@@ -437,14 +488,14 @@ impl RefactoringValidator {
     /// Categorize duplicate severity based on known patterns
     fn categorize_duplicate_severity(&self, type_name: &str, crates: &HashSet<String>) -> Severity {
         // Check if this is an intentionally duplicated utility type
-        if UTILITY_TYPES.contains(&type_name) {
+        if self.utility_types.contains(type_name) {
             return Severity::Info;
         }
 
         // Check if the crates match a known migration pattern
         let crate_vec: Vec<&String> = crates.iter().collect();
         if crate_vec.len() == 2 {
-            for (crate_a, crate_b) in KNOWN_MIGRATION_PAIRS {
+            for (crate_a, crate_b) in &self.known_migration_pairs {
                 if (crate_vec[0].as_str() == *crate_a && crate_vec[1].as_str() == *crate_b)
                     || (crate_vec[0].as_str() == *crate_b && crate_vec[1].as_str() == *crate_a)
                 {
@@ -473,8 +524,8 @@ impl RefactoringValidator {
             .any(|p| type_name.ends_with(p))
         {
             // Check if any known migration pair is involved
-            for (crate_a, crate_b) in KNOWN_MIGRATION_PAIRS {
-                if crates.contains(*crate_a) || crates.contains(*crate_b) {
+            for (crate_a, crate_b) in &self.known_migration_pairs {
+                if crates.contains(crate_a) || crates.contains(crate_b) {
                     return Severity::Warning; // Migration-related, but should be tracked
                 }
             }
@@ -539,7 +590,7 @@ impl RefactoringValidator {
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
                 // Skip common files that don't need dedicated tests
-                if REFACTORING_SKIP_FILES.contains(&file_name) {
+                if self.skip_files.contains(file_name) {
                     continue;
                 }
 
@@ -548,7 +599,8 @@ impl RefactoringValidator {
                 let path_str = relative.to_string_lossy();
 
                 // Skip files in directories that are tested via integration tests
-                let in_skip_dir = REFACTORING_SKIP_DIR_PATTERNS
+                let in_skip_dir = self
+                    .skip_dir_patterns
                     .iter()
                     .any(|pattern| path_str.contains(pattern));
                 if in_skip_dir {

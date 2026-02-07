@@ -14,9 +14,9 @@ implementation_status: Incomplete
 
 ## Status
 
-**CONSOLIDATED into ADR-003** (Unified Provider Architecture & Routing)
+**into ADR-003** (Unified Provider Architecture & Routing)
 
-> This ADR has been consolidated into [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md). All multi-provider routing, failover, and health monitoring strategies are now documented in ADR-003. This document is retained for historical reference only.
+> This ADR has been into [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md). All multi-provider routing, failover, and health monitoring strategies are now documented in ADR-003. This document is retained for historical reference only.
 >
 > Full multi-provider routing implemented in `crates/mcb-providers/src/routing/`:
 >

@@ -9,6 +9,9 @@ engine: "rust-rule-engine"
 description: "Entities should have an identity field (id, uuid)"
 rationale: "Entities are defined by their identity, not their attributes"
 
+config:
+    identity_skip_suffixes: ["Builder", "Options", "Config", "Changes"]
+
 rule: |
     rule EntityIdentity "Entity Identity Marker" {
         when

@@ -29,6 +29,8 @@ AGENTS.md
 .github/skills/
 .opencode/
 openspec/
+.check_*
+.test_*
 
 # Session artifacts (auto-generated, not for version control)
 CONTINUATION_*.md

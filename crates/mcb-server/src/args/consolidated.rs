@@ -286,6 +286,7 @@ pub struct MemoryArgs {
 // Session Tool - Consolidates session_summary and agent_session tools (6 → 1)
 // =============================================================================
 
+/// Actions available for session management operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SessionAction {
@@ -301,6 +302,7 @@ pub enum SessionAction {
     Summarize,
 }
 
+/// Arguments for session management tool operations
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct SessionArgs {
     /// Action: create, get, update, list, summarize.
@@ -336,6 +338,7 @@ pub struct SessionArgs {
 // Agent Tool - Consolidates store_tool_call, store_delegation (2 → 1)
 // =============================================================================
 
+/// Actions available for agent activity logging
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AgentAction {
@@ -345,6 +348,7 @@ pub enum AgentAction {
     LogDelegation,
 }
 
+/// Arguments for agent activity logging operations
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct AgentArgs {
     /// Action: log_tool, log_delegation.
@@ -365,6 +369,7 @@ pub struct AgentArgs {
 // search_branch, list_repositories, analyze_impact)
 // =============================================================================
 
+/// Actions available for version control system operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum VcsAction {
@@ -380,6 +385,7 @@ pub enum VcsAction {
     AnalyzeImpact,
 }
 
+/// Arguments for version control system operations
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct VcsArgs {
     /// Action: list_repositories, index_repository, compare_branches, search_branch, analyze_impact.
@@ -431,6 +437,7 @@ pub struct VcsArgs {
 // Project Tool - Consolidates all project_* tools (9 tools → 1)
 // =============================================================================
 
+/// Actions available for project resource management
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ProjectAction {
@@ -444,6 +451,7 @@ pub enum ProjectAction {
     Delete,
 }
 
+/// Types of project resources that can be managed
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ProjectResource {
@@ -457,6 +465,7 @@ pub enum ProjectResource {
     Decision,
 }
 
+/// Arguments for project resource management operations
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct ProjectArgs {
     /// Action: create, update, list, delete.

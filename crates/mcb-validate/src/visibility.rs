@@ -2,6 +2,7 @@
 //!
 //! Validates proper use of pub(crate), pub, and private visibility.
 
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 use regex::Regex;
@@ -139,7 +140,12 @@ impl Violation for VisibilityViolation {
 }
 
 /// Visibility Validator
-pub struct VisibilityValidator;
+pub struct VisibilityValidator {
+    internal_dirs: Vec<String>,
+    exempted_items: HashSet<String>,
+    utility_module_patterns: Vec<String>,
+    pub_count_threshold: usize,
+}
 
 /// Default implementation for visibility validator.
 impl Default for VisibilityValidator {
@@ -149,9 +155,43 @@ impl Default for VisibilityValidator {
 }
 
 impl VisibilityValidator {
-    /// Creates a new visibility validator.
+    /// Creates a new visibility validator with default configuration.
     pub fn new() -> Self {
-        Self
+        // This is primarily for backward compatibility in some constructors,
+        // but in ArchitectureValidator we will use with_config.
+        // We'll use an empty config and it will panic if rule is missing, which is desired.
+        Self::with_config(&ValidationConfig::new(""))
+    }
+
+    /// Creates a new visibility validator with current configuration.
+    pub fn with_config(_config: &ValidationConfig) -> Self {
+        use crate::pattern_registry::PATTERNS;
+
+        let rule_id = "VIS001";
+
+        let internal_dirs = PATTERNS.get_config_list(rule_id, "internal_dirs");
+        let exempted_items: HashSet<String> = PATTERNS
+            .get_config_list(rule_id, "exempted_items")
+            .into_iter()
+            .collect();
+        let utility_module_patterns = PATTERNS.get_config_list(rule_id, "utility_module_patterns");
+        let pub_count_threshold = PATTERNS
+            .get_config(rule_id)
+            .and_then(|v| v.get("pub_count_threshold"))
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize)
+            .unwrap_or(3);
+
+        if internal_dirs.is_empty() {
+            panic!("VisibilityValidator: Rule {rule_id} missing 'internal_dirs' in YAML config.");
+        }
+
+        Self {
+            internal_dirs,
+            exempted_items,
+            utility_module_patterns,
+            pub_count_threshold,
+        }
     }
 
     /// Validates visibility rules for the given configuration.
@@ -167,17 +207,11 @@ impl VisibilityValidator {
         config: &ValidationConfig,
     ) -> Result<Vec<VisibilityViolation>> {
         let mut violations = Vec::new();
-        let internal_dirs = [
-            "crates/mcb-infrastructure/src/utils",
-            "crates/mcb-providers/src/utils",
-            "crates/mcb-server/src/utils",
-            "crates/mcb-application/src/utils",
-        ];
 
         let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type|const|static)\s+(\w+)").unwrap();
         let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
 
-        for dir_path in &internal_dirs {
+        for dir_path in &self.internal_dirs {
             let full_path = config.workspace_root.join(dir_path);
             if !full_path.exists() {
                 continue;
@@ -202,21 +236,7 @@ impl VisibilityValidator {
                     if let Some(captures) = pub_item_re.captures(trimmed) {
                         let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
                         // Skip exempted items:
-                        // - Error types and Result aliases (standard pattern)
-                        // - Documented public utilities (FileUtils, TimedOperation, HttpResponseUtils)
-                        // - Common method names that are part of public types
-                        if item_name.starts_with("Error")
-                            || item_name == "Result"
-                            || item_name == "FileUtils"
-                            || item_name == "TimedOperation"
-                            || item_name == "HttpResponseUtils"
-                            || item_name == "start"
-                            || item_name == "new"
-                            || item_name == "elapsed"
-                            || item_name == "elapsed_ms"
-                            || item_name == "elapsed_secs"
-                            || item_name == "remaining"
-                        {
+                        if self.exempted_items.contains(item_name) {
                             continue;
                         }
 
@@ -234,7 +254,6 @@ impl VisibilityValidator {
 
     fn check_utility_modules(&self, config: &ValidationConfig) -> Result<Vec<VisibilityViolation>> {
         let mut violations = Vec::new();
-        let utility_patterns = ["common.rs", "helpers.rs", "internal.rs", "compat.rs"];
 
         let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type)\s+(\w+)").unwrap();
         let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
@@ -264,7 +283,10 @@ impl VisibilityValidator {
                 }
 
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if !utility_patterns.contains(&file_name) {
+                if !self
+                    .utility_module_patterns
+                    .contains(&file_name.to_string())
+                {
                     continue;
                 }
 
@@ -281,7 +303,7 @@ impl VisibilityValidator {
                     }
                 }
 
-                if pub_count > 3 {
+                if pub_count > self.pub_count_threshold {
                     violations.push(VisibilityViolation::UtilityModuleTooPublic {
                         module_name: file_name.trim_end_matches(".rs").to_string(),
                         file: path.to_path_buf(),

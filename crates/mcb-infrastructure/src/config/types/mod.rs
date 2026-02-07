@@ -1,6 +1,6 @@
 //! Configuration types module
 //!
-//! Consolidated configuration types organized by domain:
+//! configuration types organized by domain:
 //! - `app` - Main application configuration and containers
 //! - `server` - Server transport and network configuration
 //! - `mode` - Operating mode configuration

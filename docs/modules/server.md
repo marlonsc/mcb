@@ -24,7 +24,7 @@ Core MCP protocol server implementation with JSON-RPC handling.
 
 ### Tool Handlers (`handlers/`)
 
-Consolidated MCP tool implementations:
+MCP tool implementations:
 
 -   `index` - Index operations (start/status/clear)
 -   `search` - Unified search (code/memory)
@@ -74,16 +74,14 @@ crates/mcb-server/src/
 │   ├── service.rs            # Admin service
 │   └── mod.rs
 ├── handlers/
-│   ├── consolidated/           # Consolidated MCP tools
-│   │   ├── agent.rs
-│   │   ├── index.rs
-│   │   ├── memory.rs
-│   │   ├── project.rs
-│   │   ├── search.rs
-│   │   ├── session.rs
-│   │   ├── validate.rs
-│   │   ├── vcs.rs
-│   │   └── mod.rs
+│   ├── agent.rs
+│   ├── index.rs
+│   ├── memory.rs
+│   ├── project.rs
+│   ├── search.rs
+│   ├── session.rs
+│   ├── validate.rs
+│   ├── vcs.rs
 │   └── mod.rs
 ├── transport/
 │   ├── http.rs               # HTTP server

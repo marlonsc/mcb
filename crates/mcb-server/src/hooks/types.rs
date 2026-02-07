@@ -1,3 +1,7 @@
+//! Type definitions for the hook system.
+//!
+//! Includes hook event types, contexts, and errors.
+
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 

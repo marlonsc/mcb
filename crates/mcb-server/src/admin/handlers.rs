@@ -145,12 +145,14 @@ pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResp
 /// Readiness response
 #[derive(Serialize)]
 pub struct ReadinessResponse {
+    /// Whether the server is ready to accept requests
     pub ready: bool,
 }
 
 /// Liveness response
 #[derive(Serialize)]
 pub struct LivenessResponse {
+    /// Whether the server process is alive and responding
     pub alive: bool,
 }
 
@@ -429,6 +431,7 @@ fn calculate_overall_health(dependencies: &[DependencyHealthCheck]) -> Dependenc
 /// Cache error response
 #[derive(Serialize)]
 pub struct CacheErrorResponse {
+    /// Error message describing the cache operation failure
     pub error: String,
 }
 

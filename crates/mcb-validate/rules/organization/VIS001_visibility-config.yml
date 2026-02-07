@@ -1,0 +1,43 @@
+schema: "rule/v1"
+id: "VIS001"
+name: "Visibility Configuration"
+category: "organization"
+severity: "info"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Configuration for module visibility validation"
+rationale: "Externalized configuration for internal directories and exempted public items"
+
+config:
+  internal_dirs:
+    - "crates/mcb-infrastructure/src/utils"
+    - "crates/mcb-providers/src/utils"
+    - "crates/mcb-server/src/utils"
+    - "crates/mcb-application/src/utils"
+  exempted_items:
+    - "Error"
+    - "Result"
+    - "FileUtils"
+    - "TimedOperation"
+    - "HttpResponseUtils"
+    - "start"
+    - "new"
+    - "elapsed"
+    - "elapsed_ms"
+    - "elapsed_secs"
+    - "remaining"
+  utility_module_patterns:
+    - "common.rs"
+    - "helpers.rs"
+    - "internal.rs"
+    - "compat.rs"
+  pub_count_threshold: 3
+
+rule: |
+  rule VisibilityConfig "Visibility Configuration" {
+      when
+          True
+      then
+          // Provides configuration for VisibilityValidator
+  }

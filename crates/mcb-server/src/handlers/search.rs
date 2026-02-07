@@ -23,6 +23,7 @@ pub struct SearchHandler {
 }
 
 impl SearchHandler {
+    /// Create a new SearchHandler.
     pub fn new(
         search_service: Arc<dyn SearchServiceInterface>,
         memory_service: Arc<dyn MemoryServiceInterface>,
@@ -33,6 +34,7 @@ impl SearchHandler {
         }
     }
 
+    /// Handle a search tool request.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<SearchArgs>,

@@ -26,7 +26,7 @@ pub struct TooManyFields {
 ",
     );
 
-    let validator = KissValidator::new(temp.path());
+    let validator = KissValidator::new(temp.path()).with_max_struct_fields(8);
     let violations = validator.validate_struct_fields().unwrap();
 
     assert_eq!(violations.len(), 1);

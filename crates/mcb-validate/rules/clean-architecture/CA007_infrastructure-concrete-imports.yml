@@ -1,0 +1,27 @@
+schema: "rule/v1"
+id: "CA007"
+name: "Infrastructure Must Not Import Concrete Services"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Infrastructure should only import traits (ports), not concrete implementations"
+rationale: "Maintains hexagonal architecture by keeping infrastructure decoupled from implementations"
+
+patterns:
+  # Reuses CA002 patterns for consistency
+  app_impl_import: 'use\s+mcb_application::(services|use_cases)::(\w+Impl)\b'
+  app_service_import: 'use\s+mcb_application::\w+::(\w+Service)(?:Impl)?\b'
+
+config:
+  allowed_import_patterns: ["ports::", "dyn "]
+
+rule: |
+  rule InfrastructureConcreteImports "Infrastructure Must Not Import Concrete Services" {
+      when
+          Crate(name == "mcb-infrastructure") &&
+          Import(path matches ".*Impl$")
+      then
+          Violation("Infrastructure layer should only import ports, not concrete implementations");
+  }

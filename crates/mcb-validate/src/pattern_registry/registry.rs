@@ -10,9 +10,10 @@ use walkdir::WalkDir;
 
 use crate::Result;
 
-/// Registry of compiled regex patterns loaded from YAML rules
+/// Registry of compiled regex patterns and configurations loaded from YAML rules
 pub struct PatternRegistry {
     patterns: HashMap<String, Regex>,
+    configs: HashMap<String, serde_yaml::Value>,
 }
 
 impl PatternRegistry {
@@ -20,6 +21,7 @@ impl PatternRegistry {
     pub fn new() -> Self {
         Self {
             patterns: HashMap::new(),
+            configs: HashMap::new(),
         }
     }
 
@@ -38,7 +40,7 @@ impl PatternRegistry {
         {
             if let Err(e) = registry.load_rule_file(entry.path()) {
                 eprintln!(
-                    "Warning: Failed to load patterns from {}: {}",
+                    "Warning: Failed to load patterns/config from {}: {}",
                     entry.path().display(),
                     e
                 );
@@ -48,7 +50,7 @@ impl PatternRegistry {
         Ok(registry)
     }
 
-    /// Load patterns from a single YAML rule file
+    /// Load patterns and configurations from a single YAML rule file
     fn load_rule_file(&mut self, path: &Path) -> Result<()> {
         let content = std::fs::read_to_string(path)?;
         let yaml: serde_yaml::Value = serde_yaml::from_str(&content)?;
@@ -76,6 +78,34 @@ impl PatternRegistry {
             }
         }
 
+        // Load generic configuration from "config" section
+        if let Some(config) = yaml.get("config") {
+            self.configs.insert(rule_id.to_string(), config.clone());
+        }
+
+        // Also load top-level crate_name and allowed_dependencies if present (shorthand for dependency rules)
+        if let Some(crate_name) = yaml.get("crate_name") {
+            let mut map = serde_yaml::Mapping::new();
+            map.insert(serde_yaml::Value::from("crate_name"), crate_name.clone());
+            if let Some(allowed) = yaml.get("allowed_dependencies") {
+                map.insert(
+                    serde_yaml::Value::from("allowed_dependencies"),
+                    allowed.clone(),
+                );
+            }
+
+            // Merge into config for this rule if it doesn't already have one, or extend it
+            let entry = self
+                .configs
+                .entry(rule_id.to_string())
+                .or_insert_with(|| serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
+            if let Some(config_map) = entry.as_mapping_mut() {
+                for (k, v) in map {
+                    config_map.insert(k, v);
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -91,6 +121,24 @@ impl PatternRegistry {
     /// Get a pattern by ID
     pub fn get(&self, pattern_id: &str) -> Option<&Regex> {
         self.patterns.get(pattern_id)
+    }
+
+    /// Get a configuration by rule ID
+    pub fn get_config(&self, rule_id: &str) -> Option<&serde_yaml::Value> {
+        self.configs.get(rule_id)
+    }
+
+    /// Get a list of strings from configuration
+    pub fn get_config_list(&self, rule_id: &str, key: &str) -> Vec<String> {
+        self.get_config(rule_id)
+            .and_then(|v| v.get(key))
+            .and_then(|v| v.as_sequence())
+            .map(|seq| {
+                seq.iter()
+                    .filter_map(|v| v.as_str().map(std::string::ToString::to_string))
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     /// Check if a pattern exists

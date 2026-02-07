@@ -352,7 +352,7 @@ impl EventHandler for CompensationSubscriber {
 
 ### 5. MCP Tools: Unified Interface
 
-**Architecture Correction 9**: Context tools registration follows **ADR-033 pattern** (ConsolidatedHandler). Handlers are in `mcb-server/src/handlers/context_handlers.rs`, registered via `router.rs` tool_definitions() like existing handlers.
+**Architecture Correction 9**: Context tools registration follows **ADR-033 pattern** . Handlers are in `mcb-server/src/handlers/context_handlers.rs`, registered via `router.rs` tool_definitions() like existing handlers.
 
 ```rust
 // mcb-domain/src/ports/mcp_handler.rs (PORT TRAIT - ADR-033)
@@ -362,7 +362,7 @@ pub trait MpcHandler: Send + Sync {
     async fn handle(&self, action: &str, input: serde_json::Value) -> Result<serde_json::Value>;
 }
 
-// mcb-server/src/handlers/context_handlers.rs (CONSOLIDATED HANDLER - ADR-033)
+// mcb-server/src/handlers/context_handlers.rs (HANDLER - ADR-033)
 pub struct ContextHandler {
     search_engine: Arc<HybridSearchEngine>,
     context_store: Arc<dyn ContextRepository>,

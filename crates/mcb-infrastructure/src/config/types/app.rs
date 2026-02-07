@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use serde::{Deserialize, Serialize};
 
-// Re-export all config types from consolidated modules
+// Re-export all config types from modules
 pub use super::infrastructure::{
     CacheProvider, CacheSystemConfig, LimitsConfig, LoggingConfig, MetricsConfig, ResilienceConfig,
 };

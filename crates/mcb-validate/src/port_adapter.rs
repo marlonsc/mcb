@@ -173,7 +173,12 @@ impl Violation for PortAdapterViolation {
 }
 
 /// Validates Clean Architecture port/adapter patterns and interface segregation.
-pub struct PortAdapterValidator;
+pub struct PortAdapterValidator {
+    max_port_methods: usize,
+    adapter_suffixes: Vec<String>,
+    ports_dir: String,
+    providers_dir: String,
+}
 
 impl Default for PortAdapterValidator {
     fn default() -> Self {
@@ -182,9 +187,50 @@ impl Default for PortAdapterValidator {
 }
 
 impl PortAdapterValidator {
-    /// Creates a new port/adapter validator.
+    /// Creates a new port/adapter validator with default configuration.
     pub fn new() -> Self {
-        Self
+        Self::with_config(&ValidationConfig::new(""))
+    }
+
+    /// Creates a new port/adapter validator with current configuration.
+    pub fn with_config(_config: &ValidationConfig) -> Self {
+        use crate::pattern_registry::PATTERNS;
+
+        let rule_id = "PORT001";
+
+        let max_port_methods = PATTERNS
+            .get_config(rule_id)
+            .and_then(|v| v.get("max_port_methods"))
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize)
+            .unwrap_or(10);
+
+        let adapter_suffixes = PATTERNS.get_config_list(rule_id, "adapter_suffixes");
+        let ports_dir = PATTERNS
+            .get_config(rule_id)
+            .and_then(|v| v.get("ports_dir"))
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| "crates/mcb-application/src/ports".to_string());
+        let providers_dir = PATTERNS
+            .get_config(rule_id)
+            .and_then(|v| v.get("providers_dir"))
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| "crates/mcb-providers/src".to_string());
+
+        if adapter_suffixes.is_empty() {
+            panic!(
+                "PortAdapterValidator: Rule {rule_id} missing 'adapter_suffixes' in YAML config."
+            );
+        }
+
+        Self {
+            max_port_methods,
+            adapter_suffixes,
+            ports_dir,
+            providers_dir,
+        }
     }
 
     /// Validates port/adapter compliance for the given configuration.
@@ -200,9 +246,7 @@ impl PortAdapterValidator {
         config: &ValidationConfig,
     ) -> Result<Vec<PortAdapterViolation>> {
         let mut violations = Vec::new();
-        let ports_dir = config
-            .workspace_root
-            .join("crates/mcb-application/src/ports");
+        let ports_dir = config.workspace_root.join(&self.ports_dir);
         if !ports_dir.exists() {
             return Ok(violations);
         }
@@ -254,7 +298,7 @@ impl PortAdapterValidator {
 
                         // Flag ports with too many methods (violates ISP)
                         // Single-method interfaces are valid per ISP - don't flag them
-                        if method_count > 10 {
+                        if method_count > self.max_port_methods {
                             violations.push(PortAdapterViolation::PortTooLarge {
                                 trait_name,
                                 method_count,
@@ -276,12 +320,11 @@ impl PortAdapterValidator {
         config: &ValidationConfig,
     ) -> Result<Vec<PortAdapterViolation>> {
         let mut violations = Vec::new();
-        let providers_dir = config.workspace_root.join("crates/mcb-providers/src");
+        let providers_dir = config.workspace_root.join(&self.providers_dir);
         if !providers_dir.exists() {
             return Ok(violations);
         }
 
-        let adapter_suffixes = ["Provider", "Repository", "Adapter", "Client"];
         let adapter_import_re = Regex::new(
             r"use\s+(?:crate|super)::(?:\w+::)*(\w+(?:Provider|Repository|Adapter|Client))",
         )
@@ -325,7 +368,7 @@ impl PortAdapterValidator {
                         continue;
                     }
 
-                    for suffix in &adapter_suffixes {
+                    for suffix in &self.adapter_suffixes {
                         if imported.ends_with(suffix) && !imported.starts_with("dyn") {
                             violations.push(PortAdapterViolation::AdapterUsesAdapter {
                                 adapter_name: current_adapter.to_string(),

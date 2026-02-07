@@ -130,42 +130,42 @@ impl McpServer {
         Arc::clone(&self.services.project)
     }
 
-    /// Access to consolidated index handler (for HTTP transport)
+    /// Access to index handler (for HTTP transport)
     pub fn index_handler(&self) -> Arc<IndexHandler> {
         Arc::clone(&self.handlers.index)
     }
 
-    /// Access to consolidated search handler (for HTTP transport)
+    /// Access to search handler (for HTTP transport)
     pub fn search_handler(&self) -> Arc<SearchHandler> {
         Arc::clone(&self.handlers.search)
     }
 
-    /// Access to consolidated validate handler (for HTTP transport)
+    /// Access to validate handler (for HTTP transport)
     pub fn validate_handler(&self) -> Arc<ValidateHandler> {
         Arc::clone(&self.handlers.validate)
     }
 
-    /// Access to consolidated memory handler (for HTTP transport)
+    /// Access to memory handler (for HTTP transport)
     pub fn memory_handler(&self) -> Arc<MemoryHandler> {
         Arc::clone(&self.handlers.memory)
     }
 
-    /// Access to consolidated session handler (for HTTP transport)
+    /// Access to session handler (for HTTP transport)
     pub fn session_handler(&self) -> Arc<SessionHandler> {
         Arc::clone(&self.handlers.session)
     }
 
-    /// Access to consolidated agent handler (for HTTP transport)
+    /// Access to agent handler (for HTTP transport)
     pub fn agent_handler(&self) -> Arc<AgentHandler> {
         Arc::clone(&self.handlers.agent)
     }
 
-    /// Access to consolidated VCS handler (for HTTP transport)
+    /// Access to VCS handler (for HTTP transport)
     pub fn vcs_handler(&self) -> Arc<VcsHandler> {
         Arc::clone(&self.handlers.vcs)
     }
 
-    /// Access to consolidated project handler (for HTTP transport)
+    /// Access to project handler (for HTTP transport)
     pub fn project_handler(&self) -> Arc<ProjectHandler> {
         Arc::clone(&self.handlers.project)
     }
@@ -190,7 +190,7 @@ impl ServerHandler for McpServer {
             instructions: Some(
                 r#"MCP Context Browser - Semantic Code Search
 
-Consolidated tools:
+tools:
 - index: Index operations (start, status, clear)
 - search: Unified search for code or memory
 - validate: Validation and analysis operations

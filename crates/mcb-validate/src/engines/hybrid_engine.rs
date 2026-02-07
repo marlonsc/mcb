@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use super::expression_engine::ExpressionEngine;
 use super::rete_engine::ReteEngine;
 use super::router::RuleEngineRouter;
-use super::rust_rule_engine::RustRuleEngineWrapper;
+
 use super::rusty_rules_engine::RustyRulesEngineWrapper;
 use super::validator_engine::ValidatorEngine;
 use crate::Result;
@@ -157,7 +157,6 @@ pub struct RuleContext {
 
 /// Hybrid engine that coordinates multiple rule engines
 pub struct HybridRuleEngine {
-    rust_rule_engine: RustRuleEngineWrapper,
     rusty_rules_engine: RustyRulesEngineWrapper,
     expression_engine: ExpressionEngine,
     rete_engine: ReteEngine,
@@ -170,7 +169,6 @@ impl HybridRuleEngine {
     /// Create a new hybrid rule engine
     pub fn new() -> Self {
         Self {
-            rust_rule_engine: RustRuleEngineWrapper::new(),
             rusty_rules_engine: RustyRulesEngineWrapper::new(),
             expression_engine: ExpressionEngine::new(),
             rete_engine: ReteEngine::new(),
@@ -192,9 +190,7 @@ impl HybridRuleEngine {
 
         let violations = match engine_type {
             RuleEngineType::RustRuleEngine => {
-                self.rust_rule_engine
-                    .execute(rule_definition, context)
-                    .await?
+                self.rete_engine.execute(rule_definition, context).await?
             }
             RuleEngineType::RustyRules => {
                 self.rusty_rules_engine
@@ -436,7 +432,6 @@ impl Default for HybridRuleEngine {
 impl Clone for HybridRuleEngine {
     fn clone(&self) -> Self {
         Self {
-            rust_rule_engine: self.rust_rule_engine.clone(),
             rusty_rules_engine: self.rusty_rules_engine.clone(),
             expression_engine: self.expression_engine.clone(),
             rete_engine: self.rete_engine.clone(),

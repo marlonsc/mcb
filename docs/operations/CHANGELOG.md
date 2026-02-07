@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Success Criteria
 
--   2245+ tests passing (unit, integration, end-to-end)
+-   2239+ tests passing (unit, integration, end-to-end)
 -   85%+ code coverage minimum
 -   Zero architecture violations
 -   Complete documentation and v0.3.0 → v0.4.0 migration guide
@@ -89,7 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   **YAML Frontmatter**: All ADRs now include standardized frontmatter (ADR, title, status, created, updated, related, supersedes, superseded_by, implementation_status)
 -   **ADR Archive Structure**: New `docs/adr/archive/` directory for superseded decisions (ADR-012, ADR-024, ADR-032)
--   **Consolidated ADRs**: ADR-003 & ADR-030 merged into unified "Provider Architecture & Routing" decision
+-   **ADRs**: ADR-003 & ADR-030 merged into unified "Provider Architecture & Routing" decision
 -   **Cross-Reference Updates**: All internal ADR links updated (ADR-024 → ADR-029, ADR-030 → ADR-003)
 -   **Release Roadmap**: v0.3.0 → v0.4.0 coordination strategy documented
 
@@ -124,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   801+ lines added, 874+ lines removed
 -   0 architecture violations
 -   0 lint errors
--   2245+ tests passing
+-   2239+ tests passing
 
 ---
 
@@ -152,7 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Dependencies Planned**: sqlx (SQLite support)
 -   **Implementation Phases**: 10 phases for session memory (on top of 10 for git)
 -   **Estimated LOC**: ~3,000 for memory subsystem
--   **MCP Tool Consolidation**: 38 legacy tools consolidated into 8 tools (index, search, validate, memory, session, agent, project, vcs)
+-   **MCP Tool Consolidation**: 38 legacy tools into 8 tools (index, search, validate, memory, session, agent, project, vcs)
 
 ---
 
@@ -237,7 +237,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.3** delivers config consolidation and validation fixes. 16 config files consolidated to 6, all 23 validation violations resolved.
+**MCP Context Browser v0.1.3** delivers config consolidation and validation fixes. 16 config files to 6, all 23 validation violations resolved.
 
 ### Changed
 
@@ -401,7 +401,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Provider Registration**: Compile-time (from runtime discovery)
 -   **Validation Coverage**: 12 architecture patterns automated
 -   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
--   **Test Coverage**: 2245+ tests maintained
+-   **Test Coverage**: 2239+ tests maintained
 -   **Architecture Compliance**: Automated validation of 7-crate clean architecture
 
 ### Next Steps (v0.1.3 or v0.2.0)
@@ -469,7 +469,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   **Clean Architecture**: Complete refactoring with trait-based dependency injection
--   **Test Suite**: Expanded to 2245+ tests organized by Clean Architecture layers
+-   **Test Suite**: Expanded to 2239+ tests organized by Clean Architecture layers
 -   **Configuration**: Modular configuration with cache and limits separated
 -   **Server Operations**: Extracted operations to dedicated module (`src/server/operations.rs`)
 -   **Metrics**: Dedicated metrics module (`src/server/metrics.rs`)
@@ -498,7 +498,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
 -   **Provider Support**: 6 embedding providers, 6 vector stores
 -   **Language Support**: 14 languages with AST parsing
--   **Test Coverage**: 2245+ tests
+-   **Test Coverage**: 2239+ tests
 
 ---
 

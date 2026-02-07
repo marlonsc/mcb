@@ -36,7 +36,7 @@ Each provider has a clean port trait, a linkme-registered implementation, and is
 **This ADR** defines:
 
 1.  `WorkflowService` — an application service (in `mcb-application`) that orchestrates all three providers
-2.  A consolidated `workflow` MCP tool (following ADR-033 action-based pattern) exposed via `mcb-server`
+2.  A `workflow` MCP tool (following ADR-033 action-based pattern) exposed via `mcb-server`
 3.  An event system for workflow state changes
 4.  DI registration integrating all workflow components into the existing `build_catalog()`
 
@@ -1172,7 +1172,7 @@ pub struct WorkflowStatus {
 
 use serde::{Deserialize, Serialize};
 
-/// Consolidated `workflow` MCP tool following ADR-033 action-based pattern.
+/// `workflow` MCP tool following ADR-033 action-based pattern.
 ///
 /// Single tool with multiple actions, replacing what would be 7+ separate tools.
 #[derive(Debug, Deserialize)]

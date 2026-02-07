@@ -1,0 +1,43 @@
+schema: "rule/v1"
+id: "LAYER001"
+name: "Layer Flow Rules"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Clean Architecture layer dependency rules"
+rationale: "Enforces unidirectional dependency flow from high-level to low-level layers"
+
+config:
+  layers:
+    - "mcb-domain"
+    - "mcb-application"
+    - "mcb-providers"
+    - "mcb-infrastructure"
+    - "mcb-server"
+  forbidden_dependencies:
+    mcb-domain:
+      - "mcb-application"
+      - "mcb-providers"
+      - "mcb-infrastructure"
+      - "mcb-server"
+    mcb-application:
+      - "mcb-providers"
+      - "mcb-infrastructure"
+      - "mcb-server"
+    mcb-providers:
+      - "mcb-infrastructure"
+      - "mcb-server"
+    mcb-infrastructure:
+      - "mcb-server"
+    mcb-server:
+      - "mcb-providers"
+
+rule: |
+  rule LayerFlow "Layer Flow Rules" {
+      when
+          True
+      then
+          // Provides configuration for LayerFlowValidator
+  }

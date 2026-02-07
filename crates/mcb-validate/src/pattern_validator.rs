@@ -273,40 +273,30 @@ impl PatternValidator {
 
     /// Verify `Arc<dyn Trait>` pattern instead of `Arc<ConcreteType>`
     pub fn validate_trait_based_di(&self) -> Result<Vec<PatternViolation>> {
+        use crate::pattern_registry::PATTERNS;
         let mut violations = Vec::new();
 
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
-        let arc_pattern = Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").unwrap();
+        let arc_pattern = PATTERNS
+            .get("CA017.arc_pattern")
+            .cloned()
+            .unwrap_or_else(|| Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").unwrap());
 
         // Known concrete types that are OK to use directly
-        let allowed_concrete = [
-            // Standard library sync primitives
-            "String",
-            "Mutex",
-            "RwLock",
-            "AtomicBool",
-            "AtomicUsize",
-            "AtomicU32",
-            "AtomicU64",
-            "AtomicI32",
-            "AtomicI64",
-            "Notify",
-            "Barrier",
-            "Semaphore",
-            "Once",
-            // Infrastructure services that are intentionally concrete
-            "CryptoService", // Encryption service - no need for trait abstraction
-            // Handler types that are final implementations
-            "ToolHandler",
-            "ResourceHandler",
-            "PromptHandler",
-            "AdminHandler",
-            "ToolRouter",
-        ];
+        let allowed_concrete = PATTERNS.get_config_list("CA017", "allowed_concrete_types");
 
         // Provider trait names that should use Arc<dyn ...>
-        // Note: "Handler" is excluded - handlers are typically final implementations
-        let provider_traits = ["Provider", "Service", "Repository", "Interface"];
+        let provider_traits = PATTERNS.get_config_list("CA017", "provider_trait_suffixes");
+
+        if allowed_concrete.is_empty() {
+            panic!("PatternValidator: Rule CA017 missing 'allowed_concrete_types' in YAML config.");
+        }
+
+        if provider_traits.is_empty() {
+            panic!(
+                "PatternValidator: Rule CA017 missing 'provider_trait_suffixes' in YAML config."
+            );
+        }
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
@@ -338,7 +328,7 @@ impl PatternValidator {
                         let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip allowed concrete types
-                        if allowed_concrete.contains(&type_name) {
+                        if allowed_concrete.iter().any(|s| s == type_name) {
                             continue;
                         }
 

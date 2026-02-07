@@ -172,6 +172,18 @@ pub struct RulesConfig {
     /// SOLID principle rules
     #[serde(default)]
     pub solid: SolidRulesConfig,
+
+    /// Visibility validation rules
+    #[serde(default)]
+    pub visibility: VisibilityRulesConfig,
+
+    /// Layer flow validation rules
+    #[serde(default)]
+    pub layer_flow: LayerFlowRulesConfig,
+
+    /// Port/Adapter validation rules
+    #[serde(default)]
+    pub port_adapter: PortAdapterRulesConfig,
 }
 
 /// Architecture validation rules configuration
@@ -392,6 +404,120 @@ impl Default for SolidRulesConfig {
             max_impl_methods: MAX_IMPL_METHODS,
             max_match_arms: MAX_MATCH_ARMS,
             max_function_params: MAX_FUNCTION_PARAMS,
+        }
+    }
+}
+
+/// Visibility rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct VisibilityRulesConfig {
+    /// Whether visibility validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Directories containing internal helpers (should use pub(crate))
+    #[serde(default)]
+    pub internal_dirs: Vec<String>,
+
+    /// Items exempted from visibility checks
+    #[serde(default)]
+    pub exempted_items: Vec<String>,
+
+    /// Patterns for utility modules to check for excessive pub items
+    #[serde(default)]
+    pub utility_module_patterns: Vec<String>,
+
+    /// Threshold for pub count in utility modules
+    #[serde(default = "default_pub_count_threshold")]
+    pub pub_count_threshold: usize,
+}
+
+fn default_pub_count_threshold() -> usize {
+    3
+}
+
+impl Default for VisibilityRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            internal_dirs: vec![],
+            exempted_items: vec![],
+            utility_module_patterns: vec![],
+            pub_count_threshold: 3,
+        }
+    }
+}
+
+/// Layer Flow rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct LayerFlowRulesConfig {
+    /// Whether layer flow validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Map of source crate -> list of forbidden dependency crates
+    #[serde(default)]
+    pub forbidden_dependencies: std::collections::HashMap<String, Vec<String>>,
+
+    /// List of crates to check for circular dependencies
+    #[serde(default)]
+    pub circular_dependency_check_crates: Vec<String>,
+}
+
+impl Default for LayerFlowRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            forbidden_dependencies: std::collections::HashMap::new(),
+            circular_dependency_check_crates: vec![],
+        }
+    }
+}
+
+/// Port/Adapter rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct PortAdapterRulesConfig {
+    /// Whether port/adapter validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Maximum methods allowed in a port trait
+    #[serde(default = "default_max_port_methods")]
+    pub max_port_methods: usize,
+
+    /// Suffixes that identify adapter implementations
+    #[serde(default)]
+    pub adapter_suffixes: Vec<String>,
+
+    /// Directory where ports are defined
+    #[serde(default = "default_ports_dir")]
+    pub ports_dir: String,
+
+    /// Directory where providers (adapters) are defined
+    #[serde(default = "default_providers_dir")]
+    pub providers_dir: String,
+}
+
+fn default_max_port_methods() -> usize {
+    10
+}
+
+fn default_ports_dir() -> String {
+    "crates/mcb-application/src/ports".to_string()
+}
+
+fn default_providers_dir() -> String {
+    "crates/mcb-providers/src".to_string()
+}
+
+impl Default for PortAdapterRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_port_methods: 10,
+            adapter_suffixes: vec![],
+            ports_dir: default_ports_dir(),
+            providers_dir: default_providers_dir(),
         }
     }
 }
