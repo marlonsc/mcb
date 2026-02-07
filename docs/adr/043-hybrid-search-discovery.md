@@ -211,6 +211,58 @@ impl ContextSearchService {
 // - ContextGraphTraversal handles graph traversal and distance computation
 ```
 
+### 3.1 Port Traits (mcb-domain)
+
+**FullTextSearchProvider** (`mcb-domain/src/ports/providers/full_text_search.rs`):
+
+```rust
+use async_trait::async_trait;
+use thiserror::Error;
+use linkme::distributed_slice;
+
+#[derive(Debug, Clone)]
+pub struct FtsOptions {
+    pub k: u64,                    // Top-k results
+    pub min_score: Option<f32>,    // Minimum score threshold
+    pub field_weights: Option<Vec<(String, f32)>>, // Field-specific weights
+}
+
+#[derive(Debug, Clone)]
+pub struct FtsResult {
+    pub id: String,                // Node ID
+    pub score: f32,                // BM25 score
+    pub matched_fields: Vec<String>, // Which fields matched
+}
+
+#[derive(Debug, Error)]
+pub enum FtsError {
+    #[error("FTS search failed: {0}")]
+    SearchFailed(String),
+    #[error("Index error: {0}")]
+    IndexError(String),
+}
+
+pub type FtsResult<T> = Result<T, FtsError>;
+
+/// Port trait for full-text search providers
+/// Implementations: tantivy (default in mcb-providers), elasticsearch, meilisearch
+#[async_trait]
+pub trait FullTextSearchProvider: Send + Sync {
+    /// Search code content using BM25 ranking
+    async fn search(&self, query: &str, options: FtsOptions) -> FtsResult<Vec<FtsResult>>;
+    
+    /// Index a document
+    async fn index(&self, id: &str, content: &str) -> FtsResult<()>;
+    
+    /// Clear all indexed documents
+    async fn clear(&self) -> FtsResult<()>;
+}
+
+/// Linkme distributed slice for provider registration
+#[distributed_slice]
+pub static FULL_TEXT_SEARCH_PROVIDERS: [&'static dyn FullTextSearchProvider] = [..];
+```
+
 ### 4. Integration with Memory System
 
 MCB v0.2.0 already has memory system with FTS5 + hybrid search. v0.4.0 extends this:
