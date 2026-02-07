@@ -22,6 +22,7 @@ pub struct GoDetector {
 }
 
 impl GoDetector {
+    /// Create a new Go detector
     pub fn new(_config: &ProjectDetectorConfig) -> std::result::Result<Self, regex::Error> {
         let module_re = Regex::new(r"^module\s+(\S+)")?;
         let go_version_re = Regex::new(r"^go\s+(\d+\.\d+)")?;

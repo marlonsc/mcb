@@ -17,6 +17,7 @@ use super::PROJECT_DETECTORS;
 pub struct CargoDetector;
 
 impl CargoDetector {
+    /// Create a new Cargo detector
     #[must_use]
     pub fn new(_config: &ProjectDetectorConfig) -> Self {
         Self

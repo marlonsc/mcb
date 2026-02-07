@@ -30,6 +30,7 @@ struct PyProjectProject {
 pub struct PythonDetector;
 
 impl PythonDetector {
+    /// Create a new Python detector
     #[must_use]
     pub fn new(_config: &ProjectDetectorConfig) -> Self {
         Self

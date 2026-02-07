@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! # Infrastructure Layer
 //!
 //! Cross-cutting technical concerns that support the application and domain layers.

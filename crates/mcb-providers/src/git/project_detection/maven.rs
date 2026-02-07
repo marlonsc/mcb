@@ -19,6 +19,7 @@ use super::PROJECT_DETECTORS;
 pub struct MavenDetector;
 
 impl MavenDetector {
+    /// Create a new Maven detector
     #[must_use]
     pub fn new(_config: &ProjectDetectorConfig) -> Self {
         Self

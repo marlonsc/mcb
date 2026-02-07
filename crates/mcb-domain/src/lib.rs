@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! # Domain Layer
 //!
 //! Core business logic and domain types for semantic code analysis.

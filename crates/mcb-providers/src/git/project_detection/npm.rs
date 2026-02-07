@@ -27,6 +27,7 @@ struct PackageJson {
 pub struct NpmDetector;
 
 impl NpmDetector {
+    /// Create a new NPM detector
     #[must_use]
     pub fn new(_config: &ProjectDetectorConfig) -> Self {
         Self
