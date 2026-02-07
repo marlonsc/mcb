@@ -2,6 +2,6 @@
 //!
 //! Domain service implementations provided by the infrastructure layer.
 
-pub mod highlight;
+pub mod highlight_service;
 
-pub use highlight::HighlightServiceImpl;
+pub use highlight_service::HighlightServiceImpl;

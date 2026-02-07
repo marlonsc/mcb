@@ -28,6 +28,7 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::admin::{
     IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
 };
+use mcb_domain::ports::browse::HighlightService;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
@@ -83,7 +84,7 @@ pub struct AppContext {
     // ========================================================================
     // Infrastructure Services
     // ========================================================================
-    highlight_service: Arc<HighlightServiceImpl>,
+    highlight_service: Arc<dyn HighlightService>,
     crypto_service: Arc<CryptoService>,
 }
 
@@ -189,7 +190,7 @@ impl AppContext {
     }
 
     /// Get highlight service
-    pub fn highlight_service(&self) -> Arc<HighlightServiceImpl> {
+    pub fn highlight_service(&self) -> Arc<dyn HighlightService> {
         self.highlight_service.clone()
     }
 
@@ -311,7 +312,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     let vcs_provider = crate::di::vcs::default_vcs_provider();
     let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
 
-    let highlight_service = Arc::new(HighlightServiceImpl::new());
+    let highlight_service: Arc<dyn HighlightService> = Arc::new(HighlightServiceImpl::new());
 
     // ========================================================================
     // Create Crypto Service

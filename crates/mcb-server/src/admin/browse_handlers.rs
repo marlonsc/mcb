@@ -228,7 +228,9 @@ pub async fn get_file_chunks(
         };
 
         let highlighted_html =
-            mcb_infrastructure::services::highlight::convert_highlighted_code_to_html(&highlighted);
+            mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(
+                &highlighted,
+            );
 
         chunk_responses.push(ChunkDetailResponse {
             id: c.id,
@@ -324,7 +326,5 @@ fn insert_into_tree(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    // Unit tests are located in tests/unit/browse_handlers_tests.rs
-}
+// Tests removed to satisfy validation (TestViolation::InlineTestModule)
+// See tests/unit/browse_handlers_tests.rs

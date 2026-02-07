@@ -5,7 +5,9 @@
 use mcb_domain::error::Error;
 use mcb_domain::ports::browse::{HighlightError, HighlightService};
 use mcb_domain::value_objects::browse::HighlightCategory;
-use mcb_server::handlers::highlight_service::{HighlightServiceImpl, map_highlight_to_category};
+use mcb_infrastructure::services::highlight_service::{
+    HighlightServiceImpl, map_highlight_to_category,
+};
 use std::time::Instant;
 
 #[tokio::test]

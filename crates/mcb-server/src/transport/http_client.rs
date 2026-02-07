@@ -223,8 +223,5 @@ impl HttpClientTransport {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    // Integration tests are located in tests/integration/operating_modes_integration.rs
-    // See: test_http_client_* tests for coverage
-}
+// Tests removed to satisfy validation (TestViolation::InlineTestModule)
+// See tests/integration/operating_modes_integration.rs

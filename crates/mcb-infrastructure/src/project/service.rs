@@ -9,6 +9,7 @@ use mcb_providers::git::detect_all_projects;
 use std::path::Path;
 
 /// Real implementation of project detector service
+#[derive(Debug, PartialEq)]
 pub struct ProjectService;
 
 impl ProjectService {
