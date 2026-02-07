@@ -84,6 +84,7 @@ pub enum PerformanceViolation {
 }
 
 impl PerformanceViolation {
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::CloneInLoop { severity, .. }

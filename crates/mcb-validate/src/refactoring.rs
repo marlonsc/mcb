@@ -97,6 +97,7 @@ pub enum RefactoringViolation {
 }
 
 impl RefactoringViolation {
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::OrphanImport { severity, .. }

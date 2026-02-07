@@ -103,6 +103,7 @@ pub enum KissViolation {
 }
 
 impl KissViolation {
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::StructTooManyFields { severity, .. }

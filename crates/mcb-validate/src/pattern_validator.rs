@@ -80,6 +80,7 @@ pub enum PatternViolation {
 }
 
 impl PatternViolation {
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::ConcreteTypeInDi { severity, .. }

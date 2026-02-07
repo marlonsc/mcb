@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::args::{AgentAction, AgentArgs};
 use mcb_server::handlers::AgentHandler;
 use rmcp::handler::server::wrapper::Parameters;

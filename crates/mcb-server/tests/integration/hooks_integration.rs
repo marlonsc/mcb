@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::hooks::{HookProcessor, PostToolUseContext, SessionStartContext};
 use rmcp::model::{CallToolResult, Content};
 
@@ -31,7 +32,7 @@ async fn test_post_tool_use_hook_graceful_degradation() {
 #[tokio::test]
 async fn test_session_start_hook_graceful_degradation() {
     let processor = HookProcessor::new(None);
-    let context = SessionStartContext::new("test_session".to_string());
+    let context = SessionStartContext::new(SessionId::new("test_session"));
 
     let result = processor.process_session_start(context).await;
     assert!(result.is_err());
@@ -54,9 +55,12 @@ async fn test_post_tool_use_context_with_session_id() {
     let tool_output = CallToolResult::success(vec![Content::text("Output")]);
 
     let context = PostToolUseContext::new("index".to_string(), tool_output)
-        .with_session_id("session_123".to_string());
+        .with_session_id(SessionId::new("session_123"));
 
-    assert_eq!(context.session_id, Some("session_123".to_string()));
+    assert_eq!(
+        context.session_id.as_ref().map(|id| id.as_str()),
+        Some("session_123")
+    );
 }
 
 #[tokio::test]
@@ -71,8 +75,8 @@ async fn test_post_tool_use_context_with_metadata() {
 
 #[tokio::test]
 async fn test_session_start_context_creation() {
-    let context = SessionStartContext::new("session_456".to_string());
-    assert_eq!(context.session_id, "session_456");
+    let context = SessionStartContext::new(SessionId::new("session_456"));
+    assert_eq!(context.session_id.as_str(), "session_456");
     assert!(context.timestamp > 0);
 }
 

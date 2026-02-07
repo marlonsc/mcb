@@ -42,8 +42,11 @@ impl std::fmt::Display for RoutedEngine {
 /// Analyzes rule definitions and routes them to the appropriate engine.
 #[allow(clippy::struct_field_names)]
 pub struct RuleEngineRouter {
+    /// Engine for processing complex rules using RETE algorithm
     rete_engine: ReteEngine,
+    /// Engine for processing simple boolean expressions
     expression_engine: ExpressionEngine,
+    /// Engine for processing rules using JSON DSL
     rusty_rules_engine: RustyRulesEngineWrapper,
 }
 

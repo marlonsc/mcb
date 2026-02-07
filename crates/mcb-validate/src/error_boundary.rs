@@ -16,31 +16,49 @@ use walkdir::WalkDir;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ErrorBoundaryViolation {
     /// Error crossing layer without context
+    /// Error crossing layer without context
     MissingErrorContext {
+        /// File containing the violation
         file: PathBuf,
+        /// Line number of the propagation
         line: usize,
+        /// Description of the error pattern detected
         error_pattern: String,
+        /// Recommended fix (e.g., add context)
         suggestion: String,
+        /// Severity of the violation
         severity: Severity,
     },
     /// Infrastructure error type used in domain layer
+    /// Infrastructure error type used in domain layer
     WrongLayerError {
+        /// File containing the violation
         file: PathBuf,
+        /// Line number of the usage
         line: usize,
+        /// The infrastructure error type detected
         error_type: String,
+        /// The layer where it was used incorrectly
         layer: String,
+        /// Severity of the violation
         severity: Severity,
     },
     /// Internal error details leaked to external API
+    /// Internal error details leaked to external API
     LeakedInternalError {
+        /// File containing the violation
         file: PathBuf,
+        /// Line number of the leak
         line: usize,
+        /// Description of the leak pattern detected
         pattern: String,
+        /// Severity of the violation
         severity: Severity,
     },
 }
 
 impl ErrorBoundaryViolation {
+    /// Returns the severity level of this violation
     pub fn severity(&self) -> Severity {
         match self {
             Self::MissingErrorContext { severity, .. }
@@ -51,6 +69,7 @@ impl ErrorBoundaryViolation {
 }
 
 impl std::fmt::Display for ErrorBoundaryViolation {
+    /// Formats the violation as a human-readable string
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::MissingErrorContext {
@@ -104,6 +123,7 @@ impl std::fmt::Display for ErrorBoundaryViolation {
 }
 
 impl Violation for ErrorBoundaryViolation {
+    /// Returns the unique identifier for this violation type
     fn id(&self) -> &str {
         match self {
             Self::MissingErrorContext { .. } => "ERR001",
@@ -112,10 +132,12 @@ impl Violation for ErrorBoundaryViolation {
         }
     }
 
+    /// Returns the violation category
     fn category(&self) -> ViolationCategory {
         ViolationCategory::ErrorBoundary
     }
 
+    /// Returns the severity level of this violation
     fn severity(&self) -> Severity {
         match self {
             Self::MissingErrorContext { severity, .. }
@@ -124,6 +146,7 @@ impl Violation for ErrorBoundaryViolation {
         }
     }
 
+    /// Returns the file path where the violation was detected
     fn file(&self) -> Option<&PathBuf> {
         match self {
             Self::MissingErrorContext { file, .. }
@@ -132,6 +155,7 @@ impl Violation for ErrorBoundaryViolation {
         }
     }
 
+    /// Returns the line number where the violation was detected
     fn line(&self) -> Option<usize> {
         match self {
             Self::MissingErrorContext { line, .. }
@@ -140,6 +164,7 @@ impl Violation for ErrorBoundaryViolation {
         }
     }
 
+    /// Returns a suggestion for fixing this violation
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::MissingErrorContext { suggestion, .. } => Some(suggestion.clone()),
@@ -161,17 +186,17 @@ pub struct ErrorBoundaryValidator {
 }
 
 impl ErrorBoundaryValidator {
-    /// Create a new error boundary validator
+    /// Creates a new error boundary validator with default configuration
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Create a validator with custom configuration
+    /// Creates a validator with custom configuration
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
 
-    /// Run all error boundary validations
+    /// Runs all error boundary validations and returns detected violations
     pub fn validate_all(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_error_context()?);
@@ -180,7 +205,7 @@ impl ErrorBoundaryValidator {
         Ok(violations)
     }
 
-    /// Detect error propagation without context
+    /// Detects error propagation without context (missing `.context()` or `.map_err()`)
     pub fn validate_error_context(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
@@ -258,7 +283,7 @@ impl ErrorBoundaryValidator {
         Ok(violations)
     }
 
-    /// Detect infrastructure error types in domain layer
+    /// Detects infrastructure error types used in domain layer (layer boundary violation)
     pub fn validate_layer_error_types(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
@@ -346,7 +371,7 @@ impl ErrorBoundaryValidator {
         Ok(violations)
     }
 
-    /// Detect internal error details leaked to API responses
+    /// Detects internal error details leaked to API responses (information disclosure)
     pub fn validate_leaked_errors(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
@@ -430,14 +455,17 @@ impl ErrorBoundaryValidator {
 }
 
 impl crate::validator_trait::Validator for ErrorBoundaryValidator {
+    /// Returns the validator name
     fn name(&self) -> &'static str {
         "error_boundary"
     }
 
+    /// Returns the validator description
     fn description(&self) -> &'static str {
         "Validates error handling patterns across layer boundaries"
     }
 
+    /// Executes validation and returns violations as trait objects
     fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
         let violations = self.validate_all()?;
         Ok(violations

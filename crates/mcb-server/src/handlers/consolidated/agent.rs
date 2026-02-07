@@ -85,7 +85,7 @@ impl AgentHandler {
                 match self.agent_service.store_tool_call(tool_call).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "tool_call_id": id,
-                        "session_id": args.session_id.as_str(),
+                        "session_id": args.session_id.to_string(),
                         "tool_name": tool_name,
                     })),
                     Err(_) => Ok(CallToolResult::error(vec![Content::text(
@@ -117,7 +117,7 @@ impl AgentHandler {
                 match self.agent_service.store_delegation(delegation).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "delegation_id": id,
-                        "parent_session_id": args.session_id.as_str(),
+                        "parent_session_id": args.session_id.to_string(),
                         "child_session_id": child_session_id,
                     })),
                     Err(_) => Ok(CallToolResult::error(vec![Content::text(

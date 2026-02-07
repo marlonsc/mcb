@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::args::{SessionAction, SessionArgs};
 use mcb_server::handlers::SessionHandler;
 use rmcp::handler::server::wrapper::Parameters;
@@ -93,7 +94,7 @@ async fn test_session_get_success() {
 
     let args = SessionArgs {
         action: SessionAction::Get,
-        session_id: Some("test-session-id".to_string()),
+        session_id: Some(SessionId::new("test-session-id")),
         data: None,
         project_id: None,
         agent_type: None,
@@ -115,7 +116,7 @@ async fn test_session_get_nonexistent_session() {
 
     let args = SessionArgs {
         action: SessionAction::Get,
-        session_id: Some("nonexistent-session".to_string()),
+        session_id: Some(SessionId::new("nonexistent-session")),
         data: None,
         project_id: None,
         agent_type: None,
@@ -137,7 +138,7 @@ async fn test_session_summarize_success() {
 
     let args = SessionArgs {
         action: SessionAction::Summarize,
-        session_id: Some("test-session-id".to_string()),
+        session_id: Some(SessionId::new("test-session-id")),
         data: None,
         project_id: None,
         agent_type: None,
@@ -159,7 +160,7 @@ async fn test_session_summarize_nonexistent_session() {
 
     let args = SessionArgs {
         action: SessionAction::Summarize,
-        session_id: Some("nonexistent-session".to_string()),
+        session_id: Some(SessionId::new("nonexistent-session")),
         data: None,
         project_id: None,
         agent_type: None,

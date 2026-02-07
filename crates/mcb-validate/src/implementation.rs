@@ -96,6 +96,7 @@ pub enum ImplementationViolation {
 }
 
 impl ImplementationViolation {
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::EmptyMethodBody { severity, .. }

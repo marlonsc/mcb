@@ -12,23 +12,36 @@ use walkdir::WalkDir;
 /// Visibility Violations
 #[derive(Debug, Clone, Serialize)]
 pub enum VisibilityViolation {
+    /// Internal helper is public but should be restricted.
     InternalHelperTooPublic {
+        /// Name of the helper item.
         item_name: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
+    /// Domain type visibility is too restricted (should be public).
     DomainTypeTooRestricted {
+        /// Name of the domain type.
         type_name: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
+    /// Utility module exposes too many public items.
     UtilityModuleTooPublic {
+        /// Name of the utility module.
         module_name: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
 }
 
+/// Display implementation for visibility violations.
 impl std::fmt::Display for VisibilityViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -69,6 +82,7 @@ impl std::fmt::Display for VisibilityViolation {
     }
 }
 
+/// Violation trait implementation for visibility violations.
 impl Violation for VisibilityViolation {
     fn id(&self) -> &str {
         match self {
@@ -125,6 +139,7 @@ impl Violation for VisibilityViolation {
 /// Visibility Validator
 pub struct VisibilityValidator;
 
+/// Default implementation for visibility validator.
 impl Default for VisibilityValidator {
     fn default() -> Self {
         Self::new()
@@ -132,10 +147,12 @@ impl Default for VisibilityValidator {
 }
 
 impl VisibilityValidator {
+    /// Creates a new visibility validator.
     pub fn new() -> Self {
         Self
     }
 
+    /// Validates visibility rules for the given configuration.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<VisibilityViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.check_internal_helpers(config)?);
@@ -275,6 +292,7 @@ impl VisibilityValidator {
     }
 }
 
+/// Validator trait implementation for visibility validation.
 impl crate::validator_trait::Validator for VisibilityValidator {
     fn name(&self) -> &'static str {
         "visibility"

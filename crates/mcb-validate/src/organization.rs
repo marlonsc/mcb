@@ -255,6 +255,7 @@ pub enum OrganizationViolation {
 }
 
 impl OrganizationViolation {
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::MagicNumber { severity, .. }

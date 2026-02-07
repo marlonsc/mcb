@@ -170,7 +170,7 @@ impl Violation for PortAdapterViolation {
     }
 }
 
-/// Port/Adapter Compliance Validator
+/// Validates Clean Architecture port/adapter patterns and interface segregation.
 pub struct PortAdapterValidator;
 
 impl Default for PortAdapterValidator {
@@ -180,10 +180,12 @@ impl Default for PortAdapterValidator {
 }
 
 impl PortAdapterValidator {
+    /// Creates a new port/adapter validator.
     pub fn new() -> Self {
         Self
     }
 
+    /// Validates port/adapter compliance for the given configuration.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<PortAdapterViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.check_port_trait_sizes(config)?);

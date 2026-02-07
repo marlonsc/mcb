@@ -200,8 +200,11 @@ pub struct LegacyValidatorAdapter<F>
 where
     F: Fn(&ValidationConfig) -> Result<Vec<Box<dyn Violation>>> + Send + Sync,
 {
+    /// Unique name of the validator
     name: &'static str,
+    /// Detailed description of what it validates
     description: &'static str,
+    /// Function that performs the validation
     validate_fn: F,
 }
 

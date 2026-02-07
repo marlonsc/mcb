@@ -14,23 +14,39 @@ use walkdir::WalkDir;
 /// Layer Flow Violations
 #[derive(Debug, Clone, Serialize)]
 pub enum LayerFlowViolation {
+    /// Dependency detected that violates the allowed layer flow.
     ForbiddenDependency {
+        /// Name of the crate containing the violation.
         source_crate: String,
+        /// Name of the crate being illegally imported.
         target_crate: String,
+        /// The specific import path used.
         import_path: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
+    /// Circular dependency detected between crates.
     CircularDependency {
+        /// First crate in the cycle.
         crate_a: String,
+        /// Second crate in the cycle.
         crate_b: String,
+        /// File where the dependency is declared (Cargo.toml).
         file: PathBuf,
+        /// Line number (usually 1 for Cargo.toml).
         line: usize,
     },
+    /// Domain layer importing external crates (should be pure).
     DomainExternalDependency {
+        /// Name of the domain crate.
         crate_name: String,
+        /// Name of the external crate being imported.
         external_crate: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
 }
@@ -138,7 +154,9 @@ impl Violation for LayerFlowViolation {
     }
 }
 
+/// Defines forbidden dependency relationships between layers.
 struct LayerRules {
+    /// Maps source crates to sets of crates they cannot depend on.
     forbidden: HashMap<&'static str, HashSet<&'static str>>,
 }
 
@@ -174,6 +192,7 @@ impl Default for LayerRules {
 
 /// Layer Flow Validator
 pub struct LayerFlowValidator {
+    /// Forbidden dependency rules for Clean Architecture layers.
     rules: LayerRules,
 }
 
@@ -184,12 +203,14 @@ impl Default for LayerFlowValidator {
 }
 
 impl LayerFlowValidator {
+    /// Creates a new layer flow validator with default rules.
     pub fn new() -> Self {
         Self {
             rules: LayerRules::default(),
         }
     }
 
+    /// Validates the layer flow constraints for the given configuration.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<LayerFlowViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.check_forbidden_imports(config)?);

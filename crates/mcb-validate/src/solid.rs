@@ -149,6 +149,7 @@ pub enum SolidViolation {
 }
 
 impl SolidViolation {
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::TooManyResponsibilities { severity, .. }
@@ -390,10 +391,15 @@ impl Violation for SolidViolation {
 
 /// SOLID principles validator
 pub struct SolidValidator {
+    /// Configuration for validation scans
     config: ValidationConfig,
+    /// Maximum number of methods allowed in a trait
     max_trait_methods: usize,
+    /// Maximum number of lines allowed in a struct definition
     max_struct_lines: usize,
+    /// Maximum number of arms allowed in a match expression
     max_match_arms: usize,
+    /// Maximum number of methods allowed in an impl block
     max_impl_methods: usize,
 }
 
