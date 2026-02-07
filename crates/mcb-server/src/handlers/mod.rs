@@ -1,12 +1,22 @@
-//! MCP Tool Handlers
+//! Consolidated MCP tool handlers.
 //!
-//! Implementations of MCP tool calls using domain services.
-//! Each handler translates MCP protocol requests into domain service calls.
+//! This module contains unified handlers for MCP tool operations,
+//! organized by domain: agent, index, memory, project, search, session, validate, vcs.
 
-pub mod consolidated;
+pub mod agent;
+pub mod index;
+pub mod memory;
+pub mod project;
+pub mod search;
+pub mod session;
+pub mod validate;
+pub mod vcs;
 
-pub use consolidated::{
-    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
-    ValidateHandler, VcsHandler,
-};
-pub use mcb_infrastructure::services::HighlightServiceImpl;
+pub use agent::AgentHandler;
+pub use index::IndexHandler;
+pub use memory::MemoryHandler;
+pub use project::ProjectHandler;
+pub use search::SearchHandler;
+pub use session::SessionHandler;
+pub use validate::ValidateHandler;
+pub use vcs::VcsHandler;

@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 use crate::ast::UnwrapDetector;
-use crate::thresholds::MAX_FILE_LINES;
+use crate::thresholds::thresholds;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -350,7 +350,7 @@ impl QualityValidator {
     pub fn with_config(config: ValidationConfig) -> Self {
         Self {
             config,
-            max_file_lines: MAX_FILE_LINES,
+            max_file_lines: thresholds().max_file_lines,
         }
     }
 
