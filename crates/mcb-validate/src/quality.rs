@@ -17,64 +17,97 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-/// Quality violation types
+/// Quality violation types representing specific code quality issues.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum QualityViolation {
-    /// `unwrap()` found in production code
+    /// Indicates usage of `unwrap()` in production code, which poses a panic risk.
     UnwrapInProduction {
+        /// The file containing the violation.
         file: PathBuf,
+        /// The line number where the violation occurred.
         line: usize,
+        /// Contextual code snippet showing the usage.
         context: String,
+        /// The severity level of the violation.
         severity: Severity,
     },
-    /// `expect()` found in production code
+    /// Indicates usage of `expect()` in production code, which poses a panic risk.
     ExpectInProduction {
+        /// The file containing the violation.
         file: PathBuf,
+        /// The line number where the violation occurred.
         line: usize,
+        /// Contextual code snippet showing the usage.
         context: String,
+        /// The severity level of the violation.
         severity: Severity,
     },
-    /// panic!() found in production code
+    /// Indicates usage of `panic!()` macro in production code.
     PanicInProduction {
+        /// The file containing the violation.
         file: PathBuf,
+        /// The line number where the violation occurred.
         line: usize,
+        /// Contextual code snippet showing the usage.
         context: String,
+        /// The severity level of the violation.
         severity: Severity,
     },
-    /// File exceeds line limit
+    /// Indicates a file that exceeds the maximum allowed line count.
     FileTooLarge {
+        /// The file containing the violation.
         file: PathBuf,
+        /// The current number of lines in the file.
         lines: usize,
+        /// The maximum allowed number of lines.
         max_allowed: usize,
+        /// The severity level of the violation.
         severity: Severity,
     },
-    /// Pending comment found (T.O.D.O./F.I.X.M.E./X.X.X./H.A.C.K.)
+    /// Indicates presence of pending task comments (TODO, FIXME, etc.).
     TodoComment {
+        /// The file containing the violation.
         file: PathBuf,
+        /// The line number where the comment was found.
         line: usize,
+        /// The content of the comment.
         content: String,
+        /// The severity level of the violation.
         severity: Severity,
     },
-    /// #[`allow(dead_code)`] is not permitted; fix or remove dead code instead.
+    /// Indicates usage of `allow(dead_code)` attribute, which is not permitted.
     DeadCodeAllowNotPermitted {
+        /// The file containing the violation.
         file: PathBuf,
+        /// The line number where the attribute was found.
         line: usize,
+        /// The name of the item marked as allowed dead code.
         item_name: String,
+        /// The severity level of the violation.
         severity: Severity,
     },
-    /// Unused struct field
+    /// Indicates a struct field that is defined but never used.
     UnusedStructField {
+        /// The file containing the violation.
         file: PathBuf,
+        /// The line number where the field is defined.
         line: usize,
+        /// The name of the struct containing the field.
         struct_name: String,
+        /// The name of the unused field.
         field_name: String,
+        /// The severity level of the violation.
         severity: Severity,
     },
-    /// Function marked dead but appears uncalled
+    /// Indicates a function that is marked as dead code and appears uncalled.
     DeadFunctionUncalled {
+        /// The file containing the violation.
         file: PathBuf,
+        /// The line number where the function is defined.
         line: usize,
+        /// The name of the dead function.
         function_name: String,
+        /// The severity level of the violation.
         severity: Severity,
     },
 }
@@ -294,7 +327,7 @@ impl Violation for QualityViolation {
     }
 }
 
-/// Quality validator
+/// Validates codebase against quality standards and rules.
 pub struct QualityValidator {
     config: ValidationConfig,
     max_file_lines: usize,
@@ -305,12 +338,12 @@ impl QualityValidator {
     fn has_ignore_hint(&self, line: &str, violation_type: &str) -> bool {
         line.contains(&format!("mcb-validate-ignore: {violation_type}"))
     }
-    /// Create a new quality validator
+    /// Creates a new instance of the quality validator for the given workspace.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Create a validator with custom configuration for multi-directory support
+    /// Creates a new validator instance using a provided configuration.
     pub fn with_config(config: ValidationConfig) -> Self {
         Self {
             config,
@@ -318,14 +351,14 @@ impl QualityValidator {
         }
     }
 
-    /// Set custom max file lines
+    /// Configures the maximum allowed lines per file.
     #[must_use]
     pub fn with_max_file_lines(mut self, max: usize) -> Self {
         self.max_file_lines = max;
         self
     }
 
-    /// Run all quality validations
+    /// Executes all configured quality checks and returns any violations found.
     pub fn validate_all(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_no_unwrap_expect()?);
@@ -336,8 +369,7 @@ impl QualityValidator {
         Ok(violations)
     }
 
-    /// Report any #[`allow(dead_code)`] or #[allow(..., `dead_code`, ...)].
-    /// Justifications are not permitted; fix or remove dead code instead.
+    /// Scans for and reports usage of `allow(dead_code)` attributes.
     pub fn validate_dead_code_annotations(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
         let dead_code_pattern = Regex::new(r"#\[allow\([^\)]*dead_code[^\)]*\)\]").unwrap();
@@ -412,12 +444,10 @@ impl QualityValidator {
         None
     }
 
-    /// Check for unwrap/expect in src/ (not tests/)
+    /// Scans production code for usage of `unwrap()` and `expect()` methods.
     ///
-    /// This uses AST-based detection via Tree-sitter for accurate detection
-    /// of `.unwrap()` and `.expect()` method calls.
-    ///
-    /// Phase 2 deliverable: "QUAL001 (no-unwrap) detects `.unwrap()` calls via AST"
+    /// Uses AST-based detection to accurately identify method calls while ignoring
+    /// test files and allowed patterns.
     pub fn validate_no_unwrap_expect(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
         let mut detector = UnwrapDetector::new()?;
@@ -539,7 +569,7 @@ impl QualityValidator {
         Ok(violations)
     }
 
-    /// Check for panic!() macros in production code
+    /// Scans production code for usage of the `panic!()` macro.
     pub fn validate_no_panic(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
         let panic_pattern = Regex::new(r"panic!\s*\(").unwrap();
@@ -588,7 +618,7 @@ impl QualityValidator {
         Ok(violations)
     }
 
-    /// Validate all source files under line limit
+    /// Checks that source files do not exceed the configured line count limit.
     pub fn validate_file_sizes(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
 
@@ -632,7 +662,7 @@ impl QualityValidator {
         Ok(violations)
     }
 
-    /// Find pending comments (TODO/FIXME/XXX/HACK)
+    /// Scans for pending task comments such as TODO, FIXME, XXX, and HACK.
     pub fn find_todo_comments(&self) -> Result<Vec<QualityViolation>> {
         use crate::constants::{
             PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,

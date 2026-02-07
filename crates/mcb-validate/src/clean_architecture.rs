@@ -20,67 +20,104 @@ use walkdir::WalkDir;
 pub enum CleanArchitectureViolation {
     /// Domain layer contains implementation logic
     DomainContainsImplementation {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Type of implementation found (e.g., function body).
         impl_type: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Handler creates service directly instead of using DI
     HandlerCreatesService {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the service being created directly.
         service_name: String,
+        /// Context description of the violation.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Port implementation missing Shaku Component derive
     PortMissingComponentDerive {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the struct implementing the port.
         struct_name: String,
+        /// Name of the trait being implemented.
         trait_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Entity missing identity field
     EntityMissingIdentity {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the entity struct.
         entity_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Value object has mutable method
     ValueObjectMutable {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the value object struct.
         vo_name: String,
+        /// Name of the mutable method.
         method_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Server imports provider directly
     ServerImportsProviderDirectly {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The forbidden import path.
         import_path: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Infrastructure layer imports concrete service from Application
     ///
     /// CA007: Infrastructure should only import trait interfaces, not concrete types.
     InfrastructureImportsConcreteService {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The forbidden import path.
         import_path: String,
+        /// Name of the concrete type being imported.
         concrete_type: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Application layer imports ports from wrong location
     ///
     /// CA008: Application should import ports from mcb-domain, not locally.
     ApplicationWrongPortImport {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The incorrect import path.
         import_path: String,
+        /// The expected import path.
         should_be: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Infrastructure layer imports from Application layer
@@ -94,10 +131,15 @@ pub enum CleanArchitectureViolation {
     ///
     /// Infrastructure importing from Application creates circular dependencies.
     InfrastructureImportsApplication {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The forbidden import path.
         import_path: String,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }

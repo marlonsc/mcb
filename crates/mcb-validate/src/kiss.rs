@@ -23,51 +23,81 @@ use walkdir::WalkDir;
 pub enum KissViolation {
     /// Struct with too many fields (>7)
     StructTooManyFields {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the struct.
         struct_name: String,
+        /// Number of fields in the struct.
         field_count: usize,
+        /// Maximum allowed fields.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Function with too many parameters (>5)
     FunctionTooManyParams {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the function.
         function_name: String,
+        /// Number of parameters in the function.
         param_count: usize,
+        /// Maximum allowed parameters.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Builder with too many optional fields (>7)
     BuilderTooComplex {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the builder struct.
         builder_name: String,
+        /// Number of optional fields in the builder.
         optional_field_count: usize,
+        /// Maximum allowed optional fields.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Nested conditionals too deep (>3 levels)
     DeepNesting {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Current nesting level.
         nesting_level: usize,
+        /// Maximum allowed nesting level.
         max_allowed: usize,
+        /// Contextual code snippet.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Function too long (>50 lines)
     FunctionTooLong {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the function.
         function_name: String,
+        /// Number of lines in the function.
         line_count: usize,
+        /// Maximum allowed lines.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
@@ -279,10 +309,15 @@ impl Violation for KissViolation {
 /// KISS principle validator
 pub struct KissValidator {
     config: ValidationConfig,
+    /// Maximum allowed fields in a struct.
     max_struct_fields: usize,
+    /// Maximum allowed parameters in a function.
     max_function_params: usize,
+    /// Maximum allowed optional fields in a builder.
     max_builder_fields: usize,
+    /// Maximum allowed nesting depth.
     max_nesting_depth: usize,
+    /// Maximum allowed lines in a function.
     max_function_lines: usize,
 }
 

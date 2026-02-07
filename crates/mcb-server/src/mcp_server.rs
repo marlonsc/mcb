@@ -183,17 +183,19 @@ impl ServerHandler for McpServer {
                 ..Default::default()
             },
             instructions: Some(
-                "MCP Context Browser - Semantic Code Search\n\n\
-                 Consolidated tools:\n\
-                 - index: Index operations (start, status, clear)\n\
-                 - search: Unified search for code or memory\n\
-                 - validate: Validation and analysis operations\n\
-                 - memory: Memory storage, retrieval, timeline, inject\n\
-                  - session: Agent session lifecycle + summaries\n\
-                  - agent: Agent activity logging\n\
-                  - project: Project workflow management\n\
-                  - vcs: Repository operations\n"
-                    .to_string(),
+                r#"MCP Context Browser - Semantic Code Search
+
+Consolidated tools:
+- index: Index operations (start, status, clear)
+- search: Unified search for code or memory
+- validate: Validation and analysis operations
+- memory: Memory storage, retrieval, timeline, inject
+- session: Agent session lifecycle + summaries
+- agent: Agent activity logging
+- project: Project workflow management
+- vcs: Repository operations
+"#
+                .to_string(),
             ),
         }
     }

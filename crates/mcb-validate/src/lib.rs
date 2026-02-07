@@ -337,9 +337,11 @@ impl ValidationConfig {
 /// Validation error types
 #[derive(Error, Debug)]
 pub enum ValidationError {
+    /// I/O error
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// Parse error
     #[error("Parse error in {file}: {message}")]
     Parse { file: PathBuf, message: String },
 

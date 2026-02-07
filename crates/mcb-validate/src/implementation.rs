@@ -19,49 +19,78 @@ use walkdir::WalkDir;
 pub enum ImplementationViolation {
     /// Method body is empty or returns trivial value
     EmptyMethodBody {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the empty method.
         method_name: String,
+        /// The trivial return pattern detected (e.g., "Ok(())").
         pattern: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Method returns hardcoded value bypassing logic
     HardcodedReturnValue {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the method returning a hardcoded value.
         method_name: String,
+        /// The hardcoded value being returned.
         return_value: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Wrapper that just delegates without adding value
     PassThroughWrapper {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the struct containing the wrapper.
         struct_name: String,
+        /// Name of the wrapper method.
         method_name: String,
+        /// The target being delegated to.
         delegated_to: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Method body only contains logging/tracing
     LogOnlyMethod {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the method containing only logging.
         method_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Stub implementation using todo!/unimplemented!
     StubMacro {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the stubbed method.
         method_name: String,
+        /// The macro used (todo!, unimplemented!).
         macro_type: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Match arm with empty catch-all
     EmptyCatchAll {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Context of the match arm.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }

@@ -21,81 +21,129 @@ use walkdir::WalkDir;
 pub enum SolidViolation {
     /// SRP: Struct/Impl has too many responsibilities (too large)
     TooManyResponsibilities {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Type of the item (struct, impl).
         item_type: String,
+        /// Name of the item.
         item_name: String,
+        /// Current line count.
         line_count: usize,
+        /// Maximum allowed line count.
         max_allowed: usize,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// OCP: Large match statement that may need extension pattern
     ExcessiveMatchArms {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Number of match arms found.
         arm_count: usize,
+        /// Recommended maximum number of arms.
         max_recommended: usize,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// ISP: Trait has too many methods
     TraitTooLarge {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// Number of methods in the trait.
         method_count: usize,
+        /// Maximum allowed method count.
         max_allowed: usize,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// DIP: Module depends on concrete implementation
     ConcreteDependency {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the concrete dependency.
         dependency: String,
+        /// Layer where the violation occurred.
         layer: String,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// SRP: File has multiple unrelated structs
     MultipleUnrelatedStructs {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// List of unrelated struct names.
         struct_names: Vec<String>,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// LSP: Trait method not implemented (only panic/todo)
     PartialTraitImplementation {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the implementation.
         impl_name: String,
+        /// Name of the method.
         method_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// SRP: Impl block has too many methods
     ImplTooManyMethods {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the type.
         type_name: String,
+        /// Number of methods in the impl block.
         method_count: usize,
+        /// Maximum allowed method count.
         max_allowed: usize,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// OCP: String-based type dispatch instead of polymorphism
     StringBasedDispatch {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The match expression being dispatched on.
         match_expression: String,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
@@ -366,60 +414,6 @@ impl SolidValidator {
         }
     }
 
-    /// Check if a file in mcb-providers is legitimately exempt from SOLID checks
-    ///
-    /// Per ADR-029, only specific complex files are exempt:
-    /// - Language parsers (Tree-sitter based, inherently complex)
-    /// - Engine/orchestration files (compose multiple operations)
-    /// - External SDK adapters (Milvus)
-    ///
-    /// Files NOT exempt: null.rs, mod.rs, helpers.rs, constants.rs
-    fn is_mcb_providers_exempt(&self, path: &std::path::Path) -> bool {
-        let path_str = path.to_string_lossy();
-
-        // Only mcb-providers files can be exempt
-        if !path_str.contains("mcb-providers") {
-            return false;
-        }
-
-        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-
-        // Files that are NEVER exempt (should be simple)
-        if file_name == "null.rs"
-            || file_name == "mod.rs"
-            || file_name == "helpers.rs"
-            || file_name == "constants.rs"
-            || file_name == "lib.rs"
-        {
-            return false;
-        }
-
-        // Language parser files are complex by nature (Tree-sitter AST parsing)
-        if path_str.contains("/language/") && !path_str.contains("/common/") {
-            return true;
-        }
-
-        // Language common utilities for AST traversal are complex
-        if path_str.contains("/language/common/traverser.rs")
-            || path_str.contains("/language/common/processor.rs")
-        {
-            return true;
-        }
-
-        // Orchestration engines are legitimately complex
-        if file_name == "engine.rs" {
-            return true;
-        }
-
-        // External SDK adapters (e.g., Milvus) have complexity from SDK
-        if file_name == "milvus.rs" {
-            return true;
-        }
-
-        // All other mcb-providers files should be validated
-        false
-    }
-
     /// Run all SOLID validations
     pub fn validate_all(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
@@ -453,28 +447,6 @@ impl SolidValidator {
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
-                // Skip legitimately complex mcb-providers files (per ADR-029)
-                if self.is_mcb_providers_exempt(entry.path()) {
-                    continue;
-                }
-
-                let file_name = entry
-                    .path()
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
-
-                // Skip files that typically have multiple related structs
-                let is_collection_file = file_name == "types.rs"
-                    || file_name == "models.rs"
-                    || file_name == "args.rs"
-                    || file_name == "handlers.rs"
-                    || file_name == "responses.rs"
-                    || file_name == "requests.rs"
-                    || file_name == "dto.rs"
-                    || file_name == "entities.rs"
-                    || file_name == "admin.rs"; // Port files group related types
-
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();
 
@@ -513,7 +485,7 @@ impl SolidValidator {
 
                 // Check if file has many unrelated structs (potential SRP violation)
                 // Skip collection files which intentionally group related types
-                if structs_in_file.len() > 3 && !is_collection_file {
+                if structs_in_file.len() > 3 {
                     let struct_names: Vec<String> =
                         structs_in_file.iter().map(|(n, _)| n.clone()).collect();
 
@@ -551,21 +523,6 @@ impl SolidValidator {
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
-                // Skip legitimately complex mcb-providers files (per ADR-029)
-                if self.is_mcb_providers_exempt(entry.path()) {
-                    continue;
-                }
-
-                let path_str = entry.path().to_string_lossy();
-
-                // Skip SSE/event handlers - legitimately have many event type variants
-                if path_str.ends_with("/sse.rs")
-                    || path_str.ends_with("_events.rs")
-                    || path_str.contains("/events/")
-                {
-                    continue;
-                }
-
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();
 
@@ -743,31 +700,10 @@ impl SolidValidator {
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
-                // Skip legitimately complex mcb-providers files (per ADR-029)
-                if self.is_mcb_providers_exempt(entry.path()) {
-                    continue;
-                }
-
-                let path_str = entry.path().to_string_lossy();
-
-                // Skip DI composition root files (ADR-029)
-                // These are legitimately complex as they wire up all dependencies
-                if path_str.ends_with("/di/bootstrap.rs")
-                    || path_str.ends_with("/di/catalog.rs")
-                    || path_str.ends_with("/di/resolver.rs")
-                {
-                    continue;
-                }
-
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();
 
                 for (line_num, line) in lines.iter().enumerate() {
-                    // Skip impl Trait for Type (already checked in ISP)
-                    if line.contains(" for ") {
-                        continue;
-                    }
-
                     if let Some(cap) = impl_pattern.captures(line) {
                         let type_name = cap.get(1).map_or("", |m| m.as_str());
 
@@ -818,35 +754,8 @@ impl SolidValidator {
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();
 
-                // Track test modules to skip
-                let mut in_test_module = false;
-                let mut test_brace_depth: i32 = 0;
-                let mut brace_depth: i32 = 0;
-
                 for (line_num, line) in lines.iter().enumerate() {
                     let trimmed = line.trim();
-
-                    // Track test module boundaries
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        test_brace_depth = brace_depth;
-                    }
-
-                    // Track brace depth (count per line fits i32 in practice)
-                    brace_depth +=
-                        i32::try_from(line.chars().filter(|c| *c == '{').count()).unwrap_or(0);
-                    brace_depth -=
-                        i32::try_from(line.chars().filter(|c| *c == '}').count()).unwrap_or(0);
-
-                    // Exit test module when braces close (use < not <= to avoid premature exit)
-                    if in_test_module && brace_depth < test_brace_depth {
-                        in_test_module = false;
-                    }
-
-                    // Skip test modules
-                    if in_test_module {
-                        continue;
-                    }
 
                     // Check for string-based match dispatch
                     if string_match_pattern.is_match(line) {
