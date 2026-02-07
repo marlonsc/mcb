@@ -27,11 +27,11 @@ pub enum RefactoringViolation {
     OrphanImport {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number where the orphan import is defined.
         line: usize,
-        /// The import path that cannot be resolved.
+        /// The import path that cannot be resolved (e.g., `use crate::deleted::Item`).
         import_path: String,
-        /// Suggested remediation action.
+        /// Suggested remediation action (e.g., "Remove the import").
         suggestion: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -39,11 +39,11 @@ pub enum RefactoringViolation {
 
     /// Same type name defined in multiple locations (incomplete migration)
     DuplicateDefinition {
-        /// Name of the duplicated type.
+        /// Name of the duplicated type (struct, trait, or enum).
         type_name: String,
-        /// List of files where the type is defined.
+        /// List of files where the duplicate definitions were found.
         locations: Vec<PathBuf>,
-        /// Suggested remediation action.
+        /// Suggested remediation action (e.g., "Consolidate to a single location").
         suggestion: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -51,9 +51,9 @@ pub enum RefactoringViolation {
 
     /// New source file without corresponding test file
     MissingTestFile {
-        /// The source file missing tests.
+        /// The source file that lacks a corresponding test file.
         source_file: PathBuf,
-        /// The expected path for the test file.
+        /// The expected path where the test file should be located.
         expected_test: PathBuf,
         /// Severity level of the violation.
         severity: Severity,
@@ -63,9 +63,9 @@ pub enum RefactoringViolation {
     StaleReExport {
         /// File where the violation occurred.
         file: PathBuf,
-        /// Line number of the violation.
+        /// Line number of the stale re-export or module declaration.
         line: usize,
-        /// The re-exported item that is stale.
+        /// The re-exported item or module name that is stale.
         re_export: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -73,11 +73,11 @@ pub enum RefactoringViolation {
 
     /// File/module that was deleted but is still referenced
     DeletedModuleReference {
-        /// File referencing the deleted module.
+        /// File referencing the deleted module via a `mod` statement.
         referencing_file: PathBuf,
-        /// Line number of the reference.
+        /// Line number of the `mod` declaration.
         line: usize,
-        /// Name of the deleted module.
+        /// Name of the module that no longer exists on disk.
         deleted_module: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -85,11 +85,11 @@ pub enum RefactoringViolation {
 
     /// Dead code left from refactoring (unused after move)
     RefactoringDeadCode {
-        /// File where the violation occurred.
+        /// File containing the suspected dead code.
         file: PathBuf,
-        /// Name of the unused item.
+        /// Name of the item suspected to be dead.
         item_name: String,
-        /// Type of the item (e.g., struct, function).
+        /// Type of the item (e.g., `struct`, `function`, `enum`).
         item_type: String,
         /// Severity level of the violation.
         severity: Severity,

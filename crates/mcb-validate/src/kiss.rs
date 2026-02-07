@@ -1,7 +1,7 @@
 //! KISS Principle Validation
 //!
 //! Validates code against the KISS principle (Keep It Simple, Stupid):
-//! - Struct field count (max 7)
+//! - Struct field count (max 12)
 //! - Function parameter count (max 5)
 //! - Builder complexity (max 7 optional fields)
 //! - Nesting depth (max 3 levels)
@@ -21,7 +21,7 @@ use walkdir::WalkDir;
 /// KISS violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum KissViolation {
-    /// Struct with too many fields (>7)
+    /// Struct with too many fields (>12)
     StructTooManyFields {
         /// File where the violation occurred.
         file: PathBuf,

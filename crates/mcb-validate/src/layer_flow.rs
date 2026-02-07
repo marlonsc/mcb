@@ -20,7 +20,7 @@ pub enum LayerFlowViolation {
         source_crate: String,
         /// Name of the crate being illegally imported.
         target_crate: String,
-        /// The specific import path used.
+        /// The specific import path used in the source code.
         import_path: String,
         /// File where the violation occurred.
         file: PathBuf,
@@ -29,18 +29,18 @@ pub enum LayerFlowViolation {
     },
     /// Circular dependency detected between crates.
     CircularDependency {
-        /// First crate in the cycle.
+        /// Name of the first crate involved in the circular dependency.
         crate_a: String,
-        /// Second crate in the cycle.
+        /// Name of the second crate involved in the circular dependency.
         crate_b: String,
-        /// File where the dependency is declared (Cargo.toml).
+        /// File where the dependency is declared (e.g., a Cargo.toml file).
         file: PathBuf,
-        /// Line number (usually 1 for Cargo.toml).
+        /// Line number where the declaration was found (usually 1 for Cargo.toml).
         line: usize,
     },
     /// Domain layer importing external crates (should be pure).
     DomainExternalDependency {
-        /// Name of the domain crate.
+        /// Name of the domain crate containing the external dependency.
         crate_name: String,
         /// Name of the external crate being imported.
         external_crate: String,

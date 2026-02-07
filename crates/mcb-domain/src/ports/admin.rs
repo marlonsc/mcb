@@ -119,7 +119,7 @@ pub trait PerformanceMetricsInterface: Send + Sync {
 
 /// Status of an indexing operation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum IndexingStatus {
+pub enum IndexingOperationStatus {
     /// Indicates the operation is initializing.
     Starting,
     /// Indicates the operation is currently running.
@@ -130,6 +130,9 @@ pub enum IndexingStatus {
     Failed(String),
 }
 
+/// Alias for backward compatibility
+pub use IndexingOperationStatus as IndexingStatus;
+
 /// Data about an ongoing indexing operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexingOperation {
@@ -138,7 +141,7 @@ pub struct IndexingOperation {
     /// Identifier of the collection being indexed.
     pub collection: CollectionId,
     /// Current status of the operation.
-    pub status: IndexingStatus,
+    pub status: IndexingOperationStatus,
     /// Total number of files to process.
     pub total_files: usize,
     /// Number of files processed so far.

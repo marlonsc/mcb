@@ -24,9 +24,9 @@ pub enum QualityViolation {
     UnwrapInProduction {
         /// The file containing the violation.
         file: PathBuf,
-        /// The line number where the violation occurred.
+        /// The line number where the `unwrap()` call was detected.
         line: usize,
-        /// Contextual code snippet showing the usage.
+        /// Contextual code snippet showing the usage of `unwrap()`.
         context: String,
         /// The severity level of the violation.
         severity: Severity,
@@ -35,9 +35,9 @@ pub enum QualityViolation {
     ExpectInProduction {
         /// The file containing the violation.
         file: PathBuf,
-        /// The line number where the violation occurred.
+        /// The line number where the `expect()` call was detected.
         line: usize,
-        /// Contextual code snippet showing the usage.
+        /// Contextual code snippet showing the usage of `expect()`.
         context: String,
         /// The severity level of the violation.
         severity: Severity,
@@ -46,9 +46,9 @@ pub enum QualityViolation {
     PanicInProduction {
         /// The file containing the violation.
         file: PathBuf,
-        /// The line number where the violation occurred.
+        /// The line number where the `panic!()` macro occurred.
         line: usize,
-        /// Contextual code snippet showing the usage.
+        /// Contextual code snippet showing the usage of `panic!()`.
         context: String,
         /// The severity level of the violation.
         severity: Severity,
@@ -57,9 +57,9 @@ pub enum QualityViolation {
     FileTooLarge {
         /// The file containing the violation.
         file: PathBuf,
-        /// The current number of lines in the file.
+        /// The current total number of lines in the file.
         lines: usize,
-        /// The maximum allowed number of lines.
+        /// The maximum allowed number of lines for this file.
         max_allowed: usize,
         /// The severity level of the violation.
         severity: Severity,
@@ -68,9 +68,9 @@ pub enum QualityViolation {
     TodoComment {
         /// The file containing the violation.
         file: PathBuf,
-        /// The line number where the comment was found.
+        /// The line number where the pending task comment was found.
         line: usize,
-        /// The content of the comment.
+        /// The content of the comment, including the type (e.g., "TODO: fix this").
         content: String,
         /// The severity level of the violation.
         severity: Severity,
@@ -79,9 +79,9 @@ pub enum QualityViolation {
     DeadCodeAllowNotPermitted {
         /// The file containing the violation.
         file: PathBuf,
-        /// The line number where the attribute was found.
+        /// The line number where the `#[allow(dead_code)]` attribute was found.
         line: usize,
-        /// The name of the item marked as allowed dead code.
+        /// The name of the item (struct, function, field) marked as allowed dead code.
         item_name: String,
         /// The severity level of the violation.
         severity: Severity,
@@ -92,9 +92,9 @@ pub enum QualityViolation {
         file: PathBuf,
         /// The line number where the field is defined.
         line: usize,
-        /// The name of the struct containing the field.
+        /// The name of the struct containing the unused field.
         struct_name: String,
-        /// The name of the unused field.
+        /// The name of the field that appears to be unused.
         field_name: String,
         /// The severity level of the violation.
         severity: Severity,
@@ -105,7 +105,7 @@ pub enum QualityViolation {
         file: PathBuf,
         /// The line number where the function is defined.
         line: usize,
-        /// The name of the dead function.
+        /// The name of the function that appears to be dead/uncalled.
         function_name: String,
         /// The severity level of the violation.
         severity: Severity,

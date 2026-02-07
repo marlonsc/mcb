@@ -117,7 +117,7 @@ fn test_golden_highlight_whitespace_only() {
 }
 
 #[test]
-fn golden_highlight_unknown_language() {
+fn test_golden_highlight_unknown_language() {
     let result = highlight_code("let x = 42;", "unknownlang123", &get_service());
     // Unknown language should fallback to plain text HTML
     assert!(
@@ -132,7 +132,7 @@ fn golden_highlight_unknown_language() {
 }
 
 #[test]
-fn golden_highlight_html_escaping() {
+fn test_golden_highlight_html_escaping() {
     let code_with_html = "<div>alert('xss')</div>";
     let result = highlight_code(code_with_html, "javascript", &get_service());
 
@@ -150,7 +150,7 @@ fn golden_highlight_html_escaping() {
 }
 
 #[test]
-fn golden_highlight_multiline_code() {
+fn test_golden_highlight_multiline_code() {
     let code = r#"fn factorial(n: u32) -> u32 {
     match n {
         0 => 1,
@@ -170,7 +170,7 @@ fn golden_highlight_multiline_code() {
 }
 
 #[test]
-fn golden_highlight_special_characters() {
+fn test_golden_highlight_special_characters() {
     let code = "let msg = \"Hello\\nWorld\"; x := msg[0..5];";
     let result = highlight_code(code, "rust", &get_service());
 
@@ -183,7 +183,7 @@ fn golden_highlight_special_characters() {
 }
 
 #[test]
-fn golden_highlight_very_long_lines() {
+fn test_golden_highlight_very_long_lines() {
     let long_code = "let x = 1;\n".repeat(1000);
     let result = highlight_code(&long_code, "rust", &get_service());
 
@@ -196,7 +196,7 @@ fn golden_highlight_very_long_lines() {
 }
 
 #[test]
-fn golden_highlight_output_format() {
+fn test_golden_highlight_output_format() {
     let result = highlight_code("let x = 42;", "rust", &get_service());
 
     // Output should be valid HTML with proper nesting
@@ -214,7 +214,7 @@ fn golden_highlight_output_format() {
 }
 
 #[test]
-fn golden_highlight_class_naming_convention() {
+fn test_golden_highlight_class_naming_convention() {
     let result = highlight_code("fn hello() { 42 }", "rust", &get_service());
 
     // Verify output contains properly formatted spans with hl- classes
@@ -232,7 +232,7 @@ fn golden_highlight_class_naming_convention() {
 }
 
 #[test]
-fn golden_highlight_consistency() {
+fn test_golden_highlight_consistency() {
     // Same code should produce same highlighting
     let code = "fn foo() { return 42; }";
     let result1 = highlight_code(code, "rust", &get_service());
@@ -245,7 +245,7 @@ fn golden_highlight_consistency() {
 }
 
 #[test]
-fn golden_highlight_comments_preserved() {
+fn test_golden_highlight_comments_preserved() {
     let code = "// This is a comment\nlet x = 42; // inline comment";
     let result = highlight_code(code, "rust", &get_service());
 

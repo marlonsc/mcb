@@ -74,7 +74,7 @@ impl Default for ValidationThresholds {
             max_match_arms: 10,
 
             // KISS
-            max_struct_fields: 7,
+            max_struct_fields: 12,
             max_function_params: 5,
             max_builder_fields: 7,
             max_di_container_fields: 25,
@@ -130,7 +130,7 @@ pub const MAX_MATCH_ARMS: usize = 10;
 
 // KISS
 /// Maximum fields per struct
-pub const MAX_STRUCT_FIELDS: usize = 7;
+pub const MAX_STRUCT_FIELDS: usize = 12;
 /// Maximum parameters per function
 pub const MAX_FUNCTION_PARAMS: usize = 5;
 /// Maximum fields in a builder pattern

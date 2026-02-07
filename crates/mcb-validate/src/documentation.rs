@@ -16,20 +16,34 @@ use walkdir::WalkDir;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DocumentationViolation {
     /// Missing module-level documentation
-    MissingModuleDoc { file: PathBuf, severity: Severity },
+    MissingModuleDoc {
+        /// File that is missing module-level documentation (`//!`).
+        file: PathBuf,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
     /// Missing documentation on public item
     MissingPubItemDoc {
+        /// File containing the undocumented public item.
         file: PathBuf,
+        /// Line number where the public item is defined.
         line: usize,
+        /// Name of the public item missing documentation.
         item_name: String,
+        /// Kind of item missing documentation (e.g., "struct", "enum", "trait", "function").
         item_kind: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Missing example code in documentation
     MissingExampleCode {
+        /// File containing the item missing an example in its documentation.
         file: PathBuf,
+        /// Line number where the item is defined.
         line: usize,
+        /// Name of the item missing an example section.
         item_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }

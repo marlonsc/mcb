@@ -18,77 +18,77 @@ use walkdir::WalkDir;
 pub enum TestViolation {
     /// Inline test module found in src/
     InlineTestModule {
-        /// File containing the inline test
+        /// File containing the inline test module.
         file: PathBuf,
-        /// Line number where the module starts
+        /// Line number where the `mod tests` block or `#[cfg(test)]` starts.
         line: usize,
         /// Severity level of the violation.
         severity: Severity,
     },
     /// Test file with incorrect naming
     BadTestFileName {
-        /// File with incorrect name
+        /// File with the non-compliant name.
         file: PathBuf,
-        /// Suggested name or corrective action
+        /// Description of the naming issue and suggested corrective action.
         suggestion: String,
         /// Severity level of the violation.
         severity: Severity,
     },
     /// Test function with incorrect naming
     BadTestFunctionName {
-        /// File containing the function
+        /// File containing the incorrectly named test function.
         file: PathBuf,
-        /// Line number of the function
+        /// Line number where the test function is defined.
         line: usize,
-        /// Current function name
+        /// The current non-compliant name of the test function.
         function_name: String,
-        /// Suggested compliant name
+        /// The suggested compliant name for the test function.
         suggestion: String,
         /// Severity level of the violation.
         severity: Severity,
     },
     /// Test without assertion
     TestWithoutAssertion {
-        /// File containing the test
+        /// File containing the test function.
         file: PathBuf,
-        /// Line number of the test
+        /// Line number where the test function starts.
         line: usize,
-        /// Name of the test function
+        /// Name of the test function lacking assertions.
         function_name: String,
         /// Severity level of the violation.
         severity: Severity,
     },
     /// Trivial assertion that always passes
     TrivialAssertion {
-        /// File containing the test
+        /// File containing the trivial assertion.
         file: PathBuf,
-        /// Line number of the assertion
+        /// Line number where the trivial assertion occurs.
         line: usize,
-        /// Name of the test function
+        /// Name of the test function containing the trivial assertion.
         function_name: String,
-        /// The trivial assertion found
+        /// The content of the trivial assertion (e.g., `assert!(true)`).
         assertion: String,
         /// Severity level of the violation.
         severity: Severity,
     },
     /// Test only uses .unwrap() as assertion
     UnwrapOnlyAssertion {
-        /// File containing the test
+        /// File containing the unwrap-only test.
         file: PathBuf,
-        /// Line number of the test
+        /// Line number of the test function.
         line: usize,
-        /// Name of the test function
+        /// Name of the test function that relies solely on `.unwrap()`.
         function_name: String,
         /// Severity level of the violation.
         severity: Severity,
     },
     /// Test body is only comments
     CommentOnlyTest {
-        /// File containing the test
+        /// File containing the empty/comment-only test.
         file: PathBuf,
-        /// Line number of the test
+        /// Line number of the test function definition.
         line: usize,
-        /// Name of the test function
+        /// Name of the test function that contains no executable code.
         function_name: String,
         /// Severity level of the violation.
         severity: Severity,

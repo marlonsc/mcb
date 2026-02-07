@@ -1470,10 +1470,7 @@ impl OrganizationValidator {
     pub fn validate_domain_traits_only(&self) -> Result<Vec<OrganizationViolation>> {
         fn is_getter_method(line: &str) -> bool {
             let trimmed = line.trim();
-            trimmed.contains("&self") && !trimmed.contains("&mut self") && !trimmed.contains("->")
-                || (trimmed.contains("&self")
-                    && trimmed.contains("->")
-                    && !trimmed.contains("Result"))
+            trimmed.contains("&self") && !trimmed.contains("&mut self")
         }
         let mut violations = Vec::new();
 
