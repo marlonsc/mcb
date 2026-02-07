@@ -158,27 +158,6 @@ pub struct FunctionMetrics {
 /// Defines the contract for providers that analyze source code and extract
 /// complexity metrics. Implementations typically use tools like rust-code-analysis
 /// (RCA) or other static analysis tools.
-///
-/// # Example
-///
-/// ```no_run
-/// use mcb_domain::ports::providers::MetricsAnalysisProvider;
-/// use std::sync::Arc;
-/// use std::path::Path;
-///
-/// async fn analyze_code(provider: Arc<dyn MetricsAnalysisProvider>) {
-///     let metrics = provider.analyze_file(Path::new("src/main.rs")).await.unwrap();
-///     println!("Cyclomatic: {}, Cognitive: {}", metrics.cyclomatic, metrics.cognitive);
-///
-///     // Get function-level breakdown
-///     let functions = provider.analyze_functions(Path::new("src/main.rs")).await.unwrap();
-///     for f in functions {
-///         if f.cyclomatic > 10.0 {
-///             println!("Complex function: {} (CC={})", f.name, f.cyclomatic);
-///         }
-///     }
-/// }
-/// ```
 #[async_trait]
 pub trait MetricsAnalysisProvider: Send + Sync {
     /// Get the provider name
@@ -254,62 +233,5 @@ pub trait MetricsAnalysisProvider: Send + Sync {
         SupportedLanguage::from_path(path)
             .map(|lang| self.supports_language(lang))
             .unwrap_or(false)
-    }
-}
-
-// ============================================================================
-// Null Implementation (for testing and fallback)
-// ============================================================================
-
-/// Null metrics provider for testing or when metrics feature is disabled
-///
-/// Returns empty/default metrics for all operations. Useful for testing
-/// and as a fallback when no metrics provider is configured.
-pub struct NullMetricsProvider;
-
-impl NullMetricsProvider {
-    /// Create a new null metrics provider
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for NullMetricsProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl MetricsAnalysisProvider for NullMetricsProvider {
-    fn provider_name(&self) -> &str {
-        "null"
-    }
-
-    fn supported_languages(&self) -> &[SupportedLanguage] {
-        &[]
-    }
-
-    async fn analyze_file(&self, path: &Path) -> Result<FileMetrics> {
-        Ok(FileMetrics {
-            file: path.to_string_lossy().to_string(),
-            ..Default::default()
-        })
-    }
-
-    async fn analyze_code(
-        &self,
-        _content: &[u8],
-        _language: SupportedLanguage,
-        file_path: Option<&str>,
-    ) -> Result<FileMetrics> {
-        Ok(FileMetrics {
-            file: file_path.unwrap_or("").to_string(),
-            ..Default::default()
-        })
-    }
-
-    async fn analyze_functions(&self, _path: &Path) -> Result<Vec<FunctionMetrics>> {
-        Ok(Vec::new())
     }
 }

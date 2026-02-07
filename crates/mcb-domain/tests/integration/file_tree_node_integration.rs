@@ -7,8 +7,8 @@ use mcb_domain::value_objects::FileTreeNode;
 #[test]
 fn test_traverse_visits_all_nodes() {
     let mut root = FileTreeNode::directory("src", "src");
-    root.add_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
-    root.add_child(FileTreeNode::file("main.rs", "src/main.rs", 5, "rust"));
+    root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+    root = root.with_child(FileTreeNode::file("main.rs", "src/main.rs", 5, "rust"));
 
     let mut visited = Vec::new();
     root.traverse(&mut |node| {
@@ -25,13 +25,13 @@ fn test_traverse_visits_all_nodes() {
 fn test_traverse_depth_first_order() {
     let mut root = FileTreeNode::directory("root", "root");
     let mut subdir = FileTreeNode::directory("subdir", "root/subdir");
-    subdir.add_child(FileTreeNode::file(
+    subdir = subdir.with_child(FileTreeNode::file(
         "file.rs",
         "root/subdir/file.rs",
         3,
         "rust",
     ));
-    root.add_child(subdir);
+    root = root.with_child(subdir);
 
     let mut visited = Vec::new();
     root.traverse(&mut |node| {
@@ -47,7 +47,7 @@ fn test_traverse_depth_first_order() {
 #[test]
 fn test_display_trait_formats_tree() {
     let mut root = FileTreeNode::directory("src", "src");
-    root.add_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+    root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
 
     let display_output = format!("{}", root);
 
@@ -59,7 +59,7 @@ fn test_display_trait_formats_tree() {
 #[test]
 fn test_to_ansi_contains_tree_structure() {
     let mut root = FileTreeNode::directory("src", "src");
-    root.add_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+    root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
 
     let ansi = root.to_ansi();
 
@@ -80,7 +80,7 @@ fn test_to_ansi_includes_chunk_count() {
 #[test]
 fn test_to_html_valid_structure() {
     let mut root = FileTreeNode::directory("src", "src");
-    root.add_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+    root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
 
     let html = root.to_html();
 
@@ -95,7 +95,7 @@ fn test_to_html_valid_structure() {
 #[test]
 fn test_to_html_includes_icons() {
     let mut root = FileTreeNode::directory("src", "src");
-    root.add_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+    root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
 
     let html = root.to_html();
 
@@ -106,7 +106,7 @@ fn test_to_html_includes_icons() {
 #[test]
 fn test_to_html_escapes_special_characters() {
     let mut root = FileTreeNode::directory("src<script>", "src");
-    root.add_child(FileTreeNode::file(
+    root = root.with_child(FileTreeNode::file(
         "lib&test.rs",
         "src/lib&test.rs",
         10,

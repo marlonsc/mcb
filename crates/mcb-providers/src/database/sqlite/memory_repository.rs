@@ -9,6 +9,7 @@ use mcb_domain::entities::memory::{MemoryFilter, MemorySearchResult, Observation
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
+use mcb_domain::value_objects::ids::{ObservationId, SessionId};
 use std::sync::Arc;
 use tracing::debug;
 
@@ -64,12 +65,12 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(())
     }
 
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         let row = self
             .executor
             .query_one(
                 "SELECT * FROM observations WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.as_str().to_string())],
             )
             .await?;
 
@@ -137,11 +138,11 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(results)
     }
 
-    async fn delete_observation(&self, id: &str) -> Result<()> {
+    async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
         self.executor
             .execute(
                 "DELETE FROM observations WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.as_str().to_string())],
             )
             .await
     }
@@ -198,7 +199,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(results)
     }
 
-    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
         if ids.is_empty() {
             return Ok(Vec::new());
         }
@@ -208,7 +209,10 @@ impl MemoryRepository for SqliteMemoryRepository {
             "SELECT * FROM observations WHERE id IN ({})",
             placeholders.join(",")
         );
-        let params: Vec<SqlParam> = ids.iter().map(|s| SqlParam::String(s.clone())).collect();
+        let params: Vec<SqlParam> = ids
+            .iter()
+            .map(|id| SqlParam::String(id.as_str().to_string()))
+            .collect();
 
         let rows = self.executor.query_all(&sql, &params).await?;
 
@@ -224,7 +228,7 @@ impl MemoryRepository for SqliteMemoryRepository {
 
     async fn get_timeline(
         &self,
-        anchor_id: &str,
+        anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
@@ -339,12 +343,12 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(())
     }
 
-    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
+    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
         let row = self
             .executor
             .query_one(
                 "SELECT * FROM session_summaries WHERE session_id = ? ORDER BY created_at DESC LIMIT 1",
-                &[SqlParam::String(session_id.to_string())],
+                &[SqlParam::String(session_id.as_str().to_string())],
             )
             .await?;
 

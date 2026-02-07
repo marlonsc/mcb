@@ -574,9 +574,9 @@ impl MemoryRepository for MockMemoryRepository {
         Ok(())
     }
 
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         let obs = self.observations.lock().expect("Lock poisoned");
-        Ok(obs.iter().find(|o| o.id == id).cloned())
+        Ok(obs.iter().find(|o| o.id == id.as_str()).cloned())
     }
 
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
@@ -619,23 +619,23 @@ impl MemoryRepository for MockMemoryRepository {
         Ok(())
     }
 
-    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
+    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
         let summaries = self.summaries.lock().expect("Lock poisoned");
         Ok(summaries
             .iter()
-            .find(|s| s.session_id == session_id)
+            .find(|s| s.session_id == session_id.as_str())
             .cloned())
     }
 
     async fn get_timeline(
         &self,
-        anchor_id: &str,
+        anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
         let obs = self.observations.lock().expect("Lock poisoned");
-        let anchor_idx = obs.iter().position(|o| o.id == anchor_id);
+        let anchor_idx = obs.iter().position(|o| o.id == anchor_id.as_str());
 
         match anchor_idx {
             None => Ok(vec![]),
@@ -679,17 +679,18 @@ impl MemoryRepository for MockMemoryRepository {
             .collect())
     }
 
-    async fn delete_observation(&self, id: &str) -> Result<()> {
+    async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
         let mut obs = self.observations.lock().expect("Lock poisoned");
-        obs.retain(|o| o.id != id);
+        obs.retain(|o| o.id != id.as_str());
         Ok(())
     }
 
-    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
         let obs = self.observations.lock().expect("Lock poisoned");
+        let id_strs: Vec<&str> = ids.iter().map(|id| id.as_str()).collect();
         Ok(obs
             .iter()
-            .filter(|o| ids.contains(&o.id))
+            .filter(|o| id_strs.contains(&o.id.as_str()))
             .cloned()
             .collect())
     }

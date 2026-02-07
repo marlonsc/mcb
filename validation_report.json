@@ -1,0 +1,2709 @@
+{
+  "timestamp": "2026-02-06 21:21:10 UTC",
+  "workspace_root": "/home/marlonsc/mcb/.",
+  "summary": {
+    "total_violations": 296,
+    "errors": 1,
+    "warnings": 195,
+    "infos": 100,
+    "by_category": {
+      "Performance": 3,
+      "Implementation": 1,
+      "Error Boundary": 27,
+      "Refactoring": 9,
+      "Architecture": 3,
+      "KISS": 75,
+      "SOLID": 23,
+      "Organization": 26,
+      "Testing": 24,
+      "Documentation": 105
+    },
+    "passed": false
+  },
+  "violations_by_category": {
+    "Organization": [
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs",
+        "line": 29,
+        "message": "CA: Domain layer has method for VcsBranch::id: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs:29 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs",
+        "line": 33,
+        "message": "CA: Domain layer has method for VcsBranch::name: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs:33 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs",
+        "line": 37,
+        "message": "CA: Domain layer has method for VcsBranch::head_commit: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs:37 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs",
+        "line": 45,
+        "message": "CA: Domain layer has method for VcsBranch::upstream: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs:45 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs",
+        "line": 35,
+        "message": "CA: Domain layer has method for VcsCommit::id: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs:35 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs",
+        "line": 43,
+        "message": "CA: Domain layer has method for VcsCommit::message: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs:43 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs",
+        "line": 47,
+        "message": "CA: Domain layer has method for VcsCommit::author: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs:47 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs",
+        "line": 51,
+        "message": "CA: Domain layer has method for VcsCommit::author_email: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs:51 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs",
+        "line": 55,
+        "message": "CA: Domain layer has method for VcsCommit::timestamp: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs:55 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs",
+        "line": 59,
+        "message": "CA: Domain layer has method for VcsCommit::parent_hashes: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs:59 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs",
+        "line": 32,
+        "message": "CA: Domain layer has method for VcsRepository::id: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs:32 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs",
+        "line": 36,
+        "message": "CA: Domain layer has method for VcsRepository::path: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs:36 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs",
+        "line": 40,
+        "message": "CA: Domain layer has method for VcsRepository::default_branch: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs:40 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs",
+        "line": 44,
+        "message": "CA: Domain layer has method for VcsRepository::branches: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs:44 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs",
+        "line": 48,
+        "message": "CA: Domain layer has method for VcsRepository::remote_url: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs:48 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/workflow.rs",
+        "line": 54,
+        "message": "CA: Domain layer has method for WorkflowState::name: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/workflow.rs:54 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 23,
+        "message": "CA: Domain layer has method for FileTreeNode::file: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:23 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 40,
+        "message": "CA: Domain layer has method for FileTreeNode::directory: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:40 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 52,
+        "message": "CA: Domain layer has method for FileTreeNode::add_child: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:52 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 64,
+        "message": "CA: Domain layer has method for FileTreeNode::sorted: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:64 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 70,
+        "message": "CA: Domain layer has method for FileTreeNode::sort_children: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:70 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 82,
+        "message": "CA: Domain layer has method for FileTreeNode::traverse: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:82 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 96,
+        "message": "CA: Domain layer has method for FileTreeNode::format_ansi: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:96 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "ORG016",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 127,
+        "message": "CA: Domain layer has method for FileTreeNode::format_html: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:127 (domain should be trait-only)",
+        "suggestion": "Move implementation to application or infrastructure layer"
+      },
+      {
+        "id": "VIS003",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/helpers.rs",
+        "line": 1,
+        "message": "Utility module helpers has pub items at /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/helpers.rs:1",
+        "suggestion": "Consider pub(crate) for utility modules"
+      },
+      {
+        "id": "VIS003",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/helpers.rs",
+        "line": 1,
+        "message": "Utility module helpers has pub items at /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/helpers.rs:1",
+        "suggestion": "Consider pub(crate) for utility modules"
+      }
+    ],
+    "Documentation": [
+      {
+        "id": "DOC001",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/mod.rs",
+        "line": null,
+        "message": "Missing module doc: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/mod.rs",
+        "suggestion": "Add //! module-level documentation at the top of the file"
+      },
+      {
+        "id": "DOC001",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/services/mod.rs",
+        "line": null,
+        "message": "Missing module doc: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/services/mod.rs",
+        "suggestion": "Add //! module-level documentation at the top of the file"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-infrastructure/src/config/mcp_context_config.rs",
+        "line": 15,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-infrastructure/src/config/mcp_context_config.rs:15 - ConfigError",
+        "suggestion": "Add /// documentation for enum ConfigError"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/helpers.rs",
+        "line": 5,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/helpers.rs:5 - MemoryHelpers",
+        "suggestion": "Add /// documentation for struct MemoryHelpers"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs",
+        "line": 14,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs:14 - store_execution",
+        "suggestion": "Add /// documentation for function store_execution"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs",
+        "line": 106,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs:106 - get_executions",
+        "suggestion": "Add /// documentation for function get_executions"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/inject.rs",
+        "line": 10,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/inject.rs:10 - inject_context",
+        "suggestion": "Add /// documentation for function inject_context"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/list_timeline.rs",
+        "line": 10,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/list_timeline.rs:10 - list_observations",
+        "suggestion": "Add /// documentation for function list_observations"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/list_timeline.rs",
+        "line": 61,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/list_timeline.rs:61 - get_timeline",
+        "suggestion": "Add /// documentation for function get_timeline"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/observation.rs",
+        "line": 13,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/observation.rs:13 - store_observation",
+        "suggestion": "Add /// documentation for function store_observation"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/observation.rs",
+        "line": 66,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/observation.rs:66 - get_observations",
+        "suggestion": "Add /// documentation for function get_observations"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs",
+        "line": 15,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs:15 - store_quality_gate",
+        "suggestion": "Add /// documentation for function store_quality_gate"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs",
+        "line": 87,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs:87 - get_quality_gates",
+        "suggestion": "Add /// documentation for function get_quality_gates"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/session.rs",
+        "line": 10,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/session.rs:10 - store_session",
+        "suggestion": "Add /// documentation for function store_session"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/session.rs",
+        "line": 59,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/session.rs:59 - get_session",
+        "suggestion": "Add /// documentation for function get_session"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/helpers.rs",
+        "line": 6,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/helpers.rs:6 - SessionHelpers",
+        "suggestion": "Add /// documentation for struct SessionHelpers"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/create.rs",
+        "line": 14,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/create.rs:14 - create_session",
+        "suggestion": "Add /// documentation for function create_session"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/get.rs",
+        "line": 10,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/get.rs:10 - get_session",
+        "suggestion": "Add /// documentation for function get_session"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/list.rs",
+        "line": 9,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/list.rs:9 - list_sessions",
+        "suggestion": "Add /// documentation for function list_sessions"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/update.rs",
+        "line": 11,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/update.rs:11 - update_session",
+        "suggestion": "Add /// documentation for function update_session"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/summarize.rs",
+        "line": 11,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/summarize.rs:11 - summarize_session",
+        "suggestion": "Add /// documentation for function summarize_session"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 9,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:9 - ListRepositoriesResponse",
+        "suggestion": "Add /// documentation for struct ListRepositoriesResponse"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 15,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:15 - IndexResult",
+        "suggestion": "Add /// documentation for struct IndexResult"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 25,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:25 - BranchComparison",
+        "suggestion": "Add /// documentation for struct BranchComparison"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 35,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:35 - BranchDiffFile",
+        "suggestion": "Add /// documentation for struct BranchDiffFile"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 41,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:41 - BranchSearchResponse",
+        "suggestion": "Add /// documentation for struct BranchSearchResponse"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 50,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:50 - BranchSearchMatch",
+        "suggestion": "Add /// documentation for struct BranchSearchMatch"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 57,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:57 - ImpactSummary",
+        "suggestion": "Add /// documentation for struct ImpactSummary"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 66,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:66 - ImpactFile",
+        "suggestion": "Add /// documentation for struct ImpactFile"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 73,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:73 - ImpactResponse",
+        "suggestion": "Add /// documentation for struct ImpactResponse"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs",
+        "line": 81,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/responses.rs:81 - repo_path",
+        "suggestion": "Add /// documentation for function repo_path"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/list_repos.rs",
+        "line": 7,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/list_repos.rs:7 - list_repositories",
+        "suggestion": "Add /// documentation for function list_repositories"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/index_repo.rs",
+        "line": 12,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/index_repo.rs:12 - index_repository",
+        "suggestion": "Add /// documentation for function index_repository"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/compare_branches.rs",
+        "line": 10,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/compare_branches.rs:10 - compare_branches",
+        "suggestion": "Add /// documentation for function compare_branches"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs",
+        "line": 10,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs:10 - search_branch",
+        "suggestion": "Add /// documentation for function search_branch"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs",
+        "line": 10,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs:10 - analyze_impact",
+        "suggestion": "Add /// documentation for function analyze_impact"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 11,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:11 - IndexAction",
+        "suggestion": "Add /// documentation for enum IndexAction"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 18,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:18 - IndexArgs",
+        "suggestion": "Add /// documentation for struct IndexArgs"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 60,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:60 - SearchResource",
+        "suggestion": "Add /// documentation for enum SearchResource"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 66,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:66 - SearchArgs",
+        "suggestion": "Add /// documentation for struct SearchArgs"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 106,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:106 - ValidateAction",
+        "suggestion": "Add /// documentation for enum ValidateAction"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 114,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:114 - ValidateScope",
+        "suggestion": "Add /// documentation for enum ValidateScope"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 120,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:120 - ValidateArgs",
+        "suggestion": "Add /// documentation for struct ValidateArgs"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 143,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:143 - MemoryAction",
+        "suggestion": "Add /// documentation for enum MemoryAction"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 153,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:153 - MemoryResource",
+        "suggestion": "Add /// documentation for enum MemoryResource"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 162,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:162 - MemoryArgs",
+        "suggestion": "Add /// documentation for struct MemoryArgs"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 220,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:220 - SessionAction",
+        "suggestion": "Add /// documentation for enum SessionAction"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 229,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:229 - SessionArgs",
+        "suggestion": "Add /// documentation for struct SessionArgs"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 258,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:258 - AgentAction",
+        "suggestion": "Add /// documentation for enum AgentAction"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 264,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:264 - AgentArgs",
+        "suggestion": "Add /// documentation for struct AgentArgs"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 283,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:283 - VcsAction",
+        "suggestion": "Add /// documentation for enum VcsAction"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 292,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:292 - VcsArgs",
+        "suggestion": "Add /// documentation for struct VcsArgs"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs",
+        "line": 8,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs:8 - HookError",
+        "suggestion": "Add /// documentation for enum HookError"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs",
+        "line": 31,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs:31 - Hook",
+        "suggestion": "Add /// documentation for enum Hook"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs",
+        "line": 37,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs:37 - PostToolUseContext",
+        "suggestion": "Add /// documentation for struct PostToolUseContext"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs",
+        "line": 47,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs:47 - ToolExecutionStatus",
+        "suggestion": "Add /// documentation for enum ToolExecutionStatus"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs",
+        "line": 54,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs:54 - SessionStartContext",
+        "suggestion": "Add /// documentation for struct SessionStartContext"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs",
+        "line": 60,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/hooks/types.rs:60 - HookContext",
+        "suggestion": "Add /// documentation for struct HookContext"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/hooks/processor.rs",
+        "line": 7,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-server/src/hooks/processor.rs:7 - HookProcessor",
+        "suggestion": "Add /// documentation for struct HookProcessor"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-application/src/use_cases/agent_session_service.rs",
+        "line": 13,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-application/src/use_cases/agent_session_service.rs:13 - AgentSessionServiceImpl",
+        "suggestion": "Add /// documentation for struct AgentSessionServiceImpl"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs",
+        "line": 69,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs:69 - PhaseStatus",
+        "suggestion": "Add /// documentation for enum PhaseStatus"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs",
+        "line": 106,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs:106 - IssueType",
+        "suggestion": "Add /// documentation for enum IssueType"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs",
+        "line": 143,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs:143 - IssueStatus",
+        "suggestion": "Add /// documentation for enum IssueStatus"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs",
+        "line": 180,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs:180 - DependencyType",
+        "suggestion": "Add /// documentation for enum DependencyType"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs",
+        "line": 8,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs:8 - ObservationType",
+        "suggestion": "Add /// documentation for enum ObservationType"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs",
+        "line": 51,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs:51 - ObservationMetadata",
+        "suggestion": "Add /// documentation for struct ObservationMetadata"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs",
+        "line": 80,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs:80 - Observation",
+        "suggestion": "Add /// documentation for struct Observation"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/execution.rs",
+        "line": 4,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/execution.rs:4 - ExecutionType",
+        "suggestion": "Add /// documentation for enum ExecutionType"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/execution.rs",
+        "line": 38,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/execution.rs:38 - ExecutionMetadata",
+        "suggestion": "Add /// documentation for struct ExecutionMetadata"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/quality_gate.rs",
+        "line": 5,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/quality_gate.rs:5 - QualityGateStatus",
+        "suggestion": "Add /// documentation for enum QualityGateStatus"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/quality_gate.rs",
+        "line": 39,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/quality_gate.rs:39 - QualityGateResult",
+        "suggestion": "Add /// documentation for struct QualityGateResult"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/session.rs",
+        "line": 4,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/session.rs:4 - SessionSummary",
+        "suggestion": "Add /// documentation for struct SessionSummary"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs",
+        "line": 6,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs:6 - MemorySearchResult",
+        "suggestion": "Add /// documentation for struct MemorySearchResult"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs",
+        "line": 13,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs:13 - MemorySearchIndex",
+        "suggestion": "Add /// documentation for struct MemorySearchIndex"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs",
+        "line": 26,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs:26 - MemoryFilter",
+        "suggestion": "Add /// documentation for struct MemoryFilter"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs",
+        "line": 4,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs:4 - ErrorPatternCategory",
+        "suggestion": "Add /// documentation for enum ErrorPatternCategory"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs",
+        "line": 50,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs:50 - ErrorPattern",
+        "suggestion": "Add /// documentation for struct ErrorPattern"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs",
+        "line": 66,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs:66 - ErrorPatternMatch",
+        "suggestion": "Add /// documentation for struct ErrorPatternMatch"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs",
+        "line": 4,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/branch.rs:4 - VcsBranch",
+        "suggestion": "Add /// documentation for struct VcsBranch"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs",
+        "line": 4,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs:4 - VcsCommit",
+        "suggestion": "Add /// documentation for struct VcsCommit"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/diff.rs",
+        "line": 5,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/diff.rs:5 - DiffStatus",
+        "suggestion": "Add /// documentation for enum DiffStatus"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/diff.rs",
+        "line": 24,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/diff.rs:24 - FileDiff",
+        "suggestion": "Add /// documentation for struct FileDiff"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/diff.rs",
+        "line": 33,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/diff.rs:33 - RefDiff",
+        "suggestion": "Add /// documentation for struct RefDiff"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs",
+        "line": 6,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/vcs_repo.rs:6 - VcsRepository",
+        "suggestion": "Add /// documentation for struct VcsRepository"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/session.rs",
+        "line": 6,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/session.rs:6 - AgentSession",
+        "suggestion": "Add /// documentation for struct AgentSession"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/delegation.rs",
+        "line": 4,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/delegation.rs:4 - Delegation",
+        "suggestion": "Add /// documentation for struct Delegation"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/tool_call.rs",
+        "line": 4,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/tool_call.rs:4 - ToolCall",
+        "suggestion": "Add /// documentation for struct ToolCall"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/checkpoint.rs",
+        "line": 6,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/checkpoint.rs:6 - Checkpoint",
+        "suggestion": "Add /// documentation for struct Checkpoint"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/types.rs",
+        "line": 4,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/types.rs:4 - AgentType",
+        "suggestion": "Add /// documentation for enum AgentType"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/types.rs",
+        "line": 35,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/types.rs:35 - AgentSessionStatus",
+        "suggestion": "Add /// documentation for enum AgentSessionStatus"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/types.rs",
+        "line": 66,
+        "message": "Missing enum doc: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/types.rs:66 - CheckpointType",
+        "suggestion": "Add /// documentation for enum CheckpointType"
+      },
+      {
+        "id": "DOC003",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/memory.rs",
+        "line": 68,
+        "message": "Missing example: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/memory.rs:68 - MemorySchemaDdlGenerator",
+        "suggestion": "Add # Example section to MemorySchemaDdlGenerator documentation"
+      },
+      {
+        "id": "DOC003",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project.rs",
+        "line": 487,
+        "message": "Missing example: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project.rs:487 - SchemaDdlGenerator",
+        "suggestion": "Add # Example section to SchemaDdlGenerator documentation"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/agent.rs",
+        "line": 7,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/agent.rs:7 - tables",
+        "suggestion": "Add /// documentation for function tables"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/agent.rs",
+        "line": 352,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/agent.rs:352 - indexes",
+        "suggestion": "Add /// documentation for function indexes"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/agent.rs",
+        "line": 397,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/agent.rs:397 - foreign_keys",
+        "suggestion": "Add /// documentation for function foreign_keys"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/error_patterns.rs",
+        "line": 6,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/error_patterns.rs:6 - tables",
+        "suggestion": "Add /// documentation for function tables"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/error_patterns.rs",
+        "line": 181,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/error_patterns.rs:181 - indexes",
+        "suggestion": "Add /// documentation for function indexes"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/error_patterns.rs",
+        "line": 211,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/error_patterns.rs:211 - foreign_keys",
+        "suggestion": "Add /// documentation for function foreign_keys"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs",
+        "line": 6,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs:6 - tables",
+        "suggestion": "Add /// documentation for function tables"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs",
+        "line": 319,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs:319 - indexes",
+        "suggestion": "Add /// documentation for function indexes"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs",
+        "line": 374,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs:374 - foreign_keys",
+        "suggestion": "Add /// documentation for function foreign_keys"
+      },
+      {
+        "id": "DOC003",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/http/mod.rs",
+        "line": 15,
+        "message": "Missing example: /home/marlonsc/mcb/./crates/mcb-providers/src/http/mod.rs:15 - HttpClientProvider",
+        "suggestion": "Add # Example section to HttpClientProvider documentation"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/provider.rs",
+        "line": 16,
+        "message": "Missing struct doc: /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/provider.rs:16 - SqliteDatabaseProvider",
+        "suggestion": "Add /// documentation for struct SqliteDatabaseProvider"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/provider.rs",
+        "line": 53,
+        "message": "Missing function doc: /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/provider.rs:53 - create_memory_repository_in_memory",
+        "suggestion": "Add /// documentation for function create_memory_repository_in_memory"
+      }
+    ],
+    "KISS": [
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-infrastructure/src/di/modules/domain_services.rs",
+        "line": 54,
+        "message": "KISS: Struct ServiceDependencies has too many fields: /home/marlonsc/mcb/./crates/mcb-infrastructure/src/di/modules/domain_services.rs:54 (12 fields, max: 7)",
+        "suggestion": "Split 'ServiceDependencies' into smaller structs or use composition. 12 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/admin/models.rs",
+        "line": 135,
+        "message": "KISS: Struct ChunkDetailResponse has too many fields: /home/marlonsc/mcb/./crates/mcb-server/src/admin/models.rs:135 (8 fields, max: 7)",
+        "suggestion": "Split 'ChunkDetailResponse' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/tools/router.rs",
+        "line": 22,
+        "message": "KISS: Struct ToolHandlers has too many fields: /home/marlonsc/mcb/./crates/mcb-server/src/tools/router.rs:22 (8 fields, max: 7)",
+        "suggestion": "Split 'ToolHandlers' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 18,
+        "message": "KISS: Struct IndexArgs has too many fields: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:18 (9 fields, max: 7)",
+        "suggestion": "Split 'IndexArgs' into smaller structs or use composition. 9 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 66,
+        "message": "KISS: Struct SearchArgs has too many fields: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:66 (10 fields, max: 7)",
+        "suggestion": "Split 'SearchArgs' into smaller structs or use composition. 10 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 162,
+        "message": "KISS: Struct MemoryArgs has too many fields: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:162 (16 fields, max: 7)",
+        "suggestion": "Split 'MemoryArgs' into smaller structs or use composition. 16 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs",
+        "line": 292,
+        "message": "KISS: Struct VcsArgs has too many fields: /home/marlonsc/mcb/./crates/mcb-server/src/args/consolidated.rs:292 (10 fields, max: 7)",
+        "suggestion": "Split 'VcsArgs' into smaller structs or use composition. 10 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs",
+        "line": 215,
+        "message": "KISS: Struct ProjectPhase has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs:215 (10 fields, max: 7)",
+        "suggestion": "Split 'ProjectPhase' into smaller structs or use composition. 10 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs",
+        "line": 231,
+        "message": "KISS: Struct ProjectIssue has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs:231 (13 fields, max: 7)",
+        "suggestion": "Split 'ProjectIssue' into smaller structs or use composition. 13 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs",
+        "line": 261,
+        "message": "KISS: Struct ProjectDecision has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/project.rs:261 (8 fields, max: 7)",
+        "suggestion": "Split 'ProjectDecision' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/submodule.rs",
+        "line": 7,
+        "message": "KISS: Struct SubmoduleInfo has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/submodule.rs:7 (8 fields, max: 7)",
+        "suggestion": "Split 'SubmoduleInfo' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs",
+        "line": 51,
+        "message": "KISS: Struct ObservationMetadata has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs:51 (8 fields, max: 7)",
+        "suggestion": "Split 'ObservationMetadata' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs",
+        "line": 80,
+        "message": "KISS: Struct Observation has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/observation.rs:80 (9 fields, max: 7)",
+        "suggestion": "Split 'Observation' into smaller structs or use composition. 9 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/execution.rs",
+        "line": 38,
+        "message": "KISS: Struct ExecutionMetadata has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/execution.rs:38 (11 fields, max: 7)",
+        "suggestion": "Split 'ExecutionMetadata' into smaller structs or use composition. 11 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/session.rs",
+        "line": 4,
+        "message": "KISS: Struct SessionSummary has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/session.rs:4 (8 fields, max: 7)",
+        "suggestion": "Split 'SessionSummary' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs",
+        "line": 13,
+        "message": "KISS: Struct MemorySearchIndex has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs:13 (9 fields, max: 7)",
+        "suggestion": "Split 'MemorySearchIndex' into smaller structs or use composition. 9 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs",
+        "line": 26,
+        "message": "KISS: Struct MemoryFilter has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/search.rs:26 (8 fields, max: 7)",
+        "suggestion": "Split 'MemoryFilter' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs",
+        "line": 50,
+        "message": "KISS: Struct ErrorPattern has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs:50 (12 fields, max: 7)",
+        "suggestion": "Split 'ErrorPattern' into smaller structs or use composition. 12 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs",
+        "line": 66,
+        "message": "KISS: Struct ErrorPatternMatch has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/memory/error_pattern.rs:66 (8 fields, max: 7)",
+        "suggestion": "Split 'ErrorPatternMatch' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/session.rs",
+        "line": 6,
+        "message": "KISS: Struct AgentSession has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/session.rs:6 (14 fields, max: 7)",
+        "suggestion": "Split 'AgentSession' into smaller structs or use composition. 14 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/delegation.rs",
+        "line": 4,
+        "message": "KISS: Struct Delegation has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/delegation.rs:4 (10 fields, max: 7)",
+        "suggestion": "Split 'Delegation' into smaller structs or use composition. 10 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/tool_call.rs",
+        "line": 4,
+        "message": "KISS: Struct ToolCall has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/tool_call.rs:4 (8 fields, max: 7)",
+        "suggestion": "Split 'ToolCall' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/checkpoint.rs",
+        "line": 6,
+        "message": "KISS: Struct Checkpoint has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/agent/checkpoint.rs:6 (8 fields, max: 7)",
+        "suggestion": "Split 'Checkpoint' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/metrics_analysis.rs",
+        "line": 38,
+        "message": "KISS: Struct FileMetrics has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/metrics_analysis.rs:38 (11 fields, max: 7)",
+        "suggestion": "Split 'FileMetrics' into smaller structs or use composition. 11 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/metrics_analysis.rs",
+        "line": 95,
+        "message": "KISS: Struct HalsteadMetrics has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/metrics_analysis.rs:95 (12 fields, max: 7)",
+        "suggestion": "Split 'HalsteadMetrics' into smaller structs or use composition. 12 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/metrics_analysis.rs",
+        "line": 126,
+        "message": "KISS: Struct FunctionMetrics has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/metrics_analysis.rs:126 (8 fields, max: 7)",
+        "suggestion": "Split 'FunctionMetrics' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/admin.rs",
+        "line": 316,
+        "message": "KISS: Struct ValidationOperation has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/admin.rs:316 (8 fields, max: 7)",
+        "suggestion": "Split 'ValidationOperation' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/repositories/project_repository.rs",
+        "line": 10,
+        "message": "KISS: Struct IssueFilter has too many fields: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/repositories/project_repository.rs:10 (8 fields, max: 7)",
+        "suggestion": "Split 'IssueFilter' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-language-support/src/parser.rs",
+        "line": 30,
+        "message": "KISS: Struct ParsedFileMetrics has too many fields: /home/marlonsc/mcb/./crates/mcb-language-support/src/parser.rs:30 (8 fields, max: 7)",
+        "suggestion": "Split 'ParsedFileMetrics' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-language-support/src/parser.rs",
+        "line": 67,
+        "message": "KISS: Struct ParsedFunctionMetrics has too many fields: /home/marlonsc/mcb/./crates/mcb-language-support/src/parser.rs:67 (8 fields, max: 7)",
+        "suggestion": "Split 'ParsedFunctionMetrics' into smaller structs or use composition. 8 fields exceeds the maximum of 7."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/mcp_server.rs",
+        "line": 55,
+        "message": "KISS: Function new has too many parameters: /home/marlonsc/mcb/./crates/mcb-server/src/mcp_server.rs:55 (7 params, max: 5)",
+        "suggestion": "Refactor 'new' to use a config/options struct instead of 7 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-application/src/use_cases/indexing_service.rs",
+        "line": 264,
+        "message": "KISS: Function run_indexing_task has too many parameters: /home/marlonsc/mcb/./crates/mcb-application/src/use_cases/indexing_service.rs:264 (7 params, max: 5)",
+        "suggestion": "Refactor 'run_indexing_task' to use a config/options struct instead of 7 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs",
+        "line": 15,
+        "message": "KISS: Function new has too many parameters: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/vcs/commit.rs:15 (7 params, max: 5)",
+        "suggestion": "Refactor 'new' to use a config/options struct instead of 7 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/workflow.rs",
+        "line": 126,
+        "message": "KISS: Function new has too many parameters: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/workflow.rs:126 (6 params, max: 5)",
+        "suggestion": "Refactor 'new' to use a config/options struct instead of 6 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS004",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs",
+        "line": 54,
+        "message": "KISS: Deep nesting at /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs:54 (4 levels, max: 3) - if line.to_lowercase().contains(&query.to_lowercase()) {",
+        "suggestion": "Extract nested logic into separate functions using early returns or guard clauses. Nesting depth 4 exceeds the maximum of 3."
+      },
+      {
+        "id": "KISS004",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs",
+        "line": 60,
+        "message": "KISS: Deep nesting at /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs:60 (4 levels, max: 3) - if matches.len() >= limit {",
+        "suggestion": "Extract nested logic into separate functions using early returns or guard clauses. Nesting depth 4 exceeds the maximum of 3."
+      },
+      {
+        "id": "KISS004",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-ast-utils/src/walker.rs",
+        "line": 35,
+        "message": "KISS: Deep nesting at /home/marlonsc/mcb/./crates/mcb-ast-utils/src/walker.rs:35 (4 levels, max: 3) - if !cursor.goto_next_sibling() {",
+        "suggestion": "Extract nested logic into separate functions using early returns or guard clauses. Nesting depth 4 exceeds the maximum of 3."
+      },
+      {
+        "id": "KISS004",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-ast-utils/src/cursor.rs",
+        "line": 24,
+        "message": "KISS: Deep nesting at /home/marlonsc/mcb/./crates/mcb-ast-utils/src/cursor.rs:24 (4 levels, max: 3) - if cursor.node().id() == current.id() {",
+        "suggestion": "Extract nested logic into separate functions using early returns or guard clauses. Nesting depth 4 exceeds the maximum of 3."
+      },
+      {
+        "id": "KISS004",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-ast-utils/src/cursor.rs",
+        "line": 29,
+        "message": "KISS: Deep nesting at /home/marlonsc/mcb/./crates/mcb-ast-utils/src/cursor.rs:29 (4 levels, max: 3) - if !cursor.goto_next_sibling() {",
+        "suggestion": "Extract nested logic into separate functions using early returns or guard clauses. Nesting depth 4 exceeds the maximum of 3."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-infrastructure/src/database/memory_provider.rs",
+        "line": 19,
+        "message": "KISS: Function generate_ddl is too long: /home/marlonsc/mcb/./crates/mcb-infrastructure/src/database/memory_provider.rs:19 (141 lines, max: 50)",
+        "suggestion": "Break 'generate_ddl' into smaller, focused functions. 141 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-infrastructure/src/validation/service.rs",
+        "line": 220,
+        "message": "KISS: Function get_validation_rules is too long: /home/marlonsc/mcb/./crates/mcb-infrastructure/src/validation/service.rs:220 (88 lines, max: 50)",
+        "suggestion": "Break 'get_validation_rules' into smaller, focused functions. 88 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/admin/browse_handlers.rs",
+        "line": 181,
+        "message": "KISS: Function get_file_chunks is too long: /home/marlonsc/mcb/./crates/mcb-server/src/admin/browse_handlers.rs:181 (66 lines, max: 50)",
+        "suggestion": "Break 'get_file_chunks' into smaller, focused functions. 66 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/validate.rs",
+        "line": 25,
+        "message": "KISS: Function handle is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/validate.rs:25 (121 lines, max: 50)",
+        "suggestion": "Break 'handle' into smaller, focused functions. 121 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs",
+        "line": 14,
+        "message": "KISS: Function store_execution is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs:14 (88 lines, max: 50)",
+        "suggestion": "Break 'store_execution' into smaller, focused functions. 88 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs",
+        "line": 106,
+        "message": "KISS: Function get_executions is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs:106 (56 lines, max: 50)",
+        "suggestion": "Break 'get_executions' into smaller, focused functions. 56 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/inject.rs",
+        "line": 10,
+        "message": "KISS: Function inject_context is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/inject.rs:10 (52 lines, max: 50)",
+        "suggestion": "Break 'inject_context' into smaller, focused functions. 52 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/list_timeline.rs",
+        "line": 61,
+        "message": "KISS: Function get_timeline is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/list_timeline.rs:61 (67 lines, max: 50)",
+        "suggestion": "Break 'get_timeline' into smaller, focused functions. 67 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs",
+        "line": 15,
+        "message": "KISS: Function store_quality_gate is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs:15 (68 lines, max: 50)",
+        "suggestion": "Break 'store_quality_gate' into smaller, focused functions. 68 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs",
+        "line": 87,
+        "message": "KISS: Function get_quality_gates is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs:87 (51 lines, max: 50)",
+        "suggestion": "Break 'get_quality_gates' into smaller, focused functions. 51 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/create.rs",
+        "line": 14,
+        "message": "KISS: Function create_session is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/create.rs:14 (58 lines, max: 50)",
+        "suggestion": "Break 'create_session' into smaller, focused functions. 58 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/update.rs",
+        "line": 11,
+        "message": "KISS: Function update_session is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/update.rs:11 (53 lines, max: 50)",
+        "suggestion": "Break 'update_session' into smaller, focused functions. 53 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/summarize.rs",
+        "line": 11,
+        "message": "KISS: Function summarize_session is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/session/summarize.rs:11 (56 lines, max: 50)",
+        "suggestion": "Break 'summarize_session' into smaller, focused functions. 56 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/index_repo.rs",
+        "line": 12,
+        "message": "KISS: Function index_repository is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/index_repo.rs:12 (63 lines, max: 50)",
+        "suggestion": "Break 'index_repository' into smaller, focused functions. 63 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs",
+        "line": 10,
+        "message": "KISS: Function search_branch is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs:10 (63 lines, max: 50)",
+        "suggestion": "Break 'search_branch' into smaller, focused functions. 63 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs",
+        "line": 10,
+        "message": "KISS: Function analyze_impact is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs:10 (65 lines, max: 50)",
+        "suggestion": "Break 'analyze_impact' into smaller, focused functions. 65 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/agent.rs",
+        "line": 45,
+        "message": "KISS: Function handle is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/agent.rs:45 (82 lines, max: 50)",
+        "suggestion": "Break 'handle' into smaller, focused functions. 82 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/index.rs",
+        "line": 59,
+        "message": "KISS: Function handle is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/index.rs:59 (62 lines, max: 50)",
+        "suggestion": "Break 'handle' into smaller, focused functions. 62 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/search.rs",
+        "line": 34,
+        "message": "KISS: Function handle is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/search.rs:34 (98 lines, max: 50)",
+        "suggestion": "Break 'handle' into smaller, focused functions. 98 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs",
+        "line": 55,
+        "message": "KISS: Function walk_directory_boxed is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs:55 (52 lines, max: 50)",
+        "suggestion": "Break 'walk_directory_boxed' into smaller, focused functions. 52 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 61,
+        "message": "KISS: Function get_language_config is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:61 (67 lines, max: 50)",
+        "suggestion": "Break 'get_language_config' into smaller, focused functions. 67 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 147,
+        "message": "KISS: Function highlight_code_internal is too long: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:147 (55 lines, max: 50)",
+        "suggestion": "Break 'highlight_code_internal' into smaller, focused functions. 55 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/init.rs",
+        "line": 98,
+        "message": "KISS: Function run_server_mode is too long: /home/marlonsc/mcb/./crates/mcb-server/src/init.rs:98 (60 lines, max: 50)",
+        "suggestion": "Break 'run_server_mode' into smaller, focused functions. 60 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/init.rs",
+        "line": 225,
+        "message": "KISS: Function create_mcp_server is too long: /home/marlonsc/mcb/./crates/mcb-server/src/init.rs:225 (69 lines, max: 50)",
+        "suggestion": "Break 'create_mcp_server' into smaller, focused functions. 69 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-application/src/use_cases/memory_service.rs",
+        "line": 92,
+        "message": "KISS: Function store_observation_impl is too long: /home/marlonsc/mcb/./crates/mcb-application/src/use_cases/memory_service.rs:92 (51 lines, max: 50)",
+        "suggestion": "Break 'store_observation_impl' into smaller, focused functions. 51 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-application/src/use_cases/vcs_indexing.rs",
+        "line": 135,
+        "message": "KISS: Function index_repository is too long: /home/marlonsc/mcb/./crates/mcb-application/src/use_cases/vcs_indexing.rs:135 (103 lines, max: 50)",
+        "suggestion": "Break 'index_repository' into smaller, focused functions. 103 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-application/src/use_cases/vcs_indexing.rs",
+        "line": 271,
+        "message": "KISS: Function index_directory_incremental is too long: /home/marlonsc/mcb/./crates/mcb-application/src/use_cases/vcs_indexing.rs:271 (68 lines, max: 50)",
+        "suggestion": "Break 'index_directory_incremental' into smaller, focused functions. 68 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-application/src/use_cases/indexing_service.rs",
+        "line": 170,
+        "message": "KISS: Function index_codebase is too long: /home/marlonsc/mcb/./crates/mcb-application/src/use_cases/indexing_service.rs:170 (63 lines, max: 50)",
+        "suggestion": "Break 'index_codebase' into smaller, focused functions. 63 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-application/src/use_cases/indexing_service.rs",
+        "line": 264,
+        "message": "KISS: Function run_indexing_task is too long: /home/marlonsc/mcb/./crates/mcb-application/src/use_cases/indexing_service.rs:264 (70 lines, max: 50)",
+        "suggestion": "Break 'run_indexing_task' into smaller, focused functions. 70 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/memory.rs",
+        "line": 79,
+        "message": "KISS: Function definition is too long: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/memory.rs:79 (159 lines, max: 50)",
+        "suggestion": "Break 'definition' into smaller, focused functions. 159 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project.rs",
+        "line": 59,
+        "message": "KISS: Function tables is too long: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project.rs:59 (309 lines, max: 50)",
+        "suggestion": "Break 'tables' into smaller, focused functions. 309 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/agent.rs",
+        "line": 7,
+        "message": "KISS: Function tables is too long: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/agent.rs:7 (344 lines, max: 50)",
+        "suggestion": "Break 'tables' into smaller, focused functions. 344 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/error_patterns.rs",
+        "line": 6,
+        "message": "KISS: Function tables is too long: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/error_patterns.rs:6 (174 lines, max: 50)",
+        "suggestion": "Break 'tables' into smaller, focused functions. 174 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs",
+        "line": 6,
+        "message": "KISS: Function tables is too long: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs:6 (312 lines, max: 50)",
+        "suggestion": "Break 'tables' into smaller, focused functions. 312 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs",
+        "line": 319,
+        "message": "KISS: Function indexes is too long: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project/workflow.rs:319 (54 lines, max: 50)",
+        "suggestion": "Break 'indexes' into smaller, focused functions. 54 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-ast-utils/src/symbols.rs",
+        "line": 107,
+        "message": "KISS: Function extract_rust_symbols is too long: /home/marlonsc/mcb/./crates/mcb-ast-utils/src/symbols.rs:107 (76 lines, max: 50)",
+        "suggestion": "Break 'extract_rust_symbols' into smaller, focused functions. 76 lines exceeds the maximum of 50."
+      }
+    ],
+    "Error Boundary": [
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/validate.rs",
+        "line": 36,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/validate.rs:36 - })?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/validate.rs",
+        "line": 119,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/validate.rs:119 - })?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs",
+        "line": 131,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/execution.rs:131 - let execution = result.observation.metadata.execution?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/list_timeline.rs",
+        "line": 73,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/list_timeline.rs:73 - })?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs",
+        "line": 112,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/memory/quality_gate.rs:112 - let gate = result.observation.metadata.quality_gate?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/index.rs",
+        "line": 32,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/index.rs:32 - })?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/search.rs",
+        "line": 124,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/search.rs:124 - })?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs",
+        "line": 48,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs:48 - let code = self.get_code(path).await?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs",
+        "line": 117,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs:117 - let ext = path.extension()?.to_str()?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 160,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:160 - let lang_config = Self::get_language_config(language)?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR001",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 162,
+        "message": "Missing error context: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:162 - let config = Self::create_highlight_config(lang_config)?; (Add .context() or .map_err() for better error messages)",
+        "suggestion": "Add .context() or .map_err() for better error messages"
+      },
+      {
+        "id": "ERR002",
+        "category": "Error Boundary",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/browse.rs",
+        "line": 20,
+        "message": "Wrong layer error: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/browse.rs:20 - std::io::Error in domain",
+        "suggestion": "Wrap std::io::Error in a domain error type instead of using it directly in domain"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/compare_branches.rs",
+        "line": 21,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/compare_branches.rs:21 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/compare_branches.rs",
+        "line": 25,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/compare_branches.rs:25 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/compare_branches.rs",
+        "line": 47,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/compare_branches.rs:47 - Debug formatting in response",
+        "suggestion": "Replace Debug formatting in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs",
+        "line": 25,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/search_branch.rs:25 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs",
+        "line": 21,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs:21 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs",
+        "line": 25,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs:25 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs",
+        "line": 47,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/vcs/analyze_impact.rs:47 - Debug formatting in response",
+        "suggestion": "Replace Debug formatting in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_api.rs",
+        "line": 67,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_api.rs:67 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_api.rs",
+        "line": 87,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_api.rs:87 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs",
+        "line": 49,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs:49 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs",
+        "line": 143,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs:143 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 125,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:125 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 140,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:140 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 168,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:168 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      },
+      {
+        "id": "ERR003",
+        "category": "Error Boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 195,
+        "message": "Leaked internal error: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:195 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      }
+    ],
+    "Architecture": [
+      {
+        "id": "CA002",
+        "category": "Architecture",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 210,
+        "message": "Handler creates HighlightService directly at /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:210 - Direct service creation instead of DI",
+        "suggestion": "Inject service via constructor injection instead of creating directly"
+      },
+      {
+        "id": "CA002",
+        "category": "Architecture",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 219,
+        "message": "Handler creates HighlightService directly at /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:219 - Direct service creation instead of DI",
+        "suggestion": "Inject service via constructor injection instead of creating directly"
+      },
+      {
+        "id": "CA005",
+        "category": "Architecture",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs",
+        "line": 52,
+        "message": "Value object FileTreeNode has mutable method add_child at /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/browse/tree.rs:52",
+        "suggestion": "Value objects should be immutable - return new instance instead"
+      }
+    ],
+    "Performance": [
+      {
+        "id": "PERF001",
+        "category": "Performance",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/admin/browse_handlers.rs",
+        "line": 223,
+        "message": "Clone in loop: /home/marlonsc/mcb/./crates/mcb-server/src/admin/browse_handlers.rs:223 - c.content.clone(), (Consider borrowing or moving instead of cloning)",
+        "suggestion": "Consider borrowing or moving instead of cloning"
+      },
+      {
+        "id": "PERF001",
+        "category": "Performance",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/admin/browse_handlers.rs",
+        "line": 225,
+        "message": "Clone in loop: /home/marlonsc/mcb/./crates/mcb-server/src/admin/browse_handlers.rs:225 - c.language.clone(), (Consider borrowing or moving instead of cloning)",
+        "suggestion": "Consider borrowing or moving instead of cloning"
+      },
+      {
+        "id": "PERF002",
+        "category": "Performance",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/admin/browse_handlers.rs",
+        "line": 224,
+        "message": "Allocation in loop: /home/marlonsc/mcb/./crates/mcb-server/src/admin/browse_handlers.rs:224 - Vec::new() (Move allocation outside loop or reuse buffer)",
+        "suggestion": "Move allocation outside loop or reuse buffer"
+      }
+    ],
+    "SOLID": [
+      {
+        "id": "SOLID005",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/services/validation.rs",
+        "line": null,
+        "message": "SRP: Multiple unrelated structs in /home/marlonsc/mcb/./crates/mcb-domain/src/ports/services/validation.rs: [ValidationReport, ViolationEntry, RuleInfo, ComplexityReport, FunctionComplexity, NullValidationService] - Consider splitting into separate modules",
+        "suggestion": "Consider splitting into separate modules"
+      },
+      {
+        "id": "SOLID005",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/memory.rs",
+        "line": null,
+        "message": "SRP: Multiple unrelated structs in /home/marlonsc/mcb/./crates/mcb-domain/src/schema/memory.rs: [ColumnDef, TableDef, FtsDef, IndexDef, MemorySchema] - Consider splitting into separate modules",
+        "suggestion": "Consider splitting into separate modules"
+      },
+      {
+        "id": "SOLID001",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/schema/project.rs",
+        "line": 45,
+        "message": "SRP: impl ProjectSchema too large: /home/marlonsc/mcb/./crates/mcb-domain/src/schema/project.rs:45 (324 lines, max: 200) - Consider splitting into smaller, focused impl blocks",
+        "suggestion": "Consider splitting into smaller, focused impl blocks"
+      },
+      {
+        "id": "SOLID001",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/memory_repository.rs",
+        "line": 29,
+        "message": "SRP: impl MemoryRepository too large: /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/memory_repository.rs:29 (335 lines, max: 200) - Consider splitting into smaller, focused impl blocks",
+        "suggestion": "Consider splitting into smaller, focused impl blocks"
+      },
+      {
+        "id": "SOLID001",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/agent_repository.rs",
+        "line": 28,
+        "message": "SRP: impl AgentRepository too large: /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/agent_repository.rs:28 (351 lines, max: 200) - Consider splitting into smaller, focused impl blocks",
+        "suggestion": "Consider splitting into smaller, focused impl blocks"
+      },
+      {
+        "id": "SOLID001",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/git/git2_provider.rs",
+        "line": 91,
+        "message": "SRP: impl VcsProvider too large: /home/marlonsc/mcb/./crates/mcb-providers/src/git/git2_provider.rs:91 (294 lines, max: 200) - Consider splitting into smaller, focused impl blocks",
+        "suggestion": "Consider splitting into smaller, focused impl blocks"
+      },
+      {
+        "id": "SOLID001",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-ast-utils/src/symbols.rs",
+        "line": 65,
+        "message": "SRP: impl SymbolExtractor too large: /home/marlonsc/mcb/./crates/mcb-ast-utils/src/symbols.rs:65 (285 lines, max: 200) - Consider splitting into smaller, focused impl blocks",
+        "suggestion": "Consider splitting into smaller, focused impl blocks"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/validate.rs",
+        "line": 32,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/validate.rs:32 (15 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/index.rs",
+        "line": 66,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/consolidated/index.rs:66 (11 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs",
+        "line": 118,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs:118 (23 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 64,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:64 (13 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/entities/workflow.rs",
+        "line": 96,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-domain/src/entities/workflow.rs:96 (12 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/types.rs",
+        "line": 72,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/types.rs:72 (14 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/types.rs",
+        "line": 109,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/types.rs:109 (13 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/types.rs",
+        "line": 128,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/types.rs:128 (13 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/types.rs",
+        "line": 181,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/types.rs:181 (14 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID002",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/workflow/transitions.rs",
+        "line": 17,
+        "message": "OCP: Excessive match arms: /home/marlonsc/mcb/./crates/mcb-providers/src/workflow/transitions.rs:17 (16 arms, recommended max: 10) - Consider using visitor pattern, enum dispatch, or trait objects",
+        "suggestion": "Consider using visitor pattern, enum dispatch, or trait objects"
+      },
+      {
+        "id": "SOLID003",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/metrics.rs",
+        "line": 88,
+        "message": "ISP: Trait MetricsProvider too large: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/metrics.rs:88 (13 methods, max: 10) - Consider splitting into smaller, focused traits",
+        "suggestion": "Consider splitting into smaller, focused traits"
+      },
+      {
+        "id": "SOLID003",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/repositories/memory_repository.rs",
+        "line": 19,
+        "message": "ISP: Trait MemoryRepository too large: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/repositories/memory_repository.rs:19 (11 methods, max: 10) - Consider splitting into smaller, focused traits",
+        "suggestion": "Consider splitting into smaller, focused traits"
+      },
+      {
+        "id": "SOLID003",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/repositories/project_repository.rs",
+        "line": 23,
+        "message": "ISP: Trait ProjectRepository too large: /home/marlonsc/mcb/./crates/mcb-domain/src/ports/repositories/project_repository.rs:23 (22 methods, max: 10) - Consider splitting into smaller, focused traits",
+        "suggestion": "Consider splitting into smaller, focused traits"
+      },
+      {
+        "id": "SOLID006",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-language-support/src/parser.rs",
+        "line": 93,
+        "message": "LSP: Partial implementation: /home/marlonsc/mcb/./crates/mcb-language-support/src/parser.rs:93 - MyParser::Parser::parse_file uses panic!/todo!",
+        "suggestion": "Implement the method properly or remove the trait implementation"
+      },
+      {
+        "id": "SOLID006",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-language-support/src/parser.rs",
+        "line": 94,
+        "message": "LSP: Partial implementation: /home/marlonsc/mcb/./crates/mcb-language-support/src/parser.rs:94 - MyParser::Parser::parse_content uses panic!/todo!",
+        "suggestion": "Implement the method properly or remove the trait implementation"
+      },
+      {
+        "id": "SOLID008",
+        "category": "SOLID",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs",
+        "line": 64,
+        "message": "OCP: String-based dispatch: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/highlight_service.rs:64 - match normalized.as_str() { - Consider using enum types with FromStr or a registry pattern",
+        "suggestion": "Consider using enum types with FromStr or a registry pattern"
+      }
+    ],
+    "Implementation": [
+      {
+        "id": "IMPL001",
+        "category": "Implementation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs",
+        "line": 71,
+        "message": "Empty method body: /home/marlonsc/mcb/./crates/mcb-server/src/handlers/browse_service.rs:71 - walk_directory_boxed() returns None",
+        "suggestion": "Replace trivial return 'None' with actual implementation logic"
+      }
+    ],
+    "Testing": [
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/unit/processor_tests.rs",
+        "line": 6,
+        "message": "Test without assertion: /home/marlonsc/mcb/./crates/mcb-server/tests/unit/processor_tests.rs:6 - test_hook_processor_constructs_with_none_memory_service",
+        "suggestion": "Add assertion to test_hook_processor_constructs_with_none_memory_service or use smoke test suffix"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs",
+        "line": 38,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs:38 - golden_e2e_complete_workflow (use test_golden_e2e_complete_workflow)",
+        "suggestion": "Rename to test_golden_e2e_complete_workflow"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs",
+        "line": 161,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs:161 - golden_index_test_repository (use test_golden_index_test_repository)",
+        "suggestion": "Rename to test_golden_index_test_repository"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs",
+        "line": 195,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs:195 - golden_index_handles_multiple_languages (use test_golden_index_handles_multiple_languages)",
+        "suggestion": "Rename to test_golden_index_handles_multiple_languages"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs",
+        "line": 226,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs:226 - golden_search_returns_relevant_results (use test_golden_search_returns_relevant_results)",
+        "suggestion": "Rename to test_golden_search_returns_relevant_results"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs",
+        "line": 265,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs:265 - golden_search_handles_empty_query (use test_golden_search_handles_empty_query)",
+        "suggestion": "Rename to test_golden_search_handles_empty_query"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs",
+        "line": 287,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs:287 - golden_search_respects_limit_parameter (use test_golden_search_respects_limit_parameter)",
+        "suggestion": "Rename to test_golden_search_respects_limit_parameter"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 52,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:52 - golden_highlight_all_languages (use test_golden_highlight_all_languages)",
+        "suggestion": "Rename to test_golden_highlight_all_languages"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 76,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:76 - golden_highlight_categories (use test_golden_highlight_categories)",
+        "suggestion": "Rename to test_golden_highlight_categories"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 99,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:99 - golden_highlight_empty_input (use test_golden_highlight_empty_input)",
+        "suggestion": "Rename to test_golden_highlight_empty_input"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 105,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:105 - golden_highlight_whitespace_only (use test_golden_highlight_whitespace_only)",
+        "suggestion": "Rename to test_golden_highlight_whitespace_only"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 115,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:115 - golden_highlight_unknown_language (use test_golden_highlight_unknown_language)",
+        "suggestion": "Rename to test_golden_highlight_unknown_language"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 130,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:130 - golden_highlight_html_escaping (use test_golden_highlight_html_escaping)",
+        "suggestion": "Rename to test_golden_highlight_html_escaping"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 148,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:148 - golden_highlight_multiline_code (use test_golden_highlight_multiline_code)",
+        "suggestion": "Rename to test_golden_highlight_multiline_code"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 168,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:168 - golden_highlight_special_characters (use test_golden_highlight_special_characters)",
+        "suggestion": "Rename to test_golden_highlight_special_characters"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 181,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:181 - golden_highlight_very_long_lines (use test_golden_highlight_very_long_lines)",
+        "suggestion": "Rename to test_golden_highlight_very_long_lines"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 194,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:194 - golden_highlight_output_format (use test_golden_highlight_output_format)",
+        "suggestion": "Rename to test_golden_highlight_output_format"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 212,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:212 - golden_highlight_class_naming_convention (use test_golden_highlight_class_naming_convention)",
+        "suggestion": "Rename to test_golden_highlight_class_naming_convention"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 230,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:230 - golden_highlight_consistency (use test_golden_highlight_consistency)",
+        "suggestion": "Rename to test_golden_highlight_consistency"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 243,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:243 - golden_highlight_comments_preserved (use test_golden_highlight_comments_preserved)",
+        "suggestion": "Rename to test_golden_highlight_comments_preserved"
+      },
+      {
+        "id": "TEST003",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs",
+        "line": 259,
+        "message": "Bad test function name: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_highlight_service_e2e_integration.rs:259 - golden_highlight_strings_preserved (use test_golden_highlight_strings_preserved)",
+        "suggestion": "Rename to test_golden_highlight_strings_preserved"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-application/tests/unit/memory_tests.rs",
+        "line": 5,
+        "message": "Test without assertion: /home/marlonsc/mcb/./crates/mcb-application/tests/unit/memory_tests.rs:5 - test_memory_service_interface_is_object_safe",
+        "suggestion": "Add assertion to test_memory_service_interface_is_object_safe or use smoke test suffix"
+      },
+      {
+        "id": "TEST006",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_e2e_complete_integration.rs",
+        "line": 204,
+        "message": "Unwrap-only test: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_e2e_complete_integration.rs:204 - test_golden_e2e_respects_collection_isolation has no real assertion, only .unwrap()",
+        "suggestion": "Add explicit assert! or assert_eq! instead of relying on .unwrap()"
+      },
+      {
+        "id": "TEST006",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_e2e_complete_integration.rs",
+        "line": 511,
+        "message": "Unwrap-only test: /home/marlonsc/mcb/./crates/mcb-server/tests/integration/golden_e2e_complete_integration.rs:511 - test_golden_e2e_golden_queries_setup has no real assertion, only .unwrap()",
+        "suggestion": "Add explicit assert! or assert_eq! instead of relying on .unwrap()"
+      }
+    ],
+    "Refactoring": [
+      {
+        "id": "REF002",
+        "category": "Refactoring",
+        "severity": "ERROR",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/http.rs",
+        "line": null,
+        "message": "Duplicate definition 'HttpClientConfig' in 2 locations: [/home/marlonsc/mcb/./crates/mcb-domain/src/ports/providers/http.rs, /home/marlonsc/mcb/./crates/mcb-providers/src/http/types.rs] - Type 'HttpClientConfig' is unexpectedly defined in multiple crates: {\"mcb-providers\", \"mcb-domain\"}. This requires immediate consolidation.",
+        "suggestion": "Type 'HttpClientConfig' is unexpectedly defined in multiple crates: {\"mcb-providers\", \"mcb-domain\"}. This requires immediate consolidation."
+      },
+      {
+        "id": "REF003",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/ids.rs",
+        "line": null,
+        "message": "Missing test file for /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/ids.rs - expected /home/marlonsc/mcb/./crates/mcb-domain/tests/ids_test.rs",
+        "suggestion": "Create test file /home/marlonsc/mcb/./crates/mcb-domain/tests/ids_test.rs for source /home/marlonsc/mcb/./crates/mcb-domain/src/value_objects/ids.rs"
+      },
+      {
+        "id": "REF003",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/memory_repository.rs",
+        "line": null,
+        "message": "Missing test file for /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/memory_repository.rs - expected /home/marlonsc/mcb/./crates/mcb-providers/tests/memory_repository_test.rs",
+        "suggestion": "Create test file /home/marlonsc/mcb/./crates/mcb-providers/tests/memory_repository_test.rs for source /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/memory_repository.rs"
+      },
+      {
+        "id": "REF003",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/agent_repository.rs",
+        "line": null,
+        "message": "Missing test file for /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/agent_repository.rs - expected /home/marlonsc/mcb/./crates/mcb-providers/tests/agent_repository_test.rs",
+        "suggestion": "Create test file /home/marlonsc/mcb/./crates/mcb-providers/tests/agent_repository_test.rs for source /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/agent_repository.rs"
+      },
+      {
+        "id": "REF003",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/executor.rs",
+        "line": null,
+        "message": "Missing test file for /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/executor.rs - expected /home/marlonsc/mcb/./crates/mcb-providers/tests/executor_test.rs",
+        "suggestion": "Create test file /home/marlonsc/mcb/./crates/mcb-providers/tests/executor_test.rs for source /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/executor.rs"
+      },
+      {
+        "id": "REF003",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/row_convert.rs",
+        "line": null,
+        "message": "Missing test file for /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/row_convert.rs - expected /home/marlonsc/mcb/./crates/mcb-providers/tests/row_convert_test.rs",
+        "suggestion": "Create test file /home/marlonsc/mcb/./crates/mcb-providers/tests/row_convert_test.rs for source /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/row_convert.rs"
+      },
+      {
+        "id": "REF003",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/provider.rs",
+        "line": null,
+        "message": "Missing test file for /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/provider.rs - expected /home/marlonsc/mcb/./crates/mcb-providers/tests/provider_test.rs",
+        "suggestion": "Create test file /home/marlonsc/mcb/./crates/mcb-providers/tests/provider_test.rs for source /home/marlonsc/mcb/./crates/mcb-providers/src/database/sqlite/provider.rs"
+      },
+      {
+        "id": "REF003",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/git/project_detection/detector.rs",
+        "line": null,
+        "message": "Missing test file for /home/marlonsc/mcb/./crates/mcb-providers/src/git/project_detection/detector.rs - expected /home/marlonsc/mcb/./crates/mcb-providers/tests/detector_test.rs",
+        "suggestion": "Create test file /home/marlonsc/mcb/./crates/mcb-providers/tests/detector_test.rs for source /home/marlonsc/mcb/./crates/mcb-providers/src/git/project_detection/detector.rs"
+      },
+      {
+        "id": "REF003",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/./crates/mcb-providers/src/git/project_detection/registry.rs",
+        "line": null,
+        "message": "Missing test file for /home/marlonsc/mcb/./crates/mcb-providers/src/git/project_detection/registry.rs - expected /home/marlonsc/mcb/./crates/mcb-providers/tests/registry_test.rs",
+        "suggestion": "Create test file /home/marlonsc/mcb/./crates/mcb-providers/tests/registry_test.rs for source /home/marlonsc/mcb/./crates/mcb-providers/src/git/project_detection/registry.rs"
+      }
+    ]
+  }
+}

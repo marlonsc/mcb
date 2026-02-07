@@ -260,6 +260,7 @@ async fn create_mcp_server(
         .unwrap_or_else(|| "default".to_string());
 
     let vcs_provider = default_vcs_provider();
+    let project_service = Arc::new(mcb_infrastructure::project::ProjectService::new());
 
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         project_id,
@@ -274,6 +275,7 @@ async fn create_mcp_server(
         memory_repository,
         agent_repository,
         vcs_provider,
+        project_service: project_service.clone(),
     };
     let services =
         mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(
@@ -283,6 +285,13 @@ async fn create_mcp_server(
 
     let server = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
+        .with_context_service(services.context_service)
+        .with_search_service(services.search_service)
+        .with_validation_service(services.validation_service)
+        .with_memory_service(services.memory_service)
+        .with_project_service(services.project_service)
+        .with_vcs_provider(services.vcs_provider)
+        .with_agent_session_service(services.agent_session_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
         .with_validation_service(services.validation_service)

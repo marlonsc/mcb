@@ -1,6 +1,7 @@
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
+use mcb_domain::value_objects::ObservationId;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -54,7 +55,9 @@ async fn test_fts_search_flow() {
     assert!(results.is_empty(), "Should not find 'dog'");
 
     // 4. Delete observation
-    repo.delete_observation(&id).await.unwrap();
+    repo.delete_observation(&ObservationId::new(&id))
+        .await
+        .unwrap();
 
     // 5. Search FTS for "fox" -> returns empty (verifies trigger)
     let results = repo.search_fts("fox", 10).await.unwrap();

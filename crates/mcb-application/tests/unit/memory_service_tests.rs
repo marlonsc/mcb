@@ -21,7 +21,9 @@ mod rrf_tests {
     use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
     use mcb_domain::ports::services::MemoryServiceInterface;
     use mcb_domain::utils::compute_content_hash;
-    use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
+    use mcb_domain::value_objects::{
+        CollectionId, Embedding, ObservationId, SearchResult, SessionId,
+    };
     use serde_json::Value;
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -163,8 +165,12 @@ mod rrf_tests {
             Ok(())
         }
 
-        async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
-            Ok(self.observations.iter().find(|o| o.id == id).cloned())
+        async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
+            Ok(self
+                .observations
+                .iter()
+                .find(|o| o.id == id.as_str())
+                .cloned())
         }
 
         async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
@@ -187,7 +193,7 @@ mod rrf_tests {
             Ok(self.fts_results.clone())
         }
 
-        async fn delete_observation(&self, _id: &str) -> Result<()> {
+        async fn delete_observation(&self, _id: &ObservationId) -> Result<()> {
             Ok(())
         }
 
@@ -200,18 +206,19 @@ mod rrf_tests {
             Ok(vec![])
         }
 
-        async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+        async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
+            let id_strings: Vec<&str> = ids.iter().map(|id| id.as_str()).collect();
             Ok(self
                 .observations
                 .iter()
-                .filter(|o| ids.contains(&o.id))
+                .filter(|o| id_strings.contains(&o.id.as_str()))
                 .cloned()
                 .collect())
         }
 
         async fn get_timeline(
             &self,
-            _anchor_id: &str,
+            _anchor_id: &ObservationId,
             _before: usize,
             _after: usize,
             _filter: Option<MemoryFilter>,
@@ -223,7 +230,10 @@ mod rrf_tests {
             Ok(())
         }
 
-        async fn get_session_summary(&self, _session_id: &str) -> Result<Option<SessionSummary>> {
+        async fn get_session_summary(
+            &self,
+            _session_id: &SessionId,
+        ) -> Result<Option<SessionSummary>> {
             Ok(None)
         }
     }
@@ -247,22 +257,11 @@ mod rrf_tests {
     // ---- Tests ----
 
     /// Verifies Reciprocal Rank Fusion correctly combines FTS and vector results.
-    ///
-    /// Setup:
-    ///   FTS returns: obs_b (rank 0), obs_a (rank 1)
-    ///   Vector returns: obs_a (rank 0)
-    ///
-    /// Expected RRF scores (k=60):
-    ///   obs_a: 1/(60+1+1) + 1/(60+0+1) = 1/62 + 1/61 ≈ 0.03252
-    ///   obs_b: 1/(60+0+1)              = 1/61        ≈ 0.01639
-    ///
-    /// Result: obs_a ranked first (appears in both lists).
     #[tokio::test]
     async fn test_rrf_hybrid_search_combines_fts_and_vector() {
         let obs_a = make_observation("obs-a", "content about rust generics");
         let obs_b = make_observation("obs-b", "content about python types");
 
-        // FTS returns B first, A second
         let fts_results = vec![
             FtsSearchResult {
                 id: "obs-b".to_string(),
@@ -274,7 +273,6 @@ mod rrf_tests {
             },
         ];
 
-        // Vector store returns content matching obs_a at rank 0
         let vector_results = vec![SearchResult {
             id: "vec-1".to_string(),
             file_path: String::new(),
@@ -307,31 +305,12 @@ mod rrf_tests {
             .await
             .expect("search should succeed");
 
-        assert!(
-            results.len() >= 2,
-            "Should return at least 2 results, got {}",
-            results.len()
-        );
-
-        assert_eq!(
-            results[0].id, "obs-a",
-            "obs_a should be ranked first (present in both FTS and vector)"
-        );
-        assert_eq!(
-            results[1].id, "obs-b",
-            "obs_b should be ranked second (present only in FTS)"
-        );
-
-        assert!(
-            results[0].similarity_score > results[1].similarity_score,
-            "obs_a score ({}) should exceed obs_b score ({})",
-            results[0].similarity_score,
-            results[1].similarity_score
-        );
+        assert!(results.len() >= 2);
+        assert_eq!(results[0].id, "obs-a");
+        assert_eq!(results[1].id, "obs-b");
+        assert!(results[0].similarity_score > results[1].similarity_score);
     }
 
-    /// Verifies that search degrades gracefully when vector store returns no results.
-    /// In this case, only FTS results should be returned.
     #[tokio::test]
     async fn test_rrf_fallback_to_fts_when_vector_empty() {
         let obs_a = make_observation("obs-a", "debugging tokio runtime");
@@ -366,14 +345,13 @@ mod rrf_tests {
         let results = service
             .search_memories("tokio runtime", None, 10)
             .await
-            .expect("search should succeed with FTS-only fallback");
+            .expect("search should succeed");
 
-        assert_eq!(results.len(), 2, "Should return both FTS results");
-        assert_eq!(results[0].id, "obs-a", "FTS rank order preserved");
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].id, "obs-a");
         assert_eq!(results[1].id, "obs-b");
     }
 
-    /// Verifies that MemoryFilter is applied after RRF scoring.
     #[tokio::test]
     async fn test_rrf_respects_memory_filter() {
         let mut obs_a = make_observation("obs-a", "session one observation");
@@ -416,9 +394,9 @@ mod rrf_tests {
         let results = service
             .search_memories("observation", Some(filter), 10)
             .await
-            .expect("search with filter should succeed");
+            .expect("search should succeed");
 
-        assert_eq!(results.len(), 1, "Filter should exclude session-2");
+        assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "obs-a");
     }
 
@@ -464,9 +442,9 @@ mod rrf_tests {
         let results = service
             .search_memories("branch work", Some(filter), 10)
             .await
-            .expect("search with branch filter should succeed");
+            .expect("search should succeed");
 
-        assert_eq!(results.len(), 1, "Filter should exclude main branch");
+        assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "obs-a");
     }
 
@@ -512,9 +490,9 @@ mod rrf_tests {
         let results = service
             .search_memories("commit observation", Some(filter), 10)
             .await
-            .expect("search with commit filter should succeed");
+            .expect("search should succeed");
 
-        assert_eq!(results.len(), 1, "Filter should exclude def456 commit");
+        assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "obs-a");
     }
 }

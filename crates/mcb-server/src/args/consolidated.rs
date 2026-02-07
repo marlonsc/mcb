@@ -6,14 +6,19 @@ use validator::Validate;
 // Index Tool - Consolidates: index_codebase, get_indexing_status, clear_index
 // =============================================================================
 
+/// Actions available for the index tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IndexAction {
+    /// Start a new indexing operation.
     Start,
+    /// Get the status of current indexing operation.
     Status,
+    /// Clear the index for a collection.
     Clear,
 }
 
+/// Arguments for the index tool.
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct IndexArgs {
     #[schemars(
@@ -55,13 +60,17 @@ pub struct IndexArgs {
 // Search Tool - Consolidates: search_code, search_memories, memory_search
 // =============================================================================
 
+/// Resources available for semantic search.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SearchResource {
+    /// Search across the indexed codebase.
     Code,
+    /// Search across the memory (observations).
     Memory,
 }
 
+/// Arguments for the search tool.
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct SearchArgs {
     #[schemars(description = "Natural language search query")]
@@ -101,21 +110,29 @@ pub struct SearchArgs {
 // Validate Tool - Consolidates: validate_*, list_validators, analyze_complexity
 // =============================================================================
 
+/// Actions available for the validate tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ValidateAction {
+    /// Run architectural validation rules.
     Run,
+    /// List available validation rules.
     ListRules,
+    /// Analyze code complexity (cyclomatic, cognitive).
     Analyze,
 }
 
+/// Scope for the validate action.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ValidateScope {
+    /// Validate a single file.
     File,
+    /// Validate an entire project.
     Project,
 }
 
+/// Arguments for the validate tool.
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct ValidateArgs {
     #[schemars(description = "Action: run (validate), list_rules, analyze (complexity)")]
@@ -138,26 +155,39 @@ pub struct ValidateArgs {
 // Memory Tool - Consolidates all memory_* tools (14 tools → 1)
 // =============================================================================
 
+/// Actions available for the memory tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum MemoryAction {
+    /// Store a new memory item.
     Store,
+    /// Get a specific memory item by ID.
     Get,
+    /// List memory items with filters.
     List,
+    /// Get a timeline of memory items.
     Timeline,
+    /// Inject relevant memory items into context.
     Inject,
 }
 
+/// Resource types for the memory tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum MemoryResource {
+    /// General observation.
     Observation,
+    /// Tool execution result.
     Execution,
+    /// Architectural quality gate.
     QualityGate,
+    /// Common error pattern.
     ErrorPattern,
+    /// Session metadata.
     Session,
 }
 
+/// Arguments for the memory tool.
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct MemoryArgs {
     #[schemars(description = "Action: store, get, list, timeline, inject")]
@@ -324,4 +354,43 @@ pub struct VcsArgs {
 
     #[schemars(description = "Limit for search or list actions")]
     pub limit: Option<u32>,
+}
+// =============================================================================
+// Project Tool - Consolidates all project_* tools (9 tools → 1)
+// =============================================================================
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ProjectAction {
+    Create,
+    Update,
+    List,
+    Delete,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ProjectResource {
+    Phase,
+    Issue,
+    Dependency,
+    Decision,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct ProjectArgs {
+    #[schemars(description = "Action: create, update, list, delete")]
+    pub action: ProjectAction,
+
+    #[schemars(description = "Resource type: phase, issue, dependency, decision")]
+    pub resource: ProjectResource,
+
+    #[schemars(description = "Project ID")]
+    pub project_id: String,
+
+    #[schemars(description = "Data payload for create/update (JSON object)")]
+    pub data: Option<serde_json::Value>,
+
+    #[schemars(description = "Additional filters for list action")]
+    pub filters: Option<serde_json::Value>,
 }

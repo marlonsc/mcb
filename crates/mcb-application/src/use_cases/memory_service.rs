@@ -202,7 +202,10 @@ impl MemoryServiceImpl {
         ranked: Vec<(String, f32)>,
         filter: &MemoryFilter,
     ) -> Result<Vec<MemorySearchResult>> {
-        let top_ids: Vec<String> = ranked.iter().map(|(id, _)| id.clone()).collect();
+        let top_ids: Vec<ObservationId> = ranked
+            .iter()
+            .map(|(id, _)| ObservationId::new(id))
+            .collect();
         let observations = self.repository.get_observations_by_ids(&top_ids).await?;
 
         let obs_map: HashMap<String, Observation> = observations
@@ -288,7 +291,7 @@ impl MemoryServiceImpl {
 
     async fn get_timeline_impl(
         &self,
-        anchor_id: &str,
+        anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
@@ -298,7 +301,10 @@ impl MemoryServiceImpl {
             .await
     }
 
-    async fn get_observations_by_ids_impl(&self, ids: &[String]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids_impl(
+        &self,
+        ids: &[ObservationId],
+    ) -> Result<Vec<Observation>> {
         self.repository.get_observations_by_ids(ids).await
     }
 
@@ -338,9 +344,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     }
 
     async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
-        self.repository
-            .get_session_summary(session_id.as_str())
-            .await
+        self.repository.get_session_summary(session_id).await
     }
 
     async fn create_session_summary(
@@ -356,7 +360,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     }
 
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
-        self.repository.get_observation(id.as_str()).await
+        self.repository.get_observation(id).await
     }
 
     async fn embed_content(&self, content: &str) -> Result<Embedding> {
@@ -370,13 +374,12 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
-        self.get_timeline_impl(anchor_id.as_str(), before, after, filter)
+        self.get_timeline_impl(anchor_id, before, after, filter)
             .await
     }
 
     async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
-        let id_strings: Vec<String> = ids.iter().map(|id| id.as_str().to_string()).collect();
-        self.get_observations_by_ids_impl(&id_strings).await
+        self.get_observations_by_ids_impl(ids).await
     }
 
     async fn memory_search(

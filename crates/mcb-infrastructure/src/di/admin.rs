@@ -15,6 +15,10 @@ use super::provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,
 };
+pub use mcb_domain::ports::admin::{
+    CacheAdminInterface, EmbeddingAdminInterface, LanguageAdminInterface, ProviderInfo,
+    VectorStoreAdminInterface,
+};
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
@@ -22,29 +26,6 @@ use mcb_domain::registry::{
     CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig, VectorStoreProviderConfig,
 };
 use std::sync::Arc;
-
-// ============================================================================
-// Common Types
-// ============================================================================
-
-/// Information about an available provider
-#[derive(Debug, Clone)]
-pub struct ProviderInfo {
-    /// Provider name (used in config)
-    pub name: String,
-    /// Human-readable description
-    pub description: String,
-}
-
-impl ProviderInfo {
-    /// Create new provider info
-    pub fn new(name: impl Into<String>, description: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            description: description.into(),
-        }
-    }
-}
 
 // ============================================================================
 // Resolver Trait - Common Interface for All Provider Resolvers
@@ -234,106 +215,6 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AdminService").finish()
     }
-}
-
-// ============================================================================
-// Admin Service Interfaces (Traits)
-// ============================================================================
-
-/// Interface for embedding provider admin operations
-///
-/// # Example
-///
-/// ```
-/// use mcb_infrastructure::di::admin::{EmbeddingAdminInterface, ProviderInfo};
-///
-/// fn list_embedding_providers(admin: &dyn EmbeddingAdminInterface) -> Vec<String> {
-///     admin.list_providers()
-///         .into_iter()
-///         .map(|info| info.name)
-///         .collect()
-/// }
-/// ```
-pub trait EmbeddingAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available embedding providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Get current provider name
-    fn current_provider(&self) -> String;
-    /// Switch to a different embedding provider
-    fn switch_provider(&self, config: EmbeddingProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
-
-/// Interface for vector store provider admin operations
-///
-/// # Example
-///
-/// ```
-/// use mcb_infrastructure::di::admin::{VectorStoreAdminInterface, ProviderInfo};
-///
-/// fn list_vector_providers(admin: &dyn VectorStoreAdminInterface) -> Vec<String> {
-///     admin.list_providers()
-///         .into_iter()
-///         .map(|info| info.name)
-///         .collect()
-/// }
-/// ```
-pub trait VectorStoreAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available vector store providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Switch to a different vector store provider
-    fn switch_provider(&self, config: VectorStoreProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
-
-/// Interface for cache provider admin operations
-///
-/// # Example
-///
-/// ```
-/// use mcb_infrastructure::di::admin::{CacheAdminInterface, ProviderInfo};
-///
-/// fn list_cache_providers(admin: &dyn CacheAdminInterface) -> Vec<String> {
-///     admin.list_providers()
-///         .into_iter()
-///         .map(|info| info.name)
-///         .collect()
-/// }
-/// ```
-pub trait CacheAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available cache providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Get current provider name
-    fn current_provider(&self) -> String;
-    /// Switch to a different cache provider
-    fn switch_provider(&self, config: CacheProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
-
-/// Interface for language provider admin operations
-///
-/// # Example
-///
-/// ```
-/// use mcb_infrastructure::di::admin::{LanguageAdminInterface, ProviderInfo};
-///
-/// fn list_language_providers(admin: &dyn LanguageAdminInterface) -> Vec<String> {
-///     admin.list_providers()
-///         .into_iter()
-///         .map(|info| info.name)
-///         .collect()
-/// }
-/// ```
-pub trait LanguageAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available language providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Switch to a different language provider
-    fn switch_provider(&self, config: LanguageProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
 }
 
 // ============================================================================

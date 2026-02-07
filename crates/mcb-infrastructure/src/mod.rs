@@ -38,6 +38,7 @@
 // Clippy allows for complex patterns in infrastructure code
 
 // Core infrastructure modules
+pub mod adapters;
 pub mod cache;
 pub mod config;
 pub mod constants;
@@ -47,19 +48,11 @@ pub mod di;
 pub mod error_ext;
 pub mod health;
 pub mod logging;
+pub mod project;
 pub mod routing;
 pub mod storage;
 pub mod utils;
 
-// Architecture validation
-pub mod validation;
-
-// DI bridge modules (re-exports for module composition)
 pub mod infrastructure;
-
-// Re-export commonly used types
 pub use error_ext::ErrorContext;
 pub use utils::TimedOperation;
-
-// Provider registration happens automatically via linkme distributed slices
-// when mcb-providers is compiled as a dependency

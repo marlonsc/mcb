@@ -1,6 +1,7 @@
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
+use mcb_domain::value_objects::ObservationId;
 use mcb_providers::database::create_memory_repository_in_memory;
 use std::sync::Arc;
 
@@ -50,7 +51,10 @@ async fn test_memory_repository_store_and_get_observation() {
         embedding_id: None,
     };
     repo.store_observation(&obs).await.unwrap();
-    let got = repo.get_observation("id1").await.unwrap();
+    let got = repo
+        .get_observation(&ObservationId::new("id1"))
+        .await
+        .unwrap();
     assert!(got.is_some());
     assert_eq!(got.unwrap().content, "content");
 }

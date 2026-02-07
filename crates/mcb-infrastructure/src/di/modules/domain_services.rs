@@ -25,7 +25,8 @@ use mcb_domain::ports::providers::{
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
 use mcb_domain::ports::services::{
     AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
-    MemoryServiceInterface, SearchServiceInterface, ValidationServiceInterface,
+    MemoryServiceInterface, ProjectDetectorService, SearchServiceInterface,
+    ValidationServiceInterface,
 };
 use std::sync::Arc;
 
@@ -43,14 +44,11 @@ pub struct DomainServicesContainer {
     pub validation_service: Arc<dyn ValidationServiceInterface>,
     pub memory_service: Arc<dyn MemoryServiceInterface>,
     pub agent_session_service: Arc<dyn AgentSessionServiceInterface>,
+    pub project_service: Arc<dyn ProjectDetectorService>,
     pub vcs_provider: Arc<dyn VcsProvider>,
 }
 
 /// Runtime dependencies required to assemble Phase 6 services (Memory Search + Hybrid Search).
-///
-/// Contains providers, repositories, caches, and event buses that map directly to the Phase 6 pipeline
-/// described in `.planning/STATE.md` and `docs/context/project-state.md` so injecting the right
-/// combination keeps the memory/indexing services aligned with the roadmap.
 pub struct ServiceDependencies {
     pub project_id: String,
     pub cache: SharedCacheProvider,
@@ -64,6 +62,7 @@ pub struct ServiceDependencies {
     pub memory_repository: Arc<dyn MemoryRepository>,
     pub agent_repository: Arc<dyn AgentRepository>,
     pub vcs_provider: Arc<dyn VcsProvider>,
+    pub project_service: Arc<dyn ProjectDetectorService>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
@@ -108,6 +107,7 @@ impl DomainServicesFactory {
             validation_service,
             memory_service,
             agent_session_service,
+            project_service: deps.project_service,
             vcs_provider: deps.vcs_provider,
         })
     }
@@ -116,13 +116,8 @@ impl DomainServicesFactory {
     pub async fn create_indexing_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn IndexingServiceInterface>> {
-        // Get providers from handles (runtime-swappable)
         let language_chunker = app_context.language_handle().get();
-
-        // Create context service first (dependency)
         let context_service = Self::create_context_service(app_context).await?;
-
-        // Get indexing operations tracker and event bus from context
         let indexing_ops = app_context.indexing();
         let event_bus = app_context.event_bus();
 
@@ -138,7 +133,6 @@ impl DomainServicesFactory {
     pub async fn create_context_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn ContextServiceInterface>> {
-        // Get providers from handles (runtime-swappable)
         let cache_provider = app_context.cache_handle().get();
         let embedding_provider = app_context.embedding_handle().get();
         let vector_store_provider = app_context.vector_store_handle().get();
@@ -154,9 +148,7 @@ impl DomainServicesFactory {
     pub async fn create_search_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn SearchServiceInterface>> {
-        // Create context service first (dependency)
         let context_service = Self::create_context_service(app_context).await?;
-
         Ok(Arc::new(SearchServiceImpl::new(context_service)))
     }
 }

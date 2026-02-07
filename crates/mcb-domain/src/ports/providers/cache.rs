@@ -237,7 +237,4 @@ pub trait CacheProviderFactoryInterface: Send + Sync {
         &self,
         config: &crate::value_objects::config::CacheConfig,
     ) -> Result<std::sync::Arc<dyn CacheProvider>>;
-
-    /// Create a null cache provider for testing
-    fn create_null(&self) -> std::sync::Arc<dyn CacheProvider>;
 }

@@ -20,6 +20,6 @@ pub use memory::MemoryServiceInterface;
 pub use project::ProjectDetectorService;
 pub use search::{SearchFilters, SearchServiceInterface};
 pub use validation::{
-    ComplexityReport, FunctionComplexity, NullValidationService, RuleInfo, ValidationReport,
-    ValidationServiceInterface, ViolationEntry,
+    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
 };

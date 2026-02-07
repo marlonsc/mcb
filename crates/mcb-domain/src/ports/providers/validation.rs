@@ -78,30 +78,6 @@ pub struct ValidationOptions {
 /// Defines the contract for validation engines that can analyze code for
 /// various quality and architecture issues. Each provider can implement
 /// different validation strategies and rule sets.
-///
-/// # Example
-///
-/// ```no_run
-/// use mcb_domain::ports::providers::{ValidationProvider, ValidationOptions};
-/// use std::sync::Arc;
-/// use std::path::Path;
-///
-/// async fn validate_codebase(provider: Arc<dyn ValidationProvider>) {
-///     // List available validators
-///     let validators = provider.list_validators();
-///     println!("Available validators: {:?}", validators.iter().map(|v| &v.id).collect::<Vec<_>>());
-///
-///     // Run validation
-///     let options = ValidationOptions {
-///         validators: Some(vec!["clean_architecture".into()]),
-///         severity_filter: Some("warning".into()),
-///         ..Default::default()
-///     };
-///
-///     let report = provider.validate(Path::new("."), options).await.unwrap();
-///     println!("Found {} violations", report.total_violations);
-/// }
-/// ```
 #[async_trait]
 pub trait ValidationProvider: Send + Sync {
     /// Get the provider name
@@ -168,84 +144,4 @@ pub trait ValidationProvider: Send + Sync {
     ///
     /// Returns the file extensions this provider can validate
     fn supported_extensions(&self) -> &[&str];
-}
-
-// ============================================================================
-// Null Implementation (for testing and fallback)
-// ============================================================================
-
-/// Null validation provider for testing or when validation feature is disabled
-///
-/// Returns an empty report with all checks passed. Useful for testing
-/// and as a fallback when no validation provider is configured.
-pub struct NullValidationProvider;
-
-impl NullValidationProvider {
-    /// Create a new null validation provider
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for NullValidationProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl ValidationProvider for NullValidationProvider {
-    fn provider_name(&self) -> &str {
-        "null"
-    }
-
-    fn description(&self) -> &str {
-        "Null validation provider (no-op)"
-    }
-
-    fn list_validators(&self) -> Vec<ValidatorInfo> {
-        Vec::new()
-    }
-
-    fn get_rules(&self, _category: Option<&str>) -> Vec<RuleInfo> {
-        Vec::new()
-    }
-
-    async fn validate(
-        &self,
-        _workspace_root: &Path,
-        _options: ValidationOptions,
-    ) -> Result<ValidationReport> {
-        Ok(ValidationReport {
-            total_violations: 0,
-            errors: 0,
-            warnings: 0,
-            infos: 0,
-            violations: Vec::new(),
-            passed: true,
-        })
-    }
-
-    async fn validate_file(
-        &self,
-        _file_path: &Path,
-        _options: ValidationOptions,
-    ) -> Result<ValidationReport> {
-        Ok(ValidationReport {
-            total_violations: 0,
-            errors: 0,
-            warnings: 0,
-            infos: 0,
-            violations: Vec::new(),
-            passed: true,
-        })
-    }
-
-    fn can_validate(&self, _path: &Path) -> bool {
-        false
-    }
-
-    fn supported_extensions(&self) -> &[&str] {
-        &[]
-    }
 }

@@ -46,7 +46,7 @@ pub use database::{DatabaseExecutor, DatabaseProvider, SqlParam, SqlRow};
 pub use events::{DomainEventStream, EventBusProvider};
 pub use lock::{LockGuard, LockProvider};
 pub use metrics::{SystemMetrics, SystemMetricsCollectorInterface};
-pub use performance::{NullMetricsCollector, PerformanceMetricsCollector};
+pub use performance::PerformanceMetricsCollector;
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 pub use snapshot::{SnapshotProvider, SyncProvider};
 pub use state_store::StateStoreProvider;

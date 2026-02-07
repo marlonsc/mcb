@@ -19,8 +19,8 @@ use mcb_domain::ports::services::{
 };
 
 use crate::handlers::{
-    AgentHandler, IndexHandler, MemoryHandler, SearchHandler, SessionHandler, ValidateHandler,
-    VcsHandler,
+    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
+    ValidateHandler, VcsHandler,
 };
 use crate::hooks::HookProcessor;
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
@@ -76,6 +76,9 @@ impl McpServer {
                 memory_service.clone(),
             )),
             agent: Arc::new(AgentHandler::new(agent_session_service.clone())),
+            project: Arc::new(ProjectHandler::new(Arc::new(
+                mcb_domain::ports::services::NullProjectDetectorService::new(),
+            ))),
             vcs: Arc::new(VcsHandler::new(vcs_provider.clone())),
             hook_processor: Arc::new(hook_processor),
         };
@@ -158,6 +161,11 @@ impl McpServer {
         Arc::clone(&self.handlers.vcs)
     }
 
+    /// Access to consolidated project handler (for HTTP transport)
+    pub fn project_handler(&self) -> Arc<ProjectHandler> {
+        Arc::clone(&self.handlers.project)
+    }
+
     /// Access to hook processor (for automatic memory operations)
     pub fn hook_processor(&self) -> Arc<HookProcessor> {
         Arc::clone(&self.handlers.hook_processor)
@@ -182,9 +190,10 @@ impl ServerHandler for McpServer {
                  - search: Unified search for code or memory\n\
                  - validate: Validation and analysis operations\n\
                  - memory: Memory storage, retrieval, timeline, inject\n\
-                 - session: Agent session lifecycle + summaries\n\
-                 - agent: Agent activity logging\n\
-                 - vcs: Repository operations\n"
+                  - session: Agent session lifecycle + summaries\n\
+                  - agent: Agent activity logging\n\
+                  - project: Project workflow management\n\
+                  - vcs: Repository operations\n"
                     .to_string(),
             ),
         }

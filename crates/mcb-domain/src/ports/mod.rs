@@ -49,10 +49,8 @@ pub use providers::{
     CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats, CryptoProvider,
     EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics, HalsteadMetrics,
     HybridSearchProvider, HybridSearchResult, LanguageChunkingProvider, MetricsAnalysisProvider,
-    NullMetricsProvider, NullValidationProvider, ProviderConfigManagerInterface, ValidationOptions,
-    ValidationProvider, ValidatorInfo, VectorStoreAdmin, VectorStoreProvider,
+    ProviderConfigManagerInterface, ValidationOptions, ValidationProvider, ValidatorInfo,
+    VectorStoreAdmin, VectorStoreProvider,
 };
 pub use repositories::{AgentRepository, MemoryRepository};
-pub use services::{
-    NullValidationService, ValidationReport, ValidationServiceInterface, ViolationEntry,
-};
+pub use services::{ValidationReport, ValidationServiceInterface, ViolationEntry};
