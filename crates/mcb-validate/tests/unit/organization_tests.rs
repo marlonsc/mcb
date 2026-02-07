@@ -1,13 +1,33 @@
 //! Tests for Code Organization Validation
 //!
-//! Uses fixture crates:
-//! - `my-test`: contains magic numbers in calculate_pricing()
-//! - `my-infra`: contains constants.rs (should be exempt from magic number checks)
+//! Discovery found 8 violations in the full workspace:
+//! - Magic numbers in my-test (calculate_pricing) and my-domain
+//! - File organization violations
+//!
+//! Uses fixture crates: `my-test`, `my-infra` (constants.rs exempt)
 
 use mcb_validate::OrganizationValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// validate_all() — full workspace
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_organization_full_workspace() {
+    let (_temp, root) =
+        with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
+    let validator = OrganizationValidator::new(&root);
+    let violations = validator.validate_all().unwrap();
+
+    assert_violation_count(&violations, 8, "OrganizationValidator full workspace");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-method tests
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_magic_number_detection() {
@@ -32,6 +52,10 @@ fn test_constants_file_exempt() {
 
     assert_no_violation_from_file(&violations, "constants.rs");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Negative test
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_no_magic_numbers_in_clean_code() {

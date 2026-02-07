@@ -1,13 +1,33 @@
 //! Tests for SOLID Validation
 //!
-//! Uses fixture crate `my-domain` which contains:
-//! - `UserRepository` trait with 8 methods (ISP violation — too many methods)
-//! - `InMemoryUserRepo` with todo!()/unimplemented!() stubs (LSP violation)
+//! Discovery found 5 violations in the full workspace:
+//! - TraitTooLarge: UserRepository (8 methods) in my-domain
+//! - PartialTraitImpl: InMemoryUserRepo with todo!/unimplemented! in my-domain
+//!
+//! Uses fixture crate `my-domain` primarily.
 
 use mcb_validate::{SolidValidator, SolidViolation};
 
 use crate::test_constants::*;
 use crate::test_utils::*;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// validate_all() — full workspace
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_solid_full_workspace() {
+    let (_temp, root) =
+        with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
+    let validator = SolidValidator::new(&root);
+    let violations = validator.validate_all().unwrap();
+
+    assert_violation_count(&violations, 5, "SolidValidator full workspace");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-method tests
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_large_trait_detection() {
@@ -39,6 +59,10 @@ fn test_partial_implementation_detection() {
         "partial trait impl with todo!/unimplemented!",
     );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Negative test
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_small_trait_no_violation() {

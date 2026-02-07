@@ -1,18 +1,34 @@
 //! Tests for Documentation Validation
 //!
-//! Uses fixture crate `my-test` which contains both documented
-//! and undocumented public items (structs, functions).
+//! Discovery found 8 violations in the full workspace:
+//! - Missing pub-item docs across `my-test`, `my-domain` and `my-server`
 
 use mcb_validate::{DocumentationValidator, DocumentationViolation};
 
-use crate::test_constants::TEST_CRATE;
+use crate::test_constants::*;
 use crate::test_utils::*;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// validate_all() — full workspace
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_documentation_full_workspace() {
+    let (_temp, root) =
+        with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
+    let validator = DocumentationValidator::new(&root);
+    let violations = validator.validate_all().unwrap();
+
+    assert_violation_count(&violations, 8, "DocumentationValidator full workspace");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-item tests
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_missing_struct_doc() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
-
-    // my-test/src/lib.rs has UndocumentedStruct without doc comments
     let validator = DocumentationValidator::new(&root);
     let violations = validator.validate_pub_item_docs().unwrap();
 
@@ -26,8 +42,6 @@ fn test_missing_struct_doc() {
 #[test]
 fn test_missing_function_doc() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
-
-    // my-test/src/lib.rs has undocumented_function() without doc comments
     let validator = DocumentationValidator::new(&root);
     let violations = validator.validate_pub_item_docs().unwrap();
 
@@ -37,6 +51,10 @@ fn test_missing_function_doc() {
         "MissingPubItemDoc for undocumented_function",
     );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Negative test
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_documented_struct_no_violation() {

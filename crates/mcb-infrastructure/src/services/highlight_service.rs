@@ -159,9 +159,17 @@ impl HighlightServiceImpl {
             });
         }
 
-        let lang_config = Self::get_language_config(language)?;
+        let lang_config = Self::get_language_config(language).map_err(|e| {
+            HighlightError::ConfigurationError(format!(
+                "failed to get language config for '{language}': {e}"
+            ))
+        })?;
 
-        let config = Self::create_highlight_config(lang_config)?;
+        let config = Self::create_highlight_config(lang_config).map_err(|e| {
+            HighlightError::ConfigurationError(format!(
+                "failed to create highlight config for '{language}': {e}"
+            ))
+        })?;
 
         let mut highlighter = self.highlighter.blocking_lock();
 

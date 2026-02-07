@@ -208,39 +208,43 @@ pub async fn get_file_chunks(
         })?;
 
     let mut chunk_responses = Vec::with_capacity(chunks.len());
-    let empty_spans = vec![];
     for c in chunks {
         // Estimate end line from content
         let line_count = c.content.lines().count() as u32;
         let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
 
         // Generate server-side highlighting via injected service
-        let highlighted = match state
+        let (highlighted_html, content, language) = match state
             .highlight_service
             .highlight(&c.content, &c.language)
             .await
         {
-            Ok(h) => h,
-            Err(_) => mcb_domain::value_objects::browse::HighlightedCode::new(
-                c.content.clone(),
-                empty_spans.clone(),
-                c.language.clone(),
-            ),
+            Ok(h) => {
+                let html =
+                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&h);
+                (html, c.content, c.language)
+            }
+            Err(_) => {
+                // Move content/language into fallback HighlightedCode to avoid cloning
+                let fallback = mcb_domain::value_objects::browse::HighlightedCode::new(
+                    c.content,
+                    Vec::new(),
+                    c.language,
+                );
+                let html =
+                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&fallback);
+                (html, fallback.original, fallback.language)
+            }
         };
-
-        let highlighted_html =
-            mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(
-                &highlighted,
-            );
 
         chunk_responses.push(ChunkDetailResponse {
             id: c.id,
-            content: c.content,
+            content,
             highlighted_html,
             file_path: c.file_path,
             start_line: c.start_line,
             end_line,
-            language: c.language,
+            language,
             score: c.score,
         });
     }
