@@ -14,160 +14,242 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
-/// Organization violation types
+/// Represents a specific violation of code organization rules.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum OrganizationViolation {
-    /// Magic number found (should be a named constant)
+    /// Indicates a magic number usage that should be replaced with a named constant.
     MagicNumber {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The magic number value found.
         value: String,
+        /// The code context surrounding the violation.
         context: String,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Duplicate string literal across files
+    /// Indicates a string literal that is duplicated across multiple files.
     DuplicateStringLiteral {
+        /// The duplicated string value.
         value: String,
+        /// List of locations where the string appears.
         occurrences: Vec<(PathBuf, usize)>,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Constant defined in wrong module (should be centralized)
+    /// Indicates a constant that is defined in an inappropriate module and should be centralized.
     DecentralizedConstant {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the constant.
         constant_name: String,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Type defined in wrong layer
+    /// Indicates a type definition placed in a layer that violates architectural rules.
     TypeInWrongLayer {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the type.
         type_name: String,
+        /// The layer where the type is currently located.
         current_layer: String,
+        /// The layer where the type belongs.
         expected_layer: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// File in wrong architectural location
+    /// Indicates a file located in a directory that does not match its architectural responsibility.
     FileInWrongLocation {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// The current location description.
         current_location: String,
+        /// The expected location description.
         expected_location: String,
+        /// Reason for the placement violation.
         reason: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Declaration collision (same name in multiple places)
+    /// Indicates multiple declarations with the same name, causing ambiguity or collisions.
     DeclarationCollision {
+        /// The colliding name.
         name: String,
+        /// List of locations where the name is declared.
         locations: Vec<(PathBuf, usize, String)>, // (file, line, type)
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Trait defined outside ports layer
+    /// Indicates a trait definition found outside the designated ports directory.
     TraitOutsidePorts {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Provider/Adapter implementation outside infrastructure
+    /// Indicates an adapter implementation found outside the infrastructure layer.
     AdapterOutsideInfrastructure {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the implementation.
         impl_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Constants file too large (should be split by domain)
+    /// Indicates a constants file that has exceeded the maximum allowed size.
     ConstantsFileTooLarge {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Current line count of the file.
         line_count: usize,
+        /// Maximum allowed line count.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Common magic number pattern detected (vector dimensions, timeouts, pool sizes)
+    /// Indicates a recurring magic number pattern that suggests a missing shared constant.
     CommonMagicNumber {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The magic number value.
         value: String,
+        /// Type of pattern detected.
         pattern_type: String,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// File too large without module decomposition
+    /// Indicates a large file that lacks proper module decomposition.
     LargeFileWithoutModules {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Current line count of the file.
         line_count: usize,
+        /// Maximum allowed line count.
         max_allowed: usize,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Same service/type defined in multiple layers
+    /// Indicates a type or service defined in multiple layers, violating separation of concerns.
     DualLayerDefinition {
+        /// Name of the type.
         type_name: String,
+        /// Locations where the type is defined.
         locations: Vec<(PathBuf, String)>, // (file, layer)
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Server layer creating application services directly
+    /// Indicates the server layer is instantiating services directly instead of using dependency injection.
     ServerCreatingServices {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the service being created.
         service_name: String,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Application layer importing from server
+    /// Indicates the application layer is importing from the server layer, violating dependency rules.
     ApplicationImportsServer {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The problematic import statement.
         import_statement: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Strict directory violation - component in wrong directory for its type
+    /// Indicates a component placed in a directory that strictly contradicts its type.
     StrictDirectoryViolation {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Type of the component.
         component_type: ComponentType,
+        /// The current directory name.
         current_directory: String,
+        /// The expected directory name.
         expected_directory: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Domain layer contains implementation (should be trait-only)
+    /// Indicates an implementation block in the domain layer that contains business logic (should be trait-only).
     DomainLayerImplementation {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Type of implementation (e.g., method).
         impl_type: String,
+        /// Name of the type being implemented.
         type_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Handler file outside handlers directory
+    /// Indicates a handler implementation found outside the handlers directory.
     HandlerOutsideHandlers {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the handler.
         handler_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
-    /// Port trait outside ports directory
+    /// Indicates a port trait definition found outside the ports directory.
     PortOutsidePorts {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
@@ -626,23 +708,23 @@ impl Violation for OrganizationViolation {
     }
 }
 
-/// Organization validator
+/// Validates the structural organization and architectural compliance of the codebase.
 pub struct OrganizationValidator {
     config: ValidationConfig,
 }
 
 impl OrganizationValidator {
-    /// Create a new organization validator
+    /// Initializes a new organization validator for the specified workspace root.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Create a validator with custom configuration for multi-directory support
+    /// Initializes a new organization validator with a custom configuration.
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
 
-    /// Run all organization validations
+    /// Executes all organization validation checks and returns the aggregated violations.
     pub fn validate_all(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_magic_numbers()?);
@@ -658,7 +740,7 @@ impl OrganizationValidator {
         Ok(violations)
     }
 
-    /// Check for magic numbers (non-trivial numeric literals)
+    /// Scans for numeric literals that should be extracted as named constants.
     pub fn validate_magic_numbers(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
 
@@ -792,7 +874,7 @@ impl OrganizationValidator {
         Ok(violations)
     }
 
-    /// Check for duplicate string literals that should be constants
+    /// Scans for string literals duplicated across multiple files that should be centralized.
     pub fn validate_duplicate_strings(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
         let mut string_occurrences: HashMap<String, Vec<(PathBuf, usize)>> = HashMap::new();
@@ -900,7 +982,7 @@ impl OrganizationValidator {
         Ok(violations)
     }
 
-    /// Check for files in wrong architectural locations
+    /// Verifies that files are located in the correct directories based on their architectural role.
     pub fn validate_file_placement(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
 
@@ -975,7 +1057,7 @@ impl OrganizationValidator {
         Ok(violations)
     }
 
-    /// Check for traits defined outside domain/ports
+    /// Verifies that trait definitions are located in the appropriate ports directory.
     #[allow(clippy::too_many_lines)]
     pub fn validate_trait_placement(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
@@ -1133,8 +1215,11 @@ impl OrganizationValidator {
         Ok(violations)
     }
 
-    /// Check for declaration collisions (same name defined in multiple places)
-    /// Validate Clean Architecture layer violations
+    /// Checks for violations of Clean Architecture layer boundaries.
+    ///
+    /// Detects issues such as:
+    /// - Server layer code directly instantiating services (bypassing DI).
+    /// - Application layer code importing from the server layer (dependency inversion violation).
     pub fn validate_layer_violations(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
 
@@ -1236,13 +1321,12 @@ impl OrganizationValidator {
         Ok(violations)
     }
 
-    /// Validate strict directory placement based on component type
+    /// Enforces strict directory placement rules for specific component types (ports, adapters, handlers).
     ///
-    /// Enforces that components are in their expected directories:
-    /// - Port traits in `domain/ports/`
-    /// - Adapters in `infrastructure/adapters/`
-    /// - Handlers in `server/handlers/`
-    /// - Repositories in appropriate locations
+    /// Validates that:
+    /// - Port traits are located in `domain/ports/`.
+    /// - Adapter implementations are located in `infrastructure/adapters/`.
+    /// - Handlers are located in `server/handlers/`.
     pub fn validate_strict_directory(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
 
@@ -1375,13 +1459,13 @@ impl OrganizationValidator {
         Ok(violations)
     }
 
-    /// Validate domain layer is trait-only (no impl blocks with business logic)
+    /// Verifies that the domain layer contains only trait definitions and data structures, free of implementation logic.
     ///
-    /// Domain layer should only contain:
-    /// - Trait definitions
-    /// - Struct/enum data definitions
-    /// - Simple constructors and accessors
-    /// - Derived impls (Default, Clone, etc.)
+    /// Ensures that the domain layer remains pure and free of side effects or business logic implementation,
+    /// permitting only:
+    /// - Trait definitions.
+    /// - Struct/enum definitions.
+    /// - Constructors, accessors, and derived implementations.
     pub fn validate_domain_traits_only(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
 
