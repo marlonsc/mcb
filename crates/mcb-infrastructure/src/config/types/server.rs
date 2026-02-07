@@ -297,6 +297,7 @@ impl ServerConfigBuilder {
     }
 }
 
+/// Creates a `ServerConfigBuilder` with default values.
 impl Default for ServerConfigBuilder {
     fn default() -> Self {
         Self::new()

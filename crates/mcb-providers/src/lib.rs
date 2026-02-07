@@ -1,10 +1,10 @@
-#![allow(missing_docs)]
-#![allow(unsafe_code)]
 //! # MCP Context Browser - Provider Implementations
 //!
 //! This crate contains all user-selectable provider implementations following
 //! Clean Architecture principles. Each provider implements a port (trait)
 //! defined in `mcb-domain`.
+#![allow(missing_docs)]
+#![allow(unsafe_code)]
 //!
 //! ## Provider Categories
 //!
