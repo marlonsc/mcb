@@ -49,6 +49,7 @@ pub enum DocumentationViolation {
 }
 
 impl DocumentationViolation {
+    /// Returns the severity level of this violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::MissingModuleDoc { severity, .. }

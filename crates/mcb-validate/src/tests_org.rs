@@ -96,7 +96,7 @@ pub enum TestViolation {
 }
 
 impl TestViolation {
-    /// Get the severity level of the violation
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::InlineTestModule { severity, .. }
@@ -111,6 +111,7 @@ impl TestViolation {
 }
 
 impl std::fmt::Display for TestViolation {
+    /// Formats the violation as a human-readable string.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::InlineTestModule { file, line, .. } => {
@@ -210,6 +211,7 @@ impl std::fmt::Display for TestViolation {
 }
 
 impl Violation for TestViolation {
+    /// Returns the unique violation identifier code.
     fn id(&self) -> &str {
         match self {
             Self::InlineTestModule { .. } => "TEST001",
@@ -222,10 +224,12 @@ impl Violation for TestViolation {
         }
     }
 
+    /// Returns the category of the violation.
     fn category(&self) -> ViolationCategory {
         ViolationCategory::Testing
     }
 
+    /// Returns the severity level of the violation.
     fn severity(&self) -> Severity {
         match self {
             Self::InlineTestModule { severity, .. }
@@ -238,6 +242,7 @@ impl Violation for TestViolation {
         }
     }
 
+    /// Returns the file path associated with the violation, if any.
     fn file(&self) -> Option<&std::path::PathBuf> {
         match self {
             Self::InlineTestModule { file, .. }
@@ -250,6 +255,7 @@ impl Violation for TestViolation {
         }
     }
 
+    /// Returns the line number associated with the violation, if any.
     fn line(&self) -> Option<usize> {
         match self {
             Self::BadTestFileName { .. } => None,
@@ -262,6 +268,7 @@ impl Violation for TestViolation {
         }
     }
 
+    /// Returns a suggestion for fixing the violation, if available.
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::InlineTestModule { .. } => {
@@ -287,7 +294,13 @@ impl Violation for TestViolation {
     }
 }
 
-/// Test organization validator
+/// Validates test organization and quality across a codebase.
+///
+/// Checks for:
+/// - Inline test modules in src/ (should be in tests/)
+/// - Test file naming conventions
+/// - Test function naming conventions
+/// - Test quality (assertions, trivial tests, etc.)
 pub struct TestValidator {
     config: ValidationConfig,
 }
@@ -298,12 +311,12 @@ impl TestValidator {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Create a validator with custom configuration for multi-directory support
+    /// Creates a validator with custom configuration for multi-directory support.
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
 
-    /// Run all test organization validations
+    /// Runs all test organization validations and returns violations found.
     pub fn validate_all(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_no_inline_tests()?);
@@ -314,7 +327,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Verify no #[cfg(test)] mod tests {} in src/
+    /// Verifies that no `#[cfg(test)] mod tests {}` blocks exist in src/ directory.
     pub fn validate_no_inline_tests(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
         let cfg_test_pattern = PATTERNS.get("TEST001.cfg_test");
@@ -361,7 +374,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Validate that tests are properly organized in subdirectories
+    /// Validates that tests are properly organized in subdirectories (unit/, integration/, e2e/).
     pub fn validate_test_directory_structure(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
 
@@ -440,7 +453,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Check test file naming conventions and directory structure
+    /// Checks test file naming conventions and directory structure compliance.
     pub fn validate_test_naming(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
 
@@ -557,7 +570,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Verify test functions follow naming pattern
+    /// Verifies that test functions follow the `test_*` naming pattern.
     pub fn validate_test_function_naming(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
         let test_attr_pattern = Regex::new(r"#\[test\]").unwrap();
@@ -669,7 +682,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Validate test quality (trivial assertions, unwrap-only, comment-only)
+    /// Validates test quality by checking for trivial assertions, unwrap-only tests, and comment-only tests.
     #[allow(clippy::too_many_lines)]
     pub fn validate_test_quality(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
@@ -851,20 +864,24 @@ impl TestValidator {
         Ok(violations)
     }
 
+    /// Retrieves the source directories to validate.
     fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {
         self.config.get_source_dirs()
     }
 }
 
 impl crate::validator_trait::Validator for TestValidator {
+    /// Returns the name of this validator.
     fn name(&self) -> &'static str {
         "tests_org"
     }
 
+    /// Returns a description of what this validator checks.
     fn description(&self) -> &'static str {
         "Validates test organization and quality"
     }
 
+    /// Runs validation and returns violations as trait objects.
     fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
         let violations = self.validate_all()?;
         Ok(violations

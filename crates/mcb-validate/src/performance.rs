@@ -96,6 +96,10 @@ impl PerformanceViolation {
     }
 }
 
+/// Display implementation for performance violations.
+///
+/// Formats violations as human-readable messages with file location, line number,
+/// and context about the performance issue detected.
 impl std::fmt::Display for PerformanceViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -183,6 +187,10 @@ impl std::fmt::Display for PerformanceViolation {
     }
 }
 
+/// Violation trait implementation for performance violations.
+///
+/// Provides violation metadata including ID, category, severity, file location,
+/// line number, and remediation suggestions for performance anti-patterns.
 impl Violation for PerformanceViolation {
     fn id(&self) -> &str {
         match self {
@@ -699,6 +707,10 @@ impl PerformanceValidator {
     }
 }
 
+/// Validator trait implementation for performance pattern validation.
+///
+/// Integrates the performance validator into the validation framework,
+/// providing name, description, and validation orchestration.
 impl crate::validator_trait::Validator for PerformanceValidator {
     fn name(&self) -> &'static str {
         "performance"

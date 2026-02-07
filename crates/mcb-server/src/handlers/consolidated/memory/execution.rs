@@ -1,7 +1,6 @@
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use anyhow::Context;
 use mcb_domain::entities::memory::{
     ExecutionMetadata, MemoryFilter, ObservationMetadata, ObservationType,
 };

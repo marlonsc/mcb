@@ -56,6 +56,7 @@ pub enum DependencyViolation {
 }
 
 impl DependencyViolation {
+    /// Returns the severity level of this violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::ForbiddenCargoDepedency { severity, .. }

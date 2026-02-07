@@ -1,3 +1,5 @@
+//! Browse value objects for code navigation and file tree representation.
+
 mod collection;
 mod file;
 mod highlight;

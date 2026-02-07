@@ -25,6 +25,14 @@ pub enum ObservationType {
 
 impl ObservationType {
     /// Returns the string representation of the observation type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mcb_domain::entities::memory::observation::ObservationType;
+    /// assert_eq!(ObservationType::Code.as_str(), "code");
+    /// assert_eq!(ObservationType::Decision.as_str(), "decision");
+    /// ```
     #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -43,6 +51,19 @@ impl std::str::FromStr for ObservationType {
     type Err = String;
 
     /// Parses a string into an `ObservationType`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the string does not match any known observation type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::str::FromStr;
+    /// # use mcb_domain::entities::memory::observation::ObservationType;
+    /// assert!(ObservationType::from_str("code").is_ok());
+    /// assert!(ObservationType::from_str("invalid").is_err());
+    /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "code" => Ok(Self::Code),
@@ -58,6 +79,9 @@ impl std::str::FromStr for ObservationType {
 }
 
 /// Metadata associated with an observation.
+///
+/// Contains contextual information about where and when an observation was recorded,
+/// including session, repository, file, and git information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObservationMetadata {
     /// Unique identifier for the metadata.
@@ -81,6 +105,7 @@ pub struct ObservationMetadata {
 }
 
 impl Default for ObservationMetadata {
+    /// Creates a new `ObservationMetadata` with a generated UUID and all optional fields set to `None`.
     fn default() -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
@@ -96,6 +121,10 @@ impl Default for ObservationMetadata {
 }
 
 /// A recorded unit of knowledge or event in the system.
+///
+/// Observations are immutable records of code, decisions, context, errors, summaries,
+/// execution traces, or quality gate results. Each observation is uniquely identified,
+/// tagged for semantic search, and includes metadata about its origin and context.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Observation {
     /// Unique identifier for the observation.

@@ -11,21 +11,26 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-/// Cache operation types
+/// Cache operation types for queued operations.
 #[derive(Debug, Clone)]
 pub enum CacheOperation<K, V> {
+    /// Set a key-value pair with configuration.
     Set(K, V, CacheEntryConfig),
+    /// Delete a key from the cache.
     Delete(K),
 }
 
 /// Type alias for the operations queue to reduce complexity
 type OperationsQueue = Arc<RwLock<Vec<CacheOperation<String, Vec<u8>>>>>;
 
-/// Batch cache operations
+/// Batch processor for cache operations with queuing and flushing.
 #[derive(Clone)]
 pub struct CacheBatchProcessor {
+    /// Underlying cache provider for executing operations.
     provider: SharedCacheProvider,
+    /// Queue of pending cache operations.
     operations: OperationsQueue,
+    /// Maximum number of operations to batch before flushing.
     max_batch_size: usize,
 }
 
@@ -143,7 +148,7 @@ impl CacheBatchProcessor {
     }
 }
 
-/// Cache operation result
+/// Result of a cache operation batch.
 #[derive(Debug, Clone)]
 pub struct CacheOperationResult<T> {
     /// The result value

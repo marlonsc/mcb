@@ -110,6 +110,10 @@ impl RefactoringViolation {
     }
 }
 
+/// Display implementation for refactoring violations.
+///
+/// Formats violations as human-readable messages with file location, line number,
+/// and context about the refactoring issue detected.
 impl std::fmt::Display for RefactoringViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -203,6 +207,10 @@ impl std::fmt::Display for RefactoringViolation {
     }
 }
 
+/// Violation trait implementation for refactoring violations.
+///
+/// Provides violation metadata including ID, category, severity, file location,
+/// line number, and remediation suggestions for refactoring completeness issues.
 impl Violation for RefactoringViolation {
     fn id(&self) -> &str {
         match self {
@@ -668,6 +676,10 @@ impl RefactoringValidator {
     }
 }
 
+/// Validator trait implementation for refactoring completeness validation.
+///
+/// Integrates the refactoring validator into the validation framework,
+/// providing name, description, and validation orchestration.
 impl crate::validator_trait::Validator for RefactoringValidator {
     fn name(&self) -> &'static str {
         "refactoring"

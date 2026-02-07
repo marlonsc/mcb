@@ -19,33 +19,55 @@ use std::process::Command;
 pub enum PmatViolation {
     /// High cyclomatic complexity
     HighComplexity {
+        /// File path where violation occurred.
         file: PathBuf,
+        /// Function name with high complexity.
         function: String,
+        /// Measured cyclomatic complexity value.
         complexity: u32,
+        /// Configured complexity threshold.
         threshold: u32,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Dead code detected
     DeadCode {
+        /// File path where dead code was found.
         file: PathBuf,
+        /// Line number of the dead code.
         line: usize,
+        /// Type of dead code item (function, variable, etc).
         item_type: String,
+        /// Name of the dead code item.
         name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Low TDG score (high technical debt)
     LowTdgScore {
+        /// File path with low TDG score.
         file: PathBuf,
+        /// Technical Debt Gradient score.
         score: u32,
+        /// Configured TDG threshold.
         threshold: u32,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// PMAT tool not available
-    PmatUnavailable { message: String, severity: Severity },
+    PmatUnavailable {
+        /// Error message explaining why PMAT is unavailable.
+        message: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
     /// PMAT execution error
     PmatError {
+        /// Command that failed.
         command: String,
+        /// Error message from PMAT execution.
         error: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }

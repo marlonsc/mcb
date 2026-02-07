@@ -1,6 +1,5 @@
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use anyhow::Context;
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;

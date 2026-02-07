@@ -11,14 +11,18 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
+/// Configuration errors that can occur during MCP context setup.
 #[derive(Debug, Error)]
 pub enum ConfigError {
+    /// The configuration file was not found at the expected path.
     #[error("Config file not found: {0}")]
     NotFound(PathBuf),
 
+    /// Failed to read the configuration file from disk.
     #[error("Failed to read config file: {0}")]
     ReadError(#[from] std::io::Error),
 
+    /// The configuration file contains invalid TOML syntax.
     #[error("Failed to parse TOML: {0}")]
     ParseError(#[from] toml::de::Error),
 }

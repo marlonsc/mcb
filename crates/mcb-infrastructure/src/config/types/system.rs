@@ -11,11 +11,14 @@ use std::path::PathBuf;
 // Authentication Configuration
 // ============================================================================
 
-/// Password hashing algorithms
+/// Password hashing algorithms for authentication.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PasswordAlgorithm {
+    /// Argon2 password hashing algorithm.
     Argon2,
+    /// Bcrypt password hashing algorithm.
     Bcrypt,
+    /// PBKDF2 password hashing algorithm.
     Pbkdf2,
 }
 

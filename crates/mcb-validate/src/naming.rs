@@ -289,23 +289,26 @@ impl Violation for NamingViolation {
     }
 }
 
-/// Naming validator
+/// Validates naming conventions across Rust code.
+///
+/// Checks that structs, enums, traits use CamelCase; functions and methods use snake_case;
+/// constants use SCREAMING_SNAKE_CASE; and modules/files use snake_case.
 pub struct NamingValidator {
     config: ValidationConfig,
 }
 
 impl NamingValidator {
-    /// Create a new naming validator
+    /// Creates a new naming validator with default configuration.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Create a validator with custom configuration for multi-directory support
+    /// Creates a validator with custom configuration for multi-directory support.
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
 
-    /// Run all naming validations
+    /// Runs all naming validations and returns collected violations.
     pub fn validate_all(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_type_names()?);
@@ -317,7 +320,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate struct/enum/trait names are CamelCase
+    /// Validates that struct, enum, and trait names follow CamelCase convention.
     pub fn validate_type_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -393,7 +396,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate function/method names are `snake_case`
+    /// Validates that function and method names follow snake_case convention.
     pub fn validate_function_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -439,7 +442,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate constants are `SCREAMING_SNAKE_CASE`
+    /// Validates that constants and statics follow SCREAMING_SNAKE_CASE convention.
     pub fn validate_constant_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -495,7 +498,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate module/file names are `snake_case`
+    /// Validates that module and file names follow snake_case convention.
     pub fn validate_module_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -534,7 +537,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate file suffixes match component types per CA naming conventions
+    /// Validates that file suffixes match component types per Clean Architecture naming conventions.
     pub fn validate_file_suffixes(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -630,7 +633,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate Clean Architecture naming conventions
+    /// Validates Clean Architecture naming conventions for files and components.
     pub fn validate_ca_naming(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -734,7 +737,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Extract suffix from file name (part after last underscore)
+    /// Extracts the suffix from a file name (part after the last underscore).
     fn get_suffix<'a>(&self, name: &'a str) -> &'a str {
         if let Some(pos) = name.rfind('_') {
             &name[pos..]
@@ -743,7 +746,7 @@ impl NamingValidator {
         }
     }
 
-    /// Check if name is CamelCase
+    /// Checks if a name follows CamelCase convention.
     fn is_camel_case(&self, name: &str) -> bool {
         if name.is_empty() {
             return false;
@@ -766,7 +769,7 @@ impl NamingValidator {
         name.chars().any(|c| c.is_ascii_lowercase())
     }
 
-    /// Check if name is `snake_case`
+    /// Checks if a name follows snake_case convention.
     fn is_snake_case(&self, name: &str) -> bool {
         if name.is_empty() {
             return false;
@@ -783,7 +786,7 @@ impl NamingValidator {
         !name.chars().next().is_some_and(|c| c.is_ascii_digit())
     }
 
-    /// Check if name is `SCREAMING_SNAKE_CASE`
+    /// Checks if a name follows SCREAMING_SNAKE_CASE convention.
     fn is_screaming_snake_case(&self, name: &str) -> bool {
         if name.is_empty() {
             return false;

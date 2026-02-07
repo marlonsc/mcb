@@ -1,3 +1,5 @@
+//! Domain service port interfaces for core business operations.
+
 pub mod agent;
 pub mod chunking;
 pub mod context;
