@@ -38,13 +38,21 @@ pub enum RuleEngineType {
 /// Concrete violation structure for rule engines
 #[derive(Debug, Clone)]
 pub struct RuleViolation {
+    /// Unique identifier for the violation
     pub id: String,
+    /// Category of the violation (SOLID, quality, etc.)
     pub category: ViolationCategory,
+    /// Severity level
     pub severity: Severity,
+    /// Detailed error message
     pub message: String,
+    /// Path to the file containing the violation
     pub file: Option<std::path::PathBuf>,
+    /// Line number of the violation
     pub line: Option<usize>,
+    /// Column number of the violation
     pub column: Option<usize>,
+    /// Additional context or code snippet
     pub context: Option<String>,
 }
 
@@ -81,6 +89,7 @@ impl std::fmt::Display for RuleViolation {
 }
 
 impl RuleViolation {
+    /// Create a new rule violation
     pub fn new(
         id: impl Into<String>,
         category: ViolationCategory,
@@ -99,12 +108,14 @@ impl RuleViolation {
         }
     }
 
+    /// Attach personal file to the violation
     #[must_use]
     pub fn with_file(mut self, file: std::path::PathBuf) -> Self {
         self.file = Some(file);
         self
     }
 
+    /// Set the location of the violation
     #[must_use]
     pub fn with_location(mut self, line: usize, column: usize) -> Self {
         self.line = Some(line);
@@ -112,6 +123,7 @@ impl RuleViolation {
         self
     }
 
+    /// Attach context information
     #[must_use]
     pub fn with_context(mut self, context: impl Into<String>) -> Self {
         self.context = Some(context.into());
@@ -122,17 +134,24 @@ impl RuleViolation {
 /// Result of rule execution
 #[derive(Debug, Clone)]
 pub struct RuleResult {
+    /// List of violations found
     pub violations: Vec<RuleViolation>,
+    /// Total time taken for execution
     pub execution_time_ms: u64,
 }
 
 /// Context passed to rule engines during execution
 #[derive(Debug, Clone)]
 pub struct RuleContext {
+    /// Path to the workspace root
     pub workspace_root: std::path::PathBuf,
+    /// Global validation configuration
     pub config: ValidationConfig,
+    /// Pre-parsed AST data for analysis
     pub ast_data: HashMap<String, serde_json::Value>,
+    /// Cargo package metadata
     pub cargo_data: HashMap<String, serde_json::Value>,
+    /// Raw file contents
     pub file_contents: HashMap<String, String>,
 }
 
@@ -431,6 +450,7 @@ impl Clone for HybridRuleEngine {
 /// Trait for rule engines
 #[async_trait]
 pub trait RuleEngine: Send + Sync {
+    /// Execute the rule against the provided context
     async fn execute(
         &self,
         rule_definition: &serde_json::Value,

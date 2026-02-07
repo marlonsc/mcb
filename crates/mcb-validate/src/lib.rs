@@ -343,20 +343,30 @@ pub enum ValidationError {
 
     /// Parse error
     #[error("Parse error in {file}: {message}")]
-    Parse { file: PathBuf, message: String },
+    Parse {
+        /// Path to the file that failed to parse
+        file: PathBuf,
+        /// Error message
+        message: String,
+    },
 
+    /// TOML parse error
     #[error("TOML parse error: {0}")]
     Toml(#[from] toml::de::Error),
 
+    /// YAML parse error
     #[error("YAML parse error: {0}")]
     Yaml(#[from] serde_yaml::Error),
 
+    /// Configuration error
     #[error("Configuration error: {0}")]
     Config(String),
 
+    /// Invalid regex pattern
     #[error("Invalid regex pattern: {0}")]
     InvalidRegex(String),
 
+    /// Pattern not found
     #[error("Pattern not found: {0}")]
     PatternNotFound(String),
 }
@@ -364,8 +374,11 @@ pub enum ValidationError {
 /// Severity level for violations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Severity {
+    /// Error severity
     Error,
+    /// Warning severity
     Warning,
+    /// Info severity
     Info,
 }
 

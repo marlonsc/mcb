@@ -119,22 +119,35 @@ pub fn thresholds() -> &'static ValidationThresholds {
 // ============================================================================
 
 // SOLID
+/// Maximum methods per trait (Interface Segregation)
 pub const MAX_TRAIT_METHODS: usize = 10;
+/// Maximum lines per struct definition
 pub const MAX_STRUCT_LINES: usize = 200;
+/// Maximum methods per impl block
 pub const MAX_IMPL_METHODS: usize = 15;
+/// Maximum arms in a match expression
 pub const MAX_MATCH_ARMS: usize = 10;
 
 // KISS
+/// Maximum fields per struct
 pub const MAX_STRUCT_FIELDS: usize = 7;
+/// Maximum parameters per function
 pub const MAX_FUNCTION_PARAMS: usize = 5;
+/// Maximum fields in a builder pattern
 pub const MAX_BUILDER_FIELDS: usize = 7;
+/// Maximum fields in DI container
 pub const MAX_DI_CONTAINER_FIELDS: usize = 25;
+/// Maximum nesting depth for control structures
 pub const MAX_NESTING_DEPTH: usize = 3;
 
 // Quality
+/// Maximum lines per file
 pub const MAX_FILE_LINES: usize = 500;
+/// Maximum lines per function
 pub const MAX_FUNCTION_LINES: usize = 50;
 
 // Complexity
+/// Maximum cyclomatic complexity per function
 pub const MAX_CYCLOMATIC_COMPLEXITY: u32 = 10;
+/// Maximum cognitive complexity per function
 pub const MAX_COGNITIVE_COMPLEXITY: u32 = 15;

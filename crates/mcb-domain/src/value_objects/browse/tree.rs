@@ -48,11 +48,6 @@ impl FileTreeNode {
         }
     }
 
-    /// Add a child node to this directory (in-place)
-    pub fn add_child(&mut self, child: FileTreeNode) {
-        self.children.push(child);
-    }
-
     /// Add a child node to this directory (builder pattern)
     pub fn with_child(mut self, child: FileTreeNode) -> Self {
         self.children.push(child);

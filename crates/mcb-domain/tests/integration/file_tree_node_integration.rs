@@ -146,14 +146,14 @@ fn test_to_ansi_nested_structure() {
     let mut root = FileTreeNode::directory("root", "root");
     let mut level1 = FileTreeNode::directory("level1", "root/level1");
     let mut level2 = FileTreeNode::directory("level2", "root/level1/level2");
-    level2.add_child(FileTreeNode::file(
+    level2 = level2.with_child(FileTreeNode::file(
         "deep.rs",
         "root/level1/level2/deep.rs",
         5,
         "rust",
     ));
-    level1.add_child(level2);
-    root.add_child(level1);
+    level1 = level1.with_child(level2);
+    root = root.with_child(level1);
 
     let ansi = root.to_ansi();
 
@@ -168,14 +168,14 @@ fn test_to_html_nested_structure() {
     let mut root = FileTreeNode::directory("root", "root");
     let mut level1 = FileTreeNode::directory("level1", "root/level1");
     let mut level2 = FileTreeNode::directory("level2", "root/level1/level2");
-    level2.add_child(FileTreeNode::file(
+    level2 = level2.with_child(FileTreeNode::file(
         "deep.rs",
         "root/level1/level2/deep.rs",
         5,
         "rust",
     ));
-    level1.add_child(level2);
-    root.add_child(level1);
+    level1 = level1.with_child(level2);
+    root = root.with_child(level1);
 
     let html = root.to_html();
 
@@ -192,8 +192,8 @@ fn test_traverse_callback_receives_correct_nodes() {
     let mut root = FileTreeNode::directory("src", "src");
     let file1 = FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust");
     let file2 = FileTreeNode::file("main.rs", "src/main.rs", 5, "rust");
-    root.add_child(file1);
-    root.add_child(file2);
+    root = root.with_child(file1);
+    root = root.with_child(file2);
 
     let mut paths = Vec::new();
     root.traverse(&mut |node| {

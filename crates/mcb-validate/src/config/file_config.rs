@@ -398,38 +398,55 @@ impl Default for SolidRulesConfig {
 #[derive(Debug, Clone, Deserialize)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct ValidatorsConfig {
+    /// Enable dependency validation
     #[serde(default = "default_true")]
     pub dependency: bool,
+    /// Enable organization validation
     #[serde(default = "default_true")]
     pub organization: bool,
+    /// Enable quality validation
     #[serde(default = "default_true")]
     pub quality: bool,
+    /// Enable SOLID validation
     #[serde(default = "default_true")]
     pub solid: bool,
+    /// Enable architecture validation
     #[serde(default = "default_true")]
     pub architecture: bool,
+    /// Enable refactoring validation
     #[serde(default = "default_true")]
     pub refactoring: bool,
+    /// Enable naming validation
     #[serde(default = "default_true")]
     pub naming: bool,
+    /// Enable documentation validation
     #[serde(default = "default_true")]
     pub documentation: bool,
+    /// Enable patterns validation
     #[serde(default = "default_true")]
     pub patterns: bool,
+    /// Enable KISS validation
     #[serde(default = "default_true")]
     pub kiss: bool,
+    /// Enable tests validation
     #[serde(default = "default_true")]
     pub tests: bool,
+    /// Enable async patterns validation
     #[serde(default = "default_true")]
     pub async_patterns: bool,
+    /// Enable error boundary validation
     #[serde(default = "default_true")]
     pub error_boundary: bool,
+    /// Enable performance validation
     #[serde(default = "default_true")]
     pub performance: bool,
+    /// Enable implementation validation
     #[serde(default = "default_true")]
     pub implementation: bool,
+    /// Enable PMAT validation
     #[serde(default = "default_true")]
     pub pmat: bool,
+    /// Enable clean architecture validation
     #[serde(default = "default_true")]
     pub clean_architecture: bool,
 }

@@ -18,56 +18,85 @@ use walkdir::WalkDir;
 pub enum TestViolation {
     /// Inline test module found in src/
     InlineTestModule {
+        /// File containing the inline test
         file: PathBuf,
+        /// Line number where the module starts
         line: usize,
+        /// Severity level
         severity: Severity,
     },
     /// Test file with incorrect naming
     BadTestFileName {
+        /// File with incorrect name
         file: PathBuf,
+        /// Suggested name or corrective action
         suggestion: String,
+        /// Severity level
         severity: Severity,
     },
     /// Test function with incorrect naming
     BadTestFunctionName {
+        /// File containing the function
         file: PathBuf,
+        /// Line number of the function
         line: usize,
+        /// Current function name
         function_name: String,
+        /// Suggested compliant name
         suggestion: String,
+        /// Severity level
         severity: Severity,
     },
     /// Test without assertion
     TestWithoutAssertion {
+        /// File containing the test
         file: PathBuf,
+        /// Line number of the test
         line: usize,
+        /// Name of the test function
         function_name: String,
+        /// Severity level
         severity: Severity,
     },
-    /// Trivial assertion that always passes (assert!(true), `assert_eq!(1`, 1))
+    /// Trivial assertion that always passes
     TrivialAssertion {
+        /// File containing the test
         file: PathBuf,
+        /// Line number of the assertion
         line: usize,
+        /// Name of the test function
         function_name: String,
+        /// The trivial assertion found
         assertion: String,
+        /// Severity level
         severity: Severity,
     },
-    /// Test only uses .`unwrap()` as assertion (crash = pass)
+    /// Test only uses .unwrap() as assertion
     UnwrapOnlyAssertion {
+        /// File containing the test
         file: PathBuf,
+        /// Line number of the test
         line: usize,
+        /// Name of the test function
         function_name: String,
+        /// Severity level
         severity: Severity,
     },
-    /// Test body is only comments (no code)
+    /// Test body is only comments
     CommentOnlyTest {
+        /// File containing the test
         file: PathBuf,
+        /// Line number of the test
         line: usize,
+        /// Name of the test function
         function_name: String,
+        /// Severity level
         severity: Severity,
     },
 }
 
 impl TestViolation {
+    /// Get the severity level of the violation
     pub fn severity(&self) -> Severity {
         match self {
             Self::InlineTestModule { severity, .. }
