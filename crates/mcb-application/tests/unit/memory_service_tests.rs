@@ -182,11 +182,7 @@ mod rrf_tests {
                 .cloned())
         }
 
-        async fn search_fts_ranked(
-            &self,
-            _query: &str,
-            _limit: usize,
-        ) -> Result<Vec<FtsSearchResult>> {
+        async fn search(&self, _query: &str, _limit: usize) -> Result<Vec<FtsSearchResult>> {
             Ok(self.fts_results.clone())
         }
 

@@ -1,21 +1,36 @@
 //! Tests for Quality Validation
 //!
-//! Validates each method of `QualityValidator` against the `my-test` fixture
-//! crate, which contains realistic violations embedded in plausible code:
+//! Validates `QualityValidator` against fixture crates. Discovery found 23
+//! violations across the full workspace (unwrap/expect, TODO/FIXME, panic,
+//! dead_code annotations).
 //!
-//! | Method                             | Fixture violation                                |
-//! |------------------------------------|--------------------------------------------------|
-//! | `validate_no_unwrap_expect()`      | `load_config()`: `.unwrap()`, `.expect()`        |
-//! | `find_todo_comments()`             | `load_config()`: TODO, `merge_configs()`: FIXME  |
-//! | `validate_no_panic()`              | `validate_critical_config()`: `panic!()`         |
-//! | `validate_dead_code_annotations()` | `InternalCache`: `#[allow(dead_code)]`           |
-//! | `validate_file_sizes()`            | Tested with low threshold on fixture file        |
-//! | `validate_all()`                   | Aggregates all of the above                      |
+//! | Method                             | Fixture violations                                     |
+//! |------------------------------------|--------------------------------------------------------|
+//! | `validate_no_unwrap_expect()`      | 3 — `.unwrap()` (×2), `.expect()` (×1) in `my-test`   |
+//! | `find_todo_comments()`             | 14 — TODO/FIXME across `my-test` and `my-domain`       |
+//! | `validate_no_panic()`              | 1 — `panic!()` in `validate_critical_config()`         |
+//! | `validate_dead_code_annotations()` | 3 — `#[allow(dead_code)]` on struct + 2 fields         |
+//! | `validate_file_sizes()`            | 0 with default threshold, 1+ with low threshold        |
+//! | `validate_all()`                   | 23 total (with `.expect()` as separate violation)       |
 
 use mcb_validate::{QualityValidator, QualityViolation};
 
 use crate::test_constants::*;
 use crate::test_utils::*;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// validate_all() — full workspace
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_quality_full_workspace() {
+    let (_temp, root) =
+        with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
+    let validator = QualityValidator::new(&root);
+    let violations = validator.validate_all().unwrap();
+
+    assert_violation_count(&violations, 23, "QualityValidator full workspace");
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_no_unwrap_expect()
@@ -27,11 +42,10 @@ fn test_unwrap_expect_detection() {
     let validator = QualityValidator::new(&root);
     let violations = validator.validate_no_unwrap_expect().unwrap();
 
-    // my-test/src/lib.rs → load_config():
+    // my-test/src/lib.rs:
     //   L17: std::fs::read_to_string(path).unwrap()
     //   L19: serde_json::from_str(&content).expect("invalid config JSON")
-    // my-test/src/lib.rs → shared_state_handler():
-    //   data.lock().unwrap()
+    //   L114: data.lock().unwrap()
     assert_min_violations(&violations, 2, "unwrap/expect in fixture");
 }
 
@@ -51,13 +65,13 @@ fn test_unwrap_exempt_in_test_code() {
 
 #[test]
 fn test_todo_fixme_detection() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
+    let (_temp, root) =
+        with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
     let validator = QualityValidator::new(&root);
     let violations = validator.find_todo_comments().unwrap();
 
-    // load_config():   "TODO: Add validation for config schema"
-    // merge_configs(): "FIXME: This doesn't handle nested merges"
-    assert_min_violations(&violations, 2, "TODO and FIXME comments");
+    // Discovery found 14 TODO/FIXME across my-test and my-domain
+    assert_violation_count(&violations, 14, "TODO and FIXME comments across workspace");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,7 +98,7 @@ fn test_dead_code_annotation_detection() {
     let validator = QualityValidator::new(&root);
     let violations = validator.validate_dead_code_annotations().unwrap();
 
-    // #[allow(dead_code)] on InternalCache struct and unused_helper() fn
+    // #[allow(dead_code)] on InternalCache struct fields + unused_helper() fn
     assert_min_violations(&violations, 1, "#[allow(dead_code)]");
 }
 
@@ -118,20 +132,6 @@ fn test_file_size_default_no_violation() {
         violations.is_empty(),
         "Fixture file should be under default threshold"
     );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// validate_all()
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_validate_all_aggregates_checks() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
-    let validator = QualityValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
-
-    // Aggregates: unwrap, expect, panic, TODO, FIXME, dead_code
-    assert_min_violations(&violations, 5, "validate_all aggregate");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

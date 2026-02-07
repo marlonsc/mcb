@@ -1,13 +1,34 @@
 //! Tests for KISS (Keep It Simple, Stupid) Validation
 //!
-//! Uses fixture crate `my-test` which contains realistic too-many-fields
-//! (ServerConfig: 8 fields) and too-many-params (initialize_server: 5 params)
-//! violations, plus a programmatically generated long function test.
+//! Discovery found 2 violations in the full workspace:
+//! - StructTooManyFields (ServerParameters in my-test, UserModel in my-domain)
+//! - FunctionTooManyParams (initialize_server in my-test, list_users in my-server)
+//!
+//! Also includes a programmatically generated long-function test and a
+//! negative test for acceptable code.
 
 use mcb_validate::{KissValidator, KissViolation};
 
 use crate::test_constants::*;
 use crate::test_utils::*;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// validate_all() — full workspace
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_kiss_full_workspace() {
+    let (_temp, root) =
+        with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
+    let validator = KissValidator::new(&root);
+    let violations = validator.validate_all().unwrap();
+
+    assert_violation_count(&violations, 2, "KissValidator full workspace");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-method tests
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_struct_too_many_fields() {
@@ -64,6 +85,10 @@ pub fn long_function() {{
         "FunctionTooLong",
     );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Negative test
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_acceptable_struct_no_violations() {
