@@ -347,5 +347,3 @@ impl SymbolExtractor {
         }
     }
 }
-
-// Tests moved to tests/unit/symbols_tests.rs

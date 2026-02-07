@@ -13,24 +13,15 @@ pub mod mode;
 pub mod server;
 pub mod system;
 
-// Re-export main types
+// Re-export main types from app (which already re-exports from sub-modules)
 pub use app::{
     AdminApiKeyConfig, ApiKeyConfig, AppConfig, AuthConfig, BackupConfig, CacheProvider,
-    CacheSystemConfig, DataConfig, EmbeddingConfigContainer, EventBusConfig, EventBusProvider,
-    InfrastructureConfig, JwtConfig, LimitsConfig, LoggingConfig, ModeConfig, OperatingMode,
-    OperationsConfig, OperationsDaemonConfig, PasswordAlgorithm, ProvidersConfig, ResilienceConfig,
-    ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig,
-    SnapshotConfig, SyncConfig, SystemConfig, TransportMode, VectorStoreConfigContainer,
+    CacheSystemConfig, DaemonConfig, DataConfig, EmbeddingConfigContainer, EventBusConfig,
+    EventBusProvider, InfrastructureConfig, JwtConfig, LimitsConfig, LoggingConfig, ModeConfig,
+    OperatingMode, OperationsConfig, OperationsDaemonConfig, PasswordAlgorithm, ProvidersConfig,
+    ResilienceConfig, ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig,
+    ServerTimeoutConfig, SnapshotConfig, SyncConfig, SystemConfig, TransportMode,
+    VectorStoreConfigContainer,
 };
-pub use infrastructure::{
-    CacheProvider, CacheSystemConfig, LimitsConfig, LoggingConfig, MetricsConfig, ResilienceConfig,
-};
-pub use mode::{ModeConfig, OperatingMode};
-pub use server::{
-    ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig,
-    TransportMode,
-};
-pub use system::{
-    AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusConfig,
-    EventBusProvider, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
-};
+// Also re-export MetricsConfig which is only in infrastructure
+pub use infrastructure::MetricsConfig;

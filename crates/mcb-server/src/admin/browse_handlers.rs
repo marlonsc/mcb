@@ -326,6 +326,3 @@ fn insert_into_tree(
         }
     }
 }
-
-// Tests removed to satisfy validation (TestViolation::InlineTestModule)
-// See tests/unit/browse_handlers_tests.rs

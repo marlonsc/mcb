@@ -221,5 +221,3 @@ macro_rules! labels {
         map
     }};
 }
-
-// Tests moved to tests/unit/ports/providers/metrics_tests.rs

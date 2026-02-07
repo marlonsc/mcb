@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+#![allow(unsafe_code)]
 //! # MCP Context Browser - Provider Implementations
 //!
 //! This crate contains all user-selectable provider implementations following

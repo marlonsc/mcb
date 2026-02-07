@@ -103,6 +103,22 @@ where
 /// ```
 #[async_trait::async_trait]
 pub trait SubmoduleCollector: Send + Sync {
+    /// Recursively collects submodule information from a repository.
+    ///
+    /// Discovers all Git submodules within the specified repository path up to the
+    /// given depth limit. This enables hierarchical indexing of complex monorepos
+    /// and projects with nested dependencies.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo_path` - The root path of the repository to scan for submodules.
+    /// * `parent_id` - The identifier of the parent repository (used for linking).
+    /// * `max_depth` - Maximum recursion depth for submodule discovery (0 = no submodules).
+    ///
+    /// # Returns
+    ///
+    /// A vector of discovered submodules with their paths and metadata, or an error
+    /// if the repository cannot be accessed or parsed.
     async fn collect(
         &self,
         repo_path: &Path,

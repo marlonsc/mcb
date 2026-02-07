@@ -234,5 +234,3 @@ impl Parser for RcaParser {
         Self::parse_with_lang(content, lang, language, path)
     }
 }
-
-// Tests moved to tests/unit/parser_tests.rs

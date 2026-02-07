@@ -131,5 +131,3 @@ impl LanguageDetector {
         &self.registry
     }
 }
-
-// Tests moved to tests/unit/detection_tests.rs

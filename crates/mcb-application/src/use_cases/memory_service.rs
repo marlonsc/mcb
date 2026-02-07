@@ -32,6 +32,17 @@ pub struct MemoryServiceImpl {
 }
 
 impl MemoryServiceImpl {
+    /// Initializes the hybrid memory service with repository, embedding, and vector store providers.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id` - The project identifier for scoping observations and memories.
+    /// * `repository` - SQLite-backed repository for metadata storage and full-text search.
+    /// * `embedding_provider` - Provider for generating vector embeddings from content.
+    /// * `vector_store` - Vector store for semantic similarity search and RAG operations.
+    ///
+    /// The service implements a hybrid search strategy combining full-text search (FTS)
+    /// with vector similarity using reciprocal rank fusion (RRF) for balanced relevance.
     pub fn new(
         project_id: String,
         repository: Arc<dyn MemoryRepository>,
@@ -46,6 +57,14 @@ impl MemoryServiceImpl {
         }
     }
 
+    /// Returns the current Unix timestamp in seconds.
+    ///
+    /// Used to record observation creation times and session summary timestamps.
+    /// Falls back to 0 if the system clock is unavailable (extremely rare).
+    ///
+    /// # Returns
+    ///
+    /// Current Unix timestamp as seconds since UNIX_EPOCH, or 0 if unavailable.
     #[must_use]
     pub fn current_timestamp() -> i64 {
         SystemTime::now()

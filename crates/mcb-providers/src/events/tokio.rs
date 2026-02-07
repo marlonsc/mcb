@@ -164,7 +164,3 @@ impl EventBusProvider for TokioEventBusProvider {
         Ok(id)
     }
 }
-
-// Keep backward compatibility with old name
-/// TokioEventPublisher alias for TokioEventBusProvider
-pub type TokioEventPublisher = TokioEventBusProvider;

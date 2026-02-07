@@ -214,5 +214,3 @@ pub fn count_parameters(function_node: Node<'_>) -> usize {
     }
     0
 }
-
-// Tests moved to tests/unit/complexity_tests.rs

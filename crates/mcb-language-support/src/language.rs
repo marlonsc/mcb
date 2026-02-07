@@ -239,5 +239,3 @@ impl Default for LanguageRegistry {
         Self::new()
     }
 }
-
-// Tests moved to tests/unit/language_tests.rs

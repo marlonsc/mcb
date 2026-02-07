@@ -157,5 +157,3 @@ impl CursorUtils {
         }
     }
 }
-
-// Tests moved to tests/unit/cursor_tests.rs

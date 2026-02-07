@@ -113,5 +113,3 @@ impl TreeWalker {
         Self::ancestors(node).iter().any(|n| n.kind() == kind)
     }
 }
-
-// Tests moved to tests/unit/walker_tests.rs

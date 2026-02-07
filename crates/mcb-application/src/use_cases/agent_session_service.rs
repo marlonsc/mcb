@@ -11,15 +11,41 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 
+/// Application service for managing agent session lifecycle and persistence.
+///
+/// Implements the `AgentSessionServiceInterface` to provide session creation, retrieval,
+/// updates, and termination. Delegates all persistence operations to the injected
+/// `AgentRepository`, enabling clean separation between business logic and data access.
+/// Also manages session-related artifacts like delegations, tool calls, and checkpoints.
 pub struct AgentSessionServiceImpl {
     repository: Arc<dyn AgentRepository>,
 }
 
 impl AgentSessionServiceImpl {
+    /// Initializes the service with the required agent repository.
+    ///
+    /// # Arguments
+    ///
+    /// * `repository` - The repository implementation for persisting and retrieving agent sessions.
+    ///   This is typically injected via dependency injection and may be backed by SQLite,
+    ///   PostgreSQL, or another persistent storage mechanism.
+    ///
+    /// # Returns
+    ///
+    /// A new `AgentSessionServiceImpl` instance ready to manage agent sessions.
     pub fn new(repository: Arc<dyn AgentRepository>) -> Self {
         Self { repository }
     }
 
+    /// Returns the current Unix timestamp in seconds.
+    ///
+    /// Used throughout the service to record session start times, end times, and
+    /// checkpoint restoration timestamps. Falls back to 0 if the system clock is
+    /// unavailable (which should be extremely rare).
+    ///
+    /// # Returns
+    ///
+    /// Current Unix timestamp as seconds since UNIX_EPOCH, or 0 if unavailable.
     #[must_use]
     pub fn current_timestamp() -> i64 {
         SystemTime::now()

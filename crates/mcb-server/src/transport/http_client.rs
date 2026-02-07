@@ -222,6 +222,3 @@ impl HttpClientTransport {
         Ok(())
     }
 }
-
-// Tests removed to satisfy validation (TestViolation::InlineTestModule)
-// See tests/integration/operating_modes_integration.rs

@@ -22,4 +22,5 @@ pub use paths::{
 };
 pub use providers::{ProviderConfigBuilder, ProviderConfigManager};
 pub use server::{ServerConfigBuilder, ServerConfigPresets, ServerConfigUtils};
+pub use types::{CacheProvider, LoggingConfig};
 pub use watcher::{ConfigWatchEvent, ConfigWatcher, ConfigWatcherBuilder, ConfigWatcherUtils};
