@@ -5,7 +5,6 @@
 //!
 //! ## Components
 //!
-//! - [`NullProviderRouter`] - No-op router for testing
 //! - [`DefaultProviderRouter`] - Production router with health tracking
 //!
 //! ## Usage via DI
@@ -20,5 +19,5 @@ mod health;
 mod router;
 
 // Re-export for DI registration
-pub use health::{HealthMonitor, InMemoryHealthMonitor, NullHealthMonitor};
-pub use router::{DefaultProviderRouter, NullProviderRouter};
+pub use health::{HealthMonitor, InMemoryHealthMonitor};
+pub use router::DefaultProviderRouter;

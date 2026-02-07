@@ -52,6 +52,7 @@ pub mod project;
 pub mod routing;
 pub mod storage;
 pub mod utils;
+pub mod validation;
 
 pub mod infrastructure;
 pub use error_ext::ErrorContext;

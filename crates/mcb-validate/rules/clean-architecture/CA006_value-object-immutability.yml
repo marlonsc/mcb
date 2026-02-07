@@ -10,10 +10,10 @@ description: "Value objects must be immutable"
 rationale: "Value objects are defined by their attributes and should not change"
 
 rule: |
-  rule ValueObjectImmutability "Value Object Immutability" {
-      when
-          ValueObject() &&
-          HasMutableField()
-      then
-          Violation("Value objects must be immutable");
-  }
+    rule ValueObjectImmutability "Value Object Immutability" {
+        when
+            ValueObject() &&
+            HasMutableField()
+        then
+            Violation("Value objects must be immutable");
+    }

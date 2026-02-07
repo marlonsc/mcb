@@ -17,7 +17,7 @@ patterns:
 
 config:
   max_methods: 15
-  exclude_patterns: ["**/tests/**"]
+  exclude_patterns: []
 
 rule: |
   rule ImplMethodsLimit "Check impl method count" {

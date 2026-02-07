@@ -5,7 +5,6 @@
 use crate::test_utils::mock_services::{
     MockAgentRepository, MockMemoryRepository, MockVcsProvider,
 };
-use mcb_application::ValidationService;
 use mcb_domain::SearchResult;
 use mcb_domain::ports::services::IndexingResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
@@ -192,6 +191,9 @@ pub async fn create_test_mcp_server() -> McpServer {
     let agent_repository = Arc::new(MockAgentRepository::new());
     let vcs_provider = Arc::new(MockVcsProvider::new());
 
+    let project_service: Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
+        Arc::new(mcb_infrastructure::project::ProjectService::new());
+
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
         cache: shared_cache,
@@ -205,21 +207,21 @@ pub async fn create_test_mcp_server() -> McpServer {
         memory_repository,
         agent_repository,
         vcs_provider,
+        project_service,
     };
 
     let services = DomainServicesFactory::create_services(deps)
         .await
         .expect("Failed to create services");
 
-    let validation_service = Arc::new(ValidationService::new());
-
     McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
-        .with_validation_service(validation_service)
+        .with_validation_service(services.validation_service)
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
+        .with_project_service(services.project_service)
         .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")

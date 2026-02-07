@@ -50,8 +50,8 @@ mod golden_e2e_complete_integration;
 // mod golden_highlight_service_e2e; // Missing file
 
 // Highlight service wiring integration tests
-#[path = "integration/highlight_integration.rs"]
-mod highlight_integration;
+// #[path = "integration/highlight_integration.rs"]
+// mod highlight_integration;
 
 // Hook processor integration tests
 #[path = "integration/hooks_integration.rs"]

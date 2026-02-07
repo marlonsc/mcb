@@ -15,7 +15,7 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    SearchServiceInterface, ValidationServiceInterface,
+    ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
 
 use crate::handlers::{
@@ -40,60 +40,49 @@ pub struct McpServer {
 
 /// Domain services container (keeps struct field count manageable)
 #[derive(Clone)]
-struct McpServices {
-    indexing: Arc<dyn IndexingServiceInterface>,
-    context: Arc<dyn ContextServiceInterface>,
-    search: Arc<dyn SearchServiceInterface>,
-    memory: Arc<dyn MemoryServiceInterface>,
-    agent_session: Arc<dyn AgentSessionServiceInterface>,
-    vcs: Arc<dyn VcsProvider>,
+pub struct McpServices {
+    /// Indexing service
+    pub indexing: Arc<dyn IndexingServiceInterface>,
+    /// Context service
+    pub context: Arc<dyn ContextServiceInterface>,
+    /// Search service
+    pub search: Arc<dyn SearchServiceInterface>,
+    /// Validation service
+    pub validation: Arc<dyn ValidationServiceInterface>,
+    /// Memory service
+    pub memory: Arc<dyn MemoryServiceInterface>,
+    /// Agent session service
+    pub agent_session: Arc<dyn AgentSessionServiceInterface>,
+    /// Project detector service
+    pub project: Arc<dyn ProjectDetectorService>,
+    /// VCS provider
+    pub vcs: Arc<dyn VcsProvider>,
 }
 
 impl McpServer {
     /// Create a new MCP server with injected dependencies
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        indexing_service: Arc<dyn IndexingServiceInterface>,
-        context_service: Arc<dyn ContextServiceInterface>,
-        search_service: Arc<dyn SearchServiceInterface>,
-        validation_service: Arc<dyn ValidationServiceInterface>,
-        memory_service: Arc<dyn MemoryServiceInterface>,
-        agent_session_service: Arc<dyn AgentSessionServiceInterface>,
-        vcs_provider: Arc<dyn VcsProvider>,
-    ) -> Self {
-        let hook_processor = HookProcessor::new(Some(memory_service.clone()));
+    pub fn new(services: McpServices) -> Self {
+        let hook_processor = HookProcessor::new(Some(services.memory.clone()));
 
         let handlers = ToolHandlers {
-            index: Arc::new(IndexHandler::new(indexing_service.clone())),
+            index: Arc::new(IndexHandler::new(services.indexing.clone())),
             search: Arc::new(SearchHandler::new(
-                search_service.clone(),
-                memory_service.clone(),
+                services.search.clone(),
+                services.memory.clone(),
             )),
-            validate: Arc::new(ValidateHandler::new(validation_service)),
-            memory: Arc::new(MemoryHandler::new(memory_service.clone())),
+            validate: Arc::new(ValidateHandler::new(services.validation.clone())),
+            memory: Arc::new(MemoryHandler::new(services.memory.clone())),
             session: Arc::new(SessionHandler::new(
-                agent_session_service.clone(),
-                memory_service.clone(),
+                services.agent_session.clone(),
+                services.memory.clone(),
             )),
-            agent: Arc::new(AgentHandler::new(agent_session_service.clone())),
-            project: Arc::new(ProjectHandler::new(Arc::new(
-                mcb_domain::ports::services::NullProjectDetectorService::new(),
-            ))),
-            vcs: Arc::new(VcsHandler::new(vcs_provider.clone())),
+            agent: Arc::new(AgentHandler::new(services.agent_session.clone())),
+            project: Arc::new(ProjectHandler::new(services.project.clone())),
+            vcs: Arc::new(VcsHandler::new(services.vcs.clone())),
             hook_processor: Arc::new(hook_processor),
         };
 
-        Self {
-            services: McpServices {
-                indexing: indexing_service,
-                context: context_service,
-                search: search_service,
-                memory: memory_service,
-                agent_session: agent_session_service,
-                vcs: vcs_provider,
-            },
-            handlers,
-        }
+        Self { services, handlers }
     }
 
     /// Access to indexing service
@@ -116,6 +105,11 @@ impl McpServer {
         Arc::clone(&self.services.search)
     }
 
+    /// Access to validation service
+    pub fn validation_service(&self) -> Arc<dyn ValidationServiceInterface> {
+        Arc::clone(&self.services.validation)
+    }
+
     /// Access to memory service
     pub fn memory_service(&self) -> Arc<dyn MemoryServiceInterface> {
         Arc::clone(&self.services.memory)
@@ -124,6 +118,11 @@ impl McpServer {
     /// Access to agent session service
     pub fn agent_session_service(&self) -> Arc<dyn AgentSessionServiceInterface> {
         Arc::clone(&self.services.agent_session)
+    }
+
+    /// Access to project service
+    pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
+        Arc::clone(&self.services.project)
     }
 
     /// Access to consolidated index handler (for HTTP transport)

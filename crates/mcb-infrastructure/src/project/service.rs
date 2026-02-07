@@ -29,25 +29,3 @@ impl ProjectDetectorService for ProjectService {
         detect_all_projects(path).await
     }
 }
-
-/// Null project detector service for testing
-pub struct NullProjectDetectorService;
-
-impl NullProjectDetectorService {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for NullProjectDetectorService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl ProjectDetectorService for NullProjectDetectorService {
-    async fn detect_all(&self, _path: &Path) -> Vec<ProjectType> {
-        Vec::new()
-    }
-}

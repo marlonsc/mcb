@@ -11,7 +11,7 @@ rationale: "Large functions violate Single Responsibility Principle"
 
 config:
   max_lines: 50
-  exclude_patterns: ["**/tests/**", "**/*test*"]
+  exclude_patterns: []
 
 rule: |
   rule FunctionSizeLimit "Check function size limits" {

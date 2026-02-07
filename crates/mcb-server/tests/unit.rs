@@ -21,8 +21,8 @@ mod mcp_error_handling_tests;
 #[path = "unit/browse_handlers_tests.rs"]
 mod browse_handlers_tests;
 
-#[path = "unit/browse_service_tests.rs"]
-mod browse_service_tests;
+// #[path = "unit/browse_service_tests.rs"]
+// mod browse_service_tests;
 
 #[path = "unit/highlight_service_tests.rs"]
 mod highlight_service_tests;

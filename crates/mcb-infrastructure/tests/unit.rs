@@ -39,16 +39,6 @@ mod prometheus_metrics_tests;
 #[path = "unit/validation_service_tests.rs"]
 mod validation_service_tests;
 
-// Infrastructure service tests
-#[path = "unit/auth_tests.rs"]
-mod auth_tests;
-
-#[path = "unit/snapshot_tests.rs"]
-mod snapshot_tests;
-
-#[path = "unit/sync_tests.rs"]
-mod sync_tests;
-
 #[path = "unit/file_hash_tests.rs"]
 mod file_hash_tests;
 

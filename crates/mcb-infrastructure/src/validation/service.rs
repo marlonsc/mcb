@@ -12,9 +12,6 @@ use mcb_domain::ports::services::{
 use std::path::Path;
 
 /// Infrastructure validation service using mcb-validate
-///
-/// This is the real implementation that delegates to mcb-validate.
-/// Named differently from mcb-application's stub to avoid REF002 violation.
 pub struct InfraValidationService;
 
 impl InfraValidationService {
@@ -344,80 +341,4 @@ fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<
         sloc: aggregate.sloc,
         functions,
     })
-}
-
-/// Null validation service for testing
-pub struct NullValidationService;
-
-impl NullValidationService {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for NullValidationService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl ValidationServiceInterface for NullValidationService {
-    async fn validate(
-        &self,
-        _workspace_root: &Path,
-        _validators: Option<&[String]>,
-        _severity_filter: Option<&str>,
-    ) -> Result<ValidationReport> {
-        Ok(ValidationReport {
-            total_violations: 0,
-            errors: 0,
-            warnings: 0,
-            infos: 0,
-            violations: Vec::new(),
-            passed: true,
-        })
-    }
-
-    async fn list_validators(&self) -> Result<Vec<String>> {
-        Ok(vec![
-            "clean_architecture".into(),
-            "solid".into(),
-            "quality".into(),
-        ])
-    }
-
-    async fn validate_file(
-        &self,
-        _file_path: &Path,
-        _validators: Option<&[String]>,
-    ) -> Result<ValidationReport> {
-        Ok(ValidationReport {
-            total_violations: 0,
-            errors: 0,
-            warnings: 0,
-            infos: 0,
-            violations: Vec::new(),
-            passed: true,
-        })
-    }
-
-    async fn get_rules(&self, _category: Option<&str>) -> Result<Vec<RuleInfo>> {
-        Ok(Vec::new())
-    }
-
-    async fn analyze_complexity(
-        &self,
-        file_path: &Path,
-        _include_functions: bool,
-    ) -> Result<ComplexityReport> {
-        Ok(ComplexityReport {
-            file: file_path.to_string_lossy().to_string(),
-            cyclomatic: 0.0,
-            cognitive: 0.0,
-            maintainability_index: 100.0,
-            sloc: 0,
-            functions: Vec::new(),
-        })
-    }
 }

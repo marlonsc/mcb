@@ -120,21 +120,32 @@ pub trait PerformanceMetricsInterface: Send + Sync {
 /// Status of an indexing operation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum IndexingStatus {
+    /// Indicates the operation is initializing.
     Starting,
+    /// Indicates the operation is currently running.
     InProgress,
+    /// Indicates the operation finished successfully.
     Completed,
+    /// Indicates the operation failed with an error message.
     Failed(String),
 }
 
 /// Data about an ongoing indexing operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexingOperation {
+    /// Unique identifier for the operation.
     pub id: OperationId,
+    /// Identifier of the collection being indexed.
     pub collection: CollectionId,
+    /// Current status of the operation.
     pub status: IndexingStatus,
+    /// Total number of files to process.
     pub total_files: usize,
+    /// Number of files processed so far.
     pub processed_files: usize,
+    /// Path of the file currently being processed.
     pub current_file: Option<String>,
+    /// Timestamp when the operation started.
     pub started_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -158,35 +169,55 @@ pub trait IndexingOperationsInterface: Send + Sync {
 /// Status of a validation operation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ValidationStatus {
+    /// Indicates the operation is waiting to start.
     Queued,
+    /// Indicates the operation is currently executing.
     InProgress,
+    /// Indicates the operation finished.
     Completed,
+    /// Indicates the operation failed with an error.
     Failed(String),
+    /// Indicates the operation was manually stopped.
     Canceled,
 }
 
 /// Result metadata for a completed validation operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationOperationResult {
+    /// Total number of rule violations found.
     pub total_violations: usize,
+    /// Number of error-level violations.
     pub errors: usize,
+    /// Number of warning-level violations.
     pub warnings: usize,
+    /// Whether the validation passed acceptance criteria.
     pub passed: bool,
 }
 
 /// Data about an ongoing validation operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationOperation {
+    /// Unique identifier for the operation.
     pub id: OperationId,
+    /// Target workspace or directory being validated.
     pub workspace: String,
+    /// Current status of the operation.
     pub status: ValidationStatus,
+    /// List of validator names enabled for this operation.
     pub validators: Vec<String>,
+    /// Progress percentage (0-100).
     pub progress_percent: u8,
+    /// Path of the file currently being validated.
     pub current_file: Option<String>,
+    /// Number of items processed so far.
     pub processed_items: usize,
+    /// Total number of items to process.
     pub total_items: usize,
+    /// Timestamp when the operation started.
     pub started_at: chrono::DateTime<chrono::Utc>,
+    /// Timestamp when the operation completed (if applicable).
     pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// Final result of the validation (if completed).
     pub result: Option<ValidationOperationResult>,
 }
 
@@ -219,54 +250,102 @@ pub trait ValidationOperationsInterface: Send + Sync {
 // ============================================================================
 
 /// Current state of a port service
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum PortServiceState {
+    /// Service is initializing.
     Starting,
+    /// Service is fully operational.
     Running,
+    /// Service is shutting down.
     Stopping,
+    /// Service is stopped.
+    #[default]
     Stopped,
 }
 
+/// Health status for a system dependency
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub enum DependencyHealth {
+    /// Dependency is operating normally.
+    Healthy,
+    /// Dependency is operating with reduced functionality or high latency.
+    Degraded,
+    /// Dependency is unavailable or malfunctioning.
+    Unhealthy,
+    /// Health status has not yet been determined.
+    #[default]
+    Unknown,
+}
+
 /// Health information for a system dependency
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct DependencyHealthCheck {
+    /// Name of the dependency.
     pub name: String,
-    pub status: PortServiceState,
+    /// Current health status.
+    pub status: DependencyHealth,
+    /// Optional status message or error description.
     pub message: Option<String>,
+    /// Response latency in milliseconds (if applicable).
     pub latency_ms: Option<u64>,
+    /// Timestamp of the last check (Unix epoch).
+    pub last_check: u64,
 }
 
 /// Extended health response with detailed dependency info
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtendedHealthResponse {
-    pub status: PortServiceState,
-    pub version: String,
+    /// Overall system status string.
+    pub status: &'static str,
+    /// System uptime in seconds.
+    pub uptime_seconds: u64,
+    /// Number of active indexing operations.
+    pub active_indexing_operations: usize,
+    /// List of health checks for individual dependencies.
     pub dependencies: Vec<DependencyHealthCheck>,
+    /// Aggregated status of all dependencies.
+    pub dependencies_status: DependencyHealth,
 }
 
 /// Interface for graceful shutdown coordination
 pub trait ShutdownCoordinator: Send + Sync {
+    /// Signals the system to initiate shutdown sequence.
     fn signal_shutdown(&self);
+    /// Checks if a shutdown has been signaled.
     fn is_shutting_down(&self) -> bool;
 }
 
 /// Managed lifecycle for background services
 #[async_trait::async_trait]
 pub trait LifecycleManaged: Send + Sync {
+    /// Returns the name of the service.
     fn name(&self) -> &str;
+    /// Starts the service.
     async fn start(&self) -> crate::error::Result<()>;
+    /// Stops the service.
     async fn stop(&self) -> crate::error::Result<()>;
+    /// Restarts the service by stopping and then starting it.
     async fn restart(&self) -> crate::error::Result<()> {
         self.stop().await?;
         self.start().await
     }
+    /// Returns the current state of the service.
     fn state(&self) -> PortServiceState;
+    /// Performs a health check on the service.
     async fn health_check(&self) -> DependencyHealthCheck {
         DependencyHealthCheck {
             name: self.name().to_string(),
-            status: self.state(),
+            status: match self.state() {
+                PortServiceState::Running => DependencyHealth::Healthy,
+                PortServiceState::Starting => DependencyHealth::Unknown,
+                _ => DependencyHealth::Unhealthy,
+            },
             message: None,
             latency_ms: None,
+            last_check: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
         }
     }
 }

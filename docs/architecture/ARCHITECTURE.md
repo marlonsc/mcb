@@ -691,7 +691,7 @@ Use the `#[linkme::distributed_slice]` pattern for auto-registration:
 ```rust
 // mcb-providers/src/new_service/mod.rs
 use linkme::distributed_slice;
-use mcb_application::ports::registry::new_service::NEW_SERVICE_REGISTRY;
+use mcb_domain::ports::registry::new_service::NEW_SERVICE_REGISTRY;
 
 #[distributed_slice(NEW_SERVICE_REGISTRY)]
 pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {

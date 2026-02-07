@@ -17,13 +17,9 @@
 //! mcb-application but are infrastructure concerns, not external providers.
 
 // Internal modules - implementations NOT exported
-pub(crate) mod auth;
 pub(crate) mod events;
 pub(crate) mod lifecycle;
-pub(crate) mod metrics;
 pub(crate) mod prometheus_metrics;
-pub(crate) mod snapshot;
-pub(crate) mod sync;
 
 // Admin module - partially exported for mcb-server
 pub mod admin;
@@ -32,13 +28,7 @@ pub mod admin;
 pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
 
 // Admin types - exported for mcb-server AdminState
-pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations, NullIndexingOperations};
+pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 
 // Prometheus metrics - exported for /metrics endpoint
 pub use prometheus_metrics::{PrometheusPerformanceMetrics, export_metrics};
-
-// Test utilities - exported for testing infrastructure services
-// These are null implementations used for testing infrastructure services
-pub use auth::NullAuthService;
-pub use snapshot::NullSnapshotProvider;
-pub use sync::NullSyncProvider;

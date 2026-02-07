@@ -8,7 +8,7 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    SearchServiceInterface, ValidationServiceInterface,
+    ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
 use std::sync::Arc;
 
@@ -24,6 +24,7 @@ pub struct McpServerBuilder {
     validation_service: Option<Arc<dyn ValidationServiceInterface>>,
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
     agent_session_service: Option<Arc<dyn AgentSessionServiceInterface>>,
+    project_service: Option<Arc<dyn ProjectDetectorService>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
 }
 
@@ -96,6 +97,12 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the project detector service
+    pub fn with_project_service(mut self, service: Arc<dyn ProjectDetectorService>) -> Self {
+        self.project_service = Some(service);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -135,16 +142,22 @@ impl McpServerBuilder {
         let vcs_provider = self
             .vcs_provider
             .ok_or(BuilderError::MissingDependency("vcs provider"))?;
+        let project_service = self
+            .project_service
+            .ok_or(BuilderError::MissingDependency("project service"))?;
 
-        Ok(McpServer::new(
-            indexing_service,
-            context_service,
-            search_service,
-            validation_service,
-            memory_service,
-            agent_session_service,
-            vcs_provider,
-        ))
+        let services = crate::mcp_server::McpServices {
+            indexing: indexing_service,
+            context: context_service,
+            search: search_service,
+            validation: validation_service,
+            memory: memory_service,
+            agent_session: agent_session_service,
+            project: project_service,
+            vcs: vcs_provider,
+        };
+
+        Ok(McpServer::new(services))
     }
 }
 

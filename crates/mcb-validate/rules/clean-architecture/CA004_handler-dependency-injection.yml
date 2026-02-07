@@ -10,10 +10,10 @@ description: "Handlers must receive dependencies via injection, not create them"
 rationale: "Direct instantiation couples handlers to concrete implementations"
 
 rule: |
-  rule HandlerDependencyInjection "Handler Dependency Injection" {
-      when
-          Handler() &&
-          (CreatesConcreteType() || UsesSingleton())
-      then
-          Violation("Handlers must receive dependencies via injection, not create them");
-  }
+    rule HandlerDependencyInjection "Handler Dependency Injection" {
+        when
+            Handler() &&
+            (CreatesConcreteType() || UsesSingleton())
+        then
+            Violation("Handlers must receive dependencies via injection, not create them");
+    }

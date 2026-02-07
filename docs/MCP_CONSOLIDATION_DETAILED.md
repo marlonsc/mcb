@@ -984,7 +984,7 @@ pub async fn get_cache_stats(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<
-    Json<mcb_application::ports::providers::cache::CacheStats>,
+    Json<mcb_domain::ports::providers::cache::CacheStats>,
     (Status, Json<CacheErrorResponse>),
 > {
     let Some(cache) = &state.cache else {

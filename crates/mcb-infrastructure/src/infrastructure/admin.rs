@@ -12,7 +12,7 @@ use mcb_domain::value_objects::{CollectionId, OperationId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::Instant;
 use uuid::Uuid;
 
 // ============================================================================
@@ -131,38 +131,8 @@ impl PerformanceMetricsInterface for AtomicPerformanceMetrics {
             failed_queries: failed,
             average_response_time_ms,
             cache_hit_rate,
-            active_connections: self.active_connections.load(Ordering::Relaxed),
+            active_connections: self.active_connections.load(Ordering::Relaxed) as usize,
             uptime_seconds: self.uptime_secs(),
-        }
-    }
-}
-
-// ============================================================================
-// Performance Metrics - Null Implementation
-// ============================================================================
-
-/// Null implementation of PerformanceMetricsInterface for testing
-#[derive(Default)]
-pub struct NullPerformanceMetrics;
-
-impl PerformanceMetricsInterface for NullPerformanceMetrics {
-    fn uptime_secs(&self) -> u64 {
-        0
-    }
-
-    fn record_query(&self, _response_time_ms: u64, _success: bool, _cache_hit: bool) {}
-
-    fn update_active_connections(&self, _delta: i64) {}
-
-    fn get_performance_metrics(&self) -> PerformanceMetricsData {
-        PerformanceMetricsData {
-            total_queries: 0,
-            successful_queries: 0,
-            failed_queries: 0,
-            average_response_time_ms: 0.0,
-            cache_hit_rate: 0.0,
-            active_connections: 0,
-            uptime_seconds: 0,
         }
     }
 }
@@ -203,9 +173,10 @@ impl DefaultIndexingOperations {
             id: id.clone(),
             collection: collection.clone(),
             current_file: None,
+            status: mcb_domain::ports::admin::IndexingStatus::Starting,
             total_files,
             processed_files: 0,
-            start_timestamp: current_timestamp(),
+            started_at: chrono::Utc::now(),
         };
         self.operations.insert(id.clone(), operation);
         id
@@ -270,47 +241,4 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
     fn complete_operation(&self, operation_id: &OperationId) {
         DefaultIndexingOperations::complete_operation(self, operation_id);
     }
-}
-
-// ============================================================================
-// Indexing Operations - Null Implementation
-// ============================================================================
-
-/// Null implementation of IndexingOperationsInterface for testing
-#[derive(Default)]
-pub struct NullIndexingOperations;
-
-impl IndexingOperationsInterface for NullIndexingOperations {
-    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
-        HashMap::new()
-    }
-
-    fn start_operation(&self, _collection: &CollectionId, _total_files: usize) -> OperationId {
-        OperationId::new("") // no-op
-    }
-
-    fn update_progress(
-        &self,
-        _operation_id: &OperationId,
-        _current_file: Option<String>,
-        _processed: usize,
-    ) {
-        // no-op
-    }
-
-    fn complete_operation(&self, _operation_id: &OperationId) {
-        // no-op
-    }
-}
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-/// Get current Unix timestamp
-fn current_timestamp() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0)
 }

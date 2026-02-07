@@ -15,7 +15,7 @@ patterns:
 
 config:
   max_methods: 10
-  exclude_patterns: ["**/tests/**"]
+  exclude_patterns: []
 
 rule: |
   rule TraitMethodsLimit "Check trait method count" {

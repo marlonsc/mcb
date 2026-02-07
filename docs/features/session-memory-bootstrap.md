@@ -225,7 +225,7 @@ MCB_MEMORY_INCLUDE_TYPES=decision,learning,code_change  # Filter by type
 
 ### Memory Service Configuration
 
-See `mcb_application::ports::MemoryServiceInterface` for service-level configuration.
+See `mcb_domain::ports::MemoryServiceInterface` for service-level configuration.
 
 ## Testing
 

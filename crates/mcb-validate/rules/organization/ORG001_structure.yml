@@ -31,7 +31,7 @@ patterns:
   method_decl: '(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\('
 
 config:
-  exclude_patterns: ["**/tests/**"]
+  exclude_patterns: []
 
 rule: |
   rule CodeOrganization "Check code organization" {

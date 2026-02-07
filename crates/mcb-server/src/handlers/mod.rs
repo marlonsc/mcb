@@ -3,8 +3,6 @@
 //! Implementations of MCP tool calls using domain services.
 //! Each handler translates MCP protocol requests into domain service calls.
 
-pub mod browse_api;
-pub mod browse_service;
 pub mod consolidated;
 pub mod highlight_service;
 

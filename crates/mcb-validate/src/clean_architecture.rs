@@ -825,7 +825,7 @@ impl CleanArchitectureValidator {
                                     file: path.to_path_buf(),
                                     line: line_num + 1,
                                     import_path: format!(
-                                        "mcb_application::ports::providers::{trait_name}"
+                                        "mcb_domain::ports::providers::{trait_name}"
                                     ),
                                     should_be: format!(
                                         "mcb_domain::ports::providers::{trait_name}"
@@ -974,8 +974,8 @@ mod tests {
         assert!(re.is_match("use mcb_application::use_cases::SearchUseCaseImpl;"));
 
         // Should NOT match ports/traits
-        assert!(!re.is_match("use mcb_application::ports::providers::EmbeddingProvider;"));
-        assert!(!re.is_match("use mcb_application::ports::admin::AdminService;"));
+        assert!(!re.is_match("use mcb_domain::ports::providers::EmbeddingProvider;"));
+        assert!(!re.is_match("use mcb_domain::ports::admin::AdminService;"));
     }
 
     #[test]
@@ -992,7 +992,7 @@ mod tests {
         // Note: The actual validation filters out "ports::" paths, so we test
         // that the pattern doesn't overmatch nested module paths like ports::admin::
         // This regex only matches single-level module paths: mcb_application::X::YService
-        assert!(!re.is_match("use mcb_application::ports::admin::AdminService;"));
+        assert!(!re.is_match("use mcb_domain::ports::admin::AdminService;"));
     }
 
     #[test]
@@ -1025,7 +1025,7 @@ mod tests {
 
         // Should NOT match other imports
         assert!(!re.is_match("use mcb_domain::ports::providers::*;"));
-        assert!(!re.is_match("pub use mcb_application::ports::*;"));
+        assert!(!re.is_match("pub use mcb_domain::ports::*;"));
     }
 
     #[test]
@@ -1036,7 +1036,7 @@ mod tests {
             .expect("Pattern CA009.app_import not found");
 
         // Should match any mcb_application import
-        assert!(re.is_match("use mcb_application::ports::providers::CacheProvider;"));
+        assert!(re.is_match("use mcb_domain::ports::providers::CacheProvider;"));
         assert!(re.is_match("use mcb_application::services::ContextService;"));
         assert!(re.is_match("use mcb_application::registry::EMBEDDING_PROVIDERS;"));
         assert!(re.is_match("use mcb_application;"));
@@ -1055,10 +1055,10 @@ mod tests {
             .expect("Pattern CA009.app_import_path not found");
 
         // Should extract full import path
-        let captures = re.captures("use mcb_application::ports::providers::CacheProvider;");
+        let captures = re.captures("use mcb_domain::ports::providers::CacheProvider;");
         assert!(captures.is_some());
         let path = captures.unwrap().get(1).unwrap().as_str();
-        assert_eq!(path, "mcb_application::ports::providers::CacheProvider;");
+        assert_eq!(path, "mcb_domain::ports::providers::CacheProvider;");
 
         let captures2 =
             re.captures("use mcb_application::services::{ContextService, SearchService};");

@@ -1,6 +1,3 @@
-#![allow(clippy::unused_self)]
-#![allow(clippy::unused_async)]
-
 //! Architecture Validation for MCP Context Browser
 //!
 //! This crate provides comprehensive validation of workspace crates against:

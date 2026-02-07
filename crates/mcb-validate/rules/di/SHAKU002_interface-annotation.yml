@@ -10,10 +10,10 @@ description: "Shaku component missing #[shaku(interface = ...)]"
 rationale: "Interface annotation connects component to its port trait"
 
 rule: |
-  rule InterfaceAnnotationRequired "Check for shaku interface annotation" {
-      when
-          HasAttribute("derive(Component)") &&
-          !HasAttribute("shaku(interface")
-      then
-          Violation("Shaku component missing #[shaku(interface = ...)]");
-  }
+    rule InterfaceAnnotationRequired "Check for shaku interface annotation" {
+        when
+            HasAttribute("derive(Component)") &&
+            !HasAttribute("shaku(interface")
+        then
+            Violation("Shaku component missing #[shaku(interface = ...)]");
+    }

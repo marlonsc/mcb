@@ -33,10 +33,10 @@ pub mod services;
 
 // Re-export commonly used port traits for convenience
 pub use admin::{
-    DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
-    IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsData,
-    PerformanceMetricsInterface, PortServiceState, ShutdownCoordinator, ValidationOperation,
-    ValidationOperationResult, ValidationOperationsInterface,
+    DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation, IndexingOperationsInterface,
+    LifecycleManaged, PerformanceMetricsData, PerformanceMetricsInterface, PortServiceState,
+    ShutdownCoordinator, ValidationOperation, ValidationOperationResult,
+    ValidationOperationsInterface,
 };
 pub use browse::{BrowseError, BrowseService, HighlightError, HighlightService};
 pub use infrastructure::{
@@ -50,7 +50,7 @@ pub use providers::{
     EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics, HalsteadMetrics,
     HybridSearchProvider, HybridSearchResult, LanguageChunkingProvider, MetricsAnalysisProvider,
     ProviderConfigManagerInterface, ValidationOptions, ValidationProvider, ValidatorInfo,
-    VectorStoreAdmin, VectorStoreProvider,
+    VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider,
 };
 pub use repositories::{AgentRepository, MemoryRepository};
 pub use services::{ValidationReport, ValidationServiceInterface, ViolationEntry};

@@ -171,34 +171,10 @@ async fn test_infrastructure_services_from_app_context() {
 
     // Verify infrastructure services are accessible
     // Arc<dyn Trait> types have a strong_count >= 1 if valid
-    let auth = app_context.auth();
-    assert!(
-        std::sync::Arc::strong_count(&auth) >= 1,
-        "Auth service should have valid Arc reference"
-    );
-
     let event_bus = app_context.event_bus();
     assert!(
         std::sync::Arc::strong_count(&event_bus) >= 1,
         "EventBus service should have valid Arc reference"
-    );
-
-    let metrics = app_context.metrics();
-    assert!(
-        std::sync::Arc::strong_count(&metrics) >= 1,
-        "Metrics service should have valid Arc reference"
-    );
-
-    let sync = app_context.sync();
-    assert!(
-        std::sync::Arc::strong_count(&sync) >= 1,
-        "Sync service should have valid Arc reference"
-    );
-
-    let snapshot = app_context.snapshot();
-    assert!(
-        std::sync::Arc::strong_count(&snapshot) >= 1,
-        "Snapshot service should have valid Arc reference"
     );
 
     let shutdown = app_context.shutdown();

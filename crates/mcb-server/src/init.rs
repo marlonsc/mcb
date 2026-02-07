@@ -292,12 +292,6 @@ async fn create_mcp_server(
         .with_project_service(services.project_service)
         .with_vcs_provider(services.vcs_provider)
         .with_agent_session_service(services.agent_session_service)
-        .with_context_service(services.context_service)
-        .with_search_service(services.search_service)
-        .with_validation_service(services.validation_service)
-        .with_memory_service(services.memory_service)
-        .with_vcs_provider(services.vcs_provider)
-        .with_agent_session_service(services.agent_session_service)
         .try_build()
         .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
 

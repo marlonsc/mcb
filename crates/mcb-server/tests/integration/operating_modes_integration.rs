@@ -564,6 +564,9 @@ async fn create_test_mcp_server() -> McpServer {
     let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
         std::sync::Arc::new(Git2Provider::new());
 
+    let project_service: std::sync::Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
+        std::sync::Arc::new(mcb_infrastructure::project::ProjectService::new());
+
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
         cache: shared_cache,
@@ -577,6 +580,7 @@ async fn create_test_mcp_server() -> McpServer {
         memory_repository,
         agent_repository,
         vcs_provider,
+        project_service,
     };
 
     let services = DomainServicesFactory::create_services(deps)
