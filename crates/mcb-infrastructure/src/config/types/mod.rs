@@ -14,7 +14,14 @@ pub mod server;
 pub mod system;
 
 // Re-export main types
-pub use app::*;
+pub use app::{
+    AdminApiKeyConfig, ApiKeyConfig, AppConfig, AuthConfig, BackupConfig, CacheProvider,
+    CacheSystemConfig, DataConfig, EmbeddingConfigContainer, EventBusConfig, EventBusProvider,
+    InfrastructureConfig, JwtConfig, LimitsConfig, LoggingConfig, ModeConfig, OperatingMode,
+    OperationsConfig, OperationsDaemonConfig, PasswordAlgorithm, ProvidersConfig, ResilienceConfig,
+    ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig,
+    SnapshotConfig, SyncConfig, SystemConfig, TransportMode, VectorStoreConfigContainer,
+};
 pub use infrastructure::{
     CacheProvider, CacheSystemConfig, LimitsConfig, LoggingConfig, MetricsConfig, ResilienceConfig,
 };
