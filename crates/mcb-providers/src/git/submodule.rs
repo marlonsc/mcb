@@ -8,13 +8,13 @@ use git2::Repository;
 use mcb_domain::entities::submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
 use mcb_domain::error::{Error, Result};
 
-/// Service for discovering and traversing git submodules
-pub struct SubmoduleService {
+/// Provider for discovering and traversing git submodules
+pub struct SubmoduleProvider {
     config: SubmoduleDiscoveryConfig,
 }
 
-impl SubmoduleService {
-    /// Create a new SubmoduleService with given configuration
+impl SubmoduleProvider {
+    /// Create a new SubmoduleProvider with given configuration
     #[must_use]
     pub fn new(config: SubmoduleDiscoveryConfig) -> Self {
         Self { config }
@@ -200,7 +200,7 @@ pub async fn collect_submodules(
     repo_path: &Path,
     parent_repo_id: &str,
 ) -> Result<Vec<SubmoduleInfo>> {
-    SubmoduleService::with_defaults()
+    SubmoduleProvider::with_defaults()
         .collect_submodules(repo_path, parent_repo_id)
         .await
 }
@@ -215,7 +215,7 @@ pub async fn collect_submodules_with_depth(
         max_depth,
         ..Default::default()
     };
-    SubmoduleService::new(config)
+    SubmoduleProvider::new(config)
         .collect_submodules(repo_path, parent_repo_id)
         .await
 }

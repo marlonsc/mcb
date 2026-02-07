@@ -6,7 +6,7 @@
 //! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
 
 use crate::constants::HIGHLIGHT_NAMES;
-use mcb_domain::ports::browse::{HighlightError, HighlightService};
+use mcb_domain::ports::browse::{HighlightError, HighlightServiceInterface};
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
 use std::sync::Arc;
 use tree_sitter::Language;
@@ -237,7 +237,7 @@ impl Default for HighlightServiceImpl {
 }
 
 #[async_trait::async_trait]
-impl HighlightService for HighlightServiceImpl {
+impl HighlightServiceInterface for HighlightServiceImpl {
     async fn highlight(&self, code: &str, language: &str) -> mcb_domain::Result<HighlightedCode> {
         let code = code.to_string();
         let language = language.to_string();

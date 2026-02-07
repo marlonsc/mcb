@@ -3,7 +3,7 @@
 //! Moved from inline tests in src/handlers/highlight_service.rs.
 
 use mcb_domain::error::Error;
-use mcb_domain::ports::browse::{HighlightError, HighlightService};
+use mcb_domain::ports::browse::{HighlightError, HighlightServiceInterface};
 use mcb_domain::value_objects::browse::HighlightCategory;
 use mcb_infrastructure::services::highlight_service::{
     HighlightServiceImpl, map_highlight_to_category,

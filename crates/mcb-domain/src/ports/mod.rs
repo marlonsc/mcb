@@ -38,7 +38,7 @@ pub use admin::{
     ShutdownCoordinator, ValidationOperation, ValidationOperationResult,
     ValidationOperationsInterface,
 };
-pub use browse::{BrowseError, BrowseService, HighlightError, HighlightService};
+pub use browse::{BrowseError, BrowseServiceInterface, HighlightError, HighlightServiceInterface};
 pub use infrastructure::{
     AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, LockGuard,
     LockProvider, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,

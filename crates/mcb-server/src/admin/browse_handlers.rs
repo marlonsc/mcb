@@ -11,7 +11,7 @@
 //! | `/collections/:name/files` | GET | List files in a collection |
 //! | `/collections/:name/files/*path/chunks` | GET | Get chunks for a file |
 
-use mcb_domain::ports::browse::HighlightService;
+use mcb_domain::ports::browse::HighlightServiceInterface;
 use mcb_domain::ports::providers::VectorStoreBrowser;
 use mcb_domain::value_objects::CollectionId;
 use rocket::http::Status;
@@ -33,7 +33,7 @@ pub struct BrowseState {
     /// Vector store browser for collection/file navigation
     pub browser: Arc<dyn VectorStoreBrowser>,
     /// Highlight service for code syntax highlighting
-    pub highlight_service: Arc<dyn HighlightService>,
+    pub highlight_service: Arc<dyn HighlightServiceInterface>,
 }
 
 /// Error response for browse operations

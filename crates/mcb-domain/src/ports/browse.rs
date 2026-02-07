@@ -42,7 +42,7 @@ pub enum HighlightError {
 
 /// Browse service trait (agnóstico interface)
 #[async_trait::async_trait]
-pub trait BrowseService: Send + Sync {
+pub trait BrowseServiceInterface: Send + Sync {
     /// Get file tree from given root path
     async fn get_file_tree(&self, root: &Path, max_depth: usize) -> Result<FileNode>;
 
@@ -56,16 +56,12 @@ pub trait BrowseService: Send + Sync {
     async fn get_highlighted_code(&self, path: &Path) -> Result<HighlightedCode>;
 }
 
-pub type BrowseServiceInterface = dyn BrowseService;
-
 /// Highlight service trait (agnóstico interface)
 #[async_trait::async_trait]
-pub trait HighlightService: Send + Sync {
+pub trait HighlightServiceInterface: Send + Sync {
     /// Highlight code with given language
     ///
     /// Returns structured highlight spans with byte offsets.
     /// Falls back to empty spans if highlighting fails.
     async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode>;
 }
-
-pub type HighlightServiceInterface = dyn HighlightService;

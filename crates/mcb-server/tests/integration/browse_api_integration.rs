@@ -7,7 +7,7 @@ use mcb_domain::ports::admin::{
     IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
     PerformanceMetricsInterface,
 };
-use mcb_domain::ports::browse::HighlightService;
+use mcb_domain::ports::browse::HighlightServiceInterface;
 use mcb_domain::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
 use mcb_domain::ports::providers::VectorStoreBrowser;
 use mcb_domain::value_objects::browse::HighlightedCode;
@@ -83,7 +83,7 @@ impl VectorStoreBrowser for MockVectorStoreBrowser {
 pub struct MockHighlightService;
 
 #[async_trait]
-impl HighlightService for MockHighlightService {
+impl HighlightServiceInterface for MockHighlightService {
     async fn highlight(
         &self,
         code: &str,
