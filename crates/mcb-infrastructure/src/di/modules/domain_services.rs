@@ -36,15 +36,27 @@ use super::super::bootstrap::AppContext;
 use crate::validation::InfraValidationService;
 
 /// Domain services container
+///
+/// Holds all assembled domain service implementations for use throughout the application.
+/// This container is created by `DomainServicesFactory` and provides access to all
+/// domain-level services that depend on infrastructure components.
 #[derive(Clone)]
 pub struct DomainServicesContainer {
+    /// Service for managing context and semantic search operations
     pub context_service: Arc<dyn ContextServiceInterface>,
+    /// Service for searching across indexed code and memory
     pub search_service: Arc<dyn SearchServiceInterface>,
+    /// Service for indexing code and managing the search index
     pub indexing_service: Arc<dyn IndexingServiceInterface>,
+    /// Service for validating domain objects and operations
     pub validation_service: Arc<dyn ValidationServiceInterface>,
+    /// Service for managing persistent memory and observations
     pub memory_service: Arc<dyn MemoryServiceInterface>,
+    /// Service for managing agent sessions and state
     pub agent_session_service: Arc<dyn AgentSessionServiceInterface>,
+    /// Service for detecting and managing project information
     pub project_service: Arc<dyn ProjectDetectorService>,
+    /// Provider for version control system operations
     pub vcs_provider: Arc<dyn VcsProvider>,
 }
 
@@ -70,18 +82,31 @@ pub struct DomainServicesContainer {
 /// * `vcs_provider` - Version control system provider
 /// * `project_service` - Service for project detection and management
 pub struct ServiceDependencies {
+    /// Unique identifier for the current project
     pub project_id: String,
+    /// Shared cache provider for service-level caching
     pub cache: SharedCacheProvider,
+    /// Cryptographic service for secure operations
     pub crypto: CryptoService,
+    /// Application configuration
     pub config: AppConfig,
+    /// Provider for generating vector embeddings
     pub embedding_provider: Arc<dyn EmbeddingProvider>,
+    /// Provider for vector storage and retrieval
     pub vector_store_provider: Arc<dyn VectorStoreProvider>,
+    /// Provider for language-aware code chunking
     pub language_chunker: Arc<dyn LanguageChunkingProvider>,
+    /// Interface for indexing operations
     pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    /// Event bus for domain events
     pub event_bus: Arc<dyn EventBusProvider>,
+    /// Repository for memory persistence
     pub memory_repository: Arc<dyn MemoryRepository>,
+    /// Repository for agent session data
     pub agent_repository: Arc<dyn AgentRepository>,
+    /// Version control system provider
     pub vcs_provider: Arc<dyn VcsProvider>,
+    /// Service for project detection and management
     pub project_service: Arc<dyn ProjectDetectorService>,
 }
 
