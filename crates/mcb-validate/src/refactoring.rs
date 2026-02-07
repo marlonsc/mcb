@@ -15,6 +15,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
+use crate::config::RefactoringRulesConfig;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -293,6 +294,7 @@ impl Violation for RefactoringViolation {
 /// Refactoring completeness validator
 pub struct RefactoringValidator {
     config: ValidationConfig,
+    rules: RefactoringRulesConfig,
     generic_type_names: HashSet<String>,
     utility_types: HashSet<String>,
     known_migration_pairs: Vec<(String, String)>,
@@ -303,56 +305,35 @@ pub struct RefactoringValidator {
 impl RefactoringValidator {
     /// Create a new refactoring validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        Self::with_config(
+            ValidationConfig::new(workspace_root),
+            &RefactoringRulesConfig::default(),
+        )
     }
 
     /// Create a validator with custom configuration
-    pub fn with_config(config: ValidationConfig) -> Self {
-        use crate::pattern_registry::PATTERNS;
+    pub fn with_config(config: ValidationConfig, rules: &RefactoringRulesConfig) -> Self {
+        let generic_type_names: HashSet<String> =
+            rules.generic_type_names.iter().cloned().collect();
+        let utility_types: HashSet<String> = rules.utility_types.iter().cloned().collect();
+        let skip_files: HashSet<String> = rules.skip_files.iter().cloned().collect();
+        let skip_dir_patterns = rules.skip_dir_patterns.clone();
 
-        let rule_id = "REF001";
-
-        let generic_type_names: HashSet<String> = PATTERNS
-            .get_config_list(rule_id, "generic_type_names")
-            .into_iter()
-            .collect();
-        let utility_types: HashSet<String> = PATTERNS
-            .get_config_list(rule_id, "utility_types")
-            .into_iter()
-            .collect();
-        let skip_files: HashSet<String> = PATTERNS
-            .get_config_list(rule_id, "refactoring_skip_files")
-            .into_iter()
-            .collect();
-        let skip_dir_patterns = PATTERNS.get_config_list(rule_id, "refactoring_skip_dir_patterns");
-
-        let known_migration_pairs = PATTERNS
-            .get_config(rule_id)
-            .and_then(|v| v.get("known_migration_pairs"))
-            .and_then(|v| v.as_sequence())
-            .map(|seq| {
-                seq.iter()
-                    .filter_map(|v| v.as_sequence())
-                    .filter_map(|pair| {
-                        if pair.len() == 2 {
-                            Some((pair[0].as_str()?.to_string(), pair[1].as_str()?.to_string()))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<(String, String)>>()
+        let known_migration_pairs = rules
+            .known_migration_pairs
+            .iter()
+            .filter_map(|pair| {
+                if pair.len() == 2 {
+                    Some((pair[0].clone(), pair[1].clone()))
+                } else {
+                    None
+                }
             })
-            .unwrap_or_default();
-
-        // Fail fast if config is missing
-        if generic_type_names.is_empty() {
-            panic!(
-                "RefactoringValidator: Rule {rule_id} missing 'generic_type_names' in YAML config."
-            );
-        }
+            .collect();
 
         Self {
             config,
+            rules: rules.clone(),
             generic_type_names,
             utility_types,
             known_migration_pairs,
@@ -363,6 +344,9 @@ impl RefactoringValidator {
 
     /// Run all refactoring validations
     pub fn validate_all(&self) -> Result<Vec<RefactoringViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_duplicate_definitions()?);
         violations.extend(self.validate_missing_test_files()?);
@@ -381,8 +365,7 @@ impl RefactoringValidator {
         let mut definitions: HashMap<String, Vec<PathBuf>> = HashMap::new();
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
@@ -547,6 +530,10 @@ impl RefactoringValidator {
                 continue;
             }
 
+            if self.should_skip_crate(&crate_dir) {
+                continue;
+            }
+
             // If tests directory doesn't exist, skip this crate (no test infrastructure)
             if !tests_dir.exists() {
                 continue;
@@ -653,8 +640,7 @@ impl RefactoringValidator {
         let mod_pattern = Regex::new(r"(?:pub\s+)?mod\s+([a-z_][a-z0-9_]*)(?:\s*;)").unwrap();
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
@@ -712,11 +698,7 @@ impl RefactoringValidator {
                 let entry = entry?;
                 let path = entry.path();
 
-                // Skip mcb-validate
-                if path
-                    .file_name()
-                    .is_some_and(|n| n == "mcb-validate" || n == "mcb")
-                {
+                if self.should_skip_crate(&path) {
                     continue;
                 }
 
@@ -727,6 +709,15 @@ impl RefactoringValidator {
         }
 
         Ok(dirs)
+    }
+
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, crate_dir: &std::path::Path) -> bool {
+        let path_str = crate_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 

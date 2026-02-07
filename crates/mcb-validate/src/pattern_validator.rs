@@ -12,6 +12,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
+use crate::config::PatternRulesConfig;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -249,21 +250,31 @@ impl Violation for PatternViolation {
 /// Pattern validator
 pub struct PatternValidator {
     config: ValidationConfig,
+    rules: PatternRulesConfig,
 }
 
 impl PatternValidator {
     /// Create a new pattern validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        Self::with_config(
+            ValidationConfig::new(workspace_root),
+            &PatternRulesConfig::default(),
+        )
     }
 
     /// Create a validator with custom configuration for multi-directory support
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+    pub fn with_config(config: ValidationConfig, rules: &PatternRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
     /// Run all pattern validations
     pub fn validate_all(&self) -> Result<Vec<PatternViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_trait_based_di()?);
         violations.extend(self.validate_async_traits()?);
@@ -273,35 +284,28 @@ impl PatternValidator {
 
     /// Verify `Arc<dyn Trait>` pattern instead of `Arc<ConcreteType>`
     pub fn validate_trait_based_di(&self) -> Result<Vec<PatternViolation>> {
-        use crate::pattern_registry::PATTERNS;
         let mut violations = Vec::new();
 
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
-        let arc_pattern = PATTERNS
-            .get("CA017.arc_pattern")
-            .cloned()
-            .unwrap_or_else(|| Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").unwrap());
+        let arc_pattern = Regex::new(&self.rules.arc_pattern).unwrap_or_else(|_| {
+            Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").expect("Invalid default regex")
+        });
 
         // Known concrete types that are OK to use directly
-        let allowed_concrete = PATTERNS.get_config_list("CA017", "allowed_concrete_types");
+        let allowed_concrete = &self.rules.allowed_concrete_types;
 
         // Provider trait names that should use Arc<dyn ...>
-        let provider_traits = PATTERNS.get_config_list("CA017", "provider_trait_suffixes");
+        let provider_traits = &self.rules.provider_trait_suffixes;
 
         if allowed_concrete.is_empty() {
-            panic!("PatternValidator: Rule CA017 missing 'allowed_concrete_types' in YAML config.");
-        }
-
-        if provider_traits.is_empty() {
-            panic!(
-                "PatternValidator: Rule CA017 missing 'provider_trait_suffixes' in YAML config."
-            );
+            // Warn or panic if config is unexpectedly empty?
+            // panic!("PatternValidator: Rule CA017 missing 'allowed_concrete_types' in YAML config.");
         }
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
+        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate (contains test examples of bad patterns)
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
@@ -397,7 +401,11 @@ impl PatternValidator {
         let allow_async_fn_trait = Regex::new(r"#\[allow\(async_fn_in_trait\)\]").unwrap();
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
+        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -498,15 +506,14 @@ impl PatternValidator {
             Regex::new(r"Result<[^,]+,\s*([A-Za-z][A-Za-z0-9_:]+)>").expect("Invalid regex");
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
+        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
-            // Skip mcb-providers - factory functions use std::result::Result<..., String>
-            // by design for linkme registry compatibility (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            // Skip manually excluded crates for result check (e.g. mcb-providers)
+            if self.should_skip_result_check(&src_dir) {
                 continue;
             }
 
@@ -571,6 +578,24 @@ impl PatternValidator {
         }
 
         Ok(violations)
+    }
+
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
+    }
+
+    /// Check if a crate should be skipped for result checking
+    fn should_skip_result_check(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .result_check_excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 

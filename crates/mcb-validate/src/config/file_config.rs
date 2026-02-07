@@ -141,6 +141,10 @@ pub struct GeneralConfig {
     #[serde(default)]
     pub exclude_patterns: Vec<String>,
 
+    /// Path to the rules directory
+    #[serde(default = "default_rules_path")]
+    pub rules_path: PathBuf,
+
     /// Additional source paths to validate (beyond crates/)
     #[serde(default)]
     pub additional_src_paths: Vec<PathBuf>,
@@ -152,6 +156,10 @@ pub struct GeneralConfig {
 
 fn default_output_format() -> String {
     "human".to_string()
+}
+
+fn default_rules_path() -> PathBuf {
+    PathBuf::from("crates/mcb-validate/rules")
 }
 
 /// Rule-specific configuration
@@ -184,6 +192,38 @@ pub struct RulesConfig {
     /// Port/Adapter validation rules
     #[serde(default)]
     pub port_adapter: PortAdapterRulesConfig,
+
+    /// Clean Architecture rules
+    #[serde(default)]
+    pub clean_architecture: CleanArchitectureRulesConfig,
+
+    /// Naming rules
+    #[serde(default)]
+    pub naming: NamingRulesConfig,
+
+    /// KISS rules
+    #[serde(default)]
+    pub kiss: KISSRulesConfig,
+
+    /// Refactoring rules
+    #[serde(default)]
+    pub refactoring: RefactoringRulesConfig,
+
+    /// Performance rules
+    #[serde(default)]
+    pub performance: PerformanceRulesConfig,
+
+    /// Pattern rules
+    #[serde(default)]
+    pub patterns: PatternRulesConfig,
+
+    /// Test Quality rules
+    #[serde(default)]
+    pub test_quality: TestQualityRulesConfig,
+
+    /// Implementation rules
+    #[serde(default)]
+    pub implementation: ImplementationRulesConfig,
 }
 
 /// Architecture validation rules configuration
@@ -299,6 +339,10 @@ pub struct QualityRulesConfig {
     /// Files/patterns exempt from unwrap/expect checks
     #[serde(default)]
     pub exempt_patterns: Vec<String>,
+
+    /// Paths excluded from quality checks
+    #[serde(default)]
+    pub excluded_paths: Vec<String>,
 }
 
 fn default_max_file_lines() -> usize {
@@ -318,6 +362,10 @@ impl Default for QualityRulesConfig {
             allow_unwrap_in_tests: true,
             allow_expect_with_message: true,
             exempt_patterns: vec![],
+            excluded_paths: vec![
+                "mcb-providers/src/vector_store/".to_string(),
+                "mcb-providers/src/embedding/".to_string(),
+            ],
         }
     }
 }
@@ -430,10 +478,24 @@ pub struct VisibilityRulesConfig {
     /// Threshold for pub count in utility modules
     #[serde(default = "default_pub_count_threshold")]
     pub pub_count_threshold: usize,
+
+    /// List of crates to scan for visibility rules
+    #[serde(default = "default_scan_crates")]
+    pub scan_crates: Vec<String>,
 }
 
 fn default_pub_count_threshold() -> usize {
     3
+}
+
+fn default_scan_crates() -> Vec<String> {
+    vec![
+        "mcb-infrastructure".to_string(),
+        "mcb-providers".to_string(),
+        "mcb-server".to_string(),
+        "mcb-application".to_string(),
+        "mcb-domain".to_string(),
+    ]
 }
 
 impl Default for VisibilityRulesConfig {
@@ -444,6 +506,7 @@ impl Default for VisibilityRulesConfig {
             exempted_items: vec![],
             utility_module_patterns: vec![],
             pub_count_threshold: 3,
+            scan_crates: default_scan_crates(),
         }
     }
 }
@@ -518,6 +581,377 @@ impl Default for PortAdapterRulesConfig {
             adapter_suffixes: vec![],
             ports_dir: default_ports_dir(),
             providers_dir: default_providers_dir(),
+        }
+    }
+}
+
+/// Clean Architecture rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct CleanArchitectureRulesConfig {
+    /// Whether clean architecture validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    // Paths
+    #[serde(default = "default_server_path")]
+    pub server_path: String,
+    #[serde(default = "default_handlers_path")]
+    pub handlers_path: String,
+    #[serde(default = "default_domain_path")]
+    pub domain_path: String,
+    #[serde(default = "default_entities_path")]
+    pub entities_path: String,
+    #[serde(default = "default_vo_path")]
+    pub vo_path: String,
+    #[serde(default = "default_infra_path")]
+    pub infrastructure_path: String,
+    #[serde(default = "default_app_path")]
+    pub application_path: String,
+    #[serde(default = "default_ports_providers_path")]
+    pub ports_providers_path: String,
+
+    // Patterns
+    #[serde(default)]
+    pub identity_skip_suffixes: Vec<String>,
+    #[serde(default)]
+    pub allowed_mutable_prefixes: Vec<String>,
+    #[serde(default)]
+    pub composition_root_skip_patterns: Vec<String>,
+}
+
+fn default_server_path() -> String {
+    "crates/mcb-server".to_string()
+}
+fn default_handlers_path() -> String {
+    "crates/mcb-server/src/handlers".to_string()
+}
+fn default_domain_path() -> String {
+    "crates/mcb-domain".to_string()
+}
+fn default_entities_path() -> String {
+    "crates/mcb-domain/src/entities".to_string()
+}
+fn default_vo_path() -> String {
+    "crates/mcb-domain/src/value_objects".to_string()
+}
+fn default_infra_path() -> String {
+    "crates/mcb-infrastructure".to_string()
+}
+fn default_app_path() -> String {
+    "crates/mcb-application".to_string()
+}
+fn default_ports_providers_path() -> String {
+    "crates/mcb-application/src/ports/providers".to_string()
+}
+
+impl Default for CleanArchitectureRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            server_path: default_server_path(),
+            handlers_path: default_handlers_path(),
+            domain_path: default_domain_path(),
+            entities_path: default_entities_path(),
+            vo_path: default_vo_path(),
+            infrastructure_path: default_infra_path(),
+            application_path: default_app_path(),
+            ports_providers_path: default_ports_providers_path(),
+            identity_skip_suffixes: vec![
+                "Builder".to_string(),
+                "Options".to_string(),
+                "Config".to_string(),
+                "Changes".to_string(),
+            ],
+            allowed_mutable_prefixes: vec![
+                "set_".to_string(),
+                "add_".to_string(),
+                "remove_".to_string(),
+                "clear_".to_string(),
+                "reset_".to_string(),
+            ],
+            composition_root_skip_patterns: vec!["/di/".to_string()],
+        }
+    }
+}
+
+/// Naming rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct NamingRulesConfig {
+    /// Whether naming validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Target crate for server handlers (e.g., "mcb-server")
+    #[serde(default = "default_server_crate")]
+    pub server_crate: String,
+
+    /// Target crate for domain interfaces (e.g., "mcb-domain")
+    #[serde(default = "default_domain_crate")]
+    pub domain_crate: String,
+
+    /// Target crate for infrastructure defaults (e.g., "mcb-infrastructure")
+    #[serde(default = "default_infra_crate")]
+    pub infrastructure_crate: String,
+}
+
+fn default_server_crate() -> String {
+    "mcb-server".to_string()
+}
+fn default_domain_crate() -> String {
+    "mcb-domain".to_string()
+}
+fn default_infra_crate() -> String {
+    "mcb-infrastructure".to_string()
+}
+
+impl Default for NamingRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            server_crate: default_server_crate(),
+            domain_crate: default_domain_crate(),
+            infrastructure_crate: default_infra_crate(),
+        }
+    }
+}
+
+/// KISS rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct KISSRulesConfig {
+    /// Whether KISS validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Crates excluded from KISS checks
+    #[serde(default)]
+    pub excluded_crates: Vec<String>,
+}
+
+impl Default for KISSRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            excluded_crates: vec!["mcb-validate".to_string(), "mcb-providers".to_string()],
+        }
+    }
+}
+
+/// Refactoring rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct RefactoringRulesConfig {
+    /// Whether refactoring validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Crates excluded from refactoring checks
+    #[serde(default)]
+    pub excluded_crates: Vec<String>,
+
+    /// Generic type names to ignore (e.g. "Error", "Result")
+    #[serde(default = "default_generic_type_names")]
+    pub generic_type_names: Vec<String>,
+
+    /// Utility types to ignore (e.g. "DateTime", "Uuid")
+    #[serde(default = "default_utility_types")]
+    pub utility_types: Vec<String>,
+
+    /// Files to skip for refactoring checks
+    #[serde(default = "default_refactoring_skip_files")]
+    pub skip_files: Vec<String>,
+
+    /// Directory patterns to skip for refactoring checks
+    #[serde(default = "default_refactoring_skip_dir_patterns")]
+    pub skip_dir_patterns: Vec<String>,
+
+    /// Known pairs of crates involved in migration
+    #[serde(default = "default_known_migration_pairs")]
+    pub known_migration_pairs: Vec<Vec<String>>,
+}
+
+fn default_generic_type_names() -> Vec<String> {
+    vec![
+        "Error".to_string(),
+        "Result".to_string(),
+        "Config".to_string(),
+        "Id".to_string(),
+        "Builder".to_string(),
+    ]
+}
+
+fn default_utility_types() -> Vec<String> {
+    vec![
+        "DateTime".to_string(),
+        "Uuid".to_string(),
+        "Duration".to_string(),
+    ]
+}
+
+fn default_refactoring_skip_files() -> Vec<String> {
+    vec![
+        "mod".to_string(),
+        "lib".to_string(),
+        "main".to_string(),
+        "types".to_string(),
+        "errors".to_string(),
+    ]
+}
+
+fn default_refactoring_skip_dir_patterns() -> Vec<String> {
+    vec![
+        "/tests/".to_string(),
+        "/examples/".to_string(),
+        "/benches/".to_string(),
+    ]
+}
+
+fn default_known_migration_pairs() -> Vec<Vec<String>> {
+    vec![
+        vec!["mcb-core".to_string(), "mcb-domain".to_string()],
+        vec!["mcb-core".to_string(), "mcb-infrastructure".to_string()],
+    ]
+}
+
+impl Default for RefactoringRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            excluded_crates: vec!["mcb-validate".to_string()],
+            generic_type_names: default_generic_type_names(),
+            utility_types: default_utility_types(),
+            skip_files: default_refactoring_skip_files(),
+            skip_dir_patterns: default_refactoring_skip_dir_patterns(),
+            known_migration_pairs: default_known_migration_pairs(),
+        }
+    }
+}
+
+/// Performance rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct PerformanceRulesConfig {
+    /// Whether performance validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Crates excluded from performance checks
+    #[serde(default)]
+    pub excluded_crates: Vec<String>,
+}
+
+impl Default for PerformanceRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            excluded_crates: vec!["mcb-providers".to_string()],
+        }
+    }
+}
+
+/// Pattern rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct PatternRulesConfig {
+    /// Whether pattern validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Crates excluded from pattern checks
+    #[serde(default)]
+    pub excluded_crates: Vec<String>,
+
+    /// Regex pattern for Arc detection
+    #[serde(default = "default_arc_pattern")]
+    pub arc_pattern: String,
+
+    /// Concrete types allowed in DI
+    #[serde(default = "default_allowed_concrete_types")]
+    pub allowed_concrete_types: Vec<String>,
+
+    /// Trait suffixes that indicate a provider
+    #[serde(default = "default_provider_trait_suffixes")]
+    pub provider_trait_suffixes: Vec<String>,
+
+    /// Crates excluded specifically from result type validation
+    #[serde(default = "default_result_check_excluded_crates")]
+    pub result_check_excluded_crates: Vec<String>,
+}
+
+fn default_arc_pattern() -> String {
+    r"Arc<([A-Z][a-zA-Z0-9_]*)>".to_string()
+}
+
+fn default_allowed_concrete_types() -> Vec<String> {
+    vec![
+        "String".to_string(),
+        "Vec".to_string(),
+        "HashMap".to_string(),
+        "RwLock".to_string(),
+        "Mutex".to_string(),
+    ]
+}
+
+fn default_provider_trait_suffixes() -> Vec<String> {
+    vec![
+        "Provider".to_string(),
+        "Repository".to_string(),
+        "Service".to_string(),
+        "UseCase".to_string(),
+    ]
+}
+
+fn default_result_check_excluded_crates() -> Vec<String> {
+    vec!["mcb-providers".to_string()]
+}
+
+impl Default for PatternRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            excluded_crates: vec!["mcb-validate".to_string()],
+            arc_pattern: default_arc_pattern(),
+            allowed_concrete_types: default_allowed_concrete_types(),
+            provider_trait_suffixes: default_provider_trait_suffixes(),
+            result_check_excluded_crates: default_result_check_excluded_crates(),
+        }
+    }
+}
+
+/// Test Quality rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct TestQualityRulesConfig {
+    /// Whether test quality validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Paths excluded from test quality checks
+    #[serde(default)]
+    pub excluded_paths: Vec<String>,
+}
+
+impl Default for TestQualityRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            excluded_paths: vec!["mcb-validate/src/".to_string()],
+        }
+    }
+}
+
+/// Implementation rules configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImplementationRulesConfig {
+    /// Whether implementation validation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+
+    /// Crates excluded from implementation checks
+    #[serde(default)]
+    pub excluded_crates: Vec<String>,
+}
+
+impl Default for ImplementationRulesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            excluded_crates: Vec::new(),
         }
     }
 }

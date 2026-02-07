@@ -1,15 +1,15 @@
 [package]
 name = "mcb-providers"
-version = "0.2.0"
-edition = "2024"
-authors = ["Marlon Costa <marlonsc@gmail.com>"]
-license = "MIT"
 keywords = ["providers", "mcp", "semantic-search", "embedding", "vector-store"]
 categories = ["development-tools", "api-bindings"]
 description = "Provider implementations for MCP Context Browser - Embedding, Vector Store, Cache, and Language Chunking"
-repository = "https://github.com/marlonsc/mcb"
-homepage = "https://github.com/marlonsc/mcb"
-rust-version = "1.89"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "mcb_providers"
@@ -61,7 +61,7 @@ unicode-segmentation = { workspace = true }
 base64 = { workspace = true }
 
 # Plugin registration
-linkme = "0.3"
+linkme = { workspace = true }
 
 # Concurrent data structures
 dashmap = { workspace = true }
@@ -70,7 +70,7 @@ dashmap = { workspace = true }
 uuid = { workspace = true }
 
 # XDG directories (for cache paths)
-dirs = "6.0"
+dirs = { workspace = true }
 
 # Manifest parsers for project detection (Phase 3)
 cargo_toml = { workspace = true }
@@ -135,5 +135,5 @@ hybrid-search = []
 workspace = true
 
 [dev-dependencies]
-tempfile = "3.10"
+tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

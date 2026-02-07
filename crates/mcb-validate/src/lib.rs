@@ -59,6 +59,10 @@ pub mod linters;
 // === AST Analysis (Phase 2 - Pure Rust Pipeline) ===
 pub mod ast;
 
+// === New Fact Extractor & Graph (Modernization) ===
+pub mod extractor;
+pub mod graph;
+
 // === Metrics Analysis (Phase 4 - Complexity Metrics) ===
 pub mod metrics;
 
@@ -455,7 +459,6 @@ pub struct ArchitectureValidator {
     layer_flow: LayerFlowValidator,
     port_adapter: PortAdapterValidator,
     // Configuration
-    file_config: FileConfig,
 }
 
 impl ArchitectureValidator {
@@ -490,25 +493,40 @@ impl ArchitectureValidator {
         Self {
             dependency: DependencyValidator::with_config(config.clone()),
             quality: QualityValidator::with_config(config.clone()),
-            patterns: PatternValidator::with_config(config.clone()),
+            patterns: PatternValidator::with_config(config.clone(), &file_config.rules.patterns),
             tests: TestValidator::with_config(config.clone()),
             documentation: DocumentationValidator::with_config(config.clone()),
-            naming: NamingValidator::with_config(config.clone()),
+            naming: NamingValidator::with_config(config.clone(), &file_config.rules.naming),
             solid: SolidValidator::with_config(config.clone()),
             organization: OrganizationValidator::with_config(config.clone()),
-            kiss: KissValidator::with_config(config.clone()),
-            refactoring: RefactoringValidator::with_config(config.clone()),
-            implementation: ImplementationQualityValidator::with_config(config.clone()),
+            kiss: KissValidator::with_config(config.clone(), &file_config.rules.kiss),
+            refactoring: RefactoringValidator::with_config(
+                config.clone(),
+                &file_config.rules.refactoring,
+            ),
+            implementation: ImplementationQualityValidator::with_config(
+                config.clone(),
+                &file_config.rules.implementation,
+            ),
             // New validators for PMAT integration
-            performance: PerformanceValidator::with_config(config.clone()),
+            performance: PerformanceValidator::with_config(
+                config.clone(),
+                &file_config.rules.performance,
+            ),
             async_patterns: AsyncPatternValidator::with_config(config.clone()),
             error_boundary: ErrorBoundaryValidator::with_config(config.clone()),
             pmat: PmatValidator::with_config(config.clone()),
             // New quality validators (v0.1.2)
-            test_quality: TestQualityValidator::with_config(config.clone()),
+            test_quality: TestQualityValidator::with_config(
+                config.clone(),
+                &file_config.rules.test_quality,
+            ),
             config_quality: ConfigQualityValidator::with_config(config.clone()),
             // Clean Architecture validator (CA001-CA009)
-            clean_architecture: CleanArchitectureValidator::with_config(config.clone()),
+            clean_architecture: CleanArchitectureValidator::with_config(
+                &config,
+                &file_config.rules.clean_architecture,
+            ),
             // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
             visibility: VisibilityValidator::with_config(&file_config.rules.visibility),
             layer_flow: LayerFlowValidator::with_config(&file_config.rules.layer_flow),
@@ -517,7 +535,6 @@ impl ArchitectureValidator {
                 workspace_root: root,
                 ..config
             },
-            file_config,
         }
     }
 
@@ -716,6 +733,8 @@ impl ArchitectureValidator {
                 ast_data: HashMap::new(),   // Would be populated by scanner
                 cargo_data: HashMap::new(), // Would be populated by scanner
                 file_contents: file_contents.clone(),
+                facts: std::sync::Arc::new(Vec::new()),
+                graph: std::sync::Arc::new(crate::graph::DependencyGraph::new()),
             };
 
             // Determine severity

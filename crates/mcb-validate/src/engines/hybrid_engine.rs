@@ -140,6 +140,10 @@ pub struct RuleResult {
     pub execution_time_ms: u64,
 }
 
+use crate::extractor::Fact;
+use crate::graph::DependencyGraph;
+use std::sync::Arc;
+
 /// Context passed to rule engines during execution
 #[derive(Debug, Clone)]
 pub struct RuleContext {
@@ -153,6 +157,10 @@ pub struct RuleContext {
     pub cargo_data: HashMap<String, serde_json::Value>,
     /// Raw file contents
     pub file_contents: HashMap<String, String>,
+    /// Extracted Facts (New System)
+    pub facts: Arc<Vec<Fact>>,
+    /// Dependency Graph (New System)
+    pub graph: Arc<DependencyGraph>,
 }
 
 /// Hybrid engine that coordinates multiple rule engines

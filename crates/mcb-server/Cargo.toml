@@ -1,9 +1,5 @@
 [package]
 name = "mcb-server"
-version = "0.2.0"
-edition = "2024"
-authors = ["Marlon Costa <marlonsc@gmail.com>"]
-license = "MIT"
 keywords = [
     "mcp",
     "server",
@@ -17,9 +13,13 @@ categories = [
     "science::artificial-intelligence",
 ]
 description = "MCP Context Browser - Server transport and protocol layer"
-repository = "https://github.com/marlonsc/mcb"
-homepage = "https://github.com/marlonsc/mcb"
-rust-version = "1.89"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "mcb_server"
@@ -100,7 +100,7 @@ dashmap = { workspace = true }
 health = { workspace = true }
 
 # Hashing for simple embeddings
-sha2 = "0.10"
+sha2 = { workspace = true }
 
 # Event bus
 async-nats = { workspace = true }
@@ -109,7 +109,7 @@ async-nats = { workspace = true }
 notify = { workspace = true }
 
 # Directory paths
-dirs = "6.0"
+dirs = { workspace = true }
 
 # Compression
 flate2 = { workspace = true }
@@ -121,8 +121,8 @@ async-stream = { workspace = true }
 
 # Providers - MUST be in dependencies for linkme inventory registration
 mcb-providers = { path = "../mcb-providers" }
-fs2 = "0.4.3"
+fs2 = { workspace = true }
 
 [dev-dependencies]
-tempfile = "3.10"
+tempfile = { workspace = true }
 fastembed = { workspace = true }

@@ -5,56 +5,32 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 use super::violation::CleanArchitectureViolation;
+use crate::config::CleanArchitectureRulesConfig;
 use crate::pattern_registry::PATTERNS;
 use crate::violation_trait::Violation;
 use crate::{Result, Severity, ValidationConfig};
 
 /// Clean Architecture validator
 pub struct CleanArchitectureValidator {
-    config: ValidationConfig,
-    identity_skip_suffixes: Vec<String>,
-    allowed_mutable_prefixes: Vec<String>,
-    composition_root_skip_patterns: Vec<String>,
+    workspace_root: PathBuf,
+    rules: CleanArchitectureRulesConfig,
 }
 
 impl CleanArchitectureValidator {
     /// Create a new architecture validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        let root = workspace_root.into();
+        Self::with_config(
+            &ValidationConfig::new(root),
+            &CleanArchitectureRulesConfig::default(),
+        )
     }
 
     /// Create with custom configuration
-    pub fn with_config(config: ValidationConfig) -> Self {
-        use crate::pattern_registry::PATTERNS;
-
-        let identity_skip_suffixes = PATTERNS.get_config_list("CA005", "identity_skip_suffixes");
-        let allowed_mutable_prefixes =
-            PATTERNS.get_config_list("CA006", "allowed_mutable_prefixes");
-        let composition_root_skip_patterns =
-            PATTERNS.get_config_list("CA009", "composition_root_skip_patterns");
-
-        // Fail fast if critical config is missing
-        if identity_skip_suffixes.is_empty() {
-            panic!(
-                "CleanArchitectureValidator: Rule CA005 missing 'identity_skip_suffixes' in YAML config."
-            );
-        }
-        if allowed_mutable_prefixes.is_empty() {
-            panic!(
-                "CleanArchitectureValidator: Rule CA006 missing 'allowed_mutable_prefixes' in YAML config."
-            );
-        }
-        if composition_root_skip_patterns.is_empty() {
-            panic!(
-                "CleanArchitectureValidator: Rule CA009 missing 'composition_root_skip_patterns' in YAML config."
-            );
-        }
-
+    pub fn with_config(config: &ValidationConfig, rules: &CleanArchitectureRulesConfig) -> Self {
         Self {
-            config,
-            identity_skip_suffixes,
-            allowed_mutable_prefixes,
-            composition_root_skip_patterns,
+            workspace_root: config.workspace_root.clone(),
+            rules: rules.clone(),
         }
     }
 
@@ -93,6 +69,9 @@ impl crate::validator_trait::Validator for CleanArchitectureValidator {
     }
 
     fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         self.validate_boxed().map_err(|e| anyhow::anyhow!("{e}"))
     }
 }
@@ -101,7 +80,7 @@ impl CleanArchitectureValidator {
     /// Validate server layer doesn't import providers directly
     fn validate_server_layer_boundaries(&self) -> Result<Vec<CleanArchitectureViolation>> {
         let mut violations = Vec::new();
-        let server_crate = self.config.workspace_root.join("crates/mcb-server");
+        let server_crate = self.workspace_root.join(&self.rules.server_path);
 
         if !server_crate.exists() {
             return Ok(violations);
@@ -140,7 +119,7 @@ impl CleanArchitectureValidator {
     /// Validate handlers use dependency injection
     fn validate_handler_injection(&self) -> Result<Vec<CleanArchitectureViolation>> {
         let mut violations = Vec::new();
-        let server_crate = self.config.workspace_root.join("crates/mcb-server");
+        let server_crate = self.workspace_root.join(&self.rules.server_path);
 
         if !server_crate.exists() {
             return Ok(violations);
@@ -168,7 +147,7 @@ impl CleanArchitectureValidator {
             ),
         ];
 
-        let handlers_dir = server_crate.join("src/handlers");
+        let handlers_dir = self.workspace_root.join(&self.rules.handlers_path);
         if !handlers_dir.exists() {
             return Ok(violations);
         }
@@ -209,13 +188,13 @@ impl CleanArchitectureValidator {
     /// Validate entities have identity fields
     fn validate_entity_identity(&self) -> Result<Vec<CleanArchitectureViolation>> {
         let mut violations = Vec::new();
-        let domain_crate = self.config.workspace_root.join("crates/mcb-domain");
+        let domain_crate = self.workspace_root.join(&self.rules.domain_path);
 
         if !domain_crate.exists() {
             return Ok(violations);
         }
 
-        let entities_dir = domain_crate.join("src/entities");
+        let entities_dir = self.workspace_root.join(&self.rules.entities_path);
         if !entities_dir.exists() {
             return Ok(violations);
         }
@@ -249,6 +228,7 @@ impl CleanArchitectureValidator {
                         // Skip if not an entity (e.g., helper structs, value objects)
                         // Value Objects like *Changes don't need identity
                         if self
+                            .rules
                             .identity_skip_suffixes
                             .iter()
                             .any(|s| struct_name.ends_with(s))
@@ -299,13 +279,13 @@ impl CleanArchitectureValidator {
     /// Validate value objects are immutable
     fn validate_value_object_immutability(&self) -> Result<Vec<CleanArchitectureViolation>> {
         let mut violations = Vec::new();
-        let domain_crate = self.config.workspace_root.join("crates/mcb-domain");
+        let domain_crate = self.workspace_root.join(&self.rules.domain_path);
 
         if !domain_crate.exists() {
             return Ok(violations);
         }
 
-        let vo_dir = domain_crate.join("src/value_objects");
+        let vo_dir = self.workspace_root.join(&self.rules.vo_path);
         if !vo_dir.exists() {
             return Ok(violations);
         }
@@ -358,6 +338,7 @@ impl CleanArchitectureValidator {
 
                         // Allow some standard mutable methods
                         if !self
+                            .rules
                             .allowed_mutable_prefixes
                             .iter()
                             .any(|p| method_name.starts_with(p))
@@ -388,7 +369,7 @@ impl CleanArchitectureValidator {
         &self,
     ) -> Result<Vec<CleanArchitectureViolation>> {
         let mut violations = Vec::new();
-        let infra_crate = self.config.workspace_root.join("crates/mcb-infrastructure");
+        let infra_crate = self.workspace_root.join(&self.rules.infrastructure_path);
 
         if !infra_crate.exists() {
             return Ok(violations);
@@ -467,13 +448,13 @@ impl CleanArchitectureValidator {
     /// imported from mcb-domain to maintain single source of truth.
     fn validate_ca008_application_port_imports(&self) -> Result<Vec<CleanArchitectureViolation>> {
         let mut violations = Vec::new();
-        let app_crate = self.config.workspace_root.join("crates/mcb-application");
+        let app_crate = self.workspace_root.join(&self.rules.application_path);
 
         if !app_crate.exists() {
             return Ok(violations);
         }
 
-        let ports_dir = app_crate.join("src/ports/providers");
+        let ports_dir = self.workspace_root.join(&self.rules.ports_providers_path);
         if !ports_dir.exists() {
             return Ok(violations);
         }
@@ -548,7 +529,7 @@ impl CleanArchitectureValidator {
         &self,
     ) -> Result<Vec<CleanArchitectureViolation>> {
         let mut violations = Vec::new();
-        let infra_crate = self.config.workspace_root.join("crates/mcb-infrastructure");
+        let infra_crate = self.workspace_root.join(&self.rules.infrastructure_path);
 
         if !infra_crate.exists() {
             return Ok(violations);
@@ -574,6 +555,7 @@ impl CleanArchitectureValidator {
             // for wiring up dependencies. This is the standard Clean Architecture exception
             // where the composition root needs to know about all layers to assemble them.
             if self
+                .rules
                 .composition_root_skip_patterns
                 .iter()
                 .any(|p| path.to_string_lossy().contains(p))

@@ -12,6 +12,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
+use crate::config::TestQualityRulesConfig;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig, ValidationError};
 
@@ -212,21 +213,28 @@ impl Violation for TestQualityViolation {
 pub struct TestQualityValidator {
     /// Configuration for validation scans
     config: ValidationConfig,
+    rules: TestQualityRulesConfig,
 }
 
 impl TestQualityValidator {
     /// Create a new test quality validator with the given configuration
     pub fn new(config: ValidationConfig) -> Self {
-        Self { config }
+        Self::with_config(config, &TestQualityRulesConfig::default())
     }
 
-    /// Create a validator with a custom configuration (alias for new)
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self::new(config)
+    /// Create a validator with a custom configuration
+    pub fn with_config(config: ValidationConfig, rules: &TestQualityRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
     /// Validate test quality across all test files
     pub fn validate(&self) -> Result<Vec<TestQualityViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
 
         // Regex patterns
@@ -342,8 +350,7 @@ impl TestQualityValidator {
         fn_pattern: &Regex,
         violations: &mut Vec<TestQualityViolation>,
     ) {
-        // Skip if this is a validation test file (intentional test cases)
-        if file.to_string_lossy().contains("mcb-validate/src/") {
+        if self.should_skip_path(file) {
             return;
         }
 
@@ -473,6 +480,15 @@ impl TestQualityValidator {
             }
         }
         None
+    }
+
+    /// Check if a path should be skipped based on configuration
+    fn should_skip_path(&self, path: &Path) -> bool {
+        let path_str = path.to_string_lossy();
+        self.rules
+            .excluded_paths
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 

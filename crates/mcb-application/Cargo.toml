@@ -1,15 +1,15 @@
 [package]
 name = "mcb-application"
-version = "0.2.0"
-edition = "2024"
-authors = ["Marlon Costa <marlonsc@gmail.com>"]
-license = "MIT"
 keywords = ["application", "use-cases", "mcp", "semantic-search"]
 categories = ["development-tools", "api-bindings"]
 description = "Application layer for MCP Context Browser - Use cases and business logic orchestration"
-repository = "https://github.com/marlonsc/mcb"
-homepage = "https://github.com/marlonsc/mcb"
-rust-version = "1.89"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "mcb_application"
@@ -47,7 +47,7 @@ async-trait = { workspace = true }
 # Dependency injection
 
 # Plugin registration
-linkme = "0.3"
+linkme = { workspace = true }
 
 # Utilities
 uuid = { workspace = true }
@@ -59,7 +59,7 @@ futures = { workspace = true }
 walkdir = { workspace = true }
 
 [dev-dependencies]
-tempfile = "3.10"
+tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 # Real providers for integration tests - forces linkme registration
 mcb-providers = { path = "../mcb-providers" }

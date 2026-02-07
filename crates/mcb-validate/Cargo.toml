@@ -1,11 +1,13 @@
 [package]
 name = "mcb-validate"
-version = "0.2.0"
-edition.workspace = true
-license.workspace = true
 description = "Architecture validation for MCP Context Browser workspace"
-# Disable auto-discovery of benchmarks (bench files exist but are work-in-progress)
-autobenches = false
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [lints]
 workspace = true
@@ -70,6 +72,9 @@ jsonpath-rust.workspace = true
 
 # Lazy static values
 once_cell.workspace = true
+
+# Graph algorithms
+petgraph.workspace = true
 
 # Code metrics analysis - using rust-code-analysis fork with tree-sitter 0.26.3 + Kotlin
 rust-code-analysis.workspace = true

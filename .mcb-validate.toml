@@ -1,191 +1,106 @@
-# MCP Context Browser Validation Configuration
-# Rename to .mcb-validate.toml to use
-
 [general]
-# Patterns to exclude from validation
+workspace_root = "."
 exclude_patterns = ["target/", "tests/fixtures/"]
 
-# Additional source paths beyond crates/ (for legacy code)
-# additional_src_paths = ["../legacy-src"]
-
-# Output format: "human", "json", "ci"
-output_format = "human"
-
-# ==============================================================================
-# Architecture Rules
-# ==============================================================================
 [rules.architecture]
 enabled = true
-severity = "Error"
 
-[rules.architecture.layer_boundaries]
-# Domain layer must have no internal mcb-* dependencies
-domain_internal_deps = []
+[rules.naming]
+enabled = true
+excluded_crates = ["mcb-validate"]
+variable_pattern = "^[a-z][a-z0-9_]*$"
+function_pattern = "^[a-z][a-z0-9_]*$"
+struct_pattern = "^[A-Z][a-zA-Z0-9]*$"
+enum_pattern = "^[A-Z][a-zA-Z0-9]*$"
+trait_pattern = "^[A-Z][a-zA-Z0-9]*$"
+const_pattern = "^[A-Z][A-Z0-9_]*$"
+module_pattern = "^[a-z][a-z0-9_]*$"
 
-# Application layer only depends on domain
-application_internal_deps = ["mcb-domain"]
+[rules.kiss]
+enabled = true
+excluded_crates = ["mcb-validate"]
 
-# Providers layer depends on domain and application
-providers_internal_deps = ["mcb-domain", "mcb-application"]
-
-# Infrastructure layer depends on domain, application, and providers
-infrastructure_internal_deps = [
-    "mcb-domain",
-    "mcb-application",
-    "mcb-providers",
+[rules.refactoring]
+enabled = true
+excluded_crates = ["mcb-validate"]
+generic_type_names = [
+    "Error",
+    "Result",
+    "T",
+    "U",
+    "V",
+    "E",
+    "Context",
+    "Config",
+    "State",
 ]
+utility_types = [
+    "DateTime",
+    "Duration",
+    "Uuid",
+    "PathBuf",
+    "Option",
+    "Vec",
+    "String",
+    "HashMap",
+    "Arc",
+    "Mutex",
+]
+skip_files = ["mod.rs", "lib.rs", "main.rs", "errors.rs", "error.rs"]
+skip_dir_patterns = ["/tests/", "/benches/", "/examples/"]
+known_migration_pairs = [["mcb-core", "mcb-domain"], ["mcb-std", "mcb-common"]]
 
-# Server layer must NOT depend on providers directly (access via infrastructure)
-server_internal_deps = ["mcb-domain", "mcb-application", "mcb-infrastructure"]
+[rules.performance]
+enabled = true
+excluded_crates = ["mcb-validate"]
 
-# ==============================================================================
-# Code Quality Rules
-# ==============================================================================
+[rules.patterns]
+enabled = true
+excluded_crates = ["mcb-validate"]
+result_check_excluded_crates = ["mcb-providers"]
+arc_pattern = "Arc<([A-Z][a-zA-Z0-9_]*)>"
+allowed_concrete_types = ["String", "Vec", "HashMap", "RwLock", "Mutex"]
+provider_trait_suffixes = ["Provider", "Repository", "Service", "UseCase"]
+
+[rules.test_quality]
+enabled = true
+excluded_paths = ["mcb-validate/src/"]
+
+[rules.implementation]
+enabled = true
+excluded_crates = []
+
 [rules.quality]
 enabled = true
+max_file_lines = 800
 
-# Maximum lines per file before warning
-max_file_lines = 500
-
-# Maximum lines per function before warning
-max_function_lines = 50
-
-# Allow unwrap/expect in test code
-allow_unwrap_in_tests = true
-
-# Allow expect() with descriptive message (stricter than raw unwrap)
-allow_expect_with_message = true
-
-# Files exempt from unwrap/expect checks
-exempt_patterns = []
-
-# ==============================================================================
-# Organization Rules
-# ==============================================================================
-[rules.organization]
+[rules.clean_architecture]
 enabled = true
+domain_dependencies = []
+application_dependencies = ["mcb-domain"]
+infrastructure_dependencies = ["mcb-application", "mcb-domain"]
 
-# Magic numbers that are allowed (common sizes, time constants)
-magic_number_allowlist = [
-    0,
-    1,
-    2,
-    10,
-    100,
-    1000,  # Common constants
-    16384,
-    32768,
-    65536, # Buffer sizes
-    86400,
-    3600,
-    60,    # Time constants (day, hour, minute in seconds)
-]
-
-# Enforce strict directory structure
-strict_directory_structure = true
-
-# ==============================================================================
-# SOLID Principles Rules
-# ==============================================================================
 [rules.solid]
 enabled = true
 
-# Maximum methods per trait (Interface Segregation Principle)
-max_trait_methods = 10
-
-# Maximum methods per impl block (Single Responsibility Principle)
-max_impl_methods = 15
-
-# Maximum match arms before suggesting polymorphism (Open/Closed Principle)
-max_match_arms = 10
-
-# Maximum parameters per function
-max_function_params = 5
-
-# ==============================================================================
-# Shaku/DI Rules
-# ==============================================================================
-[rules.shaku]
+[rules.organization]
 enabled = true
 
-# Require #[derive(Component)] for port implementations
-require_component_derive = true
-
-# Require #[shaku(interface = ...)] annotation
-require_interface_annotation = true
-
-# Allow direct service construction in test code
-allow_direct_construction_in_tests = true
-
-# ==============================================================================
-# Visibility Rules
-# ==============================================================================
-[rules.visibility]
-enabled = true
-internal_dirs = ["crates/mcb-domain/src/internal"]
-exempted_items = []
-utility_module_patterns = [
-    "util.rs",
-    "utils.rs",
-    "helper.rs",
-    "helpers.rs",
-    "common.rs",
-]
-pub_count_threshold = 3
-
-# ==============================================================================
-# Layer Flow Rules
-# ==============================================================================
-[rules.layer_flow]
-enabled = true
-circular_dependency_check_crates = [
-    "mcb-domain",
-    "mcb-application",
-    "mcb-providers",
-    "mcb-infrastructure",
-    "mcb-server",
-]
-
-[rules.layer_flow.forbidden_dependencies]
-mcb-domain = [
-    "mcb-application",
-    "mcb-providers",
-    "mcb-infrastructure",
-    "mcb-server",
-]
-mcb-application = ["mcb-providers", "mcb-infrastructure", "mcb-server"]
-mcb-providers = ["mcb-infrastructure", "mcb-server"]
-mcb-infrastructure = ["mcb-server"]
-
-# ==============================================================================
-# Port/Adapter Rules
-# ==============================================================================
-[rules.port_adapter]
-enabled = true
-max_port_methods = 10
-adapter_suffixes = ["Adapter", "Repository", "Provider", "Client"]
-ports_dir = "crates/mcb-application/src/ports"
-providers_dir = "crates/mcb-providers/src"
-
-# ==============================================================================
-# Validator Enable/Disable Flags
-# ==============================================================================
 [validators]
-dependency = true
-organization = true
-quality = true
-solid = true
-shaku = true
 architecture = true
-refactoring = true
 naming = true
-documentation = true
-patterns = true
 kiss = true
-tests = true
-async_patterns = true
-error_boundary = true
+refactoring = true
 performance = true
+patterns = true
+test_quality = true
 implementation = true
-pmat = true
+dependency = true
+quality = true
+organization = true
 clean_architecture = true
+solid = true
+documentation = true
+visibility = true
+layer_flow = true
+port_adapter = true

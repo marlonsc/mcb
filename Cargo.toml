@@ -13,10 +13,13 @@ members = [
 ]
 
 [workspace.package]
-edition = "2024"
-rust-version = "1.92"
-license = "MIT"
 repository = "https://github.com/marlonsc/mcb"
+authors = ["Marlon Costa <marlonsc@gmail.com>"]
+homepage = "https://github.com/marlonsc/mcb"
+license = "MIT"
+version = "0.2.0"
+rust-version = "1.92"
+edition = "2024"
 
 [workspace.lints.rust]
 unsafe_code = "deny"
@@ -55,6 +58,7 @@ clap = { version = "4.5", features = ["derive"] }
 # File operations
 walkdir = "2.5"
 globset = "0.4"
+fs2 = "0.4"
 
 # Regex
 regex = "1.12"
@@ -166,6 +170,9 @@ edgevec = "0.8"
 # Milvus vector database client (from git - crates.io v0.2 has lifetime bug)
 milvus-sdk-rust = { version = "0.1.0", git = "https://github.com/milvus-io/milvus-sdk-rust.git" }
 
+# Graph algorithms
+petgraph = "0.8"
+
 # Additional dependencies
 async-trait = "0.1"
 downcast-rs = "2.0"
@@ -211,6 +218,9 @@ criterion = "0.8.1"
 # Dependency Injection (IoC Container)
 dill = "0.15"
 
+# Plugin registration
+linkme = "0.3"
+
 # Development/testing
 tempfile = "3.19"
 serial_test = "3.2"
@@ -223,14 +233,14 @@ serial_test = "3.2"
 cargo_metadata = "0.23"
 
 # Manifest parsers for project detection (Phase 3: Git Advanced)
-cargo_toml = "0.21"
-quick-xml = "0.36"
+cargo_toml = "0.22"
+quick-xml = "0.39"
 
 # SQLite for file hash storage (Phase 3: Incremental indexing)
 sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 
 # Git repository operations (Phase 2/3: Git indexing)
-git2 = "0.19"
+git2 = "0.20"
 
 # YAML serialization
 serde_yaml = "0.9"
@@ -244,7 +254,7 @@ evalexpr = "13"
 garde = { version = "0.22", features = ["derive"] }
 
 # JSON Schema validation
-jsonschema = "0.40"
+jsonschema = "0.41"
 
 # Pest parser for DSL
 pest = "2.8"

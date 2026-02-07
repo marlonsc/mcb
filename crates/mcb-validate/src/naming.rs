@@ -12,6 +12,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
+use crate::config::NamingRulesConfig;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -297,21 +298,31 @@ impl Violation for NamingViolation {
 /// constants use SCREAMING_SNAKE_CASE; and modules/files use snake_case.
 pub struct NamingValidator {
     config: ValidationConfig,
+    rules: NamingRulesConfig,
 }
 
 impl NamingValidator {
     /// Creates a new naming validator with default configuration.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        Self::with_config(
+            ValidationConfig::new(workspace_root),
+            &NamingRulesConfig::default(),
+        )
     }
 
-    /// Creates a validator with custom configuration for multi-directory support.
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+    /// Creates a validator with custom configuration.
+    pub fn with_config(config: ValidationConfig, rules: &NamingRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
     /// Runs all naming validations and returns collected violations.
     pub fn validate_all(&self) -> Result<Vec<NamingViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_type_names()?);
         violations.extend(self.validate_function_names()?);
@@ -582,7 +593,7 @@ impl NamingValidator {
                 }
 
                 // Check handler files in server crate
-                if crate_name == "mcb-server" && path_str.contains("/handlers/") {
+                if crate_name == self.rules.server_crate && path_str.contains("/handlers/") {
                     // Handlers should have descriptive names (snake_case tool names)
                     // but NOT have _handler suffix (that's redundant with directory)
                     if file_name.ends_with("_handler") {
@@ -602,7 +613,7 @@ impl NamingValidator {
                 // so we skip suffix validation for that directory
                 if path_str.contains("/services/")
                     && !path_str.contains("/domain_services/")
-                    && crate_name != "mcb-domain"
+                    && crate_name != self.rules.domain_crate
                     && !file_name.ends_with("_service")
                     && file_name != "mod"
                 {
@@ -662,7 +673,7 @@ impl NamingValidator {
                 }
 
                 // Domain crate: port traits should be in ports/
-                if crate_name == "mcb-domain" {
+                if crate_name == self.rules.domain_crate {
                     // Files with "provider" in name should be in ports/providers/
                     if file_name.contains("provider")
                         && !path_str.contains("/ports/providers/")
@@ -690,7 +701,7 @@ impl NamingValidator {
                 }
 
                 // Infrastructure crate: adapters should be in adapters/
-                if crate_name == "mcb-infrastructure" {
+                if crate_name == self.rules.infrastructure_crate {
                     // Implementation files should be in adapters/
                     if (file_name.ends_with("_impl") || file_name.contains("adapter"))
                         && !path_str.contains("/adapters/")
@@ -718,7 +729,7 @@ impl NamingValidator {
                 }
 
                 // Server crate: handlers should be in handlers/ or admin/
-                if crate_name == "mcb-server" {
+                if crate_name == self.rules.server_crate {
                     // Allow handlers in handlers/, admin/, or tools/ directories
                     let in_allowed_handler_dir = path_str.contains("/handlers/")
                         || path_str.contains("/admin/")

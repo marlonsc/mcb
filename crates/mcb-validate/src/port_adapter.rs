@@ -8,6 +8,7 @@ use regex::Regex;
 use serde::Serialize;
 use walkdir::WalkDir;
 
+use crate::config::PortAdapterRulesConfig;
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
@@ -189,47 +190,16 @@ impl Default for PortAdapterValidator {
 impl PortAdapterValidator {
     /// Creates a new port/adapter validator with default configuration.
     pub fn new() -> Self {
-        Self::with_config(&ValidationConfig::new(""))
+        Self::with_config(&PortAdapterRulesConfig::default())
     }
 
     /// Creates a new port/adapter validator with current configuration.
-    pub fn with_config(_config: &ValidationConfig) -> Self {
-        use crate::pattern_registry::PATTERNS;
-
-        let rule_id = "PORT001";
-
-        let max_port_methods = PATTERNS
-            .get_config(rule_id)
-            .and_then(|v| v.get("max_port_methods"))
-            .and_then(|v| v.as_u64())
-            .map(|v| v as usize)
-            .unwrap_or(10);
-
-        let adapter_suffixes = PATTERNS.get_config_list(rule_id, "adapter_suffixes");
-        let ports_dir = PATTERNS
-            .get_config(rule_id)
-            .and_then(|v| v.get("ports_dir"))
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "crates/mcb-application/src/ports".to_string());
-        let providers_dir = PATTERNS
-            .get_config(rule_id)
-            .and_then(|v| v.get("providers_dir"))
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "crates/mcb-providers/src".to_string());
-
-        if adapter_suffixes.is_empty() {
-            panic!(
-                "PortAdapterValidator: Rule {rule_id} missing 'adapter_suffixes' in YAML config."
-            );
-        }
-
+    pub fn with_config(config: &PortAdapterRulesConfig) -> Self {
         Self {
-            max_port_methods,
-            adapter_suffixes,
-            ports_dir,
-            providers_dir,
+            max_port_methods: config.max_port_methods,
+            adapter_suffixes: config.adapter_suffixes.clone(),
+            ports_dir: config.ports_dir.clone(),
+            providers_dir: config.providers_dir.clone(),
         }
     }
 

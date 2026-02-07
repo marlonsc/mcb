@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 use super::violation::ImplementationViolation;
+use crate::config::ImplementationRulesConfig;
 use crate::pattern_registry::PATTERNS;
 use crate::violation_trait::Violation;
 use crate::{Result, Severity, ValidationConfig};
@@ -12,21 +13,31 @@ use crate::{Result, Severity, ValidationConfig};
 /// Implementation quality validator
 pub struct ImplementationQualityValidator {
     config: ValidationConfig,
+    rules: ImplementationRulesConfig,
 }
 
 impl ImplementationQualityValidator {
     /// Create a new implementation quality validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        Self::with_config(
+            ValidationConfig::new(workspace_root),
+            &ImplementationRulesConfig::default(),
+        )
     }
 
     /// Create a validator with custom configuration
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+    pub fn with_config(config: ValidationConfig, rules: &ImplementationRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
     /// Run all implementation quality validations
     pub fn validate_all(&self) -> Result<Vec<ImplementationViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_empty_methods()?);
         violations.extend(self.validate_hardcoded_returns()?);
@@ -61,6 +72,9 @@ impl ImplementationQualityValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -156,6 +170,9 @@ impl ImplementationQualityValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -321,6 +338,9 @@ impl ImplementationQualityValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -401,6 +421,9 @@ impl ImplementationQualityValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -461,6 +484,9 @@ impl ImplementationQualityValidator {
         let impl_pattern = PATTERNS.get("IMPL001.impl_decl");
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -612,6 +638,9 @@ impl ImplementationQualityValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -713,6 +742,15 @@ impl ImplementationQualityValidator {
         }
 
         Ok(violations)
+    }
+
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 

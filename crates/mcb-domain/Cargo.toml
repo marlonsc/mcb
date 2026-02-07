@@ -1,15 +1,15 @@
 [package]
 name = "mcb-domain"
-version = "0.2.0"
-edition = "2024"
-authors = ["Marlon Costa <marlonsc@gmail.com>"]
-license = "MIT"
 keywords = ["domain", "types", "mcp", "semantic-search"]
 categories = ["development-tools", "api-bindings"]
 description = "Domain layer for MCP Context Browser - Core business logic and types"
-repository = "https://github.com/marlonsc/mcb"
-homepage = "https://github.com/marlonsc/mcb"
-rust-version = "1.89"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "mcb_domain"
@@ -43,7 +43,7 @@ uuid = { workspace = true }
 # Base64 encoding
 base64 = { workspace = true }
 
-hex = "0.4"
+hex = { workspace = true }
 
 # Regex for text processing
 regex = { workspace = true }
@@ -55,7 +55,7 @@ chrono = { workspace = true }
 futures = { workspace = true }
 
 # Plugin registration
-linkme = "0.3"
+linkme = { workspace = true }
 
 # HTTP Client types for providers
 reqwest = { workspace = true }
@@ -65,5 +65,5 @@ workspace = true
 
 [dev-dependencies]
 # Testing utilities
-tempfile = "3.10"
+tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

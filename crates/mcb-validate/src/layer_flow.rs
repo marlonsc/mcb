@@ -10,6 +10,7 @@ use regex::Regex;
 use serde::Serialize;
 use walkdir::WalkDir;
 
+use crate::config::LayerFlowRulesConfig;
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
@@ -160,6 +161,8 @@ impl Violation for LayerFlowViolation {
 pub struct LayerFlowValidator {
     /// Forbidden dependency mappings: source_crate -> forbidden_target_crates
     forbidden_dependencies: HashMap<String, HashSet<String>>,
+    /// List of crates to check for circular dependencies
+    circular_dependency_check_crates: Vec<String>,
 }
 
 impl Default for LayerFlowValidator {
@@ -171,45 +174,19 @@ impl Default for LayerFlowValidator {
 impl LayerFlowValidator {
     /// Creates a new layer flow validator with default rules.
     pub fn new() -> Self {
-        // Fallback for direct usage, though ArchitectureValidator will use with_config
-        Self::with_config(&ValidationConfig::new(""))
+        Self::with_config(&LayerFlowRulesConfig::default())
     }
 
     /// Creates a new layer flow validator with current configuration.
-    pub fn with_config(_config: &ValidationConfig) -> Self {
-        use crate::pattern_registry::PATTERNS;
-
-        let rule_id = "LAYER001";
-
+    pub fn with_config(config: &LayerFlowRulesConfig) -> Self {
         let mut forbidden_dependencies = HashMap::new();
-
-        if let Some(config_val) = PATTERNS.get_config(rule_id)
-            && let Some(deps_map) = config_val
-                .get("forbidden_dependencies")
-                .and_then(|v| v.as_mapping())
-        {
-            for (source_crate_val, forbidden_list) in deps_map {
-                if let Some(source_crate) = source_crate_val.as_str()
-                    && let Some(forbidden_seq) = forbidden_list.as_sequence()
-                {
-                    let forbidden_set: HashSet<String> = forbidden_seq
-                        .iter()
-                        .filter_map(|v| v.as_str())
-                        .map(|s| s.to_string())
-                        .collect();
-                    forbidden_dependencies.insert(source_crate.to_string(), forbidden_set);
-                }
-            }
-        }
-
-        if forbidden_dependencies.is_empty() {
-            panic!(
-                "LayerFlowValidator: Rule {rule_id} missing 'forbidden_dependencies' in YAML config."
-            );
+        for (k, v) in &config.forbidden_dependencies {
+            forbidden_dependencies.insert(k.clone(), v.iter().cloned().collect());
         }
 
         Self {
             forbidden_dependencies,
+            circular_dependency_check_crates: config.circular_dependency_check_crates.clone(),
         }
     }
 
@@ -291,15 +268,9 @@ impl LayerFlowValidator {
         }
 
         let mut deps: HashMap<String, HashSet<String>> = HashMap::new();
-        let crate_names = [
-            "mcb-domain",
-            "mcb-application",
-            "mcb-providers",
-            "mcb-infrastructure",
-            "mcb-server",
-        ];
+        let crate_names = &self.circular_dependency_check_crates;
 
-        for crate_name in &crate_names {
+        for crate_name in crate_names {
             let cargo_toml = crates_dir.join(crate_name).join("Cargo.toml");
             if !cargo_toml.exists() {
                 continue;
@@ -330,16 +301,16 @@ impl LayerFlowValidator {
 
                 // Only match actual dependency declarations, not any mention of crate name
                 // Look for patterns like: mcb-domain = { path = ... } or mcb-domain.path = ...
-                for dep_crate in &crate_names {
-                    if *dep_crate != *crate_name
-                        && (trimmed.starts_with(*dep_crate)
+                for dep_crate in crate_names {
+                    if dep_crate != crate_name
+                        && (trimmed.starts_with(dep_crate)
                             || trimmed.contains(&format!("\"{dep_crate}\"")))
                     {
-                        crate_deps.insert((*dep_crate).to_string());
+                        crate_deps.insert(dep_crate.to_string());
                     }
                 }
             }
-            deps.insert((*crate_name).to_string(), crate_deps);
+            deps.insert(crate_name.to_string(), crate_deps);
         }
 
         let crate_list: Vec<_> = deps.keys().cloned().collect();

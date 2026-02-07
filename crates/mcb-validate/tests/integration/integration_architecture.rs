@@ -28,6 +28,7 @@ mod architecture_integration_tests {
     use mcb_validate::clean_architecture::{
         CleanArchitectureValidator, CleanArchitectureViolation,
     };
+    use mcb_validate::config::CleanArchitectureRulesConfig;
     use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
     use tempfile::TempDir;
 
@@ -440,7 +441,10 @@ impl Server {
         let root = create_workspace_structure(&dir);
         let config = ValidationConfig::new(&root);
 
-        let validator = CleanArchitectureValidator::with_config(config.clone());
+        let validator = CleanArchitectureValidator::with_config(
+            &config,
+            &CleanArchitectureRulesConfig::default(),
+        );
 
         // Test Validator trait methods
         assert_eq!(validator.name(), "clean_architecture");

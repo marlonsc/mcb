@@ -1,15 +1,15 @@
 [package]
 name = "mcb-infrastructure"
-version = "0.2.0"
-edition = "2024"
-authors = ["Marlon Costa <marlonsc@gmail.com>"]
-license = "MIT"
 keywords = ["infrastructure", "mcp", "semantic-search"]
 categories = ["development-tools", "api-bindings"]
 description = "Infrastructure layer for MCP Context Browser - Cross-cutting technical concerns"
-repository = "https://github.com/marlonsc/mcb"
-homepage = "https://github.com/marlonsc/mcb"
-rust-version = "1.89"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "mcb_infrastructure"
@@ -36,7 +36,6 @@ thiserror = { workspace = true }
 # Logging
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-# NOTE: atty removed in v0.1.4 - using std::io::IsTerminal (stable since Rust 1.70)
 
 # Configuration
 figment = { workspace = true }
@@ -71,7 +70,6 @@ aes-gcm = { workspace = true }
 rand = { workspace = true }
 
 # Authentication
-# jsonwebtoken removed - unused dependency (RUSTSEC-2023-0071)
 bcrypt = { workspace = true }
 argon2 = { workspace = true }
 base64 = { workspace = true }
@@ -90,8 +88,6 @@ hex = { workspace = true }
 # Utilities
 uuid = { workspace = true }
 dirs = { workspace = true }
-
-# NOTE: HTTP server dependencies (axum, tower) removed in v0.1.2 - now in mcb-server only
 
 # System metrics
 sysinfo = { workspace = true }
@@ -188,6 +184,6 @@ mcb-validate = { path = "../mcb-validate" }
 workspace = true
 
 [dev-dependencies]
-tempfile = "3.10"
+tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 serial_test = { workspace = true }

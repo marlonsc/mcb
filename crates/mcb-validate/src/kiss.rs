@@ -13,6 +13,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
+use crate::config::KISSRulesConfig;
 use crate::thresholds::{
     MAX_BUILDER_FIELDS, MAX_DI_CONTAINER_FIELDS, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS,
     MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS,
@@ -312,6 +313,7 @@ impl Violation for KissViolation {
 /// KISS principle validator
 pub struct KissValidator {
     config: ValidationConfig,
+    rules: KISSRulesConfig,
     /// Maximum allowed fields in a struct.
     max_struct_fields: usize,
     /// Maximum allowed parameters in a function.
@@ -327,13 +329,17 @@ pub struct KissValidator {
 impl KissValidator {
     /// Create a new KISS validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        Self::with_config(
+            ValidationConfig::new(workspace_root),
+            &KISSRulesConfig::default(),
+        )
     }
 
     /// Create a validator with custom configuration for multi-directory support
-    pub fn with_config(config: ValidationConfig) -> Self {
+    pub fn with_config(config: ValidationConfig, rules: &KISSRulesConfig) -> Self {
         Self {
             config,
+            rules: rules.clone(),
             max_struct_fields: MAX_STRUCT_FIELDS,
             max_function_params: MAX_FUNCTION_PARAMS,
             max_builder_fields: MAX_BUILDER_FIELDS,
@@ -358,6 +364,9 @@ impl KissValidator {
 
     /// Run all KISS validations
     pub fn validate_all(&self) -> Result<Vec<KissViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_struct_fields()?);
         violations.extend(self.validate_function_params()?);
@@ -374,8 +383,7 @@ impl KissValidator {
             Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{").expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
@@ -461,13 +469,7 @@ impl KissValidator {
         .expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
-                continue;
-            }
-
-            // Skip mcb-providers - complex storage operations by design (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
@@ -558,8 +560,7 @@ impl KissValidator {
         let option_pattern = Regex::new(r"Option<").expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
@@ -604,13 +605,7 @@ impl KissValidator {
             Regex::new(r"\b(if|match|for|while|loop)\b").expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
-                continue;
-            }
-
-            // Skip mcb-providers - complex storage operations by design (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
@@ -697,13 +692,7 @@ impl KissValidator {
             Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)").expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
-                continue;
-            }
-
-            // Skip mcb-providers - complex provider implementations by design (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
@@ -923,6 +912,15 @@ impl KissValidator {
         }
 
         line_count
+    }
+
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 

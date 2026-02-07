@@ -9,6 +9,7 @@ use regex::Regex;
 use serde::Serialize;
 use walkdir::WalkDir;
 
+use crate::config::VisibilityRulesConfig;
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
@@ -145,6 +146,8 @@ pub struct VisibilityValidator {
     exempted_items: HashSet<String>,
     utility_module_patterns: Vec<String>,
     pub_count_threshold: usize,
+    scan_crates: Vec<String>,
+    enabled: bool,
 }
 
 /// Default implementation for visibility validator.
@@ -157,45 +160,34 @@ impl Default for VisibilityValidator {
 impl VisibilityValidator {
     /// Creates a new visibility validator with default configuration.
     pub fn new() -> Self {
-        // This is primarily for backward compatibility in some constructors,
-        // but in ArchitectureValidator we will use with_config.
-        // We'll use an empty config and it will panic if rule is missing, which is desired.
-        Self::with_config(&ValidationConfig::new(""))
+        Self::with_config(&VisibilityRulesConfig::default())
     }
 
     /// Creates a new visibility validator with current configuration.
-    pub fn with_config(_config: &ValidationConfig) -> Self {
-        use crate::pattern_registry::PATTERNS;
-
-        let rule_id = "VIS001";
-
-        let internal_dirs = PATTERNS.get_config_list(rule_id, "internal_dirs");
-        let exempted_items: HashSet<String> = PATTERNS
-            .get_config_list(rule_id, "exempted_items")
-            .into_iter()
-            .collect();
-        let utility_module_patterns = PATTERNS.get_config_list(rule_id, "utility_module_patterns");
-        let pub_count_threshold = PATTERNS
-            .get_config(rule_id)
-            .and_then(|v| v.get("pub_count_threshold"))
-            .and_then(|v| v.as_u64())
-            .map(|v| v as usize)
-            .unwrap_or(3);
-
-        if internal_dirs.is_empty() {
-            panic!("VisibilityValidator: Rule {rule_id} missing 'internal_dirs' in YAML config.");
-        }
+    pub fn with_config(config: &VisibilityRulesConfig) -> Self {
+        let internal_dirs = config.internal_dirs.clone();
+        let exempted_items: HashSet<String> = config.exempted_items.iter().cloned().collect();
+        let utility_module_patterns = config.utility_module_patterns.clone();
+        let pub_count_threshold = config.pub_count_threshold;
+        let scan_crates = config.scan_crates.clone();
+        let enabled = config.enabled;
 
         Self {
             internal_dirs,
             exempted_items,
             utility_module_patterns,
             pub_count_threshold,
+            scan_crates,
+            enabled,
         }
     }
 
     /// Validates visibility rules for the given configuration.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<VisibilityViolation>> {
+        if !self.enabled {
+            return Ok(Vec::new());
+        }
+
         let mut violations = Vec::new();
         violations.extend(self.check_internal_helpers(config)?);
         violations.extend(self.check_utility_modules(config)?);
@@ -258,12 +250,7 @@ impl VisibilityValidator {
         let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type)\s+(\w+)").unwrap();
         let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
 
-        for crate_name in [
-            "mcb-infrastructure",
-            "mcb-providers",
-            "mcb-server",
-            "mcb-application",
-        ] {
+        for crate_name in &self.scan_crates {
             let crate_src = config
                 .workspace_root
                 .join("crates")

@@ -12,6 +12,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
+use crate::config::PerformanceRulesConfig;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -252,21 +253,31 @@ impl Violation for PerformanceViolation {
 /// Performance pattern validator
 pub struct PerformanceValidator {
     config: ValidationConfig,
+    rules: PerformanceRulesConfig,
 }
 
 impl PerformanceValidator {
     /// Create a new performance validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        Self::with_config(
+            ValidationConfig::new(workspace_root),
+            &PerformanceRulesConfig::default(),
+        )
     }
 
     /// Create a validator with custom configuration
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+    pub fn with_config(config: ValidationConfig, rules: &PerformanceRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
     /// Run all performance validations
     pub fn validate_all(&self) -> Result<Vec<PerformanceViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_clone_in_loops()?);
         violations.extend(self.validate_allocation_in_loops()?);
@@ -284,8 +295,7 @@ impl PerformanceValidator {
         let clone_pattern = Regex::new(r"\.clone\(\)").unwrap();
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-providers - complex storage operations often require clones (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
             for entry in WalkDir::new(&src_dir)
@@ -402,8 +412,7 @@ impl PerformanceValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-providers - complex storage operations need loop allocations (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
             for entry in WalkDir::new(&src_dir)
@@ -497,6 +506,9 @@ impl PerformanceValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -580,6 +592,9 @@ impl PerformanceValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -658,6 +673,9 @@ impl PerformanceValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
@@ -706,6 +724,14 @@ impl PerformanceValidator {
         }
 
         Ok(violations)
+    }
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 
