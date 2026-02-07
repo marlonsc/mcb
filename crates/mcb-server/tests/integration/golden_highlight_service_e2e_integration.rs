@@ -57,7 +57,7 @@ fn language_test_cases() -> Vec<LanguageTestCase> {
 fn golden_highlight_all_languages() {
     let test_cases = language_test_cases();
     for case in test_cases {
-        let result = highlight_code(case.code, case.language);
+        let result = highlight_code(case.code, case.language, &get_service());
 
         assert!(
             !result.is_empty(),
@@ -89,7 +89,7 @@ fn golden_highlight_categories() {
     ];
 
     for (lang, code) in test_snippets {
-        let result = highlight_code(code, lang);
+        let result = highlight_code(code, lang, &get_service());
         // Just verify some highlighting occurred (contains any hl- class)
         assert!(
             result.contains("hl-"),
@@ -102,13 +102,13 @@ fn golden_highlight_categories() {
 
 #[test]
 fn golden_highlight_empty_input() {
-    let result = highlight_code("", "rust");
+    let result = highlight_code("", "rust", &get_service());
     assert_eq!(result, "", "Empty input should produce empty output");
 }
 
 #[test]
 fn golden_highlight_whitespace_only() {
-    let result = highlight_code("   \n\n  ", "rust");
+    let result = highlight_code("   \n\n  ", "rust", &get_service());
     // Should handle gracefully (may produce empty or whitespace wrapper)
     assert!(
         !result.is_empty() || result.is_empty(),
@@ -118,7 +118,7 @@ fn golden_highlight_whitespace_only() {
 
 #[test]
 fn golden_highlight_unknown_language() {
-    let result = highlight_code("let x = 42;", "unknownlang123");
+    let result = highlight_code("let x = 42;", "unknownlang123", &get_service());
     // Unknown language should fallback to plain text HTML
     assert!(
         !result.is_empty(),
@@ -134,7 +134,7 @@ fn golden_highlight_unknown_language() {
 #[test]
 fn golden_highlight_html_escaping() {
     let code_with_html = "<div>alert('xss')</div>";
-    let result = highlight_code(code_with_html, "javascript");
+    let result = highlight_code(code_with_html, "javascript", &get_service());
 
     // HTML should be properly escaped
     assert!(
@@ -157,7 +157,7 @@ fn golden_highlight_multiline_code() {
         _ => n * factorial(n - 1),
     }
 }"#;
-    let result = highlight_code(code, "rust");
+    let result = highlight_code(code, "rust", &get_service());
 
     assert!(!result.is_empty(), "Should handle multiline code correctly");
     // Check that highlighting is applied (contains hl- classes)
@@ -172,7 +172,7 @@ fn golden_highlight_multiline_code() {
 #[test]
 fn golden_highlight_special_characters() {
     let code = "let msg = \"Hello\\nWorld\"; x := msg[0..5];";
-    let result = highlight_code(code, "rust");
+    let result = highlight_code(code, "rust", &get_service());
 
     assert!(!result.is_empty(), "Should handle special characters");
     // Escaped newline should be in output
@@ -185,7 +185,7 @@ fn golden_highlight_special_characters() {
 #[test]
 fn golden_highlight_very_long_lines() {
     let long_code = "let x = 1;\n".repeat(1000);
-    let result = highlight_code(&long_code, "rust");
+    let result = highlight_code(&long_code, "rust", &get_service());
 
     assert!(!result.is_empty(), "Should handle very long input");
     // Should not crash and produce reasonable output
@@ -197,7 +197,7 @@ fn golden_highlight_very_long_lines() {
 
 #[test]
 fn golden_highlight_output_format() {
-    let result = highlight_code("let x = 42;", "rust");
+    let result = highlight_code("let x = 42;", "rust", &get_service());
 
     // Output should be valid HTML with proper nesting
     assert!(result.contains("<span"), "Should contain opening spans");
@@ -215,7 +215,7 @@ fn golden_highlight_output_format() {
 
 #[test]
 fn golden_highlight_class_naming_convention() {
-    let result = highlight_code("fn hello() { 42 }", "rust");
+    let result = highlight_code("fn hello() { 42 }", "rust", &get_service());
 
     // Verify output contains properly formatted spans with hl- classes
     assert!(
@@ -235,8 +235,8 @@ fn golden_highlight_class_naming_convention() {
 fn golden_highlight_consistency() {
     // Same code should produce same highlighting
     let code = "fn foo() { return 42; }";
-    let result1 = highlight_code(code, "rust");
-    let result2 = highlight_code(code, "rust");
+    let result1 = highlight_code(code, "rust", &get_service());
+    let result2 = highlight_code(code, "rust", &get_service());
 
     assert_eq!(
         result1, result2,
@@ -247,7 +247,7 @@ fn golden_highlight_consistency() {
 #[test]
 fn golden_highlight_comments_preserved() {
     let code = "// This is a comment\nlet x = 42; // inline comment";
-    let result = highlight_code(code, "rust");
+    let result = highlight_code(code, "rust", &get_service());
 
     assert!(
         result.contains("hl-comment"),
@@ -263,7 +263,7 @@ fn golden_highlight_comments_preserved() {
 #[test]
 fn golden_highlight_strings_preserved() {
     let code = r#"let s1 = "hello"; let s2 = 'world';"#;
-    let result = highlight_code(code, "rust");
+    let result = highlight_code(code, "rust", &get_service());
 
     assert!(
         result.contains("hl-string"),

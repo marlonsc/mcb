@@ -260,6 +260,17 @@ mcb-server/
 
 **Rationale**: Per Clean Architecture, domain defines port traits (interfaces to external systems). Application layer contains concrete services that orchestrate use cases. ContextService composes multiple layers (repository, graph, search, policies) and belongs in application, not domain.
 
+### Correction 2: ADR-035 Dependency Acknowledgment (2026-02-06)
+
+**Issue**: ADR-041 did not explicitly acknowledge its dependency on ADR-035 (Context Scout) for freshness tracking.
+
+**Resolution**:
+- **Clarified**: Layer 2 (Versioned Context) embeds `ContextFreshness` enum from ADR-035
+- **Documented**: ADR-045 (Context Versioning) extends ADR-035's freshness contract
+- **Cross-reference**: See ADR-045 "ADR-035 Contract Assumptions" section for full dependency details
+
+**Rationale**: Explicit dependency documentation prevents accidental modification of ADR-035 (ACCEPTED/locked) during Phase 9 implementation. ADR-041-046 build on top of ADR-035's freshness model; they do not replace it.
+
 ---
 
 **Next**: ADR-042 (Knowledge Graph), ADR-043 (Hybrid Search), ADR-044 (Lightweight Models), ADR-045 (Versioning), ADR-046 (Policy Integration)

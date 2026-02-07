@@ -302,6 +302,76 @@ println!("Memory changes: {} new observations", timeline.memory_changes.new_obse
 -   Policy evaluation results tied to snapshot (reproducible)
 -   Historical policy compliance queries: "Was code compliant at 14:30?"
 
+## ADR-035 Contract Assumptions
+
+This section documents the contract between ADR-045 (Context Versioning) and ADR-035 (Context Scout), ensuring v0.4.0 freshness tracking extends (not replaces) ADR-035's design.
+
+### ContextFreshness Entity (from ADR-035)
+
+ADR-035 defines the `ContextFreshness` enum as the authoritative freshness indicator:
+
+```rust
+#[derive(Clone, Debug, Copy, PartialEq, Serialize, Deserialize)]
+pub enum ContextFreshness {
+    Fresh,              // < 5s old
+    Acceptable,         // 5-30s old
+    Stale,             // > 30s old
+    StaleWithRisk,     // Uncommitted changes or git hook stale
+}
+```
+
+**ADR-045 Dependency**: Every `ContextSnapshot` embeds a `ContextFreshness` value. This enum is **not redefined** in ADR-045; it is **reused directly** from ADR-035.
+
+### CachedContextScout TTL & Invalidation (from ADR-035)
+
+ADR-035 specifies the `CachedContextScout` provider with:
+
+- **Default TTL**: 30 seconds (configurable)
+- **Invalidation strategy**: Time-based (TTL expiry) + signal-based (git hooks, manual edits)
+- **Cache layers**: Separate caches for git status, tracker state, and full context
+
+**ADR-045 Extension**: 
+- Snapshots are stored immutably with timestamps
+- TTL policy determines which snapshots are kept in-memory vs archived to disk
+- Staleness signals (from ADR-035) trigger context re-validation during snapshot creation
+
+### v0.4.0 Freshness Tracking EXTENDS ADR-035
+
+**What ADR-035 provides**:
+- Freshness enum (Fresh/Acceptable/Stale/StaleWithRisk)
+- CachedContextScout with TTL-based caching
+- Staleness signals (time, git hooks, manual edits)
+
+**What ADR-045 adds**:
+- Immutable snapshot versioning (capture context at point-in-time)
+- Time-travel queries (get context as it was at 14:30)
+- Snapshot-level staleness tracking (not just cache invalidation)
+- TTL-based garbage collection (keep 24h, archive older)
+- Historical policy compliance queries
+
+**Explicit Dependency**: v0.4.0 ContextVersioning **depends on** ADR-035 ContextFreshness. The freshness enum is embedded in every snapshot and used to gate search result ranking and policy evaluation.
+
+### Snapshot Lifecycle with Freshness
+
+```rust
+// When creating a snapshot:
+let snapshot = ContextSnapshot {
+    id: context_id,
+    timestamp: SystemTime::now(),
+    graph: Arc::new(code_graph),
+    memory_state: memory_snapshot,
+    vcs_state: vcs_snapshot,
+    workflow_state: workflow_state,
+    freshness: freshness_computer.compute(&signals).await?,  // From ADR-035 logic
+    version: monotonic_version,
+};
+
+// Freshness determines:
+// 1. Search result ranking (stale results demoted)
+// 2. Policy evaluation (some policies require Fresh context)
+// 3. Snapshot retention (StaleWithRisk snapshots archived sooner)
+```
+
 ## Testing
 
 -   **Unit tests** (8): Snapshot creation, TTL GC, time-travel queries
@@ -319,6 +389,22 @@ println!("Memory changes: {} new observations", timeline.memory_changes.new_obse
 -   ✅ Memory usage < 100MB for 24h history (auto-GC)
 -   ✅ Staleness signals working (time + git + manual)
 -   ✅ Historical policy compliance queryable
+
+## Architecture Corrections
+
+### Correction 1: ADR-035 Contract Documentation (2026-02-06)
+
+**Issue**: ADR-045 referenced ADR-035 ContextFreshness but did not document the contract or dependency relationship.
+
+**Resolution**:
+- **Added**: "ADR-035 Contract Assumptions" section documenting:
+  - ContextFreshness entity definition and reuse
+  - CachedContextScout TTL and invalidation strategy
+  - How v0.4.0 freshness tracking EXTENDS (not replaces) ADR-035
+  - Explicit dependency: v0.4.0 ContextVersioning depends on ADR-035 ContextFreshness
+  - Snapshot lifecycle showing freshness integration
+
+**Rationale**: Clear documentation of cross-ADR dependencies prevents implementation bugs and ensures ADR-035 (ACCEPTED/locked) is not accidentally modified during Phase 9 implementation.
 
 ---
 

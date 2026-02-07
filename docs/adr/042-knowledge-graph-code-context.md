@@ -139,6 +139,105 @@ impl SemanticExtractor for TreeSitterGraphExtractor {
 -   **Incremental updates** on file change: re-extract changed file + 1-hop neighbors
 -   **No expensive ML**: Pure AST analysis at <1ms per file
 
+### 2.5. SemanticExtractorProvider Port Trait
+
+The semantic extraction capability is exposed as a **port trait** for provider abstraction:
+
+```rust
+// mcb-domain/src/ports/providers/semantic_extractor.rs
+
+use async_trait::async_trait;
+use crate::entities::code::{Symbol, Relationship};
+use crate::errors::ContextError;
+
+/// Port trait for semantic code extraction.
+/// 
+/// Implementations extract symbols and relationships from source code.
+/// Registered via linkme distributed slice for compile-time discovery.
+#[async_trait]
+pub trait SemanticExtractorProvider: Send + Sync {
+    /// Extract symbols (functions, structs, variables, etc.) from code.
+    /// 
+    /// # Arguments
+    /// * `content` - Source code text
+    /// * `language` - Programming language (e.g., "rust", "python", "typescript")
+    /// 
+    /// # Returns
+    /// Vector of extracted symbols with locations and metadata
+    async fn extract_symbols(
+        &self,
+        content: &str,
+        language: &str,
+    ) -> Result<Vec<Symbol>, ContextError>;
+    
+    /// Extract relationships (calls, imports, type refs, data flows) from code.
+    /// 
+    /// # Arguments
+    /// * `content` - Source code text
+    /// * `language` - Programming language
+    /// 
+    /// # Returns
+    /// Vector of relationships between symbols
+    async fn extract_relationships(
+        &self,
+        content: &str,
+        language: &str,
+    ) -> Result<Vec<Relationship>, ContextError>;
+}
+
+/// Provider registry for semantic extractors (linkme distributed slice)
+#[linkme::distributed_slice]
+pub static SEMANTIC_EXTRACTOR_PROVIDERS: [&'static dyn SemanticExtractorProvider] = [..];
+```
+
+**Implementation**: Tree-sitter-based implementation in `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`:
+
+```rust
+// mcb-providers/src/context/tree_sitter_semantic_extractor.rs
+
+use mcb_domain::ports::providers::semantic_extractor::SemanticExtractorProvider;
+use async_trait::async_trait;
+
+pub struct TreeSitterSemanticExtractor {
+    // Parser cache, language configs, etc.
+}
+
+#[async_trait]
+impl SemanticExtractorProvider for TreeSitterSemanticExtractor {
+    async fn extract_symbols(
+        &self,
+        content: &str,
+        language: &str,
+    ) -> Result<Vec<Symbol>, ContextError> {
+        // 1. Parse AST via tree-sitter
+        // 2. Walk AST to extract function/struct/variable definitions
+        // 3. Return typed Symbol entities
+        unimplemented!("tree-sitter extraction")
+    }
+    
+    async fn extract_relationships(
+        &self,
+        content: &str,
+        language: &str,
+    ) -> Result<Vec<Relationship>, ContextError> {
+        // 1. Parse AST via tree-sitter
+        // 2. Run tree-sitter-graph DSL to extract relationships
+        // 3. Return typed Relationship entities (calls, imports, type refs, etc.)
+        unimplemented!("tree-sitter-graph extraction")
+    }
+}
+
+// Register provider via linkme
+#[linkme::distributed_slice(SEMANTIC_EXTRACTOR_PROVIDERS)]
+static TREE_SITTER_EXTRACTOR: &dyn SemanticExtractorProvider = &TreeSitterSemanticExtractor::new();
+```
+
+**Rationale**:
+- **Port abstraction**: Enables multiple extraction backends (tree-sitter, custom rules, ML-based in v0.5.0)
+- **Linkme registration**: Compile-time provider discovery, zero runtime overhead
+- **Async-first**: Aligns with MCB's async architecture (ADR-002)
+- **Clean Architecture**: Port trait in domain, implementation in providers (ADR-013)
+
 ### 3. Storage: petgraph DAG + slotmap Arena
 
 ```rust
@@ -245,7 +344,7 @@ impl ContextGraphTraversal for PetgraphCodeGraph {
 -   **Contextual expansion**: Find similar code patterns across codebase
 -   **Depth limits** prevent explosion (< 100 results for depth 2-3)
 
-## Integration with ADR-041 & ADR-043
+## Integration with ADR-041, ADR-043, & ADR-044
 
 **ADR-041 (Context System)**:
 
@@ -257,6 +356,12 @@ impl ContextGraphTraversal for PetgraphCodeGraph {
 -   Graph traversal enables "find related code" queries
 -   Graph ranking signal: higher rank if reachable from search Result
 -   Example: "Search for auth handler" → find callers + data flows + tests
+
+**ADR-044 (Lightweight Discovery Models)**:
+
+-   AST-based routing (Stage 1) uses CodeGraph node types and structure
+-   Graph metrics (cyclomatic complexity, line count) inform task-specific scoring
+-   Example: Bug fix routing prioritizes error handling nodes extracted by SemanticExtractorProvider
 
 ## Incremental Updates (Optimization)
 
@@ -306,6 +411,20 @@ impl IncrementalGraphBuilder {
 -   ✅ Traversal algorithms complete in <100ms for 10k-node graphs
 -   ✅ Incremental updates 10x faster than full rebuild
 -   ✅ No circular dependencies in DAG (enforced at type level)
+
+## Architecture Corrections
+
+### Correction 1: SemanticExtractorProvider Port Trait (2026-02-06)
+
+**Issue**: ADR-042 discussed semantic extraction but did not define the port trait interface.
+
+**Resolution**:
+- **Added**: `SemanticExtractorProvider` trait in `mcb-domain/src/ports/providers/semantic_extractor.rs`
+- **Methods**: `extract_symbols()` and `extract_relationships()` for AST-based extraction
+- **Registration**: Linkme distributed slice for compile-time provider discovery
+- **Implementation**: Tree-sitter-based extractor in `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`
+
+**Rationale**: Port traits enable provider abstraction (ADR-013). Multiple extraction backends can be swapped without changing consumer code.
 
 ---
 

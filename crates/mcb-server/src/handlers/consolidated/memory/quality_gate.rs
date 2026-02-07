@@ -59,7 +59,8 @@ pub async fn store_quality_gate(
     ];
     let obs_metadata = ObservationMetadata {
         id: Uuid::new_v4().to_string(),
-        session_id: MemoryHelpers::get_str(data, "session_id").or_else(|| args.session_id.clone()),
+        session_id: MemoryHelpers::get_str(data, "session_id")
+            .or_else(|| args.session_id.as_ref().map(|id| id.as_str().to_string())),
         repo_id: MemoryHelpers::get_str(data, "repo_id")
             .or_else(|| args.repo_id.clone())
             .or_else(|| vcs_context.repo_id.clone()),
@@ -92,7 +93,7 @@ pub async fn get_quality_gates(
         id: None,
         tags: None,
         observation_type: Some(ObservationType::QualityGate),
-        session_id: args.session_id.clone(),
+        session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
         repo_id: args.repo_id.clone(),
         time_range: None,
         branch: None,

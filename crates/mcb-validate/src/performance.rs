@@ -18,42 +18,67 @@ use walkdir::WalkDir;
 pub enum PerformanceViolation {
     /// .`clone()` called inside a loop
     CloneInLoop {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Code context showing the clone call.
         context: String,
+        /// Suggested improvement.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Vec/String allocation inside a loop
     AllocationInLoop {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Type of allocation detected (e.g., "Vec::new()").
         allocation_type: String,
+        /// Suggested improvement.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// `Arc<Mutex<T>>` where simpler patterns would work
     ArcMutexOveruse {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The overuse pattern detected.
         pattern: String,
+        /// Suggested alternative.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Inefficient iterator pattern
     InefficientIterator {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The inefficient pattern detected.
         pattern: String,
+        /// Suggested optimized pattern.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Inefficient string handling
     InefficientString {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The inefficient string pattern detected.
         pattern: String,
+        /// Suggested optimization.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }

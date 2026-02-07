@@ -112,7 +112,7 @@ pub async fn get_executions(
         id: None,
         tags: None,
         observation_type: Some(ObservationType::Execution),
-        session_id: args.session_id.clone(),
+        session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
         repo_id: args.repo_id.clone(),
         time_range: None,
         branch: None,

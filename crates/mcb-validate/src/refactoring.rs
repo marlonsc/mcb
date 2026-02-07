@@ -25,49 +25,73 @@ use walkdir::WalkDir;
 pub enum RefactoringViolation {
     /// Import statement referencing non-existent module/item
     OrphanImport {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The import path that cannot be resolved.
         import_path: String,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Same type name defined in multiple locations (incomplete migration)
     DuplicateDefinition {
+        /// Name of the duplicated type.
         type_name: String,
+        /// List of files where the type is defined.
         locations: Vec<PathBuf>,
+        /// Suggested remediation action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// New source file without corresponding test file
     MissingTestFile {
+        /// The source file missing tests.
         source_file: PathBuf,
+        /// The expected path for the test file.
         expected_test: PathBuf,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// pub use/mod statement for item that doesn't exist
     StaleReExport {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The re-exported item that is stale.
         re_export: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// File/module that was deleted but is still referenced
     DeletedModuleReference {
+        /// File referencing the deleted module.
         referencing_file: PathBuf,
+        /// Line number of the reference.
         line: usize,
+        /// Name of the deleted module.
         deleted_module: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Dead code left from refactoring (unused after move)
     RefactoringDeadCode {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Name of the unused item.
         item_name: String,
+        /// Type of the item (e.g., struct, function).
         item_type: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
