@@ -31,9 +31,12 @@ impl MemoryHandler {
         &self,
         Parameters(args): Parameters<MemoryArgs>,
     ) -> Result<CallToolResult, McpError> {
-        args.validate()
-            .context("failed to validate memory handler arguments")
-            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
+        args.validate().map_err(|e| {
+            McpError::invalid_params(
+                format!("Invalid arguments: {e} - failed to validate memory handler arguments"),
+                None,
+            )
+        })?;
 
         match args.action {
             MemoryAction::Store => self.handle_store(&args).await,

@@ -69,7 +69,12 @@ pub async fn get_timeline(
         let results = memory_service
             .search_memories(&query, None, 1)
             .await
-            .context("failed to search memories for timeline anchor")?;
+            .map_err(|e| {
+                McpError::internal_error(
+                    format!("Failed to search memories for timeline anchor: {e}"),
+                    None,
+                )
+            })?;
         if let Some(first) = results.first() {
             first.observation.id.clone()
         } else {
