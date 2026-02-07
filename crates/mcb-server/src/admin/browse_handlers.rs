@@ -228,7 +228,7 @@ pub async fn get_file_chunks(
         };
 
         let highlighted_html =
-            crate::handlers::highlight_service::convert_highlighted_code_to_html(&highlighted);
+            mcb_infrastructure::services::highlight::convert_highlighted_code_to_html(&highlighted);
 
         chunk_responses.push(ChunkDetailResponse {
             id: c.id,

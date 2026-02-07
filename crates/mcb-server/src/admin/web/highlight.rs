@@ -1,6 +1,6 @@
-//! Re-export highlight functions from consolidat ed handlers module
+//! Re-export highlight functions from infrastructure services module
 //!
 //! This module provides backward compatibility and serves as a public API
-//! for syntax highlighting. All implementation is in handlers::highlight_service.
+//! for syntax highlighting. All implementation is in mcb_infrastructure::services::highlight.
 
-pub use crate::handlers::highlight_service::{highlight_chunks, highlight_code};
+pub use mcb_infrastructure::services::highlight::{highlight_chunks, highlight_code};

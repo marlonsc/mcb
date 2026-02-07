@@ -73,10 +73,6 @@ pub mod tools;
 pub mod transport;
 pub mod vcs_repository_registry;
 
-// Legacy placeholder modules were removed; functionality lives in the infrastructure layer
-
-// Provider modules are included in mcb-infrastructure for clean architecture compliance
-
 // Re-export core types for public API
 pub use builder::McpServerBuilder;
 pub use init::run;

@@ -33,6 +33,9 @@ pub mod fs;
 /// Health check and monitoring constants.
 pub mod health;
 
+/// Syntax highlighting constants.
+pub mod highlight;
+
 /// HTTP server and client constants.
 pub mod http;
 
@@ -81,6 +84,7 @@ pub use error_msgs::*;
 pub use events::*;
 pub use fs::*;
 pub use health::*;
+pub use highlight::*;
 pub use http::*;
 pub use lang::*;
 pub use limits::*;

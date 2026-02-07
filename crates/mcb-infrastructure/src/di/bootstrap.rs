@@ -21,11 +21,16 @@ use crate::infrastructure::{
     events::TokioBroadcastEventBus,
     lifecycle::DefaultShutdownCoordinator,
 };
+use crate::project::ProjectService;
+use crate::services::HighlightServiceImpl;
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::{
     IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
 };
 use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
+use mcb_domain::ports::services::ProjectDetectorService;
 use std::sync::Arc;
 use tracing::info;
 
@@ -65,6 +70,19 @@ pub struct AppContext {
     shutdown_coordinator: Arc<dyn ShutdownCoordinator>,
     performance_metrics: Arc<dyn PerformanceMetricsInterface>,
     indexing_operations: Arc<dyn IndexingOperationsInterface>,
+
+    // ========================================================================
+    // Domain Services & Repositories (auto-registered)
+    // ========================================================================
+    memory_repository: Arc<dyn MemoryRepository>,
+    agent_repository: Arc<dyn AgentRepository>,
+    vcs_provider: Arc<dyn VcsProvider>,
+    project_service: Arc<dyn ProjectDetectorService>,
+
+    // ========================================================================
+    // Infrastructure Services
+    // ========================================================================
+    highlight_service: Arc<HighlightServiceImpl>,
 }
 
 impl AppContext {
@@ -146,6 +164,31 @@ impl AppContext {
     /// Get indexing operations
     pub fn indexing(&self) -> Arc<dyn IndexingOperationsInterface> {
         self.indexing_operations.clone()
+    }
+
+    /// Get memory repository
+    pub fn memory_repository(&self) -> Arc<dyn MemoryRepository> {
+        self.memory_repository.clone()
+    }
+
+    /// Get agent repository
+    pub fn agent_repository(&self) -> Arc<dyn AgentRepository> {
+        self.agent_repository.clone()
+    }
+
+    /// Get VCS provider
+    pub fn vcs_provider(&self) -> Arc<dyn VcsProvider> {
+        self.vcs_provider.clone()
+    }
+
+    /// Get project service
+    pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
+        self.project_service.clone()
+    }
+
+    /// Get highlight service
+    pub fn highlight_service(&self) -> Arc<HighlightServiceImpl> {
+        self.highlight_service.clone()
     }
 }
 
@@ -238,6 +281,33 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
     info!("Created infrastructure services");
 
+    // ========================================================================
+    // Create Domain Services & Repositories
+    // ========================================================================
+
+    let memory_db_path = dirs::data_local_dir()
+        .or_else(|| std::env::current_dir().ok())
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join(".mcb")
+        .join("memory.db");
+    let (memory_repository, db_executor) =
+        mcb_providers::database::create_memory_repository_with_executor(memory_db_path)
+            .await
+            .map_err(|e| {
+                mcb_domain::error::Error::internal(format!(
+                    "Failed to create memory repository: {e}"
+                ))
+            })?;
+    let agent_repository =
+        mcb_providers::database::create_agent_repository_from_executor(db_executor);
+
+    let vcs_provider = crate::di::vcs::default_vcs_provider();
+    let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
+
+    let highlight_service = Arc::new(HighlightServiceImpl::new());
+
+    info!("Created domain services and repositories");
+
     Ok(AppContext {
         config,
         embedding_handle,
@@ -256,6 +326,11 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         shutdown_coordinator,
         performance_metrics,
         indexing_operations,
+        memory_repository,
+        agent_repository,
+        vcs_provider,
+        project_service,
+        highlight_service,
     })
 }
 

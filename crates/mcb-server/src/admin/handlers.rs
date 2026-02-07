@@ -89,12 +89,12 @@ pub struct IndexingStatusResponse {
     /// Number of active operations
     pub active_operations: usize,
     /// Details of each operation
-    pub operations: Vec<IndexingOperationStatus>,
+    pub operations: Vec<IndexingOperationDetail>,
 }
 
-/// Individual indexing operation status
+/// Individual indexing operation details for API response
 #[derive(Serialize)]
-pub struct IndexingOperationStatus {
+pub struct IndexingOperationDetail {
     /// Operation ID
     pub id: String,
     /// Collection being indexed
@@ -114,7 +114,7 @@ pub struct IndexingOperationStatus {
 pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResponse> {
     let operations = state.indexing.get_operations();
 
-    let operation_statuses: Vec<IndexingOperationStatus> = operations
+    let operation_statuses: Vec<IndexingOperationDetail> = operations
         .values()
         .map(|op| {
             let progress = if op.total_files > 0 {
@@ -123,7 +123,7 @@ pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResp
                 0.0
             };
 
-            IndexingOperationStatus {
+            IndexingOperationDetail {
                 id: op.id.to_string(),
                 collection: op.collection.to_string(),
                 current_file: op.current_file.clone(),

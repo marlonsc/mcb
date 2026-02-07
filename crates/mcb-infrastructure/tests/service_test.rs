@@ -1,8 +1,7 @@
 //! Tests for ProjectService
 
 use mcb_domain::ports::services::project::ProjectDetectorService;
-use mcb_infrastructure::project::service::ProjectService;
-use std::path::Path;
+use mcb_infrastructure::project::ProjectService;
 
 #[tokio::test]
 async fn test_project_service_creation() {

@@ -18,9 +18,6 @@ use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
 use mcb_domain::value_objects::ids::SessionId;
 
 /// MCP client transport configuration
-///
-/// Note: Named `McpClientConfig` to distinguish from `HttpClientConfig` in
-/// mcb-providers which configures HTTP client pooling for API providers.
 #[derive(Debug, Clone)]
 pub struct McpClientConfig {
     /// Server URL (e.g., "http://127.0.0.1:8080")

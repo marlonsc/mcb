@@ -38,7 +38,6 @@ use std::sync::Arc;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::{AppConfig, OperatingMode, TransportMode};
 use mcb_infrastructure::crypto::CryptoService;
-use mcb_infrastructure::di::default_vcs_provider;
 use tracing::{error, info, warn};
 
 use crate::McpServer;
@@ -111,7 +110,7 @@ async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Er
     info!("MCP server initialized successfully");
 
     // Create BrowseState for Web UI
-    let highlight_service = Arc::new(crate::handlers::HighlightServiceImpl::new());
+    let highlight_service = app_context.highlight_service();
     let browse_state = crate::admin::BrowseState {
         browser: app_context.vector_store_handle().get(),
         highlight_service,
@@ -242,25 +241,15 @@ async fn create_mcp_server(
     let indexing_ops = app_context.indexing();
     let event_bus = app_context.event_bus();
 
-    let memory_db_path = dirs::data_local_dir()
-        .or_else(|| std::env::current_dir().ok())
-        .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join(".mcb")
-        .join("memory.db");
-    let (memory_repository, db_executor) =
-        mcb_providers::database::create_memory_repository_with_executor(memory_db_path)
-            .await
-            .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
-    let agent_repository =
-        mcb_providers::database::create_agent_repository_from_executor(db_executor.clone());
-
     let project_id = std::env::current_dir()
         .ok()
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
         .unwrap_or_else(|| "default".to_string());
 
-    let vcs_provider = default_vcs_provider();
-    let project_service = Arc::new(mcb_infrastructure::project::ProjectService::new());
+    let memory_repository = app_context.memory_repository();
+    let agent_repository = app_context.agent_repository();
+    let vcs_provider = app_context.vcs_provider();
+    let project_service = app_context.project_service();
 
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         project_id,
