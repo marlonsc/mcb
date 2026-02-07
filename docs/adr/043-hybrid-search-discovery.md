@@ -90,39 +90,49 @@ pub struct SearchProvenance {
 
 ### 3. Implementation: RRF Fusion Algorithm
 
+**Application-Layer Service** (`mcb-application/src/use_cases/context_search.rs`):
+
 ```rust
-pub struct HybridSearchEngine {
-    fts_searcher: Arc<tantivy::Index>,
+/// ContextSearchService: Application-layer service that COMPOSES multiple port traits
+/// from mcb-domain to provide unified hybrid search.
+/// 
+/// This is NOT a provider trait — it's a concrete service struct that orchestrates:
+/// - FullTextSearchProvider (port trait from mcb-domain)
+/// - VectorStoreProvider (port trait from mcb-domain)
+/// - ContextGraphTraversal (port trait from mcb-domain)
+pub struct ContextSearchService {
+    fts_provider: Arc<dyn FullTextSearchProvider>,
     vector_store: Arc<dyn VectorStoreProvider>,
-    graph: Arc<CodeGraph>,
+    graph_traversal: Arc<dyn ContextGraphTraversal>,
     k: u32,
     rrf_k: f32,  // RRF constant (typically 60)
 }
 
-impl HybridSearchEngine {
+impl ContextSearchService {
     pub async fn search(
         &self,
         query: &ContextSearchQuery,
     ) -> Result<Vec<ContextSearchResult>> {
-        // Step 1: Full-text search via tantivy
-        let fts_results = self.full_text_search(&query.text, query.k as u64)?;
+        // Step 1: Full-text search via FullTextSearchProvider port trait
+        let fts_options = FtsOptions { k: query.k as u64, ..Default::default() };
+        let fts_results = self.fts_provider.search(&query.text, fts_options).await?;
         let fts_ranked = Self::normalize_ranks(&fts_results, "bm25");
         
-        // Step 2: Semantic search via vector embedding
+        // Step 2: Semantic search via VectorStoreProvider port trait
         let embedding = query.embedding.clone()
             .or_else(|| self.encode_query(&query.text).ok());
         let semantic_results = if let Some(emb) = embedding {
-            self.vector_search(&emb, query.k as u64).await?
+            self.vector_store.search(&emb, query.k as usize).await?
         } else {
             vec![]
         };
         let semantic_ranked = Self::normalize_ranks(&semantic_results, "semantic");
         
-        // Step 3: Graph traversal (optional)
+        // Step 3: Graph traversal via ContextGraphTraversal port trait
         let graph_results = match &query.graph_expansion {
             GraphStrategy::None => vec![],
             GraphStrategy::Related { radius } => {
-                self.graph_expansion(&fts_results, *radius)?
+                self.graph_traversal.related_code(&fts_results, *radius).await?
             },
             _ => vec![],
         };
@@ -195,50 +205,10 @@ impl HybridSearchEngine {
     }
 }
 
-fn full_text_search(&self, query: &str, k: u64) -> Result<Vec<(NodeId, f32)>> {
-    let searcher = self.fts_searcher.reader()?;
-    let query_parser = tantivy::query::QueryParser::for_index(
-        &self.fts_searcher,
-        vec![tantivy::schema::Field::new("content")],
-    );
-    let query_obj = query_parser.parse_query(query)?;
-    
-    let top_docs = searcher.search(&query_obj, &tantivy::collector::TopDocs::with_limit(k as usize))?;
-    
-    Ok(top_docs.iter().map(|(score, addr)| {
-        let doc = searcher.doc(*addr).unwrap();
-        let node_id: NodeId = parse_node_id(&doc);
-        (node_id, *score)
-    }).collect())
-}
-
-async fn vector_search(&self, embedding: &[f32], k: u64) -> Result<Vec<(NodeId, f32)>> {
-    let results = self.vector_store
-        .search(embedding, k as usize)
-        .await?;
-    
-    Ok(results.into_iter()
-        .map(|result| (NodeId(result.id), result.similarity))
-        .collect())
-}
-
-fn graph_expansion(&self, seed_results: &[(NodeId, f32)], radius: u32) -> Result<Vec<(NodeId, f32)>> {
-    let mut expanded = Vec::new();
-    
-    for (seed_node, seed_score) in seed_results {
-        // BFS from seed node
-        let reachable = self.graph.traverse()
-            .related_code(*seed_node, radius)?;
-        
-        // Score expanded nodes lower than seed
-        for neighbor_id in reachable {
-            let decay = 0.8_f32.powi((self.graph.distance(*seed_node, neighbor_id)?) as i32);
-            expanded.push((neighbor_id, seed_score * decay));
-        }
-    }
-    
-    Ok(expanded)
-}
+// Implementation details delegated to port trait providers:
+// - FullTextSearchProvider handles tantivy indexing and BM25 ranking
+// - VectorStoreProvider handles semantic search and similarity computation
+// - ContextGraphTraversal handles graph traversal and distance computation
 ```
 
 ### 4. Integration with Memory System

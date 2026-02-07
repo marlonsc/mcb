@@ -4,6 +4,11 @@
 //! Tests verify: All 12 languages supported, 13 highlight categories, HTML generation, edge cases.
 
 use mcb_server::admin::web::highlight::highlight_code;
+use mcb_server::handlers::highlight_service::HighlightServiceImpl;
+
+fn get_service() -> HighlightServiceImpl {
+    HighlightServiceImpl::new()
+}
 
 /// Test data: Language-specific code snippets covering all 12 supported languages
 #[allow(dead_code)]

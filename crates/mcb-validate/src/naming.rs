@@ -18,55 +18,84 @@ use walkdir::WalkDir;
 pub enum NamingViolation {
     /// Bad struct/enum/trait name (should be CamelCase)
     BadTypeName {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the type.
         name: String,
+        /// Expected case format (e.g., "CamelCase").
         expected_case: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Bad function/method name (should be `snake_case`)
     BadFunctionName {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the function.
         name: String,
+        /// Expected case format (e.g., "snake_case").
         expected_case: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Bad constant name (should be `SCREAMING_SNAKE_CASE`)
     BadConstantName {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the constant.
         name: String,
+        /// Expected case format (e.g., "SCREAMING_SNAKE_CASE").
         expected_case: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Bad module/file name (should be `snake_case`)
     BadModuleName {
+        /// Path to the module or file.
         path: PathBuf,
+        /// Expected case format.
         expected_case: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// File suffix doesn't match component type
     BadFileSuffix {
+        /// Path to the file.
         path: PathBuf,
+        /// Component type detected.
         component_type: String,
+        /// Current file suffix.
         current_suffix: String,
+        /// Expected file suffix.
         expected_suffix: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// File name doesn't follow CA naming convention
     BadCaNaming {
+        /// Path to the file.
         path: PathBuf,
+        /// Detected Clean Architecture component type.
         detected_type: String,
+        /// Description of the issue.
         issue: String,
+        /// Suggested fix.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
 impl NamingViolation {
+    /// Returns the severity level of the violation.
     pub fn severity(&self) -> Severity {
         match self {
             Self::BadTypeName { severity, .. }

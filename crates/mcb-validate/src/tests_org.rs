@@ -22,7 +22,7 @@ pub enum TestViolation {
         file: PathBuf,
         /// Line number where the module starts
         line: usize,
-        /// Severity level
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test file with incorrect naming
@@ -31,7 +31,7 @@ pub enum TestViolation {
         file: PathBuf,
         /// Suggested name or corrective action
         suggestion: String,
-        /// Severity level
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test function with incorrect naming
@@ -44,7 +44,7 @@ pub enum TestViolation {
         function_name: String,
         /// Suggested compliant name
         suggestion: String,
-        /// Severity level
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test without assertion
@@ -55,7 +55,7 @@ pub enum TestViolation {
         line: usize,
         /// Name of the test function
         function_name: String,
-        /// Severity level
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Trivial assertion that always passes
@@ -68,7 +68,7 @@ pub enum TestViolation {
         function_name: String,
         /// The trivial assertion found
         assertion: String,
-        /// Severity level
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test only uses .unwrap() as assertion
@@ -79,7 +79,7 @@ pub enum TestViolation {
         line: usize,
         /// Name of the test function
         function_name: String,
-        /// Severity level
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test body is only comments
@@ -90,7 +90,7 @@ pub enum TestViolation {
         line: usize,
         /// Name of the test function
         function_name: String,
-        /// Severity level
+        /// Severity level of the violation.
         severity: Severity,
     },
 }

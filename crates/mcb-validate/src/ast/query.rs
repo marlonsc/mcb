@@ -20,35 +20,63 @@ use super::{AstNode, AstViolation};
 /// AST query for pattern matching
 #[derive(Debug, Clone)]
 pub struct AstQuery {
+    /// Target language for the query
     pub language: String,
+    /// Target node kind
     pub node_type: String,
+    /// List of conditions to match
     pub conditions: Vec<QueryCondition>,
+    /// Violation message if query matches
     pub message: String,
+    /// Severity level if query matches
     pub severity: String,
 }
 
 #[derive(Debug, Clone)]
 pub enum QueryCondition {
     /// Node has specific field value
-    HasField { field: String, value: String },
+    HasField {
+        /// Name of the field
+        field: String,
+        /// Expected value
+        value: String,
+    },
     /// Node does not have specific field
-    NotHasField { field: String },
+    NotHasField {
+        /// Name of the field
+        field: String,
+    },
     /// Node name matches regex pattern
-    NameMatches { pattern: String },
+    NameMatches {
+        /// Regex pattern to match
+        pattern: String,
+    },
     /// Node has children of specific type
-    HasChild { child_type: String },
+    HasChild {
+        /// Type of the child node
+        child_type: String,
+    },
     /// Node has no children of specific type
-    NoChild { child_type: String },
+    NoChild {
+        /// Type of the child node
+        child_type: String,
+    },
     /// Node has specific metadata value
     MetadataEquals {
+        /// Metadata key
         key: String,
+        /// Expected metadata value
         value: serde_json::Value,
     },
     /// Custom condition function
-    Custom { name: String },
+    Custom {
+        /// Name of the custom condition
+        name: String,
+    },
 }
 
 impl AstQuery {
+    /// Create a new AST query
     pub fn new(language: &str, node_type: &str, message: &str, severity: &str) -> Self {
         Self {
             language: language.to_string(),
@@ -59,6 +87,7 @@ impl AstQuery {
         }
     }
 
+    /// Add a condition to the query
     #[must_use]
     pub fn with_condition(mut self, condition: QueryCondition) -> Self {
         self.conditions.push(condition);
@@ -175,6 +204,7 @@ pub struct AstQueryBuilder {
 }
 
 impl AstQueryBuilder {
+    /// Create a new query builder
     pub fn new(language: &str, node_type: &str) -> Self {
         Self {
             language: language.to_string(),
@@ -185,24 +215,28 @@ impl AstQueryBuilder {
         }
     }
 
+    /// Add a condition to the query being built
     #[must_use]
     pub fn with_condition(mut self, condition: QueryCondition) -> Self {
         self.conditions.push(condition);
         self
     }
 
+    /// Set the violation message
     #[must_use]
     pub fn message(mut self, message: &str) -> Self {
         self.message = message.to_string();
         self
     }
 
+    /// Set the violation severity
     #[must_use]
     pub fn severity(mut self, severity: &str) -> Self {
         self.severity = severity.to_string();
         self
     }
 
+    /// Build the AST query
     #[must_use]
     pub fn build(self) -> AstQuery {
         AstQuery {

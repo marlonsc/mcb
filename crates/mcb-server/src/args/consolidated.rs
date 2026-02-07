@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::ids::SessionId;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -118,7 +119,7 @@ pub struct SearchArgs {
 
     /// Filter by session ID (for memory search).
     #[schemars(description = "Filter by session ID (for memory search)")]
-    pub session_id: Option<String>,
+    pub session_id: Option<SessionId>,
 
     /// JWT token for authenticated requests.
     #[schemars(description = "JWT token for authenticated requests")]
@@ -242,7 +243,7 @@ pub struct MemoryArgs {
 
     /// Filter by session ID.
     #[schemars(description = "Filter by session ID")]
-    pub session_id: Option<String>,
+    pub session_id: Option<SessionId>,
 
     /// Filter by tags.
     #[schemars(description = "Filter by tags")]
@@ -308,7 +309,7 @@ pub struct SessionArgs {
 
     /// Session ID (required for get, update, summarize).
     #[schemars(description = "Session ID (required for get, update, summarize)")]
-    pub session_id: Option<String>,
+    pub session_id: Option<SessionId>,
 
     /// Data payload for create/update (JSON object).
     #[schemars(description = "Data payload for create/update (JSON object)")]
@@ -352,8 +353,7 @@ pub struct AgentArgs {
 
     /// Session ID for the agent.
     #[schemars(description = "Session ID for the agent")]
-    #[validate(length(min = 1))]
-    pub session_id: String,
+    pub session_id: SessionId,
 
     /// Activity data (JSON object with tool/delegation details).
     #[schemars(description = "Activity data (JSON object with tool/delegation details)")]

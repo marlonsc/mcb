@@ -206,8 +206,7 @@ impl HighlightServiceImpl {
 }
 
 /// Standalone function to highlight code into HTML (backward compatibility)
-pub fn highlight_code(code: &str, language: &str) -> String {
-    let service = HighlightServiceImpl::new();
+pub fn highlight_code(code: &str, language: &str, service: &HighlightServiceImpl) -> String {
     match service.highlight_code_internal(code, language) {
         Ok(highlighted) => convert_highlighted_code_to_html(&highlighted),
         Err(_) => html_escape(code),
@@ -215,8 +214,11 @@ pub fn highlight_code(code: &str, language: &str) -> String {
 }
 
 /// Standalone function to highlight multiple chunks into HTML (backward compatibility)
-pub fn highlight_chunks(chunks: Vec<String>, language: &str) -> Vec<String> {
-    let service = HighlightServiceImpl::new();
+pub fn highlight_chunks(
+    chunks: Vec<String>,
+    language: &str,
+    service: &HighlightServiceImpl,
+) -> Vec<String> {
     chunks
         .into_iter()
         .map(

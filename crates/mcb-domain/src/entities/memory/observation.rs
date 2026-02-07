@@ -4,18 +4,27 @@ use uuid::Uuid;
 use super::execution::ExecutionMetadata;
 use super::quality_gate::QualityGateResult;
 
+/// Categorizes the type of observation recorded.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ObservationType {
+    /// Represents a code snippet or file content.
     Code,
+    /// Represents a recorded decision.
     Decision,
+    /// Represents general project context or information.
     Context,
+    /// Represents an error or exception.
     Error,
+    /// Represents a summary or aggregation of data.
     Summary,
+    /// Represents an execution trace or log.
     Execution,
+    /// Represents a quality gate check result.
     QualityGate,
 }
 
 impl ObservationType {
+    /// Returns the string representation of the observation type.
     #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -33,6 +42,7 @@ impl ObservationType {
 impl std::str::FromStr for ObservationType {
     type Err = String;
 
+    /// Parses a string into an `ObservationType`.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "code" => Ok(Self::Code),
@@ -47,16 +57,25 @@ impl std::str::FromStr for ObservationType {
     }
 }
 
+/// Metadata associated with an observation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObservationMetadata {
+    /// Unique identifier for the metadata.
     pub id: String,
+    /// Identifier of the session where the observation occurred.
     pub session_id: Option<String>,
+    /// Identifier of the repository related to the observation.
     pub repo_id: Option<String>,
+    /// Path to the file related to the observation.
     pub file_path: Option<String>,
+    /// Git branch name.
     pub branch: Option<String>,
+    /// Git commit hash.
     pub commit: Option<String>,
+    /// Details about the tool execution (if applicable).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub execution: Option<ExecutionMetadata>,
+    /// Details about the quality gate result (if applicable).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality_gate: Option<QualityGateResult>,
 }
@@ -76,15 +95,25 @@ impl Default for ObservationMetadata {
     }
 }
 
+/// A recorded unit of knowledge or event in the system.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Observation {
+    /// Unique identifier for the observation.
     pub id: String,
+    /// Identifier of the project this observation belongs to.
     pub project_id: String,
+    /// The actual content or payload of the observation.
     pub content: String,
+    /// Hash of the content for deduplication.
     pub content_hash: String,
+    /// List of semantic tags.
     pub tags: Vec<String>,
+    /// Classification of the observation.
     pub observation_type: ObservationType,
+    /// Additional metadata.
     pub metadata: ObservationMetadata,
+    /// Timestamp when the observation was created (Unix epoch).
     pub created_at: i64,
+    /// Reference to vector embedding.
     pub embedding_id: Option<String>,
 }

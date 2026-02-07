@@ -123,28 +123,17 @@ pub trait ContextRepository: Send + Sync {
     async fn prune(&self, older_than: SystemTime) -> Result<u32>;  // Cleanup old snapshots
 }
 
-// ContextService trait (composition of all layers)
+// ContextGraphTraversal trait (graph navigation and relationship queries)
 #[async_trait]
-pub trait ContextService: Send + Sync {
-    async fn discover_context(
-        &self,
-        task: &BeadsTask,
-        vcs: &dyn VcsProvider,
-    ) -> Result<ContextSnapshot>;
-    
-    async fn search(
-        &self,
-        query: &ContextQuery,
-        context: &ContextSnapshot,
-    ) -> Result<Vec<ContextSearchResult>>;
-    
-    async fn validate(
-        &self,
-        snapshot: &ContextSnapshot,
-        policies: &[Box<dyn Policy>],
-    ) -> Result<ContextValidationResult>;
+pub trait ContextGraphTraversal: Send + Sync {
+    async fn find_dependencies(&self, node_id: &str) -> Result<Vec<GraphNode>>;
+    async fn find_dependents(&self, node_id: &str) -> Result<Vec<GraphNode>>;
+    async fn traverse_path(&self, from: &str, to: &str) -> Result<Vec<GraphEdge>>;
+    async fn find_cycles(&self) -> Result<Vec<Vec<GraphNode>>>;
 }
 ```
+
+**Note**: `ContextService` is NOT a port trait. It is a **concrete use case service** defined in `mcb-application/src/use_cases/context_service.rs` that composes all layers (repository, graph, search, policies). Per Clean Architecture, services are application-layer concerns, not domain ports.
 
 ### 4. Integration with ADR-034-037
 
@@ -189,16 +178,16 @@ pub trait ContextService: Send + Sync {
 ```
 mcb-domain/
 ├── ports/
-│   ├── context_repository.rs    [NEW]
-│   └── context_service.rs       [NEW]
+│   ├── context_repository.rs        [NEW] (ContextRepository trait)
+│   └── context_graph_traversal.rs   [NEW] (ContextGraphTraversal trait)
 └── entities/
-    └── context.rs              [NEW] (ContextSnapshot, ContextFreshness, etc.)
+    └── context.rs                   [NEW] (ContextSnapshot, ContextFreshness, etc.)
 
 mcb-application/
-├── ports/
-│   └── context_service_registry.rs  [NEW] (linkme slice for ContextService providers)
-└── services/
-    └── context_service.rs       [NEW] (composition of all layers)
+├── use_cases/
+│   └── context_service.rs           [NEW] (ContextService concrete service - composition of all layers)
+└── ports/
+    └── context_service_registry.rs  [NEW] (linkme slice for ContextService providers)
 
 mcb-providers/
 ├── context/
@@ -256,6 +245,20 @@ mcb-server/
 -   ✅ Freshness propagating through search results
 -   ✅ Policies enforcing scope boundaries
 -   ✅ Compensation triggering context re-validation on failure
+
+## Architecture Corrections
+
+### Correction 1: ContextService Layer Placement (2026-02-06)
+
+**Issue**: ContextService was initially shown as a port trait in `mcb-domain/ports/`, violating Clean Architecture principles. Services are application-layer concerns, not domain ports.
+
+**Resolution**:
+- **Removed**: `ContextService` trait from domain ports
+- **Added**: `ContextGraphTraversal` trait to domain ports (graph navigation is a port concern)
+- **Clarified**: `ContextService` is a concrete use case service in `mcb-application/src/use_cases/context_service.rs`
+- **Kept**: `ContextRepository` and `ContextGraphTraversal` as domain port traits (correct per Clean Architecture)
+
+**Rationale**: Per Clean Architecture, domain defines port traits (interfaces to external systems). Application layer contains concrete services that orchestrate use cases. ContextService composes multiple layers (repository, graph, search, policies) and belongs in application, not domain.
 
 ---
 
