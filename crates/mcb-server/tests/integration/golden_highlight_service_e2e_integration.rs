@@ -261,7 +261,7 @@ fn test_golden_highlight_comments_preserved() {
 }
 
 #[test]
-fn golden_highlight_strings_preserved() {
+fn test_golden_highlight_strings_preserved() {
     let code = r#"let s1 = "hello"; let s2 = 'world';"#;
     let result = highlight_code(code, "rust", &get_service());
 
