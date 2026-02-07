@@ -69,6 +69,32 @@ pub enum ProjectType {
     },
 }
 
+impl ProjectType {
+    /// Get the project name without needing helper functions.
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::Cargo { name, .. } => name,
+            Self::Npm { name, .. } => name,
+            Self::Python { name, .. } => name,
+            Self::Go { module, .. } => module,
+            Self::Maven { artifact_id, .. } => artifact_id,
+        }
+    }
+
+    /// Get the normalized type label for the project.
+    #[must_use]
+    pub fn type_name(&self) -> &'static str {
+        match self {
+            Self::Cargo { .. } => "cargo",
+            Self::Npm { .. } => "npm",
+            Self::Python { .. } => "python",
+            Self::Go { .. } => "go",
+            Self::Maven { .. } => "maven",
+        }
+    }
+}
+
 /// Detected project with location information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DetectedProject {

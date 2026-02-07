@@ -2,7 +2,7 @@
 //!
 //! Run with: `cargo test -p mcb-validate --test integration`
 
-#[path = "integration/ca001_integration_test.rs"]
+#[path = "integration/ca001_integration_tests.rs"]
 mod ca001;
 
 #[path = "integration/integration_architecture.rs"]
@@ -29,8 +29,8 @@ mod metrics;
 #[path = "integration/integration_rca_metrics.rs"]
 mod rca_metrics;
 
-#[path = "integration/integration_test.rs"]
-mod integration_test;
+#[path = "integration/integration_tests.rs"]
+mod integration_tests;
 
 #[path = "integration/integration_yaml_metrics.rs"]
 mod yaml_metrics;

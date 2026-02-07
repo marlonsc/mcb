@@ -52,8 +52,6 @@
 
 // Clippy allows for complex patterns in server code
 
-// Allow Rust 2024 compatibility issues from Rocket's EventStream macro
-#![allow(rust_2024_compatibility)]
 // Documentation configuration for docs.rs
 #![cfg_attr(docsrs, feature(doc_cfg))]
 

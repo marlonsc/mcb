@@ -7,14 +7,13 @@ license = "MIT"
 keywords = ["domain", "types", "mcp", "semantic-search"]
 categories = ["development-tools", "api-bindings"]
 description = "Domain layer for MCP Context Browser - Core business logic and types"
-readme = "README.md"
 repository = "https://github.com/marlonsc/mcb"
 homepage = "https://github.com/marlonsc/mcb"
 rust-version = "1.89"
 
 [lib]
 name = "mcb_domain"
-path = "src/mod.rs"
+path = "src/lib.rs"
 
 [dependencies]
 # Serialization - pure lib acceptable for domain
@@ -60,6 +59,9 @@ linkme = "0.3"
 
 # HTTP Client types for providers
 reqwest = { workspace = true }
+
+[lints]
+workspace = true
 
 [dev-dependencies]
 # Testing utilities

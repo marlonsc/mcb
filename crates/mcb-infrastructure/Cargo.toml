@@ -7,14 +7,13 @@ license = "MIT"
 keywords = ["infrastructure", "mcp", "semantic-search"]
 categories = ["development-tools", "api-bindings"]
 description = "Infrastructure layer for MCP Context Browser - Cross-cutting technical concerns"
-readme = "README.md"
 repository = "https://github.com/marlonsc/mcb"
 homepage = "https://github.com/marlonsc/mcb"
 rust-version = "1.89"
 
 [lib]
 name = "mcb_infrastructure"
-path = "src/mod.rs"
+path = "src/lib.rs"
 
 [dependencies]
 # Domain layer - core business logic and port traits
@@ -184,6 +183,9 @@ mcb-providers = { path = "../mcb-providers" }
 
 # Architecture validation (for MCP tool integration)
 mcb-validate = { path = "../mcb-validate" }
+
+[lints]
+workspace = true
 
 [dev-dependencies]
 tempfile = "3.10"

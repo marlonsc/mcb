@@ -200,8 +200,6 @@ impl AdminApi {
     /// Start the admin API server with graceful shutdown
     ///
     /// Note: Rocket handles graceful shutdown internally via Ctrl+C or SIGTERM.
-    /// The shutdown_signal parameter is kept for API compatibility but Rocket
-    /// manages its own shutdown lifecycle.
     pub async fn start_with_shutdown(
         self,
         shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,

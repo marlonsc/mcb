@@ -1,20 +1,15 @@
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
-use std::sync::Arc;
 
 use crate::args::ProjectArgs;
-use mcb_domain::ports::services::project::ProjectDetectorService;
 
 /// Consolidated handler for project workflow operations.
-pub struct ProjectHandler {
-    #[allow(dead_code)]
-    project_service: Arc<dyn ProjectDetectorService>,
-}
+pub struct ProjectHandler;
 
 impl ProjectHandler {
-    pub fn new(project_service: Arc<dyn ProjectDetectorService>) -> Self {
-        Self { project_service }
+    pub fn new() -> Self {
+        Self
     }
 
     pub async fn handle(

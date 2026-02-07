@@ -42,7 +42,7 @@ pub mod web;
 
 // Re-export main types
 pub use api::{AdminApi, AdminApiConfig};
-pub use auth::{AdminAuthConfig, AuthErrorResponse, with_admin_auth};
+pub use auth::{AdminAuthConfig, AuthErrorResponse};
 pub use browse_handlers::BrowseState;
 pub use config::{
     ConfigReloadResponse, ConfigResponse, ConfigSectionUpdateRequest, ConfigSectionUpdateResponse,

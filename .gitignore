@@ -30,6 +30,9 @@ AGENTS.md
 .opencode/
 openspec/
 
+# Session artifacts (auto-generated, not for version control)
+CONTINUATION_*.md
+.PROTOCOL_*.md
 
 # Oracle reference data
 oracle/
@@ -55,6 +58,7 @@ Thumbs.db
 # Environment files
 .env
 .env.local
+node_modules/
 
 # Backup files
 *.bak
@@ -128,5 +132,4 @@ fuzz/corpus/
 benchmark_results/.cleanup-dead-code/
 # Reference legacy code (extracted from git history, not for commit)
 reference/
-.aider*
 *.rlib

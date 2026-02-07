@@ -111,16 +111,6 @@ impl McpServerBuilder {
     /// # Errors
     /// Returns `BuilderError::MissingDependency` if any required service is not provided
     pub fn build(self) -> Result<McpServer, BuilderError> {
-        self.try_build()
-    }
-
-    /// Try to build the MCP server (alias for `build`)
-    ///
-    /// This method is kept for API compatibility.
-    ///
-    /// # Returns
-    /// A Result containing the McpServer or an error if dependencies are missing
-    pub fn try_build(self) -> Result<McpServer, BuilderError> {
         let indexing_service = self
             .indexing_service
             .ok_or(BuilderError::MissingDependency("indexing service"))?;

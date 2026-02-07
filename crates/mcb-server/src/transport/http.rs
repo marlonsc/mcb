@@ -151,8 +151,6 @@ impl HttpTransport {
     /// Start with graceful shutdown
     ///
     /// Note: Rocket handles graceful shutdown internally via Ctrl+C.
-    /// The shutdown_signal parameter is kept for API compatibility but
-    /// uses Rocket's built-in shutdown mechanism.
     pub async fn start_with_shutdown(
         self,
         _shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,

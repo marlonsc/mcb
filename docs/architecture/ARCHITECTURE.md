@@ -1,7 +1,6 @@
 # MCP Context Browser - Comprehensive Architecture Documentation
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
-[![Roadmap](https://img.shields.io/badge/roadmap-v0.3.0%20%2B%20v0.4.0-lightgreen)](../../../RELEASE_ROADMAP_v0.3.0-v0.4.0.md)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 
@@ -2391,7 +2390,7 @@ impl BackupManager {
 
 **See Also**:
 
--   [`docs/guides/features/integrated-context.md`](../guides/features/integrated-context.md) – Feature overview
+-   [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md) – Feature overview
 -   [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) – Migration guide
 -   [`docs/implementation/phase-9-roadmap.md`](../implementation/phase-9-roadmap.md) – 4-week execution plan
 

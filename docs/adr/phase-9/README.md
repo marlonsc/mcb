@@ -81,7 +81,7 @@ Defines the knowledge graph structure for representing code relationships:
 
 **Related**: ADR-041, ADR-035 (Freshness Tracking)
 
-**See**: [`docs/guides/features/integrated-context.md`](../../guides/features/integrated-context.md) for usage examples
+**See**: [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) for usage examples
 
 ---
 
@@ -201,7 +201,7 @@ Defines snapshot-based versioning for time-travel queries:
 
 **Related**: ADR-041, ADR-042 (Knowledge Graph)
 
-**See**: [`docs/guides/features/integrated-context.md`](../../guides/features/integrated-context.md) for time-travel examples
+**See**: [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) for time-travel examples
 
 ---
 
@@ -295,9 +295,9 @@ See [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-road
 
 ## Feature Guides
 
--   [`docs/guides/features/integrated-context.md`](../../guides/features/integrated-context.md) – Feature overview and workflows
+-   [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) – Feature overview and workflows
 -   [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) – Migration guide from v0.3
--   [`docs/architecture/clean-architecture.md`](../../architecture/clean-architecture.md) – Architecture patterns
+-   [`docs/architecture/CLEAN_ARCHITECTURE.md`](../../architecture/CLEAN_ARCHITECTURE.md) – Architecture patterns
 
 ## Testing
 

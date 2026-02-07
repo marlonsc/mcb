@@ -188,30 +188,3 @@ impl<'r> FromRequest<'r> for AdminAuth {
 pub fn is_unauthenticated_route(path: &str) -> bool {
     matches!(path, "/live" | "/ready")
 }
-
-/// Wrapper function for backwards compatibility
-///
-/// Registers `auth_config` with Rocket so the `AdminAuth` request guard can use it.
-/// In Rocket, authentication is enforced via Request Guards in route handlers, not middleware.
-/// Use the `AdminAuth` request guard directly in route handlers.
-///
-/// # Migration
-///
-/// Instead of:
-/// ```text
-/// let router = with_admin_auth(auth_config, router);
-/// ```
-///
-/// Use request guards:
-/// ```text
-/// #[get("/protected")]
-/// fn protected(_auth: AdminAuth) -> &'static str {
-///     "Protected"
-/// }
-/// ```
-pub fn with_admin_auth(
-    auth_config: AdminAuthConfig,
-    rocket: rocket::Rocket<rocket::Build>,
-) -> rocket::Rocket<rocket::Build> {
-    rocket.manage(Arc::new(auth_config))
-}

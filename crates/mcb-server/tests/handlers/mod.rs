@@ -2,12 +2,12 @@
 //!
 //! Tests for MCP tool handlers.
 
-mod agent_test;
-mod clear_index_test;
-mod get_indexing_status_test;
-mod index_codebase_test;
-mod memory_test;
-mod search_code_test;
-mod session_test;
-mod validate_test;
-mod vcs_test;
+mod agent_tests;
+mod clear_index_tests;
+mod get_indexing_status_tests;
+mod index_codebase_tests;
+mod memory_tests;
+mod search_code_tests;
+mod session_tests;
+mod validate_tests;
+mod vcs_tests;

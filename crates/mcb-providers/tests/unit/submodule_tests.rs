@@ -2,7 +2,6 @@ use git2::Repository;
 use tempfile::TempDir;
 
 use mcb_domain::entities::submodule::SubmoduleInfo;
-use mcb_domain::utils::submodule::{collection_name, repo_id};
 use mcb_providers::git::submodule::collect_submodules;
 
 #[tokio::test]
@@ -34,6 +33,6 @@ fn test_submodule_info_collection_name() {
         is_initialized: true,
     };
 
-    assert_eq!(collection_name(&info, "mcb"), "mcb/libs-tree-sitter");
-    assert_eq!(repo_id(&info), "parent-repo:libs/tree-sitter");
+    assert_eq!(info.collection_name("mcb"), "mcb/libs-tree-sitter");
+    assert_eq!(info.repo_id(), "parent-repo:libs/tree-sitter");
 }

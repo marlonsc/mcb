@@ -17,7 +17,6 @@ categories = [
     "science::artificial-intelligence",
 ]
 description = "MCP Context Browser - Server transport and protocol layer"
-readme = "README.md"
 repository = "https://github.com/marlonsc/mcb"
 homepage = "https://github.com/marlonsc/mcb"
 rust-version = "1.89"
@@ -25,6 +24,9 @@ rust-version = "1.89"
 [lib]
 name = "mcb_server"
 path = "src/lib.rs"
+
+[lints]
+workspace = true
 
 [dependencies]
 # Domain layer - core contracts and types

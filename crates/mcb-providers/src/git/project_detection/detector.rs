@@ -4,7 +4,6 @@ use std::path::Path;
 
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::ports::providers::project_detection::ProjectDetectorConfig;
-use mcb_domain::utils::project_type::project_name;
 
 use super::registry::PROJECT_DETECTORS;
 
@@ -28,7 +27,7 @@ pub async fn detect_all_projects(path: &Path) -> Vec<ProjectType> {
                 Ok(Some(project_type)) => {
                     tracing::debug!(
                         detector = entry.name,
-                        project = ?project_name(&project_type),
+                        project = ?project_type.name(),
                         "Project detected"
                     );
                     results.push(project_type);

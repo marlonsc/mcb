@@ -4,11 +4,11 @@
 
 pub mod harness;
 
-mod api_test;
-mod auth_integration_test;
-mod auth_test;
-mod integration_test;
-mod lifecycle_handlers_test;
-mod propagation_test;
-mod sse_test;
-mod web_test;
+mod api_tests;
+mod auth_integration_tests;
+mod auth_tests;
+mod integration_tests;
+mod lifecycle_handlers_tests;
+mod propagation_tests;
+mod sse_tests;
+mod web_tests;

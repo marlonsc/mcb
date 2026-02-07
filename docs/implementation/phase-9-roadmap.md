@@ -330,9 +330,9 @@ bd create "Release v0.4.0" -t task -p 1
 -   **ADR-036**: Policies & Validation – Policy framework
 -   **ADR-037**: Compensation & Orchestration – Rollback patterns
 -   **ADR-041-046**: Phase 9 implementation details
--   [`docs/guides/features/integrated-context.md`](../guides/features/integrated-context.md) – Feature overview
+-   [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md) – Feature overview
 -   [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) – Migration guide
--   [`docs/architecture/clean-architecture.md`](../architecture/clean-architecture.md) – Architecture patterns
+-   [`docs/architecture/CLEAN_ARCHITECTURE.md`](../architecture/CLEAN_ARCHITECTURE.md) – Architecture patterns
 
 ## Next Steps
 

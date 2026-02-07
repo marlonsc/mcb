@@ -201,4 +201,4 @@ match service.operation().await {
 
 ---
 
-**Full Details**: See `docs/consolidation-analysis.md` and `docs/MCP_CONSOLIDATION_DETAILED.md`
+**Full Details**: See `docs/CONSOLIDATION_ANALYSIS.md` and `docs/MCP_CONSOLIDATION_DETAILED.md`
