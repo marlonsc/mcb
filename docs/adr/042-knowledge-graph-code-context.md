@@ -233,10 +233,11 @@ static TREE_SITTER_EXTRACTOR: &dyn SemanticExtractorProvider = &TreeSitterSemant
 ```
 
 **Rationale**:
-- **Port abstraction**: Enables multiple extraction backends (tree-sitter, custom rules, ML-based in v0.5.0)
-- **Linkme registration**: Compile-time provider discovery, zero runtime overhead
-- **Async-first**: Aligns with MCB's async architecture (ADR-002)
-- **Clean Architecture**: Port trait in domain, implementation in providers (ADR-013)
+
+-   **Port abstraction**: Enables multiple extraction backends (tree-sitter, custom rules, ML-based in v0.5.0)
+-   **Linkme registration**: Compile-time provider discovery, zero runtime overhead
+-   **Async-first**: Aligns with MCB's async architecture (ADR-002)
+-   **Clean Architecture**: Port trait in domain, implementation in providers (ADR-013)
 
 ### 3. Storage: petgraph DAG + slotmap Arena
 
@@ -419,10 +420,11 @@ impl IncrementalGraphBuilder {
 **Issue**: ADR-042 discussed semantic extraction but did not define the port trait interface.
 
 **Resolution**:
-- **Added**: `SemanticExtractorProvider` trait in `mcb-domain/src/ports/providers/semantic_extractor.rs`
-- **Methods**: `extract_symbols()` and `extract_relationships()` for AST-based extraction
-- **Registration**: Linkme distributed slice for compile-time provider discovery
-- **Implementation**: Tree-sitter-based extractor in `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`
+
+-   **Added**: `SemanticExtractorProvider` trait in `mcb-domain/src/ports/providers/semantic_extractor.rs`
+-   **Methods**: `extract_symbols()` and `extract_relationships()` for AST-based extraction
+-   **Registration**: Linkme distributed slice for compile-time provider discovery
+-   **Implementation**: Tree-sitter-based extractor in `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`
 
 **Rationale**: Port traits enable provider abstraction (ADR-013). Multiple extraction backends can be swapped without changing consumer code.
 

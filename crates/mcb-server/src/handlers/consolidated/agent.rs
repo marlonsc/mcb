@@ -74,7 +74,7 @@ impl AgentHandler {
                 };
                 let tool_call = ToolCall {
                     id: format!("tc_{}", Uuid::new_v4()),
-                    session_id: args.session_id.clone(),
+                    session_id: args.session_id.as_str().to_string(),
                     tool_name: tool_name.clone(),
                     params_summary: Self::get_str(data, "params_summary"),
                     success: Self::get_bool(data, "success").unwrap_or(true),
@@ -85,7 +85,7 @@ impl AgentHandler {
                 match self.agent_service.store_tool_call(tool_call).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "tool_call_id": id,
-                        "session_id": args.session_id,
+                        "session_id": args.session_id.as_str(),
                         "tool_name": tool_name,
                     })),
                     Err(_) => Ok(CallToolResult::error(vec![Content::text(
@@ -104,7 +104,7 @@ impl AgentHandler {
                 };
                 let delegation = Delegation {
                     id: format!("del_{}", Uuid::new_v4()),
-                    parent_session_id: args.session_id.clone(),
+                    parent_session_id: args.session_id.as_str().to_string(),
                     child_session_id: child_session_id.clone(),
                     prompt: Self::get_str(data, "prompt").unwrap_or_default(),
                     prompt_embedding_id: Self::get_str(data, "prompt_embedding_id"),
@@ -117,7 +117,7 @@ impl AgentHandler {
                 match self.agent_service.store_delegation(delegation).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "delegation_id": id,
-                        "parent_session_id": args.session_id,
+                        "parent_session_id": args.session_id.as_str(),
                         "child_session_id": child_session_id,
                     })),
                     Err(_) => Ok(CallToolResult::error(vec![Content::text(

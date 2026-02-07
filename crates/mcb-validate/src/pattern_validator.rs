@@ -18,40 +18,63 @@ use walkdir::WalkDir;
 pub enum PatternViolation {
     /// Concrete type used in DI instead of trait object
     ConcreteTypeInDi {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The concrete type found.
         concrete_type: String,
+        /// Suggested replacement.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Async trait missing Send + Sync bounds
     MissingSendSync {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// The missing bounds.
         missing_bound: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Async trait missing #[`async_trait`] attribute
     MissingAsyncTrait {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Using `std::result::Result` instead of `crate::error::Result`
     RawResultType {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Context code snippet.
         context: String,
+        /// Suggested replacement.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Missing Interface trait bound for Shaku DI
     MissingInterfaceBound {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }

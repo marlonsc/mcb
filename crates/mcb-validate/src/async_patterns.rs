@@ -18,33 +18,55 @@ use walkdir::WalkDir;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AsyncViolation {
     /// Blocking call in async function
+    /// Blocking call in async function
     BlockingInAsync {
+        /// File containing the violation
         file: PathBuf,
+        /// Line number of the blocking call
         line: usize,
+        /// Description of the blocking call detected
         blocking_call: String,
+        /// Recommended non-blocking alternative
         suggestion: String,
+        /// Severity of the violation
         severity: Severity,
     },
     /// `block_on()` used in async context
+    /// `block_on()` used in async context
     BlockOnInAsync {
+        /// File containing the violation
         file: PathBuf,
+        /// Line number of the block_on call
         line: usize,
+        /// Context snippet of the call
         context: String,
+        /// Severity of the violation
         severity: Severity,
     },
     /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
+    /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
     WrongMutexType {
+        /// File containing the violation
         file: PathBuf,
+        /// Line number of the mutex usage
         line: usize,
+        /// The type of mutex being used
         mutex_type: String,
+        /// Recommended async-safe alternative
         suggestion: String,
+        /// Severity of the violation
         severity: Severity,
     },
     /// Spawn without awaiting `JoinHandle`
+    /// Spawn without awaiting `JoinHandle`
     UnawaitedSpawn {
+        /// File containing the violation
         file: PathBuf,
+        /// Line number of the spawn
         line: usize,
+        /// Context snippet of the spawn
         context: String,
+        /// Severity of the violation
         severity: Severity,
     },
 }

@@ -513,30 +513,34 @@ impl ContextToolHandler {
 
 **Applied Corrections (v0.4.0 Alignment)**:
 
-1. **Correction 2 (mcb-z1f)**: WorkflowEventBus → Reuse EventBusProvider
-   - ✅ Removed duplicate `WorkflowEventBus` type
-   - ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider` port
-   - ✅ Subscribers implement `EventHandler` trait (existing pattern)
-   - **Impact**: Single event bus infrastructure, no duplication
+1.  **Correction 2 (mcb-z1f)**: WorkflowEventBus → Reuse EventBusProvider
 
-2. **Correction 7 (mcb-d26)**: BeadsTask contract clarification
-   - ✅ Documented BeadsTask as EXTERNAL DTO from beads issue tracker
-   - ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure boundary
-   - ✅ Task routing: external DTO → adapter → internal entity → orchestrator
-   - **Impact**: Clear contract, proper separation of concerns
+-   ✅ Removed duplicate `WorkflowEventBus` type
+-   ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider` port
+-   ✅ Subscribers implement `EventHandler` trait (existing pattern)
+-   **Impact**: Single event bus infrastructure, no duplication
 
-3. **Correction 8 (mcb-ehk)**: CompensationHandler layer placement
-   - ✅ Moved from application to infrastructure: `mcb-infrastructure/src/compensation/handler.rs`
-   - ✅ Application layer defines `CompensationPolicy` port trait
-   - ✅ Infrastructure implements `CompensationPolicy` with rollback, retry, logging
-   - **Impact**: Proper layer separation, infrastructure concerns isolated
+1.  **Correction 7 (mcb-d26)**: BeadsTask contract clarification
 
-4. **Correction 9 (mcb-tmg)**: MCP tool registration pattern
-   - ✅ Replaced with ADR-033 ConsolidatedHandler pattern
-   - ✅ Handlers in `mcb-server/src/handlers/context_handlers.rs`
-   - ✅ Registration via `router.rs` tool_definitions() like existing handlers
-   - ✅ Match on action/resource for unified dispatch
-   - **Impact**: Consistent with existing MCP handler architecture
+-   ✅ Documented BeadsTask as EXTERNAL DTO from beads issue tracker
+-   ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure boundary
+-   ✅ Task routing: external DTO → adapter → internal entity → orchestrator
+-   **Impact**: Clear contract, proper separation of concerns
+
+1.  **Correction 8 (mcb-ehk)**: CompensationHandler layer placement
+
+-   ✅ Moved from application to infrastructure: `mcb-infrastructure/src/compensation/handler.rs`
+-   ✅ Application layer defines `CompensationPolicy` port trait
+-   ✅ Infrastructure implements `CompensationPolicy` with rollback, retry, logging
+-   **Impact**: Proper layer separation, infrastructure concerns isolated
+
+1.  **Correction 9 (mcb-tmg)**: MCP tool registration pattern
+
+-   ✅ Replaced with ADR-033 ConsolidatedHandler pattern
+-   ✅ Handlers in `mcb-server/src/handlers/context_handlers.rs`
+-   ✅ Registration via `router.rs` tool_definitions() like existing handlers
+-   ✅ Match on action/resource for unified dispatch
+-   **Impact**: Consistent with existing MCP handler architecture
 
 ## Integration Checklist
 

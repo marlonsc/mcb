@@ -3,7 +3,6 @@ use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
 
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use std::sync::Arc;
@@ -26,18 +25,12 @@ pub async fn summarize_session(
         let next_steps = SessionHelpers::get_string_list(data, "next_steps");
         let key_files = SessionHelpers::get_string_list(data, "key_files");
         match memory_service
-            .create_session_summary(
-                SessionId::new(session_id.clone()),
-                topics,
-                decisions,
-                next_steps,
-                key_files,
-            )
+            .create_session_summary(session_id.clone(), topics, decisions, next_steps, key_files)
             .await
         {
             Ok(summary_id) => ResponseFormatter::json_success(&serde_json::json!({
                 "summary_id": summary_id,
-                "session_id": session_id,
+                "session_id": session_id.as_str(),
             })),
             Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
                 "Failed to create session summary: {}",
@@ -45,10 +38,7 @@ pub async fn summarize_session(
             ))])),
         }
     } else {
-        match memory_service
-            .get_session_summary(&SessionId::new(session_id.clone()))
-            .await
-        {
+        match memory_service.get_session_summary(session_id).await {
             Ok(Some(summary)) => ResponseFormatter::json_success(&serde_json::json!({
                 "session_id": summary.session_id,
                 "topics": summary.topics,

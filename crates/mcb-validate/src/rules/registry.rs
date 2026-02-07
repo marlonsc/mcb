@@ -29,9 +29,13 @@ pub struct Rule {
 /// Configuration value types for rules
 #[derive(Debug, Clone)]
 pub enum RuleConfigValue {
+    /// Single string value
     String(String),
+    /// List of string values
     StringList(Vec<String>),
+    /// Integer numeric value
     Number(i64),
+    /// Boolean flag value
     Boolean(bool),
 }
 
@@ -62,6 +66,7 @@ impl From<bool> for RuleConfigValue {
 /// Registry holding all defined rules
 #[derive(Debug, Default)]
 pub struct RuleRegistry {
+    /// List of registered rules
     rules: Vec<Rule>,
 }
 

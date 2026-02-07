@@ -253,10 +253,11 @@ mcb-server/
 **Issue**: ContextService was initially shown as a port trait in `mcb-domain/ports/`, violating Clean Architecture principles. Services are application-layer concerns, not domain ports.
 
 **Resolution**:
-- **Removed**: `ContextService` trait from domain ports
-- **Added**: `ContextGraphTraversal` trait to domain ports (graph navigation is a port concern)
-- **Clarified**: `ContextService` is a concrete use case service in `mcb-application/src/use_cases/context_service.rs`
-- **Kept**: `ContextRepository` and `ContextGraphTraversal` as domain port traits (correct per Clean Architecture)
+
+-   **Removed**: `ContextService` trait from domain ports
+-   **Added**: `ContextGraphTraversal` trait to domain ports (graph navigation is a port concern)
+-   **Clarified**: `ContextService` is a concrete use case service in `mcb-application/src/use_cases/context_service.rs`
+-   **Kept**: `ContextRepository` and `ContextGraphTraversal` as domain port traits (correct per Clean Architecture)
 
 **Rationale**: Per Clean Architecture, domain defines port traits (interfaces to external systems). Application layer contains concrete services that orchestrate use cases. ContextService composes multiple layers (repository, graph, search, policies) and belongs in application, not domain.
 
@@ -265,9 +266,10 @@ mcb-server/
 **Issue**: ADR-041 did not explicitly acknowledge its dependency on ADR-035 (Context Scout) for freshness tracking.
 
 **Resolution**:
-- **Clarified**: Layer 2 (Versioned Context) embeds `ContextFreshness` enum from ADR-035
-- **Documented**: ADR-045 (Context Versioning) extends ADR-035's freshness contract
-- **Cross-reference**: See ADR-045 "ADR-035 Contract Assumptions" section for full dependency details
+
+-   **Clarified**: Layer 2 (Versioned Context) embeds `ContextFreshness` enum from ADR-035
+-   **Documented**: ADR-045 (Context Versioning) extends ADR-035's freshness contract
+-   **Cross-reference**: See ADR-045 "ADR-035 Contract Assumptions" section for full dependency details
 
 **Rationale**: Explicit dependency documentation prevents accidental modification of ADR-035 (ACCEPTED/locked) during Phase 9 implementation. ADR-041-046 build on top of ADR-035's freshness model; they do not replace it.
 

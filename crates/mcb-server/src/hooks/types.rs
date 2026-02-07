@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::ids::SessionId;
 use rmcp::model::CallToolResult;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -55,7 +56,7 @@ pub struct PostToolUseContext {
     /// Timestamp when the execution finished (Unix epoch).
     pub timestamp: u64,
     /// Optional ID of the session where the tool was used.
-    pub session_id: Option<String>,
+    pub session_id: Option<SessionId>,
     /// Additional metadata associated with the execution.
     pub metadata: HashMap<String, String>,
 }
@@ -75,7 +76,7 @@ pub enum ToolExecutionStatus {
 #[derive(Debug, Clone)]
 pub struct SessionStartContext {
     /// Unique identifier for the new session.
-    pub session_id: String,
+    pub session_id: SessionId,
     /// Timestamp when the session started (Unix epoch).
     pub timestamp: u64,
 }
@@ -115,8 +116,8 @@ impl PostToolUseContext {
 
     /// Sets the session ID for the context.
     #[must_use]
-    pub fn with_session_id(mut self, session_id: String) -> Self {
-        self.session_id = Some(session_id);
+    pub fn with_session_id<S: Into<SessionId>>(mut self, session_id: S) -> Self {
+        self.session_id = Some(session_id.into());
         self
     }
 
@@ -130,7 +131,7 @@ impl PostToolUseContext {
 
 impl SessionStartContext {
     /// Creates a new `SessionStartContext` for a given session ID.
-    pub fn new(session_id: String) -> Self {
+    pub fn new(session_id: SessionId) -> Self {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())

@@ -300,9 +300,7 @@ fn bench_scalability(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("tokenize", multiplier),
             &code,
-            |b, code| {
-                b.iter(|| tokenize_source(black_box(code), "rust"))
-            },
+            |b, code| b.iter(|| tokenize_source(black_box(code), "rust")),
         );
 
         group.bench_with_input(

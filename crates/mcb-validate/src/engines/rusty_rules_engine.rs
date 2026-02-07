@@ -21,8 +21,11 @@ pub struct RustyRulesEngineWrapper {
 /// Rusty rule definition with composition support
 #[derive(Debug, Clone)]
 pub struct RustyRule {
+    /// The type of rule (e.g., "cargo_dependencies", "ast_pattern").
     pub rule_type: String,
+    /// The condition logic to evaluate.
     pub condition: Condition,
+    /// The action to take if the condition is met.
     pub action: Action,
 }
 
@@ -37,9 +40,13 @@ pub enum Condition {
     Not(Box<Condition>),
     /// Simple condition
     Simple {
+        /// The type of fact being checked.
         fact_type: String,
+        /// The field of the fact to check.
         field: String,
+        /// The operator to use for comparison.
         operator: String,
+        /// The value to compare against.
         value: Value,
     },
 }
@@ -47,7 +54,14 @@ pub enum Condition {
 /// Actions to execute when condition matches
 #[derive(Debug, Clone)]
 pub enum Action {
-    Violation { message: String, severity: Severity },
+    /// Report a standard violation.
+    Violation {
+        /// The violation message.
+        message: String,
+        /// The severity of the violation.
+        severity: Severity,
+    },
+    /// Execute a custom action string.
     Custom(String),
 }
 
@@ -58,6 +72,7 @@ impl Default for RustyRulesEngineWrapper {
 }
 
 impl RustyRulesEngineWrapper {
+    /// Creates a new, empty RustyRulesEngineWrapper.
     pub fn new() -> Self {
         Self {
             rule_definitions: HashMap::new(),

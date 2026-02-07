@@ -18,37 +18,57 @@ use walkdir::WalkDir;
 pub enum TestQualityViolation {
     /// Test with `#[ignore]` attribute missing justification
     IgnoreWithoutJustification {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the ignored test.
         test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// todo!() macro in test fixture without proper stub marker
     TodoInTestFixture {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the function containing todo!().
         function_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test function with empty body
     EmptyTestBody {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the empty test.
         test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test missing documentation comment
     TestMissingDocumentation {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the undocumented test.
         test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test with only assert!(true) or similar stub
     StubTestAssertion {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the stubbed test.
         test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
@@ -188,6 +208,7 @@ impl Violation for TestQualityViolation {
 
 /// Test quality validator
 pub struct TestQualityValidator {
+    /// Configuration for validation scans
     config: ValidationConfig,
 }
 

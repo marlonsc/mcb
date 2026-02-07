@@ -14,12 +14,14 @@ use crate::Result;
 pub struct RuffLinter;
 
 impl RuffLinter {
+    /// Check multiple files using Ruff
     pub async fn check_files(files: &[&Path]) -> Result<Vec<LintViolation>> {
         let linter = LinterType::Ruff;
         let output = run_linter_command(linter, files).await?;
         Ok(linter.parse_output(&output))
     }
 
+    /// Check a single file using Ruff
     pub async fn check_file(file: &Path) -> Result<Vec<LintViolation>> {
         Self::check_files(&[file]).await
     }

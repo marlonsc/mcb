@@ -14,16 +14,27 @@ use crate::Result;
 /// Loaded and validated YAML rule
 #[derive(Debug, Clone)]
 pub struct ValidatedRule {
+    /// Unique identifier for the rule.
     pub id: String,
+    /// Human-readable name of the rule.
     pub name: String,
+    /// Category of the rule (e.g., quality, security).
     pub category: String,
+    /// Severity level (error, warning, info).
     pub severity: String,
+    /// Whether the rule is active.
     pub enabled: bool,
+    /// Detailed description of what the rule checks.
     pub description: String,
+    /// Explanation of why this rule exists.
     pub rationale: String,
+    /// The engine used to execute this rule.
     pub engine: String,
+    /// Engine-specific configuration.
     pub config: serde_json::Value,
+    /// Raw rule definition.
     pub rule_definition: serde_json::Value,
+    /// List of available automated fixes.
     pub fixes: Vec<RuleFix>,
     /// Linter codes to execute (e.g., `["F401"]` for Ruff, `["clippy::unwrap_used"]` for Clippy)
     pub lint_select: Vec<String>,
@@ -75,15 +86,21 @@ pub struct AstSelector {
 /// Suggested fix for a rule violation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleFix {
+    /// Type of fix (e.g., replacement, suppression).
     pub fix_type: String,
+    /// Pattern to replace (if applicable).
     pub pattern: Option<String>,
+    /// Message describing the fix.
     pub message: String,
 }
 
 /// YAML rule loader with automatic discovery
 pub struct YamlRuleLoader {
+    /// Validator for checking YAML syntax against schema
     validator: YamlRuleValidator,
+    /// Engine for processing rule templates and inheritance
     template_engine: TemplateEngine,
+    /// Directory containing the rule definitions
     rules_dir: PathBuf,
 }
 

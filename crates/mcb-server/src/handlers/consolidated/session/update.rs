@@ -13,7 +13,7 @@ pub async fn update_session(
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
     let session_id = match args.session_id.as_ref() {
-        Some(id) => id,
+        Some(id) => id.as_str(),
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
                 "Missing session_id",

@@ -51,15 +51,16 @@ We then created Beads issues (`bd create`) for each task in the plan. The Beads 
 ### What Still Needs To Be Done
 
 1.  **Add dependencies between issues** — Use `bd edit <id> --deps <dep-id>` to wire:
-   -   `mcb-a9b` depends on `mcb-4t5` (impl depends on trait change)
-   -   `mcb-95d` depends on `mcb-s35` (wiring depends on DI refactor)
-   -   `mcb-o1z` depends on `mcb-s35`, `mcb-95d`, `mcb-xme` (verification after all fixes)
-   -   All Wave 3 provider issues (`mcb-b3l` through `mcb-gei`) depend on `mcb-hih` (constants must exist first)
 
-2.  **Update `.planning/QUALITY-REFACTOR-PLAN.md`** with the Beads issue IDs next to each task
+-   `mcb-a9b` depends on `mcb-4t5` (impl depends on trait change)
+-   `mcb-95d` depends on `mcb-s35` (wiring depends on DI refactor)
+-   `mcb-o1z` depends on `mcb-s35`, `mcb-95d`, `mcb-xme` (verification after all fixes)
+-   All Wave 3 provider issues (`mcb-b3l` through `mcb-gei`) depend on `mcb-hih` (constants must exist first)
 
-3.  **Close `mcb-037`** (P0 Fix Compilation) — compilation is already clean, this can be closed: `bd close mcb-037`
+1.  **Update `.planning/QUALITY-REFACTOR-PLAN.md`** with the Beads issue IDs next to each task
 
-4.  **Run `make validate`** to establish a baseline of current architecture violations (it was timing out before — try with longer timeout or run `cargo test -p mcb-validate` directly)
+2.  **Close `mcb-037`** (P0 Fix Compilation) — compilation is already clean, this can be closed: `bd close mcb-037`
 
-5.  **Start executing Wave 1 tasks** (strongest impact, P1 priority)
+3.  **Run `make validate`** to establish a baseline of current architecture violations (it was timing out before — try with longer timeout or run `cargo test -p mcb-validate` directly)
+
+4.  **Start executing Wave 1 tasks** (strongest impact, P1 priority)

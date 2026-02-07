@@ -21,31 +21,31 @@ pub enum ViolationCategory {
     Organization,
     /// SOLID principles
     Solid,
-    /// Dependency injection and Shaku patterns
+    /// Dependency injection patterns
     DependencyInjection,
-    /// Configuration patterns (Figment, config crate)
+    /// Configuration patterns
     Configuration,
-    /// Web framework patterns (Rocket, Axum)
+    /// Web framework patterns
     WebFramework,
     /// Performance patterns
     Performance,
-    /// Async patterns
+    /// Asynchronous programming patterns
     Async,
     /// Documentation quality
     Documentation,
-    /// Test organization
+    /// Test organization and quality
     Testing,
     /// Naming conventions
     Naming,
-    /// KISS principle (complexity)
+    /// KISS principle (simplicity)
     Kiss,
     /// Refactoring completeness
     Refactoring,
     /// Error handling boundaries
     ErrorBoundary,
-    /// Implementation quality
+    /// Implementation details
     Implementation,
-    /// PMAT integration
+    /// Project Management and Tracking integration
     Pmat,
 }
 

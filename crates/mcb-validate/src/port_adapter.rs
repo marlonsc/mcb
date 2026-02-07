@@ -12,27 +12,46 @@ use walkdir::WalkDir;
 /// Port/Adapter Violations
 #[derive(Debug, Clone, Serialize)]
 pub enum PortAdapterViolation {
+    /// Adapter lacks a corresponding port implementation
     AdapterMissingPortImpl {
+        /// Name of the adapter
         adapter_name: String,
+        /// File containing the adapter
         file: PathBuf,
+        /// Line number of the definition
         line: usize,
     },
+    /// Adapter depends on another concrete adapter instead of a port
     AdapterUsesAdapter {
+        /// Name of the source adapter
         adapter_name: String,
+        /// Name of the referenced adapter
         other_adapter: String,
+        /// File containing the violation
         file: PathBuf,
+        /// Line number of the usage
         line: usize,
     },
+    /// Port has too many methods (violates ISP)
     PortTooLarge {
+        /// Name of the trait/port
         trait_name: String,
+        /// Number of methods found
         method_count: usize,
+        /// File containing the port
         file: PathBuf,
+        /// Line number of the start of the trait
         line: usize,
     },
+    /// Port has too few methods (may indicate over-fragmentation)
     PortTooSmall {
+        /// Name of the trait/port
         trait_name: String,
+        /// Number of methods found
         method_count: usize,
+        /// File containing the port
         file: PathBuf,
+        /// Line number of the start of the trait
         line: usize,
     },
 }

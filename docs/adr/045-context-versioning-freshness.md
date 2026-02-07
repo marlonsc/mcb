@@ -326,30 +326,33 @@ pub enum ContextFreshness {
 
 ADR-035 specifies the `CachedContextScout` provider with:
 
-- **Default TTL**: 30 seconds (configurable)
-- **Invalidation strategy**: Time-based (TTL expiry) + signal-based (git hooks, manual edits)
-- **Cache layers**: Separate caches for git status, tracker state, and full context
+-   **Default TTL**: 30 seconds (configurable)
+-   **Invalidation strategy**: Time-based (TTL expiry) + signal-based (git hooks, manual edits)
+-   **Cache layers**: Separate caches for git status, tracker state, and full context
 
-**ADR-045 Extension**: 
-- Snapshots are stored immutably with timestamps
-- TTL policy determines which snapshots are kept in-memory vs archived to disk
-- Staleness signals (from ADR-035) trigger context re-validation during snapshot creation
+**ADR-045 Extension**:
+
+-   Snapshots are stored immutably with timestamps
+-   TTL policy determines which snapshots are kept in-memory vs archived to disk
+-   Staleness signals (from ADR-035) trigger context re-validation during snapshot creation
 
 ### v0.4.0 Freshness Tracking EXTENDS ADR-035
 
 **What ADR-035 provides**:
-- Freshness enum (Fresh/Acceptable/Stale/StaleWithRisk)
-- CachedContextScout with TTL-based caching
-- Staleness signals (time, git hooks, manual edits)
+
+-   Freshness enum (Fresh/Acceptable/Stale/StaleWithRisk)
+-   CachedContextScout with TTL-based caching
+-   Staleness signals (time, git hooks, manual edits)
 
 **What ADR-045 adds**:
-- Immutable snapshot versioning (capture context at point-in-time)
-- Time-travel queries (get context as it was at 14:30)
-- Snapshot-level staleness tracking (not just cache invalidation)
-- TTL-based garbage collection (keep 24h, archive older)
-- Historical policy compliance queries
 
-**Explicit Dependency**: v0.4.0 ContextVersioning **depends on** ADR-035 ContextFreshness. The freshness enum is embedded in every snapshot and used to gate search result ranking and policy evaluation.
+-   Immutable snapshot versioning (capture context at point-in-time)
+-   Time-travel queries (get context as it was at 14:30)
+-   Snapshot-level staleness tracking (not just cache invalidation)
+-   TTL-based garbage collection (keep 24h, archive older)
+-   Historical policy compliance queries
+
+**Explicit Dependency**: v0.4.0 ContextVersioning **depends on** ADR-035 ContextFreshness. The freshness enum is embedded in every snapshot and used to gate search Result ranking and policy evaluation.
 
 ### Snapshot Lifecycle with Freshness
 
@@ -397,12 +400,13 @@ let snapshot = ContextSnapshot {
 **Issue**: ADR-045 referenced ADR-035 ContextFreshness but did not document the contract or dependency relationship.
 
 **Resolution**:
-- **Added**: "ADR-035 Contract Assumptions" section documenting:
-  - ContextFreshness entity definition and reuse
-  - CachedContextScout TTL and invalidation strategy
-  - How v0.4.0 freshness tracking EXTENDS (not replaces) ADR-035
-  - Explicit dependency: v0.4.0 ContextVersioning depends on ADR-035 ContextFreshness
-  - Snapshot lifecycle showing freshness integration
+
+-   **Added**: "ADR-035 Contract Assumptions" section documenting:
+    -   ContextFreshness entity definition and reuse
+    -   CachedContextScout TTL and invalidation strategy
+    -   How v0.4.0 freshness tracking EXTENDS (not replaces) ADR-035
+    -   Explicit dependency: v0.4.0 ContextVersioning depends on ADR-035 ContextFreshness
+    -   Snapshot lifecycle showing freshness integration
 
 **Rationale**: Clear documentation of cross-ADR dependencies prevents implementation bugs and ensures ADR-035 (ACCEPTED/locked) is not accidentally modified during Phase 9 implementation.
 

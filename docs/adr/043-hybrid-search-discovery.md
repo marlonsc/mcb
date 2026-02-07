@@ -300,12 +300,13 @@ impl UnifiedSearchEngine {
 **Issue**: HybridSearchEngine was incorrectly shown as a provider trait.
 
 **Fix**: Renamed to `ContextSearchService` and clarified as an **application-layer concrete service** (not a trait) that:
-- Lives in `mcb-application/src/use_cases/context_search.rs`
-- **COMPOSES** three port traits from `mcb-domain`:
-  - `FullTextSearchProvider` (BM25 full-text search)
-  - `VectorStoreProvider` (semantic similarity)
-  - `ContextGraphTraversal` (graph-based discovery)
-- Implements the RRF fusion algorithm to combine signals
+
+-   Lives in `mcb-application/src/use_cases/context_search.rs`
+-   **COMPOSES** three port traits from `mcb-domain`:
+    -   `FullTextSearchProvider` (BM25 full-text search)
+    -   `VectorStoreProvider` (semantic similarity)
+    -   `ContextGraphTraversal` (graph-based discovery)
+-   Implements the RRF fusion algorithm to combine signals
 
 **Rationale**: Application services orchestrate port traits; they are not themselves ports. This maintains Clean Architecture's dependency inversion principle.
 
@@ -314,14 +315,15 @@ impl UnifiedSearchEngine {
 **Issue**: `FullTextSearchProvider` port trait was referenced but not defined in the ADR.
 
 **Fix**: Added complete port trait definition in section 3.1:
-- **Location**: `mcb-domain/src/ports/providers/full_text_search.rs`
-- **Trait Methods**:
-  - `async fn search(&self, query: &str, options: FtsOptions) -> FtsResult<Vec<FtsResult>>`
-  - `async fn index(&self, id: &str, content: &str) -> FtsResult<()>`
-  - `async fn clear(&self) -> FtsResult<()>`
-- **Registration**: Uses `#[linkme::distributed_slice(FULL_TEXT_SEARCH_PROVIDERS)]` for compile-time provider discovery
-- **Default Implementation**: tantivy (BM25) in `mcb-providers`
-- **Error Handling**: Custom `FtsError` enum with `thiserror`
+
+-   **Location**: `mcb-domain/src/ports/providers/full_text_search.rs`
+-   **Trait Methods**:
+    -   `async fn search(&self, query: &str, options: FtsOptions) -> FtsResult<Vec<FtsResult>>`
+    -   `async fn index(&self, id: &str, content: &str) -> FtsResult<()>`
+    -   `async fn clear(&self) -> FtsResult<()>`
+-   **Registration**: Uses `#[linkme::distributed_slice(FULL_TEXT_SEARCH_PROVIDERS)]` for compile-time provider discovery
+-   **Default Implementation**: tantivy (BM25) in `mcb-providers`
+-   **Error Handling**: Custom `FtsError` enum with `thiserror`
 
 **Rationale**: Port traits must be explicitly defined in the domain layer. Linkme registration enables zero-runtime-overhead provider discovery.
 

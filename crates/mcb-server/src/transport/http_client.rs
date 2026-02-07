@@ -15,6 +15,7 @@ use uuid::Uuid;
 
 use super::types::{McpRequest, McpResponse};
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
+use mcb_domain::value_objects::ids::SessionId;
 
 /// MCP client transport configuration
 ///
@@ -26,7 +27,7 @@ pub struct McpClientConfig {
     pub server_url: String,
 
     /// Session ID for this client connection
-    pub session_id: String,
+    pub session_id: SessionId,
 
     /// Request timeout
     pub timeout: Duration,
@@ -59,8 +60,8 @@ impl HttpClientTransport {
         timeout: Duration,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let session_id = match session_prefix {
-            Some(prefix) => format!("{}_{}", prefix, Uuid::new_v4()),
-            None => Uuid::new_v4().to_string(),
+            Some(prefix) => SessionId::new(format!("{}_{}", prefix, Uuid::new_v4())),
+            None => SessionId::new(Uuid::new_v4().to_string()),
         };
 
         let config = McpClientConfig {
@@ -150,7 +151,7 @@ impl HttpClientTransport {
             .client
             .post(&url)
             .header("Content-Type", "application/json")
-            .header("X-Session-Id", &self.config.session_id)
+            .header("X-Session-Id", self.config.session_id.as_str())
             .json(request)
             .send()
             .await?;
@@ -167,7 +168,7 @@ impl HttpClientTransport {
 
     /// Get the session ID for this client
     pub fn session_id(&self) -> &str {
-        &self.config.session_id
+        self.config.session_id.as_str()
     }
 
     /// Get the server URL

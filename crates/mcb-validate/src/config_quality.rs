@@ -18,39 +18,61 @@ use walkdir::WalkDir;
 pub enum ConfigQualityViolation {
     /// Hardcoded string in configuration that should be configurable
     HardcodedConfigString {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The hardcoded string value.
         string_value: String,
+        /// Context describing where the string is used.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Magic number in code outside constants module
     MagicNumber {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The magic number value.
         number: String,
+        /// Context describing where the number is used.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Default implementation without documentation
     UndocumentedDefault {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the struct with the undocumented default.
         struct_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Configuration field without documentation
     UndocumentedConfigField {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the undocumented field.
         field_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Hardcoded namespace or prefix that should be configurable
     HardcodedNamespace {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The hardcoded namespace string.
         namespace: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
