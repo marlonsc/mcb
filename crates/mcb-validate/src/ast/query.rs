@@ -32,6 +32,7 @@ pub struct AstQuery {
     pub severity: String,
 }
 
+/// Conditions for AST query matching.
 #[derive(Debug, Clone)]
 pub enum QueryCondition {
     /// Node has specific field value
