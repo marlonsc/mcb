@@ -12,7 +12,7 @@ use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, Highli
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
 
-use crate::constants::HIGHLIGHT_NAMES;
+use crate::constants::highlight::HIGHLIGHT_NAMES;
 
 /// Language-specific highlighting configuration
 struct HighlightLanguageConfig {

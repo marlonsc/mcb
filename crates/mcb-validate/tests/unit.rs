@@ -99,3 +99,6 @@ mod language_detector_tests;
 
 #[path = "unit/rule_filters_tests.rs"]
 mod rule_filters_tests;
+
+#[path = "unit/discovery_tests.rs"]
+mod discovery;

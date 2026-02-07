@@ -13,7 +13,8 @@ use figment::providers::{Env, Format, Serialized, Toml};
 use mcb_domain::error::{Error, Result};
 
 use crate::config::AppConfig;
-use crate::constants::*;
+use crate::constants::auth::*;
+use crate::constants::config::*;
 use crate::error_ext::ErrorContext;
 use crate::logging::log_config_loaded;
 

@@ -100,25 +100,6 @@ impl MemoryRepository for SqliteMemoryRepository {
         }
     }
 
-    async fn search_fts(&self, query: &str, limit: usize) -> Result<Vec<String>> {
-        let rows = self
-            .executor
-            .query_all(
-                "SELECT id FROM observations_fts WHERE observations_fts MATCH ? ORDER BY rank LIMIT ?",
-                &[SqlParam::String(query.to_string()), SqlParam::I64(limit as i64)],
-            )
-            .await?;
-
-        let mut ids = Vec::with_capacity(rows.len());
-        for row in rows {
-            let id = row
-                .try_get_string("id")?
-                .ok_or_else(|| Error::memory("FTS result missing id"))?;
-            ids.push(id);
-        }
-        Ok(ids)
-    }
-
     async fn search_fts_ranked(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
         let rows = self
             .executor
@@ -146,58 +127,6 @@ impl MemoryRepository for SqliteMemoryRepository {
                 &[SqlParam::String(id.as_str().to_string())],
             )
             .await
-    }
-
-    async fn search(
-        &self,
-        _query_embedding: &[f32],
-        filter: MemoryFilter,
-        limit: usize,
-    ) -> Result<Vec<MemorySearchResult>> {
-        let mut sql = String::from("SELECT * FROM observations WHERE 1=1");
-        let mut params: Vec<SqlParam> = Vec::new();
-
-        if let Some(session_id) = &filter.session_id {
-            sql.push_str(" AND json_extract(metadata, '$.session_id') = ?");
-            params.push(SqlParam::String(session_id.clone()));
-        }
-        if let Some(repo_id) = &filter.repo_id {
-            sql.push_str(" AND json_extract(metadata, '$.repo_id') = ?");
-            params.push(SqlParam::String(repo_id.clone()));
-        }
-        if let Some(branch) = &filter.branch {
-            sql.push_str(" AND json_extract(metadata, '$.branch') = ?");
-            params.push(SqlParam::String(branch.clone()));
-        }
-        if let Some(commit) = &filter.commit {
-            sql.push_str(" AND json_extract(metadata, '$.commit') = ?");
-            params.push(SqlParam::String(commit.clone()));
-        }
-        if let Some(obs_type) = &filter.observation_type {
-            sql.push_str(" AND observation_type = ?");
-            params.push(SqlParam::String(obs_type.as_str().to_string()));
-        }
-        if let Some((start, end)) = filter.time_range {
-            sql.push_str(" AND created_at >= ? AND created_at <= ?");
-            params.push(SqlParam::I64(start));
-            params.push(SqlParam::I64(end));
-        }
-        sql.push_str(" ORDER BY created_at DESC LIMIT ?");
-        params.push(SqlParam::I64(limit as i64));
-
-        let rows = self.executor.query_all(&sql, &params).await?;
-
-        let mut results = Vec::with_capacity(rows.len());
-        for (i, row) in rows.iter().enumerate() {
-            let observation = row_convert::row_to_observation(row.as_ref())
-                .map_err(|e| Error::memory_with_source("decode observation row", e))?;
-            results.push(MemorySearchResult {
-                id: observation.id.clone(),
-                observation,
-                similarity_score: 1.0 - (i as f32 * 0.1).min(0.9),
-            });
-        }
-        Ok(results)
     }
 
     async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {

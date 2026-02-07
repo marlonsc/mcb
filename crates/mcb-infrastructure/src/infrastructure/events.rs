@@ -13,7 +13,7 @@ use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use tokio::sync::broadcast;
 use tracing::{debug, warn};
 
-use crate::constants::EVENT_BUS_DEFAULT_CAPACITY;
+use crate::constants::events::EVENT_BUS_DEFAULT_CAPACITY;
 
 /// Event bus provider using tokio broadcast channels
 ///

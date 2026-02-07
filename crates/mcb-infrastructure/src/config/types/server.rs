@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::constants::*;
+use crate::constants::http::*;
 
 /// Transport mode for MCP server
 ///

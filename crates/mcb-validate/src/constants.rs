@@ -17,15 +17,6 @@ pub const DEFAULT_TDG_THRESHOLD: u32 = 50;
 // REFACTORING COMPLETENESS
 // ============================================================================
 
-/// Known migration pairs where duplicates are expected temporarily.
-/// DEPRECATED: Configure migration pairs in .mcb-validate.toml instead:
-/// ```toml
-/// [rules.refactoring]
-/// known_migration_pairs = [["old-crate", "new-crate"]]
-/// ```
-#[deprecated(note = "Use FileConfig::rules.refactoring.known_migration_pairs instead")]
-pub const KNOWN_MIGRATION_PAIRS: &[(&str, &str)] = &[];
-
 /// Utility types that are intentionally duplicated to avoid cross-crate dependencies
 pub const UTILITY_TYPES: &[&str] = &[
     "JsonExt",
@@ -67,27 +58,6 @@ pub const REFACTORING_SKIP_DIR_PATTERNS: &[&str] = &["/di/", "/config/", "/model
 
 // ============================================================================
 // RETE ENGINE
-// ============================================================================
-
-// ============================================================================
-// RETE ENGINE
-// ============================================================================
-
-/// Prefix for internal workspace dependencies.
-/// DEPRECATED: Configure internal_dep_prefix in .mcb-validate.toml instead:
-/// ```toml
-/// [general]
-/// internal_dep_prefix = "myapp-"
-/// ```
-#[deprecated(note = "Use FileConfig::general.internal_dep_prefix instead")]
-pub const INTERNAL_DEP_PREFIX: &str = "";
-
-// ============================================================================
-// DUPLICATION (clone detection)
-// ============================================================================
-
-// ============================================================================
-// DUPLICATION (clone detection)
 // ============================================================================
 
 // ============================================================================

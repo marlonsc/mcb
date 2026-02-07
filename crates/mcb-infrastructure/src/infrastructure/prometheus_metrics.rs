@@ -24,7 +24,7 @@ use prometheus::{
     CounterVec, Gauge, HistogramVec, register_counter_vec, register_gauge, register_histogram_vec,
 };
 
-use crate::constants::{METRICS_BATCH_SIZE_BUCKETS, METRICS_LATENCY_BUCKETS};
+use crate::constants::metrics::{METRICS_BATCH_SIZE_BUCKETS, METRICS_LATENCY_BUCKETS};
 
 /// Global metrics registry holder
 static METRICS: OnceLock<Result<PrometheusMetricsInner, String>> = OnceLock::new();

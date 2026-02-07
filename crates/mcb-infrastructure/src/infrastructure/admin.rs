@@ -174,7 +174,7 @@ impl DefaultIndexingOperations {
             id: id.clone(),
             collection: collection.clone(),
             current_file: None,
-            status: mcb_domain::ports::admin::IndexingStatus::Starting,
+            status: mcb_domain::ports::admin::IndexingOperationStatus::Starting,
             total_files,
             processed_files: 0,
             started_at: chrono::Utc::now(),

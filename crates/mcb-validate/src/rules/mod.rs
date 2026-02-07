@@ -2,12 +2,11 @@
 //!
 //! Provides declarative rule definitions and registry management.
 
-pub mod registry; // Legacy registry (kept for compatibility)
+pub mod registry;
 pub mod templates;
 pub mod yaml_loader;
 pub mod yaml_validator;
 
-// Re-export legacy for compatibility
 pub use registry::{Rule, RuleRegistry, clean_architecture_rules, layer_boundary_rules};
 // Re-export YAML system
 pub use templates::TemplateEngine;

@@ -183,10 +183,6 @@ mod rrf_tests {
                 .cloned())
         }
 
-        async fn search_fts(&self, _query: &str, _limit: usize) -> Result<Vec<String>> {
-            Ok(self.fts_results.iter().map(|r| r.id.clone()).collect())
-        }
-
         async fn search_fts_ranked(
             &self,
             _query: &str,
@@ -197,15 +193,6 @@ mod rrf_tests {
 
         async fn delete_observation(&self, _id: &ObservationId) -> Result<()> {
             Ok(())
-        }
-
-        async fn search(
-            &self,
-            _query_embedding: &[f32],
-            _filter: MemoryFilter,
-            _limit: usize,
-        ) -> Result<Vec<MemorySearchResult>> {
-            Ok(vec![])
         }
 
         async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {

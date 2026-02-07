@@ -5,7 +5,15 @@
 
 #![allow(clippy::assertions_on_constants)]
 
-use mcb_infrastructure::constants::*;
+use mcb_infrastructure::constants::auth::*;
+use mcb_infrastructure::constants::cache::*;
+use mcb_infrastructure::constants::crypto::*;
+use mcb_infrastructure::constants::embedding::*;
+use mcb_infrastructure::constants::fs::*;
+use mcb_infrastructure::constants::health::*;
+use mcb_infrastructure::constants::http::*;
+use mcb_infrastructure::constants::process::*;
+use mcb_infrastructure::constants::resilience::*;
 
 // ============================================================================
 // HTTP Pool Constants Tests

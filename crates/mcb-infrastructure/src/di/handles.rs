@@ -1,6 +1,6 @@
 //! Provider Handles - Runtime-swappable provider wrappers
 //!
-//! Type aliases for the generic `Handle<T>` for backward compatibility.
+//! Type aliases for the generic `Handle<T>`.
 //! All handle types use the same underlying generic implementation.
 //!
 //! ## Pattern
@@ -18,7 +18,7 @@ use mcb_domain::ports::providers::{
 use super::handle::Handle;
 
 // ============================================================================
-// Type Aliases (Backward Compatibility)
+// Type Aliases
 // ============================================================================
 
 /// Handle for runtime-swappable embedding provider

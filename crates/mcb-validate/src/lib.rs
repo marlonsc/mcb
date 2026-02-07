@@ -224,33 +224,6 @@ impl ValidationConfig {
         self
     }
 
-    /// Check if a path is from a legacy/additional source (not main crates/)
-    pub fn is_legacy_path(&self, path: &Path) -> bool {
-        for additional_path in &self.additional_src_paths {
-            let full_path = if additional_path.is_absolute() {
-                additional_path.clone()
-            } else {
-                self.workspace_root.join(additional_path)
-            };
-
-            // Canonicalize if possible for accurate comparison
-            if let (Ok(canonical_full), Ok(canonical_path)) =
-                (full_path.canonicalize(), path.canonicalize())
-                && canonical_path.starts_with(&canonical_full)
-            {
-                return true;
-            }
-
-            // Fallback to string-based check
-            if let (Some(full_str), Some(path_str)) = (full_path.to_str(), path.to_str())
-                && (path_str.contains(full_str) || path_str.contains("src/"))
-            {
-                return true;
-            }
-        }
-        false
-    }
-
     /// Check if a path should be excluded based on patterns
     pub fn should_exclude(&self, path: &Path) -> bool {
         let path_str = path.to_string_lossy();
@@ -310,11 +283,6 @@ impl ValidationConfig {
     /// Get actual source directories to scan for Rust files
     ///
     /// For crate directories (containing `src/` subdirectory), returns `<dir>/src/`.
-    /// For flat source directories (like `../src/`), returns the directory itself.
-    ///
-    /// This handles both:
-    /// - Workspace crates: `crates/mcb-domain/` → scans `crates/mcb-domain/src/`
-    /// - Legacy source: `../src/` → scans `../src/` directly
     pub fn get_scan_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut scan_dirs = Vec::new();
 
@@ -323,9 +291,6 @@ impl ValidationConfig {
             if src_subdir.exists() && src_subdir.is_dir() {
                 // Crate-style: has src/ subdirectory
                 scan_dirs.push(src_subdir);
-            } else if self.is_legacy_path(&dir) {
-                // Legacy flat directory: scan directly
-                scan_dirs.push(dir);
             }
             // Standard crate without src/ directory yet - skip (implicit continue)
         }

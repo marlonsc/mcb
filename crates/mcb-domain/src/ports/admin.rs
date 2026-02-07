@@ -132,9 +132,6 @@ pub enum IndexingOperationStatus {
     Failed(String),
 }
 
-/// Alias for backward compatibility
-pub use IndexingOperationStatus as IndexingStatus;
-
 /// Data about an ongoing indexing operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexingOperation {

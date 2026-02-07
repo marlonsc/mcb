@@ -2,7 +2,8 @@
 
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::constants::{DEFAULT_HTTP_PORT, DEFAULT_LOG_LEVEL};
+use mcb_infrastructure::constants::http::DEFAULT_HTTP_PORT;
+use mcb_infrastructure::constants::logging::DEFAULT_LOG_LEVEL;
 use tempfile::TempDir;
 
 /// Create test config with auth disabled (avoids JWT secret validation per ADR-025)
