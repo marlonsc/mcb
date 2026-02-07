@@ -1,7 +1,7 @@
-#![allow(missing_docs)]
 //! # Infrastructure Layer
 //!
 //! Cross-cutting technical concerns that support the application and domain layers.
+#![allow(missing_docs)]
 //!
 //! This layer provides shared technical capabilities used across the entire system.
 //! All adapters/providers are in mcb-providers crate, accessed via linkme registry.

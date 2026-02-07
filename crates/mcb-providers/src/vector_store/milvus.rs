@@ -198,19 +198,18 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         // Create index on the vector field for efficient search
         use milvus::index::{IndexParams, IndexType, MetricType};
 
-        let index_params = IndexParams::new(
-            "vector_index".to_string(),
-            IndexType::IvfFlat,
-            MetricType::L2,
-            HashMap::from([("nlist".to_string(), MILVUS_IVFFLAT_NLIST.to_string())]),
-        );
-
         // Retry index creation with backoff to handle eventual consistency
         let mut last_error = None;
         for attempt in 0..3 {
+            let index_params = IndexParams::new(
+                "vector_index".to_string(),
+                IndexType::IvfFlat,
+                MetricType::L2,
+                HashMap::from([("nlist".to_string(), MILVUS_IVFFLAT_NLIST.to_string())]),
+            );
             match self
                 .client
-                .create_index(name.as_str(), "vector", index_params.clone())
+                .create_index(name.as_str(), "vector", index_params)
                 .await
             {
                 Ok(()) => {

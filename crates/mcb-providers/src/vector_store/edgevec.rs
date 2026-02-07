@@ -626,13 +626,11 @@ impl EdgeVecActor {
                 let mut final_results = Vec::with_capacity(results.len());
                 if let Some(collection_metadata) = self.metadata_store.get(collection) {
                     for res in results {
-                        let external_id = self.id_map.iter().find_map(|entry| {
-                            if *entry.value() == res.vector_id {
-                                Some(entry.key().clone())
-                            } else {
-                                None
-                            }
-                        });
+                        let external_id: Option<String> = self
+                            .id_map
+                            .iter()
+                            .find(|entry| *entry.value() == res.vector_id)
+                            .map(|entry| entry.key().to_owned());
 
                         if let Some(ext_id) = external_id
                             && let Some(meta_val) = collection_metadata.get(&ext_id)

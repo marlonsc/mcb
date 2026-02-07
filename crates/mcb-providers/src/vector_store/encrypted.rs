@@ -255,8 +255,9 @@ pub fn decrypt_metadata(
         .get("encrypted_metadata")
         .ok_or_else(|| Error::invalid_argument("No encrypted_metadata field found"))?;
 
+    let encrypted_value_owned = encrypted_value.clone();
     let encrypted_data: EncryptedData =
-        serde_json::from_value(encrypted_value.clone()).map_err(|e| Error::Infrastructure {
+        serde_json::from_value(encrypted_value_owned).map_err(|e| Error::Infrastructure {
             message: format!("Failed to deserialize encrypted data: {}", e),
             source: Some(Box::new(e)),
         })?;
