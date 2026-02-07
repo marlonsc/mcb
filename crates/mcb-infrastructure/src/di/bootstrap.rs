@@ -200,6 +200,51 @@ impl AppContext {
     pub fn crypto_service(&self) -> Arc<CryptoService> {
         self.crypto_service.clone()
     }
+
+    /// Build domain services for the server layer
+    /// This method creates all domain services needed by McpServer
+    pub async fn build_domain_services(
+        &self,
+    ) -> Result<crate::di::modules::domain_services::DomainServicesContainer> {
+        let embedding_provider = self.embedding_handle().get();
+        let vector_store_provider = self.vector_store_handle().get();
+        let cache_provider = self.cache_handle().get();
+        let language_chunker = self.language_handle().get();
+
+        let shared_cache = crate::cache::provider::SharedCacheProvider::from_arc(cache_provider);
+        let crypto = (*self.crypto_service()).clone();
+
+        let indexing_ops = self.indexing();
+        let event_bus = self.event_bus();
+
+        let project_id = std::env::current_dir()
+            .ok()
+            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+            .unwrap_or_else(|| "default".to_string());
+
+        let memory_repository = self.memory_repository();
+        let agent_repository = self.agent_repository();
+        let vcs_provider = self.vcs_provider();
+        let project_service = self.project_service();
+
+        let deps = crate::di::modules::domain_services::ServiceDependencies {
+            project_id,
+            cache: shared_cache,
+            crypto,
+            config: (*self.config).clone(),
+            embedding_provider,
+            vector_store_provider,
+            language_chunker,
+            indexing_ops,
+            event_bus,
+            memory_repository,
+            agent_repository,
+            vcs_provider,
+            project_service,
+        };
+
+        crate::di::modules::domain_services::DomainServicesFactory::create_services(deps).await
+    }
 }
 
 impl std::fmt::Debug for AppContext {

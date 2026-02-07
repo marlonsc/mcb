@@ -2,10 +2,7 @@
 
 use std::net::SocketAddr;
 
-use mcb_infrastructure::config::data::ServerConfig;
-use mcb_infrastructure::config::server::{
-    ServerConfigBuilder, ServerConfigPresets, ServerConfigUtils,
-};
+use mcb_infrastructure::config::{ServerConfig, ServerConfigBuilder, ServerConfigPresets};
 use mcb_infrastructure::constants::DEFAULT_HTTPS_PORT;
 
 #[test]
@@ -14,7 +11,7 @@ fn test_parse_address() {
     config.network.host = "127.0.0.1".to_string();
     config.network.port = 8080;
 
-    let address = ServerConfigUtils::parse_address(&config).unwrap();
+    let address = config.parse_address().unwrap();
     assert_eq!(address, SocketAddr::from(([127, 0, 0, 1], 8080)));
 }
 
@@ -30,14 +27,8 @@ fn test_server_url() {
     https_config.network.port = 8443;
     https_config.ssl.https = true;
 
-    assert_eq!(
-        ServerConfigUtils::get_server_url(&http_config),
-        "http://127.0.0.1:8080"
-    );
-    assert_eq!(
-        ServerConfigUtils::get_server_url(&https_config),
-        "https://example.com:8443"
-    );
+    assert_eq!(http_config.get_base_url(), "http://127.0.0.1:8080");
+    assert_eq!(https_config.get_base_url(), "https://example.com:8443");
 }
 
 #[test]

@@ -35,12 +35,13 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use mcb_infrastructure::cache::provider::SharedCacheProvider;
-use mcb_infrastructure::config::{AppConfig, OperatingMode, TransportMode};
+use mcb_infrastructure::config::{
+    AppConfig,
+    types::{OperatingMode, TransportMode},
+};
 use tracing::{error, info, warn};
 
 use crate::McpServer;
-use crate::McpServerBuilder;
 use crate::admin::{AdminApi, AdminApiConfig};
 use crate::transport::http::{HttpTransport, HttpTransportConfig};
 use crate::transport::stdio::StdioServerExt;
@@ -227,61 +228,20 @@ async fn create_mcp_server(
     // Create AppContext with resolved providers
     let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
 
-    // Get all providers from handles (runtime-swappable via admin API)
-    let embedding_provider = app_context.embedding_handle().get();
-    let vector_store_provider = app_context.vector_store_handle().get();
-    let cache_provider = app_context.cache_handle().get();
-    let language_chunker = app_context.language_handle().get();
+    // Build domain services from AppContext
+    let services = app_context.build_domain_services().await?;
 
-    // Create shared cache provider (conversion for domain services factory)
-    let shared_cache = SharedCacheProvider::from_arc(cache_provider);
-    let crypto = (*app_context.crypto_service()).clone();
-
-    let indexing_ops = app_context.indexing();
-    let event_bus = app_context.event_bus();
-
-    let project_id = std::env::current_dir()
-        .ok()
-        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
-        .unwrap_or_else(|| "default".to_string());
-
-    let memory_repository = app_context.memory_repository();
-    let agent_repository = app_context.agent_repository();
-    let vcs_provider = app_context.vcs_provider();
-    let project_service = app_context.project_service();
-
-    let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
-        project_id,
-        cache: shared_cache,
-        crypto,
-        config,
-        embedding_provider,
-        vector_store_provider,
-        language_chunker,
-        indexing_ops,
-        event_bus,
-        memory_repository,
-        agent_repository,
-        vcs_provider,
-        project_service: project_service.clone(),
+    let mcp_services = crate::mcp_server::McpServices {
+        indexing: services.indexing_service,
+        context: services.context_service,
+        search: services.search_service,
+        validation: services.validation_service,
+        memory: services.memory_service,
+        agent_session: services.agent_session_service,
+        project: services.project_service,
+        vcs: services.vcs_provider,
     };
-    let services =
-        mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(
-            deps,
-        )
-        .await?;
-
-    let server = McpServerBuilder::new()
-        .with_indexing_service(services.indexing_service)
-        .with_context_service(services.context_service)
-        .with_search_service(services.search_service)
-        .with_validation_service(services.validation_service)
-        .with_memory_service(services.memory_service)
-        .with_project_service(services.project_service)
-        .with_vcs_provider(services.vcs_provider)
-        .with_agent_session_service(services.agent_session_service)
-        .build()
-        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
+    let server = McpServer::from_services(mcp_services);
 
     Ok((server, app_context))
 }

@@ -6,7 +6,7 @@ use mcb_infrastructure::project::ProjectService;
 #[tokio::test]
 async fn test_project_service_creation() {
     let service = ProjectService::new();
-    assert_eq!(service, ProjectService::default());
+    assert_eq!(service, ProjectService);
 }
 
 #[tokio::test]

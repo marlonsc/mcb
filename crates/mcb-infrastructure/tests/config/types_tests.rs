@@ -4,7 +4,7 @@
 //! during the configuration refactoring. These tests are retained as a
 //! placeholder for future configuration type testing.
 
-use mcb_infrastructure::config::data::{ServerConfig, ServerNetworkConfig, ServerSslConfig};
+use mcb_infrastructure::config::{ServerConfig, ServerNetworkConfig, ServerSslConfig};
 
 #[test]
 fn test_server_config_defaults() {

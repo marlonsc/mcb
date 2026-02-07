@@ -27,7 +27,7 @@ fn test_builder_all_services_provided() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .try_build();
+        .build();
 
     assert!(result.is_ok());
 }
@@ -48,7 +48,7 @@ fn test_builder_missing_indexing_service() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .try_build();
+        .build();
 
     assert!(result.is_err());
     match result {
@@ -75,7 +75,7 @@ fn test_builder_missing_context_service() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .try_build();
+        .build();
 
     assert!(result.is_err());
     match result {
@@ -102,7 +102,7 @@ fn test_builder_missing_search_service() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .try_build();
+        .build();
 
     assert!(result.is_err());
     match result {
@@ -129,7 +129,7 @@ fn test_builder_missing_validation_service() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .try_build();
+        .build();
 
     assert!(result.is_err());
     match result {
@@ -142,7 +142,7 @@ fn test_builder_missing_validation_service() {
 
 #[test]
 fn test_builder_empty() {
-    let result = McpServerBuilder::new().try_build();
+    let result = McpServerBuilder::new().build();
 
     assert!(result.is_err());
 }
@@ -165,7 +165,7 @@ fn test_try_build_success() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .try_build();
+        .build();
 
     assert!(server.is_ok());
 }
@@ -186,7 +186,7 @@ fn test_builder_missing_vcs_provider() {
         .with_validation_service(validation_service)
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
-        .try_build();
+        .build();
 
     assert!(result.is_err());
     match result {
@@ -213,7 +213,7 @@ fn test_builder_missing_memory_service() {
         .with_validation_service(validation_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .try_build();
+        .build();
 
     assert!(result.is_err());
     match result {
@@ -240,7 +240,7 @@ fn test_builder_missing_agent_session_service() {
         .with_validation_service(validation_service)
         .with_memory_service(memory_service)
         .with_vcs_provider(vcs_provider)
-        .try_build();
+        .build();
 
     assert!(result.is_err());
     match result {
@@ -254,7 +254,7 @@ fn test_builder_missing_agent_session_service() {
 #[test]
 fn test_builder_default() {
     let builder = McpServerBuilder::default();
-    let result = builder.try_build();
+    let result = builder.build();
 
     assert!(result.is_err());
 }

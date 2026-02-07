@@ -84,6 +84,12 @@ impl McpServer {
         Self { services, handlers }
     }
 
+    /// Create a new MCP server from domain services
+    /// This is the preferred constructor that uses the DI container
+    pub fn from_services(services: McpServices) -> Self {
+        Self::new(services)
+    }
+
     /// Access to indexing service
     pub fn indexing_service(&self) -> Arc<dyn IndexingServiceInterface> {
         Arc::clone(&self.services.indexing)

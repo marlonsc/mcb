@@ -22,7 +22,7 @@
 use std::collections::HashMap;
 
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use mcb_infrastructure::config::data::AppConfig;
+use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::types::{CacheSystemConfig, LimitsConfig, MetricsConfig};
 use serde::{Deserialize, Serialize};
 
@@ -131,7 +131,7 @@ impl SanitizedConfig {
                 .logging
                 .file_output
                 .as_ref()
-                .map(|p| p.display().to_string()),
+                .map(|p: &std::path::PathBuf| p.display().to_string()),
         }
     }
 

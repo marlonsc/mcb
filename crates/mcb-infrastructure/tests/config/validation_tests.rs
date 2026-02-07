@@ -4,11 +4,9 @@
 
 use std::path::PathBuf;
 
-use mcb_infrastructure::config::data::{
-    AuthConfig, CacheProvider, CacheSystemConfig, ServerConfig, ServerSslConfig,
-};
-use mcb_infrastructure::config::server::{
-    ServerConfigBuilder, ServerConfigPresets, ServerConfigUtils,
+use mcb_infrastructure::config::{
+    AuthConfig, CacheProvider, CacheSystemConfig, ServerConfig, ServerConfigBuilder,
+    ServerConfigPresets, ServerSslConfig,
 };
 
 #[test]
@@ -34,7 +32,7 @@ fn test_server_config_port_validation() {
         .host("127.0.0.1")
         .port(8080)
         .build();
-    let addr = ServerConfigUtils::parse_address(&config).unwrap();
+    let addr = config.parse_address().unwrap();
     assert_eq!(addr.port(), 8080);
 }
 
@@ -120,7 +118,7 @@ fn test_ssl_cert_required_for_https() {
         },
         ..Default::default()
     };
-    let result = ServerConfigUtils::validate_ssl_config(&https_no_ssl);
+    let result = https_no_ssl.validate_ssl();
     assert!(result.is_err());
     assert!(
         result
@@ -138,7 +136,7 @@ fn test_ssl_cert_required_for_https() {
         },
         ..Default::default()
     };
-    let result = ServerConfigUtils::validate_ssl_config(&https_cert_only);
+    let result = https_cert_only.validate_ssl();
     assert!(result.is_err());
     assert!(
         result
@@ -156,7 +154,7 @@ fn test_ssl_cert_required_for_https() {
         },
         ..Default::default()
     };
-    let result = ServerConfigUtils::validate_ssl_config(&http_config);
+    let result = http_config.validate_ssl();
     assert!(result.is_ok());
 }
 
@@ -164,14 +162,14 @@ fn test_ssl_cert_required_for_https() {
 fn test_default_config_is_valid() {
     // Default server config should be parseable
     let server_config = ServerConfig::default();
-    let addr_result = ServerConfigUtils::parse_address(&server_config);
+    let addr_result = server_config.parse_address();
     assert!(
         addr_result.is_ok(),
         "Default server config should have valid address"
     );
 
     // Default SSL config (HTTP) should be valid
-    let ssl_result = ServerConfigUtils::validate_ssl_config(&server_config);
+    let ssl_result = server_config.validate_ssl();
     assert!(
         ssl_result.is_ok(),
         "Default server config (HTTP) should pass SSL validation"
@@ -179,17 +177,17 @@ fn test_default_config_is_valid() {
 
     // Presets should produce valid configs
     let dev_config = ServerConfigPresets::development();
-    assert!(ServerConfigUtils::parse_address(&dev_config).is_ok());
-    assert!(ServerConfigUtils::validate_ssl_config(&dev_config).is_ok());
+    assert!(dev_config.parse_address().is_ok());
+    assert!(dev_config.validate_ssl().is_ok());
 
     let test_config = ServerConfigPresets::testing();
-    assert!(ServerConfigUtils::parse_address(&test_config).is_ok());
-    assert!(ServerConfigUtils::validate_ssl_config(&test_config).is_ok());
+    assert!(test_config.parse_address().is_ok());
+    assert!(test_config.validate_ssl().is_ok());
 
     // Production preset has HTTPS but no SSL paths - that's expected for "template"
     // Users must provide real SSL paths for production
     let prod_config = ServerConfigPresets::production();
-    assert!(ServerConfigUtils::parse_address(&prod_config).is_ok());
+    assert!(prod_config.parse_address().is_ok());
     // Production config is a template, SSL paths must be added by user
     // So we just verify the address is valid
 
@@ -215,7 +213,7 @@ fn test_server_url_generation() {
         .port(8080)
         .https(false)
         .build();
-    let url = ServerConfigUtils::get_server_url(&http_config);
+    let url = http_config.get_base_url();
     assert_eq!(url, "http://localhost:8080");
 
     // HTTPS URL generation
@@ -224,7 +222,7 @@ fn test_server_url_generation() {
         .port(443)
         .https(true)
         .build();
-    let url = ServerConfigUtils::get_server_url(&https_config);
+    let url = https_config.get_base_url();
     assert_eq!(url, "https://api.example.com:443");
 }
 
@@ -250,7 +248,10 @@ fn test_cors_configuration() {
 
     // Development preset has permissive CORS
     let dev_config = ServerConfigPresets::development();
-    let (enabled, origins) = ServerConfigUtils::cors_settings(&dev_config);
+    let (enabled, origins) = (
+        dev_config.cors.cors_enabled,
+        dev_config.cors.cors_origins.clone(),
+    );
     assert!(enabled);
     assert!(origins.contains(&"*".to_string()));
 }
@@ -262,8 +263,8 @@ fn test_timeout_configuration() {
         .connection_timeout(30)
         .build();
 
-    let request_timeout = ServerConfigUtils::request_timeout(&config);
-    let connection_timeout = ServerConfigUtils::connection_timeout(&config);
+    let request_timeout = config.request_timeout();
+    let connection_timeout = config.connection_timeout();
 
     assert_eq!(request_timeout.as_secs(), 120);
     assert_eq!(connection_timeout.as_secs(), 30);

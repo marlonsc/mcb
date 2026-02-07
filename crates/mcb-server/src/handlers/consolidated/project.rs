@@ -7,6 +7,12 @@ use crate::args::ProjectArgs;
 /// Consolidated handler for project workflow operations.
 pub struct ProjectHandler;
 
+impl Default for ProjectHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ProjectHandler {
     pub fn new() -> Self {
         Self
