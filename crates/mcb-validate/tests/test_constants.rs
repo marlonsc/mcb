@@ -225,3 +225,94 @@ pub const RUFF_CODE_INFO: &str = "I001";
 
 /// Clippy note-level label (maps to "info").
 pub const CLIPPY_LEVEL_NOTE: &str = "note";
+
+// ---------------------------------------------------------------------------
+// Engine routing constants (used by router_tests)
+// ---------------------------------------------------------------------------
+
+/// Engine name for RETE/GRL-based rules.
+pub const ENGINE_NAME_RETE: &str = "rete";
+
+/// Engine name for expression-based rules.
+pub const ENGINE_NAME_EXPRESSION: &str = "expression";
+
+/// Engine name for rust-rule-engine (full name used in YAML rules).
+pub const ENGINE_NAME_RUST_RULE: &str = "rust-rule-engine";
+
+// ---------------------------------------------------------------------------
+// GRL rule templates (used by rete_engine_tests)
+// ---------------------------------------------------------------------------
+
+/// Simple GRL rule template — single condition, single action.
+/// Use `format!()` to substitute `{name}`, `{condition}`, `{action}`.
+pub const GRL_SIMPLE_RULE: &str = r#"
+rule "{name}" salience 10 {{
+    when
+        {condition}
+    then
+        {action};
+}}
+"#;
+
+/// Fact key prefix used by rust-rule-engine.
+pub const FACTS_PREFIX: &str = "Facts";
+
+/// Fact key: whether crate has internal (forbidden) dependencies.
+pub const FACT_HAS_INTERNAL_DEPS: &str = "Facts.has_internal_dependencies";
+/// Fact key: whether a violation was triggered by the rule.
+pub const FACT_VIOLATION_TRIGGERED: &str = "Facts.violation_triggered";
+/// Fact key: human-readable violation message.
+pub const FACT_VIOLATION_MESSAGE: &str = "Facts.violation_message";
+/// Fact key: rule ID that triggered the violation.
+pub const FACT_VIOLATION_RULE_NAME: &str = "Facts.violation_rule_name";
+/// Fact key: name of the crate being checked.
+pub const FACT_CRATE_NAME: &str = "Facts.crate_name";
+/// Fact key: generic result value set by test rules.
+pub const FACT_RESULT_VALUE: &str = "Facts.result_value";
+
+// ---------------------------------------------------------------------------
+// AST root node kinds (used by ast_tests)
+// ---------------------------------------------------------------------------
+
+/// Root node kind for Rust source files.
+pub const AST_ROOT_RUST: &str = "source_file";
+
+/// Root node kind for Python modules.
+pub const AST_ROOT_PYTHON: &str = "module";
+
+/// Root node kind for JavaScript/TypeScript programs.
+pub const AST_ROOT_PROGRAM: &str = "program";
+
+// ---------------------------------------------------------------------------
+// Unwrap detector constants (used by unwrap_detector_tests)
+// ---------------------------------------------------------------------------
+
+/// Method name detected for `.unwrap()` calls.
+pub const UNWRAP_METHOD: &str = "unwrap";
+
+/// Method name detected for `.expect()` calls.
+pub const EXPECT_METHOD: &str = "expect";
+
+// ---------------------------------------------------------------------------
+// Inline code snippets for engine tests
+// ---------------------------------------------------------------------------
+
+/// Simple Rust main.rs content for RuleContext file_contents.
+pub const SNIPPET_MAIN_RS: &str = r#"fn main() { println!("hello"); }"#;
+
+/// Simple Rust lib.rs content for RuleContext file_contents.
+pub const SNIPPET_LIB_RS: &str = "pub fn helper() -> Result<(), Error> { Ok(()) }";
+
+// ---------------------------------------------------------------------------
+// Cargo.toml template for dependency tests
+// ---------------------------------------------------------------------------
+
+/// Template for generating a Cargo.toml with forbidden dependencies.
+/// Placeholders: `{crate_name}`, `{version}`, `{deps}`.
+pub const CARGO_TOML_TEMPLATE: &str = r#"[package]
+name = "{crate_name}"
+version = "{version}"
+
+[dependencies]
+{deps}
+"#;

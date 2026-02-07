@@ -58,9 +58,9 @@ fn unused_helper() -> bool {
 
 /// BUG(KISS): Too many struct fields (8) — should be decomposed.
 ///
-/// A realistic example: this looks like a valid configuration struct,
+/// A realistic example: this looks like a valid server parameters struct,
 /// but it has grown beyond what's maintainable.
-pub struct ServerConfig {
+pub struct ServerParameters {
     pub host: String,
     pub port: u16,
     pub max_connections: u32,
@@ -71,7 +71,7 @@ pub struct ServerConfig {
     pub log_level: String,
 }
 
-/// BUG(KISS): Function with too many parameters (> 4).
+/// BUG(KISS): Function with too many parameters (> 5).
 ///
 /// Realistic scenario: initialization function that keeps accumulating args.
 pub fn initialize_server(
@@ -80,10 +80,11 @@ pub fn initialize_server(
     max_conn: u32,
     timeout: u64,
     tls: bool,
+    log_level: &str,
 ) -> Result<(), String> {
     println!(
-        "Starting server on {}:{} (max_conn={}, timeout={}ms, tls={})",
-        host, port, max_conn, timeout, tls
+        "Starting server on {}:{} (max_conn={}, timeout={}ms, tls={}, log={})",
+        host, port, max_conn, timeout, tls, log_level
     );
     Ok(())
 }

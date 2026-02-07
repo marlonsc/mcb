@@ -1,19 +1,19 @@
 //! Unit tests for `RuleEngineRouter`.
 //!
-//! Moved from inline tests in `src/engines/router.rs`.
+//! Uses `ENGINE_NAME_*` constants instead of hardcoded engine strings,
+//! and `DOMAIN_CRATE` / `FORBIDDEN_PREFIX_PATTERN` from shared constants.
 
 use mcb_validate::engines::{RoutedEngine, RuleEngineRouter};
 use serde_json::json;
 
 use crate::test_constants::*;
-use crate::test_utils::*;
 
 #[test]
 fn test_detect_rete_engine_explicit() {
     let router = RuleEngineRouter::new();
 
     let rule = json!({
-        "engine": "rust-rule-engine",
+        "engine": ENGINE_NAME_RUST_RULE,
         "rule": "rule Test { when true then Action(); }"
     });
 
@@ -85,13 +85,13 @@ fn test_validate_rete_rule() {
     let router = RuleEngineRouter::new();
 
     let valid_rule = json!({
-        "engine": "rete",
+        "engine": ENGINE_NAME_RETE,
         "rule": "rule Test { when true then Action(); }"
     });
     assert!(router.validate_rule(&valid_rule).is_ok());
 
     let invalid_rule = json!({
-        "engine": "rete",
+        "engine": ENGINE_NAME_RETE,
         "message": "Something"
     });
     assert!(router.validate_rule(&invalid_rule).is_err());
@@ -102,13 +102,13 @@ fn test_validate_expression_rule() {
     let router = RuleEngineRouter::new();
 
     let valid_rule = json!({
-        "engine": "expression",
+        "engine": ENGINE_NAME_EXPRESSION,
         "expression": "x > 5"
     });
     assert!(router.validate_rule(&valid_rule).is_ok());
 
     let invalid_rule = json!({
-        "engine": "expression",
+        "engine": ENGINE_NAME_EXPRESSION,
         "message": "Something"
     });
     assert!(router.validate_rule(&invalid_rule).is_err());

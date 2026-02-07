@@ -4,7 +4,7 @@
 //! - `my-server`: contains Arc<Mutex<>> in async handler code
 //! - `my-test`: contains Arc<Mutex<>> in shared_state_handler
 
-use mcb_validate::{PatternValidator, PatternViolation};
+use mcb_validate::PatternValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;

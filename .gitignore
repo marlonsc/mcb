@@ -32,7 +32,6 @@ openspec/
 .check_*
 .test_*
 .arbor/
-
 arbor-graph.json
 
 # Session artifacts (auto-generated, not for version control)

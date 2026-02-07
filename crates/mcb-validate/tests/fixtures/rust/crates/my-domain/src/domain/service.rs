@@ -132,7 +132,7 @@ impl UserService {
     }
 }
 
-/// BUG(SOLID/ISP): Trait with too many methods — violates Interface Segregation.
+/// BUG(SOLID/ISP): Trait with too many methods (11) — violates Interface Segregation.
 /// Should be split into smaller, focused traits.
 pub trait UserRepository {
     fn find_by_id(&self, id: &str) -> Option<User>;
@@ -143,6 +143,9 @@ pub trait UserRepository {
     fn delete(&self, id: &str) -> Result<(), String>;
     fn count(&self) -> usize;
     fn exists(&self, id: &str) -> bool;
+    fn find_by_name(&self, name: &str) -> Vec<User>;
+    fn update(&self, user: &User) -> Result<(), String>;
+    fn find_active(&self) -> Vec<User>;
 }
 
 /// BUG(SOLID/LSP): Partial trait implementation — some methods use todo!()
@@ -172,5 +175,14 @@ impl UserRepository for InMemoryUserRepo {
     }
     fn exists(&self, _id: &str) -> bool {
         false
+    }
+    fn find_by_name(&self, _name: &str) -> Vec<User> {
+        todo!() // BUG: stub macro
+    }
+    fn update(&self, _user: &User) -> Result<(), String> {
+        todo!() // BUG: stub macro
+    }
+    fn find_active(&self) -> Vec<User> {
+        Vec::new()
     }
 }

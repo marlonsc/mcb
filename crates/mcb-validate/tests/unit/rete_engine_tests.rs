@@ -1,7 +1,13 @@
-//! Tests for RETE engine
+//! Tests for RETE engine.
+//!
+//! Uses shared helpers:
+//! - `build_grl_rule` — eliminates inline GRL templates
+//! - `build_kb_from_grl` — eliminates repeated KB+parser boilerplate
+//! - `create_facts` — eliminates repeated Facts setup
+//! - `FACT_*` constants — eliminates hardcoded fact key strings
 
 use mcb_validate::engines::rete_engine::ReteEngine;
-use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as RreValue};
+use rust_rule_engine::{RustRuleEngine, Value as RreValue};
 
 use crate::test_constants::*;
 use crate::test_utils::*;
@@ -9,28 +15,20 @@ use crate::test_utils::*;
 #[test]
 fn test_rete_engine_creation() {
     let _engine = ReteEngine::new();
-    // Engine should be created without panic
 }
 
-/// Test that GRL parsing ACTUALLY works with our syntax
-/// This test has a REAL assertion - if parsing fails, the test fails
+/// Verifies that GRL parsing works with our syntax.
 #[tokio::test]
 async fn test_grl_parsing_with_assertion() {
     let mut engine = ReteEngine::new();
 
-    // Simple rule using object.property syntax as per rust-rule-engine docs
-    let grl = r#"
-rule "TestRule" salience 10 {
-    when
-        Facts.has_internal_dependencies == true
-    then
-        Facts.violation_triggered = true;
-}
-"#;
+    let grl = build_grl_rule(
+        "TestRule",
+        &format!("{FACT_HAS_INTERNAL_DEPS} == true"),
+        &format!("{FACT_VIOLATION_TRIGGERED} = true"),
+    );
 
-    let result = engine.load_grl(grl);
-
-    // CRITICAL: This assertion will FAIL if GRL parsing doesn't work
+    let result = engine.load_grl(&grl);
     assert!(
         result.is_ok(),
         "GRL parsing FAILED: {:?}. This means rust-rule-engine doesn't accept our syntax!",
@@ -38,37 +36,24 @@ rule "TestRule" salience 10 {
     );
 }
 
-/// Test that rules ACTUALLY fire and modify facts
-/// This test has REAL assertions - if rules don't fire, the test fails
+/// Verifies that rules fire and modify facts.
 #[tokio::test]
 async fn test_rule_execution_modifies_facts() {
     let mut engine = ReteEngine::new();
 
-    // Simple rule that should fire and modify facts
-    let grl = r#"
-rule "TestRule" salience 10 {
-    when
-        Facts.has_internal_dependencies == true
-    then
-        Facts.result_value = true;
-}
-"#;
+    let grl = build_grl_rule(
+        "TestRule",
+        &format!("{FACT_HAS_INTERNAL_DEPS} == true"),
+        &format!("{FACT_RESULT_VALUE} = true"),
+    );
 
-    engine.load_grl(grl).expect("Should load GRL");
+    engine.load_grl(&grl).expect("Should load GRL");
 
-    let kb = KnowledgeBase::new("test");
-    // Add our rule to the knowledge base
-    let rules = GRLParser::parse_rules(grl).expect("Should parse GRL");
-    for rule in rules {
-        kb.add_rule(rule).expect("Should add rule");
-    }
+    let kb = build_kb_from_grl("test", &grl);
+    let facts = create_facts(&[(FACT_HAS_INTERNAL_DEPS, RreValue::Boolean(true))]);
 
-    // Create facts that match the rule condition
-    let facts = Facts::new();
-    facts.set("Facts.has_internal_dependencies", RreValue::Boolean(true));
-
-    let mut engine = RustRuleEngine::new(kb);
-    let exec_result = engine.execute(&facts);
+    let mut rre_engine = RustRuleEngine::new(kb);
+    let exec_result = rre_engine.execute(&facts);
 
     assert!(
         exec_result.is_ok(),
@@ -84,108 +69,73 @@ rule "TestRule" salience 10 {
         result.rules_evaluated
     );
 
-    // CRITICAL: Verify the fact was actually modified by the rule
-    let result_value = facts.get("Facts.result_value");
-    match result_value {
-        Some(RreValue::Boolean(true)) => {
-            // SUCCESS - rule fired and modified the fact
-        }
-        _ => {
-            panic!(
-                "Rule did NOT modify the fact! result_value should be Boolean(true) but got: {result_value:?}"
-            );
-        }
+    match facts.get(FACT_RESULT_VALUE) {
+        Some(RreValue::Boolean(true)) => { /* SUCCESS */ }
+        other => panic!(
+            "Rule did NOT modify the fact! {FACT_RESULT_VALUE} should be Boolean(true) but got: {other:?}"
+        ),
     }
 }
 
-/// End-to-end test for CA001 Domain Independence rule
-/// This test verifies the full flow: YAML rule → GRL parsing → execution → violation
+/// End-to-end test for CA001 Domain Independence rule:
+/// YAML rule → GRL parsing → execution → violation detection.
 #[tokio::test]
 async fn test_ca001_detects_violation_end_to_end() {
-    // Load the actual CA001 GRL rule (inline here for testing)
-    // IMPORTANT: The rule must check `violation_triggered == false` to prevent re-firing.
-    let grl = format!(
-        r#"
-rule "DomainIndependence" salience 10 {{
-    when
-        Facts.has_internal_dependencies == true &&
-        Facts.violation_triggered == false
-    then
-        Facts.violation_triggered = true;
-        Facts.violation_message = "Domain layer cannot depend on internal {prefix}* crates";
-        Facts.violation_rule_name = "CA001";
-}}
-"#,
-        prefix = FORBIDDEN_PREFIX,
+    let grl = build_grl_rule(
+        "DomainIndependence",
+        &format!("{FACT_HAS_INTERNAL_DEPS} == true && {FACT_VIOLATION_TRIGGERED} == false"),
+        &format!(
+            "{FACT_VIOLATION_TRIGGERED} = true;\n        \
+             {FACT_VIOLATION_MESSAGE} = \"Domain layer cannot depend on internal {FORBIDDEN_PREFIX}* crates\";\n        \
+             {FACT_VIOLATION_RULE_NAME} = \"{RULE_CA001}\""
+        ),
     );
 
-    let rules = GRLParser::parse_rules(&grl).expect("Should parse CA001 GRL");
-    let kb = KnowledgeBase::new("test");
-    for rule in rules {
-        kb.add_rule(rule).expect("Should add CA001 rule");
-    }
+    let kb = build_kb_from_grl("test", &grl);
 
-    // Test case 1: VIOLATION should be detected when has_internal_dependencies=true
-    let facts = Facts::new();
-    facts.set(
-        "Facts.crate_name",
-        RreValue::String(DOMAIN_CRATE.to_string()),
-    );
-    facts.set("Facts.has_internal_dependencies", RreValue::Boolean(true)); // VIOLATION!
-    facts.set("Facts.violation_triggered", RreValue::Boolean(false));
+    // Case 1: VIOLATION — has_internal_dependencies=true
+    {
+        let facts = create_facts(&[
+            (FACT_CRATE_NAME, RreValue::String(DOMAIN_CRATE.to_string())),
+            (FACT_HAS_INTERNAL_DEPS, RreValue::Boolean(true)),
+            (FACT_VIOLATION_TRIGGERED, RreValue::Boolean(false)),
+        ]);
 
-    let mut engine = RustRuleEngine::new(kb.clone());
-    let exec_result = engine.execute(&facts);
-    assert!(exec_result.is_ok());
+        let mut rre_engine = RustRuleEngine::new(kb.clone());
+        let result = rre_engine.execute(&facts).expect("execute should succeed");
 
-    let result = exec_result.unwrap();
+        assert_eq!(
+            result.rules_fired, 1,
+            "CA001 should fire when has_internal_dependencies=true! rules_fired={}",
+            result.rules_fired
+        );
 
-    // Rule SHOULD fire when condition is true
-    assert_eq!(
-        result.rules_fired, 1,
-        "CA001 should fire when has_internal_dependencies=true! rules_fired={}",
-        result.rules_fired
-    );
-
-    // Verify violation was triggered
-    match facts.get("Facts.violation_triggered") {
-        Some(RreValue::Boolean(true)) => {
-            // SUCCESS - violation detected (as expected)
-        }
-        other => {
-            panic!("CA001 did not trigger violation! Got: {other:?}");
+        match facts.get(FACT_VIOLATION_TRIGGERED) {
+            Some(RreValue::Boolean(true)) => { /* expected */ }
+            other => panic!("CA001 did not trigger violation! Got: {other:?}"),
         }
     }
 
-    // Test case 2: NO violation when has_internal_dependencies=false
-    let facts = Facts::new();
-    facts.set(
-        "Facts.crate_name",
-        RreValue::String(DOMAIN_CRATE.to_string()),
-    );
-    facts.set("Facts.has_internal_dependencies", RreValue::Boolean(false)); // CLEAN!
-    facts.set("Facts.violation_triggered", RreValue::Boolean(false));
+    // Case 2: NO violation — has_internal_dependencies=false
+    {
+        let facts = create_facts(&[
+            (FACT_CRATE_NAME, RreValue::String(DOMAIN_CRATE.to_string())),
+            (FACT_HAS_INTERNAL_DEPS, RreValue::Boolean(false)),
+            (FACT_VIOLATION_TRIGGERED, RreValue::Boolean(false)),
+        ]);
 
-    let mut engine = RustRuleEngine::new(kb);
-    let exec_result = engine.execute(&facts);
-    assert!(exec_result.is_ok());
+        let mut rre_engine = RustRuleEngine::new(kb);
+        let result = rre_engine.execute(&facts).expect("execute should succeed");
 
-    let result = exec_result.unwrap();
+        assert_eq!(
+            result.rules_fired, 0,
+            "CA001 should NOT fire when has_internal_dependencies=false! rules_fired={}",
+            result.rules_fired
+        );
 
-    // Rule should NOT fire when condition is false
-    assert_eq!(
-        result.rules_fired, 0,
-        "CA001 should NOT fire when has_internal_dependencies=false! rules_fired={}",
-        result.rules_fired
-    );
-
-    // Verify violation was NOT triggered
-    match facts.get("Facts.violation_triggered") {
-        Some(RreValue::Boolean(false)) => {
-            // SUCCESS - no violation (as expected)
-        }
-        other => {
-            panic!("CA001 incorrectly triggered violation! Got: {other:?}");
+        match facts.get(FACT_VIOLATION_TRIGGERED) {
+            Some(RreValue::Boolean(false)) => { /* expected */ }
+            other => panic!("CA001 incorrectly triggered violation! Got: {other:?}"),
         }
     }
 }

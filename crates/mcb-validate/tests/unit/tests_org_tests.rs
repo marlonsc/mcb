@@ -6,7 +6,7 @@
 
 use mcb_validate::tests_org::{TestValidator, TestViolation};
 
-use crate::test_constants::TEST_CRATE;
+use crate::test_constants::*;
 use crate::test_utils::*;
 
 #[test]
@@ -35,7 +35,7 @@ fn test_bad_test_naming_detection() {
 
     let has_bad_name = violations
         .iter()
-        .any(|v| matches!(v, TestViolation::BadTestNaming { .. }));
+        .any(|v| matches!(v, TestViolation::BadTestFunctionName { .. }));
 
     // Some validators may not check integration test naming — log for visibility
     if has_bad_name {

@@ -1,35 +1,21 @@
-//! Tests for cargo dependency detection
-
-use std::collections::HashMap;
-use std::path::PathBuf;
+//! Tests for cargo dependency detection.
+//!
+//! Uses shared helpers:
+//! - `create_rule_context` — eliminates duplicated RuleContext construction
+//! - `cargo_toml_with_deps` — eliminates inline Cargo.toml template strings
 
 use mcb_validate::ValidationConfig;
-use mcb_validate::engines::RuleContext;
 use mcb_validate::engines::hybrid_engine::RuleEngine;
 use mcb_validate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 use serde_json::json;
 
-use crate::test_constants::{
-    DEFAULT_VERSION, DOMAIN_CRATE, FORBIDDEN_PREFIX_PATTERN, TEST_SUBJECT_CRATE,
-    TEST_WORKSPACE_PATH,
-};
-
-fn create_test_context() -> RuleContext {
-    RuleContext {
-        workspace_root: PathBuf::from(TEST_WORKSPACE_PATH),
-        config: ValidationConfig::new(TEST_WORKSPACE_PATH),
-        ast_data: HashMap::new(),
-        cargo_data: HashMap::new(),
-        file_contents: HashMap::new(),
-        facts: std::sync::Arc::new(Vec::new()),
-        graph: std::sync::Arc::new(mcb_validate::graph::DependencyGraph::new()),
-    }
-}
+use crate::test_constants::*;
+use crate::test_utils::*;
 
 #[test]
 fn test_cargo_dependency_detection() {
     let engine = RustyRulesEngineWrapper::new();
-    let context = create_test_context();
+    let context = create_rule_context();
 
     let rule_definition = json!({
         "type": "cargo_dependencies",
@@ -59,25 +45,18 @@ fn test_cargo_dependency_detection_with_violation() {
     let temp_dir = tempfile::TempDir::new().unwrap();
     let cargo_path = temp_dir.path().join("Cargo.toml");
 
-    // Create a Cargo.toml with forbidden dependencies
-    let cargo_content = format!(
-        r#"
-[package]
-name = "{TEST_SUBJECT_CRATE}"
-version = "{DEFAULT_VERSION}"
-
-[dependencies]
-serde = "1.0"
-{infrastructure} = "0.1.0"  # This should be detected as forbidden
-{domain} = "0.1.0"          # This should also be detected
-"#,
-        infrastructure = "my-infrastructure",
-        domain = DOMAIN_CRATE
+    let cargo_content = cargo_toml_with_deps(
+        TEST_SUBJECT_CRATE,
+        &[
+            ("serde", "1.0"),
+            ("my-infrastructure", "0.1.0"),
+            (DOMAIN_CRATE, "0.1.0"),
+        ],
     );
 
     std::fs::write(&cargo_path, cargo_content).unwrap();
 
-    let mut context = create_test_context();
+    let mut context = create_rule_context();
     context.workspace_root = temp_dir.path().to_path_buf();
     context.config = ValidationConfig::new(temp_dir.path());
 

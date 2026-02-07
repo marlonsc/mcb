@@ -470,3 +470,163 @@ pub fn with_inline_crate(crate_name: &str, content: &str) -> (TempDir, std::path
     let root = temp.path().to_path_buf();
     (temp, root)
 }
+
+// ===========================================================================
+// Engine test helpers — shared across expression, rete, cargo, architecture
+// ===========================================================================
+
+/// Creates a minimal `RuleContext` with empty file contents.
+///
+/// Shared by `cargo_dependency_tests` and any test that needs a bare context.
+///
+/// # Example
+/// ```rust,ignore
+/// let ctx = create_rule_context();
+/// let result = engine.execute(&rule, &ctx);
+/// ```
+pub fn create_rule_context() -> mcb_validate::engines::RuleContext {
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+
+    mcb_validate::engines::RuleContext {
+        workspace_root: PathBuf::from(super::test_constants::TEST_WORKSPACE_PATH),
+        config: mcb_validate::ValidationConfig::new(super::test_constants::TEST_WORKSPACE_PATH),
+        ast_data: HashMap::new(),
+        cargo_data: HashMap::new(),
+        file_contents: HashMap::new(),
+        facts: std::sync::Arc::new(Vec::new()),
+        graph: std::sync::Arc::new(mcb_validate::graph::DependencyGraph::new()),
+    }
+}
+
+/// Creates a `RuleContext` pre-loaded with given file entries.
+///
+/// Shared by `expression_engine_tests` which needs file_contents populated.
+///
+/// # Example
+/// ```rust,ignore
+/// let ctx = create_rule_context_with_files(&[
+///     ("src/main.rs", SNIPPET_MAIN_RS),
+///     ("src/lib.rs", SNIPPET_LIB_RS),
+/// ]);
+/// ```
+pub fn create_rule_context_with_files(
+    files: &[(&str, &str)],
+) -> mcb_validate::engines::RuleContext {
+    let mut ctx = create_rule_context();
+    for (path, content) in files {
+        ctx.file_contents
+            .insert(path.to_string(), content.to_string());
+    }
+    ctx
+}
+
+/// Builds the YAML variable mapping required by `YamlRuleLoader`.
+///
+/// Populates `project_prefix` and all `{key}_crate` / `{key}_module` entries
+/// from [`CRATE_LAYER_MAPPINGS`].
+///
+/// # Example
+/// ```rust,ignore
+/// let vars = build_yaml_variables();
+/// let loader = YamlRuleLoader::with_variables(rules_dir, Some(vars)).unwrap();
+/// ```
+pub fn build_yaml_variables() -> serde_yaml::Value {
+    let mut variables = serde_yaml::Mapping::new();
+    variables.insert(
+        serde_yaml::Value::String("project_prefix".to_string()),
+        serde_yaml::Value::String(super::test_constants::PROJECT_PREFIX.to_string()),
+    );
+
+    for (key, crate_name, module_name) in super::test_constants::CRATE_LAYER_MAPPINGS {
+        variables.insert(
+            serde_yaml::Value::String(format!("{key}_crate")),
+            serde_yaml::Value::String(crate_name.to_string()),
+        );
+        variables.insert(
+            serde_yaml::Value::String(format!("{key}_module")),
+            serde_yaml::Value::String(module_name.to_string()),
+        );
+    }
+
+    serde_yaml::Value::Mapping(variables)
+}
+
+/// Builds a GRL rule string from name, condition, and action.
+///
+/// # Example
+/// ```rust,ignore
+/// let grl = build_grl_rule("TestRule", "Facts.x == true", "Facts.y = true");
+/// ```
+pub fn build_grl_rule(name: &str, condition: &str, action: &str) -> String {
+    format!(
+        r#"
+rule "{name}" salience 10 {{
+    when
+        {condition}
+    then
+        {action};
+}}
+"#
+    )
+}
+
+/// Parses a GRL string and returns a populated `KnowledgeBase`.
+///
+/// # Panics
+/// Panics if GRL parsing fails (test-only helper).
+///
+/// # Example
+/// ```rust,ignore
+/// let grl = build_grl_rule("Test", "Facts.x == true", "Facts.y = true");
+/// let kb = build_kb_from_grl("test", &grl);
+/// let mut engine = RustRuleEngine::new(kb);
+/// ```
+pub fn build_kb_from_grl(kb_name: &str, grl: &str) -> rust_rule_engine::KnowledgeBase {
+    use rust_rule_engine::{GRLParser, KnowledgeBase};
+
+    let kb = KnowledgeBase::new(kb_name);
+    let rules = GRLParser::parse_rules(grl).expect("Should parse GRL");
+    for rule in rules {
+        kb.add_rule(rule).expect("Should add rule");
+    }
+    kb
+}
+
+/// Creates `Facts` pre-populated with the given key-value pairs.
+///
+/// # Example
+/// ```rust,ignore
+/// let facts = create_facts(&[
+///     (FACT_HAS_INTERNAL_DEPS, RreValue::Boolean(true)),
+///     (FACT_VIOLATION_TRIGGERED, RreValue::Boolean(false)),
+/// ]);
+/// ```
+pub fn create_facts(entries: &[(&str, rust_rule_engine::Value)]) -> rust_rule_engine::Facts {
+    let facts = rust_rule_engine::Facts::new();
+    for (key, value) in entries {
+        facts.set(key, value.clone());
+    }
+    facts
+}
+
+/// Generates a `Cargo.toml` string with the given crate name and dependencies.
+///
+/// # Example
+/// ```rust,ignore
+/// let toml = cargo_toml_with_deps("my-crate", &[
+///     ("serde", "1.0"),
+///     ("my-infrastructure", "0.1.0"),
+/// ]);
+/// ```
+pub fn cargo_toml_with_deps(crate_name: &str, deps: &[(&str, &str)]) -> String {
+    let deps_str: Vec<String> = deps
+        .iter()
+        .map(|(name, version)| format!("{name} = \"{version}\""))
+        .collect();
+
+    super::test_constants::CARGO_TOML_TEMPLATE
+        .replace("{crate_name}", crate_name)
+        .replace("{version}", super::test_constants::DEFAULT_VERSION)
+        .replace("{deps}", &deps_str.join("\n"))
+}

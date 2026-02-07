@@ -1,40 +1,23 @@
-//! Tests for expression engine
+//! Tests for expression engine.
+//!
+//! Uses `create_rule_context_with_files` from shared helpers to eliminate
+//! the duplicated `create_test_context` function, and `SNIPPET_*` constants
+//! for inline file contents.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
 
-use mcb_validate::ValidationConfig;
-use mcb_validate::engines::RuleContext;
 use mcb_validate::engines::expression_engine::ExpressionEngine;
 
-use crate::test_constants::TEST_WORKSPACE_PATH;
-
-fn create_test_context() -> RuleContext {
-    let mut file_contents = HashMap::new();
-    file_contents.insert(
-        "src/main.rs".to_string(),
-        "fn main() { println!(\"hello\"); }".to_string(),
-    );
-    file_contents.insert(
-        "src/lib.rs".to_string(),
-        "pub fn helper() -> Result<(), Error> { Ok(()) }".to_string(),
-    );
-
-    RuleContext {
-        workspace_root: PathBuf::from(TEST_WORKSPACE_PATH),
-        config: ValidationConfig::new(TEST_WORKSPACE_PATH),
-        ast_data: HashMap::new(),
-        cargo_data: HashMap::new(),
-        file_contents,
-        facts: std::sync::Arc::new(Vec::new()),
-        graph: std::sync::Arc::new(mcb_validate::graph::DependencyGraph::new()),
-    }
-}
+use crate::test_constants::{SNIPPET_LIB_RS, SNIPPET_MAIN_RS};
+use crate::test_utils::create_rule_context_with_files;
 
 #[test]
 fn test_simple_expression() {
     let engine = ExpressionEngine::new();
-    let context = create_test_context();
+    let context = create_rule_context_with_files(&[
+        ("src/main.rs", SNIPPET_MAIN_RS),
+        ("src/lib.rs", SNIPPET_LIB_RS),
+    ]);
 
     let result = engine.evaluate_expression("file_count == 2", &context);
     assert!(result.is_ok());
@@ -48,7 +31,10 @@ fn test_simple_expression() {
 #[test]
 fn test_boolean_expression() {
     let engine = ExpressionEngine::new();
-    let context = create_test_context();
+    let context = create_rule_context_with_files(&[
+        ("src/main.rs", SNIPPET_MAIN_RS),
+        ("src/lib.rs", SNIPPET_LIB_RS),
+    ]);
 
     let result = engine.evaluate_expression("has_unwrap == false", &context);
     assert!(result.is_ok());
@@ -74,7 +60,10 @@ fn test_custom_variables() {
 #[test]
 fn test_invalid_expression() {
     let engine = ExpressionEngine::new();
-    let context = create_test_context();
+    let context = create_rule_context_with_files(&[
+        ("src/main.rs", SNIPPET_MAIN_RS),
+        ("src/lib.rs", SNIPPET_LIB_RS),
+    ]);
 
     let result = engine.evaluate_expression("undefined_var > 0", &context);
     assert!(result.is_err());

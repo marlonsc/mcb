@@ -1,6 +1,11 @@
-//! Tests for AST-based unwrap detector
+//! Tests for AST-based unwrap detector.
+//!
+//! Uses `UNWRAP_METHOD` and `EXPECT_METHOD` constants from shared
+//! test infrastructure.
 
 use mcb_validate::ast::UnwrapDetector;
+
+use crate::test_constants::{EXPECT_METHOD, UNWRAP_METHOD};
 
 #[test]
 fn test_detector_creation() {
@@ -21,7 +26,7 @@ fn test_detect_unwrap_simple() {
         .expect("Should detect unwrap");
 
     assert_eq!(detections.len(), 1);
-    assert_eq!(detections[0].method, "unwrap");
+    assert_eq!(detections[0].method, UNWRAP_METHOD);
     assert!(!detections[0].in_test);
 }
 
@@ -35,7 +40,7 @@ fn test_detect_expect() {
         .expect("Should detect expect");
 
     assert_eq!(detections.len(), 1);
-    assert_eq!(detections[0].method, "expect");
+    assert_eq!(detections[0].method, EXPECT_METHOD);
 }
 
 #[test]
@@ -49,8 +54,8 @@ fn test_detect_multiple() {
         .expect("Should detect multiple");
 
     assert_eq!(detections.len(), 2);
-    assert_eq!(detections[0].method, "unwrap");
-    assert_eq!(detections[1].method, "expect");
+    assert_eq!(detections[0].method, UNWRAP_METHOD);
+    assert_eq!(detections[1].method, EXPECT_METHOD);
 }
 
 #[test]

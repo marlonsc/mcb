@@ -1,6 +1,10 @@
 //! Tests for linter integration modules
+//!
+//! Uses shared constants for severity levels, rule codes, and file extensions.
 
 use mcb_validate::linters::*;
+
+use crate::test_constants::*;
 
 #[test]
 fn test_linter_engine_creation() {
@@ -11,32 +15,32 @@ fn test_linter_engine_creation() {
 #[test]
 fn test_ruff_severity_mapping() {
     assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity("F401"),
-        "error"
+        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_ERROR),
+        SEVERITY_ERROR
     );
     assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity("W291"),
-        "warning"
+        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_WARNING),
+        SEVERITY_WARNING
     );
     assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity("I001"),
-        "info"
+        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_INFO),
+        SEVERITY_INFO
     );
 }
 
 #[test]
 fn test_clippy_level_mapping() {
     assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level("error"),
-        "error"
+        mcb_validate::linters::parsers::map_clippy_level(SEVERITY_ERROR),
+        SEVERITY_ERROR
     );
     assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level("warning"),
-        "warning"
+        mcb_validate::linters::parsers::map_clippy_level(SEVERITY_WARNING),
+        SEVERITY_WARNING
     );
     assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level("note"),
-        "info"
+        mcb_validate::linters::parsers::map_clippy_level(CLIPPY_LEVEL_NOTE),
+        SEVERITY_INFO
     );
 }
 
@@ -50,15 +54,15 @@ async fn test_linter_engine_execution() {
 
 #[test]
 fn test_linter_type_supported_extension() {
-    assert_eq!(LinterType::Ruff.supported_extension(), "py");
-    assert_eq!(LinterType::Clippy.supported_extension(), "rs");
+    assert_eq!(LinterType::Ruff.supported_extension(), RUFF_EXTENSION);
+    assert_eq!(LinterType::Clippy.supported_extension(), CLIPPY_EXTENSION);
 }
 
 #[test]
 fn test_linter_type_matches_extension() {
-    assert!(LinterType::Ruff.matches_extension(Some("py")));
-    assert!(!LinterType::Ruff.matches_extension(Some("rs")));
-    assert!(LinterType::Clippy.matches_extension(Some("rs")));
-    assert!(!LinterType::Clippy.matches_extension(Some("py")));
+    assert!(LinterType::Ruff.matches_extension(Some(RUFF_EXTENSION)));
+    assert!(!LinterType::Ruff.matches_extension(Some(CLIPPY_EXTENSION)));
+    assert!(LinterType::Clippy.matches_extension(Some(CLIPPY_EXTENSION)));
+    assert!(!LinterType::Clippy.matches_extension(Some(RUFF_EXTENSION)));
     assert!(!LinterType::Ruff.matches_extension(None));
 }

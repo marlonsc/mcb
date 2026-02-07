@@ -13,7 +13,7 @@ use crate::test_utils::*;
 fn test_struct_too_many_fields() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
 
-    // my-test/src/lib.rs has ServerConfig with 8 fields
+    // my-test/src/lib.rs has ServerParameters with 8 fields
     let validator = KissValidator::new(&root).with_max_struct_fields(MAX_STRUCT_FIELDS_THRESHOLD);
     let violations = validator.validate_struct_fields().unwrap();
 
@@ -28,7 +28,7 @@ fn test_struct_too_many_fields() {
 fn test_function_too_many_params() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
 
-    // my-test/src/lib.rs has initialize_server with 5 params
+    // my-test/src/lib.rs has initialize_server with 6 params
     let validator = KissValidator::new(&root);
     let violations = validator.validate_function_params().unwrap();
 
