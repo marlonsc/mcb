@@ -133,7 +133,9 @@ pub async fn get_executions(
                 .filter_map(|result| {
                     // Extract execution metadata from observation; skip if missing
                     // (None indicates observation is not an execution type)
-                    let execution = result.observation.metadata.execution?;
+                    let Some(execution) = result.observation.metadata.execution else {
+                        return None;
+                    };
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "command": execution.command,

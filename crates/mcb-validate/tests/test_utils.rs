@@ -7,7 +7,7 @@
 //! - **Fixture loading**: `copy_fixture_crate`, `setup_fixture_workspace`
 //! - **DRY helpers**:     `with_fixture_crate`, `with_inline_crate`, `with_fixture_workspace`
 //! - **Assertions**:      `assert_no_violations`, `assert_min_violations`,
-//!                        `assert_has_violation_matching`, `assert_no_violation_from_file`
+//!   `assert_has_violation_matching`, `assert_no_violation_from_file`
 #![allow(dead_code)]
 
 use std::fs;

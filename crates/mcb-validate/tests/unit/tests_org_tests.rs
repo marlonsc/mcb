@@ -1,13 +1,32 @@
 //! Tests for test organization validation
 //!
-//! Uses fixture crate `my-test` which contains:
-//! - Inline test module in src/lib.rs (#[cfg(test)] mod tests { ... })
-//! - Tests with bad naming in tests/integration_test.rs
+//! Discovery found 8 violations in the full workspace:
+//! - InlineTestModule: #[cfg(test)] mod tests in my-test/src/lib.rs
+//! - BadTestFunctionName: tests without test_ prefix
+//! - Various test organization issues across fixture crates
 
 use mcb_validate::tests_org::{TestValidator, TestViolation};
 
 use crate::test_constants::*;
 use crate::test_utils::*;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// validate_all() — full workspace
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_tests_org_full_workspace() {
+    let (_temp, root) =
+        with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
+    let validator = TestValidator::new(&root);
+    let violations = validator.validate_all().unwrap();
+
+    assert_violation_count(&violations, 8, "TestValidator full workspace");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-method tests
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_inline_test_module_detection() {
@@ -24,26 +43,9 @@ fn test_inline_test_module_detection() {
     );
 }
 
-#[test]
-fn test_bad_test_naming_detection() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
-
-    // my-test/tests/integration_test.rs has bad_naming_convention()
-    // that doesn't follow test_ prefix convention
-    let validator = TestValidator::new(&root);
-    let violations = validator.validate_test_naming().unwrap();
-
-    let has_bad_name = violations
-        .iter()
-        .any(|v| matches!(v, TestViolation::BadTestFunctionName { .. }));
-
-    // Some validators may not check integration test naming — log for visibility
-    if has_bad_name {
-        println!("Detected bad test naming in fixture");
-    } else {
-        println!("Test naming check may not cover integration tests");
-    }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Negative test
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_proper_test_file_no_violation() {
@@ -54,7 +56,6 @@ fn test_proper_test_file_no_violation() {
 pub fn production_code() -> bool { true }
 ",
     );
-    // Add a properly structured test file
     create_test_crate_with_tests(
         &_temp,
         TEST_CRATE,

@@ -1,12 +1,30 @@
 //! Tests for Refactoring Validation
 //!
-//! Uses fixture crates `my-domain` and `my-server` which both define
-//! a `User` struct — triggering duplicate type detection across crates.
+//! Discovery found 1 violation in the full workspace:
+//! - Duplicate struct `User` defined in both `my-domain` and `my-server`
 
 use mcb_validate::refactoring::RefactoringValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// validate_all() — full workspace
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_refactoring_full_workspace() {
+    let (_temp, root) =
+        with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
+    let validator = RefactoringValidator::new(&root);
+    let violations = validator.validate_all().unwrap();
+
+    assert_violation_count(&violations, 1, "RefactoringValidator full workspace");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-method tests
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_duplicate_definition_detection() {
@@ -30,31 +48,9 @@ fn test_no_duplicates_in_single_crate() {
     let validator = RefactoringValidator::new(&root);
     let violations = validator.validate_duplicate_definitions().unwrap();
 
-    // Single crate should not have duplicate type names across crates
-    println!("Duplicates in single crate: {}", violations.len());
-}
-
-#[test]
-fn test_orphan_module_detection() {
-    let (_temp, root) = with_inline_crate(
-        TEST_CRATE,
-        r"
-pub mod used_module;
-",
-    );
-    // Create an orphaned file that's not declared in lib.rs
-    let orphan_path = root
-        .join("crates")
-        .join(TEST_CRATE)
-        .join("src")
-        .join("orphan.rs");
-    std::fs::write(&orphan_path, "pub fn orphaned() {}").unwrap();
-
-    let validator = RefactoringValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
-
-    println!(
-        "Refactoring violations (orphan check): {}",
-        violations.len()
+    // Single crate should have no cross-crate duplicate definitions
+    assert_no_violations(
+        &violations,
+        "Single crate should have no cross-crate duplicates",
     );
 }

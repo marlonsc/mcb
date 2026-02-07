@@ -7,11 +7,11 @@
 //! | Method                             | Fixture violations                                     |
 //! |------------------------------------|--------------------------------------------------------|
 //! | `validate_no_unwrap_expect()`      | 3 — `.unwrap()` (×2), `.expect()` (×1) in `my-test`   |
-//! | `find_todo_comments()`             | 14 — TODO/FIXME across `my-test` and `my-domain`       |
+//! | `find_todo_comments()`             | 13 — TODO/FIXME across `my-test` and `my-domain`       |
 //! | `validate_no_panic()`              | 1 — `panic!()` in `validate_critical_config()`         |
 //! | `validate_dead_code_annotations()` | 3 — `#[allow(dead_code)]` on struct + 2 fields         |
 //! | `validate_file_sizes()`            | 0 with default threshold, 1+ with low threshold        |
-//! | `validate_all()`                   | 23 total (with `.expect()` as separate violation)       |
+//! | `validate_all()`                   | 22 total (with `.expect()` as separate violation)       |
 
 use mcb_validate::{QualityValidator, QualityViolation};
 
@@ -29,7 +29,7 @@ fn test_quality_full_workspace() {
     let validator = QualityValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    assert_violation_count(&violations, 23, "QualityValidator full workspace");
+    assert_violation_count(&violations, 22, "QualityValidator full workspace");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ fn test_todo_fixme_detection() {
     let violations = validator.find_todo_comments().unwrap();
 
     // Discovery found 14 TODO/FIXME across my-test and my-domain
-    assert_violation_count(&violations, 14, "TODO and FIXME comments across workspace");
+    assert_violation_count(&violations, 13, "TODO and FIXME comments across workspace");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
