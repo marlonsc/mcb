@@ -18,19 +18,21 @@
 // use crate::constants::{COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::{collection_mapping_lock_path, collection_mapping_path};
+use mcb_infrastructure::config::{
+    COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, config_dir,
+};
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::path::PathBuf;
 
 /// Gets the default mapping file path (~/.config/mcb/collection_mapping.json)
 fn get_mapping_file_path() -> Result<PathBuf> {
-    collection_mapping_path()
+    Ok(config_dir()?.join(COLLECTION_MAPPING_FILENAME))
 }
 
 /// Gets the lock file path
 fn get_lock_file_path() -> Result<PathBuf> {
-    collection_mapping_lock_path()
+    Ok(config_dir()?.join(COLLECTION_MAPPING_LOCK_FILENAME))
 }
 
 /// RAII guard for file locking

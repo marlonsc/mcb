@@ -1,7 +1,7 @@
 //! Configuration Loader Tests
 
 use mcb_infrastructure::config::data::AppConfig;
-use mcb_infrastructure::config::loader::{ConfigBuilder, ConfigLoader};
+use mcb_infrastructure::config::loader::ConfigLoader;
 use mcb_infrastructure::constants::{DEFAULT_HTTP_PORT, DEFAULT_LOG_LEVEL};
 use tempfile::TempDir;
 
@@ -27,10 +27,9 @@ fn test_config_loader_default() {
 
 #[test]
 fn test_config_builder() {
-    let mut server_config = mcb_infrastructure::config::data::ServerConfig::default();
-    server_config.network.port = 9090;
-
-    let config = ConfigBuilder::new().with_server(server_config).build();
+    let mut config = AppConfig::default();
+    config.auth.enabled = false;
+    config.server.network.port = 9090;
 
     assert_eq!(config.server.network.port, 9090);
 }

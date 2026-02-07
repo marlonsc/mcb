@@ -5,7 +5,7 @@
 
 use mcb_domain::entities::vcs::RepositoryId;
 use mcb_domain::error::{Error, Result};
-use mcb_infrastructure::config::{vcs_registry_lock_path, vcs_registry_path};
+use mcb_infrastructure::config::{VCS_LOCK_FILENAME, VCS_REGISTRY_FILENAME, config_dir};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::OpenOptions;
@@ -25,11 +25,11 @@ impl Registry {
 }
 
 fn registry_path() -> Result<PathBuf> {
-    vcs_registry_path()
+    Ok(config_dir()?.join(VCS_REGISTRY_FILENAME))
 }
 
 fn lock_path() -> Result<PathBuf> {
-    vcs_registry_lock_path()
+    Ok(config_dir()?.join(VCS_LOCK_FILENAME))
 }
 
 struct FileLockGuard {

@@ -16,23 +16,3 @@ pub fn config_dir() -> Result<PathBuf> {
         dirs::config_dir().ok_or_else(|| Error::config("Unable to determine config directory"))?;
     Ok(config_dir.join("mcb"))
 }
-
-/// Returns the path to the VCS repository registry file
-pub fn vcs_registry_path() -> Result<PathBuf> {
-    Ok(config_dir()?.join(VCS_REGISTRY_FILENAME))
-}
-
-/// Returns the path to the VCS repository registry lock file
-pub fn vcs_registry_lock_path() -> Result<PathBuf> {
-    Ok(config_dir()?.join(VCS_LOCK_FILENAME))
-}
-
-/// Returns the path to the collection mapping file
-pub fn collection_mapping_path() -> Result<PathBuf> {
-    Ok(config_dir()?.join(COLLECTION_MAPPING_FILENAME))
-}
-
-/// Returns the path to the collection mapping lock file
-pub fn collection_mapping_lock_path() -> Result<PathBuf> {
-    Ok(config_dir()?.join(COLLECTION_MAPPING_LOCK_FILENAME))
-}
