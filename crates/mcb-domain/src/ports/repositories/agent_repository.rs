@@ -1,10 +1,11 @@
 //! Agent session repository port.
 
+use async_trait::async_trait;
+
 use crate::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, Delegation, ToolCall,
 };
 use crate::error::Result;
-use async_trait::async_trait;
 
 /// Query filters for agent session lookups.
 ///

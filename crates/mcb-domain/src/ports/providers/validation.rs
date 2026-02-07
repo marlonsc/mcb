@@ -20,11 +20,12 @@
 //! This separation allows multiple validation providers to be registered
 //! and selected at runtime based on configuration.
 
-use crate::error::Result;
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+
+use crate::error::Result;
 // ============================================================================
 // Re-export types from services for consistency
 // ============================================================================

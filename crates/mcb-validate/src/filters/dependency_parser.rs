@@ -3,10 +3,11 @@
 //! Parses Cargo.toml files to extract declared dependencies for validation.
 //! Used to check if libraries used in code are properly declared.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 use crate::Result;
@@ -236,9 +237,11 @@ impl CargoDependencyParser {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_parse_simple_dependency() {

@@ -1,8 +1,7 @@
 use git2::Repository;
-use tempfile::TempDir;
-
 use mcb_domain::entities::submodule::SubmoduleInfo;
 use mcb_providers::git::submodule::collect_submodules;
+use tempfile::TempDir;
 
 #[tokio::test]
 async fn test_collect_submodules_empty_repo() {

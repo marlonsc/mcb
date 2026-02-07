@@ -3,10 +3,11 @@
 //! Interface for search operations that combine semantic vector search
 //! with keyword-based search capabilities.
 
+use async_trait::async_trait;
+
 use crate::entities::CodeChunk;
 use crate::error::Result;
 use crate::value_objects::search::SearchResult;
-use async_trait::async_trait;
 
 /// Repository: Semantic and Hybrid Search Operations
 ///

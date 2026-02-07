@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
 
 /// File tree node structure (agnóstico, used by all renderers)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

@@ -1,7 +1,8 @@
 //! Tests for VCS entities (REF003: dedicated test file).
 
-use mcb_domain::entities::vcs::{RepositoryId, VcsBranch, VcsRepository};
 use std::path::PathBuf;
+
+use mcb_domain::entities::vcs::{RepositoryId, VcsBranch, VcsRepository};
 
 #[test]
 fn test_repository_id_new_and_as_str() {

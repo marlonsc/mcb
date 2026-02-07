@@ -1,7 +1,8 @@
 //! Serve command - runs the MCP server
 
-use clap::Args;
 use std::path::PathBuf;
+
+use clap::Args;
 
 /// Arguments for the serve command
 #[derive(Args, Debug, Clone)]

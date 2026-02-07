@@ -1,15 +1,16 @@
 //! Session handler implementation.
 
-use crate::args::{SessionAction, SessionArgs};
+use std::sync::Arc;
+
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
-use std::sync::Arc;
 use validator::Validate;
 
 use super::{create, get, list, summarize, update};
+use crate::args::{SessionAction, SessionArgs};
 
 /// Handler for agent session MCP tool operations.
 ///

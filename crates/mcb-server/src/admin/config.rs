@@ -19,12 +19,14 @@
 //! - Database passwords
 //! - Encryption keys
 
-use crate::constants::VALID_SECTIONS;
+use std::collections::HashMap;
+
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use mcb_infrastructure::config::data::AppConfig;
 use mcb_infrastructure::config::types::{CacheSystemConfig, LimitsConfig, MetricsConfig};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::constants::VALID_SECTIONS;
 
 /// Configuration response (sanitized for API output)
 #[derive(Debug, Clone, Serialize, Deserialize)]

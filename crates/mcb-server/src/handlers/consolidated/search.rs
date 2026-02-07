@@ -1,17 +1,19 @@
 //! Search handler for code and memory search operations.
 
-use crate::args::{SearchArgs, SearchResource};
-use crate::collection_mapping::map_collection_name;
-use crate::formatter::ResponseFormatter;
+use std::sync::Arc;
+use std::time::Instant;
+
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
-use std::sync::Arc;
-use std::time::Instant;
 use validator::Validate;
+
+use crate::args::{SearchArgs, SearchResource};
+use crate::collection_mapping::map_collection_name;
+use crate::formatter::ResponseFormatter;
 
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]

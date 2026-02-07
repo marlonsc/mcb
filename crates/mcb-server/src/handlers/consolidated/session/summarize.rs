@@ -1,11 +1,12 @@
-use super::helpers::SessionHelpers;
-use crate::args::SessionArgs;
-use crate::formatter::ResponseFormatter;
+use std::sync::Arc;
 
 use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use std::sync::Arc;
+
+use super::helpers::SessionHelpers;
+use crate::args::SessionArgs;
+use crate::formatter::ResponseFormatter;
 
 pub async fn summarize_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,

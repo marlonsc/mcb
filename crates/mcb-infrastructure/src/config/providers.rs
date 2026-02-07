@@ -2,9 +2,10 @@
 //!
 //! Manages configuration for embedding and vector store providers.
 
+use std::collections::HashMap;
+
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use std::collections::HashMap;
 
 /// Provider configuration manager
 #[derive(Clone)]

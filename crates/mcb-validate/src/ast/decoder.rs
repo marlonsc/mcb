@@ -3,6 +3,7 @@
 //! Converts Tree-sitter concrete syntax trees to unified `AstNode` format.
 
 use std::collections::HashMap;
+
 use tree_sitter::Node;
 
 use super::{AstNode, Position, Span};

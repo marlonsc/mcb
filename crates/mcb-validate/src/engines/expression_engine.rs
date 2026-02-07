@@ -3,10 +3,11 @@
 //! Wrapper for evalexpr crate providing simple boolean expression evaluation.
 //! Use this engine for rules that don't require complex GRL syntax (when/then).
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use evalexpr::{ContextWithMutableVariables, HashMapContext, Value as EvalValue};
 use serde_json::Value;
-use std::collections::HashMap;
 
 use crate::Result;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};

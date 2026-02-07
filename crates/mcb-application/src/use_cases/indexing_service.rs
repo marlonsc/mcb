@@ -4,6 +4,10 @@
 //! Orchestrates file discovery, chunking, and storage of code embeddings.
 //! Supports async background indexing with event publishing.
 
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::Instant;
+
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
@@ -14,9 +18,6 @@ use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingResult, IndexingServiceInterface,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::time::Instant;
 use tracing::{debug, info, warn};
 
 use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS, SUPPORTED_EXTENSIONS};

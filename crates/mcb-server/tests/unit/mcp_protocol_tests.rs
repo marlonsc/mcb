@@ -10,10 +10,11 @@
 
 extern crate mcb_providers;
 
-use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
-use mcb_server::transport::types::{McpRequest, McpResponse};
 use std::net::TcpListener;
 use std::sync::Arc;
+
+use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
+use mcb_server::transport::types::{McpRequest, McpResponse};
 
 use crate::test_utils::test_fixtures::create_test_mcp_server;
 

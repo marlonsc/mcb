@@ -2,12 +2,14 @@
 //!
 //! Validates proper use of pub(crate), pub, and private visibility.
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
-use crate::{Result, ValidationConfig};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::Serialize;
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::{Result, ValidationConfig};
 
 /// Visibility Violations
 #[derive(Debug, Clone, Serialize)]

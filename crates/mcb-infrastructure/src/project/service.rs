@@ -2,11 +2,12 @@
 //!
 //! Implements `ProjectDetectorService` using `mcb-providers` git detection features.
 
+use std::path::Path;
+
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::ports::services::project::ProjectDetectorService;
 use mcb_providers::git::detect_all_projects;
-use std::path::Path;
 
 /// Real implementation of project detector service
 #[derive(Debug, PartialEq)]

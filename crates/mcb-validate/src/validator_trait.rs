@@ -3,9 +3,10 @@
 //! Provides a unified interface for all validators and a registry
 //! for managing and running validators.
 
+use anyhow::Result;
+
 use crate::ValidationConfig;
 use crate::violation_trait::Violation;
-use anyhow::Result;
 
 /// All validators implement this trait
 ///
@@ -132,34 +133,31 @@ impl ValidatorRegistry {
     /// Create a registry with standard validators for a specific workspace
     pub fn standard_for(workspace_root: impl Into<std::path::PathBuf>) -> Self {
         // Architecture validators
+        // Performance validators
+        use crate::async_patterns::AsyncPatternValidator;
         use crate::clean_architecture::CleanArchitectureValidator;
-        use crate::layer_flow::LayerFlowValidator;
-        use crate::port_adapter::PortAdapterValidator;
-        use crate::visibility::VisibilityValidator;
-
         // Dependency validators
         use crate::dependency::DependencyValidator;
         // Note: ShakuValidator removed - now using inventory-based plugin architecture
 
         // Quality validators
         use crate::documentation::DocumentationValidator;
-        use crate::naming::NamingValidator;
-        use crate::pattern_validator::PatternValidator;
-        use crate::quality::QualityValidator;
-        use crate::solid::SolidValidator;
-        use crate::tests_org::TestValidator;
-
-        // Performance validators
-        use crate::async_patterns::AsyncPatternValidator;
-        use crate::kiss::KissValidator;
-        use crate::performance::PerformanceValidator;
-        use crate::pmat::PmatValidator;
-
         // Organization validators
         use crate::error_boundary::ErrorBoundaryValidator;
         use crate::implementation::ImplementationQualityValidator;
+        use crate::kiss::KissValidator;
+        use crate::layer_flow::LayerFlowValidator;
+        use crate::naming::NamingValidator;
         use crate::organization::OrganizationValidator;
+        use crate::pattern_validator::PatternValidator;
+        use crate::performance::PerformanceValidator;
+        use crate::pmat::PmatValidator;
+        use crate::port_adapter::PortAdapterValidator;
+        use crate::quality::QualityValidator;
         use crate::refactoring::RefactoringValidator;
+        use crate::solid::SolidValidator;
+        use crate::tests_org::TestValidator;
+        use crate::visibility::VisibilityValidator;
 
         let root = workspace_root.into();
 

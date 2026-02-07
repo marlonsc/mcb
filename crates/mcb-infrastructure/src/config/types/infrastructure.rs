@@ -3,9 +3,11 @@
 //! Consolidated configuration for infrastructure concerns:
 //! logging, limits, cache, metrics, and resilience.
 
-use crate::constants::*;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::constants::*;
 
 // ============================================================================
 // Logging Configuration

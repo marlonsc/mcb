@@ -2,8 +2,9 @@
 //!
 //! Provides standard locations for configuration files and directories.
 
-use mcb_domain::error::{Error, Result};
 use std::path::PathBuf;
+
+use mcb_domain::error::{Error, Result};
 
 pub const VCS_REGISTRY_FILENAME: &str = "vcs_repository_registry.json";
 pub const VCS_LOCK_FILENAME: &str = "vcs_repository_registry.lock";

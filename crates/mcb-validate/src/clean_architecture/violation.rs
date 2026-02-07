@@ -8,10 +8,12 @@
 //! - Value objects are immutable
 //! - Server layer boundaries are respected
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::Severity;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::Severity;
+use crate::violation_trait::{Violation, ViolationCategory};
 
 /// Clean Architecture violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

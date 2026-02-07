@@ -6,12 +6,14 @@
 //! - Detects default values without documentation
 //! - Ensures proper use of configuration patterns
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use std::path::{Path, PathBuf};
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Configuration quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

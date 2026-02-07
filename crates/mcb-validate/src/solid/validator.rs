@@ -1,14 +1,15 @@
 //! Solid validator implementation
 
-use super::violation::SolidViolation;
-use crate::violation_trait::Violation;
-use crate::{Result, Severity, ValidationConfig};
-use crate::thresholds::{MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_STRUCT_LINES, MAX_TRAIT_METHODS};
-use regex::Regex;
-use walkdir::WalkDir;
-use crate::pattern_registry::PATTERNS;
 use std::path::PathBuf;
 
+use regex::Regex;
+use walkdir::WalkDir;
+
+use super::violation::SolidViolation;
+use crate::pattern_registry::PATTERNS;
+use crate::thresholds::{MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_STRUCT_LINES, MAX_TRAIT_METHODS};
+use crate::violation_trait::Violation;
+use crate::{Result, Severity, ValidationConfig};
 
 /// SOLID principles validator
 pub struct SolidValidator {

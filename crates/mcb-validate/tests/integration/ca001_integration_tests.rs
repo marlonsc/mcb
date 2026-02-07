@@ -5,11 +5,12 @@
 
 #[cfg(test)]
 mod ca001_integration_tests {
+    use std::collections::HashMap;
+    use std::path::{Path, PathBuf};
+
     use mcb_validate::ValidationConfig;
     use mcb_validate::engines::RuleContext;
     use mcb_validate::engines::rete_engine::ReteEngine;
-    use std::collections::HashMap;
-    use std::path::{Path, PathBuf};
 
     /// Get the workspace root for tests (the actual project root)
     fn get_workspace_root() -> PathBuf {

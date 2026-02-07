@@ -2,8 +2,9 @@
 
 #[cfg(test)]
 mod architecture_rules_tests {
-    use mcb_validate::rules::yaml_loader::YamlRuleLoader;
     use std::path::PathBuf;
+
+    use mcb_validate::rules::yaml_loader::YamlRuleLoader;
 
     #[tokio::test]
     async fn test_ca001_rule_loading() {

@@ -11,13 +11,15 @@
 //! | `/collections/:name/files` | GET | List files in a collection |
 //! | `/collections/:name/files/*path/chunks` | GET | Get chunks for a file |
 
+use std::sync::Arc;
+
 use mcb_domain::ports::browse::HighlightServiceInterface;
 use mcb_domain::ports::providers::VectorStoreBrowser;
 use mcb_domain::value_objects::CollectionId;
+use mcb_domain::value_objects::FileTreeNode;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get};
-use std::sync::Arc;
 
 use super::auth::AdminAuth;
 use super::models::{
@@ -25,7 +27,6 @@ use super::models::{
     FileInfoResponse, FileListResponse,
 };
 use crate::constants::LIST_FILE_PATHS_LIMIT;
-use mcb_domain::value_objects::FileTreeNode;
 
 /// Browse handler state containing the vector store browser
 #[derive(Clone)]

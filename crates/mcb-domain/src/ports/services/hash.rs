@@ -1,6 +1,8 @@
-use crate::error::Result;
-use async_trait::async_trait;
 use std::path::Path;
+
+use async_trait::async_trait;
+
+use crate::error::Result;
 
 /// File hash state management port
 #[async_trait]

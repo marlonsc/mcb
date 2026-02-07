@@ -3,13 +3,14 @@
 //! Stores a mapping of repository_id -> path so tools like search_branch can
 //! resolve a repository without requiring the path in every call.
 
+use std::collections::HashMap;
+use std::fs::OpenOptions;
+use std::path::{Path, PathBuf};
+
 use mcb_domain::entities::vcs::RepositoryId;
 use mcb_domain::error::{Error, Result};
 use mcb_infrastructure::config::{VCS_LOCK_FILENAME, VCS_REGISTRY_FILENAME, config_dir};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs::OpenOptions;
-use std::path::{Path, PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Registry {

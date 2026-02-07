@@ -10,15 +10,17 @@
 //!
 //! This ensures the AdminAuth guard works correctly in production.
 
-use super::harness::{
-    AdminTestHarness, TEST_API_KEY, TEST_AUTH_HEADER, create_auth_config, create_auth_config_no_key,
-};
+use std::sync::Arc;
+
 use mcb_domain::ports::IndexingOperationsInterface;
 use mcb_domain::value_objects::CollectionId;
 use mcb_server::admin::{auth::AdminAuthConfig, routes::admin_rocket};
 use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
-use std::sync::Arc;
+
+use super::harness::{
+    AdminTestHarness, TEST_API_KEY, TEST_AUTH_HEADER, create_auth_config, create_auth_config_no_key,
+};
 
 // =============================================================================
 // PROTECTED ENDPOINTS - Should require authentication

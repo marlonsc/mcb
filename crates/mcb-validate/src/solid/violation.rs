@@ -7,10 +7,12 @@
 //! - ISP: Interface Segregation Principle (large traits)
 //! - DIP: Dependency Inversion Principle (concrete dependencies)
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::Severity;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::Severity;
+use crate::violation_trait::{Violation, ViolationCategory};
 
 /// SOLID violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

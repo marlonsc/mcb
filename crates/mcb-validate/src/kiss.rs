@@ -7,16 +7,18 @@
 //! - Nesting depth (max 3 levels)
 //! - Function length (max 50 lines)
 
+use std::path::PathBuf;
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
+
 use crate::thresholds::{
     MAX_BUILDER_FIELDS, MAX_DI_CONTAINER_FIELDS, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS,
     MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS,
 };
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use walkdir::WalkDir;
 
 /// KISS violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

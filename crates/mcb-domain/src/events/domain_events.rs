@@ -4,11 +4,13 @@
 //! enables services to publish events without coupling to specific implementations
 //! (tokio broadcast, NATS, etc.).
 
-use crate::error::Result;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+
+use crate::error::Result;
 
 /// Service lifecycle state for managed services
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]

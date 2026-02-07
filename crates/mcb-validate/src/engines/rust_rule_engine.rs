@@ -6,11 +6,10 @@
 use async_trait::async_trait;
 use serde_json::Value;
 
-use crate::Result;
-use crate::engines::hybrid_engine::RuleViolation;
-
 use super::hybrid_engine::{RuleContext, RuleEngine};
 use super::rete_engine::ReteEngine;
+use crate::Result;
+use crate::engines::hybrid_engine::RuleViolation;
 
 /// Wrapper for rust-rule-engine that delegates to `ReteEngine`
 ///

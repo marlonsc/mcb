@@ -8,10 +8,10 @@
 //! violation - mcb-validate is dev tooling). Real validation is wired via
 //! DI at the infrastructure layer.
 
-use async_trait::async_trait;
-use mcb_domain::error::Result;
 use std::path::Path;
 
+use async_trait::async_trait;
+use mcb_domain::error::Result;
 use mcb_domain::ports::services::{
     ComplexityReport, RuleInfo, ValidationReport, ValidationServiceInterface,
 };

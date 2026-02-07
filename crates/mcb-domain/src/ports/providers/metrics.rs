@@ -23,9 +23,10 @@
 //! - `increment_indexed_files` - Count of indexed files
 //! - `increment_search_requests` - Count of search requests
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::time::Duration;
+
+use async_trait::async_trait;
 
 // ============================================================================
 // Core Types

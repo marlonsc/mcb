@@ -4,11 +4,10 @@
 //! Optimized for code embeddings with voyage-code-3 model.
 
 use async_trait::async_trait;
-use reqwest::Client;
-
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use reqwest::Client;
 
 use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,

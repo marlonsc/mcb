@@ -3,11 +3,12 @@
 //! Provides factory functions for creating real local providers (InMemory, FastEmbed, Moka)
 //! for use in tests that should verify real behavior instead of mocking.
 
+use std::sync::Arc;
+
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use mcb_providers::embedding::FastEmbedProvider;
 use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
-use std::sync::Arc;
 
 /// Create a real EdgeVec vector store provider for testing
 ///
@@ -47,8 +48,9 @@ pub fn create_real_embedding_provider_with_model(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use mcb_domain::value_objects::CollectionId;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_real_vector_store_creation() {

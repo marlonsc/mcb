@@ -4,6 +4,10 @@
 //! - GET /admin/provider/current - Get current provider
 //! - POST /admin/provider/switch - Switch to a different provider
 
+use std::collections::HashMap;
+use std::pin::Pin;
+use std::sync::Arc;
+
 use futures::Stream;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::admin::{
@@ -14,9 +18,6 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use mcb_server::admin::{AdminApi, AdminApiConfig};
 use serde_json::json;
-use std::collections::HashMap;
-use std::pin::Pin;
-use std::sync::Arc;
 
 /// Mock implementation of PerformanceMetricsInterface for testing
 #[derive(Clone)]

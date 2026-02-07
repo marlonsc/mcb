@@ -3,9 +3,10 @@
 //! Defines the `LanguageId` enum for supported programming languages
 //! and `LanguageRegistry` for language lookup and metadata.
 
+use std::collections::HashMap;
+
 use rust_code_analysis::LANG;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Supported programming languages
 ///

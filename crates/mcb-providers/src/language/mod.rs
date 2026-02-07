@@ -58,6 +58,12 @@ pub use c::CProcessor;
 pub use common::{BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule};
 pub use cpp::CppProcessor;
 pub use csharp::CSharpProcessor;
+// Re-export detection functions
+pub use detection::{
+    get_chunk_size, is_language_supported, language_from_extension, supported_languages,
+};
+// Re-export engine
+pub use engine::{IntelligentChunker, UniversalLanguageChunkingProvider};
 pub use go::GoProcessor;
 pub use java::JavaProcessor;
 pub use javascript::JavaScriptProcessor;
@@ -67,11 +73,3 @@ pub use python::PythonProcessor;
 pub use ruby::RubyProcessor;
 pub use rust::RustProcessor;
 pub use swift::SwiftProcessor;
-
-// Re-export engine
-pub use engine::{IntelligentChunker, UniversalLanguageChunkingProvider};
-
-// Re-export detection functions
-pub use detection::{
-    get_chunk_size, is_language_supported, language_from_extension, supported_languages,
-};

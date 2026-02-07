@@ -2,10 +2,11 @@
 //! Routes incoming tool call requests to the appropriate handlers.
 //! This module provides a centralized dispatch mechanism for MCP tool calls.
 
+use std::sync::Arc;
+
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
-use std::sync::Arc;
 use tracing::warn;
 
 use crate::args::{

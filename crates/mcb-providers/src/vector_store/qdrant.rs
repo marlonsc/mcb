@@ -12,11 +12,10 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
-use reqwest::Client;
-
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
+use reqwest::Client;
 use serde_json::Value;
 
 use crate::constants::CONTENT_TYPE_JSON;
@@ -496,10 +495,11 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use crate::constants::QDRANT_DEFAULT_PORT;
 use mcb_domain::registry::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
+
+use crate::constants::QDRANT_DEFAULT_PORT;
 
 /// Factory function for creating Qdrant vector store provider instances.
 fn qdrant_factory(

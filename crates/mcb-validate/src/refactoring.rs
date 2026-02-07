@@ -8,17 +8,19 @@
 //! - Deleted module references
 //! - Dead code from refactoring
 
+use std::collections::{HashMap, HashSet};
+use std::path::{Path, PathBuf};
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
+
 use crate::constants::{
     GENERIC_TYPE_NAMES, KNOWN_MIGRATION_PAIRS, REFACTORING_SKIP_DIR_PATTERNS,
     REFACTORING_SKIP_FILES, UTILITY_TYPES,
 };
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
-use walkdir::WalkDir;
 
 /// Refactoring completeness violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -700,9 +702,11 @@ impl crate::validator_trait::Validator for RefactoringValidator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
         let crate_dir = temp.path().join("crates").join(name).join("src");

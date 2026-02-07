@@ -2,11 +2,13 @@
 //!
 //! Utilities for managing HTTP server configuration and settings.
 
-use crate::config::data::*;
-use crate::constants::*;
-use mcb_domain::error::{Error, Result};
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
+
+use mcb_domain::error::{Error, Result};
+
+use crate::config::data::*;
+use crate::constants::*;
 
 /// Server configuration utilities
 pub struct ServerConfigUtils;

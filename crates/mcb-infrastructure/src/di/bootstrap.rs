@@ -3,6 +3,19 @@
 //! Provides the composition root using runtime-swappable provider handles
 //! and direct infrastructure service storage.
 
+use std::sync::Arc;
+
+use mcb_domain::error::Result;
+use mcb_domain::ports::admin::{
+    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
+};
+use mcb_domain::ports::browse::HighlightServiceInterface;
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
+use mcb_domain::ports::services::ProjectDetectorService;
+use tracing::info;
+
 use crate::config::AppConfig;
 use crate::crypto::CryptoService;
 use crate::di::admin::{
@@ -24,17 +37,6 @@ use crate::infrastructure::{
 };
 use crate::project::ProjectService;
 use crate::services::HighlightServiceImpl;
-use mcb_domain::error::Result;
-use mcb_domain::ports::admin::{
-    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
-};
-use mcb_domain::ports::browse::HighlightServiceInterface;
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::VcsProvider;
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
-use mcb_domain::ports::services::ProjectDetectorService;
-use std::sync::Arc;
-use tracing::info;
 
 /// Application context with provider handles and infrastructure services
 pub struct AppContext {

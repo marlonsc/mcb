@@ -6,6 +6,10 @@
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 //! Authentication guards added in v0.1.2.
 
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
 use mcb_domain::ports::admin::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
     IndexingOperationsInterface, PerformanceMetricsData, PerformanceMetricsInterface,
@@ -20,9 +24,6 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get, post};
 use serde::Serialize;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tracing::info;
 
 use super::auth::AdminAuth;

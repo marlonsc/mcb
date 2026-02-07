@@ -17,10 +17,9 @@ use std::path::Path;
 use mcb_language_support::LanguageDetector;
 use rust_code_analysis::{FuncSpace, LANG, get_function_spaces};
 
-use crate::{Result, ValidationError};
-
 use super::MetricViolation;
 use super::thresholds::{MetricThresholds, MetricType};
+use crate::{Result, ValidationError};
 
 /// Comprehensive metrics from rust-code-analysis
 #[derive(Debug, Clone, Default)]

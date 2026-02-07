@@ -3,13 +3,14 @@
 //! Tests cover all CRUD operations and filtering for projects, phases, issues,
 //! dependencies, and decisions.
 
+use std::sync::Arc;
+
 use mcb_domain::entities::project::{
     DependencyType, IssueStatus, IssueType, PhaseStatus, Project, ProjectDecision,
     ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use mcb_domain::ports::repositories::{IssueFilter, ProjectRepository};
 use mcb_providers::database::{create_executor_in_memory, create_project_repository_from_executor};
-use std::sync::Arc;
 
 // ============================================================================
 // Helper Functions

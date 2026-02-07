@@ -3,14 +3,16 @@
 //! Builder pattern for constructing MCP servers with dependency injection.
 //! Ensures all required dependencies are provided before server construction.
 
-use crate::McpServer;
+use std::sync::Arc;
+
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
-use std::sync::Arc;
+
+use crate::McpServer;
 
 /// Builder for MCP Server with dependency injection
 ///

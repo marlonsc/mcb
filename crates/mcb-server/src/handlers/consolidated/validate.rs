@@ -1,15 +1,17 @@
 //! Validate handler for code validation operations.
 
-use crate::args::{ValidateAction, ValidateArgs, ValidateScope};
-use crate::formatter::ResponseFormatter;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Instant;
+
 use mcb_domain::ports::services::ValidationServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Instant;
 use validator::Validate;
+
+use crate::args::{ValidateAction, ValidateArgs, ValidateScope};
+use crate::formatter::ResponseFormatter;
 
 /// Handler for code validation MCP tool operations.
 #[derive(Clone)]

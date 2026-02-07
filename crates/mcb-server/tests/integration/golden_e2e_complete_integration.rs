@@ -1,15 +1,17 @@
 //! Included by mcb-server test binary; contract: docs/testing/GOLDEN_TESTS_CONTRACT.md.
 
-use crate::test_utils::test_fixtures::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
-    golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
-};
+use std::path::Path;
+use std::time::Duration;
+
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::Content;
 use serde::Deserialize;
-use std::path::Path;
-use std::time::Duration;
+
+use crate::test_utils::test_fixtures::{
+    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
+    golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
+};
 
 fn extract_text_content(content: &[Content]) -> String {
     content

@@ -1,7 +1,8 @@
 //! Tests for Error Boundary Validation
 
-use mcb_validate::error_boundary::ErrorBoundaryValidator;
 use std::fs;
+
+use mcb_validate::error_boundary::ErrorBoundaryValidator;
 use tempfile::TempDir;
 
 fn create_crate_structure(temp: &TempDir, crate_name: &str, path: &str, content: &str) {

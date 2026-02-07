@@ -8,14 +8,16 @@
 //!
 //! Phase 2 deliverable: QUAL001 (no-unwrap) detects `.unwrap()` calls via AST
 
+use std::path::PathBuf;
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
+
 use crate::ast::UnwrapDetector;
 use crate::thresholds::MAX_FILE_LINES;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use walkdir::WalkDir;
 
 /// Quality violation types representing specific code quality issues.
 #[derive(Debug, Clone, Serialize, Deserialize)]

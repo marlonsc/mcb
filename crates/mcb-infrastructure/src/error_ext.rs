@@ -3,8 +3,11 @@
 //! Provides context extension methods for domain errors and infrastructure-specific
 //! error handling utilities.
 
-use mcb_domain::error::{Error, Result};
 use std::fmt;
+
+use mcb_domain::error::{
+    ConfigError, Error, InfrastructureError, IoError, Result, ValidationError,
+};
 
 /// Extension trait for adding context to errors
 ///
@@ -73,9 +76,11 @@ where
     where
         C: fmt::Display + Send + Sync + 'static,
     {
-        self.map_err(|err| Error::Infrastructure {
-            message: format!("{}: {}", context, err),
-            source: Some(Box::new(err)),
+        self.map_err(|err| {
+            Error::Infrastructure(InfrastructureError::Operation {
+                message: format!("{}: {}", context, err),
+                source: Some(Box::new(err)),
+            })
         })
     }
 
@@ -84,9 +89,11 @@ where
         C: fmt::Display + Send + Sync + 'static,
         F: FnOnce() -> C,
     {
-        self.map_err(|err| Error::Infrastructure {
-            message: format!("{}: {}", f(), err),
-            source: Some(Box::new(err)),
+        self.map_err(|err| {
+            Error::Infrastructure(InfrastructureError::Operation {
+                message: format!("{}: {}", f(), err),
+                source: Some(Box::new(err)),
+            })
         })
     }
 
@@ -95,10 +102,7 @@ where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized,
     {
-        self.map_err(|err| Error::Io {
-            message: format!("{}: {}", context, err),
-            source: Some(Box::new(err)),
-        })
+        self.map_err(|err| Error::Io(IoError::with_source(format!("{}: {}", context, err), err)))
     }
 
     fn config_context<C>(self, context: C) -> Result<T>
@@ -106,9 +110,11 @@ where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized,
     {
-        self.map_err(|err| Error::Configuration {
-            message: format!("{}: {}", context, err),
-            source: Some(Box::new(err)),
+        self.map_err(|err| {
+            Error::Config(ConfigError::with_source(
+                format!("{}: {}", context, err),
+                err,
+            ))
         })
     }
 
@@ -117,9 +123,11 @@ where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized,
     {
-        self.map_err(|err| Error::Authentication {
-            message: format!("{}: {}", context, err),
-            source: Some(Box::new(err)),
+        self.map_err(|err| {
+            Error::Infrastructure(InfrastructureError::Authentication {
+                message: format!("{}: {}", context, err),
+                source: Some(Box::new(err)),
+            })
         })
     }
 
@@ -128,9 +136,11 @@ where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized,
     {
-        self.map_err(|err| Error::Network {
-            message: format!("{}: {}", context, err),
-            source: Some(Box::new(err)),
+        self.map_err(|err| {
+            Error::Infrastructure(InfrastructureError::Network {
+                message: format!("{}: {}", context, err),
+                source: Some(Box::new(err)),
+            })
         })
     }
 
@@ -139,9 +149,11 @@ where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized,
     {
-        self.map_err(|err| Error::Database {
-            message: format!("{}: {}", context, err),
-            source: Some(Box::new(err)),
+        self.map_err(|err| {
+            Error::Infrastructure(InfrastructureError::Database {
+                message: format!("{}: {}", context, err),
+                source: Some(Box::new(err)),
+            })
         })
     }
 }
@@ -151,10 +163,10 @@ pub fn to_domain_error<E>(error: E, context: &str) -> Error
 where
     E: std::error::Error + Send + Sync + 'static,
 {
-    Error::Infrastructure {
+    Error::Infrastructure(InfrastructureError::Operation {
         message: format!("{}: {}", context, error),
         source: Some(Box::new(error)),
-    }
+    })
 }
 
 /// Convert standard library errors to domain results with context
@@ -174,18 +186,18 @@ pub mod infra {
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        Error::Infrastructure {
+        Error::Infrastructure(InfrastructureError::Operation {
             message: message.to_string(),
             source: Some(Box::new(error)),
-        }
+        })
     }
 
     /// Create infrastructure error from message only
     pub fn infrastructure_error_msg(message: &str) -> Error {
-        Error::Infrastructure {
+        Error::Infrastructure(InfrastructureError::Operation {
             message: message.to_string(),
             source: None,
-        }
+        })
     }
 
     /// Convert I/O error with context
@@ -193,10 +205,7 @@ pub mod infra {
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        Error::Io {
-            message: message.to_string(),
-            source: Some(Box::new(error)),
-        }
+        Error::Io(IoError::with_source(message.to_string(), error))
     }
 
     /// Convert configuration error with context
@@ -204,10 +213,7 @@ pub mod infra {
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        Error::Configuration {
-            message: message.to_string(),
-            source: Some(Box::new(error)),
-        }
+        Error::Config(ConfigError::with_source(message.to_string(), error))
     }
 
     /// Convert authentication error with context
@@ -215,10 +221,10 @@ pub mod infra {
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        Error::Authentication {
+        Error::Infrastructure(InfrastructureError::Authentication {
             message: message.to_string(),
             source: Some(Box::new(error)),
-        }
+        })
     }
 
     /// Convert network error with context
@@ -226,10 +232,10 @@ pub mod infra {
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        Error::Network {
+        Error::Infrastructure(InfrastructureError::Network {
             message: message.to_string(),
             source: Some(Box::new(error)),
-        }
+        })
     }
 
     /// Convert database error with context
@@ -237,9 +243,9 @@ pub mod infra {
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        Error::Database {
+        Error::Infrastructure(InfrastructureError::Database {
             message: message.to_string(),
             source: Some(Box::new(error)),
-        }
+        })
     }
 }

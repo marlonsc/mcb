@@ -6,8 +6,9 @@
 //! Authentication integration added in v0.1.2.
 //! Browse API added in v0.1.2 for code navigation.
 
-use rocket::{Build, Rocket, routes};
 use std::sync::Arc;
+
+use rocket::{Build, Rocket, routes};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::{

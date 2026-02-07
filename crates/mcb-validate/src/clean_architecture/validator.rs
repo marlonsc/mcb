@@ -1,12 +1,13 @@
 //! Clean Architecture validator implementation
 
-use super::violation::CleanArchitectureViolation;
-use crate::violation_trait::Violation;
-use crate::{Result, Severity, ValidationConfig};
-use walkdir::WalkDir;
-use crate::pattern_registry::PATTERNS;
 use std::path::PathBuf;
 
+use walkdir::WalkDir;
+
+use super::violation::CleanArchitectureViolation;
+use crate::pattern_registry::PATTERNS;
+use crate::violation_trait::Violation;
+use crate::{Result, Severity, ValidationConfig};
 
 /// Clean Architecture validator
 pub struct CleanArchitectureValidator {

@@ -1,9 +1,11 @@
 //! Tests for Implementation Quality Validation
 
-use crate::test_utils::create_test_crate;
-use mcb_validate::ImplementationQualityValidator;
 use std::fs;
+
+use mcb_validate::ImplementationQualityValidator;
 use tempfile::TempDir;
+
+use crate::test_utils::create_test_crate;
 
 #[test]
 fn test_empty_method_detection() {

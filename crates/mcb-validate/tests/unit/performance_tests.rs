@@ -1,8 +1,9 @@
 //! Tests for Performance Validation
 
-use crate::test_utils::create_test_crate;
 use mcb_validate::performance::PerformanceValidator;
 use tempfile::TempDir;
+
+use crate::test_utils::create_test_crate;
 
 #[test]
 fn test_clone_in_loop_detection() {

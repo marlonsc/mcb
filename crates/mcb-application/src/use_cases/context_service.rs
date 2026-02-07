@@ -3,14 +3,15 @@
 //! Application service for code intelligence and semantic operations.
 //! Orchestrates embeddings, vector storage, and caching for semantic code understanding.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{CacheEntryConfig, EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::ports::services::ContextServiceInterface;
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use serde_json::json;
-use std::collections::HashMap;
-use std::sync::Arc;
 
 /// Cache key helpers for collection management
 mod cache_keys {

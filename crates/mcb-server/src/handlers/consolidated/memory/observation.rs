@@ -1,14 +1,16 @@
-use super::helpers::MemoryHelpers;
-use crate::args::MemoryArgs;
-use crate::formatter::ResponseFormatter;
+use std::sync::Arc;
+
 use mcb_domain::entities::memory::ObservationMetadata;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::vcs_context::VcsContext;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use std::sync::Arc;
 use uuid::Uuid;
+
+use super::helpers::MemoryHelpers;
+use crate::args::MemoryArgs;
+use crate::formatter::ResponseFormatter;
 
 pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,

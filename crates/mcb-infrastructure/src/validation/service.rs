@@ -3,13 +3,14 @@
 //! Implements `ValidationServiceInterface` using mcb-validate for
 //! architecture validation.
 
+use std::path::Path;
+
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::services::{
     ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
     ViolationEntry,
 };
-use std::path::Path;
 
 /// Infrastructure validation service using mcb-validate
 pub struct InfraValidationService;

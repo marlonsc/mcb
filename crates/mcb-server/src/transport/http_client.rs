@@ -10,12 +10,12 @@
 use std::io::{self, BufRead, Write};
 use std::time::Duration;
 
+use mcb_domain::value_objects::ids::SessionId;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use super::types::{McpRequest, McpResponse};
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
-use mcb_domain::value_objects::ids::SessionId;
 
 /// MCP client transport configuration
 #[derive(Debug, Clone)]

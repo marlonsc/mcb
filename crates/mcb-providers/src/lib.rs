@@ -40,7 +40,6 @@ pub use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
     VectorStoreProvider,
 };
-
 // Re-export CryptoProvider from domain (for encrypted vector store)
 pub use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 

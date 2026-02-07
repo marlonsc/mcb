@@ -18,12 +18,13 @@
 use std::sync::OnceLock;
 use std::time::Duration;
 
-use crate::constants::{METRICS_BATCH_SIZE_BUCKETS, METRICS_LATENCY_BUCKETS};
 use mcb_domain::ports::admin::{PerformanceMetricsData, PerformanceMetricsInterface};
 use mcb_domain::ports::infrastructure::PerformanceMetricsCollector;
 use prometheus::{
     CounterVec, Gauge, HistogramVec, register_counter_vec, register_gauge, register_histogram_vec,
 };
+
+use crate::constants::{METRICS_BATCH_SIZE_BUCKETS, METRICS_LATENCY_BUCKETS};
 
 /// Global metrics registry holder
 static METRICS: OnceLock<Result<PrometheusMetricsInner, String>> = OnceLock::new();

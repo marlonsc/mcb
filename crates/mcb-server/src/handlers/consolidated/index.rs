@@ -1,17 +1,19 @@
 //! Index handler for codebase indexing operations.
 
-use crate::args::{IndexAction, IndexArgs};
-use crate::collection_mapping::map_collection_name;
-use crate::formatter::ResponseFormatter;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Instant;
+
 use mcb_domain::ports::services::IndexingServiceInterface;
 use mcb_domain::value_objects::CollectionId;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Instant;
 use validator::Validate;
+
+use crate::args::{IndexAction, IndexArgs};
+use crate::collection_mapping::map_collection_name;
+use crate::formatter::ResponseFormatter;
 
 /// Handler for codebase indexing MCP tool operations.
 #[derive(Clone)]

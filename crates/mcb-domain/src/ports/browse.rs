@@ -3,10 +3,12 @@
 //! Traits for browsing file trees and syntax highlighting.
 //! These define the contract for the browse service implementation.
 
+use std::path::{Path, PathBuf};
+
+use thiserror::Error;
+
 use crate::error::Result;
 use crate::value_objects::browse::{FileNode, HighlightedCode};
-use std::path::{Path, PathBuf};
-use thiserror::Error;
 
 /// Error type for browse operations
 #[derive(Error, Debug)]

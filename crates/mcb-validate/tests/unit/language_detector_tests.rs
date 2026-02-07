@@ -2,8 +2,9 @@
 //!
 //! Moved from inline tests in `src/filters/language_detector.rs`.
 
-use mcb_validate::filters::LanguageDetector;
 use std::path::Path;
+
+use mcb_validate::filters::LanguageDetector;
 
 #[test]
 fn test_extension_detection() {

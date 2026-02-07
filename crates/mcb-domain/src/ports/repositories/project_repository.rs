@@ -1,9 +1,10 @@
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+
 use crate::entities::project::{
     IssueStatus, IssueType, Project, ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use crate::error::Result;
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 
 /// Filter for querying project issues with optional constraints.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

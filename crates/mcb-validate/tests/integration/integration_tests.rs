@@ -1,7 +1,8 @@
 //! Integration tests that validate the actual workspace
 
-use mcb_validate::{ArchitectureValidator, Severity, ValidationConfig};
 use std::path::PathBuf;
+
+use mcb_validate::{ArchitectureValidator, Severity, ValidationConfig};
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))

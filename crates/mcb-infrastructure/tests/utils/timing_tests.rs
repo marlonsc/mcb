@@ -1,8 +1,9 @@
 //! Timing Utility Tests
 
-use mcb_infrastructure::utils::TimedOperation;
 use std::thread::sleep;
 use std::time::Duration;
+
+use mcb_infrastructure::utils::TimedOperation;
 
 #[test]
 fn test_timed_operation() {

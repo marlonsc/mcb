@@ -2,9 +2,10 @@
 //!
 //! Validates YAML rules against JSON Schema using jsonschema crate.
 
+use std::path::Path;
+
 use jsonschema::Validator;
 use serde_json::Value;
-use std::path::Path;
 
 use crate::Result;
 

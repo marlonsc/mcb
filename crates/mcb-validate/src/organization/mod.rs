@@ -1,7 +1,7 @@
 //! Code organization validation module
 
-mod violation;
 mod validator;
+mod violation;
 
-pub use violation::OrganizationViolation;
 pub use validator::OrganizationValidator;
+pub use violation::OrganizationViolation;

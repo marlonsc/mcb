@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 /// Tree node for hierarchical file navigation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -17,12 +17,13 @@
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
+use std::sync::Arc;
+
 use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest, Request};
 use rocket::serde::json::Json;
 use serde::Serialize;
-use std::sync::Arc;
 
 /// Admin authentication configuration for the middleware
 #[derive(Clone)]

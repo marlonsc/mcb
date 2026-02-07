@@ -11,8 +11,9 @@
 //! assert!(!matcher.should_include(Path::new("target/debug/lib.rs")));
 //! ```
 
-use globset::{Glob, GlobSet, GlobSetBuilder};
 use std::path::Path;
+
+use globset::{Glob, GlobSet, GlobSetBuilder};
 
 /// Matcher for file patterns using glob syntax
 pub struct FilePatternMatcher {

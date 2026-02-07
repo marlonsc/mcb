@@ -1,11 +1,12 @@
 //! Swift language processor for AST-based code chunking.
 
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::Language;
+
 use crate::language::common::{
     BaseProcessor, CHUNK_SIZE_SWIFT, LanguageConfig, LanguageProcessor, NodeExtractionRule,
     TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
 };
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
 
 /// Swift language processor.
 pub struct SwiftProcessor {

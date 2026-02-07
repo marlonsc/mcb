@@ -3,11 +3,12 @@
 //! Tests the InMemoryHealthMonitor state transitions and DefaultProviderRouter
 //! provider selection logic based on health status.
 
+use std::sync::Arc;
+
 use mcb_domain::ports::infrastructure::routing::{
     ProviderContext, ProviderHealthStatus, ProviderRouter,
 };
 use mcb_infrastructure::routing::{DefaultProviderRouter, HealthMonitor, InMemoryHealthMonitor};
-use std::sync::Arc;
 
 // =============================================================================
 // InMemoryHealthMonitor Tests

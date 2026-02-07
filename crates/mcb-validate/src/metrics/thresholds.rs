@@ -2,8 +2,9 @@
 //!
 //! Defines threshold values for various code metrics and how they map to violations.
 
-use crate::violation_trait::Severity;
 use std::collections::HashMap;
+
+use crate::violation_trait::Severity;
 
 /// Types of metrics we can measure
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

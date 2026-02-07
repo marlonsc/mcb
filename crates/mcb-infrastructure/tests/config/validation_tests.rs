@@ -2,13 +2,14 @@
 //!
 //! Tests for configuration validation across all config types.
 
+use std::path::PathBuf;
+
 use mcb_infrastructure::config::data::{
     AuthConfig, CacheProvider, CacheSystemConfig, ServerConfig, ServerSslConfig,
 };
 use mcb_infrastructure::config::server::{
     ServerConfigBuilder, ServerConfigPresets, ServerConfigUtils,
 };
-use std::path::PathBuf;
 
 #[test]
 fn test_server_config_port_validation() {

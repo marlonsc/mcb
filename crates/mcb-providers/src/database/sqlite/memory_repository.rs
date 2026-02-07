@@ -2,7 +2,7 @@
 //!
 //! Implements [`MemoryRepository`] via [`DatabaseExecutor`]; no direct sqlx in this module.
 
-use super::row_convert;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::memory::{MemoryFilter, MemorySearchResult, Observation, SessionSummary};
@@ -10,8 +10,9 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
 use mcb_domain::value_objects::ids::{ObservationId, SessionId};
-use std::sync::Arc;
 use tracing::debug;
+
+use super::row_convert;
 
 /// SQLite-based memory repository using the database executor port.
 pub struct SqliteMemoryRepository {

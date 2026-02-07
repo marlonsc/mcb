@@ -16,12 +16,13 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
+use std::sync::Arc;
+
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use serde_json::json;
-use std::sync::Arc;
 
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {

@@ -3,9 +3,11 @@
 //! Consolidated configuration for system concerns:
 //! auth, event_bus, backup, sync, snapshot, daemon, and operations.
 
-use crate::constants::*;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::constants::*;
 
 // ============================================================================
 // Authentication Configuration

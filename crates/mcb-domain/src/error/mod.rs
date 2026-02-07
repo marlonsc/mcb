@@ -1,4 +1,4 @@
-//! Error handling types
+//! Error handling types organized by domain
 
 use thiserror::Error;
 
@@ -46,9 +46,6 @@ pub enum Error {
     #[error("Base64 decode error: {0}")]
     Base64(#[from] base64::DecodeError),
 
-    // /// Generic string-based error
-    // #[error("String error: {0}")]
-    // String(String),
     /// Invalid regular expression pattern
     #[error("Invalid regex pattern '{pattern}': {message}")]
     InvalidRegex {
@@ -227,7 +224,6 @@ pub enum Error {
     Highlight(#[from] crate::ports::browse::HighlightError),
 }
 
-// Basic error creation methods
 impl Error {
     /// Create a generic error
     pub fn generic<S: Into<String>>(message: S) -> Self {
@@ -261,10 +257,7 @@ impl Error {
             message: message.into(),
         }
     }
-}
 
-// I/O error creation methods
-impl Error {
     /// Create an I/O error
     pub fn io<S: Into<String>>(message: S) -> Self {
         Self::Io {
@@ -283,10 +276,7 @@ impl Error {
             source: Some(Box::new(source)),
         }
     }
-}
 
-// Configuration error creation methods
-impl Error {
     /// Create a configuration error (simple)
     pub fn config<S: Into<String>>(message: S) -> Self {
         Self::Config {
@@ -315,10 +305,7 @@ impl Error {
             source: Some(Box::new(source)),
         }
     }
-}
 
-// Authentication error creation methods
-impl Error {
     /// Create an authentication error
     pub fn authentication<S: Into<String>>(message: S) -> Self {
         Self::Authentication {
@@ -340,10 +327,7 @@ impl Error {
             source: Some(Box::new(source)),
         }
     }
-}
 
-// Network error creation methods
-impl Error {
     /// Create a network error
     pub fn network<S: Into<String>>(message: S) -> Self {
         Self::Network {
@@ -362,10 +346,7 @@ impl Error {
             source: Some(Box::new(source)),
         }
     }
-}
 
-// Database error creation methods
-impl Error {
     /// Create a database error
     pub fn database<S: Into<String>>(message: S) -> Self {
         Self::Database {
@@ -384,10 +365,7 @@ impl Error {
             source: Some(Box::new(source)),
         }
     }
-}
 
-// Internal and infrastructure error creation methods
-impl Error {
     /// Create an internal error
     pub fn internal<S: Into<String>>(message: S) -> Self {
         Self::Internal {
@@ -423,10 +401,7 @@ impl Error {
             source: Some(Box::new(source)),
         }
     }
-}
 
-// VCS error creation methods
-impl Error {
     /// Create a VCS error
     pub fn vcs<S: Into<String>>(message: S) -> Self {
         Self::Vcs {
@@ -455,10 +430,7 @@ impl Error {
     pub fn branch_not_found<S: Into<String>>(name: S) -> Self {
         Self::BranchNotFound { name: name.into() }
     }
-}
 
-// Observation storage error creation methods
-impl Error {
     /// Create an observation storage error
     pub fn memory<S: Into<String>>(message: S) -> Self {
         Self::ObservationStorage {
@@ -490,6 +462,3 @@ impl Error {
         }
     }
 }
-
-// Note: OS-specific and external crate error conversions are excluded for domain purity.
-// The infrastructure layer is responsible for these conversions.

@@ -3,8 +3,9 @@
 //! Provides chunking strategies for breaking source code into semantic units.
 //! Different languages have different optimal chunking strategies.
 
-use async_trait::async_trait;
 use std::path::Path;
+
+use async_trait::async_trait;
 
 use crate::error::Result;
 use crate::language::LanguageId;

@@ -64,9 +64,7 @@ pub mod infrastructure {
 
 // Re-export commonly used domain types at the crate root
 pub use domain::*;
-
 // Re-export main entry point at the crate root
 pub use server::run;
-
 // Re-export server types for convenience
 pub use server::{McpServer, McpServerBuilder};

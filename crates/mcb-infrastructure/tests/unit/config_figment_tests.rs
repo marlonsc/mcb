@@ -12,9 +12,10 @@
 //! Rust 2024 edition requires this for environment variable mutations.
 //! Tests use `#[serial]` to prevent data races between env var mutations.
 
+use std::env;
+
 use mcb_infrastructure::config::loader::ConfigLoader;
 use serial_test::serial;
-use std::env;
 
 /// Helper to set env var safely
 fn set_env(key: &str, value: &str) {

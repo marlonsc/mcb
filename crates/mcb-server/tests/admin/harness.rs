@@ -17,6 +17,9 @@
 
 #![allow(dead_code)]
 
+use std::path::Path;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
@@ -27,8 +30,6 @@ use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexi
 use mcb_server::admin::{auth::AdminAuthConfig, handlers::AdminState, routes::admin_rocket};
 use rocket::local::asynchronous::Client;
 use serde::Deserialize;
-use std::path::Path;
-use std::sync::Arc;
 
 // ============================================================================
 // Shared Test Event Bus

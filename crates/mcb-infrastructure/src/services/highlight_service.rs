@@ -5,12 +5,14 @@
 //!
 //! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
 
-use crate::constants::HIGHLIGHT_NAMES;
+use std::sync::Arc;
+
 use mcb_domain::ports::browse::{HighlightError, HighlightServiceInterface};
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
-use std::sync::Arc;
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
+
+use crate::constants::HIGHLIGHT_NAMES;
 
 /// Language-specific highlighting configuration
 struct HighlightLanguageConfig {

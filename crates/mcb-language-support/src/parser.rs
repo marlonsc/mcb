@@ -3,9 +3,10 @@
 //! Provides async parsing of source code using rust-code-analysis.
 //! The `Parser` trait allows for extensible parsing implementations.
 
+use std::path::Path;
+
 use async_trait::async_trait;
 use rust_code_analysis::{FuncSpace, LANG, get_function_spaces};
-use std::path::Path;
 
 use crate::detection::LanguageDetector;
 use crate::error::{LanguageError, Result};

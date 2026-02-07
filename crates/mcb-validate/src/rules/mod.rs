@@ -9,7 +9,6 @@ pub mod yaml_validator;
 
 // Re-export legacy for compatibility
 pub use registry::{Rule, RuleRegistry, clean_architecture_rules, layer_boundary_rules};
-
 // Re-export YAML system
 pub use templates::TemplateEngine;
 pub use yaml_loader::{

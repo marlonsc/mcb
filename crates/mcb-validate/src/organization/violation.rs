@@ -1,9 +1,11 @@
 //! Organization violation types and trait implementations
 
+use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
 use crate::Severity;
 use crate::violation_trait::{Violation, ViolationCategory};
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 /// Represents a specific violation of code organization rules.
 #[derive(Debug, Clone, Serialize, Deserialize)]

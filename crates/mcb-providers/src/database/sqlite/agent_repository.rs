@@ -2,15 +2,16 @@
 //!
 //! Implements [`AgentRepository`] via [`DatabaseExecutor`]; no direct sqlx in this module.
 
-use super::row_convert;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
-use std::sync::Arc;
 use tracing::debug;
+
+use super::row_convert;
 
 /// SQLite-based agent repository using the database executor port.
 pub struct SqliteAgentRepository {

@@ -2,13 +2,14 @@
 
 #[cfg(test)]
 mod cargo_dependency_tests {
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+
     use mcb_validate::ValidationConfig;
     use mcb_validate::engines::RuleContext;
     use mcb_validate::engines::hybrid_engine::RuleEngine;
     use mcb_validate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
     use serde_json::json;
-    use std::collections::HashMap;
-    use std::path::PathBuf;
 
     fn create_test_context() -> RuleContext {
         RuleContext {

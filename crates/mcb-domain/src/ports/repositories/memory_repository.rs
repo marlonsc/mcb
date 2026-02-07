@@ -1,9 +1,10 @@
 //! Memory repository port for observation storage.
 
+use async_trait::async_trait;
+
 use crate::entities::memory::{MemoryFilter, MemorySearchResult, Observation, SessionSummary};
 use crate::error::Result;
 use crate::value_objects::ids::{ObservationId, SessionId};
-use async_trait::async_trait;
 
 /// FTS search result with BM25 rank score
 #[derive(Debug, Clone)]

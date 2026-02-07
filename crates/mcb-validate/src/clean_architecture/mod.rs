@@ -1,7 +1,7 @@
 //! Clean Architecture validation module
 
-mod violation;
 mod validator;
+mod violation;
 
-pub use violation::CleanArchitectureViolation;
 pub use validator::CleanArchitectureValidator;
+pub use violation::CleanArchitectureViolation;

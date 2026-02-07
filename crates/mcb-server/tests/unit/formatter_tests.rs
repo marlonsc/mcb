@@ -1,9 +1,10 @@
 //! Tests for ResponseFormatter
 
-use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
-use mcb_server::formatter::ResponseFormatter;
 use std::path::Path;
 use std::time::Duration;
+
+use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
+use mcb_server::formatter::ResponseFormatter;
 
 use crate::test_utils::test_fixtures::{create_test_search_result, create_test_search_results};
 

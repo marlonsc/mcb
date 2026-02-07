@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
 
 /// Represents the status of a file in a version control diff.
 ///

@@ -11,10 +11,11 @@
 //!              AdminService.switch_provider()
 //! ```
 
-use super::handle::Handle;
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
+
+use super::handle::Handle;
 
 // ============================================================================
 // Type Aliases (Backward Compatibility)

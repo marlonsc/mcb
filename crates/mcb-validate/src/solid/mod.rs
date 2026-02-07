@@ -1,7 +1,7 @@
 //! SOLID principles validation module
 
-mod violation;
 mod validator;
+mod violation;
 
-pub use violation::SolidViolation;
 pub use validator::SolidValidator;
+pub use violation::SolidViolation;

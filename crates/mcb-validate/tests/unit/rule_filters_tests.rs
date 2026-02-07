@@ -2,9 +2,10 @@
 //!
 //! Moved from inline tests in `src/filters/rule_filters.rs`.
 
-use mcb_validate::filters::{RuleFilterExecutor, RuleFilters, WorkspaceDependencies};
 use std::fs;
 use std::path::Path;
+
+use mcb_validate::filters::{RuleFilterExecutor, RuleFilters, WorkspaceDependencies};
 use tempfile::TempDir;
 
 #[tokio::test]

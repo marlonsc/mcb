@@ -28,6 +28,9 @@
 // Force linkme registration of all providers from mcb-providers
 extern crate mcb_providers;
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
@@ -35,8 +38,6 @@ use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use serde_json::json;
-use std::collections::HashMap;
-use std::sync::Arc;
 
 /// Create a test AppContext with real local providers
 ///

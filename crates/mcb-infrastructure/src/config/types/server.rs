@@ -1,8 +1,10 @@
 //! Server configuration types
 
-use crate::constants::*;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::constants::*;
 
 /// Transport mode for MCP server
 ///

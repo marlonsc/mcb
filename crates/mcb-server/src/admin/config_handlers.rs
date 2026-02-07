@@ -6,12 +6,13 @@
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 //! Authentication guards added in v0.1.2.
 
+use std::path::PathBuf;
+use std::sync::Arc;
+
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get, patch, post};
-use std::path::PathBuf;
-use std::sync::Arc;
 
 use super::auth::AdminAuth;
 use super::config::{

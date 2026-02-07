@@ -3,15 +3,17 @@
 //! Provides Tokio-based event bus for internal infrastructure use.
 //! For testing, use TokioEventBusProvider (in-process broadcast).
 
-use crate::constants::EVENT_BUS_DEFAULT_CAPACITY;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use futures::stream;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
-use std::sync::Arc;
 use tokio::sync::broadcast;
 use tracing::{debug, warn};
+
+use crate::constants::EVENT_BUS_DEFAULT_CAPACITY;
 
 /// Event bus provider using tokio broadcast channels
 ///

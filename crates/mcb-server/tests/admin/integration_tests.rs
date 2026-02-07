@@ -1,7 +1,8 @@
-use super::harness::AdminTestHarness;
 use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_domain::value_objects::CollectionId;
 use rocket::http::Status;
+
+use super::harness::AdminTestHarness;
 
 #[rocket::async_test]
 async fn test_full_admin_stack_integration() {

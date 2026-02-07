@@ -1,10 +1,11 @@
 //! Session manager implementation.
 
-use dashmap::DashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use std::time::Instant;
+
+use dashmap::DashMap;
 
 /// Session manager for tracking client connections
 ///

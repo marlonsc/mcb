@@ -3,8 +3,9 @@
 //! Note: These tests use the public API which persists mappings to disk.
 //! Use unique collection names to avoid test interference.
 
-use mcb_server::collection_mapping;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use mcb_server::collection_mapping;
 
 /// Generate a unique test collection name to avoid conflicts
 fn unique_name(prefix: &str) -> String {

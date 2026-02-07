@@ -1,5 +1,6 @@
-use crate::value_objects::CollectionId;
 use serde::{Deserialize, Serialize};
+
+use crate::value_objects::CollectionId;
 
 /// Information about an indexed collection
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

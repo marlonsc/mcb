@@ -3,6 +3,7 @@
 //! This module provides common test helpers to avoid duplication across test files.
 
 use std::fs;
+
 use tempfile::TempDir;
 
 /// Create a minimal crate structure for testing

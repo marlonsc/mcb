@@ -17,12 +17,14 @@
 //! let provider = MokaCacheProvider::with_config(1000, Duration::from_secs(300));
 //! ```
 
-use crate::constants::CACHE_DEFAULT_SIZE_LIMIT;
+use std::time::Duration;
+
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
 use moka::future::Cache;
-use std::time::Duration;
+
+use crate::constants::CACHE_DEFAULT_SIZE_LIMIT;
 
 /// Moka-based in-memory cache provider
 ///

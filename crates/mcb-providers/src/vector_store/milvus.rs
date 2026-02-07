@@ -3,11 +3,9 @@
 //! High-performance cloud vector database using Milvus.
 //! Supports production-scale vector storage with automatic indexing and distributed search.
 
-use crate::constants::{
-    MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST,
-    MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
-};
-use crate::utils::JsonExt;
+use std::borrow::Cow;
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
@@ -17,8 +15,12 @@ use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
 use milvus::schema::{CollectionSchemaBuilder, FieldSchema};
 use milvus::value::{Value, ValueVec};
-use std::borrow::Cow;
-use std::collections::HashMap;
+
+use crate::constants::{
+    MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST,
+    MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
+};
+use crate::utils::JsonExt;
 
 /// Milvus vector store provider implementation
 pub struct MilvusVectorStoreProvider {

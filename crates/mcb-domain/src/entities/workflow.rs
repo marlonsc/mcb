@@ -3,9 +3,10 @@
 //! Implements the workflow finite state machine defined in ADR-034.
 //! Supports 8 states with typed state data and 11 transition triggers.
 
+use std::fmt;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// Workflow session states. Each variant carries context-specific data.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

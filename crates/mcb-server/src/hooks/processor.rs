@@ -1,8 +1,10 @@
-use super::types::{HookError, HookResult, PostToolUseContext, SessionStartContext};
+use std::sync::Arc;
+
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
 use mcb_domain::ports::services::MemoryServiceInterface;
-use std::sync::Arc;
 use tracing::debug;
+
+use super::types::{HookError, HookResult, PostToolUseContext, SessionStartContext};
 
 pub struct HookProcessor {
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,

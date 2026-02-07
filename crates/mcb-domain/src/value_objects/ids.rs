@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 macro_rules! define_id {
     ($name:ident, $doc:expr) => {

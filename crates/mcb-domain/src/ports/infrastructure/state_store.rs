@@ -2,8 +2,9 @@
 //!
 //! Defines the contract for simple key-value state persistence.
 
-use crate::error::Result;
 use async_trait::async_trait;
+
+use crate::error::Result;
 
 /// State store interface for key-value persistence
 #[async_trait]

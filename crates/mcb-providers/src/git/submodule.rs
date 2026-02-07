@@ -4,7 +4,6 @@ use std::collections::{HashSet, VecDeque};
 use std::path::Path;
 
 use git2::Repository;
-
 use mcb_domain::entities::submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
 use mcb_domain::error::{Error, Result};
 

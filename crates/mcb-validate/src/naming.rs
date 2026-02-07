@@ -6,12 +6,14 @@
 //! - Constants: `SCREAMING_SNAKE_CASE`
 //! - Modules/Files: `snake_case`
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Naming violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

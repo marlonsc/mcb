@@ -29,10 +29,9 @@
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
-use super::types::{McpRequest, McpResponse};
-use crate::McpServer;
-use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
-use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use std::net::SocketAddr;
+use std::sync::Arc;
+
 use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
 use rocket::fairing::{Fairing, Info, Kind};
@@ -40,10 +39,13 @@ use rocket::http::Header;
 use rocket::response::stream::{Event, EventStream};
 use rocket::serde::json::Json;
 use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
-use std::net::SocketAddr;
-use std::sync::Arc;
 use tokio::sync::broadcast;
 use tracing::{error, info};
+
+use super::types::{McpRequest, McpResponse};
+use crate::McpServer;
+use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
+use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
 /// HTTP transport configuration
 #[derive(Debug, Clone)]

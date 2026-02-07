@@ -13,14 +13,15 @@
 
 #[cfg(test)]
 mod duplication_integration_tests {
+    use std::fs;
+    use std::io::Write;
+    use std::path::PathBuf;
+
     use mcb_validate::duplication::{
         DuplicationAnalyzer, DuplicationThresholds, DuplicationType, TokenFingerprinter,
         tokenize_source,
     };
     use mcb_validate::violation_trait::Violation;
-    use std::fs;
-    use std::io::Write;
-    use std::path::PathBuf;
     use tempfile::TempDir;
 
     fn create_temp_file(dir: &TempDir, name: &str, content: &str) -> PathBuf {

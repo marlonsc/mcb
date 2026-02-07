@@ -1,18 +1,20 @@
 //! SQLite provider: DatabaseProvider impl and factory functions.
 
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, DatabaseProvider};
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
 use mcb_domain::schema::{ProjectSchema, SchemaDdlGenerator};
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use super::{
     SqliteAgentRepository, SqliteExecutor, SqliteMemoryRepository, SqliteProjectRepository,
     SqliteSchemaDdlGenerator,
 };
 
+/// SQLite database provider implementation
 pub struct SqliteDatabaseProvider;
 
 #[async_trait]
@@ -50,6 +52,7 @@ pub async fn create_memory_repository_with_executor(
     Ok((memory_repository, executor))
 }
 
+/// Create a memory repository in memory
 pub async fn create_memory_repository_in_memory() -> Result<Arc<dyn MemoryRepository>> {
     let pool = connect_in_memory_and_init().await?;
     let executor = Arc::new(SqliteExecutor::new(pool));

@@ -3,8 +3,9 @@
 //! Coordinates filtering of validation rules based on language, dependencies, and file patterns.
 //! Prevents rules from running on irrelevant files for better performance and accuracy.
 
-use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
 
 use super::dependency_parser::{CargoDependencyParser, WorkspaceDependencies};
 use super::file_matcher::FilePatternMatcher;

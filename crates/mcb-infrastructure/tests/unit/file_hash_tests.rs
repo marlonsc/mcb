@@ -1,8 +1,7 @@
 use std::io::Write;
 
-use tempfile::NamedTempFile;
-
 use mcb_infrastructure::storage::file_hash::FileHashStore;
+use tempfile::NamedTempFile;
 
 #[tokio::test]
 async fn test_has_changed() {

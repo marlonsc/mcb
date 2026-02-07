@@ -1,9 +1,11 @@
-use crate::database::sqlite::row_convert;
+use std::sync::Arc;
+
 use mcb_domain::entities::project::Project;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
-use std::sync::Arc;
 use tracing::debug;
+
+use crate::database::sqlite::row_convert;
 
 pub(crate) async fn create(executor: &Arc<dyn DatabaseExecutor>, project: &Project) -> Result<()> {
     let params = [

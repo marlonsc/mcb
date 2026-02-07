@@ -4,18 +4,17 @@
 
 use std::sync::Arc;
 
-use rmcp::ErrorData as McpError;
-use rmcp::ServerHandler;
-use rmcp::model::{
-    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
-    ServerCapabilities, ServerInfo,
-};
-
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
+};
+use rmcp::ErrorData as McpError;
+use rmcp::ServerHandler;
+use rmcp::model::{
+    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
+    ServerCapabilities, ServerInfo,
 };
 
 use crate::handlers::{

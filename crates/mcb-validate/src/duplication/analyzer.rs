@@ -166,11 +166,13 @@ pub struct DuplicationStats {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Write;
+
+    use tempfile::TempDir;
+
     use super::*;
     use crate::duplication::CloneCandidate;
     use crate::violation_trait::{Severity, Violation};
-    use std::io::Write;
-    use tempfile::TempDir;
 
     fn create_temp_file(dir: &TempDir, name: &str, content: &str) -> PathBuf {
         let path = dir.path().join(name);

@@ -1,8 +1,9 @@
+use std::sync::Arc;
+
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::value_objects::ObservationId;
-use std::sync::Arc;
 use uuid::Uuid;
 
 async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &str) {

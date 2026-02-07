@@ -4,6 +4,7 @@
 #![allow(dead_code)]
 
 use std::fs;
+
 use tempfile::TempDir;
 
 /// Create a minimal crate structure for testing

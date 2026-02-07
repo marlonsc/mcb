@@ -9,12 +9,8 @@
 //! Admin API → AdminService.switch_provider() → Resolver → Handle.set()
 //! ```
 
-use super::handle::Handle;
-use super::handles::{CacheHandleExt, EmbeddingHandleExt};
-use super::provider_resolvers::{
-    CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
-    VectorStoreProviderResolver,
-};
+use std::sync::Arc;
+
 pub use mcb_domain::ports::admin::{
     CacheAdminInterface, EmbeddingAdminInterface, LanguageAdminInterface, ProviderInfo,
     VectorStoreAdminInterface,
@@ -25,7 +21,13 @@ use mcb_domain::ports::providers::{
 use mcb_domain::registry::{
     CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig, VectorStoreProviderConfig,
 };
-use std::sync::Arc;
+
+use super::handle::Handle;
+use super::handles::{CacheHandleExt, EmbeddingHandleExt};
+use super::provider_resolvers::{
+    CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
+    VectorStoreProviderResolver,
+};
 
 // ============================================================================
 // Resolver Trait - Common Interface for All Provider Resolvers

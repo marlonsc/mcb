@@ -1,7 +1,8 @@
+use std::sync::Arc;
+
 use mcb_server::args::{IndexAction, IndexArgs};
 use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
-use std::sync::Arc;
 
 use crate::test_utils::mock_services::MockIndexingService;
 use crate::test_utils::test_fixtures::{create_temp_codebase, create_test_indexing_result};

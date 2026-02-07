@@ -4,14 +4,13 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use serde::Deserialize;
-use tokio::fs::read_to_string;
-
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::project_detection::{
     ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
 };
+use serde::Deserialize;
+use tokio::fs::read_to_string;
 
 use super::PROJECT_DETECTORS;
 

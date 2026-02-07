@@ -2,11 +2,12 @@
 //!
 //! Tracks provider health status based on success/failure reports.
 
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::time::Instant;
+
 use async_trait::async_trait;
 use dashmap::DashMap;
 use mcb_domain::ports::infrastructure::routing::ProviderHealthStatus;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::time::Instant;
 
 /// Health data for a single provider
 #[derive(Debug)]

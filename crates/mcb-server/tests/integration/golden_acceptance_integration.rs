@@ -16,16 +16,17 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
+use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
+use std::time::{Duration, Instant};
+
 use mcb_domain::entities::CodeChunk;
 // Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use serde_json::json;
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
-use std::time::{Duration, Instant};
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]

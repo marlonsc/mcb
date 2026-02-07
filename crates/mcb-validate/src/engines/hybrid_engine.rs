@@ -5,13 +5,10 @@
 //! - rusty-rules: Composable rules with JSON DSL
 //! - validator/garde: Field validations
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::Result;
-use crate::ValidationConfig;
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 
 use super::expression_engine::ExpressionEngine;
 use super::rete_engine::ReteEngine;
@@ -19,7 +16,10 @@ use super::router::RuleEngineRouter;
 use super::rust_rule_engine::RustRuleEngineWrapper;
 use super::rusty_rules_engine::RustyRulesEngineWrapper;
 use super::validator_engine::ValidatorEngine;
+use crate::Result;
+use crate::ValidationConfig;
 use crate::linters::{LintViolation, LinterEngine, LinterType};
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
 
 /// Types of rule engines supported
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

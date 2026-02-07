@@ -9,10 +9,12 @@
 //! [`VectorStoreProvider`], enabling consistent provider registration
 //! and factory-based creation.
 
-use crate::error::Result;
+use std::time::Duration;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+
+use crate::error::Result;
 
 /// Default TTL for cache entries (5 minutes)
 pub const DEFAULT_CACHE_TTL_SECS: u64 = 300;

@@ -1,11 +1,13 @@
-use crate::args::MemoryArgs;
-use crate::formatter::ResponseFormatter;
+use std::sync::Arc;
+
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use std::sync::Arc;
+
+use crate::args::MemoryArgs;
+use crate::formatter::ResponseFormatter;
 
 pub async fn list_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,

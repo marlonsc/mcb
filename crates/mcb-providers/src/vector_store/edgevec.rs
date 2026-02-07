@@ -4,9 +4,14 @@
 //! EdgeVec provides sub-millisecond vector similarity search with HNSW algorithm.
 //! This implementation uses the Actor pattern to eliminate locks and ensure non-blocking operation.
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use dashmap::DashMap;
-use std::collections::HashMap;
+use edgevec::hnsw::VectorId;
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use tokio::sync::{mpsc, oneshot};
 
 use crate::constants::{
@@ -14,10 +19,6 @@ use crate::constants::{
     EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0,
 };
 use crate::utils::JsonExt;
-use edgevec::hnsw::VectorId;
-use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
-use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 
 /// EdgeVec vector store configuration
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]

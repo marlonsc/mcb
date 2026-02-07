@@ -26,16 +26,18 @@
 //! # }
 //! ```
 
-use crate::constants::NATS_DEFAULT_SUBJECT;
+use std::sync::Arc;
+
 use async_nats::Client;
 use async_trait::async_trait;
 use futures::{StreamExt, stream};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
+
+use crate::constants::NATS_DEFAULT_SUBJECT;
 
 /// Event bus provider using NATS for distributed systems
 ///

@@ -1,8 +1,9 @@
 //! Main application configuration
 
+use std::collections::HashMap;
+
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 // Re-export all config types from consolidated modules
 pub use super::infrastructure::{

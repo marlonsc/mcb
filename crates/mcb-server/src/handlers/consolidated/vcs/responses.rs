@@ -1,9 +1,11 @@
-use crate::args::VcsArgs;
-use crate::vcs_repository_registry;
+use std::path::PathBuf;
+
 use mcb_domain::entities::vcs::RepositoryId;
 use rmcp::model::{CallToolResult, Content};
 use serde::Serialize;
-use std::path::PathBuf;
+
+use crate::args::VcsArgs;
+use crate::vcs_repository_registry;
 
 /// Response structure for listing repositories.
 #[derive(Serialize)]

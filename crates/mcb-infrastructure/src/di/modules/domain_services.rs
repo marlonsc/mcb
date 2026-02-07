@@ -9,9 +9,8 @@
 //! using constructor injection, because they require runtime configuration
 //! (embedding provider, vector store, cache).
 
-use crate::cache::provider::SharedCacheProvider;
-use crate::config::AppConfig;
-use crate::crypto::CryptoService;
+use std::sync::Arc;
+
 use mcb_application::use_cases::{
     AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl,
     SearchServiceImpl,
@@ -28,10 +27,11 @@ use mcb_domain::ports::services::{
     MemoryServiceInterface, ProjectDetectorService, SearchServiceInterface,
     ValidationServiceInterface,
 };
-use std::sync::Arc;
 
 use super::super::bootstrap::AppContext;
-
+use crate::cache::provider::SharedCacheProvider;
+use crate::config::AppConfig;
+use crate::crypto::CryptoService;
 // Use infrastructure validation service
 use crate::validation::InfraValidationService;
 

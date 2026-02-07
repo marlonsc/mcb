@@ -2,9 +2,10 @@
 //!
 //! Provides template inheritance and variable substitution for DRY rule definitions.
 
-use serde_yaml;
 use std::collections::HashMap;
 use std::path::Path;
+
+use serde_yaml;
 use walkdir::WalkDir;
 
 use crate::Result;
@@ -215,8 +216,9 @@ impl TemplateEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_load_templates() {

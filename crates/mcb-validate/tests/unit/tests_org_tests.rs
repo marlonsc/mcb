@@ -2,8 +2,9 @@
 
 #[cfg(test)]
 mod tests_org_tests {
-    use mcb_validate::tests_org::{TestValidator, TestViolation};
     use std::fs;
+
+    use mcb_validate::tests_org::{TestValidator, TestViolation};
     use tempfile::TempDir;
 
     fn create_test_crate_with_tests(

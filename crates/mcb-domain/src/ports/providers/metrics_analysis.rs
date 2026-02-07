@@ -20,11 +20,13 @@
 //! | SLOC | Source lines of code |
 //! | Halstead Metrics | Program vocabulary, length, volume, difficulty |
 
-use crate::error::Result;
-use crate::value_objects::SupportedLanguage;
+use std::path::Path;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+
+use crate::error::Result;
+use crate::value_objects::SupportedLanguage;
 
 // ============================================================================
 // Metrics Types

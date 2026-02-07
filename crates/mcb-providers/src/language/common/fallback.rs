@@ -3,11 +3,13 @@
 //! This module provides regex-based chunking as a fallback when tree-sitter
 //! parsing is not available or fails.
 
-use super::config::LanguageConfig;
+use std::collections::HashMap;
+
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 use regex::Regex;
-use std::collections::HashMap;
+
+use super::config::LanguageConfig;
 
 /// Parameters for creating a code chunk
 #[derive(Debug)]

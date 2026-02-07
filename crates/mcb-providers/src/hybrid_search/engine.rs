@@ -25,11 +25,12 @@
 //! Return Top-K Results
 //! ```
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use mcb_domain::ports::providers::HybridSearchProvider;
 use mcb_domain::{entities::CodeChunk, error::Result, value_objects::SearchResult};
 use serde_json::Value;
-use std::collections::HashMap;
 use tokio::sync::RwLock;
 
 use super::bm25::{BM25Params, BM25Scorer};

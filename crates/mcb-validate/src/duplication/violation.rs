@@ -2,9 +2,8 @@
 
 use std::path::PathBuf;
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
-
 use super::{CloneCandidate, DuplicationType};
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
 
 /// A duplication violation representing a detected code clone
 #[derive(Debug, Clone)]

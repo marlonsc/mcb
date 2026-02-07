@@ -3,11 +3,13 @@
 //! This module provides the AstTraverser that walks tree-sitter ASTs
 //! and extracts code chunks according to configurable rules.
 
-use super::config::NodeExtractionRule;
+use std::collections::HashMap;
+
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::Language;
-use std::collections::HashMap;
+
+use super::config::NodeExtractionRule;
 
 /// Parameters for creating a code chunk
 #[derive(Debug)]

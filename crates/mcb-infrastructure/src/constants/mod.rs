@@ -89,6 +89,8 @@ pub use http::*;
 pub use lang::*;
 pub use limits::*;
 pub use logging::*;
+// Re-export domain constants for convenience
+pub use mcb_domain::constants::*;
 pub use metadata::*;
 pub use metrics::*;
 pub use network::*;
@@ -97,6 +99,3 @@ pub use process::*;
 pub use resilience::*;
 pub use search::*;
 pub use sync::*;
-
-// Re-export domain constants for convenience
-pub use mcb_domain::constants::*;

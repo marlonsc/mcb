@@ -5,14 +5,15 @@
 //! - RETE engine (rust-rule-engine) for complex GRL rules
 //! - Router for automatic engine selection
 
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+
 use mcb_validate::engines::{
     ExpressionEngine, HybridRuleEngine, ReteEngine, RoutedEngine, RuleContext, RuleEngine,
     RuleEngineRouter, RuleEngineType,
 };
 use mcb_validate::{ValidationConfig, Violation};
 use serde_json::json;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 
 /// Get the workspace root for tests (the actual project root)
 fn get_workspace_root() -> PathBuf {

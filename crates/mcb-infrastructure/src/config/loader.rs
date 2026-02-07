@@ -5,15 +5,17 @@
 //!
 //! Uses Figment for configuration management (migrated from config crate in v0.1.2).
 
+use std::env;
+use std::path::{Path, PathBuf};
+
+use figment::Figment;
+use figment::providers::{Env, Format, Serialized, Toml};
+use mcb_domain::error::{Error, Result};
+
 use crate::config::AppConfig;
 use crate::constants::*;
 use crate::error_ext::ErrorContext;
 use crate::logging::log_config_loaded;
-use figment::Figment;
-use figment::providers::{Env, Format, Serialized, Toml};
-use mcb_domain::error::{Error, Result};
-use std::env;
-use std::path::{Path, PathBuf};
 
 /// Configuration loader service
 #[derive(Clone)]

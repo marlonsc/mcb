@@ -1,6 +1,8 @@
-pub use crate::value_objects::RepositoryId;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+pub use crate::value_objects::RepositoryId;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VcsRepository {

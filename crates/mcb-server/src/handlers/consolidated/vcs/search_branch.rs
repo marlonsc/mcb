@@ -1,11 +1,13 @@
-use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
-use crate::args::VcsArgs;
-use crate::formatter::ResponseFormatter;
+use std::path::Path;
+use std::sync::Arc;
+
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use std::path::Path;
-use std::sync::Arc;
+
+use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
+use crate::args::VcsArgs;
+use crate::formatter::ResponseFormatter;
 
 pub async fn search_branch(
     vcs_provider: &Arc<dyn VcsProvider>,

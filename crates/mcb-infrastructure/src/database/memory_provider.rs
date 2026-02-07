@@ -4,10 +4,11 @@
 //! (projects, collections, observations, session_summaries, file_hashes, FTS, indexes).
 //! Repositories receive the pool via dependency injection and do not access SQLite directly.
 
+use std::path::PathBuf;
+
 use mcb_domain::error::{Error, Result};
 use mcb_domain::schema::{ProjectSchema, SchemaDdlGenerator};
 use sqlx::SqlitePool;
-use std::path::PathBuf;
 use tracing::{debug, info};
 
 /// SQLite connection pool provider for memory storage with full `ProjectSchema` initialization.

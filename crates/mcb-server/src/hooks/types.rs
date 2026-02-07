@@ -1,7 +1,8 @@
-use mcb_domain::value_objects::ids::SessionId;
-use rmcp::model::CallToolResult;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use mcb_domain::value_objects::ids::SessionId;
+use rmcp::model::CallToolResult;
 
 /// Result type for hook operations.
 pub type HookResult<T> = Result<T, HookError>;

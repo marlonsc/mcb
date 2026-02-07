@@ -3,9 +3,10 @@
 //! Generic trait for all architecture violations. This enables a unified
 //! way to handle violations across all validators.
 
-use serde::Serialize;
 use std::fmt::Display;
 use std::path::PathBuf;
+
+use serde::Serialize;
 
 // Re-export Severity from parent module for convenience
 pub use super::Severity;

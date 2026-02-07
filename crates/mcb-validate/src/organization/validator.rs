@@ -1,12 +1,14 @@
 //! Organization validator implementation
 
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+
+use regex::Regex;
+
 use super::violation::OrganizationViolation;
 use crate::scan::{for_each_crate_rs_path, for_each_scan_rs_path, is_test_path};
 use crate::violation_trait::Violation;
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
 
 /// Validates the structural organization and architectural compliance of the codebase.
 pub struct OrganizationValidator {

@@ -12,6 +12,9 @@
 
 // Use mock providers for unit tests to ensure stability and avoid external dependencies
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use mcb_application::use_cases::{ContextServiceImpl, SearchServiceImpl};
 use mcb_domain::Result;
@@ -21,8 +24,6 @@ use mcb_domain::ports::services::*;
 use mcb_domain::value_objects::CollectionId;
 use mcb_domain::value_objects::{CollectionInfo, Embedding, FileInfo, SearchResult};
 use serde_json::{Value, json};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 // -----------------------------------------------------------------------------

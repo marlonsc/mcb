@@ -3,11 +3,12 @@
 //! Defines the LanguageProcessor trait that provides a common interface
 //! for language-specific chunking logic.
 
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::Language;
+
 use super::config::LanguageConfig;
 use super::fallback::GenericFallbackChunker;
 use super::traverser::AstTraverser;
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
 
 /// Trait for language-specific processing
 ///

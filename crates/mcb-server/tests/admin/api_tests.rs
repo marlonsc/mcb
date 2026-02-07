@@ -1,10 +1,12 @@
-use super::harness::AdminTestHarness;
+use std::sync::Arc;
+
 use mcb_domain::ports::IndexingOperationsInterface;
 use mcb_domain::value_objects::CollectionId;
 use mcb_server::admin::{auth::AdminAuthConfig, routes::admin_rocket};
 use rocket::http::Status;
 use rocket::local::asynchronous::Client;
-use std::sync::Arc;
+
+use super::harness::AdminTestHarness;
 
 #[rocket::async_test]
 async fn test_health_endpoint() {

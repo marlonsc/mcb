@@ -1,6 +1,5 @@
-use super::helpers::MemoryHelpers;
-use crate::args::MemoryArgs;
-use crate::formatter::ResponseFormatter;
+use std::sync::Arc;
+
 use chrono::TimeZone;
 use mcb_domain::entities::memory::{
     MemoryFilter, ObservationMetadata, ObservationType, QualityGateResult,
@@ -9,8 +8,11 @@ use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use std::sync::Arc;
 use uuid::Uuid;
+
+use super::helpers::MemoryHelpers;
+use crate::args::MemoryArgs;
+use crate::formatter::ResponseFormatter;
 
 pub async fn store_quality_gate(
     memory_service: &Arc<dyn MemoryServiceInterface>,

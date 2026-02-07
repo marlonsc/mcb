@@ -1,8 +1,9 @@
 //! Tests for Quality Validation
 
-use crate::test_utils::create_test_crate;
 use mcb_validate::QualityValidator;
 use tempfile::TempDir;
+
+use crate::test_utils::create_test_crate;
 
 #[test]
 fn test_unwrap_detection() {

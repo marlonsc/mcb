@@ -7,10 +7,9 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use mcb_domain::error::{Error, Result};
 use sha2::{Digest, Sha256};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
-
-use mcb_domain::error::{Error, Result};
 
 /// Configuration for FileHashStore
 ///

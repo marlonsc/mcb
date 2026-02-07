@@ -92,8 +92,64 @@ pub mod tests_org;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use thiserror::Error;
 
+// Re-export AST module types (RCA-based)
+pub use ast::{
+    AstDecoder, AstNode, AstParseResult, AstQuery, AstQueryBuilder, AstQueryPatterns, AstViolation,
+    Position, QueryCondition, Span, UnwrapDetection, UnwrapDetector,
+};
+// Re-export RCA types for direct usage (NO wrappers)
+pub use ast::{Callback, LANG, Node, ParserTrait, Search, action, find, guess_language};
+// New validators for PMAT integration
+pub use async_patterns::{AsyncPatternValidator, AsyncViolation};
+// Re-export new validators
+pub use clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
+// Re-export configuration system
+pub use config::{
+    ArchitectureRulesConfig, FileConfig, GeneralConfig, OrganizationRulesConfig,
+    QualityRulesConfig, RulesConfig, SolidRulesConfig, ValidatorsConfig,
+};
+pub use config_quality::{ConfigQualityValidator, ConfigQualityViolation};
+// Re-export legacy validators
+pub use dependency::{DependencyValidator, DependencyViolation};
+pub use documentation::{DocumentationValidator, DocumentationViolation};
+// Re-export rule registry and YAML system
+pub use engines::{HybridRuleEngine, RuleEngineType};
+pub use error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
+// Re-export new DRY violation system
+pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary, ViolationEntry};
+pub use implementation::{ImplementationQualityValidator, ImplementationViolation};
+pub use kiss::{KissValidator, KissViolation};
+pub use layer_flow::{LayerFlowValidator, LayerFlowViolation};
+// Re-export linter integration
+pub use linters::{
+    ClippyLinter, LintViolation, LinterEngine, LinterType, RuffLinter, YamlRuleExecutor,
+};
+// Re-export Metrics module types (Phase 4) - RCA-based
+pub use metrics::{
+    MetricThreshold, MetricThresholds, MetricType, MetricViolation, RcaAnalyzer,
+    RcaFunctionMetrics, RcaMetrics,
+};
+pub use naming::{NamingValidator, NamingViolation};
+pub use organization::{OrganizationValidator, OrganizationViolation};
+pub use pattern_validator::{PatternValidator, PatternViolation};
+pub use performance::{PerformanceValidator, PerformanceViolation};
+pub use pmat::{PmatValidator, PmatViolation};
+pub use port_adapter::{PortAdapterValidator, PortAdapterViolation};
+pub use quality::{QualityValidator, QualityViolation};
+// Re-export ComponentType for strict directory validation
+pub use refactoring::{RefactoringValidator, RefactoringViolation};
+pub use reporter::{Reporter, ValidationReport, ValidationSummary};
+pub use rules::templates::TemplateEngine;
+pub use rules::yaml_loader::{
+    AstSelector, MetricThresholdConfig, MetricsConfig, RuleFix, ValidatedRule, YamlRuleLoader,
+};
+pub use rules::yaml_validator::YamlRuleValidator;
+pub use rules::{Rule, RuleRegistry};
+pub use solid::{SolidValidator, SolidViolation};
+pub use test_quality::{TestQualityValidator, TestQualityViolation};
+pub use tests_org::{TestValidator, TestViolation};
+use thiserror::Error;
 // Re-export centralized thresholds
 pub use thresholds::{
     MAX_BUILDER_FIELDS, MAX_COGNITIVE_COMPLEXITY, MAX_CYCLOMATIC_COMPLEXITY,
@@ -101,76 +157,9 @@ pub use thresholds::{
     MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS, MAX_STRUCT_LINES,
     MAX_TRAIT_METHODS, ValidationThresholds, thresholds,
 };
-
-// Re-export new DRY violation system
-pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary, ViolationEntry};
-pub use reporter::{Reporter, ValidationReport, ValidationSummary};
 pub use validator_trait::{LegacyValidatorAdapter, Validator, ValidatorRegistry};
 pub use violation_trait::{Violation, ViolationCategory};
-
-// Re-export configuration system
-pub use config::{
-    ArchitectureRulesConfig, FileConfig, GeneralConfig, OrganizationRulesConfig,
-    QualityRulesConfig, RulesConfig, SolidRulesConfig, ValidatorsConfig,
-};
-
-// Re-export rule registry and YAML system
-pub use engines::{HybridRuleEngine, RuleEngineType};
-pub use rules::templates::TemplateEngine;
-pub use rules::yaml_loader::{
-    AstSelector, MetricThresholdConfig, MetricsConfig, RuleFix, ValidatedRule, YamlRuleLoader,
-};
-pub use rules::yaml_validator::YamlRuleValidator;
-pub use rules::{Rule, RuleRegistry};
-
-// Re-export linter integration
-pub use linters::{
-    ClippyLinter, LintViolation, LinterEngine, LinterType, RuffLinter, YamlRuleExecutor,
-};
-
-// Re-export AST module types (RCA-based)
-pub use ast::{
-    AstDecoder, AstNode, AstParseResult, AstQuery, AstQueryBuilder, AstQueryPatterns, AstViolation,
-    Position, QueryCondition, Span, UnwrapDetection, UnwrapDetector,
-};
-
-// Re-export RCA types for direct usage (NO wrappers)
-pub use ast::{Callback, LANG, Node, ParserTrait, Search, action, find, guess_language};
-
-// Re-export Metrics module types (Phase 4) - RCA-based
-pub use metrics::{
-    MetricThreshold, MetricThresholds, MetricType, MetricViolation, RcaAnalyzer,
-    RcaFunctionMetrics, RcaMetrics,
-};
-
-// Re-export new validators
-pub use clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
-pub use config_quality::{ConfigQualityValidator, ConfigQualityViolation};
-pub use layer_flow::{LayerFlowValidator, LayerFlowViolation};
-pub use port_adapter::{PortAdapterValidator, PortAdapterViolation};
-pub use test_quality::{TestQualityValidator, TestQualityViolation};
 pub use visibility::{VisibilityValidator, VisibilityViolation};
-
-// Re-export legacy validators
-pub use dependency::{DependencyValidator, DependencyViolation};
-pub use documentation::{DocumentationValidator, DocumentationViolation};
-pub use implementation::{ImplementationQualityValidator, ImplementationViolation};
-pub use kiss::{KissValidator, KissViolation};
-pub use naming::{NamingValidator, NamingViolation};
-pub use organization::{OrganizationValidator, OrganizationViolation};
-pub use pattern_validator::{PatternValidator, PatternViolation};
-pub use quality::{QualityValidator, QualityViolation};
-
-// Re-export ComponentType for strict directory validation
-pub use refactoring::{RefactoringValidator, RefactoringViolation};
-pub use solid::{SolidValidator, SolidViolation};
-pub use tests_org::{TestValidator, TestViolation};
-
-// New validators for PMAT integration
-pub use async_patterns::{AsyncPatternValidator, AsyncViolation};
-pub use error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
-pub use performance::{PerformanceValidator, PerformanceViolation};
-pub use pmat::{PmatValidator, PmatViolation};
 
 // Re-export ValidationConfig for multi-directory support
 // ValidationConfig is defined in this module

@@ -1,8 +1,9 @@
 //! Tests for Pattern Validation
 
-use crate::test_utils::create_test_crate;
 use mcb_validate::PatternValidator;
 use tempfile::TempDir;
+
+use crate::test_utils::create_test_crate;
 
 #[test]
 fn test_arc_mutex_detection() {

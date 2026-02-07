@@ -1,7 +1,8 @@
+use async_trait::async_trait;
+
 use crate::entities::agent::{AgentSession, AgentSessionStatus, Checkpoint, Delegation, ToolCall};
 use crate::error::Result;
 use crate::ports::repositories::agent_repository::AgentSessionQuery;
-use async_trait::async_trait;
 
 /// Port for agent session lifecycle and delegation tracking (create, list, end sessions).
 #[async_trait]

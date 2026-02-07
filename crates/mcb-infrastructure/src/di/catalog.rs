@@ -2,6 +2,19 @@
 //!
 //! Configures the dill IoC container with all infrastructure services.
 
+use std::sync::Arc;
+
+use dill::{Catalog, CatalogBuilder};
+use mcb_domain::error::Result;
+use mcb_domain::ports::admin::{
+    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
+};
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::providers::{
+    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+};
+use tracing::info;
+
 use crate::config::AppConfig;
 use crate::di::admin::{
     CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
@@ -20,17 +33,6 @@ use crate::infrastructure::{
     events::TokioBroadcastEventBus,
     lifecycle::DefaultShutdownCoordinator,
 };
-use dill::{Catalog, CatalogBuilder};
-use mcb_domain::error::Result;
-use mcb_domain::ports::admin::{
-    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
-};
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
-};
-use std::sync::Arc;
-use tracing::info;
 
 /// Build the dill Catalog with all application services
 pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {

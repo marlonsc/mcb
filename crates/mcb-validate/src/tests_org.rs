@@ -5,13 +5,15 @@
 //! - Test file naming conventions
 //! - Test function naming conventions
 
+use std::path::PathBuf;
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
+
 use crate::pattern_registry::PATTERNS;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use walkdir::WalkDir;
 
 /// Test organization violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -2,13 +2,14 @@
 //!
 //! Provides routing logic for selecting providers based on health and context.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::routing::{
     ProviderContext, ProviderHealthStatus, ProviderRouter,
 };
-use std::collections::HashMap;
-use std::sync::Arc;
 
 use super::health::HealthMonitor;
 

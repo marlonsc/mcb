@@ -3,11 +3,11 @@
 //! Provides utilities for extracting function, class, and other symbol names
 //! from parsed AST trees.
 
+use mcb_language_support::LanguageId;
 use tree_sitter::{Node, Tree};
 
 use crate::cursor::CursorUtils;
 use crate::walker::TreeWalker;
-use mcb_language_support::LanguageId;
 
 /// Information about an extracted symbol
 #[derive(Debug, Clone)]

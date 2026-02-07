@@ -1,7 +1,8 @@
+use std::sync::Arc;
+
 use mcb_server::args::{SearchArgs, SearchResource};
 use mcb_server::handlers::SearchHandler;
 use rmcp::handler::server::wrapper::Parameters;
-use std::sync::Arc;
 
 use crate::test_utils::mock_services::{MockMemoryService, MockSearchService};
 use crate::test_utils::test_fixtures::create_test_search_results;

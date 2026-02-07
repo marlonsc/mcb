@@ -2,8 +2,9 @@
 //!
 //! Rules are defined as data structures for easy configuration and extension.
 
-use crate::violation_trait::{Severity, ViolationCategory};
 use std::collections::HashMap;
+
+use crate::violation_trait::{Severity, ViolationCategory};
 
 /// Declarative rule definition
 #[derive(Debug, Clone)]

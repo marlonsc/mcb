@@ -1,8 +1,9 @@
+use rmcp::ErrorData as McpError;
+use rmcp::model::CallToolResult;
+
 use super::responses::ListRepositoriesResponse;
 use crate::collection_mapping;
 use crate::formatter::ResponseFormatter;
-use rmcp::ErrorData as McpError;
-use rmcp::model::CallToolResult;
 
 pub async fn list_repositories() -> Result<CallToolResult, McpError> {
     let repositories = collection_mapping::list_collections()

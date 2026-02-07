@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+
 /// MCP Context configuration from .mcp-context.toml files
 ///
 /// Enables per-repository configuration for git-aware indexing:
@@ -6,9 +10,6 @@
 /// - ignore_patterns: patterns to exclude (e.g., "*.log", "node_modules/")
 /// - include_submodules: recursive indexing (default: true)
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 /// Configuration errors that can occur during MCP context setup.

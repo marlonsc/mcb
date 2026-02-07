@@ -3,6 +3,16 @@
 //! Provides the main IntelligentChunker that orchestrates language-specific
 //! chunking using tree-sitter and fallback methods.
 
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::LazyLock;
+
+use async_trait::async_trait;
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::services::chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
+use mcb_domain::value_objects::Language;
+
 use super::common::constants::CHUNK_SIZE_GENERIC;
 use super::detection::{is_language_supported, language_from_extension};
 use super::{
@@ -10,14 +20,6 @@ use super::{
     KotlinProcessor, LanguageProcessor, PhpProcessor, PythonProcessor, RubyProcessor,
     RustProcessor, SwiftProcessor,
 };
-use async_trait::async_trait;
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::services::chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
-use mcb_domain::value_objects::Language;
-use std::collections::HashMap;
-use std::path::Path;
-use std::sync::LazyLock;
 
 /// Language processor registry
 pub(crate) static LANGUAGE_PROCESSORS: LazyLock<

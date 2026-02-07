@@ -1,9 +1,10 @@
-use mcb_server::args::{ValidateAction, ValidateArgs, ValidateScope};
-use mcb_server::handlers::ValidateHandler;
-use rmcp::handler::server::wrapper::Parameters;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use mcb_server::args::{ValidateAction, ValidateArgs, ValidateScope};
+use mcb_server::handlers::ValidateHandler;
+use rmcp::handler::server::wrapper::Parameters;
 use tempfile::TempDir;
 
 use crate::test_utils::mock_services::MockValidationService;

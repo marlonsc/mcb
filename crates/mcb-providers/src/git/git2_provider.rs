@@ -1,5 +1,7 @@
 //! Git2-based implementation of VcsProvider
 
+use std::path::{Path, PathBuf};
+
 use async_trait::async_trait;
 use git2::{BranchType, Repository, Sort};
 use mcb_domain::{
@@ -9,13 +11,13 @@ use mcb_domain::{
     error::{Error, Result},
     ports::providers::VcsProvider,
 };
-use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 /// Git implementation of VcsProvider using libgit2.
 pub struct Git2Provider;
 
 impl Git2Provider {
+    /// Create a new Git2 provider instance
     #[must_use]
     pub fn new() -> Self {
         Self

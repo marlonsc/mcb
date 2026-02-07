@@ -6,12 +6,14 @@
 //! - Detects missing test implementations
 //! - Ensures tests have proper documentation
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig, ValidationError};
+use std::path::{Path, PathBuf};
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig, ValidationError};
 
 /// Test quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

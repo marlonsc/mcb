@@ -2,6 +2,10 @@
 //!
 //! Application service for observation storage and semantic memory search.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use mcb_domain::entities::memory::{
     MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
     ObservationType, SessionSummary,
@@ -13,9 +17,6 @@ use mcb_domain::ports::repositories::MemoryRepository;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::compute_content_hash;
 use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use crate::constants::{

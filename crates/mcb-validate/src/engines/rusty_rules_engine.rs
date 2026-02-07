@@ -2,15 +2,15 @@
 //!
 //! Wrapper for rusty-rules crate with JSON DSL and composition support.
 
-use async_trait::async_trait;
-use serde_json::Value;
 use std::collections::HashMap;
 
+use async_trait::async_trait;
+use serde_json::Value;
+
+use super::hybrid_engine::{RuleContext, RuleEngine};
 use crate::Result;
 use crate::engines::hybrid_engine::RuleViolation;
 use crate::violation_trait::{Severity, ViolationCategory};
-
-use super::hybrid_engine::{RuleContext, RuleEngine};
 
 /// Wrapper for rusty-rules engine
 pub struct RustyRulesEngineWrapper {

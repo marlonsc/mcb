@@ -1,8 +1,9 @@
 //! Error Extension Tests
 
+use std::io;
+
 use mcb_domain::error::{Error, Result};
 use mcb_infrastructure::error_ext::{ErrorContext, infra};
-use std::io;
 
 #[test]
 fn test_error_context_extension() {

@@ -7,10 +7,12 @@
 //! - Log-only methods (no actual logic)
 //! - Default-only trait implementations
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::Severity;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::Severity;
+use crate::violation_trait::{Violation, ViolationCategory};
 
 /// Implementation quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

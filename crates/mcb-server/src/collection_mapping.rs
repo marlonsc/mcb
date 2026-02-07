@@ -16,14 +16,15 @@
 //! ```
 
 // use crate::constants::{COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME};
+use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
+use std::path::PathBuf;
+
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::{
     COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, config_dir,
 };
-use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
-use std::path::PathBuf;
 
 /// Gets the default mapping file path (~/.config/mcb/collection_mapping.json)
 fn get_mapping_file_path() -> Result<PathBuf> {

@@ -2,9 +2,10 @@
 //!
 //! Automatically loads and validates YAML-based rules with template support.
 
+use std::path::{Path, PathBuf};
+
 use serde::{Deserialize, Serialize};
 use serde_yaml;
-use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 use super::templates::TemplateEngine;

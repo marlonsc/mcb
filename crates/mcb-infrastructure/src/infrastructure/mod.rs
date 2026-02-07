@@ -25,10 +25,8 @@ pub(crate) mod prometheus_metrics;
 pub mod admin;
 
 // Public data types (NOT implementations) - these are pure DTOs
-pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
-
 // Admin types - exported for mcb-server AdminState
 pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
-
+pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
 // Prometheus metrics - exported for /metrics endpoint
 pub use prometheus_metrics::{PrometheusPerformanceMetrics, export_metrics};

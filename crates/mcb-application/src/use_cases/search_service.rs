@@ -3,10 +3,11 @@
 //! Application service for semantic search operations.
 //! Orchestrates search functionality using context service for semantic understanding.
 
+use std::sync::Arc;
+
 use mcb_domain::error::Result;
 use mcb_domain::ports::services::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
-use std::sync::Arc;
 
 /// Search service implementation - delegates to context service
 pub struct SearchServiceImpl {

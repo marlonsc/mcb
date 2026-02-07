@@ -21,6 +21,8 @@
 //! re-exports for backward compatibility and clearer API.
 
 // Re-export everything from the language module (single source of truth)
+// Re-export constants from language/common
+pub use crate::language::common::constants::*;
 pub use crate::language::{
     // Base types
     BaseProcessor,
@@ -48,6 +50,3 @@ pub use crate::language::{
     language_from_extension,
     supported_languages,
 };
-
-// Re-export constants from language/common
-pub use crate::language::common::constants::*;

@@ -2,11 +2,12 @@
 
 #[cfg(test)]
 mod expression_engine_tests {
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+
     use mcb_validate::ValidationConfig;
     use mcb_validate::engines::RuleContext;
     use mcb_validate::engines::expression_engine::ExpressionEngine;
-    use std::collections::HashMap;
-    use std::path::PathBuf;
 
     fn create_test_context() -> RuleContext {
         let mut file_contents = HashMap::new();

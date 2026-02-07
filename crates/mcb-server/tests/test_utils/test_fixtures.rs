@@ -2,9 +2,9 @@
 //!
 //! Provides factory functions for creating test data and temporary directories.
 
-use crate::test_utils::mock_services::{
-    MockAgentRepository, MockMemoryRepository, MockVcsProvider,
-};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
 use mcb_domain::SearchResult;
 use mcb_domain::ports::services::IndexingResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
@@ -16,9 +16,11 @@ use mcb_infrastructure::di::modules::domain_services::{
 };
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use tempfile::TempDir;
+
+use crate::test_utils::mock_services::{
+    MockAgentRepository, MockMemoryRepository, MockVcsProvider,
+};
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)

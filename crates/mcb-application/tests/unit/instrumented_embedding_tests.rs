@@ -1,13 +1,14 @@
 //! Unit tests for InstrumentedEmbeddingProvider decorator
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
+
 use async_trait::async_trait;
 use mcb_application::decorators::InstrumentedEmbeddingProvider;
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::{PerformanceMetricsData, PerformanceMetricsInterface};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Mock metrics collector for testing
 struct MockMetrics {

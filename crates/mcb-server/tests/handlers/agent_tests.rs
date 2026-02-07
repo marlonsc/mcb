@@ -1,9 +1,10 @@
+use std::sync::Arc;
+
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::args::{AgentAction, AgentArgs};
 use mcb_server::handlers::AgentHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
-use std::sync::Arc;
 
 use crate::test_utils::mock_services::MockAgentSessionService;
 

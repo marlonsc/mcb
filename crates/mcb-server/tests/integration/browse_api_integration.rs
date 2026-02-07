@@ -2,6 +2,9 @@
 //!
 //! Tests the REST API for browsing indexed collections, files, and chunks.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use mcb_domain::ports::admin::{
     IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
@@ -21,8 +24,6 @@ use mcb_server::admin::handlers::AdminState;
 use mcb_server::admin::routes::admin_rocket;
 use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
-use std::collections::HashMap;
-use std::sync::Arc;
 
 /// Mock VectorStoreBrowser for testing
 pub struct MockVectorStoreBrowser {

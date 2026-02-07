@@ -1,6 +1,5 @@
 //! Encryption/decryption service using AES-GCM
 
-use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 use aes_gcm::{
     Aes256Gcm, Key, Nonce,
     aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore},
@@ -10,6 +9,7 @@ use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 use sha2::{Digest, Sha256};
 
 use super::utils::bytes_to_hex;
+use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 
 /// Encryption/decryption service
 ///

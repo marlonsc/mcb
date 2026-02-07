@@ -1,11 +1,12 @@
 //! Server Configuration Tests
 
+use std::net::SocketAddr;
+
 use mcb_infrastructure::config::data::ServerConfig;
 use mcb_infrastructure::config::server::{
     ServerConfigBuilder, ServerConfigPresets, ServerConfigUtils,
 };
 use mcb_infrastructure::constants::DEFAULT_HTTPS_PORT;
-use std::net::SocketAddr;
 
 #[test]
 fn test_parse_address() {

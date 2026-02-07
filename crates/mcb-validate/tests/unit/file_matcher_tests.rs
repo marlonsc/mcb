@@ -2,8 +2,9 @@
 //!
 //! Moved from inline tests in `src/filters/file_matcher.rs`.
 
-use mcb_validate::filters::FilePatternMatcher;
 use std::path::Path;
+
+use mcb_validate::filters::FilePatternMatcher;
 
 #[test]
 fn test_simple_includes() {

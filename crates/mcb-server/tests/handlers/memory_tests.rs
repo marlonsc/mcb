@@ -1,8 +1,9 @@
+use std::sync::Arc;
+
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 use mcb_server::handlers::MemoryHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
-use std::sync::Arc;
 
 use crate::test_utils::mock_services::MockMemoryService;
 

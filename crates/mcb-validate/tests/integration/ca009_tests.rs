@@ -4,8 +4,9 @@
 //! The validator skips mcb-infrastructure/src/di/ (composition root), so compliant
 //! code has zero CA009 violations.
 
-use mcb_validate::{CleanArchitectureValidator, ValidationConfig};
 use std::path::PathBuf;
+
+use mcb_validate::{CleanArchitectureValidator, ValidationConfig};
 
 /// Test that CA009 allows composition root (di/) and flags only non-di imports
 #[test]

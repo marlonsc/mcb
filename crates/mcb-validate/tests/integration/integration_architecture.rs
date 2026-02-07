@@ -19,15 +19,16 @@
 
 #[cfg(test)]
 mod architecture_integration_tests {
+    use std::fs;
+    use std::io::Write;
+    use std::path::{Path, PathBuf};
+
     use mcb_validate::ValidationConfig;
     use mcb_validate::Validator;
     use mcb_validate::clean_architecture::{
         CleanArchitectureValidator, CleanArchitectureViolation,
     };
     use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
-    use std::fs;
-    use std::io::Write;
-    use std::path::{Path, PathBuf};
     use tempfile::TempDir;
 
     fn create_workspace_structure(dir: &TempDir) -> PathBuf {

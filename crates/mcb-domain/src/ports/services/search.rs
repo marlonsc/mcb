@@ -1,6 +1,7 @@
+use async_trait::async_trait;
+
 use crate::error::Result;
 use crate::value_objects::{CollectionId, SearchResult};
-use async_trait::async_trait;
 
 /// Search Service Interface
 ///

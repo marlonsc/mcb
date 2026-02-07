@@ -15,13 +15,14 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
+use std::sync::Arc;
+
 use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
-use std::sync::Arc;
 
 // ============================================================================
 // Registry Completeness Validation

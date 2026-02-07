@@ -9,7 +9,8 @@
 //! AppConfig (injected) → Resolver → linkme registry → Arc<dyn Provider>
 //! ```
 
-use crate::config::AppConfig;
+use std::sync::Arc;
+
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
@@ -19,7 +20,8 @@ use mcb_domain::registry::{
     resolve_language_provider, resolve_vector_store_provider,
 };
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use std::sync::Arc;
+
+use crate::config::AppConfig;
 
 // ============================================================================
 // Embedding Provider Resolver

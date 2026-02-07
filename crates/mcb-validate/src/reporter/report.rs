@@ -1,5 +1,11 @@
 //! `ValidationReport` and `Reporter` implementation.
 
+use std::fmt::Write;
+use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use super::summary::ValidationSummary;
 use crate::violation_trait::Violation;
 use crate::{
     AsyncViolation, CleanArchitectureViolation, ConfigQualityViolation, DependencyViolation,
@@ -8,11 +14,6 @@ use crate::{
     QualityViolation, RefactoringViolation, Severity, SolidViolation, TestQualityViolation,
     TestViolation,
 };
-use serde::{Deserialize, Serialize};
-use std::fmt::Write;
-use std::path::PathBuf;
-
-use super::summary::ValidationSummary;
 
 /// Section of violations: (section title, violations as trait objects)
 type ViolationSection<'a> = (&'static str, Vec<&'a dyn Violation>);

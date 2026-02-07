@@ -1,7 +1,7 @@
 //! Implementation quality validation module
 
-mod violation;
 mod validator;
+mod violation;
 
-pub use violation::ImplementationViolation;
 pub use validator::ImplementationQualityValidator;
+pub use violation::ImplementationViolation;

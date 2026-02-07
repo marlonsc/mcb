@@ -2,12 +2,14 @@
 //!
 //! Validates Clean Architecture port/adapter patterns.
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
-use crate::{Result, ValidationConfig};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::Serialize;
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::{Result, ValidationConfig};
 
 /// Port/Adapter Violations
 #[derive(Debug, Clone, Serialize)]

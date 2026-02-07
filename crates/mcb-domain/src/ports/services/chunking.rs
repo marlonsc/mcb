@@ -1,8 +1,10 @@
+use std::path::Path;
+
+use async_trait::async_trait;
+
 use crate::entities::CodeChunk;
 use crate::error::Result;
 use crate::value_objects::Language;
-use async_trait::async_trait;
-use std::path::Path;
 
 /// Options for chunking operations
 #[derive(Debug, Clone, Copy)]

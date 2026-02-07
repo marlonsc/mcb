@@ -5,12 +5,14 @@
 //! - Context preservation across layers
 //! - Error type placement (right layer)
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig, ValidationError};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig, ValidationError};
 
 /// Error boundary violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -474,9 +476,11 @@ impl crate::validator_trait::Validator for ErrorBoundaryValidator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_crate_structure(temp: &TempDir, crate_name: &str, path: &str, content: &str) {
         let file_path = temp

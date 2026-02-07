@@ -1,12 +1,13 @@
 //! Implementation validator implementation
 
-use super::violation::ImplementationViolation;
-use crate::violation_trait::Violation;
-use crate::{Result, Severity, ValidationConfig};
-use walkdir::WalkDir;
-use crate::pattern_registry::PATTERNS;
 use std::path::PathBuf;
 
+use walkdir::WalkDir;
+
+use super::violation::ImplementationViolation;
+use crate::pattern_registry::PATTERNS;
+use crate::violation_trait::Violation;
+use crate::{Result, Severity, ValidationConfig};
 
 /// Implementation quality validator
 pub struct ImplementationQualityValidator {
@@ -735,9 +736,11 @@ impl crate::validator_trait::Validator for ImplementationQualityValidator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
         let crate_dir = temp.path().join("crates").join(name).join("src");

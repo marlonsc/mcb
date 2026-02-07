@@ -1,8 +1,10 @@
 //! Shared file-scanning helpers for validators.
 
-use crate::{Result, ValidationConfig};
 use std::path::Path;
+
 use walkdir::WalkDir;
+
+use crate::{Result, ValidationConfig};
 
 /// True if a path points to a test file or tests directory.
 pub fn is_test_path(path: &str) -> bool {

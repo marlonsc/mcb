@@ -1,17 +1,19 @@
 //! Agent handler for tool call and delegation logging.
 
-use crate::args::{AgentAction, AgentArgs};
-use crate::formatter::ResponseFormatter;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use mcb_domain::entities::agent::{Delegation, ToolCall};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
 use serde_json::{Map, Value};
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 use validator::Validate;
+
+use crate::args::{AgentAction, AgentArgs};
+use crate::formatter::ResponseFormatter;
 
 /// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]

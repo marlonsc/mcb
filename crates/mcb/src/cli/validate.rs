@@ -1,7 +1,8 @@
 //! Validate command - runs architecture validation
 
-use clap::Args;
 use std::path::PathBuf;
+
+use clap::Args;
 
 /// Arguments for the validate command
 #[derive(Args, Debug, Clone)]

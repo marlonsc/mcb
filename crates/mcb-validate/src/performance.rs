@@ -6,12 +6,14 @@
 //! - Arc/Mutex overuse
 //! - Inefficient iterator patterns
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Performance violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -731,9 +733,11 @@ impl crate::validator_trait::Validator for PerformanceValidator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
         let crate_dir = temp.path().join("crates").join(name).join("src");

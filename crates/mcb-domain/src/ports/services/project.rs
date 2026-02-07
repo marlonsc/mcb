@@ -1,6 +1,8 @@
-use crate::entities::project::ProjectType;
-use async_trait::async_trait;
 use std::path::Path;
+
+use async_trait::async_trait;
+
+use crate::entities::project::ProjectType;
 
 /// Detects project types inside a repository path
 #[async_trait]

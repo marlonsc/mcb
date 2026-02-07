@@ -1,8 +1,10 @@
-use crate::error::Result;
-use crate::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use serde_json::Value;
-use std::collections::HashMap;
+
+use crate::error::Result;
+use crate::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 
 /// Vector Store Administrative Operations
 ///

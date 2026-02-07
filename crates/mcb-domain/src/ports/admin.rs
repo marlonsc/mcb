@@ -4,12 +4,14 @@
 //! These traits break the circular dependency where infrastructure/di
 //! previously imported from server layer.
 
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
 use crate::registry::{
     CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig, VectorStoreProviderConfig,
 };
 use crate::value_objects::{CollectionId, OperationId};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Information about an available provider
 #[derive(Debug, Clone, Serialize, Deserialize)]

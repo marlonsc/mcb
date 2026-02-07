@@ -6,10 +6,11 @@
 //! Phase 2 of v0.1.2: These tests verify that errors return `is_error: Some(true)`
 //! and contain proper troubleshooting information.
 
-use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
-use mcb_server::formatter::ResponseFormatter;
 use std::path::Path;
 use std::time::Duration;
+
+use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
+use mcb_server::formatter::ResponseFormatter;
 
 use crate::test_utils::test_fixtures::{create_test_search_result, create_test_search_results};
 
@@ -591,12 +592,13 @@ fn extract_text_content(content: &[rmcp::model::Content]) -> String {
 // =============================================================================
 
 mod handler_error_tests {
-    use super::*;
+    use std::sync::Arc;
+
     use mcb_server::args::{IndexAction, IndexArgs};
     use mcb_server::handlers::IndexHandler;
     use rmcp::handler::server::wrapper::Parameters;
-    use std::sync::Arc;
 
+    use super::*;
     use crate::test_utils::mock_services::MockIndexingService;
 
     #[tokio::test]

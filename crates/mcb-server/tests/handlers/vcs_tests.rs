@@ -1,7 +1,8 @@
+use std::sync::Arc;
+
 use mcb_server::args::{VcsAction, VcsArgs};
 use mcb_server::handlers::VcsHandler;
 use rmcp::handler::server::wrapper::Parameters;
-use std::sync::Arc;
 
 use crate::test_utils::mock_services::MockVcsProvider;
 

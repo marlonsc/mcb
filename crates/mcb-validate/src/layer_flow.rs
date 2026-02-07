@@ -3,13 +3,15 @@
 //! Validates that dependencies flow in correct Clean Architecture direction:
 //! mcb-domain -> mcb-application -> mcb-providers -> mcb-infrastructure -> mcb-server
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
-use crate::{Result, ValidationConfig};
-use regex::Regex;
-use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+
+use regex::Regex;
+use serde::Serialize;
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::{Result, ValidationConfig};
 
 /// Layer Flow Violations
 #[derive(Debug, Clone, Serialize)]

@@ -1,12 +1,13 @@
-use super::helpers::SessionHelpers;
-use crate::args::SessionArgs;
-use crate::formatter::ResponseFormatter;
-use mcb_domain::ports::services::AgentSessionServiceInterface;
-use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
 use std::sync::Arc;
 
 use mcb_domain::constants::keys as schema;
+use mcb_domain::ports::services::AgentSessionServiceInterface;
+use rmcp::ErrorData as McpError;
+use rmcp::model::{CallToolResult, Content};
+
+use super::helpers::SessionHelpers;
+use crate::args::SessionArgs;
+use crate::formatter::ResponseFormatter;
 
 pub async fn update_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,

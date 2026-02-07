@@ -6,18 +6,16 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use reqwest::Client;
-
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use reqwest::Client;
 
 use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
     EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
     EMBEDDING_DIMENSION_OLLAMA_NOMIC,
 };
-
 /// Error message for request timeouts
 use crate::utils::HttpResponseUtils;
 

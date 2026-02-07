@@ -8,6 +8,8 @@ mod issue;
 mod phase;
 mod project;
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use mcb_domain::entities::project::{
     Project, ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase,
@@ -15,7 +17,6 @@ use mcb_domain::entities::project::{
 use mcb_domain::error::Result;
 use mcb_domain::ports::infrastructure::database::DatabaseExecutor;
 use mcb_domain::ports::repositories::{IssueFilter, ProjectRepository};
-use std::sync::Arc;
 
 /// SQLite-based project repository using the database executor port.
 pub struct SqliteProjectRepository {

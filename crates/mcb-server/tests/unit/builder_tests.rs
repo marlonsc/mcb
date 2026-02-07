@@ -1,7 +1,8 @@
 //! Tests for McpServerBuilder
 
-use mcb_server::builder::{BuilderError, McpServerBuilder};
 use std::sync::Arc;
+
+use mcb_server::builder::{BuilderError, McpServerBuilder};
 
 use crate::test_utils::mock_services::{
     MockAgentSessionService, MockContextService, MockIndexingService, MockMemoryService,

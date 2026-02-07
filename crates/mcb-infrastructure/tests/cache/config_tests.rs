@@ -1,8 +1,9 @@
 //! Cache Configuration Tests
 
+use std::time::Duration;
+
 use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheStats};
 use mcb_infrastructure::cache::config::CacheKey;
-use std::time::Duration;
 
 #[test]
 fn test_cache_entry_config() {

@@ -8,14 +8,16 @@
 //! - mcb-server: mcb-domain, mcb-application, and mcb-infrastructure (transport layer)
 //! - mcb: All crates (facade that re-exports entire public API)
 
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
+
 use crate::constants::ALLOWED_DEPS;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
-use walkdir::WalkDir;
 
 /// Dependency violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -419,9 +421,11 @@ impl crate::validator_trait::Validator for DependencyValidator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_workspace() -> TempDir {
         let temp = TempDir::new().unwrap();

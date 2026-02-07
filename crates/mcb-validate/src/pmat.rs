@@ -7,12 +7,14 @@
 //!
 //! This validator is optional - it only runs if the `pmat` binary is available.
 
+use std::path::PathBuf;
+use std::process::Command;
+
+use serde::{Deserialize, Serialize};
+
 use crate::constants::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::process::Command;
 
 /// PMAT violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -554,8 +556,9 @@ impl crate::validator_trait::Validator for PmatValidator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_pmat_availability_check() {

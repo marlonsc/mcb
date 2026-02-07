@@ -2,9 +2,10 @@
 //!
 //! Tests for the generic runtime-swappable provider handle.
 
-use mcb_infrastructure::di::Handle;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+
+use mcb_infrastructure::di::Handle;
 
 /// Test provider trait for unit tests
 trait TestProvider: Send + Sync {

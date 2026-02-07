@@ -25,13 +25,15 @@
 //! quality = true
 //! ```
 
+use std::path::{Path, PathBuf};
+
+use serde::Deserialize;
+
 use crate::Severity;
 use crate::thresholds::{
     MAX_FILE_LINES, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS, MAX_IMPL_METHODS, MAX_MATCH_ARMS,
     MAX_TRAIT_METHODS,
 };
-use serde::Deserialize;
-use std::path::{Path, PathBuf};
 
 /// Root configuration loaded from `.mcb-validate.toml`
 #[derive(Debug, Clone, Default, Deserialize)]

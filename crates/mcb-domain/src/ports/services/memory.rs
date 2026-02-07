@@ -1,10 +1,11 @@
+use async_trait::async_trait;
+
 use crate::entities::memory::{
     MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
     ObservationType, SessionSummary,
 };
 use crate::error::Result;
 use crate::value_objects::{Embedding, ObservationId, SessionId};
-use async_trait::async_trait;
 
 /// Memory Service Interface
 ///

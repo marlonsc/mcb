@@ -9,6 +9,9 @@ fn test_current_timestamp_reports_recent_time() {
 
 #[cfg(test)]
 mod rrf_tests {
+    use std::collections::HashMap;
+    use std::sync::Arc;
+
     use async_trait::async_trait;
     use mcb_application::use_cases::memory_service::MemoryServiceImpl;
     use mcb_domain::entities::memory::{
@@ -26,8 +29,6 @@ mod rrf_tests {
         CollectionId, Embedding, ObservationId, SearchResult, SessionId,
     };
     use serde_json::Value;
-    use std::collections::HashMap;
-    use std::sync::Arc;
 
     // ---- Mock EmbeddingProvider ----
 

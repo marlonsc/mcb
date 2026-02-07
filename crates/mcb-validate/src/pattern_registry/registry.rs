@@ -2,9 +2,10 @@
 //!
 //! Loads regex patterns from YAML rules and provides centralized access.
 
-use regex::Regex;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+
+use regex::Regex;
 use walkdir::WalkDir;
 
 use crate::Result;

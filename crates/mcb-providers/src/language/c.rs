@@ -1,11 +1,12 @@
 //! C language processor for AST-based code chunking.
 
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::Language;
+
 use crate::language::common::{
     AST_NODE_STRUCT_SPECIFIER, BaseProcessor, CHUNK_SIZE_C, LanguageConfig, LanguageProcessor,
     NodeExtractionRule, TS_NODE_FUNCTION_DEFINITION,
 };
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
 
 /// C language processor.
 pub struct CProcessor {
