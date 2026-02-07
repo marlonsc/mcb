@@ -85,7 +85,7 @@ pub enum CleanArchitectureViolation {
         file: PathBuf,
         /// Line number of the incorrect import.
         line: usize,
-        /// The forbidden import path (e.g., `use mcb_providers::...`).
+        /// The forbidden import path (e.g., `use providers_crate::...`).
         import_path: String,
         /// Severity level of the violation.
         severity: Severity,
@@ -107,7 +107,7 @@ pub enum CleanArchitectureViolation {
     },
     /// Application layer imports ports from wrong location
     ///
-    /// CA008: Application should import ports from mcb-domain, not locally.
+    /// CA008: Application should import ports from the domain crate, not locally.
     ApplicationWrongPortImport {
         /// File where the violation occurred.
         file: PathBuf,
@@ -366,7 +366,7 @@ impl Violation for CleanArchitectureViolation {
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::DomainContainsImplementation { .. } => {
-                Some("Move implementation logic to mcb-providers or mcb-infrastructure".to_string())
+                Some("Move implementation logic to providers or infrastructure layer".to_string())
             }
             Self::HandlerCreatesService { .. } => Some(
                 "Inject service via constructor injection instead of creating directly".to_string(),
@@ -381,7 +381,7 @@ impl Violation for CleanArchitectureViolation {
                 Some("Value objects should be immutable - return new instance instead".to_string())
             }
             Self::ServerImportsProviderDirectly { .. } => {
-                Some("Import providers through mcb-infrastructure re-exports".to_string())
+                Some("Import providers through infrastructure re-exports".to_string())
             }
             Self::InfrastructureImportsConcreteService { .. } => Some(
                 "Import only trait interfaces from Application, not concrete implementations"

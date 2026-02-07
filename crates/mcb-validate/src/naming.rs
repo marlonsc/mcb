@@ -302,12 +302,11 @@ pub struct NamingValidator {
 }
 
 impl NamingValidator {
-    /// Creates a new naming validator with default configuration.
+    /// Creates a new naming validator, loading configuration from files.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(
-            ValidationConfig::new(workspace_root),
-            &NamingRulesConfig::default(),
-        )
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.naming)
     }
 
     /// Creates a validator with custom configuration.

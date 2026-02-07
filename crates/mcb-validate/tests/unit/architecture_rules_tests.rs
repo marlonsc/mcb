@@ -1,60 +1,70 @@
 //! Tests for architecture rules like CA001
+//!
+//! Uses `CRATE_LAYER_MAPPINGS` from test_constants instead of
+//! hardcoded crate names.
 
-#[cfg(test)]
-mod architecture_rules_tests {
-    use std::path::PathBuf;
+use std::path::PathBuf;
 
-    use mcb_validate::rules::yaml_loader::YamlRuleLoader;
+use mcb_validate::rules::yaml_loader::YamlRuleLoader;
 
-    #[tokio::test]
-    async fn test_ca001_rule_loading() {
-        // Test if the CA001 rule can be loaded from the YAML files
-        let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .to_path_buf();
-        let rules_dir = workspace_root.join("crates/mcb-validate/rules");
+use crate::test_constants::CRATE_LAYER_MAPPINGS;
 
-        println!("Rules directory: {rules_dir:?}");
-        println!("Rules directory exists: {}", rules_dir.exists());
+#[tokio::test]
+async fn test_ca001_rule_loading() {
+    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .to_path_buf();
+    let rules_dir = workspace_root.join("crates/mcb-validate/rules");
 
-        if rules_dir.exists() {
-            let mut loader = YamlRuleLoader::new(rules_dir).unwrap();
-            let rules = loader.load_all_rules().await.unwrap();
+    assert!(
+        rules_dir.exists(),
+        "Rules directory does not exist: {rules_dir:?}"
+    );
 
-            println!("Loaded {} rules", rules.len());
+    let mut variables = serde_yaml::Mapping::new();
+    variables.insert(
+        serde_yaml::Value::String("project_prefix".to_string()),
+        serde_yaml::Value::String("mcb".to_string()),
+    );
 
-            // Look for CA001 rule
-            let ca001_rule = rules.iter().find(|r| r.id == "CA001");
+    for (key, crate_name, module_name) in CRATE_LAYER_MAPPINGS {
+        variables.insert(
+            serde_yaml::Value::String(format!("{key}_crate")),
+            serde_yaml::Value::String(crate_name.to_string()),
+        );
+        variables.insert(
+            serde_yaml::Value::String(format!("{key}_module")),
+            serde_yaml::Value::String(module_name.to_string()),
+        );
+    }
 
-            if let Some(rule) = ca001_rule {
-                println!("Found CA001 rule: {:?}", rule.name);
-                println!("Rule engine: {:?}", rule.engine);
-                println!("Rule definition: {:?}", rule.rule_definition);
+    let mut loader =
+        YamlRuleLoader::with_variables(rules_dir, Some(serde_yaml::Value::Mapping(variables)))
+            .unwrap();
+    let rules = loader.load_all_rules().await.unwrap();
 
-                // Check if it's a RETE rule
-                assert_eq!(
-                    rule.engine, "rust-rule-engine",
-                    "CA001 should use rust-rule-engine"
-                );
+    println!("Loaded {} rules", rules.len());
 
-                // Check if it has the expected properties
-                assert!(
-                    rule.name.contains("Domain"),
-                    "CA001 should be about domain layer"
-                );
-            } else {
-                println!("CA001 rule not found!");
-                println!(
-                    "Available rules: {:?}",
-                    rules.iter().map(|r| &r.id).collect::<Vec<_>>()
-                );
-                panic!("CA001 rule should be loaded");
-            }
-        } else {
-            panic!("Rules directory does not exist: {rules_dir:?}");
-        }
+    let ca001_rule = rules.iter().find(|r| r.id == "CA001");
+
+    if let Some(rule) = ca001_rule {
+        println!("Found CA001 rule: {:?}", rule.name);
+        assert_eq!(
+            rule.engine, "rust-rule-engine",
+            "CA001 should use rust-rule-engine"
+        );
+        assert!(
+            rule.name.contains("Domain"),
+            "CA001 should be about domain layer"
+        );
+    } else {
+        println!(
+            "Available rules: {:?}",
+            rules.iter().map(|r| &r.id).collect::<Vec<_>>()
+        );
+        panic!("CA001 rule should be loaded");
     }
 }

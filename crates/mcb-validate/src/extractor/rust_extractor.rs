@@ -1,12 +1,25 @@
+//! Rust-specific AST fact extractor.
+//!
+//! Uses `rust-code-analysis` (which wraps `tree-sitter`) to parse Rust source
+//! files and extract [`Fact`]s for modules, imports, structs, and functions.
+
 use super::fact::{Fact, FactType, Location};
 use anyhow::Result;
-use rust_code_analysis::{ParserTrait, RustParser};
+use rust_code_analysis::{Node, ParserTrait, RustParser};
 use std::fs;
 use std::path::Path;
 
+/// Extracts code facts from Rust source files via AST analysis.
 pub struct RustExtractor;
 
 impl RustExtractor {
+    /// Parse a Rust file at `path` and return all extracted [`Fact`]s.
+    ///
+    /// Currently extracts:
+    /// - One `Module` fact per file (derived from the file stem).
+    /// - `Import` facts for every `use` declaration.
+    /// - `Struct` facts for every `struct` item.
+    /// - `Function` facts for every `fn` item.
     pub fn extract_facts(&self, path: &Path) -> Result<Vec<Fact>> {
         let code = fs::read(path)?;
         // Use RustParser which is a public type alias for Parser<RustCode>
@@ -39,8 +52,26 @@ impl RustExtractor {
             None,
         ));
 
+        // Helper for finding nodes by kind
+        fn find_by_kind<'a>(root: Node<'a>, kind: &str) -> Vec<Node<'a>> {
+            let mut results = Vec::new();
+            let mut stack = vec![root.0]; // Access inner tree-sitter node
+
+            while let Some(n) = stack.pop() {
+                if n.kind() == kind {
+                    results.push(Node(n));
+                }
+
+                let mut cursor = n.walk();
+                for child in n.children(&mut cursor) {
+                    stack.push(child);
+                }
+            }
+            results
+        }
+
         // Find "use" declarations (Imports)
-        let imports = root.find_all(|n| n.kind() == "use_declaration");
+        let imports = find_by_kind(root, "use_declaration");
         for import in imports {
             if let Some(text) = import.utf8_text(code_ref) {
                 // Remove "use " and ";"
@@ -62,44 +93,44 @@ impl RustExtractor {
         }
 
         // Find Structs
-        let structs = root.find_all(|n| n.kind() == "struct_item");
+        let structs = find_by_kind(root, "struct_item");
         for st in structs {
-            if let Some(name_node) = st.child_by_field_name("name") {
-                if let Some(name) = name_node.utf8_text(code_ref) {
-                    facts.push(Fact::new(
-                        name.to_string(),
-                        FactType::Struct,
-                        Location {
-                            file_path: path.to_path_buf(),
-                            start_line: st.start_row() + 1,
-                            end_line: st.end_row() + 1,
-                            start_column: st.start_position().1 + 1,
-                            end_column: st.end_position().1 + 1,
-                        },
-                        Some(module_id.clone()),
-                    ));
-                }
+            if let Some(name_node) = st.0.child_by_field_name("name")
+                && let Ok(name) = name_node.utf8_text(code_ref)
+            {
+                facts.push(Fact::new(
+                    name.to_string(),
+                    FactType::Struct,
+                    Location {
+                        file_path: path.to_path_buf(),
+                        start_line: st.start_row() + 1,
+                        end_line: st.end_row() + 1,
+                        start_column: st.start_position().1 + 1,
+                        end_column: st.end_position().1 + 1,
+                    },
+                    Some(module_id.clone()),
+                ));
             }
         }
 
         // Find Functions
-        let functions = root.find_all(|n| n.kind() == "function_item");
+        let functions = find_by_kind(root, "function_item");
         for func in functions {
-            if let Some(name_node) = func.child_by_field_name("name") {
-                if let Some(name) = name_node.utf8_text(code_ref) {
-                    facts.push(Fact::new(
-                        name.to_string(),
-                        FactType::Function,
-                        Location {
-                            file_path: path.to_path_buf(),
-                            start_line: func.start_row() + 1,
-                            end_line: func.end_row() + 1,
-                            start_column: func.start_position().1 + 1,
-                            end_column: func.end_position().1 + 1,
-                        },
-                        Some(module_id.clone()),
-                    ));
-                }
+            if let Some(name_node) = func.0.child_by_field_name("name")
+                && let Ok(name) = name_node.utf8_text(code_ref)
+            {
+                facts.push(Fact::new(
+                    name.to_string(),
+                    FactType::Function,
+                    Location {
+                        file_path: path.to_path_buf(),
+                        start_line: func.start_row() + 1,
+                        end_line: func.end_row() + 1,
+                        start_column: func.start_position().1 + 1,
+                        end_column: func.end_position().1 + 1,
+                    },
+                    Some(module_id.clone()),
+                ));
             }
         }
 

@@ -1,40 +1,30 @@
 //! Tests for Async Patterns Validation
+//!
+//! Uses fixture crate `my-test` which contains `async_file_processor` with
+//! blocking I/O and `async_proper_handler` with correct tokio usage.
 
 use mcb_validate::async_patterns::AsyncPatternValidator;
-use tempfile::TempDir;
 
-use crate::test_utils::create_test_crate;
+use crate::test_constants::TEST_CRATE;
+use crate::test_utils::*;
 
 #[test]
 fn test_blocking_in_async_detection() {
-    let temp = TempDir::new().unwrap();
-    create_test_crate(
-        &temp,
-        "mcb-test",
-        r"
-use std::thread;
+    let (_temp, root) = with_fixture_crate(TEST_CRATE);
 
-pub async fn bad_async() {
-    thread::sleep(std::time::Duration::from_secs(1));
-}
-",
-    );
-
-    let validator = AsyncPatternValidator::new(temp.path());
+    // my-test/src/lib.rs has async_file_processor with:
+    //   - std::fs::read_to_string (blocking I/O)
+    //   - std::thread::sleep (blocking sleep)
+    let validator = AsyncPatternValidator::new(&root);
     let violations = validator.validate_blocking_in_async().unwrap();
 
-    assert!(
-        !violations.is_empty(),
-        "Should detect blocking call in async context"
-    );
+    assert_min_violations(&violations, 1, "blocking calls in async fixture crate");
 }
 
 #[test]
-fn test_proper_async_patterns() {
-    let temp = TempDir::new().unwrap();
-    create_test_crate(
-        &temp,
-        "mcb-test",
+fn test_proper_async_no_violations() {
+    let (_temp, root) = with_inline_crate(
+        TEST_CRATE,
         r"
 use tokio::time;
 
@@ -44,8 +34,8 @@ pub async fn good_async() {
 ",
     );
 
-    let validator = AsyncPatternValidator::new(temp.path());
+    let validator = AsyncPatternValidator::new(&root);
     let violations = validator.validate_blocking_in_async().unwrap();
 
-    assert!(violations.is_empty(), "Proper async should pass");
+    assert_no_violations(&violations, "Proper async should pass");
 }

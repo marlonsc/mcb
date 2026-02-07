@@ -8,7 +8,6 @@ use mcb_validate::ast::UnwrapDetector;
 use mcb_validate::clean_architecture::CleanArchitectureValidator;
 use mcb_validate::duplication::{DuplicationAnalyzer, DuplicationThresholds, tokenize_source};
 use mcb_validate::generic_reporter::GenericReporter;
-use mcb_validate::validator_trait::Validator;
 use mcb_validate::violation_trait::Violation;
 use std::fs;
 use std::hint::black_box;

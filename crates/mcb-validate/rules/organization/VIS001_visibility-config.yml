@@ -11,10 +11,10 @@ rationale: "Externalized configuration for internal directories and exempted pub
 
 config:
   internal_dirs:
-    - "crates/mcb-infrastructure/src/utils"
-    - "crates/mcb-providers/src/utils"
-    - "crates/mcb-server/src/utils"
-    - "crates/mcb-application/src/utils"
+    - "crates/{{infrastructure_crate}}/src/utils"
+    - "crates/{{providers_crate}}/src/utils"
+    - "crates/{{server_crate}}/src/utils"
+    - "crates/{{application_crate}}/src/utils"
   exempted_items:
     - "Error"
     - "Result"

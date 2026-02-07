@@ -9,6 +9,7 @@ use regex::Regex;
 use walkdir::WalkDir;
 
 use crate::Result;
+use crate::rules::templates::TemplateEngine;
 
 /// Registry of compiled regex patterns and configurations loaded from YAML rules
 pub struct PatternRegistry {
@@ -25,8 +26,12 @@ impl PatternRegistry {
         }
     }
 
-    /// Load patterns from all YAML rules in a directory
-    pub fn load_from_rules(rules_dir: &Path) -> Result<Self> {
+    /// Load patterns from all YAML rules in a directory, using config for template variables
+    pub fn load_from_rules(
+        rules_dir: &Path,
+        naming_config: &crate::config::NamingRulesConfig,
+        project_prefix: &str,
+    ) -> Result<Self> {
         let mut registry = Self::new();
 
         for entry in WalkDir::new(rules_dir)
@@ -38,7 +43,7 @@ impl PatternRegistry {
                     .is_some_and(|ext| ext == "yml" || ext == "yaml")
             })
         {
-            if let Err(e) = registry.load_rule_file(entry.path()) {
+            if let Err(e) = registry.load_rule_file(entry.path(), naming_config, project_prefix) {
                 eprintln!(
                     "Warning: Failed to load patterns/config from {}: {}",
                     entry.path().display(),
@@ -51,9 +56,55 @@ impl PatternRegistry {
     }
 
     /// Load patterns and configurations from a single YAML rule file
-    fn load_rule_file(&mut self, path: &Path) -> Result<()> {
+    fn load_rule_file(
+        &mut self,
+        path: &Path,
+        naming_config: &crate::config::NamingRulesConfig,
+        project_prefix: &str,
+    ) -> Result<()> {
         let content = std::fs::read_to_string(path)?;
-        let yaml: serde_yaml::Value = serde_yaml::from_str(&content)?;
+        let mut yaml: serde_yaml::Value = serde_yaml::from_str(&content)?;
+
+        // Build template variables from configuration (no hardcoded crate names)
+        let mut variables = serde_yaml::Mapping::new();
+        variables.insert(
+            serde_yaml::Value::String("project_prefix".to_string()),
+            serde_yaml::Value::String(project_prefix.to_string()),
+        );
+
+        // Map each layer key to (crate_name, module_name) from NamingRulesConfig
+        let crates: [(&str, &str); 8] = [
+            ("domain", &naming_config.domain_crate),
+            ("application", &naming_config.application_crate),
+            ("providers", &naming_config.providers_crate),
+            ("infrastructure", &naming_config.infrastructure_crate),
+            ("server", &naming_config.server_crate),
+            ("validate", &naming_config.validate_crate),
+            ("language_support", &naming_config.language_support_crate),
+            ("ast_utils", &naming_config.ast_utils_crate),
+        ];
+
+        for (key, crate_name) in crates {
+            let module_name = crate_name.replace('-', "_");
+            variables.insert(
+                serde_yaml::Value::String(format!("{key}_crate")),
+                serde_yaml::Value::String(crate_name.to_string()),
+            );
+            variables.insert(
+                serde_yaml::Value::String(format!("{key}_module")),
+                serde_yaml::Value::String(module_name),
+            );
+        }
+
+        let engine = TemplateEngine::new();
+        let variables_value = serde_yaml::Value::Mapping(variables);
+        if let Err(e) = engine.substitute_variables(&mut yaml, &variables_value) {
+            eprintln!(
+                "Warning: Failed to substitute variables in {}: {}",
+                path.display(),
+                e
+            );
+        }
 
         // Get rule ID for namespacing
         let rule_id = yaml.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
@@ -214,13 +265,19 @@ pub fn default_rules_dir() -> PathBuf {
     PathBuf::from("rules")
 }
 
-/// Global pattern registry, lazy-loaded from YAML rules
+/// Global pattern registry, lazy-loaded from YAML rules and configuration
 pub static PATTERNS: std::sync::LazyLock<PatternRegistry> = std::sync::LazyLock::new(|| {
     let rules_dir = default_rules_dir();
-    PatternRegistry::load_from_rules(&rules_dir).unwrap_or_else(|e| {
-        eprintln!("Error: Failed to load pattern registry: {e}");
-        PatternRegistry::new()
-    })
+    // Load config to get project-specific crate names for template substitution
+    let file_config = crate::config::FileConfig::load(".");
+    let naming_config = &file_config.rules.naming;
+    let project_prefix = &file_config.general.project_prefix;
+    PatternRegistry::load_from_rules(&rules_dir, naming_config, project_prefix).unwrap_or_else(
+        |e| {
+            eprintln!("Error: Failed to load pattern registry: {e}");
+            PatternRegistry::new()
+        },
+    )
 });
 
 #[cfg(test)]
@@ -269,7 +326,13 @@ mod tests {
     fn test_load_from_rules_dir() {
         let rules_dir = default_rules_dir();
         if rules_dir.exists() {
-            let registry = PatternRegistry::load_from_rules(&rules_dir).expect("Should load rules");
+            let file_config = crate::config::FileConfig::load(".");
+            let registry = PatternRegistry::load_from_rules(
+                &rules_dir,
+                &file_config.rules.naming,
+                &file_config.general.project_prefix,
+            )
+            .expect("Should load rules");
             // May or may not have patterns depending on YAML content
             println!("Loaded {} patterns from rules", registry.len());
         }

@@ -1,0 +1,228 @@
+# ==============================================================================
+# mcb-validate — Default Configuration
+# ==============================================================================
+# This file is EMBEDDED in the binary at compile time via include_str!().
+# Every field in the FileConfig struct MUST have a value here.
+# Project-specific overrides go in config/mcb-validate-internal.toml.
+# Runtime overrides use MCB_VALIDATE__* environment variables.
+
+[general]
+exclude_patterns = ["target/", "tests/fixtures/"]
+additional_src_paths = []
+output_format = "human"
+rules_path = "rules"
+project_prefix = ""
+skip_crates = []
+internal_dep_prefix = ""
+
+# ==============================================================================
+# Architecture Rules
+# ==============================================================================
+[rules.architecture]
+enabled = true
+severity = "Error"
+
+[rules.architecture.layer_boundaries]
+domain_internal_deps = []
+application_internal_deps = []
+providers_internal_deps = []
+infrastructure_internal_deps = []
+server_internal_deps = []
+
+# ==============================================================================
+# Code Quality Rules
+# ==============================================================================
+[rules.quality]
+enabled = true
+max_file_lines = 500
+max_function_lines = 50
+allow_unwrap_in_tests = true
+allow_expect_with_message = true
+exempt_patterns = []
+excluded_paths = []
+
+# ==============================================================================
+# Organization Rules
+# ==============================================================================
+[rules.organization]
+enabled = true
+magic_number_allowlist = [
+    0,
+    1,
+    2,
+    10,
+    100,
+    1000,
+    16384,
+    32768,
+    65536,
+    86400,
+    3600,
+    60,
+]
+strict_directory_structure = true
+
+# ==============================================================================
+# SOLID Principles Rules
+# ==============================================================================
+[rules.solid]
+enabled = true
+max_trait_methods = 10
+max_impl_methods = 15
+max_match_arms = 10
+max_function_params = 5
+
+# ==============================================================================
+# Visibility Rules
+# ==============================================================================
+[rules.visibility]
+enabled = true
+internal_dirs = []
+exempted_items = []
+utility_module_patterns = []
+pub_count_threshold = 3
+scan_crates = []
+
+# ==============================================================================
+# Layer Flow Rules
+# ==============================================================================
+[rules.layer_flow]
+enabled = true
+circular_dependency_check_crates = []
+
+[rules.layer_flow.forbidden_dependencies]
+
+# ==============================================================================
+# Port/Adapter Rules
+# ==============================================================================
+[rules.port_adapter]
+enabled = true
+max_port_methods = 10
+adapter_suffixes = []
+ports_dir = ""
+providers_dir = ""
+
+# ==============================================================================
+# Clean Architecture Rules
+# ==============================================================================
+[rules.clean_architecture]
+enabled = true
+server_path = ""
+handlers_path = ""
+domain_path = ""
+entities_path = ""
+vo_path = ""
+infrastructure_path = ""
+application_path = ""
+ports_providers_path = ""
+identity_skip_suffixes = ["Builder", "Options", "Config", "Changes"]
+allowed_mutable_prefixes = ["set_", "add_", "remove_", "clear_", "reset_"]
+composition_root_skip_patterns = ["/di/"]
+
+# ==============================================================================
+# Naming Rules
+# ==============================================================================
+[rules.naming]
+enabled = true
+server_crate = ""
+domain_crate = ""
+infrastructure_crate = ""
+application_crate = ""
+providers_crate = ""
+validate_crate = ""
+language_support_crate = ""
+ast_utils_crate = ""
+
+# ==============================================================================
+# KISS Rules
+# ==============================================================================
+[rules.kiss]
+enabled = true
+excluded_crates = []
+
+# ==============================================================================
+# Refactoring Rules
+# ==============================================================================
+[rules.refactoring]
+enabled = true
+excluded_crates = []
+generic_type_names = [
+    "Error",
+    "Result",
+    "T",
+    "U",
+    "V",
+    "E",
+    "Context",
+    "Config",
+    "State",
+]
+utility_types = [
+    "DateTime",
+    "Duration",
+    "Uuid",
+    "PathBuf",
+    "Option",
+    "Vec",
+    "String",
+    "HashMap",
+    "Arc",
+    "Mutex",
+]
+skip_files = ["mod.rs", "lib.rs", "main.rs", "errors.rs", "error.rs"]
+skip_dir_patterns = ["/tests/", "/benches/", "/examples/"]
+known_migration_pairs = []
+
+# ==============================================================================
+# Performance Rules
+# ==============================================================================
+[rules.performance]
+enabled = true
+excluded_crates = []
+
+# ==============================================================================
+# Pattern Rules
+# ==============================================================================
+[rules.patterns]
+enabled = true
+excluded_crates = []
+arc_pattern = "Arc<([A-Z][a-zA-Z0-9_]*)>"
+allowed_concrete_types = ["String", "Vec", "HashMap", "RwLock", "Mutex"]
+provider_trait_suffixes = ["Provider", "Repository", "Service", "UseCase"]
+result_check_excluded_crates = []
+
+# ==============================================================================
+# Test Quality Rules
+# ==============================================================================
+[rules.test_quality]
+enabled = true
+excluded_paths = []
+
+# ==============================================================================
+# Implementation Rules
+# ==============================================================================
+[rules.implementation]
+enabled = true
+excluded_crates = []
+
+# ==============================================================================
+# Validator Enable/Disable Flags
+# ==============================================================================
+[validators]
+dependency = true
+organization = true
+quality = true
+solid = true
+architecture = true
+refactoring = true
+naming = true
+documentation = true
+patterns = true
+kiss = true
+tests = true
+async_patterns = true
+error_boundary = true
+performance = true
+implementation = true
+pmat = true
+clean_architecture = true

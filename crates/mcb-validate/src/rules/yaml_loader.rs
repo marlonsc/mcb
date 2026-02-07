@@ -103,15 +103,26 @@ pub struct YamlRuleLoader {
     template_engine: TemplateEngine,
     /// Directory containing the rule definitions
     rules_dir: PathBuf,
+    /// Variables for template substitution (e.g. from config)
+    variables: Option<serde_yaml::Value>,
 }
 
 impl YamlRuleLoader {
     /// Create a new YAML rule loader
     pub fn new(rules_dir: PathBuf) -> Result<Self> {
+        Self::with_variables(rules_dir, None)
+    }
+
+    /// Create a new YAML rule loader with variables
+    pub fn with_variables(
+        rules_dir: PathBuf,
+        variables: Option<serde_yaml::Value>,
+    ) -> Result<Self> {
         Ok(Self {
             validator: YamlRuleValidator::new()?,
             template_engine: TemplateEngine::new(),
             rules_dir,
+            variables,
         })
     }
 
@@ -161,8 +172,24 @@ impl YamlRuleLoader {
         // Apply template if specified
         let processed_yaml =
             if let Some(template_name) = yaml_value.get("_template").and_then(|v| v.as_str()) {
+                // Merge variables into rule definition so template specific logic can access them
+                let template_args = if let Some(vars) = &self.variables {
+                    let mut args = vars.clone();
+                    // Simple shallow merge of rule over variables (for template arguments)
+                    if let serde_yaml::Value::Mapping(args_map) = &mut args
+                        && let serde_yaml::Value::Mapping(rule_map) = &yaml_value
+                    {
+                        for (k, v) in rule_map {
+                            args_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    args
+                } else {
+                    yaml_value.clone()
+                };
+
                 self.template_engine
-                    .apply_template(template_name, &yaml_value)?
+                    .apply_template(template_name, &template_args)?
             } else {
                 yaml_value
             };
@@ -176,9 +203,16 @@ impl YamlRuleLoader {
                 processed_yaml
             };
 
-        // Convert to JSON for validation
+        // Substitute globals if provided
+        let mut final_yaml = processed_yaml;
+        if let Some(vars) = &self.variables {
+            self.template_engine
+                .substitute_variables(&mut final_yaml, vars)?;
+        }
+
+        // Convert to JSON for validating
         let json_value: serde_json::Value =
-            serde_json::to_value(processed_yaml).map_err(|e| crate::ValidationError::Parse {
+            serde_json::to_value(final_yaml).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
                 message: format!("YAML to JSON conversion error: {e}"),
             })?;

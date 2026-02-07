@@ -334,6 +334,7 @@ impl Violation for QualityViolation {
 pub struct QualityValidator {
     config: ValidationConfig,
     max_file_lines: usize,
+    excluded_paths: Vec<String>,
 }
 
 impl QualityValidator {
@@ -348,9 +349,12 @@ impl QualityValidator {
 
     /// Creates a new validator instance using a provided configuration.
     pub fn with_config(config: ValidationConfig) -> Self {
+        // Load file configuration to get quality rules
+        let file_config = crate::config::FileConfig::load(&config.workspace_root);
         Self {
             config,
             max_file_lines: thresholds().max_file_lines,
+            excluded_paths: file_config.rules.quality.excluded_paths,
         }
     }
 
@@ -650,10 +654,11 @@ impl QualityValidator {
 
                 let path_str = entry.path().to_string_lossy();
 
-                // Skip mcb-providers vector store implementations (ADR-029)
-                // These are legitimately large due to complex storage operations
-                if path_str.contains("mcb-providers/src/vector_store/")
-                    || path_str.contains("mcb-providers/src/embedding/")
+                // Skip paths excluded in configuration (e.g., large vector store implementations)
+                if self
+                    .excluded_paths
+                    .iter()
+                    .any(|excluded| path_str.contains(excluded.as_str()))
                 {
                     continue;
                 }

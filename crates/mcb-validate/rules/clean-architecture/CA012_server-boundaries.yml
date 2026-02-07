@@ -9,22 +9,22 @@ engine: "rust-rule-engine"
 description: "Server crate depends on domain, application, infrastructure, and providers"
 rationale: "Server layer depends on infrastructure for DI and application for use cases"
 
-crate_name: "mcb-server"
+crate_name: "{{server_crate}}"
 forbidden_prefixes: []
 allowed_dependencies:
-  ["mcb-domain", "mcb-application", "mcb-infrastructure", "mcb-providers"]
+  ["{{domain_crate}}", "{{application_crate}}", "{{infrastructure_crate}}", "{{providers_crate}}"]
 
 config:
-  crate_name: "mcb-server"
+  crate_name: "{{server_crate}}"
   forbidden_prefixes: []
   allowed_dependencies:
-    ["mcb-domain", "mcb-application", "mcb-infrastructure", "mcb-providers"]
+    ["{{domain_crate}}", "{{application_crate}}", "{{infrastructure_crate}}", "{{providers_crate}}"]
 
 rule: |
   rule ServerBoundaries "Server Layer Boundaries" {
       when
-          Facts.crate_name == "mcb-server" &&
-          (Facts.crate_mcb_server_depends_on_mcb == true)
+          Facts.crate_name == "{{server_crate}}" &&
+          (Facts.crate_{{server_module}}_depends_on_mcb == true)
       then
           Facts.violation_triggered = true;
           Facts.violation_message = "Server layer cannot depend on the main mcb facade crate";

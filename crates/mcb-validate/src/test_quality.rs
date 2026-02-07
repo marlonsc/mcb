@@ -217,9 +217,11 @@ pub struct TestQualityValidator {
 }
 
 impl TestQualityValidator {
-    /// Create a new test quality validator with the given configuration
-    pub fn new(config: ValidationConfig) -> Self {
-        Self::with_config(config, &TestQualityRulesConfig::default())
+    /// Create a new test quality validator with the given workspace root
+    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+        let root: std::path::PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.test_quality)
     }
 
     /// Create a validator with a custom configuration

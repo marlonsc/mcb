@@ -19,9 +19,11 @@ pub struct ImplementationQualityValidator {
 impl ImplementationQualityValidator {
     /// Create a new implementation quality validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
         Self::with_config(
-            ValidationConfig::new(workspace_root),
-            &ImplementationRulesConfig::default(),
+            ValidationConfig::new(root),
+            &file_config.rules.implementation,
         )
     }
 

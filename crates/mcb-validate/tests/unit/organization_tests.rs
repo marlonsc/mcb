@@ -1,62 +1,55 @@
 //! Tests for Code Organization Validation
-
-use std::fs;
+//!
+//! Uses fixture crates:
+//! - `my-test`: contains magic numbers in calculate_pricing()
+//! - `my-infra`: contains constants.rs (should be exempt from magic number checks)
 
 use mcb_validate::OrganizationValidator;
-use tempfile::TempDir;
 
-use crate::test_utils::create_test_crate;
+use crate::test_constants::*;
+use crate::test_utils::*;
 
 #[test]
 fn test_magic_number_detection() {
-    let temp = TempDir::new().unwrap();
-    create_test_crate(
-        &temp,
-        "mcb-test",
+    let (_temp, root) = with_fixture_crate(TEST_CRATE);
+
+    // my-test/src/lib.rs has calculate_pricing() with magic numbers:
+    //   0.0875 (tax rate), 15.99 (shipping), 10000.0 (threshold), 0.95 (discount)
+    let validator = OrganizationValidator::new(&root);
+    let violations = validator.validate_magic_numbers().unwrap();
+
+    assert_min_violations(&violations, 1, "magic numbers in calculate_pricing()");
+}
+
+#[test]
+fn test_constants_file_exempt() {
+    let (_temp, root) = with_fixture_crate(INFRA_CRATE);
+
+    // my-infra/src/constants.rs has numeric constants like MAX_DB_CONNECTIONS = 100
+    // These should NOT trigger magic number violations
+    let validator = OrganizationValidator::new(&root);
+    let violations = validator.validate_magic_numbers().unwrap();
+
+    assert_no_violation_from_file(&violations, "constants.rs");
+}
+
+#[test]
+fn test_no_magic_numbers_in_clean_code() {
+    let (_temp, root) = with_inline_crate(
+        TEST_CRATE,
         r"
-pub fn process_data() {
-    let timeout = 300000;  // magic number (5+ digits)
-    let buffer_size = 163840;  // magic number (5+ digits)
+pub fn clean_function() {
+    let x = 0;
+    let y = 1;
 }
 ",
     );
 
-    let validator = OrganizationValidator::new(temp.path());
+    let validator = OrganizationValidator::new(&root);
     let violations = validator.validate_magic_numbers().unwrap();
 
-    assert!(!violations.is_empty(), "Should detect magic numbers");
-}
-
-#[test]
-fn test_constants_file_exemption() {
-    let temp = TempDir::new().unwrap();
-
-    let crate_dir = temp.path().join("crates").join("mcb-test").join("src");
-    fs::create_dir_all(&crate_dir).unwrap();
-    fs::write(
-        crate_dir.join("constants.rs"),
-        r"
-pub const TIMEOUT_MS: u64 = 300000;
-pub const BUFFER_SIZE: usize = 163840;
-",
-    )
-    .unwrap();
-
-    fs::write(
-        temp.path()
-            .join("crates")
-            .join("mcb-test")
-            .join("Cargo.toml"),
-        r#"
-[package]
-name = "mcb-test"
-version = "0.1.1"
-"#,
-    )
-    .unwrap();
-
-    let validator = OrganizationValidator::new(temp.path());
-    let violations = validator.validate_magic_numbers().unwrap();
-
-    assert!(violations.is_empty(), "Constants files should be exempt");
+    assert_no_violations(
+        &violations,
+        "Small literals (0, 1) should not trigger magic number detection",
+    );
 }

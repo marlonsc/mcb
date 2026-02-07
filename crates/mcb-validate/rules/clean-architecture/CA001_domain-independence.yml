@@ -10,24 +10,24 @@ description: "Domain crate must have zero internal mcb-* dependencies"
 rationale: "Domain layer contains pure business logic independent of frameworks"
 
 patterns:
-  provider_import: 'use\s+mcb_providers(?:::|;)'
+  provider_import: 'use\s+{{providers_module}}(?:::|;)'
   service_constructor: '(\w+Service)(?:Impl)?::new\s*\('
   provider_constructor: '(\w+Provider)(?:Impl)?::new\s*\('
   repository_constructor: '(\w+Repository)(?:Impl)?::new\s*\('
-  app_import: 'use\s+mcb_application(?:::|;)'
-  app_import_path: 'use\s+(mcb_application::\S+)'
+  app_import: 'use\s+{{application_module}}(?:::|;)'
+  app_import_path: 'use\s+({{application_module}}::\S+)'
   pub_struct_brace: 'pub\s+struct\s+(\w+)\s*\{'
   id_field: '\bid\s*:|uuid\s*:|entity_id\s*:'
   impl_block: 'impl\s+(\w+)\s*\{'
   mut_self_method: 'fn\s+(\w+)\s*\(\s*&mut\s+self'
 
-crate_name: "mcb-domain"
-forbidden_prefixes: ["mcb-"]
+crate_name: "{{domain_crate}}"
+forbidden_prefixes: ["{{project_prefix}}-"]
 allowed_dependencies: ["std", "serde", "thiserror", "uuid", "chrono"]
 
 config:
-  crate_name: "mcb-domain"
-  forbidden_prefixes: ["mcb-"]
+  crate_name: "{{domain_crate}}"
+  forbidden_prefixes: ["{{project_prefix}}-"]
   allowed_dependencies: ["std", "serde", "thiserror", "uuid", "chrono"]
 
 # GRL rule using rust-rule-engine syntax
@@ -42,6 +42,6 @@ rule: |
           Facts.has_internal_dependencies == true
       then
           Facts.violation_triggered = true;
-          Facts.violation_message = "Domain layer cannot depend on internal mcb-* crates";
+          Facts.violation_message = "Domain layer cannot depend on internal {{project_prefix}}-* crates";
           Facts.violation_rule_name = "CA001";
   }

@@ -9,21 +9,21 @@ engine: "rust-rule-engine"
 description: "mcb-ast-utils only depends on language support"
 rationale: "AST utilities are generic and should not depend on architectural layers"
 
-crate_name: "mcb-ast-utils"
+crate_name: "{{ast_utils_crate}}"
 forbidden_prefixes: []
-allowed_dependencies: ["mcb-language-support"]
+allowed_dependencies: ["{{language_support_crate}}"]
 
 config:
-  crate_name: "mcb-ast-utils"
+  crate_name: "{{ast_utils_crate}}"
   forbidden_prefixes: []
-  allowed_dependencies: ["mcb-language-support"]
+  allowed_dependencies: ["{{language_support_crate}}"]
 
 rule: |
   rule AstUtilsBoundaries "AST Utils Boundaries" {
       when
-          Facts.crate_name == "mcb-ast-utils" &&
-          (Facts.crate_mcb_ast_utils_depends_on_mcb_domain == true ||
-           Facts.crate_mcb_ast_utils_depends_on_mcb_application == true)
+          Facts.crate_name == "{{ast_utils_crate}}" &&
+          (Facts.crate_{{ast_utils_module}}_depends_on_{{domain_module}} == true ||
+           Facts.crate_{{ast_utils_module}}_depends_on_{{application_module}} == true)
       then
           Facts.violation_triggered = true;
           Facts.violation_message = "AST utilities can only depend on language support crate";

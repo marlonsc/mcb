@@ -150,17 +150,11 @@ pub struct VisibilityValidator {
     enabled: bool,
 }
 
-/// Default implementation for visibility validator.
-impl Default for VisibilityValidator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl VisibilityValidator {
-    /// Creates a new visibility validator with default configuration.
-    pub fn new() -> Self {
-        Self::with_config(&VisibilityRulesConfig::default())
+    /// Creates a new visibility validator, loading configuration from files.
+    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+        let file_config = crate::config::FileConfig::load(workspace_root);
+        Self::with_config(&file_config.rules.visibility)
     }
 
     /// Creates a new visibility validator with current configuration.

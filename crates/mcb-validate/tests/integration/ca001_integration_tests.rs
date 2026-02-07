@@ -36,6 +36,8 @@ mod ca001_integration_tests {
             ast_data: HashMap::new(),
             cargo_data: HashMap::new(),
             file_contents: HashMap::new(),
+            facts: std::sync::Arc::new(Vec::new()),
+            graph: std::sync::Arc::new(mcb_validate::graph::DependencyGraph::new()),
         };
 
         // Load CA001 GRL rule - fires when internal dependencies exist
@@ -86,6 +88,8 @@ rule "DomainIndependence" salience 10 {
             ast_data: HashMap::new(),
             cargo_data: HashMap::new(),
             file_contents: HashMap::new(),
+            facts: std::sync::Arc::new(Vec::new()),
+            graph: std::sync::Arc::new(mcb_validate::graph::DependencyGraph::new()),
         };
 
         // Load a rule that fires only when NO internal dependencies exist

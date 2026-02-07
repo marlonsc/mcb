@@ -1,41 +1,47 @@
 //! Tests for Documentation Validation
+//!
+//! Uses fixture crate `my-test` which contains both documented
+//! and undocumented public items (structs, functions).
 
 use mcb_validate::{DocumentationValidator, DocumentationViolation};
-use tempfile::TempDir;
 
-use crate::test_utils::create_test_crate;
+use crate::test_constants::TEST_CRATE;
+use crate::test_utils::*;
 
 #[test]
 fn test_missing_struct_doc() {
-    let temp = TempDir::new().unwrap();
-    create_test_crate(
-        &temp,
-        "mcb-test",
-        r"
-pub struct UndocumentedStruct {
-    pub field: String,
-}
-",
-    );
+    let (_temp, root) = with_fixture_crate(TEST_CRATE);
 
-    let validator = DocumentationValidator::new(temp.path());
+    // my-test/src/lib.rs has UndocumentedStruct without doc comments
+    let validator = DocumentationValidator::new(&root);
     let violations = validator.validate_pub_item_docs().unwrap();
 
-    assert!(!violations.is_empty(), "Should detect missing struct doc");
-    match &violations[0] {
-        DocumentationViolation::MissingPubItemDoc { item_name, .. } => {
-            assert_eq!(item_name, "UndocumentedStruct");
-        }
-        _ => panic!("Expected MissingPubItemDoc"),
-    }
+    assert_has_violation_matching(
+        &violations,
+        |v| matches!(v, DocumentationViolation::MissingPubItemDoc { item_name, .. } if item_name == "UndocumentedStruct"),
+        "MissingPubItemDoc for UndocumentedStruct",
+    );
 }
 
 #[test]
-fn test_documented_struct() {
-    let temp = TempDir::new().unwrap();
-    create_test_crate(
-        &temp,
-        "mcb-test",
+fn test_missing_function_doc() {
+    let (_temp, root) = with_fixture_crate(TEST_CRATE);
+
+    // my-test/src/lib.rs has undocumented_function() without doc comments
+    let validator = DocumentationValidator::new(&root);
+    let violations = validator.validate_pub_item_docs().unwrap();
+
+    assert_has_violation_matching(
+        &violations,
+        |v| matches!(v, DocumentationViolation::MissingPubItemDoc { item_name, .. } if item_name == "undocumented_function"),
+        "MissingPubItemDoc for undocumented_function",
+    );
+}
+
+#[test]
+fn test_documented_struct_no_violation() {
+    let (_temp, root) = with_inline_crate(
+        TEST_CRATE,
         r"
 /// A well-documented struct
 pub struct DocumentedStruct {
@@ -44,8 +50,8 @@ pub struct DocumentedStruct {
 ",
     );
 
-    let validator = DocumentationValidator::new(temp.path());
+    let validator = DocumentationValidator::new(&root);
     let violations = validator.validate_pub_item_docs().unwrap();
 
-    assert!(violations.is_empty(), "Documented structs should pass");
+    assert_no_violations(&violations, "Documented structs should pass");
 }

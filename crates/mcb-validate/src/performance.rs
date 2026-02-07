@@ -259,10 +259,9 @@ pub struct PerformanceValidator {
 impl PerformanceValidator {
     /// Create a new performance validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(
-            ValidationConfig::new(workspace_root),
-            &PerformanceRulesConfig::default(),
-        )
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.performance)
     }
 
     /// Create a validator with custom configuration

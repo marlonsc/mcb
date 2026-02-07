@@ -30,8 +30,8 @@ config:
     - "CacheStats"
     - "TimedOperation"
   known_migration_pairs:
-    - ["mcb-providers", "mcb-infrastructure"]
-    - ["mcb-domain", "mcb-infrastructure"]
+    - ["{{providers_crate}}", "{{infrastructure_crate}}"]
+    - ["{{domain_crate}}", "{{infrastructure_crate}}"]
   refactoring_skip_files:
     - "mod"
     - "lib"

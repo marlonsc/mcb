@@ -9,22 +9,32 @@ engine: "rust-rule-engine"
 description: "Infrastructure crate depends on domain, application, providers, and validate"
 rationale: "Infrastructure serves as the composition root and manages external system integration"
 
-crate_name: "mcb-infrastructure"
+crate_name: "{{infrastructure_crate}}"
 forbidden_prefixes: []
 allowed_dependencies:
-  ["mcb-domain", "mcb-application", "mcb-providers", "mcb-validate"]
+  [
+    "{{domain_crate}}",
+    "{{application_crate}}",
+    "{{providers_crate}}",
+    "{{validate_crate}}",
+  ]
 
 config:
-  crate_name: "mcb-infrastructure"
+  crate_name: "{{infrastructure_crate}}"
   forbidden_prefixes: []
   allowed_dependencies:
-    ["mcb-domain", "mcb-application", "mcb-providers", "mcb-validate"]
+    [
+      "{{domain_crate}}",
+      "{{application_crate}}",
+      "{{providers_crate}}",
+      "{{validate_crate}}",
+    ]
 
 rule: |
   rule InfrastructureBoundaries "Infrastructure Layer Boundaries" {
       when
-          Facts.crate_name == "mcb-infrastructure" &&
-          (Facts.crate_mcb_infrastructure_depends_on_mcb_server == true)
+          Facts.crate_name == "{{infrastructure_crate}}" &&
+          (Facts.crate_{{infrastructure_module}}_depends_on_{{server_module}} == true)
       then
           Facts.violation_triggered = true;
           Facts.violation_message = "Infrastructure layer cannot depend on server layer";

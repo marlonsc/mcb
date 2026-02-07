@@ -1,0 +1,15 @@
+# mcb-validate configuration for test fixtures
+# This config provides sensible defaults for fixture-based tests.
+
+[general]
+project_prefix = "my"
+
+[rules.naming]
+domain_crate = "my-domain"
+application_crate = "my-application"
+providers_crate = "my-providers"
+infrastructure_crate = "my-infrastructure"
+server_crate = "my-server"
+validate_crate = "my-validate"
+language_support_crate = "my-language-support"
+ast_utils_crate = "my-ast-utils"

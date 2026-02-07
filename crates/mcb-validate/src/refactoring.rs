@@ -305,10 +305,9 @@ pub struct RefactoringValidator {
 impl RefactoringValidator {
     /// Create a new refactoring validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(
-            ValidationConfig::new(workspace_root),
-            &RefactoringRulesConfig::default(),
-        )
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.refactoring)
     }
 
     /// Create a validator with custom configuration

@@ -53,7 +53,9 @@ impl MavenDetector {
                     }
                 }
                 Ok(Event::Text(e)) => {
-                    let text = e.unescape().ok()?.to_string();
+                    // In quick-xml 0.39, BytesText doesn't have unescape() method
+                    // We decode the bytes directly to string
+                    let text = String::from_utf8_lossy(e.as_ref()).to_string();
 
                     if Self::path_matches(&current_path, &["project", "groupId"])
                         && group_id.is_empty()

@@ -16,8 +16,8 @@ config:
     - "Repository"
     - "Adapter"
     - "Client"
-  ports_dir: "crates/mcb-application/src/ports"
-  providers_dir: "crates/mcb-providers/src"
+  ports_dir: "crates/{{application_crate}}/src/ports"
+  providers_dir: "crates/{{providers_crate}}/src"
 
 rule: |
   rule PortAdapterConfig "Port/Adapter Configuration" {

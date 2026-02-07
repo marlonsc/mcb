@@ -5,6 +5,9 @@
 use mcb_validate::engines::{RoutedEngine, RuleEngineRouter};
 use serde_json::json;
 
+use crate::test_constants::*;
+use crate::test_utils::*;
+
 #[test]
 fn test_detect_rete_engine_explicit() {
     let router = RuleEngineRouter::new();
@@ -22,14 +25,14 @@ fn test_detect_rete_engine_by_content() {
     let router = RuleEngineRouter::new();
 
     let rule = json!({
-        "rule": r#"
-            rule DomainCheck "Check domain" {
+        "rule": format!(r#"
+            rule DomainCheck "Check domain" {{
                 when
-                    Crate(name == "mcb-domain")
+                    Crate(name == "{DOMAIN_CRATE}")
                 then
                     Violation("Error");
-            }
-        "#
+            }}
+        "#)
     });
 
     assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
@@ -71,7 +74,7 @@ fn test_detect_default_engine() {
 
     let rule = json!({
         "type": "cargo_dependencies",
-        "pattern": "mcb-*"
+        "pattern": FORBIDDEN_PREFIX_PATTERN
     });
 
     assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);

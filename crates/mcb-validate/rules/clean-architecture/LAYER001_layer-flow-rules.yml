@@ -11,28 +11,28 @@ rationale: "Enforces unidirectional dependency flow from high-level to low-level
 
 config:
   layers:
-    - "mcb-domain"
-    - "mcb-application"
-    - "mcb-providers"
-    - "mcb-infrastructure"
-    - "mcb-server"
+    - "{{domain_crate}}"
+    - "{{application_crate}}"
+    - "{{providers_crate}}"
+    - "{{infrastructure_crate}}"
+    - "{{server_crate}}"
   forbidden_dependencies:
-    mcb-domain:
-      - "mcb-application"
-      - "mcb-providers"
-      - "mcb-infrastructure"
-      - "mcb-server"
-    mcb-application:
-      - "mcb-providers"
-      - "mcb-infrastructure"
-      - "mcb-server"
-    mcb-providers:
-      - "mcb-infrastructure"
-      - "mcb-server"
-    mcb-infrastructure:
-      - "mcb-server"
-    mcb-server:
-      - "mcb-providers"
+    "{{domain_crate}}":
+      - "{{application_crate}}"
+      - "{{providers_crate}}"
+      - "{{infrastructure_crate}}"
+      - "{{server_crate}}"
+    "{{application_crate}}":
+      - "{{providers_crate}}"
+      - "{{infrastructure_crate}}"
+      - "{{server_crate}}"
+    "{{providers_crate}}":
+      - "{{infrastructure_crate}}"
+      - "{{server_crate}}"
+    "{{infrastructure_crate}}":
+      - "{{server_crate}}"
+    "{{server_crate}}":
+      - "{{providers_crate}}"
 
 rule: |
   rule LayerFlow "Layer Flow Rules" {

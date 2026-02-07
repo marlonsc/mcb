@@ -6,13 +6,13 @@ severity: "error"
 enabled: true
 engine: "rust-rule-engine"
 
-description: "Application layer should not define provider traits locally; they must be imported from mcb-domain"
+description: "Application layer should not define provider traits locally; they must be imported from {{domain_crate}}"
 rationale: "Maintains single source of truth for interfaces in the domain layer"
 
 patterns:
   # Reuses CA002 patterns for consistency
   port_trait_decl: '^\s*pub\s+trait\s+(\w+(?:Provider|Service))\s*(?::|where|\{)'
-  domain_reexport: 'pub\s+use\s+mcb_domain::'
+  domain_reexport: 'pub\s+use\s+{{domain_module}}::'
 
 config:
   ports_dir: "src/ports/providers"
@@ -20,10 +20,10 @@ config:
 rule: |
   rule ApplicationPortImports "Application Ports Must Be Imported From Domain" {
       when
-          Crate(name == "mcb-application") &&
+          Crate(name == "{{application_crate}}") &&
           FilePath(contains "/src/ports/providers/") &&
           HasTraitDefinition() &&
-          !HasReexport(from == "mcb-domain")
+          !HasReexport(from == "{{domain_crate}}")
       then
-          Violation("Provider traits must be imported from mcb-domain to ensure single source of truth");
+          Violation("Provider traits must be imported from {{domain_crate}} to ensure single source of truth");
   }

@@ -1,11 +1,11 @@
 //! Dependency Graph Validation
 //!
 //! Validates Clean Architecture layer boundaries:
-//! - mcb-domain: No internal dependencies (pure domain entities)
-//! - mcb-application: Only mcb-domain (use cases and ports)
-//! - mcb-providers: mcb-domain and mcb-application (adapter implementations)
-//! - mcb-infrastructure: mcb-domain, mcb-application, and mcb-providers (DI composition root)
-//! - mcb-server: mcb-domain, mcb-application, and mcb-infrastructure (transport layer)
+//! - domain: No internal dependencies (pure domain entities)
+//! - application: Only domain (use cases and ports)
+//! - providers: domain and application (adapter implementations)
+//! - infrastructure: domain, application, and providers (DI composition root)
+//! - server: domain, application, and infrastructure (transport layer)
 //! - mcb: All crates (facade that re-exports entire public API)
 
 use std::collections::{HashMap, HashSet};
@@ -158,7 +158,7 @@ impl Violation for DependencyViolation {
                 Some(format!("Access {forbidden_dep} through allowed layer"))
             }
             Self::CircularDependency { .. } => {
-                Some("Extract shared types to mcb-domain".to_string())
+                Some("Extract shared types to the domain crate".to_string())
             }
         }
     }

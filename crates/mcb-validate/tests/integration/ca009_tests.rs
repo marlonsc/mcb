@@ -6,7 +6,7 @@
 
 use std::path::PathBuf;
 
-use mcb_validate::config::CleanArchitectureRulesConfig;
+use mcb_validate::config::NamingRulesConfig;
 use mcb_validate::{CleanArchitectureValidator, ValidationConfig};
 
 /// Test that CA009 allows composition root (di/) and flags only non-di imports
@@ -20,8 +20,22 @@ fn test_ca009_infrastructure_imports_application() {
         .to_path_buf();
 
     let config = ValidationConfig::new(&root);
-    let validator =
-        CleanArchitectureValidator::with_config(&config, &CleanArchitectureRulesConfig::default());
+    let file_config = mcb_validate::config::FileConfig::load(&root);
+    let validator = CleanArchitectureValidator::with_config(
+        &config,
+        &file_config.rules.clean_architecture,
+        &NamingRulesConfig {
+            domain_crate: "mcb-domain".to_string(),
+            application_crate: "mcb-application".to_string(),
+            providers_crate: "mcb-providers".to_string(),
+            infrastructure_crate: "mcb-infrastructure".to_string(),
+            server_crate: "mcb-server".to_string(),
+            validate_crate: "mcb-validate".to_string(),
+            language_support_crate: "mcb-language-support".to_string(),
+            ast_utils_crate: "mcb-ast-utils".to_string(),
+            enabled: true,
+        },
+    );
 
     let violations = validator.validate_all().expect("validation should succeed");
 

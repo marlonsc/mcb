@@ -329,10 +329,9 @@ pub struct KissValidator {
 impl KissValidator {
     /// Create a new KISS validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(
-            ValidationConfig::new(workspace_root),
-            &KISSRulesConfig::default(),
-        )
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.kiss)
     }
 
     /// Create a validator with custom configuration for multi-directory support

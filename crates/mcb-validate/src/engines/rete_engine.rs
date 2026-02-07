@@ -12,7 +12,6 @@ use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as
 use serde_json::Value;
 
 use crate::Result;
-use crate::constants::INTERNAL_DEP_PREFIX;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
 use crate::violation_trait::{Severity, ViolationCategory};
 
@@ -61,6 +60,10 @@ impl ReteEngine {
     fn build_facts(&self, context: &RuleContext) -> Result<Facts> {
         let facts = Facts::new();
 
+        // Load file configuration to get internal_dep_prefix
+        let file_config = crate::config::FileConfig::load(&context.workspace_root);
+        let internal_dep_prefix = &file_config.general.internal_dep_prefix;
+
         // Use cargo_metadata for reliable workspace/package parsing
         let manifest_path = context.workspace_root.join("Cargo.toml");
 
@@ -95,8 +98,10 @@ impl ReteEngine {
                         let key = format!("Facts.crate_{pkg_name}_depends_on_{dep_name}");
                         facts.set(&key, RreValue::Boolean(true));
 
-                        // Count internal dependencies (mcb-*)
-                        if dep_name.starts_with(INTERNAL_DEP_PREFIX) {
+                        // Count internal dependencies using configured prefix
+                        if !internal_dep_prefix.is_empty()
+                            && dep_name.starts_with(internal_dep_prefix)
+                        {
                             internal_deps_count += 1;
                         }
                     }

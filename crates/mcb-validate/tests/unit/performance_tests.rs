@@ -1,61 +1,33 @@
 //! Tests for Performance Validation
+//!
+//! Uses fixture crate `my-test` which contains:
+//! - `batch_process`: clone in loop (template.clone() inside for loop)
+//! - `LargeConfig`: large struct returned by value (3x [u8; 1024])
 
 use mcb_validate::performance::PerformanceValidator;
-use tempfile::TempDir;
 
-use crate::test_utils::create_test_crate;
+use crate::test_constants::TEST_CRATE;
+use crate::test_utils::*;
 
 #[test]
 fn test_clone_in_loop_detection() {
-    let temp = TempDir::new().unwrap();
-    create_test_crate(
-        &temp,
-        "mcb-test",
-        r"
-pub fn bad_perf(items: Vec<String>) {
-    for item in items {
-        let cloned = expensive_data.clone();
-        process(cloned);
-    }
-}
-",
-    );
+    let (_temp, root) = with_fixture_crate(TEST_CRATE);
 
-    let validator = PerformanceValidator::new(temp.path());
+    // my-test/src/lib.rs has batch_process() with template.clone() in for loop
+    let validator = PerformanceValidator::new(&root);
     let violations = validator.validate_clone_in_loops().unwrap();
 
-    // Detection depends on validator configuration
-    // This test verifies the validator runs without panic
+    // Log results — fixture may or may not trigger based on pattern detection
     println!("Clone-in-loop violations found: {}", violations.len());
 }
 
 #[test]
-fn test_box_large_type_suggestion() {
-    let temp = TempDir::new().unwrap();
-    create_test_crate(
-        &temp,
-        "mcb-test",
-        r"
-pub struct LargeStruct {
-    field1: [u8; 1024],
-    field2: [u8; 1024],
-    field3: [u8; 1024],
-}
+fn test_validate_all() {
+    let (_temp, root) = with_fixture_crate(TEST_CRATE);
 
-pub fn returns_large() -> LargeStruct {
-    LargeStruct {
-        field1: [0; 1024],
-        field2: [0; 1024],
-        field3: [0; 1024],
-    }
-}
-",
-    );
-
-    let validator = PerformanceValidator::new(temp.path());
+    // my-test/src/lib.rs has LargeConfig (3x [u8; 1024]) returned by value
+    let validator = PerformanceValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    // May suggest boxing large return types - detection depends on configuration
-    // This test verifies the validator runs without panic
-    println!("Large type violations found: {}", violations.len());
+    println!("Performance violations found: {}", violations.len());
 }

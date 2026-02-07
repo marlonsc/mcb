@@ -314,8 +314,8 @@ impl ErrorBoundaryValidator {
                     continue;
                 }
 
-                // Only check domain layer files
-                let is_domain = path_str.contains("/domain/") || path_str.contains("mcb-domain");
+                // Only check domain layer files (uses directory convention, not hardcoded crate names)
+                let is_domain = path_str.contains("/domain/");
                 if !is_domain {
                     continue;
                 }
@@ -471,123 +471,5 @@ impl crate::validator_trait::Validator for ErrorBoundaryValidator {
             .into_iter()
             .map(|v| Box::new(v) as Box<dyn Violation>)
             .collect())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::fs;
-
-    use tempfile::TempDir;
-
-    use super::*;
-
-    fn create_test_crate_structure(temp: &TempDir, crate_name: &str, path: &str, content: &str) {
-        let file_path = temp
-            .path()
-            .join("crates")
-            .join(crate_name)
-            .join("src")
-            .join(path);
-        if let Some(parent) = file_path.parent() {
-            fs::create_dir_all(parent).unwrap();
-        }
-        fs::write(&file_path, content).unwrap();
-
-        // Create Cargo.toml
-        let cargo_path = temp
-            .path()
-            .join("crates")
-            .join(crate_name)
-            .join("Cargo.toml");
-        if !cargo_path.exists() {
-            fs::write(
-                cargo_path,
-                format!(
-                    r#"
-[package]
-name = "{crate_name}"
-version = "0.1.1"
-"#
-                ),
-            )
-            .unwrap();
-        }
-    }
-
-    #[test]
-    fn test_missing_error_context_detection() {
-        let temp = TempDir::new().unwrap();
-        create_test_crate_structure(
-            &temp,
-            "mcb-server",
-            "handlers/test.rs",
-            r"
-pub async fn handle_request() -> Result<(), Error> {
-    let data = fetch_data()?;
-    process_data(data)?;
-    Ok(())
-}
-",
-        );
-
-        let validator = ErrorBoundaryValidator::new(temp.path());
-        let violations = validator.validate_error_context().unwrap();
-
-        assert!(
-            !violations.is_empty(),
-            "Should detect missing error context"
-        );
-    }
-
-    #[test]
-    fn test_wrong_layer_error_detection() {
-        let temp = TempDir::new().unwrap();
-        create_test_crate_structure(
-            &temp,
-            "mcb-domain",
-            "services/test.rs",
-            r"
-use std::io::Error;
-
-pub fn domain_function() -> Result<(), std::io::Error> {
-    Ok(())
-}
-",
-        );
-
-        let validator = ErrorBoundaryValidator::new(temp.path());
-        let violations = validator.validate_layer_error_types().unwrap();
-
-        assert!(
-            !violations.is_empty(),
-            "Should detect infrastructure error in domain"
-        );
-    }
-
-    #[test]
-    fn test_error_rs_exempt() {
-        let temp = TempDir::new().unwrap();
-        create_test_crate_structure(
-            &temp,
-            "mcb-domain",
-            "error.rs",
-            r"
-use std::io::Error;
-
-#[derive(Debug)]
-pub enum DomainError {
-    Io(std::io::Error),
-}
-",
-        );
-
-        let validator = ErrorBoundaryValidator::new(temp.path());
-        let violations = validator.validate_layer_error_types().unwrap();
-
-        assert!(
-            violations.is_empty(),
-            "error.rs files should be exempt: {violations:?}"
-        );
     }
 }

@@ -1,7 +1,7 @@
 //! Layer Event Flow Validation
 //!
 //! Validates that dependencies flow in correct Clean Architecture direction:
-//! mcb-domain -> mcb-application -> mcb-providers -> mcb-infrastructure -> mcb-server
+//! domain -> application -> providers -> infrastructure -> server
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -148,7 +148,7 @@ impl Violation for LayerFlowViolation {
                 "Remove {target_crate} from {source_crate} - violates CA"
             )),
             Self::CircularDependency { .. } => {
-                Some("Extract shared types to mcb-domain".to_string())
+                Some("Extract shared types to the domain crate".to_string())
             }
             Self::DomainExternalDependency { .. } => {
                 Some("Domain should only use std/serde/thiserror".to_string())
@@ -165,16 +165,11 @@ pub struct LayerFlowValidator {
     circular_dependency_check_crates: Vec<String>,
 }
 
-impl Default for LayerFlowValidator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl LayerFlowValidator {
-    /// Creates a new layer flow validator with default rules.
-    pub fn new() -> Self {
-        Self::with_config(&LayerFlowRulesConfig::default())
+    /// Creates a new layer flow validator, loading rules from configuration.
+    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+        let file_config = crate::config::FileConfig::load(workspace_root);
+        Self::with_config(&file_config.rules.layer_flow)
     }
 
     /// Creates a new layer flow validator with current configuration.
@@ -208,7 +203,7 @@ impl LayerFlowValidator {
             return Ok(violations);
         }
 
-        let import_pattern = Regex::new(r"use\s+(mcb_\w+)").expect("Invalid regex");
+        let import_pattern = Regex::new(r"use\s+([\w][\w\d_]*)").expect("Invalid regex");
 
         for crate_name in self.forbidden_dependencies.keys() {
             let crate_src_dir = crates_dir.join(crate_name).join("src");
@@ -300,7 +295,7 @@ impl LayerFlowValidator {
                 }
 
                 // Only match actual dependency declarations, not any mention of crate name
-                // Look for patterns like: mcb-domain = { path = ... } or mcb-domain.path = ...
+                // Look for patterns like: crate-name = { path = ... } or crate-name.path = ...
                 for dep_crate in crate_names {
                     if dep_crate != crate_name
                         && (trimmed.starts_with(dep_crate)
@@ -352,12 +347,14 @@ impl crate::validator_trait::Validator for LayerFlowValidator {
 
 #[cfg(test)]
 mod tests {
+    use tempfile::TempDir;
+
     use super::LayerFlowValidator;
 
     #[test]
     fn test_layer_flow_init() {
         // Just verify it doesn't panic if initialized correctly
-        // (This assumes rules are in place, which they are in this task)
-        let _ = LayerFlowValidator::new();
+        let temp = TempDir::new().unwrap();
+        let _ = LayerFlowValidator::new(temp.path());
     }
 }

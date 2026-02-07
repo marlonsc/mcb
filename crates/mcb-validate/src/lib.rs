@@ -97,6 +97,8 @@ pub mod tests_org;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use extractor::RustExtractor;
+
 // Re-export AST module types (RCA-based)
 pub use ast::{
     AstDecoder, AstNode, AstParseResult, AstQuery, AstQueryBuilder, AstQueryPatterns, AstViolation,
@@ -263,6 +265,9 @@ impl ValidationConfig {
     pub fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut dirs = Vec::new();
 
+        // Load file configuration to get skip_crates
+        let file_config = FileConfig::load(&self.workspace_root);
+
         // Original crates/ scanning
         let crates_dir = self.workspace_root.join("crates");
         if crates_dir.exists() {
@@ -270,11 +275,13 @@ impl ValidationConfig {
                 let entry = entry?;
                 let path = entry.path();
 
-                // Skip mcb-validate (dev tooling validates production, not itself)
-                // Skip mcb (facade crate with minimal re-exports)
-                if path
-                    .file_name()
-                    .is_some_and(|n| n == "mcb" || n == "mcb-validate")
+                // Skip crates specified in configuration (e.g., validate crate itself, facade crates)
+                if let Some(file_name) = path.file_name().and_then(|n| n.to_str())
+                    && file_config
+                        .general
+                        .skip_crates
+                        .iter()
+                        .any(|skip| skip == file_name)
                 {
                     continue;
                 }
@@ -458,7 +465,10 @@ pub struct ArchitectureValidator {
     visibility: VisibilityValidator,
     layer_flow: LayerFlowValidator,
     port_adapter: PortAdapterValidator,
-    // Configuration
+    // Modernization: New generic components
+    extractor: RustExtractor,
+    naming_config: crate::config::NamingRulesConfig,
+    general_config: crate::config::GeneralConfig,
 }
 
 impl ArchitectureValidator {
@@ -488,7 +498,7 @@ impl ArchitectureValidator {
     pub fn with_config(config: ValidationConfig) -> Self {
         let root = config.workspace_root.clone();
         // Load file configuration (rules)
-        let file_config = FileConfig::load_or_default(&root);
+        let file_config = FileConfig::load(&root);
 
         Self {
             dependency: DependencyValidator::with_config(config.clone()),
@@ -526,15 +536,20 @@ impl ArchitectureValidator {
             clean_architecture: CleanArchitectureValidator::with_config(
                 &config,
                 &file_config.rules.clean_architecture,
+                &file_config.rules.naming,
             ),
             // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
             visibility: VisibilityValidator::with_config(&file_config.rules.visibility),
             layer_flow: LayerFlowValidator::with_config(&file_config.rules.layer_flow),
             port_adapter: PortAdapterValidator::with_config(&file_config.rules.port_adapter),
+            // Modernization: Initialize new components
+            extractor: RustExtractor,
             config: ValidationConfig {
                 workspace_root: root,
                 ..config
             },
+            naming_config: file_config.rules.naming.clone(),
+            general_config: file_config.general.clone(),
         }
     }
 
@@ -706,11 +721,67 @@ impl ArchitectureValidator {
         YamlRuleValidator::new()
     }
 
-    /// Load and validate all YAML rules
+    /// Load and validate all YAML rules with variable substitution
     pub async fn load_yaml_rules(&self) -> Result<Vec<crate::rules::yaml_loader::ValidatedRule>> {
-        let rules_dir = self.config.workspace_root.join("crates/mcb-validate/rules");
+        let rules_dir = self
+            .config
+            .workspace_root
+            .join(&self.general_config.rules_path);
 
-        let mut loader = YamlRuleLoader::new(rules_dir)?;
+        // Prepare variables for substitution
+        let variables_val = serde_yaml::to_value(&self.naming_config).map_err(|e| {
+            crate::ValidationError::Config(format!("Failed to serialize naming config: {e}"))
+        })?;
+
+        let mut variables = variables_val
+            .as_mapping()
+            .ok_or_else(|| {
+                crate::ValidationError::Config("Naming config is not a mapping".to_string())
+            })?
+            .clone();
+
+        // Add underscored module names (e.g., domain_module from domain_crate)
+        let crates = [
+            "domain",
+            "application",
+            "providers",
+            "infrastructure",
+            "server",
+            "validate",
+            "language_support",
+            "ast_utils",
+        ];
+        for name in crates {
+            let key = format!("{name}_crate");
+            if let Some(val) = variables.get(serde_yaml::Value::String(key.clone()))
+                && let Some(s) = val.as_str()
+            {
+                let module_name = s.replace('-', "_");
+                variables.insert(
+                    serde_yaml::Value::String(format!("{name}_module")),
+                    serde_yaml::Value::String(module_name),
+                );
+            }
+        }
+
+        if let Some(domain_val) =
+            variables.get(serde_yaml::Value::String("domain_crate".to_string()))
+            && let Some(domain_str) = domain_val.as_str()
+        {
+            let prefix = if let Some(idx) = domain_str.find('-') {
+                domain_str[0..idx].to_string()
+            } else {
+                domain_str.to_string()
+            };
+            variables.insert(
+                serde_yaml::Value::String("project_prefix".to_string()),
+                serde_yaml::Value::String(prefix),
+            );
+        }
+
+        let variables = serde_yaml::Value::Mapping(variables);
+
+        let mut loader = YamlRuleLoader::with_variables(rules_dir, Some(variables))?;
         loader.load_all_rules().await
     }
 
@@ -726,6 +797,36 @@ impl ArchitectureValidator {
         // Scan for files to validate
         let file_contents = self.scan_files_for_validation()?;
 
+        // === MODERNIZATION: Extract Facts & Build Graph ===
+        let mut all_facts = Vec::new();
+        // Use a local graph for this validation session
+        let mut dep_graph = crate::graph::DependencyGraph::new();
+
+        for file_path_str in file_contents.keys() {
+            let path = Path::new(file_path_str);
+            // Only analyze Rust files for now
+            if path.extension().and_then(|e| e.to_str()) == Some("rs") {
+                // Convert relative path to absolute if needed, or rely on what scan_files_for_validation returns.
+                // scan_files_for_validation likely returns paths relative to workspace or absolute.
+                // RustExtractor expects a path it can read via fs::read.
+                // If file_contents already has the content, we should modify RustExtractor to take content?
+                // But RustExtractor currently does fs::read.
+                // Let's assume paths are valid for fs::read.
+
+                match self.extractor.extract_facts(path) {
+                    Ok(facts) => all_facts.extend(facts),
+                    Err(_e) => {
+                        // Silently ignore extraction errors for now to avoid noise
+                    }
+                }
+            }
+        }
+
+        dep_graph.build(&all_facts);
+
+        let facts_arc = std::sync::Arc::new(all_facts);
+        let graph_arc = std::sync::Arc::new(dep_graph);
+
         for rule in rules.into_iter().filter(|r| r.enabled) {
             let context = engines::hybrid_engine::RuleContext {
                 workspace_root: self.config.workspace_root.clone(),
@@ -733,8 +834,8 @@ impl ArchitectureValidator {
                 ast_data: HashMap::new(),   // Would be populated by scanner
                 cargo_data: HashMap::new(), // Would be populated by scanner
                 file_contents: file_contents.clone(),
-                facts: std::sync::Arc::new(Vec::new()),
-                graph: std::sync::Arc::new(crate::graph::DependencyGraph::new()),
+                facts: facts_arc.clone(),
+                graph: graph_arc.clone(),
             };
 
             // Determine severity

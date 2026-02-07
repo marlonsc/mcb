@@ -9,19 +9,19 @@ engine: "rust-rule-engine"
 description: "mcb-language-support is a leaf crate"
 rationale: "Low-level language definitions should not depend on any workspace crates"
 
-crate_name: "mcb-language-support"
-forbidden_prefixes: ["mcb-"]
+crate_name: "{{language_support_crate}}"
+forbidden_prefixes: ["{{project_prefix}}-"]
 allowed_dependencies: []
 
 config:
-  crate_name: "mcb-language-support"
-  forbidden_prefixes: ["mcb-"]
+  crate_name: "{{language_support_crate}}"
+  forbidden_prefixes: ["{{project_prefix}}-"]
   allowed_dependencies: []
 
 rule: |
   rule LanguageSupportBoundaries "Language Support Boundaries" {
       when
-          Facts.crate_name == "mcb-language-support" &&
+          Facts.crate_name == "{{language_support_crate}}" &&
           Facts.has_internal_dependencies == true
       then
           Facts.violation_triggered = true;

@@ -256,10 +256,9 @@ pub struct PatternValidator {
 impl PatternValidator {
     /// Create a new pattern validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(
-            ValidationConfig::new(workspace_root),
-            &PatternRulesConfig::default(),
-        )
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.patterns)
     }
 
     /// Create a validator with custom configuration for multi-directory support

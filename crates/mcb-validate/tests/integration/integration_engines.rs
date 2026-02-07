@@ -70,6 +70,8 @@ fn test_main() {
         ast_data: HashMap::new(),
         cargo_data: HashMap::new(),
         file_contents,
+        facts: std::sync::Arc::new(Vec::new()),
+        graph: std::sync::Arc::new(mcb_validate::graph::DependencyGraph::new()),
     }
 }
 
@@ -558,6 +560,8 @@ pub mod errors;
             ast_data: HashMap::new(),
             cargo_data: HashMap::new(),
             file_contents,
+            facts: std::sync::Arc::new(Vec::new()),
+            graph: std::sync::Arc::new(mcb_validate::graph::DependencyGraph::new()),
         }
     }
 

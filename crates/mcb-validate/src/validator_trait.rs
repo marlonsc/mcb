@@ -164,9 +164,9 @@ impl ValidatorRegistry {
         Self::new()
             // Architecture
             .with_validator(Box::new(CleanArchitectureValidator::new(&root)))
-            .with_validator(Box::new(LayerFlowValidator::new()))
-            .with_validator(Box::new(PortAdapterValidator::new()))
-            .with_validator(Box::new(VisibilityValidator::new()))
+            .with_validator(Box::new(LayerFlowValidator::new(&root)))
+            .with_validator(Box::new(PortAdapterValidator::new(&root)))
+            .with_validator(Box::new(VisibilityValidator::new(&root)))
             // Dependencies
             .with_validator(Box::new(DependencyValidator::new(&root)))
             // Note: ShakuValidator removed - now using inventory-based plugin architecture

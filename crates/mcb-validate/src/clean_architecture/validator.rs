@@ -9,28 +9,37 @@ use crate::config::CleanArchitectureRulesConfig;
 use crate::pattern_registry::PATTERNS;
 use crate::violation_trait::Violation;
 use crate::{Result, Severity, ValidationConfig};
+use regex::Regex;
 
 /// Clean Architecture validator
 pub struct CleanArchitectureValidator {
     workspace_root: PathBuf,
     rules: CleanArchitectureRulesConfig,
+    naming: crate::config::NamingRulesConfig,
 }
 
 impl CleanArchitectureValidator {
     /// Create a new architecture validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         let root = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
         Self::with_config(
             &ValidationConfig::new(root),
-            &CleanArchitectureRulesConfig::default(),
+            &file_config.rules.clean_architecture,
+            &file_config.rules.naming,
         )
     }
 
     /// Create with custom configuration
-    pub fn with_config(config: &ValidationConfig, rules: &CleanArchitectureRulesConfig) -> Self {
+    pub fn with_config(
+        config: &ValidationConfig,
+        rules: &CleanArchitectureRulesConfig,
+        naming: &crate::config::NamingRulesConfig,
+    ) -> Self {
         Self {
             workspace_root: config.workspace_root.clone(),
             rules: rules.clone(),
+            naming: naming.clone(),
         }
     }
 
@@ -86,9 +95,11 @@ impl CleanArchitectureValidator {
             return Ok(violations);
         }
 
-        let provider_import_re = PATTERNS
-            .get("CA001.provider_import")
-            .expect("Pattern CA001.provider_import not found");
+        // Dynamically construct regex based on provider crate name
+        let pattern = format!(r"use\s+{}(?:::|;)", self.naming.providers_crate);
+        let provider_import_re = Regex::new(&pattern).map_err(|e| {
+            crate::ValidationError::InvalidRegex(format!("CA001.provider_import: {e}"))
+        })?;
 
         for entry in WalkDir::new(server_crate.join("src"))
             .into_iter()
@@ -126,26 +137,9 @@ impl CleanArchitectureValidator {
         }
 
         // Patterns for direct service creation
-        let service_creation_patterns = [
-            (
-                PATTERNS
-                    .get("CA001.service_constructor")
-                    .expect("Pattern CA001.service_constructor not found"),
-                "service creation",
-            ),
-            (
-                PATTERNS
-                    .get("CA001.provider_constructor")
-                    .expect("Pattern CA001.provider_constructor not found"),
-                "provider creation",
-            ),
-            (
-                PATTERNS
-                    .get("CA001.repository_constructor")
-                    .expect("Pattern CA001.repository_constructor not found"),
-                "repository creation",
-            ),
-        ];
+        let constructor_pattern = r"(\w+)(?:Service|Provider|Repository)(?:Impl)?::new\s*\(";
+        let creation_re = Regex::new(constructor_pattern)
+            .map_err(|e| crate::ValidationError::InvalidRegex(format!("Service Creation: {e}")))?;
 
         let handlers_dir = self.workspace_root.join(&self.rules.handlers_path);
         if !handlers_dir.exists() {
@@ -166,17 +160,15 @@ impl CleanArchitectureValidator {
                         continue;
                     }
 
-                    for (pattern, pattern_type) in &service_creation_patterns {
-                        if let Some(captures) = pattern.captures(line) {
-                            let service_name = captures.get(1).map_or("unknown", |m| m.as_str());
-                            violations.push(CleanArchitectureViolation::HandlerCreatesService {
-                                file: path.to_path_buf(),
-                                line: line_num + 1,
-                                service_name: service_name.to_string(),
-                                context: format!("Direct {pattern_type} instead of DI"),
-                                severity: Severity::Warning,
-                            });
-                        }
+                    if let Some(captures) = creation_re.captures(line) {
+                        let service_name = captures.get(1).map_or("unknown", |m| m.as_str());
+                        violations.push(CleanArchitectureViolation::HandlerCreatesService {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            service_name: service_name.to_string(),
+                            context: "Direct creation instead of DI".to_string(),
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
@@ -377,14 +369,19 @@ impl CleanArchitectureValidator {
 
         // Patterns for concrete types that should NOT be imported
         // These match patterns like: use mcb_application::services::ContextServiceImpl
-        let concrete_type_re = PATTERNS
-            .get("CA002.app_impl_import")
-            .expect("Pattern CA002.app_impl_import not found");
+        // Patterns for concrete types that should NOT be imported
+        let concrete_type_pattern =
+            format!(r"use\s+{}::(\w+)::(\w+Impl)", self.naming.application_crate);
+        let concrete_type_re = Regex::new(&concrete_type_pattern).map_err(|e| {
+            crate::ValidationError::InvalidRegex(format!("CA002.app_impl_import: {e}"))
+        })?;
 
         // Also catch any concrete service imports
-        let concrete_service_re = PATTERNS
-            .get("CA002.app_service_import")
-            .expect("Pattern CA002.app_service_import not found");
+        let concrete_service_pattern =
+            format!(r"use\s+{}::services::(\w+)", self.naming.application_crate);
+        let concrete_service_re = Regex::new(&concrete_service_pattern).map_err(|e| {
+            crate::ValidationError::InvalidRegex(format!("CA002.app_service_import: {e}"))
+        })?;
 
         for entry in WalkDir::new(infra_crate.join("src"))
             .into_iter()
@@ -412,7 +409,10 @@ impl CleanArchitectureValidator {
                             CleanArchitectureViolation::InfrastructureImportsConcreteService {
                                 file: path.to_path_buf(),
                                 line: line_num + 1,
-                                import_path: format!("mcb_application::{module}::{concrete_type}"),
+                                import_path: format!(
+                                    "{}::{module}::{concrete_type}",
+                                    self.naming.application_crate
+                                ),
                                 concrete_type: concrete_type.to_string(),
                                 severity: Severity::Error,
                             },
@@ -465,9 +465,10 @@ impl CleanArchitectureValidator {
             .expect("Pattern CA002.port_trait_decl not found");
 
         // Pattern for allowed re-exports from mcb-domain
-        let reexport_re = PATTERNS
-            .get("CA002.domain_reexport")
-            .expect("Pattern CA002.domain_reexport not found");
+        let reexport_pattern = format!(r"pub\s+use\s+{}::(.*)", self.naming.domain_crate);
+        let reexport_re = Regex::new(&reexport_pattern).map_err(|e| {
+            crate::ValidationError::InvalidRegex(format!("CA002.domain_reexport: {e}"))
+        })?;
 
         for entry in WalkDir::new(&ports_dir)
             .into_iter()
@@ -497,10 +498,12 @@ impl CleanArchitectureValidator {
                                     file: path.to_path_buf(),
                                     line: line_num + 1,
                                     import_path: format!(
-                                        "mcb_domain::ports::providers::{trait_name}"
+                                        "{}::ports::providers::{trait_name}",
+                                        self.naming.domain_crate
                                     ),
                                     should_be: format!(
-                                        "mcb_domain::ports::providers::{trait_name}"
+                                        "{}::ports::providers::{trait_name}",
+                                        self.naming.domain_crate
                                     ),
                                     severity: Severity::Error,
                                 },
@@ -536,14 +539,15 @@ impl CleanArchitectureValidator {
         }
 
         // Pattern for any import from mcb_application
-        let app_import_re = PATTERNS
-            .get("CA009.app_import")
-            .expect("Pattern CA009.app_import not found");
+        let app_import_pattern = format!(r"use\s+{}(?:::|;)", self.naming.application_crate);
+        let app_import_re = Regex::new(&app_import_pattern)
+            .map_err(|e| crate::ValidationError::InvalidRegex(format!("CA009.app_import: {e}")))?;
 
         // Extract specific import path
-        let import_path_re = PATTERNS
-            .get("CA009.app_import_path")
-            .expect("Pattern CA009.app_import_path not found");
+        let import_path_pattern = format!(r"use\s+({}::\S+)", self.naming.application_crate);
+        let import_path_re = Regex::new(&import_path_pattern).map_err(|e| {
+            crate::ValidationError::InvalidRegex(format!("CA009.app_import_path: {e}"))
+        })?;
 
         for entry in WalkDir::new(infra_crate.join("src"))
             .into_iter()
@@ -579,22 +583,36 @@ impl CleanArchitectureValidator {
                             .captures(line)
                             .and_then(|c| c.get(1))
                             .map_or_else(
-                                || "mcb_application".to_string(),
+                                || self.naming.application_crate.clone(),
                                 |m| m.as_str().to_string(),
                             );
 
                         // Determine suggestion based on what's being imported
                         let suggestion = if import_path.contains("::ports::providers::") {
                             format!(
-                                "Import from mcb_domain instead: {}",
-                                import_path.replace("mcb_application", "mcb_domain")
+                                "Import from {} instead: {}",
+                                self.naming.domain_crate,
+                                import_path.replace(
+                                    &self.naming.application_crate,
+                                    &self.naming.domain_crate
+                                )
                             )
                         } else if import_path.contains("::services::") {
                             "Services should be injected via DI, not imported. Use Arc<dyn ServiceTrait> in function signatures.".to_string()
                         } else if import_path.contains("::registry::") {
-                            "Registry should be accessed from mcb-application via mcb-providers, not mcb-infrastructure.".to_string()
+                            format!(
+                                "Registry should be accessed from {} via {}, not {}.",
+                                self.naming.application_crate,
+                                self.naming.providers_crate,
+                                self.naming.infrastructure_crate
+                            )
                         } else {
-                            "mcb-infrastructure should NOT depend on mcb-application. Move required traits to mcb-domain or refactor to use DI.".to_string()
+                            format!(
+                                "{} should NOT depend on {}. Move required traits to {} or refactor to use DI.",
+                                self.naming.infrastructure_crate,
+                                self.naming.application_crate,
+                                self.naming.domain_crate
+                            )
                         };
 
                         violations.push(

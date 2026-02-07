@@ -136,7 +136,7 @@ impl TemplateEngine {
     }
 
     /// Substitute variables in the form {{`variable_name`}}
-    fn substitute_variables(
+    pub fn substitute_variables(
         &self,
         value: &mut serde_yaml::Value,
         variables: &serde_yaml::Value,
