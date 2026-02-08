@@ -4,7 +4,7 @@
 # Each verb does ONE action. sync uses prerequisites for composition.
 # =============================================================================
 
-.PHONY: status commit push tag sync
+.PHONY: status commit commit-validate push push-confirm tag sync
 
 # =============================================================================
 # STATUS - Show git status
@@ -20,7 +20,15 @@ status: ## Show git status
 
 commit: ## Stage and commit changes
 	@git add -A
-	@git commit || echo "Nothing to commit"
+	@if git commit; then ./scripts/commit_beads.sh; else echo "Nothing to commit"; fi
+
+# =============================================================================
+# COMMIT-VALIDATE - Pre-commit validation (lint + validate QUICK)
+# =============================================================================
+
+
+commit-validate: ## Pre-commit validation (lint + validate QUICK)
+	@./scripts/commit_validate.sh
 
 # =============================================================================
 # PUSH - Push to remote
@@ -29,6 +37,9 @@ commit: ## Stage and commit changes
 push: ## Push to remote
 	@git push origin $$(git branch --show-current)
 	@echo "Pushed to origin"
+
+push-confirm: ## Prompt for push remote/branch
+	@./scripts/commit_push.sh
 
 # =============================================================================
 # TAG - Create and push version tag
