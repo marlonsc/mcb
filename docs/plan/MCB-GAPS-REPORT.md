@@ -21,25 +21,29 @@ MCB v0.2.0 was validated for OpenCode integration. While basic search works, **c
 **Impact**: Cannot link collections to projects, cannot use project-scoped memory
 
 **Expected Behavior**:
+
 ```rust
 // Create project linked to collection
 mcb_project(action="create", resource="phase", project_id="opencode", data={...})
 ```
 
 **Actual Behavior**:
+
 ```
 Project workflow not yet implemented
 ```
 
 **Required Fix**:
-- Implement ProjectService in mcb-application
-- Wire project MCP handlers in mcb-server
-- Link project_id to collections and observations
+
+-   Implement ProjectService in mcb-application
+-   Wire project MCP handlers in mcb-server
+-   Link project_id to collections and observations
 
 **Blocked Features**:
-- Project-scoped semantic search
-- Project-linked memory/observations
-- Phase tracking via MCB
+
+-   Project-scoped semantic search
+-   Project-linked memory/observations
+-   Phase tracking via MCB
 
 ---
 
@@ -50,24 +54,27 @@ Project workflow not yet implemented
 **Impact**: Cannot retrieve stored observations
 
 **Error**:
+
 ```
 Failed to list memories: Observation storage error: SQL query_all failed
 ```
 
 **Database Status**:
-- Tables exist: `observations`, `observations_fts`, etc.
-- Schema correct with FTS triggers
-- 0 rows in observations table
-- projects table may be empty (foreign key constraint)
+
+-   Tables exist: `observations`, `observations_fts`, etc.
+-   Schema correct with FTS triggers
+-   0 rows in observations table
+-   projects table may be empty (foreign key constraint)
 
 **Root Cause Hypothesis**:
 The observations table has `project_id TEXT NOT NULL REFERENCES projects(id)`. If no projects exist, observations cannot be created. The memory store operation may silently fail or the list query joins on non-existent projects.
 
 **Required Fix**:
-1. Check if projects table has entries
-2. Memory store should auto-create default project if none exists
-3. Memory list should handle empty project gracefully
-4. Add better error messages
+
+1.  Check if projects table has entries
+2.  Memory store should auto-create default project if none exists
+3.  Memory list should handle empty project gracefully
+4.  Add better error messages
 
 ---
 
@@ -78,6 +85,7 @@ The observations table has `project_id TEXT NOT NULL REFERENCES projects(id)`. I
 **Impact**: Performance degradation, confusing output
 
 **Observation**:
+
 ```
 repositories: [
   "TestUpperCase-...",  // 300+ entries
@@ -89,9 +97,10 @@ repositories: [
 ```
 
 **Required Fix**:
-- Add cleanup script for test collections
-- Consider test isolation (separate Milvus namespace)
-- Add `mcb cleanup --test-data` command
+
+-   Add cleanup script for test collections
+-   Consider test isolation (separate Milvus namespace)
+-   Add `mcb cleanup --test-data` command
 
 ---
 
@@ -102,9 +111,10 @@ repositories: [
 **Impact**: Cannot search unified context (code + memory + session)
 
 **Per v030-IMPLEMENTATION.md**:
-- SearchResource needs Context variant
-- SearchHandler needs ContextServiceInterface injection
-- This is blocking 15+ beads issues
+
+-   SearchResource needs Context variant
+-   SearchHandler needs ContextServiceInterface injection
+-   This is blocking 15+ beads issues
 
 ---
 
@@ -164,15 +174,15 @@ bd create --title "GAP-3: Cleanup test collections from Milvus" --type task --pr
 
 Until gaps are fixed, OpenCode can use MCB for:
 
-1. **Code search only** - `mcp_mcb_search(resource="code", collection="opencode")`
-2. **Manual session tracking** - Use `mcp_mcb_session` for basic lifecycle
-3. **Skip project/memory** - Use existing `mcp_memory` skill instead
+1.  **Code search only** - `mcp_mcb_search(resource="code", collection="opencode")`
+2.  **Manual session tracking** - Use `mcp_mcb_session` for basic lifecycle
+3.  **Skip project/memory** - Use existing `mcp_memory` skill instead
 
 ---
 
 ## Next Steps
 
-1. Agent should implement GAP-2 fix (memory query)
-2. Then implement GAP-1 (project workflow)
-3. Then GAP-4 (context search)
-4. Revalidate integration after each fix
+1.  Agent should implement GAP-2 fix (memory query)
+2.  Then implement GAP-1 (project workflow)
+3.  Then GAP-4 (context search)
+4.  Revalidate integration after each fix
