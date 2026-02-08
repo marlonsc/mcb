@@ -7,7 +7,6 @@
 
 use std::sync::Arc;
 
-use anyhow::Context;
 use mcb_domain::ports::browse::{HighlightError, HighlightServiceInterface};
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
 use tree_sitter::Language;
@@ -164,7 +163,8 @@ impl HighlightServiceImpl {
             HighlightError::ConfigurationError(format!("failed to {op} for '{language}': {e}"))
         };
 
-        let lang_config = Self::get_language_config(language).context("get language config")?;
+        let lang_config = Self::get_language_config(language)
+            .map_err(|e| HighlightError::ConfigurationError(format!("get language config: {e}")))?;
 
         let config = Self::create_highlight_config(lang_config)
             .map_err(|e| config_err("create highlight config", e))?;

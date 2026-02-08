@@ -12,6 +12,7 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Stores a new semantic observation with the provided content, type, and tags.
 pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -66,6 +67,7 @@ pub async fn store_observation(
     }
 }
 
+/// Retrieves semantic observations by their unique identifiers.
 pub async fn get_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
