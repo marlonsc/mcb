@@ -12,9 +12,6 @@
           "releaseDateUtc": "2026-02-05",
           "rules": [
             {
-              "id": "rustfmt:fmt"
-            },
-            {
               "id": "ripgrep:TODO"
             },
             {
@@ -72,325 +69,4147 @@
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran trivy in 30.16s [NqTakA]"
+                "text": "Successfully ran markdownlint in 1.40s [aGyyNa]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran trivy in 30.16s [NqTakA]"
+                  "text": "Successfully ran markdownlint in 1.40s [aGyyNa]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.10s [kU9zFW]"
+                "text": "Successfully ran ripgrep in 0.66s [gt9QfT]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.10s [kU9zFW]"
+                  "text": "Successfully ran ripgrep in 0.66s [gt9QfT]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.10s [pVtYiq]"
+                "text": "Successfully ran ripgrep in 0.11s [rFKmB6]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.10s [pVtYiq]"
+                  "text": "Successfully ran ripgrep in 0.11s [rFKmB6]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [Zmqq5R]"
+                "text": "Successfully ran clippy in 0.68s [Gg0BCd]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [Zmqq5R]"
+                  "text": "Successfully ran clippy in 0.68s [Gg0BCd]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.09s [IVhUCZ]"
+                "text": "Successfully ran radarlint-iac in 7.09s [2ZSGYQ]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.09s [IVhUCZ]"
+                  "text": "Successfully ran radarlint-iac in 7.09s [2ZSGYQ]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.10s [SdfA8C]"
+                "text": "Successfully ran markdownlint in 1.39s [7NGqH5]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.10s [SdfA8C]"
+                  "text": "Successfully ran markdownlint in 1.39s [7NGqH5]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [XZP5bA]"
+                "text": "Successfully ran markdownlint in 0.88s [5ZKMio]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [XZP5bA]"
+                  "text": "Successfully ran markdownlint in 0.88s [5ZKMio]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [IcVAd7]"
+                "text": "Successfully ran markdownlint in 1.10s [WwjhoH]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [IcVAd7]"
+                  "text": "Successfully ran markdownlint in 1.10s [WwjhoH]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [WLeAeM]"
+                "text": "Successfully ran markdownlint in 0.90s [1YnNYl]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [WLeAeM]"
+                  "text": "Successfully ran markdownlint in 0.90s [1YnNYl]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.11s [d4K3DO]"
+                "text": "Successfully ran markdownlint in 0.78s [TyeSDP]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.11s [d4K3DO]"
+                  "text": "Successfully ran markdownlint in 0.78s [TyeSDP]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.09s [cJruqm]"
+                "text": "Successfully ran clippy in 0.18s [pJoc8p]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.09s [cJruqm]"
+                  "text": "Successfully ran clippy in 0.18s [pJoc8p]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran trivy in 25.73s [hL40zL]"
+                "text": "Successfully ran trufflehog in 4.51s [duCv2d]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran trivy in 25.73s [hL40zL]"
+                  "text": "Successfully ran trufflehog in 4.51s [duCv2d]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.10s [9TyKuj]"
+                "text": "Successfully ran ripgrep in 0.61s [5exY8G]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.10s [9TyKuj]"
+                  "text": "Successfully ran ripgrep in 0.61s [5exY8G]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran trufflehog in 2.00s [VDMLmy]"
+                "text": "Successfully ran clippy in 0.32s [D9UhRu]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran trufflehog in 2.00s [VDMLmy]"
+                  "text": "Successfully ran clippy in 0.32s [D9UhRu]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.09s [K0H3tj]"
+                "text": "Successfully ran markdownlint in 1.16s [gpFHWY]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.09s [K0H3tj]"
+                  "text": "Successfully ran markdownlint in 1.16s [gpFHWY]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.10s [8nZPcz]"
+                "text": "Successfully ran markdownlint in 0.96s [gGuSkU]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.10s [8nZPcz]"
+                  "text": "Successfully ran markdownlint in 0.96s [gGuSkU]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.09s [SSDa03]"
+                "text": "Successfully ran markdownlint in 1.19s [3j3glY]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.09s [SSDa03]"
+                  "text": "Successfully ran markdownlint in 1.19s [3j3glY]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.10s [AkU1qj]"
+                "text": "Successfully ran markdownlint in 0.95s [mg51Zk]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.10s [AkU1qj]"
+                  "text": "Successfully ran markdownlint in 0.95s [mg51Zk]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [5v4FnM]"
+                "text": "Successfully ran markdownlint in 0.50s [kcF573]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [5v4FnM]"
+                  "text": "Successfully ran markdownlint in 0.50s [kcF573]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.10s [3uDJhs]"
+                "text": "Successfully ran ripgrep in 0.31s [N6AWrQ]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.10s [3uDJhs]"
+                  "text": "Successfully ran ripgrep in 0.31s [N6AWrQ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran hadolint in 0.52s [hTsy3P]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran hadolint in 0.52s [hTsy3P]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.96s [40tg7j]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.96s [40tg7j]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.46s [H15cG6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.46s [H15cG6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.43s [5PbbbO]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.43s [5PbbbO]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.18s [GEFhhz]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.18s [GEFhhz]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.75s [8vMR8Y]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.75s [8vMR8Y]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.17s [F7QGRt]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.17s [F7QGRt]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran shellcheck in 0.45s [h7Eovb]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran shellcheck in 0.45s [h7Eovb]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.97s [NM10U8]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.97s [NM10U8]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.72s [TTvEK6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.72s [TTvEK6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.82s [RKsQat]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.82s [RKsQat]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.84s [rsBWvN]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.84s [rsBWvN]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.51s [SKWEgV]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.51s [SKWEgV]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 3.71s [RlXQxj]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 3.71s [RlXQxj]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.07s [6pcsb4]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.07s [6pcsb4]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.72s [llUgIp]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.72s [llUgIp]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.87s [xVyZap]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.87s [xVyZap]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.47s [F7IMjG]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.47s [F7IMjG]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.09s [rhvQ4L]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.09s [rhvQ4L]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.91s [UDDYI0]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.91s [UDDYI0]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.79s [LpWU7H]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.79s [LpWU7H]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.52s [RRkcH7]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.52s [RRkcH7]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.42s [EXBo0J]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.42s [EXBo0J]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.97s [gE9V7A]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.97s [gE9V7A]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.80s [ezm5ZS]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.80s [ezm5ZS]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.39s [CVN8OI]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.39s [CVN8OI]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.32s [bwgvPx]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.32s [bwgvPx]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.19s [42ENSR]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.19s [42ENSR]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.46s [me21Lu]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.46s [me21Lu]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.31s [ywj9dr]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.31s [ywj9dr]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.14s [Cpmh7N]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.14s [Cpmh7N]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.94s [dBEsZe]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.94s [dBEsZe]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.76s [2GnIZq]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.76s [2GnIZq]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.91s [wu3Bfj]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.91s [wu3Bfj]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.88s [hjTipL]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.88s [hjTipL]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran shellcheck in 0.63s [2195aT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran shellcheck in 0.63s [2195aT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 3.84s [WD0wJd]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 3.84s [WD0wJd]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [Zv6rTe]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [Zv6rTe]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.87s [h39ETA]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.87s [h39ETA]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.15s [AbC36T]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.15s [AbC36T]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.76s [Gl55Je]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.76s [Gl55Je]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.39s [62lbji]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.39s [62lbji]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.86s [ELIJuo]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.86s [ELIJuo]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.54s [JXYnSD]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.54s [JXYnSD]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.59s [XvQ2Hb]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.59s [XvQ2Hb]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.79s [GsJvhz]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.79s [GsJvhz]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.84s [I32wTR]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.84s [I32wTR]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.09s [RRXaHb]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.09s [RRXaHb]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.35s [5DKn8B]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.35s [5DKn8B]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 3.92s [EDczUd]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 3.92s [EDczUd]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.71s [zXIWZ6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.71s [zXIWZ6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.75s [sQUk1Z]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.75s [sQUk1Z]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.07s [YT6qNK]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.07s [YT6qNK]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.89s [yYLRX6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.89s [yYLRX6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran zizmor in 1.26s [G4B8d0]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran zizmor in 1.26s [G4B8d0]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.11s [H0L4kf]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.11s [H0L4kf]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.89s [8RlVyW]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.89s [8RlVyW]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.49s [vis3sC]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.49s [vis3sC]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.88s [eRK0iw]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.88s [eRK0iw]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.90s [zGlS42]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.90s [zGlS42]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.63s [aeupfK]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.63s [aeupfK]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.83s [hRIvQJ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.83s [hRIvQJ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.14s [yyGWXE]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.14s [yyGWXE]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.00s [jUbsZO]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.00s [jUbsZO]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.57s [Gu9zMT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.57s [Gu9zMT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.46s [Ro09qL]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.46s [Ro09qL]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.98s [JdLZTd]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.98s [JdLZTd]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.52s [BDw1U9]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.52s [BDw1U9]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.34s [FeDMFM]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.34s [FeDMFM]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 4.29s [qzznN6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 4.29s [qzznN6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 3.69s [vL0oFM]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 3.69s [vL0oFM]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.54s [ZVwmN1]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.54s [ZVwmN1]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.66s [Drnuu6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.66s [Drnuu6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.75s [ycEylQ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.75s [ycEylQ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 3.87s [wAwJCV]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 3.87s [wAwJCV]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.63s [35pCNv]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.63s [35pCNv]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.91s [qjwTf9]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.91s [qjwTf9]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.95s [sJkdno]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.95s [sJkdno]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.46s [Upf8Qk]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.46s [Upf8Qk]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.69s [aJVVgY]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.69s [aJVVgY]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.58s [u7C3Zx]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.58s [u7C3Zx]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.58s [nJ1fbY]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.58s [nJ1fbY]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.38s [IfcQOY]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.38s [IfcQOY]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.85s [Cu6Npz]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.85s [Cu6Npz]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.40s [rIlDCd]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.40s [rIlDCd]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.13s [5KtxWE]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.13s [5KtxWE]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.96s [2Xm7Mh]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.96s [2Xm7Mh]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 4.67s [tu3qAu]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 4.67s [tu3qAu]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 4.43s [G1udxu]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 4.43s [G1udxu]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.03s [SZLnmr]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.03s [SZLnmr]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.80s [zwbKYy]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.80s [zwbKYy]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.87s [RqsQrL]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.87s [RqsQrL]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.25s [2vhH3w]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.25s [2vhH3w]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.06s [efqK51]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.06s [efqK51]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.90s [MxxNjz]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.90s [MxxNjz]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [GjQFs5]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [GjQFs5]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.87s [KRzCX6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.87s [KRzCX6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.93s [zIte0T]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.93s [zIte0T]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 4.32s [AGOgyw]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 4.32s [AGOgyw]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.20s [Lirpl9]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.20s [Lirpl9]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.05s [EPz8P0]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.05s [EPz8P0]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.20s [z8eqrM]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.20s [z8eqrM]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.05s [CGA87o]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.05s [CGA87o]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.88s [wD9ycA]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.88s [wD9ycA]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran actionlint in 1.08s [rnfesr]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran actionlint in 1.08s [rnfesr]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 4.00s [Ogz7qk]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 4.00s [Ogz7qk]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.34s [zoo4WP]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.34s [zoo4WP]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.24s [nNBaDb]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.24s [nNBaDb]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.02s [kTfxlm]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.02s [kTfxlm]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.69s [kOiqkd]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.69s [kOiqkd]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.85s [XLRMWT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.85s [XLRMWT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran shellcheck in 0.58s [w6ap6l]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran shellcheck in 0.58s [w6ap6l]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.67s [SHrr8H]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.67s [SHrr8H]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 4.12s [B3Jaxp]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 4.12s [B3Jaxp]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.24s [VryGKA]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.24s [VryGKA]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 4.12s [WNxjVy]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 4.12s [WNxjVy]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 3.67s [NW9X4w]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 3.67s [NW9X4w]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.28s [udqmm4]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.28s [udqmm4]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.97s [E6wvYg]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.97s [E6wvYg]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.04s [lVWGiC]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.04s [lVWGiC]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.23s [cITV1b]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.23s [cITV1b]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.23s [odBF8H]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.23s [odBF8H]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.88s [WFSbZx]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.88s [WFSbZx]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.20s [4M5uk5]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.20s [4M5uk5]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.97s [GvIfih]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.97s [GvIfih]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran shellcheck in 0.69s [0eH61k]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran shellcheck in 0.69s [0eH61k]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.05s [RG3KPq]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.05s [RG3KPq]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.20s [9zWWlo]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.20s [9zWWlo]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.14s [oRTqir]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.14s [oRTqir]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.74s [MY3GAM]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.74s [MY3GAM]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.36s [wLWEWY]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.36s [wLWEWY]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 4.15s [DCnSXp]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 4.15s [DCnSXp]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.84s [sKyrX0]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.84s [sKyrX0]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.19s [gow0BT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.19s [gow0BT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 1.64s [RG8DoT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 1.64s [RG8DoT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.68s [AIX4cz]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.68s [AIX4cz]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.42s [Spg7ly]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.42s [Spg7ly]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.78s [NuhaNK]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.78s [NuhaNK]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.76s [cZzzA3]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.76s [cZzzA3]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trivy in 19.12s [v5rPL6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trivy in 19.12s [v5rPL6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.84s [1kb7Lq]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.84s [1kb7Lq]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.12s [sgs0TO]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.12s [sgs0TO]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 3.23s [vurVJv]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 3.23s [vurVJv]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.40s [gyVNSX]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.40s [gyVNSX]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.73s [zTh8ci]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.73s [zTh8ci]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.53s [wnjmbs]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.53s [wnjmbs]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.62s [a6zwDT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.62s [a6zwDT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.93s [HxAm4H]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.93s [HxAm4H]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.03s [y4F8kM]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.03s [y4F8kM]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.57s [uZXm8R]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.57s [uZXm8R]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.68s [nskaQV]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.68s [nskaQV]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 3.83s [jYdUpE]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 3.83s [jYdUpE]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.42s [YH8MrM]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.42s [YH8MrM]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.93s [znHu8h]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.93s [znHu8h]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.62s [x2iHQH]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.62s [x2iHQH]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.49s [GE5Peq]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.49s [GE5Peq]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trivy in 20.55s [eY5V9V]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trivy in 20.55s [eY5V9V]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.46s [Hvo2b8]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.46s [Hvo2b8]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.75s [kRhRjN]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.75s [kRhRjN]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.58s [FJki3e]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.58s [FJki3e]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.57s [oFYhYW]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.57s [oFYhYW]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.17s [xmZ9w0]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.17s [xmZ9w0]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.43s [xF5uTt]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.43s [xF5uTt]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.67s [tu94RP]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.67s [tu94RP]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.50s [Ty74Nv]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.50s [Ty74Nv]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.45s [IrEAc9]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.45s [IrEAc9]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.11s) [7sFpuU]"
+                "text": "Error occurred while running rustfmt (0.24s) [eeW1oP]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.11s) [7sFpuU]"
+                  "text": "Error occurred while running rustfmt (0.24s) [eeW1oP]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.89s [5MZNCd]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.89s [5MZNCd]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.78s [qWDoym]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.78s [qWDoym]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.45s [6ZJDYy]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.45s [6ZJDYy]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.49s [S8zxWp]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.49s [S8zxWp]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.12s) [JxHJSp]"
+                "text": "Error occurred while running rustfmt (0.32s) [h3fUuA]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.12s) [JxHJSp]"
+                  "text": "Error occurred while running rustfmt (0.32s) [h3fUuA]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.40s [ILXluZ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.40s [ILXluZ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.58s [qO7IF3]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.58s [qO7IF3]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.54s [H21Noy]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.54s [H21Noy]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.80s [77XGlU]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.80s [77XGlU]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [nvEdKl]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [nvEdKl]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.74s [7AllqI]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.74s [7AllqI]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.49s [D0qREc]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.49s [D0qREc]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.59s [IK0XyH]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.59s [IK0XyH]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.62s [Vro3Xh]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.62s [Vro3Xh]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.47s [HsyUCR]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.47s [HsyUCR]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.52s [yI1An3]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.52s [yI1An3]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.45s [8weasl]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.45s [8weasl]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.23s) [0JgRcR]"
+                "text": "Error occurred while running rustfmt (0.50s) [tLILws]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.23s) [0JgRcR]"
+                  "text": "Error occurred while running rustfmt (0.50s) [tLILws]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.38s [HOFC0O]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.38s [HOFC0O]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.61s [2GqJyv]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.61s [2GqJyv]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.48s [Z9pNlv]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.48s [Z9pNlv]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.51s [NhRk2t]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.51s [NhRk2t]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.42s [EZ9TiM]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.42s [EZ9TiM]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.49s [st7tpv]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.49s [st7tpv]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.39s [zxlpon]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.39s [zxlpon]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.19s) [MH0G4H]"
+                "text": "Error occurred while running rustfmt (0.47s) [JpYQWc]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.19s) [MH0G4H]"
+                  "text": "Error occurred while running rustfmt (0.47s) [JpYQWc]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.66s [sf67ZD]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.66s [sf67ZD]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.37s [rqGVNT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.37s [rqGVNT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.80s [1BkIgt]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.80s [1BkIgt]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.35s [cH4svc]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.35s [cH4svc]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.56s [k7dmMf]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.56s [k7dmMf]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.51s [FwJAaW]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.51s [FwJAaW]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.91s [21CSCh]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.91s [21CSCh]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.83s [fiDVoq]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.83s [fiDVoq]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.81s [1O34E6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.81s [1O34E6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.60s [lOuyZV]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.60s [lOuyZV]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.52s [Zz9F9o]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.52s [Zz9F9o]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.72s [UnTq20]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.72s [UnTq20]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.47s [AXH1JX]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.47s [AXH1JX]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.70s [Wu3xgJ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.70s [Wu3xgJ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.59s [bPZJ07]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.59s [bPZJ07]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.62s [chqP8N]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.62s [chqP8N]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.83s [hPXUa4]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.83s [hPXUa4]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.13s) [iFEJaF]"
+                "text": "Error occurred while running rustfmt (0.51s) [6JdgI6]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.13s) [iFEJaF]"
+                  "text": "Error occurred while running rustfmt (0.51s) [6JdgI6]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.85s) [DHK4Ih]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.85s) [DHK4Ih]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.40s [NmyuWW]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.40s [NmyuWW]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.62s [5sVMxo]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.62s [5sVMxo]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.48s [Y81q3A]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.48s [Y81q3A]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.54s [yQ7bbi]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.54s [yQ7bbi]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [jVdDjb]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [jVdDjb]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [fVKWzt]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [fVKWzt]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [MmFeq8]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [MmFeq8]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.72s [h4N0Mg]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.72s [h4N0Mg]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.82s [CRR6JJ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.82s [CRR6JJ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.63s [URrVcc]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.63s [URrVcc]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.74s [aAjLNX]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.74s [aAjLNX]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.51s [AWtfPU]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.51s [AWtfPU]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.59s [XKUOZ6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.59s [XKUOZ6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.56s [P3BpfT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.56s [P3BpfT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.58s [mlhxxu]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.58s [mlhxxu]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.58s [xbZnUf]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.58s [xbZnUf]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [2NV8w9]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [2NV8w9]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.60s [GfEvDw]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.60s [GfEvDw]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.88s [ZPr5J6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.88s [ZPr5J6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.46s [YPIQ3A]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.46s [YPIQ3A]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [pWICbT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [pWICbT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.13s [8SHm7S]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.13s [8SHm7S]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.68s [Y6DJSU]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.68s [Y6DJSU]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.40s [q3S9ni]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.40s [q3S9ni]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.65s [v6NkXA]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.65s [v6NkXA]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.78s [TKXaEa]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.78s [TKXaEa]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.66s [xyDhgT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.66s [xyDhgT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.53s [iUvqTJ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.53s [iUvqTJ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.46s [AnyG15]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.46s [AnyG15]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.51s [Fc6R5R]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.51s [Fc6R5R]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.66s [NT8GRF]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.66s [NT8GRF]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.72s [GATY1T]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.72s [GATY1T]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.69s [zyU6Hl]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.69s [zyU6Hl]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.50s) [m7ZdFY]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.50s) [m7ZdFY]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.72s [ltrThw]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.72s [ltrThw]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.48s [9zCR9F]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.48s [9zCR9F]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.73s [SM42PJ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.73s [SM42PJ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.54s [0gsVs1]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.54s [0gsVs1]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.74s [LGOlT7]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.74s [LGOlT7]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.56s [GYenos]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.56s [GYenos]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.57s [INvlTE]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.57s [INvlTE]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.44s [idYGby]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.44s [idYGby]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.64s [m4w9EF]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.64s [m4w9EF]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.72s [dQfg1d]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.72s [dQfg1d]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.43s [AZfccG]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.43s [AZfccG]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.63s [imNhiq]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.63s [imNhiq]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.74s [vW87C8]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.74s [vW87C8]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.57s [Vw8YDU]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.57s [Vw8YDU]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.37s) [N3WJO4]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.37s) [N3WJO4]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.45s [aDmppK]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.45s [aDmppK]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.54s [krXvCh]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.54s [krXvCh]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.50s [MxHn3O]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.50s [MxHn3O]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.40s [t1O6NS]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.40s [t1O6NS]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.53s [wZSPPd]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.53s [wZSPPd]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.41s) [9Qir6k]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.41s) [9Qir6k]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [xuoxcr]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [xuoxcr]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.65s [FhBqCJ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.65s [FhBqCJ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.48s [s7eKMP]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.48s [s7eKMP]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.40s [gMcID7]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.40s [gMcID7]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.68s [WbEfnw]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.68s [WbEfnw]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.37s [L5dwtL]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.37s [L5dwtL]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.74s [hT6hGZ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.74s [hT6hGZ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.54s [yz76zc]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.54s [yz76zc]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.65s [2HBl4J]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.65s [2HBl4J]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.53s [fIzktb]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.53s [fIzktb]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.34s) [hgZ2Va]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.34s) [hgZ2Va]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [0N5cAg]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [0N5cAg]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.55s [B4IKjt]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.55s [B4IKjt]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.51s [pxsgZW]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.51s [pxsgZW]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.64s [6evmFY]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.64s [6evmFY]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.49s [hlogge]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.49s [hlogge]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.47s [WS3hmF]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.47s [WS3hmF]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.10s [sVYeb0]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.10s [sVYeb0]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.38s [eypsM3]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.38s [eypsM3]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.64s [4qA5xT]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.64s [4qA5xT]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.43s [2XVfXY]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.43s [2XVfXY]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.53s [H43OYF]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.53s [H43OYF]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.44s [2B3g3B]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.44s [2B3g3B]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.51s [OUypTI]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.51s [OUypTI]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.36s) [lAm4He]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.36s) [lAm4He]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.41s) [a0GabB]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.41s) [a0GabB]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.58s [jxofvy]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.58s [jxofvy]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 1.35s [8Itv33]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 1.35s [8Itv33]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.37s) [UBuXJn]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.37s) [UBuXJn]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.80s [zDSDUY]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.80s [zDSDUY]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.57s [2n1GfQ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.57s [2n1GfQ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran markdownlint in 0.53s [yK8z0H]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran markdownlint in 0.53s [yK8z0H]"
                 }
               }
             }
@@ -398,374 +4217,6 @@
         }
       },
       "results": [
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-application/tests/unit/instrumented_embedding_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-application/tests/unit/memory_service_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-application/tests/unit/search_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-domain/src/registry/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/infrastructure/admin.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/infrastructure/lifecycle.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/infrastructure/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/infrastructure/prometheus_metrics.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/logging.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/tests/di/dispatch_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/tests/di/handle_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/events/nats.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/tests/test_utils/mock_services/memory.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/tests/test_utils/mock_services/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/tests/test_utils/test_fixtures.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/tests/tools/router_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
         {
           "ruleId": "ripgrep:TODO",
           "level": "note",
@@ -1103,98 +4554,6 @@
           ]
         },
         {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/duplication/analyzer.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/duplication/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/linters/executor.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/metrics/rca_analyzer.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
           "ruleId": "ripgrep:TODO",
           "level": "note",
           "message": {
@@ -1387,75 +4746,6 @@
             {
               "id": "lint",
               "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/rules/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/solid/violation.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/validator_trait.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
             }
           ]
         },
@@ -8124,52 +11414,6 @@
           ]
         },
         {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/app_state.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/cmd.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
           "ruleId": "ripgrep:NOTE",
           "level": "note",
           "message": {
@@ -8194,52 +11438,6 @@
             {
               "id": "lint",
               "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/dev.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/dev/check.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
             }
           ]
         },
@@ -8296,282 +11494,6 @@
             {
               "id": "lint",
               "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/dev/new.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/exercise.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/info_file.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/init.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/list.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/list/state.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/main.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/run.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/term.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/watch/notify_event.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/watch/state.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/fixtures/rustlings/src/watch/terminal_event.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
             }
           ]
         },

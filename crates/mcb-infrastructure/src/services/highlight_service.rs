@@ -164,15 +164,13 @@ impl HighlightServiceImpl {
             HighlightError::ConfigurationError(format!("failed to {op} for '{language}': {e}"))
         };
 
-        let lang_config = Self::get_language_config(language)
-            .context("get language config")
-            .map_err(|e| {
-                if let Some(HighlightError::UnsupportedLanguage(_)) = e.downcast_ref() {
-                    e.downcast().unwrap()
-                } else {
-                    HighlightError::ConfigurationError(e.to_string())
-                }
-            })?;
+        let lang_config = Self::get_language_config(language).map_err(|e| {
+            if let Some(HighlightError::UnsupportedLanguage(_)) = e.downcast_ref() {
+                e.downcast().unwrap()
+            } else {
+                HighlightError::ConfigurationError(format!("get language config: {}", e))
+            }
+        })?;
 
         let config = Self::create_highlight_config(lang_config)
             .map_err(|e| config_err("create highlight config", e))?;

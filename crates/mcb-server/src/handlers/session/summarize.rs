@@ -8,6 +8,7 @@ use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Creates or retrieves a session summary.
 pub async fn summarize_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &SessionArgs,

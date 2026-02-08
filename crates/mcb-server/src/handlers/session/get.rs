@@ -8,6 +8,7 @@ use rmcp::model::{CallToolResult, Content};
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Retrieves an agent session by ID.
 pub async fn get_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,

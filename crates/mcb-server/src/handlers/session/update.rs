@@ -9,6 +9,7 @@ use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Updates an existing agent session.
 pub async fn update_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,

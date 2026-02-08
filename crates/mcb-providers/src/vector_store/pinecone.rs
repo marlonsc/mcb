@@ -245,7 +245,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
                 self.request(reqwest::Method::POST, "/vectors/upsert", Some(payload))
                     .await?;
 
-                pinecone_vectors = Vec::new();
+                pinecone_vectors.clear();
             }
         }
 

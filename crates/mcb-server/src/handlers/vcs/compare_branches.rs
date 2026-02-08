@@ -9,6 +9,7 @@ use super::responses::{BranchComparison, BranchDiffFile, repo_path};
 use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Compares two branches and returns the diff.
 pub async fn compare_branches(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,

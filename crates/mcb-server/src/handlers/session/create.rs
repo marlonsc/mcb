@@ -12,6 +12,7 @@ use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Creates a new agent session.
 pub async fn create_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,

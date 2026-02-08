@@ -11,6 +11,7 @@ use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
 use crate::vcs_repository_registry;
 
+/// Indexes a repository for search.
 pub async fn index_repository(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,

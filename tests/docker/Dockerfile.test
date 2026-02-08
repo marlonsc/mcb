@@ -1,10 +1,10 @@
 FROM rust:slim
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
-    netcat-traditional \
     make \
+    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

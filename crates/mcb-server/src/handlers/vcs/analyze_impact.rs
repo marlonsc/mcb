@@ -9,6 +9,7 @@ use super::responses::{ImpactFile, ImpactResponse, ImpactSummary, repo_path};
 use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Analyzes the impact of changes between branches.
 pub async fn analyze_impact(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,

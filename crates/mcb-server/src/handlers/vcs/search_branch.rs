@@ -9,6 +9,7 @@ use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
 use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Searches for a query string within a branch.
 pub async fn search_branch(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,

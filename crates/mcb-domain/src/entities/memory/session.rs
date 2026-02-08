@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// Summary of an agent session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionSummary {
     pub id: String,

@@ -9,6 +9,7 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Stores a session summary in the memory service.
 pub async fn store_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -53,6 +54,7 @@ pub async fn store_session(
     }
 }
 
+/// Retrieves a session summary from the memory service.
 pub async fn get_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,

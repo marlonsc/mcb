@@ -8,6 +8,7 @@ use rmcp::model::{CallToolResult, Content};
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Lists agent sessions based on filters.
 pub async fn list_sessions(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,

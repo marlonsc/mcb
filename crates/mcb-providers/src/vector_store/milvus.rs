@@ -436,12 +436,14 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         // Convert results to our format
         let mut results = Vec::new();
+        let mut columns_map = HashMap::new();
+
         for search_result in search_results {
             let scores = &search_result.score;
             let ids = &search_result.id;
 
             // Map columns by name for easy access
-            let mut columns_map = HashMap::new();
+            columns_map.clear();
             for column in &search_result.field {
                 columns_map.insert(column.name.as_str(), column);
             }
@@ -650,6 +652,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         let expr = "id >= 0".to_string();
         use milvus::query::QueryOptions;
+        let mut columns_map = HashMap::new();
 
         loop {
             let remaining = limit.saturating_sub(all_results.len());
@@ -690,7 +693,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             };
 
             // Map columns by name
-            let mut columns_map = HashMap::new();
+            columns_map.clear();
             for column in &query_results {
                 columns_map.insert(column.name.as_str(), column);
             }
