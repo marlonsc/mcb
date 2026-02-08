@@ -31,6 +31,7 @@ fn test_quality_full_workspace() {
             ("my-domain/src/domain/service.rs", 69, "UnwrapInProduction"),
             ("my-test/src/lib.rs", 17, "UnwrapInProduction"),
             ("my-test/src/lib.rs", 114, "UnwrapInProduction"),
+            ("my-test/src/lib.rs", 294, "UnwrapInProduction"),
             // ── ExpectInProduction ──────────────────────────────────────
             (
                 "my-server/src/handlers/user_handler.rs",
@@ -52,8 +53,8 @@ fn test_quality_full_workspace() {
             ("my-test/src/lib.rs", 18, "TodoComment"),
             ("my-test/src/lib.rs", 24, "TodoComment"),
             ("my-test/src/lib.rs", 26, "TodoComment"),
-            ("my-test/src/lib.rs", 222, "TodoComment"),
-            ("my-test/src/lib.rs", 224, "TodoComment"),
+            ("my-test/src/lib.rs", 334, "TodoComment"),
+            ("my-test/src/lib.rs", 336, "TodoComment"),
             // ── DeadCodeAllowNotPermitted ──────────────────────────────
             ("my-test/src/lib.rs", 43, "DeadCodeAllowNotPermitted"),
             ("my-test/src/lib.rs", 44, "DeadCodeAllowNotPermitted"),

@@ -22,14 +22,19 @@ fn test_kiss_full_workspace() {
     assert_violations_exact(
         &violations,
         &[
-            // validate_batch(a, b, c, d, e, f) — 6 params
+            // ── FunctionTooManyParams (KISS002) ──────────────────────────
             (
                 "my-domain/src/domain/service.rs",
                 94,
                 "FunctionTooManyParams",
             ),
-            // initialize_server(host, port, name, max_conn, timeout, debug) — 6 params
             ("my-test/src/lib.rs", 77, "FunctionTooManyParams"),
+            // ── BuilderTooComplex (KISS003) ──────────────────────────────
+            ("my-test/src/lib.rs", 204, "BuilderTooComplex"),
+            // ── DeepNesting (KISS004) ────────────────────────────────────
+            ("my-test/src/lib.rs", 221, "DeepNesting"),
+            // ── FunctionTooLong (KISS005) ────────────────────────────────
+            ("my-test/src/lib.rs", 233, "FunctionTooLong"),
         ],
         "KissValidator full workspace",
     );

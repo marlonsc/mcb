@@ -22,7 +22,8 @@ fn test_async_full_workspace() {
     assert_violations_exact(
         &violations,
         &[
-            // std::fs::read in async handler
+            // ── BlockingInAsync ────────────────────────────────────────
+            // std::fs::read in server handler
             (
                 "my-server/src/handlers/user_handler.rs",
                 106,
@@ -30,11 +31,16 @@ fn test_async_full_workspace() {
             ),
             // std::fs::read in async fn
             ("my-test/src/lib.rs", 102, "BlockingInAsync"),
-            // std::thread::sleep in async fn
+            // thread::sleep in async fn (two patterns match same line)
             ("my-test/src/lib.rs", 105, "BlockingInAsync"),
-            // thread::sleep in async fn (same line, different pattern)
             ("my-test/src/lib.rs", 105, "BlockingInAsync"),
-            // std::sync::Mutex in OveruseExample struct (PERF003 also triggers ASYNC003)
+            // ── BlockOnInAsync ─────────────────────────────────────────
+            // async fn def triggers block_on detection
+            ("my-test/src/lib.rs", 293, "BlockOnInAsync"),
+            // actual block_on call
+            ("my-test/src/lib.rs", 295, "BlockOnInAsync"),
+            // ── WrongMutexType ─────────────────────────────────────────
+            // std::sync::Mutex in OveruseExample struct (also triggers PERF003)
             ("my-test/src/lib.rs", 169, "WrongMutexType"),
         ],
         "AsyncPatternValidator full workspace",
@@ -46,13 +52,14 @@ fn test_async_full_workspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_clean_async_code_no_violations() {
+fn test_clean_async_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
         r#"
-/// An async function using correct non-blocking I/O.
-pub async fn fetch_data() -> Result<String, Box<dyn std::error::Error>> {
-    Ok(String::from("hello"))
+//! Clean async code.
+/// A clean async function using proper async APIs.
+pub async fn fetch_data(url: &str) -> Result<String, Box<dyn std::error::Error>> {
+    Ok(format!("fetched from {}", url))
 }
 "#,
     );

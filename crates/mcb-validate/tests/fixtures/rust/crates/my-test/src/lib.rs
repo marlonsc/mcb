@@ -196,9 +196,121 @@ pub fn raw_result_usage() -> std::result::Result<(), String> {
     // PAT004
     Ok(())
 }
+// ───────────────────────────────────────────────────
+// KISS violations (KISS003–KISS005)
+// ───────────────────────────────────────────────────
+
+/// BUG(KISS003): Builder with too many optional fields (>7 Option<> fields).
+pub struct WidgetBuilder {
+    pub name: Option<String>,
+    pub color: Option<String>,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+    pub weight: Option<f64>,
+    pub opacity: Option<f64>,
+    pub label: Option<String>,
+    pub tooltip: Option<String>,
+}
+
+/// BUG(KISS004): Deeply nested code (>3 levels of if/match/for/while).
+pub fn deeply_nested(items: &[i32]) -> i32 {
+    let mut total = 0;
+    for item in items {
+        if *item > 0 {
+            for sub in 0..*item {
+                if sub % 2 == 0 {
+                    if sub > 5 {
+                        total += sub; // KISS004: 4 levels deep
+                    }
+                }
+            }
+        }
+    }
+    total
+}
+
+/// BUG(KISS005): Function too long (>50 lines).
+pub fn very_long_function(input: &str) -> String {
+    let mut result = String::new();
+    result.push_str("line 1: ");
+    result.push_str(input);
+    result.push('\n');
+    result.push_str("line 2: processing\n");
+    result.push_str("line 3: processing\n");
+    result.push_str("line 4: processing\n");
+    result.push_str("line 5: processing\n");
+    result.push_str("line 6: processing\n");
+    result.push_str("line 7: processing\n");
+    result.push_str("line 8: processing\n");
+    result.push_str("line 9: processing\n");
+    result.push_str("line 10: processing\n");
+    result.push_str("line 11: processing\n");
+    result.push_str("line 12: processing\n");
+    result.push_str("line 13: processing\n");
+    result.push_str("line 14: processing\n");
+    result.push_str("line 15: processing\n");
+    result.push_str("line 16: processing\n");
+    result.push_str("line 17: processing\n");
+    result.push_str("line 18: processing\n");
+    result.push_str("line 19: processing\n");
+    result.push_str("line 20: processing\n");
+    result.push_str("line 21: processing\n");
+    result.push_str("line 22: processing\n");
+    result.push_str("line 23: processing\n");
+    result.push_str("line 24: processing\n");
+    result.push_str("line 25: processing\n");
+    result.push_str("line 26: processing\n");
+    result.push_str("line 27: processing\n");
+    result.push_str("line 28: processing\n");
+    result.push_str("line 29: processing\n");
+    result.push_str("line 30: processing\n");
+    result.push_str("line 31: processing\n");
+    result.push_str("line 32: processing\n");
+    result.push_str("line 33: processing\n");
+    result.push_str("line 34: processing\n");
+    result.push_str("line 35: processing\n");
+    result.push_str("line 36: processing\n");
+    result.push_str("line 37: processing\n");
+    result.push_str("line 38: processing\n");
+    result.push_str("line 39: processing\n");
+    result.push_str("line 40: processing\n");
+    result.push_str("line 41: processing\n");
+    result.push_str("line 42: processing\n");
+    result.push_str("line 43: processing\n");
+    result.push_str("line 44: processing\n");
+    result.push_str("line 45: processing\n");
+    result.push_str("line 46: processing\n");
+    result.push_str("line 47: processing\n");
+    result.push_str("line 48: processing\n");
+    result
+}
 
 // ───────────────────────────────────────────────────
-// Organization violations: magic numbers
+// Async violations (ASYNC002)
+// ───────────────────────────────────────────────────
+
+/// BUG(ASYNC002): Using block_on() inside async function.
+pub async fn async_with_block_on() {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        println!("blocked");
+    }); // ASYNC002
+}
+
+// ───────────────────────────────────────────────────
+// Implementation violations (IMPL002, IMPL004)
+// ───────────────────────────────────────────────────
+
+/// BUG(IMPL002): Hardcoded return value.
+pub fn get_default_timeout() -> u64 {
+    42
+}
+
+/// BUG(IMPL004): Log-only method — function body is only logging.
+pub fn log_action(name: &str) {
+    println!("Action executed: {}", name);
+}
+
 // ───────────────────────────────────────────────────
 
 /// BUG(Organization): Magic numbers in business logic.

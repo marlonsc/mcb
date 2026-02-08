@@ -27,10 +27,10 @@ fn test_implementation_full_workspace() {
             ("my-domain/src/domain/service.rs", 165, "StubMacro"),
             ("my-domain/src/domain/service.rs", 180, "StubMacro"),
             ("my-domain/src/domain/service.rs", 183, "StubMacro"),
-            ("my-test/src/lib.rs", 224, "StubMacro"),
+            ("my-test/src/lib.rs", 336, "StubMacro"),
             // ── EmptyCatchAll ───────────────────────────────────────────
             ("my-domain/src/domain/service.rs", 130, "EmptyCatchAll"),
-            ("my-test/src/lib.rs", 245, "EmptyCatchAll"),
+            ("my-test/src/lib.rs", 357, "EmptyCatchAll"),
         ],
         "ImplementationQualityValidator full workspace",
     );

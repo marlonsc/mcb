@@ -2,10 +2,22 @@ use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_infrastructure::infrastructure::TokioBroadcastEventBus;
 
-#[test]
-fn test_event_bus_creation() {
+#[tokio::test]
+async fn test_event_bus_clone() {
     let bus = TokioBroadcastEventBus::new();
+    let cloned = bus.clone();
+
+    // Initially no subscribers
     assert!(!bus.has_subscribers());
+    assert!(!cloned.has_subscribers());
+
+    // Add a subscriber using subscribe_events which actually creates a receiver
+    // The subscribe(topic) method in this impl returns an ID but doesn't change receiver count
+    let _stream = bus.subscribe_events().await.unwrap();
+
+    // Both should see the subscriber because they share the same channel
+    assert!(bus.has_subscribers());
+    assert!(cloned.has_subscribers());
 }
 
 #[test]
@@ -25,16 +37,6 @@ fn test_event_bus_debug() {
     let bus = TokioBroadcastEventBus::new();
     let debug = format!("{:?}", bus);
     assert!(debug.contains("TokioBroadcastEventBus"));
-}
-
-#[test]
-fn test_event_bus_clone() {
-    let bus = TokioBroadcastEventBus::new();
-    let cloned = bus.clone();
-
-    // Verify cloned instance shares the same channel capacity/state or at least exists
-    assert!(cloned.has_subscribers());
-    assert!(!bus.has_subscribers());
 }
 
 #[tokio::test]

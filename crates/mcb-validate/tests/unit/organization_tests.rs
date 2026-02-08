@@ -24,7 +24,7 @@ fn test_organization_full_workspace() {
         &[
             // ── MagicNumber ─────────────────────────────────────────────
             ("my-server/src/handlers/user_handler.rs", 82, "MagicNumber"),
-            ("my-test/src/lib.rs", 211, "MagicNumber"),
+            ("my-test/src/lib.rs", 323, "MagicNumber"),
             // ── DomainLayerImplementation ────────────────────────────────
             (
                 "my-domain/src/domain/service.rs",

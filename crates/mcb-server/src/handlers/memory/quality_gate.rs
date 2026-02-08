@@ -114,9 +114,7 @@ pub async fn get_quality_gates(
                 .filter_map(|result| {
                     // Extract quality gate metadata from observation; skip if missing
                     // (None indicates observation is not a quality gate type)
-                    let Some(gate) = result.observation.metadata.quality_gate else {
-                        return None;
-                    };
+                    let gate = result.observation.metadata.quality_gate?;
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "gate_name": gate.gate_name,

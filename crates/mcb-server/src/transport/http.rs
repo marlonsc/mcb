@@ -359,6 +359,7 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
 }
 
 /// Handle SSE connection for server-to-client events
+#[allow(unknown_lints, impl_trait_overcaptures, tail_expr_drop_order)]
 #[get("/events")]
 fn handle_sse(state: &State<HttpTransportState>) -> EventStream![] {
     let mut rx = state.event_tx.subscribe();
