@@ -1,3 +1,5 @@
+//! Shared test utilities and mocks for mcb-application tests
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -9,8 +11,7 @@ use mcb_domain::value_objects::{CollectionInfo, Embedding, FileInfo, SearchResul
 use serde_json::Value;
 use tokio::sync::Mutex;
 
-// Mock Cache Provider
-
+/// Mock Cache Provider for testing
 #[derive(Debug)]
 pub struct MockCacheProvider;
 
@@ -21,6 +22,7 @@ impl Default for MockCacheProvider {
 }
 
 impl MockCacheProvider {
+    /// Create a new mock cache provider
     pub fn new() -> Self {
         Self
     }
@@ -54,14 +56,15 @@ impl CacheProvider for MockCacheProvider {
     }
 }
 
-// Mock Embedding Provider
-
+/// Mock Embedding Provider for testing
 #[derive(Debug)]
 pub struct MockEmbeddingProvider {
+    /// Dimensions for the embeddings
     pub dimensions: usize,
 }
 
 impl MockEmbeddingProvider {
+    /// Create a new mock embedding provider with given dimensions
     pub fn new(dimensions: usize) -> Self {
         Self { dimensions }
     }
@@ -93,17 +96,22 @@ impl EmbeddingProvider for MockEmbeddingProvider {
 type VectorData = (Embedding, HashMap<String, Value>);
 type StorageMap = HashMap<String, Vec<VectorData>>;
 
+/// Mock Vector Store Provider that can store data in memory or return fixed results
 #[derive(Debug, Default)]
 pub struct MockVectorStoreProvider {
+    /// In-memory storage for simple retrieval validation
     pub storage: Arc<Mutex<StorageMap>>,
+    /// Fixed results to return if provided
     pub override_results: Arc<Mutex<Option<Vec<SearchResult>>>>,
 }
 
 impl MockVectorStoreProvider {
+    /// Create a new mock vector store provider
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Create a new mock vector store provider that always returns the given results
     pub fn with_results(results: Vec<SearchResult>) -> Self {
         Self {
             override_results: Arc::new(Mutex::new(Some(results))),
