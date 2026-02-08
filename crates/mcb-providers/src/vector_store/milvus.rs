@@ -436,13 +436,12 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         // Convert results to our format
         let mut results = Vec::new();
-
         for search_result in search_results {
+            let mut columns_map = HashMap::new();
             let scores = &search_result.score;
             let ids = &search_result.id;
 
             // Map columns by name for easy access
-            let mut columns_map = HashMap::new();
             for column in &search_result.field {
                 columns_map.insert(column.name.as_str(), column);
             }

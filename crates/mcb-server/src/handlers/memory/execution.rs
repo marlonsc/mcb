@@ -143,7 +143,9 @@ pub async fn get_executions(
                         .observation
                         .metadata
                         .execution
-                        .context("missing execution metadata")?;
+                        .as_ref()
+                        .context("missing execution metadata")
+                        .ok()?;
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "command": execution.command,

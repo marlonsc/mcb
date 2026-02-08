@@ -121,7 +121,9 @@ pub async fn get_quality_gates(
                         .observation
                         .metadata
                         .quality_gate
-                        .context("missing quality gate metadata")?;
+                        .as_ref()
+                        .context("missing quality gate metadata")
+                        .ok()?;
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "gate_name": gate.gate_name,
