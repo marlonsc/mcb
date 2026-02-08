@@ -5,29 +5,12 @@ use std::time::Duration;
 
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::Content;
 use serde::Deserialize;
 
 use crate::test_utils::test_fixtures::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
+    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, extract_text_content, golden_content_to_string,
     golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };
-
-fn extract_text_content(content: &[Content]) -> String {
-    content
-        .iter()
-        .filter_map(|c| {
-            if let Ok(json) = serde_json::to_value(c)
-                && let Some(text) = json.get("text")
-            {
-                text.as_str().map(|s| s.to_string())
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
     IndexArgs {

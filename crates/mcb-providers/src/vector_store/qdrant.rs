@@ -436,21 +436,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
         limit: usize,
     ) -> Result<Vec<FileInfo>> {
         let results = self.list_vectors(collection, limit).await?;
-
-        let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
-        for result in results {
-            let entry = file_map
-                .entry(result.file_path)
-                .or_insert_with(|| (0, result.language));
-            entry.0 += 1;
-        }
-
-        let files = file_map
-            .into_iter()
-            .map(|(path, (chunk_count, language))| FileInfo::new(path, chunk_count, language, None))
-            .collect();
-
-        Ok(files)
+        Ok(super::helpers::build_file_info_from_results(results))
     }
 
     async fn get_chunks_by_file(
