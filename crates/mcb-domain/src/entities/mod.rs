@@ -20,9 +20,8 @@ pub mod agent;
 pub mod code_chunk;
 /// Entities for codebase state management and change tracking
 pub mod codebase;
-/// Memory entities for observations and session tracking
 pub mod memory;
-/// Project type entity for detected projects within repositories
+pub mod observation;
 pub mod project;
 /// Submodule entity for VCS submodule tracking
 pub mod submodule;

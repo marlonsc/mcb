@@ -5,7 +5,7 @@ use mcb_domain::entities::project::{
     ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,
 };
 use mcb_domain::ports::repositories::ProjectRepository;
-use mcb_domain::ports::services::{ProjectDetectorService, ProjectService};
+use mcb_domain::ports::services::{ProjectDetectorService, ProjectServiceInterface};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
@@ -22,6 +22,124 @@ impl MockProjectService {
 impl ProjectDetectorService for MockProjectService {
     async fn detect_all(&self, _path: &Path) -> Vec<ProjectType> {
         vec![]
+    }
+}
+
+#[async_trait]
+impl ProjectServiceInterface for MockProjectService {
+    async fn get_project(
+        &self,
+        _id: &str,
+    ) -> mcb_domain::error::Result<mcb_domain::entities::project::Project> {
+        Ok(mcb_domain::entities::project::Project {
+            id: "test".to_string(),
+            name: "test".to_string(),
+            path: "/tmp/test".to_string(),
+            created_at: 0,
+            updated_at: 0,
+        })
+    }
+
+    async fn list_projects(
+        &self,
+    ) -> mcb_domain::error::Result<Vec<mcb_domain::entities::project::Project>> {
+        Ok(vec![])
+    }
+
+    async fn create_phase(
+        &self,
+        _project_id: &str,
+        _name: String,
+        _description: String,
+    ) -> mcb_domain::error::Result<String> {
+        unimplemented!()
+    }
+    async fn update_phase(
+        &self,
+        _id: &str,
+        _name: Option<String>,
+        _description: Option<String>,
+        _status: Option<PhaseStatus>,
+    ) -> mcb_domain::error::Result<()> {
+        unimplemented!()
+    }
+    async fn list_phases(&self, _project_id: &str) -> mcb_domain::error::Result<Vec<ProjectPhase>> {
+        unimplemented!()
+    }
+    async fn delete_phase(&self, _id: &str) -> mcb_domain::error::Result<()> {
+        unimplemented!()
+    }
+    async fn create_issue(
+        &self,
+        _project_id: &str,
+        _title: String,
+        _description: String,
+        _issue_type: IssueType,
+        _priority: i32,
+        _phase_id: Option<String>,
+        _assignee: Option<String>,
+        _labels: Vec<String>,
+    ) -> mcb_domain::error::Result<String> {
+        unimplemented!()
+    }
+    async fn update_issue(
+        &self,
+        _id: &str,
+        _title: Option<String>,
+        _description: Option<String>,
+        _status: Option<IssueStatus>,
+        _priority: Option<i32>,
+        _assignee: Option<String>,
+        _labels: Option<Vec<String>>,
+    ) -> mcb_domain::error::Result<()> {
+        unimplemented!()
+    }
+    async fn list_issues(
+        &self,
+        _project_id: &str,
+        _filter: Option<IssueFilter>,
+    ) -> mcb_domain::error::Result<Vec<ProjectIssue>> {
+        unimplemented!()
+    }
+    async fn delete_issue(&self, _id: &str) -> mcb_domain::error::Result<()> {
+        unimplemented!()
+    }
+    async fn add_dependency(
+        &self,
+        _from_issue_id: String,
+        _to_issue_id: String,
+        _dependency_type: DependencyType,
+    ) -> mcb_domain::error::Result<String> {
+        unimplemented!()
+    }
+    async fn remove_dependency(&self, _id: &str) -> mcb_domain::error::Result<()> {
+        unimplemented!()
+    }
+    async fn list_dependencies(
+        &self,
+        _project_id: &str,
+    ) -> mcb_domain::error::Result<Vec<ProjectDependency>> {
+        unimplemented!()
+    }
+    async fn create_decision(
+        &self,
+        _project_id: &str,
+        _title: String,
+        _context: String,
+        _decision: String,
+        _consequences: String,
+        _issue_id: Option<String>,
+    ) -> mcb_domain::error::Result<String> {
+        unimplemented!()
+    }
+    async fn list_decisions(
+        &self,
+        _project_id: &str,
+    ) -> mcb_domain::error::Result<Vec<ProjectDecision>> {
+        unimplemented!()
+    }
+    async fn delete_decision(&self, _id: &str) -> mcb_domain::error::Result<()> {
+        unimplemented!()
     }
 }
 
@@ -164,7 +282,20 @@ impl Default for MockProjectWorkflowService {
 }
 
 #[async_trait]
-impl ProjectService for MockProjectWorkflowService {
+impl ProjectServiceInterface for MockProjectWorkflowService {
+    async fn get_project(
+        &self,
+        _id: &str,
+    ) -> mcb_domain::error::Result<mcb_domain::entities::project::Project> {
+        Err(mcb_domain::error::Error::not_found("Project not found"))
+    }
+
+    async fn list_projects(
+        &self,
+    ) -> mcb_domain::error::Result<Vec<mcb_domain::entities::project::Project>> {
+        Ok(vec![])
+    }
+
     async fn create_phase(
         &self,
         project_id: &str,

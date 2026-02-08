@@ -5,8 +5,8 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use mcb_domain::entities::memory::{
-    MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationType,
-    SessionSummary,
+    ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
+    ObservationType, SessionSummary,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::MemoryRepository;
@@ -165,8 +165,9 @@ impl Default for MockMemoryService {
 impl MemoryServiceInterface for MockMemoryService {
     async fn store_observation(
         &self,
+        project_id: String,
         content: String,
-        observation_type: ObservationType,
+        r#type: ObservationType,
         tags: Vec<String>,
         metadata: mcb_domain::entities::memory::ObservationMetadata,
     ) -> Result<(ObservationId, bool)> {
@@ -177,7 +178,7 @@ impl MemoryServiceInterface for MockMemoryService {
 
         let obs = Observation {
             id: uuid::Uuid::new_v4().to_string(),
-            project_id: "mock-project".to_string(),
+            project_id,
             content,
             content_hash: "mock-hash".to_string(),
             tags,
@@ -189,6 +190,19 @@ impl MemoryServiceInterface for MockMemoryService {
         let id = obs.id.clone();
         self.observations.lock().expect("Lock poisoned").push(obs);
         Ok((ObservationId::new(id), false))
+    }
+
+    async fn store_error_pattern(&self, pattern: ErrorPattern) -> Result<String> {
+        Ok(pattern.id)
+    }
+
+    async fn search_error_patterns(
+        &self,
+        _query: &str,
+        _project_id: String,
+        _limit: usize,
+    ) -> Result<Vec<ErrorPattern>> {
+        Ok(vec![])
     }
 
     async fn search_memories(
@@ -271,7 +285,7 @@ impl MemoryServiceInterface for MockMemoryService {
             .take(limit)
             .map(|obs| MemorySearchIndex {
                 id: obs.id.clone(),
-                observation_type: format!("{:?}", obs.observation_type),
+                r#type: format!("{:?}", obs.r#type),
                 relevance_score: 0.9,
                 tags: obs.tags.clone(),
                 content_preview: obs

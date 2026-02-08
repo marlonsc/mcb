@@ -445,6 +445,8 @@ pub struct VcsArgs {
 pub enum ProjectAction {
     /// Create a new resource.
     Create,
+    /// Get an existing resource.
+    Get,
     /// Update an existing resource.
     Update,
     /// List resources.
@@ -457,6 +459,8 @@ pub enum ProjectAction {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ProjectResource {
+    /// Project metadata.
+    Project,
     /// Project phase.
     Phase,
     /// Project issue.

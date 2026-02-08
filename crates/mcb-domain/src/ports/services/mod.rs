@@ -19,7 +19,7 @@ pub use indexing::{
     IndexingStatus,
 };
 pub use memory::MemoryServiceInterface;
-pub use project::{ProjectDetectorService, ProjectService};
+pub use project::{ProjectDetectorService, ProjectServiceInterface};
 pub use search::{SearchFilters, SearchServiceInterface};
 pub use validation::{
     ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,

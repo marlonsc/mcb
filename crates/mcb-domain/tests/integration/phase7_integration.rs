@@ -28,7 +28,7 @@ mod phase7_integration_tests {
         let filter = MemoryFilter {
             id: None,
             tags: None,
-            observation_type: Some(ObservationType::Decision),
+            r#type: Some(ObservationType::Decision),
             session_id: Some("sess-123".to_string()),
             repo_id: None,
             time_range: None,
@@ -90,7 +90,7 @@ mod phase7_integration_tests {
         let filter = MemoryFilter {
             id: None,
             tags: None,
-            observation_type: None,
+            r#type: None,
             session_id: Some("sess-123".to_string()),
             repo_id: Some("repo-abc".to_string()),
             time_range: None,

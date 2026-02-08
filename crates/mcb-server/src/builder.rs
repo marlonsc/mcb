@@ -9,7 +9,8 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    ProjectDetectorService, ProjectService, SearchServiceInterface, ValidationServiceInterface,
+    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface,
 };
 
 use crate::McpServer;
@@ -27,7 +28,7 @@ pub struct McpServerBuilder {
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
     agent_session_service: Option<Arc<dyn AgentSessionServiceInterface>>,
     project_service: Option<Arc<dyn ProjectDetectorService>>,
-    project_workflow_service: Option<Arc<dyn ProjectService>>,
+    project_workflow_service: Option<Arc<dyn ProjectServiceInterface>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
 }
 
@@ -107,7 +108,10 @@ impl McpServerBuilder {
     }
 
     /// Set the project workflow service
-    pub fn with_project_workflow_service(mut self, service: Arc<dyn ProjectService>) -> Self {
+    pub fn with_project_workflow_service(
+        mut self,
+        service: Arc<dyn ProjectServiceInterface>,
+    ) -> Self {
         self.project_workflow_service = Some(service);
         self
     }

@@ -4,12 +4,12 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::{
-    DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
+    DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, Project, ProjectDecision,
     ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::ProjectRepository;
-use mcb_domain::ports::services::project::ProjectService;
+use mcb_domain::ports::services::project::ProjectServiceInterface;
 use uuid::Uuid;
 
 /// Service implementation for managing project workflow resources.
@@ -32,7 +32,19 @@ impl ProjectServiceImpl {
 }
 
 #[async_trait]
-impl ProjectService for ProjectServiceImpl {
+impl ProjectServiceInterface for ProjectServiceImpl {
+    // Project operations
+    async fn get_project(&self, id: &str) -> Result<Project> {
+        self.repository
+            .get_by_id(id)
+            .await?
+            .ok_or_else(|| Error::not_found(format!("Project {}", id)))
+    }
+
+    async fn list_projects(&self) -> Result<Vec<Project>> {
+        self.repository.list().await
+    }
+
     // Phase operations
     async fn create_phase(
         &self,

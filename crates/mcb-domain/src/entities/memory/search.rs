@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::observation::{Observation, ObservationType};
+use crate::entities::observation::{Observation, ObservationType};
 
 /// Result of a memory search query containing a matched observation and its similarity score.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,7 +19,8 @@ pub struct MemorySearchIndex {
     /// Unique identifier for the index entry.
     pub id: String,
     /// Type of observation (e.g., "code_snippet", "error", "decision").
-    pub observation_type: String,
+    #[serde(rename = "type", alias = "observation_type")]
+    pub r#type: String,
     /// Relevance score for ranking search results.
     pub relevance_score: f32,
     /// Tags associated with the observation for filtering and categorization.
@@ -41,10 +42,13 @@ pub struct MemorySearchIndex {
 pub struct MemoryFilter {
     /// Filter by specific observation identifier.
     pub id: Option<String>,
+    /// Filter by project identifier.
+    pub project_id: Option<String>,
     /// Filter by one or more tags.
     pub tags: Option<Vec<String>>,
     /// Filter by observation type.
-    pub observation_type: Option<ObservationType>,
+    #[serde(rename = "type", alias = "observation_type")]
+    pub r#type: Option<ObservationType>,
     /// Filter by session identifier.
     pub session_id: Option<String>,
     /// Filter by repository identifier.
@@ -62,7 +66,7 @@ impl std::fmt::Debug for MemoryFilter {
         f.debug_struct("MemoryFilter")
             .field("id", &self.id)
             .field("tags", &self.tags)
-            .field("observation_type", &self.observation_type)
+            .field("observation_type", &self.r#type)
             .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
             .field("repo_id", &self.repo_id)
             .field("time_range", &self.time_range)

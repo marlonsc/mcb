@@ -102,7 +102,7 @@ mod rrf_tests {
             content: content.to_string(),
             content_hash: compute_content_hash(content),
             tags: vec![],
-            observation_type: ObservationType::Context,
+            r#type: ObservationType::Context,
             metadata: ObservationMetadata::default(),
             created_at: 1_700_000_000,
             embedding_id: None,

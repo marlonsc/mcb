@@ -14,7 +14,7 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
 use mcb_domain::ports::services::{
-    ProjectDetectorService, ProjectService as ProjectWorkflowService,
+    ProjectDetectorService, ProjectServiceInterface as ProjectWorkflowService,
 };
 use tracing::info;
 

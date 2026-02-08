@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::execution::ExecutionMetadata;
-use super::quality_gate::QualityGateResult;
+use super::memory::{ExecutionMetadata, QualityGateResult};
 
 /// Categorizes the type of observation recorded.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -153,7 +152,8 @@ pub struct Observation {
     /// List of semantic tags.
     pub tags: Vec<String>,
     /// Classification of the observation.
-    pub observation_type: ObservationType,
+    #[serde(rename = "type", alias = "observation_type")]
+    pub r#type: ObservationType,
     /// Additional metadata.
     pub metadata: ObservationMetadata,
     /// Timestamp when the observation was created (Unix epoch).

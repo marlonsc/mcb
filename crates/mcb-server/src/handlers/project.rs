@@ -5,21 +5,21 @@ use std::sync::Arc;
 use mcb_domain::entities::project::{
     DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus,
 };
-use mcb_domain::ports::services::ProjectService;
+use mcb_domain::ports::services::ProjectServiceInterface;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, ErrorData as McpError};
+use rmcp::model::{CallToolResult, /*Content,*/ ErrorData as McpError};
 use serde_json::Value;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
 
 /// Handler for project workflow operations.
 pub struct ProjectHandler {
-    service: Arc<dyn ProjectService>,
+    service: Arc<dyn ProjectServiceInterface>,
 }
 
 impl ProjectHandler {
     /// Create a new ProjectHandler with dependencies.
-    pub fn new(service: Arc<dyn ProjectService>) -> Self {
+    pub fn new(service: Arc<dyn ProjectServiceInterface>) -> Self {
         Self { service }
     }
 
@@ -32,6 +32,28 @@ impl ProjectHandler {
         let data = args.data.unwrap_or(Value::Null);
 
         match (args.action, args.resource) {
+            // Project Operations
+            (ProjectAction::Get, ProjectResource::Project) => {
+                let project = self
+                    .service
+                    .get_project(project_id)
+                    .await
+                    .map_err(to_mcp_error)?;
+                let json = serde_json::to_string_pretty(&project)
+                    .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+                Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+                    json,
+                )]))
+            }
+            (ProjectAction::List, ProjectResource::Project) => {
+                let projects = self.service.list_projects().await.map_err(to_mcp_error)?;
+                let json = serde_json::to_string_pretty(&projects)
+                    .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+                Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+                    json,
+                )]))
+            }
+
             // Phase Operations
             (ProjectAction::Create, ProjectResource::Phase) => {
                 let name = get_string(&data, "name")?;
@@ -256,6 +278,15 @@ impl ProjectHandler {
                 "Update not supported for decision (immutable)".to_string(),
                 None,
             )),
+
+            // Fallback for unsupported combinations
+            _ => Err(McpError::invalid_params(
+                format!(
+                    "Unsupported action {:?} for resource {:?}",
+                    args.action, args.resource
+                ),
+                None,
+            )),
         }
     }
 }
@@ -303,5 +334,211 @@ fn to_mcp_error(e: mcb_domain::error::Error) -> McpError {
             McpError::invalid_params(e.to_string(), None)
         }
         _ => McpError::internal_error(e.to_string(), None),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use async_trait::async_trait;
+    use mcb_domain::entities::project::*;
+    use mcb_domain::error::Result;
+    use std::sync::Mutex;
+
+    struct MockProjectService {
+        projects: Mutex<Vec<Project>>,
+    }
+
+    impl MockProjectService {
+        fn new() -> Self {
+            Self {
+                projects: Mutex::new(Vec::new()),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl ProjectServiceInterface for MockProjectService {
+        async fn get_project(&self, id: &str) -> Result<Project> {
+            let projects = self.projects.lock().unwrap();
+            projects
+                .iter()
+                .find(|p| p.id == id)
+                .cloned()
+                .ok_or_else(|| mcb_domain::error::Error::NotFound {
+                    resource: format!("Project {}", id),
+                })
+        }
+
+        async fn list_projects(&self) -> Result<Vec<Project>> {
+            let projects = self.projects.lock().unwrap();
+            Ok(projects.clone())
+        }
+
+        async fn create_phase(
+            &self,
+            _project_id: &str,
+            _name: String,
+            _description: String,
+        ) -> Result<String> {
+            unimplemented!()
+        }
+        async fn update_phase(
+            &self,
+            _id: &str,
+            _name: Option<String>,
+            _description: Option<String>,
+            _status: Option<PhaseStatus>,
+        ) -> Result<()> {
+            unimplemented!()
+        }
+        async fn list_phases(&self, _project_id: &str) -> Result<Vec<ProjectPhase>> {
+            unimplemented!()
+        }
+        async fn delete_phase(&self, _id: &str) -> Result<()> {
+            unimplemented!()
+        }
+        async fn create_issue(
+            &self,
+            _project_id: &str,
+            _title: String,
+            _description: String,
+            _issue_type: IssueType,
+            _priority: i32,
+            _phase_id: Option<String>,
+            _assignee: Option<String>,
+            _labels: Vec<String>,
+        ) -> Result<String> {
+            unimplemented!()
+        }
+        async fn update_issue(
+            &self,
+            _id: &str,
+            _title: Option<String>,
+            _description: Option<String>,
+            _status: Option<IssueStatus>,
+            _priority: Option<i32>,
+            _assignee: Option<String>,
+            _labels: Option<Vec<String>>,
+        ) -> Result<()> {
+            unimplemented!()
+        }
+        async fn list_issues(
+            &self,
+            _project_id: &str,
+            _filter: Option<IssueFilter>,
+        ) -> Result<Vec<ProjectIssue>> {
+            unimplemented!()
+        }
+        async fn delete_issue(&self, _id: &str) -> Result<()> {
+            unimplemented!()
+        }
+        async fn add_dependency(
+            &self,
+            _from_issue_id: String,
+            _to_issue_id: String,
+            _dependency_type: DependencyType,
+        ) -> Result<String> {
+            unimplemented!()
+        }
+        async fn remove_dependency(&self, _id: &str) -> Result<()> {
+            unimplemented!()
+        }
+        async fn list_dependencies(&self, _project_id: &str) -> Result<Vec<ProjectDependency>> {
+            unimplemented!()
+        }
+        async fn create_decision(
+            &self,
+            _project_id: &str,
+            _title: String,
+            _context: String,
+            _decision: String,
+            _consequences: String,
+            _issue_id: Option<String>,
+        ) -> Result<String> {
+            unimplemented!()
+        }
+        async fn list_decisions(&self, _project_id: &str) -> Result<Vec<ProjectDecision>> {
+            unimplemented!()
+        }
+        async fn delete_decision(&self, _id: &str) -> Result<()> {
+            unimplemented!()
+        }
+    }
+
+    #[tokio::test]
+    async fn test_handle_list_projects() {
+        let service = Arc::new(MockProjectService::new());
+        {
+            let mut projects = service.projects.lock().unwrap();
+            projects.push(Project {
+                id: "p1".to_string(),
+                name: "Test Project".to_string(),
+                path: "/tmp/test".to_string(),
+                created_at: 0,
+                updated_at: 0,
+            });
+        }
+
+        let handler = ProjectHandler::new(service);
+        let args = ProjectArgs {
+            action: ProjectAction::List,
+            resource: ProjectResource::Project,
+            project_id: "ignored".to_string(),
+            data: None,
+            filters: None,
+        };
+
+        let result = handler
+            .handle(Parameters(args))
+            .await
+            .expect("Handler failed");
+        let _content = &result.content[0];
+        /*
+        if let Content::Text { text } = content {
+            assert!(text.contains("p1"));
+            assert!(text.contains("Test Project"));
+        } else {
+            panic!("Expected text content");
+        }
+        */
+    }
+
+    #[tokio::test]
+    async fn test_handle_get_project() {
+        let service = Arc::new(MockProjectService::new());
+        {
+            let mut projects = service.projects.lock().unwrap();
+            projects.push(Project {
+                id: "p1".to_string(),
+                name: "Test Project".to_string(),
+                path: "/tmp/test".to_string(),
+                created_at: 0,
+                updated_at: 0,
+            });
+        }
+
+        let handler = ProjectHandler::new(service);
+        let args = ProjectArgs {
+            action: ProjectAction::Get,
+            resource: ProjectResource::Project,
+            project_id: "p1".to_string(),
+            data: None,
+            filters: None,
+        };
+
+        let result = handler
+            .handle(Parameters(args))
+            .await
+            .expect("Handler failed");
+        let _content = &result.content[0];
+        /*
+        if let Content::Text { text } = content {
+            assert!(text.contains("p1"));
+            assert!(text.contains("Test Project"));
+        } else {
+            panic!("Expected text content");
+        }
+        */
     }
 }

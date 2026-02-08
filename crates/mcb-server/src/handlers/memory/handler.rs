@@ -2,14 +2,17 @@
 
 use std::sync::Arc;
 
+use mcb_domain::entities::memory::ErrorPattern;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
 use validator::Validate;
 
+use super::helpers::MemoryHelpers;
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
+use crate::formatter::ResponseFormatter;
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -56,9 +59,7 @@ impl MemoryHandler {
             MemoryResource::QualityGate => {
                 quality_gate::store_quality_gate(&self.memory_service, args).await
             }
-            MemoryResource::ErrorPattern => Ok(CallToolResult::error(vec![Content::text(
-                "Error pattern memory is not implemented yet",
-            )])),
+            MemoryResource::ErrorPattern => self.handle_store_error_pattern(args).await,
             MemoryResource::Session => session::store_session(&self.memory_service, args).await,
         }
     }
@@ -74,10 +75,73 @@ impl MemoryHandler {
             MemoryResource::QualityGate => {
                 quality_gate::get_quality_gates(&self.memory_service, args).await
             }
-            MemoryResource::ErrorPattern => Ok(CallToolResult::error(vec![Content::text(
-                "Error pattern memory is not implemented yet",
-            )])),
+            MemoryResource::ErrorPattern => self.handle_get_error_pattern(args).await,
             MemoryResource::Session => session::get_session(&self.memory_service, args).await,
+        }
+    }
+
+    async fn handle_store_error_pattern(
+        &self,
+        args: &MemoryArgs,
+    ) -> Result<CallToolResult, McpError> {
+        let data = match MemoryHelpers::json_map(&args.data) {
+            Some(data) => data,
+            None => {
+                return Ok(CallToolResult::error(vec![Content::text(
+                    "Missing data payload for error pattern store",
+                )]));
+            }
+        };
+
+        // Validate and deserialize ErrorPattern from data
+        // We assume the data matches ErrorPattern structure or we build it manually
+        // For simplicity, let's try to deserialize the whole data object
+        let pattern: ErrorPattern =
+            match serde_json::from_value(serde_json::Value::Object(data.clone())) {
+                Ok(p) => p,
+                Err(e) => {
+                    return Ok(CallToolResult::error(vec![Content::text(format!(
+                        "Invalid error pattern data: {}",
+                        e
+                    ))]));
+                }
+            };
+
+        match self.memory_service.store_error_pattern(pattern).await {
+            Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
+                "id": id,
+            })),
+            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
+                "Failed to store error pattern: {}",
+                e
+            ))])),
+        }
+    }
+
+    async fn handle_get_error_pattern(
+        &self,
+        args: &MemoryArgs,
+    ) -> Result<CallToolResult, McpError> {
+        let project_id = args.project_id.clone().ok_or_else(|| {
+            McpError::invalid_params("project_id is required for error pattern search", None)
+        })?;
+
+        let query = args.query.clone().unwrap_or_default();
+        let limit = args.limit.unwrap_or(10) as usize;
+
+        match self
+            .memory_service
+            .search_error_patterns(&query, project_id, limit)
+            .await
+        {
+            Ok(patterns) => ResponseFormatter::json_success(&serde_json::json!({
+                "count": patterns.len(),
+                "patterns": patterns,
+            })),
+            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
+                "Failed to get error patterns: {}",
+                e
+            ))])),
         }
     }
 

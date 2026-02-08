@@ -3,7 +3,7 @@ use std::path::Path;
 use async_trait::async_trait;
 
 use crate::entities::project::{
-    DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
+    DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, Project, ProjectDecision,
     ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,
 };
 use crate::error::Result;
@@ -17,7 +17,13 @@ pub trait ProjectDetectorService: Send + Sync {
 
 /// Service for managing project workflow resources (phases, issues, dependencies, decisions).
 #[async_trait]
-pub trait ProjectService: Send + Sync {
+pub trait ProjectServiceInterface: Send + Sync {
+    // Project operations
+    /// Gets a project by ID.
+    async fn get_project(&self, id: &str) -> Result<Project>;
+    /// Lists all registered projects.
+    async fn list_projects(&self) -> Result<Vec<Project>>;
+
     // Phase operations
     /// Creates a new phase.
     async fn create_phase(

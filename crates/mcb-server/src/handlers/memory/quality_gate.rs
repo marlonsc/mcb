@@ -73,8 +73,20 @@ pub async fn store_quality_gate(
         execution: None,
         quality_gate: Some(quality_gate),
     };
+    let project_id = args
+        .project_id
+        .clone()
+        .or_else(|| MemoryHelpers::get_str(data, "project_id"))
+        .unwrap_or_else(|| "default".to_string());
+
     match memory_service
-        .store_observation(content, ObservationType::QualityGate, tags, obs_metadata)
+        .store_observation(
+            project_id,
+            content,
+            ObservationType::QualityGate,
+            tags,
+            obs_metadata,
+        )
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
@@ -95,8 +107,9 @@ pub async fn get_quality_gates(
 ) -> Result<CallToolResult, McpError> {
     let filter = MemoryFilter {
         id: None,
+        project_id: args.project_id.clone(),
         tags: None,
-        observation_type: Some(ObservationType::QualityGate),
+        r#type: Some(ObservationType::QualityGate),
         session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
         repo_id: args.repo_id.clone(),
         time_range: None,

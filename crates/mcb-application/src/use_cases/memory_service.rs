@@ -7,8 +7,8 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::memory::{
-    MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
-    ObservationType, SessionSummary,
+    ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
+    ObservationMetadata, ObservationType, SessionSummary,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
@@ -74,6 +74,9 @@ impl MemoryServiceImpl {
     }
 
     fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
+        if !Self::check_project(obs, filter) {
+            return false;
+        }
         if !Self::check_session(obs, filter) {
             return false;
         }
@@ -92,6 +95,13 @@ impl MemoryServiceImpl {
         Self::check_commit(obs, filter)
     }
 
+    fn check_project(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .project_id
+            .as_ref()
+            .is_none_or(|id| obs.project_id == *id)
+    }
+
     fn check_session(obs: &Observation, filter: &MemoryFilter) -> bool {
         filter
             .session_id
@@ -108,9 +118,9 @@ impl MemoryServiceImpl {
 
     fn check_type(obs: &Observation, filter: &MemoryFilter) -> bool {
         filter
-            .observation_type
+            .r#type
             .as_ref()
-            .is_none_or(|t| &obs.observation_type == t)
+            .is_none_or(|t| &obs.r#type == t)
     }
 
     fn check_time(obs: &Observation, filter: &MemoryFilter) -> bool {
@@ -138,12 +148,13 @@ impl MemoryServiceImpl {
 impl MemoryServiceImpl {
     async fn store_observation_impl(
         &self,
+        project_id: String,
         content: String,
-        observation_type: ObservationType,
+        r#type: ObservationType,
         tags: Vec<String>,
         metadata: ObservationMetadata,
     ) -> Result<(String, bool)> {
-        if self.project_id.trim().is_empty() {
+        if project_id.trim().is_empty() {
             return Err(mcb_domain::error::Error::invalid_argument(
                 "Project ID cannot be empty for memory storage",
             ));
@@ -167,6 +178,10 @@ impl MemoryServiceImpl {
             serde_json::Value::String(observation_type.as_str().to_string()),
         );
         vector_metadata.insert("tags".to_string(), serde_json::json!(tags));
+        vector_metadata.insert(
+            "project_id".to_string(),
+            serde_json::Value::String(project_id.clone()),
+        );
 
         if let Some(session_id) = &metadata.session_id {
             vector_metadata.insert(
@@ -185,7 +200,7 @@ impl MemoryServiceImpl {
 
         let observation = Observation {
             id: Uuid::new_v4().to_string(),
-            project_id: self.project_id.clone(),
+            project_id,
             content,
             content_hash,
             tags,
@@ -302,7 +317,7 @@ impl MemoryServiceImpl {
 
                 MemorySearchIndex {
                     id: r.observation.id,
-                    observation_type: r.observation.observation_type.as_str().to_string(),
+                    r#type: r.observation.r#type.as_str().to_string(),
                     relevance_score: r.similarity_score,
                     tags: r.observation.tags,
                     content_preview,
@@ -376,15 +391,61 @@ impl MemoryServiceImpl {
 impl MemoryServiceInterface for MemoryServiceImpl {
     async fn store_observation(
         &self,
+        project_id: String,
         content: String,
-        observation_type: ObservationType,
+        r#type: ObservationType,
         tags: Vec<String>,
         metadata: ObservationMetadata,
     ) -> Result<(ObservationId, bool)> {
         let (id, new) = self
-            .store_observation_impl(content, observation_type, tags, metadata)
+            .store_observation_impl(project_id, content, observation_type, tags, metadata)
             .await?;
         Ok((ObservationId::new(id), new))
+    }
+
+    async fn store_error_pattern(&self, pattern: ErrorPattern) -> Result<String> {
+        let content = serde_json::to_string(&pattern)
+            .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
+
+        let metadata = ObservationMetadata {
+            id: Uuid::new_v4().to_string(),
+            ..Default::default()
+        };
+
+        let (id, _) = self
+            .store_observation(
+                pattern.project_id.clone(),
+                content,
+                ObservationType::Error,
+                pattern.tags,
+                metadata,
+            )
+            .await?;
+
+        Ok(id.into_string())
+    }
+
+    async fn search_error_patterns(
+        &self,
+        query: &str,
+        project_id: String,
+        limit: usize,
+    ) -> Result<Vec<ErrorPattern>> {
+        let filter = MemoryFilter {
+            project_id: Some(project_id),
+            r#type: Some(ObservationType::Error),
+            ..Default::default()
+        };
+
+        let results = self.search_memories(query, Some(filter), limit).await?;
+
+        let mut patterns = Vec::new();
+        for res in results {
+            if let Ok(pattern) = serde_json::from_str::<ErrorPattern>(&res.observation.content) {
+                patterns.push(pattern);
+            }
+        }
+        Ok(patterns)
     }
 
     async fn search_memories(

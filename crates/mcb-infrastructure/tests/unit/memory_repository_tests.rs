@@ -33,7 +33,7 @@ async fn test_memory_repository_store_and_get_observation() {
         content: "content".to_string(),
         content_hash: "hash1".to_string(),
         tags: vec![],
-        observation_type: ObservationType::Context,
+        r#type: ObservationType::Context,
         metadata: Default::default(),
         created_at: 0,
         embedding_id: None,

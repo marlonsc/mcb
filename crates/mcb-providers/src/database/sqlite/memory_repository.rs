@@ -56,7 +56,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             SqlParam::String(observation.content.clone()),
             SqlParam::String(observation.content_hash.clone()),
             SqlParam::String(tags_json),
-            SqlParam::String(observation.observation_type.as_str().to_string()),
+            SqlParam::String(observation.r#type.as_str().to_string()),
             SqlParam::String(metadata_json),
             SqlParam::I64(observation.created_at),
             observation
@@ -205,7 +205,7 @@ impl MemoryRepository for SqliteMemoryRepository {
                 base_sql.push_str(" AND json_extract(metadata, '$.commit') = ?");
                 base_params.push(SqlParam::String(commit.clone()));
             }
-            if let Some(obs_type) = &f.observation_type {
+            if let Some(obs_type) = &f.r#type {
                 base_sql.push_str(" AND observation_type = ?");
                 base_params.push(SqlParam::String(obs_type.as_str().to_string()));
             }

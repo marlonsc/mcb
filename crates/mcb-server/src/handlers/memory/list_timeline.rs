@@ -16,8 +16,9 @@ pub async fn list_observations(
 ) -> Result<CallToolResult, McpError> {
     let filter = MemoryFilter {
         id: None,
+        project_id: args.project_id.clone(),
         tags: args.tags.clone(),
-        observation_type: None,
+        r#type: None,
         session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
         repo_id: args.repo_id.clone(),
         time_range: None,
@@ -36,7 +37,7 @@ pub async fn list_observations(
                 .map(|item| {
                     serde_json::json!({
                         "id": item.id,
-                        "observation_type": item.observation_type.as_str(),
+                        "observation_type": item.r#type.as_str(),
                         "relevance_score": item.relevance_score,
                         "tags": item.tags,
                         "content_preview": item.content_preview,
@@ -93,8 +94,9 @@ pub async fn get_timeline(
     };
     let filter = MemoryFilter {
         id: None,
+        project_id: args.project_id.clone(),
         tags: None,
-        observation_type: None,
+        r#type: None,
         session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
         repo_id: args.repo_id.clone(),
         time_range: None,
@@ -119,7 +121,7 @@ pub async fn get_timeline(
                     serde_json::json!({
                         "observation_id": observation.id,
                         "content": observation.content,
-                        "observation_type": observation.observation_type.as_str(),
+                        "observation_type": observation.r#type.as_str(),
                         "created_at": observation.created_at,
                     })
                 })

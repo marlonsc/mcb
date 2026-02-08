@@ -17,8 +17,9 @@ pub async fn inject_context(
 ) -> Result<CallToolResult, McpError> {
     let filter = MemoryFilter {
         id: None,
+        project_id: args.project_id.clone(),
         tags: None,
-        observation_type: None,
+        r#type: None,
         session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
         repo_id: args.repo_id.clone(),
         time_range: None,
@@ -40,7 +41,7 @@ pub async fn inject_context(
                 observation_ids.push(result.observation.id.clone());
                 let entry = format!(
                     "[{}] {}: {}\n\n",
-                    result.observation.observation_type.as_str().to_uppercase(),
+                    result.observation.r#type.as_str().to_uppercase(),
                     result.observation.id,
                     result.observation.content
                 );

@@ -8,7 +8,8 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    ProjectDetectorService, ProjectService, SearchServiceInterface, ValidationServiceInterface,
+    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface,
 };
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
@@ -55,7 +56,7 @@ pub struct McpServices {
     /// Project detector service
     pub project: Arc<dyn ProjectDetectorService>,
     /// Project workflow service
-    pub project_workflow: Arc<dyn ProjectService>,
+    pub project_workflow: Arc<dyn ProjectServiceInterface>,
     /// VCS provider
     pub vcs: Arc<dyn VcsProvider>,
 }
@@ -133,7 +134,7 @@ impl McpServer {
     }
 
     /// Access to project workflow service
-    pub fn project_workflow_service(&self) -> Arc<dyn ProjectService> {
+    pub fn project_workflow_service(&self) -> Arc<dyn ProjectServiceInterface> {
         Arc::clone(&self.services.project_workflow)
     }
 

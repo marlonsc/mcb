@@ -38,6 +38,14 @@ pub async fn store_observation(
         Err(error_result) => return Ok(error_result),
     };
     let tags = MemoryHelpers::get_string_list(data, "tags");
+    let project_id = args
+        .project_id
+        .clone()
+        .or_else(|| MemoryHelpers::get_str(data, "project_id"))
+        .ok_or_else(|| {
+            McpError::invalid_params("project_id is required for storing observation", None)
+        })?;
+
     let vcs_context = VcsContext::capture();
     let metadata = ObservationMetadata {
         id: Uuid::new_v4().to_string(),
@@ -53,7 +61,7 @@ pub async fn store_observation(
         quality_gate: None,
     };
     match memory_service
-        .store_observation(content, observation_type, tags, metadata)
+        .store_observation(project_id, content, observation_type, tags, metadata)
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
@@ -93,7 +101,7 @@ pub async fn get_observations(
                     serde_json::json!({
                         "id": obs.id,
                         "content": obs.content,
-                        "observation_type": obs.observation_type.as_str(),
+                        "observation_type": obs.r#type.as_str(),
                         "tags": obs.tags,
                         "session_id": obs.metadata.session_id,
                         "repo_id": obs.metadata.repo_id,

@@ -27,7 +27,7 @@ async fn test_fts_search_flow() {
         content: "The quick brown fox".to_string(),
         content_hash: "hash1".to_string(),
         tags: vec![],
-        observation_type: ObservationType::Context,
+        r#type: ObservationType::Context,
         metadata: Default::default(),
         created_at: 100,
         embedding_id: None,

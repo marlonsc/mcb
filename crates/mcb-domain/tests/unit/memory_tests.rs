@@ -43,7 +43,7 @@ fn test_memory_filter_construction() {
     let f = MemoryFilter {
         id: None,
         tags: None,
-        observation_type: None,
+        r#type: None,
         session_id: Some("s1".to_string()),
         repo_id: None,
         time_range: None,
@@ -61,7 +61,7 @@ fn test_observation_has_required_fields() {
         content: "c".to_string(),
         content_hash: "h".to_string(),
         tags: vec![],
-        observation_type: ObservationType::Context,
+        r#type: ObservationType::Context,
         metadata: ObservationMetadata::default(),
         created_at: 0,
         embedding_id: None,

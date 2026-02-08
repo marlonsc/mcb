@@ -61,8 +61,20 @@ impl HookProcessor {
             tags.push("error".to_string());
         }
 
+        let project_id = context
+            .metadata
+            .get("project_id")
+            .cloned()
+            .unwrap_or_else(|| "default".to_string());
+
         memory_service
-            .store_observation(content, ObservationType::Execution, tags, metadata)
+            .store_observation(
+                project_id,
+                content,
+                ObservationType::Execution,
+                tags,
+                metadata,
+            )
             .await
             .map_err(|e| HookError::FailedToStoreObservation(e.to_string()))?;
 
@@ -86,8 +98,9 @@ impl HookProcessor {
 
         let filter = MemoryFilter {
             id: None,
+            project_id: None,
             tags: None,
-            observation_type: None,
+            r#type: None,
             session_id: Some(context.session_id.as_str().to_string()),
             repo_id: None,
             time_range: None,

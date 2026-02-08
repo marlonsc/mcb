@@ -87,7 +87,7 @@ impl SearchHandler {
             SearchResource::Memory | SearchResource::Context => {
                 let filter = MemoryFilter {
                     tags: args.tags.clone(),
-                    observation_type: if matches!(args.resource, SearchResource::Context) {
+                    r#type: if matches!(args.resource, SearchResource::Context) {
                         Some(mcb_domain::entities::memory::ObservationType::Context)
                     } else {
                         None
@@ -98,6 +98,7 @@ impl SearchHandler {
                     branch: None,
                     commit: None,
                     id: None,
+                    project_id: None,
                 };
                 let limit = args.limit.unwrap_or(10) as usize;
                 match self
@@ -112,7 +113,7 @@ impl SearchHandler {
                                 serde_json::json!({
                                     "observation_id": r.observation.id,
                                     "content": r.observation.content,
-                                    "observation_type": r.observation.observation_type.as_str(),
+                                    "observation_type": r.observation.r#type.as_str(),
                                     "tags": r.observation.tags,
                                     "similarity_score": r.similarity_score,
                                     "session_id": r.observation.metadata.session_id,

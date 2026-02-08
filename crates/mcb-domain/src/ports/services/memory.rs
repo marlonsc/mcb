@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 
 use crate::entities::memory::{
-    MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
-    ObservationType, SessionSummary,
+    ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
+    ObservationMetadata, ObservationType, SessionSummary,
 };
 use crate::error::Result;
 use crate::value_objects::{Embedding, ObservationId, SessionId};
@@ -19,11 +19,23 @@ pub trait MemoryServiceInterface: Send + Sync {
     /// returns the existing observation's ID and `deduplicated: true`.
     async fn store_observation(
         &self,
+        project_id: String,
         content: String,
-        observation_type: ObservationType,
+        r#type: ObservationType,
         tags: Vec<String>,
         metadata: ObservationMetadata,
     ) -> Result<(ObservationId, bool)>;
+
+    /// Store an error pattern.
+    async fn store_error_pattern(&self, pattern: ErrorPattern) -> Result<String>;
+
+    /// Search for error patterns.
+    async fn search_error_patterns(
+        &self,
+        query: &str,
+        project_id: String,
+        limit: usize,
+    ) -> Result<Vec<ErrorPattern>>;
 
     /// Search memories using semantic similarity.
     ///
