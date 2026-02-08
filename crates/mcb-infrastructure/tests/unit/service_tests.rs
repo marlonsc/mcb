@@ -16,5 +16,5 @@ async fn test_project_service_detect_all() {
 
     // Should not panic on valid path
     let result = service.detect_all(temp_dir.as_path()).await;
-    assert!(result.is_ok());
+    assert!(result.is_empty());
 }

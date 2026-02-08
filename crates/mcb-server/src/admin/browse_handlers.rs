@@ -228,7 +228,7 @@ pub async fn get_file_chunks(
                 // Move content/language into fallback HighlightedCode to avoid cloning
                 let fallback = mcb_domain::value_objects::browse::HighlightedCode::new(
                     c.content,
-                    Vec::new(),
+                    vec![],
                     c.language,
                 );
                 let html =

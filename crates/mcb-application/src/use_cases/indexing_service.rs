@@ -79,6 +79,7 @@ impl IndexingProgress {
 /// Indexing service implementation - orchestrates file discovery and chunking
 ///
 /// Supports async background indexing with progress tracking and event publishing.
+#[derive(Clone)]
 pub struct IndexingServiceImpl {
     context_service: Arc<dyn ContextServiceInterface>,
     language_chunker: Arc<dyn LanguageChunkingProvider>,
@@ -202,27 +203,16 @@ impl IndexingServiceInterface for IndexingServiceImpl {
             warn!("Failed to publish IndexingStarted event: {}", e);
         }
 
-        // Clone dependencies for the background task
-        let context_service = self.context_service.clone();
-        let language_chunker = self.language_chunker.clone();
-        let indexing_ops = self.indexing_ops.clone();
-        let event_bus = self.event_bus.clone();
+        // Clone service for the background task
+        // IndexingServiceImpl is cheap to clone (Arc-based)
+        let service = self.clone();
         let collection_id = collection.clone();
         let op_id = operation_id.clone();
 
         // Spawn background task - explicitly drop handle since we don't await it
         // (fire-and-forget pattern for async indexing)
         let _handle = tokio::spawn(async move {
-            Self::run_indexing_task(
-                context_service,
-                language_chunker,
-                indexing_ops,
-                event_bus,
-                files,
-                collection_id,
-                op_id,
-            )
-            .await;
+            Self::run_indexing_task(service, files, collection_id, op_id).await;
         });
 
         // Return immediately with operation_id
@@ -263,10 +253,7 @@ impl IndexingServiceInterface for IndexingServiceImpl {
 impl IndexingServiceImpl {
     /// Background task that performs the actual indexing work
     async fn run_indexing_task(
-        context_service: Arc<dyn ContextServiceInterface>,
-        language_chunker: Arc<dyn LanguageChunkingProvider>,
-        indexing_ops: Arc<dyn IndexingOperationsInterface>,
-        event_bus: Arc<dyn EventBusProvider>,
+        service: IndexingServiceImpl,
         files: Vec<PathBuf>,
         collection: CollectionId,
         operation_id: OperationId,
@@ -278,11 +265,16 @@ impl IndexingServiceImpl {
 
         for (i, file_path) in files.iter().enumerate() {
             // Update progress tracker
-            indexing_ops.update_progress(&operation_id, Some(file_path.display().to_string()), i);
+            service.indexing_ops.update_progress(
+                &operation_id,
+                Some(file_path.display().to_string()),
+                i,
+            );
 
             // Publish progress event periodically
             if i % PROGRESS_UPDATE_INTERVAL == 0
-                && let Err(e) = event_bus
+                && let Err(e) = service
+                    .event_bus
                     .publish_event(DomainEvent::IndexingProgress {
                         collection: collection.to_string(),
                         processed: i,
@@ -303,8 +295,14 @@ impl IndexingServiceImpl {
                 }
             };
 
-            let chunks = language_chunker.chunk(&content, &file_path.to_string_lossy());
-            if let Err(e) = context_service.store_chunks(&collection, &chunks).await {
+            let chunks = service
+                .language_chunker
+                .chunk(&content, &file_path.to_string_lossy());
+            if let Err(e) = service
+                .context_service
+                .store_chunks(&collection, &chunks)
+                .await
+            {
                 debug!("Failed to store chunks for {}: {}", file_path.display(), e);
                 continue;
             }
@@ -314,17 +312,20 @@ impl IndexingServiceImpl {
         }
 
         // Update final progress
-        indexing_ops.update_progress(&operation_id, None, total);
+        service
+            .indexing_ops
+            .update_progress(&operation_id, None, total);
 
         // Complete and remove operation
-        indexing_ops.complete_operation(&operation_id);
+        service.indexing_ops.complete_operation(&operation_id);
 
         let duration_ms = start.elapsed().as_millis() as u64;
 
         let result = IndexingProgress::with_counts(files_processed, chunks_created, 0, vec![])
             .into_result(Some(operation_id), "completed");
 
-        if let Err(e) = event_bus
+        if let Err(e) = service
+            .event_bus
             .publish_event(DomainEvent::IndexingCompleted {
                 collection: collection.to_string(),
                 chunks: result.chunks_created,

@@ -74,37 +74,29 @@ impl MemoryServiceImpl {
     }
 
     fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
-        if let Some(ref session_id) = filter.session_id
-            && obs.metadata.session_id.as_ref() != Some(session_id)
-        {
-            return false;
-        }
-        if let Some(ref repo_id) = filter.repo_id
-            && obs.metadata.repo_id.as_ref() != Some(repo_id)
-        {
-            return false;
-        }
-        if let Some(ref obs_type) = filter.observation_type
-            && &obs.observation_type != obs_type
-        {
-            return false;
-        }
-        if let Some((start, end)) = filter.time_range
-            && (obs.created_at < start || obs.created_at > end)
-        {
-            return false;
-        }
-        if let Some(ref branch) = filter.branch
-            && obs.metadata.branch.as_ref() != Some(branch)
-        {
-            return false;
-        }
-        if let Some(ref commit) = filter.commit
-            && obs.metadata.commit.as_ref() != Some(commit)
-        {
-            return false;
-        }
-        true
+        filter
+            .session_id
+            .as_ref()
+            .map_or(true, |id| obs.metadata.session_id.as_ref() == Some(id))
+            && filter
+                .repo_id
+                .as_ref()
+                .map_or(true, |id| obs.metadata.repo_id.as_ref() == Some(id))
+            && filter
+                .observation_type
+                .as_ref()
+                .map_or(true, |t| &obs.observation_type == t)
+            && filter.time_range.as_ref().map_or(true, |(start, end)| {
+                obs.created_at >= *start && obs.created_at <= *end
+            })
+            && filter
+                .branch
+                .as_ref()
+                .map_or(true, |b| obs.metadata.branch.as_ref() == Some(b))
+            && filter
+                .commit
+                .as_ref()
+                .map_or(true, |c| obs.metadata.commit.as_ref() == Some(c))
     }
 }
 

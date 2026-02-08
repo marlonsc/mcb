@@ -339,7 +339,7 @@ impl PerformanceValidator {
                     // Track loop entry
                     if loop_start_pattern.is_match(trimmed) {
                         in_loop = true;
-                        loop_depth = 1;
+                        loop_depth = 0;
                     }
 
                     if in_loop {
@@ -450,7 +450,7 @@ impl PerformanceValidator {
                     // Track loop entry
                     if loop_start_pattern.is_match(trimmed) {
                         in_loop = true;
-                        loop_depth = 1;
+                        loop_depth = 0;
                     }
 
                     if in_loop {

@@ -114,51 +114,73 @@ impl ValidateArgs {
 
     /// Print report as text
     fn print_text(&self, report: &mcb_validate::GenericReport) {
-        // Filter by severity threshold
-        let severity_threshold = match self.severity.as_str() {
-            "error" => 0,   // Only errors
-            "warning" => 1, // Errors + warnings
-            _ => 2,         // All (including info)
-        };
+        let severity_threshold = self.get_severity_threshold();
 
         // Print violations (unless quick mode)
         if !self.quick {
-            let mut has_violations = false;
-
-            for violations in report.violations_by_category.values() {
-                for violation in violations {
-                    let sev_level = match violation.severity.as_str() {
-                        "ERROR" => 0,
-                        "WARNING" => 1,
-                        _ => 2,
-                    };
-
-                    if sev_level <= severity_threshold {
-                        has_violations = true;
-                        let file_display = violation
-                            .file
-                            .as_ref()
-                            .map(|p| p.display().to_string())
-                            .unwrap_or_else(|| "-".to_string());
-                        let line = violation.line.unwrap_or(0);
-
-                        println!(
-                            "[{}] {}: {} ({}:{})",
-                            violation.severity, violation.id, violation.message, file_display, line
-                        );
-                        if let Some(ref suggestion) = violation.suggestion {
-                            println!("  → {suggestion}");
-                        }
-                    }
-                }
-            }
-
-            if has_violations {
-                println!();
-            }
+            self.print_violations(report, severity_threshold);
         }
 
         // Print summary
+        self.print_summary(report);
+    }
+
+    fn get_severity_threshold(&self) -> u8 {
+        match self.severity.as_str() {
+            "error" => 0,   // Only errors
+            "warning" => 1, // Errors + warnings
+            _ => 2,         // All (including info)
+        }
+    }
+
+    fn print_violations(&self, report: &mcb_validate::GenericReport, threshold: u8) {
+        let mut has_violations = false;
+
+        for violations in report.violations_by_category.values() {
+            for violation in violations {
+                if self.should_print_violation(violation, threshold) {
+                    has_violations = true;
+                    self.print_single_violation(violation);
+                }
+            }
+        }
+
+        if has_violations {
+            println!();
+        }
+    }
+
+    fn should_print_violation(
+        &self,
+        violation: &mcb_validate::ViolationEntry,
+        threshold: u8,
+    ) -> bool {
+        let sev_level = match violation.severity.as_str() {
+            "ERROR" => 0,
+            "WARNING" => 1,
+            _ => 2,
+        };
+        sev_level <= threshold
+    }
+
+    fn print_single_violation(&self, violation: &mcb_validate::ViolationEntry) {
+        let file_display = violation
+            .file
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| "-".to_string());
+        let line = violation.line.unwrap_or(0);
+
+        println!(
+            "[{}] {}: {} ({}:{})",
+            violation.severity, violation.id, violation.message, file_display, line
+        );
+        if let Some(ref suggestion) = violation.suggestion {
+            println!("  → {suggestion}");
+        }
+    }
+
+    fn print_summary(&self, report: &mcb_validate::GenericReport) {
         println!(
             "Validation complete: {} error(s), {} warning(s), {} info(s)",
             report.summary.errors, report.summary.warnings, report.summary.infos

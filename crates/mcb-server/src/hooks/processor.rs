@@ -23,6 +23,11 @@ impl HookProcessor {
         Self { memory_service }
     }
 
+    /// Check if the processor is ready to handle events.
+    pub fn is_ready(&self) -> bool {
+        true
+    }
+
     /// Process the PostToolUse hook event.
     ///
     /// Stores tool execution results as observations in memory.

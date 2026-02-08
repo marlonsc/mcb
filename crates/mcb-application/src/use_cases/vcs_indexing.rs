@@ -162,87 +162,17 @@ where
             .unwrap_or_else(|| Self::derive_collection_name(repo_path));
 
         // Detect projects at root
-        let mut all_projects = Vec::new();
-        if options.detect_projects {
-            let root_projects = self.project_detector.detect_all(repo_path).await;
-            for project_type in root_projects {
-                all_projects.push(DetectedProject {
-                    id: Uuid::new_v4().to_string(),
-                    path: ".".to_string(),
-                    project_type,
-                    parent_repo_id: None,
-                });
-            }
-        }
+        let mut all_projects = self.detect_root_projects(repo_path, &options).await;
 
         // Index root directory
-        let (files_indexed, files_skipped) = if options.incremental {
-            self.index_directory_incremental(repo_path, &collection)
-                .await?
-        } else {
-            self.index_directory_full(repo_path, &collection).await?
-        };
+        let (files_indexed, files_skipped) = self
+            .index_directory(repo_path, &collection, &options)
+            .await?;
 
-        // Process submodules (automatic - no opt-in flag)
-        // Users control depth via submodule_depth (0 = skip submodules)
-        let mut submodule_results = Vec::new();
-        if options.submodule_depth > 0 {
-            // Generate repo ID (in real impl, would use root commit hash)
-            let repo_id = Self::derive_repo_id(repo_path);
-
-            let submodules = self
-                .submodule_service
-                .collect(repo_path, &repo_id, options.submodule_depth)
-                .await?;
-
-            for submodule in submodules {
-                let sub_path = repo_path.join(&submodule.path);
-                if !sub_path.exists() {
-                    tracing::warn!(
-                        path = %submodule.path,
-                        "Submodule path does not exist, skipping"
-                    );
-                    continue;
-                }
-
-                // Generate hierarchical collection name
-                let sub_collection = format!("{}/{}", collection, submodule.path.replace('/', "-"));
-
-                let sub_projects: Vec<_> = if options.detect_projects {
-                    self.project_detector.detect_all(&sub_path).await
-                } else {
-                    vec![]
-                };
-
-                // Add to all projects with parent link
-                let parent_id = Some(repo_id.clone());
-                for project_type in &sub_projects {
-                    all_projects.push(DetectedProject {
-                        id: Uuid::new_v4().to_string(),
-                        path: submodule.path.clone(),
-                        project_type: project_type.clone(),
-                        parent_repo_id: parent_id.clone(),
-                    });
-                }
-
-                // Index submodule
-                let (sub_indexed, sub_skipped) = if options.incremental {
-                    self.index_directory_incremental(&sub_path, &sub_collection)
-                        .await?
-                } else {
-                    self.index_directory_full(&sub_path, &sub_collection)
-                        .await?
-                };
-
-                submodule_results.push(SubmoduleIndexResult {
-                    path: submodule.path,
-                    collection: sub_collection,
-                    files_indexed: sub_indexed,
-                    files_skipped: sub_skipped,
-                    projects: sub_projects,
-                });
-            }
-        }
+        // Process submodules
+        let submodule_results = self
+            .process_submodules(repo_path, &collection, &options, &mut all_projects)
+            .await?;
 
         let duration_ms = start.elapsed().as_millis() as u64;
 
@@ -254,6 +184,129 @@ where
             projects: all_projects,
             duration_ms,
         })
+    }
+
+    async fn detect_root_projects(
+        &self,
+        repo_path: &Path,
+        options: &VcsIndexingOptions,
+    ) -> Vec<DetectedProject> {
+        let mut projects = Vec::new();
+        if options.detect_projects {
+            let root_projects = self.project_detector.detect_all(repo_path).await;
+            for project_type in root_projects {
+                projects.push(DetectedProject {
+                    id: Uuid::new_v4().to_string(),
+                    path: ".".to_string(),
+                    project_type,
+                    parent_repo_id: None,
+                });
+            }
+        }
+        projects
+    }
+
+    async fn index_directory(
+        &self,
+        path: &Path,
+        collection: &str,
+        options: &VcsIndexingOptions,
+    ) -> Result<(usize, usize)> {
+        if options.incremental {
+            self.index_directory_incremental(path, collection).await
+        } else {
+            self.index_directory_full(path, collection).await
+        }
+    }
+
+    async fn process_submodules(
+        &self,
+        repo_path: &Path,
+        parent_collection: &str,
+        options: &VcsIndexingOptions,
+        all_projects: &mut Vec<DetectedProject>,
+    ) -> Result<Vec<SubmoduleIndexResult>> {
+        let mut results = Vec::new();
+
+        if options.submodule_depth > 0 {
+            // Generate repo ID (in real impl, would use root commit hash)
+            let repo_id = Self::derive_repo_id(repo_path);
+
+            let submodules = self
+                .submodule_service
+                .collect(repo_path, &repo_id, options.submodule_depth)
+                .await?;
+
+            for submodule in submodules {
+                if let Some(result) = self
+                    .process_single_submodule(
+                        repo_path,
+                        &submodule,
+                        parent_collection,
+                        &repo_id,
+                        options,
+                        all_projects,
+                    )
+                    .await?
+                {
+                    results.push(result);
+                }
+            }
+        }
+
+        Ok(results)
+    }
+
+    async fn process_single_submodule(
+        &self,
+        repo_path: &Path,
+        submodule: &SubmoduleInfo,
+        parent_collection: &str,
+        repo_id: &str,
+        options: &VcsIndexingOptions,
+        all_projects: &mut Vec<DetectedProject>,
+    ) -> Result<Option<SubmoduleIndexResult>> {
+        let sub_path = repo_path.join(&submodule.path);
+        if !sub_path.exists() {
+            tracing::warn!(
+                path = %submodule.path,
+                "Submodule path does not exist, skipping"
+            );
+            return Ok(None);
+        }
+
+        // Generate hierarchical collection name
+        let sub_collection = format!("{}/{}", parent_collection, submodule.path.replace('/', "-"));
+
+        let sub_projects: Vec<_> = if options.detect_projects {
+            self.project_detector.detect_all(&sub_path).await
+        } else {
+            vec![]
+        };
+
+        // Add to all projects with parent link
+        let parent_id = Some(repo_id.to_string());
+        for project_type in &sub_projects {
+            all_projects.push(DetectedProject {
+                id: Uuid::new_v4().to_string(),
+                path: submodule.path.clone(),
+                project_type: project_type.clone(),
+                parent_repo_id: parent_id.clone(),
+            });
+        }
+
+        // Index submodule
+        let (sub_indexed, sub_skipped) = self
+            .index_directory(&sub_path, &sub_collection, options)
+            .await?;
+
+        Ok(Some(SubmoduleIndexResult {
+            path: submodule.path.clone(),
+            collection: sub_collection,
+            files_indexed: sub_indexed,
+            files_skipped: sub_skipped,
+            projects: sub_projects,
+        }))
     }
 }
 
