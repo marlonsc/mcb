@@ -45,6 +45,10 @@ mod operating_modes_integration;
 #[path = "integration/golden_e2e_complete_integration.rs"]
 mod golden_e2e_complete_integration;
 
+// Golden memory and project workflow E2E tests
+#[path = "integration/golden_memory_project_e2e.rs"]
+mod golden_memory_project_e2e;
+
 // Golden highlight service tests (Phase 8b)
 // #[path = "integration/golden_highlight_service_e2e.rs"]
 // mod golden_highlight_service_e2e; // Missing file
