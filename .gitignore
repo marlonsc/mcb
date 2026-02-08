@@ -140,7 +140,6 @@ reference/
 
 # Generated analysis files
 *.lst
-extract_issues.py
 
 # MCP config (contains absolute paths)
 .mcp.json

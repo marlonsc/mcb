@@ -92,11 +92,6 @@ mode = "comment"
 [[plugin]]
 name = "ripgrep"
 mode = "comment"
-file_patterns = [
-  "!crates/mcb-validate/src/constants.rs",
-  "!crates/mcb-validate/src/quality.rs",
-  "!crates/mcb-validate/tests/integration/**",
-]
 
 [[plugin]]
 name = "ruff"
@@ -117,3 +112,14 @@ name = "trufflehog"
 
 [[plugin]]
 name = "zizmor"
+
+# =============================================================================
+# Overrides - Suppress false positives
+# =============================================================================
+
+[[overrides]]
+paths = [
+  "crates/mcb-validate/src/constants.rs",
+  "crates/mcb-validate/src/quality.rs",
+]
+plugins = [{ name = "ripgrep", enabled = false }]

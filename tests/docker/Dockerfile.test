@@ -10,10 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY . .
 
-# Pre-fetch dependencies
-RUN cargo fetch
+# Pre-fetch dependencies and create user in single layer
+RUN cargo fetch && \
+    useradd -m appuser
 
-RUN useradd -m appuser
 USER appuser
 
 HEALTHCHECK --interval=30s --timeout=3s CMD ["cargo", "--version"]
