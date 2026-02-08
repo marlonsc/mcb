@@ -19,7 +19,7 @@ name: Auto-Tag Release
 permissions:
   contents: write
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   pull_request:
     types: [closed]
     branches: [main]
@@ -32,14 +32,15 @@ jobs:
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.head.ref, 'release/v')
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Extract version from branch name
         id: version
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          BRANCH="${{ github.event.pull_request.head.ref }}"
           # Extract version: release/v0.1.5 -> v0.1.5
           VERSION="${BRANCH#release/}"
           echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
@@ -47,8 +48,9 @@ jobs:
 
       - name: Check if tag already exists
         id: check_tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "::warning ::Tag $TAG already exists, skipping creation"
@@ -58,8 +60,9 @@ jobs:
 
       - name: Create and push tag
         if: steps.check_tag.outputs.exists == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Release $TAG"
@@ -67,14 +70,20 @@ jobs:
           echo "::notice ::Created and pushed tag $TAG"
 
       - name: Summary
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          TAG_EXISTS: ${{ steps.check_tag.outputs.exists }}
+          SERVER_URL: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          echo "## Release Tag" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          if [ "${{ steps.check_tag.outputs.exists }}" == "true" ]; then
-            echo "Tag \`$TAG\` already existed. No action taken." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Created tag \`$TAG\` on merge commit." >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "The [Release workflow](${{ github.server_url }}/${{ github.repository }}/actions/workflows/release.yml) will now build artifacts." >> "$GITHUB_STEP_SUMMARY"
-          fi
+          {
+            echo "## Release Tag"
+            echo ""
+            if [ "$TAG_EXISTS" == "true" ]; then
+              echo "Tag \`$TAG\` already existed. No action taken."
+            else
+              echo "Created tag \`$TAG\` on merge commit."
+              echo ""
+              echo "The [Release workflow](${SERVER_URL}/${REPO}/actions/workflows/release.yml) will now build artifacts."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
