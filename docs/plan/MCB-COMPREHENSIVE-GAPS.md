@@ -26,6 +26,7 @@ MCB v0.2.0 provides functional code search and basic MCP tools, but **significan
 ## Layer 1: Domain Entities & Ports
 
 ### GAP-D1: WorkflowState Outdated (P1)
+
 **File**: `crates/mcb-domain/src/entities/workflow.rs`  
 **ADR**: ADR-034 (FSM)  
 **Status**: EXISTS but OUTDATED
@@ -33,18 +34,21 @@ MCB v0.2.0 provides functional code search and basic MCP tools, but **significan
 **Issue**: Current implementation has 8-state model. ADR-034 (updated 2026-02-06) mandates 12-state model.
 
 **Missing States**:
-- `Suspended` - Workflow paused by policy
-- `Timeout` - Workflow exceeded time limit
-- `Cancelled` - Workflow cancelled by user
-- `Abandoned` - Workflow abandoned (no resume)
+
+-   `Suspended` - Workflow paused by policy
+-   `Timeout` - Workflow exceeded time limit
+-   `Cancelled` - Workflow cancelled by user
+-   `Abandoned` - Workflow abandoned (no resume)
 
 ---
 
 ### GAP-D2: CodeGraph Entity Missing (P0)
+
 **File**: `crates/mcb-domain/src/entities/code_graph.rs` — **MISSING**  
 **ADR**: ADR-042 (Knowledge Graph)
 
 **Required**:
+
 ```rust
 pub struct CodeGraph {
     graph: DiGraph<CodeNode, CodeEdge>,
@@ -69,6 +73,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-D3: ContextSnapshot Entity Missing (P0)
+
 **File**: `crates/mcb-domain/src/entities/context_snapshot.rs` — **MISSING**  
 **ADR**: ADR-045 (Context Versioning)
 
@@ -77,6 +82,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-D4: WorkflowEngine Port Missing (P0)
+
 **File**: `crates/mcb-domain/src/ports/providers/workflow.rs` — **MISSING**  
 **ADR**: ADR-034
 
@@ -85,6 +91,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-D5: SemanticExtractorProvider Missing (P1)
+
 **File**: `crates/mcb-domain/src/ports/providers/semantic_extractor.rs` — **MISSING**  
 **ADR**: ADR-042
 
@@ -93,6 +100,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-D6: ContextScout Service Missing (P1)
+
 **File**: `crates/mcb-domain/src/ports/services/context_scout.rs` — **MISSING**  
 **ADR**: ADR-035
 
@@ -101,6 +109,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-D7: PolicyEngine Service Missing (P2)
+
 **File**: `crates/mcb-domain/src/ports/services/policy_engine.rs` — **MISSING**  
 **ADR**: ADR-036
 
@@ -111,6 +120,7 @@ pub enum CodeEdge {
 ## Layer 2: MCP Handlers
 
 ### GAP-H1: Project Handler Stubbed (P0)
+
 **File**: `crates/mcb-server/src/handlers/project.rs`  
 **Status**: ENTIRELY STUBBED
 
@@ -120,6 +130,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-H2: Memory ErrorPattern Not Implemented (P0)
+
 **File**: `crates/mcb-server/src/handlers/memory/handler.rs` (lines 60, 78)  
 **Status**: PARTIAL
 
@@ -129,6 +140,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-H3: VCS Repository Discovery Broken (P1)
+
 **File**: `crates/mcb-server/src/handlers/vcs/list_repos.rs`  
 **Status**: PARTIAL
 
@@ -138,6 +150,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-H4: Context Search Handler Missing (P2)
+
 **File**: `crates/mcb-server/src/handlers/search.rs`  
 **Status**: SearchResource enum missing Context variant
 
@@ -148,6 +161,7 @@ pub enum CodeEdge {
 ## Layer 3: Providers
 
 ### GAP-P1: TantivyBM25 Not Implemented (P0)
+
 **File**: `crates/mcb-providers/src/hybrid_search/bm25.rs`  
 **Status**: Custom HashMap-based scorer, NO INVERTED INDEX
 
@@ -159,6 +173,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-P2: TreeSitterExtractor Not Centralized (P0)
+
 **File**: Various language processors  
 **Status**: Extraction logic scattered
 
@@ -170,6 +185,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-P3: Milvus Stats Incomplete (P1)
+
 **File**: `crates/mcb-providers/src/vector_store/milvus.rs` (lines 91-115)  
 **Status**: PARTIAL
 
@@ -179,6 +195,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-P4: Pinecone Listing Workaround (P1)
+
 **File**: `crates/mcb-providers/src/vector_store/pinecone.rs` (lines 358-368)  
 **Status**: WORKAROUND
 
@@ -188,6 +205,7 @@ pub enum CodeEdge {
 ---
 
 ### GAP-P5: Generic Error Handling (P2)
+
 **File**: Multiple providers  
 **Status**: SUBOPTIMAL
 
@@ -199,28 +217,32 @@ pub enum CodeEdge {
 ## Priority Implementation Order
 
 ### Phase 1: Unblock OpenCode Integration (Week 1)
-1. **GAP-H2**: Fix Memory ErrorPattern → Enables observation storage
-2. **GAP-H1**: Implement Project Handler → Enables project-scoped context
+
+1.  **GAP-H2**: Fix Memory ErrorPattern → Enables observation storage
+2.  **GAP-H1**: Implement Project Handler → Enables project-scoped context
 
 ### Phase 2: Complete v0.3.0 Core (Week 2-3)
-3. **GAP-D1**: Update WorkflowState to 12-state model
-4. **GAP-D4**: Implement WorkflowEngine port
-5. **GAP-D6**: Implement ContextScout service
-6. **GAP-H3**: Fix VCS repository discovery
+
+3.  **GAP-D1**: Update WorkflowState to 12-state model
+2.  **GAP-D4**: Implement WorkflowEngine port
+3.  **GAP-D6**: Implement ContextScout service
+4.  **GAP-H3**: Fix VCS repository discovery
 
 ### Phase 3: Enable v0.4.0 Features (Week 4-6)
-7. **GAP-D2**: Implement CodeGraph entity
-8. **GAP-D3**: Implement ContextSnapshot entity
-9. **GAP-P1**: Implement TantivyBM25
-10. **GAP-P2**: Centralize TreeSitterExtractor
-11. **GAP-D5**: Implement SemanticExtractorProvider
+
+7.  **GAP-D2**: Implement CodeGraph entity
+2.  **GAP-D3**: Implement ContextSnapshot entity
+3.  **GAP-P1**: Implement TantivyBM25
+4.  **GAP-P2**: Centralize TreeSitterExtractor
+5.  **GAP-D5**: Implement SemanticExtractorProvider
 
 ### Phase 4: Polish (Week 7+)
-12. **GAP-D7**: Implement PolicyEngine service
-13. **GAP-H4**: Add Context search handler
-14. **GAP-P3**: Complete Milvus stats
-15. **GAP-P4**: Fix Pinecone listing
-16. **GAP-P5**: Improve error handling
+
+12.  **GAP-D7**: Implement PolicyEngine service
+2.  **GAP-H4**: Add Context search handler
+3.  **GAP-P3**: Complete Milvus stats
+4.  **GAP-P4**: Fix Pinecone listing
+5.  **GAP-P5**: Improve error handling
 
 ---
 
@@ -254,8 +276,8 @@ bd create --title "GAP-P5: Improve error handling - preserve driver context" --t
 
 ## Cross-References
 
-- **Initial Gaps Report**: `docs/plan/MCB-GAPS-REPORT.md`
-- **Integration Plan**: `docs/plan/OPENCODE-INTEGRATION-PLAN.md`
-- **v0.3.0 Implementation Spec**: `docs/v030-IMPLEMENTATION.md`
-- **Roadmap**: `docs/developer/ROADMAP.md`
-- **ADRs**: `docs/adr/034-046`
+-   **Initial Gaps Report**: `docs/plan/MCB-GAPS-REPORT.md`
+-   **Integration Plan**: `docs/plan/OPENCODE-INTEGRATION-PLAN.md`
+-   **v0.3.0 Implementation Spec**: `docs/v030-IMPLEMENTATION.md`
+-   **Roadmap**: `docs/developer/ROADMAP.md`
+-   **ADRs**: `docs/adr/034-046`
