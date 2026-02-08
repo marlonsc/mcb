@@ -436,17 +436,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         // Convert results to our format
         let mut results = Vec::new();
-        let mut columns_map = HashMap::new();
 
-        for search_result in search_results {
+        for search_result in &search_results {
             let scores = &search_result.score;
             let ids = &search_result.id;
-
-            // Map columns by name for easy access
-            columns_map.clear();
-            for column in &search_result.field {
-                columns_map.insert(column.name.as_str(), column);
-            }
 
             for (i, id_val) in ids.iter().enumerate() {
                 // For L2 metric, Milvus returns SQUARED distance (lower = more similar)
@@ -463,8 +456,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                     _ => "unknown".to_string(),
                 };
 
-                let file_path = columns_map
-                    .get("file_path")
+                let file_path = search_result
+                    .field
+                    .iter()
+                    .find(|c| c.name == "file_path")
                     .and_then(|col| col.get(i))
                     .map(|v| match v {
                         Value::String(s) => s.to_string(),
@@ -472,9 +467,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                     })
                     .unwrap_or_else(|| "unknown".to_string());
 
-                let start_line = columns_map
-                    .get("start_line")
-                    .or_else(|| columns_map.get("line_number"))
+                let start_line = search_result
+                    .field
+                    .iter()
+                    .find(|c| c.name == "start_line" || c.name == "line_number")
                     .and_then(|col| col.get(i))
                     .map(|v| match v {
                         Value::Long(n) => n as u32,
@@ -482,8 +478,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                     })
                     .unwrap_or(0);
 
-                let content = columns_map
-                    .get("content")
+                let content = search_result
+                    .field
+                    .iter()
+                    .find(|c| c.name == "content")
                     .and_then(|col| col.get(i))
                     .map(|v| match v {
                         Value::String(s) => s.to_string(),
@@ -652,7 +650,6 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
 
         let expr = "id >= 0".to_string();
         use milvus::query::QueryOptions;
-        let mut columns_map = HashMap::new();
 
         loop {
             let remaining = limit.saturating_sub(all_results.len());
@@ -692,26 +689,15 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                 }
             };
 
-            // Map columns by name
-            columns_map.clear();
-            for column in &query_results {
-                columns_map.insert(column.name.as_str(), column);
-            }
-
-            let row_count = if let Some(col) = query_results.first() {
-                col.len()
-            } else {
-                0
-            };
-
             // No more results
             if row_count == 0 {
                 break;
             }
 
             for i in 0..row_count {
-                let id_str = columns_map
-                    .get("id")
+                let id_str = query_results
+                    .iter()
+                    .find(|c| c.name == "id")
                     .and_then(|col| col.get(i))
                     .map(|v| match v {
                         Value::Long(id) => id.to_string(),
@@ -720,8 +706,9 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                     })
                     .unwrap_or_else(|| "unknown".to_string());
 
-                let file_path = columns_map
-                    .get("file_path")
+                let file_path = query_results
+                    .iter()
+                    .find(|c| c.name == "file_path")
                     .and_then(|col| col.get(i))
                     .map(|v| match v {
                         Value::String(s) => s.to_string(),
@@ -729,9 +716,9 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                     })
                     .unwrap_or_else(|| "unknown".to_string());
 
-                let start_line = columns_map
-                    .get("start_line")
-                    .or_else(|| columns_map.get("line_number"))
+                let start_line = query_results
+                    .iter()
+                    .find(|c| c.name == "start_line" || c.name == "line_number")
                     .and_then(|col| col.get(i))
                     .map(|v| match v {
                         Value::Long(n) => n as u32,
@@ -739,8 +726,9 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                     })
                     .unwrap_or(0);
 
-                let content = columns_map
-                    .get("content")
+                let content = query_results
+                    .iter()
+                    .find(|c| c.name == "content")
                     .and_then(|col| col.get(i))
                     .map(|v| match v {
                         Value::String(s) => s.to_string(),

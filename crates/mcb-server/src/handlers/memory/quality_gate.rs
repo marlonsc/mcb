@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use anyhow::Context;
 use chrono::TimeZone;
 use mcb_domain::entities::memory::{
     MemoryFilter, ObservationMetadata, ObservationType, QualityGateResult,
@@ -117,7 +116,7 @@ pub async fn get_quality_gates(
                 .filter_map(|result| {
                     // Extract quality gate metadata from observation; skip if missing
                     // (None indicates observation is not a quality gate type)
-                    let gate = result.observation.metadata.quality_gate.as_ref().ok()?;
+                    let gate = result.observation.metadata.quality_gate.as_ref()?;
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "gate_name": gate.gate_name,

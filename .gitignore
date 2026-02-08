@@ -137,3 +137,11 @@ benchmark_results/.cleanup-dead-code/
 # Reference legacy code (extracted from git history, not for commit)
 reference/
 *.rlib
+
+# Generated analysis files
+*.lst
+extract_issues.py
+scripts/analyze_smells.py
+
+# MCP config (contains absolute paths)
+.mcp.json

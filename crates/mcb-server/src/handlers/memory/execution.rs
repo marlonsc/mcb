@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use anyhow::Context;
 use mcb_domain::entities::memory::{
     ExecutionMetadata, MemoryFilter, ObservationMetadata, ObservationType,
 };
@@ -15,6 +14,41 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Validated execution data extracted from JSON payload
+struct ValidatedExecutionData {
+    command: String,
+    exit_code: i32,
+    duration_ms: i64,
+    success: bool,
+    execution_type: mcb_domain::entities::memory::ExecutionType,
+}
+
+impl ValidatedExecutionData {
+    /// Validate and extract all required fields from JSON data
+    fn validate(data: &serde_json::Map<String, serde_json::Value>) -> Result<Self, CallToolResult> {
+        let command = MemoryHelpers::get_required_str(data, "command")?;
+        let exit_code = MemoryHelpers::get_i32(data, "exit_code").ok_or_else(|| {
+            CallToolResult::error(vec![Content::text("Missing required field: exit_code")])
+        })?;
+        let duration_ms = MemoryHelpers::get_i64(data, "duration_ms").ok_or_else(|| {
+            CallToolResult::error(vec![Content::text("Missing required field: duration_ms")])
+        })?;
+        let success = MemoryHelpers::get_bool(data, "success").ok_or_else(|| {
+            CallToolResult::error(vec![Content::text("Missing required field: success")])
+        })?;
+        let execution_type_str = MemoryHelpers::get_required_str(data, "execution_type")?;
+        let execution_type = MemoryHelpers::parse_execution_type(&execution_type_str)?;
+
+        Ok(Self {
+            command,
+            exit_code,
+            duration_ms,
+            success,
+            execution_type,
+        })
+    }
+}
+
 /// Store an execution observation in memory
 pub async fn store_execution(
     memory_service: &Arc<dyn MemoryServiceInterface>,
@@ -28,43 +62,19 @@ pub async fn store_execution(
             )]));
         }
     };
-    let command = match MemoryHelpers::get_required_str(data, "command") {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let exit_code = match MemoryHelpers::get_i32(data, "exit_code").ok_or_else(|| {
-        CallToolResult::error(vec![Content::text("Missing required field: exit_code")])
-    }) {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let duration_ms = match MemoryHelpers::get_i64(data, "duration_ms").ok_or_else(|| {
-        CallToolResult::error(vec![Content::text("Missing required field: duration_ms")])
-    }) {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let success = match MemoryHelpers::get_bool(data, "success").ok_or_else(|| {
-        CallToolResult::error(vec![Content::text("Missing required field: success")])
-    }) {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let execution_type_str = match MemoryHelpers::get_required_str(data, "execution_type") {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let execution_type = match MemoryHelpers::parse_execution_type(&execution_type_str) {
+
+    // Validate all required fields upfront
+    let validated = match ValidatedExecutionData::validate(data) {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
     let metadata = ExecutionMetadata {
         id: Uuid::new_v4().to_string(),
-        command: command.clone(),
-        exit_code: Some(exit_code),
-        duration_ms: Some(duration_ms),
-        success,
-        execution_type,
+        command: validated.command.clone(),
+        exit_code: Some(validated.exit_code),
+        duration_ms: Some(validated.duration_ms),
+        success: validated.success,
+        execution_type: validated.execution_type,
         coverage: MemoryHelpers::get_f32(data, "coverage"),
         files_affected: MemoryHelpers::get_string_list(data, "files_affected"),
         output_summary: MemoryHelpers::get_str(data, "output_summary"),
@@ -74,12 +84,17 @@ pub async fn store_execution(
     let vcs_context = VcsContext::capture();
     let content = format!(
         "Execution: {} (exit_code={}, success={})",
-        command, exit_code, success
+        validated.command, validated.exit_code, validated.success
     );
     let tags = vec![
         "execution".to_string(),
         metadata.execution_type.as_str().to_string(),
-        if success { "success" } else { "failure" }.to_string(),
+        if validated.success {
+            "success"
+        } else {
+            "failure"
+        }
+        .to_string(),
     ];
     let obs_metadata = ObservationMetadata {
         id: Uuid::new_v4().to_string(),
@@ -139,7 +154,7 @@ pub async fn get_executions(
                 .filter_map(|result| {
                     // Extract execution metadata from observation; skip if missing
                     // (None indicates observation is not an execution type)
-                    let execution = result.observation.metadata.execution.as_ref().ok()?;
+                    let execution = result.observation.metadata.execution.as_ref()?;
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "command": execution.command,

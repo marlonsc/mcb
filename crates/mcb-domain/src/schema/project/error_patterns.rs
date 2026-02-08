@@ -3,6 +3,7 @@
 use super::ForeignKeyDef;
 use crate::schema::memory::{IndexDef, TableDef};
 
+/// Returns the table definitions.
 pub fn tables() -> Vec<TableDef> {
     vec![
         crate::table!(
@@ -38,6 +39,7 @@ pub fn tables() -> Vec<TableDef> {
     ]
 }
 
+/// Returns the index definitions.
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         crate::index!(
@@ -68,6 +70,7 @@ pub fn indexes() -> Vec<IndexDef> {
     ]
 }
 
+/// Returns the foreign key definitions.
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
