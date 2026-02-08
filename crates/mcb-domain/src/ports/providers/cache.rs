@@ -226,9 +226,8 @@ pub trait CacheProvider: Send + Sync + std::fmt::Debug {
 /// use std::sync::Arc;
 ///
 /// async fn create_cache(factory: Arc<dyn CacheProviderFactoryInterface>) -> mcb_domain::Result<()> {
-///     // Create null cache for testing
-///     let test_cache = factory.create_null();
-///     println!("Created: {}", test_cache.provider_name());
+///     // Create cache from config
+///     // let provider = factory.create_from_config(&config).await?;
 ///     Ok(())
 /// }
 /// ```

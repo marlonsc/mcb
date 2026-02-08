@@ -4,13 +4,14 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```
+//! # use mcb_validate::ast::query::{AstQueryBuilder, QueryCondition};
 //! let query = AstQueryBuilder::new("rust", "function_item")
 //!     .with_condition(QueryCondition::Custom { name: "has_no_docstring".to_string() })
 //!     .message("Function needs documentation")
 //!     .severity("warning")
 //!     .build();
-//! let violations = query.execute(&root_node);
+//! // let violations = query.execute(&root_node);
 //! ```
 
 use regex::Regex;

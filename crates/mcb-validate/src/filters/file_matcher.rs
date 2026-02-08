@@ -5,10 +5,15 @@
 //!
 //! # Example
 //!
-//! ```ignore
-//! let matcher = FilePatternMatcher::new(&["src/**/*.rs".into()], &["**/target/**".into()])?;
+//! ```
+//! # use mcb_validate::filters::file_matcher::FilePatternMatcher;
+//! # use std::path::Path;
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let matcher = FilePatternMatcher::new(&["src/**/*.rs".to_string()], &["**/target/**".to_string()])?;
 //! assert!(matcher.should_include(Path::new("src/lib.rs")));
 //! assert!(!matcher.should_include(Path::new("target/debug/lib.rs")));
+//! # Ok(())
+//! # }
 //! ```
 
 use std::path::Path;

@@ -71,7 +71,14 @@ pub enum MetricsError {
 ///
 /// ## Example
 ///
-/// ```ignore
+/// ```no_run
+/// # use mcb_domain::ports::providers::MetricsProvider;
+/// # use std::time::Duration;
+/// # use std::collections::HashMap;
+/// # type MetricLabels = HashMap<String, String>;
+/// # // Mock labels macro
+/// # macro_rules! labels { ($($t:tt)*) => { std::collections::HashMap::new() } }
+/// # async fn example(metrics: &dyn MetricsProvider) -> Result<(), Box<dyn std::error::Error>> {
 /// // Record a counter increment
 /// metrics.increment("search_requests_total", &labels!("collection" => "my-project")).await?;
 ///
@@ -83,6 +90,8 @@ pub enum MetricsError {
 ///
 /// // Use domain-specific convenience methods
 /// metrics.record_search_latency(Duration::from_millis(123), "my-collection").await?;
+/// # Ok(())
+/// # }
 /// ```
 #[async_trait]
 pub trait MetricsProvider: Send + Sync {

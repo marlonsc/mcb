@@ -178,10 +178,10 @@ impl DomainServicesFactory {
     pub async fn create_indexing_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn IndexingServiceInterface>> {
-        let language_chunker = app_context.language_handle().get();
-        let context_service = Self::create_context_service(app_context).await?;
         let indexing_ops = app_context.indexing();
         let event_bus = app_context.event_bus();
+        let language_chunker = app_context.language_handle().get();
+        let context_service = Self::create_context_service(app_context).await?;
 
         Ok(Arc::new(IndexingServiceImpl::new(
             context_service,

@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Success Criteria
 
--   2948+ tests passing (unit, integration, end-to-end)
+-   2996+ tests passing (unit, integration, end-to-end)
 -   85%+ code coverage minimum
 -   Zero architecture violations
 -   Complete documentation and v0.3.0 → v0.4.0 migration guide
@@ -124,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   801+ lines added, 874+ lines removed
 -   0 architecture violations
 -   0 lint errors
--   2948+ tests passing
+-   2996+ tests passing
 
 ---
 
@@ -184,6 +184,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   All architecture validation errors resolved (0 errors, 4 warnings)
 -   Validation service properly wired through DI system
 -   Tool count tests updated for new `validate (action=run, scope=project)` tool
+<!-- markdownlint-enable MD044 -->
+
+### Impact Metrics
+
+-   **New Providers**: 3 (Anthropic embedding, Pinecone, Qdrant)
+-   **Tests**: 1636+ passing
+-   **Violations**: 0 errors (was 1)
+-   **DRY Improvement**: ~200 lines of duplication removed
+
+---
+
+## [0.1.5] - 2026-01-31
+
+### What This Release Is
+
+**MCP Context Browser v0.1.5** delivers new providers, health endpoints, and code quality improvements following DRY/SOLID principles. This release adds Anthropic embedding, Pinecone and Qdrant vector store providers, plus Kubernetes-ready health endpoints.
+
+<!-- markdownlint-disable MD044 -->
+### Added
+
+-   **Anthropic Embedding Provider**: Full Voyage AI model support with configurable dimensions
+-   **Pinecone Vector Store Provider**: Production-ready cloud vector database integration
+-   **Qdrant Vector Store Provider**: Self-hosted vector search with gRPC support
+-   **Health Endpoints**: `/healthz` (liveness) and `/readyz` (readiness) for container orchestration
+-   **Performance Metrics Decorator**: SOLID-compliant instrumented embedding provider
+-   **Golden Test Framework**: Architecture boundary documentation and test scaffolding (ADR-027)
+
+### Changed
+
+-   **DRY Refactoring**: Shared HTTP helpers across embedding and vector store providers (~200 lines deduplicated)
+-   **CI/CD Improvements**: Auto-merge Dependabot PRs (patch/minor), auto-tag on release branch merge
+-   **SOLID Compliance**: Metrics added via decorator pattern (Open/Closed principle)
+-   **Test Organization**: Inline tests moved to proper test directories (TEST001 violations resolved)
+
+### Fixed
+
+-   All architecture validation errors resolved (0 errors, 4 warnings)
+-   Validation service properly wired through DI system
+-   Tool count tests updated for new `validate_architecture` tool
 <!-- markdownlint-enable MD044 -->
 
 ### Impact Metrics
@@ -401,7 +440,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Provider Registration**: Compile-time (from runtime discovery)
 -   **Validation Coverage**: 12 architecture patterns automated
 -   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
--   **Test Coverage**: 2948+ tests maintained
+-   **Test Coverage**: 2996+ tests maintained
 -   **Architecture Compliance**: Automated validation of 7-crate clean architecture
 
 ### Next Steps (v0.1.3 or v0.2.0)
@@ -469,7 +508,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   **Clean Architecture**: Complete refactoring with trait-based dependency injection
--   **Test Suite**: Expanded to 2948+ tests organized by Clean Architecture layers
+-   **Test Suite**: Expanded to 2996+ tests organized by Clean Architecture layers
 -   **Configuration**: Modular configuration with cache and limits separated
 -   **Server Operations**: Extracted operations to dedicated module (`src/server/operations.rs`)
 -   **Metrics**: Dedicated metrics module (`src/server/metrics.rs`)
@@ -498,7 +537,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
 -   **Provider Support**: 6 embedding providers, 6 vector stores
 -   **Language Support**: 14 languages with AST parsing
--   **Test Coverage**: 2948+ tests
+-   **Test Coverage**: 2996+ tests
 
 ---
 

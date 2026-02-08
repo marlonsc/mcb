@@ -29,7 +29,7 @@ impl ObservationType {
     /// # Examples
     ///
     /// ```
-    /// # use mcb_domain::entities::memory::observation::ObservationType;
+    /// # use mcb_domain::ObservationType;
     /// assert_eq!(ObservationType::Code.as_str(), "code");
     /// assert_eq!(ObservationType::Decision.as_str(), "decision");
     /// ```
@@ -60,7 +60,7 @@ impl std::str::FromStr for ObservationType {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use mcb_domain::entities::memory::observation::ObservationType;
+    /// # use mcb_domain::ObservationType;
     /// assert!(ObservationType::from_str("code").is_ok());
     /// assert!(ObservationType::from_str("invalid").is_err());
     /// ```
