@@ -19,7 +19,7 @@ use mcb_domain::value_objects::CollectionId;
 use mcb_domain::value_objects::FileTreeNode;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use rocket::{get, State};
+use rocket::{State, get};
 
 use super::auth::AdminAuth;
 use super::models::{

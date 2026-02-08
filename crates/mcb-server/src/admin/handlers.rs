@@ -22,7 +22,7 @@ use mcb_infrastructure::config::watcher::ConfigWatcher;
 use mcb_infrastructure::infrastructure::ServiceManager;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use rocket::{get, post, State};
+use rocket::{State, get, post};
 use serde::Serialize;
 use tracing::info;
 

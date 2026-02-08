@@ -54,9 +54,9 @@ use mcb_domain::ports::providers::{
     VectorStoreProvider,
 };
 use mcb_domain::registry::{
-    resolve_cache_provider, resolve_embedding_provider, resolve_language_provider,
-    resolve_vector_store_provider, CacheProviderConfig, EmbeddingProviderConfig,
-    LanguageProviderConfig, VectorStoreProviderConfig,
+    CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig,
+    VectorStoreProviderConfig, resolve_cache_provider, resolve_embedding_provider,
+    resolve_language_provider, resolve_vector_store_provider,
 };
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 

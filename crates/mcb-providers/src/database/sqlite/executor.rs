@@ -9,9 +9,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use sqlx::sqlite::SqliteRow;
 use sqlx::Column;
 use sqlx::Row;
+use sqlx::sqlite::SqliteRow;
 
 /// Row adapter that copies column values from a SQLite row so it can be returned
 /// as `Arc<dyn SqlRow>` without holding a reference to the connection.

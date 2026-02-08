@@ -23,10 +23,12 @@ async fn test_no_filters() {
         deps: std::collections::HashMap::new(),
     };
 
-    assert!(executor
-        .should_execute_rule(&filters, Path::new("main.rs"), None, &workspace_deps)
-        .await
-        .unwrap());
+    assert!(
+        executor
+            .should_execute_rule(&filters, Path::new("main.rs"), None, &workspace_deps)
+            .await
+            .unwrap()
+    );
 }
 
 #[tokio::test]
@@ -44,15 +46,19 @@ async fn test_language_filter() {
         deps: std::collections::HashMap::new(),
     };
 
-    assert!(executor
-        .should_execute_rule(&filters, Path::new("main.rs"), None, &workspace_deps)
-        .await
-        .unwrap());
+    assert!(
+        executor
+            .should_execute_rule(&filters, Path::new("main.rs"), None, &workspace_deps)
+            .await
+            .unwrap()
+    );
 
-    assert!(!executor
-        .should_execute_rule(&filters, Path::new("script.py"), None, &workspace_deps)
-        .await
-        .unwrap());
+    assert!(
+        !executor
+            .should_execute_rule(&filters, Path::new("script.py"), None, &workspace_deps)
+            .await
+            .unwrap()
+    );
 }
 
 #[tokio::test]
@@ -82,15 +88,17 @@ serde = "1.0"
         file_patterns: None,
     };
 
-    assert!(executor
-        .should_execute_rule(
-            &filters,
-            &cargo_toml.with_file_name("src/main.rs"),
-            None,
-            &workspace_deps
-        )
-        .await
-        .unwrap());
+    assert!(
+        executor
+            .should_execute_rule(
+                &filters,
+                &cargo_toml.with_file_name("src/main.rs"),
+                None,
+                &workspace_deps
+            )
+            .await
+            .unwrap()
+    );
 
     let tokio_filters = RuleFilters {
         languages: None,
@@ -98,15 +106,17 @@ serde = "1.0"
         file_patterns: None,
     };
 
-    assert!(!executor
-        .should_execute_rule(
-            &tokio_filters,
-            &cargo_toml.with_file_name("src/main.rs"),
-            None,
-            &workspace_deps
-        )
-        .await
-        .unwrap());
+    assert!(
+        !executor
+            .should_execute_rule(
+                &tokio_filters,
+                &cargo_toml.with_file_name("src/main.rs"),
+                None,
+                &workspace_deps
+            )
+            .await
+            .unwrap()
+    );
 }
 
 #[tokio::test]
@@ -124,25 +134,31 @@ async fn test_file_pattern_filter() {
         deps: std::collections::HashMap::new(),
     };
 
-    assert!(executor
-        .should_execute_rule(&filters, Path::new("src/main.rs"), None, &workspace_deps)
-        .await
-        .unwrap());
+    assert!(
+        executor
+            .should_execute_rule(&filters, Path::new("src/main.rs"), None, &workspace_deps)
+            .await
+            .unwrap()
+    );
 
-    assert!(!executor
-        .should_execute_rule(
-            &filters,
-            Path::new("src/tests/main.rs"),
-            None,
-            &workspace_deps
-        )
-        .await
-        .unwrap());
+    assert!(
+        !executor
+            .should_execute_rule(
+                &filters,
+                Path::new("src/tests/main.rs"),
+                None,
+                &workspace_deps
+            )
+            .await
+            .unwrap()
+    );
 
-    assert!(!executor
-        .should_execute_rule(&filters, Path::new("lib.py"), None, &workspace_deps)
-        .await
-        .unwrap());
+    assert!(
+        !executor
+            .should_execute_rule(&filters, Path::new("lib.py"), None, &workspace_deps)
+            .await
+            .unwrap()
+    );
 }
 
 #[tokio::test]
@@ -172,25 +188,29 @@ serde = "1.0"
         file_patterns: Some(vec!["**/src/**/*.rs".to_string()]),
     };
 
-    assert!(executor
-        .should_execute_rule(
-            &filters,
-            &cargo_toml.with_file_name("src/main.rs"),
-            None,
-            &workspace_deps
-        )
-        .await
-        .unwrap());
+    assert!(
+        executor
+            .should_execute_rule(
+                &filters,
+                &cargo_toml.with_file_name("src/main.rs"),
+                None,
+                &workspace_deps
+            )
+            .await
+            .unwrap()
+    );
 
-    assert!(!executor
-        .should_execute_rule(
-            &filters,
-            &cargo_toml.with_file_name("src/main.py"),
-            None,
-            &workspace_deps
-        )
-        .await
-        .unwrap());
+    assert!(
+        !executor
+            .should_execute_rule(
+                &filters,
+                &cargo_toml.with_file_name("src/main.py"),
+                None,
+                &workspace_deps
+            )
+            .await
+            .unwrap()
+    );
 
     let missing_dep_filters = RuleFilters {
         languages: Some(vec!["rust".to_string()]),
@@ -198,13 +218,15 @@ serde = "1.0"
         file_patterns: Some(vec!["**/src/**/*.rs".to_string()]),
     };
 
-    assert!(!executor
-        .should_execute_rule(
-            &missing_dep_filters,
-            &cargo_toml.with_file_name("src/main.rs"),
-            None,
-            &workspace_deps
-        )
-        .await
-        .unwrap());
+    assert!(
+        !executor
+            .should_execute_rule(
+                &missing_dep_filters,
+                &cargo_toml.with_file_name("src/main.rs"),
+                None,
+                &workspace_deps
+            )
+            .await
+            .unwrap()
+    );
 }

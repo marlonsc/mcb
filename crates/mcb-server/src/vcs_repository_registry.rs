@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 
 use mcb_domain::entities::vcs::RepositoryId;
 use mcb_domain::error::{Error, Result};
-use mcb_infrastructure::config::{config_dir, VCS_LOCK_FILENAME, VCS_REGISTRY_FILENAME};
+use mcb_infrastructure::config::{VCS_LOCK_FILENAME, VCS_REGISTRY_FILENAME, config_dir};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

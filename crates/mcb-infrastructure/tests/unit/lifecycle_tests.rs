@@ -3,8 +3,8 @@
 //! Tests service state tracking, lifecycle operations, and the LifecycleManaged trait.
 //! Includes a test implementation to verify trait behavior.
 
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_trait::async_trait;

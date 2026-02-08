@@ -8,7 +8,7 @@
 use mcb_domain::error::Result;
 
 use crate::config::AppConfig;
-use crate::di::bootstrap::{init_app, DiContainer};
+use crate::di::bootstrap::{DiContainer, init_app};
 
 /// Component dispatcher for infrastructure initialization
 ///

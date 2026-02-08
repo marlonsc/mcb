@@ -6,8 +6,8 @@ use mcb_domain::entities::memory::{
 };
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::vcs_context::VcsContext;
-use rmcp::model::{CallToolResult, Content};
 use rmcp::ErrorData as McpError;
+use rmcp::model::{CallToolResult, Content};
 use tracing::error;
 use uuid::Uuid;
 

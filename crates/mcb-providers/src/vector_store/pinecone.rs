@@ -461,14 +461,14 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
 // ============================================================================
 
 use mcb_domain::registry::{
-    VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS,
+    VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
 
 /// Factory function for creating Pinecone vector store provider instances.
 fn pinecone_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    use crate::utils::http::{create_default_client, DEFAULT_HTTP_TIMEOUT};
+    use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let api_key = config
         .api_key

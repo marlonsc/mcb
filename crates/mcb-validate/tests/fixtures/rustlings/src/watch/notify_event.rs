@@ -1,18 +1,18 @@
 use anyhow::{Context, Result};
 use notify::{
-    Event, EventKind,
     event::{AccessKind, AccessMode, MetadataKind, ModifyKind, RenameMode},
+    Event, EventKind,
 };
 use std::{
     sync::{
         atomic::Ordering::Relaxed,
-        mpsc::{RecvTimeoutError, Sender, SyncSender, sync_channel},
+        mpsc::{sync_channel, RecvTimeoutError, Sender, SyncSender},
     },
     thread,
     time::Duration,
 };
 
-use super::{EXERCISE_RUNNING, WatchEvent};
+use super::{WatchEvent, EXERCISE_RUNNING};
 
 const DEBOUNCE_DURATION: Duration = Duration::from_millis(200);
 

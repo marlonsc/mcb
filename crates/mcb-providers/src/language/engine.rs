@@ -302,7 +302,7 @@ impl mcb_domain::ports::providers::LanguageChunkingProvider for UniversalLanguag
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::LanguageChunkingProvider as LanguageProviderPort;
-use mcb_domain::registry::{LanguageProviderConfig, LanguageProviderEntry, LANGUAGE_PROVIDERS};
+use mcb_domain::registry::{LANGUAGE_PROVIDERS, LanguageProviderConfig, LanguageProviderEntry};
 
 /// Factory function for creating universal language chunking provider instances.
 fn universal_language_factory(

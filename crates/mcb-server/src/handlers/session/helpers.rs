@@ -1,6 +1,6 @@
 use mcb_domain::entities::agent::{AgentSessionStatus, AgentType};
-use rmcp::model::CallToolResult;
 use rmcp::ErrorData as McpError;
+use rmcp::model::CallToolResult;
 use serde_json::{Map, Value};
 
 /// Helper utilities for session handler operations.

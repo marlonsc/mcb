@@ -892,7 +892,7 @@ impl EdgeVecActor {
 use std::sync::Arc;
 
 use mcb_domain::registry::{
-    VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS,
+    VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
 
 /// Factory function for creating EdgeVec vector store provider instances.

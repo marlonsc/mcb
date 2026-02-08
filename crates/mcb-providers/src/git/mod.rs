@@ -10,5 +10,5 @@ pub mod project_detection;
 pub mod submodule;
 
 pub use git2_provider::Git2Provider;
-pub use project_detection::{detect_all_projects, PROJECT_DETECTORS};
-pub use submodule::{collect_submodules, collect_submodules_with_depth, SubmoduleProvider};
+pub use project_detection::{PROJECT_DETECTORS, detect_all_projects};
+pub use submodule::{SubmoduleProvider, collect_submodules, collect_submodules_with_depth};

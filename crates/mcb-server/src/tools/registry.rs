@@ -5,8 +5,8 @@
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use rmcp::model::Tool;
 use rmcp::ErrorData as McpError;
+use rmcp::model::Tool;
 
 use crate::args::{
     AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,

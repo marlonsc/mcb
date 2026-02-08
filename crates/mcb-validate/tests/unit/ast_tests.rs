@@ -5,7 +5,7 @@
 
 use std::path::Path;
 
-use rust_code_analysis::{action, guess_language, Callback, ParserTrait, LANG};
+use rust_code_analysis::{Callback, LANG, ParserTrait, action, guess_language};
 
 use crate::test_constants::{AST_ROOT_PROGRAM, AST_ROOT_PYTHON, AST_ROOT_RUST};
 

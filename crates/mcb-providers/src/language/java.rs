@@ -4,9 +4,8 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 
 use crate::language::common::{
-    BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule,
-    AST_NODE_INTERFACE_DECLARATION, CHUNK_SIZE_JAVA, TS_NODE_CLASS_DECLARATION,
-    TS_NODE_METHOD_DECLARATION,
+    AST_NODE_INTERFACE_DECLARATION, BaseProcessor, CHUNK_SIZE_JAVA, LanguageConfig,
+    LanguageProcessor, NodeExtractionRule, TS_NODE_CLASS_DECLARATION, TS_NODE_METHOD_DECLARATION,
 };
 
 /// Java language processor.

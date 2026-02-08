@@ -1,7 +1,7 @@
 //! Health Check Tests
 
 use mcb_infrastructure::health::{
-    checkers, HealthCheck, HealthChecker, HealthRegistry, HealthResponse, HealthStatus,
+    HealthCheck, HealthChecker, HealthRegistry, HealthResponse, HealthStatus, checkers,
 };
 
 #[tokio::test]

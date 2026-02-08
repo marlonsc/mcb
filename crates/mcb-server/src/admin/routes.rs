@@ -8,16 +8,16 @@
 
 use std::sync::Arc;
 
-use rocket::{routes, Build, Rocket};
+use rocket::{Build, Rocket, routes};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::{
-    get_collection_tree, get_file_chunks, list_collection_files, list_collections, BrowseState,
+    BrowseState, get_collection_tree, get_file_chunks, list_collection_files, list_collections,
 };
 use super::config_handlers::{get_config, reload_config, update_config_section};
 use super::handlers::{
-    extended_health_check, get_cache_stats, get_indexing_status, get_metrics, health_check,
-    liveness_check, readiness_check, shutdown, AdminState,
+    AdminState, extended_health_check, get_cache_stats, get_indexing_status, get_metrics,
+    health_check, liveness_check, readiness_check, shutdown,
 };
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,

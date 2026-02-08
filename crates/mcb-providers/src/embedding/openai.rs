@@ -16,7 +16,7 @@ use crate::constants::{
     EMBEDDING_DIMENSION_OPENAI_SMALL,
 };
 use crate::embedding::helpers::constructor;
-use crate::utils::{handle_request_error, parse_embedding_vector, HttpResponseUtils};
+use crate::utils::{HttpResponseUtils, handle_request_error, parse_embedding_vector};
 
 /// OpenAI embedding provider
 ///
@@ -184,7 +184,7 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
+use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
 
 /// Factory function for creating OpenAI embedding provider instances.
 fn openai_factory(

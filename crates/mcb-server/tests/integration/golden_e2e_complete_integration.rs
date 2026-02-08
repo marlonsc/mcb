@@ -9,8 +9,8 @@ use rmcp::model::Content;
 use serde::Deserialize;
 
 use crate::test_utils::test_fixtures::{
-    golden_content_to_string, golden_count_result_entries, golden_parse_results_found,
-    sample_codebase_path, GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES,
+    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
+    golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };
 
 fn extract_text_content(content: &[Content]) -> String {

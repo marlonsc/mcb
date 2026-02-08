@@ -19,7 +19,7 @@ use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
 
 use super::harness::{
-    create_auth_config, create_auth_config_no_key, AdminTestHarness, TEST_API_KEY, TEST_AUTH_HEADER,
+    AdminTestHarness, TEST_API_KEY, TEST_AUTH_HEADER, create_auth_config, create_auth_config_no_key,
 };
 
 // =============================================================================

@@ -18,8 +18,8 @@ mod duplication_integration_tests {
     use std::path::PathBuf;
 
     use mcb_validate::duplication::{
-        tokenize_source, DuplicationAnalyzer, DuplicationThresholds, DuplicationType,
-        TokenFingerprinter,
+        DuplicationAnalyzer, DuplicationThresholds, DuplicationType, TokenFingerprinter,
+        tokenize_source,
     };
     use mcb_validate::violation_trait::Violation;
     use tempfile::TempDir;

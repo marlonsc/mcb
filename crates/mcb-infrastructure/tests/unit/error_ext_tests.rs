@@ -3,7 +3,7 @@
 use std::io;
 
 use mcb_domain::error::{Error, Result};
-use mcb_infrastructure::error_ext::{infra, ErrorContext};
+use mcb_infrastructure::error_ext::{ErrorContext, infra};
 
 #[test]
 fn test_error_context_extension() {

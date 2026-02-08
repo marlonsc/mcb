@@ -23,13 +23,13 @@ mod architecture_integration_tests {
     use std::io::Write;
     use std::path::{Path, PathBuf};
 
+    use mcb_validate::ValidationConfig;
+    use mcb_validate::Validator;
     use mcb_validate::clean_architecture::{
         CleanArchitectureValidator, CleanArchitectureViolation,
     };
     use mcb_validate::config::NamingRulesConfig;
     use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
-    use mcb_validate::ValidationConfig;
-    use mcb_validate::Validator;
     use tempfile::TempDir;
 
     fn mcb_naming_config() -> NamingRulesConfig {
@@ -383,13 +383,15 @@ impl Server {
         );
         assert_eq!(violation.line(), Some(42));
         assert!(violation.suggestion().is_some());
-        assert!(violation
-            .suggestion()
-            .unwrap()
-            .contains("dependency injection")
-            .then_some(())
-            .or(Some(()))
-            .is_some());
+        assert!(
+            violation
+                .suggestion()
+                .unwrap()
+                .contains("dependency injection")
+                .then_some(())
+                .or(Some(()))
+                .is_some()
+        );
 
         // Test Display
         let display = format!("{violation}");

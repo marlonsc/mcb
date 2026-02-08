@@ -4,8 +4,8 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 
 use crate::language::common::{
-    BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule,
-    AST_NODE_STRUCT_SPECIFIER, CHUNK_SIZE_CPP, TS_NODE_FUNCTION_DEFINITION,
+    AST_NODE_STRUCT_SPECIFIER, BaseProcessor, CHUNK_SIZE_CPP, LanguageConfig, LanguageProcessor,
+    NodeExtractionRule, TS_NODE_FUNCTION_DEFINITION,
 };
 
 /// C++ language processor.

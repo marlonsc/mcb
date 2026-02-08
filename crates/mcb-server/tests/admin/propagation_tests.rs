@@ -2,8 +2,8 @@
 //!
 //! Tests configuration propagation and callback functionality.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use mcb_server::admin::propagation::{ConfigPropagator, PropagatorHandle};
 

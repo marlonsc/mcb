@@ -2,7 +2,7 @@
 //!
 //! Moved from inline tests in src/di/resolver.rs to comply with test organization standards.
 
-use mcb_infrastructure::di::{list_available_providers, AvailableProviders};
+use mcb_infrastructure::di::{AvailableProviders, list_available_providers};
 
 #[test]
 fn test_list_available_providers() {
