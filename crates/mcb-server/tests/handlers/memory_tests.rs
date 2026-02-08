@@ -5,6 +5,7 @@ use mcb_server::handlers::MemoryHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
+use crate::handlers::test_helpers::create_base_memory_args;
 use crate::test_utils::mock_services::MockMemoryService;
 
 #[tokio::test]
@@ -12,28 +13,17 @@ async fn test_memory_store_observation_success() {
     let mock_service = MockMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
-    let args = MemoryArgs {
-        action: MemoryAction::Store,
-        resource: MemoryResource::Observation,
-        data: Some(json!({
+    let args = create_base_memory_args(
+        MemoryAction::Store,
+        MemoryResource::Observation,
+        Some(json!({
             "content": "Test observation",
             "observation_type": "discovery",
             "tags": ["test", "observation"]
         })),
-        ids: None,
-        project_id: Some("test-project".to_string()),
-        repo_id: None,
-        session_id: Some("test-session".to_string().into()),
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
+        None,
+        Some("test-session".to_string()),
+    );
 
     let result = handler.handle(Parameters(args)).await;
 
@@ -46,24 +36,13 @@ async fn test_memory_store_observation_missing_data() {
     let mock_service = MockMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
-    let args = MemoryArgs {
-        action: MemoryAction::Store,
-        resource: MemoryResource::Observation,
-        data: None,
-        ids: None,
-        project_id: Some("test-project".to_string()),
-        repo_id: None,
-        session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
+    let args = create_base_memory_args(
+        MemoryAction::Store,
+        MemoryResource::Observation,
+        None,
+        None,
+        None,
+    );
 
     let result = handler.handle(Parameters(args)).await;
 
