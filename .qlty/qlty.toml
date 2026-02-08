@@ -112,14 +112,3 @@ name = "trufflehog"
 
 [[plugin]]
 name = "zizmor"
-
-# =============================================================================
-# Overrides - Suppress false positives
-# =============================================================================
-
-[[overrides]]
-paths = [
-  "crates/mcb-validate/src/constants.rs",
-  "crates/mcb-validate/src/quality.rs",
-]
-plugins = [{ name = "ripgrep", enabled = false }]

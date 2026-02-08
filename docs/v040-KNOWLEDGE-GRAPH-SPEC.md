@@ -65,10 +65,10 @@ MCB uses `tree-sitter` for high-performance, language-agnostic AST parsing and r
 
 ### Extraction Approach
 
-1. **AST Parsing**: Generate a concrete syntax tree using language-specific tree-sitter grammars.
-2. **TSG Rules**: Use TreeSitter Graph (TSG) DSL to map AST patterns to graph nodes and edges.
-3. **Symbol Resolution**: Resolve local references to Fully Qualified Names (FQNs) to link nodes across modules.
-4. **Incremental Updates**: Only re-extract files with changed hashes, patching the existing graph.
+1.  **AST Parsing**: Generate a concrete syntax tree using language-specific tree-sitter grammars.
+2.  **TSG Rules**: Use TreeSitter Graph (TSG) DSL to map AST patterns to graph nodes and edges.
+3.  **Symbol Resolution**: Resolve local references to Fully Qualified Names (FQNs) to link nodes across modules.
+4.  **Incremental Updates**: Only re-extract files with changed hashes, patching the existing graph.
 
 ### Extraction Port
 
@@ -90,14 +90,14 @@ RRF merges rankings from Full-Text Search (FTS), Vector Embeddings, and Graph Tr
 
 **Formula**:
 $$score(d) = \sum_{r \in R} \frac{1}{k + rank(d, r)}$$
-*where $k$ is a constant (default 60), and $rank(d, r)$ is the rank of document $d$ in result set $r$.*
+*where $k$ is a constant (default 60), and $rank(d, r)$ is the rank of document $d$ in Result set $r$.*
 
 ### Search Composition
 
-1. **FTS (BM25)**: Lexical matching on code content and documentation.
-2. **Vector (Cosine)**: Semantic similarity using code embeddings.
-3. **Graph (PageRank/Traversal)**: Structural importance and proximity (e.g., "find callers of X").
-4. **Freshness Weighting**: Penalty applied to stale context ($score = score \times penalty$).
+1.  **FTS (BM25)**: Lexical matching on code content and documentation.
+2.  **Vector (Cosine)**: Semantic similarity using code embeddings.
+3.  **Graph (PageRank/Traversal)**: Structural importance and proximity (e.g., "find callers of X").
+4.  **Freshness Weighting**: Penalty applied to stale context ($score = score \times penalty$).
 
 ## 4. Context Snapshot Design
 
@@ -118,6 +118,6 @@ pub struct ContextSnapshot {
 
 ### Snapshotting Policy
 
-- **Automatic**: Triggered on git commits or significant workflow state changes.
-- **Manual**: Triggered via `context_snapshot` MCP tool.
-- **Retention**: Snapshots are persisted in SQLite with a configurable TTL (Time-To-Live) to manage storage.
+-   **Automatic**: Triggered on git commits or significant workflow state changes.
+-   **Manual**: Triggered via `context_snapshot` MCP tool.
+-   **Retention**: Snapshots are persisted in SQLite with a configurable TTL (Time-To-Live) to manage storage.
