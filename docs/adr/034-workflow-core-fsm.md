@@ -561,18 +561,23 @@ impl WorkflowEngine for SqliteWorkflowEngine {
 Valid transitions are enforced at runtime. Invalid transitions return `WorkflowError::InvalidTransition`.
 
 ```
-From \ Trigger         │ CtxDisc │ StartPlan │ StartExec │ ClaimTask │ ComplTask │ StartVer │ VerPass │ VerFail │ CompPhase │ EndSess │ Error │ Recover
-───────────────────────┼─────────┼───────────┼───────────┼───────────┼───────────┼──────────┼─────────┼─────────┼───────────┼─────────┼───────┼────────
-Initializing           │ Ready   │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │   ✗
-Ready                  │    ✗    │ Planning  │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │   ✗
-Planning               │    ✗    │     ✗     │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │   ✗
-Executing              │    ✗    │     ✗     │     ✗     │ Executing │ Executing │ Verify   │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │   ✗
-Verifying              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │ PhComp  │ Exec    │     ✗     │ Compl   │ Fail  │   ✗
-PhaseComplete          │    ✗    │ Planning  │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │  Compl    │ Compl   │ Fail  │   ✗
-Failed (recoverable)   │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │   ✗   │ Ready
-Failed (unrecoverable) │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │   ✗   │   ✗
-Completed              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │   ✗
+From \ Trigger         │ CtxDisc │ StartPlan │ StartExec │ ClaimTask │ ComplTask │ StartVer │ VerPass │ VerFail │ CompPhase │ EndSess │ Error │ Suspend │ Resume │ TimeoutDet │ Cancel │ MarkAband
+───────────────────────┼─────────┼───────────┼───────────┼───────────┼───────────┼──────────┼─────────┼─────────┼───────────┼─────────┼───────┼─────────┼────────┼────────────┼────────┼───────────
+Initializing           │ Ready   │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │    ✗    │   ✗    │    ✗       │ Cancel │    ✗
+Ready                  │    ✗    │ Planning  │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │ Suspend │   ✗    │ Timeout    │ Cancel │ Abandon
+Planning               │    ✗    │     ✗     │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │ Suspend │   ✗    │ Timeout    │ Cancel │ Abandon
+Executing              │    ✗    │     ✗     │     ✗     │ Executing │ Executing │ Verify   │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │ Suspend │   ✗    │ Timeout    │ Cancel │ Abandon
+Verifying              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │ PhComp  │ Exec    │     ✗     │ Compl   │ Fail  │ Suspend │   ✗    │ Timeout    │ Cancel │ Abandon
+PhaseComplete          │    ✗    │ Planning  │ Executing │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │  Compl    │ Compl   │ Fail  │ Suspend │   ✗    │ Timeout    │ Cancel │ Abandon
+Failed (recoverable)   │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │   ✗   │ Suspend │ Ready  │ Timeout    │ Cancel │ Abandon
+Failed (unrecoverable) │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │   ✗   │    ✗    │   ✗    │    ✗       │   ✗    │    ✗
+Suspended              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │    ✗    │ *      │ Timeout    │ Cancel │ Abandon
+Timeout                │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │   ✗   │    ✗    │   ✗    │    ✗       │   ✗    │    ✗
+Cancelled              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │   ✗    │    ✗       │   ✗    │    ✗
+Abandoned              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │ Ready  │    ✗       │   ✗    │    ✗
+Completed              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │   ✗    │    ✗       │   ✗    │    ✗
 ```
+\* Resumes to the state before suspension.
 
 ### 4. Transition Implementation
 
@@ -636,9 +641,51 @@ impl WorkflowSession {
                 WorkflowState::Completed
             }
 
-            // Failed (recoverable) → Ready
+            // Suspended → Resume (simplified: to Ready, or back to previous if tracked)
+            (WorkflowState::Suspended { .. }, TransitionTrigger::Resume) => {
+                WorkflowState::Ready { context_snapshot_id: String::new() }
+            }
+
+            // Abandoned → Resume
+            (WorkflowState::Abandoned { .. }, TransitionTrigger::Resume) => {
+                WorkflowState::Ready { context_snapshot_id: String::new() }
+            }
+
+            // Recover from recoverable failure
             (WorkflowState::Failed { recoverable: true, .. }, TransitionTrigger::Recover) => {
                 WorkflowState::Ready { context_snapshot_id: String::new() }
+            }
+
+            // Any non-terminal state → Suspended
+            (state, TransitionTrigger::Suspend { reason }) if !matches!(state, WorkflowState::Completed | WorkflowState::Failed { .. } | WorkflowState::Cancelled { .. } | WorkflowState::Abandoned { .. } | WorkflowState::Timeout { .. }) => {
+                WorkflowState::Suspended { 
+                    reason: reason.clone(),
+                    suspended_at: Utc::now(),
+                }
+            }
+
+            // Any non-terminal state → Timeout
+            (state, TransitionTrigger::TimeoutDetected { deadline }) if !matches!(state, WorkflowState::Completed | WorkflowState::Failed { .. } | WorkflowState::Cancelled { .. }) => {
+                WorkflowState::Timeout {
+                    deadline: *deadline,
+                    exceeded_by_ms: 0, // Should be computed
+                }
+            }
+
+            // Any state except terminal/cancelled → Cancelled
+            (state, TransitionTrigger::Cancel { reason, by }) if !matches!(state, WorkflowState::Completed | WorkflowState::Cancelled { .. }) => {
+                WorkflowState::Cancelled {
+                    reason: reason.clone(),
+                    cancelled_by: by.clone(),
+                }
+            }
+
+            // Any state except terminal/abandoned → Abandoned
+            (state, TransitionTrigger::MarkAbandoned { days_inactive }) if !matches!(state, WorkflowState::Completed | WorkflowState::Abandoned { .. }) => {
+                WorkflowState::Abandoned {
+                    last_activity: Utc::now(),
+                    days_inactive: *days_inactive,
+                }
             }
 
             // Any state → Failed (on Error trigger)
