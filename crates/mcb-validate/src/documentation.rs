@@ -52,12 +52,10 @@ pub enum DocumentationViolation {
 
 impl DocumentationViolation {
     /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::MissingModuleDoc { severity, .. }
-            | Self::MissingPubItemDoc { severity, .. }
-            | Self::MissingExampleCode { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -442,23 +440,11 @@ impl DocumentationValidator {
     }
 }
 
-impl crate::validator_trait::Validator for DocumentationValidator {
-    fn name(&self) -> &'static str {
-        "documentation"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates documentation standards"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    DocumentationValidator,
+    "documentation",
+    "Validates documentation standards"
+);
 
 #[cfg(test)]
 mod tests {

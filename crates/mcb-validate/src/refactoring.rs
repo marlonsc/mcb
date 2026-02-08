@@ -97,15 +97,10 @@ pub enum RefactoringViolation {
 
 impl RefactoringViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::OrphanImport { severity, .. }
-            | Self::DuplicateDefinition { severity, .. }
-            | Self::MissingTestFile { severity, .. }
-            | Self::StaleReExport { severity, .. }
-            | Self::DeletedModuleReference { severity, .. }
-            | Self::RefactoringDeadCode { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -720,27 +715,11 @@ impl RefactoringValidator {
     }
 }
 
-/// Validator trait implementation for refactoring completeness validation.
-///
-/// Integrates the refactoring validator into the validation framework,
-/// providing name, description, and validation orchestration.
-impl crate::validator_trait::Validator for RefactoringValidator {
-    fn name(&self) -> &'static str {
-        "refactoring"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates refactoring completeness (duplicate definitions, missing tests, stale references)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    RefactoringValidator,
+    "refactoring",
+    "Validates refactoring completeness (duplicate definitions, missing tests, stale references)"
+);
 
 #[cfg(test)]
 mod tests {

@@ -57,13 +57,11 @@ pub enum ErrorBoundaryViolation {
 }
 
 impl ErrorBoundaryViolation {
-    /// Returns the severity level of this violation
+    /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::MissingErrorContext { severity, .. }
-            | Self::WrongLayerError { severity, .. }
-            | Self::LeakedInternalError { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -456,23 +454,8 @@ impl ErrorBoundaryValidator {
     }
 }
 
-impl crate::validator_trait::Validator for ErrorBoundaryValidator {
-    /// Returns the validator name
-    fn name(&self) -> &'static str {
-        "error_boundary"
-    }
-
-    /// Returns the validator description
-    fn description(&self) -> &'static str {
-        "Validates error handling patterns across layer boundaries"
-    }
-
-    /// Executes validation and returns violations as trait objects
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    ErrorBoundaryValidator,
+    "error_boundary",
+    "Validates error handling patterns across layer boundaries"
+);

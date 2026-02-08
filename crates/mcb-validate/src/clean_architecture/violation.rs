@@ -146,18 +146,10 @@ pub enum CleanArchitectureViolation {
 
 impl CleanArchitectureViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::DomainContainsImplementation { severity, .. }
-            | Self::HandlerCreatesService { severity, .. }
-            | Self::PortMissingComponentDerive { severity, .. }
-            | Self::EntityMissingIdentity { severity, .. }
-            | Self::ValueObjectMutable { severity, .. }
-            | Self::ServerImportsProviderDirectly { severity, .. }
-            | Self::InfrastructureImportsConcreteService { severity, .. }
-            | Self::ApplicationWrongPortImport { severity, .. }
-            | Self::InfrastructureImportsApplication { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 

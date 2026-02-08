@@ -99,15 +99,10 @@ pub enum NamingViolation {
 
 impl NamingViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::BadTypeName { severity, .. }
-            | Self::BadFunctionName { severity, .. }
-            | Self::BadConstantName { severity, .. }
-            | Self::BadModuleName { severity, .. }
-            | Self::BadFileSuffix { severity, .. }
-            | Self::BadCaNaming { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -818,23 +813,11 @@ impl NamingValidator {
     }
 }
 
-impl crate::validator_trait::Validator for NamingValidator {
-    fn name(&self) -> &'static str {
-        "naming"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates naming conventions (CamelCase, snake_case, SCREAMING_SNAKE_CASE)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    NamingValidator,
+    "naming",
+    "Validates naming conventions (CamelCase, snake_case, SCREAMING_SNAKE_CASE)"
+);
 
 #[cfg(test)]
 mod tests {
