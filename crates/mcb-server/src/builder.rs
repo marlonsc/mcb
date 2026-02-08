@@ -9,7 +9,7 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
+    ProjectDetectorService, ProjectService, SearchServiceInterface, ValidationServiceInterface,
 };
 
 use crate::McpServer;
@@ -27,6 +27,7 @@ pub struct McpServerBuilder {
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
     agent_session_service: Option<Arc<dyn AgentSessionServiceInterface>>,
     project_service: Option<Arc<dyn ProjectDetectorService>>,
+    project_workflow_service: Option<Arc<dyn ProjectService>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
 }
 
@@ -105,6 +106,12 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the project workflow service
+    pub fn with_project_workflow_service(mut self, service: Arc<dyn ProjectService>) -> Self {
+        self.project_workflow_service = Some(service);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -137,6 +144,9 @@ impl McpServerBuilder {
         let project_service = self
             .project_service
             .ok_or(BuilderError::MissingDependency("project service"))?;
+        let project_workflow_service = self
+            .project_workflow_service
+            .ok_or(BuilderError::MissingDependency("project workflow service"))?;
 
         let services = crate::mcp_server::McpServices {
             indexing: indexing_service,
@@ -146,6 +156,7 @@ impl McpServerBuilder {
             memory: memory_service,
             agent_session: agent_session_service,
             project: project_service,
+            project_workflow: project_workflow_service,
             vcs: vcs_provider,
         };
 

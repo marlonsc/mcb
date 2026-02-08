@@ -24,7 +24,7 @@ use mcb_domain::ports::providers::{
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
 use mcb_domain::ports::services::{
     AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
-    MemoryServiceInterface, ProjectDetectorService, SearchServiceInterface,
+    MemoryServiceInterface, ProjectDetectorService, ProjectService, SearchServiceInterface,
     ValidationServiceInterface,
 };
 
@@ -56,6 +56,8 @@ pub struct DomainServicesContainer {
     pub agent_session_service: Arc<dyn AgentSessionServiceInterface>,
     /// Service for detecting and managing project information
     pub project_service: Arc<dyn ProjectDetectorService>,
+    /// Service for managing project workflow resources
+    pub project_workflow_service: Arc<dyn ProjectService>,
     /// Provider for version control system operations
     pub vcs_provider: Arc<dyn VcsProvider>,
 }
@@ -108,6 +110,8 @@ pub struct ServiceDependencies {
     pub vcs_provider: Arc<dyn VcsProvider>,
     /// Service for project detection and management
     pub project_service: Arc<dyn ProjectDetectorService>,
+    /// Service for project workflow management
+    pub project_workflow_service: Arc<dyn ProjectService>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
@@ -170,6 +174,7 @@ impl DomainServicesFactory {
             memory_service,
             agent_session_service,
             project_service: deps.project_service,
+            project_workflow_service: deps.project_workflow_service,
             vcs_provider: deps.vcs_provider,
         })
     }

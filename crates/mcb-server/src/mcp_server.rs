@@ -8,7 +8,7 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
+    ProjectDetectorService, ProjectService, SearchServiceInterface, ValidationServiceInterface,
 };
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
@@ -54,6 +54,8 @@ pub struct McpServices {
     pub agent_session: Arc<dyn AgentSessionServiceInterface>,
     /// Project detector service
     pub project: Arc<dyn ProjectDetectorService>,
+    /// Project workflow service
+    pub project_workflow: Arc<dyn ProjectService>,
     /// VCS provider
     pub vcs: Arc<dyn VcsProvider>,
 }
@@ -76,7 +78,7 @@ impl McpServer {
                 services.memory.clone(),
             )),
             agent: Arc::new(AgentHandler::new(services.agent_session.clone())),
-            project: Arc::new(ProjectHandler::new()),
+            project: Arc::new(ProjectHandler::new(services.project_workflow.clone())),
             vcs: Arc::new(VcsHandler::new(services.vcs.clone())),
             hook_processor: Arc::new(hook_processor),
         };
@@ -128,6 +130,11 @@ impl McpServer {
     /// Access to project service
     pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
         Arc::clone(&self.services.project)
+    }
+
+    /// Access to project workflow service
+    pub fn project_workflow_service(&self) -> Arc<dyn ProjectService> {
+        Arc::clone(&self.services.project_workflow)
     }
 
     /// Access to index handler (for HTTP transport)

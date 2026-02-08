@@ -246,6 +246,7 @@ async fn create_mcp_server(
         memory: services.memory_service,
         agent_session: services.agent_session_service,
         project: services.project_service,
+        project_workflow: services.project_workflow_service,
         vcs: services.vcs_provider,
     };
     let server = McpServer::from_services(mcp_services);

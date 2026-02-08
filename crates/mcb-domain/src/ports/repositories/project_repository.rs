@@ -1,31 +1,9 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 
-use crate::entities::project::{
-    IssueStatus, IssueType, Project, ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase,
+pub use crate::entities::project::{
+    IssueFilter, Project, ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use crate::error::Result;
-
-/// Filter for querying project issues with optional constraints.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct IssueFilter {
-    /// Filter by project identifier.
-    pub project_id: Option<String>,
-    /// Filter by project phase identifier.
-    pub phase_id: Option<String>,
-    /// Filter by type of issue (e.g., bug, task).
-    pub issue_type: Option<IssueType>,
-    /// Filter by issue status (e.g., open, closed).
-    pub status: Option<IssueStatus>,
-    /// Filter by priority level.
-    pub priority: Option<i32>,
-    /// Filter by assigned user.
-    pub assignee: Option<String>,
-    /// Filter by applied label/tag.
-    pub label: Option<String>,
-    /// Maximum number of results to return.
-    pub limit: Option<usize>,
-}
 
 /// Port for project persistence (CRUD operations on Project entities and related workflow data).
 #[async_trait]
@@ -55,6 +33,8 @@ pub trait ProjectRepository: Send + Sync {
     async fn update_phase(&self, phase: &ProjectPhase) -> Result<()>;
     /// Lists all phases associated with a project.
     async fn list_phases(&self, project_id: &str) -> Result<Vec<ProjectPhase>>;
+    /// Deletes a phase by its identifier.
+    async fn delete_phase(&self, id: &str) -> Result<()>;
 
     // Issue operations
     /// Creates a new issue/task.
@@ -67,6 +47,8 @@ pub trait ProjectRepository: Send + Sync {
     async fn list_issues(&self, project_id: &str) -> Result<Vec<ProjectIssue>>;
     /// Retrieves a list of issues matching the specified filter criteria.
     async fn filter_issues(&self, filter: &IssueFilter) -> Result<Vec<ProjectIssue>>;
+    /// Deletes an issue by its identifier.
+    async fn delete_issue(&self, id: &str) -> Result<()>;
 
     // Dependency operations
     /// Creates a dependency relationship between two issues.
@@ -83,4 +65,6 @@ pub trait ProjectRepository: Send + Sync {
     async fn get_decision(&self, id: &str) -> Result<Option<ProjectDecision>>;
     /// Lists all decisions recorded for a project.
     async fn list_decisions(&self, project_id: &str) -> Result<Vec<ProjectDecision>>;
+    /// Deletes a decision by its identifier.
+    async fn delete_decision(&self, id: &str) -> Result<()>;
 }

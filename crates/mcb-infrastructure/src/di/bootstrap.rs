@@ -12,8 +12,10 @@ use mcb_domain::ports::admin::{
 use mcb_domain::ports::browse::HighlightServiceInterface;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
-use mcb_domain::ports::services::ProjectDetectorService;
+use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
+use mcb_domain::ports::services::{
+    ProjectDetectorService, ProjectService as ProjectWorkflowService,
+};
 use tracing::info;
 
 use crate::config::AppConfig;
@@ -80,8 +82,10 @@ pub struct AppContext {
     // ========================================================================
     memory_repository: Arc<dyn MemoryRepository>,
     agent_repository: Arc<dyn AgentRepository>,
+    project_repository: Arc<dyn ProjectRepository>,
     vcs_provider: Arc<dyn VcsProvider>,
     project_service: Arc<dyn ProjectDetectorService>,
+    project_workflow_service: Arc<dyn ProjectWorkflowService>,
 
     // ========================================================================
     // Infrastructure Services
@@ -181,6 +185,11 @@ impl AppContext {
         self.agent_repository.clone()
     }
 
+    /// Get project repository
+    pub fn project_repository(&self) -> Arc<dyn ProjectRepository> {
+        self.project_repository.clone()
+    }
+
     /// Get VCS provider
     pub fn vcs_provider(&self) -> Arc<dyn VcsProvider> {
         self.vcs_provider.clone()
@@ -189,6 +198,11 @@ impl AppContext {
     /// Get project service
     pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
         self.project_service.clone()
+    }
+
+    /// Get project workflow service
+    pub fn project_workflow_service(&self) -> Arc<dyn ProjectWorkflowService> {
+        self.project_workflow_service.clone()
     }
 
     /// Get highlight service
@@ -241,6 +255,7 @@ impl AppContext {
             agent_repository,
             vcs_provider,
             project_service,
+            project_workflow_service: self.project_workflow_service(),
         };
 
         crate::di::modules::domain_services::DomainServicesFactory::create_services(deps).await
@@ -354,10 +369,17 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
                 ))
             })?;
     let agent_repository =
-        mcb_providers::database::create_agent_repository_from_executor(db_executor);
+        mcb_providers::database::create_agent_repository_from_executor(db_executor.clone());
+    let project_repository =
+        mcb_providers::database::create_project_repository_from_executor(db_executor);
 
     let vcs_provider = crate::di::vcs::default_vcs_provider();
     let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
+    let project_workflow_service: Arc<dyn ProjectWorkflowService> = Arc::new(
+        mcb_application::use_cases::project_service::ProjectServiceImpl::new(
+            project_repository.clone(),
+        ),
+    );
 
     let highlight_service: Arc<dyn HighlightServiceInterface> =
         Arc::new(HighlightServiceImpl::new());
@@ -390,8 +412,10 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         indexing_operations,
         memory_repository,
         agent_repository,
+        project_repository,
         vcs_provider,
         project_service,
+        project_workflow_service,
         highlight_service,
         crypto_service,
     })
