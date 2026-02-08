@@ -2,8 +2,9 @@
 //!
 //! Rules are defined as data structures for easy configuration and extension.
 
-use crate::violation_trait::{Severity, ViolationCategory};
 use std::collections::HashMap;
+
+use crate::violation_trait::{Severity, ViolationCategory};
 
 /// Declarative rule definition
 #[derive(Debug, Clone)]
@@ -29,9 +30,13 @@ pub struct Rule {
 /// Configuration value types for rules
 #[derive(Debug, Clone)]
 pub enum RuleConfigValue {
+    /// Single string value
     String(String),
+    /// List of string values
     StringList(Vec<String>),
+    /// Integer numeric value
     Number(i64),
+    /// Boolean flag value
     Boolean(bool),
 }
 
@@ -62,6 +67,7 @@ impl From<bool> for RuleConfigValue {
 /// Registry holding all defined rules
 #[derive(Debug, Default)]
 pub struct RuleRegistry {
+    /// List of registered rules
     rules: Vec<Rule>,
 }
 
@@ -147,14 +153,14 @@ pub fn clean_architecture_rules() -> Vec<Rule> {
             name: "Domain Layer Independence".into(),
             category: ViolationCategory::Architecture,
             default_severity: Severity::Error,
-            description: "Domain crate must have zero internal mcb-* dependencies".into(),
+            description: "Domain crate must have zero internal dependencies".into(),
             rationale: "Domain layer contains pure business logic independent of frameworks".into(),
             enabled: true,
             config: HashMap::from([
-                ("crate".into(), RuleConfigValue::from("mcb-domain")),
+                ("crate".into(), RuleConfigValue::from("")),
                 (
                     "forbidden_prefixes".into(),
-                    RuleConfigValue::from(vec!["mcb-"]),
+                    RuleConfigValue::from(vec![] as Vec<&str>),
                 ),
             ]),
         },
@@ -168,8 +174,8 @@ pub fn clean_architecture_rules() -> Vec<Rule> {
                 .into(),
             enabled: true,
             config: HashMap::from([
-                ("crate".into(), RuleConfigValue::from("mcb-application")),
-                ("allowed".into(), RuleConfigValue::from(vec!["mcb-domain"])),
+                ("crate".into(), RuleConfigValue::from("")),
+                ("allowed".into(), RuleConfigValue::from(vec![] as Vec<&str>)),
             ]),
         },
         Rule {
@@ -233,23 +239,19 @@ pub fn layer_boundary_rules() -> Vec<Rule> {
                 ),
                 (
                     "application_deps".into(),
-                    RuleConfigValue::from(vec!["mcb-domain"]),
+                    RuleConfigValue::from(vec![] as Vec<&str>),
                 ),
                 (
                     "providers_deps".into(),
-                    RuleConfigValue::from(vec!["mcb-domain", "mcb-application"]),
+                    RuleConfigValue::from(vec![] as Vec<&str>),
                 ),
                 (
                     "infrastructure_deps".into(),
-                    RuleConfigValue::from(vec!["mcb-domain", "mcb-application", "mcb-providers"]),
+                    RuleConfigValue::from(vec![] as Vec<&str>),
                 ),
                 (
                     "server_deps".into(),
-                    RuleConfigValue::from(vec![
-                        "mcb-domain",
-                        "mcb-application",
-                        "mcb-infrastructure",
-                    ]),
+                    RuleConfigValue::from(vec![] as Vec<&str>),
                 ),
             ]),
         },

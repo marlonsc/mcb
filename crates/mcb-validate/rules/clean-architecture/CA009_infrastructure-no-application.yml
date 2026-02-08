@@ -9,29 +9,32 @@ engine: "rusty-rules"
 description: "Infrastructure layer should NOT depend on Application layer"
 
 patterns:
-  app_import: 'use\s+mcb_application(?:::|;)'
-  app_import_path: 'use\s+(mcb_application::\S+)'
+  app_import: 'use\s+{{application_module}}(?:::|;)'
+  app_import_path: 'use\s+({{application_module}}::\S+)'
 rationale: |
-  Per Clean Architecture, infrastructure layer (mcb-infrastructure) should only
-  depend on mcb-domain (for port traits).
+  Per Clean Architecture, infrastructure layer ({{infrastructure_crate}}) should only
+  depend on {{domain_crate}} (for port traits).
 
-  It should NOT depend on mcb-application, mcb-providers, or mcb-server as this
+  It should NOT depend on {{application_crate}}, {{providers_crate}}, or {{server_crate}} as this
   creates circular dependencies and layer violations.
 
 fix_guidance: |
-  1. If importing port traits: Move them to mcb-domain/src/ports/
+  1. If importing port traits: Move them to {{domain_crate}}/src/ports/
   2. If importing services: Use DI with Arc<dyn ServiceTrait>
-  3. If importing registry: Access via mcb-providers, not directly
+  3. If importing registry: Access via {{providers_crate}}, not directly
 
-crate_name: "mcb-infrastructure"
+crate_name: "{{infrastructure_crate}}"
 forbidden_imports:
-  - "mcb_application"
+  - "{{application_module}}"
+
+config:
+  composition_root_skip_patterns: ["/di/"]
 
 rule: |
   rule InfrastructureNoApplication "Infrastructure Must Not Import Application" {
       when
-          Crate(name == "mcb-infrastructure") &&
-          Import(path starts_with "mcb_application")
+          Crate(name == "{{infrastructure_crate}}") &&
+          Import(path starts_with "{{application_module}}")
       then
           Violation("Infrastructure layer cannot depend on Application layer - violates Clean Architecture");
   }

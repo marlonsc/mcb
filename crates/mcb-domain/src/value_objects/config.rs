@@ -4,10 +4,11 @@
 //! and system settings. These configurations define how the system
 //! interacts with external services.
 
+use serde::{Deserialize, Serialize};
+
 use crate::value_objects::types::{
     CacheProviderKind, EmbeddingProviderKind, VectorStoreProviderKind,
 };
-use serde::{Deserialize, Serialize};
 
 /// Value Object: Embedding Provider Configuration
 ///
@@ -35,7 +36,7 @@ pub struct EmbeddingConfig {
 /// Defines which storage system to use and connection parameters.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct VectorStoreConfig {
-    /// Provider name (filesystem, in-memory, milvus, edgevec)
+    /// Provider name (edgevec, milvus, qdrant, pinecone)
     pub provider: VectorStoreProviderKind,
     /// Server address for remote providers (e.g., Milvus)
     pub address: Option<String>,

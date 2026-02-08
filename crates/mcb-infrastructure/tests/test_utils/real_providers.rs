@@ -1,15 +1,15 @@
 //! Real Provider Test Utilities
 //!
 //! Provides factory functions for creating real (not mocked) provider instances
-//! for integration testing. Uses NullEmbeddingProvider and InMemoryVectorStoreProvider
-//! which are actual implementations, not mocks.
+//! for integration testing. Uses FastEmbedProvider and EdgeVecVectorStoreProvider
+//! which are local implementations, not mocks.
 //!
 //! ## Key Principle
 //!
-//! Tests should use real providers, not mocks, to validate actual behavior.
-//! - `NullEmbeddingProvider`: Deterministic hash-based embeddings (no external deps)
-//! - `InMemoryVectorStoreProvider`: Real in-memory storage with actual search
-//! - `NullCacheProvider`: Real no-op cache (not a mock)
+//! Tests should use real local providers, not mocks, to validate actual behavior.
+//! - `FastEmbedProvider`: Local ONNX embeddings (no external API)
+//! - `EdgeVecVectorStoreProvider`: Local HNSW storage with actual search
+//! - `MokaCacheProvider`: Local in-memory cache (not a mock)
 //!
 //! ## Usage
 //!
@@ -28,20 +28,21 @@
 // Force linkme registration of all providers from mcb-providers
 extern crate mcb_providers;
 
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::error::Result;
-use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
-use mcb_domain::value_objects::{Embedding, SearchResult};
-use mcb_infrastructure::config::AppConfig;
-use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
-use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Create a test AppContext with real providers
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::error::Result;
+use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
+use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
+use serde_json::json;
+
+/// Create a test AppContext with real local providers
 ///
-/// Uses NullEmbeddingProvider and InMemoryVectorStoreProvider (or NullVectorStore
-/// depending on config). These are real implementations, not mocks.
+/// Uses FastEmbedProvider and EdgeVecVectorStoreProvider (depending on config).
+/// These are real local implementations, not mocks.
 ///
 /// # Important
 ///
@@ -93,8 +94,9 @@ impl FullStackTestContext {
 
     /// Create collection in vector store
     pub async fn create_collection(&self, name: &str, dimensions: usize) -> Result<()> {
+        let collection_id = CollectionId::new(name);
         self.vector_store()
-            .create_collection(name, dimensions)
+            .create_collection(&collection_id, dimensions)
             .await
     }
 
@@ -109,7 +111,7 @@ impl FullStackTestContext {
         // Extract texts for embedding
         let texts: Vec<String> = chunks.iter().map(|c| c.content.clone()).collect();
 
-        // Generate real embeddings (NullEmbeddingProvider uses deterministic hash)
+        // Generate real embeddings (FastEmbedProvider - local ONNX)
         let embeddings = self.embed_texts(&texts).await?;
 
         // Build metadata from chunks
@@ -131,8 +133,9 @@ impl FullStackTestContext {
             .collect();
 
         // Insert into vector store - returns Vec<String> of IDs
+        let collection_id = CollectionId::new(collection);
         self.vector_store()
-            .insert_vectors(collection, &embeddings, metadata)
+            .insert_vectors(&collection_id, &embeddings, metadata)
             .await
     }
 
@@ -148,8 +151,9 @@ impl FullStackTestContext {
         let query_embedding = &query_embeddings[0];
 
         // Search vector store using search_similar
+        let collection_id = CollectionId::new(collection);
         self.vector_store()
-            .search_similar(collection, &query_embedding.vector, limit, None)
+            .search_similar(&collection_id, &query_embedding.vector, limit, None)
             .await
             .map(|results| {
                 results.into_iter().next().unwrap_or_else(|| SearchResult {
@@ -175,8 +179,9 @@ impl FullStackTestContext {
         let query_embedding = &query_embeddings[0];
 
         // Search vector store using search_similar
+        let collection_id = CollectionId::new(collection);
         self.vector_store()
-            .search_similar(collection, &query_embedding.vector, limit, None)
+            .search_similar(&collection_id, &query_embedding.vector, limit, None)
             .await
     }
 }
@@ -309,12 +314,12 @@ mod tests {
         assert_eq!(
             embedding.dimensions(),
             384,
-            "Null provider has 384 dimensions"
+            "FastEmbed provider has 384 dimensions"
         );
         assert_eq!(
             embedding.provider_name(),
-            "null",
-            "Should use null provider"
+            "fastembed",
+            "Should use fastembed (local) provider"
         );
     }
 

@@ -62,35 +62,3 @@ pub trait PerformanceMetricsCollector: Send + Sync {
         success: bool,
     );
 }
-
-/// Null implementation for testing
-pub struct NullMetricsCollector;
-
-impl NullMetricsCollector {
-    /// Create a new null metrics collector
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for NullMetricsCollector {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl PerformanceMetricsCollector for NullMetricsCollector {
-    fn record_embedding_latency(&self, _provider: &str, _duration: Duration, _success: bool) {}
-    fn record_vectorstore_latency(&self, _provider: &str, _duration: Duration, _success: bool) {}
-    fn record_cache_hit(&self, _provider: &str) {}
-    fn record_cache_miss(&self, _provider: &str) {}
-    fn record_indexing_throughput(&self, _chunks_per_second: f64) {}
-    fn record_batch_embedding(
-        &self,
-        _provider: &str,
-        _batch_size: usize,
-        _duration: Duration,
-        _success: bool,
-    ) {
-    }
-}

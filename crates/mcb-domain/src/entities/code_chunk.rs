@@ -4,8 +4,9 @@
 //! of source code. Code chunks are the fundamental units of semantic indexing
 //! and search in the system.
 
-use crate::value_objects::Language;
 use serde::{Deserialize, Serialize};
+
+use crate::value_objects::Language;
 
 /// Core Entity: Semantically Meaningful Code Segment
 ///

@@ -19,6 +19,6 @@ lint_select: ["clippy::unwrap_used"]
 selectors:
   - language: rust
     node_type: call_expression
-    pattern: "(call_expression function: (field_expression field: (field_identifier) @method) (#eq? @method \"unwrap\")) @match"
+    pattern: '(call_expression function: (field_expression field: (field_identifier) @method) (#eq? @method "unwrap")) @match'
 
 message: "Avoid .unwrap() in production code"

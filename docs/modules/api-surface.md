@@ -13,7 +13,7 @@ Re-exports from all internal crates for unified access:
 pub use mcb_domain::{CodeChunk, Embedding, SearchResult, Language, Error, Result};
 
 // Service interfaces (from mcb-application)
-pub use mcb_application::ports::{EmbeddingProvider, VectorStoreProvider, CacheProvider};
+pub use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider, CacheProvider};
 
 // Service implementations
 pub use mcb_application::{ContextServiceImpl, IndexingServiceImpl, SearchServiceImpl};

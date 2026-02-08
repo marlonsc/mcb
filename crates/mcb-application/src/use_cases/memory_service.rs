@@ -2,24 +2,26 @@
 //!
 //! Application service for observation storage and semantic memory search.
 
-use crate::ports::EmbeddingProvider;
-use crate::ports::services::MemoryServiceInterface;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use mcb_domain::entities::memory::{
     MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,
     ObservationType, SessionSummary,
 };
 use mcb_domain::error::Result;
+use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::ports::repositories::MemoryRepository;
+use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::compute_content_hash;
-use mcb_domain::value_objects::Embedding;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
 use uuid::Uuid;
 
-const RRF_K: f32 = 60.0;
-const HYBRID_SEARCH_MULTIPLIER: usize = 3;
+use crate::constants::{
+    HYBRID_SEARCH_MULTIPLIER, MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH, RRF_K,
+};
 
 /// Hybrid memory service: SQLite for metadata/FTS + VectorStore for RAG embeddings.
 pub struct MemoryServiceImpl {
@@ -30,6 +32,17 @@ pub struct MemoryServiceImpl {
 }
 
 impl MemoryServiceImpl {
+    /// Initializes the hybrid memory service with repository, embedding, and vector store providers.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id` - The project identifier for scoping observations and memories.
+    /// * `repository` - SQLite-backed repository for metadata storage and full-text search.
+    /// * `embedding_provider` - Provider for generating vector embeddings from content.
+    /// * `vector_store` - Vector store for semantic similarity search and RAG operations.
+    ///
+    /// The service implements a hybrid search strategy combining full-text search (FTS)
+    /// with vector similarity using reciprocal rank fusion (RRF) for balanced relevance.
     pub fn new(
         project_id: String,
         repository: Arc<dyn MemoryRepository>,
@@ -44,7 +57,14 @@ impl MemoryServiceImpl {
         }
     }
 
-    /// Current Unix timestamp; exposed for testing.
+    /// Returns the current Unix timestamp in seconds.
+    ///
+    /// Used to record observation creation times and session summary timestamps.
+    /// Falls back to 0 if the system clock is unavailable (extremely rare).
+    ///
+    /// # Returns
+    ///
+    /// Current Unix timestamp as seconds since UNIX_EPOCH, or 0 if unavailable.
     #[must_use]
     pub fn current_timestamp() -> i64 {
         SystemTime::now()
@@ -54,29 +74,58 @@ impl MemoryServiceImpl {
     }
 
     fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
-        if let Some(ref session_id) = filter.session_id
-            && obs.metadata.session_id.as_ref() != Some(session_id)
-        {
-            return false;
-        }
-        if let Some(ref repo_id) = filter.repo_id
-            && obs.metadata.repo_id.as_ref() != Some(repo_id)
-        {
-            return false;
-        }
-        if let Some(ref obs_type) = filter.observation_type
-            && &obs.observation_type != obs_type
-        {
-            return false;
-        }
-        if let Some((start, end)) = filter.time_range
-            && (obs.created_at < start || obs.created_at > end)
-        {
-            return false;
-        }
-        true
+        Self::check_session(obs, filter)
+            && Self::check_repo(obs, filter)
+            && Self::check_type(obs, filter)
+            && Self::check_time(obs, filter)
+            && Self::check_branch(obs, filter)
+            && Self::check_commit(obs, filter)
     }
 
+    fn check_session(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .session_id
+            .as_ref()
+            .is_none_or(|id| obs.metadata.session_id.as_ref() == Some(id))
+    }
+
+    fn check_repo(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .repo_id
+            .as_ref()
+            .is_none_or(|id| obs.metadata.repo_id.as_ref() == Some(id))
+    }
+
+    fn check_type(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .observation_type
+            .as_ref()
+            .is_none_or(|t| &obs.observation_type == t)
+    }
+
+    fn check_time(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .time_range
+            .as_ref()
+            .is_none_or(|(start, end)| obs.created_at >= *start && obs.created_at <= *end)
+    }
+
+    fn check_branch(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .branch
+            .as_ref()
+            .is_none_or(|b| obs.metadata.branch.as_ref() == Some(b))
+    }
+
+    fn check_commit(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .commit
+            .as_ref()
+            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c))
+    }
+}
+
+impl MemoryServiceImpl {
     async fn store_observation_impl(
         &self,
         content: String,
@@ -110,9 +159,10 @@ impl MemoryServiceImpl {
             );
         }
 
+        let collection_id = CollectionId::new(crate::constants::MEMORY_COLLECTION_NAME);
         let ids = self
             .vector_store
-            .insert_vectors("memories", &[embedding], vec![vector_metadata])
+            .insert_vectors(&collection_id, &[embedding], vec![vector_metadata])
             .await?;
 
         let embedding_id = ids.first().cloned();
@@ -133,7 +183,9 @@ impl MemoryServiceImpl {
 
         Ok((observation.id, false))
     }
+}
 
+impl MemoryServiceImpl {
     async fn search_memories_impl(
         &self,
         query: &str,
@@ -143,22 +195,19 @@ impl MemoryServiceImpl {
         let candidate_limit = limit * HYBRID_SEARCH_MULTIPLIER;
 
         let query_embedding = self.embedding_provider.embed(query).await?;
+        let collection_id = CollectionId::new(MEMORY_COLLECTION_NAME);
 
-        let fts_results = self
-            .repository
-            .search_fts_ranked(query, candidate_limit)
-            .await?;
-
-        let vector_results = self
-            .vector_store
-            .search_similar(
-                "memories",
+        let (fts_result, vector_result) = tokio::join!(
+            self.repository.search(query, candidate_limit),
+            self.vector_store.search_similar(
+                &collection_id,
                 query_embedding.vector.as_slice(),
                 candidate_limit,
                 None,
-            )
-            .await
-            .unwrap_or_default();
+            ),
+        );
+        let fts_results = fts_result?;
+        let vector_results = vector_result.unwrap_or_default();
 
         let mut rrf_scores: HashMap<String, f32> = HashMap::new();
 
@@ -190,7 +239,10 @@ impl MemoryServiceImpl {
         ranked: Vec<(String, f32)>,
         filter: &MemoryFilter,
     ) -> Result<Vec<MemorySearchResult>> {
-        let top_ids: Vec<String> = ranked.iter().map(|(id, _)| id.clone()).collect();
+        let top_ids: Vec<ObservationId> = ranked
+            .iter()
+            .map(|(id, _)| ObservationId::new(id))
+            .collect();
         let observations = self.repository.get_observations_by_ids(&top_ids).await?;
 
         let obs_map: HashMap<String, Observation> = observations
@@ -216,15 +268,18 @@ impl MemoryServiceImpl {
 
         Ok(results)
     }
+}
 
+impl MemoryServiceImpl {
     fn build_memory_index(&self, results: Vec<MemorySearchResult>) -> Vec<MemorySearchIndex> {
-        const PREVIEW_LENGTH: usize = 120;
-
         results
             .into_iter()
             .map(|r| {
-                let content_preview = if r.observation.content.len() > PREVIEW_LENGTH {
-                    format!("{}...", &r.observation.content[..PREVIEW_LENGTH])
+                let content_preview = if r.observation.content.len() > OBSERVATION_PREVIEW_LENGTH {
+                    format!(
+                        "{}...",
+                        &r.observation.content[..OBSERVATION_PREVIEW_LENGTH]
+                    )
                 } else {
                     r.observation.content.clone()
                 };
@@ -246,7 +301,7 @@ impl MemoryServiceImpl {
 
     async fn create_session_summary_impl(
         &self,
-        session_id: String,
+        session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
@@ -255,7 +310,7 @@ impl MemoryServiceImpl {
         let summary = SessionSummary {
             id: Uuid::new_v4().to_string(),
             project_id: self.project_id.clone(),
-            session_id,
+            session_id: session_id.into_string(),
             topics,
             decisions,
             next_steps,
@@ -273,7 +328,7 @@ impl MemoryServiceImpl {
 
     async fn get_timeline_impl(
         &self,
-        anchor_id: &str,
+        anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
@@ -283,7 +338,10 @@ impl MemoryServiceImpl {
             .await
     }
 
-    async fn get_observations_by_ids_impl(&self, ids: &[String]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids_impl(
+        &self,
+        ids: &[ObservationId],
+    ) -> Result<Vec<Observation>> {
         self.repository.get_observations_by_ids(ids).await
     }
 
@@ -306,9 +364,11 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         observation_type: ObservationType,
         tags: Vec<String>,
         metadata: ObservationMetadata,
-    ) -> Result<(String, bool)> {
-        self.store_observation_impl(content, observation_type, tags, metadata)
-            .await
+    ) -> Result<(ObservationId, bool)> {
+        let (id, new) = self
+            .store_observation_impl(content, observation_type, tags, metadata)
+            .await?;
+        Ok((ObservationId::new(id), new))
     }
 
     async fn search_memories(
@@ -320,13 +380,13 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         self.search_memories_impl(query, filter, limit).await
     }
 
-    async fn get_session_summary(&self, session_id: &str) -> Result<Option<SessionSummary>> {
+    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
         self.repository.get_session_summary(session_id).await
     }
 
     async fn create_session_summary(
         &self,
-        session_id: String,
+        session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
@@ -336,7 +396,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .await
     }
 
-    async fn get_observation(&self, id: &str) -> Result<Option<Observation>> {
+    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         self.repository.get_observation(id).await
     }
 
@@ -346,7 +406,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
 
     async fn get_timeline(
         &self,
-        anchor_id: &str,
+        anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
@@ -355,7 +415,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .await
     }
 
-    async fn get_observations_by_ids(&self, ids: &[String]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
         self.get_observations_by_ids_impl(ids).await
     }
 

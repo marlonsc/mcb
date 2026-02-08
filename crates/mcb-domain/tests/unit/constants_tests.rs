@@ -14,38 +14,29 @@ fn test_indexing_constants() {
 }
 
 #[test]
-#[allow(clippy::assertions_on_constants)]
 fn test_indexing_constants_relationships() {
-    // Test that constants have reasonable relationships
-    // These assertions document expected properties even though they're
-    // evaluated at compile time
-    assert!(INDEXING_CHUNK_MIN_LENGTH > 0);
-    assert!(INDEXING_CHUNK_MIN_LINES > 0);
-    assert!(INDEXING_BATCH_SIZE > 0);
-    assert!(INDEXING_CHUNKS_MAX_PER_FILE > 0);
+    let min_len = INDEXING_CHUNK_MIN_LENGTH;
+    let min_lines = INDEXING_CHUNK_MIN_LINES;
+    let batch = INDEXING_BATCH_SIZE;
+    let max_chunks = INDEXING_CHUNKS_MAX_PER_FILE;
 
-    // Test that batch size is reasonable
-    assert!(INDEXING_BATCH_SIZE >= 1);
-    assert!(INDEXING_BATCH_SIZE <= 100);
-
-    // Test that chunk limits are reasonable
-    assert!(INDEXING_CHUNK_MIN_LENGTH >= 10);
-    assert!(INDEXING_CHUNK_MIN_LINES >= 1);
-    assert!(INDEXING_CHUNKS_MAX_PER_FILE >= 10);
-    assert!(INDEXING_CHUNKS_MAX_PER_FILE <= 200);
+    assert!(min_len > 0);
+    assert!(min_lines > 0);
+    assert!(batch > 0);
+    assert!(max_chunks > 0);
+    assert!((1..=100).contains(&batch));
+    assert!(min_len >= 10);
+    assert!(min_lines >= 1);
+    assert!((10..=200).contains(&max_chunks));
 }
 
 #[test]
-#[allow(clippy::assertions_on_constants)]
 fn test_constants_are_compile_time() {
-    // These are compile-time constants, so they should be accessible
-    // without any runtime computation
-    let _batch_size = INDEXING_BATCH_SIZE;
-    let _min_length = INDEXING_CHUNK_MIN_LENGTH;
+    let batch_size = INDEXING_BATCH_SIZE;
+    let min_length = INDEXING_CHUNK_MIN_LENGTH;
     let _min_lines = INDEXING_CHUNK_MIN_LINES;
     let _max_chunks = INDEXING_CHUNKS_MAX_PER_FILE;
 
-    // Just verify they can be used in expressions
-    assert!(INDEXING_BATCH_SIZE * 2 == 20);
-    assert!(INDEXING_CHUNK_MIN_LENGTH + 5 == 30);
+    assert_eq!(batch_size * 2, 20);
+    assert_eq!(min_length + 5, 30);
 }

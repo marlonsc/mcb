@@ -136,7 +136,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
             let rule_code = if raw_code.starts_with("clippy::") {
                 raw_code
             } else {
-                format!("clippy::{}", raw_code)
+                format!("clippy::{raw_code}")
             };
 
             violations.push(LintViolation {
@@ -177,10 +177,9 @@ pub fn find_project_root(files: &[&Path]) -> Option<std::path::PathBuf> {
 /// Map Ruff severity
 pub fn map_ruff_severity(code: &str) -> String {
     match code.chars().next() {
-        Some('F') => "error".to_string(),   // Pyflakes
-        Some('E') => "error".to_string(),   // pycodestyle errors
-        Some('W') => "warning".to_string(), // pycodestyle warnings
-        _ => "info".to_string(),
+        Some('F' | 'E') => "error".to_string(), // Pyflakes / pycodestyle errors
+        Some('W') => "warning".to_string(),     // pycodestyle warnings
+        Some(_) | None => "info".to_string(),
     }
 }
 
@@ -189,8 +188,6 @@ pub fn map_clippy_level(level: &str) -> String {
     match level {
         "error" => "error".to_string(),
         "warning" => "warning".to_string(),
-        "note" => "info".to_string(),
-        "help" => "info".to_string(),
-        _ => "info".to_string(),
+        _ => "info".to_string(), // note, help, and others
     }
 }

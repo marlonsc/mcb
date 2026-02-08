@@ -1,4 +1,16 @@
-# ADR 005: Context Cache Support (Moka and Redis)
+---
+adr: 5
+title: Context Cache Support (Moka and Redis)
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
+## ADR 005: Context Cache Support (Moka and Redis)
 
 ## Status
 

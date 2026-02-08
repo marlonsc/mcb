@@ -123,7 +123,7 @@ make adr-status    # ADR lifecycle status
 
 Obsolete scripts moved to `archive/`:
 
--   Consolidated features in `automation.sh`
+-   features in `automation.sh`
 -   Elimination of **81.25% of duplicate code**
 -   Simplified maintenance
 

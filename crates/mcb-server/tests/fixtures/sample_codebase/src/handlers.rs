@@ -17,7 +17,10 @@ impl SearchHandler {
 
     /// Handle MCP search request
     pub async fn handle_search(&self, request: SearchRequest) -> Result<SearchResponse, Error> {
-        let results = self.search_service.search(&request.query, request.limit).await?;
+        let results = self
+            .search_service
+            .search(&request.query, request.limit)
+            .await?;
         Ok(SearchResponse { results })
     }
 }
@@ -34,7 +37,10 @@ impl IndexHandler {
 
     /// Handle MCP index codebase request
     pub async fn handle_index(&self, request: IndexRequest) -> Result<IndexResponse, Error> {
-        let stats = self.indexing_service.index_codebase(&request.path, &request.collection).await?;
+        let stats = self
+            .indexing_service
+            .index_codebase(&request.path, &request.collection)
+            .await?;
         Ok(IndexResponse { stats })
     }
 }
@@ -77,12 +83,20 @@ pub struct IndexingStats {
 
 /// Search service trait
 pub trait SearchService: Send + Sync {
-    fn search(&self, query: &str, limit: usize) -> impl std::future::Future<Output = Result<Vec<SearchResult>, Error>> + Send;
+    fn search(
+        &self,
+        query: &str,
+        limit: usize,
+    ) -> impl std::future::Future<Output = Result<Vec<SearchResult>, Error>> + Send;
 }
 
 /// Indexing service trait
 pub trait IndexingService: Send + Sync {
-    fn index_codebase(&self, path: &str, collection: &str) -> impl std::future::Future<Output = Result<IndexingStats, Error>> + Send;
+    fn index_codebase(
+        &self,
+        path: &str,
+        collection: &str,
+    ) -> impl std::future::Future<Output = Result<IndexingStats, Error>> + Send;
 }
 
 /// Error type for handlers

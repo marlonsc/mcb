@@ -3,13 +3,15 @@
 //! Provides health check endpoints and health monitoring capabilities
 //! for system status assessment and monitoring.
 
-use crate::logging::log_health_check;
-use mcb_domain::error::Result;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use mcb_domain::error::Result;
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
+
+use crate::logging::log_health_check;
 
 /// Health status enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

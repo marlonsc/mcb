@@ -20,7 +20,17 @@ metrics:
   halstead_volume:
     max: 1000
     severity: warning
-    languages: ["rust", "python", "javascript", "typescript", "java", "c", "cpp", "kotlin"]
+    languages:
+      [
+        "rust",
+        "python",
+        "javascript",
+        "typescript",
+        "java",
+        "c",
+        "cpp",
+        "kotlin",
+      ]
 
 thresholds:
   - value: 1000

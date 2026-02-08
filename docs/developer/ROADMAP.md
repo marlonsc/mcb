@@ -8,10 +8,129 @@ This roadmap outlines the development of MCP Context Browser, a drop-in replacem
 
 ## Current Status
 
-### v0.1.4 - RCA Integration + Security Fixes 🚀 CURRENT
+### v0.2.0 - Documentation Refactoring 🎉 RELEASED
+
+**Status**: Released
+**Release Date**: February 5, 2026
+**Key Architecture**: ADR-003 (Provider), ADR-029 (Hexagonal DI)
+
+MCP Context Browser v0.2.0 completes documentation refactoring with ADR consolidation, YAML metadata standardization, and cross-reference updates.
+
+#### Achievements
+
+**Documentation Consolidation:**
+
+-   ✅ 44 ADRs with standardized YAML frontmatter (ADR, title, status, created, updated, related, supersedes, superseded_by, implementation_status)
+-   ✅ 3 deprecated ADRs archived to `docs/adr/archive/` (ADR-012, ADR-024, ADR-032)
+-   ✅ ADR-003 + ADR-030 into unified "Provider Architecture & Routing"
+-   ✅ 5-value status set standardized (IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED)
+
+**Cross-Reference Updates:**
+
+-   ✅ All Shaku references removed (→ ADR-029 dill-based DI)
+-   ✅ ADR-024 → ADR-029 migration documented
+-   ✅ ADR-030 → ADR-003 consolidation verified
+-   ✅ ADR-032 → ADR-034 supersession mapped
+
+**Metrics:**
+
+-   ADRs: 44 with metadata, 3 archived, 1 consolidation
+-   Tests: 2040+ passing
+-   Code: 7 commits, 801+ lines added, 874+ lines removed (net cleanup)
+-   Violations: 0 architecture, 0 lint errors
+
+---
+
+### v0.3.0 - Workflow System Implementation 🚀 IN DEVELOPMENT
+
+**Status**: Planning/Spec Finalization
+**Target Date**: Q1 2026 (4-8 weeks)
+**Key Architecture**: ADR-034 (FSM), ADR-035 (Scout), ADR-036 (Policies), ADR-037 (Orchestrator), ADR-038 (Tiers)
+
+MCP Context Browser v0.3.0 implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
+
+#### Planned Achievements
+
+**Workflow Core (ADR-034-038):**
+
+-   WorkflowFSM state machine for task orchestration
+-   ContextScout for context gathering and search
+-   PolicyEngine for workflow validation and enforcement
+-   TaskOrchestrator for multi-layer task coordination
+-   ExecutionTiers for hierarchical execution management
+
+**Infrastructure:**
+
+-   5 new workflow system modules/crates
+-   Unit tests (target: 95%+ coverage)
+-   Integration tests with existing providers
+-   Complete rustdoc API documentation
+
+**Quality & Release:**
+
+-   `make quality` passes (0 errors)
+-   `make validate` passes (0 violations)
+-   Performance benchmarks
+-   Migration guide from v0.2.0
+
+**Estimated Effort**: 4-8 weeks (parallelizable features)
+
+#### Unblocks
+
+-   ✅ v0.4.0 Integrated Context System (depends on workflow APIs)
+-   ✅ Multi-agent collaboration infrastructure
+-   ✅ Session lifecycle management
+
+---
+
+### v0.4.0 - Integrated Context System 🎨 PLANNED
+
+**Status**: Design Phase (Parallel to v0.3.0)
+**Target Date**: Q2 2026 (after v0.3.0)
+**Key Architecture**: ADR-041-046 (Context System), depends on v0.3.0 APIs
+
+MCP Context Browser v0.4.0 implements integrated context system with multi-agent collaboration, context merging, and session lifecycle management.
+
+#### Planned Achievements
+
+**Context System:**
+
+-   Multi-agent context aggregation
+-   Context merging and conflict resolution
+-   Session-based lifecycle management
+-   Global memory patterns
+-   Hierarchical planning support
+
+**Integration:**
+
+-   Workflow FSM extensions (v0.3.0 compatibility)
+-   Context Scout multi-agent support
+-   Policy-aware context merging
+-   Task orchestration with context awareness
+
+**Quality & Release:**
+
+-   Full integration test suite
+-   Performance benchmarks (context merging)
+-   Documentation + examples
+-   Migration guide from v0.3.0
+
+**Estimated Effort**: 6-10 weeks (dependent on v0.3.0)
+
+#### Coordination
+
+-   **Sync**: Weekly with v0.3.0 agent
+-   **API Lock-in**: Week 6 (v0.3.0 finalizes interfaces)
+-   **Implementation Start**: Week 8 (post v0.3.0 release)
+-   **Timeline**: Q2 2026 release
+
+---
+
+### v0.1.4 - RCA Integration + Security Fixes ✅ PREVIOUS
 
 **Status**: Released
 **Release Date**: January 28, 2026
+**Key Architecture**: ADR-001 (Modular Crates), ADR-002 (Async-First), ADR-029 (Hexagonal DI)
 
 MCP Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes security vulnerabilities, and updates dependencies.
 
@@ -53,6 +172,7 @@ MCP Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes
 
 **Status**: Released
 **Release Date**: January 18, 2026
+**Key Architecture**: ADR-023 (Linkme Migration), ADR-027 (Architecture Evolution)
 
 MCP Context Browser v0.1.2 modernizes provider registration using compile-time linkme distributed slices and introduces the mcb-validate crate scaffolding.
 
@@ -73,7 +193,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 -   ✅ Phase 3: Rule Engines verified (30/30 tests pass)
 -   ✅ Phases 4–7: Metrics, Duplication, Architecture (CA001–CA009), Integration verified
 -   ✅ 12 migration validation rules (YAML files in rules/migration/)
--   ✅ 750+ mcb-validate tests; 1924+ tests project-wide
+-   ✅ 750+ mcb-validate tests; 2966+ tests project-wide
 
 **Admin UI Code Browser:**
 
@@ -89,20 +209,20 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 **Maintained from v0.1.1:**
 
--   ✅ 1924+ tests with comprehensive coverage (100% pass rate)
--   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   ✅ 8 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
+-   ✅ 2966+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
+-   ✅ 6 vector stores (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
 -   ✅ 14 languages with AST parsing support
 -   ✅ Clean architecture with dill-based DI (ADR-029)
 
 #### Technical Metrics
 
 -   **Source Files**: 340+ Rust files
--   **Test Suite**: 1924+ tests passing
+-   **Test Suite**: 2966+ tests passing
 -   **Crates**: 8 (7 + mcb-validate)
 -   **Validation Rules**: 12 YAML migration rules; CA001–CA009 architecture rules
 -   **Provider Registration**: Compile-time via linkme (inventory removed)
--   **mcb-validate Status**: Phases 1–7 verified (1924+ tests)
+-   **mcb-validate Status**: Phases 1–7 verified (2966+ tests)
 
 ---
 
@@ -112,6 +232,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 
 **Status**: Production-Ready
 **Release Date**: January 11, 2026
+**Key Architecture**: ADR-001 (Modular Crates), ADR-002 (Async-First), ADR-013 (Clean Architecture)
 
 MCP Context Browser v0.1.0 is the first stable release, providing a complete drop-in replacement for Claude-context with superior performance and expanded capabilities.
 
@@ -119,10 +240,10 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 
 -   ✅ Full MCP protocol implementation (4 tools)
 -   ✅ 14 languages with AST parsing (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
--   ✅ 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   ✅ 8 vector stores (In-Memory, Encrypted, Null)
+-   ✅ 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
+-   ✅ 6 vector stores (In-Memory, Encrypted, Null)
 -   ✅ Claude-context environment variable compatibility
--   ✅ 1924+ tests with comprehensive coverage (100% pass rate)
+-   ✅ 2966+ tests with comprehensive coverage (100% pass rate)
 -   ✅ JWT authentication and rate limiting
 -   ✅ Clean architecture with trait-based dependency injection
 -   ✅ HTTP transport foundation for future enhancements
@@ -133,33 +254,42 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 
 ## Upcoming Releases
 
-### v0.2.0 - Git-Aware Indexing + Session Memory + Advanced Browser 🚧 PLANNED
+### v0.3.0 - Workflow System + Feature Implementation 🚀 IN DEVELOPMENT
 
-**Status**: Planning Complete (ADR-008, ADR-009, ADR-028)
+**Status**: Planning/Spec Finalization
+**Target Date**: Q1 2026 (4-8 weeks)
 **Priority**: High
-**Estimated Effort**: 25 phases (10 git + 10 memory + 5 browser)
+**Key Architecture**: ADR-008 (Git-Aware Indexing), ADR-009 (Session Memory), ADR-028 (Code Browser), ADR-034 (FSM), ADR-035 (Scout), ADR-036 (Policies), ADR-037 (Orchestrator), ADR-038 (Tiers)
 
 #### Vision
 
-Transform MCP Context Browser into a comprehensive development platform combining git-aware semantic search with persistent cross-session memory and IDE-like code browsing, enabling powerful code navigation and context preservation across Claude Code sessions.
+Transform MCP Context Browser into a comprehensive development platform combining FSM-based task orchestration with git-aware semantic search, persistent cross-session memory, and IDE-like code browsing.
 
 #### Objectives
 
-1.**Git-Aware Semantic Indexing**(ADR-008)
+**Workflow Core (ADR-034-038):**
+
+-   WorkflowFSM state machine for task orchestration
+-   ContextScout for context gathering and search
+-   PolicyEngine for workflow validation and enforcement
+-   TaskOrchestrator for multi-layer task coordination
+-   ExecutionTiers for hierarchical execution management
+
+**Git-Aware Semantic Indexing (ADR-008):**
 
 -   Project-relative indexing (portable)
 -   Multi-branch support with commit history
 -   Change impact analysis
 -   Monorepo and submodule support
 
-2.**Persistent Session Memory**(ADR-009)
+**Persistent Session Memory (ADR-009):**
 
 -   Cross-session observation storage
 -   Semantic search over past decisions and work
 -   Token-efficient progressive disclosure (3-layer workflow)
 -   Context injection for session continuity
 
-3.**Advanced Code Browser UI**(ADR-028)
+**Advanced Code Browser UI (ADR-028):**
 
 -   Tree view navigation with collapsible directories
 -   Full syntax highlighting with chunk boundary markers
@@ -167,110 +297,36 @@ Transform MCP Context Browser into a comprehensive development platform combinin
 -   Keyboard shortcuts and dark mode
 -   Real-time SSE updates during indexing
 
-#### New Capabilities - Git Integration
+#### Infrastructure
 
-| Capability | Description |
-|------------|-------------|
-| Repository ID | Portable identification via root commit hash |
-| Multi-Branch Indexing | Index main, HEAD, and current branch (configurable) |
-| Commit History | Last 50 commits indexed by default |
-| Submodule Support | Recursive indexing as separate projects |
-| Project Detection | Auto-detect Cargo, npm, Python, Go, Maven projects in monorepos |
-| Impact Analysis | Semantic analysis of change impact between refs |
+-   5+ new workflow system modules
+-   Unit tests (target: 95%+ coverage)
+-   Integration tests with existing providers
+-   Complete rustdoc API documentation
 
-#### New Capabilities - Session Memory
+#### Quality & Release
 
-| Capability | Description |
-|------------|-------------|
-| Observation Storage | Persistent storage of tool outputs with metadata |
-| Session Summaries | Comprehensive session-level summaries |
-| Hybrid Search | Search memory using BM25 + vector embeddings |
-| Progressive Disclosure | 3-layer workflow: search → timeline → get_observations (10x token savings) |
-| Context Injection | Automatic context generation for SessionStart hooks |
-| Git-Tagged Memory | Observations tagged with git context (branch, commit) |
+-   `make quality` passes (0 errors)
+-   `make validate` passes (0 violations)
+-   Performance benchmarks
+-   Migration guide from v0.2.0
 
-#### New Capabilities - Code Browser
+**Estimated Effort**: 4-8 weeks (parallelizable features)
 
-| Capability | Description |
-|------------|-------------|
-| Tree View Navigation | Collapsible directory tree for large codebases |
-| Enhanced Code Display | Tree-sitter highlighting with chunk boundaries |
-| Search Integration | Inline semantic search results with similarity scores |
-| Keyboard Navigation | Vim-like shortcuts (j/k scroll, Enter to open) |
-| Real-time Updates | SSE events for indexing progress and updates |
-| Dark Mode | CSS variable-based theming |
+#### Unblocks
 
-#### New MCP Tools - Git
-
-| Tool | Purpose |
-|------|---------|
-| `index_git_repository` | Index repository with branch awareness |
-| `search_branch` | Search within specific branch |
-| `compare_branches` | Compare code between branches |
-| `analyze_impact` | Analyze change impact between refs |
-| `list_repositories` | List indexed repositories |
-
-#### New MCP Tools - Memory
-
-| Tool | Purpose |
-|------|---------|
-| `search` | Step 1: Search memory index (token-efficient) |
-| `timeline` | Step 2: Get chronological context around results |
-| `get_observations` | Step 3: Fetch full details for filtered IDs |
-| `store_observation` | Store tool observation (PostToolUse hook) |
-| `inject_context` | Generate context for SessionStart hook |
-
-#### Technical Details
-
-**Git Integration:**
-
--   **New Dependency**: git2 (libgit2 bindings)
--   **New Files**: ~12 source files
--   **Estimated LOC**: ~2500
--   **ADR**: [008-git-aware-semantic-indexing-v0.2.0](../adr/008-git-aware-semantic-indexing-v0.2.0.md)
-
-**Session Memory:**
-
--   **New Dependency**: sqlx (SQLite support)
--   **New Files**: ~15 source files
--   **Estimated LOC**: ~3000
--   **ADR**: [009-persistent-session-memory-v0.2.0](../adr/009-persistent-session-memory-v0.2.0.md)
-
-**Code Browser:**
-
--   **New Dependencies**: Alpine.js (CDN)
--   **New Files**: ~6 source files
--   **Estimated LOC**: ~1500
--   **ADR**: [028-advanced-code-browser-v020](../adr/028-advanced-code-browser-v020.md)
--   **Foundation**: v0.1.2 basic browse (already implemented)
-
-#### Configuration Defaults
-
-**Git Settings:**
-
-| Setting | Default | Override |
-|---------|---------|----------|
-| Branches | main, HEAD, current | Per-repo via `.mcp-context.toml` |
-| History depth | 50 commits | Per-repo |
-| Submodules | Recursive indexing | Per-repo |
-
-**Memory Settings:**
-
-| Setting | Default | Override |
-|---------|---------|----------|
-| Database | ~/.mcb/memory.db | Global config |
-| Observation types | decision, bugfix, feature | Per-project |
-| Observation limit | 20 | Per-request |
-| Date range | 30 days | Per-request |
-| SDK compression | Disabled | Opt-in |
+-   ✅ v0.4.0 Integrated Context System (depends on workflow APIs)
+-   ✅ Multi-agent collaboration infrastructure
+-   ✅ Session lifecycle management
 
 ---
 
-### v0.3.0 - Advanced Code Intelligence 📋 FUTURE
+### Future - Advanced Code Intelligence 📋 CONCEPTUAL
 
 **Status**: Conceptual
 **Priority**: Medium
-**Dependencies**: v0.2.0 completion
+**Dependencies**: v0.3.0 completion
+**Key Architecture**: ADR-039 (Symbol Extraction), ADR-040 (Call Graph Analysis)
 
 #### Vision
 
@@ -303,41 +359,69 @@ Enhance semantic code search with deep code intelligence features, enabling adva
 
 ---
 
-### v0.4.0 - Enterprise Features 📋 FUTURE
+### v0.4.0 - Integrated Context System 📋 PLANNED
 
-**Status**: Conceptual
-**Priority**: Medium
+**Status**: Planning Complete (ADR-041-046)
+**Priority**: High
 **Dependencies**: v0.3.0 completion
+**Timeline**: Feb 17 - Mar 16, 2026 (4 weeks)
+**Key Architecture**: ADR-041-046 (Context Architecture, Knowledge Graph, Hybrid Search, Versioning, Integration)
 
 #### Vision
 
-Transform MCP Context Browser into an enterprise-ready platform with multi-tenancy, advanced security, compliance features, and comprehensive administrative capabilities suitable for large organizations.
+Implement an integrated context system with knowledge graphs, freshness tracking, and time-travel queries. This system enables intelligent, adaptive code search with temporal awareness and policy-driven context discovery.
 
 #### Objectives
 
 | Feature | Description | Benefit |
 |---------|-------------|---------|
-|**Multi-Tenant Support**| Isolated workspaces with resource quotas | Support multiple teams/projects |
-|**Advanced RBAC**| Role-based access control with team permissions | Granular security control |
-|**SSO Integration**| SAML 2.0, OIDC, Active Directory support | Enterprise authentication |
-|**Enhanced Audit Logging**| Comprehensive activity tracking with retention | Compliance and security |
-|**Cost Tracking**| Per-tenant API usage and cost allocation | Budget management |
-|**Admin Dashboard**| Web-based administrative interface | Centralized management |
+|**Knowledge Graph**| Code relationships (calls, imports, extends) | Understand code structure and dependencies |
+|**Freshness Tracking**| Temporal metadata and staleness signals | Find current, relevant code patterns |
+|**Time-Travel Queries**| Query code as it existed at specific commits | Understand code evolution and regressions |
+|**Hybrid Search**| RRF fusion of semantic + keyword search | Better relevance through dual ranking |
+|**Context Snapshots**| Immutable captures of code state | Enable temporal queries and versioning |
+|**Policy-Driven Discovery**| Freshness and validation policies | Enforce context quality standards |
 
 #### Technical Approach
 
--   **Multi-Tenancy Architecture**: Tenant isolation at database and provider level
--   **Authentication Layer**: OAuth2/OIDC integration with configurable providers
--   **Audit System**: Structured logging with tamper-proof audit trail
--   **Metrics per Tenant**: Prometheus labels for tenant-specific monitoring
--   **Web Admin UI**: Expand ADR-007 admin interface with tenant management
+-   **5-Layer Architecture**: Code indexing → Graph → Hybrid search → Versioning → Integration
+-   **Knowledge Graph**: petgraph-based with relationship types (calls, imports, extends, implements)
+-   **Hybrid Search**: RRF (Reciprocal Rank Fusion) combining semantic embeddings + BM25 keyword search
+-   **Snapshot Versioning**: Immutable captures at commits/tags with temporal query support
+-   **Policy Enforcement**: Freshness gates and validation at FSM state boundaries
+-   **MCP Integration**: Enhanced search, index, memory, session tools with new parameters
+
+#### New Capabilities
+
+**Freshness-Aware Search**:
+
+```bash
+mcb search --query "authenticate" --freshness-max-age 7
+# Returns only patterns < 7 days old with staleness warnings
+```
+
+**Time-Travel Queries**:
+
+```bash
+mcb search --query "auth" --snapshot v0.2.0
+# Show authentication patterns as they existed in v0.2.0
+```
+
+**Policy-Driven Context**:
+
+```bash
+mcb search --query "API docs" --policy api_docs
+# Apply "API docs must be < 7 days old" policy
+```
 
 #### Success Metrics
 
--   Tenant isolation: 100% (no cross-tenant data leakage)
--   SSO integration: <5 min setup time
--   Audit completeness: 100% of API calls logged
--   Admin UI availability: 99.9% uptime
+-   2966+ tests passing (unit, integration, end-to-end)
+-   Knowledge graph: <1s for 10,000 nodes
+-   Hybrid search: <500ms average query time
+-   Snapshot creation: <5s for large codebases
+-   Zero architecture violations
+-   Complete documentation and migration guide
 
 ---
 
@@ -346,6 +430,7 @@ Transform MCP Context Browser into an enterprise-ready platform with multi-tenan
 **Status**: Conceptual
 **Priority**: High
 **Dependencies**: v0.4.0 completion
+**Key Architecture**: ADR-044 (HA Architecture), ADR-045 (Disaster Recovery), ADR-046 (Compliance Framework)
 
 #### Vision
 
@@ -402,10 +487,10 @@ Deliver a fully production-ready enterprise platform with SLA guarantees, profes
 | v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
 | v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
 | v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
-| v0.1.4 | **Current** | Complete RCA integration, atty security fix, dependency updates, 1924+ tests |
-| v0.2.0 | Planned | Git-aware indexing, session memory, advanced code browser |
-| v0.3.0 | Future | Advanced code intelligence |
-| v0.4.0 | Future | Enterprise features |
+| v0.1.4 | Released | Complete RCA integration, atty security fix, dependency updates, 2966+ tests |
+| v0.2.0 | **Released** | Documentation refactoring, ADR consolidation, architecture audit |
+| v0.3.0 | **In Development** | Workflow System (ADR-034-038), Git indexing, Session memory, Code browser |
+| v0.4.0 | Planned | Integrated Context System (Phase 9: Knowledge Graph, Hybrid Search, Versioning) |
 | v1.0.0 | Future | Production enterprise |
 
 ---

@@ -16,6 +16,9 @@ const INDEXING_HTML: &str = include_str!("templates/indexing.html");
 const BROWSE_HTML: &str = include_str!("templates/browse.html");
 const BROWSE_COLLECTION_HTML: &str = include_str!("templates/browse_collection.html");
 const BROWSE_FILE_HTML: &str = include_str!("templates/browse_file.html");
+const BROWSE_TREE_HTML: &str = include_str!("templates/browse_tree.html");
+const SHARED_JS: &str = include_str!("templates/shared.js");
+const THEME_CSS: &str = include_str!("templates/theme.css");
 
 /// Dashboard page handler
 #[get("/")]
@@ -56,6 +59,18 @@ pub fn favicon() -> (ContentType, &'static str) {
     )
 }
 
+/// Theme CSS handler
+#[get("/ui/theme.css")]
+pub fn theme_css() -> (ContentType, &'static str) {
+    (ContentType::CSS, THEME_CSS)
+}
+
+/// Shared JavaScript utilities for admin UI
+#[get("/ui/shared.js")]
+pub fn shared_js() -> (ContentType, &'static str) {
+    (ContentType::JavaScript, SHARED_JS)
+}
+
 /// Browse collections page handler
 #[get("/ui/browse")]
 pub fn browse_page() -> RawHtml<&'static str> {
@@ -72,4 +87,10 @@ pub fn browse_collection_page(_collection: &str) -> RawHtml<&'static str> {
 #[get("/ui/browse/<_collection>/file")]
 pub fn browse_file_page(_collection: &str) -> RawHtml<&'static str> {
     RawHtml(BROWSE_FILE_HTML)
+}
+
+/// Browse tree view page handler (Phase 8b Wave 3)
+#[get("/ui/browse/tree")]
+pub fn browse_tree_page() -> RawHtml<&'static str> {
+    RawHtml(BROWSE_TREE_HTML)
 }

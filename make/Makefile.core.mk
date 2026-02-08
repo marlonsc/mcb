@@ -19,10 +19,10 @@ export TEST_THREADS ?= 0
 build: ## Build project (RELEASE=1 for release)
 ifeq ($(RELEASE),1)
 	@echo "Building release..."
-	cargo build --release --features "full"
+	cargo build --release
 else
 	@echo "Building debug..."
-	cargo build --features "full"
+	cargo build
 endif
 
 # =============================================================================
@@ -44,7 +44,7 @@ else ifeq ($(SCOPE),doc)
 	@echo "Running doctests..."
 	MCP_PORT=$(MCP_PORT) cargo test --doc --workspace $(TEST_THREADS_FLAG)
 else ifeq ($(SCOPE),golden)
-	@echo "Running golden acceptance and tools e2e tests..."
+	@echo "Running golden tests (acceptance + tools e2e + E2E)..."
 	MCP_PORT=$(MCP_PORT) cargo test -p mcb-server golden -- --nocapture $(TEST_THREADS_FLAG)
 else ifeq ($(SCOPE),integration)
 	@echo "Running integration tests..."
@@ -54,7 +54,7 @@ else ifeq ($(SCOPE),modes)
 	MCP_PORT=$(MCP_PORT) cargo test -p mcb-server operating_modes -- --nocapture $(TEST_THREADS_FLAG)
 else
 	@echo "Running all tests..."
-	MCP_PORT=$(MCP_PORT) cargo test --workspace --features "full" $(TEST_THREADS_FLAG)
+	MCP_PORT=$(MCP_PORT) cargo test --workspace $(TEST_THREADS_FLAG)
 endif
 
 # =============================================================================

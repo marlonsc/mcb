@@ -8,23 +8,23 @@
 //!
 //! ```text
 //!                    ┌─────────────────┐
-//!                    │  ServiceManager │
+//!                    │   ServiceManager   │
 //!                    └────────┬────────┘
-//!                             │
-//!        ┌────────────────────┼────────────────────┐
-//!        │                    │                    │
+//!                              │
+//!        ┌──────────── ─────┼─────────────────┐
+//!        │                     │                    │
 //!        ▼                    ▼                    ▼
 //! ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-//! │   Service A  │    │   Service B  │    │   Service C  │
-//! │ (Embedding)  │    │ (VectorStore)│    │   (Cache)    │
+//! │    Service A   │    │    Service B    │    │    Service C   │
+//! │  (Embedding)   │    │  (VectorStore)  │    │    (Cache)     │
 //! └──────────────┘    └──────────────┘    └──────────────┘
 //!        │                    │                    │
-//!        └────────────────────┼────────────────────┘
+//!        └─────────────────┼─────────────────┘
 //!                             │
 //!                             ▼
 //!                    ┌─────────────────┐
-//!                    │    EventBus     │
-//!                    │ (SSE/WebSocket) │
+//!                    │      EventBus      │
+//!                    │  (SSE/WebSocket)   │
 //!                    └─────────────────┘
 //! ```
 //!
@@ -47,6 +47,9 @@
 //! manager.restart("embedding").await?;
 //! ```
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use dashmap::DashMap;
 use mcb_domain::events::{DomainEvent, ServiceState as EventServiceState};
 use mcb_domain::ports::admin::{
@@ -54,8 +57,6 @@ use mcb_domain::ports::admin::{
 };
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use serde::Serialize;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::sync::Notify;
 use tracing::{error, info, warn};
 

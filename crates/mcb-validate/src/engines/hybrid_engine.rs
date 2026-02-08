@@ -5,21 +5,21 @@
 //! - rusty-rules: Composable rules with JSON DSL
 //! - validator/garde: Field validations
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::Result;
-use crate::ValidationConfig;
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 
 use super::expression_engine::ExpressionEngine;
 use super::rete_engine::ReteEngine;
 use super::router::RuleEngineRouter;
-use super::rust_rule_engine::RustRuleEngineWrapper;
+
 use super::rusty_rules_engine::RustyRulesEngineWrapper;
 use super::validator_engine::ValidatorEngine;
+use crate::Result;
+use crate::ValidationConfig;
 use crate::linters::{LintViolation, LinterEngine, LinterType};
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
 
 /// Types of rule engines supported
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -38,13 +38,21 @@ pub enum RuleEngineType {
 /// Concrete violation structure for rule engines
 #[derive(Debug, Clone)]
 pub struct RuleViolation {
+    /// Unique identifier for the violation
     pub id: String,
+    /// Category of the violation (SOLID, quality, etc.)
     pub category: ViolationCategory,
+    /// Severity level
     pub severity: Severity,
+    /// Detailed error message
     pub message: String,
+    /// Path to the file containing the violation
     pub file: Option<std::path::PathBuf>,
+    /// Line number of the violation
     pub line: Option<usize>,
+    /// Column number of the violation
     pub column: Option<usize>,
+    /// Additional context or code snippet
     pub context: Option<String>,
 }
 
@@ -81,6 +89,7 @@ impl std::fmt::Display for RuleViolation {
 }
 
 impl RuleViolation {
+    /// Create a new rule violation
     pub fn new(
         id: impl Into<String>,
         category: ViolationCategory,
@@ -99,17 +108,23 @@ impl RuleViolation {
         }
     }
 
+    /// Attach personal file to the violation
+    #[must_use]
     pub fn with_file(mut self, file: std::path::PathBuf) -> Self {
         self.file = Some(file);
         self
     }
 
+    /// Set the location of the violation
+    #[must_use]
     pub fn with_location(mut self, line: usize, column: usize) -> Self {
         self.line = Some(line);
         self.column = Some(column);
         self
     }
 
+    /// Attach context information
+    #[must_use]
     pub fn with_context(mut self, context: impl Into<String>) -> Self {
         self.context = Some(context.into());
         self
@@ -119,23 +134,37 @@ impl RuleViolation {
 /// Result of rule execution
 #[derive(Debug, Clone)]
 pub struct RuleResult {
+    /// List of violations found
     pub violations: Vec<RuleViolation>,
+    /// Total time taken for execution
     pub execution_time_ms: u64,
 }
+
+use crate::extractor::Fact;
+use crate::graph::DependencyGraph;
+use std::sync::Arc;
 
 /// Context passed to rule engines during execution
 #[derive(Debug, Clone)]
 pub struct RuleContext {
+    /// Path to the workspace root
     pub workspace_root: std::path::PathBuf,
+    /// Global validation configuration
     pub config: ValidationConfig,
+    /// Pre-parsed AST data for analysis
     pub ast_data: HashMap<String, serde_json::Value>,
+    /// Cargo package metadata
     pub cargo_data: HashMap<String, serde_json::Value>,
+    /// Raw file contents
     pub file_contents: HashMap<String, String>,
+    /// Extracted Facts (New System)
+    pub facts: Arc<Vec<Fact>>,
+    /// Dependency Graph (New System)
+    pub graph: Arc<DependencyGraph>,
 }
 
 /// Hybrid engine that coordinates multiple rule engines
 pub struct HybridRuleEngine {
-    rust_rule_engine: RustRuleEngineWrapper,
     rusty_rules_engine: RustyRulesEngineWrapper,
     expression_engine: ExpressionEngine,
     rete_engine: ReteEngine,
@@ -148,7 +177,6 @@ impl HybridRuleEngine {
     /// Create a new hybrid rule engine
     pub fn new() -> Self {
         Self {
-            rust_rule_engine: RustRuleEngineWrapper::new(),
             rusty_rules_engine: RustyRulesEngineWrapper::new(),
             expression_engine: ExpressionEngine::new(),
             rete_engine: ReteEngine::new(),
@@ -170,9 +198,7 @@ impl HybridRuleEngine {
 
         let violations = match engine_type {
             RuleEngineType::RustRuleEngine => {
-                self.rust_rule_engine
-                    .execute(rule_definition, context)
-                    .await?
+                self.rete_engine.execute(rule_definition, context).await?
             }
             RuleEngineType::RustyRules => {
                 self.rusty_rules_engine
@@ -190,6 +216,7 @@ impl HybridRuleEngine {
             }
         };
 
+        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -211,6 +238,7 @@ impl HybridRuleEngine {
 
         let violations = self.router.execute(rule_definition, context).await?;
 
+        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -252,11 +280,11 @@ impl HybridRuleEngine {
             match handle.await {
                 Ok((rule_id, Ok(result))) => results.push((rule_id, result)),
                 Ok((rule_id, Err(e))) => {
-                    eprintln!("Warning: Rule '{}' execution error: {}", rule_id, e);
+                    eprintln!("Warning: Rule '{rule_id}' execution error: {e}");
                     // Continue with other tasks
                 }
                 Err(e) => {
-                    eprintln!("Warning: Task join error: {}", e);
+                    eprintln!("Warning: Task join error: {e}");
                     // Continue with other tasks
                 }
             }
@@ -286,7 +314,7 @@ impl HybridRuleEngine {
         self.cache.clear();
     }
 
-    /// Execute linter-based validation for rules with lint_select
+    /// Execute linter-based validation for rules with `lint_select`
     ///
     /// This method runs Ruff and/or Clippy based on the lint codes specified
     /// in the rule's `lint_select` field and filters the results.
@@ -351,6 +379,7 @@ impl HybridRuleEngine {
             }
         }
 
+        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -376,7 +405,7 @@ impl HybridRuleEngine {
         (ruff_codes, clippy_codes)
     }
 
-    /// Convert a LintViolation to a RuleViolation
+    /// Convert a `LintViolation` to a `RuleViolation`
     fn lint_to_rule_violation(
         lv: &LintViolation,
         rule_id: &str,
@@ -393,7 +422,7 @@ impl HybridRuleEngine {
             .with_context(format!("Linter: {} ({})", lv.rule, lv.category))
     }
 
-    /// Check if a rule uses lint_select (linter-based validation)
+    /// Check if a rule uses `lint_select` (linter-based validation)
     pub fn is_lint_rule(rule_definition: &serde_json::Value) -> bool {
         rule_definition
             .get("lint_select")
@@ -411,7 +440,6 @@ impl Default for HybridRuleEngine {
 impl Clone for HybridRuleEngine {
     fn clone(&self) -> Self {
         Self {
-            rust_rule_engine: self.rust_rule_engine.clone(),
             rusty_rules_engine: self.rusty_rules_engine.clone(),
             expression_engine: self.expression_engine.clone(),
             rete_engine: self.rete_engine.clone(),
@@ -425,6 +453,7 @@ impl Clone for HybridRuleEngine {
 /// Trait for rule engines
 #[async_trait]
 pub trait RuleEngine: Send + Sync {
+    /// Execute the rule against the provided context
     async fn execute(
         &self,
         rule_definition: &serde_json::Value,

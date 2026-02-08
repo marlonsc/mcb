@@ -1,8 +1,9 @@
 //! Unit tests for ValidationService
 
+use std::path::PathBuf;
+
 use mcb_domain::ports::services::ValidationServiceInterface;
 use mcb_infrastructure::validation::InfraValidationService;
-use std::path::PathBuf;
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))

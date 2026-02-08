@@ -4,9 +4,11 @@
 //! depend on a concrete driver (e.g. SQLite/sqlx). Implementations live in
 //! infrastructure and are injected via DI.
 
-use crate::error::Result;
-use async_trait::async_trait;
 use std::sync::Arc;
+
+use async_trait::async_trait;
+
+use crate::error::Result;
 
 /// Parameter for prepared statement binding (driver-agnostic).
 #[derive(Debug, Clone)]
@@ -15,6 +17,8 @@ pub enum SqlParam {
     String(String),
     /// 64-bit integer
     I64(i64),
+    /// Boolean value
+    Bool(bool),
     /// Null
     Null,
 }

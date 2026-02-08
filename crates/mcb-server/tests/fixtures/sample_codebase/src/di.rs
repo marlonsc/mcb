@@ -60,13 +60,17 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog, Error> {
 }
 
 /// Resolve embedding provider from configuration
-pub fn resolve_embedding_provider(config: &EmbeddingConfig) -> Result<Arc<dyn EmbeddingProvider>, Error> {
+pub fn resolve_embedding_provider(
+    config: &EmbeddingConfig,
+) -> Result<Arc<dyn EmbeddingProvider>, Error> {
     // Provider resolution logic
     Ok(Arc::new(NullEmbeddingProvider::new()))
 }
 
 /// Resolve vector store provider from configuration
-pub fn resolve_vector_store_provider(config: &VectorStoreConfig) -> Result<Arc<dyn VectorStoreProvider>, Error> {
+pub fn resolve_vector_store_provider(
+    config: &VectorStoreConfig,
+) -> Result<Arc<dyn VectorStoreProvider>, Error> {
     // Provider resolution logic
     Ok(Arc::new(InMemoryVectorStore::new()))
 }
@@ -80,7 +84,11 @@ pub fn resolve_cache_provider(config: &CacheConfig) -> Result<Arc<dyn CacheProvi
 // Placeholder types for compilation
 pub struct Catalog;
 pub struct CatalogBuilder;
-pub struct AppConfig { pub embedding: EmbeddingConfig, pub vector_store: VectorStoreConfig, pub cache: CacheConfig }
+pub struct AppConfig {
+    pub embedding: EmbeddingConfig,
+    pub vector_store: VectorStoreConfig,
+    pub cache: CacheConfig,
+}
 pub struct EmbeddingConfig;
 pub struct VectorStoreConfig;
 pub struct CacheConfig;
@@ -91,21 +99,39 @@ pub trait EmbeddingProvider: Send + Sync {}
 pub trait VectorStoreProvider: Send + Sync {}
 pub trait CacheProvider: Send + Sync {}
 pub struct NullEmbeddingProvider;
-impl NullEmbeddingProvider { pub fn new() -> Self { Self } }
+impl NullEmbeddingProvider {
+    pub fn new() -> Self {
+        Self
+    }
+}
 impl EmbeddingProvider for NullEmbeddingProvider {}
 pub struct InMemoryVectorStore;
-impl InMemoryVectorStore { pub fn new() -> Self { Self } }
+impl InMemoryVectorStore {
+    pub fn new() -> Self {
+        Self
+    }
+}
 impl VectorStoreProvider for InMemoryVectorStore {}
 pub struct NullCacheProvider;
-impl NullCacheProvider { pub fn new() -> Self { Self } }
+impl NullCacheProvider {
+    pub fn new() -> Self {
+        Self
+    }
+}
 impl CacheProvider for NullCacheProvider {}
 impl CatalogBuilder {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
     pub fn add_value<T>(&mut self, _v: T) {}
-    pub fn build(self) -> Catalog { Catalog }
+    pub fn build(self) -> Catalog {
+        Catalog
+    }
 }
 impl Catalog {
-    pub fn get_one<T>(&self) -> Option<Arc<T>> { None }
+    pub fn get_one<T>(&self) -> Option<Arc<T>> {
+        None
+    }
 }
 #[derive(Debug)]
 pub struct Error;

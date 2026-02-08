@@ -15,6 +15,7 @@
 pub mod test_utils;
 
 // Shared test utilities
+/// Shared test helper functions.
 pub mod test_helpers {
     /// Create a temporary test directory
     pub fn temp_dir() -> tempfile::TempDir {

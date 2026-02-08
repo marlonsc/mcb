@@ -4,4 +4,5 @@
 //! for handler testing.
 
 pub mod mock_services;
+pub mod real_providers;
 pub mod test_fixtures;

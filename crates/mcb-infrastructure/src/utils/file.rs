@@ -3,8 +3,9 @@
 //! Consolidates common patterns for JSON serialization, file writing, and error handling.
 //! Provides reusable async helpers that reduce boilerplate across the codebase.
 
-use mcb_domain::error::{Error, Result};
 use std::path::Path;
+
+use mcb_domain::error::{Error, Result};
 
 /// Async file utilities for common I/O patterns
 ///

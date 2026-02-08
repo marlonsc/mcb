@@ -3,8 +3,9 @@
 //! Value objects representing search results and related concepts
 //! for semantic search operations.
 
-use crate::value_objects::Language;
 use serde::{Deserialize, Serialize};
+
+use crate::value_objects::Language;
 
 /// Value Object: Ranked Search Result
 ///

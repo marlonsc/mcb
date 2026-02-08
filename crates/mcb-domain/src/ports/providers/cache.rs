@@ -9,10 +9,12 @@
 //! [`VectorStoreProvider`], enabling consistent provider registration
 //! and factory-based creation.
 
-use crate::error::Result;
+use std::time::Duration;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+
+use crate::error::Result;
 
 /// Default TTL for cache entries (5 minutes)
 pub const DEFAULT_CACHE_TTL_SECS: u64 = 300;
@@ -224,9 +226,8 @@ pub trait CacheProvider: Send + Sync + std::fmt::Debug {
 /// use std::sync::Arc;
 ///
 /// async fn create_cache(factory: Arc<dyn CacheProviderFactoryInterface>) -> mcb_domain::Result<()> {
-///     // Create null cache for testing
-///     let test_cache = factory.create_null();
-///     println!("Created: {}", test_cache.provider_name());
+///     // Create cache from config
+///     // let provider = factory.create_from_config(&config).await?;
 ///     Ok(())
 /// }
 /// ```
@@ -237,7 +238,4 @@ pub trait CacheProviderFactoryInterface: Send + Sync {
         &self,
         config: &crate::value_objects::config::CacheConfig,
     ) -> Result<std::sync::Arc<dyn CacheProvider>>;
-
-    /// Create a null cache provider for testing
-    fn create_null(&self) -> std::sync::Arc<dyn CacheProvider>;
 }

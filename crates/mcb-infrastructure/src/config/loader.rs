@@ -5,15 +5,18 @@
 //!
 //! Uses Figment for configuration management (migrated from config crate in v0.1.2).
 
-use crate::config::AppConfig;
-use crate::constants::*;
-use crate::error_ext::ErrorContext;
-use crate::logging::log_config_loaded;
+use std::env;
+use std::path::{Path, PathBuf};
+
 use figment::Figment;
 use figment::providers::{Env, Format, Serialized, Toml};
 use mcb_domain::error::{Error, Result};
-use std::env;
-use std::path::{Path, PathBuf};
+
+use crate::config::AppConfig;
+use crate::constants::auth::*;
+use crate::constants::config::*;
+use crate::error_ext::ErrorContext;
+use crate::logging::log_config_loaded;
 
 /// Configuration loader service
 #[derive(Clone)]
@@ -65,12 +68,11 @@ impl ConfigLoader {
                 log_config_loaded(config_path, false);
             }
         } else {
-            // Try to find default config file
-            if let Some(default_path) = Self::find_default_config_path() {
-                if default_path.exists() {
-                    figment = figment.merge(Toml::file(&default_path));
-                    log_config_loaded(&default_path, true);
-                }
+            if let Some(default_path) = Self::find_default_config_path()
+                && default_path.exists()
+            {
+                figment = figment.merge(Toml::file(&default_path));
+                log_config_loaded(&default_path, true);
             }
         }
 
@@ -79,8 +81,8 @@ impl ConfigLoader {
         // Prefix is MCP__ (double underscore) to match mcp-config.json env format
         // lowercase(true) converts PROVIDERS__EMBEDDING to providers.embedding
         figment = figment.merge(
-            Env::prefixed(&format!("{}__", self.env_prefix))
-                .split("__")
+            Env::prefixed(&format!("{}{}", self.env_prefix, CONFIG_ENV_SEPARATOR))
+                .split(CONFIG_ENV_SEPARATOR)
                 .lowercase(true),
         );
 
@@ -180,17 +182,17 @@ fn validate_app_config(config: &AppConfig) -> Result<()> {
 
 fn validate_server_config(config: &AppConfig) -> Result<()> {
     if config.server.network.port == 0 {
-        return Err(Error::Configuration {
+        return Err(Error::ConfigInvalid {
+            key: "server.network.port".to_string(),
             message: "Server port cannot be 0".to_string(),
-            source: None,
         });
     }
     if config.server.ssl.https
         && (config.server.ssl.ssl_cert_path.is_none() || config.server.ssl.ssl_key_path.is_none())
     {
-        return Err(Error::Configuration {
+        return Err(Error::ConfigInvalid {
+            key: "server.ssl".to_string(),
             message: "SSL certificate and key paths are required when HTTPS is enabled".to_string(),
-            source: None,
         });
     }
     Ok(())
@@ -199,14 +201,17 @@ fn validate_server_config(config: &AppConfig) -> Result<()> {
 fn validate_auth_config(config: &AppConfig) -> Result<()> {
     if config.auth.enabled {
         if config.auth.jwt.secret.is_empty() {
-            return Err(Error::Configuration {
+            return Err(Error::ConfigInvalid {
+                key: "auth.jwt.secret".to_string(),
                 message: "JWT secret cannot be empty when authentication is enabled".to_string(),
-                source: None,
             });
         }
-        if config.auth.jwt.secret.len() < 32 {
+        if config.auth.jwt.secret.len() < MIN_JWT_SECRET_LENGTH {
             return Err(Error::Configuration {
-                message: "JWT secret should be at least 32 characters long".to_string(),
+                message: format!(
+                    "JWT secret should be at least {} characters long",
+                    MIN_JWT_SECRET_LENGTH
+                ),
                 source: None,
             });
         }
@@ -286,80 +291,6 @@ fn validate_operations_config(config: &AppConfig) -> Result<()> {
 
 /// Returns default ConfigLoader for loading application configuration from files
 impl Default for ConfigLoader {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Configuration builder for programmatic configuration
-pub struct ConfigBuilder {
-    config: AppConfig,
-}
-
-impl ConfigBuilder {
-    /// Create a new configuration builder with defaults
-    pub fn new() -> Self {
-        Self {
-            config: AppConfig::default(),
-        }
-    }
-
-    /// Set server configuration
-    pub fn with_server(mut self, server: crate::config::data::ServerConfig) -> Self {
-        self.config.server = server;
-        self
-    }
-
-    /// Set logging configuration
-    pub fn with_logging(mut self, logging: crate::config::data::LoggingConfig) -> Self {
-        self.config.logging = logging;
-        self
-    }
-
-    /// Add embedding provider configuration
-    pub fn with_embedding_provider(
-        mut self,
-        name: String,
-        config: mcb_domain::value_objects::EmbeddingConfig,
-    ) -> Self {
-        self.config.providers.embedding.configs.insert(name, config);
-        self
-    }
-
-    /// Add vector store provider configuration
-    pub fn with_vector_store_provider(
-        mut self,
-        name: String,
-        config: mcb_domain::value_objects::VectorStoreConfig,
-    ) -> Self {
-        self.config
-            .providers
-            .vector_store
-            .configs
-            .insert(name, config);
-        self
-    }
-
-    /// Set authentication configuration
-    pub fn with_auth(mut self, auth: crate::config::data::AuthConfig) -> Self {
-        self.config.auth = auth;
-        self
-    }
-
-    /// Set cache system configuration
-    pub fn with_cache(mut self, cache: crate::config::data::CacheSystemConfig) -> Self {
-        self.config.system.infrastructure.cache = cache;
-        self
-    }
-
-    /// Build the configuration
-    pub fn build(self) -> AppConfig {
-        self.config
-    }
-}
-
-/// Returns default ConfigBuilder with default application configuration
-impl Default for ConfigBuilder {
     fn default() -> Self {
         Self::new()
     }

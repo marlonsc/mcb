@@ -15,39 +15,33 @@
 //! }
 //! ```
 
-use mcb_domain::error::{Error, Result};
+// use crate::constants::{COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME};
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::path::PathBuf;
 
-/// Collection name mapping file name
-const MAPPING_FILENAME: &str = "collection_mapping.json";
-
-/// Lock file for atomic operations
-const LOCK_FILENAME: &str = "collection_mapping.lock";
+use mcb_domain::error::{Error, Result};
+use mcb_domain::value_objects::CollectionId;
+use mcb_infrastructure::config::{
+    COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, config_dir,
+};
 
 /// Gets the default mapping file path (~/.config/mcb/collection_mapping.json)
 fn get_mapping_file_path() -> Result<PathBuf> {
-    let config_dir =
-        dirs::config_dir().ok_or_else(|| Error::io("Unable to determine config directory"))?;
-
-    let mcb_config = config_dir.join("mcb");
-    Ok(mcb_config.join(MAPPING_FILENAME))
+    Ok(config_dir()?.join(COLLECTION_MAPPING_FILENAME))
 }
 
 /// Gets the lock file path
 fn get_lock_file_path() -> Result<PathBuf> {
-    let config_dir =
-        dirs::config_dir().ok_or_else(|| Error::io("Unable to determine config directory"))?;
-
-    let mcb_config = config_dir.join("mcb");
-    Ok(mcb_config.join(LOCK_FILENAME))
+    Ok(config_dir()?.join(COLLECTION_MAPPING_LOCK_FILENAME))
 }
 
 /// RAII guard for file locking
 struct FileLockGuard {
     _file: File,
 }
+
+use fs2::FileExt;
 
 impl FileLockGuard {
     /// Acquire an exclusive lock on the mapping file
@@ -70,36 +64,10 @@ impl FileLockGuard {
             .map_err(|e| Error::io(format!("Failed to open lock file: {}", e)))?;
 
         // Acquire exclusive lock (blocking)
-        #[cfg(unix)]
-        {
-            use std::os::unix::io::AsRawFd;
-            let fd = file.as_raw_fd();
-            // LOCK_EX = 2 (exclusive lock)
-            // SAFETY: fd is a valid open file descriptor from `file`; we retain ownership.
-            let result = unsafe { libc::flock(fd, libc::LOCK_EX) };
-            if result != 0 {
-                return Err(Error::io("Failed to acquire file lock"));
-            }
-        }
-
-        #[cfg(not(unix))]
-        {
-            // On non-Unix platforms, we skip locking (best effort)
-            // Windows could use LockFileEx if needed
-        }
+        file.lock_exclusive()
+            .map_err(|e| Error::io(format!("Failed to acquire file lock: {}", e)))?;
 
         Ok(Self { _file: file })
-    }
-}
-
-#[cfg(unix)]
-impl Drop for FileLockGuard {
-    fn drop(&mut self) {
-        use std::os::unix::io::AsRawFd;
-        let fd = self._file.as_raw_fd();
-        // LOCK_UN = 8 (unlock)
-        // SAFETY: fd is a valid open file descriptor from `_file`; we held the lock.
-        unsafe { libc::flock(fd, libc::LOCK_UN) };
     }
 }
 
@@ -165,16 +133,16 @@ fn generate_milvus_name(user_name: &str) -> String {
 /// * `user_name` - User-provided collection name (e.g., "mcb")
 ///
 /// # Returns
-/// * `String` - Milvus-compatible name (stored in mapping)
+/// * `CollectionId` - Milvus-compatible name (stored in mapping)
 ///
 /// # Example
 /// ```no_run
 /// use mcb_server::collection_mapping::map_collection_name;
 ///
 /// let milvus_name = map_collection_name("mcb").unwrap();
-/// // Returns: "mcp_context_browser_143021" (with mapping stored)
+/// // Returns: CollectionId("mcp_context_browser_143021")
 /// ```
-pub fn map_collection_name(user_name: &str) -> Result<String> {
+pub fn map_collection_name(user_name: &str) -> Result<CollectionId> {
     let mapping_path = get_mapping_file_path()?;
 
     // Acquire exclusive lock for the entire read-modify-write operation
@@ -184,7 +152,7 @@ pub fn map_collection_name(user_name: &str) -> Result<String> {
 
     // Return existing mapping if available
     if let Some(milvus_name) = mapping.get(user_name) {
-        return Ok(milvus_name.clone());
+        return Ok(CollectionId::new(milvus_name));
     }
 
     // Generate new mapping
@@ -194,7 +162,7 @@ pub fn map_collection_name(user_name: &str) -> Result<String> {
     // Persist the mapping atomically
     save_mapping_atomic(&mapping, &mapping_path)?;
 
-    Ok(milvus_name)
+    Ok(CollectionId::new(milvus_name))
     // Lock is released when _lock goes out of scope
 }
 

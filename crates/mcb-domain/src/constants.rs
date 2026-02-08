@@ -4,6 +4,8 @@
 //! the application layer. Infrastructure-specific constants remain in
 //! `infrastructure/constants.rs`.
 
+pub mod keys;
+
 // ============================================================================
 // INDEXING DOMAIN CONSTANTS
 // ============================================================================

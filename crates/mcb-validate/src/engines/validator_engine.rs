@@ -19,6 +19,7 @@ impl Default for ValidatorEngine {
 }
 
 impl ValidatorEngine {
+    /// Create a new validator engine instance.
     pub fn new() -> Self {
         Self
     }
@@ -29,31 +30,29 @@ impl ValidatorEngine {
         let rule_config: RuleConfigValidation = serde_json::from_value(rule_definition.clone())
             .map_err(|e| crate::ValidationError::Parse {
                 file: "rule_definition".into(),
-                message: format!("Invalid rule structure: {}", e),
+                message: format!("Invalid rule structure: {e}"),
             })?;
 
         // Use validator for basic validations
         validator::Validate::validate(&rule_config)
-            .map_err(|e| crate::ValidationError::Config(format!("Validation error: {:?}", e)))?;
+            .map_err(|e| crate::ValidationError::Config(format!("Validation error: {e:?}")))?;
 
         // Validate category if present
         if let Some(ref category) = rule_config.category {
-            validate_category(category).map_err(|e| {
-                crate::ValidationError::Config(format!("Invalid category: {:?}", e))
-            })?;
+            validate_category(category)
+                .map_err(|e| crate::ValidationError::Config(format!("Invalid category: {e:?}")))?;
         }
 
         // Validate engine if present
         if let Some(ref engine) = rule_config.engine {
             validate_engine(engine)
-                .map_err(|e| crate::ValidationError::Config(format!("Invalid engine: {:?}", e)))?;
+                .map_err(|e| crate::ValidationError::Config(format!("Invalid engine: {e:?}")))?;
         }
 
         // Validate severity if present
         if let Some(ref severity) = rule_config.severity {
-            validate_severity(severity).map_err(|e| {
-                crate::ValidationError::Config(format!("Invalid severity: {:?}", e))
-            })?;
+            validate_severity(severity)
+                .map_err(|e| crate::ValidationError::Config(format!("Invalid severity: {e:?}")))?;
         }
 
         Ok(())
@@ -164,65 +163,5 @@ fn validate_engine(engine: &str) -> std::result::Result<(), ValidationErrors> {
         let mut errors = ValidationErrors::new();
         errors.add("engine", validator::ValidationError::new("invalid_engine"));
         Err(errors)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_valid_rule_config() {
-        let engine = ValidatorEngine::new();
-
-        let valid_rule = serde_json::json!({
-            "id": "TEST001",
-            "name": "Test Rule",
-            "category": "architecture",
-            "severity": "error",
-            "description": "This is a test rule with enough description",
-            "rationale": "This rule exists for testing purposes and has enough rationale",
-            "engine": "rust-rule-engine",
-            "config": {
-                "crate_name": "test-crate",
-                "forbidden_prefixes": ["test"]
-            }
-        });
-
-        assert!(engine.validate_rule_definition(&valid_rule).is_ok());
-    }
-
-    #[test]
-    fn test_invalid_category() {
-        let engine = ValidatorEngine::new();
-
-        let invalid_rule = serde_json::json!({
-            "id": "TEST001",
-            "name": "Test Rule",
-            "category": "invalid_category",
-            "severity": "error",
-            "description": "This is a test rule",
-            "rationale": "This rule exists for testing",
-            "engine": "rust-rule-engine"
-        });
-
-        assert!(engine.validate_rule_definition(&invalid_rule).is_err());
-    }
-
-    #[test]
-    fn test_invalid_engine() {
-        let engine = ValidatorEngine::new();
-
-        let invalid_rule = serde_json::json!({
-            "id": "TEST001",
-            "name": "Test Rule",
-            "category": "architecture",
-            "severity": "error",
-            "description": "This is a test rule",
-            "rationale": "This rule exists for testing",
-            "engine": "invalid_engine"
-        });
-
-        assert!(engine.validate_rule_definition(&invalid_rule).is_err());
     }
 }

@@ -1,4 +1,16 @@
-# ADR-032: Agent & Quality Domain Extension (MCB-Only)
+---
+adr: 32
+title: Agent & Quality Domain Extension (MCB-Only)
+status: SUPERSEDED
+created: '2026-02-03'
+updated: 2026-02-05
+related: [9, 13, 29]
+supersedes: []
+superseded_by: [34]
+implementation_status: Incomplete
+---
+
+## ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
 **Status:** Proposed
 **Date:** 2026-02-03
@@ -71,11 +83,11 @@ Replace GSD/Beads with complete CRUD operations:
 
 ```
 project_create          → Create project
-project_create_phase    → Create phase
-project_update_phase    → Update status/progress
-project_create_issue    → Create issue
-project_update_issue    → Update issue
-project_add_dependency  → Add blocker
+project (action=create, resource=phase)    → Create phase
+project (action=update, resource=phase)    → Update status/progress
+project (action=create, resource=issue)    → Create issue
+project (action=update, resource=issue)    → Update issue
+project (action=add_dependency, resource=dependency)  → Add blocker
 project_get_state       → Current state
 project_get_ready_work  → Issues without blockers
 project_log_decision    → Log decision

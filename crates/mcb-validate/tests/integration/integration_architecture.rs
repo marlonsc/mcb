@@ -19,16 +19,32 @@
 
 #[cfg(test)]
 mod architecture_integration_tests {
+    use std::fs;
+    use std::io::Write;
+    use std::path::{Path, PathBuf};
+
     use mcb_validate::ValidationConfig;
     use mcb_validate::Validator;
     use mcb_validate::clean_architecture::{
         CleanArchitectureValidator, CleanArchitectureViolation,
     };
+    use mcb_validate::config::NamingRulesConfig;
     use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
-    use std::fs;
-    use std::io::Write;
-    use std::path::{Path, PathBuf};
     use tempfile::TempDir;
+
+    fn mcb_naming_config() -> NamingRulesConfig {
+        NamingRulesConfig {
+            domain_crate: "mcb-domain".to_string(),
+            application_crate: "mcb-application".to_string(),
+            providers_crate: "mcb-providers".to_string(),
+            infrastructure_crate: "mcb-infrastructure".to_string(),
+            server_crate: "mcb-server".to_string(),
+            validate_crate: "mcb-validate".to_string(),
+            language_support_crate: "mcb-language-support".to_string(),
+            ast_utils_crate: "mcb-ast-utils".to_string(),
+            enabled: true,
+        }
+    }
 
     fn create_workspace_structure(dir: &TempDir) -> PathBuf {
         let root = dir.path().to_path_buf();
@@ -319,7 +335,12 @@ impl Server {
 ";
         write_file(&root, "crates/mcb-server/src/lib.rs", server_code);
 
-        let validator = CleanArchitectureValidator::new(&root);
+        let file_config = mcb_validate::config::FileConfig::load(&root);
+        let validator = CleanArchitectureValidator::with_config(
+            &ValidationConfig::new(&root),
+            &file_config.rules.clean_architecture,
+            &mcb_naming_config(),
+        );
         let violations = validator.validate_all().unwrap();
 
         // Should detect CA006 violations
@@ -439,7 +460,12 @@ impl Server {
         let root = create_workspace_structure(&dir);
         let config = ValidationConfig::new(&root);
 
-        let validator = CleanArchitectureValidator::with_config(config.clone());
+        let file_config = mcb_validate::config::FileConfig::load(&root);
+        let validator = CleanArchitectureValidator::with_config(
+            &config,
+            &file_config.rules.clean_architecture,
+            &file_config.rules.naming,
+        );
 
         // Test Validator trait methods
         assert_eq!(validator.name(), "clean_architecture");

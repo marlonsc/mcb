@@ -77,6 +77,6 @@
     "collection_name": "golden-sample-codebase",
     "timeout_ms": 30000,
     "relevance_threshold": 0.3,
-    "top_k": 5
+    "top_k": 10
   }
 }

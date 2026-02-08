@@ -21,6 +21,22 @@ thoughts/
 .aider*
 GEMINI.md
 AGENTS.md
+.agent/
+.codex/
+.cursor/
+.gemini/
+.github/prompts/
+.github/skills/
+.opencode/
+openspec/
+.check_*
+.test_*
+.arbor/
+arbor-graph.json
+
+# Session artifacts (auto-generated, not for version control)
+CONTINUATION_*.md
+.PROTOCOL_*.md
 
 # Oracle reference data
 oracle/
@@ -30,7 +46,7 @@ oracle/
 
 # Docs exclusions (plans, archive, backups)
 docs/plans/
-docs/archive/
+!docs/adr/archive/*
 docs/**/*backup*
 docs/**/*bak*
 docs/**/*old*
@@ -46,6 +62,7 @@ Thumbs.db
 # Environment files
 .env
 .env.local
+node_modules/
 
 # Backup files
 *.bak
@@ -54,9 +71,9 @@ Thumbs.db
 *.backup
 *.backup*
 *.disabled
-*.archive/
+*.archive
+*.archived
 *.obsolete
-archive/
 *.new
 *.old
 *.broken
@@ -119,5 +136,4 @@ fuzz/corpus/
 benchmark_results/.cleanup-dead-code/
 # Reference legacy code (extracted from git history, not for commit)
 reference/
-.aider*
 *.rlib

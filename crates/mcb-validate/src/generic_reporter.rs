@@ -3,11 +3,14 @@
 //! Generates reports from violations implementing the Violation trait.
 //! Supports multiple output formats: human-readable, JSON, and CI (GitHub Actions).
 
+use std::collections::HashMap;
+use std::fmt::Write;
+use std::path::PathBuf;
+
+use serde::Serialize;
+
 use crate::Severity;
 use crate::violation_trait::{Violation, ViolationCategory};
-use serde::Serialize;
-use std::collections::HashMap;
-use std::path::PathBuf;
 
 /// Report containing all violations with summary
 #[derive(Debug, Clone, Serialize)]
@@ -143,29 +146,30 @@ impl GenericReporter {
         let mut output = String::new();
 
         output.push_str("=== Architecture Validation Report ===\n\n");
-        output.push_str(&format!("Timestamp: {}\n", report.timestamp));
-        output.push_str(&format!(
-            "Workspace: {}\n\n",
-            report.workspace_root.display()
-        ));
+        let _ = writeln!(output, "Timestamp: {}", report.timestamp);
+        let _ = writeln!(output, "Workspace: {}", report.workspace_root.display());
+        let _ = writeln!(output);
 
         // Summary
         output.push_str("--- Summary ---\n");
-        output.push_str(&format!(
-            "Total Violations: {} ({} errors, {} warnings, {} info)\n",
+        let _ = writeln!(
+            output,
+            "Total Violations: {} ({} errors, {} warnings, {} info)",
             report.summary.total_violations,
             report.summary.errors,
             report.summary.warnings,
             report.summary.infos
-        ));
-        output.push_str(&format!(
-            "Status: {}\n\n",
+        );
+        let _ = writeln!(
+            output,
+            "Status: {}",
             if report.summary.passed {
                 "PASSED"
             } else {
                 "FAILED"
             }
-        ));
+        );
+        let _ = writeln!(output);
 
         // By category
         if !report.violations_by_category.is_empty() {
@@ -181,7 +185,7 @@ impl GenericReporter {
                     continue;
                 }
 
-                output.push_str(&format!("=== {} ({}) ===\n", category, violations.len()));
+                let _ = writeln!(output, "=== {} ({}) ===", category, violations.len());
 
                 for v in violations {
                     let location = match (&v.file, v.line) {
@@ -190,13 +194,14 @@ impl GenericReporter {
                         _ => "unknown".to_string(),
                     };
 
-                    output.push_str(&format!(
-                        "  [{:>7}] [{}] {} - {}\n",
+                    let _ = writeln!(
+                        output,
+                        "  [{:>7}] [{}] {} - {}",
                         v.severity, v.id, location, v.message
-                    ));
+                    );
 
                     if let Some(ref suggestion) = v.suggestion {
-                        output.push_str(&format!("            -> {}\n", suggestion));
+                        let _ = writeln!(output, "            -> {suggestion}");
                     }
                 }
                 output.push('\n');
@@ -214,42 +219,46 @@ impl GenericReporter {
             match v.severity() {
                 Severity::Error => {
                     if let (Some(file), Some(line)) = (v.file(), v.line()) {
-                        output.push_str(&format!(
-                            "::error file={},line={}::[{}] {}\n",
+                        let _ = writeln!(
+                            output,
+                            "::error file={},line={}::[{}] {}",
                             file.display(),
                             line,
                             v.id(),
                             v.message()
-                        ));
+                        );
                     } else if let Some(file) = v.file() {
-                        output.push_str(&format!(
-                            "::error file={}::[{}] {}\n",
+                        let _ = writeln!(
+                            output,
+                            "::error file={}::[{}] {}",
                             file.display(),
                             v.id(),
                             v.message()
-                        ));
+                        );
                     } else {
-                        output.push_str(&format!("::error ::[{}] {}\n", v.id(), v.message()));
+                        let _ = writeln!(output, "::error ::[{}] {}", v.id(), v.message());
                     }
                 }
                 Severity::Warning => {
                     if let (Some(file), Some(line)) = (v.file(), v.line()) {
-                        output.push_str(&format!(
-                            "::warning file={},line={}::[{}] {}\n",
+                        let _ = writeln!(
+                            output,
+                            "::warning file={},line={}::[{}] {}",
                             file.display(),
                             line,
                             v.id(),
                             v.message()
-                        ));
+                        );
                     } else if let Some(file) = v.file() {
-                        output.push_str(&format!(
-                            "::warning file={}::[{}] {}\n",
+                        let _ = writeln!(
+                            output,
+                            "::warning file={}::[{}] {}",
                             file.display(),
                             v.id(),
                             v.message()
-                        ));
+                        );
                     } else {
-                        output.push_str(&format!("::warning ::[{}] {}\n", v.id(), v.message()));
+                        let _ = writeln!(output, "::warning ::[{}] {}", v.id(), v.message());
                     }
                 }
                 Severity::Info => {

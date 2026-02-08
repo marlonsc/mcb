@@ -1,17 +1,18 @@
 //! Main application configuration
 
-use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-// Re-export all config types from consolidated modules
+use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
+use serde::{Deserialize, Serialize};
+
+// Re-export all config types from modules
 pub use super::infrastructure::{
     CacheProvider, CacheSystemConfig, LimitsConfig, LoggingConfig, MetricsConfig, ResilienceConfig,
 };
 pub use super::mode::{ModeConfig, OperatingMode};
 pub use super::server::{
-    ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig,
-    TransportMode,
+    ServerConfig, ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig, ServerNetworkConfig,
+    ServerSslConfig, ServerTimeoutConfig, TransportMode,
 };
 pub use super::system::{
     AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusConfig,

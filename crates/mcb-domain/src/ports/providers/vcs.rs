@@ -1,9 +1,11 @@
 //! Version Control System provider port for repository operations.
 
+use std::path::{Path, PathBuf};
+
+use async_trait::async_trait;
+
 use crate::entities::vcs::{RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};
 use crate::error::Result;
-use async_trait::async_trait;
-use std::path::{Path, PathBuf};
 
 /// Version Control System provider for repository operations.
 ///

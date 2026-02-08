@@ -39,7 +39,7 @@
 /// - For each variant:
 ///   - `id`: Unique violation identifier (e.g., "DEP001")
 ///   - `severity`: Error, Warning, or Info
-///   - `message`: Display message (can use {field_name} placeholders)
+///   - `message`: Display message (can use {`field_name`} placeholders)
 ///   - `suggestion` (optional): Suggested fix
 ///   - Fields must include `file: PathBuf` and `line: usize` for location tracking
 #[macro_export]

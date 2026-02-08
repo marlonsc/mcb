@@ -1,10 +1,11 @@
 //! Rust language processor for AST-based code chunking.
 
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::Language;
+
 use crate::language::common::{
     BaseProcessor, CHUNK_SIZE_RUST, LanguageConfig, LanguageProcessor, NodeExtractionRule,
 };
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
 
 /// Rust language processor with comprehensive AST extraction rules.
 pub struct RustProcessor {

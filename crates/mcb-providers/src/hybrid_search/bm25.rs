@@ -14,8 +14,9 @@
 //! - avgdl = average document length
 //! - k1, b = tuning parameters
 
-use mcb_domain::entities::CodeChunk;
 use std::collections::{HashMap, HashSet};
+
+use mcb_domain::entities::CodeChunk;
 
 use crate::constants::{BM25_TOKEN_MIN_LENGTH, HYBRID_SEARCH_BM25_B, HYBRID_SEARCH_BM25_K1};
 

@@ -33,6 +33,7 @@ pub mod handles;
 pub mod modules;
 pub mod provider_resolvers;
 pub mod resolver;
+pub mod vcs;
 
 pub use admin::{
     AdminService, CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface,
@@ -55,3 +56,4 @@ pub use provider_resolvers::{
 pub use resolver::{
     AvailableProviders, ResolvedProviders, list_available_providers, resolve_providers,
 };
+pub use vcs::default_vcs_provider;

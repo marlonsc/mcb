@@ -1916,6 +1916,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs2"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "fs_extra"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2414,6 +2424,15 @@ dependencies = [
  "cfg-if",
  "libc",
  "windows-link",
+]
+
+[[package]]
+name = "html-escape"
+version = "0.2.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d1ad449764d627e22bfd7cd5e8868264fc9236e07c752972b4080cd351cb476"
+dependencies = [
+ "utf8-width",
 ]
 
 [[package]]
@@ -3309,7 +3328,7 @@ dependencies = [
 
 [[package]]
 name = "mcb"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "clap",
  "mcb-domain",
@@ -3323,7 +3342,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-application"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3343,7 +3362,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-ast-utils"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "mcb-language-support",
  "tempfile",
@@ -3364,14 +3383,16 @@ dependencies = [
 
 [[package]]
 name = "mcb-domain"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
  "chrono",
  "futures",
  "hex",
+ "linkme",
  "regex",
+ "reqwest 0.13.1",
  "schemars",
  "serde",
  "serde_json",
@@ -3385,7 +3406,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-infrastructure"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -3411,6 +3432,7 @@ dependencies = [
  "hex",
  "hmac",
  "hostname",
+ "html-escape",
  "humantime",
  "ignore",
  "itertools 0.14.0",
@@ -3451,6 +3473,21 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "tree-sitter",
+ "tree-sitter-c",
+ "tree-sitter-c-sharp",
+ "tree-sitter-cpp",
+ "tree-sitter-go",
+ "tree-sitter-highlight",
+ "tree-sitter-java",
+ "tree-sitter-javascript",
+ "tree-sitter-kotlin-ng",
+ "tree-sitter-php",
+ "tree-sitter-python",
+ "tree-sitter-ruby",
+ "tree-sitter-rust",
+ "tree-sitter-swift",
+ "tree-sitter-typescript",
  "unicode-segmentation",
  "uuid",
  "validator",
@@ -3459,7 +3496,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-language-support"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "rust-code-analysis",
@@ -3472,7 +3509,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-providers"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -3488,7 +3525,6 @@ dependencies = [
  "futures",
  "git2",
  "linkme",
- "mcb-application",
  "mcb-domain",
  "milvus-sdk-rust",
  "moka",
@@ -3525,7 +3561,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-server"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3538,11 +3574,12 @@ dependencies = [
  "clap",
  "dashmap 6.1.0",
  "dirs",
+ "fastembed",
  "flate2",
+ "fs2",
  "futures",
  "handlebars",
  "health",
- "libc",
  "mcb-application",
  "mcb-domain",
  "mcb-infrastructure",
@@ -3574,14 +3611,16 @@ dependencies = [
 
 [[package]]
 name = "mcb-validate"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "cargo_metadata",
  "chrono",
  "clap",
+ "criterion",
  "evalexpr",
+ "figment",
  "garde",
  "glob",
  "globset",
@@ -3592,6 +3631,7 @@ dependencies = [
  "once_cell",
  "pest",
  "pest_derive",
+ "petgraph 0.8.3",
  "regex",
  "rust-code-analysis",
  "rust-rule-engine",
@@ -7411,6 +7451,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tree-sitter-highlight"
+version = "0.26.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb0636662a03005d9289649e0b4a89ff37b75df5033e8d4a16398740ae6496d2"
+dependencies = [
+ "regex",
+ "streaming-iterator",
+ "thiserror 2.0.18",
+ "tree-sitter",
+]
+
+[[package]]
 name = "tree-sitter-java"
 version = "0.23.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7753,6 +7805,12 @@ name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
+
+[[package]]
+name = "utf8-width"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1292c0d970b54115d14f2492fe0170adf21d68a1de108eebc51c1df4f346a091"
 
 [[package]]
 name = "utf8_iter"

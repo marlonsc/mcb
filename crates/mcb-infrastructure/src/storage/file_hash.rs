@@ -7,10 +7,9 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use mcb_domain::error::{Error, Result};
 use sha2::{Digest, Sha256};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
-
-use mcb_domain::error::{Error, Result};
 
 /// Configuration for FileHashStore
 ///
@@ -90,15 +89,14 @@ pub struct FileHashStore {
 impl FileHashStore {
     /// Create a new FileHashStore with given configuration
     pub async fn new(config: FileHashConfig) -> Result<Self> {
-        // Ensure parent directory exists for file-based databases
-        if let Some(path_str) = config.database_url.strip_prefix("sqlite:") {
-            if path_str != ":memory:" {
-                let path = Path::new(path_str);
-                if let Some(parent) = path.parent() {
-                    std::fs::create_dir_all(parent).map_err(|e| {
-                        Error::internal(format!("Failed to create database directory: {e}"))
-                    })?;
-                }
+        if let Some(path_str) = config.database_url.strip_prefix("sqlite:")
+            && path_str != ":memory:"
+        {
+            let path = Path::new(path_str);
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent).map_err(|e| {
+                    Error::internal(format!("Failed to create database directory: {e}"))
+                })?;
             }
         }
 

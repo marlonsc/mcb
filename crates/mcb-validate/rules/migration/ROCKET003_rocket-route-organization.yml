@@ -10,11 +10,11 @@ description: "Routes should be organized in feature modules with routes![] macro
 rationale: "Clean route organization improves maintainability"
 
 rule: |
-  rule RocketRouteOrganization "Check for route organization" {
-      when
-          RocketRoutes() &&
-          !UsesMacro("routes!") &&
-          !InFeatureModule()
-      then
-          Violation("Routes should be organized in feature modules with routes![] macro");
-  }
+    rule RocketRouteOrganization "Check for route organization" {
+        when
+            RocketRoutes() &&
+            !UsesMacro("routes!") &&
+            !InFeatureModule()
+        then
+            Violation("Routes should be organized in feature modules with routes![] macro");
+    }

@@ -10,6 +10,11 @@
 //! - `/ui/health` - Health status and dependency monitoring
 //! - `/ui/indexing` - Indexing operation progress
 //!
+//! ## Duplication
+//!
+//! Nav and footer are duplicated across templates (index, config, health, indexing, browse,
+//! browse_collection, browse_file). When changing nav/footer structure, update all of these.
+//!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 pub mod handlers;

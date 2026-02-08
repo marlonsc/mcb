@@ -3,8 +3,9 @@
 //! Handles propagating configuration changes to services that support hot-reload.
 //! Uses the ConfigWatcher event subscription mechanism.
 
-use mcb_infrastructure::config::watcher::{ConfigWatchEvent, ConfigWatcher};
 use std::sync::Arc;
+
+use mcb_infrastructure::config::watcher::{ConfigWatchEvent, ConfigWatcher};
 use tokio::sync::broadcast::Receiver;
 use tracing::{debug, error, info, warn};
 
@@ -137,8 +138,9 @@ impl PropagatorHandle {
 
 /// Pre-built config change callbacks for common services
 pub mod callbacks {
-    use super::ConfigChangeCallback;
     use tracing::info;
+
+    use super::ConfigChangeCallback;
 
     /// Create a callback that logs all config changes
     pub fn logging_callback() -> ConfigChangeCallback {

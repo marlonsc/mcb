@@ -1,4 +1,16 @@
-# ADR 015: Workspace Structure for Shared Libraries
+---
+adr: 15
+title: Workspace Structure for Shared Libraries
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [13, 14]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 015: Workspace Structure for Shared Libraries
 
 ## Status
 
@@ -57,7 +69,7 @@ pub trait LanguageProcessor: Send + Sync {
     fn chunk_code(&self, source: &str) -> Result<Vec<CodeChunk>>;
 
     // Analysis (future capability - v0.3.0+)
-    fn analyze_complexity(&self, source: &str) -> Result<ComplexityMetrics>;
+    fn validate (action=analyze)(&self, source: &str) -> Result<ComplexityMetrics>;
     fn extract_functions(&self, source: &str) -> Result<Vec<FunctionInfo>>;
 }
 ```

@@ -1,5 +1,8 @@
 # Configuration Reference
 
+**Version**: 0.2.0  
+**Updated**: 2026-02-05
+
 MCP Context Browser uses Figment for configuration management per [ADR-025](adr/025-figment-configuration.md).
 
 ## Overview
@@ -7,7 +10,7 @@ MCP Context Browser uses Figment for configuration management per [ADR-025](adr/
 All configuration follows a strict precedence order (later sources override earlier):
 
 1.  **Default values** (built into code)
-2.  **TOML configuration file** (`mcb.toml`)
+2.  **TOML configuration file** (`.mcp-context.toml` or `mcb.toml`)
 3.  **Environment variables** (highest precedence)
 
 ## Environment Variable Pattern
@@ -129,6 +132,124 @@ max_size = 104857600  # 100MB
 enabled = true
 watching_enabled = true  # Set to false in containers
 ```
+
+## .MCP-context.toml (NEW in v0.2.0)
+
+v0.2.0 introduces `.mcp-context.toml` for git-aware indexing configuration. This file is **optional** but enables powerful features like multi-branch indexing and file filtering.
+
+### File Location
+
+Place `.mcp-context.toml` in the root of your repository:
+
+```
+/path/to/repo/
+├── .mcp-context.toml    ← Configuration file
+├── src/
+├── tests/
+└── ...
+```
+
+### Full Schema with Examples
+
+```toml
+[git]
+# Git-specific configuration for multi-branch indexing
+depth = 100              # Number of commits to analyze (default: 1000)
+branches = ["main", "develop"]  # Branches to index (default: ["main", "HEAD"])
+include_submodules = true       # Include git submodules (default: true)
+
+# File filtering patterns (glob-style)
+# Supports: wildcards (*.log), directories (target/), exact names (node_modules)
+ignore_patterns = [
+  "*.log",              # Ignore all .log files
+  "target/",            # Ignore target directory
+  "node_modules/",      # Ignore node_modules
+  ".git/",              # Ignore .git (usually auto-ignored)
+  "*.cache",            # Ignore cache files
+  "dist/"               # Ignore distribution directory
+]
+```
+
+### Configuration Examples
+
+#### Example 1: Default (Rust Project)
+
+```toml
+[git]
+depth = 100
+branches = ["main"]
+ignore_patterns = [
+  "target/",
+  "*.log",
+  ".git/",
+  "Cargo.lock"
+]
+```
+
+#### Example 2: JavaScript Project
+
+```toml
+[git]
+depth = 50
+branches = ["main", "develop"]
+ignore_patterns = [
+  "node_modules/",
+  "dist/",
+  "build/",
+  ".env",
+  "*.log",
+  ".next/",
+  "coverage/"
+]
+```
+
+#### Example 3: Multi-Language Project
+
+```toml
+[git]
+depth = 200
+branches = ["main", "feature/*"]  # Can use wildcards
+include_submodules = true
+ignore_patterns = [
+  "target/",              # Rust
+  "node_modules/",        # JavaScript
+  "__pycache__/",         # Python
+  ".venv/",               # Python venv
+  "dist/",                # Build output
+  "coverage/",            # Test coverage
+  "*.o",                  # Object files
+  "*.a",                  # Archive files
+  ".DS_Store"             # macOS files
+]
+```
+
+### Defaults (When .MCP-context.toml is Missing)
+
+If you don't provide `.mcp-context.toml`, these defaults apply:
+
+-   **depth**: 1000 commits
+-   **branches**: ["main", "HEAD"]
+-   **include_submodules**: true
+-   **ignore_patterns**: [] (no patterns)
+
+This ensures **backward compatibility** with v0.1.x projects.
+
+### Environment Variable Overrides
+
+Environment variables override `.mcp-context.toml` values:
+
+```bash
+# Override depth via environment
+export MCP__GIT__DEPTH=50
+
+# Override branches
+export MCP__GIT__BRANCHES="main,develop,staging"
+
+# Override ignore patterns (comma-separated)
+export MCP__GIT__IGNORE_PATTERNS="target/,*.log,node_modules/"
+```
+
+---
 
 ## Migration from Previous Versions
 

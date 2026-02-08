@@ -22,8 +22,8 @@ pub use helpers::{
 mod golden_acceptance_integration;
 
 // Golden MCP tools e2e (no ignore)
-#[path = "integration/golden_tools_e2e.rs"]
-mod golden_tools_e2e;
+#[path = "integration/golden_tools_e2e_integration.rs"]
+mod golden_tools_e2e_integration;
 
 // Browse API integration tests
 #[path = "integration/browse_api_integration.rs"]
@@ -40,3 +40,33 @@ mod error_recovery_integration;
 // Operating modes integration tests (standalone, server, client)
 #[path = "integration/operating_modes_integration.rs"]
 mod operating_modes_integration;
+
+// Golden E2E complete (no ignore): workflow, index, MCP schema, search
+#[path = "integration/golden_e2e_complete_integration.rs"]
+mod golden_e2e_complete_integration;
+
+// Golden highlight service tests (Phase 8b)
+// #[path = "integration/golden_highlight_service_e2e.rs"]
+// mod golden_highlight_service_e2e; // Missing file
+
+// Highlight service wiring integration tests
+// #[path = "integration/highlight_integration.rs"]
+// mod highlight_integration;
+
+// Hook processor integration tests
+#[path = "integration/hooks_integration.rs"]
+mod hooks_integration;
+
+// Admin API integration tests
+#[path = "integration/admin_api_integration.rs"]
+mod admin_api_integration;
+
+// Golden tests have been moved or removed
+// #[path = "../../../tests/golden/test_end_to_end.rs"]
+// mod golden_test_end_to_end;
+// #[path = "../../../tests/golden/test_index_repository.rs"]
+// mod golden_test_index_repository;
+// #[path = "../../../tests/golden/test_mcp_schemas.rs"]
+// mod golden_test_mcp_schemas;
+// #[path = "../../../tests/golden/test_search_validation.rs"]
+// mod golden_test_search_validation;

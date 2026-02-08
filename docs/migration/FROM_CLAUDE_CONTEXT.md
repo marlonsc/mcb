@@ -98,10 +98,10 @@ Both tools provide the same 4 MCP tools with identical interfaces:
 
 | Tool | Description | Compatibility |
 |------|-------------|---------------|
-| `index_codebase` | Index a directory with AST-aware chunking | 100% compatible |
-| `search_code` | Semantic + BM25 hybrid search | 100% compatible |
-| `get_indexing_status` | Check indexing progress | 100% compatible |
-| `clear_index` | Remove indexed data | 100% compatible |
+| `index (action=start)` | Index a directory with AST-aware chunking | 100% compatible |
+| `search (resource=code)` | Semantic + BM25 hybrid search | 100% compatible |
+| `index (action=status)` | Check indexing progress | 100% compatible |
+| `index (action=clear)` | Remove indexed data | 100% compatible |
 
 ## Provider Selection
 
@@ -211,7 +211,7 @@ Re-index your codebase:
 
 ```
 
-# In Claude Desktop, use the index_codebase tool
+# In Claude Desktop, use the index (action=start) tool
 ```
 
 ## Getting Help

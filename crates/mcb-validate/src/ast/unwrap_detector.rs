@@ -58,25 +58,25 @@ fn detect_recursive(
     results: &mut Vec<UnwrapDetection>,
 ) {
     // Check if this is a call_expression with unwrap/expect
-    if node.kind() == "call_expression" {
-        if let Some(text) = node.utf8_text(code) {
-            let method = extract_method(text);
-            if matches!(method.as_str(), "unwrap" | "expect") {
-                let byte_pos = node.start_byte();
-                let in_test = cfg
-                    .test_ranges
-                    .iter()
-                    .any(|(start, end)| byte_pos >= *start && byte_pos < *end);
+    if node.kind() == "call_expression"
+        && let Some(text) = node.utf8_text(code)
+    {
+        let method = extract_method(text);
+        if matches!(method.as_str(), "unwrap" | "expect") {
+            let byte_pos = node.start_byte();
+            let in_test = cfg
+                .test_ranges
+                .iter()
+                .any(|(start, end)| byte_pos >= *start && byte_pos < *end);
 
-                results.push(UnwrapDetection {
-                    file: cfg.filename.clone(),
-                    line: node.start_row() + 1,
-                    column: node.start_position().1 + 1,
-                    method,
-                    in_test,
-                    context: text.lines().next().unwrap_or("").trim().to_string(),
-                });
-            }
+            results.push(UnwrapDetection {
+                file: cfg.filename.clone(),
+                line: node.start_row() + 1,
+                column: node.start_position().1 + 1,
+                method,
+                in_test,
+                context: text.lines().next().unwrap_or("").trim().to_string(),
+            });
         }
     }
 
@@ -119,20 +119,20 @@ fn find_test_modules_recursive(node: &Node, code: &[u8], ranges: &mut Vec<(usize
         }
 
         // Also check if the module name is "tests" (common pattern)
-        if let Some(name_text) = node.utf8_text(code) {
-            if name_text.contains("mod tests") || name_text.contains("mod test") {
-                // Double check there's a #[cfg(test)] somewhere before it in the file
-                let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
-                // Find the last occurrence of #[cfg(test)] before this position
-                if let Some(attr_pos) = all_before.rfind("#[cfg(test)]") {
-                    // Make sure there's no other mod_item between the attribute and this module
-                    let between = &all_before[attr_pos..];
-                    if !between.contains("mod ")
-                        || between.rfind("mod ").unwrap_or(0) == between.len() - name_text.len()
-                    {
-                        ranges.push((node.start_byte(), node.end_byte()));
-                        return;
-                    }
+        if let Some(name_text) = node.utf8_text(code)
+            && (name_text.contains("mod tests") || name_text.contains("mod test"))
+        {
+            // Double check there's a #[cfg(test)] somewhere before it in the file
+            let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
+            // Find the last occurrence of #[cfg(test)] before this position
+            if let Some(attr_pos) = all_before.rfind("#[cfg(test)]") {
+                // Make sure there's no other mod_item between the attribute and this module
+                let between = &all_before[attr_pos..];
+                if !between.contains("mod ")
+                    || between.rfind("mod ").unwrap_or(0) == between.len() - name_text.len()
+                {
+                    ranges.push((node.start_byte(), node.end_byte()));
+                    return;
                 }
             }
         }
@@ -164,7 +164,7 @@ pub fn detect_in_content(content: &str, filename: &str) -> Result<Vec<UnwrapDete
 
     let (lang, _) = guess_language(&source, path);
     let lang = lang.ok_or_else(|| {
-        ValidationError::Config(format!("Unsupported language for file: {}", filename))
+        ValidationError::Config(format!("Unsupported language for file: {filename}"))
     })?;
 
     // First pass: find test module ranges
@@ -223,12 +223,12 @@ mod tests {
 
     #[test]
     fn test_detect_unwrap_in_code() {
-        let code = r#"
+        let code = r"
 fn main() {
     let x = Some(42);
     let y = x.unwrap();
 }
-"#;
+";
         let detections = detect_in_content(code, "test.rs").unwrap();
         assert!(!detections.is_empty());
         assert_eq!(detections[0].method, "unwrap");
@@ -250,7 +250,7 @@ fn main() {
 
     #[test]
     fn test_detect_in_test_module() {
-        let code = r#"
+        let code = r"
 fn main() {
     let x = Some(42);
 }
@@ -262,7 +262,7 @@ mod tests {
         let y = Some(1).unwrap();
     }
 }
-"#;
+";
         let detections = detect_in_content(code, "test.rs").unwrap();
         // Should find the unwrap in test module
         let test_detections: Vec<_> = detections.iter().filter(|d| d.in_test).collect();

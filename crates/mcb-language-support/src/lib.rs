@@ -50,6 +50,5 @@ pub use language::{LanguageId, LanguageInfo, LanguageRegistry};
 pub use parser::{
     FunctionInfo, ParsedFile, ParsedFileMetrics, ParsedFunctionMetrics, Parser, RcaParser,
 };
-
 /// Re-export rust-code-analysis LANG enum for direct access when needed
 pub use rust_code_analysis::LANG;

@@ -1,16 +1,27 @@
 //! Admin API server
 //!
-//! HTTP server for the admin API running on a separate port.
+//! HTTP server for the admin API running on a separate port (see `AdminApiConfig`).
+//!
+//! ## Wiring
+//!
+//! The default server startup in `init.rs` does **not** start this admin server. For the admin
+//! web UI and REST API to be available, the application must explicitly build and start `AdminApi`:
+//!
+//! - **Config (GET/PATCH /config)**: Call `.with_config_watcher(config_watcher, config_path)` so
+//!   `AdminState` has a config watcher; otherwise GET /config returns 503 and PATCH is unusable.
+//! - **Browse (GET /collections, ...)**: Call `.with_browse_state(browse_state)` so browse routes
+//!   are mounted; otherwise /collections returns 404.
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
-use mcb_application::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
-use mcb_application::ports::infrastructure::EventBusProvider;
-use mcb_infrastructure::config::watcher::ConfigWatcher;
-use rocket::config::{Config as RocketConfig, LogLevel};
 use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_infrastructure::config::watcher::ConfigWatcher;
+use rocket::config::{Config as RocketConfig, LogLevel};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::BrowseState;
@@ -178,10 +189,10 @@ impl AdminApi {
             admin_rocket(self.state, self.auth_config, self.browse_state).configure(rocket_config);
 
         rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Rocket launch failed: {}", e),
-            )) as Box<dyn std::error::Error + Send + Sync>
+            Box::new(std::io::Error::other(format!(
+                "Rocket launch failed: {}",
+                e
+            ))) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
         Ok(())
@@ -190,8 +201,6 @@ impl AdminApi {
     /// Start the admin API server with graceful shutdown
     ///
     /// Note: Rocket handles graceful shutdown internally via Ctrl+C or SIGTERM.
-    /// The shutdown_signal parameter is kept for API compatibility but Rocket
-    /// manages its own shutdown lifecycle.
     pub async fn start_with_shutdown(
         self,
         shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
@@ -209,10 +218,10 @@ impl AdminApi {
             .ignite()
             .await
             .map_err(|e| {
-                Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Rocket ignite failed: {}", e),
-                )) as Box<dyn std::error::Error + Send + Sync>
+                Box::new(std::io::Error::other(format!(
+                    "Rocket ignite failed: {}",
+                    e
+                ))) as Box<dyn std::error::Error + Send + Sync>
             })?;
 
         // Spawn a task to handle the external shutdown signal
@@ -223,10 +232,10 @@ impl AdminApi {
         });
 
         rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Rocket launch failed: {}", e),
-            )) as Box<dyn std::error::Error + Send + Sync>
+            Box::new(std::io::Error::other(format!(
+                "Rocket launch failed: {}",
+                e
+            ))) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
         Ok(())

@@ -1,7 +1,7 @@
 # MCP Context Browser - Comprehensive Architecture Documentation
 
-[![Version](https://img.shields.io/badge/version-0.1.4-blue)](https://github.com/marlonsc/mcb/releases)
-[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
+[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 
 **Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings**
@@ -690,7 +690,7 @@ Use the `#[linkme::distributed_slice]` pattern for auto-registration:
 ```rust
 // mcb-providers/src/new_service/mod.rs
 use linkme::distributed_slice;
-use mcb_application::ports::registry::new_service::NEW_SERVICE_REGISTRY;
+use mcb_domain::ports::registry::new_service::NEW_SERVICE_REGISTRY;
 
 #[distributed_slice(NEW_SERVICE_REGISTRY)]
 pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
@@ -1144,7 +1144,7 @@ sequenceDiagram
     participant VecProv as Vector Store Provider
     participant Metadata as Metadata Store
 
-    User->>MCP: index_codebase(repo_path)
+    User->>MCP: index (action=start)(repo_path)
     MCP->>IndexSvc: index_repository(repo_path)
 
     IndexSvc->>FileWalk: discover_files(repo_path)
@@ -1181,7 +1181,7 @@ sequenceDiagram
     participant VecProv as Vector Store Provider
     participant Ranker as Result Ranker
 
-    User->>MCP: search_code(query, limit)
+    User->>MCP: search (resource=code)(query, limit)
     MCP->>SearchSvc: search(collection, query, limit)
 
     SearchSvc->>Cache: get_cached_results(query)
@@ -2315,10 +2315,84 @@ impl BackupManager {
 -   Multi-branch and commit history search
 -   Cross-session memory with SQLite storage
 -   Hybrid search for observations and decisions
--   📋**v0.3.0**: Advanced code intelligence
+-   📋**v0.3.0**: Advanced code intelligence + Workflow FSM (Phase 8)
 -   Symbol extraction and cross-referencing
 -   Call graph analysis
 -   Dependency impact mapping
+-   Workflow state machines (ADR-034)
+-   Freshness tracking and policies (ADR-035, ADR-036)
+-   Compensation and orchestration (ADR-037)
+-   🚧**v0.4.0**: Integrated Context System (Phase 9, Feb 17 - Mar 16, 2026)
+-   Knowledge graph with code relationships (ADR-042)
+-   Hybrid search engine with RRF fusion (ADR-043)
+-   Context snapshots and time-travel queries (ADR-045)
+-   Policy-driven context discovery (ADR-046)
+-   70+ tests, complete documentation
+
+### v0.4.0: Integrated Context System Architecture
+
+**Overview**: v0.4.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
+
+**5-Layer Architecture**:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Layer 5: Integration & Policies                     │
+│ (Policy enforcement, compensation triggers)         │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│ Layer 4: Versioning & Snapshots                     │
+│ (Context snapshots, temporal queries)               │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│ Layer 3: Hybrid Search Engine                       │
+│ (RRF fusion, semantic + keyword search)             │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│ Layer 2: Knowledge Graph                            │
+│ (Code relationships, freshness metadata)            │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│ Layer 1: Code Indexing & Embeddings                 │
+│ (AST parsing, vector embeddings, storage)           │
+└─────────────────────────────────────────────────────┘
+```
+
+**Key Components**:
+
+-   **CodeGraph** (petgraph): Nodes (code entities), Edges (relationships), Metadata (freshness)
+-   **HybridSearchEngine**: Semantic (embeddings) + Keyword (BM25) with RRF ranking
+-   **ContextSnapshot**: Immutable captures at commits/tags for temporal queries
+-   **PolicyEngine**: Freshness gates, validation policies, compensation triggers
+
+**New Capabilities**:
+
+| Capability | Example | Benefit |
+|------------|---------|---------|
+| Freshness-Aware Search | `search --freshness-max-age 7` | Find current, relevant patterns |
+| Time-Travel Queries | `search --snapshot v0.2.0` | Understand code evolution |
+| Knowledge Graph | Graph relationships (calls, imports) | Understand code structure |
+| Hybrid Search | RRF fusion of semantic + keyword | Better relevance |
+| Policy-Driven Discovery | Apply freshness/validation policies | Enforce context quality |
+
+**Related ADRs**:
+
+-   [ADR-041: Context Architecture](../adr/phase-9/README.md#adr-041-context-architecture)
+-   [ADR-042: Knowledge Graph](../adr/phase-9/README.md#adr-042-knowledge-graph)
+-   [ADR-043: Hybrid Search Engine](../adr/phase-9/README.md#adr-043-hybrid-search-engine)
+-   [ADR-044: Model Selection](../adr/phase-9/README.md#adr-044-model-selection)
+-   [ADR-045: Context Versioning](../adr/phase-9/README.md#adr-045-context-versioning)
+-   [ADR-046: Integration Patterns](../adr/phase-9/README.md#adr-046-integration-patterns)
+
+**See Also**:
+
+-   [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md) – Feature overview
+-   [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) – Migration guide
+-   [`docs/implementation/phase-9-roadmap.md`](../implementation/phase-9-roadmap.md) – 4-week execution plan
 
 ### Phase 3: Enterprise Features (Planned 📋)
 

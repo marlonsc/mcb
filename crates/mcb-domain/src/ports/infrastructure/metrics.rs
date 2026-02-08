@@ -2,8 +2,9 @@
 //!
 //! Defines the contract for collecting system metrics.
 
-use crate::error::Result;
 use async_trait::async_trait;
+
+use crate::error::Result;
 
 /// System metrics data
 #[derive(Debug, Clone, Default)]

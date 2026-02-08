@@ -48,13 +48,13 @@ patterns:
   catchall_continue: '_\s*=>\s*continue'
 
   # Log patterns
-  log_tracing: 'tracing::(info|debug|warn|error|trace)!'
-  log_log: 'log::(info|debug|warn|error|trace)!'
-  log_println: 'println!'
-  log_eprintln: 'eprintln!'
+  log_tracing: "tracing::(info|debug|warn|error|trace)!"
+  log_log: "log::(info|debug|warn|error|trace)!"
+  log_println: "println!"
+  log_eprintln: "eprintln!"
 
 config:
-  exclude_patterns: ["**/tests/**", "**/null*.rs", "**/fake*.rs"]
+  exclude_patterns: []
 
 rule: |
   rule ImplementationQuality "Check implementation quality" {

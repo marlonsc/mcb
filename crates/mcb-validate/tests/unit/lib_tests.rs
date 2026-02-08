@@ -1,7 +1,8 @@
 //! Unit tests for `mcb_validate::lib` module
 
-use mcb_validate::{ArchitectureValidator, Severity, ValidationConfig};
 use std::path::PathBuf;
+
+use mcb_validate::{ArchitectureValidator, Severity, ValidationConfig};
 
 #[test]
 fn test_severity_serialization() {

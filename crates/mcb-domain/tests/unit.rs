@@ -35,9 +35,6 @@ mod types;
 #[path = "unit/browse_tests.rs"]
 mod browse;
 
-#[path = "unit/performance_tests.rs"]
-mod performance;
-
 #[path = "unit/ports/providers/metrics_tests.rs"]
 mod metrics;
 
@@ -55,3 +52,11 @@ mod submodule_tests;
 
 #[path = "unit/vcs_tests.rs"]
 mod vcs_tests;
+
+#[path = "unit/agent_tests.rs"]
+mod agent_tests;
+#[path = "unit/workflow_tests.rs"]
+mod workflow_tests;
+
+#[path = "unit/ids_tests.rs"]
+mod ids_tests;

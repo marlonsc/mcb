@@ -132,5 +132,3 @@ impl NodeVisitor for KindCounter {
         true
     }
 }
-
-// Tests moved to tests/unit/visitor_tests.rs

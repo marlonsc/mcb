@@ -10,13 +10,13 @@ description: "HTTP handlers should use Rocket attribute macros (#[get], #[post],
 rationale: "Attribute-based routing reduces boilerplate and improves readability"
 
 rule: |
-  rule RocketAttributeHandlers "Check for Rocket attribute usage" {
-      when
-          HttpHandler() &&
-          !HasAttribute("#[get]") &&
-          !HasAttribute("#[post]") &&
-          !HasAttribute("#[put]") &&
-          !HasAttribute("#[delete]")
-      then
-          Violation("HTTP handlers should use Rocket attribute macros (#[get], #[post], etc.)");
-  }
+    rule RocketAttributeHandlers "Check for Rocket attribute usage" {
+        when
+            HttpHandler() &&
+            !HasAttribute("#[get]") &&
+            !HasAttribute("#[post]") &&
+            !HasAttribute("#[put]") &&
+            !HasAttribute("#[delete]")
+        then
+            Violation("HTTP handlers should use Rocket attribute macros (#[get], #[post], etc.)");
+    }

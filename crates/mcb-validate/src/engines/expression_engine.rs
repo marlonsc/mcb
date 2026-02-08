@@ -3,10 +3,11 @@
 //! Wrapper for evalexpr crate providing simple boolean expression evaluation.
 //! Use this engine for rules that don't require complex GRL syntax (when/then).
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use evalexpr::{ContextWithMutableVariables, HashMapContext, Value as EvalValue};
 use serde_json::Value;
-use std::collections::HashMap;
 
 use crate::Result;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
@@ -30,6 +31,7 @@ impl Default for ExpressionEngine {
 }
 
 impl ExpressionEngine {
+    /// Create a new expression engine instance.
     pub fn new() -> Self {
         Self {
             cached_contexts: HashMap::new(),
@@ -37,16 +39,15 @@ impl ExpressionEngine {
     }
 
     /// Build context from rule context for expression evaluation
+    #[allow(clippy::unused_self, clippy::cast_possible_wrap)]
     fn build_eval_context(&self, rule_context: &RuleContext) -> HashMapContext {
         let mut ctx = HashMapContext::new();
 
-        // Add file count
         let _ = ctx.set_value(
             "file_count".to_string(),
             EvalValue::Int(rule_context.file_contents.len() as i64),
         );
 
-        // Add workspace root path length
         let _ = ctx.set_value(
             "workspace_path_len".to_string(),
             EvalValue::Int(rule_context.workspace_root.to_string_lossy().len() as i64),
@@ -91,8 +92,7 @@ impl ExpressionEngine {
         match evalexpr::eval_boolean_with_context(expression, &eval_ctx) {
             Ok(result) => Ok(result),
             Err(e) => Err(crate::ValidationError::Config(format!(
-                "Expression evaluation error: {}",
-                e
+                "Expression evaluation error: {e}"
             ))),
         }
     }
@@ -106,22 +106,20 @@ impl ExpressionEngine {
         let mut ctx = HashMapContext::new();
 
         for (key, value) in variables {
-            let eval_value = self.json_to_eval_value(value);
+            let eval_value = Self::json_to_eval_value(value);
             let _ = ctx.set_value(key.clone(), eval_value);
         }
 
         match evalexpr::eval_boolean_with_context(expression, &ctx) {
             Ok(result) => Ok(result),
             Err(e) => Err(crate::ValidationError::Config(format!(
-                "Expression evaluation error: {}",
-                e
+                "Expression evaluation error: {e}"
             ))),
         }
     }
 
-    /// Convert JSON value to evalexpr value
-    #[allow(clippy::only_used_in_recursion)]
-    fn json_to_eval_value(&self, value: &serde_json::Value) -> EvalValue {
+    /// Convert JSON value to evalexpr value (associated function to avoid `only_used_in_recursion`).
+    fn json_to_eval_value(value: &serde_json::Value) -> EvalValue {
         match value {
             serde_json::Value::Null => EvalValue::Empty,
             serde_json::Value::Bool(b) => EvalValue::Boolean(*b),
@@ -136,8 +134,7 @@ impl ExpressionEngine {
             }
             serde_json::Value::String(s) => EvalValue::String(s.clone()),
             serde_json::Value::Array(arr) => {
-                let tuple: Vec<EvalValue> =
-                    arr.iter().map(|v| self.json_to_eval_value(v)).collect();
+                let tuple: Vec<EvalValue> = arr.iter().map(Self::json_to_eval_value).collect();
                 EvalValue::Tuple(tuple)
             }
             serde_json::Value::Object(_) => {
@@ -164,7 +161,7 @@ impl ExpressionEngine {
                 // Expression matched - generate violation
                 violations.push(
                     RuleViolation::new(rule_id, category, severity, message)
-                        .with_context(format!("Expression: {}", expression)),
+                        .with_context(format!("Expression: {expression}")),
                 );
             }
             Ok(false) => {
@@ -177,9 +174,9 @@ impl ExpressionEngine {
                         rule_id,
                         ViolationCategory::Configuration,
                         Severity::Warning,
-                        format!("Expression evaluation failed: {}", e),
+                        format!("Expression evaluation failed: {e}"),
                     )
-                    .with_context(format!("Expression: {}", expression)),
+                    .with_context(format!("Expression: {expression}")),
                 );
             }
         }
@@ -229,7 +226,6 @@ impl RuleEngine for ExpressionEngine {
             .and_then(|v| v.as_str())
             .map_or(ViolationCategory::Quality, |c| match c {
                 "architecture" => ViolationCategory::Architecture,
-                "quality" => ViolationCategory::Quality,
                 "performance" => ViolationCategory::Performance,
                 _ => ViolationCategory::Quality,
             });

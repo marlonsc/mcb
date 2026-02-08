@@ -34,6 +34,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "20"
+          # Note: no npm cache - project uses npx/global installs only
       - run: npm install -g markdownlint-cli
       - run: make docs-validate QUICK=1
 

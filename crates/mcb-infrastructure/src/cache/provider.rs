@@ -6,10 +6,11 @@
 //! **ARCHITECTURE**: Uses `Arc<dyn CacheProvider>` directly to follow OCP.
 //! No enum wrapper - new cache providers can be added without modification.
 
-use mcb_domain::error::Result;
-use mcb_domain::ports::providers::{CacheEntryConfig, CacheProvider, CacheStats};
 use std::fmt;
 use std::sync::Arc;
+
+use mcb_domain::error::Result;
+use mcb_domain::ports::providers::{CacheEntryConfig, CacheProvider, CacheStats};
 
 /// Shared cache provider wrapper
 ///

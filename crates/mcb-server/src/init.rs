@@ -35,13 +35,14 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use mcb_infrastructure::cache::provider::SharedCacheProvider;
-use mcb_infrastructure::config::{AppConfig, OperatingMode, TransportMode};
-use mcb_infrastructure::crypto::CryptoService;
+use mcb_infrastructure::config::{
+    AppConfig,
+    types::{OperatingMode, TransportMode},
+};
 use tracing::{error, info, warn};
 
 use crate::McpServer;
-use crate::McpServerBuilder;
+use crate::admin::{AdminApi, AdminApiConfig};
 use crate::transport::http::{HttpTransport, HttpTransportConfig};
 use crate::transport::stdio::StdioServerExt;
 
@@ -81,14 +82,6 @@ pub async fn run(
     }
 }
 
-/// Legacy entry point for backwards compatibility
-///
-/// Runs in standalone mode (equivalent to `run(config_path, false)` with standalone config)
-#[deprecated(since = "0.2.0", note = "Use `run(config_path, server_mode)` instead")]
-pub async fn run_server(config_path: Option<&Path>) -> Result<(), Box<dyn std::error::Error>> {
-    run(config_path, false).await
-}
-
 // =============================================================================
 // Operating Modes
 // =============================================================================
@@ -113,8 +106,31 @@ async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Er
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let server = create_mcp_server(config).await?;
+    let (server, app_context) = create_mcp_server(config.clone()).await?;
     info!("MCP server initialized successfully");
+
+    // Create BrowseState for Web UI
+    let highlight_service = app_context.highlight_service();
+    let browse_state = crate::admin::BrowseState {
+        browser: app_context.vector_store_handle().get(),
+        highlight_service,
+    };
+
+    // Create and spawn admin API server
+    let admin_api = AdminApi::new(
+        AdminApiConfig::default(),
+        app_context.performance(),
+        app_context.indexing(),
+        app_context.event_bus(),
+    )
+    .with_browse_state(browse_state);
+
+    tokio::spawn(async move {
+        if let Err(e) = admin_api.start().await {
+            error!(error = %e, "Admin API server failed");
+        }
+    });
+    info!("Admin API server spawned on port 9090");
 
     // In server mode, we prefer hybrid or http transport
     match transport_mode {
@@ -154,7 +170,7 @@ async fn run_standalone(config: AppConfig) -> Result<(), Box<dyn std::error::Err
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let server = create_mcp_server(config).await?;
+    let (server, _app_context) = create_mcp_server(config).await?;
     info!("MCP server initialized successfully");
 
     start_transport(server, transport_mode, &http_host, http_port).await
@@ -205,64 +221,29 @@ fn load_config(config_path: Option<&Path>) -> Result<AppConfig, Box<dyn std::err
 // =============================================================================
 
 /// Create and configure the MCP server with all services
-async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::error::Error>> {
+async fn create_mcp_server(
+    config: AppConfig,
+) -> Result<(McpServer, mcb_infrastructure::di::bootstrap::AppContext), Box<dyn std::error::Error>>
+{
     // Create AppContext with resolved providers
     let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
 
-    // Get all providers from handles (runtime-swappable via admin API)
-    let embedding_provider = app_context.embedding_handle().get();
-    let vector_store_provider = app_context.vector_store_handle().get();
-    let cache_provider = app_context.cache_handle().get();
-    let language_chunker = app_context.language_handle().get();
+    // Build domain services from AppContext
+    let services = app_context.build_domain_services().await?;
 
-    // Create shared cache provider (conversion for domain services factory)
-    let shared_cache = SharedCacheProvider::from_arc(cache_provider);
-    let crypto = create_crypto_service(&config).await?;
-
-    let indexing_ops = app_context.indexing();
-    let event_bus = app_context.event_bus();
-
-    let memory_db_path = dirs::data_local_dir()
-        .or_else(|| std::env::current_dir().ok())
-        .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join(".mcb")
-        .join("memory.db");
-    let memory_repository = mcb_providers::database::create_memory_repository(memory_db_path)
-        .await
-        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
-
-    let project_id = std::env::current_dir()
-        .ok()
-        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
-        .unwrap_or_else(|| "default".to_string());
-
-    let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
-        project_id,
-        cache: shared_cache,
-        crypto,
-        config,
-        embedding_provider,
-        vector_store_provider,
-        language_chunker,
-        indexing_ops,
-        event_bus,
-        memory_repository,
+    let mcp_services = crate::mcp_server::McpServices {
+        indexing: services.indexing_service,
+        context: services.context_service,
+        search: services.search_service,
+        validation: services.validation_service,
+        memory: services.memory_service,
+        agent_session: services.agent_session_service,
+        project: services.project_service,
+        vcs: services.vcs_provider,
     };
-    let services =
-        mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(
-            deps,
-        )
-        .await?;
+    let server = McpServer::from_services(mcp_services);
 
-    McpServerBuilder::new()
-        .with_indexing_service(services.indexing_service)
-        .with_context_service(services.context_service)
-        .with_search_service(services.search_service)
-        .with_validation_service(services.validation_service)
-        .with_memory_service(services.memory_service)
-        .with_vcs_provider(services.vcs_provider)
-        .try_build()
-        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
+    Ok((server, app_context))
 }
 
 // =============================================================================
@@ -385,24 +366,4 @@ async fn run_hybrid_transport(
     }
 
     Ok(())
-}
-
-// =============================================================================
-// Crypto Service Creation
-// =============================================================================
-
-/// Create crypto service from configuration
-///
-/// Uses JWT secret from config if available (32+ bytes), otherwise generates a random key.
-async fn create_crypto_service(
-    config: &AppConfig,
-) -> Result<CryptoService, Box<dyn std::error::Error>> {
-    // AES-GCM requires exactly 32 bytes for the key
-    let master_key = if config.auth.jwt.secret.len() >= 32 {
-        config.auth.jwt.secret.as_bytes()[..32].to_vec()
-    } else {
-        CryptoService::generate_master_key()
-    };
-
-    CryptoService::new(master_key).map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
 }

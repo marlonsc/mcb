@@ -10,10 +10,10 @@ description: "Service implementation missing constructor that accepts Arc<dyn Tr
 rationale: "All services must use constructor injection for dependency management"
 
 rule: |
-  rule ConstructorInjectionPattern "Check for constructor injection" {
-      when
-          ServiceImplementation() &&
-          !HasConstructor(Arc<dyn Trait>)
-      then
-          Violation("Service implementation missing constructor that accepts Arc<dyn Trait> parameters");
-  }
+    rule ConstructorInjectionPattern "Check for constructor injection" {
+        when
+            ServiceImplementation() &&
+            !HasConstructor(Arc<dyn Trait>)
+        then
+            Violation("Service implementation missing constructor that accepts Arc<dyn Trait> parameters");
+    }

@@ -1,4 +1,16 @@
-# ADR 031: Documentation Excellence
+---
+adr: 31
+title: Documentation Excellence
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [3, 6, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 031: Documentation Excellence
 
 ## Status
 

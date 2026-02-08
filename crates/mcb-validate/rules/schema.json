@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://mcb.com/schemas/rule/v2",
   "title": "MCB Validation Rule Schema",
   "description": "Schema for YAML-based validation rules in MCP Context Browser",
@@ -7,7 +7,12 @@
   "properties": {
     "schema": {
       "type": "string",
-      "enum": ["rule/v1", "rule/v2", "rule/v3", "template/v1"],
+      "enum": [
+        "rule/v1",
+        "rule/v2",
+        "rule/v3",
+        "template/v1"
+      ],
       "description": "Schema version identifier"
     },
     "id": {
@@ -35,13 +40,24 @@
         "quality",
         "solid",
         "testing",
-        "web_framework"
+        "web_framework",
+        "async",
+        "naming",
+        "kiss",
+        "refactoring",
+        "error_boundary",
+        "implementation",
+        "pmat"
       ],
       "description": "Rule category for grouping"
     },
     "severity": {
       "type": "string",
-      "enum": ["error", "warning", "info"],
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ],
       "description": "Default severity level"
     },
     "enabled": {
@@ -63,7 +79,11 @@
     },
     "engine": {
       "type": "string",
-      "enum": ["rust-rule-engine", "rusty-rules", "ast"],
+      "enum": [
+        "rust-rule-engine",
+        "rusty-rules",
+        "ast"
+      ],
       "description": "Which rule engine to use for execution"
     },
     "selectors": {
@@ -74,7 +94,14 @@
         "properties": {
           "language": {
             "type": "string",
-            "enum": ["rust", "python", "javascript", "typescript", "go", "java"],
+            "enum": [
+              "rust",
+              "python",
+              "javascript",
+              "typescript",
+              "go",
+              "java"
+            ],
             "description": "Programming language"
           },
           "node_type": {
@@ -86,7 +113,10 @@
             "description": "Tree-sitter query pattern"
           }
         },
-        "required": ["language", "node_type"]
+        "required": [
+          "language",
+          "node_type"
+        ]
       }
     },
     "ast_query": {
@@ -112,38 +142,106 @@
         "cognitive_complexity": {
           "type": "object",
           "properties": {
-            "max": {"type": "integer", "minimum": 1},
-            "severity": {"type": "string", "enum": ["error", "warning", "info"]},
-            "languages": {"type": "array", "items": {"type": "string"}}
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "info"
+              ]
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           },
-          "required": ["max"]
+          "required": [
+            "max"
+          ]
         },
         "cyclomatic_complexity": {
           "type": "object",
           "properties": {
-            "max": {"type": "integer", "minimum": 1},
-            "severity": {"type": "string", "enum": ["error", "warning", "info"]},
-            "languages": {"type": "array", "items": {"type": "string"}}
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "info"
+              ]
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           },
-          "required": ["max"]
+          "required": [
+            "max"
+          ]
         },
         "function_length": {
           "type": "object",
           "properties": {
-            "max": {"type": "integer", "minimum": 1},
-            "severity": {"type": "string", "enum": ["error", "warning", "info"]},
-            "languages": {"type": "array", "items": {"type": "string"}}
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "info"
+              ]
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           },
-          "required": ["max"]
+          "required": [
+            "max"
+          ]
         },
         "nesting_depth": {
           "type": "object",
           "properties": {
-            "max": {"type": "integer", "minimum": 1},
-            "severity": {"type": "string", "enum": ["error", "warning", "info"]},
-            "languages": {"type": "array", "items": {"type": "string"}}
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "info"
+              ]
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           },
-          "required": ["max"]
+          "required": [
+            "max"
+          ]
         }
       }
     },
@@ -153,7 +251,12 @@
       "properties": {
         "clone_type": {
           "type": "string",
-          "enum": ["exact", "renamed", "gapped", "semantic"],
+          "enum": [
+            "exact",
+            "renamed",
+            "gapped",
+            "semantic"
+          ],
           "description": "Type of clone to detect"
         },
         "min_lines": {
@@ -179,11 +282,18 @@
         },
         "languages": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "description": "Languages to analyze"
         }
       },
-      "required": ["clone_type", "min_lines", "min_tokens", "similarity_threshold"]
+      "required": [
+        "clone_type",
+        "min_lines",
+        "min_tokens",
+        "similarity_threshold"
+      ]
     },
     "rule": {
       "description": "Engine-specific rule definition",
@@ -191,10 +301,18 @@
         {
           "type": "object",
           "properties": {
-            "type": {"type": "string"},
-            "condition": {"type": "string"},
-            "pattern": {"type": "string"},
-            "message": {"type": "string"}
+            "type": {
+              "type": "string"
+            },
+            "condition": {
+              "type": "string"
+            },
+            "pattern": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            }
           }
         },
         {
@@ -212,7 +330,9 @@
           "patternProperties": {
             "^[a-zA-Z_][a-zA-Z0-9_]*$": {
               "type": "array",
-              "items": {"type": "string"}
+              "items": {
+                "type": "string"
+              }
             }
           }
         }
@@ -223,9 +343,15 @@
       "items": {
         "type": "object",
         "properties": {
-          "type": {"type": "string"},
-          "pattern": {"type": "string"},
-          "message": {"type": "string"}
+          "type": {
+            "type": "string"
+          },
+          "pattern": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
         }
       },
       "description": "Suggested fixes for violations"
@@ -243,37 +369,102 @@
       "description": "Whether this is a base template"
     }
   },
-  "required": ["schema", "id", "name", "category", "severity", "description", "rationale"],
+  "required": [
+    "schema",
+    "id",
+    "name",
+    "category",
+    "severity",
+    "description",
+    "rationale"
+  ],
   "if": {
-    "properties": { "schema": { "const": "rule/v1" } }
+    "properties": {
+      "schema": {
+        "const": "rule/v1"
+      }
+    }
   },
   "then": {
-    "required": ["engine", "rule"]
+    "required": [
+      "engine",
+      "rule"
+    ]
   },
   "else": {
     "if": {
-      "properties": { "schema": { "const": "rule/v2" } }
+      "properties": {
+        "schema": {
+          "const": "rule/v2"
+        }
+      }
     },
     "then": {
       "anyOf": [
-        { "required": ["engine", "rule"] },
-        { "required": ["selectors"] },
-        { "required": ["lint_select"] },
-        { "required": ["ast_query"] }
+        {
+          "required": [
+            "engine",
+            "rule"
+          ]
+        },
+        {
+          "required": [
+            "selectors"
+          ]
+        },
+        {
+          "required": [
+            "lint_select"
+          ]
+        },
+        {
+          "required": [
+            "ast_query"
+          ]
+        }
       ]
     },
     "else": {
       "if": {
-        "properties": { "schema": { "const": "rule/v3" } }
+        "properties": {
+          "schema": {
+            "const": "rule/v3"
+          }
+        }
       },
       "then": {
         "anyOf": [
-          { "required": ["metrics"] },
-          { "required": ["duplication"] },
-          { "required": ["engine", "rule"] },
-          { "required": ["selectors"] },
-          { "required": ["lint_select"] },
-          { "required": ["ast_query"] }
+          {
+            "required": [
+              "metrics"
+            ]
+          },
+          {
+            "required": [
+              "duplication"
+            ]
+          },
+          {
+            "required": [
+              "engine",
+              "rule"
+            ]
+          },
+          {
+            "required": [
+              "selectors"
+            ]
+          },
+          {
+            "required": [
+              "lint_select"
+            ]
+          },
+          {
+            "required": [
+              "ast_query"
+            ]
+          }
         ]
       }
     }

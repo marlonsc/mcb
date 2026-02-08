@@ -10,10 +10,10 @@ description: "Consider adding profile-based configuration (dev/prod)"
 rationale: "Figment enables easy environment-specific configuration"
 
 rule: |
-  rule FigmentProfileSupport "Check for profile-based configuration" {
-      when
-          ConfigurationLoading() &&
-          !HasProfileSupport()
-      then
-          Violation("Consider adding profile-based configuration (dev/prod)");
-  }
+    rule FigmentProfileSupport "Check for profile-based configuration" {
+        when
+            ConfigurationLoading() &&
+            !HasProfileSupport()
+        then
+            Violation("Consider adding profile-based configuration (dev/prod)");
+    }

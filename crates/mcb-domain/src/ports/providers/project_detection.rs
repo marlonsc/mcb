@@ -1,8 +1,9 @@
 //! Project detection port for identifying project types in repositories.
 
-use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 
 use crate::entities::project::ProjectType;
 use crate::error::Result;

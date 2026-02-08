@@ -50,10 +50,10 @@ impl CloneDetector {
         let mut candidates = Vec::new();
 
         for m in matches {
-            if let Some(candidate) = self.verify_single_match(m) {
-                if self.passes_thresholds(&candidate) {
-                    candidates.push(candidate);
-                }
+            if let Some(candidate) = self.verify_single_match(m)
+                && self.passes_thresholds(&candidate)
+            {
+                candidates.push(candidate);
             }
         }
 
@@ -209,6 +209,7 @@ impl CloneDetector {
 ///
 /// This is a simplified tokenizer. A full implementation would use
 /// tree-sitter for language-aware tokenization.
+#[allow(clippy::too_many_lines)]
 pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
     let mut current_line = 1;
@@ -278,7 +279,7 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
                 string.push(c);
                 let start_column = current_column;
 
-                while let Some(next) = chars.next() {
+                for next in chars.by_ref() {
                     string.push(next);
                     if next == quote && !string.ends_with('\\') {
                         break;
@@ -356,103 +357,7 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
 
 /// Check if a word is a common keyword (simplified, multi-language)
 fn is_keyword(word: &str) -> bool {
-    const KEYWORDS: &[&str] = &[
-        // Rust
-        "fn",
-        "let",
-        "mut",
-        "const",
-        "static",
-        "struct",
-        "enum",
-        "impl",
-        "trait",
-        "pub",
-        "mod",
-        "use",
-        "crate",
-        "self",
-        "super",
-        "where",
-        "async",
-        "await",
-        "move",
-        "ref",
-        "match",
-        "if",
-        "else",
-        "loop",
-        "while",
-        "for",
-        "in",
-        "break",
-        "continue",
-        "return",
-        "type",
-        "as",
-        "dyn",
-        "unsafe",
-        "extern", // Python
-        "def",
-        "class",
-        "import",
-        "from",
-        "as",
-        "with",
-        "try",
-        "except",
-        "finally",
-        "raise",
-        "pass",
-        "yield",
-        "lambda",
-        "global",
-        "nonlocal",
-        "assert",
-        "del",
-        "True",
-        "False",
-        "None",
-        "and",
-        "or",
-        "not",
-        "is", // JavaScript/TypeScript
-        "function",
-        "var",
-        "const",
-        "let",
-        "class",
-        "extends",
-        "implements",
-        "interface",
-        "type",
-        "enum",
-        "namespace",
-        "module",
-        "export",
-        "import",
-        "default",
-        "new",
-        "delete",
-        "typeof",
-        "instanceof",
-        "this",
-        "super",
-        "null",
-        "undefined",
-        "true",
-        "false",
-        "void",
-        "throw",
-        "try",
-        "catch",
-        "finally",
-        "debugger",
-        "switch",
-        "case",
-    ];
-
-    KEYWORDS.contains(&word)
+    crate::constants::DUPLICATION_KEYWORDS.contains(&word)
 }
 
 #[cfg(test)]

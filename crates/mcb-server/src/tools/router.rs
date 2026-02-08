@@ -1,193 +1,113 @@
-//! Tool Router Module
 //!
 //! Routes incoming tool call requests to the appropriate handlers.
 //! This module provides a centralized dispatch mechanism for MCP tool calls.
 
+use std::sync::Arc;
+
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
-use std::sync::Arc;
+use tracing::warn;
 
 use crate::args::{
-    AnalyzeComplexityArgs, AnalyzeImpactArgs, ClearIndexArgs, CompareBranchesArgs,
-    CreateSessionSummaryArgs, GetIndexingStatusArgs, GetSessionSummaryArgs, GetValidationRulesArgs,
-    IndexCodebaseArgs, IndexVcsRepositoryArgs, ListRepositoriesArgs, ListValidatorsArgs,
-    MemoryGetObservationsArgs, MemoryInjectContextArgs, MemorySearchArgs, MemoryTimelineArgs,
-    SearchBranchArgs, SearchCodeArgs, SearchMemoriesArgs, StoreObservationArgs,
-    ValidateArchitectureArgs, ValidateFileArgs,
+    AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
 };
 use crate::handlers::{
-    AnalyzeComplexityHandler, AnalyzeImpactHandler, ClearIndexHandler, CompareBranchesHandler,
-    CreateSessionSummaryHandler, GetIndexingStatusHandler, GetSessionSummaryHandler,
-    GetValidationRulesHandler, IndexCodebaseHandler, IndexVcsRepositoryHandler,
-    ListRepositoriesHandler, ListValidatorsHandler, MemoryGetObservationsHandler,
-    MemoryInjectContextHandler, MemorySearchHandler, MemoryTimelineHandler, SearchBranchHandler,
-    SearchCodeHandler, SearchMemoriesHandler, StoreObservationHandler, ValidateArchitectureHandler,
-    ValidateFileHandler,
+    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
+    ValidateHandler, VcsHandler,
 };
+use crate::hooks::{HookProcessor, PostToolUseContext};
 
 /// Handler references for tool routing
 #[derive(Clone)]
 pub struct ToolHandlers {
-    /// Handler for codebase indexing operations
-    pub index_codebase: Arc<IndexCodebaseHandler>,
-    /// Handler for code search operations
-    pub search_code: Arc<SearchCodeHandler>,
-    /// Handler for indexing status operations
-    pub get_indexing_status: Arc<GetIndexingStatusHandler>,
-    /// Handler for index clearing operations
-    pub clear_index: Arc<ClearIndexHandler>,
-    /// Handler for architecture validation operations
-    pub validate_architecture: Arc<ValidateArchitectureHandler>,
-    /// Handler for single file validation
-    pub validate_file: Arc<ValidateFileHandler>,
-    /// Handler for listing validators
-    pub list_validators: Arc<ListValidatorsHandler>,
-    /// Handler for getting validation rules
-    pub get_validation_rules: Arc<GetValidationRulesHandler>,
-    /// Handler for complexity analysis
-    pub analyze_complexity: Arc<AnalyzeComplexityHandler>,
-    /// Handler for VCS repository indexing
-    pub index_vcs_repository: Arc<IndexVcsRepositoryHandler>,
-    /// Handler for branch-specific search
-    pub search_branch: Arc<SearchBranchHandler>,
-    /// Handler for listing indexed repositories
-    pub list_repositories: Arc<ListRepositoriesHandler>,
-    /// Handler for comparing branches
-    pub compare_branches: Arc<CompareBranchesHandler>,
-    /// Handler for impact analysis
-    pub analyze_impact: Arc<AnalyzeImpactHandler>,
-    /// Handler for storing observations in memory
-    pub store_observation: Arc<StoreObservationHandler>,
-    /// Handler for searching memories
-    pub search_memories: Arc<SearchMemoriesHandler>,
-    /// Handler for getting session summaries
-    pub get_session_summary: Arc<GetSessionSummaryHandler>,
-    /// Handler for creating session summaries
-    pub create_session_summary: Arc<CreateSessionSummaryHandler>,
-    /// Handler for memory timeline operations (MEM-04)
-    pub memory_timeline: Arc<MemoryTimelineHandler>,
-    /// Handler for getting observation details (MEM-04)
-    pub memory_get_observations: Arc<MemoryGetObservationsHandler>,
-    /// Handler for context injection (MEM-08)
-    pub memory_inject_context: Arc<MemoryInjectContextHandler>,
-    /// Handler for token-efficient memory search (Step 1 - MEM-04a)
-    pub memory_search: Arc<MemorySearchHandler>,
+    /// Handler for coding implementation tasks.
+    pub index: Arc<IndexHandler>,
+    /// Handler for search operations.
+    pub search: Arc<SearchHandler>,
+    /// Handler for validation operations.
+    pub validate: Arc<ValidateHandler>,
+    /// Handler for memory operations.
+    pub memory: Arc<MemoryHandler>,
+    /// Handler for session management.
+    pub session: Arc<SessionHandler>,
+    /// Handler for agent operations.
+    pub agent: Arc<AgentHandler>,
+    /// Handler for project management.
+    pub project: Arc<ProjectHandler>,
+    /// Handler for VCS operations.
+    pub vcs: Arc<VcsHandler>,
+    /// Processor for tool execution hooks.
+    pub hook_processor: Arc<HookProcessor>,
 }
 
 /// Route a tool call request to the appropriate handler
 ///
 /// Parses the request arguments and delegates to the matching handler.
+/// After tool execution, automatically triggers PostToolUse hook for memory operations.
 pub async fn route_tool_call(
     request: CallToolRequestParams,
     handlers: &ToolHandlers,
 ) -> Result<CallToolResult, McpError> {
-    match request.name.as_ref() {
-        "index_codebase" => {
-            let args = parse_args::<IndexCodebaseArgs>(&request)?;
-            handlers.index_codebase.handle(Parameters(args)).await
+    let tool_name = request.name.clone();
+
+    let result = match request.name.as_ref() {
+        "index" => {
+            let args = parse_args::<IndexArgs>(&request)?;
+            handlers.index.handle(Parameters(args)).await
         }
-        "search_code" => {
-            let args = parse_args::<SearchCodeArgs>(&request)?;
-            handlers.search_code.handle(Parameters(args)).await
+        "search" => {
+            let args = parse_args::<SearchArgs>(&request)?;
+            handlers.search.handle(Parameters(args)).await
         }
-        "get_indexing_status" => {
-            let args = parse_args::<GetIndexingStatusArgs>(&request)?;
-            handlers.get_indexing_status.handle(Parameters(args)).await
+        "validate" => {
+            let args = parse_args::<ValidateArgs>(&request)?;
+            handlers.validate.handle(Parameters(args)).await
         }
-        "clear_index" => {
-            let args = parse_args::<ClearIndexArgs>(&request)?;
-            handlers.clear_index.handle(Parameters(args)).await
+        "memory" => {
+            let args = parse_args::<MemoryArgs>(&request)?;
+            handlers.memory.handle(Parameters(args)).await
         }
-        "validate_architecture" => {
-            let args = parse_args::<ValidateArchitectureArgs>(&request)?;
-            handlers
-                .validate_architecture
-                .handle(Parameters(args))
-                .await
+        "session" => {
+            let args = parse_args::<SessionArgs>(&request)?;
+            handlers.session.handle(Parameters(args)).await
         }
-        "validate_file" => {
-            let args = parse_args::<ValidateFileArgs>(&request)?;
-            handlers.validate_file.handle(Parameters(args)).await
+        "agent" => {
+            let args = parse_args::<AgentArgs>(&request)?;
+            handlers.agent.handle(Parameters(args)).await
         }
-        "list_validators" => {
-            let args = parse_args::<ListValidatorsArgs>(&request)?;
-            handlers.list_validators.handle(Parameters(args)).await
+        "project" => {
+            let args = parse_args::<ProjectArgs>(&request)?;
+            handlers.project.handle(Parameters(args)).await
         }
-        "get_validation_rules" => {
-            let args = parse_args::<GetValidationRulesArgs>(&request)?;
-            handlers.get_validation_rules.handle(Parameters(args)).await
-        }
-        "analyze_complexity" => {
-            let args = parse_args::<AnalyzeComplexityArgs>(&request)?;
-            handlers.analyze_complexity.handle(Parameters(args)).await
-        }
-        "index_vcs_repository" => {
-            let args = parse_args::<IndexVcsRepositoryArgs>(&request)?;
-            handlers.index_vcs_repository.handle(Parameters(args)).await
-        }
-        "search_branch" => {
-            let args = parse_args::<SearchBranchArgs>(&request)?;
-            handlers.search_branch.handle(Parameters(args)).await
-        }
-        "list_repositories" => {
-            let args = parse_args::<ListRepositoriesArgs>(&request)?;
-            handlers.list_repositories.handle(Parameters(args)).await
-        }
-        "compare_branches" => {
-            let args = parse_args::<CompareBranchesArgs>(&request)?;
-            handlers.compare_branches.handle(Parameters(args)).await
-        }
-        "analyze_impact" => {
-            let args = parse_args::<AnalyzeImpactArgs>(&request)?;
-            handlers.analyze_impact.handle(Parameters(args)).await
-        }
-        "store_observation" => {
-            let args = parse_args::<StoreObservationArgs>(&request)?;
-            handlers.store_observation.handle(Parameters(args)).await
-        }
-        "search_memories" => {
-            let args = parse_args::<SearchMemoriesArgs>(&request)?;
-            handlers.search_memories.handle(Parameters(args)).await
-        }
-        "get_session_summary" => {
-            let args = parse_args::<GetSessionSummaryArgs>(&request)?;
-            handlers.get_session_summary.handle(Parameters(args)).await
-        }
-        "create_session_summary" => {
-            let args = parse_args::<CreateSessionSummaryArgs>(&request)?;
-            handlers
-                .create_session_summary
-                .handle(Parameters(args))
-                .await
-        }
-        "memory_timeline" => {
-            let args = parse_args::<MemoryTimelineArgs>(&request)?;
-            handlers.memory_timeline.handle(Parameters(args)).await
-        }
-        "memory_get_observations" => {
-            let args = parse_args::<MemoryGetObservationsArgs>(&request)?;
-            handlers
-                .memory_get_observations
-                .handle(Parameters(args))
-                .await
-        }
-        "memory_inject_context" => {
-            let args = parse_args::<MemoryInjectContextArgs>(&request)?;
-            handlers
-                .memory_inject_context
-                .handle(Parameters(args))
-                .await
-        }
-        "memory_search" => {
-            let args = parse_args::<MemorySearchArgs>(&request)?;
-            handlers.memory_search.handle(Parameters(args)).await
+        "vcs" => {
+            let args = parse_args::<VcsArgs>(&request)?;
+            handlers.vcs.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),
             None,
         )),
+    }?;
+
+    if let Err(e) = trigger_post_tool_use_hook(&tool_name, &result, &handlers.hook_processor).await
+    {
+        warn!("PostToolUse hook failed (non-fatal): {}", e);
     }
+
+    Ok(result)
+}
+
+async fn trigger_post_tool_use_hook(
+    tool_name: &str,
+    result: &CallToolResult,
+    hook_processor: &HookProcessor,
+) -> Result<(), String> {
+    let context = PostToolUseContext::new(tool_name.to_string(), result.clone());
+    hook_processor
+        .process_post_tool_use(context)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// Parse request arguments into the expected type
@@ -196,5 +116,5 @@ fn parse_args<T: serde::de::DeserializeOwned>(
 ) -> Result<T, McpError> {
     let args_value = serde_json::Value::Object(request.arguments.clone().unwrap_or_default());
     serde_json::from_value(args_value)
-        .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {}", e), None))
+        .map_err(|e| McpError::invalid_params(format!("Failed to parse arguments: {e}"), None))
 }

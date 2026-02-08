@@ -4,14 +4,13 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use serde::Deserialize;
-use tokio::fs::read_to_string;
-
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::project_detection::{
     ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
 };
+use serde::Deserialize;
+use tokio::fs::read_to_string;
 
 use super::PROJECT_DETECTORS;
 
@@ -31,6 +30,7 @@ struct PyProjectProject {
 pub struct PythonDetector;
 
 impl PythonDetector {
+    /// Create a new Python detector
     #[must_use]
     pub fn new(_config: &ProjectDetectorConfig) -> Self {
         Self
@@ -60,39 +60,37 @@ impl ProjectDetector for PythonDetector {
         let requirements_path = path.join("requirements.txt");
 
         // Try pyproject.toml first (modern standard)
-        if pyproject_path.exists() {
-            if let Ok(content) = read_to_string(&pyproject_path).await {
-                if let Ok(pyproject) = toml::from_str::<PyProject>(&content) {
-                    if let Some(project) = pyproject.project {
-                        return Ok(Some(ProjectType::Python {
-                            name: project.name.unwrap_or_else(|| {
-                                path.file_name()
-                                    .and_then(|n| n.to_str())
-                                    .unwrap_or("unknown")
-                                    .to_string()
-                            }),
-                            version: project.version,
-                            dependencies: project.dependencies.unwrap_or_default(),
-                        }));
-                    }
-                }
-            }
+        if pyproject_path.exists()
+            && let Ok(content) = read_to_string(&pyproject_path).await
+            && let Ok(pyproject) = toml::from_str::<PyProject>(&content)
+            && let Some(project) = pyproject.project
+        {
+            return Ok(Some(ProjectType::Python {
+                name: project.name.unwrap_or_else(|| {
+                    path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("unknown")
+                        .to_string()
+                }),
+                version: project.version,
+                dependencies: project.dependencies.unwrap_or_default(),
+            }));
         }
 
         // Fall back to requirements.txt
-        if requirements_path.exists() {
-            if let Ok(content) = read_to_string(&requirements_path).await {
-                let dependencies = Self::parse_requirements(&content);
-                return Ok(Some(ProjectType::Python {
-                    name: path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("unknown")
-                        .to_string(),
-                    version: None,
-                    dependencies,
-                }));
-            }
+        if requirements_path.exists()
+            && let Ok(content) = read_to_string(&requirements_path).await
+        {
+            let dependencies = Self::parse_requirements(&content);
+            return Ok(Some(ProjectType::Python {
+                name: path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("unknown")
+                    .to_string(),
+                version: None,
+                dependencies,
+            }));
         }
 
         Ok(None)

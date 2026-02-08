@@ -40,9 +40,13 @@ impl std::fmt::Display for RoutedEngine {
 /// Rule Engine Router
 ///
 /// Analyzes rule definitions and routes them to the appropriate engine.
+#[allow(clippy::struct_field_names)]
 pub struct RuleEngineRouter {
+    /// Engine for processing complex rules using RETE algorithm
     rete_engine: ReteEngine,
+    /// Engine for processing simple boolean expressions
     expression_engine: ExpressionEngine,
+    /// Engine for processing rules using JSON DSL
     rusty_rules_engine: RustyRulesEngineWrapper,
 }
 
@@ -53,6 +57,7 @@ impl Default for RuleEngineRouter {
 }
 
 impl RuleEngineRouter {
+    /// Create a new rule engine router with all available engines.
     pub fn new() -> Self {
         Self {
             rete_engine: ReteEngine::new(),
@@ -217,122 +222,5 @@ impl Clone for RuleEngineRouter {
             expression_engine: self.expression_engine.clone(),
             rusty_rules_engine: self.rusty_rules_engine.clone(),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn test_detect_rete_engine_explicit() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
-            "engine": "rust-rule-engine",
-            "rule": "rule Test { when true then Action(); }"
-        });
-
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
-    }
-
-    #[test]
-    fn test_detect_rete_engine_by_content() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
-            "rule": r#"
-                rule DomainCheck "Check domain" {
-                    when
-                        Crate(name == "mcb-domain")
-                    then
-                        Violation("Error");
-                }
-            "#
-        });
-
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
-    }
-
-    #[test]
-    fn test_detect_expression_engine() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
-            "expression": "file_count > 100",
-            "message": "Too many files"
-        });
-
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::Expression);
-    }
-
-    #[test]
-    fn test_detect_rusty_rules_engine() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
-            "condition": {
-                "all": [
-                    { "fact_type": "file", "field": "path", "operator": "matches", "value": "*.rs" }
-                ]
-            },
-            "action": {
-                "violation": { "message": "Rule triggered" }
-            }
-        });
-
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);
-    }
-
-    #[test]
-    fn test_detect_default_engine() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
-            "type": "cargo_dependencies",
-            "pattern": "mcb-*"
-        });
-
-        // Should default to RustyRules
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);
-    }
-
-    #[test]
-    fn test_validate_rete_rule() {
-        let router = RuleEngineRouter::new();
-
-        // Valid RETE rule
-        let valid_rule = json!({
-            "engine": "rete",
-            "rule": "rule Test { when true then Action(); }"
-        });
-        assert!(router.validate_rule(&valid_rule).is_ok());
-
-        // Invalid RETE rule (missing 'rule' field)
-        let invalid_rule = json!({
-            "engine": "rete",
-            "message": "Something"
-        });
-        assert!(router.validate_rule(&invalid_rule).is_err());
-    }
-
-    #[test]
-    fn test_validate_expression_rule() {
-        let router = RuleEngineRouter::new();
-
-        // Valid expression rule
-        let valid_rule = json!({
-            "engine": "expression",
-            "expression": "x > 5"
-        });
-        assert!(router.validate_rule(&valid_rule).is_ok());
-
-        // Invalid expression rule (missing 'expression' field)
-        let invalid_rule = json!({
-            "engine": "expression",
-            "message": "Something"
-        });
-        assert!(router.validate_rule(&invalid_rule).is_err());
     }
 }

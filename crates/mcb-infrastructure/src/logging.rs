@@ -6,11 +6,11 @@
 use std::io::IsTerminal;
 
 use mcb_domain::error::{Error, Result};
+use tracing::{Level, debug, error, info, warn};
+use tracing_subscriber::{EnvFilter, Registry, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 // Re-export LoggingConfig for convenience
 pub use crate::config::LoggingConfig;
-use tracing::{Level, debug, error, info, warn};
-use tracing_subscriber::{EnvFilter, Registry, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 /// Initialize logging with the provided configuration
 pub fn init_logging(config: LoggingConfig) -> Result<()> {

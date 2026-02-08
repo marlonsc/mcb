@@ -1,6 +1,6 @@
 //! Provider Handles - Runtime-swappable provider wrappers
 //!
-//! Type aliases for the generic `Handle<T>` for backward compatibility.
+//! Type aliases for the generic `Handle<T>`.
 //! All handle types use the same underlying generic implementation.
 //!
 //! ## Pattern
@@ -11,13 +11,14 @@
 //!              AdminService.switch_provider()
 //! ```
 
-use super::handle::Handle;
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 
+use super::handle::Handle;
+
 // ============================================================================
-// Type Aliases (Backward Compatibility)
+// Type Aliases
 // ============================================================================
 
 /// Handle for runtime-swappable embedding provider

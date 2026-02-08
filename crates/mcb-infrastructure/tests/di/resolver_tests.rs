@@ -9,15 +9,15 @@ use mcb_infrastructure::di::resolver::*;
 #[test]
 fn test_available_providers_display() {
     let providers = AvailableProviders {
-        embedding: vec![("null", "Null provider")],
-        vector_store: vec![("memory", "In-memory store")],
+        embedding: vec![("fastembed", "FastEmbed local provider")],
+        vector_store: vec![("edgevec", "EdgeVec HNSW store")],
         cache: vec![("moka", "Moka cache")],
         language: vec![("universal", "Universal chunker")],
     };
 
     let display = format!("{}", providers);
     assert!(display.contains("Embedding Providers"));
-    assert!(display.contains("null"));
+    assert!(display.contains("fastembed"));
 }
 
 #[test]

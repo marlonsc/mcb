@@ -4,11 +4,13 @@
 //! This abstraction enables services to coordinate sync operations without
 //! coupling to specific debouncing, queueing, or file-watching implementations.
 
-use crate::error::Result;
-use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
+
+use async_trait::async_trait;
+
+use crate::error::Result;
 
 /// Configuration for sync operations
 #[derive(Debug, Clone)]

@@ -1,0 +1,15 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/models"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": "{\"data\": [{\"id\": \"gpt-4\", \"object\": \"model\"}]}",
+      "headers": {
+        "Content-Type": ["application/json"]
+      }
+    }
+  }
+]

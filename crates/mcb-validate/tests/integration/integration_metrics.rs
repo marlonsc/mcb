@@ -5,10 +5,11 @@
 
 #[cfg(test)]
 mod integration_metrics_tests {
+    use std::path::Path;
+
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
     use mcb_validate::violation_trait::Severity;
     use rust_code_analysis::LANG;
-    use std::path::Path;
     use tempfile::TempDir;
 
     /// Test analyzing a simple function that should pass all thresholds

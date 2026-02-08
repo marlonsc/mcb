@@ -1,4 +1,16 @@
-# ADR 027: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
+---
+adr: 27
+title: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [8, 13, 24]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 027: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
 
 ## Status
 

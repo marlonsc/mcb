@@ -8,7 +8,7 @@
 //!
 //! - **Semantic Search**: AI-powered code understanding and retrieval using vector embeddings
 //! - **Multi-Provider**: Support for OpenAI, Ollama, FastEmbed, VoyageAI, Gemini embedding providers
-//! - **Vector Storage**: Milvus, EdgeVec, or filesystem-based vector storage
+//! - **Vector Storage**: EdgeVec (local), Milvus, Qdrant, Pinecone
 //! - **AST Parsing**: 14 programming languages with tree-sitter based code chunking
 //! - **Hybrid Search**: Combines BM25 lexical search with semantic similarity
 //!
@@ -44,18 +44,14 @@
 //! ## Feature Flags
 //!
 //! - `fastembed`: Local embeddings via FastEmbed (default)
-//! - `filesystem-store`: Local filesystem vector storage (default)
+//! - `edgevec`: Local HNSW vector storage (default)
 //! - `milvus`: Milvus vector database support
 //! - `edgevec`: EdgeVec in-memory vector store
 //! - `redis-cache`: Redis distributed caching
 //! - `full`: All features enabled
 
 // Clippy allows for complex patterns in server code
-#![allow(clippy::io_other_error)]
-#![allow(clippy::for_kv_map)]
-#![allow(clippy::while_let_loop)]
-// Allow Rust 2024 compatibility issues from Rocket's EventStream macro
-#![allow(rust_2024_compatibility)]
+
 // Documentation configuration for docs.rs
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
@@ -67,15 +63,14 @@ pub mod collection_mapping;
 pub mod constants;
 pub mod formatter;
 pub mod handlers;
+pub mod hooks;
 pub mod init;
 pub mod mcp_server;
 pub mod session;
 pub mod tools;
 pub mod transport;
-
-// Placeholder modules removed - functionality handled by infrastructure layer
-
-// Provider modules are included in mcb-infrastructure for clean architecture compliance
+pub mod utils;
+pub mod vcs_repository_registry;
 
 // Re-export core types for public API
 pub use builder::McpServerBuilder;

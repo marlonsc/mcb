@@ -10,10 +10,10 @@ description: "Configuration loading should use Figment::new().merge().extract() 
 rationale: "Figment provides unified configuration source handling"
 
 rule: |
-  rule FigmentPatternUsage "Check for Figment pattern usage" {
-      when
-          ConfigurationLoading() &&
-          !UsesPattern("Figment::new().merge().extract()")
-      then
-          Violation("Configuration loading should use Figment::new().merge().extract() pattern");
-  }
+    rule FigmentPatternUsage "Check for Figment pattern usage" {
+        when
+            ConfigurationLoading() &&
+            !UsesPattern("Figment::new().merge().extract()")
+        then
+            Violation("Configuration loading should use Figment::new().merge().extract() pattern");
+    }

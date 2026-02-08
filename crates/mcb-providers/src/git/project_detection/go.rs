@@ -4,14 +4,13 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use regex::Regex;
-use tokio::fs::read_to_string;
-
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::project_detection::{
     ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
 };
+use regex::Regex;
+use tokio::fs::read_to_string;
 
 use super::PROJECT_DETECTORS;
 
@@ -23,6 +22,7 @@ pub struct GoDetector {
 }
 
 impl GoDetector {
+    /// Create a new Go detector
     pub fn new(_config: &ProjectDetectorConfig) -> std::result::Result<Self, regex::Error> {
         let module_re = Regex::new(r"^module\s+(\S+)")?;
         let go_version_re = Regex::new(r"^go\s+(\d+\.\d+)")?;
@@ -84,21 +84,20 @@ impl ProjectDetector for GoDetector {
                 continue;
             }
 
-            if in_require_block {
-                if let Some(caps) = self.require_re.captures(line) {
-                    if let Some(dep) = caps.get(1) {
-                        dependencies.push(dep.as_str().to_string());
-                    }
-                }
+            if in_require_block
+                && let Some(caps) = self.require_re.captures(line)
+                && let Some(dep) = caps.get(1)
+            {
+                dependencies.push(dep.as_str().to_string());
             }
 
             // Single-line require
-            if line.starts_with("require ") && !line.contains('(') {
-                if let Some(caps) = self.require_re.captures(&line["require ".len()..]) {
-                    if let Some(dep) = caps.get(1) {
-                        dependencies.push(dep.as_str().to_string());
-                    }
-                }
+            if line.starts_with("require ")
+                && !line.contains('(')
+                && let Some(caps) = self.require_re.captures(&line["require ".len()..])
+                && let Some(dep) = caps.get(1)
+            {
+                dependencies.push(dep.as_str().to_string());
             }
         }
 

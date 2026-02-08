@@ -9,17 +9,19 @@
 //! AppConfig (injected) → Resolver → linkme registry → Arc<dyn Provider>
 //! ```
 
-use crate::config::AppConfig;
-use mcb_application::ports::registry::{
+use std::sync::Arc;
+
+use mcb_domain::ports::providers::{
+    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+};
+use mcb_domain::registry::{
     CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig,
     VectorStoreProviderConfig, resolve_cache_provider, resolve_embedding_provider,
     resolve_language_provider, resolve_vector_store_provider,
 };
-use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
-};
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use std::sync::Arc;
+
+use crate::config::AppConfig;
 
 // ============================================================================
 // Embedding Provider Resolver
@@ -77,8 +79,8 @@ impl EmbeddingProviderResolver {
                 resolve_embedding_provider(&registry_config)
             }
         } else {
-            // Fallback to null provider if no default configured
-            resolve_embedding_provider(&EmbeddingProviderConfig::new("null"))
+            // Fallback to fastembed (local provider) if no default configured
+            resolve_embedding_provider(&EmbeddingProviderConfig::new("fastembed"))
         }
     }
 
@@ -92,7 +94,7 @@ impl EmbeddingProviderResolver {
 
     /// List available embedding providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_application::ports::registry::list_embedding_providers()
+        mcb_domain::registry::list_embedding_providers()
     }
 }
 
@@ -155,8 +157,8 @@ impl VectorStoreProviderResolver {
                 resolve_vector_store_provider(&registry_config)
             }
         } else {
-            // Fallback to memory provider if no default configured
-            resolve_vector_store_provider(&VectorStoreProviderConfig::new("memory"))
+            // Fallback to edgevec (local HNSW) if no default configured
+            resolve_vector_store_provider(&VectorStoreProviderConfig::new("edgevec"))
         }
     }
 
@@ -170,7 +172,7 @@ impl VectorStoreProviderResolver {
 
     /// List available vector store providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_application::ports::registry::list_vector_store_providers()
+        mcb_domain::registry::list_vector_store_providers()
     }
 }
 
@@ -227,7 +229,7 @@ impl CacheProviderResolver {
 
     /// List available cache providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_application::ports::registry::list_cache_providers()
+        mcb_domain::registry::list_cache_providers()
     }
 }
 
@@ -246,7 +248,6 @@ impl std::fmt::Debug for CacheProviderResolver {
 /// Uses the linkme registry to resolve language providers by name.
 /// Can resolve from current config or from an override config.
 pub struct LanguageProviderResolver {
-    #[allow(dead_code)] // Reserved for config-based language selection in future
     config: Arc<AppConfig>,
 }
 
@@ -258,7 +259,8 @@ impl LanguageProviderResolver {
 
     /// Resolve provider from current application config
     pub fn resolve_from_config(&self) -> Result<Arc<dyn LanguageChunkingProvider>, String> {
-        // Language provider is always "universal" for now
+        // Use config so the field is not dead; language provider is "universal" for now
+        let _ = self.config.as_ref();
         let registry_config = LanguageProviderConfig::new("universal");
         resolve_language_provider(&registry_config)
     }
@@ -273,7 +275,7 @@ impl LanguageProviderResolver {
 
     /// List available language providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_application::ports::registry::list_language_providers()
+        mcb_domain::registry::list_language_providers()
     }
 }
 

@@ -1,0 +1,31 @@
+_template: "cargo_dependency_check"
+id: "CA010"
+name: "Providers Layer Boundaries"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Providers crate only depends on domain and application"
+rationale: "Providers implement domain interfaces using application use cases"
+
+crate_name: "{{providers_crate}}"
+forbidden_prefixes: []
+allowed_dependencies: ["{{domain_crate}}", "{{application_crate}}"]
+
+config:
+  crate_name: "{{providers_crate}}"
+  forbidden_prefixes: []
+  allowed_dependencies: ["{{domain_crate}}", "{{application_crate}}"]
+
+rule: |
+  rule ProvidersBoundaries "Providers Layer Boundaries" {
+      when
+          Facts.crate_name == "{{providers_crate}}" &&
+          (Facts.crate_{{providers_module}}_depends_on_{{infrastructure_module}} == true ||
+           Facts.crate_{{providers_module}}_depends_on_{{server_module}} == true)
+      then
+          Facts.violation_triggered = true;
+          Facts.violation_message = "Providers layer can only depend on domain and application layers";
+          Facts.violation_rule_name = "CA010";
+  }

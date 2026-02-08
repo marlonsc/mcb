@@ -11,6 +11,123 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
+#### v0.3.0 - Workflow System Implementation - IN DEVELOPMENT
+
+**Status**: Phase 8 (ADR-034-037 implementation)  
+**Target**: TBD (blocks v0.4.0)  
+**Key Architecture**: ADR-034 (FSM), ADR-035 (Freshness), ADR-036 (Policies), ADR-037 (Orchestrator)
+
+**Specification & Implementation Phase**
+
+### Added (Planned)
+
+-   **Workflow FSM** (ADR-034): 12-state machine for task orchestration with transitions, state metadata, compensation handlers
+-   **Context Scout** (ADR-035): Freshness tracking (Fresh/Acceptable/Stale/StaleWithRisk) with staleness signals
+-   **Policy Engine** (ADR-036): 11+ policies for workflow validation, scope filtering, enforcement
+-   **Task Orchestrator** (ADR-037): Multi-layer coordination with compensation, event broadcasting, Beads integration
+-   **Execution Tiers** (ADR-038): Hierarchical execution (immediate, scheduled, deferred)
+
+### Unblocks
+
+-   ✅ v0.4.0 Integrated Context System (READY to execute upon v0.3.0 release)
+
+---
+
+#### v0.4.0 - Integrated Context System 📋 PLANNED (blocked on v0.3.0)
+
+**Status**: PLANNED (blocked on v0.3.0 completion)  
+**Target**: Feb 17 - Mar 16, 2026 (4 weeks execution upon v0.3.0 release)  
+**Key Architecture**: ADR-041-046 (Phase 9 Context System)  
+**Unlock Criteria**: 7-point gate requiring v0.3.0 release (see `.planning/PHASE-8-9-DEPENDENCY-MAP.md`)
+
+**Multi-Source Integrated Context**
+
+### Added (Planned)
+
+-   **Knowledge Graph** (ADR-042): petgraph-based relationships (calls, imports, extends) with tree-sitter-graph extraction
+-   **Hybrid Search** (ADR-043): RRF fusion of semantic embeddings + BM25 keyword ranking with freshness weighting
+-   **Freshness Tracking** (ADR-045): Temporal metadata, immutable snapshots, time-travel queries, TTL garbage collection
+-   **Lightweight Discovery Models** (ADR-044): AST-based routing (Stage 1), rhai rules (Stage 2), optional ML (v0.5.0)
+-   **Context Versioning** (ADR-045): Immutable snapshots at commits/tags, temporal query API
+-   **FSM & Policy Integration** (ADR-046): Workflow state gates freshness requirements, policies scope boundaries, compensation rollback
+
+### Architecture
+
+-   **5-Layer System**: VCS → Indexing → Memory → Graph → Search → Policies
+-   **Embedded-First**: petgraph, tantivy, vecstore locally (no Neo4j in MVP)
+-   **Tech Stack**: 25+ Rust crates (petgraph, tree-sitter-graph, tantivy, rhai, im, dill)
+-   **Integration**: Full FSM + policy gating + event streaming + MCP tools
+
+### Execution Phase
+
+-   **Week 1**: Graph infrastructure + corrections (6 days, 18-25 hours)
+-   **Week 2**: Hybrid search engine (<500ms target)
+-   **Week 3**: Context versioning + snapshots (<100MB memory)
+-   **Week 4**: FSM integration + validation + compensation
+
+### Dependencies
+
+-   ⏳ **v0.3.0 MUST release** (Feb 17, 2026 unlock date)
+-   ✅ ADR-034-037 locked (no post-release changes)
+-   ✅ ContextFreshness enum stable (CRITICAL)
+-   ✅ 35 Beads issues created + ready to claim
+
+### Success Criteria
+
+-   2966+ tests passing (unit, integration, end-to-end)
+-   85%+ code coverage minimum
+-   Zero architecture violations
+-   Complete documentation and v0.3.0 → v0.4.0 migration guide
+
+---
+
+## [v0.2.0] - Documentation Refactoring - 2026-02-05
+
+**Release**: ✅ RELEASED
+
+### Added
+
+-   **YAML Frontmatter**: All ADRs now include standardized frontmatter (ADR, title, status, created, updated, related, supersedes, superseded_by, implementation_status)
+-   **ADR Archive Structure**: New `docs/adr/archive/` directory for superseded decisions (ADR-012, ADR-024, ADR-032)
+-   **ADRs**: ADR-003 & ADR-030 merged into unified "Provider Architecture & Routing" decision
+-   **Cross-Reference Updates**: All internal ADR links updated (ADR-024 → ADR-029, ADR-030 → ADR-003)
+-   **Release Roadmap**: v0.3.0 → v0.4.0 coordination strategy documented
+
+### Changed
+
+-   **ADR Status Standardization**: All ADRs now use 5-value status set: IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED
+-   **Documentation Structure**: Improved navigation with frontmatter-based indexing
+-   **Supersession Chains**: Updated chains (ADR-012→024→029, ADR-032→034)
+-   **Version Badges**: Updated to v0.2.0
+-   **README**: Added Key Architectural Decisions section
+-   **ROADMAP**: Added v0.3.0 and v0.4.0 planned phases
+
+### Fixed
+
+-   Removed deprecated Shaku DI references from ADR-002
+-   Updated all supersession chains for clarity
+-   Standardized ADR metadata across all 46 decisions
+-   Fixed markdown linting issues
+
+### Deprecated
+
+-   ADR-012 (Shaku DI Strategy) - Use ADR-029 instead
+-   ADR-024 (Simplified DI) - Use ADR-029 instead
+-   ADR-032 (Agent/Quality Domain) - Use ADR-034 instead
+
+### Metrics
+
+-   44 ADRs with YAML metadata
+-   3 ADRs archived
+-   1 major consolidation (ADR-003/030)
+-   5 commits
+-   801+ lines added, 874+ lines removed
+-   0 architecture violations
+-   0 lint errors
+-   2966+ tests passing
+
+---
+
 #### v0.2.0 Planning - 2026-01-12
 
 -   **ADR-009**: Persistent Session Memory architecture decision record
@@ -35,7 +152,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Dependencies Planned**: sqlx (SQLite support)
 -   **Implementation Phases**: 10 phases for session memory (on top of 10 for git)
 -   **Estimated LOC**: ~3,000 for memory subsystem
--   **New MCP Tools**: 5 tools (search, timeline, get_observations, store_observation, inject_context)
+-   **MCP Tool Consolidation**: 38 legacy tools into 8 tools (index, search, validate, memory, session, agent, project, vcs)
+
+---
+
+## [0.2.0] - 2026-01-31
+
+### What This Release Is
+
+**MCP Context Browser v0.2.0** delivers new providers, health endpoints, and code quality improvements following DRY/SOLID principles. This release adds Anthropic embedding, Pinecone and Qdrant vector store providers, plus Kubernetes-ready health endpoints.
+
+<!-- markdownlint-disable MD044 -->
+### Added
+
+-   **Anthropic Embedding Provider**: Full Voyage AI model support with configurable dimensions
+-   **Pinecone Vector Store Provider**: Production-ready cloud vector database integration
+-   **Qdrant Vector Store Provider**: Self-hosted vector search with gRPC support
+-   **Health Endpoints**: `/healthz` (liveness) and `/readyz` (readiness) for container orchestration
+-   **Performance Metrics Decorator**: SOLID-compliant instrumented embedding provider
+-   **Golden Test Framework**: Architecture boundary documentation and test scaffolding (ADR-027)
+
+### Changed
+
+-   **DRY Refactoring**: Shared HTTP helpers across embedding and vector store providers (~200 lines deduplicated)
+-   **CI/CD Improvements**: Auto-merge Dependabot PRs (patch/minor), auto-tag on release branch merge
+-   **SOLID Compliance**: Metrics added via decorator pattern (Open/Closed principle)
+-   **Test Organization**: Inline tests moved to proper test directories (TEST001 violations resolved)
+
+### Fixed
+
+-   All architecture validation errors resolved (0 errors, 4 warnings)
+-   Validation service properly wired through DI system
+-   Tool count tests updated for new `validate (action=run, scope=project)` tool
+<!-- markdownlint-enable MD044 -->
+
+### Impact Metrics
+
+-   **New Providers**: 3 (Anthropic embedding, Pinecone, Qdrant)
+-   **Tests**: 1636+ passing
+-   **Violations**: 0 errors (was 1)
+-   **DRY Improvement**: ~200 lines of duplication removed
 
 ---
 
@@ -120,7 +276,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.3** delivers config consolidation and validation fixes. 16 config files consolidated to 6, all 23 validation violations resolved.
+**MCP Context Browser v0.1.3** delivers config consolidation and validation fixes. 16 config files to 6, all 23 validation violations resolved.
 
 ### Changed
 
@@ -204,7 +360,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   **Linkme Distributed Slices**: Compile-time provider registration replacing inventory runtime registration
 -   **4 Pure Linkme Registries**: Embedding, vector store, cache, and language provider registries
--   **15 Migrated Providers**: All providers (6 embedding, 3 cache, 8 vector stores, 14 languages) using linkme pattern
+-   **15 Migrated Providers**: All providers (6 embedding, 3 cache, 6 vector stores, 14 languages) using linkme pattern
 -   **Zero Runtime Overhead**: Provider discovery at compile-time instead of runtime
 
 #### Validation Rules
@@ -284,7 +440,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Provider Registration**: Compile-time (from runtime discovery)
 -   **Validation Coverage**: 12 architecture patterns automated
 -   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
--   **Test Coverage**: 1924+ tests maintained
+-   **Test Coverage**: 2966+ tests maintained
 -   **Architecture Compliance**: Automated validation of 7-crate clean architecture
 
 ### Next Steps (v0.1.3 or v0.2.0)
@@ -352,7 +508,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   **Clean Architecture**: Complete refactoring with trait-based dependency injection
--   **Test Suite**: Expanded to 1924+ tests organized by Clean Architecture layers
+-   **Test Suite**: Expanded to 2966+ tests organized by Clean Architecture layers
 -   **Configuration**: Modular configuration with cache and limits separated
 -   **Server Operations**: Extracted operations to dedicated module (`src/server/operations.rs`)
 -   **Metrics**: Dedicated metrics module (`src/server/metrics.rs`)
@@ -379,9 +535,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   **Startup Time**: Instant (from npm/npx overhead)
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
--   **Provider Support**: 7 embedding providers, 8 vector stores
+-   **Provider Support**: 6 embedding providers, 6 vector stores
 -   **Language Support**: 14 languages with AST parsing
--   **Test Coverage**: 1924+ tests
+-   **Test Coverage**: 2966+ tests
 
 ---
 

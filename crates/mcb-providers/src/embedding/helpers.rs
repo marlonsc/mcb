@@ -33,12 +33,3 @@ pub(crate) mod constructor {
             .unwrap_or_else(|| default_url.to_string())
     }
 }
-
-/// HTTP client helpers for embedding providers (DRY)
-///
-/// Re-exports from utils::http for backward compatibility.
-pub(crate) mod http {
-    pub(crate) use crate::utils::http::{
-        DEFAULT_HTTP_TIMEOUT, create_default_client, create_http_provider_config,
-    };
-}

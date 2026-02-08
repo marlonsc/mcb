@@ -36,7 +36,7 @@ patterns:
   trivial_ne_true_false: 'assert_ne!\s*\(\s*true\s*,\s*false\s*\)'
 
 config:
-  exclude_patterns: ["**/test_utils/**", "**/fixtures/**"]
+  exclude_patterns: []
 
 rule: |
   rule TestOrganization "Check test organization" {

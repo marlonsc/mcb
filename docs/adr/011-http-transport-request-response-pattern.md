@@ -1,4 +1,16 @@
-# ADR 011: HTTP Transport - Request-Response Pattern Over SSE Streaming
+---
+adr: 11
+title: HTTP Transport - Request-Response Pattern Over SSE Streaming
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 7, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
+## ADR 011: HTTP Transport - Request-Response Pattern Over SSE Streaming
 
 ## Status
 
@@ -206,7 +218,7 @@ async fn handle_mcp_get(
 ) -> Result<Response, McpError> {
     // Session validation happens here
 
-    // TODO: Implement Server-Sent Events streaming
+    // NOTE: SSE streaming to be implemented when real-time transport is added
     // For now, return 501 to indicate not implemented
     Err(McpError::NotImplemented(
         "SSE streaming not yet implemented. Use POST for request-response communication."

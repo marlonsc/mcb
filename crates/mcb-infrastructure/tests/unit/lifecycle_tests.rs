@@ -3,14 +3,15 @@
 //! Tests service state tracking, lifecycle operations, and the LifecycleManaged trait.
 //! Includes a test implementation to verify trait behavior.
 
-use async_trait::async_trait;
-use mcb_application::ports::admin::{
-    DependencyHealth, DependencyHealthCheck, LifecycleManaged, PortServiceState,
-};
-use mcb_domain::error::Result;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use async_trait::async_trait;
+use mcb_domain::error::Result;
+use mcb_domain::ports::admin::{
+    DependencyHealth, DependencyHealthCheck, LifecycleManaged, PortServiceState,
+};
 
 // =============================================================================
 // PortServiceState Enum Tests

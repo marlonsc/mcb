@@ -23,7 +23,7 @@ async fn test_catalog_builds_with_default_config() {
 #[tokio::test]
 async fn test_catalog_builds_with_custom_embedding_config() {
     let mut config = AppConfig::default();
-    config.providers.embedding.provider = Some("null".to_string());
+    config.providers.embedding.provider = Some("fastembed".to_string());
 
     let result = build_catalog(config).await;
 
@@ -38,7 +38,7 @@ async fn test_catalog_builds_with_custom_embedding_config() {
 #[tokio::test]
 async fn test_catalog_builds_with_custom_vector_store_config() {
     let mut config = AppConfig::default();
-    config.providers.vector_store.provider = Some("null".to_string());
+    config.providers.vector_store.provider = Some("edgevec".to_string());
 
     let result = build_catalog(config).await;
 

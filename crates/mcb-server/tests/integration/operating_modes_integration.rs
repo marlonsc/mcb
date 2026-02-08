@@ -13,6 +13,8 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::test_utils::mock_services::{MockProjectService, MockVcsProvider};
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::types::{AppConfig, ModeConfig, OperatingMode};
 use mcb_infrastructure::crypto::CryptoService;
@@ -331,8 +333,8 @@ fn test_mcp_request_with_params() {
     let request = McpRequest {
         method: "tools/call".to_string(),
         params: Some(serde_json::json!({
-            "name": "search_code",
-            "arguments": {"query": "test"}
+            "name": "search",
+            "arguments": {"query": "test", "resource": "code"}
         })),
         id: Some(serde_json::json!(42)),
     };
@@ -507,20 +509,20 @@ async fn test_session_isolation_with_vector_store() {
 
     // Both should be able to create their own collections
     vector_store
-        .create_collection(&coll_a, 384)
+        .create_collection(&CollectionId::new(&coll_a), 384)
         .await
         .expect("Create A");
     vector_store
-        .create_collection(&coll_b, 384)
+        .create_collection(&CollectionId::new(&coll_b), 384)
         .await
         .expect("Create B");
 
     // Verify they're separate (search one, verify empty in other)
     let results_a = vector_store
-        .search_similar(&coll_a, &vec![0.0; 384], 10, None)
+        .search_similar(&CollectionId::new(&coll_a), &vec![0.0; 384], 10, None)
         .await;
     let results_b = vector_store
-        .search_similar(&coll_b, &vec![0.0; 384], 10, None)
+        .search_similar(&CollectionId::new(&coll_b), &vec![0.0; 384], 10, None)
         .await;
 
     // Both should succeed (collections exist) and be empty (no data inserted)
@@ -552,14 +554,24 @@ async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
-    let memory_repository = mcb_providers::database::create_memory_repository_in_memory()
-        .await
-        .expect("Failed to create memory database");
+    let (memory_repository, shared_executor) =
+        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+            .await
+            .expect("Failed to create memory database");
+    let agent_repository = mcb_providers::database::create_agent_repository_from_executor(
+        std::sync::Arc::clone(&shared_executor),
+    );
+    let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
+        std::sync::Arc::new(MockVcsProvider::new());
+
+    let project_service: std::sync::Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
+        std::sync::Arc::new(MockProjectService::new());
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
         cache: shared_cache,
-        crypto,
+        crypto: std::sync::Arc::new(crypto)
+            as std::sync::Arc<dyn mcb_domain::ports::providers::CryptoProvider>,
         config,
         embedding_provider,
         vector_store_provider,
@@ -567,6 +579,9 @@ async fn create_test_mcp_server() -> McpServer {
         indexing_ops,
         event_bus,
         memory_repository,
+        agent_repository,
+        vcs_provider,
+        project_service,
     };
 
     let services = DomainServicesFactory::create_services(deps)
@@ -579,6 +594,8 @@ async fn create_test_mcp_server() -> McpServer {
         .with_search_service(services.search_service)
         .with_validation_service(services.validation_service)
         .with_memory_service(services.memory_service)
+        .with_agent_session_service(services.agent_session_service)
+        .with_project_service(services.project_service)
         .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")
@@ -635,22 +652,14 @@ async fn test_http_server_tools_list() {
         .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
         .collect();
 
-    assert!(
-        tool_names.contains(&"index_codebase"),
-        "Should have index_codebase"
-    );
-    assert!(
-        tool_names.contains(&"search_code"),
-        "Should have search_code"
-    );
-    assert!(
-        tool_names.contains(&"get_indexing_status"),
-        "Should have get_indexing_status"
-    );
-    assert!(
-        tool_names.contains(&"clear_index"),
-        "Should have clear_index"
-    );
+    assert!(tool_names.contains(&"index"), "Should have index");
+    assert!(tool_names.contains(&"search"), "Should have search");
+    assert!(tool_names.contains(&"validate"), "Should have validate");
+    assert!(tool_names.contains(&"memory"), "Should have memory");
+    assert!(tool_names.contains(&"session"), "Should have session");
+    assert!(tool_names.contains(&"agent"), "Should have agent");
+    assert!(tool_names.contains(&"project"), "Should have project");
+    assert!(tool_names.contains(&"vcs"), "Should have vcs");
 }
 
 #[tokio::test]
@@ -816,7 +825,7 @@ async fn test_http_server_with_session_header() {
 }
 
 #[tokio::test]
-async fn test_http_server_tools_call_get_indexing_status() {
+async fn test_http_server_tools_call_index_status() {
     let port = get_free_port();
     let server = Arc::new(create_test_mcp_server().await);
 
@@ -828,12 +837,13 @@ async fn test_http_server_tools_call_get_indexing_status() {
         .await
         .expect("Failed to create test client");
 
-    // Call get_indexing_status tool
+    // Call index tool with status action
     let request = McpRequest {
         method: "tools/call".to_string(),
         params: Some(serde_json::json!({
-            "name": "get_indexing_status",
+            "name": "index",
             "arguments": {
+                "action": "status",
                 "collection": "test-collection"
             }
         })),

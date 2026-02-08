@@ -23,10 +23,10 @@
 //! - `increment_indexed_files` - Count of indexed files
 //! - `increment_search_requests` - Count of search requests
 
-use async_trait::async_trait;
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::time::Duration;
+
+use async_trait::async_trait;
 
 // ============================================================================
 // Core Types
@@ -36,7 +36,7 @@ use std::time::Duration;
 pub type MetricLabels = HashMap<String, String>;
 
 /// Result type for metrics operations
-pub type MetricsResult<T> = Result<T, MetricsError>;
+pub type MetricsResult<T> = crate::Result<T>;
 
 /// Errors that can occur during metrics operations
 #[derive(Debug, Clone, thiserror::Error)]
@@ -71,7 +71,14 @@ pub enum MetricsError {
 ///
 /// ## Example
 ///
-/// ```ignore
+/// ```no_run
+/// # use mcb_domain::ports::providers::MetricsProvider;
+/// # use std::time::Duration;
+/// # use std::collections::HashMap;
+/// # type MetricLabels = HashMap<String, String>;
+/// # // Mock labels macro
+/// # macro_rules! labels { ($($t:tt)*) => { std::collections::HashMap::new() } }
+/// # async fn example(metrics: &dyn MetricsProvider) -> Result<(), Box<dyn std::error::Error>> {
 /// // Record a counter increment
 /// metrics.increment("search_requests_total", &labels!("collection" => "my-project")).await?;
 ///
@@ -83,6 +90,8 @@ pub enum MetricsError {
 ///
 /// // Use domain-specific convenience methods
 /// metrics.record_search_latency(Duration::from_millis(123), "my-collection").await?;
+/// # Ok(())
+/// # }
 /// ```
 #[async_trait]
 pub trait MetricsProvider: Send + Sync {
@@ -221,60 +230,3 @@ macro_rules! labels {
         map
     }};
 }
-
-// ============================================================================
-// Null Implementation
-// ============================================================================
-
-/// No-op metrics provider that discards all metrics
-///
-/// Use this as a default when metrics collection is disabled.
-#[derive(Debug, Clone, Default)]
-pub struct NullMetricsObservabilityProvider;
-
-impl NullMetricsObservabilityProvider {
-    /// Create a new null provider
-    pub fn new() -> Self {
-        Self
-    }
-
-    /// Create as Arc for trait object usage
-    pub fn arc() -> Arc<dyn MetricsProvider> {
-        Arc::new(Self::new())
-    }
-}
-
-#[async_trait]
-impl MetricsProvider for NullMetricsObservabilityProvider {
-    fn name(&self) -> &str {
-        "null"
-    }
-
-    async fn increment(&self, _name: &str, _labels: &MetricLabels) -> MetricsResult<()> {
-        Ok(())
-    }
-
-    async fn increment_by(
-        &self,
-        _name: &str,
-        _value: f64,
-        _labels: &MetricLabels,
-    ) -> MetricsResult<()> {
-        Ok(())
-    }
-
-    async fn gauge(&self, _name: &str, _value: f64, _labels: &MetricLabels) -> MetricsResult<()> {
-        Ok(())
-    }
-
-    async fn histogram(
-        &self,
-        _name: &str,
-        _value: f64,
-        _labels: &MetricLabels,
-    ) -> MetricsResult<()> {
-        Ok(())
-    }
-}
-
-// Tests moved to tests/unit/ports/providers/metrics_tests.rs

@@ -2,9 +2,11 @@
 //!
 //! Provides factory functions for creating test data and temporary directories.
 
-use mcb_application::ValidationService;
-use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
 use mcb_domain::SearchResult;
+use mcb_domain::ports::services::IndexingResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::types::AppConfig;
 use mcb_infrastructure::crypto::CryptoService;
@@ -14,9 +16,63 @@ use mcb_infrastructure::di::modules::domain_services::{
 };
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
-use std::path::PathBuf;
-use std::sync::Arc;
 use tempfile::TempDir;
+
+use crate::test_utils::mock_services::{
+    MockAgentRepository, MockMemoryRepository, MockVcsProvider,
+};
+
+// -----------------------------------------------------------------------------
+// Golden test helpers (shared by tests/golden and integration)
+// -----------------------------------------------------------------------------
+
+pub const GOLDEN_COLLECTION: &str = "mcb_golden_test";
+
+/// Path to sample_codebase fixture (used by golden tests).
+pub fn sample_codebase_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample_codebase")
+}
+
+/// Extract text content from CallToolResult for assertions.
+pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
+    res.content
+        .iter()
+        .filter_map(|x| {
+            if let Ok(v) = serde_json::to_value(x) {
+                v.get("text").and_then(|t| t.as_str()).map(String::from)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Parse "**Results found:** N" from search response text.
+pub fn golden_parse_results_found(text: &str) -> Option<usize> {
+    let prefix = "**Results found:**";
+    text.find(prefix).and_then(|i| {
+        let rest = text[i + prefix.len()..].trim_start();
+        let num_str: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+        num_str.parse().ok()
+    })
+}
+
+/// Count result lines (each has "📁") in search response.
+pub fn golden_count_result_entries(text: &str) -> usize {
+    text.lines().filter(|line| line.contains("📁")).count()
+}
+
+/// Expected files in sample_codebase for search assertions.
+pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
+    "embedding.rs",
+    "vector_store.rs",
+    "handlers.rs",
+    "cache.rs",
+    "di.rs",
+    "error.rs",
+    "chunking.rs",
+];
 
 /// Create a temporary codebase directory with sample code files
 pub fn create_temp_codebase() -> (TempDir, PathBuf) {
@@ -79,44 +135,6 @@ pub fn create_test_indexing_result(
     }
 }
 
-/// Create a test indexing result with specific error messages
-pub fn create_test_indexing_result_with_errors(
-    files_processed: usize,
-    chunks_created: usize,
-    errors: Vec<String>,
-) -> IndexingResult {
-    IndexingResult {
-        files_processed,
-        chunks_created,
-        files_skipped: 0,
-        errors,
-        operation_id: None,
-        status: "completed".to_string(),
-    }
-}
-
-/// Create an idle indexing status (not indexing)
-pub fn create_idle_status() -> IndexingStatus {
-    IndexingStatus {
-        is_indexing: false,
-        progress: 0.0,
-        current_file: None,
-        total_files: 0,
-        processed_files: 0,
-    }
-}
-
-/// Create an in-progress indexing status
-pub fn create_in_progress_status(progress: f64, current_file: &str) -> IndexingStatus {
-    IndexingStatus {
-        is_indexing: true,
-        progress,
-        current_file: Some(current_file.to_string()),
-        total_files: 100,
-        processed_files: (progress * 100.0) as usize,
-    }
-}
-
 /// Create a single test search result
 pub fn create_test_search_result(
     file_path: &str,
@@ -167,11 +185,18 @@ pub async fn create_test_mcp_server() -> McpServer {
     // Create shared cache provider for domain services factory
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
 
-    // Create crypto service with random key for tests
     let master_key = CryptoService::generate_master_key();
-    let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
+    let crypto: std::sync::Arc<dyn mcb_domain::ports::providers::CryptoProvider> =
+        std::sync::Arc::new(
+            CryptoService::new(master_key).expect("Failed to create crypto service"),
+        );
 
-    let memory_repository = Arc::new(crate::test_utils::mock_services::MockMemoryRepository::new());
+    let memory_repository = Arc::new(MockMemoryRepository::new());
+    let agent_repository = Arc::new(MockAgentRepository::new());
+    let vcs_provider = Arc::new(MockVcsProvider::new());
+
+    let project_service: Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
+        Arc::new(mcb_infrastructure::project::ProjectService::new());
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
@@ -184,20 +209,23 @@ pub async fn create_test_mcp_server() -> McpServer {
         indexing_ops,
         event_bus,
         memory_repository,
+        agent_repository,
+        vcs_provider,
+        project_service,
     };
 
     let services = DomainServicesFactory::create_services(deps)
         .await
         .expect("Failed to create services");
 
-    let validation_service = Arc::new(ValidationService::new());
-
     McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
-        .with_validation_service(validation_service)
+        .with_validation_service(services.validation_service)
         .with_memory_service(services.memory_service)
+        .with_agent_session_service(services.agent_session_service)
+        .with_project_service(services.project_service)
         .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")
@@ -209,16 +237,10 @@ mod tests {
 
     /// Smoke test so fixture helpers are not reported as dead code in the unit test target.
     #[test]
-    fn fixture_helpers_used_in_unit_target() {
+    fn test_fixture_helpers_used_in_unit_target() {
         let (_temp, path) = create_temp_codebase();
         assert!(path.join("lib.rs").exists());
         let r = create_test_indexing_result(2, 10, 0);
         assert_eq!(r.files_processed, 2);
-        let r2 = create_test_indexing_result_with_errors(1, 5, vec!["err".to_string()]);
-        assert_eq!(r2.errors.len(), 1);
-        let idle = create_idle_status();
-        assert!(!idle.is_indexing);
-        let prog = create_in_progress_status(0.5, "src/main.rs");
-        assert!(prog.is_indexing);
     }
 }

@@ -17,12 +17,13 @@
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
+use std::sync::Arc;
+
 use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest, Request};
 use rocket::serde::json::Json;
 use serde::Serialize;
-use std::sync::Arc;
 
 /// Admin authentication configuration for the middleware
 #[derive(Clone)]
@@ -187,31 +188,4 @@ impl<'r> FromRequest<'r> for AdminAuth {
 /// Check if a route should bypass authentication
 pub fn is_unauthenticated_route(path: &str) -> bool {
     matches!(path, "/live" | "/ready")
-}
-
-/// Wrapper function for backwards compatibility
-///
-/// In Rocket, authentication is handled via Request Guards rather than
-/// middleware. This function is kept for API compatibility but is a no-op.
-/// Use the `AdminAuth` request guard directly in route handlers.
-///
-/// # Migration
-///
-/// Instead of:
-/// ```text
-/// let router = with_admin_auth(auth_config, router);
-/// ```
-///
-/// Use request guards:
-/// ```text
-/// #[get("/protected")]
-/// fn protected(_auth: AdminAuth) -> &'static str {
-///     "Protected"
-/// }
-/// ```
-pub fn with_admin_auth(
-    auth_config: AdminAuthConfig,
-    rocket: rocket::Rocket<rocket::Build>,
-) -> rocket::Rocket<rocket::Build> {
-    rocket.manage(Arc::new(auth_config))
 }

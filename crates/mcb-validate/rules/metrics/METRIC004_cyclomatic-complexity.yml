@@ -20,7 +20,17 @@ metrics:
   cyclomatic_complexity:
     max: 10
     severity: warning
-    languages: ["rust", "python", "javascript", "typescript", "java", "c", "cpp", "kotlin"]
+    languages:
+      [
+        "rust",
+        "python",
+        "javascript",
+        "typescript",
+        "java",
+        "c",
+        "cpp",
+        "kotlin",
+      ]
 
 thresholds:
   - value: 10

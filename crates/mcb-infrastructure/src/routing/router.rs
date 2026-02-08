@@ -2,13 +2,14 @@
 //!
 //! Provides routing logic for selecting providers based on health and context.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::routing::{
     ProviderContext, ProviderHealthStatus, ProviderRouter,
 };
-use std::collections::HashMap;
-use std::sync::Arc;
 
 use super::health::HealthMonitor;
 
@@ -150,56 +151,5 @@ impl std::fmt::Debug for DefaultProviderRouter {
             .field("embedding_providers", &self.embedding_providers)
             .field("vector_store_providers", &self.vector_store_providers)
             .finish()
-    }
-}
-
-/// Null provider router for testing
-///
-/// Always returns "null" as the selected provider.
-/// Does not track health or apply any routing logic.
-pub struct NullProviderRouter;
-
-impl NullProviderRouter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for NullProviderRouter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl ProviderRouter for NullProviderRouter {
-    async fn select_embedding_provider(&self, _context: &ProviderContext) -> Result<String> {
-        Ok("null".to_string())
-    }
-
-    async fn select_vector_store_provider(&self, _context: &ProviderContext) -> Result<String> {
-        Ok("null".to_string())
-    }
-
-    async fn get_provider_health(&self, _provider_id: &str) -> Result<ProviderHealthStatus> {
-        Ok(ProviderHealthStatus::Healthy)
-    }
-
-    async fn report_failure(&self, _provider_id: &str, _error: &str) -> Result<()> {
-        Ok(())
-    }
-
-    async fn report_success(&self, _provider_id: &str) -> Result<()> {
-        Ok(())
-    }
-
-    async fn get_all_health(&self) -> Result<HashMap<String, ProviderHealthStatus>> {
-        Ok(HashMap::new())
-    }
-
-    async fn get_stats(&self) -> HashMap<String, serde_json::Value> {
-        let mut stats = HashMap::new();
-        stats.insert("provider".to_string(), serde_json::json!("null"));
-        stats
     }
 }

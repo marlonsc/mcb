@@ -3,8 +3,9 @@
 //! Coordinates filtering of validation rules based on language, dependencies, and file patterns.
 //! Prevents rules from running on irrelevant files for better performance and accuracy.
 
-use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
 
 use super::dependency_parser::{CargoDependencyParser, WorkspaceDependencies};
 use super::file_matcher::FilePatternMatcher;
@@ -68,27 +69,26 @@ impl RuleFilterExecutor {
         }
 
         // Check language filter
-        if let Some(languages) = &filters.languages {
-            if !self
+        if let Some(languages) = &filters.languages
+            && !self
                 .language_detector
                 .matches_languages(file_path, file_content, languages)
-            {
-                return Ok(false);
-            }
+        {
+            return Ok(false);
         }
 
         // Check dependency filter
-        if let Some(required_deps) = &filters.dependencies {
-            if !self.check_dependencies(required_deps, file_path, workspace_deps) {
-                return Ok(false);
-            }
+        if let Some(required_deps) = &filters.dependencies
+            && !self.check_dependencies(required_deps, file_path, workspace_deps)
+        {
+            return Ok(false);
         }
 
         // Check file pattern filter
-        if let Some(patterns) = &filters.file_patterns {
-            if !self.file_matcher.matches_any(file_path, patterns) {
-                return Ok(false);
-            }
+        if let Some(patterns) = &filters.file_patterns
+            && !self.file_matcher.matches_any(file_path, patterns)
+        {
+            return Ok(false);
         }
 
         Ok(true)
@@ -119,7 +119,7 @@ impl RuleFilterExecutor {
     /// Create a file matcher for specific patterns
     pub fn create_file_matcher(&self, patterns: &[String]) -> crate::Result<FilePatternMatcher> {
         FilePatternMatcher::from_mixed_patterns(patterns)
-            .map_err(|e| crate::ValidationError::Config(format!("Invalid file pattern: {}", e)))
+            .map_err(|e| crate::ValidationError::Config(format!("Invalid file pattern: {e}")))
     }
 
     /// Get the language detector for direct use
@@ -130,249 +130,5 @@ impl RuleFilterExecutor {
     /// Get the dependency parser for direct use
     pub fn dependency_parser(&self) -> &CargoDependencyParser {
         &self.dependency_parser
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-    use tempfile::TempDir;
-
-    #[tokio::test]
-    async fn test_no_filters() {
-        let temp_dir = TempDir::new().unwrap();
-        let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
-
-        let filters = RuleFilters {
-            languages: None,
-            dependencies: None,
-            file_patterns: None,
-        };
-
-        let workspace_deps = WorkspaceDependencies {
-            deps: std::collections::HashMap::new(),
-        };
-
-        // Should always execute when no filters
-        assert!(
-            executor
-                .should_execute_rule(&filters, Path::new("main.rs"), None, &workspace_deps)
-                .await
-                .unwrap()
-        );
-    }
-
-    #[tokio::test]
-    async fn test_language_filter() {
-        let temp_dir = TempDir::new().unwrap();
-        let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
-
-        let filters = RuleFilters {
-            languages: Some(vec!["rust".to_string()]),
-            dependencies: None,
-            file_patterns: None,
-        };
-
-        let workspace_deps = WorkspaceDependencies {
-            deps: std::collections::HashMap::new(),
-        };
-
-        // Should execute on Rust files
-        assert!(
-            executor
-                .should_execute_rule(&filters, Path::new("main.rs"), None, &workspace_deps)
-                .await
-                .unwrap()
-        );
-
-        // Should not execute on Python files
-        assert!(
-            !executor
-                .should_execute_rule(&filters, Path::new("script.py"), None, &workspace_deps)
-                .await
-                .unwrap()
-        );
-    }
-
-    #[tokio::test]
-    async fn test_dependency_filter() {
-        let temp_dir = TempDir::new().unwrap();
-
-        // Create a Cargo.toml with serde dependency
-        let cargo_toml = temp_dir.path().join("Cargo.toml");
-        fs::write(
-            &cargo_toml,
-            r#"
-[package]
-name = "test"
-version = "0.1.0"
-
-[dependencies]
-serde = "1.0"
-"#,
-        )
-        .unwrap();
-
-        let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
-        let workspace_deps = executor.parse_workspace_dependencies().unwrap();
-
-        let filters = RuleFilters {
-            languages: None,
-            dependencies: Some(vec!["serde".to_string()]),
-            file_patterns: None,
-        };
-
-        // Should execute if serde is declared
-        assert!(
-            executor
-                .should_execute_rule(
-                    &filters,
-                    &cargo_toml.with_file_name("src/main.rs"),
-                    None,
-                    &workspace_deps
-                )
-                .await
-                .unwrap()
-        );
-
-        // Should not execute if tokio is required but not declared
-        let tokio_filters = RuleFilters {
-            languages: None,
-            dependencies: Some(vec!["tokio".to_string()]),
-            file_patterns: None,
-        };
-
-        assert!(
-            !executor
-                .should_execute_rule(
-                    &tokio_filters,
-                    &cargo_toml.with_file_name("src/main.rs"),
-                    None,
-                    &workspace_deps
-                )
-                .await
-                .unwrap()
-        );
-    }
-
-    #[tokio::test]
-    async fn test_file_pattern_filter() {
-        let temp_dir = TempDir::new().unwrap();
-        let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
-
-        let filters = RuleFilters {
-            languages: None,
-            dependencies: None,
-            file_patterns: Some(vec!["src/**/*.rs".to_string(), "!**/tests/**".to_string()]),
-        };
-
-        let workspace_deps = WorkspaceDependencies {
-            deps: std::collections::HashMap::new(),
-        };
-
-        // Should execute on src/main.rs
-        assert!(
-            executor
-                .should_execute_rule(&filters, Path::new("src/main.rs"), None, &workspace_deps)
-                .await
-                .unwrap()
-        );
-
-        // Should not execute on src/tests/main.rs (excluded by !**/tests/**)
-        assert!(
-            !executor
-                .should_execute_rule(
-                    &filters,
-                    Path::new("src/tests/main.rs"),
-                    None,
-                    &workspace_deps
-                )
-                .await
-                .unwrap()
-        );
-
-        // Should not execute on lib.py (doesn't match pattern)
-        assert!(
-            !executor
-                .should_execute_rule(&filters, Path::new("lib.py"), None, &workspace_deps)
-                .await
-                .unwrap()
-        );
-    }
-
-    #[tokio::test]
-    async fn test_combined_filters() {
-        let temp_dir = TempDir::new().unwrap();
-
-        // Create a Cargo.toml with serde dependency
-        let cargo_toml = temp_dir.path().join("Cargo.toml");
-        fs::write(
-            &cargo_toml,
-            r#"
-[package]
-name = "test"
-version = "0.1.0"
-
-[dependencies]
-serde = "1.0"
-"#,
-        )
-        .unwrap();
-
-        let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
-        let workspace_deps = executor.parse_workspace_dependencies().unwrap();
-
-        // Use **/ prefix to match paths from any root
-        let filters = RuleFilters {
-            languages: Some(vec!["rust".to_string()]),
-            dependencies: Some(vec!["serde".to_string()]),
-            file_patterns: Some(vec!["**/src/**/*.rs".to_string()]),
-        };
-
-        // Should execute: Rust file, has serde dep, matches pattern
-        assert!(
-            executor
-                .should_execute_rule(
-                    &filters,
-                    &cargo_toml.with_file_name("src/main.rs"),
-                    None,
-                    &workspace_deps
-                )
-                .await
-                .unwrap()
-        );
-
-        // Should not execute: wrong language
-        assert!(
-            !executor
-                .should_execute_rule(
-                    &filters,
-                    &cargo_toml.with_file_name("src/main.py"),
-                    None,
-                    &workspace_deps
-                )
-                .await
-                .unwrap()
-        );
-
-        // Should not execute: missing dependency
-        let missing_dep_filters = RuleFilters {
-            languages: Some(vec!["rust".to_string()]),
-            dependencies: Some(vec!["tokio".to_string()]),
-            file_patterns: Some(vec!["**/src/**/*.rs".to_string()]),
-        };
-
-        assert!(
-            !executor
-                .should_execute_rule(
-                    &missing_dep_filters,
-                    &cargo_toml.with_file_name("src/main.rs"),
-                    None,
-                    &workspace_deps
-                )
-                .await
-                .unwrap()
-        );
     }
 }

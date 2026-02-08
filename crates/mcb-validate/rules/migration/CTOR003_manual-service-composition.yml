@@ -10,11 +10,11 @@ description: "Service instantiation should happen in bootstrap/container functio
 rationale: "Dependency wiring should be centralized and explicit"
 
 rule: |
-  rule ManualServiceComposition "Check for manual service composition" {
-      when
-          ServiceInstantiation() &&
-          !InBootstrapFunction() &&
-          !InContainerFunction()
-      then
-          Violation("Service instantiation should happen in bootstrap/container functions");
-  }
+    rule ManualServiceComposition "Check for manual service composition" {
+        when
+            ServiceInstantiation() &&
+            !InBootstrapFunction() &&
+            !InContainerFunction()
+        then
+            Violation("Service instantiation should happen in bootstrap/container functions");
+    }

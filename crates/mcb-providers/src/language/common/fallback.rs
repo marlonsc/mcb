@@ -3,11 +3,13 @@
 //! This module provides regex-based chunking as a fallback when tree-sitter
 //! parsing is not available or fails.
 
-use super::config::LanguageConfig;
+use std::collections::HashMap;
+
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 use regex::Regex;
-use std::collections::HashMap;
+
+use super::config::LanguageConfig;
 
 /// Parameters for creating a code chunk
 #[derive(Debug)]
@@ -36,10 +38,9 @@ struct ChunkingContext<'a> {
 
 /// Generic fallback chunker using regex patterns
 pub struct GenericFallbackChunker<'a> {
-    #[allow(dead_code)] // Reserved for future config-based pattern selection
-    config: &'a LanguageConfig,
-    /// Precompiled regex patterns for block detection
+    /// Precompiled regex patterns for block detection (built from config in new())
     compiled_patterns: Vec<Regex>,
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> GenericFallbackChunker<'a> {
@@ -52,8 +53,8 @@ impl<'a> GenericFallbackChunker<'a> {
             .collect();
 
         Self {
-            config,
             compiled_patterns,
+            _marker: std::marker::PhantomData,
         }
     }
 

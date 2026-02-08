@@ -10,10 +10,12 @@
 //! - Implementations live in mcb-infrastructure (CryptoService)
 //! - Providers depend on the abstraction, not the concrete implementation
 
-use crate::error::Result;
+use std::fmt;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+
+use crate::error::Result;
 
 /// Cryptographic provider port
 ///

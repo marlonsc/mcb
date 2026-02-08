@@ -27,6 +27,8 @@ pub mod config;
 pub mod crypto;
 /// Embedding provider port
 pub mod embedding;
+/// HTTP client provider port
+pub mod http;
 /// Hybrid search provider port
 pub mod hybrid_search;
 /// Language chunking provider port
@@ -49,17 +51,14 @@ pub use cache::{CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, 
 pub use config::ProviderConfigManagerInterface;
 pub use crypto::{CryptoProvider, EncryptedData};
 pub use embedding::EmbeddingProvider;
+pub use http::{HttpClientConfig, HttpClientProvider};
 pub use hybrid_search::{HybridSearchProvider, HybridSearchResult};
 pub use language_chunking::LanguageChunkingProvider;
-pub use metrics::{
-    MetricLabels, MetricsError, MetricsProvider, MetricsResult, NullMetricsObservabilityProvider,
-};
+pub use metrics::{MetricLabels, MetricsError, MetricsProvider, MetricsResult};
 pub use metrics_analysis::{
-    FileMetrics, FunctionMetrics, HalsteadMetrics, MetricsAnalysisProvider, NullMetricsProvider,
+    FileMetrics, FunctionMetrics, HalsteadMetrics, MetricsAnalysisProvider,
 };
 pub use project_detection::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
-pub use validation::{
-    NullValidationProvider, ValidationOptions, ValidationProvider, ValidatorInfo,
-};
+pub use validation::{ValidationOptions, ValidationProvider, ValidatorInfo};
 pub use vcs::VcsProvider;
 pub use vector_store::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};

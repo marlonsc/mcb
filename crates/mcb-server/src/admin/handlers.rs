@@ -6,22 +6,24 @@
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 //! Authentication guards added in v0.1.2.
 
-use mcb_application::ports::admin::{
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use mcb_domain::ports::admin::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
     IndexingOperationsInterface, PerformanceMetricsData, PerformanceMetricsInterface,
     ShutdownCoordinator,
 };
-use mcb_application::ports::infrastructure::EventBusProvider;
-use mcb_application::ports::providers::CacheProvider;
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::providers::CacheProvider;
+use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use mcb_infrastructure::infrastructure::ServiceManager;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get, post};
 use serde::Serialize;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tracing::info;
 
 use super::auth::AdminAuth;
@@ -88,12 +90,12 @@ pub struct IndexingStatusResponse {
     /// Number of active operations
     pub active_operations: usize,
     /// Details of each operation
-    pub operations: Vec<IndexingOperationStatus>,
+    pub operations: Vec<IndexingOperationDetail>,
 }
 
-/// Individual indexing operation status
+/// Individual indexing operation details for API response
 #[derive(Serialize)]
-pub struct IndexingOperationStatus {
+pub struct IndexingOperationDetail {
     /// Operation ID
     pub id: String,
     /// Collection being indexed
@@ -113,7 +115,7 @@ pub struct IndexingOperationStatus {
 pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResponse> {
     let operations = state.indexing.get_operations();
 
-    let operation_statuses: Vec<IndexingOperationStatus> = operations
+    let operation_statuses: Vec<IndexingOperationDetail> = operations
         .values()
         .map(|op| {
             let progress = if op.total_files > 0 {
@@ -122,9 +124,9 @@ pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResp
                 0.0
             };
 
-            IndexingOperationStatus {
-                id: op.id.clone(),
-                collection: op.collection.clone(),
+            IndexingOperationDetail {
+                id: op.id.to_string(),
+                collection: op.collection.to_string(),
                 current_file: op.current_file.clone(),
                 progress_percent: progress,
                 processed_files: op.processed_files,
@@ -143,12 +145,14 @@ pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResp
 /// Readiness response
 #[derive(Serialize)]
 pub struct ReadinessResponse {
+    /// Whether the server is ready to accept requests
     pub ready: bool,
 }
 
 /// Liveness response
 #[derive(Serialize)]
 pub struct LivenessResponse {
+    /// Whether the server process is alive and responding
     pub alive: bool,
 }
 
@@ -336,7 +340,7 @@ fn current_timestamp() -> u64 {
 /// Build dependency health checks from metrics and operations
 fn build_dependency_checks(
     metrics: &PerformanceMetricsData,
-    operations: &std::collections::HashMap<String, IndexingOperation>,
+    operations: &std::collections::HashMap<OperationId, IndexingOperation>,
     now: u64,
 ) -> Vec<DependencyHealthCheck> {
     vec![
@@ -366,7 +370,7 @@ fn build_embedding_health(metrics: &PerformanceMetricsData, now: u64) -> Depende
 
 /// Build vector store health check
 fn build_vector_store_health(
-    operations: &std::collections::HashMap<String, IndexingOperation>,
+    operations: &std::collections::HashMap<OperationId, IndexingOperation>,
     now: u64,
 ) -> DependencyHealthCheck {
     DependencyHealthCheck {
@@ -427,6 +431,7 @@ fn calculate_overall_health(dependencies: &[DependencyHealthCheck]) -> Dependenc
 /// Cache error response
 #[derive(Serialize)]
 pub struct CacheErrorResponse {
+    /// Error message describing the cache operation failure
     pub error: String,
 }
 
@@ -441,10 +446,8 @@ pub struct CacheErrorResponse {
 pub async fn get_cache_stats(
     _auth: AdminAuth,
     state: &State<AdminState>,
-) -> Result<
-    Json<mcb_application::ports::providers::cache::CacheStats>,
-    (Status, Json<CacheErrorResponse>),
-> {
+) -> Result<Json<mcb_domain::ports::providers::cache::CacheStats>, (Status, Json<CacheErrorResponse>)>
+{
     let Some(cache) = &state.cache else {
         return Err((
             Status::ServiceUnavailable,

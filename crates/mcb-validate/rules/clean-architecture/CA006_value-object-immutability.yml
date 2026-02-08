@@ -9,11 +9,14 @@ engine: "rust-rule-engine"
 description: "Value objects must be immutable"
 rationale: "Value objects are defined by their attributes and should not change"
 
+config:
+    allowed_mutable_prefixes: ["set_", "add_", "remove_", "clear_", "reset_"]
+
 rule: |
-  rule ValueObjectImmutability "Value Object Immutability" {
-      when
-          ValueObject() &&
-          HasMutableField()
-      then
-          Violation("Value objects must be immutable");
-  }
+    rule ValueObjectImmutability "Value Object Immutability" {
+        when
+            ValueObject() &&
+            HasMutableField()
+        then
+            Violation("Value objects must be immutable");
+    }

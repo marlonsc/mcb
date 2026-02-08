@@ -4,6 +4,7 @@
 
 use std::path::Path;
 use std::process::Stdio;
+
 use tokio::process::Command;
 
 use super::parsers::run_linter_command;
@@ -14,12 +15,14 @@ use crate::Result;
 pub struct RuffLinter;
 
 impl RuffLinter {
+    /// Check multiple files using Ruff
     pub async fn check_files(files: &[&Path]) -> Result<Vec<LintViolation>> {
         let linter = LinterType::Ruff;
         let output = run_linter_command(linter, files).await?;
         Ok(linter.parse_output(&output))
     }
 
+    /// Check a single file using Ruff
     pub async fn check_file(file: &Path) -> Result<Vec<LintViolation>> {
         Self::check_files(&[file]).await
     }
@@ -36,7 +39,7 @@ impl ClippyLinter {
 
     /// Check project with specific lint codes enabled as warnings
     ///
-    /// This is used by YamlRuleExecutor to enable specific lints from lint_select.
+    /// This is used by `YamlRuleExecutor` to enable specific lints from `lint_select`.
     /// For example, `clippy::unwrap_used` is "allow" by default and needs `-W` to enable.
     pub async fn check_project_with_lints(
         project_root: &Path,

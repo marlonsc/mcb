@@ -1,4 +1,16 @@
-# ADR 020: Testing Strategy for Integrated Code
+---
+adr: 20
+title: Testing Strategy for Integrated Code
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [12, 13, 17]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
+## ADR 020: Testing Strategy for Integrated Code
 
 ## Status
 

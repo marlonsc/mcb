@@ -1,4 +1,16 @@
-# ADR 029: Hexagonal Architecture with dill IoC
+---
+adr: 29
+title: Hexagonal Architecture with dill IoC
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 029: Hexagonal Architecture with dill IoC
 
 ## Status
 

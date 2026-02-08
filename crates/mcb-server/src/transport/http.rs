@@ -29,10 +29,9 @@
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
-use super::types::{McpRequest, McpResponse};
-use crate::McpServer;
-use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
-use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use std::net::SocketAddr;
+use std::sync::Arc;
+
 use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
 use rocket::fairing::{Fairing, Info, Kind};
@@ -40,10 +39,13 @@ use rocket::http::Header;
 use rocket::response::stream::{Event, EventStream};
 use rocket::serde::json::Json;
 use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
-use std::net::SocketAddr;
-use std::sync::Arc;
 use tokio::sync::broadcast;
 use tracing::{error, info};
+
+use super::types::{McpRequest, McpResponse};
+use crate::McpServer;
+use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
+use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
 /// HTTP transport configuration
 #[derive(Debug, Clone)]
@@ -151,8 +153,6 @@ impl HttpTransport {
     /// Start with graceful shutdown
     ///
     /// Note: Rocket handles graceful shutdown internally via Ctrl+C.
-    /// The shutdown_signal parameter is kept for API compatibility but
-    /// uses Rocket's built-in shutdown mechanism.
     pub async fn start_with_shutdown(
         self,
         _shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
@@ -334,28 +334,15 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
     };
 
     let handlers = ToolHandlers {
-        index_codebase: state.server.index_codebase_handler(),
-        search_code: state.server.search_code_handler(),
-        get_indexing_status: state.server.get_indexing_status_handler(),
-        clear_index: state.server.clear_index_handler(),
-        validate_architecture: state.server.validate_architecture_handler(),
-        validate_file: state.server.validate_file_handler(),
-        list_validators: state.server.list_validators_handler(),
-        get_validation_rules: state.server.get_validation_rules_handler(),
-        analyze_complexity: state.server.analyze_complexity_handler(),
-        index_vcs_repository: state.server.index_vcs_repository_handler(),
-        search_branch: state.server.search_branch_handler(),
-        list_repositories: state.server.list_repositories_handler(),
-        compare_branches: state.server.compare_branches_handler(),
-        analyze_impact: state.server.analyze_impact_handler(),
-        store_observation: state.server.store_observation_handler(),
-        search_memories: state.server.search_memories_handler(),
-        get_session_summary: state.server.get_session_summary_handler(),
-        create_session_summary: state.server.create_session_summary_handler(),
-        memory_timeline: state.server.memory_timeline_handler(),
-        memory_get_observations: state.server.memory_get_observations_handler(),
-        memory_inject_context: state.server.memory_inject_context_handler(),
-        memory_search: state.server.memory_search_handler(),
+        index: state.server.index_handler(),
+        search: state.server.search_handler(),
+        validate: state.server.validate_handler(),
+        memory: state.server.memory_handler(),
+        session: state.server.session_handler(),
+        agent: state.server.agent_handler(),
+        project: state.server.project_handler(),
+        vcs: state.server.vcs_handler(),
+        hook_processor: state.server.hook_processor(),
     };
 
     match route_tool_call(call_request, &handlers).await {
@@ -372,16 +359,14 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
 }
 
 /// Handle SSE connection for server-to-client events
+#[allow(unknown_lints, impl_trait_overcaptures, tail_expr_drop_order)]
 #[get("/events")]
 fn handle_sse(state: &State<HttpTransportState>) -> EventStream![] {
     let mut rx = state.event_tx.subscribe();
 
     EventStream! {
-        loop {
-            match rx.recv().await {
-                Ok(data) => yield Event::data(data),
-                Err(_) => break,
-            }
+        while let Ok(data) = rx.recv().await {
+            yield Event::data(data);
         }
     }
 }

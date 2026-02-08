@@ -10,10 +10,10 @@ description: "Port implementation missing #[derive(Component)]"
 rationale: "All port implementations must be Shaku components for DI"
 
 rule: |
-  rule ComponentDeriveRequired "Check for Component derive" {
-      when
-          AST.Struct(implements_port == true) &&
-          !HasAttribute("derive(Component)")
-      then
-          Violation("Port implementation missing #[derive(Component)]");
-  }
+    rule ComponentDeriveRequired "Check for Component derive" {
+        when
+            AST.Struct(implements_port == true) &&
+            !HasAttribute("derive(Component)")
+        then
+            Violation("Port implementation missing #[derive(Component)]");
+    }

@@ -1,11 +1,18 @@
 //! Infrastructure configuration types
 //!
-//! Consolidated configuration for infrastructure concerns:
+//! configuration for infrastructure concerns:
 //! logging, limits, cache, metrics, and resilience.
 
-use crate::constants::*;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::constants::cache::*;
+use crate::constants::http::*;
+use crate::constants::limits::*;
+use crate::constants::logging::*;
+use crate::constants::metrics::*;
+use crate::constants::resilience::*;
 
 // ============================================================================
 // Logging Configuration
@@ -77,8 +84,8 @@ impl Default for LimitsConfig {
             memory_limit: DEFAULT_MEMORY_LIMIT,
             cpu_limit: DEFAULT_CPU_LIMIT,
             disk_io_limit: DEFAULT_DISK_IO_LIMIT,
-            max_connections: 1000,
-            max_requests_per_connection: 100,
+            max_connections: DEFAULT_MAX_CONNECTIONS,
+            max_requests_per_connection: DEFAULT_MAX_REQUESTS_PER_CONNECTION,
         }
     }
 }
@@ -224,8 +231,8 @@ impl Default for ResilienceConfig {
             circuit_breaker_success_threshold: CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
             rate_limiter_rps: RATE_LIMITER_DEFAULT_RPS,
             rate_limiter_burst: RATE_LIMITER_DEFAULT_BURST,
-            retry_attempts: 3,
-            retry_delay_ms: 1000,
+            retry_attempts: DEFAULT_RETRY_ATTEMPTS,
+            retry_delay_ms: DEFAULT_RETRY_DELAY_MS,
         }
     }
 }

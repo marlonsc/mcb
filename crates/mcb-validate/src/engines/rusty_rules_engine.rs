@@ -2,15 +2,15 @@
 //!
 //! Wrapper for rusty-rules crate with JSON DSL and composition support.
 
-use async_trait::async_trait;
-use serde_json::Value;
 use std::collections::HashMap;
 
+use async_trait::async_trait;
+use serde_json::Value;
+
+use super::hybrid_engine::{RuleContext, RuleEngine};
 use crate::Result;
 use crate::engines::hybrid_engine::RuleViolation;
 use crate::violation_trait::{Severity, ViolationCategory};
-
-use super::hybrid_engine::{RuleContext, RuleEngine};
 
 /// Wrapper for rusty-rules engine
 pub struct RustyRulesEngineWrapper {
@@ -21,8 +21,11 @@ pub struct RustyRulesEngineWrapper {
 /// Rusty rule definition with composition support
 #[derive(Debug, Clone)]
 pub struct RustyRule {
+    /// The type of rule (e.g., "cargo_dependencies", "ast_pattern").
     pub rule_type: String,
+    /// The condition logic to evaluate.
     pub condition: Condition,
+    /// The action to take if the condition is met.
     pub action: Action,
 }
 
@@ -37,9 +40,13 @@ pub enum Condition {
     Not(Box<Condition>),
     /// Simple condition
     Simple {
+        /// The type of fact being checked.
         fact_type: String,
+        /// The field of the fact to check.
         field: String,
+        /// The operator to use for comparison.
         operator: String,
+        /// The value to compare against.
         value: Value,
     },
 }
@@ -47,7 +54,14 @@ pub enum Condition {
 /// Actions to execute when condition matches
 #[derive(Debug, Clone)]
 pub enum Action {
-    Violation { message: String, severity: Severity },
+    /// Report a standard violation.
+    Violation {
+        /// The violation message.
+        message: String,
+        /// The severity of the violation.
+        severity: Severity,
+    },
+    /// Execute a custom action string.
     Custom(String),
 }
 
@@ -58,6 +72,7 @@ impl Default for RustyRulesEngineWrapper {
 }
 
 impl RustyRulesEngineWrapper {
+    /// Creates a new, empty RustyRulesEngineWrapper.
     pub fn new() -> Self {
         Self {
             rule_definitions: HashMap::new(),
@@ -81,14 +96,14 @@ impl RustyRulesEngineWrapper {
 
         // Parse condition
         let condition = if let Some(condition_json) = definition.get("condition") {
-            self.parse_condition(condition_json)?
+            Self::parse_condition_value(condition_json)?
         } else {
             Condition::All(vec![]) // Default empty condition
         };
 
         // Parse action
         let action = if let Some(action_json) = definition.get("action") {
-            self.parse_action(action_json)?
+            self.parse_action(action_json)
         } else {
             Action::Violation {
                 message: "Rule violation".to_string(),
@@ -103,30 +118,29 @@ impl RustyRulesEngineWrapper {
         })
     }
 
-    #[allow(clippy::only_used_in_recursion)]
-    fn parse_condition(&self, condition_json: &Value) -> Result<Condition> {
-        if let Some(all_conditions) = condition_json.get("all") {
-            if let Some(conditions_array) = all_conditions.as_array() {
-                let conditions = conditions_array
-                    .iter()
-                    .map(|c| self.parse_condition(c))
-                    .collect::<Result<Vec<_>>>()?;
-                return Ok(Condition::All(conditions));
-            }
+    fn parse_condition_value(condition_json: &Value) -> Result<Condition> {
+        if let Some(all_conditions) = condition_json.get("all")
+            && let Some(conditions_array) = all_conditions.as_array()
+        {
+            let conditions = conditions_array
+                .iter()
+                .map(Self::parse_condition_value)
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(Condition::All(conditions));
         }
 
-        if let Some(any_conditions) = condition_json.get("any") {
-            if let Some(conditions_array) = any_conditions.as_array() {
-                let conditions = conditions_array
-                    .iter()
-                    .map(|c| self.parse_condition(c))
-                    .collect::<Result<Vec<_>>>()?;
-                return Ok(Condition::Any(conditions));
-            }
+        if let Some(any_conditions) = condition_json.get("any")
+            && let Some(conditions_array) = any_conditions.as_array()
+        {
+            let conditions = conditions_array
+                .iter()
+                .map(Self::parse_condition_value)
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(Condition::Any(conditions));
         }
 
         if let Some(not_condition) = condition_json.get("not") {
-            let condition = self.parse_condition(not_condition)?;
+            let condition = Self::parse_condition_value(not_condition)?;
             return Ok(Condition::Not(Box::new(condition)));
         }
 
@@ -159,7 +173,7 @@ impl RustyRulesEngineWrapper {
         })
     }
 
-    fn parse_action(&self, action_json: &Value) -> Result<Action> {
+    fn parse_action(&self, action_json: &Value) -> Action {
         if let Some(violation) = action_json.get("violation") {
             let message = violation
                 .get("message")
@@ -173,15 +187,14 @@ impl RustyRulesEngineWrapper {
                     .and_then(|v| v.as_str())
                     .map_or(Severity::Warning, |s| match s {
                         "error" => Severity::Error,
-                        "warning" => Severity::Warning,
                         "info" => Severity::Info,
                         _ => Severity::Warning,
                     });
 
-            return Ok(Action::Violation { message, severity });
+            return Action::Violation { message, severity };
         }
 
-        Ok(Action::Custom("Custom action".to_string()))
+        Action::Custom("Custom action".to_string())
     }
 
     fn has_forbidden_dependency(&self, pattern: &str, context: &RuleContext) -> bool {
@@ -195,28 +208,28 @@ impl RustyRulesEngineWrapper {
 
         for entry in WalkDir::new(&context.workspace_root).into_iter().flatten() {
             let path = entry.path();
-            if cargo_pattern.matches_path(path) {
-                if let Ok(content) = std::fs::read_to_string(path) {
-                    // Try to parse as TOML and check dependencies section
-                    if let Ok(toml_value) = content.parse::<toml::Value>() {
-                        if let Some(dependencies) = toml_value.get("dependencies") {
-                            if let Some(deps_table) = dependencies.as_table() {
-                                for dep_name in deps_table.keys() {
-                                    if dep_name.starts_with(pattern_prefix) {
-                                        return true;
-                                    }
-                                }
+            if cargo_pattern.matches_path(path)
+                && let Ok(content) = std::fs::read_to_string(path)
+            {
+                // Try to parse as TOML and check dependencies section
+                if let Ok(toml_value) = content.parse::<toml::Value>() {
+                    if let Some(dependencies) = toml_value.get("dependencies")
+                        && let Some(deps_table) = dependencies.as_table()
+                    {
+                        for dep_name in deps_table.keys() {
+                            if dep_name.starts_with(pattern_prefix) {
+                                return true;
                             }
                         }
-                    } else {
-                        // Fallback to simple pattern matching
-                        for line in content.lines() {
-                            let line = line.trim();
-                            if line.contains('=') {
-                                let dep_name = line.split('=').next().unwrap().trim();
-                                if dep_name.starts_with(pattern_prefix) {
-                                    return true;
-                                }
+                    }
+                } else {
+                    // Fallback to simple pattern matching
+                    for line in content.lines() {
+                        let line = line.trim();
+                        if line.contains('=') {
+                            let dep_name = line.split('=').next().unwrap().trim();
+                            if dep_name.starts_with(pattern_prefix) {
+                                return true;
                             }
                         }
                     }
@@ -287,7 +300,7 @@ impl RustyRulesEngineWrapper {
                                 Severity::Error,
                                 "Forbidden dependency found",
                             )
-                            .with_context(format!("Pattern: {}", forbidden_pattern)),
+                            .with_context(format!("Pattern: {forbidden_pattern}")),
                         );
                     }
                 }
@@ -301,7 +314,7 @@ impl RustyRulesEngineWrapper {
                                 Severity::Error,
                                 "Required dependency not found",
                             )
-                            .with_context(format!("Pattern: {}", forbidden_pattern)),
+                            .with_context(format!("Pattern: {forbidden_pattern}")),
                         );
                     }
                 }
@@ -332,10 +345,10 @@ impl RustyRulesEngineWrapper {
                                     "AST_PATTERN",
                                     ViolationCategory::Quality,
                                     Severity::Error,
-                                    format!("Found forbidden pattern: {}", pattern),
+                                    format!("Found forbidden pattern: {pattern}"),
                                 )
                                 .with_file(std::path::PathBuf::from(file_path))
-                                .with_context(format!("Pattern: {}", pattern)),
+                                .with_context(format!("Pattern: {pattern}")),
                             );
                         }
                     }
@@ -391,10 +404,10 @@ impl RustyRulesEngineWrapper {
                                 "QUAL006",
                                 ViolationCategory::Quality,
                                 Severity::Warning,
-                                format!("{}: {} lines (max: {})", message, line_count, max_lines),
+                                format!("{message}: {line_count} lines (max: {max_lines})"),
                             )
                             .with_file(std::path::PathBuf::from(file_path))
-                            .with_context(format!("File: {}, Lines: {}", file_path, line_count)),
+                            .with_context(format!("File: {file_path}, Lines: {line_count}")),
                         );
                     }
                 }

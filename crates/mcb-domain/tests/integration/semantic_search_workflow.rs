@@ -1,11 +1,12 @@
 //! End-to-end test for the complete semantic code search workflow
 
+use std::collections::HashMap;
+
 use mcb_domain::{
     CodeChunk, Embedding, SearchResult,
     entities::{CodebaseSnapshot, FileSnapshot},
     value_objects::config::SyncBatch,
 };
-use std::collections::HashMap;
 
 /// End-to-end test simulating the complete semantic code search workflow
 #[test]

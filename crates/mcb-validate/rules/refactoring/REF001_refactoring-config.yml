@@ -1,0 +1,84 @@
+schema: "rule/v1"
+id: "REF001"
+name: "Refactoring Configuration"
+category: "refactoring"
+severity: "warning"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Configuration for refactoring completeness checks"
+rationale: "Externalized configuration for skip lists and known migration pairs"
+
+config:
+  generic_type_names:
+    - "Error"
+    - "Result"
+    - "Config"
+    - "Builder"
+    - "Context"
+    - "State"
+    - "Options"
+    - "Params"
+    - "Settings"
+    - "Message"
+    - "Request"
+    - "Response"
+    - "CacheConfig"
+  utility_types:
+    - "JsonExt"
+    - "HttpResponseUtils"
+    - "CacheStats"
+    - "TimedOperation"
+  known_migration_pairs:
+    - ["{{providers_crate}}", "{{infrastructure_crate}}"]
+    - ["{{domain_crate}}", "{{infrastructure_crate}}"]
+  refactoring_skip_files:
+    - "mod"
+    - "lib"
+    - "main"
+    - "prelude"
+    - "constants"
+    - "types"
+    - "error"
+    - "errors"
+    - "helpers"
+    - "utils"
+    - "common"
+    - "config"
+    - "builder"
+    - "factory"
+    - "indexing"
+    - "search_repository"
+    - "metrics"
+    - "components"
+    - "operations"
+    - "rate_limit_middleware"
+    - "security"
+    - "mcp_server"
+    - "init"
+  refactoring_skip_dir_patterns:
+    - "providers"
+    - "adapters"
+    - "language"
+    - "embedding"
+    - "vector_store"
+    - "cache"
+    - "hybrid_search"
+    - "events"
+    - "chunking"
+    - "http"
+    - "di"
+    - "admin"
+    - "handlers"
+    - "config"
+    - "tools"
+    - "utils"
+    - "ports"
+
+rule: |
+  rule RefactoringCompleteness "Refactoring Completeness" {
+      when
+          True
+      then
+          // This rule primarily provides configuration for the Rust-based RefactoringValidator
+  }

@@ -20,6 +20,8 @@
 
 /// Administrative interfaces for system management and monitoring
 pub mod admin;
+/// Browse and highlight service ports
+pub mod browse;
 /// Infrastructure service ports
 pub mod infrastructure;
 /// External service provider ports
@@ -31,11 +33,12 @@ pub mod services;
 
 // Re-export commonly used port traits for convenience
 pub use admin::{
-    DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
-    IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsData,
-    PerformanceMetricsInterface, PortServiceState, ShutdownCoordinator, ValidationOperation,
-    ValidationOperationResult, ValidationOperationsInterface,
+    DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation, IndexingOperationsInterface,
+    LifecycleManaged, PerformanceMetricsData, PerformanceMetricsInterface, PortServiceState,
+    ShutdownCoordinator, ValidationOperation, ValidationOperationResult,
+    ValidationOperationsInterface,
 };
+pub use browse::{BrowseError, BrowseServiceInterface, HighlightError, HighlightServiceInterface};
 pub use infrastructure::{
     AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, LockGuard,
     LockProvider, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
@@ -46,10 +49,8 @@ pub use providers::{
     CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats, CryptoProvider,
     EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics, HalsteadMetrics,
     HybridSearchProvider, HybridSearchResult, LanguageChunkingProvider, MetricsAnalysisProvider,
-    NullMetricsProvider, NullValidationProvider, ProviderConfigManagerInterface, ValidationOptions,
-    ValidationProvider, ValidatorInfo, VectorStoreAdmin, VectorStoreProvider,
+    ProviderConfigManagerInterface, ValidationOptions, ValidationProvider, ValidatorInfo,
+    VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider,
 };
-pub use repositories::MemoryRepository;
-pub use services::{
-    NullValidationService, ValidationReport, ValidationServiceInterface, ViolationEntry,
-};
+pub use repositories::{AgentRepository, MemoryRepository};
+pub use services::{ValidationReport, ValidationServiceInterface, ViolationEntry};

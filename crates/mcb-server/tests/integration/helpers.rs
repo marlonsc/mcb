@@ -19,17 +19,42 @@ pub fn check_service_available(host: &str, port: u16) -> bool {
 
 /// Milvus vector database service (default port 19530)
 pub fn is_milvus_available() -> bool {
-    check_service_available("127.0.0.1", 19530) || check_service_available("localhost", 19530)
+    let host = std::env::var("MILVUS_ADDRESS")
+        .unwrap_or_else(|_| "http://127.0.0.1:19530".to_string())
+        .replace("http://", "");
+    let parts: Vec<&str> = host.split(':').collect();
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(19530);
+    check_service_available(parts[0], port)
 }
 
 /// Ollama LLM service (default port 11434)
 pub fn is_ollama_available() -> bool {
-    check_service_available("127.0.0.1", 11434) || check_service_available("localhost", 11434)
+    let host = std::env::var("OLLAMA_BASE_URL")
+        .unwrap_or_else(|_| "http://127.0.0.1:11434".to_string())
+        .replace("http://", "");
+    let parts: Vec<&str> = host.split(':').collect();
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(11434);
+    check_service_available(parts[0], port)
 }
 
 /// Redis cache service (default port 6379)
 pub fn is_redis_available() -> bool {
-    check_service_available("127.0.0.1", 6379) || check_service_available("localhost", 6379)
+    let host = std::env::var("REDIS_URL")
+        .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string())
+        .replace("redis://", "");
+    let parts: Vec<&str> = host.split(':').collect();
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(6379);
+    check_service_available(parts[0], port)
+}
+
+/// NATS event bus service (default port 4222)
+pub fn is_nats_available() -> bool {
+    let host = std::env::var("NATS_URL")
+        .unwrap_or_else(|_| "nats://127.0.0.1:4222".to_string())
+        .replace("nats://", "");
+    let parts: Vec<&str> = host.split(':').collect();
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(4222);
+    check_service_available(parts[0], port)
 }
 
 /// PostgreSQL service (default port 5432)
@@ -105,16 +130,17 @@ mod tests {
 
     #[test]
     fn test_service_detection_logic() {
-        // These checks should not panic and return boolean values
+        let _ = is_ci();
         let milvus = is_milvus_available();
         let ollama = is_ollama_available();
         let redis = is_redis_available();
+        let nats = is_nats_available();
         let postgres = is_postgres_available();
 
-        // Assert that functions return boolean (may be true or false depending on environment)
         assert!(matches!(milvus, true | false));
         assert!(matches!(ollama, true | false));
         assert!(matches!(redis, true | false));
+        assert!(matches!(nats, true | false));
         assert!(matches!(postgres, true | false));
 
         println!("✓ Service detection logic verified");

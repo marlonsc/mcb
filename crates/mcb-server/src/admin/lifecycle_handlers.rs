@@ -46,11 +46,15 @@ pub struct ServiceInfoResponse {
 /// Service error response
 #[derive(Serialize)]
 pub struct ServiceErrorResponse {
+    /// Error message describing what went wrong
     pub error: String,
+    /// Name of the service involved in the error (optional)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub service: Option<String>,
+    /// Number of services (optional, used in list responses)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub count: Option<usize>,
+    /// List of services (optional, used in list responses)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub services: Option<Vec<ServiceInfoResponse>>,
 }
@@ -58,7 +62,9 @@ pub struct ServiceErrorResponse {
 /// Service action response
 #[derive(Serialize)]
 pub struct ServiceActionResponse {
+    /// Status of the action (e.g., "started", "stopped", "restarted")
     pub status: String,
+    /// Name of the service that was acted upon
     pub service: String,
 }
 
@@ -239,7 +245,9 @@ pub async fn restart_service(
 /// Services health response
 #[derive(Serialize)]
 pub struct ServicesHealthResponse {
+    /// Number of services checked
     pub count: usize,
+    /// Health check results for each service
     pub checks: Vec<serde_json::Value>,
 }
 

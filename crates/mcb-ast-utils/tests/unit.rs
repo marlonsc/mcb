@@ -2,6 +2,9 @@
 //!
 //! Run with: `cargo test -p mcb-ast-utils --test unit`
 
+#[path = "unit/common.rs"]
+mod common;
+
 #[path = "unit/complexity_tests.rs"]
 mod complexity;
 

@@ -3,11 +3,13 @@
 //! This module provides the AstTraverser that walks tree-sitter ASTs
 //! and extracts code chunks according to configurable rules.
 
-use super::config::NodeExtractionRule;
+use std::collections::HashMap;
+
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::Language;
-use std::collections::HashMap;
+
+use super::config::NodeExtractionRule;
 
 /// Parameters for creating a code chunk
 #[derive(Debug)]
@@ -182,13 +184,13 @@ impl<'a> AstTraverser<'a> {
         let mut chunk = self.create_chunk_from_node(node, chunk_params);
 
         // Add context metadata if available
-        if let Some(context_lines) = context {
-            if let Some(metadata) = chunk.metadata.as_object_mut() {
-                metadata.insert(
-                    "context_lines".to_string(),
-                    serde_json::json!(context_lines),
-                );
-            }
+        if let Some(context_lines) = context
+            && let Some(metadata) = chunk.metadata.as_object_mut()
+        {
+            metadata.insert(
+                "context_lines".to_string(),
+                serde_json::json!(context_lines),
+            );
         }
 
         Some(chunk)

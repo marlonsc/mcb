@@ -8,9 +8,6 @@
 //!
 //! Using rust-code-analysis (RCA) directly - NO wrappers.
 
-#![allow(clippy::items_after_statements)]
-#![allow(clippy::similar_names)]
-
 use std::path::Path;
 
 use mcb_validate::ast::{

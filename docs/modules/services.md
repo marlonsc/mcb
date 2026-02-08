@@ -31,7 +31,7 @@ pub trait SearchServiceInterface: Send + Sync {
 }
 
 pub trait IndexingServiceInterface: Send + Sync {
-    fn index_codebase(&self, path: &Path, collection: &str) -> impl Future<Output = Result<IndexingResult>> + Send;
+    fn index (action=start)(&self, path: &Path, collection: &str) -> impl Future<Output = Result<IndexingResult>> + Send;
     fn get_status(&self) -> IndexingStatus;
     fn clear_collection(&self, collection: &str) -> impl Future<Output = Result<()>> + Send;
 }

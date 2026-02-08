@@ -3,8 +3,9 @@
 //! Type aliases and basic type definitions for dynamic domain concepts.
 //! These allow the domain to be extended without changing core types.
 
-use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
 
 /// Programming language identifier
 ///

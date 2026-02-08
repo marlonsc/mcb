@@ -37,18 +37,7 @@ duplication:
     - kotlin
 
 # Patterns to exclude from duplication checking
-exclude_patterns:
-  - "**/tests/**"
-  - "**/test/**"
-  - "**/*_test.rs"
-  - "**/*_test.py"
-  - "**/*.test.ts"
-  - "**/*.test.js"
-  - "**/fixtures/**"
-  - "**/generated/**"
-  - "**/vendor/**"
-  - "**/node_modules/**"
-  - "**/target/**"
+exclude_patterns: []
 
 # Rationale and guidance
 rationale: |

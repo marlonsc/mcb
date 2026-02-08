@@ -26,11 +26,13 @@
 //! }
 //! ```
 
-use crate::error::Result;
-use crate::events::DomainEvent;
+use std::pin::Pin;
+
 use async_trait::async_trait;
 use futures::Stream;
-use std::pin::Pin;
+
+use crate::error::Result;
+use crate::events::DomainEvent;
 
 /// Boxed async stream of domain events
 ///

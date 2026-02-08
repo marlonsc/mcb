@@ -43,6 +43,7 @@ use super::handlers::AdminState;
 ///
 /// Streams domain events to connected clients in real-time.
 /// Uses the EventBusProvider's subscribe_events() method to receive events.
+#[allow(unknown_lints, impl_trait_overcaptures, tail_expr_drop_order)]
 #[get("/events")]
 pub async fn events_stream(state: &State<AdminState>) -> EventStream![] {
     let event_bus = state.event_bus.clone();

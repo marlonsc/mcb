@@ -13,9 +13,9 @@ The product delivers semantic code search by combining vector embeddings, git co
 
 **Used in:** `README.md` "MCP Tools"
 
--   `index_codebase`: ingest a repository and store embeddings in the selected vector store.
--   `search_code`: answer natural-language prompts by matching vectors in the index.
--   `get_indexing_status` / `clear_index`: observe and reset collections, keeping search data predictable.
+-   `index (action=start)`: ingest a repository and store embeddings in the selected vector store.
+-   `search (resource=code)`: answer natural-language prompts by matching vectors in the index.
+-   `index (action=status)` / `index (action=clear)`: observe and reset collections, keeping search data predictable.
 **When to use:** Build API surfaces and CLI workflows around these MCP tools so every search operation stays traceable and testable.
 
 ### Phase-driven memory search
@@ -23,7 +23,7 @@ The product delivers semantic code search by combining vector embeddings, git co
 **Used in:** `.planning/STATE.md` (Phase 6 in progress) and `docs/developer/ROADMAP.md` (v0.2.0 vision)
 
 -   Phase 6 "Memory Search" is active; plan 06-01 concluded and 06-02 (Hybrid Search Implementation) is the next checkpoint.
--   The release branch `release/v0.1.5` holds these artifacts, so phase milestones should update this branch before advancing to the next plan.
+-   The release branch `release/v0.2.0` holds these artifacts, so phase milestones should update this branch before advancing to the next plan.
 **Guidance:** Always align new work with the numbered plan file (e.g., `06-02-PLAN.md`) and update `.planning/STATE.md` progress metrics to reflect completion percentages.
 
 ## Project-State Signals

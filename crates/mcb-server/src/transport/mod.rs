@@ -26,8 +26,7 @@ pub mod types;
 pub use config::TransportConfig;
 pub use http::{HttpTransport, HttpTransportConfig};
 pub use http_client::{HttpClientTransport, McpClientConfig};
-pub use stdio::StdioServerExt;
-pub use types::{McpError, McpRequest, McpResponse};
-
 // Re-export TransportMode from infrastructure config (single source of truth)
 pub use mcb_infrastructure::config::TransportMode;
+pub use stdio::StdioServerExt;
+pub use types::{McpError, McpRequest, McpResponse};

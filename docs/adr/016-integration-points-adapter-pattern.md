@@ -1,4 +1,16 @@
-# ADR 016: Integration Points and Adapter Pattern
+---
+adr: 16
+title: Integration Points and Adapter Pattern
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [13, 15, 19]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 016: Integration Points and Adapter Pattern
 
 ## Status
 

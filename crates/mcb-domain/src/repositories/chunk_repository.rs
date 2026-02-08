@@ -6,9 +6,10 @@
 //! different storage backends (database, filesystem, cloud storage) without
 //! changing the application code.
 
+use async_trait::async_trait;
+
 use crate::entities::CodeChunk;
 use crate::error::Result;
-use async_trait::async_trait;
 
 /// Repository for managing code chunks
 ///

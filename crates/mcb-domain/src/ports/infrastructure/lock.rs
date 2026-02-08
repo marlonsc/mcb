@@ -2,8 +2,9 @@
 //!
 //! Defines the contract for distributed lock coordination services.
 
-use crate::error::Result;
 use async_trait::async_trait;
+
+use crate::error::Result;
 
 /// Lock guard token returned when a lock is acquired
 #[derive(Debug, Clone)]
