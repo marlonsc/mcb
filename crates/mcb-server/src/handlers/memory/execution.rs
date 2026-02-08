@@ -26,18 +26,60 @@ struct ValidatedExecutionData {
 impl ValidatedExecutionData {
     /// Validate and extract all required fields from JSON data
     fn validate(data: &serde_json::Map<String, serde_json::Value>) -> Result<Self, CallToolResult> {
-        let command = MemoryHelpers::get_required_str(data, "command")?;
-        let exit_code = MemoryHelpers::get_i32(data, "exit_code").ok_or_else(|| {
-            CallToolResult::error(vec![Content::text("Missing required field: exit_code")])
-        })?;
-        let duration_ms = MemoryHelpers::get_i64(data, "duration_ms").ok_or_else(|| {
-            CallToolResult::error(vec![Content::text("Missing required field: duration_ms")])
-        })?;
-        let success = MemoryHelpers::get_bool(data, "success").ok_or_else(|| {
-            CallToolResult::error(vec![Content::text("Missing required field: success")])
-        })?;
-        let execution_type_str = MemoryHelpers::get_required_str(data, "execution_type")?;
-        let execution_type = MemoryHelpers::parse_execution_type(&execution_type_str)?;
+        let command = match MemoryHelpers::get_required_str(data, "command") {
+            Ok(cmd) => cmd,
+            Err(_) => {
+                return Err(CallToolResult::error(vec![Content::text(
+                    "Missing required field: command",
+                )]));
+            }
+        };
+
+        let exit_code = match MemoryHelpers::get_i32(data, "exit_code") {
+            Some(code) => code,
+            None => {
+                return Err(CallToolResult::error(vec![Content::text(
+                    "Missing required field: exit_code",
+                )]));
+            }
+        };
+
+        let duration_ms = match MemoryHelpers::get_i64(data, "duration_ms") {
+            Some(ms) => ms,
+            None => {
+                return Err(CallToolResult::error(vec![Content::text(
+                    "Missing required field: duration_ms",
+                )]));
+            }
+        };
+
+        let success = match MemoryHelpers::get_bool(data, "success") {
+            Some(s) => s,
+            None => {
+                return Err(CallToolResult::error(vec![Content::text(
+                    "Missing required field: success",
+                )]));
+            }
+        };
+
+        let execution_type_str = match MemoryHelpers::get_required_str(data, "execution_type") {
+            Ok(s) => s,
+            Err(_) => {
+                return Err(CallToolResult::error(vec![Content::text(
+                    "Missing required field: execution_type",
+                )]));
+            }
+        };
+
+        let execution_type = match MemoryHelpers::parse_execution_type(&execution_type_str) {
+            Ok(t) => t,
+            Err(_) => {
+                return Err(CallToolResult::error(vec![Content::text(format!(
+                    "Invalid execution_type: {}",
+                    execution_type_str
+                ))]));
+            }
+        };
 
         Ok(Self {
             command,
@@ -154,21 +196,24 @@ pub async fn get_executions(
                 .filter_map(|result| {
                     // Extract execution metadata from observation; skip if missing
                     // (None indicates observation is not an execution type)
-                    let execution = result.observation.metadata.execution.as_ref()?;
-                    Some(serde_json::json!({
-                        "observation_id": result.observation.id,
-                        "command": execution.command,
-                        "exit_code": execution.exit_code,
-                        "duration_ms": execution.duration_ms,
-                        "success": execution.success,
-                        "execution_type": execution.execution_type.as_str(),
-                        "coverage": execution.coverage,
-                        "files_affected": execution.files_affected,
-                        "output_summary": execution.output_summary,
-                        "warnings_count": execution.warnings_count,
-                        "errors_count": execution.errors_count,
-                        "created_at": result.observation.created_at,
-                    }))
+                    if let Some(execution) = result.observation.metadata.execution.as_ref() {
+                        Some(serde_json::json!({
+                                "observation_id": result.observation.id,
+                                "command": execution.command,
+                            "exit_code": execution.exit_code,
+                            "duration_ms": execution.duration_ms,
+                            "success": execution.success,
+                            "execution_type": execution.execution_type.as_str(),
+                            "coverage": execution.coverage,
+                            "files_affected": execution.files_affected,
+                            "output_summary": execution.output_summary,
+                            "warnings_count": execution.warnings_count,
+                            "errors_count": execution.errors_count,
+                            "created_at": result.observation.created_at,
+                        }))
+                    } else {
+                        None
+                    }
                 })
                 .collect();
             executions.sort_by(|a, b| {

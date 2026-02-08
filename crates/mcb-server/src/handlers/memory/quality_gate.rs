@@ -116,16 +116,19 @@ pub async fn get_quality_gates(
                 .filter_map(|result| {
                     // Extract quality gate metadata from observation; skip if missing
                     // (None indicates observation is not a quality gate type)
-                    let gate = result.observation.metadata.quality_gate.as_ref()?;
-                    Some(serde_json::json!({
-                        "observation_id": result.observation.id,
-                        "gate_name": gate.gate_name,
-                        "status": gate.status.as_str(),
-                        "message": gate.message,
-                        "timestamp": gate.timestamp,
-                        "execution_id": gate.execution_id,
-                        "created_at": result.observation.created_at,
-                    }))
+                    if let Some(gate) = result.observation.metadata.quality_gate.as_ref() {
+                        Some(serde_json::json!({
+                            "observation_id": result.observation.id,
+                            "gate_name": gate.gate_name,
+                            "status": gate.status.as_str(),
+                            "message": gate.message,
+                            "timestamp": gate.timestamp,
+                            "execution_id": gate.execution_id,
+                            "created_at": result.observation.created_at,
+                        }))
+                    } else {
+                        None
+                    }
                 })
                 .collect();
             gates.sort_by(|a, b| {

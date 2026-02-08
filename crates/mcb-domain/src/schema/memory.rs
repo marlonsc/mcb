@@ -80,8 +80,21 @@ pub struct MemorySchema {
 /// Port for generating DDL from the generic memory schema.
 ///
 /// Each backend (SQLite, PostgreSQL, MySQL, etc.) implements this trait to
-/// produce dialect-specific DDL. The same [`MemorySchema`] is the single
+/// produce dialect-specific DDL from this model. The same [`MemorySchema`] is the single
 /// source of truth; only the output format differs per backend.
+///
+/// # Examples
+///
+/// ```rust
+/// use mcb_domain::schema::memory::{MemorySchema, MemorySchemaDdlGenerator};
+///
+/// struct SqliteGenerator;
+/// impl MemorySchemaDdlGenerator for SqliteGenerator {
+///     fn generate_ddl(&self, schema: &MemorySchema) -> Vec<String> {
+///         vec!["CREATE TABLE ...".to_string()]
+///     }
+/// }
+/// ```
 pub trait MemorySchemaDdlGenerator: Send + Sync {
     /// Generate DDL statements for the given schema in this backend's dialect.
     ///

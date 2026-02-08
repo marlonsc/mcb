@@ -4,7 +4,7 @@
 # Parameters: BUMP (from main Makefile)
 # =============================================================================
 
-.PHONY: release install install-validate version
+.PHONY: release install install-validate install-mcp version
 
 # Get version from mcb crate Cargo.toml
 VERSION := $(shell grep '^version' crates/mcb/Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
@@ -50,7 +50,7 @@ install: ## Install release binary + systemd service to user directories
 	@-systemctl --user stop mcb.service 2>/dev/null || true
 	@sleep 1
 	@-pkill -9 -f "\.local/bin/mcb" 2>/dev/null || true
-	@-pkill -9 -f "mcb --server" 2>/dev/null || true
+	@-pkill -9 -f "mcb.*--server" 2>/dev/null || true
 	@sleep 1
 	@# Backup old binary
 	@if [ -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" ]; then \
@@ -70,8 +70,40 @@ install: ## Install release binary + systemd service to user directories
 	@echo "✓ Systemd service installed and started"
 	@ls -lh $(INSTALL_DIR)/$(INSTALL_BINARY) | awk '{print "  Size: "$$5"  Modified: "$$6" "$$7" "$$8}'
 	@if [ -f "$(INSTALL_DIR)/$(INSTALL_BINARY).old" ]; then echo "  Old binary: $(INSTALL_DIR)/$(INSTALL_BINARY).old (remove if not needed)"; fi
+	@# Install MCP configs
+	@$(MAKE) install-mcp
 	@# Run validation
 	@$(MAKE) install-validate
+
+# =============================================================================
+# INSTALL-MCP - Update agent configs to use MCB server with "serve" subcommand
+# =============================================================================
+
+install-mcp: ## Update Claude Code and Gemini MCP configs
+	@echo "Updating MCP agent configurations..."
+	@# Claude Code: ensure .mcp.json has mcb with ["serve"]
+	@if [ -d "." ] && [ -f ".mcp.json" ]; then \
+		if command -v jq >/dev/null 2>&1; then \
+			jq '.mcpServers.mcb.args = ["serve"]' .mcp.json > .mcp.json.tmp && \
+			mv .mcp.json.tmp .mcp.json; \
+			echo "  ✓ Claude Code: .mcp.json updated"; \
+		else \
+			echo "  ⚠ Claude Code: jq not found, manual update needed"; \
+		fi; \
+	fi
+	@# Gemini: ensure ~/.gemini/antigravity/mcp_config.json has mcb with ["serve"]
+	@if [ -f "$(HOME)/.gemini/antigravity/mcp_config.json" ]; then \
+		if command -v jq >/dev/null 2>&1; then \
+			jq '.mcpServers.mcb.args = ["serve"]' "$(HOME)/.gemini/antigravity/mcp_config.json" > "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" && \
+			mv "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" "$(HOME)/.gemini/antigravity/mcp_config.json"; \
+			echo "  ✓ Gemini: mcp_config.json updated"; \
+		else \
+			echo "  ⚠ Gemini: jq not found, manual update needed"; \
+		fi; \
+	else \
+		echo "  ℹ Gemini: config not found (optional)"; \
+	fi
+	@echo "  Note: MCB configuration is in ~/.config/mcb/mcb.toml (providers, vector store, etc)"
 
 # =============================================================================
 # INSTALL-VALIDATE - Install and validate the binary works

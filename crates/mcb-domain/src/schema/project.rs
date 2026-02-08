@@ -364,6 +364,19 @@ impl ProjectSchema {
 /// Each backend (SQLite, PostgreSQL, MySQL, etc.) implements this trait to
 /// produce dialect-specific DDL for all project tables, FKs, and constraints.
 /// Use this for a single database that serves memory, collections, and file hashes.
+///
+/// # Examples
+///
+/// ```rust
+/// use mcb_domain::schema::project::{ProjectSchema, SchemaDdlGenerator};
+///
+/// struct PostgresGenerator;
+/// impl SchemaDdlGenerator for PostgresGenerator {
+///     fn generate_ddl(&self, schema: &ProjectSchema) -> Vec<String> {
+///         vec!["CREATE TABLE ...".to_string()]
+///     }
+/// }
+/// ```
 pub trait SchemaDdlGenerator: Send + Sync {
     /// Generate DDL statements for the given project schema in this backend's dialect.
     fn generate_ddl(&self, schema: &ProjectSchema) -> Vec<String>;

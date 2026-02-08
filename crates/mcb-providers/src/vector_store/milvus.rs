@@ -689,6 +689,12 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                 }
             };
 
+            let row_count = if let Some(col) = query_results.first() {
+                col.len()
+            } else {
+                0
+            };
+
             // No more results
             if row_count == 0 {
                 break;
