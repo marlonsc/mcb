@@ -61,6 +61,22 @@ make ci-local
 make lint CI_MODE=1 && make validate QUICK=1
 ```
 
+### Commit Orchestrator (Local)
+
+```bash
+# Analyze staged changes
+./scripts/commit_analyze.sh
+
+# Run pre-commit validation (same as hook)
+make commit-validate
+
+# Commit (updates Beads if issue ID in branch/footers)
+make commit
+
+# Optional interactive push
+make push-confirm
+```
+
 ### Bypassing Pre-commit (Not Recommended)
 
 If you need to bypass pre-commit checks temporarily:
