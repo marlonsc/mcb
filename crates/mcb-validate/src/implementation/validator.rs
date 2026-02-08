@@ -268,20 +268,20 @@ impl ImplementationQualityValidator {
                 if func.meaningful_body.len() != 1 {
                     continue;
                 }
-                if let Some(re) = passthrough_pattern {
-                    if let Some(cap) = re.captures(&func.meaningful_body[0]) {
-                        let field = cap.get(1).map_or("", |m| m.as_str());
-                        let method = cap.get(2).map_or("", |m| m.as_str());
-                        if method == func.name || method.starts_with(&func.name) {
-                            violations.push(ImplementationViolation::PassThroughWrapper {
-                                file: entry.path().to_path_buf(),
-                                line: func.start_line,
-                                struct_name: current_struct_name.clone(),
-                                method_name: func.name.clone(),
-                                delegated_to: format!("self.{field}.{method}()"),
-                                severity: Severity::Info,
-                            });
-                        }
+                if let Some(re) = passthrough_pattern
+                    && let Some(cap) = re.captures(&func.meaningful_body[0])
+                {
+                    let field = cap.get(1).map_or("", |m| m.as_str());
+                    let method = cap.get(2).map_or("", |m| m.as_str());
+                    if method == func.name || method.starts_with(&func.name) {
+                        violations.push(ImplementationViolation::PassThroughWrapper {
+                            file: entry.path().to_path_buf(),
+                            line: func.start_line,
+                            struct_name: current_struct_name.clone(),
+                            method_name: func.name.clone(),
+                            delegated_to: format!("self.{field}.{method}()"),
+                            severity: Severity::Info,
+                        });
                     }
                 }
             }
@@ -415,13 +415,13 @@ fn non_test_lines<'a>(lines: &[&'a str]) -> Vec<(usize, &'a str)> {
 
 /// Track function name from a regex pattern match.
 fn track_fn_name(fn_pattern: Option<&Regex>, trimmed: &str, name: &mut String) {
-    if let Some(re) = fn_pattern {
-        if let Some(cap) = re.captures(trimmed) {
-            *name = cap
-                .get(1)
-                .map(|m| m.as_str().to_string())
-                .unwrap_or_default();
-        }
+    if let Some(re) = fn_pattern
+        && let Some(cap) = re.captures(trimmed)
+    {
+        *name = cap
+            .get(1)
+            .map(|m| m.as_str().to_string())
+            .unwrap_or_default();
     }
 }
 
@@ -459,55 +459,54 @@ fn extract_functions(fn_pattern: Option<&Regex>, lines: &[(usize, &str)]) -> Vec
     let mut i = 0;
     while i < lines.len() {
         let (orig_idx, trimmed) = lines[i];
-        if let Some(re) = fn_pattern {
-            if let Some(cap) = re.captures(trimmed) {
-                let fn_name = cap
-                    .get(1)
-                    .map(|m| m.as_str().to_string())
-                    .unwrap_or_default();
-                let fn_start = orig_idx + 1; // 1-based
+        if let Some(re) = fn_pattern
+            && let Some(cap) = re.captures(trimmed)
+        {
+            let fn_name = cap
+                .get(1)
+                .map(|m| m.as_str().to_string())
+                .unwrap_or_default();
+            let fn_start = orig_idx + 1; // 1-based
 
-                // Find function body extent by tracking braces
-                let mut brace_depth: i32 = 0;
-                let mut fn_started = false;
-                let mut fn_end_idx = i;
+            // Find function body extent by tracking braces
+            let mut brace_depth: i32 = 0;
+            let mut fn_started = false;
+            let mut fn_end_idx = i;
 
-                for j in i..lines.len() {
-                    let line_content = lines[j].1;
-                    let opens = i32::try_from(line_content.chars().filter(|c| *c == '{').count())
-                        .unwrap_or(i32::MAX);
-                    let closes = i32::try_from(line_content.chars().filter(|c| *c == '}').count())
-                        .unwrap_or(i32::MAX);
+            for (j, (_, line_content)) in lines.iter().enumerate().skip(i) {
+                let opens = i32::try_from(line_content.chars().filter(|c| *c == '{').count())
+                    .unwrap_or(i32::MAX);
+                let closes = i32::try_from(line_content.chars().filter(|c| *c == '}').count())
+                    .unwrap_or(i32::MAX);
 
-                    if opens > 0 {
-                        fn_started = true;
-                    }
-                    brace_depth += opens - closes;
-                    if fn_started && brace_depth <= 0 {
-                        fn_end_idx = j;
-                        break;
-                    }
+                if opens > 0 {
+                    fn_started = true;
                 }
-
-                let body: Vec<String> = lines[i..=fn_end_idx]
-                    .iter()
-                    .map(|(_, l)| l.trim().to_string())
-                    .filter(|l| !l.is_empty() && !l.starts_with("//"))
-                    .collect();
-
-                let meaningful = meaningful_lines(&body);
-                let has_cf = has_control_flow(&body);
-
-                functions.push(FunctionInfo {
-                    name: fn_name,
-                    start_line: fn_start,
-                    body_lines: body,
-                    meaningful_body: meaningful,
-                    has_control_flow: has_cf,
-                });
-
-                i = fn_end_idx;
+                brace_depth += opens - closes;
+                if fn_started && brace_depth <= 0 {
+                    fn_end_idx = j;
+                    break;
+                }
             }
+
+            let body: Vec<String> = lines[i..=fn_end_idx]
+                .iter()
+                .map(|(_, l)| l.trim().to_string())
+                .filter(|l| !l.is_empty() && !l.starts_with("//"))
+                .collect();
+
+            let meaningful = meaningful_lines(&body);
+            let has_cf = has_control_flow(&body);
+
+            functions.push(FunctionInfo {
+                name: fn_name,
+                start_line: fn_start,
+                body_lines: body,
+                meaningful_body: meaningful,
+                has_control_flow: has_cf,
+            });
+
+            i = fn_end_idx;
         }
         i += 1;
     }
@@ -533,26 +532,26 @@ fn extract_functions_with_body(
             continue;
         }
 
-        if let Some(re) = impl_pattern {
-            if let Some(cap) = re.captures(trimmed) {
-                *current_struct = cap
-                    .get(1)
-                    .map(|m| m.as_str().to_string())
-                    .unwrap_or_default();
-            }
+        if let Some(re) = impl_pattern
+            && let Some(cap) = re.captures(trimmed)
+        {
+            *current_struct = cap
+                .get(1)
+                .map(|m| m.as_str().to_string())
+                .unwrap_or_default();
         }
 
-        if let Some(re) = fn_pattern {
-            if let Some(cap) = re.captures(trimmed) {
-                current_fn_name = cap
-                    .get(1)
-                    .map(|m| m.as_str().to_string())
-                    .unwrap_or_default();
-                fn_start_line = orig_idx + 1; // 1-based
-                fn_body_lines.clear();
-                in_fn = true;
-                brace_depth = 0;
-            }
+        if let Some(re) = fn_pattern
+            && let Some(cap) = re.captures(trimmed)
+        {
+            current_fn_name = cap
+                .get(1)
+                .map(|m| m.as_str().to_string())
+                .unwrap_or_default();
+            fn_start_line = orig_idx + 1; // 1-based
+            fn_body_lines.clear();
+            in_fn = true;
+            brace_depth = 0;
         }
 
         if in_fn {
