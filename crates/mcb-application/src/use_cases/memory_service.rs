@@ -117,10 +117,7 @@ impl MemoryServiceImpl {
     }
 
     fn check_type(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .r#type
-            .as_ref()
-            .is_none_or(|t| &obs.r#type == t)
+        filter.r#type.as_ref().is_none_or(|t| &obs.r#type == t)
     }
 
     fn check_time(obs: &Observation, filter: &MemoryFilter) -> bool {
@@ -175,7 +172,7 @@ impl MemoryServiceImpl {
         );
         vector_metadata.insert(
             "type".to_string(),
-            serde_json::Value::String(observation_type.as_str().to_string()),
+            serde_json::Value::String(r#type.as_str().to_string()),
         );
         vector_metadata.insert("tags".to_string(), serde_json::json!(tags));
         vector_metadata.insert(
@@ -204,7 +201,7 @@ impl MemoryServiceImpl {
             content,
             content_hash,
             tags,
-            observation_type,
+            r#type,
             metadata,
             created_at: Self::current_timestamp(),
             embedding_id,
@@ -398,7 +395,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         metadata: ObservationMetadata,
     ) -> Result<(ObservationId, bool)> {
         let (id, new) = self
-            .store_observation_impl(project_id, content, observation_type, tags, metadata)
+            .store_observation_impl(project_id, content, r#type, tags, metadata)
             .await?;
         Ok((ObservationId::new(id), new))
     }
@@ -503,5 +500,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         limit: usize,
     ) -> Result<Vec<MemorySearchIndex>> {
         self.memory_search_impl(query, filter, limit).await
+    }
+
+    async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
+        self.repository.delete_observation(id).await
     }
 }

@@ -65,6 +65,8 @@ pub trait MemoryServiceInterface: Send + Sync {
     /// Get an observation by ID.
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;
 
+    async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
+
     /// Generate embedding for content (for external use).
     async fn embed_content(&self, content: &str) -> Result<Embedding>;
 

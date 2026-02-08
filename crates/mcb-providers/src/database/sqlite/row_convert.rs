@@ -41,7 +41,7 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
         content: required_string(row, "content")?,
         content_hash: required_string(row, "content_hash")?,
         tags,
-        observation_type,
+        r#type: observation_type,
         metadata,
         created_at: row
             .try_get_i64(schema::CREATED_AT)?
