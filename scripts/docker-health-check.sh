@@ -13,6 +13,10 @@ log_info() {
 	echo -e "${GREEN}[✓]${NC} $1"
 }
 
+log_warn() {
+	echo -e "${YELLOW}[!]${NC} $1"
+}
+
 log_error() {
 	echo -e "${RED}[✗]${NC} $1"
 }
