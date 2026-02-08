@@ -140,8 +140,6 @@ reference/
 
 # Generated analysis files
 *.lst
-extract_issues.py
-scripts/analyze_smells.py
 
 # MCP config (contains absolute paths)
 .mcp.json
