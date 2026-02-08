@@ -55,6 +55,8 @@ This phase addresses critical gaps identified in the v0.2.0 release, focusing on
 -   **Multi-Dimensional Support**: Enable multi-collection, multi-session, and multi-agent coordination.
 -   **Worktree Isolation**: Ensure each worktree has an isolated semantic index.
 -   **Memory Stabilization**: Fix GAP-H2 (Memory ErrorPattern) to enable consistent observation storage.
+-   **Milvus Health**: Complete Milvus health metrics (GAP-P3).
+-   **Pinecone Listing**: Implement Pinecone listing (GAP-P4).
 
 ---
 
@@ -117,6 +119,8 @@ MCP Context Browser v0.4.0 implements integrated context system with multi-agent
 -   Session-based lifecycle management
 -   Global memory patterns
 -   Hierarchical planning support
+-   **Centralize TreeSitterExtractor** (GAP-P2)
+-   **SemanticExtractorProvider** (GAP-D5)
 
 **Integration:**
 

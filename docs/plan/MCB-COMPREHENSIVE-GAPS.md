@@ -295,3 +295,15 @@ bd create --title "GAP-P5: Improve error handling - preserve driver context" --t
 -   **v0.3.0 Implementation Spec**: `docs/v030-IMPLEMENTATION.md`
 -   **Roadmap**: `docs/developer/ROADMAP.md`
 -   **ADRs**: `docs/adr/034-046`
+
+---
+
+## Traceability Matrix
+
+| Gap ID | Finding | Target Version | Roadmap Status |
+|--------|---------|----------------|----------------|
+| **GAP-P3** | Milvus health metrics incomplete | v0.2.1 | Added (Missing) |
+| **GAP-P4** | Pinecone listing using zero-vector workaround | v0.2.1 | Added (Missing) |
+| **GAP-D5** | SemanticExtractorProvider missing port | v0.4.0 | Refined (Vague) |
+| **GAP-P2** | TreeSitterExtractor logic scattered | v0.4.0 | Refined (Vague) |
+
