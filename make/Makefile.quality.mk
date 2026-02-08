@@ -4,7 +4,7 @@
 # Parameters: FIX, CI_MODE, STRICT, QUICK, LCOV (from main Makefile)
 # =============================================================================
 
-.PHONY: quality fmt lint validate audit coverage update
+.PHONY: quality fmt lint validate audit coverage update qlty-check
 
 # =============================================================================
 # QUALITY - Full check (fmt + lint + test)
@@ -109,3 +109,15 @@ update: ## Update Cargo dependencies
 	@echo "Updating dependencies..."
 	cargo update
 	@echo "Dependencies updated"
+
+# =============================================================================
+# QLTY-CHECK - Run qlty check and analyze results
+# =============================================================================
+
+qlty-check: ## Run qlty check and analyze results
+	@echo "Running qlty check..."
+	@qlty check --all --sarif > qlty.check.lst 2>&1 || true
+	@echo "Analyzing results..."
+	@python3 scripts/analyze_checks.py
+	@echo "Done. Results saved to qlty.check.lst"
+
