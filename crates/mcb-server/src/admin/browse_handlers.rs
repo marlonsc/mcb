@@ -208,7 +208,6 @@ pub async fn get_file_chunks(
         })?;
 
     let mut chunk_responses = Vec::with_capacity(chunks.len());
-    let empty_spans = Vec::new();
     for c in chunks {
         // Estimate end line from content
         let line_count = c.content.lines().count() as u32;
@@ -229,7 +228,7 @@ pub async fn get_file_chunks(
                 // Move content/language into fallback HighlightedCode to avoid cloning
                 let fallback = mcb_domain::value_objects::browse::HighlightedCode::new(
                     c.content,
-                    empty_spans.clone(),
+                    Vec::new(),
                     c.language,
                 );
                 let html =

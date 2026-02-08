@@ -15,5 +15,6 @@ async fn test_project_service_detect_all() {
     let temp_dir = std::env::temp_dir();
 
     // Should not panic on valid path
-    let _result = service.detect_all(temp_dir.as_path()).await;
+    let result = service.detect_all(temp_dir.as_path()).await;
+    assert!(result.is_ok());
 }

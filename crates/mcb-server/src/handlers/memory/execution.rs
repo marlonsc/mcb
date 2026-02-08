@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use anyhow::Context;
 use mcb_domain::entities::memory::{
     ExecutionMetadata, MemoryFilter, ObservationMetadata, ObservationType,
 };
@@ -138,7 +139,11 @@ pub async fn get_executions(
                 .filter_map(|result| {
                     // Extract execution metadata from observation; skip if missing
                     // (None indicates observation is not an execution type)
-                    let execution = result.observation.metadata.execution?;
+                    let execution = result
+                        .observation
+                        .metadata
+                        .execution
+                        .context("missing execution metadata")?;
                     Some(serde_json::json!({
                         "observation_id": result.observation.id,
                         "command": execution.command,
