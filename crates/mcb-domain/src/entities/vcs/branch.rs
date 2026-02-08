@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// VcsBranch entity.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VcsBranch {
     id: String,

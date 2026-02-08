@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// VcsCommit entity.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VcsCommit {
     id: String,
@@ -11,6 +12,7 @@ pub struct VcsCommit {
     parent_hashes: Vec<String>,
 }
 
+/// Builder for VcsCommit.
 #[derive(Debug, Clone, Default)]
 pub struct CommitBuilder {
     id: String,
