@@ -2,26 +2,13 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
+use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::value_objects::ObservationId;
 use mcb_providers::database::create_memory_repository_in_memory;
 
-async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &str) {
-    let now = chrono::Utc::now().timestamp();
-    executor
-        .execute(
-            "INSERT INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-            &[
-                SqlParam::String(project_id.to_string()),
-                SqlParam::String(project_id.to_string()),
-                SqlParam::String("/test".to_string()),
-                SqlParam::I64(now),
-                SqlParam::I64(now),
-            ],
-        )
-        .await
-        .unwrap();
-}
+#[path = "../test_utils/mod.rs"]
+mod test_utils;
+use test_utils::create_test_project;
 
 #[tokio::test]
 async fn test_memory_repository_in_memory_creates() {

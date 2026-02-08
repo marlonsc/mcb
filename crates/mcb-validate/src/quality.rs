@@ -66,13 +66,13 @@ pub enum QualityViolation {
         /// The severity level of the violation.
         severity: Severity,
     },
-    /// Indicates presence of pending task comments (TODO, FIXME, etc.).
+    /// Indicates presence of pending task comments (tracked via `PENDING_LABEL_*` constants).
     TodoComment {
         /// The file containing the violation.
         file: PathBuf,
         /// The line number where the pending task comment was found.
         line: usize,
-        /// The content of the comment, including the type (e.g., "TODO: fix this").
+        /// The content of the comment, including the label type and message text.
         content: String,
         /// The severity level of the violation.
         severity: Severity,
@@ -673,7 +673,7 @@ impl QualityValidator {
         Ok(violations)
     }
 
-    /// Scans for pending task comments such as TODO, FIXME, XXX, and HACK.
+    /// Scans for pending task comments matching `PENDING_LABEL_*` constants.
     pub fn find_todo_comments(&self) -> Result<Vec<QualityViolation>> {
         use crate::constants::{
             PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,

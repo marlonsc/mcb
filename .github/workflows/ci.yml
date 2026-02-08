@@ -11,31 +11,31 @@ name: CI
 permissions:
   contents: "read"
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
       - develop
     paths:
-      - 'src/**'
-      - 'crates/**'
-      - 'tests/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '.github/workflows/ci.yml'
-      - '.github/setup-ci.sh'
+      - "src/**"
+      - "crates/**"
+      - "tests/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/ci.yml"
+      - ".github/setup-ci.sh"
   pull_request:
     branches:
       - main
       - develop
     paths:
-      - 'src/**'
-      - 'crates/**'
-      - 'tests/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '.github/workflows/ci.yml'
-      - '.github/setup-ci.sh'
+      - "src/**"
+      - "crates/**"
+      - "tests/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/ci.yml"
+      - ".github/setup-ci.sh"
 
 env:
   CARGO_TERM_COLOR: always
@@ -45,12 +45,12 @@ jobs:
     name: Lint (Rust 2024)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make lint CI_MODE=1
 
   test-pr:
@@ -60,10 +60,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make test TEST_THREADS=4
 
   test-main:
@@ -76,12 +76,12 @@ jobs:
       matrix:
         rust: [stable, beta]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make test TEST_THREADS=4
 
   validate:
@@ -89,10 +89,10 @@ jobs:
     needs: [lint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make validate STRICT=1
       - name: Check Provider Traits Location
         run: |
@@ -113,30 +113,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make test SCOPE=golden TEST_THREADS=2
 
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh --install-audit
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make audit
 
   docs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make docs
 
   coverage:
@@ -146,12 +146,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh --install-coverage
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make coverage LCOV=1 TEST_THREADS=4
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67ab1fd00d0d27f # v5.4.3
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
@@ -171,14 +171,14 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make build RELEASE=1
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mcb-${{ matrix.target }}
           path: >-

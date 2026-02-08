@@ -4,30 +4,11 @@
 
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::Content;
+
+use crate::test_utils::test_fixtures::{GOLDEN_COLLECTION, extract_text_content};
 
 fn sample_codebase_path() -> std::path::PathBuf {
     crate::test_utils::test_fixtures::sample_codebase_path()
-}
-
-fn test_collection() -> &'static str {
-    "mcb_golden_tools_e2e"
-}
-
-fn extract_text_content(content: &[Content]) -> String {
-    content
-        .iter()
-        .filter_map(|c| {
-            if let Ok(json) = serde_json::to_value(c)
-                && let Some(text) = json.get("text")
-            {
-                text.as_str().map(|s| s.to_string())
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 // =============================================================================
@@ -44,7 +25,7 @@ async fn test_golden_e2e_complete_workflow() {
         path
     );
     let path_str = path.to_string_lossy().to_string();
-    let coll = test_collection();
+    let coll = GOLDEN_COLLECTION;
 
     let index_h = server.index_handler();
     let search_h = server.search_handler();
@@ -167,7 +148,7 @@ async fn test_golden_index_test_repository() {
     let args = IndexArgs {
         action: IndexAction::Start,
         path: Some(path.to_string_lossy().to_string()),
-        collection: Some(test_collection().to_string()),
+        collection: Some(GOLDEN_COLLECTION.to_string()),
         extensions: None,
         exclude_dirs: None,
         ignore_patterns: None,
