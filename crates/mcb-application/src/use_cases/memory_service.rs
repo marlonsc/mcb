@@ -74,29 +74,54 @@ impl MemoryServiceImpl {
     }
 
     fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
+        Self::check_session(obs, filter)
+            && Self::check_repo(obs, filter)
+            && Self::check_type(obs, filter)
+            && Self::check_time(obs, filter)
+            && Self::check_branch(obs, filter)
+            && Self::check_commit(obs, filter)
+    }
+
+    fn check_session(obs: &Observation, filter: &MemoryFilter) -> bool {
         filter
             .session_id
             .as_ref()
-            .map_or(true, |id| obs.metadata.session_id.as_ref() == Some(id))
-            && filter
-                .repo_id
-                .as_ref()
-                .map_or(true, |id| obs.metadata.repo_id.as_ref() == Some(id))
-            && filter
-                .observation_type
-                .as_ref()
-                .map_or(true, |t| &obs.observation_type == t)
-            && filter.time_range.as_ref().map_or(true, |(start, end)| {
-                obs.created_at >= *start && obs.created_at <= *end
-            })
-            && filter
-                .branch
-                .as_ref()
-                .map_or(true, |b| obs.metadata.branch.as_ref() == Some(b))
-            && filter
-                .commit
-                .as_ref()
-                .map_or(true, |c| obs.metadata.commit.as_ref() == Some(c))
+            .is_none_or(|id| obs.metadata.session_id.as_ref() == Some(id))
+    }
+
+    fn check_repo(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .repo_id
+            .as_ref()
+            .is_none_or(|id| obs.metadata.repo_id.as_ref() == Some(id))
+    }
+
+    fn check_type(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .observation_type
+            .as_ref()
+            .is_none_or(|t| &obs.observation_type == t)
+    }
+
+    fn check_time(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .time_range
+            .as_ref()
+            .is_none_or(|(start, end)| obs.created_at >= *start && obs.created_at <= *end)
+    }
+
+    fn check_branch(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .branch
+            .as_ref()
+            .is_none_or(|b| obs.metadata.branch.as_ref() == Some(b))
+    }
+
+    fn check_commit(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter
+            .commit
+            .as_ref()
+            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c))
     }
 }
 

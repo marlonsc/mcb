@@ -5,9 +5,6 @@
 //! discovered at runtime.
 
 use std::collections::HashMap;
-use std::sync::Arc;
-
-use crate::ports::providers::VectorStoreProvider;
 
 /// Configuration for vector store provider creation
 ///
@@ -80,61 +77,11 @@ impl VectorStoreProviderConfig {
     }
 }
 
-/// Registry entry for vector store providers
-///
-/// Each vector store provider implementation registers itself with this entry
-/// using `#[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]`. The entry contains
-/// metadata and a factory function to create provider instances.
-pub struct VectorStoreProviderEntry {
-    /// Unique provider name (e.g., "milvus", "memory", "null")
-    pub name: &'static str,
-    /// Human-readable description
-    pub description: &'static str,
-    /// Factory function to create provider instance
-    pub factory: fn(&VectorStoreProviderConfig) -> Result<Arc<dyn VectorStoreProvider>, String>,
-}
-
-// Auto-collection via linkme distributed slices - providers submit entries at compile time
-#[linkme::distributed_slice]
-pub static VECTOR_STORE_PROVIDERS: [VectorStoreProviderEntry] = [..];
-
-/// Resolve vector store provider by name from registry
-///
-/// Searches the registry for a provider matching the configured name
-/// and creates an instance using the provider's factory function.
-///
-/// # Arguments
-/// * `config` - Configuration containing provider name and settings
-///
-/// # Returns
-/// * `Ok(Arc<dyn VectorStoreProvider>)` - Created provider instance
-/// * `Err(String)` - Error message if provider not found or creation failed
-pub fn resolve_vector_store_provider(
-    config: &VectorStoreProviderConfig,
-) -> Result<Arc<dyn VectorStoreProvider>, String> {
-    let provider_name = &config.provider;
-
-    for entry in VECTOR_STORE_PROVIDERS {
-        if entry.name == provider_name {
-            return (entry.factory)(config);
-        }
-    }
-
-    let available: Vec<&str> = VECTOR_STORE_PROVIDERS.iter().map(|e| e.name).collect();
-
-    Err(format!(
-        "Unknown vector store provider '{}'. Available providers: {:?}",
-        provider_name, available
-    ))
-}
-
-/// List all registered vector store providers
-///
-/// Returns a list of (name, description) tuples for all registered
-/// vector store providers. Useful for CLI help and admin UI.
-pub fn list_vector_store_providers() -> Vec<(&'static str, &'static str)> {
-    VECTOR_STORE_PROVIDERS
-        .iter()
-        .map(|e| (e.name, e.description))
-        .collect()
-}
+crate::impl_registry!(
+    provider_trait: crate::ports::providers::VectorStoreProvider,
+    config_type: VectorStoreProviderConfig,
+    entry_type: VectorStoreProviderEntry,
+    slice_name: VECTOR_STORE_PROVIDERS,
+    resolve_fn: resolve_vector_store_provider,
+    list_fn: list_vector_store_providers
+);

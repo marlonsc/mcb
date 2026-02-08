@@ -62,6 +62,9 @@ pub mod schema;
 pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
+/// Common macros
+#[macro_use]
+pub mod macros;
 
 // Re-export commonly used types for convenience
 pub use constants::*;

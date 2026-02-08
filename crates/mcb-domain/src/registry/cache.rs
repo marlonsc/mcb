@@ -5,9 +5,6 @@
 //! discovered at runtime.
 
 use std::collections::HashMap;
-use std::sync::Arc;
-
-use crate::ports::providers::CacheProvider;
 
 /// Configuration for cache provider creation
 ///
@@ -69,61 +66,11 @@ impl CacheProviderConfig {
     }
 }
 
-/// Registry entry for cache providers
-///
-/// Each cache provider implementation registers itself with this entry
-/// using `#[linkme::distributed_slice(CACHE_PROVIDERS)]`. The entry contains
-/// metadata and a factory function to create provider instances.
-pub struct CacheProviderEntry {
-    /// Unique provider name (e.g., "moka", "redis", "null")
-    pub name: &'static str,
-    /// Human-readable description
-    pub description: &'static str,
-    /// Factory function to create provider instance
-    pub factory: fn(&CacheProviderConfig) -> Result<Arc<dyn CacheProvider>, String>,
-}
-
-// Auto-collection via linkme distributed slices - providers submit entries at compile time
-#[linkme::distributed_slice]
-pub static CACHE_PROVIDERS: [CacheProviderEntry] = [..];
-
-/// Resolve cache provider by name from registry
-///
-/// Searches the registry for a provider matching the configured name
-/// and creates an instance using the provider's factory function.
-///
-/// # Arguments
-/// * `config` - Configuration containing provider name and settings
-///
-/// # Returns
-/// * `Ok(Arc<dyn CacheProvider>)` - Created provider instance
-/// * `Err(String)` - Error message if provider not found or creation failed
-pub fn resolve_cache_provider(
-    config: &CacheProviderConfig,
-) -> Result<Arc<dyn CacheProvider>, String> {
-    let provider_name = &config.provider;
-
-    for entry in CACHE_PROVIDERS {
-        if entry.name == provider_name {
-            return (entry.factory)(config);
-        }
-    }
-
-    let available: Vec<&str> = CACHE_PROVIDERS.iter().map(|e| e.name).collect();
-
-    Err(format!(
-        "Unknown cache provider '{}'. Available providers: {:?}",
-        provider_name, available
-    ))
-}
-
-/// List all registered cache providers
-///
-/// Returns a list of (name, description) tuples for all registered
-/// cache providers. Useful for CLI help and admin UI.
-pub fn list_cache_providers() -> Vec<(&'static str, &'static str)> {
-    CACHE_PROVIDERS
-        .iter()
-        .map(|e| (e.name, e.description))
-        .collect()
-}
+crate::impl_registry!(
+    provider_trait: crate::ports::providers::CacheProvider,
+    config_type: CacheProviderConfig,
+    entry_type: CacheProviderEntry,
+    slice_name: CACHE_PROVIDERS,
+    resolve_fn: resolve_cache_provider,
+    list_fn: list_cache_providers
+);

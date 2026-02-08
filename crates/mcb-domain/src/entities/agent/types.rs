@@ -31,24 +31,11 @@ impl AgentType {
     }
 }
 
-impl std::str::FromStr for AgentType {
-    type Err = String;
-
-    /// Parses a string into an `AgentType`.
-    ///
-    /// The parsing is case-insensitive. Valid inputs are "sisyphus", "oracle", and "explore".
-    ///
-    /// # Errors
-    /// Returns an error if the string does not match any known agent type.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "sisyphus" => Ok(Self::Sisyphus),
-            "oracle" => Ok(Self::Oracle),
-            "explore" => Ok(Self::Explore),
-            _ => Err(format!("Unknown agent type: {s}")),
-        }
-    }
-}
+crate::impl_from_str!(AgentType, "Unknown agent type: {}", {
+    "sisyphus" => Self::Sisyphus,
+    "oracle" => Self::Oracle,
+    "explore" => Self::Explore,
+});
 
 /// Enumeration of possible states for an agent session.
 ///
@@ -78,24 +65,11 @@ impl AgentSessionStatus {
     }
 }
 
-impl std::str::FromStr for AgentSessionStatus {
-    type Err = String;
-
-    /// Parses a string into an `AgentSessionStatus`.
-    ///
-    /// The parsing is case-insensitive. Valid inputs are "active", "completed", and "failed".
-    ///
-    /// # Errors
-    /// Returns an error if the string does not match any known session status.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "active" => Ok(Self::Active),
-            "completed" => Ok(Self::Completed),
-            "failed" => Ok(Self::Failed),
-            _ => Err(format!("Unknown agent session status: {s}")),
-        }
-    }
-}
+crate::impl_from_str!(AgentSessionStatus, "Unknown agent session status: {}", {
+    "active" => Self::Active,
+    "completed" => Self::Completed,
+    "failed" => Self::Failed,
+});
 
 /// Enumeration of checkpoint types for session state persistence.
 ///
@@ -125,21 +99,8 @@ impl CheckpointType {
     }
 }
 
-impl std::str::FromStr for CheckpointType {
-    type Err = String;
-
-    /// Parses a string into a `CheckpointType`.
-    ///
-    /// The parsing is case-insensitive. Valid inputs are "git", "file", and "config".
-    ///
-    /// # Errors
-    /// Returns an error if the string does not match any known checkpoint type.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "git" => Ok(Self::Git),
-            "file" => Ok(Self::File),
-            "config" => Ok(Self::Config),
-            _ => Err(format!("Unknown checkpoint type: {s}")),
-        }
-    }
-}
+crate::impl_from_str!(CheckpointType, "Unknown checkpoint type: {}", {
+    "git" => Self::Git,
+    "file" => Self::File,
+    "config" => Self::Config,
+});
