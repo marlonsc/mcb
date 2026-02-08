@@ -255,7 +255,7 @@ evalexpr = "13"
 garde = { version = "0.22", features = ["derive"] }
 
 # JSON Schema validation
-jsonschema = "0.40"
+jsonschema = "0.41"
 
 # Pest parser for DSL
 pest = "2.8"
