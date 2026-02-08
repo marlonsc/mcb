@@ -42,7 +42,9 @@ use mcb_infrastructure::config::{
 use tracing::{error, info, warn};
 
 use crate::McpServer;
-use crate::admin::{AdminApi, AdminApiConfig};
+use crate::admin::auth::AdminAuthConfig;
+use crate::admin::browse_handlers::BrowseState;
+use crate::admin::handlers::AdminState;
 use crate::transport::http::{HttpTransport, HttpTransportConfig};
 use crate::transport::stdio::StdioServerExt;
 
@@ -87,19 +89,12 @@ pub async fn run(
 // =============================================================================
 
 /// Run as server daemon (HTTP + optional stdio based on transport_mode)
-///
-/// This mode is activated by the `--server` flag. The server accepts
-/// connections from MCB clients and processes MCP requests.
-///
-/// Transport mode is still controlled by `config.server.transport_mode`:
-/// - `Http`: HTTP only
-/// - `Hybrid`: HTTP + stdio (default for server mode)
 async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         transport_mode = ?config.server.transport_mode,
         host = %config.server.network.host,
         port = %config.server.network.port,
-        "Starting MCB server daemon"
+        "Starting MCB server daemon (single port)"
     );
 
     let transport_mode = config.server.transport_mode;
@@ -109,30 +104,26 @@ async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Er
     let (server, app_context) = create_mcp_server(config.clone()).await?;
     info!("MCP server initialized successfully");
 
-    // Create BrowseState for Web UI
-    let highlight_service = app_context.highlight_service();
-    let browse_state = crate::admin::BrowseState {
-        browser: app_context.vector_store_handle().get(),
-        highlight_service,
+    // Create admin state for consolidated single-port operation
+    let admin_state = AdminState {
+        metrics: app_context.performance(),
+        indexing: app_context.indexing(),
+        config_watcher: None,
+        config_path: None,
+        shutdown_coordinator: None,
+        shutdown_timeout_secs: 30,
+        event_bus: app_context.event_bus(),
+        service_manager: None,
+        cache: None,
     };
 
-    // Create and spawn admin API server
-    let admin_api = AdminApi::new(
-        AdminApiConfig::default(),
-        app_context.performance(),
-        app_context.indexing(),
-        app_context.event_bus(),
-    )
-    .with_browse_state(browse_state);
+    let browse_state = BrowseState {
+        browser: app_context.vector_store_handle().get(),
+        highlight_service: app_context.highlight_service(),
+    };
 
-    tokio::spawn(async move {
-        if let Err(e) = admin_api.start().await {
-            error!(error = %e, "Admin API server failed");
-        }
-    });
-    info!("Admin API server spawned on port 9090");
+    let auth_config = std::sync::Arc::new(AdminAuthConfig::default());
 
-    // In server mode, we prefer hybrid or http transport
     match transport_mode {
         TransportMode::Stdio => {
             warn!(
@@ -141,16 +132,32 @@ async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Er
             run_stdio_transport(server).await
         }
         TransportMode::Http => {
-            info!(host = %http_host, port = http_port, "Starting HTTP transport");
-            run_http_transport(server, &http_host, http_port).await
+            info!(host = %http_host, port = http_port, "Starting HTTP transport (MCP + Admin)");
+            run_http_transport_with_admin(
+                server,
+                &http_host,
+                http_port,
+                admin_state,
+                auth_config,
+                Some(browse_state),
+            )
+            .await
         }
         TransportMode::Hybrid => {
             info!(
                 host = %http_host,
                 port = http_port,
-                "Starting hybrid transport (stdio + HTTP)"
+                "Starting hybrid transport (stdio + HTTP with Admin)"
             );
-            run_hybrid_transport(server, &http_host, http_port).await
+            run_hybrid_transport_with_admin(
+                server,
+                &http_host,
+                http_port,
+                admin_state,
+                auth_config,
+                Some(browse_state),
+            )
+            .await
         }
     }
 }
@@ -285,10 +292,7 @@ async fn run_stdio_transport(server: McpServer) -> Result<(), Box<dyn std::error
     server.serve_stdio().await
 }
 
-/// Run the server with HTTP transport only
-///
-/// Starts an HTTP server that handles MCP requests via REST API
-/// and provides Server-Sent Events for server-to-client notifications.
+/// Run HTTP transport with MCP endpoints only (no admin)
 async fn run_http_transport(
     server: McpServer,
     host: &str,
@@ -307,25 +311,42 @@ async fn run_http_transport(
         .map_err(|e| -> Box<dyn std::error::Error> { e })
 }
 
-/// Run the server with both stdio and HTTP transports simultaneously
-///
-/// Spawns both transports as concurrent tasks. This allows the server to:
-/// - Serve CLI tools via stdin/stdout
-/// - Serve web clients via HTTP
-///
-/// If either transport fails, the error is logged and the other continues.
-/// The function returns when both transports have finished.
+/// Run HTTP transport with consolidated MCP + Admin endpoints
+async fn run_http_transport_with_admin(
+    server: McpServer,
+    host: &str,
+    port: u16,
+    admin_state: AdminState,
+    auth_config: std::sync::Arc<AdminAuthConfig>,
+    browse_state: Option<BrowseState>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let http_config = HttpTransportConfig {
+        host: host.to_string(),
+        port,
+        enable_cors: true,
+    };
+
+    let http_transport = HttpTransport::new(http_config, Arc::new(server)).with_admin(
+        admin_state,
+        auth_config,
+        browse_state,
+    );
+    http_transport
+        .start()
+        .await
+        .map_err(|e| -> Box<dyn std::error::Error> { e })
+}
+
+/// Run hybrid transport (stdio + HTTP) without admin
 async fn run_hybrid_transport(
     server: McpServer,
     host: &str,
     port: u16,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Clone server for each transport (McpServer is Clone)
     let stdio_server = server.clone();
     let http_server = Arc::new(server);
     let http_host = host.to_string();
 
-    // Spawn stdio transport task
     let stdio_handle = tokio::spawn(async move {
         info!("Hybrid: starting stdio transport");
         if let Err(e) = stdio_server.serve_stdio().await {
@@ -334,7 +355,6 @@ async fn run_hybrid_transport(
         info!("Hybrid: stdio transport finished");
     });
 
-    // Spawn HTTP transport task
     let http_handle = tokio::spawn(async move {
         info!("Hybrid: starting HTTP transport on {}:{}", http_host, port);
         let http_config = HttpTransportConfig {
@@ -350,19 +370,68 @@ async fn run_hybrid_transport(
         info!("Hybrid: HTTP transport finished");
     });
 
-    // Wait for both transports to finish (join keeps both running)
     let (stdio_result, http_result) = tokio::join!(stdio_handle, http_handle);
 
     if let Err(e) = stdio_result {
         error!(error = %e, "Hybrid: stdio transport task panicked");
-    } else {
-        info!("Hybrid: stdio transport task completed");
     }
-
     if let Err(e) = http_result {
         error!(error = %e, "Hybrid: HTTP transport task panicked");
-    } else {
-        info!("Hybrid: HTTP transport task completed");
+    }
+
+    Ok(())
+}
+
+/// Run hybrid transport (stdio + HTTP) with consolidated Admin endpoints
+async fn run_hybrid_transport_with_admin(
+    server: McpServer,
+    host: &str,
+    port: u16,
+    admin_state: AdminState,
+    auth_config: std::sync::Arc<AdminAuthConfig>,
+    browse_state: Option<BrowseState>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let stdio_server = server.clone();
+    let http_server = Arc::new(server);
+    let http_host = host.to_string();
+
+    let stdio_handle = tokio::spawn(async move {
+        info!("Hybrid: starting stdio transport");
+        if let Err(e) = stdio_server.serve_stdio().await {
+            error!(error = %e, "Hybrid: stdio transport failed");
+        }
+        info!("Hybrid: stdio transport finished");
+    });
+
+    let http_handle = tokio::spawn(async move {
+        info!(
+            "Hybrid: starting HTTP+Admin transport on {}:{}",
+            http_host, port
+        );
+        let http_config = HttpTransportConfig {
+            host: http_host,
+            port,
+            enable_cors: true,
+        };
+
+        let http_transport = HttpTransport::new(http_config, http_server).with_admin(
+            admin_state,
+            auth_config,
+            browse_state,
+        );
+        if let Err(e) = http_transport.start().await {
+            error!(error = %e, "Hybrid: HTTP+Admin transport failed");
+        }
+        info!("Hybrid: HTTP+Admin transport finished");
+    });
+
+    let (stdio_result, http_result) = tokio::join!(stdio_handle, http_handle);
+
+    if let Err(e) = stdio_result {
+        error!(error = %e, "Hybrid: stdio transport task panicked");
+    }
+    if let Err(e) = http_result {
+        error!(error = %e, "Hybrid: HTTP transport task panicked");
     }
 
     Ok(())

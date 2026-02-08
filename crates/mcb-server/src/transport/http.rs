@@ -3,7 +3,15 @@
 //! Implements MCP protocol over HTTP using Server-Sent Events (SSE).
 //! This transport allows web clients to connect to the MCP server.
 //!
-//! # Supported Methods
+//! # Architecture
+//!
+//! This transport consolidates all HTTP endpoints into a single port:
+//! - MCP protocol endpoints (`/mcp`, `/events`)
+//! - Health/readiness probes (`/healthz`, `/readyz`)
+//! - Admin API endpoints (`/health`, `/config`, `/collections`, etc.)
+//! - Prometheus metrics (`/metrics`)
+//!
+//! # Supported MCP Methods
 //!
 //! | Method | Description |
 //! |--------|-------------|
@@ -28,6 +36,7 @@
 //! # Migration Note
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
+//! Consolidated Admin API into single port in v0.2.0.
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -44,17 +53,17 @@ use tracing::{error, info};
 
 use super::types::{McpRequest, McpResponse};
 use crate::McpServer;
+use crate::admin::auth::AdminAuthConfig;
+use crate::admin::browse_handlers::BrowseState;
+use crate::admin::handlers::AdminState;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 
 /// HTTP transport configuration
 #[derive(Debug, Clone)]
 pub struct HttpTransportConfig {
-    /// Host to bind to
     pub host: String,
-    /// Port to listen on
     pub port: u16,
-    /// Enable CORS for browser access
     pub enable_cors: bool,
 }
 
@@ -89,16 +98,17 @@ impl HttpTransportConfig {
 /// Shared state for HTTP transport
 #[derive(Clone)]
 pub struct HttpTransportState {
-    /// Broadcast channel for SSE events
     pub event_tx: broadcast::Sender<String>,
-    /// MCP server reference (for handling requests)
     pub server: Arc<McpServer>,
 }
 
-/// HTTP transport server
+/// HTTP transport server with optional admin API integration
 pub struct HttpTransport {
     config: HttpTransportConfig,
     state: HttpTransportState,
+    admin_state: Option<AdminState>,
+    auth_config: Option<Arc<AdminAuthConfig>>,
+    browse_state: Option<BrowseState>,
 }
 
 impl HttpTransport {
@@ -108,11 +118,40 @@ impl HttpTransport {
         Self {
             config,
             state: HttpTransportState { event_tx, server },
+            admin_state: None,
+            auth_config: None,
+            browse_state: None,
         }
     }
 
-    /// Build the Rocket application
+    /// Add admin API state for consolidated single-port operation
+    pub fn with_admin(
+        mut self,
+        admin_state: AdminState,
+        auth_config: Arc<AdminAuthConfig>,
+        browse_state: Option<BrowseState>,
+    ) -> Self {
+        self.admin_state = Some(admin_state);
+        self.auth_config = Some(auth_config);
+        self.browse_state = browse_state;
+        self
+    }
+
+    /// Build the Rocket application with MCP and optional Admin routes
     pub fn rocket(&self) -> Rocket<Build> {
+        use crate::admin::browse_handlers::{
+            get_collection_tree, get_file_chunks, list_collection_files, list_collections,
+        };
+        use crate::admin::config_handlers::{get_config, reload_config, update_config_section};
+        use crate::admin::handlers::{
+            extended_health_check, get_cache_stats, get_indexing_status, get_metrics, health_check,
+            liveness_check, readiness_check, shutdown,
+        };
+        use crate::admin::lifecycle_handlers::{
+            list_services, restart_service, services_health, start_service, stop_service,
+        };
+        use crate::admin::sse::events_stream;
+
         let mut rocket = rocket::build().manage(self.state.clone()).mount(
             "/",
             routes![
@@ -123,6 +162,52 @@ impl HttpTransport {
                 metrics_endpoint
             ],
         );
+
+        // Mount admin routes if admin state is provided
+        if let Some(ref admin_state) = self.admin_state {
+            rocket = rocket
+                .manage(admin_state.clone())
+                .manage(
+                    self.auth_config
+                        .clone()
+                        .unwrap_or_else(|| Arc::new(AdminAuthConfig::default())),
+                )
+                .mount(
+                    "/",
+                    routes![
+                        health_check,
+                        extended_health_check,
+                        get_metrics,
+                        get_indexing_status,
+                        readiness_check,
+                        liveness_check,
+                        shutdown,
+                        get_config,
+                        reload_config,
+                        update_config_section,
+                        events_stream,
+                        list_services,
+                        services_health,
+                        start_service,
+                        stop_service,
+                        restart_service,
+                        get_cache_stats,
+                    ],
+                );
+
+            // Add browse routes if BrowseState is available
+            if let Some(ref browse) = self.browse_state {
+                rocket = rocket.manage(browse.clone()).mount(
+                    "/",
+                    routes![
+                        list_collections,
+                        list_collection_files,
+                        get_file_chunks,
+                        get_collection_tree,
+                    ],
+                );
+            }
+        }
 
         if self.config.enable_cors {
             rocket = rocket.attach(Cors);
