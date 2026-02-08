@@ -558,7 +558,15 @@ impl SolidValidator {
             return true;
         }
 
-        // Check for common prefix (at least 3 chars)
+        Self::has_common_prefix(names)
+            || Self::has_common_suffix(names)
+            || Self::has_purpose_suffix(names)
+            || Self::has_shared_keyword(names)
+            || Self::has_common_words(names)
+    }
+
+    /// Check for common prefix (at least 3 chars)
+    fn has_common_prefix(names: &[String]) -> bool {
         let first = &names[0];
         for len in (3..=first.len().min(10)).rev() {
             let prefix = &first[..len];
@@ -566,16 +574,53 @@ impl SolidValidator {
                 return true;
             }
         }
+        false
+    }
 
-        // Check for common suffix (at least 3 chars)
+    /// Check for common suffix (at least 3 chars)
+    fn has_common_suffix(names: &[String]) -> bool {
+        let first = &names[0];
         for len in (3..=first.len().min(10)).rev() {
             let suffix = &first[first.len().saturating_sub(len)..];
             if names.iter().all(|n| n.ends_with(suffix)) {
                 return true;
             }
         }
+        false
+    }
 
-        // Check for common domain keywords (most structs contain one of these)
+    /// Check if structs share related purpose suffixes
+    fn has_purpose_suffix(names: &[String]) -> bool {
+        let purpose_suffixes = [
+            "Config",
+            "State",
+            "Error",
+            "Request",
+            "Response",
+            "Options",
+            "Args",
+            "Report",
+            "Entry",
+            "Info",
+            "Data",
+            "Metrics",
+            "Operation",
+            "Status",
+            "Result",
+            "Summary",
+            "File",
+            "Match",
+            "Check",
+            "Health",
+            "Complexity",
+        ];
+        names
+            .iter()
+            .any(|n| purpose_suffixes.iter().any(|suffix| n.ends_with(suffix)))
+    }
+
+    /// Check if structs share domain keywords
+    fn has_shared_keyword(names: &[String]) -> bool {
         let domain_keywords = [
             "Config",
             "Options",
@@ -623,54 +668,17 @@ impl SolidValidator {
             "Pattern",
         ];
 
-        // Check if structs share related purpose suffixes (Config, State, Error, etc.)
-        // These are ALWAYS considered related - they're intentional groupings
-        let purpose_suffixes = [
-            "Config",
-            "State",
-            "Error",
-            "Request",
-            "Response",
-            "Options",
-            "Args",
-            "Report",
-            "Entry",
-            "Info",
-            "Data",
-            "Metrics",
-            "Operation",
-            "Status",
-            "Result",
-            "Summary",
-            "File",
-            "Match",
-            "Check",
-            "Health",
-            "Complexity",
-        ];
-        let purpose_count: usize = names
-            .iter()
-            .filter(|n| purpose_suffixes.iter().any(|suffix| n.ends_with(suffix)))
-            .count();
-        // If ANY structs have purpose suffixes, they're likely related
-        // (lowered threshold from >50% to >0 because these are intentional groupings)
-        if purpose_count > 0 {
-            return true;
-        }
-
-        for keyword in domain_keywords {
+        domain_keywords.iter().any(|keyword| {
             let has_keyword: Vec<_> = names.iter().filter(|n| n.contains(keyword)).collect();
-            // If majority (>50%) of structs share a keyword, they're related
-            if has_keyword.len() > names.len() / 2 {
-                return true;
-            }
-        }
+            has_keyword.len() > names.len() / 2
+        })
+    }
 
-        // Check for partial word overlaps (e.g., Validation and ValidationResult share "Validation")
+    /// Check for partial word overlaps in CamelCase names
+    fn has_common_words(names: &[String]) -> bool {
         let words: Vec<Vec<&str>> = names
             .iter()
             .map(|n| {
-                // Split CamelCase into words
                 let mut words = Vec::new();
                 let mut start = 0;
                 for (i, c) in n.char_indices() {
@@ -688,11 +696,9 @@ impl SolidValidator {
             })
             .collect();
 
-        // Count common words across all struct names
         if let Some(first_words) = words.first() {
             for word in first_words {
                 if word.len() >= 4 {
-                    // Only consider meaningful words (4+ chars)
                     let count = words.iter().filter(|w| w.contains(word)).count();
                     if count > names.len() / 2 {
                         return true;
@@ -700,7 +706,6 @@ impl SolidValidator {
                 }
             }
         }
-
         false
     }
 
