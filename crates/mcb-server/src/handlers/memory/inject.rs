@@ -5,6 +5,7 @@ use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
+use tracing::error;
 
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
@@ -59,8 +60,11 @@ pub async fn inject_context(
                 }
             }))
         }
-        Err(e) => Ok(rmcp::model::CallToolResult::error(vec![
-            rmcp::model::Content::text(format!("Failed to inject context: {}", e)),
-        ])),
+        Err(e) => {
+            error!(error = %e, "Failed to inject context");
+            Ok(rmcp::model::CallToolResult::error(vec![
+                rmcp::model::Content::text("Failed to inject context"),
+            ]))
+        }
     }
 }

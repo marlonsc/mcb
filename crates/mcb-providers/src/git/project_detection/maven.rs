@@ -89,7 +89,7 @@ impl MavenDetector {
                     {
                         if !dep_artifact_id.is_empty() {
                             let dep = if dep_group_id.is_empty() {
-                                dep_artifact_id.clone()
+                                std::mem::take(&mut dep_artifact_id)
                             } else {
                                 format!("{}:{}", dep_group_id, dep_artifact_id)
                             };

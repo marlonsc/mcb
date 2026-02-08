@@ -31,7 +31,7 @@ use mcb_domain::ports::services::{
 use super::super::bootstrap::AppContext;
 use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
-use crate::crypto::CryptoService;
+use mcb_domain::ports::providers::CryptoProvider;
 // Use infrastructure validation service
 use crate::validation::InfraValidationService;
 
@@ -87,7 +87,7 @@ pub struct ServiceDependencies {
     /// Shared cache provider for service-level caching
     pub cache: SharedCacheProvider,
     /// Cryptographic service for secure operations
-    pub crypto: CryptoService,
+    pub crypto: Arc<dyn CryptoProvider>,
     /// Application configuration
     pub config: AppConfig,
     /// Provider for generating vector embeddings

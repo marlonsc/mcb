@@ -1,10 +1,7 @@
-//! Tests for Code Organization Validation
+//! Tests for Organization Validation
 //!
-//! Discovery found 8 violations in the full workspace:
-//! - Magic numbers in my-test (calculate_pricing) and my-domain
-//! - File organization violations
-//!
-//! Uses fixture crates: `my-test`, `my-infra` (constants.rs exempt)
+//! Validates `OrganizationValidator` against fixture crates with precise
+//! file + line + violation-type assertions.
 
 use mcb_validate::OrganizationValidator;
 
@@ -12,7 +9,7 @@ use crate::test_constants::*;
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// validate_all() — full workspace
+// validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
@@ -22,58 +19,69 @@ fn test_organization_full_workspace() {
     let validator = OrganizationValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    assert_violation_count(&violations, 8, "OrganizationValidator full workspace");
+    assert_violations_exact(
+        &violations,
+        &[
+            // ── MagicNumber ─────────────────────────────────────────────
+            ("my-server/src/handlers/user_handler.rs", 82, "MagicNumber"),
+            ("my-test/src/lib.rs", 211, "MagicNumber"),
+            // ── DomainLayerImplementation ────────────────────────────────
+            (
+                "my-domain/src/domain/service.rs",
+                17,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                38,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                49,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                59,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                67,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                94,
+                "DomainLayerImplementation",
+            ),
+        ],
+        "OrganizationValidator full workspace",
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Per-method tests
+// Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_magic_number_detection() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
-
-    // my-test/src/lib.rs has calculate_pricing() with magic numbers:
-    //   0.0875 (tax rate), 15.99 (shipping), 10000.0 (threshold), 0.95 (discount)
-    let validator = OrganizationValidator::new(&root);
-    let violations = validator.validate_magic_numbers().unwrap();
-
-    assert_min_violations(&violations, 1, "magic numbers in calculate_pricing()");
-}
-
-#[test]
-fn test_constants_file_exempt() {
-    let (_temp, root) = with_fixture_crate(INFRA_CRATE);
-
-    // my-infra/src/constants.rs has numeric constants like MAX_DB_CONNECTIONS = 100
-    // These should NOT trigger magic number violations
-    let validator = OrganizationValidator::new(&root);
-    let violations = validator.validate_magic_numbers().unwrap();
-
-    assert_no_violation_from_file(&violations, "constants.rs");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Negative test
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_no_magic_numbers_in_clean_code() {
+fn test_clean_organization_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
         r"
-pub fn clean_function() {
-    let x = 0;
-    let y = 1;
+/// A well-organized module with named constants.
+pub const MAX_RETRIES: u32 = 3;
+pub fn retry(attempts: u32) -> bool {
+    attempts < MAX_RETRIES
 }
 ",
     );
-
     let validator = OrganizationValidator::new(&root);
-    let violations = validator.validate_magic_numbers().unwrap();
+    let violations = validator.validate_all().unwrap();
 
     assert_no_violations(
         &violations,
-        "Small literals (0, 1) should not trigger magic number detection",
+        "Clean organized code should produce no violations",
     );
 }

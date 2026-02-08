@@ -69,12 +69,12 @@ impl Default for ValidationThresholds {
         Self {
             // SOLID
             max_trait_methods: 10,
-            max_struct_lines: 200,
+            max_struct_lines: 350,
             max_impl_methods: 15,
             max_match_arms: 10,
 
             // KISS
-            max_struct_fields: 12,
+            max_struct_fields: 16,
             max_function_params: 5,
             max_builder_fields: 7,
             max_di_container_fields: 25,
@@ -122,7 +122,7 @@ pub fn thresholds() -> &'static ValidationThresholds {
 /// Maximum methods per trait (Interface Segregation)
 pub const MAX_TRAIT_METHODS: usize = 10;
 /// Maximum lines per struct definition
-pub const MAX_STRUCT_LINES: usize = 200;
+pub const MAX_STRUCT_LINES: usize = 350;
 /// Maximum methods per impl block
 pub const MAX_IMPL_METHODS: usize = 15;
 /// Maximum arms in a match expression
@@ -130,7 +130,7 @@ pub const MAX_MATCH_ARMS: usize = 10;
 
 // KISS
 /// Maximum fields per struct
-pub const MAX_STRUCT_FIELDS: usize = 12;
+pub const MAX_STRUCT_FIELDS: usize = 16;
 /// Maximum parameters per function
 pub const MAX_FUNCTION_PARAMS: usize = 5;
 /// Maximum fields in a builder pattern

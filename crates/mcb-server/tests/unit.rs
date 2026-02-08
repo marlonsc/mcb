@@ -43,3 +43,18 @@ mod fixtures_smoke;
 
 #[path = "unit/processor_tests.rs"]
 mod processor_tests;
+
+#[path = "unit/config_tests.rs"]
+mod config_tests;
+
+#[path = "unit/http_client_tests.rs"]
+mod http_client_tests;
+
+#[path = "unit/stdio_tests.rs"]
+mod stdio_tests;
+
+#[path = "unit/types_tests.rs"]
+mod types_tests;
+
+#[path = "unit/http_tests.rs"]
+mod http_tests;

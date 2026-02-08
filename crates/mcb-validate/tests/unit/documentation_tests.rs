@@ -1,15 +1,18 @@
 //! Tests for Documentation Validation
 //!
-//! Discovery found 8 violations in the full workspace:
-//! - Missing pub-item docs across `my-test`, `my-domain` and `my-server`
+//! Validates `DocumentationValidator` against fixture crates with precise
+//! file + line + violation-type assertions.
+//!
+//! Note: `MissingModuleDoc` violations have no line field, so line=0
+//! is used (skips line check).
 
-use mcb_validate::{DocumentationValidator, DocumentationViolation};
+use mcb_validate::DocumentationValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// validate_all() — full workspace
+// validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
@@ -19,57 +22,51 @@ fn test_documentation_full_workspace() {
     let validator = DocumentationValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    assert_violation_count(&violations, 8, "DocumentationValidator full workspace");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Per-item tests
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_missing_struct_doc() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
-    let validator = DocumentationValidator::new(&root);
-    let violations = validator.validate_pub_item_docs().unwrap();
-
-    assert_has_violation_matching(
+    assert_violations_exact(
         &violations,
-        |v| matches!(v, DocumentationViolation::MissingPubItemDoc { item_name, .. } if item_name == "UndocumentedStruct"),
-        "MissingPubItemDoc for UndocumentedStruct",
-    );
-}
-
-#[test]
-fn test_missing_function_doc() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
-    let validator = DocumentationValidator::new(&root);
-    let violations = validator.validate_pub_item_docs().unwrap();
-
-    assert_has_violation_matching(
-        &violations,
-        |v| matches!(v, DocumentationViolation::MissingPubItemDoc { item_name, .. } if item_name == "undocumented_function"),
-        "MissingPubItemDoc for undocumented_function",
+        &[
+            // MissingModuleDoc — no line field, use 0 to skip check
+            ("my-server/src/lib.rs", 0, "MissingModuleDoc"),
+            ("my-server/src/handlers/mod.rs", 0, "MissingModuleDoc"),
+            ("my-domain/src/lib.rs", 0, "MissingModuleDoc"),
+            ("my-domain/src/domain/mod.rs", 0, "MissingModuleDoc"),
+            // MissingExampleCode — has line field
+            ("my-domain/src/domain/service.rs", 137, "MissingExampleCode"),
+            // MissingPubItemDoc — has line field
+            ("my-domain/src/domain/model.rs", 16, "MissingPubItemDoc"),
+            ("my-test/src/lib.rs", 136, "MissingPubItemDoc"),
+            ("my-test/src/lib.rs", 141, "MissingPubItemDoc"),
+        ],
+        "DocumentationValidator full workspace",
     );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Negative test
+// Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_documented_struct_no_violation() {
+fn test_well_documented_code_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r"
-/// A well-documented struct
-pub struct DocumentedStruct {
-    pub field: String,
+        r#"
+//! Well-documented crate.
+/// A well-documented public function.
+///
+/// # Examples
+/// ```
+/// assert_eq!(my_crate::add(1, 2), 3);
+/// ```
+pub fn add(a: i32, b: i32) -> i32 {
+    a + b
 }
-",
+"#,
     );
-
     let validator = DocumentationValidator::new(&root);
-    let violations = validator.validate_pub_item_docs().unwrap();
+    let violations = validator.validate_all().unwrap();
 
-    assert_no_violations(&violations, "Documented structs should pass");
+    assert_no_violations(
+        &violations,
+        "Well-documented code should produce no violations",
+    );
 }

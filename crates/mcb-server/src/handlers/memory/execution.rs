@@ -7,12 +7,14 @@ use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use tracing::error;
 use uuid::Uuid;
 
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 
+/// Store an execution observation in memory
 pub async fn store_execution(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -99,13 +101,16 @@ pub async fn store_execution(
             "observation_id": observation_id,
             "deduplicated": deduplicated,
         })),
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to store execution: {}",
-            e
-        ))])),
+        Err(e) => {
+            error!(error = %e, "Failed to store execution");
+            Ok(CallToolResult::error(vec![Content::text(
+                "Failed to store execution",
+            )]))
+        }
     }
 }
 
+/// Retrieve execution observations filtered by session and repo
 pub async fn get_executions(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -163,9 +168,11 @@ pub async fn get_executions(
                 "executions": executions,
             }))
         }
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to get executions: {}",
-            e
-        ))])),
+        Err(e) => {
+            error!(error = %e, "Failed to get executions");
+            Ok(CallToolResult::error(vec![Content::text(
+                "Failed to get executions",
+            )]))
+        }
     }
 }

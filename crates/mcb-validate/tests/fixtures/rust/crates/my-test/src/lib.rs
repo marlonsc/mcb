@@ -143,31 +143,58 @@ pub fn undocumented_function() -> bool {
 }
 
 // ───────────────────────────────────────────────────
-// Performance violations
+// Performance violations (PERF001–PERF005)
 // ───────────────────────────────────────────────────
 
-/// BUG(Performance): Large struct returned by value — should use Box.
-pub struct LargeConfig {
-    pub buffer1: [u8; 1024],
-    pub buffer2: [u8; 1024],
-    pub buffer3: [u8; 1024],
-}
+/// Helper that accepts a cloned value (used to trigger PERF001).
+fn consume_template(_t: serde_json::Value) {}
 
-/// Returns a large struct by value.
-pub fn create_large_config() -> LargeConfig {
-    LargeConfig {
-        buffer1: [0; 1024],
-        buffer2: [0; 1024],
-        buffer3: [0; 1024],
-    }
-}
-
-/// BUG(Performance): Clone in loop — expensive data cloned each iteration.
+/// BUG(PERF001): Clone in loop — .clone() in function argument, NOT let binding.
 pub fn batch_process(items: Vec<String>, template: serde_json::Value) {
-    for item in &items {
-        let t = template.clone(); // BUG: clone in loop
-        println!("Processing {} with {:?}", item, t);
+    for _item in &items {
+        consume_template(template.clone()); // PERF001: clone in function arg
     }
+}
+
+/// BUG(PERF002): Allocation in loop — Vec::new() inside for loop.
+pub fn allocate_in_loop(count: usize) {
+    for _ in 0..count {
+        let _buf: Vec<u8> = Vec::new(); // PERF002: allocation in loop
+        println!("allocated");
+    }
+}
+
+/// BUG(PERF003): Arc<Mutex> overuse — Mutex<bool> should be AtomicBool.
+pub struct OveruseExample {
+    pub flag: std::sync::Mutex<bool>, // PERF003: Mutex<bool>
+}
+
+/// BUG(PERF004): Inefficient iterator — .iter().cloned().take().
+pub fn inefficient_iter(data: &[String]) -> Vec<String> {
+    data.iter().cloned().take(5).collect() // PERF004
+}
+
+/// BUG(PERF005): Inefficient string — format!("{}", var) instead of var.to_string().
+pub fn inefficient_string(name: &str) -> String {
+    format!("{}", name) // PERF005
+}
+
+// ───────────────────────────────────────────────────
+// Pattern violations (PAT001, PAT004)
+// ───────────────────────────────────────────────────
+
+/// Concrete service implementation (used to trigger PAT001).
+pub struct CacheServiceImpl;
+
+/// BUG(PAT001): Concrete type in DI — Arc<CacheServiceImpl> instead of Arc<dyn CacheService>.
+pub struct AppContainer {
+    pub cache: Arc<CacheServiceImpl>, // PAT001: concrete DI
+}
+
+/// BUG(PAT004): Raw result type — std::result::Result instead of crate::Result.
+pub fn raw_result_usage() -> std::result::Result<(), String> {
+    // PAT004
+    Ok(())
 }
 
 // ───────────────────────────────────────────────────
@@ -201,8 +228,12 @@ pub fn not_ready_yet() -> String {
 pub struct EmptyService;
 
 impl EmptyService {
-    pub fn process(&self) -> Result<(), String> { Ok(()) }
-    pub fn validate(&self) -> Result<(), String> { Ok(()) }
+    pub fn process(&self) -> Result<(), String> {
+        Ok(())
+    }
+    pub fn validate(&self) -> Result<(), String> {
+        Ok(())
+    }
 }
 
 /// BUG(Implementation): Empty catch-all in match.

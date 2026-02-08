@@ -115,17 +115,18 @@ impl SearchHandler {
                                 })
                             })
                             .collect();
+                        let fmt_err = |e: McpError| {
+                            McpError::internal_error(
+                                format!("Failed to format memory search results: {e}"),
+                                None,
+                            )
+                        };
                         let response = ResponseFormatter::json_success(&serde_json::json!({
                             "query": query,
                             "count": results.len(),
                             "results": results,
                         }))
-                        .map_err(|e| {
-                            McpError::internal_error(
-                                format!("Failed to format memory search results: {e}"),
-                                None,
-                            )
-                        })?;
+                        .map_err(fmt_err)?;
                         Ok(response)
                     }
                     Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(

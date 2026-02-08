@@ -35,9 +35,9 @@ impl ValidateHandler {
 
         match args.action {
             ValidateAction::Run => {
-                let path_str = args.path.as_ref().ok_or_else(|| {
-                    McpError::invalid_params("Missing required parameter: path", None)
-                })?;
+                let missing_path =
+                    || McpError::invalid_params("Missing required parameter: path", None);
+                let path_str = args.path.as_ref().ok_or_else(missing_path)?;
                 let path = PathBuf::from(path_str);
                 if !path.exists() {
                     return Ok(ResponseFormatter::format_validation_error(
@@ -118,9 +118,10 @@ impl ValidateHandler {
                 }
             }
             ValidateAction::Analyze => {
-                let path_str = args.path.as_ref().ok_or_else(|| {
+                let missing_path = || {
                     McpError::invalid_params("Missing required parameter: path for analyze", None)
-                })?;
+                };
+                let path_str = args.path.as_ref().ok_or_else(missing_path)?;
                 let path = PathBuf::from(path_str);
                 if !path.exists() || !path.is_file() {
                     return Ok(CallToolResult::error(vec![Content::text(

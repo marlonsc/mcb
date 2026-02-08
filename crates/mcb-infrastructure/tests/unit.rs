@@ -5,6 +5,9 @@
 //! The auth, snapshot, and sync tests require the `test-utils` feature:
 //! `cargo test -p mcb-infrastructure --test unit --features test-utils`
 
+#[path = "unit/admin_tests.rs"]
+mod admin_tests;
+
 #[path = "unit/constants_tests.rs"]
 mod constants_tests;
 
@@ -13,6 +16,9 @@ mod crypto_tests;
 
 #[path = "unit/error_ext_tests.rs"]
 mod error_ext_tests;
+
+#[path = "unit/events_tests.rs"]
+mod events_tests;
 
 #[path = "unit/health_tests.rs"]
 mod health_tests;
@@ -56,3 +62,6 @@ mod memory_provider_tests;
 
 #[path = "unit/mcp_context_config_tests.rs"]
 mod mcp_context_config_tests;
+
+#[path = "unit/service_tests.rs"]
+mod service_tests;

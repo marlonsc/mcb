@@ -185,9 +185,11 @@ pub async fn create_test_mcp_server() -> McpServer {
     // Create shared cache provider for domain services factory
     let shared_cache = SharedCacheProvider::from_arc(cache_provider);
 
-    // Create crypto service with random key for tests
     let master_key = CryptoService::generate_master_key();
-    let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
+    let crypto: std::sync::Arc<dyn mcb_domain::ports::providers::CryptoProvider> =
+        std::sync::Arc::new(
+            CryptoService::new(master_key).expect("Failed to create crypto service"),
+        );
 
     let memory_repository = Arc::new(MockMemoryRepository::new());
     let agent_repository = Arc::new(MockAgentRepository::new());

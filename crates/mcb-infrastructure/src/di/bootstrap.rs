@@ -11,7 +11,7 @@ use mcb_domain::ports::admin::{
 };
 use mcb_domain::ports::browse::HighlightServiceInterface;
 use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
 use mcb_domain::ports::services::ProjectDetectorService;
 use tracing::info;
@@ -87,7 +87,7 @@ pub struct AppContext {
     // Infrastructure Services
     // ========================================================================
     highlight_service: Arc<dyn HighlightServiceInterface>,
-    crypto_service: Arc<CryptoService>,
+    crypto_service: Arc<dyn CryptoProvider>,
 }
 
 impl AppContext {
@@ -197,7 +197,7 @@ impl AppContext {
     }
 
     /// Get crypto service
-    pub fn crypto_service(&self) -> Arc<CryptoService> {
+    pub fn crypto_service(&self) -> Arc<dyn CryptoProvider> {
         self.crypto_service.clone()
     }
 
@@ -212,7 +212,7 @@ impl AppContext {
         let language_chunker = self.language_handle().get();
 
         let shared_cache = crate::cache::provider::SharedCacheProvider::from_arc(cache_provider);
-        let crypto = (*self.crypto_service()).clone();
+        let crypto = self.crypto_service();
 
         let indexing_ops = self.indexing();
         let event_bus = self.event_bus();
@@ -405,6 +405,7 @@ pub async fn init_test_app() -> Result<AppContext> {
 
 pub type DiContainer = AppContext;
 
+/// Create a test DI container with default configuration
 pub async fn create_test_container() -> Result<AppContext> {
     init_test_app().await
 }

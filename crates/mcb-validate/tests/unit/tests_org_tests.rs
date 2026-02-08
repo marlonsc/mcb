@@ -1,85 +1,67 @@
-//! Tests for test organization validation
+//! Tests for Test Organization Validation
 //!
-//! Discovery found 8 violations in the full workspace:
-//! - InlineTestModule: #[cfg(test)] mod tests in my-test/src/lib.rs
-//! - BadTestFunctionName: tests without test_ prefix
-//! - Various test organization issues across fixture crates
+//! Validates `TestValidator` against fixture crates with precise
+//! file + line + violation-type assertions.
+//!
+//! Note: `BadTestFileName` violations have no line field, so line=0
+//! is used (skips line check).
 
-use mcb_validate::tests_org::{TestValidator, TestViolation};
+use mcb_validate::TestValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// validate_all() — full workspace
+// validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_tests_org_full_workspace() {
+fn test_test_org_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
     let validator = TestValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    assert_violation_count(&violations, 8, "TestValidator full workspace");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Per-method tests
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_inline_test_module_detection() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
-
-    // my-test/src/lib.rs has an inline #[cfg(test)] mod tests block
-    let validator = TestValidator::new(&root);
-    let violations = validator.validate_no_inline_tests().unwrap();
-
-    assert_has_violation_matching(
+    assert_violations_exact(
         &violations,
-        |v| matches!(v, TestViolation::InlineTestModule { .. }),
-        "InlineTestModule in src/lib.rs",
+        &[
+            // ── InlineTestModule ────────────────────────────────────────
+            ("my-test/src/lib.rs", 254, "InlineTestModule"),
+            // ── BadTestFileName — no line field, use 0 ──────────────────
+            ("my-test/tests", 0, "BadTestFileName"),
+            ("integration_test.rs", 0, "BadTestFileName"),
+            ("integration_test.rs", 0, "BadTestFileName"),
+            // ── BadTestFunctionName ─────────────────────────────────────
+            ("integration_test.rs", 8, "BadTestFunctionName"),
+            // ── TrivialAssertion ────────────────────────────────────────
+            ("integration_test.rs", 4, "TrivialAssertion"),
+            ("integration_test.rs", 10, "TrivialAssertion"),
+            ("integration_test.rs", 16, "TrivialAssertion"),
+        ],
+        "TestValidator full workspace",
     );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Negative test
+// Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_proper_test_file_no_violation() {
-    // Create a crate with tests in the proper location only (no inline)
+fn test_clean_test_org_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
         r"
-pub fn production_code() -> bool { true }
-",
-    );
-    create_test_crate_with_tests(
-        &_temp,
-        TEST_CRATE,
-        r"
-pub fn production_code() -> bool { true }
-",
-        r"
-#[test]
-fn test_production_code() {
-    assert!(my_test::production_code());
+/// A well-structured module.
+pub fn add(a: i32, b: i32) -> i32 {
+    a + b
 }
 ",
     );
-
     let validator = TestValidator::new(&root);
-    let violations = validator.validate_no_inline_tests().unwrap();
-
-    let inline_violations: Vec<_> = violations
-        .iter()
-        .filter(|v| matches!(v, TestViolation::InlineTestModule { .. }))
-        .collect();
+    let violations = validator.validate_all().unwrap();
 
     assert_no_violations(
-        &inline_violations,
-        "Properly structured tests should not trigger inline test violation",
+        &violations,
+        "Clean test organization should produce no violations",
     );
 }

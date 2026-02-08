@@ -395,10 +395,10 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         let results = self.list_vectors(collection, limit).await?;
 
         let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
-        for result in &results {
+        for result in results {
             let entry = file_map
-                .entry(result.file_path.clone())
-                .or_insert((0, result.language.clone()));
+                .entry(result.file_path)
+                .or_insert_with(|| (0, result.language));
             entry.0 += 1;
         }
 

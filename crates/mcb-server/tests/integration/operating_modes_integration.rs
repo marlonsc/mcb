@@ -570,7 +570,8 @@ async fn create_test_mcp_server() -> McpServer {
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
         cache: shared_cache,
-        crypto,
+        crypto: std::sync::Arc::new(crypto)
+            as std::sync::Arc<dyn mcb_domain::ports::providers::CryptoProvider>,
         config,
         embedding_provider,
         vector_store_provider,

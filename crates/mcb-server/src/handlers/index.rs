@@ -28,11 +28,12 @@ impl IndexHandler {
     }
 
     fn validate_request(args: &IndexArgs) -> Result<(PathBuf, CollectionId), CallToolResult> {
-        let path_str = args.path.as_ref().ok_or_else(|| {
+        let missing_path_err = || {
             CallToolResult::error(vec![rmcp::model::Content::text(
                 "Missing required parameter: path",
             )])
-        })?;
+        };
+        let path_str = args.path.as_ref().ok_or_else(missing_path_err)?;
         let path = PathBuf::from(path_str);
         if !path.exists() {
             return Err(ResponseFormatter::format_indexing_error(

@@ -1,19 +1,15 @@
 //! Tests for Error Boundary Validation
 //!
-//! Discovery found 22 violations in the full workspace:
-//! - Wrong-layer error types in domain code (std::io::Error, reqwest, sqlx, etc.)
-//! - Missing error context (bare `?` operators)
-//! - Leaked error details in API responses
-//!
-//! Uses fixture crates via `with_fixture_workspace` and `with_fixture_crate`.
+//! Validates `ErrorBoundaryValidator` against fixture crates with precise
+//! file + line + violation-type assertions.
 
-use mcb_validate::error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
+use mcb_validate::ErrorBoundaryValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// validate_all() — full workspace
+// validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
@@ -23,72 +19,79 @@ fn test_error_boundary_full_workspace() {
     let validator = ErrorBoundaryValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    assert_violation_count(&violations, 22, "ErrorBoundaryValidator full workspace");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// validate_layer_error_types() — wrong layer errors in domain
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_domain_infra_error_types_detected() {
-    let (_temp, root) = with_fixture_crate(DOMAIN_CRATE);
-
-    let validator = ErrorBoundaryValidator::new(&root);
-    let violations = validator.validate_layer_error_types().unwrap();
-
-    // my-domain has infra error types: std::io::Error, reqwest::Error,
-    // sqlx::Error, serde_json::Error, tokio::*, hyper::Error
-    assert_min_violations(
+    assert_violations_exact(
         &violations,
-        3,
-        "Should detect multiple infrastructure error types in domain",
-    );
-
-    // Verify different error types were found
-    let error_types: Vec<&str> = violations
-        .iter()
-        .filter_map(|v| match v {
-            ErrorBoundaryViolation::WrongLayerError { error_type, .. } => Some(error_type.as_str()),
-            _ => None,
-        })
-        .collect();
-
-    assert!(
-        error_types.iter().any(|t| t.contains("io")),
-        "Should detect std::io::Error, found: {error_types:?}"
+        &[
+            // ── MissingErrorContext (bare ?) ─────────────────────────────
+            (
+                "my-server/src/handlers/user_handler.rs",
+                30,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                32,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                36,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                106,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                109,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                112,
+                "MissingErrorContext",
+            ),
+            // ── WrongLayerError (infra types in domain) ─────────────────
+            ("my-domain/src/domain/service.rs", 17, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 19, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 20, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 38, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 49, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 59, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 76, "WrongLayerError"),
+            // ── LeakedInternalError (.to_string() in response) ──────────
+            (
+                "my-server/src/handlers/user_handler.rs",
+                123,
+                "LeakedInternalError",
+            ),
+        ],
+        "ErrorBoundaryValidator full workspace",
     );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// validate_error_context() — bare ? operators
+// Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_handler_missing_error_context() {
-    let (_temp, root) = with_fixture_crate(SERVER_CRATE);
-
+fn test_clean_error_boundary_no_violations() {
+    let (_temp, root) = with_inline_crate(
+        TEST_CRATE,
+        r##"
+/// A function with proper error handling.
+pub fn parse_config(input: &str) -> Result<i32, String> {
+    input.parse::<i32>().map_err(|e| format!("parse error: {}", e))
+}
+"##,
+    );
     let validator = ErrorBoundaryValidator::new(&root);
-    let violations = validator.validate_error_context().unwrap();
+    let violations = validator.validate_all().unwrap();
 
-    assert_min_violations(
+    assert_no_violations(
         &violations,
-        1,
-        "Should detect bare ? operators in handler code",
+        "Clean error handling should produce no violations",
     );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Negative test: error.rs files should be exempt
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_domain_error_module_exempt() {
-    let (_temp, root) = with_fixture_crate(DOMAIN_CRATE);
-
-    let validator = ErrorBoundaryValidator::new(&root);
-    let violations = validator.validate_layer_error_types().unwrap();
-
-    // error.rs files are exempt from layer error type checks
-    assert_no_violation_from_file(&violations, "error.rs");
 }

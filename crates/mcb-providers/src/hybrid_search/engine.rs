@@ -244,7 +244,7 @@ impl HybridSearchProvider for HybridSearchEngine {
         let mut collection_stats = HashMap::new();
         for (name, index) in collections.iter() {
             collection_stats.insert(
-                name.clone(),
+                name.to_owned(),
                 serde_json::json!({
                     "total_documents": index.scorer.total_docs(),
                     "unique_terms": index.scorer.unique_terms(),

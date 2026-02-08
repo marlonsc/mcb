@@ -380,7 +380,10 @@ impl ErrorBoundaryValidator {
                 r#"format!\s*\(\s*"\{\:?\?\}""#,
                 "Debug formatting in response",
             ),
-            (r"\.to_string\(\)\s*\)", "Error .to_string() in response"),
+            (
+                r"\b(?:err|error|e)\b\.to_string\(\)",
+                "Error .to_string() in response",
+            ),
             (
                 r#"serde_json::json!\s*\(\s*\{\s*"error"\s*:\s*format!"#,
                 "Internal error in JSON response",

@@ -30,3 +30,5 @@ pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
 // Prometheus metrics - exported for /metrics endpoint
 pub use prometheus_metrics::{PrometheusPerformanceMetrics, export_metrics};
+// Event bus - exported for DI bootstrap and testing
+pub use events::TokioBroadcastEventBus;

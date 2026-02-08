@@ -1,15 +1,18 @@
 //! Tests for Refactoring Validation
 //!
-//! Discovery found 1 violation in the full workspace:
-//! - Duplicate struct `User` defined in both `my-domain` and `my-server`
+//! Validates `RefactoringValidator` against fixture crates with precise
+//! file + line + violation-type assertions.
+//!
+//! Note: `DuplicateDefinition` has no single line field; it references
+//! multiple files. We use line=0 to skip line check.
 
-use mcb_validate::refactoring::RefactoringValidator;
+use mcb_validate::RefactoringValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// validate_all() — full workspace
+// validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
@@ -19,38 +22,35 @@ fn test_refactoring_full_workspace() {
     let validator = RefactoringValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    assert_violation_count(&violations, 1, "RefactoringValidator full workspace");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Per-method tests
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_duplicate_definition_detection() {
-    // Both my-domain and my-server define a `User` struct
-    let (_temp, root) = with_fixture_workspace(&[DOMAIN_CRATE, SERVER_CRATE]);
-
-    let validator = RefactoringValidator::new(&root);
-    let violations = validator.validate_duplicate_definitions().unwrap();
-
-    assert_min_violations(
+    // 1 violation: DuplicateDefinition for 'User' across my-server and my-domain
+    assert_violations_exact(
         &violations,
-        1,
-        "duplicate User struct across domain and server crates",
+        &[("User", 0, "DuplicateDefinition")],
+        "RefactoringValidator full workspace",
     );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Negative test: clean code
+// ─────────────────────────────────────────────────────────────────────────────
+
 #[test]
-fn test_no_duplicates_in_single_crate() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
-
+fn test_clean_refactoring_no_violations() {
+    let (_temp, root) = with_inline_crate(
+        TEST_CRATE,
+        r"
+/// A unique type with no duplicates.
+pub struct UniqueType {
+    /// Value field.
+    pub value: i32,
+}
+",
+    );
     let validator = RefactoringValidator::new(&root);
-    let violations = validator.validate_duplicate_definitions().unwrap();
+    let violations = validator.validate_all().unwrap();
 
-    // Single crate should have no cross-crate duplicate definitions
     assert_no_violations(
         &violations,
-        "Single crate should have no cross-crate duplicates",
+        "Clean code with unique types should produce no violations",
     );
 }

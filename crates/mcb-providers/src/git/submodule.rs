@@ -133,7 +133,7 @@ impl SubmoduleProvider {
                 let name = submodule
                     .name()
                     .map(ToString::to_string)
-                    .unwrap_or_else(|| path.clone());
+                    .unwrap_or_else(|| path.to_owned());
 
                 // Check if submodule is initialized
                 let workdir = current_repo.workdir().unwrap_or_else(|| Path::new(""));

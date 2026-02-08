@@ -1,16 +1,19 @@
 //! Tests for Performance Validation
 //!
-//! Discovery found 0 violations in the full workspace.
-//! Fixture crates don't currently trigger the performance
-//! clone-in-loop or large-return-by-value detectors.
+//! Validates `PerformanceValidator` against fixture crates with precise
+//! file + line + violation-type assertions.
+//!
+//! Codes covered: PERF001 (CloneInLoop), PERF002 (AllocationInLoop),
+//! PERF003 (ArcMutexOveruse), PERF004 (InefficientIterator),
+//! PERF005 (InefficientString).
 
-use mcb_validate::performance::PerformanceValidator;
+use mcb_validate::PerformanceValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// validate_all() — full workspace
+// validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
@@ -20,6 +23,44 @@ fn test_performance_full_workspace() {
     let validator = PerformanceValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    // Discovery confirmed 0 violations from fixtures
-    assert_violation_count(&violations, 0, "PerformanceValidator full workspace");
+    assert_violations_exact(
+        &violations,
+        &[
+            // ── PERF001: CloneInLoop ─────────────────────────────────────
+            ("my-test/src/lib.rs", 155, "CloneInLoop"),
+            // ── PERF002: AllocationInLoop ────────────────────────────────
+            ("my-test/src/lib.rs", 162, "AllocationInLoop"),
+            // ── PERF003: ArcMutexOveruse ────────────────────────────────
+            ("my-test/src/lib.rs", 169, "ArcMutexOveruse"),
+            // ── PERF004: InefficientIterator ────────────────────────────
+            ("my-test/src/lib.rs", 174, "InefficientIterator"),
+            // ── PERF005: InefficientString ──────────────────────────────
+            ("my-test/src/lib.rs", 179, "InefficientString"),
+        ],
+        "PerformanceValidator full workspace",
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Negative test: clean code
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_clean_performance_no_violations() {
+    let (_temp, root) = with_inline_crate(
+        TEST_CRATE,
+        r#"
+/// Efficient processing without clones or allocations in loops.
+pub fn process_items(items: &[String]) -> usize {
+    items.len()
+}
+"#,
+    );
+    let validator = PerformanceValidator::new(&root);
+    let violations = validator.validate_all().unwrap();
+
+    assert_no_violations(
+        &violations,
+        "Clean performance code should produce no violations",
+    );
 }

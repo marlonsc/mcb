@@ -525,9 +525,15 @@ impl PatternValidator {
 
                 // Skip error-related files (they define/extend error types)
                 let file_name = entry.path().file_name().and_then(|n| n.to_str());
+                let parent_name = entry
+                    .path()
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str());
                 if file_name.is_some_and(|n| {
                     n == "error.rs" || n == "error_ext.rs" || n.starts_with("error")
-                }) {
+                }) || parent_name.is_some_and(|p| p == "error")
+                {
                     continue;
                 }
 

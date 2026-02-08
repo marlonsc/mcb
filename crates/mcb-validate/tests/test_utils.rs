@@ -259,6 +259,114 @@ pub fn assert_no_violation_from_file<V: std::fmt::Debug>(violations: &[V], file_
     }
 }
 
+/// Asserts that a specific violation exists matching file suffix, line, and message substring.
+///
+/// The `file_suffix` is checked with `ends_with()` so you can use relative paths
+/// like `"my-test/src/lib.rs"` without knowing the temp dir prefix.
+///
+/// # Example
+/// ```rust,ignore
+/// assert_violation_at(
+///     &violations,
+///     "my-test/src/lib.rs", 17,
+///     "unwrap",
+/// );
+/// ```
+pub fn assert_violation_at<V: std::fmt::Debug>(
+    violations: &[V],
+    file_suffix: &str,
+    line: usize,
+    msg_contains: &str,
+) {
+    let debug_strs: Vec<String> = violations.iter().map(|v| format!("{v:?}")).collect();
+    let found = debug_strs.iter().any(|d| {
+        d.contains(file_suffix)
+            && (line == 0 || d.contains(&format!("line: {line}")))
+            && d.contains(msg_contains)
+    });
+    assert!(
+        found,
+        "Expected violation at {}:{} containing {:?}, but not found.\nActual violations:\n{}",
+        file_suffix,
+        line,
+        msg_contains,
+        debug_strs.join("\n")
+    );
+}
+
+/// Asserts that the violations list matches the expected set **exactly**.
+///
+/// Each expected entry is `(file_suffix, line, msg_contains)`.
+/// Fails if any expected violation is missing or if there are unexpected violations.
+///
+/// # Example
+/// ```rust,ignore
+/// assert_violations_exact(&violations, &[
+///     ("my-test/src/lib.rs", 17, "UnwrapInProduction"),
+///     ("my-test/src/lib.rs", 19, "ExpectInProduction"),
+/// ], "QualityValidator");
+/// ```
+pub fn assert_violations_exact<V: std::fmt::Debug>(
+    violations: &[V],
+    expected: &[(&str, usize, &str)],
+    context: &str,
+) {
+    let debug_strs: Vec<String> = violations.iter().map(|v| format!("{v:?}")).collect();
+
+    // Check each expected violation is present
+    let mut missing: Vec<String> = Vec::new();
+    for (file_suffix, line, msg_contains) in expected {
+        let found = debug_strs.iter().any(|d| {
+            d.contains(file_suffix)
+                && (*line == 0 || d.contains(&format!("line: {line}")))
+                && d.contains(msg_contains)
+        });
+        if !found {
+            missing.push(format!("  {}:{} {:?}", file_suffix, line, msg_contains));
+        }
+    }
+
+    // Check there are no unexpected violations (count mismatch means extras)
+    let mut extras: Vec<String> = Vec::new();
+    if violations.len() != expected.len() {
+        for (i, d) in debug_strs.iter().enumerate() {
+            let matched = expected.iter().any(|(file_suffix, line, msg_contains)| {
+                d.contains(file_suffix)
+                    && (*line == 0 || d.contains(&format!("line: {line}")))
+                    && d.contains(msg_contains)
+            });
+            if !matched {
+                extras.push(format!("  [{}] {}", i, d));
+            }
+        }
+    }
+
+    if !missing.is_empty() || !extras.is_empty() {
+        let mut msg = format!(
+            "{}: expected {} violations, got {}\n",
+            context,
+            expected.len(),
+            violations.len()
+        );
+        if !missing.is_empty() {
+            msg.push_str(&format!(
+                "MISSING ({}):\n{}\n",
+                missing.len(),
+                missing.join("\n")
+            ));
+        }
+        if !extras.is_empty() {
+            msg.push_str(&format!(
+                "UNEXPECTED ({}):\n{}\n",
+                extras.len(),
+                extras.join("\n")
+            ));
+        }
+        msg.push_str(&format!("ALL VIOLATIONS:\n{}", debug_strs.join("\n")));
+        panic!("{msg}");
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Fixture loading utilities
 // ---------------------------------------------------------------------------

@@ -287,10 +287,11 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         }
 
         // Prepare data for insertion
-        let mut vectors_flat = Vec::new();
-        let mut file_paths = Vec::new();
-        let mut start_lines = Vec::new();
-        let mut contents = Vec::new();
+        let capacity = vectors.len();
+        let mut vectors_flat = Vec::with_capacity(capacity * expected_dims);
+        let mut file_paths = Vec::with_capacity(capacity);
+        let mut start_lines = Vec::with_capacity(capacity);
+        let mut contents = Vec::with_capacity(capacity);
 
         for (embedding, meta) in vectors.iter().zip(metadata.iter()) {
             vectors_flat.extend_from_slice(&embedding.vector);
@@ -359,7 +360,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                 Some(milvus::proto::schema::i_ds::IdField::IntId(int_ids)) => {
                     int_ids.data.iter().map(|id| id.to_string()).collect()
                 }
-                Some(milvus::proto::schema::i_ds::IdField::StrId(str_ids)) => str_ids.data.clone(),
+                Some(milvus::proto::schema::i_ds::IdField::StrId(str_ids)) => str_ids.data,
                 None => Vec::new(),
             },
             None => Vec::new(),

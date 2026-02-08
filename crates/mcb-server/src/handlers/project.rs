@@ -26,9 +26,8 @@ impl ProjectHandler {
         &self,
         _params: Parameters<ProjectArgs>,
     ) -> Result<CallToolResult, McpError> {
-        // TODO: Implement actual project workflow logic
         Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-            "Project tool called (implementation in progress)",
+            "Project workflow not yet implemented",
         )]))
     }
 }

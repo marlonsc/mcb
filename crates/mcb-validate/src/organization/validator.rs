@@ -810,6 +810,9 @@ impl OrganizationValidator {
             "total_changes",
             "from_ast",
             "from_fallback",
+            "directory",
+            "file",
+            "sorted",
             // Simple getters that start with common prefixes
         ];
         // Also allow any method starting with common prefixes (factory methods on value objects)

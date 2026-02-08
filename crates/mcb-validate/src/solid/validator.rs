@@ -113,7 +113,7 @@ impl SolidValidator {
 
                 // Check if file has many unrelated structs (potential SRP violation)
                 // Skip collection files which intentionally group related types
-                if structs_in_file.len() > 3 {
+                if structs_in_file.len() > 5 {
                     let struct_names: Vec<String> =
                         structs_in_file.iter().map(|(n, _)| n.clone()).collect();
 

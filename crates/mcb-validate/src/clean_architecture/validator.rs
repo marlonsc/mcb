@@ -470,7 +470,7 @@ impl CleanArchitectureValidator {
             crate::ValidationError::InvalidRegex(format!("CA002.domain_reexport: {e}"))
         })?;
 
-        for entry in WalkDir::new(&ports_dir)
+        for entry in WalkDir::new(&app_crate)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {
@@ -480,27 +480,21 @@ impl CleanArchitectureValidator {
                 let has_reexport = reexport_re.is_match(&content);
 
                 for (line_num, line) in content.lines().enumerate() {
-                    // Skip comments
                     let trimmed = line.trim();
                     if trimmed.starts_with("//") {
                         continue;
                     }
 
-                    // Check for local trait definition
                     if let Some(captures) = local_trait_re.captures(line) {
                         let trait_name = captures.get(1).map_or("?", |m| m.as_str());
 
-                        // If file has re-exports, allow documentation of traits
-                        // Only flag if this is a NEW trait definition (no re-export in file)
                         if !has_reexport {
+                            let relative = path.strip_prefix(&self.workspace_root).unwrap_or(path);
                             violations.push(
                                 CleanArchitectureViolation::ApplicationWrongPortImport {
                                     file: path.to_path_buf(),
                                     line: line_num + 1,
-                                    import_path: format!(
-                                        "{}::ports::providers::{trait_name}",
-                                        self.naming.domain_crate
-                                    ),
+                                    import_path: format!("{}::{trait_name}", relative.display()),
                                     should_be: format!(
                                         "{}::ports::providers::{trait_name}",
                                         self.naming.domain_crate

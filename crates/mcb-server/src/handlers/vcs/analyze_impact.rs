@@ -46,7 +46,7 @@ pub async fn analyze_impact(
     let mut deleted = 0;
     let mut impacted_files = Vec::new();
     for file in diff.files.iter() {
-        let status = format!("{:?}", file.status).to_lowercase();
+        let status = file.status.to_string();
         match status.as_str() {
             "added" => added += 1,
             "deleted" => deleted += 1,

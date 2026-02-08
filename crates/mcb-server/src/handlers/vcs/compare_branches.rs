@@ -46,7 +46,7 @@ pub async fn compare_branches(
         .iter()
         .map(|file| BranchDiffFile {
             path: file.path.to_string_lossy().to_string(),
-            status: format!("{:?}", file.status).to_lowercase(),
+            status: file.status.to_string(),
         })
         .collect();
     let result = BranchComparison {

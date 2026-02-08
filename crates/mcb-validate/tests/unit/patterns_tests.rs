@@ -1,10 +1,9 @@
-//! Tests for Pattern Detection Validation
+//! Tests for Pattern Validation
 //!
-//! Discovery found 0 violations in the full workspace.
-//! The fixture crates don't currently trigger pattern violations
-//! (concrete-type DI detection is quite specific).
+//! Validates `PatternValidator` against fixture crates with precise
+//! file + line + violation-type assertions.
 //!
-//! Keeps negative test for Arc<dyn Trait> which should NOT trigger.
+//! Codes covered: PAT001 (ConcreteTypeInDi), PAT004 (RawResultType).
 
 use mcb_validate::PatternValidator;
 
@@ -12,46 +11,48 @@ use crate::test_constants::*;
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// validate_all() — full workspace
+// validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_pattern_full_workspace() {
+fn test_patterns_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
     let validator = PatternValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    // Discovery confirmed 0 violations from fixtures
-    assert_violation_count(&violations, 0, "PatternValidator full workspace");
+    assert_violations_exact(
+        &violations,
+        &[
+            // ── PAT001: ConcreteTypeInDi ────────────────────────────────
+            ("my-test/src/lib.rs", 191, "ConcreteTypeInDi"),
+            // ── PAT004: RawResultType ───────────────────────────────────
+            ("my-test/src/lib.rs", 195, "RawResultType"),
+        ],
+        "PatternValidator full workspace",
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Negative test
+// Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_clean_async_code_no_violation() {
+fn test_clean_patterns_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r"
-use std::sync::Arc;
-
-pub trait MyService: Send + Sync {
-    fn process(&self);
+        r#"
+/// Clean DI using trait objects.
+pub trait CacheService {
+    fn get(&self, key: &str) -> Option<String>;
 }
-
-pub struct AppState {
-    pub service: Arc<dyn MyService>,
-}
-",
+"#,
     );
-
     let validator = PatternValidator::new(&root);
-    let violations = validator.validate_trait_based_di().unwrap();
+    let violations = validator.validate_all().unwrap();
 
     assert_no_violations(
         &violations,
-        "Arc<dyn Trait> should not trigger DI violation",
+        "Clean pattern code should produce no violations",
     );
 }

@@ -48,8 +48,9 @@ fn get_mcb_path() -> PathBuf {
 }
 
 /// Spawn mcb with test-safe configuration (no external service dependencies)
-fn create_test_command(mcb_path: &PathBuf) -> std::process::Command {
+fn create_test_command(mcb_path: &PathBuf) -> Command {
     let mut cmd = Command::new(mcb_path);
+    cmd.arg("serve");
     cmd.arg("--config").arg("config/test.toml");
     cmd
 }
@@ -79,11 +80,19 @@ fn send_request_get_response(
 
     // Read response line
     let mut response_line = String::new();
-    stdout
-        .read_line(&mut response_line)
-        .expect("Failed to read response");
+    match stdout.read_line(&mut response_line) {
+        Ok(0) => panic!("EOF reading stdout - server likely crashed. Check stderr."),
+        Ok(_) => {}
+        Err(e) => panic!("Failed to read response: {}", e),
+    }
 
-    serde_json::from_str(&response_line).expect("Failed to parse JSON response")
+    match serde_json::from_str(&response_line) {
+        Ok(val) => val,
+        Err(e) => {
+            eprintln!("Failed to parse JSON response: {}", response_line);
+            panic!("JSON parse error: {}", e);
+        }
+    }
 }
 
 /// Create the MCP initialize request required to start a session
