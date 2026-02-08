@@ -73,6 +73,7 @@ impl AgentSessionServiceInterface for MockAgentSessionService {
     }
 }
 
+#[allow(dead_code)]
 pub struct MockAgentRepository {
     sessions: Arc<Mutex<HashMap<String, AgentSession>>>,
     delegations: Arc<Mutex<Vec<Delegation>>>,
@@ -80,6 +81,7 @@ pub struct MockAgentRepository {
     checkpoints: Arc<Mutex<HashMap<String, Checkpoint>>>,
 }
 
+#[allow(dead_code)]
 impl MockAgentRepository {
     pub fn new() -> Self {
         Self {
@@ -91,28 +93,28 @@ impl MockAgentRepository {
     }
 
     fn matches_query(session: &AgentSession, query: &AgentSessionQuery) -> bool {
-        if let Some(summary_id) = &query.session_summary_id
-            && session.session_summary_id != *summary_id
-        {
-            return false;
+        if let Some(summary_id) = &query.session_summary_id {
+            if session.session_summary_id != *summary_id {
+                return false;
+            }
         }
 
-        if let Some(parent_id) = &query.parent_session_id
-            && session.parent_session_id.as_ref() != Some(parent_id)
-        {
-            return false;
+        if let Some(parent_id) = &query.parent_session_id {
+            if session.parent_session_id.as_ref() != Some(parent_id) {
+                return false;
+            }
         }
 
-        if let Some(agent_type) = &query.agent_type
-            && &session.agent_type != agent_type
-        {
-            return false;
+        if let Some(agent_type) = &query.agent_type {
+            if &session.agent_type != agent_type {
+                return false;
+            }
         }
 
-        if let Some(status) = &query.status
-            && &session.status != status
-        {
-            return false;
+        if let Some(status) = &query.status {
+            if &session.status != status {
+                return false;
+            }
         }
 
         true

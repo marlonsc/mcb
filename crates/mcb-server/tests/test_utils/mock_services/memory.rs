@@ -14,11 +14,13 @@ use mcb_domain::ports::repositories::memory_repository::FtsSearchResult;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
 
+#[allow(dead_code)]
 pub struct MockMemoryRepository {
     pub observations: Arc<Mutex<Vec<Observation>>>,
     pub summaries: Arc<Mutex<Vec<SessionSummary>>>,
 }
 
+#[allow(dead_code)]
 impl MockMemoryRepository {
     pub fn new() -> Self {
         Self {
@@ -89,11 +91,12 @@ impl MemoryRepository for MockMemoryRepository {
                 let timeline: Vec<Observation> = obs[start..end]
                     .iter()
                     .filter(|o| {
-                        if let Some(ref f) = filter
-                            && let Some(ref session) = f.session_id
-                            && o.metadata.session_id.as_ref() != Some(session)
-                        {
-                            return false;
+                        if let Some(ref f) = filter {
+                            if let Some(ref session) = f.session_id {
+                                if o.metadata.session_id.as_ref() != Some(session) {
+                                    return false;
+                                }
+                            }
                         }
                         true
                     })
@@ -338,11 +341,12 @@ impl MemoryServiceInterface for MockMemoryService {
                 let timeline: Vec<Observation> = observations[start..end]
                     .iter()
                     .filter(|obs| {
-                        if let Some(ref f) = filter
-                            && let Some(ref session) = f.session_id
-                            && obs.metadata.session_id.as_ref() != Some(session)
-                        {
-                            return false;
+                        if let Some(ref f) = filter {
+                            if let Some(ref session) = f.session_id {
+                                if obs.metadata.session_id.as_ref() != Some(session) {
+                                    return false;
+                                }
+                            }
                         }
                         true
                     })

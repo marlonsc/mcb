@@ -5,6 +5,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use mcb_application::use_cases::project_service::ProjectServiceImpl;
 use mcb_domain::SearchResult;
 use mcb_domain::ports::services::IndexingResult;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
@@ -18,9 +19,9 @@ use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use tempfile::TempDir;
 
-use crate::test_utils::mock_services::{
-    MockAgentRepository, MockMemoryRepository, MockVcsProvider,
-};
+#[allow(unused_imports)]
+use crate::test_utils::mock_services::MockMemoryRepository;
+use crate::test_utils::mock_services::MockVcsProvider;
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
@@ -191,12 +192,22 @@ pub async fn create_test_mcp_server() -> McpServer {
             CryptoService::new(master_key).expect("Failed to create crypto service"),
         );
 
-    let memory_repository = Arc::new(MockMemoryRepository::new());
-    let agent_repository = Arc::new(MockAgentRepository::new());
+    let (memory_repository, shared_executor) =
+        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+            .await
+            .expect("Failed to create memory database");
+    let agent_repository = mcb_providers::database::create_agent_repository_from_executor(
+        std::sync::Arc::clone(&shared_executor),
+    );
+    let project_repository = mcb_providers::database::create_project_repository_from_executor(
+        std::sync::Arc::clone(&shared_executor),
+    );
     let vcs_provider = Arc::new(MockVcsProvider::new());
 
     let project_service: Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
         Arc::new(mcb_infrastructure::project::ProjectService::new());
+    let project_workflow_service: Arc<dyn mcb_domain::ports::services::ProjectService> =
+        Arc::new(ProjectServiceImpl::new(project_repository.clone()));
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
@@ -212,6 +223,7 @@ pub async fn create_test_mcp_server() -> McpServer {
         agent_repository,
         vcs_provider,
         project_service,
+        project_workflow_service: project_workflow_service.clone(),
     };
 
     let services = DomainServicesFactory::create_services(deps)
@@ -226,6 +238,7 @@ pub async fn create_test_mcp_server() -> McpServer {
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
         .with_project_service(services.project_service)
+        .with_project_workflow_service(project_workflow_service)
         .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")

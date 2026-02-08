@@ -114,11 +114,17 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
 
 async fn connect_in_memory_and_init() -> Result<sqlx::SqlitePool> {
     use mcb_domain::error::Error;
-    let pool = sqlx::SqlitePool::connect("sqlite::memory:")
+    use uuid::Uuid;
+    // Use a unique name for each connection pool to ensure test isolation
+    // while allowing shared cache within the pool (and shared connections to same URI)
+    let uuid = Uuid::new_v4();
+    let db_url = format!("file:memdb{}?mode=memory&cache=shared", uuid);
+
+    let pool = sqlx::SqlitePool::connect(&db_url)
         .await
         .map_err(|e| Error::memory_with_source("connect in-memory SQLite", e))?;
     apply_schema(&pool).await?;
-    tracing::debug!("In-memory memory database initialized");
+    tracing::debug!("In-memory memory database initialized: {}", db_url);
     Ok(pool)
 }
 

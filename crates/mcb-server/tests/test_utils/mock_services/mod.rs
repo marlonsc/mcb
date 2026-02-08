@@ -9,11 +9,15 @@ pub mod search;
 pub mod validation;
 pub mod vcs;
 
-pub use agent::{MockAgentRepository, MockAgentSessionService};
+#[allow(unused_imports)]
+pub use agent::MockAgentRepository;
+pub use agent::MockAgentSessionService;
 pub use context::MockContextService;
 pub use indexing::MockIndexingService;
-pub use memory::{MockMemoryRepository, MockMemoryService};
-pub use project::MockProjectService;
+#[allow(unused_imports)]
+pub use memory::MockMemoryRepository;
+pub use memory::MockMemoryService;
+pub use project::{MockProjectRepository, MockProjectService};
 pub use search::MockSearchService;
 pub use validation::MockValidationService;
 pub use vcs::MockVcsProvider;

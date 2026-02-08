@@ -13,7 +13,7 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::test_utils::mock_services::{MockProjectService, MockVcsProvider};
+use crate::test_utils::mock_services::{MockProjectRepository, MockVcsProvider};
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::types::{AppConfig, ModeConfig, OperatingMode};
@@ -565,7 +565,14 @@ async fn create_test_mcp_server() -> McpServer {
         std::sync::Arc::new(MockVcsProvider::new());
 
     let project_service: std::sync::Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
-        std::sync::Arc::new(MockProjectService::new());
+        std::sync::Arc::new(mcb_infrastructure::project::ProjectService::new());
+    let project_repository = std::sync::Arc::new(MockProjectRepository::new());
+    let project_workflow_service: std::sync::Arc<dyn mcb_domain::ports::services::ProjectService> =
+        std::sync::Arc::new(
+            mcb_application::use_cases::project_service::ProjectServiceImpl::new(
+                project_repository,
+            ),
+        );
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
@@ -582,6 +589,7 @@ async fn create_test_mcp_server() -> McpServer {
         agent_repository,
         vcs_provider,
         project_service,
+        project_workflow_service: project_workflow_service.clone(),
     };
 
     let services = DomainServicesFactory::create_services(deps)
@@ -596,6 +604,7 @@ async fn create_test_mcp_server() -> McpServer {
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
         .with_project_service(services.project_service)
+        .with_project_workflow_service(project_workflow_service)
         .with_vcs_provider(services.vcs_provider)
         .build()
         .expect("Failed to build MCP server")
