@@ -62,13 +62,18 @@ impl std::fmt::Display for SymbolKind {
 /// Symbol extractor for different languages
 pub struct SymbolExtractor;
 
+/// Symbol mapping type for language-specific extraction
+type SymbolMapping = &'static [(&'static str, SymbolKind)];
+/// Function checks type for language-specific extraction
+type FunctionChecks = &'static [(&'static str, &'static str)];
+
 impl SymbolExtractor {
     /// Extract all symbols from a tree
     pub fn extract(tree: &Tree, source: &[u8], language: LanguageId) -> Vec<SymbolInfo> {
         let root = tree.root_node();
         let mut symbols = Vec::new();
 
-        let (mapping, checks): (&[(&str, SymbolKind)], &[(&str, &str)]) = match language {
+        let (mapping, checks): (SymbolMapping, FunctionChecks) = match language {
             LanguageId::Rust => (
                 &[
                     ("struct_item", SymbolKind::Class),
