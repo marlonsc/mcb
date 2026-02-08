@@ -3,8 +3,8 @@
 //! Implements MCP protocol over standard input/output streams.
 //! This is the traditional transport mechanism for MCP servers.
 
-use rmcp::ServiceExt;
 use rmcp::transport::stdio;
+use rmcp::ServiceExt;
 use tracing::info;
 
 use crate::McpServer;

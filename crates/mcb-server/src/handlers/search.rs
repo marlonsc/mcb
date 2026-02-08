@@ -6,9 +6,9 @@ use std::time::Instant;
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
-use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 use validator::Validate;
 
 use crate::args::{SearchArgs, SearchResource};

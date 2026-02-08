@@ -69,8 +69,8 @@ pub async fn create_executor_in_memory() -> Result<Arc<dyn DatabaseExecutor>> {
 ///
 /// Returns both the repository and the shared executor so callers can create
 /// additional repositories (agent, project) from the same database.
-pub async fn create_memory_repository_in_memory_with_executor()
--> Result<(Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>)> {
+pub async fn create_memory_repository_in_memory_with_executor(
+) -> Result<(Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>)> {
     let executor = create_executor_in_memory().await?;
     let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&executor)));
     Ok((memory_repository, executor))

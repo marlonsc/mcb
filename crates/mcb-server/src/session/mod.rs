@@ -6,4 +6,4 @@
 
 mod manager;
 
-pub use manager::{SessionContext, SessionManager, create_session_manager};
+pub use manager::{create_session_manager, SessionContext, SessionManager};

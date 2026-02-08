@@ -8,14 +8,14 @@ title = "Setup"
 
 Before installing Rustlings, you must have the **latest version of Rust** installed.
 Visit [www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install) for further instructions.
-This will also install _Cargo_, Rust's package/project manager.
+This will also install *Cargo*, Rust's package/project manager.
 
-> 🐧 If you are on **Linux**, make sure you have `gcc` installed (_for a linker_).
+> 🐧 If you are on **Linux**, make sure you have `gcc` installed (*for a linker*).
 >
 > Debian: `sudo apt install gcc`\
 > Fedora: `sudo dnf install gcc`
 
-> 🍎 If you are on **MacOS**, make sure you have _Xcode and its developer tools_ installed: `xcode-select --install`
+> 🍎 If you are on **MacOS**, make sure you have *Xcode and its developer tools* installed: `xcode-select --install`
 
 ## Installing Rustlings
 
@@ -27,9 +27,9 @@ cargo install rustlings
 
 {% details(summary="If the installation fails…") %}
 
-- Make sure you have the latest Rust version by running `rustup update`
-- Try adding the `--locked` flag: `cargo install rustlings --locked`
-- Otherwise, please [report the issue](https://github.com/rust-lang/rustlings/issues/new)
+-   Make sure you have the latest Rust version by running `rustup update`
+-   Try adding the `--locked` flag: `cargo install rustlings --locked`
+-   Otherwise, please [report the issue](https://github.com/rust-lang/rustlings/issues/new)
 
 {% end %}
 
@@ -48,8 +48,8 @@ You are probably using Linux and installed Rust using your package manager.
 Cargo installs binaries to the directory `~/.cargo/bin`.
 Sadly, package managers often don't add `~/.cargo/bin` to your `PATH` environment variable.
 
-- Either add `~/.cargo/bin` manually to `PATH`
-- Or uninstall Rust from the package manager and [install it using the official way with `rustup`](https://www.rust-lang.org/tools/install)
+-   Either add `~/.cargo/bin` manually to `PATH`
+-   Or uninstall Rust from the package manager and [install it using the official way with `rustup`](https://www.rust-lang.org/tools/install)
 
 {% end %}
 
@@ -64,8 +64,8 @@ rustlings
 
 ### Editor
 
-Our general recommendation is [VS Code](https://code.visualstudio.com/) with the [rust-analyzer plugin](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
-But any editor that supports [rust-analyzer](https://rust-analyzer.github.io/) should be enough for working on the exercises.
+Our general recommendation is [VS Code](https://code.visualstudio.com/) with the [Rust-analyzer plugin](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+But any editor that supports [Rust-analyzer](https://rust-analyzer.github.io/) should be enough for working on the exercises.
 
 ### Terminal
 

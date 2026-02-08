@@ -4,8 +4,8 @@ use mcb_domain::entities::memory::ObservationMetadata;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::vcs_context::VcsContext;
 use mcb_domain::value_objects::ObservationId;
-use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 use uuid::Uuid;
 
 use super::helpers::MemoryHelpers;

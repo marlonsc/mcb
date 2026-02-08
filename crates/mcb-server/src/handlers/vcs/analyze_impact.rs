@@ -2,10 +2,10 @@ use std::path::Path;
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
-use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 
-use super::responses::{ImpactFile, ImpactResponse, ImpactSummary, repo_path};
+use super::responses::{repo_path, ImpactFile, ImpactResponse, ImpactSummary};
 use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
 

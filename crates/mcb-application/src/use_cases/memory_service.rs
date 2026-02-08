@@ -74,12 +74,22 @@ impl MemoryServiceImpl {
     }
 
     fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
-        Self::check_session(obs, filter)
-            && Self::check_repo(obs, filter)
-            && Self::check_type(obs, filter)
-            && Self::check_time(obs, filter)
-            && Self::check_branch(obs, filter)
-            && Self::check_commit(obs, filter)
+        if !Self::check_session(obs, filter) {
+            return false;
+        }
+        if !Self::check_repo(obs, filter) {
+            return false;
+        }
+        if !Self::check_type(obs, filter) {
+            return false;
+        }
+        if !Self::check_time(obs, filter) {
+            return false;
+        }
+        if !Self::check_branch(obs, filter) {
+            return false;
+        }
+        Self::check_commit(obs, filter)
     }
 
     fn check_session(obs: &Observation, filter: &MemoryFilter) -> bool {

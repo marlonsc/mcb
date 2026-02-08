@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{Observation, ObservationType};
-use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
+use mcb_domain::ports::MemoryRepository;
 use mcb_domain::value_objects::ObservationId;
 use mcb_providers::database::create_memory_repository_in_memory;
 

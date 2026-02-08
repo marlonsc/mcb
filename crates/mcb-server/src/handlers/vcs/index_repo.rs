@@ -3,10 +3,10 @@ use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_infrastructure::config::McpContextConfig;
-use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 
-use super::responses::{IndexResult, repo_path};
+use super::responses::{repo_path, IndexResult};
 use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
 use crate::vcs_repository_registry;

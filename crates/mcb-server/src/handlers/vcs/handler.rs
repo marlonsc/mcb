@@ -3,9 +3,9 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
-use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
+use rmcp::ErrorData as McpError;
 use validator::Validate;
 
 use super::{analyze_impact, compare_branches, index_repo, list_repos, search_branch};

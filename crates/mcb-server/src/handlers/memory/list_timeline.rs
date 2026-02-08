@@ -3,8 +3,8 @@ use std::sync::Arc;
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;
-use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;

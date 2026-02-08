@@ -1,7 +1,7 @@
 +++
 +++
 
-Small exercises to get you used to reading and writing [Rust](https://www.rust-lang.org) code - _Recommended in parallel to reading [the official Rust book](https://doc.rust-lang.org/book) 📚️_
+Small exercises to get you used to reading and writing [Rust](https://www.rust-lang.org) code - *Recommended in parallel to reading [the official Rust book](https://doc.rust-lang.org/book) 📚️*
 
 <script src="https://asciinema.org/a/719805.js" id="asciicast-719805" async="true"></script>
 

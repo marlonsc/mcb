@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::SessionId;
-use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;

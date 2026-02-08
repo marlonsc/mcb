@@ -8,7 +8,7 @@ use mcb_domain::error::Error;
 use mcb_domain::ports::browse::{HighlightError, HighlightServiceInterface};
 use mcb_domain::value_objects::browse::HighlightCategory;
 use mcb_infrastructure::services::highlight_service::{
-    HighlightServiceImpl, map_highlight_to_category,
+    map_highlight_to_category, HighlightServiceImpl,
 };
 
 #[tokio::test]
@@ -23,12 +23,10 @@ async fn test_highlight_rust_keyword() {
     assert_eq!(result.original, code);
     assert_eq!(result.language, "rust");
     assert!(!result.spans.is_empty());
-    assert!(
-        result
-            .spans
-            .iter()
-            .any(|s| s.category == HighlightCategory::Keyword)
-    );
+    assert!(result
+        .spans
+        .iter()
+        .any(|s| s.category == HighlightCategory::Keyword));
 }
 
 #[tokio::test]
@@ -262,12 +260,10 @@ fn main() {
         .await
         .expect("Failed to highlight");
 
-    assert!(
-        result
-            .spans
-            .iter()
-            .any(|s| s.category == HighlightCategory::Comment)
-    );
+    assert!(result
+        .spans
+        .iter()
+        .any(|s| s.category == HighlightCategory::Comment));
 }
 
 #[test]

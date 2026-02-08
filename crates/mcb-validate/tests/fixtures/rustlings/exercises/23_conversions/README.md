@@ -7,9 +7,9 @@ The simplest form of type conversion is a type cast expression. It is denoted wi
 Rust also offers traits that facilitate type conversions upon implementation. These traits can be found under the [`convert`](https://doc.rust-lang.org/std/convert/index.html) module.
 The traits are the following:
 
-- `From` and `Into` covered in [`from_into`](from_into.rs)
-- `TryFrom` and `TryInto` covered in [`try_from_into`](try_from_into.rs)
-- `AsRef` and `AsMut` covered in [`as_ref_mut`](as_ref_mut.rs)
+-   `From` and `Into` covered in [`from_into`](from_into.rs)
+-   `TryFrom` and `TryInto` covered in [`try_from_into`](try_from_into.rs)
+-   `AsRef` and `AsMut` covered in [`as_ref_mut`](as_ref_mut.rs)
 
 Furthermore, the `std::str` module offers a trait called [`FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html) which helps with converting strings into target types via the `parse` method on strings. If properly implemented for a given type `Person`, then `let p: Person = "Mark,20".parse().unwrap()` should both compile and run without panicking.
 
@@ -19,5 +19,5 @@ These should be the main ways ***within the standard library*** to convert data 
 
 These are not directly covered in the book, but the standard library has a great documentation for it.
 
-- [conversions](https://doc.rust-lang.org/std/convert/index.html)
-- [`FromStr` trait](https://doc.rust-lang.org/std/str/trait.FromStr.html)
+-   [conversions](https://doc.rust-lang.org/std/convert/index.html)
+-   [`FromStr` trait](https://doc.rust-lang.org/std/str/trait.FromStr.html)

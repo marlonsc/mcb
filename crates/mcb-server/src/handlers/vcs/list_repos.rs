@@ -1,5 +1,5 @@
-use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
+use rmcp::ErrorData as McpError;
 
 use super::responses::ListRepositoriesResponse;
 use crate::collection_mapping;

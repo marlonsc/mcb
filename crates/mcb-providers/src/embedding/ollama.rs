@@ -177,13 +177,13 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
+use mcb_domain::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
 
 /// Factory function for creating Ollama embedding provider instances.
 fn ollama_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
+    use crate::utils::http::{create_default_client, DEFAULT_HTTP_TIMEOUT};
 
     let base_url = config
         .base_url

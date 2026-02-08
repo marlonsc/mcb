@@ -104,11 +104,39 @@ impl SymbolExtractor {
             .map(String::from)
     }
 
-    fn extract_rust_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        // Functions
-        for func in TreeWalker::find_by_kind(node, "function_item") {
+    /// Helper to extract symbols of a specific kind
+    fn extract_symbols_of_kind(
+        node: Node<'_>,
+        source: &[u8],
+        node_kind: &str,
+        symbol_kind: SymbolKind,
+        symbols: &mut Vec<SymbolInfo>,
+    ) {
+        for item in TreeWalker::find_by_kind(node, node_kind) {
+            if let Some(name) = Self::extract_name(item, source) {
+                symbols.push(SymbolInfo {
+                    name,
+                    kind: symbol_kind,
+                    start_line: item.start_position().row,
+                    end_line: item.end_position().row,
+                    start_column: item.start_position().column,
+                    parent: None,
+                });
+            }
+        }
+    }
+
+    /// Helper to extract functions/methods checking for parent context
+    fn extract_functions_with_method_check(
+        node: Node<'_>,
+        source: &[u8],
+        func_kind: &str,
+        parent_kind: &str,
+        symbols: &mut Vec<SymbolInfo>,
+    ) {
+        for func in TreeWalker::find_by_kind(node, func_kind) {
             if let Some(name) = Self::extract_name(func, source) {
-                let is_method = TreeWalker::is_inside_kind(func, "impl_item");
+                let is_method = TreeWalker::is_inside_kind(func, parent_kind);
                 symbols.push(SymbolInfo {
                     name,
                     kind: if is_method {
@@ -123,227 +151,90 @@ impl SymbolExtractor {
                 });
             }
         }
+    }
 
-        // Structs
-        for item in TreeWalker::find_by_kind(node, "struct_item") {
-            if let Some(name) = Self::extract_name(item, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Class,
-                    start_line: item.start_position().row,
-                    end_line: item.end_position().row,
-                    start_column: item.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Traits
-        for item in TreeWalker::find_by_kind(node, "trait_item") {
-            if let Some(name) = Self::extract_name(item, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Interface,
-                    start_line: item.start_position().row,
-                    end_line: item.end_position().row,
-                    start_column: item.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Enums
-        for item in TreeWalker::find_by_kind(node, "enum_item") {
-            if let Some(name) = Self::extract_name(item, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Enum,
-                    start_line: item.start_position().row,
-                    end_line: item.end_position().row,
-                    start_column: item.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Modules
-        for item in TreeWalker::find_by_kind(node, "mod_item") {
-            if let Some(name) = Self::extract_name(item, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Module,
-                    start_line: item.start_position().row,
-                    end_line: item.end_position().row,
-                    start_column: item.start_position().column,
-                    parent: None,
-                });
-            }
-        }
+    fn extract_rust_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
+        Self::extract_functions_with_method_check(
+            node,
+            source,
+            "function_item",
+            "impl_item",
+            symbols,
+        );
+        Self::extract_symbols_of_kind(node, source, "struct_item", SymbolKind::Class, symbols);
+        Self::extract_symbols_of_kind(node, source, "trait_item", SymbolKind::Interface, symbols);
+        Self::extract_symbols_of_kind(node, source, "enum_item", SymbolKind::Enum, symbols);
+        Self::extract_symbols_of_kind(node, source, "mod_item", SymbolKind::Module, symbols);
     }
 
     fn extract_python_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        // Functions
-        for func in TreeWalker::find_by_kind(node, "function_definition") {
-            if let Some(name) = Self::extract_name(func, source) {
-                let is_method = TreeWalker::is_inside_kind(func, "class_definition");
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: if is_method {
-                        SymbolKind::Method
-                    } else {
-                        SymbolKind::Function
-                    },
-                    start_line: func.start_position().row,
-                    end_line: func.end_position().row,
-                    start_column: func.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Classes
-        for class in TreeWalker::find_by_kind(node, "class_definition") {
-            if let Some(name) = Self::extract_name(class, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Class,
-                    start_line: class.start_position().row,
-                    end_line: class.end_position().row,
-                    start_column: class.start_position().column,
-                    parent: None,
-                });
-            }
-        }
+        Self::extract_functions_with_method_check(
+            node,
+            source,
+            "function_definition",
+            "class_definition",
+            symbols,
+        );
+        Self::extract_symbols_of_kind(node, source, "class_definition", SymbolKind::Class, symbols);
     }
 
     fn extract_js_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        // Function declarations
-        for func in TreeWalker::find_by_kind(node, "function_declaration") {
-            if let Some(name) = Self::extract_name(func, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Function,
-                    start_line: func.start_position().row,
-                    end_line: func.end_position().row,
-                    start_column: func.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Method definitions
-        for method in TreeWalker::find_by_kind(node, "method_definition") {
-            if let Some(name) = Self::extract_name(method, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Method,
-                    start_line: method.start_position().row,
-                    end_line: method.end_position().row,
-                    start_column: method.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Classes
-        for class in TreeWalker::find_by_kind(node, "class_declaration") {
-            if let Some(name) = Self::extract_name(class, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Class,
-                    start_line: class.start_position().row,
-                    end_line: class.end_position().row,
-                    start_column: class.start_position().column,
-                    parent: None,
-                });
-            }
-        }
+        Self::extract_symbols_of_kind(
+            node,
+            source,
+            "function_declaration",
+            SymbolKind::Function,
+            symbols,
+        );
+        Self::extract_symbols_of_kind(
+            node,
+            source,
+            "method_definition",
+            SymbolKind::Method,
+            symbols,
+        );
+        Self::extract_symbols_of_kind(
+            node,
+            source,
+            "class_declaration",
+            SymbolKind::Class,
+            symbols,
+        );
     }
 
     fn extract_java_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        // Methods
-        for method in TreeWalker::find_by_kind(node, "method_declaration") {
-            if let Some(name) = Self::extract_name(method, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Method,
-                    start_line: method.start_position().row,
-                    end_line: method.end_position().row,
-                    start_column: method.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Classes
-        for class in TreeWalker::find_by_kind(node, "class_declaration") {
-            if let Some(name) = Self::extract_name(class, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Class,
-                    start_line: class.start_position().row,
-                    end_line: class.end_position().row,
-                    start_column: class.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Interfaces
-        for iface in TreeWalker::find_by_kind(node, "interface_declaration") {
-            if let Some(name) = Self::extract_name(iface, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Interface,
-                    start_line: iface.start_position().row,
-                    end_line: iface.end_position().row,
-                    start_column: iface.start_position().column,
-                    parent: None,
-                });
-            }
-        }
+        Self::extract_symbols_of_kind(
+            node,
+            source,
+            "method_declaration",
+            SymbolKind::Method,
+            symbols,
+        );
+        Self::extract_symbols_of_kind(
+            node,
+            source,
+            "class_declaration",
+            SymbolKind::Class,
+            symbols,
+        );
+        Self::extract_symbols_of_kind(
+            node,
+            source,
+            "interface_declaration",
+            SymbolKind::Interface,
+            symbols,
+        );
     }
 
     fn extract_cpp_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        // Functions
-        for func in TreeWalker::find_by_kind(node, "function_definition") {
-            if let Some(name) = Self::extract_name(func, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Function,
-                    start_line: func.start_position().row,
-                    end_line: func.end_position().row,
-                    start_column: func.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        // Classes and structs
-        for class in TreeWalker::find_by_kind(node, "class_specifier") {
-            if let Some(name) = Self::extract_name(class, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Class,
-                    start_line: class.start_position().row,
-                    end_line: class.end_position().row,
-                    start_column: class.start_position().column,
-                    parent: None,
-                });
-            }
-        }
-
-        for strct in TreeWalker::find_by_kind(node, "struct_specifier") {
-            if let Some(name) = Self::extract_name(strct, source) {
-                symbols.push(SymbolInfo {
-                    name,
-                    kind: SymbolKind::Class,
-                    start_line: strct.start_position().row,
-                    end_line: strct.end_position().row,
-                    start_column: strct.start_position().column,
-                    parent: None,
-                });
-            }
-        }
+        Self::extract_symbols_of_kind(
+            node,
+            source,
+            "function_definition",
+            SymbolKind::Function,
+            symbols,
+        );
+        Self::extract_symbols_of_kind(node, source, "class_specifier", SymbolKind::Class, symbols);
+        Self::extract_symbols_of_kind(node, source, "struct_specifier", SymbolKind::Class, symbols);
     }
 }

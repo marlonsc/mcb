@@ -32,20 +32,20 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
+use rmcp::ServerHandler;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::response::stream::{Event, EventStream};
 use rocket::serde::json::Json;
-use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
+use rocket::{get, post, routes, Build, Request, Response, Rocket, State};
 use tokio::sync::broadcast;
 use tracing::{error, info};
 
 use super::types::{McpRequest, McpResponse};
-use crate::McpServer;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
-use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use crate::tools::{create_tool_list, route_tool_call, ToolHandlers};
+use crate::McpServer;
 
 /// HTTP transport configuration
 #[derive(Debug, Clone)]

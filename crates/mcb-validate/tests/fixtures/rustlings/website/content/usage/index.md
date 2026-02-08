@@ -14,13 +14,13 @@ Most exercises contain an error that keeps them from compiling, and it's up to y
 Some exercises contain tests that need to pass for the exercise to be done ✅
 
 Search for `TODO` and `todo!()` to find out what you need to change.
-Ask for hints by entering `h` in the _watch mode_ 💡
+Ask for hints by entering `h` in the *watch mode* 💡
 
 ## Watch Mode
 
 After the [initialization](@/setup/index.md#initialization), Rustlings can be launched by simply running the command `rustlings`.
 
-This will start the _watch mode_ which walks you through the exercises in a predefined order (what we think is best for newcomers).
+This will start the *watch mode* which walks you through the exercises in a predefined order (what we think is best for newcomers).
 It will rerun the current exercise automatically every time you change the exercise's file in the `exercises/` directory.
 
 {% details(summary="If detecting file changes in the <code>exercises/</code> directory fails…") %}
@@ -37,15 +37,15 @@ In the [watch mode](#watch-mode) (after launching `rustlings`), you can enter `l
 
 The list allows you to…
 
-- See the status of all exercises (done or pending)
-- `c`: Continue at another exercise (temporarily skip some exercises or go back to a previous one)
-- `r`: Reset status and file of the selected exercise (you need to _reload/reopen_ its file in your editor afterwards)
+-   See the status of all exercises (done or pending)
+-   `c`: Continue at another exercise (temporarily skip some exercises or go back to a previous one)
+-   `r`: Reset status and file of the selected exercise (you need to *reload/reopen* its file in your editor afterwards)
 
 See the footer of the list for all possible keys.
 
 ## Questions?
 
-If you need any help while doing the exercises and the builtin hints aren't helpful, feel free to ask in the [_Q&A_ discussions](https://github.com/rust-lang/rustlings/discussions/categories/q-a?discussions_q=) if your question isn't answered there 💡
+If you need any help while doing the exercises and the builtin hints aren't helpful, feel free to ask in the [*Q&A* discussions](https://github.com/rust-lang/rustlings/discussions/categories/q-a?discussions_q=) if your question isn't answered there 💡
 
 ## Continuing On
 

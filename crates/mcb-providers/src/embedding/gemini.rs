@@ -12,7 +12,7 @@ use reqwest::Client;
 
 use crate::constants::{CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_GEMINI};
 use crate::embedding::helpers::constructor;
-use crate::utils::{HttpResponseUtils, handle_request_error};
+use crate::utils::{handle_request_error, HttpResponseUtils};
 
 /// Gemini embedding provider
 ///
@@ -195,7 +195,7 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
+use mcb_domain::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
 
 /// Factory function for creating Gemini embedding provider instances.
 fn gemini_factory(

@@ -4,8 +4,9 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 
 use crate::language::common::{
-    AST_NODE_INTERFACE_DECLARATION, BaseProcessor, CHUNK_SIZE_JAVASCRIPT, LanguageConfig,
-    LanguageProcessor, NodeExtractionRule, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
+    BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule,
+    AST_NODE_INTERFACE_DECLARATION, CHUNK_SIZE_JAVASCRIPT, TS_NODE_CLASS_DECLARATION,
+    TS_NODE_FUNCTION_DECLARATION,
 };
 
 /// JavaScript/TypeScript language processor.

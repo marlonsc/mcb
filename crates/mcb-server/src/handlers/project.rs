@@ -1,8 +1,8 @@
 //! Project handler for workflow operations.
 
-use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
+use rmcp::ErrorData as McpError;
 
 use crate::args::ProjectArgs;
 

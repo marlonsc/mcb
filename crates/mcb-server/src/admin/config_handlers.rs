@@ -12,7 +12,7 @@ use std::sync::Arc;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use rocket::{State, get, patch, post};
+use rocket::{get, patch, post, State};
 
 use super::auth::AdminAuth;
 use super::config::{

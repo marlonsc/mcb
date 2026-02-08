@@ -4,8 +4,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
-use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 use uuid::Uuid;
 
 use super::helpers::SessionHelpers;

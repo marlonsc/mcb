@@ -1,5 +1,5 @@
-use mcb_server::McpServer;
 use mcb_server::transport::stdio::StdioServerExt;
+use mcb_server::McpServer;
 
 #[test]
 fn test_stdio_server_ext_trait_exists() {

@@ -4,9 +4,9 @@
 
 use std::sync::Arc;
 
-use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
+use rmcp::ErrorData as McpError;
 use tracing::warn;
 
 use crate::args::{

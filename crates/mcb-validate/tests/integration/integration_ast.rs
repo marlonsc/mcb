@@ -13,7 +13,7 @@ use std::path::Path;
 use mcb_validate::ast::{
     AstNode, AstQuery, AstQueryBuilder, AstQueryPatterns, Position, QueryCondition, Span,
 };
-use rust_code_analysis::{Callback, LANG, ParserTrait, action, find, guess_language};
+use rust_code_analysis::{action, find, guess_language, Callback, ParserTrait, LANG};
 
 // ==================== RCA Callback for Parsing Tests ====================
 

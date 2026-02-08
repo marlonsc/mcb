@@ -6,9 +6,9 @@ use std::time::Instant;
 
 use mcb_domain::ports::services::IndexingServiceInterface;
 use mcb_domain::value_objects::CollectionId;
-use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
+use rmcp::ErrorData as McpError;
 use validator::Validate;
 
 use crate::args::{IndexAction, IndexArgs};

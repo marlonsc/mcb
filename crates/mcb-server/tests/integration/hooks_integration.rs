@@ -5,12 +5,10 @@ use rmcp::model::{CallToolResult, Content};
 #[tokio::test]
 async fn test_hook_processor_creation() {
     let processor = HookProcessor::new(None);
-    assert!(
-        processor
-            .process_post_tool_use(create_test_context())
-            .await
-            .is_err()
-    );
+    assert!(processor
+        .process_post_tool_use(create_test_context())
+        .await
+        .is_err());
 }
 
 #[tokio::test]

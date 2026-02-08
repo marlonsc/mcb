@@ -54,6 +54,6 @@ pub use provider_resolvers::{
     VectorStoreProviderResolver,
 };
 pub use resolver::{
-    AvailableProviders, ResolvedProviders, list_available_providers, resolve_providers,
+    list_available_providers, resolve_providers, AvailableProviders, ResolvedProviders,
 };
 pub use vcs::default_vcs_provider;

@@ -3,9 +3,9 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::services::MemoryServiceInterface;
-use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 use validator::Validate;
 
 use super::{execution, inject, list_timeline, observation, quality_gate, session};

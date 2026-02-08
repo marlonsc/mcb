@@ -5,9 +5,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::agent::{Delegation, ToolCall};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
-use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::ErrorData as McpError;
 
 use uuid::Uuid;
 use validator::Validate;

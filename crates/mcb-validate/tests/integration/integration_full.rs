@@ -16,10 +16,10 @@ mod full_integration_tests {
     use std::io::Write;
     use std::path::{Path, PathBuf};
 
-    use mcb_validate::ValidationConfig;
-    use mcb_validate::ValidatorRegistry;
     use mcb_validate::generic_reporter::{GenericReport, GenericReporter, GenericSummary};
     use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
+    use mcb_validate::ValidationConfig;
+    use mcb_validate::ValidatorRegistry;
     use tempfile::TempDir;
 
     fn create_test_workspace(dir: &TempDir) -> PathBuf {

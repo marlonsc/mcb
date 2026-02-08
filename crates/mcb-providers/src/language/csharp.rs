@@ -4,8 +4,9 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 
 use crate::language::common::{
-    AST_NODE_INTERFACE_DECLARATION, BaseProcessor, CHUNK_SIZE_CSHARP, LanguageConfig,
-    LanguageProcessor, NodeExtractionRule, TS_NODE_CLASS_DECLARATION, TS_NODE_METHOD_DECLARATION,
+    BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule,
+    AST_NODE_INTERFACE_DECLARATION, CHUNK_SIZE_CSHARP, TS_NODE_CLASS_DECLARATION,
+    TS_NODE_METHOD_DECLARATION,
 };
 
 /// C# language processor.

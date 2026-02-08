@@ -9,7 +9,7 @@ pub mod memory;
 pub mod project;
 
 pub use memory::{
-    COL_OBSERVATION_TYPE, ColumnDef, ColumnType, FtsDef, IndexDef, MemorySchema,
-    MemorySchemaDdlGenerator, TableDef,
+    ColumnDef, ColumnType, FtsDef, IndexDef, MemorySchema, MemorySchemaDdlGenerator, TableDef,
+    COL_OBSERVATION_TYPE,
 };
 pub use project::{ForeignKeyDef, ProjectSchema, SchemaDdlGenerator, UniqueConstraintDef};

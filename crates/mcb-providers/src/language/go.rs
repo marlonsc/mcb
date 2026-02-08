@@ -4,7 +4,7 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 
 use crate::language::common::{
-    BaseProcessor, CHUNK_SIZE_GO, LanguageConfig, LanguageProcessor, NodeExtractionRule,
+    BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule, CHUNK_SIZE_GO,
     TS_NODE_FUNCTION_DECLARATION, TS_NODE_METHOD_DECLARATION,
 };
 

@@ -36,7 +36,7 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use mcb_infrastructure::config::AppConfig;
-use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
+use mcb_infrastructure::di::bootstrap::{init_app, AppContext};
 use serde_json::json;
 
 /// Create a test AppContext with real local providers

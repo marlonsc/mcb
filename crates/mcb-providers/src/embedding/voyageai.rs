@@ -16,10 +16,10 @@ use crate::constants::{
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
 use crate::embedding::helpers::constructor;
-use crate::utils::HttpResponseUtils;
 use crate::utils::http::{
     create_http_provider_config, handle_request_error, parse_embedding_vector,
 };
+use crate::utils::HttpResponseUtils;
 
 /// VoyageAI embedding provider
 ///
@@ -184,7 +184,7 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
+use mcb_domain::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
 
 /// Factory function for creating VoyageAI embedding provider instances.
 fn voyageai_factory(

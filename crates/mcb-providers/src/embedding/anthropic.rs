@@ -17,7 +17,7 @@ use crate::constants::{
     EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT, EMBEDDING_DIMENSION_ANTHROPIC_LITE,
 };
 use crate::embedding::helpers::constructor;
-use crate::utils::{HttpResponseUtils, handle_request_error, parse_embedding_vector};
+use crate::utils::{handle_request_error, parse_embedding_vector, HttpResponseUtils};
 
 /// Anthropic embedding provider
 ///
@@ -183,7 +183,7 @@ impl EmbeddingProvider for AnthropicEmbeddingProvider {
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
+use mcb_domain::registry::{EmbeddingProviderConfig, EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
 
 /// Factory function for creating Anthropic embedding provider instances.
 fn anthropic_factory(

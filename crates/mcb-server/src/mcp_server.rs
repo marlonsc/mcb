@@ -10,19 +10,19 @@ use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
-use rmcp::ErrorData as McpError;
-use rmcp::ServerHandler;
 use rmcp::model::{
     CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
     ServerCapabilities, ServerInfo,
 };
+use rmcp::ErrorData as McpError;
+use rmcp::ServerHandler;
 
 use crate::handlers::{
     AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
     ValidateHandler, VcsHandler,
 };
 use crate::hooks::HookProcessor;
-use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use crate::tools::{create_tool_list, route_tool_call, ToolHandlers};
 
 /// Core MCP server implementation
 ///

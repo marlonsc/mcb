@@ -22,8 +22,8 @@
 use std::collections::HashMap;
 
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::types::{CacheSystemConfig, LimitsConfig, MetricsConfig};
+use mcb_infrastructure::config::AppConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::VALID_SECTIONS;

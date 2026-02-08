@@ -2,7 +2,7 @@
 //!
 //! Tests admin authentication configuration and validation.
 
-use mcb_server::admin::auth::{AdminAuthConfig, is_unauthenticated_route};
+use mcb_server::admin::auth::{is_unauthenticated_route, AdminAuthConfig};
 
 #[test]
 fn test_admin_auth_config_default() {

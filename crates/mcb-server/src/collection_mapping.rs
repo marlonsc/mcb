@@ -23,7 +23,7 @@ use std::path::PathBuf;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::{
-    COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, config_dir,
+    config_dir, COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME,
 };
 
 /// Gets the default mapping file path (~/.config/mcb/collection_mapping.json)

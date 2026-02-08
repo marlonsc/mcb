@@ -76,19 +76,11 @@ impl CursorUtils {
     /// Count children of a specific kind
     pub fn count_children_of_kind(node: Node<'_>, kind: &str) -> usize {
         let mut count = 0;
-        let mut cursor = node.walk();
-
-        if cursor.goto_first_child() {
-            loop {
-                if cursor.node().kind() == kind {
-                    count += 1;
-                }
-                if !cursor.goto_next_sibling() {
-                    break;
-                }
+        Self::for_each_child(&mut node.walk(), |child| {
+            if child.kind() == kind {
+                count += 1;
             }
-        }
-
+        });
         count
     }
 
@@ -114,7 +106,6 @@ impl CursorUtils {
     /// Get the first child of a specific kind
     pub fn first_child_of_kind<'a>(node: Node<'a>, kind: &str) -> Option<Node<'a>> {
         let mut cursor = node.walk();
-
         if cursor.goto_first_child() {
             loop {
                 if cursor.node().kind() == kind {
@@ -125,7 +116,6 @@ impl CursorUtils {
                 }
             }
         }
-
         None
     }
 

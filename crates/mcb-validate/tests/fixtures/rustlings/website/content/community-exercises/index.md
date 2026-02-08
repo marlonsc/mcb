@@ -4,8 +4,8 @@ title = "Community Exercises"
 
 ## List of Community Exercises
 
-- 🇯🇵 [Japanese Rustlings](https://github.com/sotanengel/rustlings-jp)：A Japanese translation of the Rustlings exercises.
-- 🇨🇳 [Simplified Chinese Rustlings](https://github.com/SandmeyerX/rustlings-zh-cn): A simplified Chinese translation of the Rustlings exercises.
+-   🇯🇵 [Japanese Rustlings](https://github.com/sotanengel/rustlings-jp)：A Japanese translation of the Rustlings exercises.
+-   🇨🇳 [Simplified Chinese Rustlings](https://github.com/SandmeyerX/rustlings-zh-cn): A simplified Chinese translation of the Rustlings exercises.
 
 > You can use the same `rustlings` program that you installed with `cargo install rustlings` to run community exercises.
 
@@ -19,7 +19,7 @@ You could also offer a translation of the original Rustlings exercises as commun
 To create community exercises, install Rustlings and run `rustlings dev new PROJECT_NAME`.
 This command will, similar to `cargo new PROJECT_NAME`, create the template directory `PROJECT_NAME` with all what you need to get started.
 
-_Read the comments_ in the generated `info.toml` file to understand its format.
+*Read the comments* in the generated `info.toml` file to understand its format.
 It allows you to set a custom welcome and final message and specify the metadata of every exercise.
 
 ### Creating an Exercise
@@ -56,8 +56,8 @@ Except of the `bin` list, you can modify the `Cargo.toml` file as you want.
 
 > The `bin` list is automatically updated by running `rustlings dev update`
 
-- You can add dependencies in the `[dependencies]` table.
-- You might want to [configure some lints](https://doc.rust-lang.org/cargo/reference/manifest.html#the-lints-section) for all exercises. You can do so in the `[lints.rust]` and `[lints.clippy]` tables.
+-   You can add dependencies in the `[dependencies]` table.
+-   You might want to [configure some lints](https://doc.rust-lang.org/cargo/reference/manifest.html#the-lints-section) for all exercises. You can do so in the `[lints.rust]` and `[lints.clippy]` tables.
 
 ### Publishing
 

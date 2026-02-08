@@ -496,7 +496,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
 // ============================================================================
 
 use mcb_domain::registry::{
-    VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
+    VectorStoreProviderConfig, VectorStoreProviderEntry, VECTOR_STORE_PROVIDERS,
 };
 
 use crate::constants::QDRANT_DEFAULT_PORT;
@@ -505,7 +505,7 @@ use crate::constants::QDRANT_DEFAULT_PORT;
 fn qdrant_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
+    use crate::utils::http::{create_default_client, DEFAULT_HTTP_TIMEOUT};
 
     let base_url = config
         .uri
