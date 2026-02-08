@@ -781,15 +781,20 @@ impl NamingValidator {
         name.chars().any(|c| c.is_ascii_lowercase())
     }
 
-    /// Checks if a name follows snake_case convention.
-    fn is_snake_case(&self, name: &str) -> bool {
+    /// Helper to validate snake-like case conventions.
+    fn is_valid_snake_case(&self, name: &str, is_uppercase: bool) -> bool {
         if name.is_empty() {
             return false;
         }
 
-        // Must be all lowercase or underscores or digits
+        // Must be all lowercase/uppercase (depending on is_uppercase) or underscores or digits
         for c in name.chars() {
-            if !c.is_ascii_lowercase() && c != '_' && !c.is_ascii_digit() {
+            let valid_case = if is_uppercase {
+                c.is_ascii_uppercase()
+            } else {
+                c.is_ascii_lowercase()
+            };
+            if !valid_case && c != '_' && !c.is_ascii_digit() {
                 return false;
             }
         }
@@ -798,21 +803,14 @@ impl NamingValidator {
         !name.chars().next().is_some_and(|c| c.is_ascii_digit())
     }
 
+    /// Checks if a name follows snake_case convention.
+    fn is_snake_case(&self, name: &str) -> bool {
+        self.is_valid_snake_case(name, false)
+    }
+
     /// Checks if a name follows SCREAMING_SNAKE_CASE convention.
     fn is_screaming_snake_case(&self, name: &str) -> bool {
-        if name.is_empty() {
-            return false;
-        }
-
-        // Must be all uppercase or underscores or digits
-        for c in name.chars() {
-            if !c.is_ascii_uppercase() && c != '_' && !c.is_ascii_digit() {
-                return false;
-            }
-        }
-
-        // Can't start with digit
-        !name.chars().next().is_some_and(|c| c.is_ascii_digit())
+        self.is_valid_snake_case(name, true)
     }
 
     fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {
