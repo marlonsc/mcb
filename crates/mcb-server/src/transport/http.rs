@@ -150,14 +150,9 @@ impl HttpTransport {
             list_services, restart_service, services_health, start_service, stop_service,
         };
 
-        let mut rocket = rocket::build().manage(self.state.clone()).mount(
-            "/",
-            routes![
-                handle_mcp_request,
-                healthz,
-                readyz
-            ],
-        );
+        let mut rocket = rocket::build()
+            .manage(self.state.clone())
+            .mount("/", routes![handle_mcp_request, healthz, readyz]);
 
         // Mount admin routes if admin state is provided
         // Note: /events and /metrics routes are provided by admin routes (events_stream, get_metrics)

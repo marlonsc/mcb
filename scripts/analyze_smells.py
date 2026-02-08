@@ -1,68 +1,116 @@
 #!/usr/bin/env python3
-"""Analyze qlty.smells.lst from SARIF format."""
+"""Analyze qlty smells results from SARIF format."""
 
 import json
+import sys
 from collections import defaultdict
 
-with open("qlty.smells.lst") as f:
-    data = json.load(f)
 
-results = data["runs"][0]["results"]
+def load_sarif(filepath):
+    """Load and validate SARIF data from a file."""
+    try:
+        with open(filepath) as f:
+            content = f.read().strip()
+    except FileNotFoundError:
+        print("ERROR: " + filepath + " not found")
+        print("Run 'qlty smells --all --sarif > " + filepath + "' first")
+        sys.exit(1)
 
-# Group by ruleId and file
-by_rule = defaultdict(list)
-by_file = defaultdict(list)
-rule_counts: dict[str, int] = defaultdict(int)
+    if not content:
+        print("ERROR: " + filepath + " is empty")
+        sys.exit(1)
 
-for r in results:
-    rule = r["ruleId"]
-    uri = r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
-    msg = r["message"]["text"]
-    start = r["locations"][0]["physicalLocation"]["region"]["startLine"]
-    end = r["locations"][0]["physicalLocation"]["region"]["endLine"]
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError as e:
+        print("ERROR: Invalid JSON: " + str(e))
+        sys.exit(1)
 
-    entry = {"rule": rule, "file": uri, "msg": msg, "start": start, "end": end}
-    by_rule[rule].append(entry)
-    by_file[uri].append(entry)
-    rule_counts[rule] += 1
 
-print("=== TOTAL RESULTS:", len(results))
-print()
-print("=== BY RULE ===")
-for rule, count in sorted(rule_counts.items(), key=lambda x: -x[1]):
-    print(f"  {rule}: {count}")
-print()
+def extract_issue(result):
+    """Extract path, line, and message from a SARIF result."""
+    loc = result.get("locations", [{}])[0].get("physicalLocation", {})
+    path = loc.get("artifactLocation", {}).get("uri", "?")
+    region = loc.get("region", {})
+    line = region.get("startLine", "?")
+    msg = result.get("message", {}).get("text", "")
+    return path, line, msg
 
-# filter out test fixtures
-real_results = [
-    r
-    for r in results
-    if "fixtures"
-    not in r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
-]
-print("=== REAL RESULTS (excluding fixtures):", len(real_results))
-real_by_rule: dict[str, int] = defaultdict(int)
-for r in real_results:
-    real_by_rule[r["ruleId"]] += 1
-for rule, count in sorted(real_by_rule.items(), key=lambda x: -x[1]):
-    print(f"  {rule}: {count}")
-print()
 
-print("=== REAL FILES AFFECTED ===")
-real_files = set()
-for r in real_results:
-    real_files.add(r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"])
-for f in sorted(real_files):
-    print(f"  {f}")
-print()
+def print_group(rule, items, report_file=None):
+    """Print and optionally write a group of issues."""
+    header = "\n" + rule + ": " + str(len(items)) + " issues"
+    separator = "-" * 70
+    print(header)
+    print(separator)
+    if report_file:
+        report_file.write(header + "\n")
+        report_file.write(separator + "\n")
 
-print("=== DETAIL BY RULE (excluding fixtures) ===")
-for rule in sorted(real_by_rule.keys()):
-    print(f"\n--- {rule} ---")
-    for r in real_results:
-        if r["ruleId"] == rule:
-            uri = r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
-            msg = r["message"]["text"]
-            start = r["locations"][0]["physicalLocation"]["region"]["startLine"]
-            end = r["locations"][0]["physicalLocation"]["region"]["endLine"]
-            print(f"  {uri}:{start}-{end} | {msg}")
+    for item in items[:10]:
+        line_info = "  " + item["path"] + ":" + str(item["line"])
+        print(line_info)
+        if report_file:
+            report_file.write(line_info + "\n")
+        if item["msg"]:
+            msg_info = "    -> " + item["msg"][:100]
+            print(msg_info)
+            if report_file:
+                report_file.write(msg_info + "\n")
+
+    if len(items) > 10:
+        remaining = "  ... and " + str(len(items) - 10) + " more"
+        print(remaining)
+        if report_file:
+            report_file.write(remaining + "\n")
+
+
+def main():
+    """Analyze qlty smells results and print summary."""
+    data = load_sarif("qlty.smells.lst")
+    results = data["runs"][0].get("results", [])
+
+    if not results:
+        print("No code smells found!")
+        return
+
+    groups = defaultdict(list)
+    fixture_count = 0
+    real_count = 0
+
+    for result in results:
+        rule = result["ruleId"]
+        path, line, msg = extract_issue(result)
+
+        if "fixtures/" in path:
+            fixture_count += 1
+        else:
+            real_count += 1
+
+        groups[rule].append({"path": path, "line": line, "msg": msg})
+
+    # Print summary
+    print("\n" + "=" * 70)
+    print("QLTY SMELLS SUMMARY")
+    print("=" * 70)
+    print("Total smells: " + str(len(results)))
+    print("  In fixtures (should be excluded): " + str(fixture_count))
+    print("  In real code: " + str(real_count))
+    print()
+
+    # Save detailed report
+    with open("qlty_smells_report.txt", "w") as report:
+        report.write("QLTY SMELLS REPORT\n")
+        report.write("=" * 70 + "\n")
+        report.write("Total smells: " + str(len(results)) + "\n")
+        report.write("  In fixtures: " + str(fixture_count) + "\n")
+        report.write("  In real code: " + str(real_count) + "\n\n")
+
+        for rule in sorted(groups.keys(), key=lambda r: -len(groups[r])):
+            print_group(rule, groups[rule], report)
+
+    print("\nDetailed report saved to: qlty_smells_report.txt")
+
+
+if __name__ == "__main__":
+    main()

@@ -4,7 +4,7 @@
 # Parameters: FIX, CI_MODE, STRICT, QUICK, LCOV (from main Makefile)
 # =============================================================================
 
-.PHONY: quality fmt lint validate audit coverage update qlty-smells
+.PHONY: quality fmt lint validate audit coverage update qlty-check qlty-smells
 
 # =============================================================================
 # QUALITY - Full check (fmt + lint + test)
@@ -111,13 +111,21 @@ update: ## Update Cargo dependencies
 	@echo "Dependencies updated"
 
 # =============================================================================
-# QLTY SMELLS - Code smell analysis
+# QLTY-CHECK - Run qlty check and analyze results
 # =============================================================================
 
-qlty-smells: ## Analyze code smells with qlty (generates qlty.smells.lst)
-	@echo "Running qlty smells analysis..."
-	@qlty smells --all --sarif > qlty.smells.lst
+qlty-check: ## Run qlty check and analyze results
+	@echo "Running qlty check..."
+	@qlty check --all --sarif > qlty.check.lst || true
 	@echo "Analyzing results..."
+	@python3 scripts/analyze_checks.py
+	@echo "Done. Results saved to qlty.check.lst"
+
+qlty-smells: ## Run qlty smells and analyze results
+	@echo "Running qlty smells..."
+	@qlty smells --all --sarif > qlty.smells.lst || true
+	@echo "Analyzing smells..."
 	@python3 scripts/analyze_smells.py
-	@echo "✓ Analysis complete. Report saved to qlty.smells.lst (gitignored)"
+	@echo "Done. Results saved to qlty.smells.lst"
+
 
