@@ -82,7 +82,7 @@ impl std::str::FromStr for ObservationType {
 ///
 /// Contains contextual information about where and when an observation was recorded,
 /// including session, repository, file, and git information.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct ObservationMetadata {
     /// Unique identifier for the metadata.
     pub id: String,
@@ -102,6 +102,21 @@ pub struct ObservationMetadata {
     /// Details about the quality gate result (if applicable).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality_gate: Option<QualityGateResult>,
+}
+
+impl std::fmt::Debug for ObservationMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ObservationMetadata")
+            .field("id", &self.id)
+            .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
+            .field("repo_id", &self.repo_id)
+            .field("file_path", &self.file_path)
+            .field("branch", &self.branch)
+            .field("commit", &self.commit)
+            .field("execution", &self.execution)
+            .field("quality_gate", &self.quality_gate)
+            .finish()
+    }
 }
 
 impl Default for ObservationMetadata {

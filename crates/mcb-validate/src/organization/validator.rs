@@ -813,6 +813,7 @@ impl OrganizationValidator {
             "directory",
             "file",
             "sorted",
+            "sort_children",
             // Simple getters that start with common prefixes
         ];
         // Also allow any method starting with common prefixes (factory methods on value objects)

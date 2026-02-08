@@ -37,7 +37,7 @@ pub struct MemorySearchIndex {
 }
 
 /// Filter criteria for querying memory observations.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct MemoryFilter {
     /// Filter by specific observation identifier.
     pub id: Option<String>,
@@ -55,4 +55,19 @@ pub struct MemoryFilter {
     pub branch: Option<String>,
     /// Filter by git commit hash.
     pub commit: Option<String>,
+}
+
+impl std::fmt::Debug for MemoryFilter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemoryFilter")
+            .field("id", &self.id)
+            .field("tags", &self.tags)
+            .field("observation_type", &self.observation_type)
+            .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
+            .field("repo_id", &self.repo_id)
+            .field("time_range", &self.time_range)
+            .field("branch", &self.branch)
+            .field("commit", &self.commit)
+            .finish()
+    }
 }

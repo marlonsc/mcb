@@ -58,3 +58,12 @@ mod types_tests;
 
 #[path = "unit/http_tests.rs"]
 mod http_tests;
+
+#[path = "unit/constants_tests.rs"]
+mod constants_tests;
+
+#[path = "unit/json_tests.rs"]
+mod json_tests;
+
+#[path = "unit/init_tests.rs"]
+mod init_tests;
