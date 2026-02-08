@@ -26,60 +26,36 @@ struct ValidatedExecutionData {
 impl ValidatedExecutionData {
     /// Validate and extract all required fields from JSON data
     fn validate(data: &serde_json::Map<String, serde_json::Value>) -> Result<Self, CallToolResult> {
-        let command = match MemoryHelpers::get_required_str(data, "command") {
-            Ok(cmd) => cmd,
-            Err(_) => {
-                return Err(CallToolResult::error(vec![Content::text(
-                    "Missing required field: command",
-                )]));
-            }
-        };
+        let command = MemoryHelpers::get_required_str(data, "command").map_err(|_| {
+            CallToolResult::error(vec![Content::text("Missing required field: command")])
+        })?;
 
-        let exit_code = match MemoryHelpers::get_i32(data, "exit_code") {
-            Some(code) => code,
-            None => {
-                return Err(CallToolResult::error(vec![Content::text(
-                    "Missing required field: exit_code",
-                )]));
-            }
-        };
+        let exit_code = MemoryHelpers::get_i32(data, "exit_code").ok_or_else(|| {
+            CallToolResult::error(vec![Content::text("Missing required field: exit_code")])
+        })?;
 
-        let duration_ms = match MemoryHelpers::get_i64(data, "duration_ms") {
-            Some(ms) => ms,
-            None => {
-                return Err(CallToolResult::error(vec![Content::text(
-                    "Missing required field: duration_ms",
-                )]));
-            }
-        };
+        let duration_ms = MemoryHelpers::get_i64(data, "duration_ms").ok_or_else(|| {
+            CallToolResult::error(vec![Content::text("Missing required field: duration_ms")])
+        })?;
 
-        let success = match MemoryHelpers::get_bool(data, "success") {
-            Some(s) => s,
-            None => {
-                return Err(CallToolResult::error(vec![Content::text(
-                    "Missing required field: success",
-                )]));
-            }
-        };
+        let success = MemoryHelpers::get_bool(data, "success").ok_or_else(|| {
+            CallToolResult::error(vec![Content::text("Missing required field: success")])
+        })?;
 
-        let execution_type_str = match MemoryHelpers::get_required_str(data, "execution_type") {
-            Ok(s) => s,
-            Err(_) => {
-                return Err(CallToolResult::error(vec![Content::text(
+        let execution_type_str =
+            MemoryHelpers::get_required_str(data, "execution_type").map_err(|_| {
+                CallToolResult::error(vec![Content::text(
                     "Missing required field: execution_type",
-                )]));
-            }
-        };
+                )])
+            })?;
 
-        let execution_type = match MemoryHelpers::parse_execution_type(&execution_type_str) {
-            Ok(t) => t,
-            Err(_) => {
-                return Err(CallToolResult::error(vec![Content::text(format!(
+        let execution_type =
+            MemoryHelpers::parse_execution_type(&execution_type_str).map_err(|_| {
+                CallToolResult::error(vec![Content::text(format!(
                     "Invalid execution_type: {}",
                     execution_type_str
-                ))]));
-            }
-        };
+                ))])
+            })?;
 
         Ok(Self {
             command,
