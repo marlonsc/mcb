@@ -8,7 +8,6 @@ use walkdir::WalkDir;
 use super::violation::SolidViolation;
 use crate::pattern_registry::PATTERNS;
 use crate::thresholds::{MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_STRUCT_LINES, MAX_TRAIT_METHODS};
-use crate::violation_trait::Violation;
 use crate::{Result, Severity, ValidationConfig};
 
 /// SOLID principles validator
@@ -714,20 +713,4 @@ impl SolidValidator {
     }
 }
 
-impl crate::validator_trait::Validator for SolidValidator {
-    fn name(&self) -> &'static str {
-        "solid"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates SOLID principles"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(SolidValidator, "solid", "Validates SOLID principles");

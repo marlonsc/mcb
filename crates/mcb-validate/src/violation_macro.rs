@@ -172,5 +172,42 @@ macro_rules! define_violations {
     };
 }
 
+/// Macro to implement the `Validator` trait for types that have a `validate_all()` method.
+///
+/// This eliminates the boilerplate `impl Validator` block that was repeated
+/// in 12+ validator implementations. Each validator only needs to provide
+/// a name and description; the `validate()` method delegates to `validate_all()`.
+///
+/// # Example
+///
+/// ```text
+/// impl_validator!(PatternValidator, "patterns", "Validates code patterns (DI, async traits, error handling)");
+/// ```
+#[macro_export]
+macro_rules! impl_validator {
+    ($validator_ty:ty, $name:literal, $desc:literal) => {
+        impl $crate::validator_trait::Validator for $validator_ty {
+            fn name(&self) -> &'static str {
+                $name
+            }
+
+            fn description(&self) -> &'static str {
+                $desc
+            }
+
+            fn validate(
+                &self,
+                _config: &$crate::ValidationConfig,
+            ) -> anyhow::Result<Vec<Box<dyn $crate::violation_trait::Violation>>> {
+                let violations = self.validate_all()?;
+                Ok(violations
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn $crate::violation_trait::Violation>)
+                    .collect())
+            }
+        }
+    };
+}
+
 // Tests are moved to integration tests to avoid macro expansion issues
 // with unused format arguments in the test module.

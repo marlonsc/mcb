@@ -116,17 +116,10 @@ pub enum QualityViolation {
 
 impl QualityViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::UnwrapInProduction { severity, .. }
-            | Self::ExpectInProduction { severity, .. }
-            | Self::PanicInProduction { severity, .. }
-            | Self::FileTooLarge { severity, .. }
-            | Self::TodoComment { severity, .. }
-            | Self::DeadCodeAllowNotPermitted { severity, .. }
-            | Self::UnusedStructField { severity, .. }
-            | Self::DeadFunctionUncalled { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -724,20 +717,8 @@ impl QualityValidator {
     }
 }
 
-impl crate::validator_trait::Validator for QualityValidator {
-    fn name(&self) -> &'static str {
-        "quality"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates code quality (no unwrap/expect)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    QualityValidator,
+    "quality",
+    "Validates code quality (no unwrap/expect)"
+);
