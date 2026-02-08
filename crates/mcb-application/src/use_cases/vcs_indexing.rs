@@ -127,6 +127,15 @@ pub trait SubmoduleCollector: Send + Sync {
     ) -> Result<Vec<SubmoduleInfo>>;
 }
 
+/// Context for processing a single submodule
+struct SubmoduleProcessingContext<'a> {
+    repo_path: &'a Path,
+    submodule: &'a SubmoduleInfo,
+    parent_collection: &'a str,
+    repo_id: &'a str,
+    options: &'a VcsIndexingOptions,
+}
+
 impl<S, P, H> VcsIndexingService<S, P, H>
 where
     S: SubmoduleCollector,
@@ -238,17 +247,15 @@ where
                 .await?;
 
             for submodule in submodules {
-                if let Some(result) = self
-                    .process_single_submodule(
-                        repo_path,
-                        &submodule,
-                        parent_collection,
-                        &repo_id,
-                        options,
-                        all_projects,
-                    )
-                    .await?
-                {
+                let ctx = SubmoduleProcessingContext {
+                    repo_path,
+                    submodule: &submodule,
+                    parent_collection,
+                    repo_id: &repo_id,
+                    options,
+                };
+
+                if let Some(result) = self.process_single_submodule(&ctx, all_projects).await? {
                     results.push(result);
                 }
             }
@@ -259,37 +266,37 @@ where
 
     async fn process_single_submodule(
         &self,
-        repo_path: &Path,
-        submodule: &SubmoduleInfo,
-        parent_collection: &str,
-        repo_id: &str,
-        options: &VcsIndexingOptions,
+        ctx: &SubmoduleProcessingContext<'_>,
         all_projects: &mut Vec<DetectedProject>,
     ) -> Result<Option<SubmoduleIndexResult>> {
-        let sub_path = repo_path.join(&submodule.path);
+        let sub_path = ctx.repo_path.join(&ctx.submodule.path);
         if !sub_path.exists() {
             tracing::warn!(
-                path = %submodule.path,
+                path = %ctx.submodule.path,
                 "Submodule path does not exist, skipping"
             );
             return Ok(None);
         }
 
         // Generate hierarchical collection name
-        let sub_collection = format!("{}/{}", parent_collection, submodule.path.replace('/', "-"));
+        let sub_collection = format!(
+            "{}/{}",
+            ctx.parent_collection,
+            ctx.submodule.path.replace('/', "-")
+        );
 
-        let sub_projects: Vec<_> = if options.detect_projects {
+        let sub_projects: Vec<_> = if ctx.options.detect_projects {
             self.project_detector.detect_all(&sub_path).await
         } else {
             vec![]
         };
 
         // Add to all projects with parent link
-        let parent_id = Some(repo_id.to_string());
+        let parent_id = Some(ctx.repo_id.to_string());
         for project_type in &sub_projects {
             all_projects.push(DetectedProject {
                 id: Uuid::new_v4().to_string(),
-                path: submodule.path.clone(),
+                path: ctx.submodule.path.clone(),
                 project_type: project_type.clone(),
                 parent_repo_id: parent_id.clone(),
             });
@@ -297,11 +304,11 @@ where
 
         // Index submodule
         let (sub_indexed, sub_skipped) = self
-            .index_directory(&sub_path, &sub_collection, options)
+            .index_directory(&sub_path, &sub_collection, ctx.options)
             .await?;
 
         Ok(Some(SubmoduleIndexResult {
-            path: submodule.path.clone(),
+            path: ctx.submodule.path.clone(),
             collection: sub_collection,
             files_indexed: sub_indexed,
             files_skipped: sub_skipped,

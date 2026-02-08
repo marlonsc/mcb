@@ -95,161 +95,171 @@ impl MemorySchema {
     #[must_use]
     pub fn definition() -> Self {
         Self {
-            tables: vec![
-                TableDef {
-                    name: "observations".to_string(),
-                    columns: vec![
-                        ColumnDef {
-                            name: "id".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: true,
-                            unique: false,
-                            not_null: true,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "content".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: true,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "content_hash".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: true,
-                            not_null: true,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "tags".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: false,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: COL_OBSERVATION_TYPE.to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: false,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "metadata".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: false,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "created_at".to_string(),
-                            type_: ColumnType::Integer,
-                            primary_key: false,
-                            unique: false,
-                            not_null: true,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "embedding_id".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: false,
-                            auto_increment: false,
-                        },
-                    ],
-                },
-                TableDef {
-                    name: "session_summaries".to_string(),
-                    columns: vec![
-                        ColumnDef {
-                            name: "id".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: true,
-                            unique: false,
-                            not_null: true,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "session_id".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: true,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "topics".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: false,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "decisions".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: false,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "next_steps".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: false,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "key_files".to_string(),
-                            type_: ColumnType::Text,
-                            primary_key: false,
-                            unique: false,
-                            not_null: false,
-                            auto_increment: false,
-                        },
-                        ColumnDef {
-                            name: "created_at".to_string(),
-                            type_: ColumnType::Integer,
-                            primary_key: false,
-                            unique: false,
-                            not_null: true,
-                            auto_increment: false,
-                        },
-                    ],
-                },
-            ],
+            tables: tables(),
             fts: Some(FtsDef {
                 virtual_table_name: "observations_fts".to_string(),
                 content_table: "observations".to_string(),
                 content_columns: vec!["content".to_string()],
                 id_column: "id".to_string(),
             }),
-            indexes: vec![
-                IndexDef {
-                    name: "idx_obs_hash".to_string(),
-                    table: "observations".to_string(),
-                    columns: vec!["content_hash".to_string()],
-                },
-                IndexDef {
-                    name: "idx_obs_created".to_string(),
-                    table: "observations".to_string(),
-                    columns: vec!["created_at".to_string()],
-                },
-                IndexDef {
-                    name: "idx_summary_session".to_string(),
-                    table: "session_summaries".to_string(),
-                    columns: vec!["session_id".to_string()],
-                },
-            ],
+            indexes: indexes(),
         }
     }
+}
+
+/// Returns table definitions for the memory module.
+pub fn tables() -> Vec<TableDef> {
+    vec![
+        TableDef {
+            name: "observations".to_string(),
+            columns: vec![
+                ColumnDef {
+                    name: "id".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: true,
+                    unique: false,
+                    not_null: true,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "content".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: true,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "content_hash".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: true,
+                    not_null: true,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "tags".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: COL_OBSERVATION_TYPE.to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "metadata".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "created_at".to_string(),
+                    type_: ColumnType::Integer,
+                    primary_key: false,
+                    unique: false,
+                    not_null: true,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "embedding_id".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+            ],
+        },
+        TableDef {
+            name: "session_summaries".to_string(),
+            columns: vec![
+                ColumnDef {
+                    name: "id".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: true,
+                    unique: false,
+                    not_null: true,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "session_id".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: true,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "topics".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "decisions".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "next_steps".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "key_files".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+                ColumnDef {
+                    name: "created_at".to_string(),
+                    type_: ColumnType::Integer,
+                    primary_key: false,
+                    unique: false,
+                    not_null: true,
+                    auto_increment: false,
+                },
+            ],
+        },
+    ]
+}
+
+/// Returns index definitions for the memory module.
+pub fn indexes() -> Vec<IndexDef> {
+    vec![
+        IndexDef {
+            name: "idx_obs_hash".to_string(),
+            table: "observations".to_string(),
+            columns: vec!["content_hash".to_string()],
+        },
+        IndexDef {
+            name: "idx_obs_created".to_string(),
+            table: "observations".to_string(),
+            columns: vec!["created_at".to_string()],
+        },
+        IndexDef {
+            name: "idx_summary_session".to_string(),
+            table: "session_summaries".to_string(),
+            columns: vec!["session_id".to_string()],
+        },
+    ]
 }

@@ -10,7 +10,7 @@ pub mod agent;
 pub mod error_patterns;
 pub mod workflow;
 
-use super::memory::{COL_OBSERVATION_TYPE, ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
+use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 
 /// Foreign key: (from_table.from_column) REFERENCES to_table(to_column).
 #[derive(Debug, Clone)]
@@ -149,19 +149,29 @@ impl ProjectSchema {
                     },
                 ],
             },
-            // observations (memory)
-            TableDef {
-                name: "observations".to_string(),
-                columns: vec![
+        ];
+
+        // Add memory tables (observations, session_summaries)
+        let memory_tables = super::memory::tables().into_iter().map(|mut t| {
+            // Add project_id column if not present (memory schema might be generic)
+            // In memory.rs refactor, we saw memory.rs has specific columns.
+            // Let's assume memory.rs definition is correct but might lack project_id if it was designed to be generic?
+            // Wait, in previous read of project.rs, 'observations' HAD project_id.
+            // In memory.rs, it DID NOT have project_id in my last read.
+            // So project.rs extends memory tables with project_id?
+            // Or I should add project_id to memory.rs if it's supposed to be there.
+            // If I blindly use memory::tables(), I might miss project_id.
+
+            // Let's check memory.rs content again in tool 219 output.
+            // It does NOT have project_id.
+            // So I need to inject project_id into the tables from memory.rs.
+
+            // Only inject if not present
+            if !t.columns.iter().any(|c| c.name == "project_id") {
+                t.columns.insert(
+                    1,
                     ColumnDef {
-                        name: "id".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: true,
-                        unique: false,
-                        not_null: true,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
+                        // Insert after id
                         name: "project_id".to_string(),
                         type_: ColumnType::Text,
                         primary_key: false,
@@ -169,134 +179,14 @@ impl ProjectSchema {
                         not_null: true,
                         auto_increment: false,
                     },
-                    ColumnDef {
-                        name: "content".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: true,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "content_hash".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: true,
-                        not_null: true,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "tags".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: false,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: COL_OBSERVATION_TYPE.to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: false,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "metadata".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: false,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "created_at".to_string(),
-                        type_: ColumnType::Integer,
-                        primary_key: false,
-                        unique: false,
-                        not_null: true,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "embedding_id".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: false,
-                        auto_increment: false,
-                    },
-                ],
-            },
-            // session_summaries (memory)
-            TableDef {
-                name: "session_summaries".to_string(),
-                columns: vec![
-                    ColumnDef {
-                        name: "id".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: true,
-                        unique: false,
-                        not_null: true,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "project_id".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: true,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "session_id".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: true,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "topics".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: false,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "decisions".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: false,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "next_steps".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: false,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "key_files".to_string(),
-                        type_: ColumnType::Text,
-                        primary_key: false,
-                        unique: false,
-                        not_null: false,
-                        auto_increment: false,
-                    },
-                    ColumnDef {
-                        name: "created_at".to_string(),
-                        type_: ColumnType::Integer,
-                        primary_key: false,
-                        unique: false,
-                        not_null: true,
-                        auto_increment: false,
-                    },
-                ],
-            },
+                );
+            }
+            t
+        });
+
+        tables.extend(memory_tables);
+
+        tables.push(
             // file_hashes (incremental indexing; collection = namespace)
             TableDef {
                 name: "file_hashes".to_string(),
@@ -359,7 +249,8 @@ impl ProjectSchema {
                     },
                 ],
             },
-        ];
+        );
+
         tables.extend(agent::tables());
         tables.extend(error_patterns::tables());
         tables.extend(workflow::tables());
@@ -390,21 +281,6 @@ impl ProjectSchema {
                 columns: vec!["project_id".to_string()],
             },
             IndexDef {
-                name: "idx_obs_hash".to_string(),
-                table: "observations".to_string(),
-                columns: vec!["content_hash".to_string()],
-            },
-            IndexDef {
-                name: "idx_obs_created".to_string(),
-                table: "observations".to_string(),
-                columns: vec!["created_at".to_string()],
-            },
-            IndexDef {
-                name: "idx_summary_session".to_string(),
-                table: "session_summaries".to_string(),
-                columns: vec!["session_id".to_string()],
-            },
-            IndexDef {
                 name: "idx_file_hashes_project".to_string(),
                 table: "file_hashes".to_string(),
                 columns: vec!["project_id".to_string()],
@@ -420,6 +296,10 @@ impl ProjectSchema {
                 columns: vec!["deleted_at".to_string()],
             },
         ];
+
+        // Add memory indexes
+        indexes.extend(super::memory::indexes());
+
         indexes.extend(agent::indexes());
         indexes.extend(error_patterns::indexes());
         indexes.extend(workflow::indexes());

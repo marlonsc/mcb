@@ -238,6 +238,39 @@ mod rrf_tests {
         }
     }
 
+    fn make_observation_with_meta(
+        id: &str,
+        content: &str,
+        session: Option<&str>,
+        branch: Option<&str>,
+        commit: Option<&str>,
+    ) -> Observation {
+        let mut obs = make_observation(id, content);
+        if let Some(s) = session {
+            obs.metadata.session_id = Some(s.to_string());
+        }
+        if let Some(b) = branch {
+            obs.metadata.branch = Some(b.to_string());
+        }
+        if let Some(c) = commit {
+            obs.metadata.commit = Some(c.to_string());
+        }
+        obs
+    }
+
+    fn create_test_service(
+        repo: Arc<MockMemoryRepo>,
+        vector_store: Arc<MockVectorStore>,
+        embedding_provider: Arc<MockEmbedding>,
+    ) -> MemoryServiceImpl {
+        MemoryServiceImpl::new(
+            "test-project".to_string(),
+            repo,
+            embedding_provider,
+            vector_store,
+        )
+    }
+
     // ---- Tests ----
 
     /// Verifies Reciprocal Rank Fusion correctly combines FTS and vector results.
@@ -277,12 +310,7 @@ mod rrf_tests {
 
         let embedding_provider = Arc::new(MockEmbedding);
 
-        let service = MemoryServiceImpl::new(
-            "test-project".to_string(),
-            repo,
-            embedding_provider,
-            vector_store,
-        );
+        let service = create_test_service(repo, vector_store, embedding_provider);
 
         let results = service
             .search_memories("rust generics", None, 10)
@@ -319,12 +347,7 @@ mod rrf_tests {
         let vector_store = Arc::new(MockVectorStore { results: vec![] });
         let embedding_provider = Arc::new(MockEmbedding);
 
-        let service = MemoryServiceImpl::new(
-            "test-project".to_string(),
-            repo,
-            embedding_provider,
-            vector_store,
-        );
+        let service = create_test_service(repo, vector_store, embedding_provider);
 
         let results = service
             .search_memories("tokio runtime", None, 10)
@@ -338,11 +361,20 @@ mod rrf_tests {
 
     #[tokio::test]
     async fn test_rrf_respects_memory_filter() {
-        let mut obs_a = make_observation("obs-a", "session one observation");
-        obs_a.metadata.session_id = Some("session-1".to_string());
-
-        let mut obs_b = make_observation("obs-b", "session two observation");
-        obs_b.metadata.session_id = Some("session-2".to_string());
+        let obs_a = make_observation_with_meta(
+            "obs-a",
+            "session one observation",
+            Some("session-1"),
+            None,
+            None,
+        );
+        let obs_b = make_observation_with_meta(
+            "obs-b",
+            "session two observation",
+            Some("session-2"),
+            None,
+            None,
+        );
 
         let fts_results = vec![
             FtsSearchResult {
@@ -363,12 +395,7 @@ mod rrf_tests {
         let vector_store = Arc::new(MockVectorStore { results: vec![] });
         let embedding_provider = Arc::new(MockEmbedding);
 
-        let service = MemoryServiceImpl::new(
-            "test-project".to_string(),
-            repo,
-            embedding_provider,
-            vector_store,
-        );
+        let service = create_test_service(repo, vector_store, embedding_provider);
 
         let filter = MemoryFilter {
             session_id: Some("session-1".to_string()),
@@ -386,11 +413,15 @@ mod rrf_tests {
 
     #[tokio::test]
     async fn test_filter_by_branch() {
-        let mut obs_a = make_observation("obs-a", "feature branch work");
-        obs_a.metadata.branch = Some("feature/auth".to_string());
-
-        let mut obs_b = make_observation("obs-b", "main branch work");
-        obs_b.metadata.branch = Some("main".to_string());
+        let obs_a = make_observation_with_meta(
+            "obs-a",
+            "feature branch work",
+            None,
+            Some("feature/auth"),
+            None,
+        );
+        let obs_b =
+            make_observation_with_meta("obs-b", "main branch work", None, Some("main"), None);
 
         let fts_results = vec![
             FtsSearchResult {
@@ -411,12 +442,7 @@ mod rrf_tests {
         let vector_store = Arc::new(MockVectorStore { results: vec![] });
         let embedding_provider = Arc::new(MockEmbedding);
 
-        let service = MemoryServiceImpl::new(
-            "test-project".to_string(),
-            repo,
-            embedding_provider,
-            vector_store,
-        );
+        let service = create_test_service(repo, vector_store, embedding_provider);
 
         let filter = MemoryFilter {
             branch: Some("feature/auth".to_string()),
@@ -434,11 +460,20 @@ mod rrf_tests {
 
     #[tokio::test]
     async fn test_filter_by_commit() {
-        let mut obs_a = make_observation("obs-a", "commit abc observation");
-        obs_a.metadata.commit = Some("abc123".to_string());
-
-        let mut obs_b = make_observation("obs-b", "commit def observation");
-        obs_b.metadata.commit = Some("def456".to_string());
+        let obs_a = make_observation_with_meta(
+            "obs-a",
+            "commit abc observation",
+            None,
+            None,
+            Some("abc123"),
+        );
+        let obs_b = make_observation_with_meta(
+            "obs-b",
+            "commit def observation",
+            None,
+            None,
+            Some("def456"),
+        );
 
         let fts_results = vec![
             FtsSearchResult {
@@ -459,12 +494,7 @@ mod rrf_tests {
         let vector_store = Arc::new(MockVectorStore { results: vec![] });
         let embedding_provider = Arc::new(MockEmbedding);
 
-        let service = MemoryServiceImpl::new(
-            "test-project".to_string(),
-            repo,
-            embedding_provider,
-            vector_store,
-        );
+        let service = create_test_service(repo, vector_store, embedding_provider);
 
         let filter = MemoryFilter {
             commit: Some("abc123".to_string()),

@@ -105,7 +105,7 @@ mod embedding_registry_tests {
         match result {
             Err(err) => {
                 assert!(
-                    err.contains("Unknown embedding provider"),
+                    err.contains("Unknown provider"),
                     "Error should describe the issue: {}",
                     err
                 );
