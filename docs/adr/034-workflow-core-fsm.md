@@ -180,7 +180,8 @@ pub struct Transition {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowSession {
     pub id: String,
-    pub project_id: String,
+    pub project_id: ProjectId,
+    pub worktree_id: WorktreeId,
     pub current_state: WorkflowState,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -389,7 +390,8 @@ pub enum CompensationResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowSession {
     pub id: String,
-    pub project_id: String,           // GSD project (mcb-workspace)
+    pub project_id: ProjectId,           // GSD project (mcb-workspace)
+    pub worktree_id: WorktreeId,          // Worktree isolation handle
     pub operator_id: String,          // Human operator or bot (e.g., "claude", "user-123")
     pub task_id: String,              // Beads task ID for tracking
     pub current_state: WorkflowState,
@@ -577,6 +579,7 @@ Cancelled              │    ✗    │     ✗     │     ✗     │     ✗
 Abandoned              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │ Ready  │    ✗       │   ✗    │    ✗
 Completed              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │   ✗    │    ✗       │   ✗    │    ✗
 ```
+
 \* Resumes to the state before suspension.
 
 ### 4. Transition Implementation

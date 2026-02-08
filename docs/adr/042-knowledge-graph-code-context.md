@@ -33,6 +33,8 @@ ADR-041 defines a 5-layer context system. Layer 3 is the **Knowledge Graph** tha
 
 ```rust
 pub struct CodeGraph {
+    pub project_id: ProjectId,
+    pub worktree_id: WorktreeId,
     graph: DiGraph<CodeNode, CodeEdge>,
     index: HashMap<NodeId, NodeIndex>,
 }
@@ -226,6 +228,8 @@ use slotmap::SlotMap;
 
 // In-memory graph (serializable to JSON via serde)
 pub struct CodeGraph {
+    pub project_id: ProjectId,
+    pub worktree_id: WorktreeId,
     dag: Dag<CodeNode, RelationshipType>,
     node_arena: SlotMap<NodeId, CodeNode>,  // O(1) lookups
     timestamp: SystemTime,
