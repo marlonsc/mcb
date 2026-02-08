@@ -9,7 +9,6 @@ fn test_current_timestamp_reports_recent_time() {
 
 #[cfg(test)]
 mod rrf_tests {
-    use std::collections::HashMap;
     use std::sync::Arc;
 
     use async_trait::async_trait;
@@ -18,140 +17,12 @@ mod rrf_tests {
         MemoryFilter, Observation, ObservationMetadata, ObservationType, SessionSummary,
     };
     use mcb_domain::error::Result;
-    use mcb_domain::ports::providers::EmbeddingProvider;
-    use mcb_domain::ports::providers::vector_store::VectorStoreProvider;
-    use mcb_domain::ports::providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
     use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
     use mcb_domain::ports::services::MemoryServiceInterface;
     use mcb_domain::utils::compute_content_hash;
-    use mcb_domain::value_objects::{
-        CollectionId, Embedding, ObservationId, SearchResult, SessionId,
-    };
-    use serde_json::Value;
+    use mcb_domain::value_objects::{ObservationId, SearchResult, SessionId};
 
-    // ---- Mock EmbeddingProvider ----
-
-    struct MockEmbedding;
-
-    #[async_trait]
-    impl EmbeddingProvider for MockEmbedding {
-        async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-            Ok(texts
-                .iter()
-                .map(|_| Embedding {
-                    vector: vec![0.1, 0.2, 0.3],
-                    model: "mock".to_string(),
-                    dimensions: 3,
-                })
-                .collect())
-        }
-
-        fn dimensions(&self) -> usize {
-            3
-        }
-
-        fn provider_name(&self) -> &str {
-            "mock"
-        }
-    }
-
-    // ---- Mock VectorStoreProvider ----
-
-    struct MockVectorStore {
-        results: Vec<SearchResult>,
-    }
-
-    #[async_trait]
-    impl VectorStoreAdmin for MockVectorStore {
-        async fn collection_exists(&self, _name: &CollectionId) -> Result<bool> {
-            Ok(true)
-        }
-
-        async fn get_stats(&self, _collection: &CollectionId) -> Result<HashMap<String, Value>> {
-            Ok(HashMap::new())
-        }
-
-        async fn flush(&self, _collection: &CollectionId) -> Result<()> {
-            Ok(())
-        }
-
-        fn provider_name(&self) -> &str {
-            "mock"
-        }
-    }
-
-    #[async_trait]
-    impl VectorStoreBrowser for MockVectorStore {
-        async fn list_collections(&self) -> Result<Vec<mcb_domain::value_objects::CollectionInfo>> {
-            Ok(vec![])
-        }
-
-        async fn list_file_paths(
-            &self,
-            _collection: &CollectionId,
-            _limit: usize,
-        ) -> Result<Vec<mcb_domain::value_objects::FileInfo>> {
-            Ok(vec![])
-        }
-
-        async fn get_chunks_by_file(
-            &self,
-            _collection: &CollectionId,
-            _file_path: &str,
-        ) -> Result<Vec<SearchResult>> {
-            Ok(vec![])
-        }
-    }
-
-    #[async_trait]
-    impl VectorStoreProvider for MockVectorStore {
-        async fn create_collection(&self, _name: &CollectionId, _dimensions: usize) -> Result<()> {
-            Ok(())
-        }
-
-        async fn delete_collection(&self, _name: &CollectionId) -> Result<()> {
-            Ok(())
-        }
-
-        async fn insert_vectors(
-            &self,
-            _collection: &CollectionId,
-            _vectors: &[Embedding],
-            _metadata: Vec<HashMap<String, Value>>,
-        ) -> Result<Vec<String>> {
-            Ok(vec!["mock-id".to_string()])
-        }
-
-        async fn search_similar(
-            &self,
-            _collection: &CollectionId,
-            _query_vector: &[f32],
-            _limit: usize,
-            _filter: Option<&str>,
-        ) -> Result<Vec<SearchResult>> {
-            Ok(self.results.clone())
-        }
-
-        async fn delete_vectors(&self, _collection: &CollectionId, _ids: &[String]) -> Result<()> {
-            Ok(())
-        }
-
-        async fn get_vectors_by_ids(
-            &self,
-            _collection: &CollectionId,
-            _ids: &[String],
-        ) -> Result<Vec<SearchResult>> {
-            Ok(vec![])
-        }
-
-        async fn list_vectors(
-            &self,
-            _collection: &CollectionId,
-            _limit: usize,
-        ) -> Result<Vec<SearchResult>> {
-            Ok(vec![])
-        }
-    }
+    use crate::test_utils::{MockEmbeddingProvider, MockVectorStoreProvider};
 
     // ---- Mock MemoryRepository ----
 
@@ -260,8 +131,8 @@ mod rrf_tests {
 
     fn create_test_service(
         repo: Arc<MockMemoryRepo>,
-        vector_store: Arc<MockVectorStore>,
-        embedding_provider: Arc<MockEmbedding>,
+        vector_store: Arc<MockVectorStoreProvider>,
+        embedding_provider: Arc<MockEmbeddingProvider>,
     ) -> MemoryServiceImpl {
         MemoryServiceImpl::new(
             "test-project".to_string(),
@@ -304,11 +175,9 @@ mod rrf_tests {
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStore {
-            results: vector_results,
-        });
+        let vector_store = Arc::new(MockVectorStoreProvider::with_results(vector_results));
 
-        let embedding_provider = Arc::new(MockEmbedding);
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 
@@ -344,8 +213,8 @@ mod rrf_tests {
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStore { results: vec![] });
-        let embedding_provider = Arc::new(MockEmbedding);
+        let vector_store = Arc::new(MockVectorStoreProvider::new());
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 
@@ -392,8 +261,8 @@ mod rrf_tests {
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStore { results: vec![] });
-        let embedding_provider = Arc::new(MockEmbedding);
+        let vector_store = Arc::new(MockVectorStoreProvider::new());
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 
@@ -439,8 +308,8 @@ mod rrf_tests {
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStore { results: vec![] });
-        let embedding_provider = Arc::new(MockEmbedding);
+        let vector_store = Arc::new(MockVectorStoreProvider::new());
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 
@@ -491,8 +360,8 @@ mod rrf_tests {
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStore { results: vec![] });
-        let embedding_provider = Arc::new(MockEmbedding);
+        let vector_store = Arc::new(MockVectorStoreProvider::new());
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 

@@ -1,373 +1,109 @@
 //! Workflow schema elements for project phases, issues, dependencies, and decisions.
 
 use super::ForeignKeyDef;
-use crate::schema::memory::{ColumnDef, ColumnType, IndexDef, TableDef};
+use crate::schema::memory::{IndexDef, TableDef};
 
 pub fn tables() -> Vec<TableDef> {
     vec![
-        TableDef {
-            name: "project_phases".to_string(),
-            columns: vec![
-                ColumnDef {
-                    name: "id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: true,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "project_id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "name".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "description".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "sequence".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "status".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "started_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: false,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "completed_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: false,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "created_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "updated_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-            ],
-        },
-        TableDef {
-            name: "project_issues".to_string(),
-            columns: vec![
-                ColumnDef {
-                    name: "id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: true,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "project_id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "phase_id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: false,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "title".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "description".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "issue_type".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "status".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "priority".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "assignee".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: false,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "labels".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: false,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "created_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "updated_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "closed_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: false,
-                    auto_increment: false,
-                },
-            ],
-        },
-        TableDef {
-            name: "project_dependencies".to_string(),
-            columns: vec![
-                ColumnDef {
-                    name: "id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: true,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "from_issue_id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "to_issue_id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "dependency_type".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "created_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-            ],
-        },
-        TableDef {
-            name: "project_decisions".to_string(),
-            columns: vec![
-                ColumnDef {
-                    name: "id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: true,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "project_id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "issue_id".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: false,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "title".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "context".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "decision".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "consequences".to_string(),
-                    type_: ColumnType::Text,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-                ColumnDef {
-                    name: "created_at".to_string(),
-                    type_: ColumnType::Integer,
-                    primary_key: false,
-                    unique: false,
-                    not_null: true,
-                    auto_increment: false,
-                },
-            ],
-        },
+        crate::table!(
+            "project_phases",
+            [
+                crate::col!("id", Text, pk),
+                crate::col!("project_id", Text),
+                crate::col!("name", Text),
+                crate::col!("description", Text),
+                crate::col!("sequence", Integer),
+                crate::col!("status", Text),
+                crate::col!("started_at", Integer, nullable),
+                crate::col!("completed_at", Integer, nullable),
+                crate::col!("created_at", Integer),
+                crate::col!("updated_at", Integer),
+            ]
+        ),
+        crate::table!(
+            "project_issues",
+            [
+                crate::col!("id", Text, pk),
+                crate::col!("project_id", Text),
+                crate::col!("phase_id", Text, nullable),
+                crate::col!("title", Text),
+                crate::col!("description", Text),
+                crate::col!("issue_type", Text),
+                crate::col!("status", Text),
+                crate::col!("priority", Integer),
+                crate::col!("assignee", Text, nullable),
+                crate::col!("labels", Text, nullable),
+                crate::col!("created_at", Integer),
+                crate::col!("updated_at", Integer),
+                crate::col!("closed_at", Integer, nullable),
+            ]
+        ),
+        crate::table!(
+            "project_dependencies",
+            [
+                crate::col!("id", Text, pk),
+                crate::col!("from_issue_id", Text),
+                crate::col!("to_issue_id", Text),
+                crate::col!("dependency_type", Text),
+                crate::col!("created_at", Integer),
+            ]
+        ),
+        crate::table!(
+            "project_decisions",
+            [
+                crate::col!("id", Text, pk),
+                crate::col!("project_id", Text),
+                crate::col!("issue_id", Text, nullable),
+                crate::col!("title", Text),
+                crate::col!("context", Text),
+                crate::col!("decision", Text),
+                crate::col!("consequences", Text),
+                crate::col!("created_at", Integer),
+            ]
+        ),
     ]
 }
 
 pub fn indexes() -> Vec<IndexDef> {
     vec![
-        IndexDef {
-            name: "idx_project_phases_project".to_string(),
-            table: "project_phases".to_string(),
-            columns: vec!["project_id".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_phases_status".to_string(),
-            table: "project_phases".to_string(),
-            columns: vec!["status".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_issues_project".to_string(),
-            table: "project_issues".to_string(),
-            columns: vec!["project_id".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_issues_phase".to_string(),
-            table: "project_issues".to_string(),
-            columns: vec!["phase_id".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_issues_status".to_string(),
-            table: "project_issues".to_string(),
-            columns: vec!["status".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_issues_priority".to_string(),
-            table: "project_issues".to_string(),
-            columns: vec!["priority".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_dependencies_from".to_string(),
-            table: "project_dependencies".to_string(),
-            columns: vec!["from_issue_id".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_dependencies_to".to_string(),
-            table: "project_dependencies".to_string(),
-            columns: vec!["to_issue_id".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_decisions_project".to_string(),
-            table: "project_decisions".to_string(),
-            columns: vec!["project_id".to_string()],
-        },
-        IndexDef {
-            name: "idx_project_decisions_issue".to_string(),
-            table: "project_decisions".to_string(),
-            columns: vec!["issue_id".to_string()],
-        },
+        crate::index!(
+            "idx_project_phases_project",
+            "project_phases",
+            ["project_id"]
+        ),
+        crate::index!("idx_project_phases_status", "project_phases", ["status"]),
+        crate::index!(
+            "idx_project_issues_project",
+            "project_issues",
+            ["project_id"]
+        ),
+        crate::index!("idx_project_issues_phase", "project_issues", ["phase_id"]),
+        crate::index!("idx_project_issues_status", "project_issues", ["status"]),
+        crate::index!(
+            "idx_project_issues_priority",
+            "project_issues",
+            ["priority"]
+        ),
+        crate::index!(
+            "idx_project_dependencies_from",
+            "project_dependencies",
+            ["from_issue_id"]
+        ),
+        crate::index!(
+            "idx_project_dependencies_to",
+            "project_dependencies",
+            ["to_issue_id"]
+        ),
+        crate::index!(
+            "idx_project_decisions_project",
+            "project_decisions",
+            ["project_id"]
+        ),
+        crate::index!(
+            "idx_project_decisions_issue",
+            "project_decisions",
+            ["issue_id"]
+        ),
     ]
 }
 

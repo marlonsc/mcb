@@ -4,23 +4,8 @@
 
 use mcb_ast_utils::symbols::{SymbolExtractor, SymbolKind};
 use mcb_language_support::language::LanguageId;
-use tree_sitter::Parser;
 
-fn parse_rust(code: &str) -> tree_sitter::Tree {
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_rust::LANGUAGE.into())
-        .expect("Error loading Rust grammar");
-    parser.parse(code, None).unwrap()
-}
-
-fn parse_python(code: &str) -> tree_sitter::Tree {
-    let mut parser = Parser::new();
-    parser
-        .set_language(&tree_sitter_python::LANGUAGE.into())
-        .expect("Error loading Python grammar");
-    parser.parse(code, None).unwrap()
-}
+use super::common::{parse_python, parse_rust};
 
 #[test]
 fn test_extract_rust_functions() {
