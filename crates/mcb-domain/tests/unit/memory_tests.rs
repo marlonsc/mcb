@@ -42,6 +42,7 @@ fn test_observation_metadata_default() {
 fn test_memory_filter_construction() {
     let f = MemoryFilter {
         id: None,
+        project_id: None,
         tags: None,
         r#type: None,
         session_id: Some("s1".to_string()),
