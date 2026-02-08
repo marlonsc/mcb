@@ -77,6 +77,8 @@ into a **single queryable knowledge base** with explicit freshness tracking, ver
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ContextSnapshot {
     pub id: ContextId,
+    pub project_id: ProjectId,
+    pub worktree_id: WorktreeId,
     pub timestamp: SystemTime,
     pub workflow_state: WorkflowState,  // From ADR-034
     pub freshness: ContextFreshness,    // From ADR-035

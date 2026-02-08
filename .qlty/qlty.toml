@@ -92,11 +92,6 @@ mode = "comment"
 [[plugin]]
 name = "ripgrep"
 mode = "comment"
-file_patterns = [
-  "!crates/mcb-validate/src/constants.rs",
-  "!crates/mcb-validate/src/quality.rs",
-  "!crates/mcb-validate/tests/integration/**",
-]
 
 [[plugin]]
 name = "ruff"

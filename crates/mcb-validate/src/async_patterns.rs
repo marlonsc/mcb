@@ -72,13 +72,10 @@ pub enum AsyncViolation {
 /// Helper methods for async violations.
 impl AsyncViolation {
     /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::BlockingInAsync { severity, .. }
-            | Self::BlockOnInAsync { severity, .. }
-            | Self::WrongMutexType { severity, .. }
-            | Self::UnawaitedSpawn { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -166,7 +163,12 @@ impl Violation for AsyncViolation {
     }
 
     fn severity(&self) -> Severity {
-        self.severity()
+        match self {
+            Self::BlockingInAsync { severity, .. }
+            | Self::BlockOnInAsync { severity, .. }
+            | Self::WrongMutexType { severity, .. }
+            | Self::UnawaitedSpawn { severity, .. } => *severity,
+        }
     }
 
     fn file(&self) -> Option<&PathBuf> {
@@ -641,24 +643,11 @@ impl AsyncPatternValidator {
     }
 }
 
-/// Validator trait implementation for async pattern validation.
-impl crate::validator_trait::Validator for AsyncPatternValidator {
-    fn name(&self) -> &'static str {
-        "async_patterns"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates async patterns (blocking calls, mutex types, spawn patterns)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    AsyncPatternValidator,
+    "async_patterns",
+    "Validates async patterns (blocking calls, mutex types, spawn patterns)"
+);
 
 #[cfg(test)]
 mod tests {

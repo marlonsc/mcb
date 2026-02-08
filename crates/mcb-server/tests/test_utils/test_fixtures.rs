@@ -34,19 +34,32 @@ pub fn sample_codebase_path() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample_codebase")
 }
 
-/// Extract text content from CallToolResult for assertions.
+/// Extract text content from CallToolResult for assertions (joined by space).
 pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
-    res.content
+    extract_text_content_with_sep(&res.content, " ")
+}
+
+/// Extract text content from Content slice, joining with newline.
+///
+/// Shared helper used by golden integration tests and tools e2e tests.
+#[allow(dead_code)]
+pub fn extract_text_content(content: &[rmcp::model::Content]) -> String {
+    extract_text_content_with_sep(content, "\n")
+}
+
+/// Internal helper: extract text from Content with a configurable separator.
+fn extract_text_content_with_sep(content: &[rmcp::model::Content], sep: &str) -> String {
+    content
         .iter()
-        .filter_map(|x| {
-            if let Ok(v) = serde_json::to_value(x) {
+        .filter_map(|c| {
+            if let Ok(v) = serde_json::to_value(c) {
                 v.get("text").and_then(|t| t.as_str()).map(String::from)
             } else {
                 None
             }
         })
         .collect::<Vec<_>>()
-        .join(" ")
+        .join(sep)
 }
 
 /// Parse "**Results found:** N" from search response text.

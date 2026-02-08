@@ -63,6 +63,7 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 -   [ADR 044: Model Selection](phase-9/README.md#adr-044-model-selection) - Embedding and search model choices
 -   [ADR 045: Context Versioning](phase-9/README.md#adr-045-context-versioning) - Snapshot and temporal queries
 -   [ADR 046: Integration Patterns](phase-9/README.md#adr-046-integration-patterns) - MCP tool integration
+-   [ADR 047: Project Architecture](047-project-architecture.md) - Central Hub and Multi-Dimensional Coordination
 
 ### Implementation Timeline v0.1.2
 
@@ -108,14 +109,14 @@ This directory contains all Architecture Decision Records (ADRs) for the MCP Con
 
 ## ADR Count
 
-**Total ADRs**: 46 (ADR-001 through ADR-046)
+**Total ADRs**: 47 (ADR-001 through ADR-047)
 
 -   **Core Architecture**: ADR-001-007 (7 ADRs)
 -   **v0.2.0 Features**: ADR-008-010 (3 ADRs)
 -   **Infrastructure**: ADR-011-022 (12 ADRs)
 -   **v0.1.2 Refactoring**: ADR-023-031 (9 ADRs)
 -   **Phase 8 (Workflow)**: ADR-034-037 (4 ADRs)
--   **Phase 9 (Context)**: ADR-041-046 (6 ADRs)
+-   **Phase 9 (Context)**: ADR-041-047 (7 ADRs)
 
 ## Creating New ADRs
 

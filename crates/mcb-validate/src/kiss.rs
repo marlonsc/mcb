@@ -107,14 +107,10 @@ pub enum KissViolation {
 
 impl KissViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::StructTooManyFields { severity, .. }
-            | Self::FunctionTooManyParams { severity, .. }
-            | Self::BuilderTooComplex { severity, .. }
-            | Self::DeepNesting { severity, .. }
-            | Self::FunctionTooLong { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -923,20 +919,8 @@ impl KissValidator {
     }
 }
 
-impl crate::validator_trait::Validator for KissValidator {
-    fn name(&self) -> &'static str {
-        "kiss"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates KISS principle (Keep It Simple, Stupid)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    KissValidator,
+    "kiss",
+    "Validates KISS principle (Keep It Simple, Stupid)"
+);

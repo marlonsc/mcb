@@ -97,15 +97,10 @@ pub enum ImplementationViolation {
 
 impl ImplementationViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::EmptyMethodBody { severity, .. }
-            | Self::HardcodedReturnValue { severity, .. }
-            | Self::PassThroughWrapper { severity, .. }
-            | Self::LogOnlyMethod { severity, .. }
-            | Self::StubMacro { severity, .. }
-            | Self::EmptyCatchAll { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 

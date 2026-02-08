@@ -58,12 +58,10 @@ pub enum DependencyViolation {
 
 impl DependencyViolation {
     /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::ForbiddenCargoDepedency { severity, .. }
-            | Self::ForbiddenUseStatement { severity, .. }
-            | Self::CircularDependency { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -420,23 +418,11 @@ fn find_cycle_impl(
     None
 }
 
-impl crate::validator_trait::Validator for DependencyValidator {
-    fn name(&self) -> &'static str {
-        "dependency"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates Clean Architecture layer dependencies"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    DependencyValidator,
+    "dependency",
+    "Validates Clean Architecture layer dependencies"
+);
 
 #[cfg(test)]
 mod tests {

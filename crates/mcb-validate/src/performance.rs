@@ -88,14 +88,10 @@ pub enum PerformanceViolation {
 
 impl PerformanceViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::CloneInLoop { severity, .. }
-            | Self::AllocationInLoop { severity, .. }
-            | Self::ArcMutexOveruse { severity, .. }
-            | Self::InefficientIterator { severity, .. }
-            | Self::InefficientString { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -734,27 +730,11 @@ impl PerformanceValidator {
     }
 }
 
-/// Validator trait implementation for performance pattern validation.
-///
-/// Integrates the performance validator into the validation framework,
-/// providing name, description, and validation orchestration.
-impl crate::validator_trait::Validator for PerformanceValidator {
-    fn name(&self) -> &'static str {
-        "performance"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates performance patterns (clones, allocations, Arc/Mutex usage)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    PerformanceValidator,
+    "performance",
+    "Validates performance patterns (clones, allocations, Arc/Mutex usage)"
+);
 
 #[cfg(test)]
 mod tests {

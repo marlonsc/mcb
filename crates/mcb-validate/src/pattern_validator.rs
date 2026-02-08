@@ -84,14 +84,10 @@ pub enum PatternViolation {
 
 impl PatternViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::ConcreteTypeInDi { severity, .. }
-            | Self::MissingSendSync { severity, .. }
-            | Self::MissingAsyncTrait { severity, .. }
-            | Self::RawResultType { severity, .. }
-            | Self::MissingInterfaceBound { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -604,23 +600,11 @@ impl PatternValidator {
     }
 }
 
-impl crate::validator_trait::Validator for PatternValidator {
-    fn name(&self) -> &'static str {
-        "patterns"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates code patterns (DI, async traits, error handling)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    PatternValidator,
+    "patterns",
+    "Validates code patterns (DI, async traits, error handling)"
+);
 
 #[cfg(test)]
 mod tests {

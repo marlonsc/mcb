@@ -99,16 +99,10 @@ pub enum TestViolation {
 
 impl TestViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::InlineTestModule { severity, .. }
-            | Self::BadTestFileName { severity, .. }
-            | Self::BadTestFunctionName { severity, .. }
-            | Self::TestWithoutAssertion { severity, .. }
-            | Self::TrivialAssertion { severity, .. }
-            | Self::UnwrapOnlyAssertion { severity, .. }
-            | Self::CommentOnlyTest { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -872,23 +866,8 @@ impl TestValidator {
     }
 }
 
-impl crate::validator_trait::Validator for TestValidator {
-    /// Returns the name of this validator.
-    fn name(&self) -> &'static str {
-        "tests_org"
-    }
-
-    /// Returns a description of what this validator checks.
-    fn description(&self) -> &'static str {
-        "Validates test organization and quality"
-    }
-
-    /// Runs validation and returns violations as trait objects.
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    TestValidator,
+    "tests_org",
+    "Validates test organization and quality"
+);

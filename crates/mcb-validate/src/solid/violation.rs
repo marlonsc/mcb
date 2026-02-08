@@ -148,17 +148,10 @@ pub enum SolidViolation {
 
 impl SolidViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::TooManyResponsibilities { severity, .. }
-            | Self::ExcessiveMatchArms { severity, .. }
-            | Self::TraitTooLarge { severity, .. }
-            | Self::ConcreteDependency { severity, .. }
-            | Self::MultipleUnrelatedStructs { severity, .. }
-            | Self::PartialTraitImplementation { severity, .. }
-            | Self::ImplTooManyMethods { severity, .. }
-            | Self::StringBasedDispatch { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 

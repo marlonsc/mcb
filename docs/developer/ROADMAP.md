@@ -41,6 +41,25 @@ MCP Context Browser v0.2.0 completes documentation refactoring with ADR consolid
 
 ---
 
+### v0.2.1 - Stabilization Phase (v0.2.0 Gaps) 🛠️ IN PROGRESS
+
+**Status**: Active  
+**Target Date**: February 2026 (2 weeks)  
+**Priority**: Critical  
+
+This phase addresses critical gaps identified in the v0.2.0 release, focusing on stabilizing the project as a central hub and preparing for the v0.3.0 workflow system.
+
+#### Objectives
+
+-   **Project as Central Hub**: Implement 1:1 mapping between Projects and Git repositories.
+-   **Multi-Dimensional Support**: Enable multi-collection, multi-session, and multi-agent coordination.
+-   **Worktree Isolation**: Ensure each worktree has an isolated semantic index.
+-   **Memory Stabilization**: Fix GAP-H2 (Memory ErrorPattern) to enable consistent observation storage.
+-   **Milvus Health**: Complete Milvus health metrics (GAP-P3).
+-   **Pinecone Listing**: Implement Pinecone listing (GAP-P4).
+
+---
+
 ### v0.3.0 - Workflow System Implementation 🚀 IN DEVELOPMENT
 
 **Status**: Planning/Spec Finalization
@@ -100,6 +119,8 @@ MCP Context Browser v0.4.0 implements integrated context system with multi-agent
 -   Session-based lifecycle management
 -   Global memory patterns
 -   Hierarchical planning support
+-   **Centralize TreeSitterExtractor** (GAP-P2)
+-   **SemanticExtractorProvider** (GAP-D5)
 
 **Integration:**
 

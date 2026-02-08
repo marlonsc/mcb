@@ -7,7 +7,6 @@ use regex::Regex;
 
 use super::violation::OrganizationViolation;
 use crate::scan::{for_each_crate_rs_path, for_each_scan_rs_path, is_test_path};
-use crate::violation_trait::Violation;
 use crate::{Result, Severity, ValidationConfig};
 
 /// Validates the structural organization and architectural compliance of the codebase.
@@ -908,20 +907,8 @@ impl OrganizationValidator {
     }
 }
 
-impl crate::validator_trait::Validator for OrganizationValidator {
-    fn name(&self) -> &'static str {
-        "organization"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates code organization patterns"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    OrganizationValidator,
+    "organization",
+    "Validates code organization patterns"
+);

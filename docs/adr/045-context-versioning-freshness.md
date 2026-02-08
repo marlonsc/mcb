@@ -33,11 +33,9 @@ But questions remain:
 
 ## Decision
 
-### 1. Immutable Snapshots with TTL
+### 1. ContextSnapshot Entity Spec
 
 ```rust
-use im::Vector;
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ContextSnapshot {
     pub id: ContextId,
@@ -49,89 +47,10 @@ pub struct ContextSnapshot {
     pub freshness: ContextFreshness,
     pub version: u64,                  // Monotonic for versioning
 }
-
-pub struct VersionedContextStore {
-    // Immutable history (using im::Vector for COW semantics)
-    versions: Arc<RwLock<im::Vector<ContextSnapshot>>>,
-    
-    // Staleness tracking
-    staleness_map: Arc<DashMap<ContextId, StalenessInfo>>,
-    
-    // TTL-based garbage collection
-    ttl_policy: TtlPolicy,
-}
-
-pub struct TtlPolicy {
-    pub keep_recent: Duration,      // Keep snapshots from last 24h
-    pub keep_count: u32,             // Keep at least 10 snapshots
-    pub archive_older: bool,         // Move 24h+ old snapshots to disk
-}
-
-impl VersionedContextStore {
-    pub async fn snapshot(&self, id: ContextId) -> Result<ContextSnapshot> {
-        let versions = self.versions.read().await;
-        versions.iter()
-            .find(|s| s.id == id)
-            .cloned()
-            .ok_or(Error::SnapshotNotFound)
-    }
-    
-    pub async fn create(&self, snapshot: ContextSnapshot) -> Result<ContextId> {
-        let mut versions = self.versions.write().await;
-        let id = snapshot.id.clone();
-        
-        // Immutable append (im::Vector handles COW)
-        versions.push_back(snapshot.clone());
-        
-        // Track staleness info
-        self.staleness_map.insert(id.clone(), StalenessInfo {
-            created_at: SystemTime::now(),
-            last_validated: SystemTime::now(),
-            stale_signal: StalenessSignal::None,
-        });
-        
-        // Trigger GC if needed
-        self.garbage_collect().await?;
-        
-        Ok(id)
-    }
-    
-    pub async fn timeline(
-        &self,
-        session_id: &str,
-        start: SystemTime,
-        end: SystemTime,
-    ) -> Result<Vec<ContextSnapshot>> {
-        let versions = self.versions.read().await;
-        Ok(versions.iter()
-            .filter(|s| s.timestamp >= start && s.timestamp <= end)
-            .cloned()
-            .collect())
-    }
-    
-    async fn garbage_collect(&self) -> Result<()> {
-        let mut versions = self.versions.write().await;
-        let now = SystemTime::now();
-        
-        // Keep snapshots newer than TTL policy
-        let keep_cutoff = now - self.ttl_policy.keep_recent;
-        let to_archive: Vec<_> = versions.iter()
-            .filter(|s| s.timestamp < keep_cutoff)
-            .cloned()
-            .collect();
-        
-        // Archive or delete based on policy
-        for snapshot in to_archive {
-            if self.ttl_policy.archive_older {
-                self.archive_snapshot(&snapshot).await?;
-            }
-            versions.retain(|s| s.id != snapshot.id);
-        }
-        
-        Ok(())
-    }
-}
 ```
+
+### 2. Immutable Snapshots with TTL
+
 
 **Rationale**:
 

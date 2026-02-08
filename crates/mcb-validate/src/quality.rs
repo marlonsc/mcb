@@ -66,13 +66,13 @@ pub enum QualityViolation {
         /// The severity level of the violation.
         severity: Severity,
     },
-    /// Indicates presence of pending task comments (TODO, FIXME, etc.).
+    /// Indicates presence of pending task comments (tracked via `PENDING_LABEL_*` constants).
     TodoComment {
         /// The file containing the violation.
         file: PathBuf,
         /// The line number where the pending task comment was found.
         line: usize,
-        /// The content of the comment, including the type (e.g., "TODO: fix this").
+        /// The content of the comment, including the label type and message text.
         content: String,
         /// The severity level of the violation.
         severity: Severity,
@@ -116,17 +116,10 @@ pub enum QualityViolation {
 
 impl QualityViolation {
     /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::UnwrapInProduction { severity, .. }
-            | Self::ExpectInProduction { severity, .. }
-            | Self::PanicInProduction { severity, .. }
-            | Self::FileTooLarge { severity, .. }
-            | Self::TodoComment { severity, .. }
-            | Self::DeadCodeAllowNotPermitted { severity, .. }
-            | Self::UnusedStructField { severity, .. }
-            | Self::DeadFunctionUncalled { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -680,7 +673,7 @@ impl QualityValidator {
         Ok(violations)
     }
 
-    /// Scans for pending task comments such as TODO, FIXME, XXX, and HACK.
+    /// Scans for pending task comments matching `PENDING_LABEL_*` constants.
     pub fn find_todo_comments(&self) -> Result<Vec<QualityViolation>> {
         use crate::constants::{
             PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
@@ -724,20 +717,8 @@ impl QualityValidator {
     }
 }
 
-impl crate::validator_trait::Validator for QualityValidator {
-    fn name(&self) -> &'static str {
-        "quality"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates code quality (no unwrap/expect)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    QualityValidator,
+    "quality",
+    "Validates code quality (no unwrap/expect)"
+);

@@ -32,53 +32,34 @@ ADR-041 defines a 5-layer context system. Layer 3 is the **Knowledge Graph** tha
 ### 1. Graph Structure: Multi-Graph with Multiple Edge Types
 
 ```rust
-pub enum RelationshipType {
-    // Structure relationships
-    Calls { callee_line: u32, caller_line: u32 },
-    DefinedIn { scope: String },        // Function in module, field in struct
-    PartOf { parent_id: NodeId },       // Class method, nested function
-    TypeRef { type_name: String },      // Variable/param has this type
-    Imports { module: String },
-    
-    // Data relationships
-    DataFlowFrom { uses_var: String },  // Depends on variable defined elsewhere
-    DataFlowTo { defines_var: String },
-    
-    // Temporal relationships
-    VersionBefore { commit_id: String }, // In git history
-    CommitedOn { commit_hash: String },
-}
-
-#[derive(Clone, Debug)]
-pub struct CodeNode {
-    pub id: NodeId,
-    pub kind: CodeNodeKind,          // Function, Struct, Module, File, Variable
-    pub name: String,
-    pub fqn: String,                  // Fully qualified name
-    pub range: TextRange,             // Line/col in source
-    pub language: Language,
-    pub documentation: Option<String>,
-    pub symbols: Vec<Symbol>,         // Extracted AST symbols
-    pub metrics: CodeMetrics,         // Complexity, line count
-    pub freshness: ContextFreshness,  // Stale if 30s+ old
-    pub last_modified: SystemTime,
-}
-
-#[derive(Clone, Debug)]
 pub struct CodeGraph {
-    pub dag: petgraph::dag::Dag<CodeNode, RelationshipType>,
-    pub timestamp: SystemTime,
-    pub language: Language,
-    pub file_hash: String,            // Git blob hash for dedup
+    pub project_id: ProjectId,
+    pub worktree_id: WorktreeId,
+    graph: DiGraph<CodeNode, CodeEdge>,
+    index: HashMap<NodeId, NodeIndex>,
+}
+
+pub enum CodeNode {
+    Function { name: String, file: PathBuf, line: u32 },
+    Class { name: String, file: PathBuf, line: u32 },
+    Module { name: String, path: PathBuf },
+}
+
+pub enum CodeEdge {
+    Calls,
+    Imports,
+    Extends,
+    Implements,
+    Contains,
 }
 ```
 
 **Rationale**:
 
 -   **Multiple edge types** enable different reasoning (calls vs data flows vs imports)
--   **DAG structure** prevents circular dependency bugs
--   **Freshness tracking** integrates with ADR-035
--   **Metrics embedded** enable complexity-based filtering
+-   **Directed Graph** structure for relationship modeling
+-   **Explicit Index** for fast node lookup by ID
+-   **Simplified Node Types** focused on primary code entities
 
 ### 2. Extraction Strategy: tree-sitter-graph + Manual Walks
 
@@ -247,6 +228,8 @@ use slotmap::SlotMap;
 
 // In-memory graph (serializable to JSON via serde)
 pub struct CodeGraph {
+    pub project_id: ProjectId,
+    pub worktree_id: WorktreeId,
     dag: Dag<CodeNode, RelationshipType>,
     node_arena: SlotMap<NodeId, CodeNode>,  // O(1) lookups
     timestamp: SystemTime,

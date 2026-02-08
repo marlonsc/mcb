@@ -75,15 +75,11 @@ pub enum PmatViolation {
 }
 
 impl PmatViolation {
-    /// Returns the severity level of this violation
+    /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::HighComplexity { severity, .. }
-            | Self::DeadCode { severity, .. }
-            | Self::LowTdgScore { severity, .. }
-            | Self::PmatUnavailable { severity, .. }
-            | Self::PmatError { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
