@@ -158,6 +158,152 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     }
 }
 
+impl MilvusVectorStoreProvider {
+    /// Validate search parameters
+    fn validate_search_params(query_vector: &[f32], limit: usize) -> Result<()> {
+        if query_vector.is_empty() {
+            return Err(Error::vector_db("Query vector cannot be empty".to_string()));
+        }
+        if limit == 0 {
+            return Err(Error::vector_db("Limit must be greater than 0".to_string()));
+        }
+        Ok(())
+    }
+
+    /// Load collection with graceful error handling
+    async fn load_collection_safe(&self, collection: &CollectionId) -> Result<()> {
+        if let Err(e) = self.client.load_collection(collection.as_str(), None).await {
+            let err_str = e.to_string();
+            if err_str.contains("CollectionNotExists")
+                || err_str.contains("collection not found")
+                || err_str.contains("not exist")
+            {
+                tracing::debug!(
+                    "Collection '{}' does not exist, returning empty results",
+                    collection
+                );
+                return Err(Error::vector_db(format!(
+                    "Collection '{}' not found",
+                    collection
+                )));
+            }
+            return Err(Error::vector_db(format!(
+                "Failed to load collection '{}': {}",
+                collection, e
+            )));
+        }
+        Ok(())
+    }
+
+    /// Perform the actual search operation
+    async fn perform_search(
+        &self,
+        collection: &CollectionId,
+        query_vector: &[f32],
+        limit: usize,
+    ) -> Result<Vec<milvus::collection::SearchResult<'_>>> {
+        use milvus::query::SearchOptions;
+
+        let search_options = SearchOptions::new()
+            .limit(limit)
+            .output_fields(vec![
+                "id".to_string(),
+                "file_path".to_string(),
+                "start_line".to_string(),
+                "content".to_string(),
+            ])
+            .add_param("metric_type", "L2");
+
+        self.client
+            .search(
+                collection.as_str(),
+                vec![Value::FloatArray(Cow::Borrowed(query_vector))],
+                Some(search_options),
+            )
+            .await
+            .map_err(|e| {
+                let err_str = e.to_string();
+                if err_str.contains("no IDs") || err_str.contains("empty") {
+                    Error::vector_db("No results found".to_string())
+                } else {
+                    Error::vector_db(format!("Failed to search: {}", e))
+                }
+            })
+    }
+
+    /// Convert Milvus search results to our SearchResult format
+    fn convert_search_results(
+        search_results: &[milvus::collection::SearchResult<'_>],
+    ) -> Vec<SearchResult> {
+        let mut results = Vec::new();
+
+        for search_result in search_results {
+            let scores = &search_result.score;
+            let ids = &search_result.id;
+
+            for (i, id_val) in ids.iter().enumerate() {
+                // For L2 metric, Milvus returns SQUARED distance (lower = more similar)
+                // First take sqrt to get actual Euclidean distance, then convert to similarity
+                // Formula: score = 1 / (1 + sqrt(distance²))
+                // This maps: dist²=0 → 1.0, dist²=1 → 0.5, dist²=100 → 0.09
+                let distance_squared = scores.get(i).copied().unwrap_or(0.0);
+                let distance = distance_squared.sqrt();
+                let score = 1.0 / (1.0 + distance);
+
+                let id_str = match id_val {
+                    Value::Long(id) => id.to_string(),
+                    Value::String(id) => id.to_string(),
+                    _ => "unknown".to_string(),
+                };
+
+                let file_path = search_result
+                    .field
+                    .iter()
+                    .find(|c| c.name == "file_path")
+                    .and_then(|col| col.get(i))
+                    .map(|v| match v {
+                        Value::String(s) => s.to_string(),
+                        _ => "unknown".to_string(),
+                    })
+                    .unwrap_or_else(|| "unknown".to_string());
+
+                let start_line = search_result
+                    .field
+                    .iter()
+                    .find(|c| c.name == "start_line" || c.name == "line_number")
+                    .and_then(|col| col.get(i))
+                    .map(|v| match v {
+                        Value::Long(n) => n as u32,
+                        _ => 0,
+                    })
+                    .unwrap_or(0);
+
+                let content = search_result
+                    .field
+                    .iter()
+                    .find(|c| c.name == "content")
+                    .and_then(|col| col.get(i))
+                    .map(|v| match v {
+                        Value::String(s) => s.to_string(),
+                        _ => "".to_string(),
+                    })
+                    .unwrap_or_default();
+
+                results.push(SearchResult {
+                    id: id_str,
+                    file_path,
+                    start_line,
+                    content,
+                    score: score as f64,
+                    language: "unknown".to_string(),
+                });
+            }
+        }
+
+        results
+    }
+}
+
 #[async_trait]
 impl VectorStoreProvider for MilvusVectorStoreProvider {
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
@@ -376,131 +522,17 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         limit: usize,
         _filter: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
-        if query_vector.is_empty() {
-            return Err(Error::vector_db("Query vector cannot be empty".to_string()));
-        }
+        // Validate parameters
+        Self::validate_search_params(query_vector, limit)?;
 
-        if limit == 0 {
-            return Ok(Vec::new());
-        }
+        // Load collection safely
+        self.load_collection_safe(collection).await?;
 
-        // Ensure collection is loaded - handle missing collection gracefully
-        if let Err(e) = self.client.load_collection(collection.as_str(), None).await {
-            let err_str = e.to_string();
-            if err_str.contains("CollectionNotExists")
-                || err_str.contains("collection not found")
-                || err_str.contains("not exist")
-            {
-                tracing::debug!(
-                    "Collection '{}' does not exist, returning empty results",
-                    collection
-                );
-                return Ok(Vec::new());
-            }
-            return Err(Error::vector_db(format!(
-                "Failed to load collection '{}': {}",
-                collection, e
-            )));
-        }
-
-        use milvus::query::SearchOptions;
-
-        let search_options = SearchOptions::new()
-            .limit(limit)
-            .output_fields(vec![
-                "id".to_string(),
-                "file_path".to_string(),
-                "start_line".to_string(),
-                "content".to_string(),
-            ])
-            .add_param("metric_type", "L2");
-
-        let search_results = match self
-            .client
-            .search(
-                collection.as_str(),
-                vec![Value::FloatArray(Cow::Borrowed(query_vector))],
-                Some(search_options),
-            )
-            .await
-        {
-            Ok(results) => results,
-            Err(e) => {
-                let err_str = e.to_string();
-                if err_str.contains("no IDs") || err_str.contains("empty") {
-                    return Ok(Vec::new());
-                }
-                return Err(Error::vector_db(format!("Failed to search: {}", e)));
-            }
-        };
+        // Perform search
+        let search_results = self.perform_search(collection, query_vector, limit).await?;
 
         // Convert results to our format
-        let mut results = Vec::new();
-
-        for search_result in &search_results {
-            let scores = &search_result.score;
-            let ids = &search_result.id;
-
-            for (i, id_val) in ids.iter().enumerate() {
-                // For L2 metric, Milvus returns SQUARED distance (lower = more similar)
-                // First take sqrt to get actual Euclidean distance, then convert to similarity
-                // Formula: score = 1 / (1 + sqrt(distance²))
-                // This maps: dist²=0 → 1.0, dist²=1 → 0.5, dist²=100 → 0.09
-                let distance_squared = scores.get(i).copied().unwrap_or(0.0);
-                let distance = distance_squared.sqrt();
-                let score = 1.0 / (1.0 + distance);
-
-                let id_str = match id_val {
-                    Value::Long(id) => id.to_string(),
-                    Value::String(id) => id.to_string(),
-                    _ => "unknown".to_string(),
-                };
-
-                let file_path = search_result
-                    .field
-                    .iter()
-                    .find(|c| c.name == "file_path")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::String(s) => s.to_string(),
-                        _ => "unknown".to_string(),
-                    })
-                    .unwrap_or_else(|| "unknown".to_string());
-
-                let start_line = search_result
-                    .field
-                    .iter()
-                    .find(|c| c.name == "start_line" || c.name == "line_number")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::Long(n) => n as u32,
-                        _ => 0,
-                    })
-                    .unwrap_or(0);
-
-                let content = search_result
-                    .field
-                    .iter()
-                    .find(|c| c.name == "content")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::String(s) => s.to_string(),
-                        _ => "".to_string(),
-                    })
-                    .unwrap_or_default();
-
-                results.push(SearchResult {
-                    id: id_str,
-                    file_path,
-                    start_line,
-                    content,
-                    score: score as f64,
-                    language: "unknown".to_string(),
-                });
-            }
-        }
-
-        Ok(results)
+        Ok(Self::convert_search_results(&search_results))
     }
 
     async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()> {

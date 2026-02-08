@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Analyze qlty.smells.lst from SARIF format."""
+
 import json
 from collections import defaultdict
 
@@ -10,7 +12,7 @@ results = data["runs"][0]["results"]
 # Group by ruleId and file
 by_rule = defaultdict(list)
 by_file = defaultdict(list)
-rule_counts = defaultdict(int)
+rule_counts: dict[str, int] = defaultdict(int)
 
 for r in results:
     rule = r["ruleId"]
@@ -39,7 +41,7 @@ real_results = [
     not in r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
 ]
 print("=== REAL RESULTS (excluding fixtures):", len(real_results))
-real_by_rule = defaultdict(int)
+real_by_rule: dict[str, int] = defaultdict(int)
 for r in real_results:
     real_by_rule[r["ruleId"]] += 1
 for rule, count in sorted(real_by_rule.items(), key=lambda x: -x[1]):
@@ -49,7 +51,8 @@ print()
 print("=== REAL FILES AFFECTED ===")
 real_files = set()
 for r in real_results:
-    real_files.add(r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"])
+    real_files.add(r["locations"][0]["physicalLocation"]"
+    r"["artifactLocation"]["uri"])
 for f in sorted(real_files):
     print(f"  {f}")
 print()

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
+"""Extract issues from qlty.check.lst."""
+
 import json
+from collections import defaultdict
 
 with open("qlty.check.lst") as f:
     data = json.load(f)
 
 results = data["runs"][0].get("results", [])
-
-# Group by ruleId
-from collections import defaultdict
 
 groups = defaultdict(list)
 for r in results:

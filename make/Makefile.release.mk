@@ -6,8 +6,8 @@
 
 .PHONY: release install install-validate install-mcp version
 
-# Get version from mcb crate Cargo.toml
-VERSION := $(shell grep '^version' crates/mcb/Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
+# Get version from root Cargo.toml (workspace)
+VERSION := $(shell grep '^version =' Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
 
 # Installation directories
 INSTALL_DIR := $(HOME)/.local/bin
