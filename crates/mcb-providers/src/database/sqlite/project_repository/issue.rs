@@ -120,21 +120,13 @@ pub(crate) async fn list_issues(
     executor: &Arc<dyn DatabaseExecutor>,
     project_id: &str,
 ) -> Result<Vec<ProjectIssue>> {
-    let rows = executor
-        .query_all(
-            "SELECT * FROM project_issues WHERE project_id = ? ORDER BY created_at DESC",
-            &[SqlParam::String(project_id.to_string())],
-        )
-        .await?;
-
-    let mut issues = Vec::with_capacity(rows.len());
-    for row in rows {
-        issues.push(
-            row_convert::row_to_project_issue(row.as_ref())
-                .map_err(|e| Error::memory_with_source("decode project issue row", e))?,
-        );
-    }
-    Ok(issues)
+    super::helpers::query_and_convert_all(
+        executor,
+        "SELECT * FROM project_issues WHERE project_id = ? ORDER BY created_at DESC",
+        &[SqlParam::String(project_id.to_string())],
+        row_convert::row_to_project_issue,
+    )
+    .await
 }
 
 pub(crate) async fn filter_issues(

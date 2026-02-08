@@ -64,19 +64,11 @@ pub(crate) async fn list_decisions(
     executor: &Arc<dyn DatabaseExecutor>,
     project_id: &str,
 ) -> Result<Vec<ProjectDecision>> {
-    let rows = executor
-        .query_all(
-            "SELECT * FROM project_decisions WHERE project_id = ? ORDER BY created_at DESC",
-            &[SqlParam::String(project_id.to_string())],
-        )
-        .await?;
-
-    let mut decisions = Vec::with_capacity(rows.len());
-    for row in rows {
-        decisions.push(
-            row_convert::row_to_project_decision(row.as_ref())
-                .map_err(|e| Error::memory_with_source("decode project decision row", e))?,
-        );
-    }
-    Ok(decisions)
+    super::helpers::query_and_convert_all(
+        executor,
+        "SELECT * FROM project_decisions WHERE project_id = ? ORDER BY created_at DESC",
+        &[SqlParam::String(project_id.to_string())],
+        row_convert::row_to_project_decision,
+    )
+    .await
 }

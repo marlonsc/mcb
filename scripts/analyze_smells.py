@@ -51,8 +51,7 @@ print()
 print("=== REAL FILES AFFECTED ===")
 real_files = set()
 for r in real_results:
-    real_files.add(r["locations"][0]["physicalLocation"]"
-    r"["artifactLocation"]["uri"])
+    real_files.add(r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"])
 for f in sorted(real_files):
     print(f"  {f}")
 print()

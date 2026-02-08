@@ -95,19 +95,11 @@ pub(crate) async fn list_phases(
     executor: &Arc<dyn DatabaseExecutor>,
     project_id: &str,
 ) -> Result<Vec<ProjectPhase>> {
-    let rows = executor
-        .query_all(
-            "SELECT * FROM project_phases WHERE project_id = ? ORDER BY sequence ASC",
-            &[SqlParam::String(project_id.to_string())],
-        )
-        .await?;
-
-    let mut phases = Vec::with_capacity(rows.len());
-    for row in rows {
-        phases.push(
-            row_convert::row_to_project_phase(row.as_ref())
-                .map_err(|e| Error::memory_with_source("decode project phase row", e))?,
-        );
-    }
-    Ok(phases)
+    super::helpers::query_and_convert_all(
+        executor,
+        "SELECT * FROM project_phases WHERE project_id = ? ORDER BY sequence ASC",
+        &[SqlParam::String(project_id.to_string())],
+        row_convert::row_to_project_phase,
+    )
+    .await
 }
