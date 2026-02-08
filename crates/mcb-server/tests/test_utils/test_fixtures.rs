@@ -219,7 +219,7 @@ pub async fn create_test_mcp_server() -> McpServer {
 
     let project_service: Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
         Arc::new(mcb_infrastructure::project::ProjectService::new());
-    let project_workflow_service: Arc<dyn mcb_domain::ports::services::ProjectService> =
+    let project_workflow_service: Arc<dyn mcb_domain::ports::services::ProjectServiceInterface> =
         Arc::new(ProjectServiceImpl::new(project_repository.clone()));
 
     let deps = ServiceDependencies {
