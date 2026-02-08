@@ -10,6 +10,20 @@
 
 MCB v0.2.0 provides functional code search and basic MCP tools, but **significant gaps exist** blocking v0.3.0 (Workflow System) and v0.4.0 (Integrated Context). This analysis identifies **18 critical gaps** across 3 layers.
 
+### Missing Multi-Dimensional Architecture
+
+The core gap is **Project as Central Hub** not being implemented. MCB currently lacks:
+
+| Dimension | Current State | Required State |
+|-----------|---------------|----------------|
+| **Project-Repository Link** | None | 1:1 mapping to git repo |
+| **Multi-Collection** | Single collection | 1:N collections per worktree |
+| **Multi-Session** | Basic session list | Session tracks user + agent + worktree |
+| **Multi-User** | None | Operator roles (owner, contributor, bot) |
+| **Multi-Agent** | None | Parallel agent sessions on same project |
+| **Worktree Support** | None | Each worktree has isolated index |
+| **Cross-Session Context** | None | Sessions inform each other |
+
 ---
 
 ## Gap Matrix
