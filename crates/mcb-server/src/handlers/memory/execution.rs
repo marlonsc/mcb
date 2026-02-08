@@ -82,8 +82,7 @@ pub async fn store_execution(
     ];
     let obs_metadata = ObservationMetadata {
         id: Uuid::new_v4().to_string(),
-        session_id: MemoryHelpers::get_str(data, "session_id")
-            .or_else(|| args.session_id.as_ref().map(|id| id.as_str().to_string())),
+        session_id: None,
         repo_id: MemoryHelpers::get_str(data, "repo_id")
             .or_else(|| args.repo_id.clone())
             .or_else(|| vcs_context.repo_id.clone()),
@@ -119,7 +118,7 @@ pub async fn get_executions(
         id: None,
         tags: None,
         observation_type: Some(ObservationType::Execution),
-        session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
+        session_id: None,
         repo_id: args.repo_id.clone(),
         time_range: None,
         branch: None,

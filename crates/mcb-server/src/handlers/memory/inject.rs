@@ -18,7 +18,7 @@ pub async fn inject_context(
         id: None,
         tags: None,
         observation_type: None,
-        session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
+        session_id: None,
         repo_id: args.repo_id.clone(),
         time_range: None,
         branch: None,

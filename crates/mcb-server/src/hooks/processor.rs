@@ -44,10 +44,7 @@ impl HookProcessor {
         );
 
         let metadata = mcb_domain::entities::memory::ObservationMetadata {
-            session_id: context
-                .session_id
-                .as_ref()
-                .map(|id| id.as_str().to_string()),
+            session_id: None,
             ..Default::default()
         };
 
@@ -83,7 +80,7 @@ impl HookProcessor {
             id: None,
             tags: None,
             observation_type: None,
-            session_id: Some(context.session_id.as_str().to_string()),
+            session_id: None,
             repo_id: None,
             time_range: None,
             branch: None,
