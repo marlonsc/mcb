@@ -17,7 +17,8 @@ pub use indexing::MockIndexingService;
 #[allow(unused_imports)]
 pub use memory::MockMemoryRepository;
 pub use memory::MockMemoryService;
-pub use project::{MockProjectRepository, MockProjectService};
+#[allow(unused_imports)]
+pub use project::{MockProjectRepository, MockProjectService, MockProjectWorkflowService};
 pub use search::MockSearchService;
 pub use validation::MockValidationService;
 pub use vcs::MockVcsProvider;

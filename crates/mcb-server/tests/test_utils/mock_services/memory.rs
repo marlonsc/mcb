@@ -182,7 +182,7 @@ impl MemoryServiceInterface for MockMemoryService {
             content,
             content_hash: "mock-hash".to_string(),
             tags,
-            observation_type,
+            r#type,
             metadata,
             created_at: chrono::Utc::now().timestamp(),
             embedding_id: None,
@@ -254,6 +254,12 @@ impl MemoryServiceInterface for MockMemoryService {
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         let observations = self.observations.lock().expect("Lock poisoned");
         Ok(observations.iter().find(|o| o.id == id.as_str()).cloned())
+    }
+
+    async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
+        let mut observations = self.observations.lock().expect("Lock poisoned");
+        observations.retain(|o| o.id != id.as_str());
+        Ok(())
     }
 
     async fn embed_content(&self, _content: &str) -> Result<Embedding> {
