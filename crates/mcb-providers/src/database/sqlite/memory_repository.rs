@@ -29,6 +29,22 @@ impl SqliteMemoryRepository {
 #[async_trait]
 impl MemoryRepository for SqliteMemoryRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
+        // GAP-2: Auto-create project if missing to prevent FK constraint violation
+        // This ensures the project exists before we try to link an observation to it.
+        self.executor
+            .execute(
+                "INSERT OR IGNORE INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                &[
+                    SqlParam::String(observation.project_id.clone()),
+                    SqlParam::String(format!("Project {}", observation.project_id)),
+                    SqlParam::String("default".to_string()),
+                    SqlParam::I64(observation.created_at),
+                    SqlParam::I64(observation.created_at),
+                ],
+            )
+            .await
+            .map_err(|e| Error::memory_with_source("auto-create project", e))?;
+
         let tags_json = serde_json::to_string(&observation.tags)
             .map_err(|e| Error::memory_with_source("serialize tags", e))?;
         let metadata_json = serde_json::to_string(&observation.metadata)

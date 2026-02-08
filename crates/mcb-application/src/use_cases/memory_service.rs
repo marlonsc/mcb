@@ -143,6 +143,12 @@ impl MemoryServiceImpl {
         tags: Vec<String>,
         metadata: ObservationMetadata,
     ) -> Result<(String, bool)> {
+        if self.project_id.trim().is_empty() {
+            return Err(mcb_domain::error::Error::invalid_argument(
+                "Project ID cannot be empty for memory storage",
+            ));
+        }
+
         let content_hash = compute_content_hash(&content);
 
         if let Some(existing) = self.repository.find_by_hash(&content_hash).await? {
