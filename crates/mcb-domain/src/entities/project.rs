@@ -375,3 +375,24 @@ pub struct ProjectDecision {
     /// Timestamp when the decision was recorded (Unix epoch).
     pub created_at: i64,
 }
+
+/// Filter for querying project issues with optional constraints.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct IssueFilter {
+    /// Filter by project identifier.
+    pub project_id: Option<String>,
+    /// Filter by project phase identifier.
+    pub phase_id: Option<String>,
+    /// Filter by type of issue (e.g., bug, task).
+    pub issue_type: Option<IssueType>,
+    /// Filter by issue status (e.g., open, closed).
+    pub status: Option<IssueStatus>,
+    /// Filter by priority level.
+    pub priority: Option<i32>,
+    /// Filter by assigned user.
+    pub assignee: Option<String>,
+    /// Filter by applied label/tag.
+    pub label: Option<String>,
+    /// Maximum number of results to return.
+    pub limit: Option<usize>,
+}
