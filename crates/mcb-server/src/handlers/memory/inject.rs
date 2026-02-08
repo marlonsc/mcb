@@ -49,7 +49,6 @@ pub async fn inject_context(
                 context.push_str(&entry);
             }
             ResponseFormatter::json_success(&serde_json::json!({
-                "session_id": args.session_id.as_ref().map(|id| id.as_str()),
                 "observation_count": observation_ids.len(),
                 "observation_ids": observation_ids,
                 "context": context,
