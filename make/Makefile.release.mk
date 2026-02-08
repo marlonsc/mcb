@@ -40,29 +40,33 @@ release: ## Full release pipeline (lint + test + validate + build)
 install: ## Install release binary + systemd service to user directories (fully automatic)
 	@echo "🚀 Installing MCB v$(VERSION)..."
 	@$(MAKE) build RELEASE=1
-	@# Create all required directories
 	@mkdir -p $(INSTALL_DIR) $(SYSTEMD_USER_DIR) $(CONFIG_DIR) $(DATA_DIR) || { echo "❌ Failed to create directories"; exit 1; }
-	@# Gracefully stop existing service and processes (no errors if not running)
-	@-systemctl --user stop mcb.service 2>/dev/null; sleep 1
-	@-pkill -9 -f "\.local/bin/mcb" 2>/dev/null; sleep 1
-	@-pkill -9 -f "mcb.*serve.*--server" 2>/dev/null; sleep 1
-	@# Backup old binary if exists
-	@if [ -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" ]; then mv "$(INSTALL_DIR)/$(INSTALL_BINARY)" "$(INSTALL_DIR)/$(INSTALL_BINARY).bak.$$"; fi
-	@# Install new binary with strict validation
-	@if ! cp target/release/$(BINARY_NAME) $(INSTALL_DIR)/$(INSTALL_BINARY); then echo "❌ Failed to copy binary"; exit 1; fi
-	@chmod +x $(INSTALL_DIR)/$(INSTALL_BINARY) || { echo "❌ Failed to chmod binary"; exit 1; }
-	@# Verify binary works
+	@# Stop service and wait for binary to be released
+	@echo "  Stopping existing MCB..."
+	@-systemctl --user stop mcb.service 2>/dev/null
+	@WAIT=0; while [ $$WAIT -lt 10 ]; do \
+		if ! pgrep -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" >/dev/null 2>&1; then break; fi; \
+		sleep 1; WAIT=$$((WAIT + 1)); \
+	done
+	@-pkill -9 -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" 2>/dev/null; sleep 1
+	@# Wait for file lock release (fuser check with timeout)
+	@WAIT=0; while [ $$WAIT -lt 5 ]; do \
+		if ! fuser "$(INSTALL_DIR)/$(INSTALL_BINARY)" >/dev/null 2>&1; then break; fi; \
+		sleep 1; WAIT=$$((WAIT + 1)); \
+	done
+	@# Atomic install: copy to temp, then rename (rename is atomic on same filesystem)
+	@rm -f "$(INSTALL_DIR)/$(INSTALL_BINARY).new" 2>/dev/null
+	@cp target/release/$(BINARY_NAME) "$(INSTALL_DIR)/$(INSTALL_BINARY).new" || { echo "❌ Failed to copy binary"; exit 1; }
+	@chmod +x "$(INSTALL_DIR)/$(INSTALL_BINARY).new"
+	@rm -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" 2>/dev/null
+	@mv "$(INSTALL_DIR)/$(INSTALL_BINARY).new" "$(INSTALL_DIR)/$(INSTALL_BINARY)" || { echo "❌ Failed to install binary"; exit 1; }
 	@if ! $(INSTALL_DIR)/$(INSTALL_BINARY) --version >/dev/null 2>&1; then echo "❌ Binary validation failed"; exit 1; fi
-	@# Install systemd service
 	@cp systemd/mcb.service $(SYSTEMD_USER_DIR)/mcb.service || { echo "❌ Failed to install systemd service"; exit 1; }
-	@# Reload, enable and start service
 	@systemctl --user daemon-reload || { echo "❌ Failed to reload systemd"; exit 1; }
 	@systemctl --user enable mcb.service || { echo "❌ Failed to enable service"; exit 1; }
 	@systemctl --user start mcb.service || { echo "❌ Failed to start service"; exit 1; }
 	@sleep 2
-	@# Update MCP agent configurations
 	@$(MAKE) install-mcp
-	@# Final validation loop with retries
 	@$(MAKE) install-validate
 
 # =============================================================================

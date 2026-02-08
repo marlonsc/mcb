@@ -45,7 +45,6 @@ use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
-use rocket::response::stream::{Event, EventStream};
 use rocket::serde::json::Json;
 use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
 use tokio::sync::broadcast;
@@ -144,26 +143,24 @@ impl HttpTransport {
         };
         use crate::admin::config_handlers::{get_config, reload_config, update_config_section};
         use crate::admin::handlers::{
-            extended_health_check, get_cache_stats, get_indexing_status, get_metrics, health_check,
+            extended_health_check, get_cache_stats, get_indexing_status, health_check,
             liveness_check, readiness_check, shutdown,
         };
         use crate::admin::lifecycle_handlers::{
             list_services, restart_service, services_health, start_service, stop_service,
         };
-        use crate::admin::sse::events_stream;
 
         let mut rocket = rocket::build().manage(self.state.clone()).mount(
             "/",
             routes![
                 handle_mcp_request,
-                handle_sse,
                 healthz,
-                readyz,
-                metrics_endpoint
+                readyz
             ],
         );
 
         // Mount admin routes if admin state is provided
+        // Note: /events and /metrics routes are provided by admin routes (events_stream, get_metrics)
         if let Some(ref admin_state) = self.admin_state {
             rocket = rocket
                 .manage(admin_state.clone())
@@ -177,7 +174,6 @@ impl HttpTransport {
                     routes![
                         health_check,
                         extended_health_check,
-                        get_metrics,
                         get_indexing_status,
                         readiness_check,
                         liveness_check,
@@ -185,7 +181,6 @@ impl HttpTransport {
                         get_config,
                         reload_config,
                         update_config_section,
-                        events_stream,
                         list_services,
                         services_health,
                         start_service,
@@ -443,19 +438,6 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
     }
 }
 
-/// Handle SSE connection for server-to-client events
-#[allow(unknown_lints, impl_trait_overcaptures, tail_expr_drop_order)]
-#[get("/events")]
-fn handle_sse(state: &State<HttpTransportState>) -> EventStream![] {
-    let mut rx = state.event_tx.subscribe();
-
-    EventStream! {
-        while let Ok(data) = rx.recv().await {
-            yield Event::data(data);
-        }
-    }
-}
-
 // =============================================================================
 // Health Endpoints
 // =============================================================================
@@ -478,13 +460,4 @@ fn readyz(_state: &State<HttpTransportState>) -> &'static str {
     // Returns OK if server is running. Provider health checks are available
     // via the /health endpoint which returns detailed status JSON.
     "OK"
-}
-
-/// Prometheus metrics endpoint
-///
-/// Exports all registered Prometheus metrics in text format.
-/// Used by Prometheus scraper to collect metrics.
-#[get("/metrics")]
-fn metrics_endpoint() -> String {
-    mcb_infrastructure::infrastructure::export_metrics()
 }
