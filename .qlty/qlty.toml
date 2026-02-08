@@ -14,6 +14,7 @@
 config_version = "0"
 
 exclude_patterns = [
+  "**/fixtures/**",
   "*_min.*",
   "*-min.*",
   "*.min.*",
@@ -91,12 +92,15 @@ mode = "comment"
 [[plugin]]
 name = "ripgrep"
 mode = "comment"
+file_patterns = [
+  "!crates/mcb-validate/src/constants.rs",
+  "!crates/mcb-validate/src/quality.rs",
+  "!crates/mcb-validate/tests/integration/**",
+]
 
 [[plugin]]
 name = "ruff"
-drivers = [
-  "lint",
-]
+drivers = ["lint"]
 
 [[plugin]]
 name = "rustfmt"
@@ -106,10 +110,7 @@ name = "shellcheck"
 
 [[plugin]]
 name = "trivy"
-drivers = [
-  "config",
-  "fs-vuln",
-]
+drivers = ["config", "fs-vuln"]
 
 [[plugin]]
 name = "trufflehog"
