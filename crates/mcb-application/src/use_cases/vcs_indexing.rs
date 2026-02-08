@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 /// Configuration for VCS indexing
 ///
-/// NOTE: Submodules are ALWAYS indexed when present (user decision: automatic detection).
+/// Submodules are ALWAYS indexed when present (user decision: automatic detection).
 /// Users control depth via `submodule_depth`, not via opt-in/opt-out flag.
 #[derive(Debug, Clone)]
 pub struct VcsIndexingOptions {

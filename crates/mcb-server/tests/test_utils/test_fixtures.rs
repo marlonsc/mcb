@@ -41,6 +41,7 @@ pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
 /// Extract text content from Content slice, joining with newline.
 ///
 /// Shared helper used by golden integration tests and tools e2e tests.
+#[allow(dead_code)]
 pub fn extract_text_content(content: &[rmcp::model::Content]) -> String {
     extract_text_content_with_sep(content, "\n")
 }
