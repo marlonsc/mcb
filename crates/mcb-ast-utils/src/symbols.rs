@@ -68,16 +68,58 @@ impl SymbolExtractor {
         let root = tree.root_node();
         let mut symbols = Vec::new();
 
-        match language {
-            LanguageId::Rust => Self::extract_rust_symbols(root, source, &mut symbols),
-            LanguageId::Python => Self::extract_python_symbols(root, source, &mut symbols),
-            LanguageId::JavaScript | LanguageId::TypeScript => {
-                Self::extract_js_symbols(root, source, &mut symbols);
-            }
-            LanguageId::Java | LanguageId::Kotlin => {
-                Self::extract_java_symbols(root, source, &mut symbols);
-            }
-            LanguageId::Cpp => Self::extract_cpp_symbols(root, source, &mut symbols),
+        let (mapping, checks): (&[(&str, SymbolKind)], &[(&str, &str)]) = match language {
+            LanguageId::Rust => (
+                &[
+                    ("struct_item", SymbolKind::Class),
+                    ("trait_item", SymbolKind::Interface),
+                    ("enum_item", SymbolKind::Enum),
+                    ("mod_item", SymbolKind::Module),
+                ],
+                &[("function_item", "impl_item")],
+            ),
+            LanguageId::Python => (
+                &[("class_definition", SymbolKind::Class)],
+                &[("function_definition", "class_definition")],
+            ),
+            LanguageId::JavaScript | LanguageId::TypeScript => (
+                &[
+                    ("function_declaration", SymbolKind::Function),
+                    ("method_definition", SymbolKind::Method),
+                    ("class_declaration", SymbolKind::Class),
+                ],
+                &[],
+            ),
+            LanguageId::Java | LanguageId::Kotlin => (
+                &[
+                    ("method_declaration", SymbolKind::Method),
+                    ("class_declaration", SymbolKind::Class),
+                    ("interface_declaration", SymbolKind::Interface),
+                ],
+                &[],
+            ),
+            LanguageId::Cpp => (
+                &[
+                    ("function_definition", SymbolKind::Function),
+                    ("class_specifier", SymbolKind::Class),
+                    ("struct_specifier", SymbolKind::Class),
+                ],
+                &[],
+            ),
+        };
+
+        for (node_kind, symbol_kind) in mapping {
+            Self::extract_symbols_of_kind(root, source, node_kind, *symbol_kind, &mut symbols);
+        }
+
+        for (func_kind, parent_kind) in checks {
+            Self::extract_functions_with_method_check(
+                root,
+                source,
+                func_kind,
+                parent_kind,
+                &mut symbols,
+            );
         }
 
         symbols
@@ -151,90 +193,5 @@ impl SymbolExtractor {
                 });
             }
         }
-    }
-
-    fn extract_rust_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        Self::extract_functions_with_method_check(
-            node,
-            source,
-            "function_item",
-            "impl_item",
-            symbols,
-        );
-        Self::extract_symbols_of_kind(node, source, "struct_item", SymbolKind::Class, symbols);
-        Self::extract_symbols_of_kind(node, source, "trait_item", SymbolKind::Interface, symbols);
-        Self::extract_symbols_of_kind(node, source, "enum_item", SymbolKind::Enum, symbols);
-        Self::extract_symbols_of_kind(node, source, "mod_item", SymbolKind::Module, symbols);
-    }
-
-    fn extract_python_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        Self::extract_functions_with_method_check(
-            node,
-            source,
-            "function_definition",
-            "class_definition",
-            symbols,
-        );
-        Self::extract_symbols_of_kind(node, source, "class_definition", SymbolKind::Class, symbols);
-    }
-
-    fn extract_js_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        Self::extract_symbols_of_kind(
-            node,
-            source,
-            "function_declaration",
-            SymbolKind::Function,
-            symbols,
-        );
-        Self::extract_symbols_of_kind(
-            node,
-            source,
-            "method_definition",
-            SymbolKind::Method,
-            symbols,
-        );
-        Self::extract_symbols_of_kind(
-            node,
-            source,
-            "class_declaration",
-            SymbolKind::Class,
-            symbols,
-        );
-    }
-
-    fn extract_java_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        Self::extract_symbols_of_kind(
-            node,
-            source,
-            "method_declaration",
-            SymbolKind::Method,
-            symbols,
-        );
-        Self::extract_symbols_of_kind(
-            node,
-            source,
-            "class_declaration",
-            SymbolKind::Class,
-            symbols,
-        );
-        Self::extract_symbols_of_kind(
-            node,
-            source,
-            "interface_declaration",
-            SymbolKind::Interface,
-            symbols,
-        );
-    }
-
-    fn extract_cpp_symbols(node: Node<'_>, source: &[u8], symbols: &mut Vec<SymbolInfo>) {
-        Self::extract_symbols_of_kind(
-            node,
-            source,
-            "function_definition",
-            SymbolKind::Function,
-            symbols,
-        );
-        Self::extract_symbols_of_kind(node, source, "class_specifier", SymbolKind::Class, symbols);
-        Self::extract_symbols_of_kind(node, source, "struct_specifier", SymbolKind::Class, symbols);
     }
 }
