@@ -22,6 +22,27 @@ impl SqliteProjectRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
+
+    async fn ensure_project_exists(&self, project_id: &str) -> Result<()> {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as i64;
+
+        self.executor
+            .execute(
+                "INSERT OR IGNORE INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                &[
+                    SqlParam::String(project_id.to_string()),
+                    SqlParam::String(format!("Project {}", project_id)),
+                    SqlParam::String("default".to_string()),
+                    SqlParam::I64(now),
+                    SqlParam::I64(now),
+                ],
+            )
+            .await
+            .map_err(|e| Error::memory_with_source("auto-create project", e))
+    }
 }
 
 #[async_trait]
@@ -136,6 +157,7 @@ impl ProjectRepository for SqliteProjectRepository {
 
     // Phase operations
     async fn create_phase(&self, phase: &ProjectPhase) -> Result<()> {
+        self.ensure_project_exists(&phase.project_id).await?;
         self.executor
             .execute(
                 "INSERT INTO project_phases (id, project_id, name, description, sequence, status, started_at, completed_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -220,6 +242,7 @@ impl ProjectRepository for SqliteProjectRepository {
 
     // Issue operations
     async fn create_issue(&self, issue: &ProjectIssue) -> Result<()> {
+        self.ensure_project_exists(&issue.project_id).await?;
         let labels_json = serde_json::to_string(&issue.labels)
             .map_err(|e| Error::memory_with_source("serialize labels", e))?;
 
@@ -420,6 +443,7 @@ impl ProjectRepository for SqliteProjectRepository {
 
     // Decision operations
     async fn create_decision(&self, decision: &ProjectDecision) -> Result<()> {
+        self.ensure_project_exists(&decision.project_id).await?;
         self.executor
             .execute(
                 "INSERT INTO project_decisions (id, project_id, issue_id, title, context, decision, consequences, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
