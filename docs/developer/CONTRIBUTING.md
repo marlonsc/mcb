@@ -69,12 +69,44 @@ crates/
 
 ### Commit Messages
 
-Use clear, descriptive commit messages:
+Use **conventional commits**:
 
 ```bash
-feat: add new MCP tool handler
-fix: resolve memory leak in vector storage
-docs: update API documentation
+<type>(<scope>): <short description>
+
+<body: 1-2 sentences explaining why>
+
+Fixes #<issue-id>
+```
+
+Examples:
+
+```bash
+feat(cli): add commit orchestrator flow
+fix(core): handle nil input
+docs: update contribution guide
+```
+
+**Types:** feat, fix, docs, style, refactor, perf, test, build, ci, chore
+
+**Scope:** module or crate (e.g., core, cli, docs, scripts, mcb-server)
+
+**Beads auto-close:** include `Fixes #<id>` or `Closes #<id>` in the footer.
+
+### Commit Orchestrator (Local)
+
+```bash
+# Analyze staged changes
+./scripts/commit_analyze.sh
+
+# Run pre-commit validation (lint + validate QUICK)
+make commit-validate
+
+# Commit (runs beads update hook)
+make commit
+
+# Optional interactive push
+make push-confirm
 ```
 
 ## 🧪 Testing

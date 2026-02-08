@@ -473,7 +473,7 @@ fn extract_functions(fn_pattern: Option<&Regex>, lines: &[(usize, &str)]) -> Vec
             let mut fn_started = false;
             let mut fn_end_idx = i;
 
-            for (j, (_, line_content)) in lines.iter().enumerate().skip(i) {
+            for (j, (_, line_content)) in lines[i..].iter().enumerate() {
                 let opens = i32::try_from(line_content.chars().filter(|c| *c == '{').count())
                     .unwrap_or(i32::MAX);
                 let closes = i32::try_from(line_content.chars().filter(|c| *c == '}').count())
@@ -484,7 +484,7 @@ fn extract_functions(fn_pattern: Option<&Regex>, lines: &[(usize, &str)]) -> Vec
                 }
                 brace_depth += opens - closes;
                 if fn_started && brace_depth <= 0 {
-                    fn_end_idx = j;
+                    fn_end_idx = i + j;
                     break;
                 }
             }
