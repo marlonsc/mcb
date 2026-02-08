@@ -17,9 +17,8 @@ name: Release
 
 permissions:
   contents: write
-  packages: "read"
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   push:
     tags:
       - "v*"
@@ -33,12 +32,12 @@ jobs:
     name: Pre-Release Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: bash .github/setup-ci.sh --install-audit
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make lint CI_MODE=1
       - run: make test
       - run: make validate STRICT=1
@@ -70,7 +69,7 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
@@ -80,15 +79,16 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
       - run: make build RELEASE=1
       - name: Create dist directory
         run: mkdir -p dist
       - name: Copy artifact (Unix)
         if: runner.os != 'Windows'
-        run: >-
-          cp target/release/${{ matrix.artifact_name }}
-          dist/${{ matrix.asset_name }}
+        env:
+          ARTIFACT: ${{ matrix.artifact_name }}
+          ASSET: ${{ matrix.asset_name }}
+        run: cp "target/release/$ARTIFACT" "dist/$ASSET"
       - name: Copy artifact (Windows)
         if: runner.os == 'Windows'
         run: >-
@@ -96,7 +96,7 @@ jobs:
           dist\${{ matrix.asset_name }}
         shell: cmd
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
@@ -108,12 +108,12 @@ jobs:
     needs: [pre-release-checks, build-release]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          fetch-depth: 0  # Full history for changelog generation
+          fetch-depth: 0 # Full history for changelog generation
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: release-artifacts
 
@@ -146,7 +146,7 @@ jobs:
           sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Release ${{ env.RELEASE_VERSION }}
@@ -159,9 +159,10 @@ jobs:
           prerelease: false
 
       - name: Release Summary
+        env:
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          REPO: ${{ github.repository }}
         run: |
-          echo "✓ Release ${{ env.RELEASE_TAG }} created successfully"
+          echo "✓ Release $RELEASE_TAG created successfully"
           echo "  - Artifacts: 3 binaries (Linux, macOS, Windows)"
-          echo >-
-            "  - GitHub Release: https://github.com/${{ github.repository
-            }}/releases/tag/${{ env.RELEASE_TAG }}"
+          echo "  - GitHub Release: https://github.com/${REPO}/releases/tag/${RELEASE_TAG}"
