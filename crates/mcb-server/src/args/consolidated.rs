@@ -78,6 +78,8 @@ pub enum SearchResource {
     Code,
     /// Search across the memory (observations).
     Memory,
+    /// Search across context snapshots.
+    Context,
 }
 
 /// Arguments for the search tool.

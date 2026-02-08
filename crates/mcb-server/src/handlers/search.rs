@@ -84,10 +84,14 @@ impl SearchHandler {
                     ))])),
                 }
             }
-            SearchResource::Memory => {
+            SearchResource::Memory | SearchResource::Context => {
                 let filter = MemoryFilter {
                     tags: args.tags.clone(),
-                    observation_type: None,
+                    observation_type: if matches!(args.resource, SearchResource::Context) {
+                        Some(mcb_domain::entities::memory::ObservationType::Context)
+                    } else {
+                        None
+                    },
                     session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
                     repo_id: None,
                     time_range: None,
