@@ -9,9 +9,12 @@
   },
   "scripts": {
     "test": "playwright test",
-    "test:e2e": "playwright test e2e/browse-ui.spec.ts",
+    "test:admin": "playwright test e2e/admin-ui-routes.spec.ts",
+    "test:browse": "playwright test e2e/browse-ui.spec.ts",
+    "test:all": "playwright test e2e/",
     "test:ui": "playwright test --ui",
-    "test:debug": "playwright test --debug"
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report"
   },
   "repository": {
     "type": "git",

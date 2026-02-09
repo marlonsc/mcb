@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    baseURL: 'http://localhost:3001',
+    baseURL: process.env.MCB_BASE_URL || 'http://localhost:8080',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     /* Screenshot on failure */
@@ -39,8 +39,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: './target/release/mcb serve --config config/test.toml --server',
-    url: 'http://localhost:3001/ui/browse',
+    command: './target/release/mcb serve --server',
+    url: process.env.MCB_BASE_URL || 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
