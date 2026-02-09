@@ -56,3 +56,19 @@ pub const RESULT_SUMMARY: &str = "result_summary";
 
 /// Column/Field name for "session_summary_id"
 pub const SESSION_SUMMARY_ID: &str = "session_summary_id";
+
+// Metadata keys for code chunks
+/// Metadata key for "start_line"
+pub const METADATA_KEY_START_LINE: &str = "start_line";
+
+/// Metadata key for "end_line"
+pub const METADATA_KEY_END_LINE: &str = "end_line";
+
+/// Metadata key for "chunk_type"
+pub const METADATA_KEY_CHUNK_TYPE: &str = "chunk_type";
+
+/// Metadata key for "file_path"
+pub const METADATA_KEY_FILE_PATH: &str = "file_path";
+
+/// Metadata key for "vectors_count"
+pub const METADATA_KEY_VECTORS_COUNT: &str = "vectors_count";
