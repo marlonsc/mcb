@@ -17,20 +17,26 @@ pub async fn create_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let agent_type = match args.agent_type.as_ref() {
-        Some(value) => SessionHelpers::parse_agent_type(value)?,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing agent_type for create",
-            )]));
-        }
-    };
     let data = match SessionHelpers::json_map(&args.data) {
         Some(data) => data,
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
                 "Missing data payload for create",
             )]));
+        }
+    };
+
+    let agent_type = if let Some(value) = args.agent_type.as_ref() {
+        SessionHelpers::parse_agent_type(value)?
+    } else {
+        // Fallback: Check "agent_type" in data payload
+        match SessionHelpers::get_str(data, "agent_type") {
+            Some(value) => SessionHelpers::parse_agent_type(&value)?,
+            None => {
+                return Ok(CallToolResult::error(vec![Content::text(
+                    "Missing agent_type for create (expected in args or data)",
+                )]));
+            }
         }
     };
     let now = SystemTime::now()

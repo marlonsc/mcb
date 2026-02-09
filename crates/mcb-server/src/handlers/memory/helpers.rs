@@ -67,7 +67,7 @@ impl MemoryHelpers {
             "execution" => Ok(ObservationType::Execution),
             "quality_gate" => Ok(ObservationType::QualityGate),
             _ => Err(CallToolResult::error(vec![Content::text(format!(
-                "Unknown observation type: {value}"
+                "Unknown observation type: {value}. Valid types: code, decision, context, error, summary, execution, quality_gate"
             ))])),
         }
     }

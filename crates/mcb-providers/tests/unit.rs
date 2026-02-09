@@ -32,5 +32,8 @@ mod ddl_tests;
 #[path = "unit/project_repository_tests.rs"]
 mod project_repository_tests;
 
+#[path = "unit/agent_repository_tests.rs"]
+mod agent_repository_tests;
+
 #[path = "unit/transitions_tests.rs"]
 mod transitions_tests;
