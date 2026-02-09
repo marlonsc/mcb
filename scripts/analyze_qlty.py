@@ -1,42 +1,15 @@
 #!/usr/bin/env python3
-"""Unified SARIF analyzer for qlty check and qlty smells reports.
-
-Processes SARIF output from both `qlty check --all` and `qlty smells`
-to generate comprehensive reports, prioritized fix plans, and actionable
-remediation strategies.
-
-Usage examples::
-
-    # Analyze checks only
-    python scripts/analyze_qlty.py --type checks --summary
-
-    # Analyze smells only
-    python scripts/analyze_qlty.py --type smells --summary
-
-    # Analyze both with full report
-    python scripts/analyze_qlty.py --type both --summary --markdown FULL_REPORT.md
-
-    # Filter by severity
-    python scripts/analyze_qlty.py --type checks --severity error --summary
-
-    # Filter by rule
-    python scripts/analyze_qlty.py --type checks --rule rustfmt:fmt --summary
-
-    # Generate combined report
-    python scripts/analyze_qlty.py --type both --plan --output combined_plan.json
 """
-
-from __future__ import annotations
+SARIF Quality Analysis Tool - Parses qlty check SARIF output and provides statistics.
+"""
 
 import argparse
 import json
-import subprocess
+import subprocess  # nosec B404
 import sys
-import tempfile
-from collections import Counter
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from enum import IntEnum
+from enum import Enum, IntEnum
 from pathlib import Path
 from typing import Any
 
@@ -158,7 +131,7 @@ def run_qlty_check(
     print(f"🔄 Running qlty check --all --sarif...")
 
     try:
-        result = subprocess.run(  # nosec B603
+        result = subprocess.run(  # nosec B603 B607
             ["qlty", "check", "--all", "--sarif"],
             capture_output=True,
             text=True,
@@ -332,7 +305,7 @@ class AnalysisReport:
         return "\n".join(lines)
 
 
-def analyze_issues(issues: list[SarifIssue]) -> AnalysisReport:
+def analyze_issues(issues: list[SarifIssue]) -> AnalysisReport:  # noqa: C901
     """Generate statistical analysis of issues."""
     report = AnalysisReport()
     report.total_issues = len(issues)
@@ -355,7 +328,7 @@ def analyze_issues(issues: list[SarifIssue]) -> AnalysisReport:
 # ────────────────────────────────────────────────
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901
     parser = argparse.ArgumentParser(
         description="Analyze qlty SARIF reports (checks and smells)",
         formatter_class=argparse.RawDescriptionHelpFormatter,

@@ -4,7 +4,7 @@
 import re
 
 
-def add_persist_credentials(filepath, skip_indices=None):
+def add_persist_credentials(filepath, skip_indices=None):  # noqa: C901
     """Add persist-credentials: false to checkout steps.
 
     skip_indices: set of 0-based checkout occurrence indices to skip

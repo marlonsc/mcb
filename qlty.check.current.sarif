@@ -1,0 +1,6273 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "qlty",
+          "informationUri": "https://github.com/qlty/qlty",
+          "semanticVersion": "0.608.0",
+          "version": "0.608.0 linux-x64 (c7dad04 2026-02-05)",
+          "releaseDateUtc": "2026-02-05",
+          "rules": [
+            {
+              "id": "zizmor:zizmor/artipacked",
+              "helpUri": "https://docs.zizmor.sh/audits/#artipacked"
+            },
+            {
+              "id": "zizmor:zizmor/excessive-permissions",
+              "helpUri": "https://docs.zizmor.sh/audits/#excessive-permissions"
+            },
+            {
+              "id": "osv-scanner:RUSTSEC-2023-0089",
+              "helpUri": "https://osv.dev/RUSTSEC-2023-0089"
+            },
+            {
+              "id": "osv-scanner:RUSTSEC-2025-0119",
+              "helpUri": "https://osv.dev/RUSTSEC-2025-0119"
+            },
+            {
+              "id": "osv-scanner:RUSTSEC-2024-0436",
+              "helpUri": "https://osv.dev/RUSTSEC-2024-0436"
+            },
+            {
+              "id": "osv-scanner:CVE-2023-49092",
+              "helpUri": "https://osv.dev/CVE-2023-49092"
+            },
+            {
+              "id": "osv-scanner:RUSTSEC-2025-0134",
+              "helpUri": "https://osv.dev/RUSTSEC-2025-0134"
+            },
+            {
+              "id": "markdownlint:fmt"
+            },
+            {
+              "id": "markdownlint:MD032",
+              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD032"
+            },
+            {
+              "id": "markdownlint:MD044",
+              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD044"
+            },
+            {
+              "id": "markdownlint:MD030",
+              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD030"
+            },
+            {
+              "id": "markdownlint:MD031",
+              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD031"
+            },
+            {
+              "id": "markdownlint:MD025",
+              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD025"
+            },
+            {
+              "id": "radarlint-python:python:S3776"
+            },
+            {
+              "id": "ruff:E501",
+              "helpUri": "https://docs.astral.sh/ruff/rules/line-too-long"
+            },
+            {
+              "id": "ruff:F401",
+              "helpUri": "https://docs.astral.sh/ruff/rules/unused-import"
+            },
+            {
+              "id": "radarlint-python:python:S125"
+            },
+            {
+              "id": "ripgrep:NOTE"
+            },
+            {
+              "id": "ruff:F821",
+              "helpUri": "https://docs.astral.sh/ruff/rules/undefined-name"
+            },
+            {
+              "id": "radarlint-python:python:S3457"
+            },
+            {
+              "id": "ruff:F541",
+              "helpUri": "https://docs.astral.sh/ruff/rules/f-string-missing-placeholders"
+            }
+          ],
+          "notifications": [
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trivy in 3.99s [7noxjx]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trivy in 3.99s [7noxjx]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.11s [Yjn178]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.11s [Yjn178]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.18s [csPCa2]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.18s [csPCa2]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 2.61s [v710Ea]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 2.61s [v710Ea]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.19s [cPTGOO]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.19s [cPTGOO]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.08s [nzRcoj]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.08s [nzRcoj]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ruff in 0.23s [wLrg6M]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ruff in 0.23s [wLrg6M]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.17s [NCyM3O]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.17s [NCyM3O]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.17s [S5MjOf]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.17s [S5MjOf]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran zizmor in 0.32s [CoYgn2]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran zizmor in 0.32s [CoYgn2]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.08s [SMFluh]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.08s [SMFluh]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran actionlint in 0.28s [ndAphJ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran actionlint in 0.28s [ndAphJ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.26s [9XKxI1]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.26s [9XKxI1]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.10s [EO6wJZ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.10s [EO6wJZ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trivy in 0.68s [1i7zhQ]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trivy in 0.68s [1i7zhQ]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.13s [oEc83Y]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.13s [oEc83Y]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.25s) [CKMv7p]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.25s) [CKMv7p]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.26s) [a1cjNM]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.26s) [a1cjNM]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "zizmor:zizmor/artipacked",
+          "level": "warning",
+          "message": {
+            "text": "credential persistence through GitHub Actions artifacts"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/docs.yml"
+                },
+                "region": {
+                  "startLine": 50,
+                  "startColumn": 9,
+                  "endLine": 52,
+                  "endColumn": 45
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "vulnerability",
+              "name": "vulnerability"
+            }
+          ]
+        },
+        {
+          "ruleId": "zizmor:zizmor/excessive-permissions",
+          "level": "warning",
+          "message": {
+            "text": "overly broad permissions"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/release.yml"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 166,
+                  "endColumn": 1
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "vulnerability",
+              "name": "vulnerability"
+            }
+          ]
+        },
+        {
+          "ruleId": "zizmor:zizmor/excessive-permissions",
+          "level": "warning",
+          "message": {
+            "text": "overly broad permissions"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/release.yml"
+                },
+                "region": {
+                  "startLine": 28,
+                  "startColumn": 3,
+                  "endLine": 44,
+                  "endColumn": 46
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "vulnerability",
+              "name": "vulnerability"
+            }
+          ]
+        },
+        {
+          "ruleId": "zizmor:zizmor/artipacked",
+          "level": "warning",
+          "message": {
+            "text": "credential persistence through GitHub Actions artifacts"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/release.yml"
+                },
+                "region": {
+                  "startLine": 32,
+                  "startColumn": 9,
+                  "endLine": 32,
+                  "endColumn": 81
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "vulnerability",
+              "name": "vulnerability"
+            }
+          ]
+        },
+        {
+          "ruleId": "zizmor:zizmor/excessive-permissions",
+          "level": "warning",
+          "message": {
+            "text": "overly broad permissions"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/release.yml"
+                },
+                "region": {
+                  "startLine": 45,
+                  "startColumn": 3,
+                  "endLine": 100,
+                  "endColumn": 45
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "vulnerability",
+              "name": "vulnerability"
+            }
+          ]
+        },
+        {
+          "ruleId": "zizmor:zizmor/artipacked",
+          "level": "warning",
+          "message": {
+            "text": "credential persistence through GitHub Actions artifacts"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/release.yml"
+                },
+                "region": {
+                  "startLine": 68,
+                  "startColumn": 9,
+                  "endLine": 68,
+                  "endColumn": 81
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "vulnerability",
+              "name": "vulnerability"
+            }
+          ]
+        },
+        {
+          "ruleId": "zizmor:zizmor/artipacked",
+          "level": "warning",
+          "message": {
+            "text": "credential persistence through GitHub Actions artifacts"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/release.yml"
+                },
+                "region": {
+                  "startLine": 108,
+                  "startColumn": 9,
+                  "endLine": 110,
+                  "endColumn": 65
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "vulnerability",
+              "name": "vulnerability"
+            }
+          ]
+        },
+        {
+          "ruleId": "zizmor:zizmor/artipacked",
+          "level": "warning",
+          "message": {
+            "text": "credential persistence through GitHub Actions artifacts"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/retag-on-merge.yml"
+                },
+                "region": {
+                  "startLine": 36,
+                  "startColumn": 9,
+                  "endLine": 38,
+                  "endColumn": 25
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "vulnerability",
+              "name": "vulnerability"
+            }
+          ]
+        },
+        {
+          "ruleId": "osv-scanner:RUSTSEC-2023-0089",
+          "level": "warning",
+          "message": {
+            "text": "Package 'atomic-polyfill@1.0.3' is vulnerable to 'RUSTSEC-2023-0089'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Cargo.lock"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "dependencyalert",
+              "name": "dependencyalert"
+            }
+          ]
+        },
+        {
+          "ruleId": "osv-scanner:RUSTSEC-2025-0119",
+          "level": "warning",
+          "message": {
+            "text": "Package 'number_prefix@0.4.0' is vulnerable to 'RUSTSEC-2025-0119'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Cargo.lock"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "dependencyalert",
+              "name": "dependencyalert"
+            }
+          ]
+        },
+        {
+          "ruleId": "osv-scanner:RUSTSEC-2024-0436",
+          "level": "warning",
+          "message": {
+            "text": "Package 'paste@1.0.15' is vulnerable to 'RUSTSEC-2024-0436'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Cargo.lock"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "dependencyalert",
+              "name": "dependencyalert"
+            }
+          ]
+        },
+        {
+          "ruleId": "osv-scanner:CVE-2023-49092",
+          "level": "warning",
+          "message": {
+            "text": "Package 'rsa@0.9.10' is vulnerable to 'CVE-2023-49092' (also known as 'RUSTSEC-2023-0071', 'GHSA-4grx-2x9w-596c', 'GHSA-c38w-74pg-36hr')."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Cargo.lock"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "dependencyalert",
+              "name": "dependencyalert"
+            }
+          ]
+        },
+        {
+          "ruleId": "osv-scanner:RUSTSEC-2025-0134",
+          "level": "warning",
+          "message": {
+            "text": "Package 'rustls-pemfile@2.2.0' is vulnerable to 'RUSTSEC-2025-0134'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Cargo.lock"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "dependencyalert",
+              "name": "dependencyalert"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 27,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD044",
+          "level": "warning",
+          "message": {
+            "text": "Proper names should have the correct capitalization"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 27,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 27,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 28,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 29,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD044",
+          "level": "warning",
+          "message": {
+            "text": "Proper names should have the correct capitalization"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 30,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 30,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD044",
+          "level": "warning",
+          "message": {
+            "text": "Proper names should have the correct capitalization"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 34,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 35,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 36,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 41,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 41,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 42,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 45,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 45,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 46,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 47,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD031",
+          "level": "warning",
+          "message": {
+            "text": "Fenced code blocks should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 52,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 60,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 60,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 61,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 62,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 71,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 71,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 72,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD031",
+          "level": "warning",
+          "message": {
+            "text": "Fenced code blocks should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 79,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD031",
+          "level": "warning",
+          "message": {
+            "text": "Fenced code blocks should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 90,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD031",
+          "level": "warning",
+          "message": {
+            "text": "Fenced code blocks should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 97,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD031",
+          "level": "warning",
+          "message": {
+            "text": "Fenced code blocks should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 113,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 118,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 118,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 119,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 120,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD031",
+          "level": "warning",
+          "message": {
+            "text": "Fenced code blocks should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 135,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD031",
+          "level": "warning",
+          "message": {
+            "text": "Fenced code blocks should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 141,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 162,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD044",
+          "level": "warning",
+          "message": {
+            "text": "Proper names should have the correct capitalization"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 163,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 163,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 164,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 165,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 167,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 168,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 169,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 170,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 189,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 190,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 191,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 192,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 202,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 203,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD032",
+          "level": "warning",
+          "message": {
+            "text": "Lists should be surrounded by blank lines"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 206,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 206,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 207,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "QLTY_RESOLUTION_FINAL.md"
+                },
+                "region": {
+                  "startLine": 208,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cache_errors.md"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cache_errors.md"
+                },
+                "region": {
+                  "startLine": 37,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cache_errors.md"
+                },
+                "region": {
+                  "startLine": 39,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cache_errors.md"
+                },
+                "region": {
+                  "startLine": 41,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cache_errors.md"
+                },
+                "region": {
+                  "startLine": 43,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cache_errors.md"
+                },
+                "region": {
+                  "startLine": 45,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD030",
+          "level": "warning",
+          "message": {
+            "text": "Spaces after list markers"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cache_errors.md"
+                },
+                "region": {
+                  "startLine": 47,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-application/tests/unit/instrumented_embedding_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-ast-utils/src/lib.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-domain/src/registry/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-domain/src/schema/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-domain/tests/integration/semantic_search_workflow.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-domain/tests/unit/constants_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/encryption.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/password.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/token.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/utils.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/dispatch.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/provider_resolvers.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/resolver.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/infrastructure/prometheus_metrics.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/test_utils/real_providers.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/unit/di_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/unit/error_ext_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/unit/health_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/unit/lifecycle_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/unit/logging_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/unit/memory_fts_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/unit/memory_repository_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/executor.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/provider.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/embedding/anthropic.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/embedding/fastembed.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/events/nats.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/git/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/git/project_detection/maven.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/c.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/cpp.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/csharp.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/engine.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/go.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/java.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/javascript.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/kotlin.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/php.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/python.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/ruby.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/rust.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/swift.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vector_store/edgevec.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vector_store/milvus.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vector_store/pinecone.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vector_store/qdrant.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/tests/unit/ddl_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/tests/unit/git2_provider_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/tests/unit/project_repository_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/admin/browse_handlers.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/admin/config.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/admin/config_handlers.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/admin/handlers.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/admin/lifecycle_handlers.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/admin/routes.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/admin/sse.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/admin/web/router.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/collection_mapping.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/formatter.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/agent.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/index.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/memory/execution.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/memory/handler.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/memory/inject.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/memory/list_timeline.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/memory/observation.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/memory/quality_gate.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/memory/session.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/search.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/session/create.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/session/get.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/session/handler.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/session/helpers.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/session/list.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/session/summarize.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/session/update.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/validate.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/vcs/analyze_impact.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/vcs/compare_branches.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/vcs/handler.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/vcs/index_repo.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/vcs/list_repos.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/vcs/search_branch.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/init.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/mcp_server.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/session/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/tools/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/tools/registry.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/tools/router.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/transport/http.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/transport/stdio.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/vcs_repository_registry.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/admin/auth_integration_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/admin/auth_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/admin/propagation_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/integration/golden_e2e_complete_integration.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/integration/golden_tools_e2e_integration.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/integration/hooks_integration.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/integration/operating_modes_integration.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/test_utils/mock_services/memory.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/test_utils/mock_services/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/test_utils/test_fixtures.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/tools/router_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/unit/fixtures_smoke.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/unit/highlight_service_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/unit/stdio_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/duplication/analyzer.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/duplication/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/engines/rete_engine.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/engines/router.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/engines/rusty_rules_engine.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/generic_reporter.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/graph/dep_graph.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/organization/violation.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/pattern_registry/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/pattern_registry/registry.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/rules/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/solid/violation.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/validator_trait.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/tests/integration/ca001_integration_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/tests/integration/integration_architecture.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/tests/integration/integration_ast.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/tests/integration/integration_duplication.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/tests/integration/integration_full.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/tests/unit/rule_filters_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "markdownlint:MD025",
+          "level": "warning",
+          "message": {
+            "text": "Multiple top-level headings in the same document"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "docs/adr/047-project-architecture.md"
+                },
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 0
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S3776",
+          "level": "error",
+          "message": {
+            "text": "Refactor this function to reduce its Cognitive Complexity from 31 to the 15 allowed."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "fix_cache.py"
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 5,
+                  "endLine": 7,
+                  "endColumn": 16
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S3776",
+          "level": "error",
+          "message": {
+            "text": "Refactor this function to reduce its Cognitive Complexity from 19 to the 15 allowed."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "fix_checkout.py"
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 5,
+                  "endLine": 7,
+                  "endColumn": 28
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ruff:E501",
+          "level": "warning",
+          "message": {
+            "text": "Line too long (94 > 88)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "fix_checkout.py"
+                },
+                "region": {
+                  "startLine": 56,
+                  "startColumn": 89,
+                  "endLine": 56,
+                  "endColumn": 95
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ruff:F401",
+          "level": "warning",
+          "message": {
+            "text": "`enum.Enum` imported but unused"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 18,
+                  "endLine": 12,
+                  "endColumn": 22
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": ""
+              },
+              "replacements": [
+                {
+                  "deletedRegion": {
+                    "startLine": 12,
+                    "startColumn": 1,
+                    "endLine": 12,
+                    "endColumn": 31
+                  },
+                  "insertedContent": {
+                    "text": "from enum import IntEnum"
+                  }
+                }
+              ]
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S125",
+          "level": "warning",
+          "message": {
+            "text": "Remove this commented out code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 16,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "NOTE = 1"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 26,
+                  "startColumn": 5,
+                  "endLine": 26,
+                  "endColumn": 9
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ruff:F821",
+          "level": "warning",
+          "message": {
+            "text": "Undefined name `Severity`"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 30,
+                  "startColumn": 34,
+                  "endLine": 30,
+                  "endColumn": 42
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "\"note\": cls.NOTE,"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 34,
+                  "startColumn": 25,
+                  "endLine": 34,
+                  "endColumn": 29
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "self.NOTE: \"🔵\","
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 42,
+                  "startColumn": 18,
+                  "endLine": 42,
+                  "endColumn": 22
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S3457",
+          "level": "warning",
+          "message": {
+            "text": "Add replacement fields or use a normal string instead of an f-string."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 131,
+                  "startColumn": 11,
+                  "endLine": 131,
+                  "endColumn": 52
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ruff:F541",
+          "level": "warning",
+          "message": {
+            "text": "f-string without any placeholders"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 131,
+                  "startColumn": 11,
+                  "endLine": 131,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": ""
+              },
+              "replacements": [
+                {
+                  "deletedRegion": {
+                    "startLine": 131,
+                    "startColumn": 11,
+                    "endLine": 131,
+                    "endColumn": 51
+                  },
+                  "insertedContent": {
+                    "text": "\"🔄 Running qlty check --all --sarif...\""
+                  }
+                }
+              ]
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S125",
+          "level": "warning",
+          "message": {
+            "text": "Remove this commented out code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 160,
+                  "startColumn": 1,
+                  "endLine": 160,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 189,
+                  "startColumn": 64,
+                  "endLine": 189,
+                  "endColumn": 68
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S3776",
+          "level": "error",
+          "message": {
+            "text": "Refactor this function to reduce its Cognitive Complexity from 32 to the 15 allowed."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 221,
+                  "startColumn": 9,
+                  "endLine": 221,
+                  "endColumn": 26
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 234,
+                  "startColumn": 64,
+                  "endLine": 234,
+                  "endColumn": 68
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 270,
+                  "startColumn": 64,
+                  "endLine": 270,
+                  "endColumn": 68
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S3776",
+          "level": "error",
+          "message": {
+            "text": "Refactor this function to reduce its Cognitive Complexity from 27 to the 15 allowed."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 331,
+                  "startColumn": 5,
+                  "endLine": 331,
+                  "endColumn": 9
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S3457",
+          "level": "warning",
+          "message": {
+            "text": "Add replacement fields or use a normal string instead of an f-string."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 420,
+                  "startColumn": 19,
+                  "endLine": 420,
+                  "endColumn": 63
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ruff:F541",
+          "level": "warning",
+          "message": {
+            "text": "f-string without any placeholders"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/analyze_qlty.py"
+                },
+                "region": {
+                  "startLine": 420,
+                  "startColumn": 19,
+                  "endLine": 420,
+                  "endColumn": 63
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": ""
+              },
+              "replacements": [
+                {
+                  "deletedRegion": {
+                    "startLine": 420,
+                    "startColumn": 19,
+                    "endLine": 420,
+                    "endColumn": 63
+                  },
+                  "insertedContent": {
+                    "text": "\"⚠️  No checks file and --no-run specified\""
+                  }
+                }
+              ]
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S125",
+          "level": "warning",
+          "message": {
+            "text": "Remove this commented out code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/fix_smells.py"
+                },
+                "region": {
+                  "startLine": 47,
+                  "startColumn": 1,
+                  "endLine": 47,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S125",
+          "level": "warning",
+          "message": {
+            "text": "Remove this commented out code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/fix_smells.py"
+                },
+                "region": {
+                  "startLine": 149,
+                  "startColumn": 1,
+                  "endLine": 149,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S125",
+          "level": "warning",
+          "message": {
+            "text": "Remove this commented out code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/fix_smells.py"
+                },
+                "region": {
+                  "startLine": 1000,
+                  "startColumn": 1,
+                  "endLine": 1000,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S125",
+          "level": "warning",
+          "message": {
+            "text": "Remove this commented out code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/fix_smells.py"
+                },
+                "region": {
+                  "startLine": 1039,
+                  "startColumn": 1,
+                  "endLine": 1039,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S3776",
+          "level": "error",
+          "message": {
+            "text": "Refactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/fix_smells.py"
+                },
+                "region": {
+                  "startLine": 1113,
+                  "startColumn": 5,
+                  "endLine": 1113,
+                  "endColumn": 16
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "radarlint-python:python:S125",
+          "level": "warning",
+          "message": {
+            "text": "Remove this commented out code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/fix_smells.py"
+                },
+                "region": {
+                  "startLine": 1376,
+                  "startColumn": 1,
+                  "endLine": 1376,
+                  "endColumn": 51
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

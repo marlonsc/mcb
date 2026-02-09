@@ -1110,7 +1110,7 @@ def report_detail(
             print(f"  L{ln:>4d} ({pc}) {rule:<25s} {msg}{fn}")
 
 
-def report_plan(
+def report_plan(  # noqa: C901
     smells: list[Smell],
 ) -> None:
     """Print a prioritised refactoring plan."""

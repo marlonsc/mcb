@@ -11,9 +11,10 @@
 #      GITHUB_TOKEN cannot approve PRs per GitHub restriction)
 #
 # Security:
-#   - Only runs for dependabot[bot] actor
+#   - Only runs for dependabot[bot] user who created the PR
 #   - Requires CI to pass before merge (configure in branch protection)
-#   - Uses pull_request_target intentionally for Dependabot token access
+#   - Uses pull_request trigger (safer than pull_request_target)
+#   - Requires Dependabot secrets configured for write permissions
 # =============================================================================
 
 name: Dependabot Auto-Merge
@@ -23,18 +24,14 @@ permissions:
   pull-requests: write
 
 on: # yamllint disable-line rule:truthy
-  # zizmor:ignore[dangerous-triggers] -- pull_request_target is required for
-  # Dependabot PRs to access GITHUB_TOKEN with write permissions
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
   auto-merge:
     name: Auto-Merge Dependabot
     runs-on: ubuntu-latest
-    # zizmor:ignore[bot-conditions] -- dependabot[bot] check is the standard
-    # GitHub-recommended pattern for Dependabot auto-merge workflows
-    if: github.actor == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Fetch Dependabot metadata
         id: metadata

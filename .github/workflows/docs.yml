@@ -26,6 +26,7 @@ jobs:
   validate:
     name: Validate Documentation
     runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -33,11 +34,10 @@ jobs:
       - run: make docs-check
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0 zizmor:ignore[cache-poisoning]
-        with:
-          node-version: "20"
-          cache: ${{ github.event_name == 'push' && 'npm' || '' }}
-      - run: npm install -g markdownlint-cli
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y nodejs npm
+          npm install -g markdownlint-cli
       - run: make docs-validate QUICK=1
 
   update-docs:
@@ -52,9 +52,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
-      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
-        with:
-          save-if: ${{ github.event_name == 'push' }}
       - name: Update README and metrics
         run: |
           make docs-auto
@@ -103,9 +100,6 @@ jobs:
           persist-credentials: false
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
-      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
-        with:
-          save-if: ${{ github.event_name == 'push' }}
       - run: make rust-docs
       - run: make test SCOPE=doc
 

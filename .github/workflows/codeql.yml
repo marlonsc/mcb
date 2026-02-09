@@ -45,11 +45,6 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8 zizmor:ignore[cache-poisoning]
-        with:
-          save-if: ${{ github.event_name == 'push' }}
-
       - name: Autobuild
         uses: github/codeql-action/autobuild@ce28f5bb42b7a9f2c824e633a3f6ee835bab6858 # v3.28.13
 

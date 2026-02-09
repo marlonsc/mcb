@@ -4,7 +4,7 @@
 import re
 
 
-def add_save_if(filepath):
+def add_save_if(filepath):  # noqa: C901
     with open(filepath) as f:
         lines = f.readlines()
 
