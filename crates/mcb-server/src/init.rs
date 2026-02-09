@@ -74,7 +74,7 @@ pub async fn run(
 
     if server_mode {
         // Explicit server mode via --server flag
-        run_server_mode(config).await
+        run_server_mode(config, config_path.map(|p| p.to_path_buf())).await
     } else {
         // Check config for operating mode
         match config.mode.mode_type {
@@ -89,7 +89,10 @@ pub async fn run(
 // =============================================================================
 
 /// Run as server daemon (HTTP + optional stdio based on transport_mode)
-async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_server_mode(
+    config: AppConfig,
+    config_path: Option<std::path::PathBuf>,
+) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         transport_mode = ?config.server.transport_mode,
         host = %config.server.network.host,
@@ -105,16 +108,30 @@ async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Er
     info!("MCP server initialized successfully");
 
     // Create admin state for consolidated single-port operation
+    // Initialize ConfigWatcher for hot-reload support
+    let config_watcher = if let Some(ref path) = config_path {
+        mcb_infrastructure::config::watcher::ConfigWatcher::new(path.clone(), config.clone())
+            .await
+            .ok()
+            .map(std::sync::Arc::new)
+    } else {
+        None
+    };
+
+    // Initialize ServiceManager for lifecycle operations
+    let service_manager =
+        mcb_infrastructure::infrastructure::ServiceManager::new(app_context.event_bus());
+
     let admin_state = AdminState {
         metrics: app_context.performance(),
         indexing: app_context.indexing(),
-        config_watcher: None,
-        config_path: None,
-        shutdown_coordinator: None,
+        config_watcher,
+        config_path,
+        shutdown_coordinator: Some(app_context.shutdown()),
         shutdown_timeout_secs: 30,
         event_bus: app_context.event_bus(),
-        service_manager: None,
-        cache: None,
+        service_manager: Some(std::sync::Arc::new(service_manager)),
+        cache: Some(app_context.cache_handle().get()),
     };
 
     let browse_state = BrowseState {

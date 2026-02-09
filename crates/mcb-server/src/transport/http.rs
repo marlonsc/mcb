@@ -154,6 +154,7 @@ impl HttpTransport {
         use crate::admin::lifecycle_handlers::{
             list_services, restart_service, services_health, start_service, stop_service,
         };
+        use crate::admin::sse::events_stream;
         use crate::admin::web::handlers::{
             browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
             dashboard, dashboard_ui, favicon, health_page, indexing_page, shared_js, theme_css,
@@ -191,7 +192,7 @@ impl HttpTransport {
                         stop_service,
                         restart_service,
                         get_cache_stats,
-                        // Web UI routes
+                        events_stream,
                         dashboard,
                         dashboard_ui,
                         favicon,
