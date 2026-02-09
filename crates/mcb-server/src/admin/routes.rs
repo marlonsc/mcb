@@ -23,6 +23,10 @@ use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
 };
 use super::sse::events_stream;
+use super::web::handlers::{
+    browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
+    dashboard, dashboard_ui, favicon, health_page, indexing_page, shared_js, theme_css,
+};
 
 /// Create the admin API rocket instance
 ///
@@ -86,6 +90,19 @@ pub fn admin_rocket(
             restart_service,
             // Cache management
             get_cache_stats,
+            // Web UI routes
+            dashboard,
+            dashboard_ui,
+            favicon,
+            config_page,
+            health_page,
+            indexing_page,
+            browse_page,
+            browse_collection_page,
+            browse_file_page,
+            browse_tree_page,
+            theme_css,
+            shared_js,
         ],
     );
 
