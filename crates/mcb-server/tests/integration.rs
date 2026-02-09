@@ -65,6 +65,10 @@ mod hooks_integration;
 #[path = "integration/admin_api_integration.rs"]
 mod admin_api_integration;
 
+// Validation fixes verification (v0.2.0)
+#[path = "integration/validation_fixes_e2e.rs"]
+mod validation_fixes_e2e;
+
 // Golden tests have been moved or removed
 // #[path = "../../../tests/golden/test_end_to_end.rs"]
 // mod golden_test_end_to_end;
