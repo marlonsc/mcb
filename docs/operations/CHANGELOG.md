@@ -74,124 +74,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Success Criteria
 
--   2976+ tests passing (unit, integration, end-to-end)
+-   2982+ tests passing (unit, integration, end-to-end)
 -   85%+ code coverage minimum
 -   Zero architecture violations
 -   Complete documentation and v0.3.0 → v0.4.0 migration guide
 
 ---
 
-## [v0.2.0] - Documentation Refactoring - 2026-02-05
-
-**Release**: ✅ RELEASED
-
-### Added
-
--   **YAML Frontmatter**: All ADRs now include standardized frontmatter (ADR, title, status, created, updated, related, supersedes, superseded_by, implementation_status)
--   **ADR Archive Structure**: New `docs/adr/archive/` directory for superseded decisions (ADR-012, ADR-024, ADR-032)
--   **ADRs**: ADR-003 & ADR-030 merged into unified "Provider Architecture & Routing" decision
--   **Cross-Reference Updates**: All internal ADR links updated (ADR-024 → ADR-029, ADR-030 → ADR-003)
--   **Release Roadmap**: v0.3.0 → v0.4.0 coordination strategy documented
-
-### Changed
-
--   **ADR Status Standardization**: All ADRs now use 5-value status set: IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED
--   **Documentation Structure**: Improved navigation with frontmatter-based indexing
--   **Supersession Chains**: Updated chains (ADR-012→024→029, ADR-032→034)
--   **Version Badges**: Updated to v0.2.0
--   **README**: Added Key Architectural Decisions section
--   **ROADMAP**: Added v0.3.0 and v0.4.0 planned phases
-
-### Fixed
-
--   Removed deprecated Shaku DI references from ADR-002
--   Updated all supersession chains for clarity
--   Standardized ADR metadata across all 46 decisions
--   Fixed markdown linting issues
-
-### Deprecated
-
--   ADR-012 (Shaku DI Strategy) - Use ADR-029 instead
--   ADR-024 (Simplified DI) - Use ADR-029 instead
--   ADR-032 (Agent/Quality Domain) - Use ADR-034 instead
-
-### Metrics
-
--   44 ADRs with YAML metadata
--   3 ADRs archived
--   1 major consolidation (ADR-003/030)
--   5 commits
--   801+ lines added, 874+ lines removed
--   0 architecture violations
--   0 lint errors
--   2976+ tests passing
-
----
-
-#### v0.2.0 Planning - 2026-01-12
-
--   **ADR-009**: Persistent Session Memory architecture decision record
--   Cross-session observation storage with git context
--   Session summaries and tracking
--   Hybrid search (BM25 + vector embeddings)
--   Progressive disclosure (3-layer workflow for 10x token savings)
--   Context injection for SessionStart hooks
--   Integration with git-aware features from ADR-008
-
-#### Documentation Enhancements - 2026-01-12
-
--   **ROADMAP.md**: Expanded v0.2.0 scope to include both git integration and session memory (20 phases total)
--   **VERSION_HISTORY.md**: Updated v0.2.0 architectural evolution diagram with dual features
--   **ARCHITECTURE.md**: Updated milestones and technical roadmap
--   **README.md**: Enhanced v0.2.0 preview with complete feature list
--   **Claude.md**: Updated development guide with v0.2.0 dual-feature scope
-
-### Technical Details
-
--   **New ADR**: docs/ADR/009-persistent-session-memory-v0.2.0.md (1,329 lines)
--   **Dependencies Planned**: sqlx (SQLite support)
--   **Implementation Phases**: 10 phases for session memory (on top of 10 for git)
--   **Estimated LOC**: ~3,000 for memory subsystem
--   **MCP Tool Consolidation**: 38 legacy tools into 8 tools (index, search, validate, memory, session, agent, project, vcs)
-
----
-
-## [0.2.0] - 2026-01-31
+## [0.2.0] - 2026-02-09
 
 ### What This Release Is
 
-**MCP Context Browser v0.2.0** delivers new providers, health endpoints, and code quality improvements following DRY/SOLID principles. This release adds Anthropic embedding, Pinecone and Qdrant vector store providers, plus Kubernetes-ready health endpoints.
-
-<!-- markdownlint-disable MD044 -->
-### Added
-
--   **Anthropic Embedding Provider**: Full Voyage AI model support with configurable dimensions
--   **Pinecone Vector Store Provider**: Production-ready cloud vector database integration
--   **Qdrant Vector Store Provider**: Self-hosted vector search with gRPC support
--   **Health Endpoints**: `/healthz` (liveness) and `/readyz` (readiness) for container orchestration
--   **Performance Metrics Decorator**: SOLID-compliant instrumented embedding provider
--   **Golden Test Framework**: Architecture boundary documentation and test scaffolding (ADR-027)
-
-### Changed
-
--   **DRY Refactoring**: Shared HTTP helpers across embedding and vector store providers (~200 lines deduplicated)
--   **CI/CD Improvements**: Auto-merge Dependabot PRs (patch/minor), auto-tag on release branch merge
--   **SOLID Compliance**: Metrics added via decorator pattern (Open/Closed principle)
--   **Test Organization**: Inline tests moved to proper test directories (TEST001 violations resolved)
+**MCP Context Browser v0.2.0** is a major stabilization release delivering critical bug fixes for the Agent, Session, and Memory subsystems, alongside a comprehensive documentation overhaul. This release solidifies the architecture for the upcoming Workflow System (v0.3.0).
 
 ### Fixed
 
--   All architecture validation errors resolved (0 errors, 4 warnings)
--   Validation service properly wired through DI system
--   Tool count tests updated for new `validate (action=run, scope=project)` tool
-<!-- markdownlint-enable MD044 -->
+-   **Agent SQL Storage**: Fixed "Failed to store tool call" error by ensuring correct repository dependency chain (Project -> Session -> Agent) in `mcb-providers`.
+-   **Session Schema**: Implemented fallback logic in `handlers/session/create.rs` to correctly handle `agent_type` and `model` fields in session creation payloads.
+-   **Memory Enums**: Improved validation and error messages for `observation_type` in `handlers/memory/helpers.rs`.
+-   **Linting & Quality**: Resolved Clippy errors in `git2_provider.rs` and other modules.
+-   **Validation**: Added comprehensive integration tests (`validation_fixes_e2e.rs`) covering the fixed scenarios.
+
+### Added
+
+-   **YAML Frontmatter**: All ADRs now include standardized frontmatter (ADR, title, status, created, updated, related, supersedes, superseded_by, implementation_status).
+-   **ADR Archive Structure**: New `docs/adr/archive/` directory for superseded decisions.
+-   **Unified Provider Architecture**: Consolidation of provider strategies (ADR-003).
+-   **Release Roadmap**: Clear coordination strategy for v0.3.0 and v0.4.0.
+
+### Changed
+
+-   **ADR Status Standardization**: All ADRs now use 5-value status set: IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED.
+-   **Documentation Structure**: Improved navigation with frontmatter-based indexing.
+-   **Supersession Chains**: Clarified architectural decision history (ADR-012→024→029, etc.).
 
 ### Impact Metrics
 
--   **New Providers**: 3 (Anthropic embedding, Pinecone, Qdrant)
--   **Tests**: 1636+ passing
--   **Violations**: 0 errors (was 1)
--   **DRY Improvement**: ~200 lines of duplication removed
+-   **Tests**: 2982+ tests passing (including new e2e validation tests).
+-   **Stability**: Critical persistence and schema bugs resolved.
+-   **Documentation**: 44 ADRs standardized and indexed.
 
 ---
 
@@ -440,7 +361,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Provider Registration**: Compile-time (from runtime discovery)
 -   **Validation Coverage**: 12 architecture patterns automated
 -   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
--   **Test Coverage**: 2976+ tests maintained
+-   **Test Coverage**: 2982+ tests maintained
 -   **Architecture Compliance**: Automated validation of 7-crate clean architecture
 
 ### Next Steps (v0.1.3 or v0.2.0)
@@ -508,7 +429,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   **Clean Architecture**: Complete refactoring with trait-based dependency injection
--   **Test Suite**: Expanded to 2976+ tests organized by Clean Architecture layers
+-   **Test Suite**: Expanded to 2982+ tests organized by Clean Architecture layers
 -   **Configuration**: Modular configuration with cache and limits separated
 -   **Server Operations**: Extracted operations to dedicated module (`src/server/operations.rs`)
 -   **Metrics**: Dedicated metrics module (`src/server/metrics.rs`)
@@ -537,7 +458,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
 -   **Provider Support**: 6 embedding providers, 6 vector stores
 -   **Language Support**: 14 languages with AST parsing
--   **Test Coverage**: 2976+ tests
+-   **Test Coverage**: 2982+ tests
 
 ---
 
