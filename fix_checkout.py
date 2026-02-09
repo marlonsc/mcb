@@ -74,7 +74,8 @@ def add_persist_credentials(filepath, skip_indices=None):
         f.write("\n".join(new_lines))
 
     print(
-        f"Fixed {filepath} ({checkout_idx} checkout steps found, {len(skip_indices)} skipped)"
+        f"Fixed {filepath} ({checkout_idx} checkout steps found, "
+        f"{len(skip_indices)} skipped)"
     )
 
 

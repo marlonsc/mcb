@@ -9,13 +9,9 @@ import subprocess  # nosec B404
 import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum
+from enum import IntEnum
 from pathlib import Path
 from typing import Any
-
-# ────────────────────────────────────────────────
-# Constants & Configuration
-# ────────────────────────────────────────────────
 
 
 class Severity(IntEnum):
@@ -27,7 +23,7 @@ class Severity(IntEnum):
     NONE = 0
 
     @classmethod
-    def from_str(cls, s: str) -> Severity:
+    def from_str(cls, s: str):
         mapping = {
             "error": cls.ERROR,
             "warning": cls.WARNING,
@@ -128,7 +124,7 @@ def run_qlty_check(
     output_file: Path = Path("qlty.check.current.sarif"),
 ) -> list[SarifIssue]:
     """Run qlty check --all --sarif, save to file, and parse SARIF output."""
-    print(f"🔄 Running qlty check --all --sarif...")
+    print("🔄 Running qlty check --all --sarif...")
 
     try:
         result = subprocess.run(  # nosec B603 B607
@@ -155,11 +151,6 @@ def run_qlty_check(
     except Exception as e:
         print(f"   ❌ Error running qlty: {e}", file=sys.stderr)
         return []
-
-
-# ────────────────────────────────────────────────
-# Analysis & Reporting
-# ────────────────────────────────────────────────
 
 
 @dataclass
@@ -389,7 +380,7 @@ def _collect_checks_issues(args, all_issues):
     if not args.no_run:
         _run_qlty_checks(all_issues)
     else:
-        print(f"⚠️  No checks file and --no-run specified", file=sys.stderr)
+        print("⚠️  No checks file and --no-run specified", file=sys.stderr)
 
 
 def _collect_all_issues(args):

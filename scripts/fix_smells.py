@@ -44,10 +44,6 @@ from enum import IntEnum
 from pathlib import Path
 from typing import Any, Sequence
 
-# ────────────────────────────────────────────────
-# Constants & Configuration
-# ────────────────────────────────────────────────
-
 # -- Paths ----------------------------------------
 DEFAULT_SARIF = "qlty.smells.lst"
 SARIF_VERSION = "2.1.0"
@@ -144,11 +140,6 @@ _WORKSPACE_DIRS: frozenset[str] = frozenset(
         "pkg",
     }
 )
-
-
-# ────────────────────────────────────────────────
-# Priority
-# ────────────────────────────────────────────────
 
 
 class Priority(IntEnum):
@@ -997,11 +988,6 @@ def generate_fix_instruction(
     return "\n".join(parts)
 
 
-# ────────────────────────────────────────────────
-# Filtering
-# ────────────────────────────────────────────────
-
-
 def filter_smells(
     smells: list[Smell],
     *,
@@ -1034,11 +1020,6 @@ def filter_smells(
         out = [s for s in out if s.severity_score >= min_severity]
 
     return out
-
-
-# ────────────────────────────────────────────────
-# Reporters
-# ────────────────────────────────────────────────
 
 
 def report_summary(
@@ -1389,11 +1370,6 @@ def load_config(path: Path) -> None:
     TOP_MODULES = th.get("top_modules", TOP_MODULES)
 
     _ok(f"Config loaded from {path}")
-
-
-# ────────────────────────────────────────────────
-# CLI
-# ────────────────────────────────────────────────
 
 
 def build_parser() -> argparse.ArgumentParser:
