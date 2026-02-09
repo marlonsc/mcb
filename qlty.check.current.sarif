@@ -12,34 +12,6 @@
           "releaseDateUtc": "2026-02-05",
           "rules": [
             {
-              "id": "zizmor:zizmor/artipacked",
-              "helpUri": "https://docs.zizmor.sh/audits/#artipacked"
-            },
-            {
-              "id": "zizmor:zizmor/excessive-permissions",
-              "helpUri": "https://docs.zizmor.sh/audits/#excessive-permissions"
-            },
-            {
-              "id": "osv-scanner:RUSTSEC-2023-0089",
-              "helpUri": "https://osv.dev/RUSTSEC-2023-0089"
-            },
-            {
-              "id": "osv-scanner:RUSTSEC-2025-0119",
-              "helpUri": "https://osv.dev/RUSTSEC-2025-0119"
-            },
-            {
-              "id": "osv-scanner:RUSTSEC-2024-0436",
-              "helpUri": "https://osv.dev/RUSTSEC-2024-0436"
-            },
-            {
-              "id": "osv-scanner:CVE-2023-49092",
-              "helpUri": "https://osv.dev/CVE-2023-49092"
-            },
-            {
-              "id": "osv-scanner:RUSTSEC-2025-0134",
-              "helpUri": "https://osv.dev/RUSTSEC-2025-0134"
-            },
-            {
               "id": "rustfmt:fmt"
             },
             {
@@ -50,221 +22,247 @@
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [en4DOq]"
+                "text": "Successfully ran actionlint in 0.18s [BmZa1H]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [en4DOq]"
+                  "text": "Successfully ran actionlint in 0.18s [BmZa1H]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [IvoXdk]"
+                "text": "Successfully ran clippy in 0.12s [3VCXiZ]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [IvoXdk]"
+                  "text": "Successfully ran clippy in 0.12s [3VCXiZ]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran ruff in 0.05s [QBfPqg]"
+                "text": "Successfully ran trufflehog in 2.55s [axR2KV]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran ruff in 0.05s [QBfPqg]"
+                  "text": "Successfully ran trufflehog in 2.55s [axR2KV]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [WXCSY4]"
+                "text": "Successfully ran clippy in 0.12s [1KfINj]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [WXCSY4]"
+                  "text": "Successfully ran clippy in 0.12s [1KfINj]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran trivy in 3.72s [eLAtUI]"
+                "text": "Successfully ran clippy in 0.15s [Uz0JNa]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran trivy in 3.72s [eLAtUI]"
+                  "text": "Successfully ran clippy in 0.15s [Uz0JNa]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [NAuljv]"
+                "text": "Successfully ran clippy in 0.08s [DFdfbS]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [NAuljv]"
+                  "text": "Successfully ran clippy in 0.08s [DFdfbS]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [zujPi7]"
+                "text": "Successfully ran zizmor in 0.28s [4zQd1n]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [zujPi7]"
+                  "text": "Successfully ran zizmor in 0.28s [4zQd1n]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [7Nl2de]"
+                "text": "Successfully ran ruff in 0.19s [dxEvC6]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [7Nl2de]"
+                  "text": "Successfully ran ruff in 0.19s [dxEvC6]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [3Chxjv]"
+                "text": "Successfully ran clippy in 0.18s [SAP8Wt]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [3Chxjv]"
+                  "text": "Successfully ran clippy in 0.18s [SAP8Wt]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [oqXL06]"
+                "text": "Successfully ran clippy in 0.07s [vtzEw7]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [oqXL06]"
+                  "text": "Successfully ran clippy in 0.07s [vtzEw7]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.07s [N1Znan]"
+                "text": "Successfully ran clippy in 0.13s [YNEGjZ]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.07s [N1Znan]"
+                  "text": "Successfully ran clippy in 0.13s [YNEGjZ]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [bHPdpK]"
+                "text": "Successfully ran clippy in 0.12s [vkxoUM]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [bHPdpK]"
+                  "text": "Successfully ran clippy in 0.12s [vkxoUM]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran trivy in 0.54s [srXfGe]"
+                "text": "Successfully ran trivy in 0.59s [VaaTUi]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran trivy in 0.54s [srXfGe]"
+                  "text": "Successfully ran trivy in 0.59s [VaaTUi]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trivy in 3.80s [EEJywd]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trivy in 3.80s [EEJywd]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.07s [x97JHE]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.07s [x97JHE]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.07s [MrSvGl]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.07s [MrSvGl]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.16s) [lNCozr]"
+                "text": "Error occurred while running rustfmt (0.31s) [rI6Ezi]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.16s) [lNCozr]"
-                }
-              }
-            },
-            {
-              "level": "note",
-              "message": {
-                "text": "Successfully ran rustfmt in 0.29s [YApD9J]"
-              },
-              "descriptor": {
-                "id": "qlty:message:invocation.concluded.success",
-                "name": "qlty_check::executor",
-                "shortDescription": {
-                  "text": "Successfully ran rustfmt in 0.29s [YApD9J]"
+                  "text": "Error occurred while running rustfmt (0.31s) [rI6Ezi]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.34s) [2nIkDx]"
+                "text": "Error occurred while running rustfmt (0.22s) [uBmCGI]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.34s) [2nIkDx]"
+                  "text": "Error occurred while running rustfmt (0.22s) [uBmCGI]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.28s) [kLr7pa]"
+                "text": "Error occurred while running rustfmt (0.14s) [q3B4sy]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.28s) [kLr7pa]"
+                  "text": "Error occurred while running rustfmt (0.14s) [q3B4sy]"
                 }
               }
             }
@@ -273,240 +271,16 @@
       },
       "results": [
         {
-          "ruleId": "zizmor:zizmor/artipacked",
-          "level": "warning",
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
           "message": {
-            "text": "credential persistence through GitHub Actions artifacts"
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": ".github/workflows/docs.yml"
-                },
-                "region": {
-                  "startLine": 50,
-                  "startColumn": 9,
-                  "endLine": 52,
-                  "endColumn": 45
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "vulnerability",
-              "name": "vulnerability"
-            }
-          ]
-        },
-        {
-          "ruleId": "zizmor:zizmor/excessive-permissions",
-          "level": "warning",
-          "message": {
-            "text": "overly broad permissions"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": ".github/workflows/release.yml"
-                },
-                "region": {
-                  "startLine": 16,
-                  "startColumn": 1,
-                  "endLine": 167,
-                  "endColumn": 1
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "vulnerability",
-              "name": "vulnerability"
-            }
-          ]
-        },
-        {
-          "ruleId": "zizmor:zizmor/excessive-permissions",
-          "level": "warning",
-          "message": {
-            "text": "overly broad permissions"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": ".github/workflows/release.yml"
-                },
-                "region": {
-                  "startLine": 28,
-                  "startColumn": 3,
-                  "endLine": 44,
-                  "endColumn": 46
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "vulnerability",
-              "name": "vulnerability"
-            }
-          ]
-        },
-        {
-          "ruleId": "zizmor:zizmor/artipacked",
-          "level": "warning",
-          "message": {
-            "text": "credential persistence through GitHub Actions artifacts"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": ".github/workflows/release.yml"
-                },
-                "region": {
-                  "startLine": 32,
-                  "startColumn": 9,
-                  "endLine": 32,
-                  "endColumn": 81
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "vulnerability",
-              "name": "vulnerability"
-            }
-          ]
-        },
-        {
-          "ruleId": "zizmor:zizmor/excessive-permissions",
-          "level": "warning",
-          "message": {
-            "text": "overly broad permissions"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": ".github/workflows/release.yml"
-                },
-                "region": {
-                  "startLine": 45,
-                  "startColumn": 3,
-                  "endLine": 101,
-                  "endColumn": 45
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "vulnerability",
-              "name": "vulnerability"
-            }
-          ]
-        },
-        {
-          "ruleId": "zizmor:zizmor/artipacked",
-          "level": "warning",
-          "message": {
-            "text": "credential persistence through GitHub Actions artifacts"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": ".github/workflows/release.yml"
-                },
-                "region": {
-                  "startLine": 68,
-                  "startColumn": 9,
-                  "endLine": 68,
-                  "endColumn": 81
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "vulnerability",
-              "name": "vulnerability"
-            }
-          ]
-        },
-        {
-          "ruleId": "zizmor:zizmor/artipacked",
-          "level": "warning",
-          "message": {
-            "text": "credential persistence through GitHub Actions artifacts"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": ".github/workflows/release.yml"
-                },
-                "region": {
-                  "startLine": 109,
-                  "startColumn": 9,
-                  "endLine": 111,
-                  "endColumn": 65
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "vulnerability",
-              "name": "vulnerability"
-            }
-          ]
-        },
-        {
-          "ruleId": "zizmor:zizmor/artipacked",
-          "level": "warning",
-          "message": {
-            "text": "credential persistence through GitHub Actions artifacts"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": ".github/workflows/retag-on-merge.yml"
-                },
-                "region": {
-                  "startLine": 36,
-                  "startColumn": 9,
-                  "endLine": 38,
-                  "endColumn": 25
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "vulnerability",
-              "name": "vulnerability"
-            }
-          ]
-        },
-        {
-          "ruleId": "osv-scanner:RUSTSEC-2023-0089",
-          "level": "warning",
-          "message": {
-            "text": "Package 'atomic-polyfill@1.0.3' is vulnerable to 'RUSTSEC-2023-0089'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Cargo.lock"
+                  "uri": "crates/mcb-application/tests/unit/instrumented_embedding_tests.rs"
                 },
                 "region": {}
               }
@@ -514,22 +288,22 @@
           ],
           "taxa": [
             {
-              "id": "dependencyalert",
-              "name": "dependencyalert"
+              "id": "style",
+              "name": "style"
             }
           ]
         },
         {
-          "ruleId": "osv-scanner:RUSTSEC-2025-0119",
-          "level": "warning",
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
           "message": {
-            "text": "Package 'number_prefix@0.4.0' is vulnerable to 'RUSTSEC-2025-0119'."
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "Cargo.lock"
+                  "uri": "crates/mcb-application/tests/unit/search_tests.rs"
                 },
                 "region": {}
               }
@@ -537,22 +311,22 @@
           ],
           "taxa": [
             {
-              "id": "dependencyalert",
-              "name": "dependencyalert"
+              "id": "style",
+              "name": "style"
             }
           ]
         },
         {
-          "ruleId": "osv-scanner:RUSTSEC-2024-0436",
-          "level": "warning",
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
           "message": {
-            "text": "Package 'paste@1.0.15' is vulnerable to 'RUSTSEC-2024-0436'."
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "Cargo.lock"
+                  "uri": "crates/mcb-application/tests/unit/test_utils.rs"
                 },
                 "region": {}
               }
@@ -560,22 +334,22 @@
           ],
           "taxa": [
             {
-              "id": "dependencyalert",
-              "name": "dependencyalert"
+              "id": "style",
+              "name": "style"
             }
           ]
         },
         {
-          "ruleId": "osv-scanner:CVE-2023-49092",
-          "level": "warning",
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
           "message": {
-            "text": "Package 'rsa@0.9.10' is vulnerable to 'CVE-2023-49092' (also known as 'RUSTSEC-2023-0071', 'GHSA-4grx-2x9w-596c', 'GHSA-c38w-74pg-36hr')."
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "Cargo.lock"
+                  "uri": "crates/mcb-ast-utils/src/lib.rs"
                 },
                 "region": {}
               }
@@ -583,31 +357,8 @@
           ],
           "taxa": [
             {
-              "id": "dependencyalert",
-              "name": "dependencyalert"
-            }
-          ]
-        },
-        {
-          "ruleId": "osv-scanner:RUSTSEC-2025-0134",
-          "level": "warning",
-          "message": {
-            "text": "Package 'rustls-pemfile@2.2.0' is vulnerable to 'RUSTSEC-2025-0134'."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "Cargo.lock"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "dependencyalert",
-              "name": "dependencyalert"
+              "id": "style",
+              "name": "style"
             }
           ]
         },
@@ -644,53 +395,237 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "crates/mcb-domain/tests/integration/semantic_search_workflow.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-domain/tests/unit/constants_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
                   "uri": "crates/mcb-infrastructure/src/crypto/encryption.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/password.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/token.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/crypto/utils.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/provider_resolvers.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/resolver.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/di/dispatch_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/di/handle_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/tests/test_utils/real_providers.rs"
                 },
                 "region": {}
               }
@@ -759,144 +694,6 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/tests/unit/health_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/tests/unit/lifecycle_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/tests/unit/logging_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/tests/unit/memory_fts_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/tests/unit/memory_repository_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-language-support/src/detection.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
                   "uri": "crates/mcb-language-support/src/parser.rs"
                 },
                 "region": {}
@@ -920,7 +717,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "crates/mcb-language-support/tests/unit/parser_tests.rs"
+                  "uri": "crates/mcb-providers/src/events/nats.rs"
                 },
                 "region": {}
               }
@@ -943,7 +740,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/database/mod.rs"
+                  "uri": "crates/mcb-providers/src/git/mod.rs"
                 },
                 "region": {}
               }
@@ -966,99 +763,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/database/sqlite/executor.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/database/sqlite/provider.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/c.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/cpp.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/csharp.rs"
+                  "uri": "crates/mcb-providers/src/git/project_detection/maven.rs"
                 },
                 "region": {}
               }
@@ -1173,53 +878,237 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/kotlin.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/php.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/python.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/ruby.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/rust.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/language/swift.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vector_store/edgevec.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vector_store/milvus.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vector_store/pinecone.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vector_store/qdrant.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
                   "uri": "crates/mcb-providers/tests/unit/ddl_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/tests/unit/git2_provider_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/tests/unit/project_repository_tests.rs"
                 },
                 "region": {}
               }
@@ -1404,6 +1293,98 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-server/src/admin/web/router.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/collection_mapping.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/formatter.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/agent.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/src/handlers/index.rs"
                 },
                 "region": {}
               }
@@ -2254,6 +2235,52 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/integration/hooks_integration.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-server/tests/integration/operating_modes_integration.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
                   "uri": "crates/mcb-server/tests/test_utils/mock_services/memory.rs"
                 },
                 "region": {}
@@ -2301,29 +2328,6 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-server/tests/test_utils/test_fixtures.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/tests/tools/router_tests.rs"
                 },
                 "region": {}
               }
@@ -2623,6 +2627,52 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-validate/src/engines/rusty_rules_engine.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/generic_reporter.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/graph/dep_graph.rs"
                 },
                 "region": {}
               }
@@ -2945,6 +2995,29 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-validate/tests/unit/cargo_dependency_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/tests/unit/rule_filters_tests.rs"
                 },
                 "region": {}
               }

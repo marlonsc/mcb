@@ -15,6 +15,9 @@
 
 name: Release
 
+permissions:
+  contents: read
+
 on: # yamllint disable-line rule:truthy
   push:
     tags:
@@ -28,8 +31,12 @@ jobs:
   pre-release-checks:
     name: Pre-Release Validation
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - run: bash .github/setup-ci.sh --install-audit
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
         with:
@@ -46,6 +53,8 @@ jobs:
     name: Build Release (${{ matrix.target }})
     needs: [pre-release-checks]
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         include:
@@ -66,6 +75,8 @@ jobs:
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
@@ -109,6 +120,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0 # Full history for changelog generation
+          persist-credentials: false
 
       - name: Download all artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0

@@ -81,6 +81,30 @@ mode = "comment"
 [[plugin]]
 name = "osv-scanner"
 
+[[plugin.ignore]]
+id = "RUSTSEC-2023-0089"
+note = "atomic-polyfill unmaintained - transitive via fastembed, no fix available"
+
+[[plugin.ignore]]
+id = "RUSTSEC-2025-0119"
+note = "number_prefix unmaintained - transitive via fastembed, no fix available"
+
+[[plugin.ignore]]
+id = "RUSTSEC-2024-0436"
+note = "paste unmaintained - transitive via fastembed, author says 'finished'"
+
+[[plugin.ignore]]
+id = "CVE-2023-49092"
+note = "rsa timing attack - NO FIX AVAILABLE, not in tree"
+
+[[plugin.ignore]]
+id = "RUSTSEC-2023-0071"
+note = "rsa timing attack - same as CVE-2023-49092"
+
+[[plugin.ignore]]
+id = "RUSTSEC-2025-0134"
+note = "rustls-pemfile unmaintained - transitive via async-nats/milvus"
+
 [[plugin]]
 name = "radarlint-iac"
 mode = "monitor"
