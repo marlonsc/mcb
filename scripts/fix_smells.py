@@ -1110,60 +1110,78 @@ def report_detail(
             print(f"  L{ln:>4d} ({pc}) {rule:<25s} {msg}{fn}")
 
 
-def report_plan(  # noqa: C901
-    smells: list[Smell],
-) -> None:
+def _group_smells_by_priority(smells):
+    by_prio: dict[Priority, list[Smell]] = defaultdict(list)
+    for s in smells:
+        by_prio[s.priority].append(s)
+    return by_prio
+
+
+def _group_smells_by_file(items):
+    by_file: dict[str, list[Smell]] = defaultdict(list)
+    for itm in items:
+        by_file[itm.location.uri].append(itm)
+    return by_file
+
+
+def _print_priority_header(prio, count):
+    print(f"\n{HASH}")
+    print(f"# PRIORITY: {prio.name} ({count} items)")
+    print(HASH)
+
+
+def _print_file_header(uri, count):
+    print(f"\n{THIN}")
+    print(f"File: {uri} ({count} smells)")
+    print(THIN)
+
+
+def _print_duplicate_smell(s):
+    fnl = ""
+    if s.function_name:
+        fnl = f" `{s.function_name}`"
+    ln = s.location.start_line
+    msg = s.message[:55]
+    print(f"  ↳ Also at line {ln}{fnl}: {msg}")
+
+
+def _print_primary_smell(s):
+    print()
+    print(generate_fix_instruction(s))
+
+
+def _process_file_smells(file_smells):
+    seen: set[str] = set()
+    for s in sorted(file_smells, key=lambda x: x.location.start_line):
+        fn = s.function_name or "file"
+        key = f"{s.rule_short}:{fn}"
+        if key in seen:
+            _print_duplicate_smell(s)
+            continue
+        seen.add(key)
+        _print_primary_smell(s)
+
+
+def report_plan(smells: list[Smell]) -> None:
     """Print a prioritised refactoring plan."""
     print(SEP)
     print("REFACTORING PLAN")
     print(SEP)
 
-    by_prio: dict[Priority, list[Smell]] = defaultdict(list)
-    for s in smells:
-        by_prio[s.priority].append(s)
+    by_prio = _group_smells_by_priority(smells)
 
     for prio in Priority:
         items = by_prio.get(prio, [])
         if not items:
             continue
 
-        n = len(items)
-        print(f"\n{HASH}")
-        print(f"# PRIORITY: {prio.name} ({n} items)")
-        print(HASH)
+        _print_priority_header(prio, len(items))
+        by_file = _group_smells_by_file(items)
 
-        by_file: dict[str, list[Smell]] = defaultdict(list)
-        for itm in items:
-            by_file[itm.location.uri].append(itm)
-
-        for uri in sorted(
-            by_file,
-            key=lambda u: -len(by_file[u]),
-        ):
-            fs = by_file[uri]
-            fc = len(fs)
-            print(f"\n{THIN}")
-            print(f"File: {uri} ({fc} smells)")
-            print(THIN)
-
-            seen: set[str] = set()
-            for s in sorted(
-                fs,
-                key=lambda x: x.location.start_line,
-            ):
-                fn = s.function_name or "file"
-                key = f"{s.rule_short}:{fn}"
-                if key in seen:
-                    fnl = ""
-                    if s.function_name:
-                        fnl = f" `{s.function_name}`"
-                    ln = s.location.start_line
-                    msg = s.message[:55]
-                    print(f"  \u21b3 Also at line {ln}{fnl}: {msg}")
-                    continue
-                seen.add(key)
-                print()
-                print(generate_fix_instruction(s))
+        for uri in sorted(by_file, key=lambda u: -len(by_file[u])):
+            file_smells = by_file[uri]
+            _print_file_header(uri, len(file_smells))
+            _process_file_smells(file_smells)
 
 
 def report_json(
