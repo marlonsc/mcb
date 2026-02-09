@@ -11,23 +11,19 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
-  /* Run tests in files in parallel */
-  fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  workers: 1,
+  reporter: process.env.CI ? 'github' : 'list',
+  timeout: 30000,
   use: {
-    baseURL: process.env.MCB_BASE_URL || 'http://localhost:8080',
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    baseURL: process.env.MCB_TEST_PORT 
+      ? `http://localhost:${process.env.MCB_TEST_PORT}` 
+      : 'http://localhost:18080',
     trace: 'on-first-retry',
-    /* Screenshot on failure */
     screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
 
   /* Configure projects for major browsers */
@@ -39,10 +35,17 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: './target/release/mcb serve --server',
-    url: process.env.MCB_BASE_URL || 'http://localhost:8080',
+    command: `MCP__SERVER__TRANSPORT_MODE=http cargo run --release --bin mcb -- serve --server`,
+    url: process.env.MCB_TEST_PORT 
+      ? `http://localhost:${process.env.MCB_TEST_PORT}` 
+      : 'http://localhost:18080',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    env: {
+      'MCP__SERVER__NETWORK__PORT': process.env.MCB_TEST_PORT || '18080',
+      'MCP__SERVER__TRANSPORT_MODE': 'http',
+      'RUST_LOG': 'info',
+    },
   },
 });
 
