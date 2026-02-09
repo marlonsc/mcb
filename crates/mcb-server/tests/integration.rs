@@ -69,6 +69,11 @@ mod admin_api_integration;
 #[path = "integration/validation_fixes_e2e.rs"]
 mod validation_fixes_e2e;
 
+// Golden Admin Web UI E2E tests (v0.2.0+)
+// CRITICAL: Tests admin_rocket() production config, not just isolated web_rocket()
+#[path = "integration/golden_admin_web_e2e.rs"]
+mod golden_admin_web_e2e;
+
 // Golden tests have been moved or removed
 // #[path = "../../../tests/golden/test_end_to_end.rs"]
 // mod golden_test_end_to_end;
