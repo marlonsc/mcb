@@ -120,7 +120,7 @@ pub fn thresholds() -> &'static ValidationThresholds {
 
 // SOLID
 /// Maximum methods per trait (Interface Segregation)
-pub const MAX_TRAIT_METHODS: usize = 25;
+pub const MAX_TRAIT_METHODS: usize = 10;
 /// Maximum lines per struct definition
 pub const MAX_STRUCT_LINES: usize = 700;
 /// Maximum methods per impl block
@@ -132,7 +132,7 @@ pub const MAX_MATCH_ARMS: usize = 15;
 /// Maximum fields per struct
 pub const MAX_STRUCT_FIELDS: usize = 16;
 /// Maximum parameters per function
-pub const MAX_FUNCTION_PARAMS: usize = 8;
+pub const MAX_FUNCTION_PARAMS: usize = 5;
 /// Maximum fields in a builder pattern
 pub const MAX_BUILDER_FIELDS: usize = 7;
 /// Maximum fields in DI container
