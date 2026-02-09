@@ -126,6 +126,7 @@ async fn run_server_mode(
         metrics: app_context.performance(),
         indexing: app_context.indexing(),
         config_watcher,
+        current_config: config.clone(),
         config_path,
         shutdown_coordinator: Some(app_context.shutdown()),
         shutdown_timeout_secs: 30,

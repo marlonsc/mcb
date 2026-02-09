@@ -18,6 +18,7 @@ use mcb_domain::ports::admin::{
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::CacheProvider;
 use mcb_domain::value_objects::OperationId;
+use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use mcb_infrastructure::infrastructure::ServiceManager;
 use rocket::http::Status;
@@ -37,6 +38,8 @@ pub struct AdminState {
     pub indexing: Arc<dyn IndexingOperationsInterface>,
     /// Configuration watcher for hot-reload support
     pub config_watcher: Option<Arc<ConfigWatcher>>,
+    /// Current configuration snapshot (read-only fallback if watcher unavailable)
+    pub current_config: AppConfig,
     /// Configuration file path (for updates)
     pub config_path: Option<PathBuf>,
     /// Shutdown coordinator for graceful shutdown

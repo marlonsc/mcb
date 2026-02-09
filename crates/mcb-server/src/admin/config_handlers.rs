@@ -51,19 +51,12 @@ pub async fn get_config(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> (Status, Json<ConfigResponse>) {
-    let Some(watcher) = &state.config_watcher else {
-        return (
-            Status::ServiceUnavailable,
-            Json(ConfigResponse {
-                success: false,
-                config: SanitizedConfig::default(),
-                config_path: None,
-                last_reload: None,
-            }),
-        );
+    let config = if let Some(watcher) = &state.config_watcher {
+        watcher.get_config().await
+    } else {
+        state.current_config.clone()
     };
 
-    let config = watcher.get_config().await;
     let sanitized = SanitizedConfig::from_app_config(&config);
 
     (
@@ -72,7 +65,10 @@ pub async fn get_config(
             success: true,
             config: sanitized,
             config_path: state.config_path.as_ref().map(|p| p.display().to_string()),
-            last_reload: Some(chrono::Utc::now().to_rfc3339()),
+            last_reload: state
+                .config_watcher
+                .as_ref()
+                .map(|_| chrono::Utc::now().to_rfc3339()),
         }),
     )
 }

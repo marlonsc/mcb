@@ -88,7 +88,10 @@ test.describe('Admin API Integration Tests', () => {
     expect(response.ok()).toBeTruthy();
     
     const data = await response.json();
-    expect(data).toHaveProperty('status');
+    // Check for actual fields in IndexingStatusResponse
+    expect(data).toHaveProperty('is_indexing');
+    expect(data).toHaveProperty('active_operations');
+    expect(Array.isArray(data.operations)).toBeTruthy();
   });
 
   test('Collections endpoint should return array', async ({ request }) => {
