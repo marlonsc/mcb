@@ -8,169 +8,134 @@ use serde_json::json;
 
 use crate::test_utils::mock_services::{MockAgentSessionService, MockMemoryService};
 
-#[tokio::test]
-async fn test_session_create_success() {
-    let agent_service = MockAgentSessionService::new();
-    let memory_service = MockMemoryService::new();
-    let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
+macro_rules! session_test {
+    ($test_name:ident, $action:expr, session_id: $session_id:expr, expect_ok) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let agent_service = MockAgentSessionService::new();
+            let memory_service = MockMemoryService::new();
+            let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
 
-    let args = SessionArgs {
-        action: SessionAction::Create,
-        session_id: None,
-        data: Some(json!({
-            "session_summary_id": "summary-123",
-            "model": "claude-3-sonnet",
-            "project_id": "test-project"
-        })),
-        project_id: Some("test-project".to_string()),
-        agent_type: Some("explore".to_string()),
-        status: None,
-        limit: None,
+            let args = SessionArgs {
+                action: $action,
+                session_id: Some($session_id),
+                data: None,
+                project_id: None,
+                agent_type: None,
+                status: None,
+                limit: None,
+            };
+
+            let result = handler.handle(Parameters(args)).await;
+            assert!(result.is_ok());
+            let _response = result.expect("Expected response");
+        }
     };
 
-    let result = handler.handle(Parameters(args)).await;
+    ($test_name:ident, $action:expr, data: $data:expr, $(project_id: $project_id:expr,)? $(agent_type: $agent_type:expr,)? expect_ok) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let agent_service = MockAgentSessionService::new();
+            let memory_service = MockMemoryService::new();
+            let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
+            let args = SessionArgs {
+                action: $action,
+                session_id: None,
+                data: Some($data),
+                project_id: None $(.or($project_id))?,
+                agent_type: None $(.or($agent_type))?,
+                status: None,
+                limit: None,
+            };
 
-#[tokio::test]
-async fn test_session_create_missing_data() {
-    let agent_service = MockAgentSessionService::new();
-    let memory_service = MockMemoryService::new();
-    let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
-
-    let args = SessionArgs {
-        action: SessionAction::Create,
-        session_id: None,
-        data: None,
-        project_id: Some("test-project".to_string()),
-        agent_type: Some("explore".to_string()),
-        status: None,
-        limit: None,
+            let result = handler.handle(Parameters(args)).await;
+            assert!(result.is_ok());
+            let response = result.expect("Expected successful response");
+            assert!(!response.is_error.unwrap_or(false));
+        }
     };
 
-    let result = handler.handle(Parameters(args)).await;
+    ($test_name:ident, $action:expr, data: $data:expr, $(project_id: $project_id:expr,)? $(agent_type: $agent_type:expr,)? expect_error) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let agent_service = MockAgentSessionService::new();
+            let memory_service = MockMemoryService::new();
+            let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Missing data should return error"
-    );
-}
+            let args = SessionArgs {
+                action: $action,
+                session_id: None,
+                data: $data,
+                project_id: None $(.or($project_id))?,
+                agent_type: None $(.or($agent_type))?,
+                status: None,
+                limit: None,
+            };
 
-#[tokio::test]
-async fn test_session_create_invalid_data() {
-    let agent_service = MockAgentSessionService::new();
-    let memory_service = MockMemoryService::new();
-    let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
-
-    let args = SessionArgs {
-        action: SessionAction::Create,
-        session_id: None,
-        data: Some(json!("not an object")),
-        project_id: Some("test-project".to_string()),
-        agent_type: Some("explore".to_string()),
-        status: None,
-        limit: None,
+            let result = handler.handle(Parameters(args)).await;
+            assert!(result.is_ok());
+            let response = result.expect("Expected response");
+            assert!(response.is_error.unwrap_or(false), "Should return error");
+        }
     };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Invalid data should return error"
-    );
 }
 
-#[tokio::test]
-async fn test_session_get_success() {
-    let agent_service = MockAgentSessionService::new();
-    let memory_service = MockMemoryService::new();
-    let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
+session_test!(
+    test_session_create_success,
+    SessionAction::Create,
+    data: json!({
+        "session_summary_id": "summary-123",
+        "model": "claude-3-sonnet",
+        "project_id": "test-project"
+    }),
+    project_id: Some("test-project".to_string()),
+    agent_type: Some("explore".to_string()),
+    expect_ok
+);
 
-    let args = SessionArgs {
-        action: SessionAction::Get,
-        session_id: Some(SessionId::new("test-session-id")),
-        data: None,
-        project_id: None,
-        agent_type: None,
-        status: None,
-        limit: None,
-    };
+session_test!(
+    test_session_create_missing_data,
+    SessionAction::Create,
+    data: None,
+    project_id: Some("test-project".to_string()),
+    agent_type: Some("explore".to_string()),
+    expect_error
+);
 
-    let result = handler.handle(Parameters(args)).await;
+session_test!(
+    test_session_create_invalid_data,
+    SessionAction::Create,
+    data: Some(json!("not an object")),
+    project_id: Some("test-project".to_string()),
+    agent_type: Some("explore".to_string()),
+    expect_error
+);
 
-    assert!(result.is_ok());
-    let _response = result.expect("Expected response");
-}
+session_test!(
+    test_session_get_success,
+    SessionAction::Get,
+    session_id: SessionId::new("test-session-id"),
+    expect_ok
+);
 
-#[tokio::test]
-async fn test_session_get_nonexistent_session() {
-    let agent_service = MockAgentSessionService::new();
-    let memory_service = MockMemoryService::new();
-    let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
+session_test!(
+    test_session_get_nonexistent_session,
+    SessionAction::Get,
+    session_id: SessionId::new("nonexistent-session"),
+    expect_ok
+);
 
-    let args = SessionArgs {
-        action: SessionAction::Get,
-        session_id: Some(SessionId::new("nonexistent-session")),
-        data: None,
-        project_id: None,
-        agent_type: None,
-        status: None,
-        limit: None,
-    };
+session_test!(
+    test_session_summarize_success,
+    SessionAction::Summarize,
+    session_id: SessionId::new("test-session-id"),
+    expect_ok
+);
 
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let _response = result.expect("Expected response");
-}
-
-#[tokio::test]
-async fn test_session_summarize_success() {
-    let agent_service = MockAgentSessionService::new();
-    let memory_service = MockMemoryService::new();
-    let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
-
-    let args = SessionArgs {
-        action: SessionAction::Summarize,
-        session_id: Some(SessionId::new("test-session-id")),
-        data: None,
-        project_id: None,
-        agent_type: None,
-        status: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let _response = result.expect("Expected response");
-}
-
-#[tokio::test]
-async fn test_session_summarize_nonexistent_session() {
-    let agent_service = MockAgentSessionService::new();
-    let memory_service = MockMemoryService::new();
-    let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
-
-    let args = SessionArgs {
-        action: SessionAction::Summarize,
-        session_id: Some(SessionId::new("nonexistent-session")),
-        data: None,
-        project_id: None,
-        agent_type: None,
-        status: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let _response = result.expect("Expected response");
-}
+session_test!(
+    test_session_summarize_nonexistent_session,
+    SessionAction::Summarize,
+    session_id: SessionId::new("nonexistent-session"),
+    expect_ok
+);
