@@ -6,7 +6,8 @@ use mcb_server::builder::{BuilderError, McpServerBuilder};
 
 use crate::test_utils::mock_services::{
     MockAgentSessionService, MockContextService, MockIndexingService, MockMemoryService,
-    MockProjectService, MockSearchService, MockValidationService, MockVcsProvider,
+    MockProjectService, MockProjectWorkflowService, MockSearchService, MockValidationService,
+    MockVcsProvider,
 };
 
 #[test]
@@ -28,6 +29,7 @@ fn test_builder_all_services_provided() {
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
         .with_project_service(Arc::new(MockProjectService::new()))
+        .with_project_workflow_service(Arc::new(MockProjectWorkflowService::new()))
         .build();
 
     assert!(result.is_ok());
@@ -167,6 +169,7 @@ fn test_try_build_success() {
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
         .with_project_service(Arc::new(MockProjectService::new()))
+        .with_project_workflow_service(Arc::new(MockProjectWorkflowService::new()))
         .build();
 
     assert!(server.is_ok());
