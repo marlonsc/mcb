@@ -20,26 +20,26 @@ services:
       timeout: 5s
       retries: 3
 
-  # Ollama for embeddings
-  ollama:
-    image: ollama/ollama:latest
-    container_name: mcp-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-      - ./tests/docker/init-ollama.sh:/init-ollama.sh:ro
-    networks:
-      - mcp-test
-    environment:
-      - OLLAMA_HOST=0.0.0.0
-      - OLLAMA_KEEP_ALIVE=24h
-    healthcheck:
-      test: ["CMD", "ollama", "list", "|", "grep", "nomic-embed-text"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-    command: ["sh", "-c", "serve & /init-ollama.sh && wait"]
+#  # Ollama for embeddings
+#  ollama:
+#    image: ollama/ollama:latest
+#    container_name: mcp-ollama
+#    ports:
+#      - "11434:11434"
+#    volumes:
+#      - ollama_data:/root/.ollama
+#      - ./tests/docker/init-ollama.sh:/init-ollama.sh:ro
+#    networks:
+#      - mcp-test
+#    environment:
+#      - OLLAMA_HOST=0.0.0.0
+#      - OLLAMA_KEEP_ALIVE=24h
+#    healthcheck:
+#      test: ["CMD", "ollama", "list", "|", "grep", "nomic-embed-text"]
+#      interval: 15s
+#      timeout: 10s
+#      retries: 10
+#    command: ["sh", "-c", "serve & /init-ollama.sh && wait"]
 
   # Redis - Cache layer
   redis:
@@ -160,7 +160,8 @@ services:
     environment:
       # Internal services (Docker network)
       - OPENAI_BASE_URL=http://mcp-openai-mock:1080
-      - OLLAMA_BASE_URL=http://mcp-ollama:11434
+      # - OLLAMA_BASE_URL=http://mcp-ollama:11434
+      - OLLAMA_BASE_URL=http://localhost:11434
       - MILVUS_ADDRESS=http://mcp-milvus-standalone:19530
       - REDIS_URL=redis://mcp-redis:6379
       - NATS_URL=nats://mcp-nats:4222
@@ -176,8 +177,8 @@ services:
     depends_on:
       openai-mock:
         condition: service_healthy
-      ollama:
-        condition: service_healthy
+      #ollama:
+      #  condition: service_healthy
       milvus-standalone:
         condition: service_healthy
       redis:
