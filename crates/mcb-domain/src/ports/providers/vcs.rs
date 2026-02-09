@@ -47,4 +47,16 @@ pub trait VcsProvider: Send + Sync {
         base_ref: &str,
         head_ref: &str,
     ) -> Result<RefDiff>;
+
+    /// Discover and list repositories under a root path
+    ///
+    /// Scans the given root directory for VCS repositories (e.g., directories containing `.git`).
+    /// Returns a list of discovered repositories.
+    ///
+    /// # Arguments
+    /// * `root` - Root directory to scan for repositories
+    ///
+    /// # Returns
+    /// Vector of discovered repositories, or empty vector if none found.
+    async fn list_repositories(&self, root: &Path) -> Result<Vec<VcsRepository>>;
 }

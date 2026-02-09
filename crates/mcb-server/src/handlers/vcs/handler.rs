@@ -34,7 +34,9 @@ impl VcsHandler {
             .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
 
         match args.action {
-            VcsAction::ListRepositories => list_repos::list_repositories().await,
+            VcsAction::ListRepositories => {
+                list_repos::list_repositories(&self.vcs_provider, &args).await
+            }
             VcsAction::IndexRepository => {
                 index_repo::index_repository(&self.vcs_provider, &args).await
             }
