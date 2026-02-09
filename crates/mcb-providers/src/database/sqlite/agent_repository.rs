@@ -9,6 +9,7 @@ use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
+use mcb_domain::utils::mask_id;
 use tracing::debug;
 
 use super::row_convert;
@@ -82,7 +83,7 @@ impl AgentRepository for SqliteAgentRepository {
             )
             .await?;
 
-        debug!("Stored agent session: {}", session.id);
+        debug!("Stored agent session: {}", mask_id(session.id.as_str()));
         Ok(())
     }
 
@@ -158,7 +159,7 @@ impl AgentRepository for SqliteAgentRepository {
             )
             .await?;
 
-        debug!("Updated agent session: {}", session.id);
+        debug!("Updated agent session: {}", mask_id(session.id.as_str()));
         Ok(())
     }
 

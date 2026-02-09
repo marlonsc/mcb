@@ -156,6 +156,15 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     fn provider_name(&self) -> &str {
         "milvus"
     }
+
+    async fn health_check(&self) -> Result<()> {
+        // Try to list collections as a health check - lighter than creating a test collection
+        Self::map_milvus_error(
+            self.client.list_collections().await,
+            "health check (list collections)",
+        )?;
+        Ok(())
+    }
 }
 
 impl MilvusVectorStoreProvider {

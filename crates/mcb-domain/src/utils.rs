@@ -10,3 +10,15 @@ pub fn compute_content_hash(content: &str) -> String {
     hasher.update(content.as_bytes());
     hex::encode(hasher.finalize())
 }
+
+/// Mask sensitive ID for logging
+///
+/// Shows first 8 chars + "..." to allow correlation while protecting full ID.
+/// Example: "ses_abc123def456" -> "ses_abc1..."
+pub fn mask_id(id: &str) -> String {
+    if id.len() <= 8 {
+        id.to_string()
+    } else {
+        format!("{}...", &id[..8])
+    }
+}

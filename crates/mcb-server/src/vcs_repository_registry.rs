@@ -107,3 +107,16 @@ pub fn lookup_repository_path(repository_id: &RepositoryId) -> Result<PathBuf> {
         .cloned()
         .ok_or_else(|| Error::repository_not_found(repository_id.to_string()))
 }
+
+/// List all registered repositories.
+///
+/// # Returns
+/// * `Vec<(RepositoryId, PathBuf)>` - List of registered repositories with their IDs and paths
+pub fn list_repositories() -> Result<Vec<(RepositoryId, PathBuf)>> {
+    let _guard = FileLockGuard::acquire()?;
+    let registry_path = registry_path()?;
+    let registry = load_registry(&registry_path)?;
+    let mut repos: Vec<_> = registry.repositories.into_iter().collect();
+    repos.sort_by(|a, b| a.0.as_str().cmp(b.0.as_str()));
+    Ok(repos)
+}

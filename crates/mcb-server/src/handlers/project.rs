@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use mcb_domain::constants::keys::{ID, NAME, STATUS};
 use mcb_domain::entities::project::{
     DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus,
 };
@@ -56,7 +57,7 @@ impl ProjectHandler {
 
             // Phase Operations
             (ProjectAction::Create, ProjectResource::Phase) => {
-                let name = get_string(&data, "name")?;
+                let name = get_string(&data, NAME)?;
                 let description = get_string(&data, "description")?;
                 let id = self
                     .service
@@ -68,10 +69,10 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Update, ProjectResource::Phase) => {
-                let id = get_string(&data, "id")?;
-                let name = get_opt_string(&data, "name");
+                let id = get_string(&data, ID)?;
+                let name = get_opt_string(&data, NAME);
                 let description = get_opt_string(&data, "description");
-                let status = if let Some(s) = get_opt_string(&data, "status") {
+                let status = if let Some(s) = get_opt_string(&data, STATUS) {
                     Some(
                         s.parse::<PhaseStatus>()
                             .map_err(|e| McpError::invalid_params(e, None))?,
@@ -101,7 +102,7 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Delete, ProjectResource::Phase) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 self.service.delete_phase(&id).await.map_err(to_mcp_error)?;
                 Ok(CallToolResult::success(vec![rmcp::model::Content::text(
                     format!("Deleted phase: {}", id),
@@ -139,10 +140,10 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Update, ProjectResource::Issue) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 let title = get_opt_string(&data, "title");
                 let description = get_opt_string(&data, "description");
-                let status = if let Some(s) = get_opt_string(&data, "status") {
+                let status = if let Some(s) = get_opt_string(&data, STATUS) {
                     Some(
                         s.parse::<IssueStatus>()
                             .map_err(|e| McpError::invalid_params(e, None))?,
@@ -183,7 +184,7 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Delete, ProjectResource::Issue) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 self.service.delete_issue(&id).await.map_err(to_mcp_error)?;
                 Ok(CallToolResult::success(vec![rmcp::model::Content::text(
                     format!("Deleted issue: {}", id),
@@ -209,7 +210,7 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Delete, ProjectResource::Dependency) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 self.service
                     .remove_dependency(&id)
                     .await
@@ -265,7 +266,7 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Delete, ProjectResource::Decision) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 self.service
                     .delete_decision(&id)
                     .await
@@ -347,12 +348,20 @@ mod tests {
 
     struct MockProjectService {
         projects: Mutex<Vec<Project>>,
+        phases: Mutex<Vec<ProjectPhase>>,
+        issues: Mutex<Vec<ProjectIssue>>,
+        dependencies: Mutex<Vec<ProjectDependency>>,
+        decisions: Mutex<Vec<ProjectDecision>>,
     }
 
     impl MockProjectService {
         fn new() -> Self {
             Self {
                 projects: Mutex::new(Vec::new()),
+                phases: Mutex::new(Vec::new()),
+                issues: Mutex::new(Vec::new()),
+                dependencies: Mutex::new(Vec::new()),
+                decisions: Mutex::new(Vec::new()),
             }
         }
     }
@@ -377,92 +386,235 @@ mod tests {
 
         async fn create_phase(
             &self,
-            _project_id: &str,
-            _name: String,
-            _description: String,
+            project_id: &str,
+            name: String,
+            description: String,
         ) -> Result<String> {
-            unimplemented!()
+            let id = uuid::Uuid::new_v4().to_string();
+            let mut phases = self.phases.lock().unwrap();
+            let sequence = phases.iter().filter(|p| p.project_id == project_id).count() as i32 + 1;
+            phases.push(ProjectPhase {
+                id: id.clone(),
+                project_id: project_id.to_string(),
+                name,
+                description,
+                sequence,
+                status: PhaseStatus::Planned,
+                started_at: None,
+                completed_at: None,
+                created_at: 0,
+                updated_at: 0,
+            });
+            Ok(id)
         }
         async fn update_phase(
             &self,
-            _id: &str,
-            _name: Option<String>,
-            _description: Option<String>,
-            _status: Option<PhaseStatus>,
+            id: &str,
+            name: Option<String>,
+            description: Option<String>,
+            status: Option<PhaseStatus>,
         ) -> Result<()> {
-            unimplemented!()
+            let mut phases = self.phases.lock().unwrap();
+            let phase = phases.iter_mut().find(|p| p.id == id).ok_or_else(|| {
+                mcb_domain::error::Error::NotFound {
+                    resource: format!("Phase {}", id),
+                }
+            })?;
+            if let Some(n) = name {
+                phase.name = n;
+            }
+            if let Some(d) = description {
+                phase.description = d;
+            }
+            if let Some(s) = status {
+                phase.status = s;
+            }
+            phase.updated_at = 1;
+            Ok(())
         }
-        async fn list_phases(&self, _project_id: &str) -> Result<Vec<ProjectPhase>> {
-            unimplemented!()
+        async fn list_phases(&self, project_id: &str) -> Result<Vec<ProjectPhase>> {
+            let phases = self.phases.lock().unwrap();
+            Ok(phases
+                .iter()
+                .filter(|p| p.project_id == project_id)
+                .cloned()
+                .collect())
         }
-        async fn delete_phase(&self, _id: &str) -> Result<()> {
-            unimplemented!()
+        async fn delete_phase(&self, id: &str) -> Result<()> {
+            let mut phases = self.phases.lock().unwrap();
+            phases.retain(|p| p.id != id);
+            Ok(())
         }
         async fn create_issue(
             &self,
-            _project_id: &str,
-            _title: String,
-            _description: String,
-            _issue_type: IssueType,
-            _priority: i32,
-            _phase_id: Option<String>,
-            _assignee: Option<String>,
-            _labels: Vec<String>,
+            project_id: &str,
+            title: String,
+            description: String,
+            issue_type: IssueType,
+            priority: i32,
+            phase_id: Option<String>,
+            assignee: Option<String>,
+            labels: Vec<String>,
         ) -> Result<String> {
-            unimplemented!()
+            let id = uuid::Uuid::new_v4().to_string();
+            let mut issues = self.issues.lock().unwrap();
+            issues.push(ProjectIssue {
+                id: id.clone(),
+                project_id: project_id.to_string(),
+                title,
+                description,
+                issue_type,
+                status: IssueStatus::Open,
+                priority,
+                phase_id,
+                assignee,
+                labels,
+                created_at: 0,
+                updated_at: 0,
+                closed_at: None,
+            });
+            Ok(id)
         }
         async fn update_issue(
             &self,
-            _id: &str,
-            _title: Option<String>,
-            _description: Option<String>,
-            _status: Option<IssueStatus>,
-            _priority: Option<i32>,
-            _assignee: Option<String>,
-            _labels: Option<Vec<String>>,
+            id: &str,
+            title: Option<String>,
+            description: Option<String>,
+            status: Option<IssueStatus>,
+            priority: Option<i32>,
+            assignee: Option<String>,
+            labels: Option<Vec<String>>,
         ) -> Result<()> {
-            unimplemented!()
+            let mut issues = self.issues.lock().unwrap();
+            let issue = issues.iter_mut().find(|i| i.id == id).ok_or_else(|| {
+                mcb_domain::error::Error::NotFound {
+                    resource: format!("Issue {}", id),
+                }
+            })?;
+            if let Some(t) = title {
+                issue.title = t;
+            }
+            if let Some(d) = description {
+                issue.description = d;
+            }
+            if let Some(s) = status {
+                issue.status = s;
+            }
+            if let Some(p) = priority {
+                issue.priority = p;
+            }
+            if let Some(a) = assignee {
+                issue.assignee = Some(a);
+            }
+            if let Some(l) = labels {
+                issue.labels = l;
+            }
+            issue.updated_at = 1;
+            Ok(())
         }
         async fn list_issues(
             &self,
-            _project_id: &str,
-            _filter: Option<IssueFilter>,
+            project_id: &str,
+            filter: Option<IssueFilter>,
         ) -> Result<Vec<ProjectIssue>> {
-            unimplemented!()
+            let issues = self.issues.lock().unwrap();
+            let mut result: Vec<ProjectIssue> = issues
+                .iter()
+                .filter(|i| i.project_id == project_id)
+                .cloned()
+                .collect();
+            if let Some(f) = filter {
+                if let Some(s) = f.status {
+                    result.retain(|i| i.status == s);
+                }
+                if let Some(t) = f.issue_type {
+                    result.retain(|i| i.issue_type == t);
+                }
+                if let Some(p) = f.phase_id {
+                    result.retain(|i| i.phase_id.as_ref() == Some(&p));
+                }
+                if let Some(a) = f.assignee {
+                    result.retain(|i| i.assignee.as_ref() == Some(&a));
+                }
+            }
+            Ok(result)
         }
-        async fn delete_issue(&self, _id: &str) -> Result<()> {
-            unimplemented!()
+        async fn delete_issue(&self, id: &str) -> Result<()> {
+            let mut issues = self.issues.lock().unwrap();
+            issues.retain(|i| i.id != id);
+            Ok(())
         }
         async fn add_dependency(
             &self,
-            _from_issue_id: String,
-            _to_issue_id: String,
-            _dependency_type: DependencyType,
+            from_issue_id: String,
+            to_issue_id: String,
+            dependency_type: DependencyType,
         ) -> Result<String> {
-            unimplemented!()
+            let id = uuid::Uuid::new_v4().to_string();
+            let mut deps = self.dependencies.lock().unwrap();
+            deps.push(ProjectDependency {
+                id: id.clone(),
+                from_issue_id,
+                to_issue_id,
+                dependency_type,
+                created_at: 0,
+            });
+            Ok(id)
         }
-        async fn remove_dependency(&self, _id: &str) -> Result<()> {
-            unimplemented!()
+        async fn remove_dependency(&self, id: &str) -> Result<()> {
+            let mut deps = self.dependencies.lock().unwrap();
+            deps.retain(|d| d.id != id);
+            Ok(())
         }
-        async fn list_dependencies(&self, _project_id: &str) -> Result<Vec<ProjectDependency>> {
-            unimplemented!()
+        async fn list_dependencies(&self, project_id: &str) -> Result<Vec<ProjectDependency>> {
+            let deps = self.dependencies.lock().unwrap();
+            let issues = self.issues.lock().unwrap();
+            let project_issue_ids: Vec<String> = issues
+                .iter()
+                .filter(|i| i.project_id == project_id)
+                .map(|i| i.id.clone())
+                .collect();
+            Ok(deps
+                .iter()
+                .filter(|d| project_issue_ids.contains(&d.from_issue_id))
+                .cloned()
+                .collect())
         }
         async fn create_decision(
             &self,
-            _project_id: &str,
-            _title: String,
-            _context: String,
-            _decision: String,
-            _consequences: String,
-            _issue_id: Option<String>,
+            project_id: &str,
+            title: String,
+            context: String,
+            decision: String,
+            consequences: String,
+            issue_id: Option<String>,
         ) -> Result<String> {
-            unimplemented!()
+            let id = uuid::Uuid::new_v4().to_string();
+            let mut decisions = self.decisions.lock().unwrap();
+            decisions.push(ProjectDecision {
+                id: id.clone(),
+                project_id: project_id.to_string(),
+                title,
+                context,
+                decision,
+                consequences,
+                issue_id,
+                created_at: 0,
+            });
+            Ok(id)
         }
-        async fn list_decisions(&self, _project_id: &str) -> Result<Vec<ProjectDecision>> {
-            unimplemented!()
+        async fn list_decisions(&self, project_id: &str) -> Result<Vec<ProjectDecision>> {
+            let decisions = self.decisions.lock().unwrap();
+            Ok(decisions
+                .iter()
+                .filter(|d| d.project_id == project_id)
+                .cloned()
+                .collect())
         }
-        async fn delete_decision(&self, _id: &str) -> Result<()> {
-            unimplemented!()
+        async fn delete_decision(&self, id: &str) -> Result<()> {
+            let mut decisions = self.decisions.lock().unwrap();
+            decisions.retain(|d| d.id != id);
+            Ok(())
         }
     }
 

@@ -6,6 +6,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use mcb_domain::constants::keys::{
+    METADATA_KEY_END_LINE, METADATA_KEY_FILE_PATH, METADATA_KEY_START_LINE,
+};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{CacheEntryConfig, EmbeddingProvider, VectorStoreProvider};
@@ -30,10 +33,10 @@ mod cache_keys {
 fn build_chunk_metadata(chunk: &CodeChunk) -> HashMap<String, serde_json::Value> {
     HashMap::from([
         ("id".to_string(), json!(chunk.id)),
-        ("file_path".to_string(), json!(chunk.file_path)),
+        (METADATA_KEY_FILE_PATH.to_string(), json!(chunk.file_path)),
         ("content".to_string(), json!(chunk.content)),
-        ("start_line".to_string(), json!(chunk.start_line)),
-        ("end_line".to_string(), json!(chunk.end_line)),
+        (METADATA_KEY_START_LINE.to_string(), json!(chunk.start_line)),
+        (METADATA_KEY_END_LINE.to_string(), json!(chunk.end_line)),
         ("language".to_string(), json!(chunk.language)),
     ])
 }

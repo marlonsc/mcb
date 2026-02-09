@@ -1,5 +1,9 @@
-pub const METADATA_KEY_START_LINE: &str = "start_line";
-pub const METADATA_KEY_END_LINE: &str = "end_line";
-pub const METADATA_KEY_CHUNK_TYPE: &str = "chunk_type";
-pub const METADATA_KEY_FILE_PATH: &str = "file_path";
-pub const METADATA_KEY_VECTORS_COUNT: &str = "vectors_count";
+//! Re-exports metadata constants from domain layer.
+//!
+//! These constants were moved to mcb-domain to fix layering.
+//! Infrastructure should import domain constants, not define its own.
+
+pub use mcb_domain::constants::keys::{
+    METADATA_KEY_CHUNK_TYPE, METADATA_KEY_END_LINE, METADATA_KEY_FILE_PATH,
+    METADATA_KEY_START_LINE, METADATA_KEY_VECTORS_COUNT,
+};
