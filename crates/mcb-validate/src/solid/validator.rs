@@ -411,22 +411,24 @@ impl SolidValidator {
         Ok(violations)
     }
 
-    /// Count methods in an impl block
-    fn count_impl_methods(&self, lines: &[&str], start_line: usize, fn_pattern: &Regex) -> usize {
+    /// Generic helper: iterate over lines within a brace-delimited block
+    fn within_block<F>(&self, lines: &[&str], start_line: usize, mut visitor: F)
+    where
+        F: FnMut(&str, usize) -> bool,
+    {
         let mut brace_depth = 0;
-        let mut in_impl = false;
-        let mut method_count = 0;
+        let mut in_block = false;
 
-        for line in &lines[start_line..] {
+        for (idx, line) in lines[start_line..].iter().enumerate() {
             if line.contains('{') {
-                in_impl = true;
+                in_block = true;
             }
-            if in_impl {
+            if in_block {
                 brace_depth += line.chars().filter(|c| *c == '{').count();
                 brace_depth -= line.chars().filter(|c| *c == '}').count();
 
-                if fn_pattern.is_match(line) {
-                    method_count += 1;
+                if !visitor(line, idx) {
+                    break;
                 }
 
                 if brace_depth == 0 {
@@ -434,8 +436,18 @@ impl SolidValidator {
                 }
             }
         }
+    }
 
-        method_count
+    /// Count methods in an impl block
+    fn count_impl_methods(&self, lines: &[&str], start_line: usize, fn_pattern: &Regex) -> usize {
+        let mut count = 0;
+        self.within_block(lines, start_line, |line, _| {
+            if fn_pattern.is_match(line) {
+                count += 1;
+            }
+            true
+        });
+        count
     }
 
     /// Count string match arms
@@ -445,111 +457,57 @@ impl SolidValidator {
         start_line: usize,
         string_arm_pattern: &Regex,
     ) -> usize {
-        let mut brace_depth = 0;
-        let mut in_match = false;
-        let mut arm_count = 0;
-
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_match = true;
+        let mut count = 0;
+        self.within_block(lines, start_line, |line, _| {
+            if string_arm_pattern.is_match(line) {
+                count += 1;
             }
-            if in_match {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-
-                if string_arm_pattern.is_match(line) {
-                    arm_count += 1;
-                }
-
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
-        arm_count
+            true
+        });
+        count
     }
 
     /// Count lines in a code block (impl, struct, etc.)
     fn count_block_lines(&self, lines: &[&str], start_line: usize) -> usize {
-        let mut brace_depth = 0;
-        let mut in_block = false;
         let mut count = 0;
-
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_block = true;
-            }
-            if in_block {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-                count += 1;
-
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
+        self.within_block(lines, start_line, |_, _| {
+            count += 1;
+            true
+        });
         count
     }
 
     /// Count match arms in a match statement
     fn count_match_arms(&self, lines: &[&str], start_line: usize) -> usize {
-        let mut brace_depth = 0;
-        let mut in_match = false;
-        let mut arm_count = 0;
         let arrow_pattern = PATTERNS
             .get("SOLID003.match_arrow")
             .expect("Pattern SOLID003.match_arrow not found");
 
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_match = true;
+        let mut count = 0;
+        let mut brace_depth = 0;
+
+        self.within_block(lines, start_line, |line, _| {
+            brace_depth += line.chars().filter(|c| *c == '{').count();
+            brace_depth -= line.chars().filter(|c| *c == '}').count();
+
+            if arrow_pattern.is_match(line) && brace_depth >= 1 {
+                count += 1;
             }
-            if in_match {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-
-                // Count arrows (match arms)
-                if arrow_pattern.is_match(line) && brace_depth >= 1 {
-                    arm_count += 1;
-                }
-
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
-        arm_count
+            true
+        });
+        count
     }
 
     /// Count methods in a trait definition
     fn count_trait_methods(&self, lines: &[&str], start_line: usize, fn_pattern: &Regex) -> usize {
-        let mut brace_depth = 0;
-        let mut in_trait = false;
-        let mut method_count = 0;
-
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_trait = true;
+        let mut count = 0;
+        self.within_block(lines, start_line, |line, _| {
+            if fn_pattern.is_match(line) {
+                count += 1;
             }
-            if in_trait {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-
-                if fn_pattern.is_match(line) {
-                    method_count += 1;
-                }
-
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
-        method_count
+            true
+        });
+        count
     }
 
     /// Check if structs seem related (share common prefix/suffix)
