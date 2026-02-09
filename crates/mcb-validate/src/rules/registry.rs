@@ -145,6 +145,68 @@ impl RuleRegistry {
     }
 }
 
+/// Helper: Create architecture rule with empty config
+fn arch_rule(id: &str, name: &str, description: &str, rationale: &str, severity: Severity) -> Rule {
+    Rule {
+        id: id.into(),
+        name: name.into(),
+        category: ViolationCategory::Architecture,
+        default_severity: severity,
+        description: description.into(),
+        rationale: rationale.into(),
+        enabled: true,
+        config: HashMap::new(),
+    }
+}
+
+/// Helper: Create DI rule with empty config
+fn di_rule(id: &str, name: &str, description: &str, rationale: &str, severity: Severity) -> Rule {
+    Rule {
+        id: id.into(),
+        name: name.into(),
+        category: ViolationCategory::DependencyInjection,
+        default_severity: severity,
+        description: description.into(),
+        rationale: rationale.into(),
+        enabled: true,
+        config: HashMap::new(),
+    }
+}
+
+/// Helper: Create config rule with empty config
+fn config_rule(
+    id: &str,
+    name: &str,
+    description: &str,
+    rationale: &str,
+    severity: Severity,
+) -> Rule {
+    Rule {
+        id: id.into(),
+        name: name.into(),
+        category: ViolationCategory::Configuration,
+        default_severity: severity,
+        description: description.into(),
+        rationale: rationale.into(),
+        enabled: true,
+        config: HashMap::new(),
+    }
+}
+
+/// Helper: Create web framework rule with empty config
+fn web_rule(id: &str, name: &str, description: &str, rationale: &str, severity: Severity) -> Rule {
+    Rule {
+        id: id.into(),
+        name: name.into(),
+        category: ViolationCategory::WebFramework,
+        default_severity: severity,
+        description: description.into(),
+        rationale: rationale.into(),
+        enabled: true,
+        config: HashMap::new(),
+    }
+}
+
 /// Clean Architecture rules
 pub fn clean_architecture_rules() -> Vec<Rule> {
     vec![
@@ -178,46 +240,34 @@ pub fn clean_architecture_rules() -> Vec<Rule> {
                 ("allowed".into(), RuleConfigValue::from(vec![] as Vec<&str>)),
             ]),
         },
-        Rule {
-            id: "CA003".into(),
-            name: "Domain Contains Only Traits".into(),
-            category: ViolationCategory::Architecture,
-            default_severity: Severity::Error,
-            description: "Domain layer should only contain traits and value objects".into(),
-            rationale: "Implementations belong in infrastructure/providers layers".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
-        Rule {
-            id: "CA004".into(),
-            name: "Handler Dependency Injection".into(),
-            category: ViolationCategory::Architecture,
-            default_severity: Severity::Error,
-            description: "Handlers must receive dependencies via injection, not create them".into(),
-            rationale: "Direct instantiation couples handlers to concrete implementations".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
-        Rule {
-            id: "CA005".into(),
-            name: "Entity Identity Marker".into(),
-            category: ViolationCategory::Architecture,
-            default_severity: Severity::Warning,
-            description: "Entities should have an identity field (id, uuid)".into(),
-            rationale: "Entities are defined by their identity, not their attributes".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
-        Rule {
-            id: "CA006".into(),
-            name: "Value Object Immutability".into(),
-            category: ViolationCategory::Architecture,
-            default_severity: Severity::Error,
-            description: "Value objects must be immutable".into(),
-            rationale: "Value objects are defined by their attributes and should not change".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
+        arch_rule(
+            "CA003",
+            "Domain Contains Only Traits",
+            "Domain must contain only trait definitions, not implementations",
+            "Ports (traits) belong in domain; adapters (impls) belong in infrastructure",
+            Severity::Error,
+        ),
+        arch_rule(
+            "CA004",
+            "Infrastructure Depends on Application",
+            "Infrastructure crate must depend only on application and domain",
+            "Infrastructure implements application ports",
+            Severity::Error,
+        ),
+        arch_rule(
+            "CA005",
+            "No Concrete Types in Domain",
+            "Domain services should depend on traits, not concrete types",
+            "Dependency Inversion Principle: depend on abstractions",
+            Severity::Warning,
+        ),
+        arch_rule(
+            "CA006",
+            "Value Object Immutability",
+            "Value objects must be immutable",
+            "Value objects are defined by their attributes and should not change",
+            Severity::Error,
+        ),
     ]
 }
 
@@ -255,16 +305,13 @@ pub fn layer_boundary_rules() -> Vec<Rule> {
                 ),
             ]),
         },
-        Rule {
-            id: "LAYER002".into(),
-            name: "Circular Dependency".into(),
-            category: ViolationCategory::Architecture,
-            default_severity: Severity::Error,
-            description: "Circular dependency detected between crates".into(),
-            rationale: "Circular dependencies indicate architectural problems".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
+        arch_rule(
+            "LAYER002",
+            "Circular Dependency",
+            "Circular dependency detected between crates",
+            "Circular dependencies indicate architectural problems",
+            Severity::Error,
+        ),
         Rule {
             id: "LAYER003".into(),
             name: "Domain External Dependency".into(),
@@ -373,28 +420,20 @@ pub fn linkme_rules() -> Vec<Rule> {
             "Code still uses inventory::submit! or inventory::collect!",
             "inventory crate is being replaced by linkme for simpler plugin registration",
         ),
-        Rule {
-            id: "LINKME002".into(),
-            name: "Linkme Slice Declaration".into(),
-            category: ViolationCategory::DependencyInjection,
-            default_severity: Severity::Warning,
-            description: "Provider registry missing #[linkme::distributed_slice] declaration"
-                .into(),
-            rationale: "All provider registries must use linkme distributed slices".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
-        Rule {
-            id: "LINKME003".into(),
-            name: "Linkme Slice Usage".into(),
-            category: ViolationCategory::DependencyInjection,
-            default_severity: Severity::Warning,
-            description:
-                "Provider registration missing #[linkme::distributed_slice(NAME)] attribute".into(),
-            rationale: "All provider implementations must be registered via linkme slices".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
+        di_rule(
+            "LINKME002",
+            "Linkme Slice Declaration",
+            "Provider registry missing #[linkme::distributed_slice] declaration",
+            "All provider registries must use linkme distributed slices",
+            Severity::Warning,
+        ),
+        di_rule(
+            "LINKME003",
+            "Linkme Slice Usage",
+            "Provider registration missing #[linkme::distributed_slice(NAME)] attribute",
+            "All provider implementations must be registered via linkme slices",
+            Severity::Warning,
+        ),
     ]
 }
 
@@ -408,30 +447,20 @@ pub fn constructor_injection_rules() -> Vec<Rule> {
             "Code still uses Shaku DI patterns (#[derive(Component)], module! macro)",
             "Shaku DI is being replaced by direct constructor injection for simplicity",
         ),
-        Rule {
-            id: "CTOR002".into(),
-            name: "Constructor Injection Pattern".into(),
-            category: ViolationCategory::DependencyInjection,
-            default_severity: Severity::Warning,
-            description:
-                "Service implementation missing constructor that accepts Arc<dyn Trait> parameters"
-                    .into(),
-            rationale: "All services must use constructor injection for dependency management"
-                .into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
-        Rule {
-            id: "CTOR003".into(),
-            name: "Manual Service Composition".into(),
-            category: ViolationCategory::DependencyInjection,
-            default_severity: Severity::Info,
-            description: "Service instantiation should happen in bootstrap/container functions"
-                .into(),
-            rationale: "Dependency wiring should be centralized and explicit".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
+        di_rule(
+            "CTOR002",
+            "Constructor Injection Pattern",
+            "Service implementation missing constructor that accepts Arc<dyn Trait> parameters",
+            "All services must use constructor injection for dependency management",
+            Severity::Warning,
+        ),
+        di_rule(
+            "CTOR003",
+            "Manual Service Composition",
+            "Service instantiation should happen in bootstrap/container functions",
+            "Dependency wiring should be centralized and explicit",
+            Severity::Info,
+        ),
     ]
 }
 
@@ -445,27 +474,20 @@ pub fn figment_rules() -> Vec<Rule> {
             "Code still uses config crate (Config::builder(), Environment, File)",
             "config crate is being replaced by Figment for unified configuration",
         ),
-        Rule {
-            id: "FIGMENT002".into(),
-            name: "Figment Pattern Usage".into(),
-            category: ViolationCategory::Configuration,
-            default_severity: Severity::Warning,
-            description:
-                "Configuration loading should use Figment::new().merge().extract() pattern".into(),
-            rationale: "Figment provides unified configuration source handling".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
-        Rule {
-            id: "FIGMENT003".into(),
-            name: "Profile Support".into(),
-            category: ViolationCategory::Configuration,
-            default_severity: Severity::Info,
-            description: "Consider adding profile-based configuration (dev/prod)".into(),
-            rationale: "Figment enables easy environment-specific configuration".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
+        config_rule(
+            "FIGMENT002",
+            "Figment Pattern Usage",
+            "Configuration loading should use Figment::new().merge().extract() pattern",
+            "Figment provides unified configuration source handling",
+            Severity::Warning,
+        ),
+        config_rule(
+            "FIGMENT003",
+            "Profile Support",
+            "Consider adding profile-based configuration (dev/prod)",
+            "Figment enables easy environment-specific configuration",
+            Severity::Info,
+        ),
     ]
 }
 
@@ -479,29 +501,20 @@ pub fn rocket_rules() -> Vec<Rule> {
             "Code still uses Axum routing patterns (Router::new(), axum::routing::*)",
             "Axum is being replaced by Rocket for attribute-based routing simplicity",
         ),
-        Rule {
-            id: "ROCKET002".into(),
-            name: "Attribute-Based Handlers".into(),
-            category: ViolationCategory::WebFramework,
-            default_severity: Severity::Warning,
-            description: "HTTP handlers should use Rocket attribute macros (#[get], #[post], etc.)"
-                .into(),
-            rationale: "Attribute-based routing reduces boilerplate and improves readability"
-                .into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
-        Rule {
-            id: "ROCKET003".into(),
-            name: "Rocket Route Organization".into(),
-            category: ViolationCategory::WebFramework,
-            default_severity: Severity::Info,
-            description: "Routes should be organized in feature modules with routes![] macro"
-                .into(),
-            rationale: "Clean route organization improves maintainability".into(),
-            enabled: true,
-            config: HashMap::new(),
-        },
+        web_rule(
+            "ROCKET002",
+            "Attribute-Based Handlers",
+            "HTTP handlers should use Rocket attribute macros (#[get], #[post], etc.)",
+            "Attribute-based routing reduces boilerplate and improves readability",
+            Severity::Warning,
+        ),
+        web_rule(
+            "ROCKET003",
+            "Rocket Route Organization",
+            "Routes should be organized in feature modules with routes![] macro",
+            "Clean route organization improves maintainability",
+            Severity::Info,
+        ),
     ]
 }
 
