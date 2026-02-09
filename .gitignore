@@ -8,6 +8,7 @@ exports/
 .idea/
 *.swp
 *.swo
+*.sarif
 
 # Private directories
 thoughts/

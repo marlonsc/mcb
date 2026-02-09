@@ -115,7 +115,7 @@ mode = "comment"
 
 [[plugin]]
 name = "ripgrep"
-mode = "comment"
+mode = "disabled"
 
 [[plugin]]
 name = "ruff"
@@ -123,6 +123,8 @@ drivers = ["lint"]
 
 [[plugin]]
 name = "rustfmt"
+version = "1.8.0"
+mode = "disabled"
 
 [[plugin]]
 name = "shellcheck"
