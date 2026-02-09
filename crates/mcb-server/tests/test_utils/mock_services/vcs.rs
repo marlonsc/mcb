@@ -118,4 +118,26 @@ impl VcsProvider for MockVcsProvider {
             total_deletions: 2,
         })
     }
+
+    async fn list_repositories(&self, root: &Path) -> Result<Vec<VcsRepository>> {
+        if self.should_fail.load(Ordering::SeqCst) {
+            return Err(mcb_domain::error::Error::vcs("Mock failure"));
+        }
+        Ok(vec![
+            VcsRepository::new(
+                RepositoryId::new("mock-repo-1".to_string()),
+                root.join("repo1"),
+                "main".to_string(),
+                vec!["main".to_string(), "develop".to_string()],
+                Some("https://github.com/test/repo1.git".to_string()),
+            ),
+            VcsRepository::new(
+                RepositoryId::new("mock-repo-2".to_string()),
+                root.join("repo2"),
+                "master".to_string(),
+                vec!["master".to_string()],
+                None,
+            ),
+        ])
+    }
 }

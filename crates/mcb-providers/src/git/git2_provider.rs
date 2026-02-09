@@ -383,4 +383,37 @@ impl VcsProvider for Git2Provider {
             total_deletions,
         })
     }
+
+    async fn list_repositories(&self, root: &Path) -> Result<Vec<VcsRepository>> {
+        use std::fs;
+
+        let mut repositories = Vec::new();
+
+        // Check if root itself is a repository
+        if root.join(".git").exists() {
+            match self.open_repository(root).await {
+                Ok(repo) => repositories.push(repo),
+                Err(_) => {} // Skip invalid repos
+            }
+        }
+
+        // Scan subdirectories for repositories (non-recursive for now)
+        if let Ok(entries) = fs::read_dir(root) {
+            for entry in entries.flatten() {
+                if let Ok(metadata) = entry.metadata() {
+                    if metadata.is_dir() {
+                        let path = entry.path();
+                        if path.join(".git").exists() {
+                            match self.open_repository(&path).await {
+                                Ok(repo) => repositories.push(repo),
+                                Err(_) => {} // Skip invalid repos
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(repositories)
+    }
 }
