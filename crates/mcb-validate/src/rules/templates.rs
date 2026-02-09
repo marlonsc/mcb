@@ -37,7 +37,7 @@ impl TemplateEngine {
             return Ok(()); // No templates directory, that's fine
         }
 
-        for entry in WalkDir::new(&templates_dir) {
+        for entry in WalkDir::new(&templates_dir).follow_links(false) {
             let entry = entry.map_err(|e| crate::ValidationError::Io(e.into()))?;
             let path = entry.path();
 

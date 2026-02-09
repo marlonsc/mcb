@@ -204,6 +204,7 @@ impl VisibilityValidator {
             }
 
             for entry in WalkDir::new(&full_path)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
             {
@@ -255,6 +256,7 @@ impl VisibilityValidator {
             }
 
             for entry in WalkDir::new(&crate_src)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
             {

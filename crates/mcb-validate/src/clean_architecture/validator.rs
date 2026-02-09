@@ -147,6 +147,7 @@ impl CleanArchitectureValidator {
         }
 
         for entry in WalkDir::new(handlers_dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {
@@ -200,6 +201,7 @@ impl CleanArchitectureValidator {
             .expect("Pattern CA001.id_field not found");
 
         for entry in WalkDir::new(entities_dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {
@@ -291,6 +293,7 @@ impl CleanArchitectureValidator {
             .expect("Pattern CA001.mut_self_method not found");
 
         for entry in WalkDir::new(vo_dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {
@@ -471,6 +474,7 @@ impl CleanArchitectureValidator {
         })?;
 
         for entry in WalkDir::new(&app_crate)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {

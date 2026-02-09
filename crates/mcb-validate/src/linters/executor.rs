@@ -73,6 +73,7 @@ impl YamlRuleExecutor {
         let mut files: Vec<PathBuf> = Vec::new();
 
         for entry in walkdir::WalkDir::new(dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
             .filter(|e| e.file_type().is_file())

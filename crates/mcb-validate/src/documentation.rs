@@ -194,6 +194,7 @@ impl DocumentationValidator {
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -253,6 +254,7 @@ impl DocumentationValidator {
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))

@@ -218,6 +218,7 @@ impl ErrorBoundaryValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -301,6 +302,7 @@ impl ErrorBoundaryValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -396,6 +398,7 @@ impl ErrorBoundaryValidator {
         // Only check handler files (API boundary)
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))

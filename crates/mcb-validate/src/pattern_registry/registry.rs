@@ -35,6 +35,7 @@ impl PatternRegistry {
         let mut registry = Self::new();
 
         for entry in WalkDir::new(rules_dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
             .filter(|e| {

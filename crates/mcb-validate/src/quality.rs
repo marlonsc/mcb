@@ -379,6 +379,7 @@ impl QualityValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -460,6 +461,7 @@ impl QualityValidator {
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -582,6 +584,7 @@ impl QualityValidator {
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -630,6 +633,7 @@ impl QualityValidator {
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| {
@@ -686,6 +690,7 @@ impl QualityValidator {
         let mut violations = Vec::new();
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))

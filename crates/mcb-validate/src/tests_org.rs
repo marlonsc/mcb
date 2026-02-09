@@ -336,6 +336,7 @@ impl TestValidator {
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -463,6 +464,7 @@ impl TestValidator {
             // in any subdirectory structure as long as they have entry points
 
             for entry in WalkDir::new(&tests_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -594,6 +596,7 @@ impl TestValidator {
             }
 
             for entry in WalkDir::new(&tests_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -722,6 +725,7 @@ impl TestValidator {
             }
 
             for entry in WalkDir::new(&tests_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))

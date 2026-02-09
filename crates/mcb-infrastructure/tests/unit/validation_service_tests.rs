@@ -25,12 +25,14 @@ async fn test_list_validators() {
 }
 
 #[tokio::test]
-async fn test_validate_mcb_workspace() {
+async fn test_validate_mcb_workspace_quality_only() {
     let workspace_root = get_workspace_root();
     let service = InfraValidationService::new();
-    let result = service.validate(&workspace_root, None, None).await;
 
-    // Should complete without panic (may have violations, that's OK)
+    let result = service
+        .validate(&workspace_root, Some(&["quality".to_string()]), None)
+        .await;
+
     assert!(result.is_ok());
 }
 

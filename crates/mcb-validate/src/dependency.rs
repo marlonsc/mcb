@@ -282,6 +282,7 @@ impl DependencyValidator {
             }
 
             for entry in WalkDir::new(&crate_src)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))

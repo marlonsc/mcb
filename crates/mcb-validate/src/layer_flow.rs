@@ -215,6 +215,7 @@ impl LayerFlowValidator {
             let crate_name_underscored = crate_name.replace('-', "_");
 
             for entry in WalkDir::new(&crate_src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
             {

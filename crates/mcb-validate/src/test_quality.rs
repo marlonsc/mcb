@@ -257,6 +257,7 @@ impl TestQualityValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| {

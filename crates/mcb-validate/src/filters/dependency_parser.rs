@@ -129,6 +129,8 @@ impl CargoDependencyParser {
         }
 
         for entry in WalkDir::new(&self.workspace_root)
+            .follow_links(false)
+            .follow_links(false)
             .max_depth(3)
             .into_iter()
             .filter_map(std::result::Result::ok)
