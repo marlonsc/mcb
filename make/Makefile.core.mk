@@ -57,6 +57,9 @@ test-rust: ## Run all Rust tests (unit + integration + golden)
 
 test-e2e: ## Run E2E tests with Playwright (auto-installs if needed)
 	@echo "🎭 Running Playwright E2E tests on port $(MCB_TEST_PORT)..."
+	@echo "🧹 Cleaning up test server on port $(MCB_TEST_PORT)..."
+	@lsof -ti:$(MCB_TEST_PORT) | xargs -r kill -9 2>/dev/null || true
+	@sleep 1
 	@if ! command -v npx > /dev/null; then \
 		echo "❌ Error: npx not found. Install Node.js first."; \
 		exit 1; \
@@ -67,15 +70,15 @@ test-e2e: ## Run E2E tests with Playwright (auto-installs if needed)
 		npx playwright install chromium --with-deps 2>&1 | tail -5; \
 	fi
 	@echo "🚀 Starting test server on port $(MCB_TEST_PORT)..."
-	@MCB_TEST_PORT=$(MCB_TEST_PORT) npx playwright test --reporter=list
+	@MCB_TEST_PORT=$(MCB_TEST_PORT) npx playwright test --config=tests/playwright.config.ts --reporter=list
 
 test-e2e-ui: ## Run E2E tests with Playwright UI (interactive)
 	@echo "🎭 Running Playwright E2E tests in UI mode..."
-	@MCB_TEST_PORT=$(MCB_TEST_PORT) npx playwright test --ui
+	@MCB_TEST_PORT=$(MCB_TEST_PORT) npx playwright test --config=tests/playwright.config.ts --ui
 
 test-e2e-debug: ## Run E2E tests with Playwright debug mode
 	@echo "🐛 Running Playwright E2E tests in debug mode..."
-	@MCB_TEST_PORT=$(MCB_TEST_PORT) npx playwright test --debug
+	@MCB_TEST_PORT=$(MCB_TEST_PORT) npx playwright test --config=tests/playwright.config.ts --debug
 
 test-e2e-report: ## Show last E2E test report
 	@npx playwright show-report

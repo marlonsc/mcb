@@ -8,12 +8,12 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "playwright test",
-    "test:admin": "playwright test e2e/admin-ui-routes.spec.ts",
-    "test:browse": "playwright test e2e/browse-ui.spec.ts",
-    "test:all": "playwright test e2e/",
-    "test:ui": "playwright test --ui",
-    "test:debug": "playwright test --debug",
+    "test": "playwright test --config=tests/playwright.config.ts",
+    "test:admin": "playwright test --config=tests/playwright.config.ts tests/e2e/admin-ui-routes.spec.ts",
+    "test:browse": "playwright test --config=tests/playwright.config.ts tests/e2e/browse-ui.spec.ts",
+    "test:all": "playwright test --config=tests/playwright.config.ts tests/e2e/",
+    "test:ui": "playwright test --config=tests/playwright.config.ts --ui",
+    "test:debug": "playwright test --config=tests/playwright.config.ts --debug",
     "test:report": "playwright show-report"
   },
   "repository": {
@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/marlonsc/mcb#readme",
   "devDependencies": {
-    "@playwright/test": "^1.58.1",
+    "@playwright/test": "^1.58.2",
     "@types/node": "^25.2.1",
     "typescript": "^5.9.3"
   }
