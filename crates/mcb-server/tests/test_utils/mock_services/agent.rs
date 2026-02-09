@@ -11,7 +11,7 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 
-use crate::test_utils::helpers::arc_mutex_hashmap;
+use crate::test_utils::helpers::{arc_mutex_hashmap, arc_mutex_vec};
 
 #[allow(dead_code)]
 pub struct MockAgentSessionService {

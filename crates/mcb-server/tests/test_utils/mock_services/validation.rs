@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::services::{ValidationReport, ValidationServiceInterface, ViolationEntry};
 
-use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
+use crate::test_utils::helpers::arc_mutex;
 
 /// Mock implementation of ValidationServiceInterface for testing
 pub struct MockValidationService {
