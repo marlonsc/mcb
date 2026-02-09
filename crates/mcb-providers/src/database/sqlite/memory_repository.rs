@@ -10,6 +10,7 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
 use mcb_domain::value_objects::ids::{ObservationId, SessionId};
+use mcb_infrastructure::logging::mask_id;
 use tracing::debug;
 
 use super::row_convert;
@@ -285,7 +286,10 @@ impl MemoryRepository for SqliteMemoryRepository {
             )
             .await?;
 
-        debug!("Stored session summary for session: {}", summary.session_id);
+        debug!(
+            "Stored session summary for session: {}",
+            mask_id(summary.session_id.as_str())
+        );
         Ok(())
     }
 
