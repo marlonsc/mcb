@@ -30,7 +30,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
+import tempfile
 from collections import Counter
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -147,6 +149,41 @@ def parse_sarif_file(path: Path) -> list[SarifIssue]:
             )
 
     return issues
+
+
+def run_qlty_check() -> list[SarifIssue]:
+    """Run qlty check --all --sarif and parse SARIF output."""
+    print("🔄 Running qlty check --all --sarif...")
+
+    try:
+        result = subprocess.run(  # nosec B603
+            ["qlty", "check", "--all", "--sarif"],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+
+        if not result.stdout.strip():
+            print("   ✅ No issues found (clean)")
+            return []
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".sarif", delete=False
+        ) as tmp:
+            tmp.write(result.stdout)
+            tmp_path = Path(tmp.name)
+
+        issues = parse_sarif_file(tmp_path)
+        tmp_path.unlink()
+        print(f"   Found {len(issues)} issues")
+        return issues
+
+    except subprocess.TimeoutExpired:
+        print("   ❌ qlty check timed out after 300s", file=sys.stderr)
+        return []
+    except Exception as e:
+        print(f"   ❌ Error running qlty: {e}", file=sys.stderr)
+        return []
 
 
 # ────────────────────────────────────────────────
@@ -337,14 +374,19 @@ def main() -> int:
     parser.add_argument(
         "--checks-file",
         type=Path,
-        default=Path("qlty.check.lst"),
-        help="Path to checks SARIF file (default: qlty.check.lst)",
+        default=None,
+        help="Path to checks SARIF file (default: run qlty check --all)",
     )
     parser.add_argument(
         "--smells-file",
         type=Path,
         default=Path("qlty.smells.lst"),
         help="Path to smells SARIF file (default: qlty.smells.lst)",
+    )
+    parser.add_argument(
+        "--no-run",
+        action="store_true",
+        help="Don't run qlty, only use existing files",
     )
 
     # Filtering options
@@ -391,15 +433,22 @@ def main() -> int:
     all_issues = []
 
     if args.type in ("checks", "both"):
-        if args.checks_file.exists():
+        # Run qlty or use file
+        if args.checks_file and args.checks_file.exists():
             print(f"📖 Reading checks from {args.checks_file}")
             checks = parse_sarif_file(args.checks_file)
             for check in checks:
                 check.category = "check"
             all_issues.extend(checks)
             print(f"   Found {len(checks)} check issues")
+        elif not args.no_run:
+            print("📖 No checks file specified, running qlty check --all...")
+            checks = run_qlty_check()
+            for check in checks:
+                check.category = "check"
+            all_issues.extend(checks)
         else:
-            print(f"⚠️  Checks file not found: {args.checks_file}", file=sys.stderr)
+            print(f"⚠️  No checks file and --no-run specified", file=sys.stderr)
 
     if args.type in ("smells", "both"):
         if args.smells_file.exists():
