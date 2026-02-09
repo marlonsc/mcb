@@ -23,6 +23,20 @@ async fn setup_repository() -> Arc<dyn ProjectRepository> {
     create_project_repository_from_executor(executor)
 }
 
+/// Helper: Setup repository and create a test project, returning both
+async fn setup_with_project(
+    id: &str,
+    name: &str,
+    path: &str,
+) -> (Arc<dyn ProjectRepository>, Project) {
+    let repo = setup_repository().await;
+    let project = create_test_project(id, name, path);
+    repo.create(&project)
+        .await
+        .expect("Failed to create project");
+    (repo, project)
+}
+
 fn create_test_project(id: &str, name: &str, path: &str) -> Project {
     let now = 1000000i64;
     Project {
@@ -110,12 +124,7 @@ fn create_test_decision(
 
 #[tokio::test]
 async fn test_create_project() {
-    let repo = setup_repository().await;
-    let project = create_test_project("proj-1", "Test Project", "/test/path");
-
-    repo.create(&project)
-        .await
-        .expect("Failed to create project");
+    let (repo, _project) = setup_with_project("proj-1", "Test Project", "/test/path").await;
 
     let retrieved = repo
         .get_by_id("proj-1")
@@ -127,12 +136,7 @@ async fn test_create_project() {
 
 #[tokio::test]
 async fn test_get_project_by_id() {
-    let repo = setup_repository().await;
-    let project = create_test_project("proj-2", "Project 2", "/path/2");
-
-    repo.create(&project)
-        .await
-        .expect("Failed to create project");
+    let (repo, project) = setup_with_project("proj-2", "Project 2", "/path/2").await;
 
     let retrieved = repo
         .get_by_id("proj-2")
@@ -140,9 +144,9 @@ async fn test_get_project_by_id() {
         .expect("Failed to get project");
     assert!(retrieved.is_some());
     let p = retrieved.unwrap();
-    assert_eq!(p.id, "proj-2");
-    assert_eq!(p.name, "Project 2");
-    assert_eq!(p.path, "/path/2");
+    assert_eq!(p.id, project.id);
+    assert_eq!(p.name, project.name);
+    assert_eq!(p.path, project.path);
 }
 
 #[tokio::test]
@@ -158,12 +162,7 @@ async fn test_get_project_by_id_not_found() {
 
 #[tokio::test]
 async fn test_get_project_by_name() {
-    let repo = setup_repository().await;
-    let project = create_test_project("proj-3", "Unique Name", "/path/3");
-
-    repo.create(&project)
-        .await
-        .expect("Failed to create project");
+    let (repo, _project) = setup_with_project("proj-3", "Unique Name", "/path/3").await;
 
     let retrieved = repo
         .get_by_name("Unique Name")
@@ -175,12 +174,7 @@ async fn test_get_project_by_name() {
 
 #[tokio::test]
 async fn test_get_project_by_path() {
-    let repo = setup_repository().await;
-    let project = create_test_project("proj-4", "Project 4", "/unique/path");
-
-    repo.create(&project)
-        .await
-        .expect("Failed to create project");
+    let (repo, _project) = setup_with_project("proj-4", "Project 4", "/unique/path").await;
 
     let retrieved = repo
         .get_by_path("/unique/path")
@@ -239,12 +233,7 @@ async fn test_update_project() {
 
 #[tokio::test]
 async fn test_delete_project() {
-    let repo = setup_repository().await;
-    let project = create_test_project("proj-8", "To Delete", "/delete/path");
-
-    repo.create(&project)
-        .await
-        .expect("Failed to create project");
+    let (repo, _project) = setup_with_project("proj-8", "To Delete", "/path/8").await;
 
     repo.delete("proj-8")
         .await
