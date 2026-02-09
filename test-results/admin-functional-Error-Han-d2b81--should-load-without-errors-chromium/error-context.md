@@ -1,0 +1,67 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: MCP Context Browser
+        - generic [ref=e7]: Admin
+      - generic [ref=e8]:
+        - generic [ref=e11]: Disconnected
+        - link "Dashboard" [ref=e12] [cursor=pointer]:
+          - /url: /
+        - link "Config" [ref=e13] [cursor=pointer]:
+          - /url: /ui/config
+        - link "Health" [ref=e14] [cursor=pointer]:
+          - /url: /ui/health
+        - link "Indexing" [ref=e15] [cursor=pointer]:
+          - /url: /ui/indexing
+        - link "Browse" [ref=e16] [cursor=pointer]:
+          - /url: /ui/browse
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - heading "Dashboard" [level=1] [ref=e19]
+      - paragraph [ref=e20]: System overview and real-time metrics via SSE
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - heading "Status" [level=3] [ref=e23]
+        - paragraph [ref=e24]: HEALTHY
+      - generic [ref=e25]:
+        - heading "Uptime" [level=3] [ref=e26]
+        - paragraph [ref=e27]: Loading...
+      - generic [ref=e28]:
+        - heading "Active Operations" [level=3] [ref=e29]
+        - paragraph [ref=e30]: Loading...
+    - generic [ref=e31]:
+      - heading "Performance Metrics" [level=2] [ref=e32]
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - paragraph [ref=e35]: Total Queries
+          - paragraph [ref=e36]: Loading...
+        - generic [ref=e37]:
+          - paragraph [ref=e38]: Success Rate
+          - paragraph [ref=e39]: Loading...
+        - generic [ref=e40]:
+          - paragraph [ref=e41]: Cache Hit Rate
+          - paragraph [ref=e42]: Loading...
+        - generic [ref=e43]:
+          - paragraph [ref=e44]: Avg Response Time
+          - paragraph [ref=e45]: Loading...
+    - generic [ref=e46]:
+      - generic [ref=e47]:
+        - heading "Services" [level=2] [ref=e48]
+        - button "Refresh" [ref=e49] [cursor=pointer]
+      - paragraph [ref=e51]: Error loading services
+    - generic [ref=e53]:
+      - heading "Live Event Log" [level=2] [ref=e54]
+      - button "Clear" [ref=e55] [cursor=pointer]
+    - generic [ref=e56]:
+      - heading "Quick Actions" [level=2] [ref=e57]
+      - generic [ref=e58]:
+        - button "Reload Config" [ref=e59] [cursor=pointer]
+        - button "Health Check All" [ref=e60] [cursor=pointer]
+        - button "Shutdown Server" [ref=e61] [cursor=pointer]
+  - contentinfo [ref=e62]:
+    - generic [ref=e63]: MCP Context Browser v0.1.5 | Admin Panel | SSE Real-time Updates
+```
