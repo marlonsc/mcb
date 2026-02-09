@@ -22,151 +22,151 @@ fn create_temp_dir() -> (TempDir, PathBuf) {
     (temp_dir, dir_path)
 }
 
-#[tokio::test]
-async fn test_validate_run_with_valid_file() {
-    let (_temp_dir, file_path) = create_temp_file();
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
+/// Macro to generate validation handler tests with common setup and assertions.
+///
+/// Usage patterns:
+/// - `validate_test!(test_name, action, path_expr, expect_ok)`
+/// - `validate_test!(test_name, action, path_expr, expect_error)`
+/// - `validate_test!(test_name, action, path_expr, scope: Some(scope), expect_ok)`
+/// - `validate_test!(test_name, action, path_expr, scope: Some(scope), rules: Some(vec![...]), expect_ok)`
+macro_rules! validate_test {
+    ($test_name:ident, $action:expr, expect_mcp_error) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let mock_service = MockValidationService::new();
+            let handler = ValidateHandler::new(Arc::new(mock_service));
 
-    let args = ValidateArgs {
-        action: ValidateAction::Run,
-        path: Some(file_path.to_string_lossy().to_string()),
-        scope: Some(ValidateScope::File),
-        rules: None,
-        category: None,
+            let args = ValidateArgs {
+                action: $action,
+                path: None,
+                scope: None,
+                rules: None,
+                category: None,
+            };
+
+            let result = handler.handle(Parameters(args)).await;
+            assert!(result.is_err(), "Missing path should return McpError");
+        }
     };
 
-    let result = handler.handle(Parameters(args)).await;
+    ($test_name:ident, $action:expr, $path_expr:expr, $(scope: $scope:expr,)? $(rules: $rules:expr,)? $(category: $category:expr,)? expect_ok) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let (_temp_dir, path) = $path_expr;
+            let mock_service = MockValidationService::new();
+            let handler = ValidateHandler::new(Arc::new(mock_service));
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
+            let args = ValidateArgs {
+                action: $action,
+                path: Some(path.to_string_lossy().to_string()),
+                scope: None $(.or($scope))?,
+                rules: None $(.or($rules))?,
+                category: None $(.or($category))?,
+            };
 
-#[tokio::test]
-async fn test_validate_run_with_nonexistent_path() {
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
-
-    let args = ValidateArgs {
-        action: ValidateAction::Run,
-        path: Some("/nonexistent/path/to/file.rs".to_string()),
-        scope: Some(ValidateScope::File),
-        rules: None,
-        category: None,
+            let result = handler.handle(Parameters(args)).await;
+            assert!(result.is_ok());
+            let response = result.expect("Expected successful response");
+            assert!(!response.is_error.unwrap_or(false));
+        }
     };
 
-    let result = handler.handle(Parameters(args)).await;
+    ($test_name:ident, $action:expr, path: $path:expr, $(scope: $scope:expr,)? expect_error) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let mock_service = MockValidationService::new();
+            let handler = ValidateHandler::new(Arc::new(mock_service));
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Nonexistent path should return error"
-    );
-}
+            let args = ValidateArgs {
+                action: $action,
+                path: Some($path.to_string()),
+                scope: None $(.or($scope))?,
+                rules: None,
+                category: None,
+            };
 
-#[tokio::test]
-async fn test_validate_run_missing_path() {
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
-
-    let args = ValidateArgs {
-        action: ValidateAction::Run,
-        path: None,
-        scope: Some(ValidateScope::File),
-        rules: None,
-        category: None,
+            let result = handler.handle(Parameters(args)).await;
+            assert!(result.is_ok());
+            let response = result.expect("Expected response");
+            assert!(response.is_error.unwrap_or(false), "Should return error");
+        }
     };
 
-    let result = handler.handle(Parameters(args)).await;
+    ($test_name:ident, $action:expr, $path_expr:expr, expect_error) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let (_temp_dir, path) = $path_expr;
+            let mock_service = MockValidationService::new();
+            let handler = ValidateHandler::new(Arc::new(mock_service));
 
-    assert!(result.is_err(), "Missing path should return McpError");
-}
+            let args = ValidateArgs {
+                action: $action,
+                path: Some(path.to_string_lossy().to_string()),
+                scope: None,
+                rules: None,
+                category: None,
+            };
 
-#[tokio::test]
-async fn test_validate_run_with_project_scope() {
-    let (_temp_dir, dir_path) = create_temp_dir();
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
-
-    let args = ValidateArgs {
-        action: ValidateAction::Run,
-        path: Some(dir_path.to_string_lossy().to_string()),
-        scope: Some(ValidateScope::Project),
-        rules: None,
-        category: None,
+            let result = handler.handle(Parameters(args)).await;
+            assert!(result.is_ok());
+            let response = result.expect("Expected response");
+            assert!(response.is_error.unwrap_or(false), "Should return error");
+        }
     };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
 }
 
-#[tokio::test]
-async fn test_validate_run_auto_detect_scope_file() {
-    let (_temp_dir, file_path) = create_temp_file();
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
+validate_test!(
+    test_validate_run_with_valid_file,
+    ValidateAction::Run,
+    create_temp_file(),
+    scope: Some(ValidateScope::File),
+    expect_ok
+);
 
-    let args = ValidateArgs {
-        action: ValidateAction::Run,
-        path: Some(file_path.to_string_lossy().to_string()),
-        scope: None,
-        rules: None,
-        category: None,
-    };
+validate_test!(
+    test_validate_run_with_nonexistent_path,
+    ValidateAction::Run,
+    path: "/nonexistent/path/to/file.rs",
+    scope: Some(ValidateScope::File),
+    expect_error
+);
 
-    let result = handler.handle(Parameters(args)).await;
+validate_test!(
+    test_validate_run_missing_path,
+    ValidateAction::Run,
+    expect_mcp_error
+);
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
+validate_test!(
+    test_validate_run_with_project_scope,
+    ValidateAction::Run,
+    create_temp_dir(),
+    scope: Some(ValidateScope::Project),
+    expect_ok
+);
 
-#[tokio::test]
-async fn test_validate_run_auto_detect_scope_project() {
-    let (_temp_dir, dir_path) = create_temp_dir();
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
+validate_test!(
+    test_validate_run_auto_detect_scope_file,
+    ValidateAction::Run,
+    create_temp_file(),
+    expect_ok
+);
 
-    let args = ValidateArgs {
-        action: ValidateAction::Run,
-        path: Some(dir_path.to_string_lossy().to_string()),
-        scope: None,
-        rules: None,
-        category: None,
-    };
+validate_test!(
+    test_validate_run_auto_detect_scope_project,
+    ValidateAction::Run,
+    create_temp_dir(),
+    expect_ok
+);
 
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_validate_run_with_specific_rules() {
-    let (_temp_dir, file_path) = create_temp_file();
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
-
-    let args = ValidateArgs {
-        action: ValidateAction::Run,
-        path: Some(file_path.to_string_lossy().to_string()),
-        scope: Some(ValidateScope::File),
-        rules: Some(vec!["rule1".to_string(), "rule2".to_string()]),
-        category: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
+validate_test!(
+    test_validate_run_with_specific_rules,
+    ValidateAction::Run,
+    create_temp_file(),
+    scope: Some(ValidateScope::File),
+    rules: Some(vec!["rule1".to_string(), "rule2".to_string()]),
+    expect_ok
+);
 
 #[tokio::test]
 async fn test_validate_list_rules_all() {
@@ -208,88 +208,29 @@ async fn test_validate_list_rules_by_category() {
     assert!(!response.is_error.unwrap_or(false));
 }
 
-#[tokio::test]
-async fn test_validate_analyze_valid_file() {
-    let (_temp_dir, file_path) = create_temp_file();
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
+validate_test!(
+    test_validate_analyze_valid_file,
+    ValidateAction::Analyze,
+    create_temp_file(),
+    expect_ok
+);
 
-    let args = ValidateArgs {
-        action: ValidateAction::Analyze,
-        path: Some(file_path.to_string_lossy().to_string()),
-        scope: None,
-        rules: None,
-        category: None,
-    };
+validate_test!(
+    test_validate_analyze_nonexistent_file,
+    ValidateAction::Analyze,
+    path: "/nonexistent/file.rs",
+    expect_error
+);
 
-    let result = handler.handle(Parameters(args)).await;
+validate_test!(
+    test_validate_analyze_directory_should_fail,
+    ValidateAction::Analyze,
+    create_temp_dir(),
+    expect_error
+);
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_validate_analyze_nonexistent_file() {
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
-
-    let args = ValidateArgs {
-        action: ValidateAction::Analyze,
-        path: Some("/nonexistent/file.rs".to_string()),
-        scope: None,
-        rules: None,
-        category: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Nonexistent file should return error"
-    );
-}
-
-#[tokio::test]
-async fn test_validate_analyze_directory_should_fail() {
-    let (_temp_dir, dir_path) = create_temp_dir();
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
-
-    let args = ValidateArgs {
-        action: ValidateAction::Analyze,
-        path: Some(dir_path.to_string_lossy().to_string()),
-        scope: None,
-        rules: None,
-        category: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Directory should return error for analyze"
-    );
-}
-
-#[tokio::test]
-async fn test_validate_analyze_missing_path() {
-    let mock_service = MockValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
-
-    let args = ValidateArgs {
-        action: ValidateAction::Analyze,
-        path: None,
-        scope: None,
-        rules: None,
-        category: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_err(), "Missing path should return McpError");
-}
+validate_test!(
+    test_validate_analyze_missing_path,
+    ValidateAction::Analyze,
+    expect_mcp_error
+);
