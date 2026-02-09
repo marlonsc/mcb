@@ -151,9 +151,11 @@ def parse_sarif_file(path: Path) -> list[SarifIssue]:
     return issues
 
 
-def run_qlty_check() -> list[SarifIssue]:
-    """Run qlty check --all --sarif and parse SARIF output."""
-    print("🔄 Running qlty check --all --sarif...")
+def run_qlty_check(
+    output_file: Path = Path("qlty.check.current.sarif"),
+) -> list[SarifIssue]:
+    """Run qlty check --all --sarif, save to file, and parse SARIF output."""
+    print(f"🔄 Running qlty check --all --sarif...")
 
     try:
         result = subprocess.run(  # nosec B603
@@ -167,15 +169,11 @@ def run_qlty_check() -> list[SarifIssue]:
             print("   ✅ No issues found (clean)")
             return []
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".sarif", delete=False
-        ) as tmp:
-            tmp.write(result.stdout)
-            tmp_path = Path(tmp.name)
+        output_file.write_text(result.stdout)
+        print(f"   💾 Saved SARIF to {output_file}")
 
-        issues = parse_sarif_file(tmp_path)
-        tmp_path.unlink()
-        print(f"   Found {len(issues)} issues")
+        issues = parse_sarif_file(output_file)
+        print(f"   📊 Found {len(issues)} issues")
         return issues
 
     except subprocess.TimeoutExpired:
@@ -433,7 +431,6 @@ def main() -> int:
     all_issues = []
 
     if args.type in ("checks", "both"):
-        # Run qlty or use file
         if args.checks_file and args.checks_file.exists():
             print(f"📖 Reading checks from {args.checks_file}")
             checks = parse_sarif_file(args.checks_file)
@@ -442,7 +439,6 @@ def main() -> int:
             all_issues.extend(checks)
             print(f"   Found {len(checks)} check issues")
         elif not args.no_run:
-            print("📖 No checks file specified, running qlty check --all...")
             checks = run_qlty_check()
             for check in checks:
                 check.category = "check"

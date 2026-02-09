@@ -33,7 +33,7 @@ jobs:
       - run: make docs-check
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0 zizmor:ignore[cache-poisoning]
         with:
           node-version: "20"
           cache: ${{ github.event_name == 'push' && 'npm' || '' }}
