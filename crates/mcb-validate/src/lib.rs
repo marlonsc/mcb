@@ -884,32 +884,43 @@ impl ArchitectureValidator {
     }
 
     /// Recursively scan a directory for source files
+    ///
+    /// SAFETY: Uses WalkDir with symlink protection to prevent infinite loops
     fn scan_directory(
         &self,
         dir: &Path,
         file_contents: &mut HashMap<String, String>,
     ) -> Result<()> {
+        use walkdir::WalkDir;
+
         if !dir.exists() || !dir.is_dir() {
             return Ok(());
         }
 
-        for entry in std::fs::read_dir(dir)? {
-            let entry = entry?;
+        // Use WalkDir with symlink protection instead of manual recursion
+        for entry in WalkDir::new(dir)
+            .follow_links(false)
+            .follow_links(false) // CRITICAL: Prevent circular symlink loops
+            .max_depth(100) // Reasonable depth limit to prevent stack overflow
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+        {
             let path = entry.path();
 
-            if self.config.should_exclude(&path) {
+            if self.config.should_exclude(path) {
                 continue;
             }
 
-            if path.is_dir() {
-                self.scan_directory(&path, file_contents)?;
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 // Include common source file extensions
                 let is_source = matches!(
                     ext,
                     "rs" | "py" | "js" | "ts" | "go" | "java" | "c" | "cpp" | "h" | "hpp"
                 );
-                if is_source && let Ok(content) = std::fs::read_to_string(&path) {
+                if is_source
+                    && entry.file_type().is_file()
+                    && let Ok(content) = std::fs::read_to_string(path)
+                {
                     file_contents.insert(path.to_string_lossy().to_string(), content);
                 }
             }

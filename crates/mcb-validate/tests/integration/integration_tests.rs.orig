@@ -158,7 +158,6 @@ fn test_validate_workspace_naming() {
 }
 
 #[test]
-#[ignore = "Stack overflow on large workspaces - run with: RUST_MIN_STACK=8388608 cargo test test_full_validation_report -- --ignored"]
 fn test_full_validation_report() {
     println!("Starting test_full_validation_report...");
     let workspace_root = get_workspace_root();

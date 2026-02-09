@@ -220,6 +220,7 @@ impl PortAdapterValidator {
         let fn_re = Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").unwrap();
 
         for entry in WalkDir::new(&ports_dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {
@@ -296,6 +297,7 @@ impl PortAdapterValidator {
         .unwrap();
 
         for entry in WalkDir::new(&providers_dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {

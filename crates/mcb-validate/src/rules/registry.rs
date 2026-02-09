@@ -366,17 +366,13 @@ pub fn solid_rules() -> Vec<Rule> {
 /// Linkme distributed slice rules (v0.2.0)
 pub fn linkme_rules() -> Vec<Rule> {
     vec![
-        Rule {
-            id: "LINKME001".into(),
-            name: "Inventory Migration Required".into(),
-            category: ViolationCategory::DependencyInjection,
-            default_severity: Severity::Error,
-            description: "Code still uses inventory::submit! or inventory::collect!".into(),
-            rationale:
-                "inventory crate is being replaced by linkme for simpler plugin registration".into(),
-            enabled: true,
-            config: HashMap::from([("migration_deadline".into(), RuleConfigValue::from("v0.2.0"))]),
-        },
+        migration_rule(
+            "LINKME001",
+            "Inventory Migration Required",
+            ViolationCategory::DependencyInjection,
+            "Code still uses inventory::submit! or inventory::collect!",
+            "inventory crate is being replaced by linkme for simpler plugin registration",
+        ),
         Rule {
             id: "LINKME002".into(),
             name: "Linkme Slice Declaration".into(),
@@ -405,18 +401,13 @@ pub fn linkme_rules() -> Vec<Rule> {
 /// Constructor injection rules (v0.2.0)
 pub fn constructor_injection_rules() -> Vec<Rule> {
     vec![
-        Rule {
-            id: "CTOR001".into(),
-            name: "Shaku Migration Required".into(),
-            category: ViolationCategory::DependencyInjection,
-            default_severity: Severity::Error,
-            description: "Code still uses Shaku DI patterns (#[derive(Component)], module! macro)"
-                .into(),
-            rationale: "Shaku DI is being replaced by direct constructor injection for simplicity"
-                .into(),
-            enabled: true,
-            config: HashMap::from([("migration_deadline".into(), RuleConfigValue::from("v0.2.0"))]),
-        },
+        migration_rule(
+            "CTOR001",
+            "Shaku Migration Required",
+            ViolationCategory::DependencyInjection,
+            "Code still uses Shaku DI patterns (#[derive(Component)], module! macro)",
+            "Shaku DI is being replaced by direct constructor injection for simplicity",
+        ),
         Rule {
             id: "CTOR002".into(),
             name: "Constructor Injection Pattern".into(),
@@ -447,17 +438,13 @@ pub fn constructor_injection_rules() -> Vec<Rule> {
 /// Figment configuration rules (v0.2.0)
 pub fn figment_rules() -> Vec<Rule> {
     vec![
-        Rule {
-            id: "FIGMENT001".into(),
-            name: "Config Crate Migration Required".into(),
-            category: ViolationCategory::Configuration,
-            default_severity: Severity::Error,
-            description: "Code still uses config crate (Config::builder(), Environment, File)"
-                .into(),
-            rationale: "config crate is being replaced by Figment for unified configuration".into(),
-            enabled: true,
-            config: HashMap::from([("migration_deadline".into(), RuleConfigValue::from("v0.2.0"))]),
-        },
+        migration_rule(
+            "FIGMENT001",
+            "Config Crate Migration Required",
+            ViolationCategory::Configuration,
+            "Code still uses config crate (Config::builder(), Environment, File)",
+            "config crate is being replaced by Figment for unified configuration",
+        ),
         Rule {
             id: "FIGMENT002".into(),
             name: "Figment Pattern Usage".into(),
@@ -485,18 +472,13 @@ pub fn figment_rules() -> Vec<Rule> {
 /// Rocket routing rules (v0.2.0)
 pub fn rocket_rules() -> Vec<Rule> {
     vec![
-        Rule {
-            id: "ROCKET001".into(),
-            name: "Axum Migration Required".into(),
-            category: ViolationCategory::WebFramework,
-            default_severity: Severity::Error,
-            description: "Code still uses Axum routing patterns (Router::new(), axum::routing::*)"
-                .into(),
-            rationale: "Axum is being replaced by Rocket for attribute-based routing simplicity"
-                .into(),
-            enabled: true,
-            config: HashMap::from([("migration_deadline".into(), RuleConfigValue::from("v0.2.0"))]),
-        },
+        migration_rule(
+            "ROCKET001",
+            "Axum Migration Required",
+            ViolationCategory::WebFramework,
+            "Code still uses Axum routing patterns (Router::new(), axum::routing::*)",
+            "Axum is being replaced by Rocket for attribute-based routing simplicity",
+        ),
         Rule {
             id: "ROCKET002".into(),
             name: "Attribute-Based Handlers".into(),
@@ -521,6 +503,26 @@ pub fn rocket_rules() -> Vec<Rule> {
             config: HashMap::new(),
         },
     ]
+}
+
+/// Helper: Create migration rule with standard config
+fn migration_rule(
+    id: &str,
+    name: &str,
+    category: ViolationCategory,
+    description: &str,
+    rationale: &str,
+) -> Rule {
+    Rule {
+        id: id.into(),
+        name: name.into(),
+        category,
+        default_severity: Severity::Error,
+        description: description.into(),
+        rationale: rationale.into(),
+        enabled: true,
+        config: HashMap::from([("migration_deadline".into(), RuleConfigValue::from("v0.2.0"))]),
+    }
 }
 
 #[cfg(test)]

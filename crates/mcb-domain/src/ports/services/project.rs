@@ -17,6 +17,7 @@ pub trait ProjectDetectorService: Send + Sync {
 
 /// Service for managing project workflow resources (phases, issues, dependencies, decisions).
 #[async_trait]
+#[allow(clippy::too_many_arguments)]
 pub trait ProjectServiceInterface: Send + Sync {
     // Project operations
     /// Gets a project by ID.

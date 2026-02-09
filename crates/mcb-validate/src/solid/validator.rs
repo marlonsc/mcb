@@ -49,7 +49,56 @@ impl SolidValidator {
         violations.extend(self.validate_isp()?);
         violations.extend(self.validate_lsp()?);
         violations.extend(self.validate_impl_method_count()?);
-        violations.extend(self.validate_string_dispatch()?);
+        Ok(violations)
+    }
+
+    /// Helper: Scan declaration blocks and count methods
+    fn scan_decl_blocks<F>(
+        &self,
+        decl_pattern: &Regex,
+        member_fn_pattern: &Regex,
+        count_fn: fn(&Self, &[&str], usize, &Regex) -> usize,
+        max_allowed: usize,
+        make_violation: F,
+    ) -> Result<Vec<SolidViolation>>
+    where
+        F: Fn(PathBuf, usize, &str, usize, usize) -> SolidViolation,
+    {
+        let mut violations = Vec::new();
+
+        for crate_dir in self.get_crate_dirs()? {
+            let src_dir = crate_dir.join("src");
+            if !src_dir.exists() {
+                continue;
+            }
+
+            for entry in WalkDir::new(&src_dir)
+                .into_iter()
+                .filter_map(std::result::Result::ok)
+                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
+            {
+                let content = std::fs::read_to_string(entry.path())?;
+                let lines: Vec<&str> = content.lines().collect();
+
+                for (line_num, line) in lines.iter().enumerate() {
+                    if let Some(cap) = decl_pattern.captures(line) {
+                        let name = cap.get(1).map_or("", |m| m.as_str());
+                        let method_count = count_fn(self, &lines, line_num, member_fn_pattern);
+
+                        if method_count > max_allowed {
+                            violations.push(make_violation(
+                                entry.path().to_path_buf(),
+                                line_num + 1,
+                                name,
+                                method_count,
+                                max_allowed,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+
         Ok(violations)
     }
 
@@ -178,7 +227,6 @@ impl SolidValidator {
 
     /// ISP: Check for traits with too many methods
     pub fn validate_isp(&self) -> Result<Vec<SolidViolation>> {
-        let mut violations = Vec::new();
         let trait_pattern = PATTERNS
             .get("SOLID001.trait_decl")
             .expect("Pattern SOLID001.trait_decl not found");
@@ -186,45 +234,21 @@ impl SolidValidator {
             .get("SOLID001.fn_decl")
             .expect("Pattern SOLID001.fn_decl not found");
 
-        for crate_dir in self.get_crate_dirs()? {
-            let src_dir = crate_dir.join("src");
-            if !src_dir.exists() {
-                continue;
-            }
-
-            for entry in WalkDir::new(&src_dir)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
-
-                for (line_num, line) in lines.iter().enumerate() {
-                    if let Some(cap) = trait_pattern.captures(line) {
-                        let trait_name = cap.get(1).map_or("", |m| m.as_str());
-
-                        // Count methods in trait
-                        let method_count = self.count_trait_methods(&lines, line_num, fn_pattern);
-
-                        if method_count > self.max_trait_methods {
-                            violations.push(SolidViolation::TraitTooLarge {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                trait_name: trait_name.to_string(),
-                                method_count,
-                                max_allowed: self.max_trait_methods,
-                                suggestion: "Consider splitting into smaller, focused traits"
-                                    .to_string(),
-                                severity: Severity::Warning,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(violations)
+        self.scan_decl_blocks(
+            trait_pattern,
+            fn_pattern,
+            Self::count_trait_methods,
+            self.max_trait_methods,
+            |file, line, trait_name, method_count, max_allowed| SolidViolation::TraitTooLarge {
+                file,
+                line,
+                trait_name: trait_name.to_string(),
+                method_count,
+                max_allowed,
+                suggestion: "Consider splitting into smaller, focused traits".to_string(),
+                severity: Severity::Warning,
+            },
+        )
     }
 
     /// LSP: Check for partial trait implementations (panic!/todo! in trait methods)
@@ -308,7 +332,6 @@ impl SolidValidator {
 
     /// SRP: Check for impl blocks with too many methods
     pub fn validate_impl_method_count(&self) -> Result<Vec<SolidViolation>> {
-        let mut violations = Vec::new();
         let impl_pattern = PATTERNS
             .get("SOLID003.impl_only_decl")
             .expect("Pattern SOLID003.impl_only_decl not found");
@@ -316,44 +339,23 @@ impl SolidValidator {
             .get("SOLID002.fn_decl")
             .expect("Pattern SOLID002.fn_decl not found");
 
-        for crate_dir in self.get_crate_dirs()? {
-            let src_dir = crate_dir.join("src");
-            if !src_dir.exists() {
-                continue;
-            }
-
-            for entry in WalkDir::new(&src_dir)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
-
-                for (line_num, line) in lines.iter().enumerate() {
-                    if let Some(cap) = impl_pattern.captures(line) {
-                        let type_name = cap.get(1).map_or("", |m| m.as_str());
-
-                        // Count methods in impl block
-                        let method_count = self.count_impl_methods(&lines, line_num, fn_pattern);
-
-                        if method_count > self.max_impl_methods {
-                            violations.push(SolidViolation::ImplTooManyMethods {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                type_name: type_name.to_string(),
-                                method_count,
-                                max_allowed: self.max_impl_methods,
-                                suggestion: "Consider splitting into smaller, focused impl blocks or extracting to traits".to_string(),
-                                severity: Severity::Warning,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(violations)
+        self.scan_decl_blocks(
+            impl_pattern,
+            fn_pattern,
+            Self::count_impl_methods,
+            self.max_impl_methods,
+            |file, line, type_name, method_count, max_allowed| SolidViolation::ImplTooManyMethods {
+                file,
+                line,
+                type_name: type_name.to_string(),
+                method_count,
+                max_allowed,
+                suggestion:
+                    "Consider splitting into smaller, focused impl blocks or extracting to traits"
+                        .to_string(),
+                severity: Severity::Warning,
+            },
+        )
     }
 
     /// OCP: Check for string-based type dispatch

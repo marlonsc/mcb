@@ -134,7 +134,7 @@ impl YamlRuleLoader {
         self.template_engine.load_templates(&self.rules_dir).await?;
 
         // Load rule files
-        for entry in WalkDir::new(&self.rules_dir) {
+        for entry in WalkDir::new(&self.rules_dir).follow_links(false) {
             let entry = entry.map_err(|e| crate::ValidationError::Io(std::io::Error::other(e)))?;
             let path = entry.path();
 
