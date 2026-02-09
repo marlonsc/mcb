@@ -91,12 +91,11 @@ impl MemoryRepository for MockMemoryRepository {
                 let timeline: Vec<Observation> = obs[start..end]
                     .iter()
                     .filter(|o| {
-                        if let Some(ref f) = filter {
-                            if let Some(ref session) = f.session_id {
-                                if o.metadata.session_id.as_ref() != Some(session) {
-                                    return false;
-                                }
-                            }
+                        if let Some(ref f) = filter
+                            && let Some(ref session) = f.session_id
+                            && o.metadata.session_id.as_ref() != Some(session)
+                        {
+                            return false;
                         }
                         true
                     })
@@ -361,12 +360,11 @@ impl MemoryServiceInterface for MockMemoryService {
                 let timeline: Vec<Observation> = observations[start..end]
                     .iter()
                     .filter(|obs| {
-                        if let Some(ref f) = filter {
-                            if let Some(ref session) = f.session_id {
-                                if obs.metadata.session_id.as_ref() != Some(session) {
-                                    return false;
-                                }
-                            }
+                        if let Some(ref f) = filter
+                            && let Some(ref session) = f.session_id
+                            && obs.metadata.session_id.as_ref() != Some(session)
+                        {
+                            return false;
                         }
                         true
                     })

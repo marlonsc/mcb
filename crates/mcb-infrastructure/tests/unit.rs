@@ -5,6 +5,10 @@
 //! The auth, snapshot, and sync tests require the `test-utils` feature:
 //! `cargo test -p mcb-infrastructure --test unit --features test-utils`
 
+// Shared test utilities (single declaration for all unit tests)
+#[path = "test_utils/mod.rs"]
+mod test_utils;
+
 #[path = "unit/admin_tests.rs"]
 mod admin_tests;
 

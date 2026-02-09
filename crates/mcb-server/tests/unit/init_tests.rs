@@ -1,5 +1,4 @@
 #[test]
 fn test_init_exists() {
-    // Placeholder test
-    assert!(true, "Init module exists");
+    // Init module exists - this test verifies module compilation
 }
