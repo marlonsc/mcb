@@ -8,6 +8,8 @@ use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::services::{ValidationReport, ValidationServiceInterface, ViolationEntry};
 
+use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
+
 /// Mock implementation of ValidationServiceInterface for testing
 pub struct MockValidationService {
     /// Pre-configured validation report
@@ -24,21 +26,21 @@ impl MockValidationService {
     /// Create a new mock validation service
     pub fn new() -> Self {
         Self {
-            report: Arc::new(Mutex::new(ValidationReport {
+            report: arc_mutex(ValidationReport {
                 total_violations: 0,
                 errors: 0,
                 warnings: 0,
                 infos: 0,
                 violations: Vec::new(),
                 passed: true,
-            })),
-            validators: Arc::new(Mutex::new(vec![
+            }),
+            validators: arc_mutex(vec![
                 "clean_architecture".into(),
                 "solid".into(),
                 "quality".into(),
-            ])),
+            ]),
             should_fail: Arc::new(AtomicBool::new(false)),
-            error_message: Arc::new(Mutex::new("Simulated validation failure".to_string())),
+            error_message: arc_mutex("Simulated validation failure".to_string()),
         }
     }
 

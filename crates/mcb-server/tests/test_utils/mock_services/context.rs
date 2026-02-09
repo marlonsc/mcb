@@ -9,6 +9,8 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::services::ContextServiceInterface;
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 
+use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
+
 /// Mock implementation of ContextServiceInterface for testing
 pub struct MockContextService {
     /// Pre-configured search results
@@ -25,10 +27,10 @@ impl MockContextService {
     /// Create a new mock context service
     pub fn new() -> Self {
         Self {
-            search_results: Arc::new(Mutex::new(Vec::new())),
+            search_results: arc_mutex_vec(),
             dimensions: 384,
             should_fail: Arc::new(AtomicBool::new(false)),
-            error_message: Arc::new(Mutex::new("Simulated context failure".to_string())),
+            error_message: arc_mutex("Simulated context failure".to_string()),
         }
     }
 

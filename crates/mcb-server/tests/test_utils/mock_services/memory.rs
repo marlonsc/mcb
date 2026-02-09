@@ -14,6 +14,8 @@ use mcb_domain::ports::repositories::memory_repository::FtsSearchResult;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
 
+use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
+
 #[allow(dead_code)]
 pub struct MockMemoryRepository {
     pub observations: Arc<Mutex<Vec<Observation>>>,
@@ -24,8 +26,8 @@ pub struct MockMemoryRepository {
 impl MockMemoryRepository {
     pub fn new() -> Self {
         Self {
-            observations: Arc::new(Mutex::new(Vec::new())),
-            summaries: Arc::new(Mutex::new(Vec::new())),
+            observations: arc_mutex_vec(),
+            summaries: arc_mutex_vec(),
         }
     }
 }
@@ -147,9 +149,9 @@ impl MockMemoryService {
     pub fn new() -> Self {
         Self {
             should_fail: Arc::new(AtomicBool::new(false)),
-            error_message: Arc::new(Mutex::new("Simulated memory failure".to_string())),
-            observations: Arc::new(Mutex::new(Vec::new())),
-            summaries: Arc::new(Mutex::new(Vec::new())),
+            error_message: arc_mutex("Simulated memory failure".to_string()),
+            observations: arc_mutex_vec(),
+            summaries: arc_mutex_vec(),
         }
     }
 }

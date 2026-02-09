@@ -9,6 +9,8 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::services::{IndexingResult, IndexingServiceInterface, IndexingStatus};
 use mcb_domain::value_objects::CollectionId;
 
+use crate::test_utils::helpers::arc_mutex;
+
 /// Mock implementation of IndexingServiceInterface for testing
 pub struct MockIndexingService {
     /// Pre-configured indexing result
@@ -25,17 +27,17 @@ impl MockIndexingService {
     /// Create a new mock indexing service
     pub fn new() -> Self {
         Self {
-            indexing_result: Arc::new(Mutex::new(Some(IndexingResult {
+            indexing_result: arc_mutex(Some(IndexingResult {
                 files_processed: 0,
                 chunks_created: 0,
                 files_skipped: 0,
                 errors: Vec::new(),
                 operation_id: None,
                 status: "completed".to_string(),
-            }))),
-            status: Arc::new(Mutex::new(IndexingStatus::default())),
+            })),
+            status: arc_mutex(IndexingStatus::default()),
             should_fail: Arc::new(AtomicBool::new(false)),
-            error_message: Arc::new(Mutex::new("Simulated indexing failure".to_string())),
+            error_message: arc_mutex("Simulated indexing failure".to_string()),
         }
     }
 

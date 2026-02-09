@@ -8,6 +8,8 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::services::SearchServiceInterface;
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 
+use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
+
 /// Mock implementation of SearchServiceInterface for testing
 pub struct MockSearchService {
     /// Pre-configured results to return
@@ -22,9 +24,9 @@ impl MockSearchService {
     /// Create a new mock search service
     pub fn new() -> Self {
         Self {
-            results: Arc::new(Mutex::new(Vec::new())),
+            results: arc_mutex_vec(),
             should_fail: Arc::new(AtomicBool::new(false)),
-            error_message: Arc::new(Mutex::new("Simulated search failure".to_string())),
+            error_message: arc_mutex("Simulated search failure".to_string()),
         }
     }
 

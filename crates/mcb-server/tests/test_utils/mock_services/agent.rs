@@ -11,6 +11,8 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 
+use crate::test_utils::helpers::arc_mutex_hashmap;
+
 #[allow(dead_code)]
 pub struct MockAgentSessionService {
     sessions: Arc<Mutex<HashMap<String, AgentSession>>>,
@@ -20,7 +22,7 @@ impl MockAgentSessionService {
     #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
-            sessions: Arc::new(Mutex::new(HashMap::new())),
+            sessions: arc_mutex_hashmap(),
         }
     }
 }
@@ -85,10 +87,10 @@ pub struct MockAgentRepository {
 impl MockAgentRepository {
     pub fn new() -> Self {
         Self {
-            sessions: Arc::new(Mutex::new(HashMap::new())),
-            delegations: Arc::new(Mutex::new(Vec::new())),
-            tool_calls: Arc::new(Mutex::new(Vec::new())),
-            checkpoints: Arc::new(Mutex::new(HashMap::new())),
+            sessions: arc_mutex_hashmap(),
+            delegations: arc_mutex_vec(),
+            tool_calls: arc_mutex_vec(),
+            checkpoints: arc_mutex_hashmap(),
         }
     }
 
