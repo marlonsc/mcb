@@ -15,9 +15,6 @@
 
 name: Release
 
-permissions:
-  contents: write
-
 on: # yamllint disable-line rule:truthy
   push:
     tags:
@@ -111,6 +108,8 @@ jobs:
     name: Create GitHub Release
     needs: [pre-release-checks, build-release]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:

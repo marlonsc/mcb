@@ -51,7 +51,6 @@ pub struct ContextSnapshot {
 
 ### 2. Immutable Snapshots with TTL
 
-
 **Rationale**:
 
 -   **im::Vector**: Provides copy-on-write semantics. New snapshots don't copy old history.

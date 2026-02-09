@@ -1,4 +1,4 @@
-import json, sys
+import json
 
 data = json.load(open("/home/marlonsc/mcb-check-fix/qlty.check.lst"))
 c = {}

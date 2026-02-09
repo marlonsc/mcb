@@ -31,11 +31,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
+from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 # ────────────────────────────────────────────────
 # Constants & Configuration

@@ -11,10 +11,11 @@ All 10 steps of the comprehensive plan were implemented and validated.
 ### ✅ Step 1-2: Compilation Fixes (BLOCKER RESOLVED)
 
 **Errors Fixed:**
-- `milvus.rs` lifetime errors: `columns_map` moved inside loops
-- `highlight_service.rs` type error: removed `.context()` in filter_map closure
-- `execution.rs` + `quality_gate.rs`: filter_map type conversions fixed
-- Route collisions: removed duplicate `/events` and `/metrics` handlers
+
+-   `milvus.rs` lifetime errors: `columns_map` moved inside loops
+-   `highlight_service.rs` type error: removed `.context()` in filter_map closure
+-   `execution.rs` + `quality_gate.rs`: filter_map type conversions fixed
+-   Route collisions: removed duplicate `/events` and `/metrics` handlers
 
 **Result**: `cargo check` passes clean, 112/114 tests pass
 
@@ -23,6 +24,7 @@ All 10 steps of the comprehensive plan were implemented and validated.
 **File**: `systemd/mcb.service`
 
 **Change**:
+
 ```
 - ExecStart=%h/.local/bin/mcb --server
 + ExecStart=%h/.local/bin/mcb serve --server
@@ -65,21 +67,24 @@ Uses centralized config: `~/.config/mcb/mcb.toml`
 **Target**: `make install-mcp` - integrated into `make install`
 
 **Features**:
-- Updates Claude Code `.mcp.json` via `jq`
-- Updates Gemini `mcp_config.json` via `jq`
-- Validates all configs
-- Zero manual intervention required
+
+-   Updates Claude Code `.mcp.json` via `jq`
+-   Updates Gemini `mcp_config.json` via `jq`
+-   Validates all configs
+-   Zero manual intervention required
 
 **Enhanced `make install`**:
-- Atomic binary installation
-- Service start with validation retries
-- HTTP health check with retries (5 attempts)
-- Full error reporting on failure
-- 100% automation - no manual `systemctl start` needed
+
+-   Atomic binary installation
+-   Service start with validation retries
+-   HTTP health check with retries (5 attempts)
+-   Full error reporting on failure
+-   100% automation - no manual `systemctl start` needed
 
 ### ✅ Step 7: .gitignore Cleanup
 
 **Added**:
+
 ```
 *.lst                          # qlty SARIF output
 extract_issues.py             # Generated script
@@ -88,6 +93,7 @@ scripts/analyze_smells.py     # Generated script
 ```
 
 **Removed from tracking**:
+
 ```bash
 git rm --cached qlty.*.lst extract_issues.py scripts/analyze_smells.py
 ```
@@ -95,23 +101,25 @@ git rm --cached qlty.*.lst extract_issues.py scripts/analyze_smells.py
 ### ✅ Step 8: .qlty Git Status
 
 **Confirmed**: 4 files tracked correctly
-- `.qlty/.gitignore`
-- `.qlty/qlty.toml`
-- `.qlty/configs/.hadolint.yaml`
-- `.qlty/configs/.shellcheckrc`
+
+-   `.qlty/.gitignore`
+-   `.qlty/qlty.toml`
+-   `.qlty/configs/.hadolint.yaml`
+-   `.qlty/configs/.shellcheckrc`
 
 Symlinks and logs properly excluded.
 
 ### ✅ Step 9: Lint & Test
 
-- `cargo fmt --all`: ✓ Pass
-- `cargo clippy`: ✓ Pass (warnings only for missing docs)
-- `cargo test`: 112/114 pass (2 pre-existing failures in validate rules)
-- `cargo check`: Clean
+-   `cargo fmt --all`: ✓ Pass
+-   `cargo clippy`: ✓ Pass (warnings only for missing docs)
+-   `cargo test`: 112/114 pass (2 pre-existing failures in validate rules)
+-   `cargo check`: Clean
 
 ### ✅ Step 10: Final Validation
 
 **All Systems Operational**:
+
 ```
 Systemd Service:     ACTIVE ✓
 Binary (v0.2.0):     RUNNING ✓
@@ -144,12 +152,14 @@ port = 8080
 ### MCP Agent Configs
 
 **Claude Code** (`.mcp.json`):
-- Minimal: command + args only
-- Inherits providers from `~/.config/mcb/mcb.toml`
+
+-   Minimal: command + args only
+-   Inherits providers from `~/.config/mcb/mcb.toml`
 
 **Gemini** (`~/.gemini/antigravity/mcp_config.json`):
-- Minimal: command + args only
-- Inherits providers from `~/.config/mcb/mcb.toml`
+
+-   Minimal: command + args only
+-   Inherits providers from `~/.config/mcb/mcb.toml`
 
 ## 🚀 Usage
 
@@ -160,24 +170,27 @@ make install
 ```
 
 **Automatically**:
-1. ✓ Builds release binary
-2. ✓ Installs to `~/.local/bin/mcb`
-3. ✓ Installs systemd service
-4. ✓ Updates MCP agent configs
-5. ✓ Validates all systems
-6. ✓ Starts service daemon
+
+1.  ✓ Builds release binary
+2.  ✓ Installs to `~/.local/bin/mcb`
+3.  ✓ Installs systemd service
+4.  ✓ Updates MCP agent configs
+5.  ✓ Validates all systems
+6.  ✓ Starts service daemon
 
 **Zero manual steps required**
 
 ### Access MCB
 
 **Claude Code**:
+
 ```bash
 # Uses .mcp.json automatically
 # MCB available as "mcb" MCP server
 ```
 
 **Gemini**:
+
 ```bash
 # Uses ~/.gemini/antigravity/mcp_config.json
 # MCB available via Antigravity integration
@@ -194,45 +207,49 @@ curl http://127.0.0.1:8080/healthz
 ## 📝 Git Commits
 
 ### Commit 1: 5658b038
+
 **Message**: Multi-fix (compilation, systemd, MCP standardization)
 
 **Changes**:
-- Lifetime/type error fixes
-- Systemd service: `mcb serve --server`
-- MCP config standardization
-- .gitignore cleanup
+
+-   Lifetime/type error fixes
+-   Systemd service: `mcb serve --server`
+-   MCP config standardization
+-   .gitignore cleanup
 
 ### Commit 2: 74238f92
+
 **Message**: Route collision fix + make install improvements
 
 **Changes**:
-- Remove duplicate `/events` handlers
-- Remove duplicate `/metrics` handlers
-- Enhanced `make install` with validation retries
-- Atomic binary installation
-- HTTP health check with retries
+
+-   Remove duplicate `/events` handlers
+-   Remove duplicate `/metrics` handlers
+-   Enhanced `make install` with validation retries
+-   Atomic binary installation
+-   HTTP health check with retries
 
 ## ✅ Validation Checklist
 
-- [x] Binary compiles and runs
-- [x] Systemd service starts and stays active
-- [x] HTTP server responds to requests
-- [x] MCP config for Claude Code set
-- [x] MCP config for Gemini set
-- [x] Central config in place
-- [x] `make install` is 100% automatic
-- [x] No manual steps required
-- [x] All error paths handled
-- [x] Validation with retries works
+-   [x] Binary compiles and runs
+-   [x] Systemd service starts and stays active
+-   [x] HTTP server responds to requests
+-   [x] MCP config for Claude Code set
+-   [x] MCP config for Gemini set
+-   [x] Central config in place
+-   [x] `make install` is 100% automatic
+-   [x] No manual steps required
+-   [x] All error paths handled
+-   [x] Validation with retries works
 
 ## 🎯 Key Improvements
 
-1. **Zero Manual Steps**: `make install` handles everything
-2. **Robust Validation**: Retries on service startup, HTTP health checks
-3. **Centralized Config**: Single source of truth for providers
-4. **Clean Architecture**: No duplicate route handlers
-5. **Error Handling**: Early failure detection with clear messages
-6. **Idempotent**: Can run `make install` multiple times safely
+1.  **Zero Manual Steps**: `make install` handles everything
+2.  **Robust Validation**: Retries on service startup, HTTP health checks
+3.  **Centralized Config**: Single source of truth for providers
+4.  **Clean Architecture**: No duplicate route handlers
+5.  **Error Handling**: Early failure detection with clear messages
+6.  **Idempotent**: Can run `make install` multiple times safely
 
 ## 📊 System Status
 

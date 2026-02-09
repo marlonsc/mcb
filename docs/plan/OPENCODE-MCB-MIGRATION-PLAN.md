@@ -9,10 +9,11 @@
 ## Executive Summary
 
 This document maps every OpenCode hook, skill, command, and agent to its MCB replacement across three phases (v0.2.0, v0.3.0, v0.4.0). Each mapping includes:
-- Current file location
-- Current implementation
-- MCB replacement
-- Migration action
+
+-   Current file location
+-   Current implementation
+-   MCB replacement
+-   Migration action
 
 ---
 
@@ -47,9 +48,10 @@ This document maps every OpenCode hook, skill, command, and agent to its MCB rep
 
 ### 1.1 Agent Replacements
 
-#### Explore Agent → mcp_mcb_search
+#### Explore Agent → MCP_mcb_search
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/AGENTS.md (line 16)
 
@@ -61,6 +63,7 @@ Usage in delegation:
 ```
 
 **MCB Replacement**:
+
 ```typescript
 // Replace explore agent spawn with direct MCB call
 mcp_mcb_search(
@@ -80,17 +83,19 @@ mcp_mcb_search(
 | 1.1.3 | `~/.config/opencode/oh-my-opencode.json` | Add `tool_preferences.code_search: ["mcp_mcb_search", "ast_grep_search", "grep"]` |
 
 **When to KEEP explore agent**:
-- AST structural patterns (use ast-grep)
-- Exact regex matches (use grep)
-- Multi-file cross-reference (use LSP)
+
+-   AST structural patterns (use ast-grep)
+-   Exact regex matches (use grep)
+-   Multi-file cross-reference (use LSP)
 
 ---
 
 ### 1.2 Session Tracking
 
-#### oc-session-tracker Skill → mcp_mcb_session + mcp_mcb_agent
+#### oc-session-tracker Skill → MCP_mcb_session + MCP_mcb_agent
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/skills/oc-session-tracker/SKILL.md
 
@@ -113,6 +118,7 @@ Session End (lines 54-66):
 ```
 
 **MCB Replacement**:
+
 ```typescript
 // Session Start
 mcp_mcb_session(action="start", data={
@@ -158,6 +164,7 @@ mcp_mcb_session(action="end", data={
 #### /oc-init → Add MCB Index
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/command/oc-init.md
 
@@ -169,6 +176,7 @@ Creates:
 ```
 
 **MCB Enhancement**:
+
 ```typescript
 // After project initialization
 mcp_mcb_index(
@@ -196,9 +204,10 @@ mcp_mcb_session(action="start", data={
 
 ### 1.4 Memory Skill Enhancement
 
-#### oc-memory Skill → mcp_mcb_memory (After GAP-H2 Fix)
+#### oc-memory Skill → MCP_mcb_memory (After GAP-H2 Fix)
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/skills/oc-memory/SKILL.md
 
@@ -215,6 +224,7 @@ Usage (lines 34-44):
 ```
 
 **MCB Replacement** (after GAP-H2 fix):
+
 ```typescript
 // Search (same as before, better context)
 mcp_mcb_memory(
@@ -262,9 +272,10 @@ mcp_mcb_memory(
 
 ### 2.1 Hook Replacements
 
-#### oc-state-machine.sh → mcp_mcb_workflow
+#### oc-state-machine.sh → MCP_mcb_workflow
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/hooks/oc-state-machine.sh
 
@@ -280,6 +291,7 @@ Transitions (lines 25-50):
 ```
 
 **MCB Replacement**:
+
 ```typescript
 // Replace shell-based FSM with MCB Workflow
 mcp_mcb_workflow(
@@ -313,9 +325,10 @@ mcp_mcb_workflow(
 
 ---
 
-#### oc-workflow-orchestration.sh → mcp_mcb_workflow
+#### oc-workflow-orchestration.sh → MCP_mcb_workflow
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/hooks/oc-workflow-orchestration.sh
 
@@ -330,6 +343,7 @@ Phases (lines 18-37):
 ```
 
 **MCB Replacement**:
+
 ```typescript
 // Pre-commit validation via MCB
 mcp_mcb_workflow(
@@ -369,6 +383,7 @@ mcp_mcb_workflow(
 #### /oc-welcome → MCB Session Integration
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/command/oc-welcome.md
 
@@ -388,6 +403,7 @@ Loads Skills (lines 12-18):
 ```
 
 **MCB Enhancement**:
+
 ```typescript
 // Replace manual detection with MCB session
 const session = await mcp_mcb_session(action="get_or_create", data={
@@ -420,6 +436,7 @@ if (session.is_new) {
 #### /oc-plan → MCB Memory Patterns
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/command/oc-plan.md
 
@@ -430,6 +447,7 @@ Research Phase:
 ```
 
 **MCB Enhancement**:
+
 ```typescript
 // Before planning, search for similar past plans
 const patterns = await mcp_mcb_memory(
@@ -474,6 +492,7 @@ await mcp_mcb_memory(
 | 2.3.2 | All commands using `mcp_memory` | Replace with `mcp_mcb_memory` |
 
 **Deprecation Notice to Add**:
+
 ```markdown
 ---
 name: oc-memory
@@ -522,9 +541,10 @@ This skill is deprecated. Migrate to MCB memory for project-scoped observations.
 
 ### 3.1 Unified Context Search
 
-#### Explore + Librarian → mcp_mcb_search(context)
+#### Explore + Librarian → MCP_mcb_search(context)
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/AGENTS.md
 
@@ -539,6 +559,7 @@ Time: 30-60 seconds
 ```
 
 **MCB Replacement**:
+
 ```typescript
 // Single call replaces all three
 const context = await mcp_mcb_search(
@@ -573,9 +594,10 @@ Time: 5-10 seconds
 
 ### 3.2 Knowledge Graph
 
-#### oc-cartography → mcp_mcb_search(graph)
+#### oc-cartography → MCP_mcb_search(graph)
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/skills/oc-cartography/SKILL.md
 
@@ -588,6 +610,7 @@ Output: codemap.md files per directory (static snapshots)
 ```
 
 **MCB Replacement**:
+
 ```typescript
 // Dynamic code structure query
 const structure = await mcp_mcb_search(
@@ -638,6 +661,7 @@ const deps = await mcp_mcb_search(
 #### /oc-debug → MCB Snapshot Queries
 
 **Current Implementation**:
+
 ```
 File: ~/.config/opencode/command/oc-debug.md
 
@@ -648,6 +672,7 @@ Current debugging:
 ```
 
 **MCB Enhancement**:
+
 ```typescript
 // Find when behavior changed
 const beforeRelease = await mcp_mcb_search(
@@ -780,9 +805,9 @@ const diff = await mcp_mcb_vcs(
 
 ## Cross-References
 
-- **MCB Gaps Report**: `/home/marlonsc/mcb/docs/plan/MCB-COMPREHENSIVE-GAPS.md`
-- **MCB Roadmap**: `/home/marlonsc/mcb/docs/developer/ROADMAP.md`
-- **OpenCode AGENTS.md**: `/home/marlonsc/.config/opencode/AGENTS.md`
-- **OpenCode Skills**: `/home/marlonsc/.config/opencode/skills/`
-- **OpenCode Commands**: `/home/marlonsc/.config/opencode/command/`
-- **OpenCode Hooks**: `/home/marlonsc/.config/opencode/hooks/`
+-   **MCB Gaps Report**: `/home/marlonsc/mcb/docs/plan/MCB-COMPREHENSIVE-GAPS.md`
+-   **MCB Roadmap**: `/home/marlonsc/mcb/docs/developer/ROADMAP.md`
+-   **OpenCode AGENTS.md**: `/home/marlonsc/.config/opencode/AGENTS.md`
+-   **OpenCode Skills**: `/home/marlonsc/.config/opencode/skills/`
+-   **OpenCode Commands**: `/home/marlonsc/.config/opencode/command/`
+-   **OpenCode Hooks**: `/home/marlonsc/.config/opencode/hooks/`

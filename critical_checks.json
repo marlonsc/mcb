@@ -1,0 +1,241 @@
+{
+  "total": 24,
+  "by_severity": {
+    "ERROR": 24
+  },
+  "by_rule": {
+    "zizmor:zizmor/dangerous-triggers": 1,
+    "zizmor:zizmor/bot-conditions": 1,
+    "zizmor:zizmor/unpinned-uses": 15,
+    "zizmor:zizmor/cache-poisoning": 6,
+    "zizmor:zizmor/excessive-permissions": 1
+  },
+  "by_category": {
+    "zizmor": 24
+  },
+  "by_file": {
+    ".github/workflows/auto-reviewer.yml": 2,
+    ".github/workflows/ci.yml": 9,
+    ".github/workflows/codeql.yml": 2,
+    ".github/workflows/docs.yml": 6,
+    ".github/workflows/release.yml": 5
+  },
+  "issues": [
+    {
+      "rule_id": "zizmor:zizmor/dangerous-triggers",
+      "level": "ERROR",
+      "message": "use of fundamentally insecure workflow trigger",
+      "location": ".github/workflows/auto-reviewer.yml:25-29",
+      "file": ".github/workflows/auto-reviewer.yml",
+      "line": 25,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/bot-conditions",
+      "level": "ERROR",
+      "message": "spoofable bot actor check",
+      "location": ".github/workflows/auto-reviewer.yml:37",
+      "file": ".github/workflows/auto-reviewer.yml",
+      "line": 37,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:50",
+      "file": ".github/workflows/ci.yml",
+      "line": 50,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:65",
+      "file": ".github/workflows/ci.yml",
+      "line": 65,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:81",
+      "file": ".github/workflows/ci.yml",
+      "line": 81,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:94",
+      "file": ".github/workflows/ci.yml",
+      "line": 94,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:118",
+      "file": ".github/workflows/ci.yml",
+      "line": 118,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:128",
+      "file": ".github/workflows/ci.yml",
+      "line": 128,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:138",
+      "file": ".github/workflows/ci.yml",
+      "line": 138,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:151",
+      "file": ".github/workflows/ci.yml",
+      "line": 151,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/ci.yml:176",
+      "file": ".github/workflows/ci.yml",
+      "line": 176,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/codeql.yml:44",
+      "file": ".github/workflows/codeql.yml",
+      "line": 44,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/cache-poisoning",
+      "level": "ERROR",
+      "message": "runtime artifacts potentially vulnerable to a cache poisoning attack",
+      "location": ".github/workflows/codeql.yml:47",
+      "file": ".github/workflows/codeql.yml",
+      "line": 47,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/docs.yml:33",
+      "file": ".github/workflows/docs.yml",
+      "line": 33,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/cache-poisoning",
+      "level": "ERROR",
+      "message": "runtime artifacts potentially vulnerable to a cache poisoning attack",
+      "location": ".github/workflows/docs.yml:34",
+      "file": ".github/workflows/docs.yml",
+      "line": 34,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/docs.yml:50",
+      "file": ".github/workflows/docs.yml",
+      "line": 50,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/cache-poisoning",
+      "level": "ERROR",
+      "message": "runtime artifacts potentially vulnerable to a cache poisoning attack",
+      "location": ".github/workflows/docs.yml:51",
+      "file": ".github/workflows/docs.yml",
+      "line": 51,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/docs.yml:95",
+      "file": ".github/workflows/docs.yml",
+      "line": 95,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/cache-poisoning",
+      "level": "ERROR",
+      "message": "runtime artifacts potentially vulnerable to a cache poisoning attack",
+      "location": ".github/workflows/docs.yml:96",
+      "file": ".github/workflows/docs.yml",
+      "line": 96,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/excessive-permissions",
+      "level": "ERROR",
+      "message": "overly broad permissions",
+      "location": ".github/workflows/release.yml:19",
+      "file": ".github/workflows/release.yml",
+      "line": 19,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/release.yml:37",
+      "file": ".github/workflows/release.yml",
+      "line": 37,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/cache-poisoning",
+      "level": "ERROR",
+      "message": "runtime artifacts potentially vulnerable to a cache poisoning attack",
+      "location": ".github/workflows/release.yml:40",
+      "file": ".github/workflows/release.yml",
+      "line": 40,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/unpinned-uses",
+      "level": "ERROR",
+      "message": "unpinned action reference",
+      "location": ".github/workflows/release.yml:79",
+      "file": ".github/workflows/release.yml",
+      "line": 79,
+      "category": "check"
+    },
+    {
+      "rule_id": "zizmor:zizmor/cache-poisoning",
+      "level": "ERROR",
+      "message": "runtime artifacts potentially vulnerable to a cache poisoning attack",
+      "location": ".github/workflows/release.yml:82",
+      "file": ".github/workflows/release.yml",
+      "line": 82,
+      "category": "check"
+    }
+  ]
+}

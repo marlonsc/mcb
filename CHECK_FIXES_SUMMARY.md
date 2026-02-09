@@ -12,23 +12,28 @@
 
 **Files Modified:** 5 GitHub Actions workflow files
 
-1. **.github/workflows/ci.yml**
-   - Pinned 9 unpinned `dtolnay/rust-toolchain` actions to SHA digests
-   - Added version comments (e.g., `# stable`, `# master`) for maintainability
+1.  **.GitHub/workflows/ci.yml**
 
-2. **.github/workflows/docs.yml**
-   - Pinned 3 unpinned `dtolnay/rust-toolchain@stable` actions to SHA
+-   Pinned 9 unpinned `dtolnay/rust-toolchain` Actions to SHA digests
+-   Added version comments (e.g., `# stable`, `# master`) for maintainability
 
-3. **.github/workflows/release.yml**
-   - Pinned 2 unpinned `dtolnay/rust-toolchain@stable` actions to SHA
-   - Added `save-if: ${{ github.event_name == 'push' }}` to 2 Swatinem/rust-cache instances (cache poisoning mitigation)
-   - Fixed YAML indentation errors
+1.  **.GitHub/workflows/docs.yml**
 
-4. **.github/workflows/codeql.yml**
-   - No changes needed (already had protections in place)
+-   Pinned 3 unpinned `dtolnay/rust-toolchain@stable` Actions to SHA
 
-5. **.github/workflows/auto-reviewer.yml**
-   - No changes needed (already had `zizmor:ignore` comments from previous fixes)
+1.  **.GitHub/workflows/release.yml**
+
+-   Pinned 2 unpinned `dtolnay/rust-toolchain@stable` Actions to SHA
+-   Added `save-if: ${{ github.event_name == 'push' }}` to 2 Swatinem/Rust-cache instances (cache poisoning mitigation)
+-   Fixed YAML indentation errors
+
+1.  **.GitHub/workflows/codeql.yml**
+
+-   No changes needed (already had protections in place)
+
+1.  **.GitHub/workflows/auto-reviewer.yml**
+
+-   No changes needed (already had `zizmor:ignore` comments from previous fixes)
 
 ### Security Fixes Applied
 
@@ -44,6 +49,7 @@
 ### Verification Results
 
 **Before fixes:**
+
 ```
 ERROR count: 24 (all from zizmor)
 - 15 unpinned actions
@@ -52,6 +58,7 @@ ERROR count: 24 (all from zizmor)
 ```
 
 **After fixes:**
+
 ```
 ERROR count: 4 (only rustfmt - file path issues)
 - 0 security errors (zizmor)
@@ -67,11 +74,13 @@ ERROR count: 4 (only rustfmt - file path issues)
 ### SHA Pinning Strategy
 
 All GitHub Actions are now pinned using the pattern:
+
 ```yaml
 - uses: owner/action@<40-char-sha-digest> # version-tag
 ```
 
 Example:
+
 ```yaml
 - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
 ```
@@ -94,10 +103,10 @@ Added conditional cache saving to prevent malicious PRs from poisoning the cache
 
 ## Artifacts Generated
 
-1. **scripts/analyze_qlty.py** - Unified analyzer for qlty checks and smells with filtering
-2. **QUALITY_ANALYSIS_GUIDE.md** - Complete usage guide for the analyzer
-3. **CRITICAL_CHECKS.md** - Detailed report of the 24 errors fixed
-4. **critical_checks.json** - Machine-readable error data
+1.  **scripts/analyze_qlty.py** - Unified analyzer for qlty checks and smells with filtering
+2.  **QUALITY_ANALYSIS_GUIDE.md** - Complete usage guide for the analyzer
+3.  **CRITICAL_CHECKS.md** - Detailed report of the 24 errors fixed
+4.  **critical_checks.JSON** - Machine-readable error data
 
 ---
 
@@ -111,10 +120,10 @@ Added conditional cache saving to prevent malicious PRs from poisoning the cache
 
 ## Next Steps
 
-1. ✅ All critical security errors fixed
-2. ⏭️ Commit changes with message: `fix(ci): resolve all zizmor security errors in GitHub Actions workflows`
-3. ⏭️ Push to remote
-4. ⏭️ Code smells are being addressed in separate worktree (not our concern)
+1.  ✅ All critical security errors fixed
+2.  ⏭️ Commit changes with message: `fix(ci): resolve all zizmor security errors in GitHub Actions workflows`
+3.  ⏭️ Push to remote
+4.  ⏭️ Code smells are being addressed in separate worktree (not our concern)
 
 ---
 

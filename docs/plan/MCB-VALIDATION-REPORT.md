@@ -17,7 +17,7 @@
 | `mcp_mcb_vcs` | ⚠️ **PARTIAL** | list_repositories, index_repository | search_branch, compare_branches, analyze_impact |
 | `mcp_mcb_session` | ⚠️ **PARTIAL** | list | create, get, update, summarize |
 | `mcp_mcb_memory` | ❌ **BROKEN** | - | store, list, get, timeline, inject |
-| `mcp_mcb_project` | ❌ **NOT IMPLEMENTED** | - | All actions |
+| `mcp_mcb_project` | ❌ **NOT IMPLEMENTED** | - | All Actions |
 | `mcp_mcb_agent` | ❌ **BROKEN** | - | log_tool, log_delegation |
 
 **Overall**: 2 fully working, 3 partial, 3 broken/not implemented.
@@ -26,9 +26,9 @@
 
 ## Detailed Test Results
 
-### 1. mcp_mcb_index ✅ WORKING
+### 1. MCP_mcb_index ✅ WORKING
 
-All actions work correctly.
+All Actions work correctly.
 
 | Action | Status | Evidence |
 |--------|--------|----------|
@@ -37,6 +37,7 @@ All actions work correctly.
 | `clear` | ✅ | Returns `{"success": true, "collection": "name"}` |
 
 **Test Commands:**
+
 ```
 mcp_mcb_index(action="status")
 mcp_mcb_index(action="start", path="/path", collection="name", extensions=[".md"])
@@ -45,7 +46,7 @@ mcp_mcb_index(action="clear", collection="name")
 
 ---
 
-### 2. mcp_mcb_search ✅ WORKING
+### 2. MCP_mcb_search ✅ WORKING
 
 Code search works perfectly. Memory search returns empty (expected if no memories stored).
 
@@ -56,6 +57,7 @@ Code search works perfectly. Memory search returns empty (expected if no memorie
 | Error handling | ✅ | "Collection not found" for nonexistent collections |
 
 **Test Commands:**
+
 ```
 mcp_mcb_search(query="provider config", resource="code", collection="opencode", limit=5)
 mcp_mcb_search(query="session", resource="memory", limit=3)
@@ -63,33 +65,35 @@ mcp_mcb_search(query="session", resource="memory", limit=3)
 
 ---
 
-### 3. mcp_mcb_validate ⚠️ PARTIAL
+### 3. MCP_mcb_validate ⚠️ PARTIAL
 
 list_rules and analyze work. run action has scope enum parsing issue.
 
 | Action | Status | Evidence |
 |--------|--------|----------|
-| `list_rules` | ✅ | Returns 12 validators: clean_architecture, solid, quality, organization, kiss, naming, documentation, performance, async_patterns, dependencies, patterns, tests |
+| `list_rules` | ✅ | Returns 12 validators: clean_architecture, SOLID, quality, organization, kiss, naming, documentation, performance, async_patterns, dependencies, patterns, tests |
 | `analyze` | ✅ | Returns complexity metrics: cyclomatic, cognitive, maintainability_index, sloc, functions breakdown |
 | `run` | ❌ | Scope enum not parsed: `JSON Parse error: Unexpected identifier "file"` |
 
 **Working Commands:**
+
 ```
 mcp_mcb_validate(action="list_rules")
 mcp_mcb_validate(action="analyze", path="/path/to/file.py")
 ```
 
 **Broken Command:**
+
 ```
 mcp_mcb_validate(action="run", path="/path", scope="file")
 # Error: JSON Parse error: Unexpected identifier "file"
 ```
 
-**Root Cause**: The `scope` parameter expects an enum but MCP is not properly serializing the string value.
+**Root Cause**: The `scope` parameter expects an enum but MCP is not properly serializing the String value.
 
 ---
 
-### 4. mcp_mcb_vcs ⚠️ PARTIAL
+### 4. MCP_mcb_vcs ⚠️ PARTIAL
 
 Repository listing and indexing work. Search/compare/analyze fail with "Repository not found".
 
@@ -104,12 +108,14 @@ Repository listing and indexing work. Search/compare/analyze fail with "Reposito
 **Root Cause**: The `repo_id` parameter must be the hash returned by `index_repository`, not an arbitrary name. However, even with correct repo_id, search/compare/analyze may have other issues.
 
 **Working Commands:**
+
 ```
 mcp_mcb_vcs(action="list_repositories")
 mcp_mcb_vcs(action="index_repository", repo_path="/path/to/repo", branches=["main"])
 ```
 
 **Broken Commands:**
+
 ```
 mcp_mcb_vcs(action="search_branch", repo_id="name", query="...", limit=3)
 mcp_mcb_vcs(action="compare_branches", repo_id="name", base_branch="main", target_branch="feature")
@@ -118,9 +124,9 @@ mcp_mcb_vcs(action="analyze_impact", repo_id="name", target_branch="main")
 
 ---
 
-### 5. mcp_mcb_session ⚠️ PARTIAL
+### 5. MCP_mcb_session ⚠️ PARTIAL
 
-List works. All other actions fail.
+List works. All other Actions fail.
 
 | Action | Status | Evidence |
 |--------|--------|----------|
@@ -133,11 +139,13 @@ List works. All other actions fail.
 **Root Cause**: The `data` JSON object is not being parsed correctly. The handler expects `agent_type` inside data but cannot extract it.
 
 **Working Command:**
+
 ```
 mcp_mcb_session(action="list", limit=5)
 ```
 
 **Broken Command:**
+
 ```
 mcp_mcb_session(action="create", data={"agent_type": "test", "project_id": "opencode"})
 # Error: Missing agent_type for create
@@ -145,9 +153,9 @@ mcp_mcb_session(action="create", data={"agent_type": "test", "project_id": "open
 
 ---
 
-### 6. mcp_mcb_memory ❌ BROKEN
+### 6. MCP_mcb_memory ❌ BROKEN
 
-All actions fail.
+All Actions fail.
 
 | Action | Status | Evidence |
 |--------|--------|----------|
@@ -159,11 +167,13 @@ All actions fail.
 | `inject` | ❌ | `Failed to inject context: ...` |
 
 **Root Causes**:
-1. **Data payload parsing**: JSON object in `data` parameter not being extracted
-2. **SQL errors**: Database table may not exist or have wrong schema
-3. **Error patterns not implemented**: Feature stub in code
+
+1.  **Data payload parsing**: JSON object in `data` parameter not being extracted
+2.  **SQL errors**: Database table may not exist or have wrong schema
+3.  **Error patterns not implemented**: Feature stub in code
 
 **Broken Commands:**
+
 ```
 mcp_mcb_memory(action="store", resource="observation", data={"content": "test", "tags": ["t1"]})
 # Error: Missing data payload for observation store
@@ -177,9 +187,9 @@ mcp_mcb_memory(action="timeline", resource="observation", depth_before=5, depth_
 
 ---
 
-### 7. mcp_mcb_project ❌ NOT IMPLEMENTED
+### 7. MCP_mcb_project ❌ NOT IMPLEMENTED
 
-All actions return "Project workflow not yet implemented".
+All Actions return "Project workflow not yet implemented".
 
 | Action | Status | Evidence |
 |--------|--------|----------|
@@ -194,9 +204,9 @@ All actions return "Project workflow not yet implemented".
 
 ---
 
-### 8. mcp_mcb_agent ❌ BROKEN
+### 8. MCP_mcb_agent ❌ BROKEN
 
-All actions fail with data parsing error.
+All Actions fail with data parsing error.
 
 | Action | Status | Evidence |
 |--------|--------|----------|
@@ -206,6 +216,7 @@ All actions fail with data parsing error.
 **Root Cause**: Same as session/memory - the `data` JSON object parameter is not being deserialized correctly by the MCP handler.
 
 **Broken Commands:**
+
 ```
 mcp_mcb_agent(action="log_tool", session_id="test", data={"tool_name": "edit", "success": true})
 # Error: Data must be a JSON object
@@ -223,9 +234,10 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 **Affected Tools**: memory, session, agent
 
 **Symptoms**:
-- `Missing data payload for X`
-- `Missing agent_type for create`
-- `Data must be a JSON object`
+
+-   `Missing data payload for X`
+-   `Missing agent_type for create`
+-   `Data must be a JSON object`
 
 **Evidence**: The `data` parameter is defined as `Option<serde_json::Value>` but when passed from MCP client, it's not being deserialized correctly.
 
@@ -240,13 +252,15 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 **Affected Tools**: memory (list, inject)
 
 **Symptoms**:
-- `SQL query_all failed: Failed to fetch from memory_observations`
+
+-   `SQL query_all failed: Failed to fetch from memory_observations`
 
 **Evidence**: The memory_observations table may not exist or have wrong schema in SQLite.
 
-**Probable Location**: 
-- Schema: `mcb-domain/src/repositories/`
-- Migrations: `mcb-persistence/`
+**Probable Location**:
+
+-   Schema: `mcb-domain/src/repositories/`
+-   Migrations: `mcb-persistence/`
 
 **Fix Priority**: P1 - Blocks memory read operations
 
@@ -257,7 +271,8 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 **Affected Tools**: validate (run action)
 
 **Symptoms**:
-- `JSON Parse error: Unexpected identifier "file"`
+
+-   `JSON Parse error: Unexpected identifier "file"`
 
 **Evidence**: The `scope` enum (file/project) is not being serialized/deserialized correctly through MCP.
 
@@ -272,7 +287,8 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 **Affected Tools**: vcs (search_branch, compare_branches, analyze_impact)
 
 **Symptoms**:
-- `Repository not found: opencode`
+
+-   `Repository not found: opencode`
 
 **Evidence**: The `repo_id` must be the hash returned by index_repository, not an arbitrary name. Documentation should clarify this.
 
@@ -287,14 +303,16 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 **Affected Tools**: project (all), memory (error_pattern store)
 
 **Symptoms**:
-- `Project workflow not yet implemented`
-- `ErrorPattern store not implemented yet`
+
+-   `Project workflow not yet implemented`
+-   `ErrorPattern store not implemented yet`
 
 **Evidence**: Stub implementations in handlers.
 
-**Probable Location**: 
-- `mcb-server/src/handlers/project.rs`
-- `mcb-application/src/use_cases/memory_service.rs`
+**Probable Location**:
+
+-   `mcb-server/src/handlers/project.rs`
+-   `mcb-application/src/use_cases/memory_service.rs`
 
 **Fix Priority**: P3 - Known roadmap items
 
@@ -304,25 +322,27 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 
 ### Immediate (v0.2.1 Hotfix)
 
-1. **Fix JSON data payload parsing** - This is blocking 3 major tools
-   - Debug why `serde_json::Value` from MCP is not deserializing
-   - Add logging to trace the actual received payload
-   - Consider using raw JSON string and parsing explicitly
+1.  **Fix JSON data payload parsing** - This is blocking 3 major tools
 
-2. **Fix memory SQL errors** - Ensure tables exist and have correct schema
-   - Add migration check on startup
-   - Return clearer error messages
+-   Debug why `serde_json::Value` from MCP is not deserializing
+-   Add logging to trace the actual received payload
+-   Consider using raw JSON String and parsing explicitly
+
+1.  **Fix memory SQL errors** - Ensure tables exist and have correct schema
+
+-   Add migration check on startup
+-   Return clearer error messages
 
 ### Short-term (v0.3.0)
 
-3. **Fix validate scope enum** - Use string matching instead of enum deserialization
-4. **Improve VCS repo_id documentation** - Clarify that hash from index is required
-5. **Implement project handler** - Core workflow feature
+1.  **Fix validate scope enum** - Use String matching instead of enum deserialization
+2.  **Improve VCS repo_id documentation** - Clarify that hash from index is required
+3.  **Implement project handler** - Core workflow feature
 
 ### Medium-term (v0.4.0)
 
-6. **Implement error_pattern store** - Complete memory feature set
-7. **Add E2E MCP tool tests** - Catch these issues before release
+1.  **Implement error_pattern store** - Complete memory feature set
+2.  **Add E2E MCP tool tests** - Catch these issues before release
 
 ---
 

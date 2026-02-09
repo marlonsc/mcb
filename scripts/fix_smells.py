@@ -36,7 +36,7 @@ import abc
 import argparse
 import json
 import re
-import subprocess
+import subprocess  # nosec B404
 import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
@@ -411,7 +411,7 @@ def run_qlty_smells(
     _info(f"Working directory: {root}")
 
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             cmd,
             capture_output=True,
             text=True,
@@ -915,7 +915,7 @@ def _run_ast_grep(
         cmd.append(str(root))
 
     try:
-        res = subprocess.run(
+        res = subprocess.run(  # nosec B603
             cmd,
             capture_output=True,
             text=True,
@@ -1149,7 +1149,7 @@ def report_plan(
             seen: set[str] = set()
             for s in sorted(
                 fs,
-                key=lambda x: (x.location.start_line),
+                key=lambda x: x.location.start_line,
             ):
                 fn = s.function_name or "file"
                 key = f"{s.rule_short}:{fn}"

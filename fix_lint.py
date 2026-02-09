@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Find lines over 79 chars."""
 
-import sys
 
 path = "/home/marlonsc/mcb-smells-fix/scripts/fix_smells.py"
 with open(path) as f:

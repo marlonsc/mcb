@@ -97,34 +97,40 @@ python3 scripts/analyze_qlty.py --type both --file "crates/mcb-validate/*" --sum
 
 #### 🔴 Critical (24 errors)
 
-1. **Unpinned GitHub Actions** (15 errors)
-   - Files: `.github/workflows/*.yml`
-   - Fix: Pin actions to SHA digests
-   
-2. **Cache Poisoning Risk** (6 errors)
-   - Files: `.github/workflows/*.yml`
-   - Fix: Add cache key validation
+1.  **Unpinned GitHub Actions** (15 errors)
 
-3. **Security Issues** (3 errors)
-   - Dangerous triggers (1)
-   - Bot conditions (1)
-   - Excessive permissions (1)
+-   Files: `.github/workflows/*.yml`
+-   Fix: Pin Actions to SHA digests
+
+1.  **Cache Poisoning Risk** (6 errors)
+
+-   Files: `.github/workflows/*.yml`
+-   Fix: Add cache key validation
+
+1.  **Security Issues** (3 errors)
+
+-   Dangerous triggers (1)
+-   Bot conditions (1)
+-   Excessive permissions (1)
 
 #### 🟠 High Priority (25 warnings)
 
-1. **Artipacked Warnings** (20 warnings)
-   - Files: `.github/workflows/*.yml`
-   - Fix: Review artifact upload/download patterns
+1.  **Artipacked Warnings** (20 warnings)
 
-2. **Dependency Vulnerabilities** (5 warnings)
-   - File: `Cargo.lock`
-   - Fix: Update vulnerable dependencies
+-   Files: `.github/workflows/*.yml`
+-   Fix: Review artifact upload/download patterns
+
+1.  **Dependency Vulnerabilities** (5 warnings)
+
+-   File: `Cargo.lock`
+-   Fix: Update vulnerable dependencies
 
 #### 🔵 Low Priority (85 notes)
 
-1. **Rustfmt Formatting** (85 notes)
-   - Files: Various Rust source files
-   - Fix: Run `cargo fmt`
+1.  **Rustfmt Formatting** (85 notes)
+
+-   Files: Various Rust source files
+-   Fix: Run `cargo fmt`
 
 ## Recommended Workflow
 
@@ -188,24 +194,24 @@ bd create --title="Update vulnerable dependencies (5 issues)" --type=task --prio
 
 ### Summary (Console)
 
-- Quick overview with emoji indicators
-- Severity breakdown with percentages
-- Top 10 rules and files
-- Ideal for quick checks
+-   Quick overview with emoji indicators
+-   Severity breakdown with percentages
+-   Top 10 rules and files
+-   Ideal for quick checks
 
 ### Markdown Report
 
-- Complete analysis with tables
-- Organized by severity
-- Grouped by rule with examples
-- Ready for documentation or PRs
+-   Complete analysis with tables
+-   Organized by severity
+-   Grouped by rule with examples
+-   Ready for documentation or PRs
 
 ### JSON Export
 
-- Machine-readable format
-- Ideal for automation
-- Can be processed by other tools
-- Includes all metadata
+-   Machine-readable format
+-   Ideal for automation
+-   Can be processed by other tools
+-   Includes all metadata
 
 ## Examples from Current Project
 
@@ -276,20 +282,20 @@ fi
 
 ## Tips
 
-1. **Start with errors**: `--severity error` focuses on must-fix issues
-2. **Category filtering**: Tackle one tool at a time (rustfmt → zizmor → osv-scanner)
-3. **File-based iteration**: Fix one file completely before moving to next
-4. **Combine with beads**: Create issues for systematic tracking
-5. **Export JSON**: Use for automation and tracking over time
+1.  **Start with errors**: `--severity error` focuses on must-fix issues
+2.  **Category filtering**: Tackle one tool at a time (rustfmt → zizmor → osv-scanner)
+3.  **File-based iteration**: Fix one file completely before moving to next
+4.  **Combine with beads**: Create issues for systematic tracking
+5.  **Export JSON**: Use for automation and tracking over time
 
 ## Next Steps
 
 Based on current analysis:
 
-1. Fix 24 zizmor errors (GitHub Actions security) - HIGH PRIORITY
-2. Update 5 vulnerable dependencies - MEDIUM PRIORITY  
-3. Run `cargo fmt` to fix 85 rustfmt notes - LOW PRIORITY
-4. Address code smells (139 duplications) - TECHNICAL DEBT
+1.  Fix 24 zizmor errors (GitHub Actions security) - HIGH PRIORITY
+2.  Update 5 vulnerable dependencies - MEDIUM PRIORITY  
+3.  Run `cargo fmt` to fix 85 rustfmt notes - LOW PRIORITY
+4.  Address code smells (139 duplications) - TECHNICAL DEBT
 
 ---
 

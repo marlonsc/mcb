@@ -237,14 +237,14 @@ pub enum CodeEdge {
 
 ### Phase 2: Complete v0.3.0 Core (Week 2-3)
 
-3.  **GAP-D1**: Update WorkflowState to 12-state model
+1.  **GAP-D1**: Update WorkflowState to 12-state model
 2.  **GAP-D4**: Implement WorkflowEngine port
 3.  **GAP-D6**: Implement ContextScout service
 4.  **GAP-H3**: Fix VCS repository discovery
 
 ### Phase 3: Enable v0.4.0 Features (Week 4-6)
 
-7.  **GAP-D2**: Implement CodeGraph entity
+1.  **GAP-D2**: Implement CodeGraph entity
 2.  **GAP-D3**: Implement ContextSnapshot entity
 3.  **GAP-P1**: Implement TantivyBM25
 4.  **GAP-P2**: Centralize TreeSitterExtractor
@@ -252,7 +252,7 @@ pub enum CodeEdge {
 
 ### Phase 4: Polish (Week 7+)
 
-12.  **GAP-D7**: Implement PolicyEngine service
+1.  **GAP-D7**: Implement PolicyEngine service
 2.  **GAP-H4**: Add Context search handler
 3.  **GAP-P3**: Complete Milvus stats
 4.  **GAP-P4**: Fix Pinecone listing
@@ -306,4 +306,3 @@ bd create --title "GAP-P5: Improve error handling - preserve driver context" --t
 | **GAP-P4** | Pinecone listing using zero-vector workaround | v0.2.1 | Added (Missing) |
 | **GAP-D5** | SemanticExtractorProvider missing port | v0.4.0 | Refined (Vague) |
 | **GAP-P2** | TreeSitterExtractor logic scattered | v0.4.0 | Refined (Vague) |
-
