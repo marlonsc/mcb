@@ -7,7 +7,7 @@ use mcb_domain::entities::project::{
     IssueFilter, Project, ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
+use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::ProjectRepository;
 
 use super::row_convert;
@@ -21,6 +21,24 @@ impl SqliteProjectRepository {
     /// Create a repository that uses the given executor.
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
+    }
+
+    /// Helper: Query single row and convert to optional entity
+    async fn query_one_and_convert<T, F>(
+        &self,
+        sql: &str,
+        params: &[SqlParam],
+        convert_fn: F,
+        _entity_name: &str,
+    ) -> Result<Option<T>>
+    where
+        F: FnOnce(&dyn SqlRow) -> Result<T>,
+    {
+        let row = self.executor.query_one(sql, params).await?;
+        match row {
+            Some(r) => Ok(Some(convert_fn(r.as_ref())?)),
+            None => Ok(None),
+        }
     }
 
     async fn ensure_project_exists(&self, project_id: &str) -> Result<()> {
@@ -64,57 +82,33 @@ impl ProjectRepository for SqliteProjectRepository {
     }
 
     async fn get_by_id(&self, id: &str) -> Result<Option<Project>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM projects WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_project(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode project row", e))?,
-            )),
-            None => Ok(None),
-        }
+        self.query_one_and_convert(
+            "SELECT * FROM projects WHERE id = ?",
+            &[SqlParam::String(id.to_string())],
+            row_convert::row_to_project,
+            "project",
+        )
+        .await
     }
 
     async fn get_by_name(&self, name: &str) -> Result<Option<Project>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM projects WHERE name = ?",
-                &[SqlParam::String(name.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_project(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode project row", e))?,
-            )),
-            None => Ok(None),
-        }
+        self.query_one_and_convert(
+            "SELECT * FROM projects WHERE name = ?",
+            &[SqlParam::String(name.to_string())],
+            row_convert::row_to_project,
+            "project",
+        )
+        .await
     }
 
     async fn get_by_path(&self, path: &str) -> Result<Option<Project>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM projects WHERE path = ?",
-                &[SqlParam::String(path.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_project(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode project row", e))?,
-            )),
-            None => Ok(None),
-        }
+        self.query_one_and_convert(
+            "SELECT * FROM projects WHERE path = ?",
+            &[SqlParam::String(path.to_string())],
+            row_convert::row_to_project,
+            "project",
+        )
+        .await
     }
 
     async fn list(&self) -> Result<Vec<Project>> {
@@ -178,21 +172,13 @@ impl ProjectRepository for SqliteProjectRepository {
     }
 
     async fn get_phase(&self, id: &str) -> Result<Option<ProjectPhase>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM project_phases WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_project_phase(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode phase row", e))?,
-            )),
-            None => Ok(None),
-        }
+        self.query_one_and_convert(
+            "SELECT * FROM project_phases WHERE id = ?",
+            &[SqlParam::String(id.to_string())],
+            row_convert::row_to_project_phase,
+            "phase",
+        )
+        .await
     }
 
     async fn update_phase(&self, phase: &ProjectPhase) -> Result<()> {
@@ -269,21 +255,13 @@ impl ProjectRepository for SqliteProjectRepository {
     }
 
     async fn get_issue(&self, id: &str) -> Result<Option<ProjectIssue>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM project_issues WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_project_issue(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode issue row", e))?,
-            )),
-            None => Ok(None),
-        }
+        self.query_one_and_convert(
+            "SELECT * FROM project_issues WHERE id = ?",
+            &[SqlParam::String(id.to_string())],
+            row_convert::row_to_project_issue,
+            "issue",
+        )
+        .await
     }
 
     async fn update_issue(&self, issue: &ProjectIssue) -> Result<()> {
@@ -462,21 +440,13 @@ impl ProjectRepository for SqliteProjectRepository {
     }
 
     async fn get_decision(&self, id: &str) -> Result<Option<ProjectDecision>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM project_decisions WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_project_decision(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode decision row", e))?,
-            )),
-            None => Ok(None),
-        }
+        self.query_one_and_convert(
+            "SELECT * FROM project_decisions WHERE id = ?",
+            &[SqlParam::String(id.to_string())],
+            row_convert::row_to_project_decision,
+            "decision",
+        )
+        .await
     }
 
     async fn list_decisions(&self, project_id: &str) -> Result<Vec<ProjectDecision>> {
