@@ -40,289 +40,231 @@
               "helpUri": "https://osv.dev/RUSTSEC-2025-0134"
             },
             {
-              "id": "markdownlint:fmt"
-            },
-            {
-              "id": "markdownlint:MD032",
-              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD032"
-            },
-            {
-              "id": "markdownlint:MD044",
-              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD044"
-            },
-            {
-              "id": "markdownlint:MD030",
-              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD030"
-            },
-            {
-              "id": "markdownlint:MD031",
-              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD031"
-            },
-            {
-              "id": "markdownlint:MD025",
-              "helpUri": "https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md#MD025"
-            },
-            {
-              "id": "radarlint-python:python:S3776"
-            },
-            {
-              "id": "ruff:E501",
-              "helpUri": "https://docs.astral.sh/ruff/rules/line-too-long"
-            },
-            {
-              "id": "ruff:F401",
-              "helpUri": "https://docs.astral.sh/ruff/rules/unused-import"
-            },
-            {
-              "id": "radarlint-python:python:S125"
+              "id": "rustfmt:fmt"
             },
             {
               "id": "ripgrep:NOTE"
-            },
-            {
-              "id": "ruff:F821",
-              "helpUri": "https://docs.astral.sh/ruff/rules/undefined-name"
-            },
-            {
-              "id": "radarlint-python:python:S3457"
-            },
-            {
-              "id": "ruff:F541",
-              "helpUri": "https://docs.astral.sh/ruff/rules/f-string-missing-placeholders"
             }
           ],
           "notifications": [
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran trivy in 3.99s [7noxjx]"
+                "text": "Successfully ran clippy in 0.08s [en4DOq]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran trivy in 3.99s [7noxjx]"
+                  "text": "Successfully ran clippy in 0.08s [en4DOq]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.11s [Yjn178]"
+                "text": "Successfully ran clippy in 0.08s [IvoXdk]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.11s [Yjn178]"
+                  "text": "Successfully ran clippy in 0.08s [IvoXdk]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.18s [csPCa2]"
+                "text": "Successfully ran ruff in 0.05s [QBfPqg]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.18s [csPCa2]"
+                  "text": "Successfully ran ruff in 0.05s [QBfPqg]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran trufflehog in 2.61s [v710Ea]"
+                "text": "Successfully ran clippy in 0.08s [WXCSY4]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran trufflehog in 2.61s [v710Ea]"
+                  "text": "Successfully ran clippy in 0.08s [WXCSY4]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.19s [cPTGOO]"
+                "text": "Successfully ran trivy in 3.72s [eLAtUI]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.19s [cPTGOO]"
+                  "text": "Successfully ran trivy in 3.72s [eLAtUI]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [nzRcoj]"
+                "text": "Successfully ran clippy in 0.08s [NAuljv]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [nzRcoj]"
+                  "text": "Successfully ran clippy in 0.08s [NAuljv]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran ruff in 0.23s [wLrg6M]"
+                "text": "Successfully ran clippy in 0.08s [zujPi7]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran ruff in 0.23s [wLrg6M]"
+                  "text": "Successfully ran clippy in 0.08s [zujPi7]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.17s [NCyM3O]"
+                "text": "Successfully ran clippy in 0.08s [7Nl2de]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.17s [NCyM3O]"
+                  "text": "Successfully ran clippy in 0.08s [7Nl2de]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.17s [S5MjOf]"
+                "text": "Successfully ran clippy in 0.08s [3Chxjv]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.17s [S5MjOf]"
+                  "text": "Successfully ran clippy in 0.08s [3Chxjv]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran zizmor in 0.32s [CoYgn2]"
+                "text": "Successfully ran clippy in 0.08s [oqXL06]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran zizmor in 0.32s [CoYgn2]"
+                  "text": "Successfully ran clippy in 0.08s [oqXL06]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.08s [SMFluh]"
+                "text": "Successfully ran clippy in 0.07s [N1Znan]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.08s [SMFluh]"
+                  "text": "Successfully ran clippy in 0.07s [N1Znan]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran actionlint in 0.28s [ndAphJ]"
+                "text": "Successfully ran clippy in 0.08s [bHPdpK]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran actionlint in 0.28s [ndAphJ]"
+                  "text": "Successfully ran clippy in 0.08s [bHPdpK]"
                 }
               }
             },
             {
               "level": "note",
               "message": {
-                "text": "Successfully ran clippy in 0.26s [9XKxI1]"
+                "text": "Successfully ran trivy in 0.54s [srXfGe]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.success",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Successfully ran clippy in 0.26s [9XKxI1]"
-                }
-              }
-            },
-            {
-              "level": "note",
-              "message": {
-                "text": "Successfully ran clippy in 0.10s [EO6wJZ]"
-              },
-              "descriptor": {
-                "id": "qlty:message:invocation.concluded.success",
-                "name": "qlty_check::executor",
-                "shortDescription": {
-                  "text": "Successfully ran clippy in 0.10s [EO6wJZ]"
-                }
-              }
-            },
-            {
-              "level": "note",
-              "message": {
-                "text": "Successfully ran trivy in 0.68s [1i7zhQ]"
-              },
-              "descriptor": {
-                "id": "qlty:message:invocation.concluded.success",
-                "name": "qlty_check::executor",
-                "shortDescription": {
-                  "text": "Successfully ran trivy in 0.68s [1i7zhQ]"
-                }
-              }
-            },
-            {
-              "level": "note",
-              "message": {
-                "text": "Successfully ran clippy in 0.13s [oEc83Y]"
-              },
-              "descriptor": {
-                "id": "qlty:message:invocation.concluded.success",
-                "name": "qlty_check::executor",
-                "shortDescription": {
-                  "text": "Successfully ran clippy in 0.13s [oEc83Y]"
+                  "text": "Successfully ran trivy in 0.54s [srXfGe]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.25s) [CKMv7p]"
+                "text": "Error occurred while running rustfmt (0.16s) [lNCozr]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.25s) [CKMv7p]"
+                  "text": "Error occurred while running rustfmt (0.16s) [lNCozr]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran rustfmt in 0.29s [YApD9J]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran rustfmt in 0.29s [YApD9J]"
                 }
               }
             },
             {
               "level": "error",
               "message": {
-                "text": "Error occurred while running rustfmt (0.26s) [a1cjNM]"
+                "text": "Error occurred while running rustfmt (0.34s) [2nIkDx]"
               },
               "descriptor": {
                 "id": "qlty:message:invocation.concluded.error",
                 "name": "qlty_check::executor",
                 "shortDescription": {
-                  "text": "Error occurred while running rustfmt (0.26s) [a1cjNM]"
+                  "text": "Error occurred while running rustfmt (0.34s) [2nIkDx]"
+                }
+              }
+            },
+            {
+              "level": "error",
+              "message": {
+                "text": "Error occurred while running rustfmt (0.28s) [kLr7pa]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.error",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Error occurred while running rustfmt (0.28s) [kLr7pa]"
                 }
               }
             }
@@ -373,7 +315,7 @@
                 "region": {
                   "startLine": 16,
                   "startColumn": 1,
-                  "endLine": 166,
+                  "endLine": 167,
                   "endColumn": 1
                 }
               }
@@ -457,7 +399,7 @@
                 "region": {
                   "startLine": 45,
                   "startColumn": 3,
-                  "endLine": 100,
+                  "endLine": 101,
                   "endColumn": 45
                 }
               }
@@ -511,9 +453,9 @@
                   "uri": ".github/workflows/release.yml"
                 },
                 "region": {
-                  "startLine": 108,
+                  "startLine": 109,
                   "startColumn": 9,
-                  "endLine": 110,
+                  "endLine": 111,
                   "endColumn": 65
                 }
               }
@@ -670,1918 +612,6 @@
           ]
         },
         {
-          "ruleId": "markdownlint:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 27,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD044",
-          "level": "warning",
-          "message": {
-            "text": "Proper names should have the correct capitalization"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 27,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 27,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 28,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 29,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD044",
-          "level": "warning",
-          "message": {
-            "text": "Proper names should have the correct capitalization"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 30,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 30,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 33,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD044",
-          "level": "warning",
-          "message": {
-            "text": "Proper names should have the correct capitalization"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 33,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 33,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 34,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 35,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 36,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 41,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 41,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 42,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 45,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 45,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 46,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 47,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD031",
-          "level": "warning",
-          "message": {
-            "text": "Fenced code blocks should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 52,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 60,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 60,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 61,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 62,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 71,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 71,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 72,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD031",
-          "level": "warning",
-          "message": {
-            "text": "Fenced code blocks should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 79,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD031",
-          "level": "warning",
-          "message": {
-            "text": "Fenced code blocks should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 90,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD031",
-          "level": "warning",
-          "message": {
-            "text": "Fenced code blocks should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 97,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD031",
-          "level": "warning",
-          "message": {
-            "text": "Fenced code blocks should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 113,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 118,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 118,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 119,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 120,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD031",
-          "level": "warning",
-          "message": {
-            "text": "Fenced code blocks should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 135,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD031",
-          "level": "warning",
-          "message": {
-            "text": "Fenced code blocks should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 141,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 162,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD044",
-          "level": "warning",
-          "message": {
-            "text": "Proper names should have the correct capitalization"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 163,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 163,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 164,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 165,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 167,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 168,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 169,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 170,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 189,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 190,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 191,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 192,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 201,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 201,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 202,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 203,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD032",
-          "level": "warning",
-          "message": {
-            "text": "Lists should be surrounded by blank lines"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 206,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 206,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 207,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "QLTY_RESOLUTION_FINAL.md"
-                },
-                "region": {
-                  "startLine": 208,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "cache_errors.md"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "cache_errors.md"
-                },
-                "region": {
-                  "startLine": 37,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "cache_errors.md"
-                },
-                "region": {
-                  "startLine": 39,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "cache_errors.md"
-                },
-                "region": {
-                  "startLine": 41,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "cache_errors.md"
-                },
-                "region": {
-                  "startLine": 43,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "cache_errors.md"
-                },
-                "region": {
-                  "startLine": 45,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "markdownlint:MD030",
-          "level": "warning",
-          "message": {
-            "text": "Spaces after list markers"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "cache_errors.md"
-                },
-                "region": {
-                  "startLine": 47,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-application/tests/unit/instrumented_embedding_tests.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-ast-utils/src/lib.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
           "ruleId": "rustfmt:fmt",
           "level": "note",
           "message": {
@@ -2592,29 +622,6 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-domain/src/registry/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-domain/src/schema/mod.rs"
                 },
                 "region": {}
               }
@@ -2684,236 +691,6 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-infrastructure/src/crypto/encryption.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/crypto/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/crypto/password.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/crypto/token.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/crypto/utils.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/di/dispatch.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/di/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/di/provider_resolvers.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/di/resolver.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/src/infrastructure/prometheus_metrics.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-infrastructure/tests/test_utils/real_providers.rs"
                 },
                 "region": {}
               }
@@ -3097,6 +874,75 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
+                  "uri": "crates/mcb-language-support/src/detection.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-language-support/src/parser.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-language-support/tests/unit/parser_tests.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
                   "uri": "crates/mcb-providers/src/database/mod.rs"
                 },
                 "region": {}
@@ -3144,121 +990,6 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-providers/src/database/sqlite/provider.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/embedding/anthropic.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/embedding/fastembed.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/events/nats.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/git/mod.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/git/project_detection/maven.rs"
                 },
                 "region": {}
               }
@@ -3420,236 +1151,6 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-providers/src/language/javascript.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/kotlin.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/php.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/python.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/ruby.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/rust.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/language/swift.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/vector_store/edgevec.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/vector_store/milvus.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/vector_store/pinecone.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-providers/src/vector_store/qdrant.rs"
                 },
                 "region": {}
               }
@@ -3903,98 +1404,6 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-server/src/admin/web/router.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/src/collection_mapping.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/src/formatter.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/src/handlers/agent.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/src/handlers/index.rs"
                 },
                 "region": {}
               }
@@ -4845,52 +2254,6 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "crates/mcb-server/tests/integration/hooks_integration.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-server/tests/integration/operating_modes_integration.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
                   "uri": "crates/mcb-server/tests/test_utils/mock_services/memory.rs"
                 },
                 "region": {}
@@ -5052,6 +2415,75 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/ast/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/ast/unwrap_detector.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/clean_architecture/violation.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
                   "uri": "crates/mcb-validate/src/duplication/analyzer.rs"
                 },
                 "region": {}
@@ -5076,6 +2508,52 @@
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "crates/mcb-validate/src/duplication/mod.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/engines/expression_engine.rs"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "style",
+              "name": "style"
+            }
+          ]
+        },
+        {
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
+          "message": {
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/src/engines/hybrid_engine.rs"
                 },
                 "region": {}
               }
@@ -5167,30 +2645,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/generic_reporter.rs"
-                },
-                "region": {}
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "style",
-              "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "rustfmt:fmt",
-          "level": "note",
-          "message": {
-            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "crates/mcb-validate/src/graph/dep_graph.rs"
+                  "uri": "crates/mcb-validate/src/metrics/rca_analyzer.rs"
                 },
                 "region": {}
               }
@@ -5466,7 +2921,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "crates/mcb-validate/tests/unit/rule_filters_tests.rs"
+                  "uri": "crates/mcb-validate/tests/unit/ast_tests.rs"
                 },
                 "region": {}
               }
@@ -5480,23 +2935,18 @@
           ]
         },
         {
-          "ruleId": "markdownlint:MD025",
-          "level": "warning",
+          "ruleId": "rustfmt:fmt",
+          "level": "note",
           "message": {
-            "text": "Multiple top-level headings in the same document"
+            "text": "Incorrect formatting, autoformat by running `qlty fmt`."
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "docs/adr/047-project-architecture.md"
+                  "uri": "crates/mcb-validate/tests/unit/cargo_dependency_tests.rs"
                 },
-                "region": {
-                  "startLine": 13,
-                  "startColumn": 0,
-                  "endLine": 0,
-                  "endColumn": 0
-                }
+                "region": {}
               }
             }
           ],
@@ -5504,166 +2954,6 @@
             {
               "id": "style",
               "name": "style"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S3776",
-          "level": "error",
-          "message": {
-            "text": "Refactor this function to reduce its Cognitive Complexity from 31 to the 15 allowed."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "fix_cache.py"
-                },
-                "region": {
-                  "startLine": 7,
-                  "startColumn": 5,
-                  "endLine": 7,
-                  "endColumn": 16
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S3776",
-          "level": "error",
-          "message": {
-            "text": "Refactor this function to reduce its Cognitive Complexity from 19 to the 15 allowed."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "fix_checkout.py"
-                },
-                "region": {
-                  "startLine": 7,
-                  "startColumn": 5,
-                  "endLine": 7,
-                  "endColumn": 28
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "ruff:E501",
-          "level": "warning",
-          "message": {
-            "text": "Line too long (94 > 88)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "fix_checkout.py"
-                },
-                "region": {
-                  "startLine": 56,
-                  "startColumn": 89,
-                  "endLine": 56,
-                  "endColumn": 95
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "ruff:F401",
-          "level": "warning",
-          "message": {
-            "text": "`enum.Enum` imported but unused"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 12,
-                  "startColumn": 18,
-                  "endLine": 12,
-                  "endColumn": 22
-                }
-              }
-            }
-          ],
-          "fixes": [
-            {
-              "description": {
-                "text": ""
-              },
-              "replacements": [
-                {
-                  "deletedRegion": {
-                    "startLine": 12,
-                    "startColumn": 1,
-                    "endLine": 12,
-                    "endColumn": 31
-                  },
-                  "insertedContent": {
-                    "text": "from enum import IntEnum"
-                  }
-                }
-              ]
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S125",
-          "level": "warning",
-          "message": {
-            "text": "Remove this commented out code."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 16,
-                  "startColumn": 1,
-                  "endLine": 16,
-                  "endColumn": 51
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
             }
           ]
         },
@@ -5680,38 +2970,10 @@
                   "uri": "scripts/analyze_qlty.py"
                 },
                 "region": {
-                  "startLine": 26,
+                  "startLine": 22,
                   "startColumn": 5,
-                  "endLine": 26,
+                  "endLine": 22,
                   "endColumn": 9
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "ruff:F821",
-          "level": "warning",
-          "message": {
-            "text": "Undefined name `Severity`"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 30,
-                  "startColumn": 34,
-                  "endLine": 30,
-                  "endColumn": 42
                 }
               }
             }
@@ -5736,9 +2998,9 @@
                   "uri": "scripts/analyze_qlty.py"
                 },
                 "region": {
-                  "startLine": 34,
+                  "startLine": 30,
                   "startColumn": 25,
-                  "endLine": 34,
+                  "endLine": 30,
                   "endColumn": 29
                 }
               }
@@ -5764,9 +3026,9 @@
                   "uri": "scripts/analyze_qlty.py"
                 },
                 "region": {
-                  "startLine": 42,
+                  "startLine": 38,
                   "startColumn": 18,
-                  "endLine": 42,
+                  "endLine": 38,
                   "endColumn": 22
                 }
               }
@@ -5780,110 +3042,6 @@
           ]
         },
         {
-          "ruleId": "radarlint-python:python:S3457",
-          "level": "warning",
-          "message": {
-            "text": "Add replacement fields or use a normal string instead of an f-string."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 131,
-                  "startColumn": 11,
-                  "endLine": 131,
-                  "endColumn": 52
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "ruff:F541",
-          "level": "warning",
-          "message": {
-            "text": "f-string without any placeholders"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 131,
-                  "startColumn": 11,
-                  "endLine": 131,
-                  "endColumn": 51
-                }
-              }
-            }
-          ],
-          "fixes": [
-            {
-              "description": {
-                "text": ""
-              },
-              "replacements": [
-                {
-                  "deletedRegion": {
-                    "startLine": 131,
-                    "startColumn": 11,
-                    "endLine": 131,
-                    "endColumn": 51
-                  },
-                  "insertedContent": {
-                    "text": "\"🔄 Running qlty check --all --sarif...\""
-                  }
-                }
-              ]
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S125",
-          "level": "warning",
-          "message": {
-            "text": "Remove this commented out code."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 160,
-                  "startColumn": 1,
-                  "endLine": 160,
-                  "endColumn": 51
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
           "ruleId": "ripgrep:NOTE",
           "level": "note",
           "message": {
@@ -5896,65 +3054,9 @@
                   "uri": "scripts/analyze_qlty.py"
                 },
                 "region": {
-                  "startLine": 189,
+                  "startLine": 180,
                   "startColumn": 64,
-                  "endLine": 189,
-                  "endColumn": 68
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S3776",
-          "level": "error",
-          "message": {
-            "text": "Refactor this function to reduce its Cognitive Complexity from 32 to the 15 allowed."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 221,
-                  "startColumn": 9,
-                  "endLine": 221,
-                  "endColumn": 26
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "ripgrep:NOTE",
-          "level": "note",
-          "message": {
-            "text": "for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 234,
-                  "startColumn": 64,
-                  "endLine": 234,
+                  "endLine": 180,
                   "endColumn": 68
                 }
               }
@@ -5980,9 +3082,9 @@
                   "uri": "scripts/analyze_qlty.py"
                 },
                 "region": {
-                  "startLine": 270,
+                  "startLine": 217,
                   "startColumn": 64,
-                  "endLine": 270,
+                  "endLine": 217,
                   "endColumn": 68
                 }
               }
@@ -5996,10 +3098,10 @@
           ]
         },
         {
-          "ruleId": "radarlint-python:python:S3776",
-          "level": "error",
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
           "message": {
-            "text": "Refactor this function to reduce its Cognitive Complexity from 27 to the 15 allowed."
+            "text": "for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:"
           },
           "locations": [
             {
@@ -6008,254 +3110,10 @@
                   "uri": "scripts/analyze_qlty.py"
                 },
                 "region": {
-                  "startLine": 331,
-                  "startColumn": 5,
-                  "endLine": 331,
-                  "endColumn": 9
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S3457",
-          "level": "warning",
-          "message": {
-            "text": "Add replacement fields or use a normal string instead of an f-string."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 420,
-                  "startColumn": 19,
-                  "endLine": 420,
-                  "endColumn": 63
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "ruff:F541",
-          "level": "warning",
-          "message": {
-            "text": "f-string without any placeholders"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/analyze_qlty.py"
-                },
-                "region": {
-                  "startLine": 420,
-                  "startColumn": 19,
-                  "endLine": 420,
-                  "endColumn": 63
-                }
-              }
-            }
-          ],
-          "fixes": [
-            {
-              "description": {
-                "text": ""
-              },
-              "replacements": [
-                {
-                  "deletedRegion": {
-                    "startLine": 420,
-                    "startColumn": 19,
-                    "endLine": 420,
-                    "endColumn": 63
-                  },
-                  "insertedContent": {
-                    "text": "\"⚠️  No checks file and --no-run specified\""
-                  }
-                }
-              ]
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S125",
-          "level": "warning",
-          "message": {
-            "text": "Remove this commented out code."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/fix_smells.py"
-                },
-                "region": {
-                  "startLine": 47,
-                  "startColumn": 1,
-                  "endLine": 47,
-                  "endColumn": 51
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S125",
-          "level": "warning",
-          "message": {
-            "text": "Remove this commented out code."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/fix_smells.py"
-                },
-                "region": {
-                  "startLine": 149,
-                  "startColumn": 1,
-                  "endLine": 149,
-                  "endColumn": 51
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S125",
-          "level": "warning",
-          "message": {
-            "text": "Remove this commented out code."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/fix_smells.py"
-                },
-                "region": {
-                  "startLine": 1000,
-                  "startColumn": 1,
-                  "endLine": 1000,
-                  "endColumn": 51
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S125",
-          "level": "warning",
-          "message": {
-            "text": "Remove this commented out code."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/fix_smells.py"
-                },
-                "region": {
-                  "startLine": 1039,
-                  "startColumn": 1,
-                  "endLine": 1039,
-                  "endColumn": 51
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S3776",
-          "level": "error",
-          "message": {
-            "text": "Refactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/fix_smells.py"
-                },
-                "region": {
-                  "startLine": 1113,
-                  "startColumn": 5,
-                  "endLine": 1113,
-                  "endColumn": 16
-                }
-              }
-            }
-          ],
-          "taxa": [
-            {
-              "id": "lint",
-              "name": "lint"
-            }
-          ]
-        },
-        {
-          "ruleId": "radarlint-python:python:S125",
-          "level": "warning",
-          "message": {
-            "text": "Remove this commented out code."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "scripts/fix_smells.py"
-                },
-                "region": {
-                  "startLine": 1376,
-                  "startColumn": 1,
-                  "endLine": 1376,
-                  "endColumn": 51
+                  "startLine": 303,
+                  "startColumn": 64,
+                  "endLine": 303,
+                  "endColumn": 68
                 }
               }
             }

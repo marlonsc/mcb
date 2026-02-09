@@ -96,12 +96,13 @@ jobs:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
           retention-days: 1
+          include-hidden-files: false
 
   # Create GitHub Release with all artifacts
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: build-binaries
+    needs: build-release
     permissions:
       contents: write
     steps:
