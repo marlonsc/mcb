@@ -86,17 +86,23 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // ========================================================================
 
     let embedding_admin: Arc<dyn EmbeddingAdminInterface> = Arc::new(EmbeddingAdminService::new(
+        "Embedding Service",
         embedding_resolver.clone(),
         embedding_handle.clone(),
     ));
-    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = Arc::new(
-        VectorStoreAdminService::new(vector_store_resolver.clone(), vector_store_handle.clone()),
-    );
+    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> =
+        Arc::new(VectorStoreAdminService::new(
+            "Vector Store Service",
+            vector_store_resolver.clone(),
+            vector_store_handle.clone(),
+        ));
     let cache_admin: Arc<dyn CacheAdminInterface> = Arc::new(CacheAdminService::new(
+        "Cache Service",
         cache_resolver.clone(),
         cache_handle.clone(),
     ));
     let language_admin: Arc<dyn LanguageAdminInterface> = Arc::new(LanguageAdminService::new(
+        "Language Service",
         language_resolver.clone(),
         language_handle.clone(),
     ));

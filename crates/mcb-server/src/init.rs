@@ -122,6 +122,11 @@ async fn run_server_mode(
     let service_manager =
         mcb_infrastructure::infrastructure::ServiceManager::new(app_context.event_bus());
 
+    // Register services from AppContext
+    for service in &app_context.lifecycle_services {
+        service_manager.register(service.clone());
+    }
+
     let admin_state = AdminState {
         metrics: app_context.performance(),
         indexing: app_context.indexing(),

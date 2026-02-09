@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::{
-    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
+    IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsInterface, ShutdownCoordinator,
 };
 use mcb_domain::ports::browse::HighlightServiceInterface;
 use mcb_domain::ports::infrastructure::EventBusProvider;
@@ -76,6 +76,8 @@ pub struct AppContext {
     shutdown_coordinator: Arc<dyn ShutdownCoordinator>,
     performance_metrics: Arc<dyn PerformanceMetricsInterface>,
     indexing_operations: Arc<dyn IndexingOperationsInterface>,
+    /// Services eligible for lifecycle management
+    pub lifecycle_services: Vec<Arc<dyn LifecycleManaged>>,
 
     // ========================================================================
     // Domain Services & Repositories (auto-registered)
@@ -321,21 +323,41 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Admin Services
     // ========================================================================
 
-    let embedding_admin: Arc<dyn EmbeddingAdminInterface> = Arc::new(EmbeddingAdminService::new(
+    let embedding_admin_svc = Arc::new(EmbeddingAdminService::new(
+        "Embedding Service",
         embedding_resolver.clone(),
         embedding_handle.clone(),
     ));
-    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = Arc::new(
-        VectorStoreAdminService::new(vector_store_resolver.clone(), vector_store_handle.clone()),
-    );
-    let cache_admin: Arc<dyn CacheAdminInterface> = Arc::new(CacheAdminService::new(
+    let embedding_admin: Arc<dyn EmbeddingAdminInterface> = embedding_admin_svc.clone();
+
+    let vector_store_admin_svc = Arc::new(VectorStoreAdminService::new(
+        "Vector Store Service",
+        vector_store_resolver.clone(),
+        vector_store_handle.clone(),
+    ));
+    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = vector_store_admin_svc.clone();
+
+    let cache_admin_svc = Arc::new(CacheAdminService::new(
+        "Cache Service",
         cache_resolver.clone(),
         cache_handle.clone(),
     ));
-    let language_admin: Arc<dyn LanguageAdminInterface> = Arc::new(LanguageAdminService::new(
+    let cache_admin: Arc<dyn CacheAdminInterface> = cache_admin_svc.clone();
+
+    let language_admin_svc = Arc::new(LanguageAdminService::new(
+        "Language Service",
         language_resolver.clone(),
         language_handle.clone(),
     ));
+    let language_admin: Arc<dyn LanguageAdminInterface> = language_admin_svc.clone();
+
+    // Collect lifecycle managed services
+    let lifecycle_services: Vec<Arc<dyn LifecycleManaged>> = vec![
+        embedding_admin_svc,
+        vector_store_admin_svc,
+        cache_admin_svc,
+        language_admin_svc,
+    ];
 
     // ========================================================================
     // Create Infrastructure Services
@@ -418,6 +440,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         project_workflow_service,
         highlight_service,
         crypto_service,
+        lifecycle_services,
     })
 }
 

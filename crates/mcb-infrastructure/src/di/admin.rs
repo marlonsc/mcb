@@ -12,7 +12,8 @@
 use std::sync::Arc;
 
 pub use mcb_domain::ports::admin::{
-    CacheAdminInterface, EmbeddingAdminInterface, LanguageAdminInterface, ProviderInfo,
+    CacheAdminInterface, DependencyHealth, DependencyHealthCheck, EmbeddingAdminInterface,
+    LanguageAdminInterface, LifecycleManaged, PortServiceState, ProviderInfo,
     VectorStoreAdminInterface,
 };
 use mcb_domain::ports::providers::{
@@ -122,6 +123,7 @@ impl_provider_resolver!(
 /// * `P` - Provider trait type (e.g., `dyn EmbeddingProvider`)
 /// * `C` - Config type for the provider
 pub struct AdminService<R, P: ?Sized + Send + Sync, C> {
+    name: String,
     resolver: Arc<R>,
     handle: Arc<Handle<P>>,
     _config_marker: std::marker::PhantomData<C>,
@@ -133,8 +135,9 @@ where
     P: ?Sized + Send + Sync,
 {
     /// Create a new admin service
-    pub fn new(resolver: Arc<R>, handle: Arc<Handle<P>>) -> Self {
+    pub fn new(name: impl Into<String>, resolver: Arc<R>, handle: Arc<Handle<P>>) -> Self {
         Self {
+            name: name.into(),
             resolver,
             handle,
             _config_marker: std::marker::PhantomData,
@@ -172,6 +175,46 @@ where
         let provider = self.resolver.resolve_from_config()?;
         self.handle.set(provider);
         Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl<R, P, C> LifecycleManaged for AdminService<R, P, C>
+where
+    R: ProviderResolver<P, C>,
+    P: ?Sized + Send + Sync,
+    C: Send + Sync,
+{
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    async fn start(&self) -> mcb_domain::error::Result<()> {
+        // Admin services are always "started" as they manage handles
+        Ok(())
+    }
+
+    async fn stop(&self) -> mcb_domain::error::Result<()> {
+        // Cannot stop an admin service
+        Ok(())
+    }
+
+    fn state(&self) -> PortServiceState {
+        // Always considered running as they are infrastructure
+        PortServiceState::Running
+    }
+
+    async fn health_check(&self) -> DependencyHealthCheck {
+        DependencyHealthCheck {
+            name: self.name.clone(),
+            status: DependencyHealth::Healthy,
+            message: Some(format!("Service active: {}", self.name)),
+            latency_ms: None,
+            last_check: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+        }
     }
 }
 
