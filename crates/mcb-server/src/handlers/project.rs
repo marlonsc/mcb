@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use mcb_domain::constants::keys::{ID, NAME, STATUS};
 use mcb_domain::entities::project::{
     DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus,
 };
@@ -56,7 +57,7 @@ impl ProjectHandler {
 
             // Phase Operations
             (ProjectAction::Create, ProjectResource::Phase) => {
-                let name = get_string(&data, "name")?;
+                let name = get_string(&data, NAME)?;
                 let description = get_string(&data, "description")?;
                 let id = self
                     .service
@@ -68,10 +69,10 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Update, ProjectResource::Phase) => {
-                let id = get_string(&data, "id")?;
-                let name = get_opt_string(&data, "name");
+                let id = get_string(&data, ID)?;
+                let name = get_opt_string(&data, NAME);
                 let description = get_opt_string(&data, "description");
-                let status = if let Some(s) = get_opt_string(&data, "status") {
+                let status = if let Some(s) = get_opt_string(&data, STATUS) {
                     Some(
                         s.parse::<PhaseStatus>()
                             .map_err(|e| McpError::invalid_params(e, None))?,
@@ -101,7 +102,7 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Delete, ProjectResource::Phase) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 self.service.delete_phase(&id).await.map_err(to_mcp_error)?;
                 Ok(CallToolResult::success(vec![rmcp::model::Content::text(
                     format!("Deleted phase: {}", id),
@@ -139,10 +140,10 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Update, ProjectResource::Issue) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 let title = get_opt_string(&data, "title");
                 let description = get_opt_string(&data, "description");
-                let status = if let Some(s) = get_opt_string(&data, "status") {
+                let status = if let Some(s) = get_opt_string(&data, STATUS) {
                     Some(
                         s.parse::<IssueStatus>()
                             .map_err(|e| McpError::invalid_params(e, None))?,
@@ -183,7 +184,7 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Delete, ProjectResource::Issue) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 self.service.delete_issue(&id).await.map_err(to_mcp_error)?;
                 Ok(CallToolResult::success(vec![rmcp::model::Content::text(
                     format!("Deleted issue: {}", id),
@@ -209,7 +210,7 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Delete, ProjectResource::Dependency) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 self.service
                     .remove_dependency(&id)
                     .await
@@ -265,7 +266,7 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::Delete, ProjectResource::Decision) => {
-                let id = get_string(&data, "id")?;
+                let id = get_string(&data, ID)?;
                 self.service
                     .delete_decision(&id)
                     .await
