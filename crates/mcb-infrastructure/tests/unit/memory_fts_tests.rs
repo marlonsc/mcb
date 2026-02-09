@@ -6,9 +6,7 @@ use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::value_objects::ObservationId;
 use uuid::Uuid;
 
-#[path = "../test_utils/mod.rs"]
-mod test_utils;
-use test_utils::create_test_project;
+use crate::test_utils::create_test_project;
 
 #[tokio::test]
 async fn test_fts_search_flow() {

@@ -61,8 +61,11 @@ use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 /// HTTP transport configuration
 #[derive(Debug, Clone)]
 pub struct HttpTransportConfig {
+    /// Host address to bind the HTTP server (e.g., "127.0.0.1", "0.0.0.0")
     pub host: String,
+    /// Port number for the HTTP server
     pub port: u16,
+    /// Whether to enable CORS headers for cross-origin requests
     pub enable_cors: bool,
 }
 
@@ -97,7 +100,9 @@ impl HttpTransportConfig {
 /// Shared state for HTTP transport
 #[derive(Clone)]
 pub struct HttpTransportState {
+    /// Broadcast channel sender for server-sent events (SSE)
     pub event_tx: broadcast::Sender<String>,
+    /// Shared reference to the MCP server instance
     pub server: Arc<McpServer>,
 }
 

@@ -6,9 +6,7 @@ use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::value_objects::ObservationId;
 use mcb_providers::database::create_memory_repository_in_memory;
 
-#[path = "../test_utils/mod.rs"]
-mod test_utils;
-use test_utils::create_test_project;
+use crate::test_utils::create_test_project;
 
 #[tokio::test]
 async fn test_memory_repository_in_memory_creates() {
