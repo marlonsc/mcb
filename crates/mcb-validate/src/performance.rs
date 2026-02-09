@@ -482,25 +482,16 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
-    /// Detect Arc/Mutex overuse patterns
-    pub fn validate_arc_mutex_overuse(&self) -> Result<Vec<PerformanceViolation>> {
+    /// Helper: Scan files and apply pattern matching with a custom violation builder
+    fn scan_files_with_patterns<F>(
+        &self,
+        compiled_patterns: &[(Regex, &str, &str)],
+        make_violation: F,
+    ) -> Result<Vec<PerformanceViolation>>
+    where
+        F: Fn(PathBuf, usize, &str, &str) -> PerformanceViolation,
+    {
         let mut violations = Vec::new();
-
-        let overuse_patterns = [
-            (r"Arc<Arc<", "Nested Arc<Arc<>>", "Use single Arc instead"),
-            (r"Mutex<bool>", "Mutex<bool>", "Use AtomicBool instead"),
-            (r"Mutex<usize>", "Mutex<usize>", "Use AtomicUsize instead"),
-            (r"Mutex<u32>", "Mutex<u32>", "Use AtomicU32 instead"),
-            (r"Mutex<u64>", "Mutex<u64>", "Use AtomicU64 instead"),
-            (r"Mutex<i32>", "Mutex<i32>", "Use AtomicI32 instead"),
-            (r"Mutex<i64>", "Mutex<i64>", "Use AtomicI64 instead"),
-            (r"RwLock<bool>", "RwLock<bool>", "Use AtomicBool instead"),
-        ];
-
-        let compiled_patterns: Vec<_> = overuse_patterns
-            .iter()
-            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
-            .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
             if self.should_skip_crate(&src_dir) {
@@ -538,16 +529,15 @@ impl PerformanceValidator {
                         continue;
                     }
 
-                    // Check for overuse patterns
-                    for (pattern, desc, sugg) in &compiled_patterns {
+                    // Check for patterns
+                    for (pattern, desc, sugg) in compiled_patterns {
                         if pattern.is_match(line) {
-                            violations.push(PerformanceViolation::ArcMutexOveruse {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                pattern: desc.to_string(),
-                                suggestion: sugg.to_string(),
-                                severity: Severity::Info,
-                            });
+                            violations.push(make_violation(
+                                entry.path().to_path_buf(),
+                                line_num + 1,
+                                desc,
+                                sugg,
+                            ));
                         }
                     }
                 }
@@ -557,10 +547,37 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
+    /// Detect Arc/Mutex overuse patterns
+    pub fn validate_arc_mutex_overuse(&self) -> Result<Vec<PerformanceViolation>> {
+        let overuse_patterns = [
+            (r"Arc<Arc<", "Nested Arc<Arc<>>", "Use single Arc instead"),
+            (r"Mutex<bool>", "Mutex<bool>", "Use AtomicBool instead"),
+            (r"Mutex<usize>", "Mutex<usize>", "Use AtomicUsize instead"),
+            (r"Mutex<u32>", "Mutex<u32>", "Use AtomicU32 instead"),
+            (r"Mutex<u64>", "Mutex<u64>", "Use AtomicU64 instead"),
+            (r"Mutex<i32>", "Mutex<i32>", "Use AtomicI32 instead"),
+            (r"Mutex<i64>", "Mutex<i64>", "Use AtomicI64 instead"),
+            (r"RwLock<bool>", "RwLock<bool>", "Use AtomicBool instead"),
+        ];
+
+        let compiled_patterns: Vec<_> = overuse_patterns
+            .iter()
+            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
+            .collect();
+
+        self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
+            PerformanceViolation::ArcMutexOveruse {
+                file,
+                line,
+                pattern: pattern.to_string(),
+                suggestion: suggestion.to_string(),
+                severity: Severity::Info,
+            }
+        })
+    }
+
     /// Detect inefficient iterator patterns
     pub fn validate_inefficient_iterators(&self) -> Result<Vec<PerformanceViolation>> {
-        let mut violations = Vec::new();
-
         let inefficient_patterns = [
             (
                 r"\.iter\(\)\.cloned\(\)\.take\(",
@@ -589,65 +606,19 @@ impl PerformanceValidator {
             .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
             .collect();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
+            PerformanceViolation::InefficientIterator {
+                file,
+                line,
+                pattern: pattern.to_string(),
+                suggestion: suggestion.to_string(),
+                severity: Severity::Info,
             }
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
-                    continue;
-                }
-
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_test_module = false;
-
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
-
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Check for inefficient patterns
-                    for (pattern, desc, sugg) in &compiled_patterns {
-                        if pattern.is_match(line) {
-                            violations.push(PerformanceViolation::InefficientIterator {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                pattern: desc.to_string(),
-                                suggestion: sugg.to_string(),
-                                severity: Severity::Info,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(violations)
+        })
     }
 
     /// Detect inefficient string handling patterns
     pub fn validate_inefficient_strings(&self) -> Result<Vec<PerformanceViolation>> {
-        let mut violations = Vec::new();
-
         let inefficient_patterns = [
             (
                 r#"format!\s*\(\s*"\{\}"\s*,\s*\w+\s*\)"#,
@@ -671,59 +642,15 @@ impl PerformanceValidator {
             .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
             .collect();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
+            PerformanceViolation::InefficientString {
+                file,
+                line,
+                pattern: pattern.to_string(),
+                suggestion: suggestion.to_string(),
+                severity: Severity::Info,
             }
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
-                    continue;
-                }
-
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_test_module = false;
-
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
-
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Check for inefficient patterns
-                    for (pattern, desc, sugg) in &compiled_patterns {
-                        if pattern.is_match(line) {
-                            violations.push(PerformanceViolation::InefficientString {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                pattern: desc.to_string(),
-                                suggestion: sugg.to_string(),
-                                severity: Severity::Info,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(violations)
+        })
     }
     /// Check if a crate should be skipped based on configuration
     fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
