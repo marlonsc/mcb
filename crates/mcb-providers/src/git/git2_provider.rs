@@ -390,26 +390,32 @@ impl VcsProvider for Git2Provider {
         let mut repositories = Vec::new();
 
         // Check if root itself is a repository
-        if root.join(".git").exists() {
-            match self.open_repository(root).await {
-                Ok(repo) => repositories.push(repo),
-                Err(_) => {} // Skip invalid repos
+        let root_is_repo = root.join(".git").exists();
+        #[allow(clippy::collapsible_if)]
+        if root_is_repo {
+            if let Ok(repo) = self.open_repository(root).await {
+                repositories.push(repo);
             }
         }
 
         // Scan subdirectories for repositories (non-recursive for now)
         if let Ok(entries) = fs::read_dir(root) {
             for entry in entries.flatten() {
-                if let Ok(metadata) = entry.metadata() {
-                    if metadata.is_dir() {
-                        let path = entry.path();
-                        if path.join(".git").exists() {
-                            match self.open_repository(&path).await {
-                                Ok(repo) => repositories.push(repo),
-                                Err(_) => {} // Skip invalid repos
-                            }
-                        }
-                    }
+                let Ok(metadata) = entry.metadata() else {
+                    continue;
+                };
+
+                if !metadata.is_dir() {
+                    continue;
+                }
+
+                let path = entry.path();
+                if !path.join(".git").exists() {
+                    continue;
+                }
+
+                if let Ok(repo) = self.open_repository(&path).await {
+                    repositories.push(repo);
                 }
             }
         }

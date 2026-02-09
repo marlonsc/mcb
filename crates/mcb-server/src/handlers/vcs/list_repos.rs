@@ -8,7 +8,6 @@ use rmcp::model::CallToolResult;
 use super::responses::ListRepositoriesResponse;
 use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
-use crate::vcs_repository_registry;
 
 /// Lists all available repositories discovered by the VCS provider.
 pub async fn list_repositories(
