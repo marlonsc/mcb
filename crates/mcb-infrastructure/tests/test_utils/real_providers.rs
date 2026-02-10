@@ -49,7 +49,15 @@ use serde_json::json;
 /// The `extern crate mcb_providers` at the top of this module forces linkme
 /// to register all providers. Without it, the registry would be empty.
 pub async fn create_test_app_context() -> Result<AppContext> {
-    let config = AppConfig::default();
+    let mut config = AppConfig::default();
+    let temp_dir = std::env::temp_dir().join(format!(
+        "mcb-test-ctx-{}.db",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    config.auth.user_db_path = Some(temp_dir);
     init_app(config).await
 }
 
