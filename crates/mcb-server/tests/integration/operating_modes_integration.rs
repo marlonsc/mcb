@@ -41,9 +41,17 @@ fn get_free_port() -> u16 {
     port
 }
 
-/// Create test configuration with default (null) providers
 fn create_test_config() -> AppConfig {
-    AppConfig::default()
+    let mut config = AppConfig::default();
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time")
+        .as_nanos();
+    let thread_id = std::thread::current().id();
+    let db_path =
+        std::env::temp_dir().join(format!("mcb-opmode-test-{}-{:?}.db", stamp, thread_id));
+    config.auth.user_db_path = Some(db_path);
+    config
 }
 
 /// Create test configuration for client mode
@@ -540,7 +548,7 @@ async fn test_session_isolation_with_vector_store() {
 
 /// Helper to create an MCP server with null providers for testing
 async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
-    let config = AppConfig::default();
+    let config = create_test_config();
     let ctx = init_app(config.clone()).await.expect("Failed to init app");
 
     // Get providers from context

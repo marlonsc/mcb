@@ -151,12 +151,8 @@ impl HttpTransport {
         };
         use crate::admin::config_handlers::{get_config, reload_config, update_config_section};
         use crate::admin::handlers::{
-            extended_health_check, get_cache_stats, get_indexing_status, get_jobs_status,
-            get_metrics, health_check, list_browse_projects, liveness_check, readiness_check,
-            shutdown,
             extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
-            list_browse_project_issues, list_browse_project_phases, list_browse_projects,
-            liveness_check, readiness_check, shutdown,
+            list_browse_projects, liveness_check, readiness_check, shutdown,
         };
         use crate::admin::lifecycle_handlers::{
             list_services, restart_service, services_health, start_service, stop_service,
