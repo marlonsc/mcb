@@ -13,9 +13,9 @@ understanding — all through the standard Model Context Protocol.
 
 - 🔍 **Semantic Code Search** — Natural language queries over indexed codebases using vector embeddings
 - 🧠 **Persistent Memory** — Cross-session observation storage with timeline, tagging, and context injection
-- 🏗️ **Multi-Provider Architecture** — 5 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed) and 2 vector stores (Milvus, EdgeVec)
+- 🏗️ **Multi-Provider Architecture** — 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed) and 6 vector stores (Milvus, EdgeVec)
 - 🌳 **AST-Aware Analysis** — Tree-sitter parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
-- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 2961+ tests)
+- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 2953+ tests)
 - 🔌 **MCP Protocol Native** — Seamless integration with Claude Desktop, Claude Code, and any MCP-compatible client
 - 🔒 **Git-Aware Indexing** — Repository-level context with branch comparison and impact analysis
 
