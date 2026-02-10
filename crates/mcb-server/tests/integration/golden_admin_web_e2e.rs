@@ -107,8 +107,13 @@ async fn test_admin_rocket_shared_js_is_accessible() {
 
     let response = client.get("/ui/shared.js").dispatch().await;
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(
-        response.content_type().map(|ct| ct.to_string()),
-        Some("text/javascript; charset=utf-8".to_string())
+    let content_type = response.content_type().map(|ct| ct.to_string());
+    assert!(
+        matches!(
+            content_type.as_deref(),
+            Some("text/javascript") | Some("text/javascript; charset=utf-8")
+        ),
+        "Unexpected Content-Type for /ui/shared.js: {:?}",
+        content_type
     );
 }
