@@ -10,12 +10,16 @@ use mcb_domain::ports::admin::{
     IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsInterface, ShutdownCoordinator,
 };
 use mcb_domain::ports::browse::HighlightServiceInterface;
-use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::infrastructure::{DatabaseProvider, EventBusProvider};
 use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
+use mcb_domain::ports::repositories::{
+    AgentRepository, FileHashRepository, MemoryRepository, ProjectRepository,
+};
 use mcb_domain::ports::services::{
     ProjectDetectorService, ProjectServiceInterface as ProjectWorkflowService,
 };
+use mcb_providers::database::{SqliteDatabaseProvider, SqliteMemoryRepository};
+use mcb_providers::storage::{SqliteFileHashConfig, SqliteFileHashRepository};
 use tracing::info;
 
 use crate::config::AppConfig;
@@ -88,6 +92,7 @@ pub struct AppContext {
     vcs_provider: Arc<dyn VcsProvider>,
     project_service: Arc<dyn ProjectDetectorService>,
     project_workflow_service: Arc<dyn ProjectWorkflowService>,
+    file_hash_repository: Arc<dyn FileHashRepository>,
 
     // ========================================================================
     // Infrastructure Services
@@ -205,6 +210,11 @@ impl AppContext {
     /// Get project workflow service
     pub fn project_workflow_service(&self) -> Arc<dyn ProjectWorkflowService> {
         self.project_workflow_service.clone()
+    }
+
+    /// Get file hash repository
+    pub fn file_hash_repository(&self) -> Arc<dyn FileHashRepository> {
+        self.file_hash_repository.clone()
     }
 
     /// Get highlight service
@@ -377,23 +387,32 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Domain Services & Repositories
     // ========================================================================
 
-    let memory_db_path = dirs::data_local_dir()
-        .or_else(|| std::env::current_dir().ok())
-        .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join(".mcb")
-        .join("memory.db");
-    let (memory_repository, db_executor) =
-        mcb_providers::database::create_memory_repository_with_executor(memory_db_path)
-            .await
-            .map_err(|e| {
-                mcb_domain::error::Error::internal(format!(
-                    "Failed to create memory repository: {e}"
-                ))
-            })?;
+    // Use configured path or fallback to default
+    let memory_db_path = config.auth.user_db_path.clone().unwrap_or_else(|| {
+        dirs::data_local_dir()
+            .or_else(|| std::env::current_dir().ok())
+            .unwrap_or_else(|| std::path::PathBuf::from("."))
+            .join(".mcb")
+            .join("memory.db")
+    });
+
+    let sqlite_provider = SqliteDatabaseProvider;
+    let db_executor = sqlite_provider
+        .connect(memory_db_path.as_path())
+        .await
+        .map_err(|e| {
+            mcb_domain::error::Error::internal(format!("Failed to create database executor: {e}"))
+        })?;
+
+    let memory_repository: Arc<dyn MemoryRepository> =
+        Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
     let agent_repository =
-        mcb_providers::database::create_agent_repository_from_executor(db_executor.clone());
+        mcb_providers::database::create_agent_repository_from_executor(Arc::clone(&db_executor));
     let project_repository =
-        mcb_providers::database::create_project_repository_from_executor(db_executor);
+        mcb_providers::database::create_project_repository_from_executor(Arc::clone(&db_executor));
+    let file_hash_repository: Arc<dyn FileHashRepository> = Arc::new(
+        SqliteFileHashRepository::new(Arc::clone(&db_executor), SqliteFileHashConfig::default()),
+    );
 
     let vcs_provider = crate::di::vcs::default_vcs_provider();
     let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
@@ -438,6 +457,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         vcs_provider,
         project_service,
         project_workflow_service,
+        file_hash_repository,
         highlight_service,
         crypto_service,
         lifecycle_services,

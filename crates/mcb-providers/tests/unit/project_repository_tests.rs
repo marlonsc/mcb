@@ -10,17 +10,20 @@ use mcb_domain::entities::project::{
     ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use mcb_domain::ports::repositories::{IssueFilter, ProjectRepository};
-use mcb_providers::database::{create_executor_in_memory, create_project_repository_from_executor};
+use mcb_providers::database::create_project_repository;
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
-async fn setup_repository() -> Arc<dyn ProjectRepository> {
-    let executor = create_executor_in_memory()
+async fn setup_repository() -> (Arc<dyn ProjectRepository>, tempfile::TempDir) {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+
+    let repo = create_project_repository(db_path)
         .await
-        .expect("Failed to create in-memory executor");
-    create_project_repository_from_executor(executor)
+        .expect("Failed to create project repository");
+    (repo, temp_dir)
 }
 
 /// Helper: Setup repository and create a test project, returning both
@@ -28,13 +31,13 @@ async fn setup_with_project(
     id: &str,
     name: &str,
     path: &str,
-) -> (Arc<dyn ProjectRepository>, Project) {
-    let repo = setup_repository().await;
+) -> (Arc<dyn ProjectRepository>, Project, tempfile::TempDir) {
+    let (repo, temp_dir) = setup_repository().await;
     let project = create_test_project(id, name, path);
     repo.create(&project)
         .await
         .expect("Failed to create project");
-    (repo, project)
+    (repo, project, temp_dir)
 }
 
 fn create_test_project(id: &str, name: &str, path: &str) -> Project {
@@ -124,9 +127,9 @@ fn create_test_decision(
 
 #[tokio::test]
 async fn test_create_project() {
-    let (repo, _project) = setup_with_project("proj-1", "Test Project", "/test/path").await;
+    let (_repo, _project, _temp) = setup_with_project("proj-1", "Test Project", "/test/path").await;
 
-    let retrieved = repo
+    let retrieved = _repo
         .get_by_id("proj-1")
         .await
         .expect("Failed to get project");
@@ -136,7 +139,7 @@ async fn test_create_project() {
 
 #[tokio::test]
 async fn test_get_project_by_id() {
-    let (repo, project) = setup_with_project("proj-2", "Project 2", "/path/2").await;
+    let (repo, project, _temp) = setup_with_project("proj-2", "Project 2", "/path/2").await;
 
     let retrieved = repo
         .get_by_id("proj-2")
@@ -151,7 +154,7 @@ async fn test_get_project_by_id() {
 
 #[tokio::test]
 async fn test_get_project_by_id_not_found() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
 
     let retrieved = repo
         .get_by_id("nonexistent")
@@ -162,7 +165,7 @@ async fn test_get_project_by_id_not_found() {
 
 #[tokio::test]
 async fn test_get_project_by_name() {
-    let (repo, _project) = setup_with_project("proj-3", "Unique Name", "/path/3").await;
+    let (repo, _project, _temp) = setup_with_project("proj-3", "Unique Name", "/path/3").await;
 
     let retrieved = repo
         .get_by_name("Unique Name")
@@ -174,7 +177,7 @@ async fn test_get_project_by_name() {
 
 #[tokio::test]
 async fn test_get_project_by_path() {
-    let (repo, _project) = setup_with_project("proj-4", "Project 4", "/unique/path").await;
+    let (repo, _project, _temp) = setup_with_project("proj-4", "Project 4", "/unique/path").await;
 
     let retrieved = repo
         .get_by_path("/unique/path")
@@ -186,7 +189,7 @@ async fn test_get_project_by_path() {
 
 #[tokio::test]
 async fn test_list_projects() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let proj1 = create_test_project("proj-5", "Project 5", "/path/5");
     let proj2 = create_test_project("proj-6", "Project 6", "/path/6");
 
@@ -205,7 +208,7 @@ async fn test_list_projects() {
 
 #[tokio::test]
 async fn test_update_project() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let mut project = create_test_project("proj-7", "Original Name", "/original/path");
 
     repo.create(&project)
@@ -233,7 +236,7 @@ async fn test_update_project() {
 
 #[tokio::test]
 async fn test_delete_project() {
-    let (repo, _project) = setup_with_project("proj-8", "To Delete", "/path/8").await;
+    let (repo, _project, _temp) = setup_with_project("proj-8", "To Delete", "/path/8").await;
 
     repo.delete("proj-8")
         .await
@@ -249,7 +252,7 @@ async fn test_delete_project() {
 
 #[tokio::test]
 async fn test_create_phase() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-9", "Project 9", "/path/9");
     repo.create(&project)
         .await
@@ -270,7 +273,7 @@ async fn test_create_phase() {
 
 #[tokio::test]
 async fn test_list_phases() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-10", "Project 10", "/path/10");
     repo.create(&project)
         .await
@@ -297,7 +300,7 @@ async fn test_list_phases() {
 
 #[tokio::test]
 async fn test_update_phase() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-11", "Project 11", "/path/11");
     repo.create(&project)
         .await
@@ -334,7 +337,7 @@ async fn test_update_phase() {
 
 #[tokio::test]
 async fn test_create_issue() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-12", "Project 12", "/path/12");
     repo.create(&project)
         .await
@@ -355,7 +358,7 @@ async fn test_create_issue() {
 
 #[tokio::test]
 async fn test_list_issues() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-13", "Project 13", "/path/13");
     repo.create(&project)
         .await
@@ -382,7 +385,7 @@ async fn test_list_issues() {
 
 #[tokio::test]
 async fn test_filter_issues_by_status() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-14", "Project 14", "/path/14");
     repo.create(&project)
         .await
@@ -417,7 +420,7 @@ async fn test_filter_issues_by_status() {
 
 #[tokio::test]
 async fn test_filter_issues_by_phase() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-15", "Project 15", "/path/15");
     repo.create(&project)
         .await
@@ -463,7 +466,7 @@ async fn test_filter_issues_by_phase() {
 
 #[tokio::test]
 async fn test_update_issue() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-16", "Project 16", "/path/16");
     repo.create(&project)
         .await
@@ -502,7 +505,7 @@ async fn test_update_issue() {
 
 #[tokio::test]
 async fn test_add_dependency() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-17", "Project 17", "/path/17");
     repo.create(&project)
         .await
@@ -532,7 +535,7 @@ async fn test_add_dependency() {
 
 #[tokio::test]
 async fn test_list_dependencies() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-18", "Project 18", "/path/18");
     repo.create(&project)
         .await
@@ -573,7 +576,7 @@ async fn test_list_dependencies() {
 
 #[tokio::test]
 async fn test_remove_dependency() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-19", "Project 19", "/path/19");
     repo.create(&project)
         .await
@@ -611,7 +614,7 @@ async fn test_remove_dependency() {
 
 #[tokio::test]
 async fn test_create_decision() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-20", "Project 20", "/path/20");
     repo.create(&project)
         .await
@@ -632,7 +635,7 @@ async fn test_create_decision() {
 
 #[tokio::test]
 async fn test_list_decisions() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-21", "Project 21", "/path/21");
     repo.create(&project)
         .await
@@ -659,7 +662,7 @@ async fn test_list_decisions() {
 
 #[tokio::test]
 async fn test_decision_with_issue() {
-    let repo = setup_repository().await;
+    let (repo, _temp) = setup_repository().await;
     let project = create_test_project("proj-22", "Project 22", "/path/22");
     repo.create(&project)
         .await

@@ -3,25 +3,17 @@
 //! Provides factory functions for creating test data and temporary directories.
 
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
-use mcb_application::use_cases::project_service::ProjectServiceImpl;
 use mcb_domain::SearchResult;
 use mcb_domain::ports::services::IndexingResult;
-use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::types::AppConfig;
-use mcb_infrastructure::crypto::CryptoService;
 use mcb_infrastructure::di::bootstrap::init_app;
-use mcb_infrastructure::di::modules::domain_services::{
-    DomainServicesFactory, ServiceDependencies,
-};
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use tempfile::TempDir;
 
 #[allow(unused_imports)]
 use crate::test_utils::mock_services::MockMemoryRepository;
-use crate::test_utils::mock_services::MockVcsProvider;
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
@@ -180,70 +172,29 @@ pub fn create_test_search_results(count: usize) -> Vec<SearchResult> {
         .collect()
 }
 
-/// Create an MCP server with null providers for testing
+/// Create an MCP server with default providers (SQLite, EdgeVec, FastEmbed, Tokio)
 ///
-/// This uses the default AppConfig which initializes null providers,
-/// suitable for unit tests that don't need real embedding/vector store.
-pub async fn create_test_mcp_server() -> McpServer {
-    let config = AppConfig::default();
-    let ctx = init_app(config.clone()).await.expect("Failed to init app");
+/// This uses the default AppConfig and initializes real providers,
+/// suitable for all tests unless specific mocks are required.
+///
+/// Returns (server, temp_dir) - temp_dir must be kept alive by caller.
+pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
+    // Create temp dir for SQLite DB and other files
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
 
-    // Get providers from context
-    let embedding_provider = ctx.embedding_handle().get();
-    let vector_store_provider = ctx.vector_store_handle().get();
-    let language_chunker = ctx.language_handle().get();
-    let cache_provider = ctx.cache_handle().get();
-    let indexing_ops = ctx.indexing();
-    let event_bus = ctx.event_bus();
+    let mut config = AppConfig::default();
+    // Configure SQLite path to use temp dir
+    config.auth.user_db_path = Some(db_path.clone());
 
-    // Create shared cache provider for domain services factory
-    let shared_cache = SharedCacheProvider::from_arc(cache_provider);
+    let ctx = init_app(config).await.expect("Failed to init app");
 
-    let master_key = CryptoService::generate_master_key();
-    let crypto: std::sync::Arc<dyn mcb_domain::ports::providers::CryptoProvider> =
-        std::sync::Arc::new(
-            CryptoService::new(master_key).expect("Failed to create crypto service"),
-        );
-
-    let (memory_repository, shared_executor) =
-        mcb_providers::database::create_memory_repository_in_memory_with_executor()
-            .await
-            .expect("Failed to create memory database");
-    let agent_repository = mcb_providers::database::create_agent_repository_from_executor(
-        std::sync::Arc::clone(&shared_executor),
-    );
-    let project_repository = mcb_providers::database::create_project_repository_from_executor(
-        std::sync::Arc::clone(&shared_executor),
-    );
-    let vcs_provider = Arc::new(MockVcsProvider::new());
-
-    let project_service: Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
-        Arc::new(mcb_infrastructure::project::ProjectService::new());
-    let project_workflow_service: Arc<dyn mcb_domain::ports::services::ProjectServiceInterface> =
-        Arc::new(ProjectServiceImpl::new(project_repository.clone()));
-
-    let deps = ServiceDependencies {
-        project_id: "test-project".to_string(),
-        cache: shared_cache,
-        crypto,
-        config,
-        embedding_provider,
-        vector_store_provider,
-        language_chunker,
-        indexing_ops,
-        event_bus,
-        memory_repository,
-        agent_repository,
-        vcs_provider,
-        project_service,
-        project_workflow_service: project_workflow_service.clone(),
-    };
-
-    let services = DomainServicesFactory::create_services(deps)
+    let services = ctx
+        .build_domain_services()
         .await
         .expect("Failed to create services");
 
-    McpServerBuilder::new()
+    let server = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
@@ -251,10 +202,12 @@ pub async fn create_test_mcp_server() -> McpServer {
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
         .with_project_service(services.project_service)
-        .with_project_workflow_service(project_workflow_service)
+        .with_project_workflow_service(ctx.project_workflow_service())
         .with_vcs_provider(services.vcs_provider)
         .build()
-        .expect("Failed to build MCP server")
+        .expect("Failed to build MCP server");
+
+    (server, temp_dir)
 }
 
 #[cfg(test)]

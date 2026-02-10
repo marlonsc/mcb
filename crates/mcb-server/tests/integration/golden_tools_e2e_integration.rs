@@ -17,7 +17,7 @@ fn sample_codebase_path() -> std::path::PathBuf {
 
 #[tokio::test]
 async fn test_golden_e2e_complete_workflow() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     assert!(
         path.exists(),
@@ -140,7 +140,7 @@ async fn test_golden_e2e_complete_workflow() {
 
 #[tokio::test]
 async fn test_golden_index_test_repository() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     assert!(path.exists(), "sample_codebase must exist: {:?}", path);
 
@@ -174,7 +174,7 @@ async fn test_golden_index_test_repository() {
 
 #[tokio::test]
 async fn test_golden_index_handles_multiple_languages() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let handler = server.index_handler();
     let args = IndexArgs {
@@ -205,7 +205,7 @@ async fn test_golden_index_handles_multiple_languages() {
 
 #[tokio::test]
 async fn test_golden_search_returns_relevant_results() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_search_relevance";
     server
@@ -244,7 +244,7 @@ async fn test_golden_search_returns_relevant_results() {
 
 #[tokio::test]
 async fn test_golden_search_handles_empty_query() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let search_h = server.search_handler();
     let r = search_h.handle(Parameters(SearchArgs {
         query: "   ".to_string(),
@@ -266,7 +266,7 @@ async fn test_golden_search_handles_empty_query() {
 
 #[tokio::test]
 async fn test_golden_search_respects_limit_parameter() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_limit_test";
     server

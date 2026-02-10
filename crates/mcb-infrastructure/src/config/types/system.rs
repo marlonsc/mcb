@@ -160,8 +160,6 @@ pub enum EventBusProvider {
     Tokio,
     /// Distributed message queue (NATS)
     Nats,
-    /// No-op event bus for testing
-    Null,
 }
 
 /// EventBus configuration
@@ -218,13 +216,6 @@ impl EventBusConfig {
         Self {
             provider: EventBusProvider::Nats,
             nats_url: Some(url.into()),
-            ..Default::default()
-        }
-    }
-
-    pub fn null() -> Self {
-        Self {
-            provider: EventBusProvider::Null,
             ..Default::default()
         }
     }

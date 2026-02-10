@@ -35,7 +35,7 @@ fn extract_text(content: &[rmcp::model::Content]) -> String {
 
 #[tokio::test]
 async fn test_golden_memory_store_with_default_project() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
 
     // Store observation with non-existent project (should auto-create default)
@@ -75,7 +75,7 @@ async fn test_golden_memory_store_with_default_project() {
 
 #[tokio::test]
 async fn test_golden_memory_list_empty_graceful() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
 
     // List memories for a project with no data
@@ -116,7 +116,7 @@ async fn test_golden_memory_list_empty_graceful() {
 
 #[tokio::test]
 async fn test_golden_project_create_phase() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let project_h = server.project_handler();
     let project_id = "test-project-1";
 
@@ -141,7 +141,7 @@ async fn test_golden_project_create_phase() {
 
 #[tokio::test]
 async fn test_golden_project_create_issue() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let project_h = server.project_handler();
     let project_id = "test-project-2";
 
@@ -169,7 +169,7 @@ async fn test_golden_project_create_issue() {
 
 #[tokio::test]
 async fn test_golden_project_list_phases() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let project_h = server.project_handler();
     let project_id = "test-project-3";
 
@@ -206,7 +206,7 @@ async fn test_golden_project_list_phases() {
 
 #[tokio::test]
 async fn test_golden_project_update_issue_status() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let project_h = server.project_handler();
     let project_id = "test-project-4";
 
@@ -252,7 +252,7 @@ async fn test_golden_project_update_issue_status() {
 
 #[tokio::test]
 async fn test_golden_project_add_dependency() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let project_h = server.project_handler();
     let project_id = "test-project-5";
 
@@ -319,7 +319,7 @@ async fn test_golden_project_add_dependency() {
 
 #[tokio::test]
 async fn test_golden_context_search_basic() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
     let search_h = server.search_handler();
     let project_id = "search-project";

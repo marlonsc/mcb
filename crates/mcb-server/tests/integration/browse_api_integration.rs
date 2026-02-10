@@ -186,6 +186,7 @@ fn create_test_admin_state() -> AdminState {
         metrics: Arc::new(MockMetrics),
         indexing: Arc::new(MockIndexing),
         config_watcher: None,
+        current_config: mcb_infrastructure::config::types::AppConfig::default(),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,

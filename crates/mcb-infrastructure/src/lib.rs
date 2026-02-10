@@ -51,7 +51,6 @@ pub mod logging;
 pub mod project;
 pub mod routing;
 pub mod services;
-pub mod storage;
 pub mod utils;
 pub mod validation;
 

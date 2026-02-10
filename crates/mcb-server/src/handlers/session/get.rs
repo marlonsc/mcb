@@ -7,6 +7,7 @@ use rmcp::model::{CallToolResult, Content};
 
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
+use tracing::error;
 
 /// Retrieves an agent session by ID.
 pub async fn get_session(
@@ -41,8 +42,12 @@ pub async fn get_session(
         Ok(None) => Ok(CallToolResult::error(vec![Content::text(
             "Agent session not found",
         )])),
-        Err(_) => Ok(CallToolResult::error(vec![Content::text(
-            "Failed to get agent session",
-        )])),
+        Err(e) => {
+            error!("Failed to get agent session: {:?}", e);
+            Ok(CallToolResult::error(vec![Content::text(format!(
+                "Failed to get agent session: {}",
+                e
+            ))]))
+        }
     }
 }

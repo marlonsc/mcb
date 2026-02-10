@@ -11,6 +11,7 @@ use uuid::Uuid;
 use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
+use tracing::error;
 
 /// Creates a new agent session.
 pub async fn create_session(
@@ -75,8 +76,12 @@ pub async fn create_session(
             "agent_type": agent_type.as_str(),
             "status": "active",
         })),
-        Err(_) => Ok(CallToolResult::error(vec![Content::text(
-            "Failed to create agent session",
-        )])),
+        Err(e) => {
+            error!("Failed to create agent session: {:?}", e);
+            Ok(CallToolResult::error(vec![Content::text(format!(
+                "Failed to create agent session: {}",
+                e
+            ))]))
+        }
     }
 }

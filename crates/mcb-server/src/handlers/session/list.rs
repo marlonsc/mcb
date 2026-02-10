@@ -7,6 +7,7 @@ use rmcp::model::{CallToolResult, Content};
 
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
+use tracing::error;
 
 /// Lists agent sessions based on filters.
 pub async fn list_sessions(
@@ -49,8 +50,12 @@ pub async fn list_sessions(
                 "count": items.len(),
             }))
         }
-        Err(_) => Ok(CallToolResult::error(vec![Content::text(
-            "Failed to list agent sessions",
-        )])),
+        Err(e) => {
+            error!("Failed to list agent sessions: {:?}", e);
+            Ok(CallToolResult::error(vec![Content::text(format!(
+                "Failed to list agent sessions: {}",
+                e
+            ))]))
+        }
     }
 }

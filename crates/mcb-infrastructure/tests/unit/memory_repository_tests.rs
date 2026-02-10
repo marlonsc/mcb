@@ -4,21 +4,27 @@ use mcb_domain::entities::memory::{Observation, ObservationType};
 use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::value_objects::ObservationId;
-use mcb_providers::database::create_memory_repository_in_memory;
+use mcb_providers::database::{create_memory_repository, create_memory_repository_with_executor};
 
 use super::test_utils::create_test_project;
 
 #[tokio::test]
-async fn test_memory_repository_in_memory_creates() {
-    let repo: Arc<dyn MemoryRepository> = create_memory_repository_in_memory().await.unwrap();
+async fn test_memory_repository_creates() {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+
+    let repo: Arc<dyn MemoryRepository> = create_memory_repository(db_path).await.unwrap();
     let results = repo.search("test", 1).await.unwrap();
     assert!(results.is_empty());
 }
 
 #[tokio::test]
 async fn test_memory_repository_store_and_get_observation() {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+
     let (repo, executor): (Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>) =
-        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+        create_memory_repository_with_executor(db_path)
             .await
             .unwrap();
 

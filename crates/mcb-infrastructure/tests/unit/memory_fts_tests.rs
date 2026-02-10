@@ -10,8 +10,11 @@ use super::test_utils::create_test_project;
 
 #[tokio::test]
 async fn test_fts_search_flow() {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+
     let (repo, executor): (Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>) =
-        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+        mcb_providers::database::create_memory_repository_with_executor(db_path)
             .await
             .unwrap();
 

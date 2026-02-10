@@ -10,7 +10,7 @@ use mcb_domain::entities::memory::SessionSummary;
 use mcb_domain::entities::project::Project;
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
 use mcb_providers::database::{
-    create_agent_repository_from_executor, create_memory_repository_in_memory_with_executor,
+    create_agent_repository_from_executor, create_memory_repository_with_executor,
     create_project_repository_from_executor,
 };
 
@@ -22,13 +22,17 @@ async fn setup_repositories() -> (
     Arc<dyn AgentRepository>,
     Arc<dyn MemoryRepository>,
     Arc<dyn ProjectRepository>,
+    tempfile::TempDir,
 ) {
-    let (memory_repo, executor) = create_memory_repository_in_memory_with_executor()
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+
+    let (memory_repo, executor) = create_memory_repository_with_executor(db_path)
         .await
-        .expect("Failed to create in-memory executor");
+        .expect("Failed to create executor");
     let agent_repo = create_agent_repository_from_executor(Arc::clone(&executor));
     let project_repo = create_project_repository_from_executor(Arc::clone(&executor));
-    (agent_repo, memory_repo, project_repo)
+    (agent_repo, memory_repo, project_repo, temp_dir)
 }
 
 fn create_test_project(id: &str) -> Project {
@@ -96,7 +100,7 @@ fn create_test_tool_call(id: &str, session_id: &str) -> ToolCall {
 
 #[tokio::test]
 async fn test_create_agent_session() {
-    let (agent_repo, memory_repo, project_repo) = setup_repositories().await;
+    let (agent_repo, memory_repo, project_repo, _temp) = setup_repositories().await;
 
     // Prerequisite: Create Project
     let project = create_test_project("proj-1");
@@ -130,7 +134,7 @@ async fn test_create_agent_session() {
 
 #[tokio::test]
 async fn test_store_tool_call() {
-    let (agent_repo, memory_repo, project_repo) = setup_repositories().await;
+    let (agent_repo, memory_repo, project_repo, _temp) = setup_repositories().await;
 
     // Prerequisite: Create Project
     let project = create_test_project("proj-1");

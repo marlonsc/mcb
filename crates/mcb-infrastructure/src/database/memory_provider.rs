@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::schema::{ProjectSchema, SchemaDdlGenerator};
 use sqlx::SqlitePool;
-use tracing::{debug, info};
+use tracing::info;
 
 /// SQLite connection pool provider for memory storage with full `ProjectSchema` initialization.
 pub struct MemoryDatabaseProvider;
@@ -188,17 +188,6 @@ impl MemoryDatabaseProvider {
         apply_project_schema(&pool).await?;
 
         info!("Memory database initialized at {}", path.display());
-        Ok(pool)
-    }
-
-    pub async fn connect_in_memory() -> Result<SqlitePool> {
-        let pool = SqlitePool::connect("sqlite::memory:")
-            .await
-            .map_err(|e| Error::memory_with_source("Failed to connect to in-memory SQLite", e))?;
-
-        apply_project_schema(&pool).await?;
-
-        debug!("In-memory memory database initialized");
         Ok(pool)
     }
 }

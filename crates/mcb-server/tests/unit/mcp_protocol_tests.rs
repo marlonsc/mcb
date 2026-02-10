@@ -40,7 +40,8 @@ fn get_free_port() -> u16 {
 #[tokio::test]
 async fn test_initialize_response_protocol_version_is_string() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -103,7 +104,8 @@ async fn test_initialize_response_protocol_version_is_string() {
 #[tokio::test]
 async fn test_initialize_response_has_server_info() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -153,7 +155,8 @@ async fn test_initialize_response_has_server_info() {
 #[tokio::test]
 async fn test_initialize_response_has_capabilities() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -204,7 +207,8 @@ async fn test_initialize_response_has_capabilities() {
 #[tokio::test]
 async fn test_tools_list_has_input_schemas() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -271,7 +275,8 @@ async fn test_tools_list_has_input_schemas() {
 #[tokio::test]
 async fn test_index_schema_has_required_action() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -328,7 +333,8 @@ async fn test_index_schema_has_required_action() {
 #[tokio::test]
 async fn test_search_schema_has_required_query() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -385,7 +391,8 @@ async fn test_search_schema_has_required_query() {
 #[tokio::test]
 async fn test_tool_schemas_have_valid_structure() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -458,7 +465,8 @@ async fn test_tool_schemas_have_valid_structure() {
 #[tokio::test]
 async fn test_response_has_jsonrpc_field() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -500,7 +508,8 @@ async fn test_response_has_jsonrpc_field() {
 #[tokio::test]
 async fn test_response_echoes_request_id() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -561,7 +570,8 @@ async fn test_response_echoes_request_id() {
 #[tokio::test]
 async fn test_error_response_has_code_and_message() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);

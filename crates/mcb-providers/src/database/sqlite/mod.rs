@@ -8,7 +8,7 @@
 
 mod agent_repository;
 mod ddl;
-mod executor;
+pub mod executor;
 mod memory_repository;
 mod project_repository;
 mod provider;

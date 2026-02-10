@@ -126,6 +126,7 @@ async-nats = { workspace = true }
 
 # SQLite for memory repository (uses generic schema from domain)
 sqlx = { workspace = true }
+sha2.workspace = true
 
 [features]
 default = []

@@ -54,7 +54,7 @@ pub struct VectorStoreConfigContainer {
 }
 
 /// Provider configurations
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvidersConfig {
     /// Embedding provider configuration
     #[serde(default)]
@@ -62,6 +62,21 @@ pub struct ProvidersConfig {
     /// Vector store provider configuration
     #[serde(default)]
     pub vector_store: VectorStoreConfigContainer,
+}
+
+impl Default for ProvidersConfig {
+    fn default() -> Self {
+        Self {
+            embedding: EmbeddingConfigContainer {
+                provider: Some("fastembed".to_string()),
+                ..Default::default()
+            },
+            vector_store: VectorStoreConfigContainer {
+                provider: Some("edgevec".to_string()),
+                ..Default::default()
+            },
+        }
+    }
 }
 
 /// Infrastructure configurations

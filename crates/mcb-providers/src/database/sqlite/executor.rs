@@ -172,4 +172,15 @@ impl DatabaseExecutor for SqliteExecutor {
     async fn query_all(&self, sql: &str, params: &[SqlParam]) -> Result<Vec<Arc<dyn SqlRow>>> {
         self.query_all_impl(sql, params).await
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+impl SqliteExecutor {
+    /// Get reference to inner pool
+    pub fn pool(&self) -> &sqlx::SqlitePool {
+        &self.pool
+    }
 }

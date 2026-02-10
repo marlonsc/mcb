@@ -535,7 +535,7 @@ async fn test_session_isolation_with_vector_store() {
 // ============================================================================
 
 /// Helper to create an MCP server with null providers for testing
-async fn create_test_mcp_server() -> McpServer {
+async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
     let config = AppConfig::default();
     let ctx = init_app(config.clone()).await.expect("Failed to init app");
 
@@ -554,8 +554,12 @@ async fn create_test_mcp_server() -> McpServer {
     let master_key = CryptoService::generate_master_key();
     let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
 
+    // Use a temporary file for the memory database
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+
     let (memory_repository, shared_executor) =
-        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+        mcb_providers::database::create_memory_repository_with_executor(db_path)
             .await
             .expect("Failed to create memory database");
     let agent_repository = mcb_providers::database::create_agent_repository_from_executor(
@@ -595,7 +599,7 @@ async fn create_test_mcp_server() -> McpServer {
         .await
         .expect("Failed to create services");
 
-    McpServerBuilder::new()
+    let server = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
@@ -606,13 +610,16 @@ async fn create_test_mcp_server() -> McpServer {
         .with_project_workflow_service(project_workflow_service)
         .with_vcs_provider(services.vcs_provider)
         .build()
-        .expect("Failed to build MCP server")
+        .expect("Failed to build MCP server");
+
+    (server, temp_dir)
 }
 
 #[tokio::test]
 async fn test_http_server_tools_list() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     // Create and start HTTP transport
     let http_config = HttpTransportConfig::localhost(port);
@@ -673,7 +680,8 @@ async fn test_http_server_tools_list() {
 #[tokio::test]
 async fn test_http_server_ping() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -713,7 +721,8 @@ async fn test_http_server_ping() {
 #[tokio::test]
 async fn test_http_server_initialize() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -755,7 +764,8 @@ async fn test_http_server_initialize() {
 #[tokio::test]
 async fn test_http_server_unknown_method() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -792,7 +802,8 @@ async fn test_http_server_unknown_method() {
 #[tokio::test]
 async fn test_http_server_with_session_header() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
@@ -835,7 +846,8 @@ async fn test_http_server_with_session_header() {
 #[tokio::test]
 async fn test_http_server_tools_call_index_status() {
     let port = get_free_port();
-    let server = Arc::new(create_test_mcp_server().await);
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);

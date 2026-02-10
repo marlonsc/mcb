@@ -8,6 +8,7 @@ use rmcp::model::{CallToolResult, Content};
 use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::formatter::ResponseFormatter;
+use tracing::error;
 
 /// Updates an existing agent session.
 pub async fn update_session(
@@ -53,16 +54,24 @@ pub async fn update_session(
                     schema::STATUS: &status_str,
                     "updated": true,
                 })),
-                Err(_) => Ok(CallToolResult::error(vec![Content::text(
-                    "Failed to update agent session",
-                )])),
+                Err(e) => {
+                    error!("Failed to update agent session: {:?}", e);
+                    Ok(CallToolResult::error(vec![Content::text(format!(
+                        "Failed to update agent session: {}",
+                        e
+                    ))]))
+                }
             }
         }
         Ok(None) => Ok(CallToolResult::error(vec![Content::text(
             "Agent session not found",
         )])),
-        Err(_) => Ok(CallToolResult::error(vec![Content::text(
-            "Failed to update agent session",
-        )])),
+        Err(e) => {
+            error!("Failed to update agent session (get failed): {:?}", e);
+            Ok(CallToolResult::error(vec![Content::text(format!(
+                "Failed to update agent session: {}",
+                e
+            ))]))
+        }
     }
 }

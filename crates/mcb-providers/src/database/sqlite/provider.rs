@@ -23,11 +23,6 @@ impl DatabaseProvider for SqliteDatabaseProvider {
         let pool = connect_and_init(path.to_path_buf()).await?;
         Ok(Arc::new(SqliteExecutor::new(pool)))
     }
-
-    async fn connect_in_memory(&self) -> Result<Arc<dyn DatabaseExecutor>> {
-        let pool = connect_in_memory_and_init().await?;
-        Ok(Arc::new(SqliteExecutor::new(pool)))
-    }
 }
 
 /// Create a file-backed memory repository: connect, apply [`ProjectSchema`] DDL, return repository.
@@ -48,30 +43,6 @@ pub async fn create_memory_repository_with_executor(
 ) -> Result<(Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>)> {
     let pool = connect_and_init(path).await?;
     let executor: Arc<dyn DatabaseExecutor> = Arc::new(SqliteExecutor::new(pool));
-    let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&executor)));
-    Ok((memory_repository, executor))
-}
-
-/// Create a memory repository in memory
-pub async fn create_memory_repository_in_memory() -> Result<Arc<dyn MemoryRepository>> {
-    let pool = connect_in_memory_and_init().await?;
-    let executor = Arc::new(SqliteExecutor::new(pool));
-    Ok(Arc::new(SqliteMemoryRepository::new(executor)))
-}
-
-/// Create an in-memory database executor.
-pub async fn create_executor_in_memory() -> Result<Arc<dyn DatabaseExecutor>> {
-    let pool = connect_in_memory_and_init().await?;
-    Ok(Arc::new(SqliteExecutor::new(pool)))
-}
-
-/// Create an in-memory memory repository with a shared executor.
-///
-/// Returns both the repository and the shared executor so callers can create
-/// additional repositories (agent, project) from the same database.
-pub async fn create_memory_repository_in_memory_with_executor()
--> Result<(Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>)> {
-    let executor = create_executor_in_memory().await?;
     let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&executor)));
     Ok((memory_repository, executor))
 }
@@ -109,22 +80,6 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
         .map_err(|e| Error::memory_with_source("connect SQLite", e))?;
     apply_schema(&pool).await?;
     tracing::info!("Memory database initialized at {}", path.display());
-    Ok(pool)
-}
-
-async fn connect_in_memory_and_init() -> Result<sqlx::SqlitePool> {
-    use mcb_domain::error::Error;
-    use uuid::Uuid;
-    // Use a unique name for each connection pool to ensure test isolation
-    // while allowing shared cache within the pool (and shared connections to same URI)
-    let uuid = Uuid::new_v4();
-    let db_url = format!("file:memdb{}?mode=memory&cache=shared", uuid);
-
-    let pool = sqlx::SqlitePool::connect(&db_url)
-        .await
-        .map_err(|e| Error::memory_with_source("connect in-memory SQLite", e))?;
-    apply_schema(&pool).await?;
-    tracing::debug!("In-memory memory database initialized: {}", db_url);
     Ok(pool)
 }
 

@@ -30,7 +30,7 @@ fn extract_text(content: &[rmcp::model::Content]) -> String {
 
 #[tokio::test]
 async fn test_validation_agent_sql_storage_flow() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let agent_h = server.agent_handler();
 
     // Verify LogTool handles repo errors gracefully (proving handler execution)
@@ -60,7 +60,7 @@ async fn test_validation_agent_sql_storage_flow() {
 
 #[tokio::test]
 async fn test_validation_session_create_schema_fallback() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let session_h = server.session_handler();
 
     // Try creating session with agent_type inside data (MISSING from top-level args)
@@ -94,7 +94,7 @@ async fn test_validation_session_create_schema_fallback() {
 
 #[tokio::test]
 async fn test_validation_memory_observation_enum_error() {
-    let server = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
 
     let result = memory_h
