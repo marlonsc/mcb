@@ -20,7 +20,7 @@ cd mcb
 # Build the project
 make build
 
-# Run all tests (950+)
+# Run all tests (1,310+)
 make test
 
 # Run quality checks
@@ -115,7 +115,7 @@ make push-confirm
 
 ```bash
 
-# Run all tests (950+)
+# Run all tests (1,310+)
 make test
 
 # Run unit tests only

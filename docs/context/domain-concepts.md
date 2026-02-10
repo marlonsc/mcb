@@ -30,7 +30,7 @@ The product delivers semantic code search by combining vector embeddings, git co
 
 **Used in:** `.planning/PROJECT.md` and `docs/developer/ROADMAP.md`
 
--   `docs/developer/ROADMAP.md` tracks release v0.1.4 (RCA + security) as current and plots v0.2.0 (git-aware indexing, session memory, advanced browser) as the high priority target.
+-   `docs/developer/ROADMAP.md` tracks release v0.2.0 (stabilization, rebranding, DDL fix) as current and plots v0.3.0 (workflow system) as the next target.
 -   `.planning/PROJECT.md` lists validated requirements (MCP tools, 14 languages, 7 embedding providers, 8 vector stores, clean architecture) and active debt items (mcb-validate coupling, duplicate Tree-sitter, missing provider health checks).
 -   `docs/context/project-state.md` consolidates these signals so contributors can see the validated capabilities, project constraints, and planned objectives together.
 
