@@ -168,29 +168,37 @@ pub async fn list_browse_projects(
     };
 
     // TODO(phase-1): extract org_id from admin auth context
+    let org_ctx = mcb_domain::value_objects::OrgContext::default();
     match project_workflow
-        .list_projects(mcb_domain::constants::keys::DEFAULT_ORG_ID)
+        .list_projects(org_ctx.org_id.as_str())
         .await
     {
         Ok(projects) => {
             let total = projects.len();
             Ok(Json(ProjectsBrowseResponse { projects, total }))
         }
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list projects");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list projects".to_string(),
+                }),
+            ))
+        }
     }
 }
 
+/// Response payload for the repositories browse endpoint.
 #[derive(Serialize)]
 pub struct RepositoriesBrowseResponse {
+    /// List of repositories.
     pub repositories: Vec<mcb_domain::entities::repository::Repository>,
+    /// Total number of repositories.
     pub total: usize,
 }
 
+/// List repositories for browse entity graph.
 #[get("/repositories?<project_id>")]
 pub async fn list_browse_repositories(
     _auth: AdminAuth,
@@ -206,10 +214,14 @@ pub async fn list_browse_repositories(
         ));
     };
 
-    let org_id = mcb_domain::constants::keys::DEFAULT_ORG_ID;
+    // TODO(phase-1): extract org_id from admin auth context
+    let org_ctx = mcb_domain::value_objects::OrgContext::default();
     let pid = project_id.as_deref().unwrap_or("");
 
-    match vcs_entity.list_repositories(org_id, pid).await {
+    match vcs_entity
+        .list_repositories(org_ctx.org_id.as_str(), pid)
+        .await
+    {
         Ok(repositories) => {
             let total = repositories.len();
             Ok(Json(RepositoriesBrowseResponse {
@@ -217,12 +229,15 @@ pub async fn list_browse_repositories(
                 total,
             }))
         }
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list repositories");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list repositories".to_string(),
+                }),
+            ))
+        }
     }
 }
 
@@ -563,11 +578,14 @@ pub async fn get_cache_stats(
 
     match cache.stats().await {
         Ok(stats) => Ok(Json(stats)),
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to get cache stats");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to retrieve cache statistics".to_string(),
+                }),
+            ))
+        }
     }
 }

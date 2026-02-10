@@ -2,26 +2,27 @@
 
 use std::sync::Arc;
 
-use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::ports::services::ProjectServiceInterface;
+use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, /*Content,*/ ErrorData as McpError};
+use rmcp::model::{CallToolResult, ErrorData as McpError};
 use serde_json::Value;
+use tracing::{error, info};
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
 
-/// Handler for project workflow operations.
+/// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {
     service: Arc<dyn ProjectServiceInterface>,
 }
 
 impl ProjectHandler {
-    /// Create a new ProjectHandler with dependencies.
+    /// Create a new handler wrapping the given service.
     pub fn new(service: Arc<dyn ProjectServiceInterface>) -> Self {
         Self { service }
     }
 
-    /// Handle a project tool request.
+    /// Route an incoming `project` tool call to the appropriate operation.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<ProjectArgs>,
@@ -29,8 +30,20 @@ impl ProjectHandler {
         let project_id = &args.project_id;
         let _data = args.data.unwrap_or(Value::Null);
 
-        // TODO(phase-1): extract org_id from request context / auth token
-        let org_id = DEFAULT_ORG_ID;
+        // TODO(phase-1): extract org_id from auth token / request context
+        let org_ctx = OrgContext::default();
+        let org_id = org_ctx.org_id.as_str();
+
+        if project_id.trim().is_empty() && !matches!(args.action, ProjectAction::List) {
+            return Err(McpError::invalid_params("project_id is required", None));
+        }
+
+        info!(
+            action = ?args.action,
+            resource = ?args.resource,
+            project_id = %project_id,
+            "project request"
+        );
 
         match (args.action, args.resource) {
             (ProjectAction::Get, ProjectResource::Project) => {
@@ -39,11 +52,7 @@ impl ProjectHandler {
                     .get_project(org_id, project_id)
                     .await
                     .map_err(to_mcp_error)?;
-                let json = serde_json::to_string_pretty(&project)
-                    .map_err(|e| McpError::internal_error(e.to_string(), None))?;
-                Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-                    json,
-                )]))
+                ok_json(&project)
             }
             (ProjectAction::List, ProjectResource::Project) => {
                 let projects = self
@@ -51,14 +60,9 @@ impl ProjectHandler {
                     .list_projects(org_id)
                     .await
                     .map_err(to_mcp_error)?;
-                let json = serde_json::to_string_pretty(&projects)
-                    .map_err(|e| McpError::internal_error(e.to_string(), None))?;
-                Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-                    json,
-                )]))
+                ok_json(&projects)
             }
 
-            // Fallback for unsupported combinations
             _ => Err(McpError::invalid_params(
                 format!(
                     "Unsupported action {:?} for resource {:?}",
@@ -70,13 +74,24 @@ impl ProjectHandler {
     }
 }
 
+fn ok_json<T: serde::Serialize>(val: &T) -> Result<CallToolResult, McpError> {
+    let json = serde_json::to_string_pretty(val)
+        .map_err(|_| McpError::internal_error("serialization failed", None))?;
+    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+        json,
+    )]))
+}
+
 fn to_mcp_error(e: mcb_domain::error::Error) -> McpError {
-    match e {
+    match &e {
         mcb_domain::error::Error::NotFound { .. } => McpError::invalid_params(e.to_string(), None),
         mcb_domain::error::Error::InvalidArgument { .. } => {
             McpError::invalid_params(e.to_string(), None)
         }
-        _ => McpError::internal_error(e.to_string(), None),
+        other => {
+            error!(error = %other, "project operation failed");
+            McpError::internal_error("internal server error", None)
+        }
     }
 }
 
@@ -84,6 +99,7 @@ fn to_mcp_error(e: mcb_domain::error::Error) -> McpError {
 mod tests {
     use super::*;
     use async_trait::async_trait;
+    use mcb_domain::constants::keys::DEFAULT_ORG_ID;
     use mcb_domain::entities::project::*;
     use mcb_domain::error::Result;
     use std::sync::Mutex;
@@ -179,5 +195,24 @@ mod tests {
             .await
             .expect("Handler failed");
         let _content = &result.content[0];
+    }
+
+    #[tokio::test]
+    async fn test_empty_project_id_rejected_for_get() {
+        let service = Arc::new(MockProjectService::new());
+        let handler = ProjectHandler::new(service);
+        let args = ProjectArgs {
+            action: ProjectAction::Get,
+            resource: ProjectResource::Project,
+            project_id: "  ".to_string(),
+            data: None,
+            filters: None,
+        };
+
+        let err = handler
+            .handle(Parameters(args))
+            .await
+            .expect_err("Should reject empty project_id");
+        assert!(err.message.contains("project_id is required"));
     }
 }
