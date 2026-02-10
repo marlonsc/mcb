@@ -147,3 +147,20 @@ reference/
 
 # MCP config (contains absolute paths)
 .mcp.json
+
+# Automated reports and logs
+qlty_report*.txt
+check_output*.txt
+lint_fix_output*.txt
+clippy_fix*.txt
+check_cleanup*.txt
+lint_final*.txt
+validate_output*.txt
+test_output*.txt
+smells*.txt
+issues_report*.txt
+playwright-report/
+test-results/
+
+# Editor backups
+*~
