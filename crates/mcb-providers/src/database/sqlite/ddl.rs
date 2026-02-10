@@ -70,6 +70,9 @@ fn column_type_sqlite(ty: &ColumnType) -> &'static str {
     match ty {
         ColumnType::Text => "TEXT",
         ColumnType::Integer => "INTEGER",
+        ColumnType::Real => "REAL",
+        ColumnType::Boolean => "INTEGER",
+        ColumnType::Blob => "BLOB",
     }
 }
 

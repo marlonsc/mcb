@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use chrono::TimeZone;
 use mcb_domain::entities::memory::{
     MemoryFilter, ObservationMetadata, ObservationType, QualityGateResult,
 };
@@ -39,9 +38,8 @@ pub async fn store_quality_gate(
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
-    let timestamp = MemoryHelpers::get_i64(data, "timestamp")
-        .and_then(|ts| chrono::Utc.timestamp_opt(ts, 0).single())
-        .unwrap_or_else(chrono::Utc::now);
+    let timestamp =
+        MemoryHelpers::get_i64(data, "timestamp").unwrap_or_else(|| chrono::Utc::now().timestamp());
     let quality_gate = QualityGateResult {
         id: Uuid::new_v4().to_string(),
         gate_name: gate_name.clone(),

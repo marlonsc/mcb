@@ -11,6 +11,12 @@ pub enum ColumnType {
     Text,
     /// 64-bit integer
     Integer,
+    /// Floating-point number
+    Real,
+    /// Boolean (stored as INTEGER 0/1 in SQLite)
+    Boolean,
+    /// Binary large object
+    Blob,
 }
 
 /// A single column definition.
