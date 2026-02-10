@@ -6,6 +6,8 @@
 pub mod agent;
 pub mod index;
 pub mod memory;
+/// Plan entity CRUD handler.
+pub mod plan_entity;
 pub mod project;
 pub mod search;
 pub mod session;
@@ -17,6 +19,7 @@ pub mod vcs_entity;
 pub use agent::AgentHandler;
 pub use index::IndexHandler;
 pub use memory::MemoryHandler;
+pub use plan_entity::PlanEntityHandler;
 pub use project::ProjectHandler;
 pub use search::SearchHandler;
 pub use session::SessionHandler;

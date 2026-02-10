@@ -26,6 +26,8 @@ pub mod memory;
 pub mod observation;
 /// Organization entity (top-level tenant)
 pub mod organization;
+/// Plan, plan version, and plan review entities
+pub mod plan;
 pub mod project;
 /// Persisted VCS repository and branch entities (multi-tenant CRUD)
 pub mod repository;
@@ -55,6 +57,7 @@ pub use memory::{
     ObservationType, QualityGateResult, QualityGateStatus, SessionSummary,
 };
 pub use organization::{OrgStatus, Organization};
+pub use plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
 pub use project::{
     DependencyType, DetectedProject, IssueFilter, IssueStatus, IssueType, PhaseStatus, Project,
     ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,

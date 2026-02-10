@@ -6,6 +6,7 @@ pub mod context;
 pub mod hash;
 pub mod indexing;
 pub mod memory;
+pub mod plan_entity;
 pub mod project;
 pub mod search;
 pub mod validation;
@@ -20,6 +21,7 @@ pub use indexing::{
     IndexingStatus,
 };
 pub use memory::MemoryServiceInterface;
+pub use plan_entity::PlanEntityServiceInterface;
 pub use project::{ProjectDetectorService, ProjectServiceInterface};
 pub use search::{SearchFilters, SearchServiceInterface};
 pub use validation::{

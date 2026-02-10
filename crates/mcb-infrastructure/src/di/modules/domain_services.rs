@@ -24,8 +24,9 @@ use mcb_domain::ports::providers::{
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
 use mcb_domain::ports::services::{
     AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
-    MemoryServiceInterface, ProjectDetectorService, ProjectServiceInterface,
-    SearchServiceInterface, ValidationServiceInterface, VcsEntityServiceInterface,
+    MemoryServiceInterface, PlanEntityServiceInterface, ProjectDetectorService,
+    ProjectServiceInterface, SearchServiceInterface, ValidationServiceInterface,
+    VcsEntityServiceInterface,
 };
 
 use super::super::bootstrap::AppContext;
@@ -62,6 +63,8 @@ pub struct DomainServicesContainer {
     pub vcs_provider: Arc<dyn VcsProvider>,
     /// Service for VCS entity CRUD (repos, branches, worktrees)
     pub vcs_entity_service: Arc<dyn VcsEntityServiceInterface>,
+    /// Service for plan entity CRUD (plans, versions, reviews)
+    pub plan_entity_service: Arc<dyn PlanEntityServiceInterface>,
 }
 
 /// Runtime dependencies required to assemble Phase 6 services (Memory Search + Hybrid Search).
@@ -116,6 +119,8 @@ pub struct ServiceDependencies {
     pub project_workflow_service: Arc<dyn ProjectServiceInterface>,
     /// Service for VCS entity CRUD
     pub vcs_entity_service: Arc<dyn VcsEntityServiceInterface>,
+    /// Service for plan entity CRUD
+    pub plan_entity_service: Arc<dyn PlanEntityServiceInterface>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
@@ -181,6 +186,7 @@ impl DomainServicesFactory {
             project_workflow_service: deps.project_workflow_service,
             vcs_provider: deps.vcs_provider,
             vcs_entity_service: deps.vcs_entity_service,
+            plan_entity_service: deps.plan_entity_service,
         })
     }
 

@@ -11,8 +11,9 @@
 pub mod sqlite;
 pub use sqlite::{
     SqliteAgentRepository, SqliteDatabaseProvider, SqliteExecutor, SqliteMemoryDdlGenerator,
-    SqliteMemoryRepository, SqliteProjectRepository, SqliteSchemaDdlGenerator,
-    SqliteVcsEntityRepository, create_agent_repository, create_agent_repository_from_executor,
-    create_memory_repository, create_memory_repository_with_executor, create_project_repository,
+    SqliteMemoryRepository, SqlitePlanEntityRepository, SqliteProjectRepository,
+    SqliteSchemaDdlGenerator, SqliteVcsEntityRepository, create_agent_repository,
+    create_agent_repository_from_executor, create_memory_repository,
+    create_memory_repository_with_executor, create_project_repository,
     create_project_repository_from_executor,
 };

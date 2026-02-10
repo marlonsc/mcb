@@ -10,12 +10,12 @@ use rmcp::model::{CallToolRequestParams, CallToolResult};
 use tracing::warn;
 
 use crate::args::{
-    AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
-    VcsEntityArgs,
+    AgentArgs, IndexArgs, MemoryArgs, PlanEntityArgs, ProjectArgs, SearchArgs, SessionArgs,
+    ValidateArgs, VcsArgs, VcsEntityArgs,
 };
 use crate::handlers::{
-    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
-    ValidateHandler, VcsEntityHandler, VcsHandler,
+    AgentHandler, IndexHandler, MemoryHandler, PlanEntityHandler, ProjectHandler, SearchHandler,
+    SessionHandler, ValidateHandler, VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::{HookProcessor, PostToolUseContext};
 
@@ -40,6 +40,8 @@ pub struct ToolHandlers {
     pub vcs: Arc<VcsHandler>,
     /// Handler for VCS entity CRUD.
     pub vcs_entity: Arc<VcsEntityHandler>,
+    /// Handler for plan entity CRUD.
+    pub plan_entity: Arc<PlanEntityHandler>,
     /// Processor for tool execution hooks.
     pub hook_processor: Arc<HookProcessor>,
 }
@@ -90,6 +92,10 @@ pub async fn route_tool_call(
         "vcs_entity" => {
             let args = parse_args::<VcsEntityArgs>(&request)?;
             handlers.vcs_entity.handle(Parameters(args)).await
+        }
+        "plan_entity" => {
+            let args = parse_args::<PlanEntityArgs>(&request)?;
+            handlers.plan_entity.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

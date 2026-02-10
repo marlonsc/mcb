@@ -8,8 +8,8 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface, VcsEntityServiceInterface,
+    PlanEntityServiceInterface, ProjectDetectorService, ProjectServiceInterface,
+    SearchServiceInterface, ValidationServiceInterface, VcsEntityServiceInterface,
 };
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
@@ -19,8 +19,8 @@ use rmcp::model::{
 };
 
 use crate::handlers::{
-    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
-    ValidateHandler, VcsEntityHandler, VcsHandler,
+    AgentHandler, IndexHandler, MemoryHandler, PlanEntityHandler, ProjectHandler, SearchHandler,
+    SessionHandler, ValidateHandler, VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::HookProcessor;
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
@@ -61,6 +61,8 @@ pub struct McpServices {
     pub vcs: Arc<dyn VcsProvider>,
     /// VCS entity service (repos, branches, worktrees)
     pub vcs_entity: Arc<dyn VcsEntityServiceInterface>,
+    /// Plan entity service (plans, versions, reviews)
+    pub plan_entity: Arc<dyn PlanEntityServiceInterface>,
 }
 
 impl McpServer {
@@ -84,6 +86,7 @@ impl McpServer {
             project: Arc::new(ProjectHandler::new(services.project_workflow.clone())),
             vcs: Arc::new(VcsHandler::new(services.vcs.clone())),
             vcs_entity: Arc::new(VcsEntityHandler::new(services.vcs_entity.clone())),
+            plan_entity: Arc::new(PlanEntityHandler::new(services.plan_entity.clone())),
             hook_processor: Arc::new(hook_processor),
         };
 
@@ -146,6 +149,11 @@ impl McpServer {
         Arc::clone(&self.services.vcs_entity)
     }
 
+    /// Access to plan entity service.
+    pub fn plan_entity_service(&self) -> Arc<dyn PlanEntityServiceInterface> {
+        Arc::clone(&self.services.plan_entity)
+    }
+
     /// Access to index handler (for HTTP transport)
     pub fn index_handler(&self) -> Arc<IndexHandler> {
         Arc::clone(&self.handlers.index)
@@ -191,6 +199,11 @@ impl McpServer {
         Arc::clone(&self.handlers.vcs_entity)
     }
 
+    /// Access to plan entity handler (for HTTP transport)
+    pub fn plan_entity_handler(&self) -> Arc<PlanEntityHandler> {
+        Arc::clone(&self.handlers.plan_entity)
+    }
+
     /// Access to hook processor (for automatic memory operations)
     pub fn hook_processor(&self) -> Arc<HookProcessor> {
         Arc::clone(&self.handlers.hook_processor)
@@ -221,6 +234,7 @@ tools:
 - project: Project workflow management
 - vcs: Repository operations
 - vcs_entity: VCS entity CRUD (repositories, branches, worktrees, assignments)
+- plan_entity: Plan entity CRUD (plans, versions, reviews)
 "#
                 .to_string(),
             ),

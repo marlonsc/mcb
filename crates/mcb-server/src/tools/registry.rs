@@ -9,8 +9,8 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::Tool;
 
 use crate::args::{
-    AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
-    VcsEntityArgs,
+    AgentArgs, IndexArgs, MemoryArgs, PlanEntityArgs, ProjectArgs, SearchArgs, SessionArgs,
+    ValidateArgs, VcsArgs, VcsEntityArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -98,6 +98,15 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `plan_entity` tool.
+    pub fn plan_entity() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "plan_entity",
+            "Plan entity CRUD (plans, versions, reviews)",
+            schemars::schema_for!(PlanEntityArgs),
+        )
+    }
+
     fn create_tool(
         name: &'static str,
         description: &'static str,
@@ -140,5 +149,6 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::project()?,
         ToolDefinitions::vcs()?,
         ToolDefinitions::vcs_entity()?,
+        ToolDefinitions::plan_entity()?,
     ])
 }

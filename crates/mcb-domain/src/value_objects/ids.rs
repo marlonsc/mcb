@@ -96,3 +96,6 @@ define_id!(
     AssignmentId,
     "Strong typed identifier for an agent-worktree assignment"
 );
+define_id!(PlanId, "Strong typed identifier for a plan");
+define_id!(PlanVersionId, "Strong typed identifier for a plan version");
+define_id!(PlanReviewId, "Strong typed identifier for a plan review");

@@ -920,7 +920,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Phases 1–7 all VERIFIED (v0.1.4) - 750+ tests pass
+**Status**: Phases 1–7 all VERIFIED (v0.2.0) - 750+ tests pass
 
 **Components**:
 

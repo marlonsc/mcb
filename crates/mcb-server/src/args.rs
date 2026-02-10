@@ -36,7 +36,8 @@ pub mod consolidated;
 
 pub use consolidated::{
     AgentAction, AgentArgs, IndexAction, IndexArgs, MemoryAction, MemoryArgs, MemoryResource,
-    ProjectAction, ProjectArgs, ProjectResource, SearchArgs, SearchResource, SessionAction,
-    SessionArgs, ValidateAction, ValidateArgs, ValidateScope, VcsAction, VcsArgs, VcsEntityAction,
-    VcsEntityArgs, VcsEntityResource,
+    PlanEntityAction, PlanEntityArgs, PlanEntityResource, ProjectAction, ProjectArgs,
+    ProjectResource, SearchArgs, SearchResource, SessionAction, SessionArgs, ValidateAction,
+    ValidateArgs, ValidateScope, VcsAction, VcsArgs, VcsEntityAction, VcsEntityArgs,
+    VcsEntityResource,
 };

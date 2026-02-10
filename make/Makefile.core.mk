@@ -76,11 +76,8 @@ test-e2e: ## Run E2E tests with Playwright (auto-installs if needed)
 	fi
 	@echo "🏗️ Building release binary once for E2E runs..."
 	@cargo build --release --bin mcb
-	@echo "🚀 Running Playwright specs sequentially on port $(MCB_TEST_PORT)..."
-	@for spec in tests/e2e/*.spec.ts; do \
-		echo "▶ Running $$spec"; \
-		MCB_TEST_PORT=$(MCB_TEST_PORT) tests/node_modules/.bin/playwright test --config=tests/playwright.config.ts --reporter=list "$$spec" || exit 1; \
-	done
+	@echo "🚀 Running Playwright E2E specs on port $(MCB_TEST_PORT)..."
+	@MCB_TEST_PORT=$(MCB_TEST_PORT) tests/node_modules/.bin/playwright test --config=tests/playwright.config.ts --reporter=list
 
 test-e2e-ui: ## Run E2E tests with Playwright UI (interactive)
 	@echo "🎭 Running Playwright E2E tests in UI mode..."
