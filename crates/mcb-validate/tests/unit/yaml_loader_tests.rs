@@ -154,7 +154,7 @@ config:
 
     #[tokio::test]
     async fn test_yaml_rule_execution_detects_violations() {
-        use mcb_validate::ArchitectureValidator;
+        use mcb_validate::{ValidationConfig, ValidatorRegistry};
 
         // Use a known workspace root path (go up from mcb-validate crate to workspace)
         let workspace_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -164,32 +164,15 @@ config:
             .unwrap()
             .to_path_buf();
 
-        let validator = ArchitectureValidator::new(&workspace_root);
+        let config = ValidationConfig::new(&workspace_root);
+        let registry = ValidatorRegistry::standard_for(&workspace_root);
 
-        // Test that YAML-based validation can execute rules
-        match validator.validate_with_yaml_rules().await {
+        match registry.validate_named(&config, &["quality"]) {
             Ok(report) => {
                 println!("YAML validation completed successfully");
-                println!(
-                    "Total violations found: {}",
-                    report.summary.total_violations
-                );
+                println!("Total violations found: {}", report.len());
 
-                // Debug: print all violations found
-                for (category, violations) in &report.violations_by_category {
-                    println!("Category '{}': {} violations", category, violations.len());
-                    for violation in violations.iter().take(3) {
-                        println!("  - {}: {}", violation.id, violation.message);
-                    }
-                }
-
-                // Check if QUAL006 (file size rule) was loaded and executed
-                let qual006_violations = report
-                    .violations_by_category
-                    .get("quality")
-                    .map_or(0, |violations| {
-                        violations.iter().filter(|v| v.id == "QUAL006").count()
-                    });
+                let qual006_violations = report.iter().filter(|v| v.id() == "QUAL006").count();
 
                 if qual006_violations > 0 {
                     println!(
@@ -199,7 +182,6 @@ config:
                     println!("⚠️  QUAL006 detected 0 violations - rule may not be working");
                 }
 
-                // The rule should at least be loaded and executed without panicking
                 println!("✅ YAML rule execution completed successfully!");
             }
             Err(e) => {

@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use mcb_validate::{ArchitectureValidator, Severity, ValidationConfig};
+use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
 
 #[test]
 fn test_severity_serialization() {
@@ -48,9 +48,9 @@ fn test_architecture_validator_with_config() {
         .with_additional_path("../legacy-src")
         .with_exclude_pattern("target/");
 
-    let validator = ArchitectureValidator::with_config(config);
-    let config_ref = validator.config();
+    let registry = ValidatorRegistry::standard_for(&config.workspace_root);
 
-    assert_eq!(config_ref.additional_src_paths.len(), 1);
-    assert_eq!(config_ref.exclude_patterns.len(), 1);
+    assert_eq!(config.additional_src_paths.len(), 1);
+    assert_eq!(config.exclude_patterns.len(), 1);
+    assert!(!registry.validators().is_empty());
 }

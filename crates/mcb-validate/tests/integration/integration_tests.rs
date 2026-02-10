@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use mcb_validate::{ArchitectureValidator, Severity, ValidationConfig};
+use mcb_validate::{GenericReporter, Severity, ValidationConfig, ValidatorRegistry};
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -16,9 +16,9 @@ fn get_workspace_root() -> PathBuf {
 #[test]
 fn test_validate_workspace_dependencies() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_dependencies().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["dependency"]).unwrap();
 
     println!("\n=== Dependency Violations ===");
     for v in &violations {
@@ -37,9 +37,9 @@ fn test_validate_workspace_dependencies() {
 #[test]
 fn test_validate_workspace_quality() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_quality().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["quality"]).unwrap();
 
     println!("\n=== Quality Violations ===");
     let errors: Vec<_> = violations
@@ -79,9 +79,9 @@ fn test_validate_workspace_quality() {
 #[test]
 fn test_validate_workspace_patterns() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_patterns().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["patterns"]).unwrap();
 
     println!("\n=== Pattern Violations ===");
     for v in &violations {
@@ -96,9 +96,9 @@ fn test_validate_workspace_patterns() {
 #[test]
 fn test_validate_workspace_tests() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_tests().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["tests_org"]).unwrap();
 
     println!("\n=== Test Organization Violations ===");
     for v in &violations {
@@ -113,9 +113,11 @@ fn test_validate_workspace_tests() {
 #[test]
 fn test_validate_workspace_documentation() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_documentation().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry
+        .validate_named(&config, &["documentation"])
+        .unwrap();
 
     println!("\n=== Documentation Violations ===");
     let by_severity = |sev: Severity| violations.iter().filter(|v| v.severity() == sev).count();
@@ -143,9 +145,9 @@ fn test_validate_workspace_documentation() {
 #[test]
 fn test_validate_workspace_naming() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_naming().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["naming"]).unwrap();
 
     println!("\n=== Naming Violations ===");
     for v in &violations {
@@ -163,10 +165,12 @@ fn test_full_validation_report() {
     println!("Starting test_full_validation_report...");
     let workspace_root = get_workspace_root();
     println!("Workspace root: {workspace_root:?}");
-    let mut validator = ArchitectureValidator::new(&workspace_root);
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
     println!("Created validator...");
 
-    let report = validator.validate_all().unwrap();
+    let violations = registry.validate_all(&config).unwrap();
+    let report = GenericReporter::create_report(&violations, workspace_root.clone());
 
     println!("\n=== VALIDATION REPORT ===");
     println!(

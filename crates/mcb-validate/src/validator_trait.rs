@@ -162,19 +162,6 @@ impl ValidatorRegistry {
         Ok(all_violations)
     }
 
-    /// Create a registry with standard validators
-    ///
-    /// This registers all built-in validators with default configuration.
-    /// Validators include:
-    /// - Architecture: `clean_architecture`, `layer_flow`, `port_adapter`, visibility
-    /// - Dependencies: dependency
-    /// - Quality: quality, solid, naming, patterns, documentation, `tests_org`
-    /// - Performance: performance, `async_patterns`, kiss, pmat
-    /// - Organization: organization, implementation, refactoring, `error_boundary`
-    pub fn standard() -> Self {
-        Self::standard_for(".")
-    }
-
     /// Create a registry with standard validators for a specific workspace
     pub fn standard_for(workspace_root: impl Into<std::path::PathBuf>) -> Self {
         let root = workspace_root.into();
@@ -208,59 +195,29 @@ impl ValidatorRegistry {
     }
 }
 
-/// Helper struct for wrapping existing validators
-///
-/// This allows existing validators to be used with the new registry
-/// during the migration period.
-pub struct LegacyValidatorAdapter<F>
-where
-    F: Fn(&ValidationConfig) -> Result<Vec<Box<dyn Violation>>> + Send + Sync,
-{
-    /// Unique name of the validator
-    name: &'static str,
-    /// Detailed description of what it validates
-    description: &'static str,
-    /// Function that performs the validation
-    validate_fn: F,
-}
-
-impl<F> LegacyValidatorAdapter<F>
-where
-    F: Fn(&ValidationConfig) -> Result<Vec<Box<dyn Violation>>> + Send + Sync,
-{
-    /// Create a new adapter
-    pub fn new(name: &'static str, description: &'static str, validate_fn: F) -> Self {
-        Self {
-            name,
-            description,
-            validate_fn,
-        }
-    }
-}
-
-impl<F> Validator for LegacyValidatorAdapter<F>
-where
-    F: Fn(&ValidationConfig) -> Result<Vec<Box<dyn Violation>>> + Send + Sync,
-{
-    fn name(&self) -> &'static str {
-        self.name
-    }
-
-    fn description(&self) -> &'static str {
-        self.description
-    }
-
-    fn validate(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
-        (self.validate_fn)(config)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeSet;
 
-    use super::{LegacyValidatorAdapter, ValidatorRegistry};
+    use anyhow::Result;
+
+    use super::{Validator, ValidatorRegistry};
     use crate::ValidationConfig;
+    use crate::violation_trait::Violation;
+
+    struct DummyValidator {
+        name: &'static str,
+    }
+
+    impl Validator for DummyValidator {
+        fn name(&self) -> &'static str {
+            self.name
+        }
+
+        fn validate(&self, _config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
+            Ok(Vec::new())
+        }
+    }
 
     #[test]
     fn test_canonical_registry_completeness() {
@@ -290,9 +247,8 @@ mod tests {
 
     #[test]
     fn test_validate_named_rejects_unknown_validators() {
-        let registry = ValidatorRegistry::new().with_validator(Box::new(
-            LegacyValidatorAdapter::new("known", "", |_| Ok(Vec::new())),
-        ));
+        let registry =
+            ValidatorRegistry::new().with_validator(Box::new(DummyValidator { name: "known" }));
         let config = ValidationConfig::new(".");
 
         match registry.validate_named(&config, &["known", "unknown", "unknown"]) {
