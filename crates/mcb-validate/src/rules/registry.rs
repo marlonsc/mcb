@@ -4,6 +4,9 @@
 
 use std::collections::HashMap;
 
+use crate::embedded_rules::EmbeddedRules;
+use crate::rules::YamlRuleLoader;
+use crate::rules::yaml_loader::ValidatedRule;
 use crate::violation_trait::{Severity, ViolationCategory};
 
 /// Declarative rule definition
@@ -108,40 +111,87 @@ impl RuleRegistry {
     /// Create registry with all standard rules
     pub fn standard() -> Self {
         let mut registry = Self::new();
-
-        for rule in clean_architecture_rules() {
-            registry.register(rule);
+        let embedded = EmbeddedRules::all_yaml();
+        if let Ok(mut loader) = YamlRuleLoader::from_embedded(&embedded)
+            && let Ok(validated_rules) = loader.load_embedded_rules()
+        {
+            for validated_rule in validated_rules {
+                registry.register(rule_from_validated(validated_rule));
+            }
         }
 
-        for rule in layer_boundary_rules() {
-            registry.register(rule);
-        }
-
-        for rule in quality_rules() {
-            registry.register(rule);
-        }
-
-        for rule in solid_rules() {
-            registry.register(rule);
-        }
-
-        for rule in linkme_rules() {
-            registry.register(rule);
-        }
-
-        for rule in constructor_injection_rules() {
-            registry.register(rule);
-        }
-
-        for rule in figment_rules() {
-            registry.register(rule);
-        }
-
-        for rule in rocket_rules() {
-            registry.register(rule);
+        if registry.rules.is_empty() {
+            for rule in clean_architecture_rules() {
+                registry.register(rule);
+            }
+            for rule in layer_boundary_rules() {
+                registry.register(rule);
+            }
+            for rule in quality_rules() {
+                registry.register(rule);
+            }
+            for rule in solid_rules() {
+                registry.register(rule);
+            }
+            for rule in linkme_rules() {
+                registry.register(rule);
+            }
+            for rule in constructor_injection_rules() {
+                registry.register(rule);
+            }
+            for rule in figment_rules() {
+                registry.register(rule);
+            }
+            for rule in rocket_rules() {
+                registry.register(rule);
+            }
         }
 
         registry
+    }
+}
+
+fn rule_from_validated(validated: ValidatedRule) -> Rule {
+    Rule {
+        id: validated.id,
+        name: validated.name,
+        category: category_from_yaml(&validated.category),
+        default_severity: severity_from_yaml(&validated.severity),
+        description: validated.description,
+        rationale: validated.rationale,
+        enabled: validated.enabled,
+        config: HashMap::new(),
+    }
+}
+
+fn severity_from_yaml(value: &str) -> Severity {
+    match value.to_ascii_lowercase().as_str() {
+        "error" => Severity::Error,
+        "info" => Severity::Info,
+        _ => Severity::Warning,
+    }
+}
+
+fn category_from_yaml(value: &str) -> ViolationCategory {
+    match value.to_ascii_lowercase().as_str() {
+        "architecture" | "clean-architecture" => ViolationCategory::Architecture,
+        "quality" | "duplication" | "metrics" => ViolationCategory::Quality,
+        "organization" => ViolationCategory::Organization,
+        "solid" => ViolationCategory::Solid,
+        "di" => ViolationCategory::DependencyInjection,
+        "configuration" => ViolationCategory::Configuration,
+        "web-framework" => ViolationCategory::WebFramework,
+        "performance" => ViolationCategory::Performance,
+        "async" => ViolationCategory::Async,
+        "documentation" => ViolationCategory::Documentation,
+        "testing" => ViolationCategory::Testing,
+        "naming" => ViolationCategory::Naming,
+        "kiss" => ViolationCategory::Kiss,
+        "refactoring" | "migration" => ViolationCategory::Refactoring,
+        "error_boundary" => ViolationCategory::ErrorBoundary,
+        "implementation" => ViolationCategory::Implementation,
+        "pmat" => ViolationCategory::Pmat,
+        _ => ViolationCategory::Quality,
     }
 }
 

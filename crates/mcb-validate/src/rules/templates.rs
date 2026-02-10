@@ -81,6 +81,42 @@ impl TemplateEngine {
         Ok(())
     }
 
+    /// Load templates from embedded `(path, content)` entries.
+    pub fn load_templates_from_embedded(&mut self, entries: &[(String, String)]) -> Result<()> {
+        for (path, content) in entries {
+            if !path.ends_with(".yml") || !path.contains("/templates/") {
+                continue;
+            }
+
+            let template_name = Path::new(path)
+                .file_stem()
+                .and_then(|name| name.to_str())
+                .ok_or_else(|| {
+                    crate::ValidationError::Config(format!("Invalid template filename: {path}"))
+                })?;
+
+            let template: serde_yaml::Value =
+                serde_yaml::from_str(content).map_err(|e| crate::ValidationError::Parse {
+                    file: path.into(),
+                    message: format!("Template parse error: {e}"),
+                })?;
+
+            if template
+                .get("_base")
+                .and_then(serde_yaml::Value::as_bool)
+                .unwrap_or(false)
+            {
+                let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
+                    || template_name.to_string(),
+                    std::string::ToString::to_string,
+                );
+                self.templates.insert(registry_name, template);
+            }
+        }
+
+        Ok(())
+    }
+
     /// Apply a template to a rule definition
     pub fn apply_template(
         &self,

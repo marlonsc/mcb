@@ -4,10 +4,11 @@ use std::sync::Arc;
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_infrastructure::config::McpContextConfig;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use super::responses::{IndexResult, repo_path};
 use crate::args::VcsArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Indexes a repository for search.
@@ -22,9 +23,7 @@ pub async fn index_repository(
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to open repository: {e}"
-            ))]));
+            return Ok(to_opaque_tool_error(e));
         }
     };
 
@@ -46,9 +45,8 @@ pub async fn index_repository(
                 total_files += filtered_files.len();
             }
             Err(e) => {
-                return Ok(CallToolResult::error(vec![Content::text(format!(
-                    "Failed to list files in branch {branch}: {e}"
-                ))]));
+                let _ = branch;
+                return Ok(to_opaque_tool_error(e));
             }
         }
     }

@@ -20,6 +20,7 @@ pub mod indexing_service;
 /// Issue entity CRUD service delegating to the repository port.
 pub mod issue_entity_service;
 pub mod memory_service;
+pub mod org_entity_service;
 /// Plan entity CRUD service delegating to the repository port.
 pub mod plan_entity_service;
 pub mod project_service;
@@ -34,6 +35,7 @@ pub use context_service::*;
 pub use indexing_service::*;
 pub use issue_entity_service::*;
 pub use memory_service::*;
+pub use org_entity_service::*;
 pub use plan_entity_service::*;
 pub use project_service::*;
 pub use search_service::*;

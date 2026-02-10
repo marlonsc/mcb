@@ -1,13 +1,15 @@
 use std::sync::Arc;
 
-use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::ports::services::IssueEntityServiceInterface;
+use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
+use crate::error_mapping::to_opaque_mcp_error;
+use crate::handler_helpers::{ok_json, ok_text, require_id};
 
 /// Handler for the consolidated `issue_entity` MCP tool.
 pub struct IssueEntityHandler {
@@ -25,7 +27,9 @@ impl IssueEntityHandler {
         &self,
         Parameters(args): Parameters<IssueEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let org_id = args.org_id.as_deref().unwrap_or(DEFAULT_ORG_ID);
+        // TODO(phase-1): extract org_id from auth token / request context
+        let org_ctx = OrgContext::default();
+        let org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
 
         match (args.action, args.resource) {
             (IssueEntityAction::Create, IssueEntityResource::Issue) => {
@@ -33,13 +37,20 @@ impl IssueEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
                 let issue: ProjectIssue = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
-                self.service.create_issue(&issue).await.map_err(to_mcp)?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                self.service
+                    .create_issue(&issue)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&issue)
             }
             (IssueEntityAction::Get, IssueEntityResource::Issue) => {
                 let id = require_id(&args.id)?;
-                let issue = self.service.get_issue(org_id, &id).await.map_err(to_mcp)?;
+                let issue = self
+                    .service
+                    .get_issue(org_id, &id)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&issue)
             }
             (IssueEntityAction::List, IssueEntityResource::Issue) => {
@@ -50,7 +61,7 @@ impl IssueEntityHandler {
                     .service
                     .list_issues(org_id, project_id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&issues)
             }
             (IssueEntityAction::Update, IssueEntityResource::Issue) => {
@@ -58,8 +69,11 @@ impl IssueEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
                 let issue: ProjectIssue = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
-                self.service.update_issue(&issue).await.map_err(to_mcp)?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                self.service
+                    .update_issue(&issue)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_text("updated")
             }
             (IssueEntityAction::Delete, IssueEntityResource::Issue) => {
@@ -67,7 +81,7 @@ impl IssueEntityHandler {
                 self.service
                     .delete_issue(org_id, &id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_text("deleted")
             }
             (IssueEntityAction::Create, IssueEntityResource::Comment) => {
@@ -75,16 +89,20 @@ impl IssueEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let comment: IssueComment = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 self.service
                     .create_comment(&comment)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&comment)
             }
             (IssueEntityAction::Get, IssueEntityResource::Comment) => {
                 let id = require_id(&args.id)?;
-                let comment = self.service.get_comment(&id).await.map_err(to_mcp)?;
+                let comment = self
+                    .service
+                    .get_comment(&id)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&comment)
             }
             (IssueEntityAction::List, IssueEntityResource::Comment) => {
@@ -96,12 +114,15 @@ impl IssueEntityHandler {
                     .service
                     .list_comments_by_issue(issue_id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&comments)
             }
             (IssueEntityAction::Delete, IssueEntityResource::Comment) => {
                 let id = require_id(&args.id)?;
-                self.service.delete_comment(&id).await.map_err(to_mcp)?;
+                self.service
+                    .delete_comment(&id)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_text("deleted")
             }
             (IssueEntityAction::Create, IssueEntityResource::Label) => {
@@ -109,13 +130,20 @@ impl IssueEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let label: IssueLabel = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
-                self.service.create_label(&label).await.map_err(to_mcp)?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                self.service
+                    .create_label(&label)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&label)
             }
             (IssueEntityAction::Get, IssueEntityResource::Label) => {
                 let id = require_id(&args.id)?;
-                let label = self.service.get_label(&id).await.map_err(to_mcp)?;
+                let label = self
+                    .service
+                    .get_label(&id)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&label)
             }
             (IssueEntityAction::List, IssueEntityResource::Label) => {
@@ -126,12 +154,15 @@ impl IssueEntityHandler {
                     .service
                     .list_labels(org_id, project_id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&labels)
             }
             (IssueEntityAction::Delete, IssueEntityResource::Label) => {
                 let id = require_id(&args.id)?;
-                self.service.delete_label(&id).await.map_err(to_mcp)?;
+                self.service
+                    .delete_label(&id)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_text("deleted")
             }
             (IssueEntityAction::Create, IssueEntityResource::LabelAssignment) => {
@@ -139,11 +170,11 @@ impl IssueEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let assignment: IssueLabelAssignment = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 self.service
                     .assign_label(&assignment)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_text("assigned")
             }
             (IssueEntityAction::Delete, IssueEntityResource::LabelAssignment) => {
@@ -158,7 +189,7 @@ impl IssueEntityHandler {
                 self.service
                     .unassign_label(issue_id, label_id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_text("unassigned")
             }
             (IssueEntityAction::List, IssueEntityResource::LabelAssignment) => {
@@ -170,7 +201,7 @@ impl IssueEntityHandler {
                     .service
                     .list_labels_for_issue(issue_id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&labels)
             }
             _ => Err(McpError::invalid_params(
@@ -181,35 +212,6 @@ impl IssueEntityHandler {
                 None,
             )),
         }
-    }
-}
-
-fn require_id(id: &Option<String>) -> Result<String, McpError> {
-    id.clone()
-        .ok_or_else(|| McpError::invalid_params("id required", None))
-}
-
-fn ok_json<T: serde::Serialize>(val: &T) -> Result<CallToolResult, McpError> {
-    let json = serde_json::to_string_pretty(val)
-        .map_err(|e| McpError::internal_error(e.to_string(), None))?;
-    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-        json,
-    )]))
-}
-
-fn ok_text(msg: &str) -> Result<CallToolResult, McpError> {
-    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-        msg,
-    )]))
-}
-
-fn to_mcp(e: mcb_domain::error::Error) -> McpError {
-    match e {
-        mcb_domain::error::Error::NotFound { .. } => McpError::invalid_params(e.to_string(), None),
-        mcb_domain::error::Error::InvalidArgument { .. } => {
-            McpError::invalid_params(e.to_string(), None)
-        }
-        _ => McpError::internal_error(e.to_string(), None),
     }
 }
 

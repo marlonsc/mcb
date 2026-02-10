@@ -7,6 +7,7 @@ use rmcp::model::{CallToolResult, Content};
 
 use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 use tracing::error;
 
@@ -56,10 +57,7 @@ pub async fn update_session(
                 })),
                 Err(e) => {
                     error!("Failed to update agent session: {:?}", e);
-                    Ok(CallToolResult::error(vec![Content::text(format!(
-                        "Failed to update agent session: {}",
-                        e
-                    ))]))
+                    Ok(to_opaque_tool_error(e))
                 }
             }
         }
@@ -68,10 +66,7 @@ pub async fn update_session(
         )])),
         Err(e) => {
             error!("Failed to update agent session (get failed): {:?}", e);
-            Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to update agent session: {}",
-                e
-            ))]))
+            Ok(to_opaque_tool_error(e))
         }
     }
 }

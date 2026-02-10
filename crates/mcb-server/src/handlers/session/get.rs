@@ -6,6 +6,7 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
 use crate::args::SessionArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 use tracing::error;
 
@@ -44,10 +45,7 @@ pub async fn get_session(
         )])),
         Err(e) => {
             error!("Failed to get agent session: {:?}", e);
-            Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to get agent session: {}",
-                e
-            ))]))
+            Ok(to_opaque_tool_error(e))
         }
     }
 }

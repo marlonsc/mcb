@@ -7,6 +7,7 @@ use rmcp::model::{CallToolResult, Content};
 
 use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
 use crate::args::VcsArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Searches for a query string within a branch.
@@ -33,17 +34,13 @@ pub async fn search_branch(
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to open repository: {e}"
-            ))]));
+            return Ok(to_opaque_tool_error(e));
         }
     };
     let files = match vcs_provider.list_files(&repo, &branch).await {
         Ok(files) => files,
         Err(e) => {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to list files: {e}"
-            ))]));
+            return Ok(to_opaque_tool_error(e));
         }
     };
     let limit = args.limit.unwrap_or(20) as usize;

@@ -20,10 +20,10 @@ pub async fn list_repositories(
         .map(PathBuf::from)
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
-    let discovered_repos = vcs_provider
-        .list_repositories(&root)
-        .await
-        .map_err(|e| McpError::internal_error(format!("Failed to list repositories: {e}"), None))?;
+    let discovered_repos = vcs_provider.list_repositories(&root).await.map_err(|e| {
+        tracing::error!(error = %e, "failed to list repositories");
+        McpError::internal_error("internal server error", None)
+    })?;
 
     let repositories: Vec<String> = discovered_repos
         .iter()

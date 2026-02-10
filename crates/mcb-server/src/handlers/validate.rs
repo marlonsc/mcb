@@ -11,6 +11,7 @@ use rmcp::model::{CallToolResult, Content};
 use validator::Validate;
 
 use crate::args::{ValidateAction, ValidateArgs, ValidateScope};
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Handler for code validation MCP tool operations.
@@ -31,7 +32,7 @@ impl ValidateHandler {
         Parameters(args): Parameters<ValidateArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
+            .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
         match args.action {
             ValidateAction::Run => {
@@ -64,10 +65,13 @@ impl ValidateHandler {
                             &path,
                             timer.elapsed(),
                         )),
-                        Err(e) => Ok(ResponseFormatter::format_validation_error(
-                            &format!("Validation failed for file {}: {}", path.display(), e),
-                            &path,
-                        )),
+                        Err(e) => {
+                            let _ = e;
+                            Ok(ResponseFormatter::format_validation_error(
+                                &format!("Validation failed for file {}", path.display()),
+                                &path,
+                            ))
+                        }
                     },
                     ValidateScope::Project => match self
                         .validation_service
@@ -79,10 +83,13 @@ impl ValidateHandler {
                             &path,
                             timer.elapsed(),
                         )),
-                        Err(e) => Ok(ResponseFormatter::format_validation_error(
-                            &format!("Project validation failed for {}: {}", path.display(), e),
-                            &path,
-                        )),
+                        Err(e) => {
+                            let _ = e;
+                            Ok(ResponseFormatter::format_validation_error(
+                                &format!("Project validation failed for {}", path.display()),
+                                &path,
+                            ))
+                        }
                     },
                 }
             }
@@ -98,10 +105,7 @@ impl ValidateHandler {
                             "count": rules.len(),
                             "filter": category,
                         })),
-                        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                            "Failed to get validation rules: {}",
-                            e
-                        ))])),
+                        Err(e) => Ok(to_opaque_tool_error(e)),
                     }
                 } else {
                     match self.validation_service.list_validators().await {
@@ -110,10 +114,7 @@ impl ValidateHandler {
                             "count": validators.len(),
                             "description": "Available validation rules",
                         })),
-                        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                            "Failed to list validators: {}",
-                            e
-                        ))])),
+                        Err(e) => Ok(to_opaque_tool_error(e)),
                     }
                 }
             }
@@ -143,10 +144,7 @@ impl ValidateHandler {
                         "functions": report.functions,
                         "analysis_time_ms": timer.elapsed().as_millis(),
                     })),
-                    Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                        "Failed to analyze complexity: {}",
-                        e
-                    ))])),
+                    Err(e) => Ok(to_opaque_tool_error(e)),
                 }
             }
         }

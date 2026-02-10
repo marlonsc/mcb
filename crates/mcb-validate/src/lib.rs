@@ -36,6 +36,8 @@ pub mod violation_trait;
 #[macro_use]
 pub mod violation_macro;
 pub mod generic_reporter;
+/// Declarative registration macros used by validator composition.
+pub mod macros;
 pub mod reporter;
 pub mod validator_trait;
 
@@ -44,6 +46,7 @@ pub mod config;
 pub mod scan;
 
 // === Rule Registry (Phase 3) ===
+pub mod embedded_rules;
 pub mod engines;
 pub mod rules;
 
@@ -119,6 +122,7 @@ pub use config_quality::{ConfigQualityValidator, ConfigQualityViolation};
 // Re-export legacy validators
 pub use dependency::{DependencyValidator, DependencyViolation};
 pub use documentation::{DocumentationValidator, DocumentationViolation};
+pub use embedded_rules::EmbeddedRules;
 // Re-export rule registry and YAML system
 pub use engines::{HybridRuleEngine, RuleEngineType};
 pub use error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
@@ -528,10 +532,7 @@ impl ArchitectureValidator {
         &self.config
     }
 
-    /// Run all validations and return a comprehensive report.
-    ///
-    /// Deprecated execution path: this method manually orchestrates legacy and trait-based
-    /// validators. Prefer `validate_with_registry()` for the canonical execution path.
+    /// Run all validations and return a comprehensive report
     pub fn validate_all(&mut self) -> Result<GenericReport> {
         let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
 
@@ -749,7 +750,17 @@ impl ArchitectureValidator {
 
         let variables = serde_yaml::Value::Mapping(variables);
 
-        let mut loader = YamlRuleLoader::with_variables(rules_dir, Some(variables))?;
+        if rules_dir.exists() {
+            let mut fs_loader = YamlRuleLoader::with_variables(rules_dir, Some(variables.clone()))?;
+            let fs_rules = fs_loader.load_all_rules().await?;
+            if !fs_rules.is_empty() {
+                return Ok(fs_rules);
+            }
+        }
+
+        let embedded_rules = EmbeddedRules::all_yaml();
+        let mut loader =
+            YamlRuleLoader::from_embedded_with_variables(&embedded_rules, Some(variables))?;
         loader.load_all_rules().await
     }
 
@@ -945,7 +956,7 @@ impl ArchitectureValidator {
         ValidatorRegistry::standard_for(&self.config.workspace_root)
     }
 
-    /// Validate using the canonical registry-based system.
+    /// Validate using the new registry-based system
     ///
     /// This runs only the validators that have been migrated to the new
     /// trait-based architecture. Use `validate_all()` for comprehensive

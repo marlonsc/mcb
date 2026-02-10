@@ -7,9 +7,11 @@ use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 use serde_json::Value;
-use tracing::{error, info};
+use tracing::info;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
+use crate::error_mapping::to_opaque_mcp_error;
+use crate::handler_helpers::ok_json;
 
 /// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {
@@ -51,7 +53,7 @@ impl ProjectHandler {
                     .service
                     .get_project(org_id, project_id)
                     .await
-                    .map_err(to_mcp_error)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&project)
             }
             (ProjectAction::List, ProjectResource::Project) => {
@@ -59,7 +61,7 @@ impl ProjectHandler {
                     .service
                     .list_projects(org_id)
                     .await
-                    .map_err(to_mcp_error)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&projects)
             }
 
@@ -70,27 +72,6 @@ impl ProjectHandler {
                 ),
                 None,
             )),
-        }
-    }
-}
-
-fn ok_json<T: serde::Serialize>(val: &T) -> Result<CallToolResult, McpError> {
-    let json = serde_json::to_string_pretty(val)
-        .map_err(|_| McpError::internal_error("serialization failed", None))?;
-    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-        json,
-    )]))
-}
-
-fn to_mcp_error(e: mcb_domain::error::Error) -> McpError {
-    match &e {
-        mcb_domain::error::Error::NotFound { .. } => McpError::invalid_params(e.to_string(), None),
-        mcb_domain::error::Error::InvalidArgument { .. } => {
-            McpError::invalid_params(e.to_string(), None)
-        }
-        other => {
-            error!(error = %other, "project operation failed");
-            McpError::internal_error("internal server error", None)
         }
     }
 }

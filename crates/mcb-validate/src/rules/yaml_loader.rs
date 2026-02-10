@@ -105,6 +105,7 @@ pub struct YamlRuleLoader {
     rules_dir: PathBuf,
     /// Variables for template substitution (e.g. from config)
     variables: Option<serde_yaml::Value>,
+    embedded_rules: Option<Vec<(String, String)>>,
 }
 
 impl YamlRuleLoader {
@@ -123,11 +124,61 @@ impl YamlRuleLoader {
             template_engine: TemplateEngine::new(),
             rules_dir,
             variables,
+            embedded_rules: None,
         })
+    }
+
+    /// Create a YAML loader backed by embedded `(path, content)` entries.
+    pub fn from_embedded(rules: &[(&str, &str)]) -> Result<Self> {
+        Self::from_embedded_with_variables(rules, None)
+    }
+
+    /// Create a YAML loader backed by embedded entries with substitution variables.
+    pub fn from_embedded_with_variables(
+        rules: &[(&str, &str)],
+        variables: Option<serde_yaml::Value>,
+    ) -> Result<Self> {
+        Ok(Self {
+            validator: YamlRuleValidator::new()?,
+            template_engine: TemplateEngine::new(),
+            rules_dir: PathBuf::new(),
+            variables,
+            embedded_rules: Some(
+                rules
+                    .iter()
+                    .map(|(path, content)| ((*path).to_string(), (*content).to_string()))
+                    .collect(),
+            ),
+        })
+    }
+
+    /// Load all rules from embedded entries without filesystem access.
+    pub fn load_embedded_rules(&mut self) -> Result<Vec<ValidatedRule>> {
+        let mut rules = Vec::new();
+
+        if let Some(embedded_rules) = &self.embedded_rules {
+            self.template_engine
+                .load_templates_from_embedded(embedded_rules)?;
+
+            for (path, content) in embedded_rules {
+                if path.ends_with(".yml") && !path.contains("/templates/") {
+                    let loaded_rules = self.load_rule_from_str(Path::new(path), content)?;
+                    rules.extend(loaded_rules);
+                }
+            }
+        }
+
+        Ok(rules)
     }
 
     /// Load all rules from the rules directory
     pub async fn load_all_rules(&mut self) -> Result<Vec<ValidatedRule>> {
+        if let Some(embedded_rules) = &self.embedded_rules {
+            if !embedded_rules.is_empty() {
+                return self.load_embedded_rules();
+            }
+        }
+
         let mut rules = Vec::new();
 
         // Load templates first
@@ -153,8 +204,12 @@ impl YamlRuleLoader {
             .await
             .map_err(crate::ValidationError::Io)?;
 
+        self.load_rule_from_str(path, &content)
+    }
+
+    fn load_rule_from_str(&self, path: &Path, content: &str) -> Result<Vec<ValidatedRule>> {
         let yaml_value: serde_yaml::Value =
-            serde_yaml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
+            serde_yaml::from_str(content).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
                 message: format!("YAML parse error: {e}"),
             })?;

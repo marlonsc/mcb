@@ -31,7 +31,7 @@ impl VcsHandler {
         Parameters(args): Parameters<VcsArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
+            .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
         match args.action {
             VcsAction::ListRepositories => {

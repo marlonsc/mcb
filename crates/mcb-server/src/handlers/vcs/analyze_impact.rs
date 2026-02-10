@@ -3,10 +3,11 @@ use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use super::responses::{ImpactFile, ImpactResponse, ImpactSummary, repo_path};
 use crate::args::VcsArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Analyzes the impact of changes between branches.
@@ -29,17 +30,13 @@ pub async fn analyze_impact(
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to open repository: {e}"
-            ))]));
+            return Ok(to_opaque_tool_error(e));
         }
     };
     let diff = match vcs_provider.diff_refs(&repo, &base_ref, &head_ref).await {
         Ok(diff) => diff,
         Err(e) => {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to diff branches: {e}"
-            ))]));
+            return Ok(to_opaque_tool_error(e));
         }
     };
     let mut added = 0;

@@ -45,6 +45,29 @@ impl Default for ValidatorRegistry {
 }
 
 impl ValidatorRegistry {
+    /// Canonical validator names used by registry-based execution.
+    pub const STANDARD_VALIDATOR_NAMES: &'static [&'static str] = &[
+        "clean_architecture",
+        "layer_flow",
+        "port_adapter",
+        "visibility",
+        "dependency",
+        "quality",
+        "solid",
+        "naming",
+        "patterns",
+        "documentation",
+        "tests_org",
+        "performance",
+        "async_patterns",
+        "kiss",
+        "pmat",
+        "organization",
+        "implementation",
+        "refactoring",
+        "error_boundary",
+    ];
+
     /// Create an empty registry
     pub fn new() -> Self {
         Self {
@@ -132,61 +155,34 @@ impl ValidatorRegistry {
 
     /// Create a registry with standard validators for a specific workspace
     pub fn standard_for(workspace_root: impl Into<std::path::PathBuf>) -> Self {
-        // Architecture validators
-        // Performance validators
-        use crate::async_patterns::AsyncPatternValidator;
-        use crate::clean_architecture::CleanArchitectureValidator;
-        // Dependency validators
-        use crate::dependency::DependencyValidator;
-        // Note: Legacy validator removed - now using linkme-based plugin architecture
-
-        // Quality validators
-        use crate::documentation::DocumentationValidator;
-        // Organization validators
-        use crate::error_boundary::ErrorBoundaryValidator;
-        use crate::implementation::ImplementationQualityValidator;
-        use crate::kiss::KissValidator;
-        use crate::layer_flow::LayerFlowValidator;
-        use crate::naming::NamingValidator;
-        use crate::organization::OrganizationValidator;
-        use crate::pattern_validator::PatternValidator;
-        use crate::performance::PerformanceValidator;
-        use crate::pmat::PmatValidator;
-        use crate::port_adapter::PortAdapterValidator;
-        use crate::quality::QualityValidator;
-        use crate::refactoring::RefactoringValidator;
-        use crate::solid::SolidValidator;
-        use crate::tests_org::TestValidator;
-        use crate::visibility::VisibilityValidator;
-
         let root = workspace_root.into();
+        crate::mk_validators!(
+            &root;
+            crate::clean_architecture::CleanArchitectureValidator,
+            crate::layer_flow::LayerFlowValidator,
+            crate::port_adapter::PortAdapterValidator,
+            crate::visibility::VisibilityValidator,
+            crate::dependency::DependencyValidator,
+            crate::quality::QualityValidator,
+            crate::solid::SolidValidator,
+            crate::naming::NamingValidator,
+            crate::pattern_validator::PatternValidator,
+            crate::documentation::DocumentationValidator,
+            crate::tests_org::TestValidator,
+            crate::performance::PerformanceValidator,
+            crate::async_patterns::AsyncPatternValidator,
+            crate::kiss::KissValidator,
+            crate::pmat::PmatValidator,
+            crate::organization::OrganizationValidator,
+            crate::implementation::ImplementationQualityValidator,
+            crate::refactoring::RefactoringValidator,
+            crate::error_boundary::ErrorBoundaryValidator,
+        )
+    }
 
-        Self::new()
-            // Architecture
-            .with_validator(Box::new(CleanArchitectureValidator::new(&root)))
-            .with_validator(Box::new(LayerFlowValidator::new(&root)))
-            .with_validator(Box::new(PortAdapterValidator::new(&root)))
-            .with_validator(Box::new(VisibilityValidator::new(&root)))
-            // Dependencies
-            .with_validator(Box::new(DependencyValidator::new(&root)))
-            // Note: Legacy validator removed - now using linkme-based plugin architecture
-            // Quality
-            .with_validator(Box::new(QualityValidator::new(&root)))
-            .with_validator(Box::new(SolidValidator::new(&root)))
-            .with_validator(Box::new(NamingValidator::new(&root)))
-            .with_validator(Box::new(PatternValidator::new(&root)))
-            .with_validator(Box::new(DocumentationValidator::new(&root)))
-            .with_validator(Box::new(TestValidator::new(&root)))
-            // Performance
-            .with_validator(Box::new(PerformanceValidator::new(&root)))
-            .with_validator(Box::new(AsyncPatternValidator::new(&root)))
-            .with_validator(Box::new(KissValidator::new(&root)))
-            .with_validator(Box::new(PmatValidator::new(&root)))
-            // Organization
-            .with_validator(Box::new(OrganizationValidator::new(&root)))
-            .with_validator(Box::new(ImplementationQualityValidator::new(&root)))
-            .with_validator(Box::new(RefactoringValidator::new(&root)))
-            .with_validator(Box::new(ErrorBoundaryValidator::new(&root)))
+    /// Return canonical validator names for public API consumers.
+    pub fn standard_validator_names() -> &'static [&'static str] {
+        Self::STANDARD_VALIDATOR_NAMES
     }
 }
 
@@ -253,29 +249,10 @@ mod tests {
             .collect();
 
         let actual: BTreeSet<&'static str> = names.iter().copied().collect();
-        let expected: BTreeSet<&'static str> = [
-            "clean_architecture",
-            "layer_flow",
-            "port_adapter",
-            "visibility",
-            "dependency",
-            "quality",
-            "solid",
-            "naming",
-            "patterns",
-            "documentation",
-            "tests_org",
-            "performance",
-            "async_patterns",
-            "kiss",
-            "pmat",
-            "organization",
-            "implementation",
-            "refactoring",
-            "error_boundary",
-        ]
-        .into_iter()
-        .collect();
+        let expected: BTreeSet<&'static str> = ValidatorRegistry::standard_validator_names()
+            .iter()
+            .copied()
+            .collect();
 
         assert_eq!(
             actual, expected,

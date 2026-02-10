@@ -6,6 +6,7 @@ use rmcp::model::{CallToolResult, Content};
 
 use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Creates or retrieves a session summary.
@@ -34,10 +35,7 @@ pub async fn summarize_session(
                 "summary_id": summary_id,
                 "session_id": session_id.as_str(),
             })),
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to create session summary: {}",
-                e
-            ))])),
+            Err(e) => Ok(to_opaque_tool_error(e)),
         }
     } else {
         match memory_service.get_session_summary(session_id).await {
@@ -52,10 +50,7 @@ pub async fn summarize_session(
             Ok(None) => Ok(CallToolResult::error(vec![Content::text(
                 "Session summary not found",
             )])),
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to get session summary: {}",
-                e
-            ))])),
+            Err(e) => Ok(to_opaque_tool_error(e)),
         }
     }
 }

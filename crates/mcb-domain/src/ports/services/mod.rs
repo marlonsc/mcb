@@ -7,6 +7,7 @@ pub mod hash;
 pub mod indexing;
 pub mod issue_entity;
 pub mod memory;
+pub mod org_entity;
 pub mod plan_entity;
 pub mod project;
 pub mod search;
@@ -23,6 +24,7 @@ pub use indexing::{
 };
 pub use issue_entity::IssueEntityServiceInterface;
 pub use memory::MemoryServiceInterface;
+pub use org_entity::OrgEntityServiceInterface;
 pub use plan_entity::PlanEntityServiceInterface;
 pub use project::{ProjectDetectorService, ProjectServiceInterface};
 pub use search::{SearchFilters, SearchServiceInterface};

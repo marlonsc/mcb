@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
-use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
 use mcb_domain::ports::services::PlanEntityServiceInterface;
+use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
+use crate::error_mapping::to_opaque_mcp_error;
+use crate::handler_helpers::{ok_json, ok_text, require_id};
 
 /// Handler for the consolidated `plan_entity` MCP tool.
 pub struct PlanEntityHandler {
@@ -24,7 +26,9 @@ impl PlanEntityHandler {
         &self,
         Parameters(args): Parameters<PlanEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let org_id = args.org_id.as_deref().unwrap_or(DEFAULT_ORG_ID);
+        // TODO(phase-1): extract org_id from auth token / request context
+        let org_ctx = OrgContext::default();
+        let org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
 
         match (args.action, args.resource) {
             (PlanEntityAction::Create, PlanEntityResource::Plan) => {
@@ -32,13 +36,20 @@ impl PlanEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
                 let plan: Plan = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
-                self.service.create_plan(&plan).await.map_err(to_mcp)?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                self.service
+                    .create_plan(&plan)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&plan)
             }
             (PlanEntityAction::Get, PlanEntityResource::Plan) => {
                 let id = require_id(&args.id)?;
-                let plan = self.service.get_plan(org_id, &id).await.map_err(to_mcp)?;
+                let plan = self
+                    .service
+                    .get_plan(org_id, &id)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&plan)
             }
             (PlanEntityAction::List, PlanEntityResource::Plan) => {
@@ -49,7 +60,7 @@ impl PlanEntityHandler {
                     .service
                     .list_plans(org_id, project_id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&plans)
             }
             (PlanEntityAction::Update, PlanEntityResource::Plan) => {
@@ -57,8 +68,11 @@ impl PlanEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
                 let plan: Plan = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
-                self.service.update_plan(&plan).await.map_err(to_mcp)?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                self.service
+                    .update_plan(&plan)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_text("updated")
             }
             (PlanEntityAction::Delete, PlanEntityResource::Plan) => {
@@ -66,7 +80,7 @@ impl PlanEntityHandler {
                 self.service
                     .delete_plan(org_id, &id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_text("deleted")
             }
             (PlanEntityAction::Create, PlanEntityResource::Version) => {
@@ -74,16 +88,20 @@ impl PlanEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let version: PlanVersion = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 self.service
                     .create_plan_version(&version)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&version)
             }
             (PlanEntityAction::Get, PlanEntityResource::Version) => {
                 let id = require_id(&args.id)?;
-                let version = self.service.get_plan_version(&id).await.map_err(to_mcp)?;
+                let version = self
+                    .service
+                    .get_plan_version(&id)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&version)
             }
             (PlanEntityAction::List, PlanEntityResource::Version) => {
@@ -95,7 +113,7 @@ impl PlanEntityHandler {
                     .service
                     .list_plan_versions_by_plan(plan_id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&versions)
             }
             (PlanEntityAction::Create, PlanEntityResource::Review) => {
@@ -103,16 +121,20 @@ impl PlanEntityHandler {
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let review: PlanReview = serde_json::from_value(data)
-                    .map_err(|e| McpError::invalid_params(e.to_string(), None))?;
+                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 self.service
                     .create_plan_review(&review)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&review)
             }
             (PlanEntityAction::Get, PlanEntityResource::Review) => {
                 let id = require_id(&args.id)?;
-                let review = self.service.get_plan_review(&id).await.map_err(to_mcp)?;
+                let review = self
+                    .service
+                    .get_plan_review(&id)
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&review)
             }
             (PlanEntityAction::List, PlanEntityResource::Review) => {
@@ -124,7 +146,7 @@ impl PlanEntityHandler {
                     .service
                     .list_plan_reviews_by_version(plan_version_id)
                     .await
-                    .map_err(to_mcp)?;
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&reviews)
             }
             _ => Err(McpError::invalid_params(
@@ -135,35 +157,6 @@ impl PlanEntityHandler {
                 None,
             )),
         }
-    }
-}
-
-fn require_id(id: &Option<String>) -> Result<String, McpError> {
-    id.clone()
-        .ok_or_else(|| McpError::invalid_params("id required", None))
-}
-
-fn ok_json<T: serde::Serialize>(val: &T) -> Result<CallToolResult, McpError> {
-    let json = serde_json::to_string_pretty(val)
-        .map_err(|e| McpError::internal_error(e.to_string(), None))?;
-    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-        json,
-    )]))
-}
-
-fn ok_text(msg: &str) -> Result<CallToolResult, McpError> {
-    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-        msg,
-    )]))
-}
-
-fn to_mcp(e: mcb_domain::error::Error) -> McpError {
-    match e {
-        mcb_domain::error::Error::NotFound { .. } => McpError::invalid_params(e.to_string(), None),
-        mcb_domain::error::Error::InvalidArgument { .. } => {
-            McpError::invalid_params(e.to_string(), None)
-        }
-        _ => McpError::internal_error(e.to_string(), None),
     }
 }
 

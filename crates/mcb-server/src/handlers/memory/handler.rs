@@ -12,6 +12,7 @@ use validator::Validate;
 use super::helpers::MemoryHelpers;
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Handler for memory-related MCP tool operations.
@@ -34,8 +35,8 @@ impl MemoryHandler {
         &self,
         Parameters(args): Parameters<MemoryArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let validate_err = |e: validator::ValidationErrors| {
-            McpError::invalid_params(format!("failed to validate memory args: {e}"), None)
+        let validate_err = |_e: validator::ValidationErrors| {
+            McpError::invalid_params("failed to validate memory args", None)
         };
         args.validate().map_err(validate_err)?;
 
@@ -100,10 +101,7 @@ impl MemoryHandler {
             match serde_json::from_value(serde_json::Value::Object(data.clone())) {
                 Ok(p) => p,
                 Err(e) => {
-                    return Ok(CallToolResult::error(vec![Content::text(format!(
-                        "Invalid error pattern data: {}",
-                        e
-                    ))]));
+                    return Ok(to_opaque_tool_error(e));
                 }
             };
 
@@ -111,10 +109,7 @@ impl MemoryHandler {
             Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                 "id": id,
             })),
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to store error pattern: {}",
-                e
-            ))])),
+            Err(e) => Ok(to_opaque_tool_error(e)),
         }
     }
 
@@ -138,10 +133,7 @@ impl MemoryHandler {
                 "count": patterns.len(),
                 "patterns": patterns,
             })),
-            Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to get error patterns: {}",
-                e
-            ))])),
+            Err(e) => Ok(to_opaque_tool_error(e)),
         }
     }
 

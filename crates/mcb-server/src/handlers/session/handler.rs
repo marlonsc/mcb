@@ -39,7 +39,7 @@ impl SessionHandler {
         Parameters(args): Parameters<SessionArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
+            .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
         match args.action {
             SessionAction::Create => create::create_session(&self.agent_service, &args).await,

@@ -635,6 +635,50 @@ pub struct PlanEntityArgs {
     pub data: Option<serde_json::Value>,
 }
 
+/// Actions for org entity resource management
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OrgEntityAction {
+    Create,
+    Get,
+    Update,
+    List,
+    Delete,
+}
+
+/// Types of org entity resources
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OrgEntityResource {
+    Org,
+    User,
+    Team,
+    TeamMember,
+    ApiKey,
+}
+
+/// Arguments for the consolidated `org_entity` MCP tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct OrgEntityArgs {
+    #[schemars(description = "Action: create, get, update, list, delete")]
+    pub action: OrgEntityAction,
+    #[schemars(description = "Resource: org, user, team, team_member, api_key")]
+    pub resource: OrgEntityResource,
+    #[schemars(description = "Resource ID (for get/update/delete)")]
+    pub id: Option<String>,
+    #[schemars(description = "Organization ID (for listing users/teams/api_keys)")]
+    pub org_id: Option<String>,
+    #[schemars(description = "Team ID (for listing members)")]
+    pub team_id: Option<String>,
+    #[schemars(description = "User ID (for removing team member)")]
+    pub user_id: Option<String>,
+    #[schemars(description = "Email (for user lookup by email)")]
+    pub email: Option<String>,
+    #[schemars(description = "Data payload for create/update (JSON object)")]
+    #[schemars(with = "serde_json::Value")]
+    pub data: Option<serde_json::Value>,
+}
+
 /// CRUD actions for issue entity resources.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]

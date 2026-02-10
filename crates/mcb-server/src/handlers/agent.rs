@@ -34,7 +34,7 @@ impl AgentHandler {
         Parameters(args): Parameters<AgentArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
+            .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
         if args.session_id.to_string().is_empty() {
             return Err(McpError::invalid_params("session_id is required", None));

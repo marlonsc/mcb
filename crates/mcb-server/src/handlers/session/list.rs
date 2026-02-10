@@ -3,9 +3,10 @@ use std::sync::Arc;
 use mcb_domain::ports::repositories::agent_repository::AgentSessionQuery;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use crate::args::SessionArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 use tracing::error;
 
@@ -50,10 +51,7 @@ pub async fn list_sessions(
         }
         Err(e) => {
             error!("Failed to list agent sessions: {:?}", e);
-            Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to list agent sessions: {}",
-                e
-            ))]))
+            Ok(to_opaque_tool_error(e))
         }
     }
 }
