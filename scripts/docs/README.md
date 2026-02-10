@@ -1,8 +1,8 @@
-# 📚 MCP Context Browser - Documentation Scripts
+# 📚 Memory Context Browser - Documentation Scripts
 
 ## 🎯 **First Stable Release**
 
-This folder contains the automation scripts for the **self-documenting** system of MCP Context Browser.
+This folder contains the automation scripts for the **self-documenting** system of Memory Context Browser.
 
 ---
 
@@ -174,6 +174,6 @@ make docs           # Full production build
 
 ## 🎉 **Conclusion**
 
-The documentation system represents a **clean, efficient, and fully integrated architecture** that establishes MCP Context Browser as a reference in automated documentation for Rust projects.
+The documentation system represents a **clean, efficient, and fully integrated architecture** that establishes Memory Context Browser as a reference in automated documentation for Rust projects.
 
 **Status: ✅ PRODUCTION READY** 🚀

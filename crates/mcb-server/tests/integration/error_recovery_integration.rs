@@ -21,12 +21,17 @@ use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 
-fn test_config() -> (AppConfig, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let db_path = temp_dir.path().join("test.db");
+fn unique_test_config() -> AppConfig {
     let mut config = AppConfig::default();
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time")
+        .as_nanos();
+    let thread_id = std::thread::current().id();
+    let db_path =
+        std::env::temp_dir().join(format!("mcb-errrecovery-test-{}-{:?}.db", stamp, thread_id));
     config.auth.user_db_path = Some(db_path);
-    (config, temp_dir)
+    config
 }
 
 // ============================================================================
@@ -128,7 +133,7 @@ fn test_unknown_language_provider_error_message() {
 
 #[tokio::test]
 async fn test_search_empty_collection_returns_empty_not_error() {
-    let (config, _temp) = test_config();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -170,7 +175,7 @@ async fn test_search_empty_collection_returns_empty_not_error() {
 
 #[tokio::test]
 async fn test_init_app_with_default_config_succeeds() {
-    let (config, _temp) = test_config();
+    let config = unique_test_config();
     let result = init_app(config).await;
 
     assert!(
@@ -182,7 +187,7 @@ async fn test_init_app_with_default_config_succeeds() {
 
 #[tokio::test]
 async fn test_provider_handles_return_valid_instances() {
-    let (config, _temp) = test_config();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     // All handles should return valid providers
@@ -211,7 +216,7 @@ async fn test_provider_handles_return_valid_instances() {
 
 #[tokio::test]
 async fn test_failed_search_doesnt_corrupt_state() {
-    let (config, _temp) = test_config();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -311,7 +316,7 @@ fn test_resolve_with_empty_config_values() {
 
 #[tokio::test]
 async fn test_concurrent_handle_access() {
-    let (config, _temp) = test_config();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let handle = ctx.embedding_handle();

@@ -36,9 +36,9 @@ if ! command -v docker &>/dev/null; then
 	exit 1
 fi
 
-# Check if docker-compose -f tests/docker-compose.yml is available
-if ! command -v docker-compose -f tests/docker-compose.yml &>/dev/null; then
-	log_error "docker-compose -f tests/docker-compose.yml is not installed. Please install docker-compose -f tests/docker-compose.yml to run integration tests."
+# Check if docker-compose is available
+if ! command -v docker-compose &>/dev/null; then
+	log_error "docker-compose is not installed. Please install docker-compose to run integration tests."
 	exit 1
 fi
 

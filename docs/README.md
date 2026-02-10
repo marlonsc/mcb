@@ -16,7 +16,7 @@ This documentation is organized into focused sections for different audiences an
 User-facing documentation for installation, usage, and features.
 
 -   **[README](user-guide/README.md)** - Project overview, quick start, and basic usage
--   **[Features](user-guide/README.md#current-capabilities-v014)** - Current capabilities and features
+-   **[Features](user-guide/README.md)** - Current capabilities and features
 
 ### 🛠️ Developer Guide
 
@@ -46,7 +46,7 @@ Technical architecture documentation following C4 model principles.
     -   [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)
     -   [Full ADR Index](adr/README.md) - 46 ADRs total
 
-### 📦 Modules (v0.1.4 Crate Structure)
+### 📦 Modules (v0.2.0 Crate Structure)
 
 Module documentation organized by the eight-crate Clean Architecture:
 

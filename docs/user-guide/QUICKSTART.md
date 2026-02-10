@@ -1,6 +1,6 @@
 # Quickstart Guide
 
-Get Memory Context Browser v0.1.4 running in 5 minutes.
+Get Memory Context Browser v0.2.0 running in 5 minutes.
 
 ## 1. Download
 
