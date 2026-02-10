@@ -14,13 +14,13 @@ See also [CONFIGURATION.md](../CONFIGURATION.md) for Figment-based config (ADR-0
 MCP Context Browser uses a hierarchical configuration system:
 
 1.**Configuration Files**: `config/default.toml` and `config/local.toml`
-2.**Environment Variables**: Override config file settings with prefix `MCP_`
-3.**Defaults**: Built-in defaults when neither file nor env var is set
+2.**Environment Variables**: Override config file settings with prefix `MCP__`
+3.**Defaults**: Canonical defaults from `config/default.toml`
 
 All environment variables use the pattern:
 
 ```
-MCP_<SUBSYSTEM>_<PARAMETER>
+MCP__<SECTION>__<NESTED_SECTION>__<PARAMETER>
 ```
 
 For nested settings, use double underscores:
@@ -37,16 +37,14 @@ MCP_CACHE__NAMESPACES__EMBEDDINGS__TTL_SECONDS=7200
 
 | Variable | Default | Type | Description |
 |----------|---------|------|-------------|
-| `MCP_SERVER__HOST` | `127.0.0.1` | String | Server bind address |
-| `MCP_SERVER__PORT` | `3000` | Integer | Server listen port (MCP protocol) |
-| `MCP_PORT` | `3001` | Integer | Unified port for Admin + Metrics APIs |
+| `MCP__SERVER__NETWORK__HOST` | `0.0.0.0` | String | Unified server bind address |
+| `MCP__SERVER__NETWORK__PORT` | `3000` | Integer | Unified HTTP port (MCP + Admin + Metrics) |
 
 **Usage**:
 
 ```bash
-export MCP_SERVER__HOST=0.0.0.0
-export MCP_SERVER__PORT=9000
-export MCP_PORT=9001
+export MCP__SERVER__NETWORK__HOST=0.0.0.0
+export MCP__SERVER__NETWORK__PORT=9000
 ```
 
 ---
@@ -241,7 +239,7 @@ export DATABASE_MIN_IDLE=10
 | Variable | Default | Type | Description |
 |----------|---------|------|-------------|
 | `MCP_METRICS_ENABLED` | `true` | Boolean | Enable/disable metrics collection |
-| `MCP_PORT` | `3001` | Integer | Metrics API port (shared with Admin) |
+| `MCP__SERVER__NETWORK__PORT` | `3000` | Integer | Unified HTTP port (shared by metrics endpoint) |
 
 ### Rate Limiting for Metrics
 
@@ -420,15 +418,14 @@ See [admin_defaults.rs](../../src/server/admin/service/helpers/admin_defaults.rs
 
 Settings are loaded in this order (highest priority first):
 
-1.**Environment Variables**(prefix `MCP_`)
+1.**Environment Variables**(prefix `MCP__`)
 2.**Local Config File**(`config/local.toml`)
 3.**Default Config File**(`config/default.toml`)
-4.**Built-in Defaults**(hardcoded in Rust)
 
 Example: To override default port:
 
 ```bash
-export MCP_SERVER__PORT=8080  # Environment takes precedence
+export MCP__SERVER__NETWORK__PORT=8080  # Environment takes precedence
 ```
 
 ---
@@ -561,7 +558,7 @@ This will replace:
 
 ### Configuration Not Being Applied
 
-1.**Check environment variable format**: Use `MCP_` prefix and `__` for nesting
+1.**Check environment variable format**: Use `MCP__` prefix and `__` for nesting
 2.**Verify spacing**: No spaces around `=` in exports
 3.**Check precedence**: Environment variables override config files
 4.**Enable debug logging**: `RUST_LOG=debug` to see config loading
@@ -571,10 +568,7 @@ This will replace:
 ```bash
 
 # Server port conflict
-export MCP_SERVER__PORT=9000
-
-# Metrics port conflict
-export MCP_PORT=9001
+export MCP__SERVER__NETWORK__PORT=9000
 ```
 
 ### Cache Not Working

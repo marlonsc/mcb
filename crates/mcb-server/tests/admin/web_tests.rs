@@ -64,7 +64,7 @@ async fn test_jobs_page_returns_html() {
 }
 
 #[rocket::async_test]
-async fn test_legacy_indexing_route_removed() {
+async fn test_removed_indexing_route_returns_not_found() {
     let client = Client::tracked(web_rocket())
         .await
         .expect("valid rocket instance");

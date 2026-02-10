@@ -12,7 +12,7 @@ use rocket::response::content::RawHtml;
 const INDEX_HTML: &str = include_str!("templates/index.html");
 const CONFIG_HTML: &str = include_str!("templates/config.html");
 const HEALTH_HTML: &str = include_str!("templates/health.html");
-const INDEXING_HTML: &str = include_str!("templates/indexing.html");
+const JOBS_HTML: &str = include_str!("templates/jobs.html");
 const BROWSE_HTML: &str = include_str!("templates/browse.html");
 const BROWSE_COLLECTION_HTML: &str = include_str!("templates/browse_collection.html");
 const BROWSE_FILE_HTML: &str = include_str!("templates/browse_file.html");
@@ -47,7 +47,7 @@ pub fn health_page() -> RawHtml<&'static str> {
 /// Jobs page handler
 #[get("/ui/jobs")]
 pub fn jobs_page() -> RawHtml<&'static str> {
-    RawHtml(INDEXING_HTML)
+    RawHtml(JOBS_HTML)
 }
 
 /// Favicon handler - returns a simple SVG icon

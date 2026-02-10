@@ -89,69 +89,6 @@ pub fn get_metrics(_auth: AdminAuth, state: &State<AdminState>) -> Json<Performa
     Json(metrics)
 }
 
-/// Indexing status response
-#[derive(Serialize)]
-pub struct IndexingStatusResponse {
-    /// Whether indexing is currently active
-    pub is_indexing: bool,
-    /// Number of active operations
-    pub active_operations: usize,
-    /// Details of each operation
-    pub operations: Vec<IndexingOperationDetail>,
-}
-
-/// Individual indexing operation details for API response
-#[derive(Serialize)]
-pub struct IndexingOperationDetail {
-    /// Operation ID
-    pub id: String,
-    /// Collection being indexed
-    pub collection: String,
-    /// Current file being processed
-    pub current_file: Option<String>,
-    /// Progress as percentage
-    pub progress_percent: f32,
-    /// Files processed
-    pub processed_files: usize,
-    /// Total files
-    pub total_files: usize,
-    /// Timestamp when operation started (ISO8601)
-    pub started_at: String,
-}
-
-/// Get indexing status endpoint
-#[get("/indexing")]
-pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResponse> {
-    let operations = state.indexing.get_operations();
-
-    let operation_statuses: Vec<IndexingOperationDetail> = operations
-        .values()
-        .map(|op| {
-            let progress = if op.total_files > 0 {
-                (op.processed_files as f32 / op.total_files as f32) * 100.0
-            } else {
-                0.0
-            };
-
-            IndexingOperationDetail {
-                id: op.id.to_string(),
-                collection: op.collection.to_string(),
-                current_file: op.current_file.clone(),
-                progress_percent: progress,
-                processed_files: op.processed_files,
-                total_files: op.total_files,
-                started_at: op.started_at.to_rfc3339(),
-            }
-        })
-        .collect();
-
-    Json(IndexingStatusResponse {
-        is_indexing: !operation_statuses.is_empty(),
-        active_operations: operation_statuses.len(),
-        operations: operation_statuses,
-    })
-}
-
 /// Jobs status response (unified job tracking)
 #[derive(Serialize)]
 pub struct JobsStatusResponse {

@@ -14,7 +14,7 @@ implementation_status: Complete
 
 ## Status
 
-**In Progress** (v0.1.1 → v0.2.0)
+**Implemented** (v0.2.0)
 
 > Backend infrastructure implemented in `crates/mcb-server/src/admin/`:
 >
@@ -23,7 +23,7 @@ implementation_status: Complete
 > -   REST API routes for config, health, backup, maintenance (routes.rs, handlers.rs)
 > -   JWT authentication integration
 > -   **New (v0.2.0)**:
->     -   Unified port architecture (MCP + Admin + Metrics on port 3001)
+>     -   Unified port architecture (MCP + Admin + Metrics on port 3000)
 >     -   Subsystem control via EventBus (6 new AdminService methods)
 >     -   Configuration persistence with explicit save pattern
 >     -   14 SystemEvent variants for inter-subsystem communication
@@ -31,7 +31,7 @@ implementation_status: Complete
 
 ## Context
 
-MCP Context Browser provides comprehensive system monitoring and metrics through HTTP endpoints on port 3001, but lacks a user-friendly web interface for administration, configuration, and visualization. Users currently need to interact with the system through:
+MCP Context Browser provides comprehensive system monitoring and metrics through HTTP endpoints on a unified port, but lacks a user-friendly web interface for administration, configuration, and visualization. Users currently need to interact with the system through:
 
 1.  Environment variables for configuration
 2.  MCP protocol tools for basic operations
@@ -48,14 +48,14 @@ This creates barriers for non-technical users and makes it difficult to:
 
 The existing infrastructure already includes:
 
--   HTTP metrics server on port 3001
+-   HTTP metrics server on unified port 3000
 -   Comprehensive metrics collection
 -   Provider management capabilities
 -   Configuration system
 
 ## Decision
 
-We will implement an integrated web administration interface that runs on the same port as the metrics server (3001), providing a modern, responsive web UI for:
+We will implement an integrated web administration interface that runs on the same port as the metrics server (3000), providing a modern, responsive web UI for:
 
 1.  **System Dashboard**: Real-time metrics visualization with interactive charts
 2.  **Configuration Management**: Dynamic provider and system configuration
@@ -66,7 +66,7 @@ We will implement an integrated web administration interface that runs on the sa
 
 The interface will be implemented using:
 
--   **Backend**: Extend existing Axum HTTP server with new REST endpoints
+-   **Backend**: Extend existing Rocket HTTP server with new REST endpoints
 -   **Frontend**: Modern HTML/CSS/JavaScript with responsive design
 -   **Authentication**: JWT-based authentication for admin access
 -   **Real-time**: WebSocket support for live metrics updates
@@ -80,7 +80,7 @@ The interface will be implemented using:
 -   **Real-time Monitoring**: Live dashboards with interactive charts and alerts
 -   **Operational Efficiency**: Faster troubleshooting and configuration changes
 -   **Security Enhancement**: Authentication and authorization for administrative access
--   **Unified Interface**: Single port (3001) serves both metrics API and admin interface
+-   **Unified Interface**: Single port (3000) serves both metrics API and admin interface
 -   **Extensibility**: Foundation for future web-based features
 -   **Developer Productivity**: Easier testing and development workflows
 
@@ -216,20 +216,20 @@ crates/mcb-server/src/admin/web/templates/
 
 ## Unified Port Architecture (v0.2.0)
 
-All HTTP services run on a single unified port (default: 3001).
+All HTTP services run on a single unified port (default: 3000).
 
 ### Port Configuration
 
 Configure via environment variable:
 
 ```bash
-export MCP_PORT=3001  # Default unified port for Admin + Metrics + MCP
+export MCP__SERVER__NETWORK__PORT=3000  # Default unified port for Admin + Metrics + MCP
 ```
 
 ### URL Structure
 
 ```
-Port 3001 (Unified: Admin + Metrics + MCP HTTP)
+Port 3000 (Unified: Admin + Metrics + MCP HTTP)
 ├── /                - Admin dashboard (root redirects to dashboard)
 ├── /dashboard       - Admin dashboard
 ├── /providers       - Provider management UI

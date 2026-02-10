@@ -9,7 +9,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use figment::Figment;
-use figment::providers::{Env, Format, Serialized, Toml};
+use figment::providers::{Env, Format, Toml};
 use mcb_domain::error::{Error, Result};
 
 use crate::config::AppConfig;
@@ -63,10 +63,9 @@ impl ConfigLoader {
         })?;
         log_config_loaded(&default_path, true);
 
-        // Start with struct defaults for schema completeness, then override from defaults file
-        let mut figment = Figment::new()
-            .merge(Serialized::defaults(AppConfig::default()))
-            .merge(Toml::file(&default_path));
+        // Source of truth starts from canonical defaults file only.
+        // Runtime must not rely on hardcoded struct defaults.
+        let mut figment = Figment::new().merge(Toml::file(&default_path));
 
         if let Some(config_path) = &self.config_path {
             if !config_path.exists() {

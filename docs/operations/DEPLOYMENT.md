@@ -557,9 +557,9 @@ data:
 ```bash
 
 # Core settings
-export MCP_MODE=distributed
-export MCP_HOST=0.0.0.0
-export MCP_PORT=3000
+export MCP__SERVER__TRANSPORT_MODE=http
+export MCP__SERVER__NETWORK__HOST=0.0.0.0
+export MCP__SERVER__NETWORK__PORT=3000
 
 # Database
 export DATABASE_URL=postgresql://user:password@host:5432/db

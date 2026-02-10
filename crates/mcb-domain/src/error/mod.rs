@@ -194,9 +194,7 @@ pub enum Error {
     /// Observation storage operation error
     #[error("Observation storage error: {message}")]
     ObservationStorage {
-        /// Description of the observation storage error
         message: String,
-        /// Optional source error
         #[source]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
@@ -444,8 +442,10 @@ impl Error {
         message: S,
         source: E,
     ) -> Self {
+        let msg = message.into();
+        let full_message = format!("{msg}: {source}");
         Self::ObservationStorage {
-            message: message.into(),
+            message: full_message,
             source: Some(Box::new(source)),
         }
     }

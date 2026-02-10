@@ -42,28 +42,29 @@ async fn test_full_admin_stack_integration() {
     let _op2 = indexing.start_operation(&CollectionId::new("project-beta"), 200);
     indexing.update_progress(&op1, Some("src/main.rs".to_string()), 25);
 
-    // 6. Verify indexing endpoint shows operations
-    let response = client.get("/indexing").dispatch().await;
+    // 6. Verify jobs endpoint shows operations
+    let response = client.get("/jobs").dispatch().await;
 
     assert_eq!(response.status(), Status::Ok);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
 
-    assert_eq!(json["is_indexing"], true);
-    assert_eq!(json["active_operations"], 2);
+    assert_eq!(json["running"], 2);
+    assert_eq!(json["queued"], 0);
+    assert_eq!(json["total"], 2);
 
-    let ops = json["operations"].as_array().unwrap();
+    let ops = json["jobs"].as_array().unwrap();
     assert_eq!(ops.len(), 2);
 
     // Find the project-alpha operation
     let alpha_op = ops
         .iter()
-        .find(|op| op["collection"] == "project-alpha")
+        .find(|op| op["label"] == "project-alpha")
         .expect("Should find project-alpha operation");
-    assert_eq!(alpha_op["processed_files"], 25);
-    assert_eq!(alpha_op["total_files"], 100);
-    assert_eq!(alpha_op["progress_percent"], 25.0);
-    assert_eq!(alpha_op["current_file"], "src/main.rs");
+    assert_eq!(alpha_op["processed_items"], 25);
+    assert_eq!(alpha_op["total_items"], 100);
+    assert_eq!(alpha_op["progress_percent"], 25);
+    assert_eq!(alpha_op["current_item"], "src/main.rs");
 
     // 7. Health should now show active indexing operations
     let response = client.get("/health").dispatch().await;
@@ -75,11 +76,11 @@ async fn test_full_admin_stack_integration() {
     // 8. Complete one operation
     indexing.complete_operation(&op1);
 
-    let response = client.get("/indexing").dispatch().await;
+    let response = client.get("/jobs").dispatch().await;
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
-    assert_eq!(json["active_operations"], 1);
+    assert_eq!(json["running"], 1);
 
     // 9. Verify liveness probe (always OK)
     let response = client.get("/live").dispatch().await;
@@ -142,11 +143,11 @@ async fn test_indexing_lifecycle_integration() {
     let op2 = indexing.start_operation(&CollectionId::new("repo-2"), 100);
     let op3 = indexing.start_operation(&CollectionId::new("repo-3"), 150);
 
-    let response = client.get("/indexing").dispatch().await;
+    let response = client.get("/jobs").dispatch().await;
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
-    assert_eq!(json["active_operations"], 3);
+    assert_eq!(json["running"], 3);
 
     indexing.update_progress(&op1, Some("file1.rs".to_string()), 50);
     indexing.update_progress(&op2, Some("file2.rs".to_string()), 50);
@@ -154,19 +155,19 @@ async fn test_indexing_lifecycle_integration() {
 
     indexing.complete_operation(&op1);
 
-    let response = client.get("/indexing").dispatch().await;
+    let response = client.get("/jobs").dispatch().await;
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
-    assert_eq!(json["active_operations"], 2);
+    assert_eq!(json["running"], 2);
 
     indexing.complete_operation(&op2);
     indexing.complete_operation(&op3);
 
-    let response = client.get("/indexing").dispatch().await;
+    let response = client.get("/jobs").dispatch().await;
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
-    assert_eq!(json["active_operations"], 0);
-    assert_eq!(json["is_indexing"], false);
+    assert_eq!(json["running"], 0);
+    assert_eq!(json["total"], 0);
 }

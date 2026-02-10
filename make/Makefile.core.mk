@@ -4,14 +4,13 @@
 # Parameters: RELEASE, SCOPE (from main Makefile)
 # =============================================================================
 
-.PHONY: build test test-rust test-e2e test-e2e-ui test-e2e-debug clean
+.PHONY: build test test-rust test-startup test-e2e test-e2e-ui test-e2e-debug clean
 
 # Test ports (avoid conflicts with production on 8080)
 export MCB_TEST_PORT ?= 18080
-export MCP_PORT ?= $(MCB_TEST_PORT)
 
-# Test thread count (parallelization - use fewer threads on CI to reduce timeout issues)
-export TEST_THREADS ?= 0
+# Test thread count (set to 1 for deterministic env-dependent tests)
+export TEST_THREADS ?= 1
 
 # =============================================================================
 # BUILD (RELEASE=1 for release)
@@ -49,7 +48,13 @@ test: ## Run ALL tests (Rust unit/integration/golden + Playwright E2E)
 
 test-rust: ## Run all Rust tests (unit + integration + golden)
 	@echo "Running Rust test suite..."
-	MCP_PORT=$(MCP_PORT) cargo test --workspace --all-targets
+	@THREADS="$(TEST_THREADS)"; \
+	case "$$THREADS" in ''|*[!0-9]*|0) THREADS=1;; esac; \
+	RUST_TEST_THREADS=$$THREADS cargo test --workspace --all-targets
+
+test-startup: ## Run startup smoke tests (DDL/init failure detection)
+	@echo "Running startup smoke tests..."
+	@cargo test -p mcb --test startup_smoke_integration -- --nocapture
 
 # =============================================================================
 # E2E Tests (Playwright)
@@ -69,8 +74,13 @@ test-e2e: ## Run E2E tests with Playwright (auto-installs if needed)
 		npm install --save-dev @playwright/test @types/node typescript 2>&1 | grep -v "npm WARN" || true; \
 		npx playwright install chromium --with-deps 2>&1 | tail -5; \
 	fi
-	@echo "🚀 Starting test server on port $(MCB_TEST_PORT)..."
-	@MCB_TEST_PORT=$(MCB_TEST_PORT) npx playwright test --config=tests/playwright.config.ts --reporter=list
+	@echo "🏗️ Building release binary once for E2E runs..."
+	@cargo build --release --bin mcb
+	@echo "🚀 Running Playwright specs sequentially on port $(MCB_TEST_PORT)..."
+	@for spec in tests/e2e/*.spec.ts; do \
+		echo "▶ Running $$spec"; \
+		MCB_TEST_PORT=$(MCB_TEST_PORT) npx playwright test --config=tests/playwright.config.ts --reporter=list "$$spec" || exit 1; \
+	done
 
 test-e2e-ui: ## Run E2E tests with Playwright UI (interactive)
 	@echo "🎭 Running Playwright E2E tests in UI mode..."

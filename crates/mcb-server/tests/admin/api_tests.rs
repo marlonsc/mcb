@@ -46,23 +46,24 @@ async fn test_metrics_endpoint() {
 }
 
 #[rocket::async_test]
-async fn test_indexing_endpoint_no_operations() {
+async fn test_jobs_endpoint_no_operations() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
 
-    let response = client.get("/indexing").dispatch().await;
+    let response = client.get("/jobs").dispatch().await;
 
     assert_eq!(response.status(), Status::Ok);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
 
-    assert_eq!(json["is_indexing"], false);
-    assert_eq!(json["active_operations"], 0);
-    assert!(json["operations"].as_array().unwrap().is_empty());
+    assert_eq!(json["running"], 0);
+    assert_eq!(json["queued"], 0);
+    assert_eq!(json["total"], 0);
+    assert!(json["jobs"].as_array().unwrap().is_empty());
 }
 
 #[rocket::async_test]
-async fn test_indexing_endpoint_with_operations() {
+async fn test_jobs_endpoint_with_operations() {
     let harness = AdminTestHarness::new();
     let op_id = harness
         .indexing()
@@ -72,25 +73,26 @@ async fn test_indexing_endpoint_with_operations() {
         .update_progress(&op_id, Some("src/main.rs".to_string()), 10);
     let (client, _, _) = harness.build_client().await;
 
-    let response = client.get("/indexing").dispatch().await;
+    let response = client.get("/jobs").dispatch().await;
 
     assert_eq!(response.status(), Status::Ok);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
 
-    assert_eq!(json["is_indexing"], true);
-    assert_eq!(json["active_operations"], 1);
+    assert_eq!(json["running"], 1);
+    assert_eq!(json["queued"], 0);
+    assert_eq!(json["total"], 1);
 
-    let ops = json["operations"].as_array().unwrap();
+    let ops = json["jobs"].as_array().unwrap();
     assert_eq!(ops.len(), 1);
 
     let op = &ops[0];
-    assert_eq!(op["collection"], "test-collection");
-    assert_eq!(op["current_file"], "src/main.rs");
-    assert_eq!(op["processed_files"], 10);
-    assert_eq!(op["total_files"], 50);
-    assert_eq!(op["progress_percent"], 20.0);
+    assert_eq!(op["label"], "test-collection");
+    assert_eq!(op["current_item"], "src/main.rs");
+    assert_eq!(op["processed_items"], 10);
+    assert_eq!(op["total_items"], 50);
+    assert_eq!(op["progress_percent"], 20);
 }
 
 #[rocket::async_test]

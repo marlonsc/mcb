@@ -146,7 +146,7 @@ jobs:
 | `/` | ✅ `test_dashboard_returns_html` | ✅ `test_admin_rocket_dashboard_is_accessible` | ✅ `Dashboard should return 200` |
 | `/ui/config` | ✅ `test_config_page_returns_html` | ✅ `test_admin_rocket_config_page_is_accessible` | ✅ `config should return 200` |
 | `/ui/health` | ✅ `test_health_page_returns_html` | ✅ `test_admin_rocket_health_page_is_accessible` | ✅ `health should return 200` |
-| `/ui/indexing` | ✅ `test_indexing_page_returns_html` | ✅ `test_admin_rocket_indexing_page_is_accessible` | ✅ `indexing should return 200` |
+| `/ui/jobs` | ✅ `test_jobs_page_returns_html` | ✅ `test_admin_rocket_jobs_page_is_accessible` | ✅ `jobs should return 200` |
 | `/ui/browse` | ✅ | ✅ `test_admin_rocket_browse_page_is_accessible` | ✅ `browse should return 200` |
 | `/favicon.ico` | ✅ `test_favicon_returns_svg` | ✅ `test_admin_rocket_favicon_is_accessible` | ✅ `favicon should return SVG` |
 | `/ui/theme.css` | ❌ | ✅ `test_admin_rocket_theme_css_is_accessible` | ✅ `theme CSS should return 200` |

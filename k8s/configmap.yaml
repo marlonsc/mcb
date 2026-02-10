@@ -7,16 +7,18 @@ metadata:
 data:
   config.toml: |
     [server]
+    transport_mode = "http"
+
+    [server.network]
     host = "0.0.0.0"
     port = 3000
 
-    [metrics]
-    port = 3001
+    [system.infrastructure.metrics]
     enabled = true
 
-    [cache]
+    [system.infrastructure.cache]
     enabled = true
-    default_ttl_seconds = 3600
+    default_ttl_secs = 3600
     max_size = 10000
 
     [cache.namespaces.embeddings]

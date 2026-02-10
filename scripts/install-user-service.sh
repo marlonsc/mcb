@@ -25,9 +25,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Check if binary exists
 BINARY_SOURCE="$PROJECT_ROOT/target/release/mcb"
 if [ ! -f "$BINARY_SOURCE" ]; then
-    echo -e "${YELLOW}Release binary not found. Building with make...${NC}"
-    cd "$PROJECT_ROOT"
-    make build-release
+	echo -e "${YELLOW}Release binary not found. Building with make...${NC}"
+	cd "$PROJECT_ROOT"
+	make build-release
 fi
 
 # Create required directories
@@ -45,32 +45,21 @@ chmod 755 ~/.local/bin/mcb
 # Copy config if it doesn't exist
 CONFIG_DEST="$HOME/.config/mcb/config.toml"
 if [ ! -f "$CONFIG_DEST" ]; then
-    if [ -f "$PROJECT_ROOT/config.example.toml" ]; then
-        echo "Creating default configuration..."
-        cp "$PROJECT_ROOT/config.example.toml" "$CONFIG_DEST"
-    else
-        echo "Creating minimal configuration..."
-        cat > "$CONFIG_DEST" << 'EOF'
-# MCP Context Browser Configuration
-# See documentation for all options
-
-[transport]
-mode = "hybrid"
-
-[transport.http]
-bind_address = "127.0.0.1"
-
-[metrics]
-# Unified port for Admin + Metrics + MCP HTTP (default: 3001)
-port = 3001
-enabled = true
-EOF
-    fi
-    echo -e "${GREEN}Created config at $CONFIG_DEST${NC}"
+	if [ -f "$PROJECT_ROOT/config.example.toml" ]; then
+		echo "Creating default configuration..."
+		cp "$PROJECT_ROOT/config.example.toml" "$CONFIG_DEST"
+	elif [ -f "$PROJECT_ROOT/config/default.toml" ]; then
+		echo "Creating configuration from canonical defaults..."
+		cp "$PROJECT_ROOT/config/default.toml" "$CONFIG_DEST"
+	else
+		echo -e "${RED}No default configuration found at $PROJECT_ROOT/config/default.toml${NC}"
+		exit 1
+	fi
+	echo -e "${GREEN}Created config at $CONFIG_DEST${NC}"
 else
-    echo -e "${YELLOW}Config already exists at $CONFIG_DEST, checking for migration...${NC}"
-    # Run config migration if needed
-    "$SCRIPT_DIR/migrate-config.sh" "$CONFIG_DEST"
+	echo -e "${YELLOW}Config already exists at $CONFIG_DEST, checking for migration...${NC}"
+	# Run config migration if needed
+	"$SCRIPT_DIR/migrate-config.sh" "$CONFIG_DEST"
 fi
 
 # Install systemd service
