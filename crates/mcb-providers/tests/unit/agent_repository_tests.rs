@@ -5,18 +5,16 @@
 
 use std::sync::Arc;
 
+use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, ToolCall};
 use mcb_domain::entities::memory::SessionSummary;
 use mcb_domain::entities::project::Project;
+use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
 use mcb_providers::database::{
     create_agent_repository_from_executor, create_memory_repository_with_executor,
     create_project_repository_from_executor,
 };
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
 async fn setup_repositories() -> (
     Arc<dyn AgentRepository>,
@@ -30,9 +28,27 @@ async fn setup_repositories() -> (
     let (memory_repo, executor) = create_memory_repository_with_executor(db_path)
         .await
         .expect("Failed to create executor");
+    seed_default_org(executor.as_ref()).await;
     let agent_repo = create_agent_repository_from_executor(Arc::clone(&executor));
     let project_repo = create_project_repository_from_executor(Arc::clone(&executor));
     (agent_repo, memory_repo, project_repo, temp_dir)
+}
+
+async fn seed_default_org(executor: &dyn DatabaseExecutor) {
+    executor
+        .execute(
+            "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            &[
+                SqlParam::String(DEFAULT_ORG_ID.to_string()),
+                SqlParam::String("default".to_string()),
+                SqlParam::String("default".to_string()),
+                SqlParam::String("{}".to_string()),
+                SqlParam::I64(0),
+                SqlParam::I64(0),
+            ],
+        )
+        .await
+        .expect("seed default org");
 }
 
 fn create_test_project(id: &str) -> Project {

@@ -17,6 +17,21 @@ use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 /// a project to exist before storing observations.
 pub async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &str) {
     let now = chrono::Utc::now().timestamp();
+    // Ensure default organization exists (FK: projects.org_id → organizations.id)
+    executor
+        .execute(
+            "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            &[
+                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
+                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_NAME.to_string()),
+                SqlParam::String("default".to_string()),
+                SqlParam::String("{}".to_string()),
+                SqlParam::I64(now),
+                SqlParam::I64(now),
+            ],
+        )
+        .await
+        .unwrap();
     executor
         .execute(
             "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",

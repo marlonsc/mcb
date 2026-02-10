@@ -8,6 +8,7 @@
 
 pub mod agent;
 pub mod error_patterns;
+pub mod multi_tenant;
 
 use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 
@@ -56,7 +57,10 @@ impl ProjectSchema {
     }
 
     fn tables() -> Vec<TableDef> {
-        let mut tables = vec![
+        // Multi-tenant tables must come first (organizations referenced by projects.org_id)
+        let mut tables = multi_tenant::tables();
+
+        tables.extend(vec![
             TableDef {
                 name: "projects".to_string(),
                 columns: vec![
@@ -110,7 +114,6 @@ impl ProjectSchema {
                     },
                 ],
             },
-            // collections: user name <-> vector store name (replaces collection_mapping.json)
             TableDef {
                 name: "collections".to_string(),
                 columns: vec![
@@ -156,7 +159,7 @@ impl ProjectSchema {
                     },
                 ],
             },
-        ];
+        ]);
 
         // Add memory tables (observations, session_summaries)
         let memory_tables = super::memory::tables().into_iter().map(|mut t| {
@@ -313,6 +316,7 @@ impl ProjectSchema {
 
         indexes.extend(agent::indexes());
         indexes.extend(error_patterns::indexes());
+        indexes.extend(multi_tenant::indexes());
         indexes
     }
 }
@@ -347,11 +351,12 @@ impl ProjectSchema {
         ];
         fks.extend(agent::foreign_keys());
         fks.extend(error_patterns::foreign_keys());
+        fks.extend(multi_tenant::foreign_keys());
         fks
     }
 
     fn unique_constraints() -> Vec<UniqueConstraintDef> {
-        vec![
+        let mut ucs = vec![
             UniqueConstraintDef {
                 table: "projects".to_string(),
                 columns: vec!["org_id".to_string(), "name".to_string()],
@@ -368,7 +373,9 @@ impl ProjectSchema {
                     "file_path".to_string(),
                 ],
             },
-        ]
+        ];
+        ucs.extend(multi_tenant::unique_constraints());
+        ucs
     }
 }
 

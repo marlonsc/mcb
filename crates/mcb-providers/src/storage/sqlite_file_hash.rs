@@ -74,6 +74,23 @@ impl SqliteFileHashRepository {
 
     async fn ensure_project_exists(&self) -> Result<()> {
         let now = Self::now();
+        // Ensure default org exists (FK: projects.org_id → organizations.id)
+        sqlx::query(
+            r#"
+            INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            "#,
+        )
+        .bind(mcb_domain::constants::keys::DEFAULT_ORG_ID)
+        .bind(mcb_domain::constants::keys::DEFAULT_ORG_NAME)
+        .bind("default")
+        .bind("{}")
+        .bind(now)
+        .bind(now)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| Error::database(format!("Failed to ensure default org exists: {e}")))?;
+
         sqlx::query(
             r#"
             INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at)

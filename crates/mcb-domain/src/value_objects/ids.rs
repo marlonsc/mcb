@@ -87,3 +87,6 @@ define_id!(
     OrgId,
     "Strong typed identifier for an organization (tenant isolation)"
 );
+define_id!(UserId, "Strong typed identifier for a user");
+define_id!(TeamId, "Strong typed identifier for a team");
+define_id!(ApiKeyId, "Strong typed identifier for an API key");

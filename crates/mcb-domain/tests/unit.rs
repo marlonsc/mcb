@@ -60,3 +60,12 @@ mod workflow_tests;
 
 #[path = "unit/ids_tests.rs"]
 mod ids_tests;
+
+#[path = "unit/api_key_tests.rs"]
+mod api_key_tests;
+#[path = "unit/organization_tests.rs"]
+mod organization_tests;
+#[path = "unit/team_tests.rs"]
+mod team_tests;
+#[path = "unit/user_tests.rs"]
+mod user_tests;

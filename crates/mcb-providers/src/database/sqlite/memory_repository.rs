@@ -30,8 +30,23 @@ impl SqliteMemoryRepository {
 #[async_trait]
 impl MemoryRepository for SqliteMemoryRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
-        // GAP-2: Auto-create project if missing to prevent FK constraint violation
-        // This ensures the project exists before we try to link an observation to it.
+        // Ensure default org exists (FK: projects.org_id → organizations.id)
+        self.executor
+            .execute(
+                "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                &[
+                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
+                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_NAME.to_string()),
+                    SqlParam::String("default".to_string()),
+                    SqlParam::String("{}".to_string()),
+                    SqlParam::I64(observation.created_at),
+                    SqlParam::I64(observation.created_at),
+                ],
+            )
+            .await
+            .map_err(|e| Error::memory_with_source("auto-create default org", e))?;
+
+        // Auto-create project if missing to prevent FK constraint violation
         self.executor
             .execute(
                 "INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",

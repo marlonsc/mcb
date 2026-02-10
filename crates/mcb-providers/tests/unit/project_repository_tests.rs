@@ -2,17 +2,39 @@ use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::project::Project;
+use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::ProjectRepository;
-use mcb_providers::database::create_project_repository;
+use mcb_providers::database::{
+    create_memory_repository_with_executor, create_project_repository_from_executor,
+};
 
 async fn setup_repository() -> (Arc<dyn ProjectRepository>, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
 
-    let repo = create_project_repository(db_path)
+    let (_mem_repo, executor) = create_memory_repository_with_executor(db_path)
         .await
-        .expect("Failed to create project repository");
+        .expect("Failed to create executor");
+    seed_default_org(executor.as_ref()).await;
+    let repo = create_project_repository_from_executor(executor);
     (repo, temp_dir)
+}
+
+async fn seed_default_org(executor: &dyn DatabaseExecutor) {
+    executor
+        .execute(
+            "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            &[
+                SqlParam::String(DEFAULT_ORG_ID.to_string()),
+                SqlParam::String("default".to_string()),
+                SqlParam::String("default".to_string()),
+                SqlParam::String("{}".to_string()),
+                SqlParam::I64(0),
+                SqlParam::I64(0),
+            ],
+        )
+        .await
+        .expect("seed default org");
 }
 
 async fn setup_with_project(
@@ -170,7 +192,30 @@ async fn test_delete_project() {
 
 #[tokio::test]
 async fn test_org_isolation() {
-    let (repo, _temp) = setup_repository().await;
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+    let (_mem_repo, executor) = create_memory_repository_with_executor(db_path)
+        .await
+        .expect("create executor");
+
+    for org_id in &["org-A", "org-B"] {
+        executor
+            .execute(
+                "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                &[
+                    SqlParam::String(org_id.to_string()),
+                    SqlParam::String(org_id.to_string()),
+                    SqlParam::String(org_id.to_string()),
+                    SqlParam::String("{}".to_string()),
+                    SqlParam::I64(0),
+                    SqlParam::I64(0),
+                ],
+            )
+            .await
+            .expect("seed org");
+    }
+
+    let repo = create_project_repository_from_executor(executor);
     let project = Project {
         id: "proj-iso".to_string(),
         org_id: "org-A".to_string(),
