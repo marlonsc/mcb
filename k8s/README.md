@@ -1,6 +1,6 @@
-# 🚀 MCP Context Browser - Kubernetes Deployment
+# 🚀 Memory Context Browser - Kubernetes Deployment
 
-This documentation describes how to deploy MCP Context Browser in a Kubernetes cluster with horizontal auto-scaling using HPA (HorizontalPodAutoscaler).
+This documentation describes how to deploy Memory Context Browser in a Kubernetes cluster with horizontal auto-scaling using HPA (HorizontalPodAutoscaler).
 
 ## 📋 Prerequisites
 

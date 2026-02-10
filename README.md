@@ -15,7 +15,7 @@ understanding — all through the standard Model Context Protocol.
 - 🧠 **Persistent Memory** — Cross-session observation storage with timeline, tagging, and context injection
 - 🏗️ **Multi-Provider Architecture** — 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) and 6 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
 - 🌳 **AST-Aware Analysis** — Tree-sitter parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
-- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 2900+ tests)
+- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 2995+ tests)
 - 🔌 **MCP Protocol Native** — Seamless integration with Claude Desktop, Claude Code, and any MCP-compatible client
 - 🔒 **Git-Aware Indexing** — Repository-level context with branch comparison and impact analysis
 
