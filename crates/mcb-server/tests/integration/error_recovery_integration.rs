@@ -35,8 +35,11 @@ fn test_unknown_embedding_provider_error_message() {
     // Use match to avoid unwrap_err requiring Debug on Ok type
     match result {
         Err(err) => {
+            let err_text = err.to_string();
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err_text.contains("Unknown")
+                    || err_text.contains("not found")
+                    || err_text.contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -54,8 +57,11 @@ fn test_unknown_vector_store_provider_error_message() {
 
     match result {
         Err(err) => {
+            let err_text = err.to_string();
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err_text.contains("Unknown")
+                    || err_text.contains("not found")
+                    || err_text.contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -73,8 +79,11 @@ fn test_unknown_cache_provider_error_message() {
 
     match result {
         Err(err) => {
+            let err_text = err.to_string();
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err_text.contains("Unknown")
+                    || err_text.contains("not found")
+                    || err_text.contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -92,8 +101,11 @@ fn test_unknown_language_provider_error_message() {
 
     match result {
         Err(err) => {
+            let err_text = err.to_string();
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err_text.contains("Unknown")
+                    || err_text.contains("not found")
+                    || err_text.contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );

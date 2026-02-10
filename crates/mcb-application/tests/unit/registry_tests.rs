@@ -75,8 +75,8 @@ mod embedding_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
-                .unwrap_or("unknown")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         );
 
         // Verify the resolved provider has expected properties
@@ -105,7 +105,7 @@ mod embedding_registry_tests {
         match result {
             Err(err) => {
                 assert!(
-                    err.contains("Unknown provider"),
+                    err.to_string().contains("Unknown provider"),
                     "Error should describe the issue: {}",
                     err
                 );
@@ -184,8 +184,8 @@ mod vector_store_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
-                .unwrap_or("unknown")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         );
 
         let provider = result.expect("Provider should be valid");
@@ -252,8 +252,8 @@ mod cache_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
-                .unwrap_or("unknown")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         );
 
         let provider = result.expect("Provider should be valid");
@@ -316,8 +316,8 @@ mod language_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
-                .unwrap_or("unknown")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         );
     }
 }
