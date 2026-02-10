@@ -120,6 +120,28 @@ impl ValidatorRegistry {
         config: &ValidationConfig,
         names: &[&str],
     ) -> Result<Vec<Box<dyn Violation>>> {
+        let mut available = std::collections::BTreeSet::new();
+        for validator in &self.validators {
+            available.insert(validator.name());
+        }
+
+        let mut unknown: Vec<&str> = names
+            .iter()
+            .copied()
+            .filter(|name| !available.contains(name))
+            .collect();
+        unknown.sort_unstable();
+        unknown.dedup();
+
+        if !unknown.is_empty() {
+            let available_list = available.into_iter().collect::<Vec<_>>().join(", ");
+            return Err(anyhow::anyhow!(
+                "Unknown validator(s): {}. Available validators: {}",
+                unknown.join(", "),
+                available_list
+            ));
+        }
+
         let mut all_violations = Vec::new();
 
         for validator in &self.validators {
@@ -237,7 +259,8 @@ where
 mod tests {
     use std::collections::BTreeSet;
 
-    use super::ValidatorRegistry;
+    use super::{LegacyValidatorAdapter, ValidatorRegistry};
+    use crate::ValidationConfig;
 
     #[test]
     fn test_canonical_registry_completeness() {
@@ -263,5 +286,21 @@ mod tests {
             expected.len(),
             "registry must not contain duplicate validators"
         );
+    }
+
+    #[test]
+    fn test_validate_named_rejects_unknown_validators() {
+        let registry = ValidatorRegistry::new().with_validator(Box::new(
+            LegacyValidatorAdapter::new("known", "", |_| Ok(Vec::new())),
+        ));
+        let config = ValidationConfig::new(".");
+
+        let err = registry
+            .validate_named(&config, &["known", "unknown", "unknown"])
+            .expect_err("expected unknown validator names to fail");
+
+        let msg = err.to_string();
+        assert!(msg.contains("Unknown validator(s): unknown"));
+        assert!(msg.contains("Available validators: known"));
     }
 }
