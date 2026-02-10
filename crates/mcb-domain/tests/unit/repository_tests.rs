@@ -33,7 +33,7 @@ fn repository_construction() {
         name: "mcb-data-model".to_string(),
         url: "https://github.com/org/mcb-data-model".to_string(),
         local_path: "/home/dev/mcb-data-model".to_string(),
-        vcs_type: VcsType::Git.as_str().to_string(),
+        vcs_type: VcsType::Git,
         created_at: 1000,
         updated_at: 1000,
     };
@@ -41,7 +41,7 @@ fn repository_construction() {
     assert_eq!(repo.org_id, "org-001");
     assert_eq!(repo.project_id, "proj-001");
     assert_eq!(repo.name, "mcb-data-model");
-    assert_eq!(repo.vcs_type, "git");
+    assert_eq!(repo.vcs_type, VcsType::Git);
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn repository_serialization_roundtrip() {
         name: "backend".to_string(),
         url: "https://github.com/org/backend".to_string(),
         local_path: "/tmp/backend".to_string(),
-        vcs_type: "git".to_string(),
+        vcs_type: VcsType::Git,
         created_at: 2000,
         updated_at: 3000,
     };

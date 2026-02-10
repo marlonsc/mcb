@@ -22,7 +22,7 @@ pub struct Worktree {
     /// Filesystem path of the worktree.
     pub path: String,
     /// Current status of the worktree.
-    pub status: String,
+    pub status: WorktreeStatus,
     /// Agent session currently assigned to this worktree (if any).
     pub assigned_agent_id: Option<String>,
     /// Timestamp when the worktree was created (Unix epoch).
@@ -51,6 +51,12 @@ impl WorktreeStatus {
             Self::InUse => "in_use",
             Self::Pruned => "pruned",
         }
+    }
+}
+
+impl std::fmt::Display for WorktreeStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 

@@ -353,7 +353,7 @@ mod tests {
                 name: "my-repo".into(),
                 url: "https://github.com/org/repo".into(),
                 local_path: "/tmp/repo".into(),
-                vcs_type: "git".into(),
+                vcs_type: mcb_domain::entities::repository::VcsType::Git,
                 created_at: 0,
                 updated_at: 0,
             });
@@ -384,7 +384,7 @@ mod tests {
                 name: "my-repo".into(),
                 url: "https://github.com/org/repo".into(),
                 local_path: "/tmp/repo".into(),
-                vcs_type: "git".into(),
+                vcs_type: mcb_domain::entities::repository::VcsType::Git,
                 created_at: 0,
                 updated_at: 0,
             });

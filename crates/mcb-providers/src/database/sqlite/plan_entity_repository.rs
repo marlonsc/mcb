@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
+use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::PlanEntityRepository;
@@ -42,13 +42,17 @@ impl SqlitePlanEntityRepository {
 }
 
 fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
+    let status = req_str(row, "status")?
+        .parse::<PlanStatus>()
+        .unwrap_or(PlanStatus::Draft);
+
     Ok(Plan {
         id: req_str(row, "id")?,
         org_id: req_str(row, "org_id")?,
         project_id: req_str(row, "project_id")?,
         title: req_str(row, "title")?,
         description: req_str(row, "description")?,
-        status: req_str(row, "status")?,
+        status,
         created_by: req_str(row, "created_by")?,
         created_at: req_i64(row, "created_at")?,
         updated_at: req_i64(row, "updated_at")?,
@@ -68,11 +72,15 @@ fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
 }
 
 fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
+    let verdict = req_str(row, "verdict")?
+        .parse::<ReviewVerdict>()
+        .unwrap_or(ReviewVerdict::NeedsRevision);
+
     Ok(PlanReview {
         id: req_str(row, "id")?,
         plan_version_id: req_str(row, "plan_version_id")?,
         reviewer_id: req_str(row, "reviewer_id")?,
-        verdict: req_str(row, "verdict")?,
+        verdict,
         feedback: req_str(row, "feedback")?,
         created_at: req_i64(row, "created_at")?,
     })
@@ -100,7 +108,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
                     SqlParam::String(plan.project_id.clone()),
                     SqlParam::String(plan.title.clone()),
                     SqlParam::String(plan.description.clone()),
-                    SqlParam::String(plan.status.clone()),
+                    SqlParam::String(plan.status.to_string()),
                     SqlParam::String(plan.created_by.clone()),
                     SqlParam::I64(plan.created_at),
                     SqlParam::I64(plan.updated_at),
@@ -140,7 +148,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
                 &[
                     SqlParam::String(plan.title.clone()),
                     SqlParam::String(plan.description.clone()),
-                    SqlParam::String(plan.status.clone()),
+                    SqlParam::String(plan.status.to_string()),
                     SqlParam::I64(plan.updated_at),
                     SqlParam::String(plan.org_id.clone()),
                     SqlParam::String(plan.id.clone()),
@@ -204,7 +212,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
                     SqlParam::String(review.id.clone()),
                     SqlParam::String(review.plan_version_id.clone()),
                     SqlParam::String(review.reviewer_id.clone()),
-                    SqlParam::String(review.verdict.clone()),
+                    SqlParam::String(review.verdict.to_string()),
                     SqlParam::String(review.feedback.clone()),
                     SqlParam::I64(review.created_at),
                 ],

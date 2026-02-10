@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use mcb_domain::entities::repository::{Branch, Repository};
-use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
+use mcb_domain::entities::repository::{Branch, Repository, VcsType};
+use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::VcsEntityRepository;
@@ -43,6 +43,10 @@ impl SqliteVcsEntityRepository {
 }
 
 fn row_to_repository(row: &dyn SqlRow) -> Result<Repository> {
+    let vcs_type = req_str(row, "vcs_type")?
+        .parse::<VcsType>()
+        .unwrap_or(VcsType::Git);
+
     Ok(Repository {
         id: req_str(row, "id")?,
         org_id: req_str(row, "org_id")?,
@@ -50,7 +54,7 @@ fn row_to_repository(row: &dyn SqlRow) -> Result<Repository> {
         name: req_str(row, "name")?,
         url: req_str(row, "url")?,
         local_path: req_str(row, "local_path")?,
-        vcs_type: req_str(row, "vcs_type")?,
+        vcs_type,
         created_at: req_i64(row, "created_at")?,
         updated_at: req_i64(row, "updated_at")?,
     })
@@ -70,12 +74,16 @@ fn row_to_branch(row: &dyn SqlRow) -> Result<Branch> {
 }
 
 fn row_to_worktree(row: &dyn SqlRow) -> Result<Worktree> {
+    let status = req_str(row, "status")?
+        .parse::<WorktreeStatus>()
+        .unwrap_or(WorktreeStatus::Active);
+
     Ok(Worktree {
         id: req_str(row, "id")?,
         repository_id: req_str(row, "repository_id")?,
         branch_id: req_str(row, "branch_id")?,
         path: req_str(row, "path")?,
-        status: req_str(row, "status")?,
+        status,
         assigned_agent_id: row.try_get_string("assigned_agent_id")?,
         created_at: req_i64(row, "created_at")?,
         updated_at: req_i64(row, "updated_at")?,
@@ -117,7 +125,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                     SqlParam::String(repo.name.clone()),
                     SqlParam::String(repo.url.clone()),
                     SqlParam::String(repo.local_path.clone()),
-                    SqlParam::String(repo.vcs_type.clone()),
+                    SqlParam::String(repo.vcs_type.to_string()),
                     SqlParam::I64(repo.created_at),
                     SqlParam::I64(repo.updated_at),
                 ],
@@ -157,7 +165,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                     SqlParam::String(repo.name.clone()),
                     SqlParam::String(repo.url.clone()),
                     SqlParam::String(repo.local_path.clone()),
-                    SqlParam::String(repo.vcs_type.clone()),
+                    SqlParam::String(repo.vcs_type.to_string()),
                     SqlParam::I64(repo.updated_at),
                     SqlParam::String(repo.org_id.clone()),
                     SqlParam::String(repo.id.clone()),
@@ -256,7 +264,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                     SqlParam::String(wt.repository_id.clone()),
                     SqlParam::String(wt.branch_id.clone()),
                     SqlParam::String(wt.path.clone()),
-                    SqlParam::String(wt.status.clone()),
+                    SqlParam::String(wt.status.to_string()),
                     match &wt.assigned_agent_id {
                         Some(a) => SqlParam::String(a.clone()),
                         None => SqlParam::Null,
@@ -293,7 +301,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                 &[
                     SqlParam::String(wt.branch_id.clone()),
                     SqlParam::String(wt.path.clone()),
-                    SqlParam::String(wt.status.clone()),
+                    SqlParam::String(wt.status.to_string()),
                     match &wt.assigned_agent_id {
                         Some(a) => SqlParam::String(a.clone()),
                         None => SqlParam::Null,

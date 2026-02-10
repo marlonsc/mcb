@@ -34,7 +34,7 @@ fn plan_construction() {
         project_id: "proj-001".to_string(),
         title: "Migration plan".to_string(),
         description: "Migrate schema and data".to_string(),
-        status: PlanStatus::Draft.as_str().to_string(),
+        status: PlanStatus::Draft,
         created_by: "user-001".to_string(),
         created_at: 1000,
         updated_at: 1000,
@@ -43,7 +43,7 @@ fn plan_construction() {
     assert_eq!(plan.id, "plan-001");
     assert_eq!(plan.org_id, "org-001");
     assert_eq!(plan.project_id, "proj-001");
-    assert_eq!(plan.status, "draft");
+    assert_eq!(plan.status, PlanStatus::Draft);
 }
 
 #[test]
@@ -54,7 +54,7 @@ fn plan_serialization_roundtrip() {
         project_id: "proj-001".to_string(),
         title: "Execution plan".to_string(),
         description: "Execute rollout".to_string(),
-        status: "active".to_string(),
+        status: PlanStatus::Active,
         created_by: "user-001".to_string(),
         created_at: 2000,
         updated_at: 3000,
@@ -149,14 +149,14 @@ fn plan_review_construction() {
         id: "pr-001".to_string(),
         plan_version_id: "pv-001".to_string(),
         reviewer_id: "user-003".to_string(),
-        verdict: ReviewVerdict::Approved.as_str().to_string(),
+        verdict: ReviewVerdict::Approved,
         feedback: "Looks good".to_string(),
         created_at: 7000,
     };
 
     assert_eq!(review.id, "pr-001");
     assert_eq!(review.plan_version_id, "pv-001");
-    assert_eq!(review.verdict, "approved");
+    assert_eq!(review.verdict, ReviewVerdict::Approved);
 }
 
 #[test]
@@ -165,7 +165,7 @@ fn plan_review_serialization_roundtrip() {
         id: "pr-002".to_string(),
         plan_version_id: "pv-002".to_string(),
         reviewer_id: "user-004".to_string(),
-        verdict: "needs_revision".to_string(),
+        verdict: ReviewVerdict::NeedsRevision,
         feedback: "Please split into phases".to_string(),
         created_at: 8000,
     };

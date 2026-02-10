@@ -16,7 +16,7 @@ pub struct Plan {
     /// Detailed plan description.
     pub description: String,
     /// Current lifecycle status.
-    pub status: String,
+    pub status: PlanStatus,
     /// User that created the plan.
     pub created_by: String,
     /// Creation timestamp (Unix epoch).
@@ -51,6 +51,12 @@ impl PlanStatus {
             Self::Completed => "completed",
             Self::Archived => "archived",
         }
+    }
+}
+
+impl std::fmt::Display for PlanStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 
@@ -98,7 +104,7 @@ pub struct PlanReview {
     /// Reviewer user identifier.
     pub reviewer_id: String,
     /// Review verdict string.
-    pub verdict: String,
+    pub verdict: ReviewVerdict,
     /// Reviewer feedback text.
     pub feedback: String,
     /// Creation timestamp (Unix epoch).
@@ -125,6 +131,12 @@ impl ReviewVerdict {
             Self::Rejected => "rejected",
             Self::NeedsRevision => "needs_revision",
         }
+    }
+}
+
+impl std::fmt::Display for ReviewVerdict {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 

@@ -47,7 +47,7 @@ fn worktree_construction() {
         repository_id: "repo-001".to_string(),
         branch_id: "br-001".to_string(),
         path: "/home/dev/mcb-wt-feat".to_string(),
-        status: WorktreeStatus::Active.as_str().to_string(),
+        status: WorktreeStatus::Active,
         assigned_agent_id: None,
         created_at: 1000,
         updated_at: 1000,
@@ -55,7 +55,7 @@ fn worktree_construction() {
     assert_eq!(wt.id, "wt-001");
     assert_eq!(wt.repository_id, "repo-001");
     assert_eq!(wt.branch_id, "br-001");
-    assert_eq!(wt.status, "active");
+    assert_eq!(wt.status, WorktreeStatus::Active);
     assert!(wt.assigned_agent_id.is_none());
 }
 
@@ -66,12 +66,12 @@ fn worktree_with_assigned_agent() {
         repository_id: "repo-001".to_string(),
         branch_id: "br-002".to_string(),
         path: "/home/dev/mcb-wt-fix".to_string(),
-        status: WorktreeStatus::InUse.as_str().to_string(),
+        status: WorktreeStatus::InUse,
         assigned_agent_id: Some("agent-session-001".to_string()),
         created_at: 2000,
         updated_at: 3000,
     };
-    assert_eq!(wt.status, "in_use");
+    assert_eq!(wt.status, WorktreeStatus::InUse);
     assert_eq!(wt.assigned_agent_id, Some("agent-session-001".to_string()));
 }
 
@@ -82,7 +82,7 @@ fn worktree_serialization_roundtrip() {
         repository_id: "repo-002".to_string(),
         branch_id: "br-003".to_string(),
         path: "/tmp/worktrees/wt-003".to_string(),
-        status: "pruned".to_string(),
+        status: WorktreeStatus::Pruned,
         assigned_agent_id: None,
         created_at: 4000,
         updated_at: 5000,
@@ -90,7 +90,7 @@ fn worktree_serialization_roundtrip() {
     let json = serde_json::to_string(&wt).expect("serialize");
     let deserialized: Worktree = serde_json::from_str(&json).expect("deserialize");
     assert_eq!(deserialized.id, "wt-003");
-    assert_eq!(deserialized.status, "pruned");
+    assert_eq!(deserialized.status, WorktreeStatus::Pruned);
     assert_eq!(deserialized.path, "/tmp/worktrees/wt-003");
 }
 

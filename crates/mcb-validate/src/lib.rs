@@ -528,7 +528,10 @@ impl ArchitectureValidator {
         &self.config
     }
 
-    /// Run all validations and return a comprehensive report
+    /// Run all validations and return a comprehensive report.
+    ///
+    /// Deprecated execution path: this method manually orchestrates legacy and trait-based
+    /// validators. Prefer `validate_with_registry()` for the canonical execution path.
     pub fn validate_all(&mut self) -> Result<GenericReport> {
         let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
 
@@ -942,7 +945,7 @@ impl ArchitectureValidator {
         ValidatorRegistry::standard_for(&self.config.workspace_root)
     }
 
-    /// Validate using the new registry-based system
+    /// Validate using the canonical registry-based system.
     ///
     /// This runs only the validators that have been migrated to the new
     /// trait-based architecture. Use `validate_all()` for comprehensive

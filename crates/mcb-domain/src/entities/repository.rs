@@ -26,7 +26,7 @@ pub struct Repository {
     /// Local filesystem path where the repo is cloned.
     pub local_path: String,
     /// Version control system type.
-    pub vcs_type: String,
+    pub vcs_type: VcsType,
     /// Timestamp when the repository was first tracked (Unix epoch).
     pub created_at: i64,
     /// Timestamp of last metadata update (Unix epoch).
@@ -53,6 +53,12 @@ impl VcsType {
             Self::Mercurial => "mercurial",
             Self::Svn => "svn",
         }
+    }
+}
+
+impl std::fmt::Display for VcsType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 

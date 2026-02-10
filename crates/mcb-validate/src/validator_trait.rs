@@ -236,3 +236,55 @@ where
         (self.validate_fn)(config)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    use super::ValidatorRegistry;
+
+    #[test]
+    fn test_canonical_registry_completeness() {
+        let registry = ValidatorRegistry::standard_for(".");
+        let names: Vec<&'static str> = registry
+            .validators()
+            .iter()
+            .map(|validator| validator.name())
+            .collect();
+
+        let actual: BTreeSet<&'static str> = names.iter().copied().collect();
+        let expected: BTreeSet<&'static str> = [
+            "clean_architecture",
+            "layer_flow",
+            "port_adapter",
+            "visibility",
+            "dependency",
+            "quality",
+            "solid",
+            "naming",
+            "patterns",
+            "documentation",
+            "tests_org",
+            "performance",
+            "async_patterns",
+            "kiss",
+            "pmat",
+            "organization",
+            "implementation",
+            "refactoring",
+            "error_boundary",
+        ]
+        .into_iter()
+        .collect();
+
+        assert_eq!(
+            actual, expected,
+            "registry validator set must match canonical list"
+        );
+        assert_eq!(
+            names.len(),
+            expected.len(),
+            "registry must not contain duplicate validators"
+        );
+    }
+}
