@@ -24,6 +24,20 @@ use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use serde_json::json;
 
+/// Create a test configuration with a unique database path to allow parallel execution
+fn unique_test_config() -> AppConfig {
+    let mut config = AppConfig::default();
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time")
+        .as_nanos();
+    let thread_id = std::thread::current().id();
+    let db_path =
+        std::env::temp_dir().join(format!("mcb-fullstack-test-{}-{:?}.db", stamp, thread_id));
+    config.auth.user_db_path = Some(db_path);
+    config
+}
+
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {
     vec![
@@ -63,8 +77,7 @@ async fn main() {
 
 #[tokio::test]
 async fn test_init_app_creates_working_context() {
-    // Initialize app through DI
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let result = init_app(config).await;
 
     assert!(
@@ -102,7 +115,7 @@ async fn test_init_app_creates_working_context() {
 
 #[tokio::test]
 async fn test_embedding_generates_real_vectors() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -147,7 +160,7 @@ async fn test_embedding_generates_real_vectors() {
 
 #[tokio::test]
 async fn test_full_index_and_search_flow() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -224,7 +237,7 @@ async fn test_full_index_and_search_flow() {
 
 #[tokio::test]
 async fn test_provider_handles_return_same_instance() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     // Get embedding provider twice via handle
@@ -241,7 +254,7 @@ async fn test_provider_handles_return_same_instance() {
 
 #[tokio::test]
 async fn test_multiple_collections_isolated() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -316,7 +329,7 @@ async fn test_multiple_collections_isolated() {
 
 #[tokio::test]
 async fn test_embedding_dimensions_consistent() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
