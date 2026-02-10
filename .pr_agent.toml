@@ -1,0 +1,113 @@
+# Qodo Merge (PR-Agent) — MCB repository configuration
+# Only overrides from defaults. Full reference:
+# https://github.com/qodo-ai/pr-agent/blob/main/pr_agent/settings/configuration.toml
+
+[config]
+response_language = "en-US"
+output_relevant_configurations = false
+
+[github_app]
+handle_pr_actions = ['opened', 'reopened', 'ready_for_review']
+pr_commands = [
+    "/describe --pr_description.final_update_message=false",
+    "/review --pr_reviewer.num_max_findings=5",
+    "/improve",
+]
+handle_push_trigger = false
+
+[pr_reviewer]
+require_score_review = false
+require_tests_review = true
+require_estimate_effort_to_review = true
+require_can_be_split_review = false
+require_security_review = true
+require_ticket_analysis_review = true
+num_max_findings = 5
+persistent_comment = true
+enable_review_labels_security = true
+enable_review_labels_effort = true
+extra_instructions = """\
+You are reviewing a Rust 2024 edition workspace (9 crates) that follows Clean Architecture.
+
+Architecture rules (CI-blocking):
+- Dependencies point inward only: mcb-server -> mcb-infrastructure -> mcb-application -> mcb-domain
+- mcb-providers implements port traits from mcb-domain, registers via linkme distributed slices
+- mcb-domain has ZERO dependencies on other MCB crates
+- No direct imports from mcb-providers in mcb-server (use DI via mcb-infrastructure)
+
+Safety (workspace lints — deny):
+- unsafe_code is denied. Flag any unsafe block.
+- Flag unwrap()/expect() outside of test modules. Use ? and Result propagation.
+- Flag todo!()/unimplemented!() in non-draft code.
+- Flag empty catch / error-swallowing patterns.
+
+Patterns to enforce:
+- New providers MUST register via #[linkme::distributed_slice] with function pointers (not closures).
+- Error types use thiserror in domain, anyhow in application orchestration.
+- Async traits use #[async_trait] from the async-trait crate.
+- Services consume ports as Arc<dyn Trait>, never concrete provider types.
+- Import order: std -> external crates -> workspace crates (mcb_*) -> local modules.
+- Max line width: 100 chars (rustfmt.toml).
+- New logic MUST include tests.
+- Build commands use make targets, not raw cargo.
+"""
+
+[pr_description]
+publish_labels = true
+add_original_user_description = true
+generate_ai_title = false
+use_bullet_points = true
+enable_pr_type = true
+enable_semantic_files_types = true
+collapsible_file_list = 'adaptive'
+enable_pr_diagram = true
+enable_large_pr_handling = true
+
+[pr_code_suggestions]
+commitable_code_suggestions = false
+focus_only_on_problems = true
+persistent_comment = true
+suggestions_score_threshold = 5
+auto_extended_mode = true
+num_code_suggestions_per_chunk = 3
+extra_instructions = """\
+For this Rust project, focus suggestions on:
+- Missing error propagation (unwrap/expect outside tests)
+- Architecture boundary violations (wrong crate importing another)
+- Missing or inadequate tests for new logic
+- Potential performance issues (unnecessary clones, allocations in hot paths)
+- Security concerns (input validation, credential handling)
+Do NOT suggest style changes already handled by rustfmt (formatting, whitespace).
+"""
+
+[best_practices]
+content = """\
+## MCB Rust Best Practices
+
+### Architecture
+- Follow Clean Architecture: domain -> application -> infrastructure -> server
+- Port traits in mcb-domain, adapters in mcb-providers
+- Provider registration via linkme distributed slices
+- DI via dill IoC container (ADR-029)
+- Config via figment (ADR-025)
+
+### Safety
+- No unsafe code (workspace lint: deny)
+- No unwrap()/expect() outside tests
+- Use Result<T, Error> with thiserror/anyhow
+- Helper constructors for errors: Error::io(), Error::config()
+
+### Testing
+- Unit tests in crates/*/tests/unit/
+- Integration tests in crates/*/tests/integration.rs
+- Golden acceptance tests in tests/golden/
+- Use #[tokio::test] for async, tempfile for filesystem tests
+
+### Build System
+- Always use make targets: make build, make test, make lint, make validate
+- CI pipeline: lint -> test -> startup-smoke -> validate -> audit -> docs
+
+### Commits
+- Conventional commits: feat|fix|docs|refactor(scope): description
+- Scope = module or crate name
+"""
