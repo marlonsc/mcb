@@ -115,7 +115,7 @@ vo_path = ""
 infrastructure_path = ""
 application_path = ""
 ports_providers_path = ""
-identity_skip_suffixes = ["Builder", "Options", "Config", "Changes"]
+identity_skip_suffixes = ["Builder", "Options", "Config", "Changes", "Filter"]
 allowed_mutable_prefixes = ["set_", "add_", "remove_", "clear_", "reset_"]
 composition_root_skip_patterns = ["/di/"]
 

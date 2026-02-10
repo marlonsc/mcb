@@ -403,11 +403,12 @@ fn tool_result_to_json(result: rmcp::model::CallToolResult) -> serde_json::Value
     let content_json: Vec<serde_json::Value> = result
         .content
         .iter()
-        .map(|content| {
-            serde_json::to_value(content).unwrap_or(serde_json::json!({
+        .map(|content| match serde_json::to_value(content) {
+            Ok(value) => value,
+            Err(e) => serde_json::json!({
                 "type": "text",
-                "text": "Error serializing content"
-            }))
+                "text": format!("Error serializing content: {}", e)
+            }),
         })
         .collect();
 

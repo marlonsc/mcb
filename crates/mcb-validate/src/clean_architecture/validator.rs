@@ -155,9 +155,15 @@ impl CleanArchitectureValidator {
             if path.extension().is_some_and(|e| e == "rs") {
                 let content = std::fs::read_to_string(path)?;
 
+                let mut in_test_section = false;
                 for (line_num, line) in content.lines().enumerate() {
-                    // Skip test code
-                    if line.contains("#[test]") || line.contains("#[cfg(test)]") {
+                    // Skip inline/unit-test code sections (typically below #[cfg(test)]).
+                    // This avoids false positives from mock/test-only constructors in handlers.
+                    if line.contains("#[cfg(test)]") {
+                        in_test_section = true;
+                        continue;
+                    }
+                    if in_test_section || line.contains("#[test]") {
                         continue;
                     }
 
