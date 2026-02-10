@@ -32,7 +32,7 @@ AGENTS.md
 openspec/
 .check_*
 .test_*
-tests_results/
+test-results/
 .arbor/
 arbor-graph.json
 
