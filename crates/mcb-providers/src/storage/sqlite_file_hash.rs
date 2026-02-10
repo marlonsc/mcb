@@ -76,11 +76,12 @@ impl SqliteFileHashRepository {
         let now = Self::now();
         sqlx::query(
             r#"
-            INSERT OR IGNORE INTO projects (id, name, path, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             "#,
         )
         .bind(&self.project_id)
+        .bind(mcb_domain::constants::keys::DEFAULT_ORG_ID)
         .bind(&self.project_id)
         .bind(&self.project_id)
         .bind(now)

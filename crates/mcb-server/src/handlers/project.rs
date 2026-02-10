@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::ports::services::ProjectServiceInterface;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, /*Content,*/ ErrorData as McpError};
@@ -28,12 +29,14 @@ impl ProjectHandler {
         let project_id = &args.project_id;
         let _data = args.data.unwrap_or(Value::Null);
 
+        // TODO(phase-1): extract org_id from request context / auth token
+        let org_id = DEFAULT_ORG_ID;
+
         match (args.action, args.resource) {
-            // Project Operations
             (ProjectAction::Get, ProjectResource::Project) => {
                 let project = self
                     .service
-                    .get_project(project_id)
+                    .get_project(org_id, project_id)
                     .await
                     .map_err(to_mcp_error)?;
                 let json = serde_json::to_string_pretty(&project)
@@ -43,7 +46,11 @@ impl ProjectHandler {
                 )]))
             }
             (ProjectAction::List, ProjectResource::Project) => {
-                let projects = self.service.list_projects().await.map_err(to_mcp_error)?;
+                let projects = self
+                    .service
+                    .list_projects(org_id)
+                    .await
+                    .map_err(to_mcp_error)?;
                 let json = serde_json::to_string_pretty(&projects)
                     .map_err(|e| McpError::internal_error(e.to_string(), None))?;
                 Ok(CallToolResult::success(vec![rmcp::model::Content::text(
@@ -95,7 +102,7 @@ mod tests {
 
     #[async_trait]
     impl ProjectServiceInterface for MockProjectService {
-        async fn get_project(&self, id: &str) -> Result<Project> {
+        async fn get_project(&self, _org_id: &str, id: &str) -> Result<Project> {
             let projects = self.projects.lock().unwrap();
             projects
                 .iter()
@@ -106,7 +113,7 @@ mod tests {
                 })
         }
 
-        async fn list_projects(&self) -> Result<Vec<Project>> {
+        async fn list_projects(&self, _org_id: &str) -> Result<Vec<Project>> {
             let projects = self.projects.lock().unwrap();
             Ok(projects.clone())
         }
@@ -119,6 +126,7 @@ mod tests {
             let mut projects = service.projects.lock().unwrap();
             projects.push(Project {
                 id: "p1".to_string(),
+                org_id: DEFAULT_ORG_ID.to_string(),
                 name: "Test Project".to_string(),
                 path: "/tmp/test".to_string(),
                 created_at: 0,
@@ -149,6 +157,7 @@ mod tests {
             let mut projects = service.projects.lock().unwrap();
             projects.push(Project {
                 id: "p1".to_string(),
+                org_id: DEFAULT_ORG_ID.to_string(),
                 name: "Test Project".to_string(),
                 path: "/tmp/test".to_string(),
                 created_at: 0,

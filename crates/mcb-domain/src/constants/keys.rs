@@ -72,3 +72,13 @@ pub const METADATA_KEY_FILE_PATH: &str = "file_path";
 
 /// Metadata key for "vectors_count"
 pub const METADATA_KEY_VECTORS_COUNT: &str = "vectors_count";
+
+/// Column/Field name for "org_id"
+pub const ORG_ID: &str = "org_id";
+
+/// Default organization ID (hardcoded UUID for single-tenant bootstrap).
+/// All data created before multi-tenant is enabled uses this org.
+pub const DEFAULT_ORG_ID: &str = "00000000-0000-0000-0000-000000000001";
+
+/// Default organization name.
+pub const DEFAULT_ORG_NAME: &str = "default";

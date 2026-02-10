@@ -69,10 +69,18 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
+                        name: "org_id".to_string(),
+                        type_: ColumnType::Text,
+                        primary_key: false,
+                        unique: false,
+                        not_null: true,
+                        auto_increment: false,
+                    },
+                    ColumnDef {
                         name: "name".to_string(),
                         type_: ColumnType::Text,
                         primary_key: false,
-                        unique: true,
+                        unique: false,
                         not_null: true,
                         auto_increment: false,
                     },
@@ -269,6 +277,11 @@ impl ProjectSchema {
     fn indexes() -> Vec<IndexDef> {
         let mut indexes = vec![
             IndexDef {
+                name: "idx_projects_org".to_string(),
+                table: "projects".to_string(),
+                columns: vec!["org_id".to_string()],
+            },
+            IndexDef {
                 name: "idx_collections_project".to_string(),
                 table: "collections".to_string(),
                 columns: vec!["project_id".to_string()],
@@ -339,6 +352,10 @@ impl ProjectSchema {
 
     fn unique_constraints() -> Vec<UniqueConstraintDef> {
         vec![
+            UniqueConstraintDef {
+                table: "projects".to_string(),
+                columns: vec!["org_id".to_string(), "name".to_string()],
+            },
             UniqueConstraintDef {
                 table: "collections".to_string(),
                 columns: vec!["project_id".to_string(), "name".to_string()],

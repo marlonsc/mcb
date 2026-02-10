@@ -19,9 +19,10 @@ pub async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &s
     let now = chrono::Utc::now().timestamp();
     executor
         .execute(
-            "INSERT INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             &[
                 SqlParam::String(project_id.to_string()),
+                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
                 SqlParam::String(project_id.to_string()),
                 SqlParam::String("/test".to_string()),
                 SqlParam::I64(now),

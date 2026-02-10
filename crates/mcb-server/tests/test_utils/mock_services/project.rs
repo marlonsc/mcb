@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::{ProjectDetectorService, ProjectServiceInterface};
@@ -23,10 +24,12 @@ impl ProjectDetectorService for MockProjectService {
 impl ProjectServiceInterface for MockProjectService {
     async fn get_project(
         &self,
+        _org_id: &str,
         _id: &str,
     ) -> mcb_domain::error::Result<mcb_domain::entities::project::Project> {
         Ok(mcb_domain::entities::project::Project {
             id: "test".to_string(),
+            org_id: DEFAULT_ORG_ID.to_string(),
             name: "test".to_string(),
             path: "/tmp/test".to_string(),
             created_at: 0,
@@ -36,6 +39,7 @@ impl ProjectServiceInterface for MockProjectService {
 
     async fn list_projects(
         &self,
+        _org_id: &str,
     ) -> mcb_domain::error::Result<Vec<mcb_domain::entities::project::Project>> {
         Ok(vec![])
     }
@@ -61,23 +65,29 @@ impl ProjectRepository for MockProjectRepository {
     }
     async fn get_by_id(
         &self,
+        _org_id: &str,
         _id: &str,
     ) -> mcb_domain::error::Result<Option<mcb_domain::entities::project::Project>> {
         Ok(None)
     }
     async fn get_by_name(
         &self,
+        _org_id: &str,
         _name: &str,
     ) -> mcb_domain::error::Result<Option<mcb_domain::entities::project::Project>> {
         Ok(None)
     }
     async fn get_by_path(
         &self,
+        _org_id: &str,
         _path: &str,
     ) -> mcb_domain::error::Result<Option<mcb_domain::entities::project::Project>> {
         Ok(None)
     }
-    async fn list(&self) -> mcb_domain::error::Result<Vec<mcb_domain::entities::project::Project>> {
+    async fn list(
+        &self,
+        _org_id: &str,
+    ) -> mcb_domain::error::Result<Vec<mcb_domain::entities::project::Project>> {
         Ok(vec![])
     }
     async fn update(
@@ -86,7 +96,7 @@ impl ProjectRepository for MockProjectRepository {
     ) -> mcb_domain::error::Result<()> {
         Ok(())
     }
-    async fn delete(&self, _id: &str) -> mcb_domain::error::Result<()> {
+    async fn delete(&self, _org_id: &str, _id: &str) -> mcb_domain::error::Result<()> {
         Ok(())
     }
 }
@@ -110,6 +120,7 @@ impl Default for MockProjectWorkflowService {
 impl ProjectServiceInterface for MockProjectWorkflowService {
     async fn get_project(
         &self,
+        _org_id: &str,
         _id: &str,
     ) -> mcb_domain::error::Result<mcb_domain::entities::project::Project> {
         Err(mcb_domain::error::Error::not_found("Project not found"))
@@ -117,6 +128,7 @@ impl ProjectServiceInterface for MockProjectWorkflowService {
 
     async fn list_projects(
         &self,
+        _org_id: &str,
     ) -> mcb_domain::error::Result<Vec<mcb_domain::entities::project::Project>> {
         Ok(vec![])
     }

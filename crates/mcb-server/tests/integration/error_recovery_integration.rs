@@ -21,6 +21,14 @@ use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 
+fn test_config() -> (AppConfig, tempfile::TempDir) {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(db_path);
+    (config, temp_dir)
+}
+
 // ============================================================================
 // Provider Resolution Error Handling
 // ============================================================================
@@ -120,7 +128,7 @@ fn test_unknown_language_provider_error_message() {
 
 #[tokio::test]
 async fn test_search_empty_collection_returns_empty_not_error() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -162,8 +170,7 @@ async fn test_search_empty_collection_returns_empty_not_error() {
 
 #[tokio::test]
 async fn test_init_app_with_default_config_succeeds() {
-    // Default config should always work (uses null/memory providers)
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let result = init_app(config).await;
 
     assert!(
@@ -175,7 +182,7 @@ async fn test_init_app_with_default_config_succeeds() {
 
 #[tokio::test]
 async fn test_provider_handles_return_valid_instances() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     // All handles should return valid providers
@@ -204,7 +211,7 @@ async fn test_provider_handles_return_valid_instances() {
 
 #[tokio::test]
 async fn test_failed_search_doesnt_corrupt_state() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -304,7 +311,7 @@ fn test_resolve_with_empty_config_values() {
 
 #[tokio::test]
 async fn test_concurrent_handle_access() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let handle = ctx.embedding_handle();

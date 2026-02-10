@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 pub struct Project {
     /// Unique identifier for the project.
     pub id: String,
+    /// Organization this project belongs to (tenant isolation).
+    pub org_id: String,
     /// Display name of the project.
     pub name: String,
     /// Absolute filesystem path to the project root.

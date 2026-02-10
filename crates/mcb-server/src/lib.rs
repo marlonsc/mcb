@@ -64,7 +64,6 @@ pub mod formatter;
 pub mod handlers;
 pub mod hooks;
 pub mod init;
-pub mod legacy_compat;
 pub mod mcp_server;
 pub mod session;
 pub mod tools;

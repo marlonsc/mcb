@@ -165,7 +165,11 @@ pub async fn list_browse_projects(
         ));
     };
 
-    match project_workflow.list_projects().await {
+    // TODO(phase-1): extract org_id from admin auth context
+    match project_workflow
+        .list_projects(mcb_domain::constants::keys::DEFAULT_ORG_ID)
+        .await
+    {
         Ok(projects) => {
             let total = projects.len();
             Ok(Json(ProjectsBrowseResponse { projects, total }))

@@ -1,5 +1,2 @@
-//! MCB Server Utilities
-//!
-//! Common utility modules for server operations.
-
+pub mod collections;
 pub mod json;

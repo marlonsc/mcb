@@ -159,10 +159,10 @@ pub fn row_to_checkpoint(row: &dyn SqlRow) -> Result<Checkpoint> {
     })
 }
 
-/// Build a `Project` from a port row.
 pub fn row_to_project(row: &dyn SqlRow) -> Result<Project> {
     Ok(Project {
         id: required_string(row, "id")?,
+        org_id: required_string(row, "org_id")?,
         name: required_string(row, "name")?,
         path: required_string(row, "path")?,
         created_at: row

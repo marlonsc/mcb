@@ -83,3 +83,7 @@ define_id!(
     OperationId,
     "Strong typed identifier for an indexing operation"
 );
+define_id!(
+    OrgId,
+    "Strong typed identifier for an organization (tenant isolation)"
+);

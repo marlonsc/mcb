@@ -3,22 +3,17 @@ use async_trait::async_trait;
 use crate::entities::project::Project;
 use crate::error::Result;
 
-/// Port for project persistence (CRUD operations on Project entities and related workflow data).
+/// Port for project persistence with row-level tenant isolation.
+///
+/// All query methods require `org_id` to scope data to a single organization.
+/// Create/update use the `org_id` embedded in the `Project` entity.
 #[async_trait]
 pub trait ProjectRepository: Send + Sync {
-    // Project CRUD
-    /// Creates a new project record.
     async fn create(&self, project: &Project) -> Result<()>;
-    /// Retrieves a project by its unique identifier.
-    async fn get_by_id(&self, id: &str) -> Result<Option<Project>>;
-    /// Retrieves a project by its name.
-    async fn get_by_name(&self, name: &str) -> Result<Option<Project>>;
-    /// Retrieves a project by its filesystem path.
-    async fn get_by_path(&self, path: &str) -> Result<Option<Project>>;
-    /// Lists all registered projects.
-    async fn list(&self) -> Result<Vec<Project>>;
-    /// Updates an existing project record.
+    async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Option<Project>>;
+    async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Option<Project>>;
+    async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Option<Project>>;
+    async fn list(&self, org_id: &str) -> Result<Vec<Project>>;
     async fn update(&self, project: &Project) -> Result<()>;
-    /// Deletes a project by its identifier.
-    async fn delete(&self, id: &str) -> Result<()>;
+    async fn delete(&self, org_id: &str, id: &str) -> Result<()>;
 }

@@ -42,13 +42,13 @@ impl SqliteProjectRepository {
 
 #[async_trait]
 impl ProjectRepository for SqliteProjectRepository {
-    // Project CRUD
     async fn create(&self, project: &Project) -> Result<()> {
         self.executor
             .execute(
-                "INSERT INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(project.id.clone()),
+                    SqlParam::String(project.org_id.clone()),
                     SqlParam::String(project.name.clone()),
                     SqlParam::String(project.path.clone()),
                     SqlParam::I64(project.created_at),
@@ -58,40 +58,52 @@ impl ProjectRepository for SqliteProjectRepository {
             .await
     }
 
-    async fn get_by_id(&self, id: &str) -> Result<Option<Project>> {
+    async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Option<Project>> {
         self.query_one_and_convert(
-            "SELECT * FROM projects WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            "SELECT * FROM projects WHERE org_id = ? AND id = ?",
+            &[
+                SqlParam::String(org_id.to_string()),
+                SqlParam::String(id.to_string()),
+            ],
             row_convert::row_to_project,
             "project",
         )
         .await
     }
 
-    async fn get_by_name(&self, name: &str) -> Result<Option<Project>> {
+    async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Option<Project>> {
         self.query_one_and_convert(
-            "SELECT * FROM projects WHERE name = ?",
-            &[SqlParam::String(name.to_string())],
+            "SELECT * FROM projects WHERE org_id = ? AND name = ?",
+            &[
+                SqlParam::String(org_id.to_string()),
+                SqlParam::String(name.to_string()),
+            ],
             row_convert::row_to_project,
             "project",
         )
         .await
     }
 
-    async fn get_by_path(&self, path: &str) -> Result<Option<Project>> {
+    async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Option<Project>> {
         self.query_one_and_convert(
-            "SELECT * FROM projects WHERE path = ?",
-            &[SqlParam::String(path.to_string())],
+            "SELECT * FROM projects WHERE org_id = ? AND path = ?",
+            &[
+                SqlParam::String(org_id.to_string()),
+                SqlParam::String(path.to_string()),
+            ],
             row_convert::row_to_project,
             "project",
         )
         .await
     }
 
-    async fn list(&self) -> Result<Vec<Project>> {
+    async fn list(&self, org_id: &str) -> Result<Vec<Project>> {
         let rows = self
             .executor
-            .query_all("SELECT * FROM projects", &[])
+            .query_all(
+                "SELECT * FROM projects WHERE org_id = ?",
+                &[SqlParam::String(org_id.to_string())],
+            )
             .await?;
         let mut projects = Vec::with_capacity(rows.len());
         for row in rows {
@@ -106,22 +118,26 @@ impl ProjectRepository for SqliteProjectRepository {
     async fn update(&self, project: &Project) -> Result<()> {
         self.executor
             .execute(
-                "UPDATE projects SET name = ?, path = ?, updated_at = ? WHERE id = ?",
+                "UPDATE projects SET name = ?, path = ?, updated_at = ? WHERE org_id = ? AND id = ?",
                 &[
                     SqlParam::String(project.name.clone()),
                     SqlParam::String(project.path.clone()),
                     SqlParam::I64(project.updated_at),
+                    SqlParam::String(project.org_id.clone()),
                     SqlParam::String(project.id.clone()),
                 ],
             )
             .await
     }
 
-    async fn delete(&self, id: &str) -> Result<()> {
+    async fn delete(&self, org_id: &str, id: &str) -> Result<()> {
         self.executor
             .execute(
-                "DELETE FROM projects WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                "DELETE FROM projects WHERE org_id = ? AND id = ?",
+                &[
+                    SqlParam::String(org_id.to_string()),
+                    SqlParam::String(id.to_string()),
+                ],
             )
             .await
     }

@@ -9,7 +9,6 @@ use rmcp::model::{CallToolResult, Content};
 use super::responses::{IndexResult, repo_path};
 use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
-use crate::legacy_compat as vcs_repository_registry;
 
 /// Indexes a repository for search.
 pub async fn index_repository(
@@ -75,7 +74,7 @@ pub async fn index_repository(
         total_files,
         commits_indexed,
     };
-    let _ = vcs_repository_registry::record_repository(repo.id(), repo.path());
+
     ResponseFormatter::json_success(&result)
 }
 

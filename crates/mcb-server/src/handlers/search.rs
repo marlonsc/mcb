@@ -13,7 +13,7 @@ use validator::Validate;
 
 use crate::args::{SearchArgs, SearchResource};
 use crate::formatter::ResponseFormatter;
-use crate::legacy_compat::map_collection_name;
+use crate::utils::collections::normalize_collection_name;
 
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]
@@ -56,7 +56,7 @@ impl SearchHandler {
         match args.resource {
             SearchResource::Code => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
-                let collection_id = match map_collection_name(collection_name) {
+                let collection_id = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
                     Err(e) => {
                         return Ok(CallToolResult::error(vec![Content::text(format!(

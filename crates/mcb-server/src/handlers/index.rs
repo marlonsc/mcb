@@ -13,7 +13,7 @@ use validator::Validate;
 
 use crate::args::{IndexAction, IndexArgs};
 use crate::formatter::ResponseFormatter;
-use crate::legacy_compat::map_collection_name;
+use crate::utils::collections::normalize_collection_name;
 
 /// Handler for codebase indexing MCP tool operations.
 #[derive(Clone)]
@@ -48,7 +48,7 @@ impl IndexHandler {
             ));
         }
         let collection_name = args.collection.as_deref().unwrap_or("default");
-        let collection_id = match map_collection_name(collection_name) {
+        let collection_id = match normalize_collection_name(collection_name) {
             Ok(id) => id,
             Err(e) => {
                 return Err(ResponseFormatter::format_indexing_error(
@@ -97,7 +97,7 @@ impl IndexHandler {
             }
             IndexAction::Clear => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
-                let milvus_collection = match map_collection_name(collection_name) {
+                let milvus_collection = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
                     Err(e) => {
                         return Ok(ResponseFormatter::format_indexing_error(

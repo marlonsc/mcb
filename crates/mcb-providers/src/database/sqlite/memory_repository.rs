@@ -34,9 +34,10 @@ impl MemoryRepository for SqliteMemoryRepository {
         // This ensures the project exists before we try to link an observation to it.
         self.executor
             .execute(
-                "INSERT OR IGNORE INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                "INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(observation.project_id.clone()),
+                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
                     SqlParam::String(format!("Project {}", observation.project_id)),
                     SqlParam::String("default".to_string()),
                     SqlParam::I64(observation.created_at),

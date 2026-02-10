@@ -39,6 +39,7 @@ fn create_test_project(id: &str) -> Project {
     let now = 1000000i64;
     Project {
         id: id.to_string(),
+        org_id: mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string(),
         name: "Test Project".to_string(),
         path: "/tmp/test".to_string(),
         created_at: now,

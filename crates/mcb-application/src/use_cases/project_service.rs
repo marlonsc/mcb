@@ -22,15 +22,14 @@ impl ProjectServiceImpl {
 
 #[async_trait]
 impl ProjectServiceInterface for ProjectServiceImpl {
-    // Project operations
-    async fn get_project(&self, id: &str) -> Result<Project> {
+    async fn get_project(&self, org_id: &str, id: &str) -> Result<Project> {
         self.repository
-            .get_by_id(id)
+            .get_by_id(org_id, id)
             .await?
             .ok_or_else(|| Error::not_found(format!("Project {}", id)))
     }
 
-    async fn list_projects(&self) -> Result<Vec<Project>> {
-        self.repository.list().await
+    async fn list_projects(&self, org_id: &str) -> Result<Vec<Project>> {
+        self.repository.list(org_id).await
     }
 }
