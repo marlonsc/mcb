@@ -84,7 +84,7 @@ redis = { version = "1.0", features = ["tokio-comp", "connection-manager"] }
 
 # Cryptography
 aes-gcm = "0.10"
-rand = "0.9"
+rand = "0.10"
 
 # Authentication
 # NOTE: jsonwebtoken removed in v0.1.4 (RUSTSEC-2023-0071) - was never actually used
@@ -151,7 +151,7 @@ schemars = "1.2"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "0.14", features = [
+rmcp = { version = "0.15", features = [
     "server",
     "client",
     "macros",
