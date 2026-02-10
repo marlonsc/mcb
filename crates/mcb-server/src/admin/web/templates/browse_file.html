@@ -131,8 +131,10 @@
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 const data = await response.json();
-                document.getElementById('chunk-count').textContent = `${data.total} chunks indexed from this file`;
-                renderChunks(data.chunks, data.language);
+                const chunks = toArraySafe(data && data.chunks);
+                const total = toIntegerSafe(data && data.total, chunks.length);
+                document.getElementById('chunk-count').textContent = `${total} chunks indexed from this file`;
+                renderChunks(chunks, data && data.language);
             } catch (e) {
                 console.error('Error loading chunks:', e);
                 document.getElementById('chunk-count').textContent = '—';
@@ -145,7 +147,7 @@
             }
         }
 
-        function renderChunks(chunks, defaultLang) {
+        function renderChunks(chunks, _defaultLang) {
             const container = document.getElementById('chunks-container');
 
             if (!chunks || chunks.length === 0) {
@@ -162,14 +164,14 @@
                     <div class="card overflow-hidden" id="chunk-${idx}">
                         <div class="chunk-header flex items-center justify-between">
                             <div class="flex items-center space-x-4">
-                                <span class="chunk-lines">Lines ${chunk.start_line} - ${chunk.end_line}</span>
-                                <span class="chunk-id">${escapeHtml(chunk.id.substring(0, 12))}...</span>
+                                <span class="chunk-lines">Lines ${toIntegerSafe(chunk.start_line, 0)} - ${toIntegerSafe(chunk.end_line, 0)}</span>
+                                <span class="chunk-id">${escapeHtml(String(chunk.id || '').substring(0, 12))}...</span>
                             </div>
                             <button onclick="copyChunk(${idx})" class="text-sm text-gray-400 hover:text-white transition-colors">
                                 Copy
                             </button>
                         </div>
-                        <pre class="chunk-code" style="background: var(--bg-code); color: var(--text-primary);">${chunk.highlighted_html}</pre>
+                        <pre id="code-${idx}" class="chunk-code" style="background: var(--bg-code); color: var(--text-primary);">${chunk.highlighted_html || ''}</pre>
                     </div>
                 `;
             }).join('');
@@ -184,7 +186,9 @@
                     if (btn) {
                         const original = btn.textContent;
                         btn.textContent = 'Copied!';
-                        setTimeout(() => btn.textContent = original, 1500);
+                        setTimeout(() => {
+                            btn.textContent = original;
+                        }, 1500);
                     }
                 }
             }).catch(err => {
@@ -237,9 +241,11 @@
                     if (selectedChunk >= 0) copyChunk(selectedChunk);
                     break;
                 case 'Escape':
-                    // Go back to file list if we can navigate
-                    const backLink = document.getElementById('back-link');
-                    if (backLink) window.location.href = backLink.href;
+                    {
+                        // Go back to file list if we can navigate
+                        const backLink = document.getElementById('back-link');
+                        if (backLink) window.location.href = backLink.href;
+                    }
                     break;
             }
         });

@@ -385,38 +385,38 @@ impl VcsProvider for Git2Provider {
     }
 
     async fn list_repositories(&self, root: &Path) -> Result<Vec<VcsRepository>> {
-        use std::fs;
+        use walkdir::WalkDir;
 
         let mut repositories = Vec::new();
 
         // Check if root itself is a repository
         let root_is_repo = root.join(".git").exists();
-        #[allow(clippy::collapsible_if)]
-        if root_is_repo {
-            if let Ok(repo) = self.open_repository(root).await {
-                repositories.push(repo);
-            }
+        if root_is_repo && let Ok(repo) = self.open_repository(root).await {
+            repositories.push(repo);
         }
 
-        // Scan subdirectories for repositories (non-recursive for now)
-        if let Ok(entries) = fs::read_dir(root) {
-            for entry in entries.flatten() {
-                let Ok(metadata) = entry.metadata() else {
-                    continue;
-                };
+        // Recursively scan subdirectories for repositories (limit depth to 3)
+        // Use walkdir instead of fs::read_dir for recursion
+        let walker = WalkDir::new(root)
+            .min_depth(1)
+            .max_depth(3)
+            .follow_links(false)
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+            .filter(|e| e.file_type().is_dir());
 
-                if !metadata.is_dir() {
-                    continue;
-                }
+        for entry in walker {
+            let path = entry.path();
+            // Skip .git directories themselves
+            if path.file_name().and_then(|n| n.to_str()) == Some(".git") {
+                continue;
+            }
 
-                let path = entry.path();
-                if !path.join(".git").exists() {
-                    continue;
-                }
-
-                if let Ok(repo) = self.open_repository(&path).await {
-                    repositories.push(repo);
-                }
+            // Check for .git child directory
+            if path.join(".git").exists()
+                && let Ok(repo) = self.open_repository(path).await
+            {
+                repositories.push(repo);
             }
         }
 

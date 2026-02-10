@@ -75,7 +75,8 @@ mod embedding_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
+                .map(std::string::ToString::to_string)
+                .as_deref()
                 .unwrap_or("unknown")
         );
 
@@ -105,7 +106,7 @@ mod embedding_registry_tests {
         match result {
             Err(err) => {
                 assert!(
-                    err.contains("Unknown provider"),
+                    err.to_string().contains("Unknown provider"),
                     "Error should describe the issue: {}",
                     err
                 );
@@ -184,7 +185,8 @@ mod vector_store_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
+                .map(std::string::ToString::to_string)
+                .as_deref()
                 .unwrap_or("unknown")
         );
 
@@ -252,7 +254,8 @@ mod cache_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
+                .map(std::string::ToString::to_string)
+                .as_deref()
                 .unwrap_or("unknown")
         );
 
@@ -316,7 +319,8 @@ mod language_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
+                .map(std::string::ToString::to_string)
+                .as_deref()
                 .unwrap_or("unknown")
         );
     }

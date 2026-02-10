@@ -97,32 +97,35 @@
         document.body.addEventListener('htmx:afterSwap', function(evt) {
             if (evt.detail.target.id === 'health-content') {
                 try {
-                    const data = JSON.parse(evt.detail.xhr.responseText);
+                    const data = parseJsonSafe(evt.detail.xhr.responseText, {});
                     const safeStatus = ['healthy', 'degraded', 'unhealthy', 'unknown'].includes(String(data.status || '').toLowerCase())
                         ? String(data.status).toLowerCase() : 'unknown';
+                    const uptimeSeconds = toIntegerSafe(data.uptime_seconds, 0);
+                    const activeOps = toIntegerSafe(data.active_indexing_operations, 0);
+                    const dependencies = toArraySafe(data.dependencies);
                     let html = `
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div class="card">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Overall Status</h2>
                                 <div class="flex items-center justify-between">
                                     <span class="status-badge status-${safeStatus}">${escapeHtml(String(data.status || '').toUpperCase())}</span>
-                                    <span class="text-gray-500">Uptime: ${formatUptime(data.uptime_seconds)}</span>
+                                    <span class="text-gray-500">Uptime: ${formatUptime(uptimeSeconds)}</span>
                                 </div>
                             </div>
                             <div class="card">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Active Operations</h2>
-                                <p class="text-3xl font-semibold">${data.active_indexing_operations}</p>
+                                <p class="text-3xl font-semibold">${activeOps}</p>
                                 <p class="text-gray-500 text-sm">indexing operations in progress</p>
                             </div>
                         </div>
                     `;
 
-                    if (data.dependencies && data.dependencies.length > 0) {
+                    if (dependencies.length > 0) {
                         html += `
                             <div class="card">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Dependencies</h2>
                                 <div>
-                                    ${data.dependencies.map(dep => {
+                                    ${dependencies.map(dep => {
                                         const depSafe = ['healthy', 'degraded', 'unhealthy', 'unknown'].includes(String(dep.status || '').toLowerCase())
                                             ? String(dep.status).toLowerCase() : 'unknown';
                                         return `
@@ -155,12 +158,13 @@
 
             if (evt.detail.target.id === 'ready-status') {
                 try {
-                    const data = JSON.parse(evt.detail.xhr.responseText);
-                    const statusClass = data.ready ? 'status-healthy' : 'status-unhealthy';
-                    const statusText = data.ready ? 'READY' : 'NOT READY';
+                    const data = parseJsonSafe(evt.detail.xhr.responseText, {});
+                    const ready = Boolean(data.ready);
+                    const statusClass = ready ? 'status-healthy' : 'status-unhealthy';
+                    const statusText = ready ? 'READY' : 'NOT READY';
                     document.getElementById('ready-status').innerHTML = `
                         <span class="status-badge ${statusClass}">${statusText}</span>
-                        <p class="text-sm text-gray-500 mt-2">Uptime: ${formatUptime(data.uptime_seconds)}</p>
+                        <p class="text-sm text-gray-500 mt-2">Uptime: ${formatUptime(toIntegerSafe(data.uptime_seconds, 0))}</p>
                     `;
                 } catch (e) {
                     console.error('Error parsing ready response:', e);
@@ -169,11 +173,13 @@
 
             if (evt.detail.target.id === 'live-status') {
                 try {
-                    const data = JSON.parse(evt.detail.xhr.responseText);
-                    const statusClass = data.alive ? 'status-healthy' : 'status-unhealthy';
-                    const statusText = data.alive ? 'ALIVE' : 'NOT ALIVE';
+                    const data = parseJsonSafe(evt.detail.xhr.responseText, {});
+                    const alive = Boolean(data.alive);
+                    const statusClass = alive ? 'status-healthy' : 'status-unhealthy';
+                    const statusText = alive ? 'ALIVE' : 'NOT ALIVE';
                     document.getElementById('live-status').innerHTML = `
                         <span class="status-badge ${statusClass}">${statusText}</span>
+                        <p class="text-sm text-gray-500 mt-2">Uptime: ${formatUptime(toIntegerSafe(data.uptime_seconds, 0))}</p>
                     `;
                 } catch (e) {
                     console.error('Error parsing live response:', e);

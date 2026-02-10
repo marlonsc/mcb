@@ -75,7 +75,10 @@
         document.body.addEventListener('htmx:afterSwap', function(evt) {
             if (evt.detail.target.id === 'indexing-content') {
                 try {
-                    const data = JSON.parse(evt.detail.xhr.responseText);
+                    const data = parseJsonSafe(evt.detail.xhr.responseText, {});
+                    const activeOperations = toIntegerSafe(data.active_operations, 0);
+                    const isIndexing = Boolean(data.is_indexing);
+                    const operations = toArraySafe(data.operations);
                     let html = '';
 
                     // Summary card
@@ -85,40 +88,49 @@
                                 <div>
                                     <h2 class="text-lg font-semibold text-gray-900">Indexing Summary</h2>
                                     <p class="text-gray-500">
-                                        ${data.active_operations} active operation${data.active_operations !== 1 ? 's' : ''}
+                                        ${activeOperations} active operation${activeOperations !== 1 ? 's' : ''}
                                     </p>
                                 </div>
-                                <span class="status-badge ${data.is_indexing ? 'status-active' : 'status-idle'}">
-                                    ${data.is_indexing ? 'INDEXING' : 'IDLE'}
+                                <span class="status-badge ${isIndexing ? 'status-active' : 'status-idle'}">
+                                    ${isIndexing ? 'INDEXING' : 'IDLE'}
                                 </span>
                             </div>
                         </div>
                     `;
 
                     // Operations list
-                    if (data.operations && data.operations.length > 0) {
+                    if (operations.length > 0) {
                         html += `
                             <div class="card">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Active Operations</h2>
-                                ${data.operations.map(op => `
+                                ${operations.map(op => {
+                                    const progressPercent = toNumberSafe(op.progress_percent, 0);
+                                    const processedFiles = toIntegerSafe(op.processed_files, 0);
+                                    const totalFiles = toIntegerSafe(op.total_files, 0);
+                                    const startedAt = op.started_at ? new Date(op.started_at) : null;
+                                    const startedText = startedAt && !Number.isNaN(startedAt.getTime())
+                                        ? startedAt.toLocaleString()
+                                        : 'Unknown';
+                                    return `
                                     <div class="operation-card">
                                         <div class="flex justify-between items-start mb-2">
                                             <div>
                                                 <h3 class="font-medium text-gray-900">${escapeHtml(op.collection || '')}</h3>
                                                 <p class="text-sm text-gray-500">ID: ${escapeHtml(String(op.id || ''))}</p>
                                             </div>
-                                            <span class="text-sm font-semibold text-blue-600">${op.progress_percent.toFixed(1)}%</span>
+                                            <span class="text-sm font-semibold text-blue-600">${progressPercent.toFixed(1)}%</span>
                                         </div>
                                         <div class="progress-bar mb-2">
-                                            <div class="progress-fill" style="width: ${op.progress_percent}%"></div>
+                                            <div class="progress-fill" style="width: ${progressPercent}%"></div>
                                         </div>
                                         <div class="flex justify-between text-sm text-gray-500">
-                                            <span>${op.processed_files} / ${op.total_files} files</span>
+                                            <span>${processedFiles} / ${totalFiles} files</span>
                                             <span class="file-path" title="${escapeHtml((op.current_file || 'N/A').toString())}">${escapeHtml((op.current_file || 'Waiting...').toString())}</span>
                                         </div>
-                                        <p class="text-xs text-gray-400 mt-2">Started: ${new Date(op.started_at).toLocaleString()}</p>
+                                        <p class="text-xs text-gray-400 mt-2">Started: ${startedText}</p>
                                     </div>
-                                `).join('')}
+                                `;
+                                }).join('')}
                             </div>
                         `;
                     } else {

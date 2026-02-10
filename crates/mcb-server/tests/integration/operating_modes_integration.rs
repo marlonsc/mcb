@@ -888,3 +888,123 @@ async fn test_http_server_tools_call_index_status() {
         "Should have result from tool call"
     );
 }
+
+#[tokio::test]
+async fn test_http_server_tools_call_missing_params_returns_invalid_params() {
+    let port = get_free_port();
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
+
+    let http_config = HttpTransportConfig::localhost(port);
+    let transport = HttpTransport::new(http_config, server);
+
+    let rocket = transport.rocket();
+    let client = rocket::local::asynchronous::Client::tracked(rocket)
+        .await
+        .expect("Failed to create test client");
+
+    let request = McpRequest {
+        method: "tools/call".to_string(),
+        params: None,
+        id: Some(serde_json::json!(1)),
+    };
+
+    let response = client
+        .post("/mcp")
+        .header(rocket::http::ContentType::JSON)
+        .body(serde_json::to_string(&request).unwrap())
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), rocket::http::Status::Ok);
+
+    let body = response.into_string().await.expect("Response body");
+    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
+
+    let error = mcp_response
+        .error
+        .expect("Missing params should return error");
+    assert_eq!(error.code, -32602);
+}
+
+#[tokio::test]
+async fn test_http_server_tools_call_non_object_arguments_returns_invalid_params() {
+    let port = get_free_port();
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
+
+    let http_config = HttpTransportConfig::localhost(port);
+    let transport = HttpTransport::new(http_config, server);
+
+    let rocket = transport.rocket();
+    let client = rocket::local::asynchronous::Client::tracked(rocket)
+        .await
+        .expect("Failed to create test client");
+
+    let request = McpRequest {
+        method: "tools/call".to_string(),
+        params: Some(serde_json::json!({
+            "name": "index",
+            "arguments": "not-an-object"
+        })),
+        id: Some(serde_json::json!(1)),
+    };
+
+    let response = client
+        .post("/mcp")
+        .header(rocket::http::ContentType::JSON)
+        .body(serde_json::to_string(&request).unwrap())
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), rocket::http::Status::Ok);
+
+    let body = response.into_string().await.expect("Response body");
+    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
+
+    let error = mcp_response
+        .error
+        .expect("Non-object arguments should return error");
+    assert_eq!(error.code, -32602);
+}
+
+#[tokio::test]
+async fn test_http_server_tools_call_unknown_tool_returns_invalid_params() {
+    let port = get_free_port();
+    let (server_instance, _temp) = create_test_mcp_server().await;
+    let server = Arc::new(server_instance);
+
+    let http_config = HttpTransportConfig::localhost(port);
+    let transport = HttpTransport::new(http_config, server);
+
+    let rocket = transport.rocket();
+    let client = rocket::local::asynchronous::Client::tracked(rocket)
+        .await
+        .expect("Failed to create test client");
+
+    let request = McpRequest {
+        method: "tools/call".to_string(),
+        params: Some(serde_json::json!({
+            "name": "does-not-exist",
+            "arguments": {}
+        })),
+        id: Some(serde_json::json!(1)),
+    };
+
+    let response = client
+        .post("/mcp")
+        .header(rocket::http::ContentType::JSON)
+        .body(serde_json::to_string(&request).unwrap())
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), rocket::http::Status::Ok);
+
+    let body = response.into_string().await.expect("Response body");
+    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
+
+    let error = mcp_response
+        .error
+        .expect("Unknown tool should return error");
+    assert_eq!(error.code, -32602);
+}

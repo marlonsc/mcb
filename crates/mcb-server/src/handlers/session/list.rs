@@ -20,9 +20,7 @@ pub async fn list_sessions(
         agent_type: args
             .agent_type
             .as_ref()
-            .map(|value| value.parse())
-            .transpose()
-            .map_err(|_| McpError::invalid_params("Invalid agent_type", None))?,
+            .and_then(|value| value.parse().ok()),
         status: args
             .status
             .as_ref()

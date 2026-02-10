@@ -23,12 +23,23 @@
         return '';
     }
 
-    document.body.addEventListener('htmx:configRequest', function (evt) {
-        const key = ensureAdminKey();
-        if (key !== '') {
-            evt.detail.headers['X-Admin-Key'] = key;
+    function bindHtmxAdminHeader() {
+        if (!document.body) {
+            return;
         }
-    });
+        document.body.addEventListener('htmx:configRequest', function (evt) {
+            const key = ensureAdminKey();
+            if (key !== '') {
+                evt.detail.headers['X-Admin-Key'] = key;
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindHtmxAdminHeader);
+    } else {
+        bindHtmxAdminHeader();
+    }
 
     window.adminFetch = async function (url, options) {
         const opts = options || {};
@@ -45,15 +56,38 @@
 
     window.escapeHtml = function (text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text == null ? '' : String(text);
         return div.innerHTML;
     };
 
+    window.parseJsonSafe = function (raw, fallback) {
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return fallback;
+        }
+    };
+
+    window.toNumberSafe = function (value, fallback) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : fallback;
+    };
+
+    window.toIntegerSafe = function (value, fallback) {
+        const n = Number(value);
+        return Number.isInteger(n) ? n : fallback;
+    };
+
+    window.toArraySafe = function (value) {
+        return Array.isArray(value) ? value : [];
+    };
+
     window.formatUptime = function (seconds) {
-        const days = Math.floor(seconds / 86400);
-        const hours = Math.floor((seconds % 86400) / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
+        const safe = window.toIntegerSafe(seconds, 0);
+        const days = Math.floor(safe / 86400);
+        const hours = Math.floor((safe % 86400) / 3600);
+        const mins = Math.floor((safe % 3600) / 60);
+        const secs = Math.floor(safe % 60);
         if (days > 0) return `${days}d ${hours}h ${mins}m`;
         if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
         if (mins > 0) return `${mins}m ${secs}s`;

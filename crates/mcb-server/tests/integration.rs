@@ -69,6 +69,10 @@ mod admin_api_integration;
 #[path = "integration/validation_fixes_e2e.rs"]
 mod validation_fixes_e2e;
 
+// Gap fixes verification (GAP-1, GAP-2, GAP-3)
+#[path = "integration/gap_fixes_e2e.rs"]
+mod gap_fixes_e2e;
+
 // Golden Admin Web UI E2E tests (v0.2.0+)
 // CRITICAL: Tests admin_rocket() production config, not just isolated web_rocket()
 #[path = "integration/golden_admin_web_e2e.rs"]

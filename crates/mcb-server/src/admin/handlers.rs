@@ -111,6 +111,8 @@ pub struct IndexingOperationDetail {
     pub processed_files: usize,
     /// Total files
     pub total_files: usize,
+    /// Timestamp when operation started (ISO8601)
+    pub started_at: String,
 }
 
 /// Get indexing status endpoint
@@ -134,6 +136,7 @@ pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResp
                 progress_percent: progress,
                 processed_files: op.processed_files,
                 total_files: op.total_files,
+                started_at: op.started_at.to_rfc3339(),
             }
         })
         .collect();
@@ -150,6 +153,8 @@ pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResp
 pub struct ReadinessResponse {
     /// Whether the server is ready to accept requests
     pub ready: bool,
+    /// Server uptime in seconds
+    pub uptime_seconds: u64,
 }
 
 /// Liveness response
@@ -157,6 +162,8 @@ pub struct ReadinessResponse {
 pub struct LivenessResponse {
     /// Whether the server process is alive and responding
     pub alive: bool,
+    /// Server uptime in seconds
+    pub uptime_seconds: u64,
 }
 
 /// Readiness check endpoint (for k8s/docker health checks)
@@ -166,19 +173,35 @@ pub fn readiness_check(state: &State<AdminState>) -> (Status, Json<ReadinessResp
 
     // Consider ready if server has been up for at least 1 second
     if metrics.uptime_seconds >= 1 {
-        (Status::Ok, Json(ReadinessResponse { ready: true }))
+        (
+            Status::Ok,
+            Json(ReadinessResponse {
+                ready: true,
+                uptime_seconds: metrics.uptime_seconds,
+            }),
+        )
     } else {
         (
             Status::ServiceUnavailable,
-            Json(ReadinessResponse { ready: false }),
+            Json(ReadinessResponse {
+                ready: false,
+                uptime_seconds: metrics.uptime_seconds,
+            }),
         )
     }
 }
 
 /// Liveness check endpoint (for k8s/docker health checks)
 #[get("/live")]
-pub fn liveness_check() -> (Status, Json<LivenessResponse>) {
-    (Status::Ok, Json(LivenessResponse { alive: true }))
+pub fn liveness_check(state: &State<AdminState>) -> (Status, Json<LivenessResponse>) {
+    let metrics = state.metrics.get_performance_metrics();
+    (
+        Status::Ok,
+        Json(LivenessResponse {
+            alive: true,
+            uptime_seconds: metrics.uptime_seconds,
+        }),
+    )
 }
 
 // ============================================================================

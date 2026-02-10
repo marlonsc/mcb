@@ -21,7 +21,7 @@
         .config-section { margin-bottom: 1rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.375rem; }
         .config-section h4 { font-weight: 600; margin-bottom: 0.5rem; }
         .input-field { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; }
-        .input-field:focus { outline: none; border-color: #2563eb; ring: 2px; ring-color: #2563eb20; }
+        .input-field:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px #2563eb20; }
         .notification { padding: 1rem; border-radius: 0.375rem; margin-bottom: 1rem; }
         .notification-success { background: #dcfce7; color: #166534; }
         .notification-error { background: #fee2e2; color: #991b1b; }
@@ -66,18 +66,7 @@
                             hx-swap="innerHTML">
                         Refresh
                     </button>
-                    <button class="btn btn-primary"
-                            hx-post="/config/reload"
-                            hx-swap="none"
-                            hx-confirm="Reload configuration from file? This will apply any changes made to the config file."
-                            _="on htmx:afterRequest
-                               if event.detail.successful
-                                 put '<div class=\"notification notification-success\">Configuration reloaded successfully!</div>' into #notification-area
-                                 trigger configReloaded
-                               else
-                                 put '<div class=\"notification notification-error\">Failed to reload configuration</div>' into #notification-area
-                               end
-                               wait 3s then put '' into #notification-area">
+                    <button id="reload-config-button" class="btn btn-primary" onclick="reloadConfigFromFile()">
                         Reload from File
                     </button>
                 </div>
@@ -156,15 +145,24 @@
                 const enabledEl = document.getElementById('config-cache-enabled');
                 if (enabledEl) enabledEl.value = c.cache.enabled ? 'true' : 'false';
                 const maxSizeEl = document.getElementById('config-cache-max-size');
-                if (maxSizeEl && c.cache.max_size != null) maxSizeEl.value = String(c.cache.max_size);
+                if (maxSizeEl) {
+                    const maxSize = toIntegerSafe(c.cache.max_size, null);
+                    maxSizeEl.value = maxSize == null ? '' : String(maxSize);
+                }
             }
             if (c.server) {
                 const hostEl = document.getElementById('config-server-host');
                 if (hostEl && c.server.host != null) hostEl.value = c.server.host;
                 const portEl = document.getElementById('config-server-port');
-                if (portEl && c.server.port != null) portEl.value = String(c.server.port);
+                if (portEl) {
+                    const port = toIntegerSafe(c.server.port, null);
+                    portEl.value = port == null ? '' : String(port);
+                }
                 const adminPortEl = document.getElementById('config-server-admin-port');
-                if (adminPortEl && c.server.admin_port != null) adminPortEl.value = String(c.server.admin_port);
+                if (adminPortEl) {
+                    const adminPort = toIntegerSafe(c.server.admin_port, null);
+                    adminPortEl.value = adminPort == null ? '' : String(adminPort);
+                }
             }
         }
 
@@ -219,10 +217,35 @@
             return false;
         }
 
+        async function reloadConfigFromFile() {
+            const notification = document.getElementById('notification-area');
+            const confirmed = window.confirm('Reload configuration from file? This will apply any changes made to the config file.');
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const response = await adminFetch('/config/reload', { method: 'POST' });
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && data.success) {
+                    notification.innerHTML = '<div class="notification notification-success">Configuration reloaded successfully!</div>';
+                    document.body.dispatchEvent(new CustomEvent('configReloaded'));
+                } else {
+                    notification.innerHTML = `<div class="notification notification-error">${escapeHtml(data.message || 'Failed to reload configuration')}</div>`;
+                }
+            } catch (e) {
+                notification.innerHTML = `<div class="notification notification-error">Request failed: ${escapeHtml(String(e && e.message ? e.message : e))}</div>`;
+            }
+
+            setTimeout(() => {
+                notification.innerHTML = '';
+            }, 3000);
+        }
+
         document.body.addEventListener('htmx:afterSwap', function(evt) {
             if (evt.detail.target.id === 'config-display') {
                 try {
-                    const data = JSON.parse(evt.detail.xhr.responseText);
+                    const data = parseJsonSafe(evt.detail.xhr.responseText, {});
                     const formatted = JSON.stringify(data, null, 2);
                     document.getElementById('config-display').innerHTML = `<pre>${escapeHtml(formatted)}</pre>`;
                     populateConfigForms(data);

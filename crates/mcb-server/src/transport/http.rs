@@ -144,7 +144,7 @@ impl HttpTransport {
         };
         use crate::admin::config_handlers::{get_config, reload_config, update_config_section};
         use crate::admin::handlers::{
-            extended_health_check, get_cache_stats, get_indexing_status, health_check,
+            extended_health_check, get_cache_stats, get_indexing_status, get_metrics, health_check,
             liveness_check, readiness_check, shutdown,
         };
         use crate::admin::lifecycle_handlers::{
@@ -175,6 +175,7 @@ impl HttpTransport {
                     routes![
                         health_check,
                         extended_health_check,
+                        get_metrics,
                         get_indexing_status,
                         readiness_check,
                         liveness_check,
@@ -378,7 +379,16 @@ fn parse_tool_call_params(
         ))?
         .to_string();
 
-    let arguments = params.get("arguments").and_then(|v| v.as_object().cloned());
+    let arguments = match params.get("arguments") {
+        None | Some(serde_json::Value::Null) => None,
+        Some(value) => {
+            let object = value.as_object().cloned().ok_or((
+                JSONRPC_INVALID_PARAMS,
+                "Invalid 'arguments' parameter for tools/call: expected object",
+            ))?;
+            Some(object)
+        }
+    };
 
     Ok(CallToolRequestParams {
         name: tool_name.into(),
@@ -443,9 +453,14 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         Ok(result) => McpResponse::success(request.id.clone(), tool_result_to_json(result)),
         Err(e) => {
             error!(error = ?e, "Tool call failed");
+            let code = if e.code.0 == JSONRPC_INVALID_PARAMS {
+                JSONRPC_INVALID_PARAMS
+            } else {
+                JSONRPC_INTERNAL_ERROR
+            };
             McpResponse::error(
                 request.id.clone(),
-                JSONRPC_INTERNAL_ERROR,
+                code,
                 format!("Tool call failed: {:?}", e),
             )
         }

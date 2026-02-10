@@ -36,7 +36,9 @@ fn test_unknown_embedding_provider_error_message() {
     match result {
         Err(err) => {
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err.to_string().contains("Unknown")
+                    || err.to_string().contains("not found")
+                    || err.to_string().contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -55,7 +57,9 @@ fn test_unknown_vector_store_provider_error_message() {
     match result {
         Err(err) => {
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err.to_string().contains("Unknown")
+                    || err.to_string().contains("not found")
+                    || err.to_string().contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -74,7 +78,9 @@ fn test_unknown_cache_provider_error_message() {
     match result {
         Err(err) => {
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err.to_string().contains("Unknown")
+                    || err.to_string().contains("not found")
+                    || err.to_string().contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -93,7 +99,9 @@ fn test_unknown_language_provider_error_message() {
     match result {
         Err(err) => {
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err.to_string().contains("Unknown")
+                    || err.to_string().contains("not found")
+                    || err.to_string().contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );

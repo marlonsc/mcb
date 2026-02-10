@@ -105,7 +105,7 @@
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 const data = await response.json();
-                renderCollections(data.collections);
+                renderCollections(toArraySafe(data && data.collections));
             } catch (e) {
                 console.error('Error loading collections:', e);
                 grid.innerHTML = `
@@ -162,13 +162,15 @@
         }
 
         function formatNumber(num) {
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-            return num.toString();
+            const safeNum = toNumberSafe(num, 0);
+            if (safeNum >= 1000000) return (safeNum / 1000000).toFixed(1) + 'M';
+            if (safeNum >= 1000) return (safeNum / 1000).toFixed(1) + 'K';
+            return safeNum.toString();
         }
 
         function formatTimestamp(ts) {
-            return new Date(ts * 1000).toLocaleString();
+            const safeTs = toNumberSafe(ts, 0);
+            return new Date(safeTs * 1000).toLocaleString();
         }
 
         // Load on page ready

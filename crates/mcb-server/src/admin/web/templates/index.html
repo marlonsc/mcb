@@ -210,7 +210,7 @@
 
             eventTypes.forEach(eventType => {
                 eventSource.addEventListener(eventType, function(e) {
-                    handleEvent(eventType, JSON.parse(e.data));
+                    handleEvent(eventType, parseJsonSafe(e.data, {}));
                 });
             });
         }
@@ -247,14 +247,18 @@
                     break;
 
                 case 'IndexingProgress':
-                    const progress = data.total_files > 0
-                        ? Math.round((data.processed_files / data.total_files) * 100)
-                        : 0;
-                    addEventToLog('indexing', `Indexing progress: ${progress}% (${data.processed_files}/${data.total_files})`);
+                    {
+                        const total = toIntegerSafe(data.total, 0);
+                        const processed = toIntegerSafe(data.processed, 0);
+                        const progress = total > 0
+                            ? Math.round((processed / total) * 100)
+                            : 0;
+                        addEventToLog('indexing', `Indexing progress: ${progress}% (${processed}/${total})`);
+                    }
                     break;
 
                 case 'IndexingCompleted':
-                    addEventToLog('indexing', `Indexing completed: ${data.collection || 'unknown'} - ${data.total_indexed || 0} chunks indexed`);
+                    addEventToLog('indexing', `Indexing completed: ${data.collection || 'unknown'} - ${toIntegerSafe(data.chunks, 0)} chunks indexed`);
                     break;
 
                 case 'ConfigReloaded':
@@ -267,11 +271,11 @@
                     break;
 
                 case 'MetricsSnapshot':
-                    handleMetricsSnapshot(data);
+                    refreshMetrics();
                     break;
 
                 case 'SearchExecuted':
-                    addEventToLog('indexing', `Search executed: "${data.query?.substring(0, 30)}..." - ${data.results_count || 0} results`);
+                    addEventToLog('indexing', `Search executed: "${(data.query || '').toString().substring(0, 30)}..." - ${toIntegerSafe(data.results, 0)} results`);
                     break;
 
                 case 'CacheInvalidate':
@@ -314,6 +318,37 @@
             }
         }
 
+        async function refreshMetrics() {
+            try {
+                const metricsResponse = await adminFetch('/metrics');
+                if (!metricsResponse.ok) {
+                    document.getElementById('metric-total-queries').textContent = '0';
+                    document.getElementById('metric-success-rate').textContent = '0.0%';
+                    document.getElementById('metric-cache-hit').textContent = '0.0%';
+                    document.getElementById('metric-avg-response').textContent = '0.0ms';
+                    return;
+                }
+                const metrics = await metricsResponse.json();
+                const totalQueries = toIntegerSafe(metrics.total_queries, 0);
+                const successfulQueries = toIntegerSafe(metrics.successful_queries, 0);
+                const cacheHitRate = toNumberSafe(metrics.cache_hit_rate, 0);
+                const avgResponseMs = toNumberSafe(metrics.average_response_time_ms, 0);
+
+                document.getElementById('metric-total-queries').textContent = String(totalQueries);
+                const successRate = totalQueries > 0
+                    ? ((successfulQueries / totalQueries) * 100).toFixed(1)
+                    : '0.0';
+                document.getElementById('metric-success-rate').textContent = successRate + '%';
+                document.getElementById('metric-cache-hit').textContent = (cacheHitRate * 100).toFixed(1) + '%';
+                document.getElementById('metric-avg-response').textContent = avgResponseMs.toFixed(1) + 'ms';
+            } catch (e) {
+                document.getElementById('metric-total-queries').textContent = '0';
+                document.getElementById('metric-success-rate').textContent = '0.0%';
+                document.getElementById('metric-cache-hit').textContent = '0.0%';
+                document.getElementById('metric-avg-response').textContent = '0.0ms';
+            }
+        }
+
         // =========================================================================
         // Event Log Management
         // =========================================================================
@@ -350,7 +385,8 @@
         async function refreshServices() {
             try {
                 const response = await adminFetch('/services');
-                const services = await response.json();
+                const payload = await response.json();
+                const services = toArraySafe(payload && payload.services);
                 renderServices(services);
             } catch (e) {
                 console.error('Error fetching services:', e);
@@ -419,7 +455,8 @@
         async function healthCheckAll() {
             try {
                 const response = await adminFetch('/services/health');
-                const checks = await response.json();
+                const payload = await response.json();
+                const checks = toArraySafe(payload && payload.checks);
 
                 checks.forEach(check => {
                     addEventToLog('health', `${check.name}: ${check.status} ${check.message ? '- ' + check.message : ''}`);
@@ -438,28 +475,17 @@
             try {
                 const healthResponse = await fetch('/health');
                 const health = await healthResponse.json();
-                document.getElementById('status-value').textContent = health.status.toUpperCase();
-                document.getElementById('status-value').className = 'mt-2 text-3xl font-semibold status-' + health.status;
-                document.getElementById('uptime-value').textContent = formatUptime(health.uptime_seconds);
-                document.getElementById('active-ops-value').textContent = health.active_indexing_operations;
+                const status = (health.status || 'unknown').toString().toLowerCase();
+                document.getElementById('status-value').textContent = status.toUpperCase();
+                document.getElementById('status-value').className = 'mt-2 text-3xl font-semibold status-' + status;
+                document.getElementById('uptime-value').textContent = formatUptime(toIntegerSafe(health.uptime_seconds, 0));
+                document.getElementById('active-ops-value').textContent = String(toIntegerSafe(health.active_indexing_operations, 0));
             } catch (e) {
                 console.error('Error loading health:', e);
             }
 
             // Load metrics
-            try {
-                const metricsResponse = await adminFetch('/metrics');
-                const metrics = await metricsResponse.json();
-                document.getElementById('metric-total-queries').textContent = metrics.total_queries;
-                const successRate = metrics.total_queries > 0
-                    ? ((metrics.successful_queries / metrics.total_queries) * 100).toFixed(1)
-                    : '0.0';
-                document.getElementById('metric-success-rate').textContent = successRate + '%';
-                document.getElementById('metric-cache-hit').textContent = (metrics.cache_hit_rate * 100).toFixed(1) + '%';
-                document.getElementById('metric-avg-response').textContent = metrics.average_response_time_ms.toFixed(1) + 'ms';
-            } catch (e) {
-                console.error('Error loading metrics:', e);
-            }
+            await refreshMetrics();
 
             // Load services
             refreshServices();

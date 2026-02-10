@@ -4,7 +4,7 @@
 # Parameters: FIX, CI_MODE, STRICT, QUICK, LCOV (from main Makefile)
 # =============================================================================
 
-.PHONY: quality fmt lint validate audit coverage update qlty-check qlty-smells
+.PHONY: check quality fmt lint validate audit coverage update qlty-check qlty-smells
 
 # =============================================================================
 # QUALITY - Full check (fmt + lint + test)
@@ -16,6 +16,12 @@ quality: ## Full check: fmt + lint + test (pre-commit gate)
 	@$(MAKE) lint
 	@$(MAKE) test SCOPE=all
 	@echo "Quality checks passed."
+
+check: ## Non-mutating check: lint + test
+	@echo "Running checks (lint + test)..."
+	@$(MAKE) lint
+	@$(MAKE) test SCOPE=all
+	@echo "Checks passed."
 
 # =============================================================================
 # FMT - Format Rust and Markdown
@@ -127,5 +133,4 @@ qlty-smells: ## Run qlty smells and analyze results
 	@echo "Analyzing smells..."
 	@python3 scripts/analyze_smells.py
 	@echo "Done. Results saved to qlty.smells.lst"
-
 
