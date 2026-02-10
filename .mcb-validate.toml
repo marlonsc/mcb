@@ -109,6 +109,7 @@ vo_path = "crates/mcb-domain/src/value_objects"
 infrastructure_path = "crates/mcb-infrastructure/src"
 application_path = "crates/mcb-application/src"
 ports_providers_path = "crates/mcb-domain/src/ports"
+identity_skip_suffixes = ["Builder", "Options", "Config", "Changes", "Filter"]
 
 [rules.solid]
 enabled = true
