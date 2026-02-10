@@ -1,31 +1,48 @@
 # Qodo Merge (PR-Agent) — MCB repository configuration
-# Only overrides from defaults. Full reference:
-# https://github.com/qodo-ai/pr-agent/blob/main/pr_agent/settings/configuration.toml
+# ALL features enabled at maximum thoroughness.
+# Full reference: https://github.com/qodo-ai/pr-agent/blob/main/pr_agent/settings/configuration.toml
 
+# ===========================================================================
+# Core Settings
+# ===========================================================================
 [config]
 response_language = "en-US"
-output_relevant_configurations = false
+output_relevant_configurations = true
+add_repo_metadata = true
+reasoning_effort = "high"
 
+# ===========================================================================
+# GitHub App — Triggers & Commands
+# ===========================================================================
 [github_app]
 handle_pr_actions = ['opened', 'reopened', 'ready_for_review']
 pr_commands = [
     "/describe --pr_description.final_update_message=false",
-    "/review --pr_reviewer.num_max_findings=5",
-    "/improve",
+    "/review --pr_reviewer.num_max_findings=7",
+    "/improve --pr_code_suggestions.commitable_code_suggestions=true",
 ]
-handle_push_trigger = false
+handle_push_trigger = true
+push_commands = [
+    "/describe --pr_description.final_update_message=false",
+    "/review --pr_reviewer.num_max_findings=5",
+]
 
+# ===========================================================================
+# /review — Code Review
+# ===========================================================================
 [pr_reviewer]
-require_score_review = false
+require_score_review = true
 require_tests_review = true
 require_estimate_effort_to_review = true
-require_can_be_split_review = false
+require_can_be_split_review = true
 require_security_review = true
 require_ticket_analysis_review = true
-num_max_findings = 5
+require_todo_scan = true
+num_max_findings = 7
 persistent_comment = true
 enable_review_labels_security = true
 enable_review_labels_effort = true
+enable_help_text = true
 extra_instructions = """\
 You are reviewing a Rust 2024 edition workspace (9 crates) that follows Clean Architecture.
 
@@ -41,6 +58,12 @@ Safety (workspace lints — deny):
 - Flag todo!()/unimplemented!() in non-draft code.
 - Flag empty catch / error-swallowing patterns.
 
+Multi-tenancy rules (critical):
+- NEVER hardcode org_id / DEFAULT_ORG_ID in handler code.
+- Tenant context must come from request context or OrgContext::default().
+- Error responses must NOT leak internal details (DB errors, file paths, stack traces).
+- All new handlers MUST have tracing instrumentation.
+
 Patterns to enforce:
 - New providers MUST register via #[linkme::distributed_slice] with function pointers (not closures).
 - Error types use thiserror in domain, anyhow in application orchestration.
@@ -52,6 +75,9 @@ Patterns to enforce:
 - Build commands use make targets, not raw cargo.
 """
 
+# ===========================================================================
+# /describe — PR Description
+# ===========================================================================
 [pr_description]
 publish_labels = true
 add_original_user_description = true
@@ -60,26 +86,66 @@ use_bullet_points = true
 enable_pr_type = true
 enable_semantic_files_types = true
 collapsible_file_list = 'adaptive'
+collapsible_file_list_threshold = 8
 enable_pr_diagram = true
 enable_large_pr_handling = true
+inline_file_summary = 'table'
+max_ai_calls = 4
+async_ai_calls = true
 
+# ===========================================================================
+# /improve — Code Suggestions
+# ===========================================================================
 [pr_code_suggestions]
-commitable_code_suggestions = false
+commitable_code_suggestions = true
 focus_only_on_problems = true
 persistent_comment = true
-suggestions_score_threshold = 5
+suggestions_score_threshold = 3
+dual_publishing_score_threshold = 7
 auto_extended_mode = true
-num_code_suggestions_per_chunk = 3
+num_code_suggestions_per_chunk = 4
+num_best_practice_suggestions = 2
+demand_code_suggestions_self_review = true
+publish_post_process_suggestion_impact = true
+wiki_page_accepted_suggestions = true
+allow_thumbs_up_down = true
+apply_suggestions_checkbox = true
+self_reflect_on_suggestions = true
 extra_instructions = """\
 For this Rust project, focus suggestions on:
 - Missing error propagation (unwrap/expect outside tests)
 - Architecture boundary violations (wrong crate importing another)
 - Missing or inadequate tests for new logic
 - Potential performance issues (unnecessary clones, allocations in hot paths)
-- Security concerns (input validation, credential handling)
+- Security concerns (input validation, credential handling, leaky error messages)
+- Multi-tenant isolation violations (hardcoded org_id, missing tenant scoping)
 Do NOT suggest style changes already handled by rustfmt (formatting, whitespace).
 """
 
+# ===========================================================================
+# /improve — Self-Reflection
+# ===========================================================================
+[pr_code_suggestions.self_reflect_on_suggestions]
+enabled = true
+
+# ===========================================================================
+# Auto Best Practices — Learning from PR history
+# ===========================================================================
+[auto_best_practices]
+enable_auto_best_practices = true
+utilize_auto_best_practices = true
+max_patterns = 7
+extra_instructions = """\
+Pay special attention to patterns involving:
+- Clean Architecture boundary enforcement
+- linkme distributed slice registration
+- Error handling with thiserror/anyhow
+- Multi-tenant data isolation
+"""
+
+# ===========================================================================
+# Best Practices — Static Rules
+# ===========================================================================
 [best_practices]
 content = """\
 ## MCB Rust Best Practices
@@ -97,6 +163,12 @@ content = """\
 - Use Result<T, Error> with thiserror/anyhow
 - Helper constructors for errors: Error::io(), Error::config()
 
+### Multi-Tenancy
+- Every query MUST be scoped by org_id
+- Never hardcode DEFAULT_ORG_ID in handler logic
+- Use OrgContext from request context / auth token
+- Error responses MUST NOT leak internal details (DB errors, file paths)
+
 ### Testing
 - Unit tests in crates/*/tests/unit/
 - Integration tests in crates/*/tests/integration.rs
@@ -110,4 +182,9 @@ content = """\
 ### Commits
 - Conventional commits: feat|fix|docs|refactor(scope): description
 - Scope = module or crate name
+
+### Observability
+- All handlers annotated with #[tracing::instrument]
+- Use tracing::info!/warn!/error! for structured logging
+- Include org_id, project_id in span fields
 """
