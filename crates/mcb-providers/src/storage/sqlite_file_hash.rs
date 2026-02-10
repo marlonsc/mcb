@@ -31,6 +31,7 @@ impl Default for SqliteFileHashConfig {
 pub struct SqliteFileHashRepository {
     pool: SqlitePool,
     config: SqliteFileHashConfig,
+    project_id: String,
 }
 
 use crate::database::sqlite::executor::SqliteExecutor;
@@ -46,7 +47,21 @@ impl SqliteFileHashRepository {
 
         let pool = executor.pool().clone();
 
-        Self { pool, config }
+        let project_id = std::env::var("MCB_PROJECT_ID")
+            .ok()
+            .filter(|v| !v.trim().is_empty())
+            .or_else(|| {
+                std::env::current_dir()
+                    .ok()
+                    .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+            })
+            .unwrap_or_else(|| "default".to_string());
+
+        Self {
+            pool,
+            config,
+            project_id,
+        }
     }
 
     /// Get current Unix timestamp
@@ -56,14 +71,35 @@ impl SqliteFileHashRepository {
             .unwrap_or_default()
             .as_secs() as i64
     }
+
+    async fn ensure_project_exists(&self) -> Result<()> {
+        let now = Self::now();
+        sqlx::query(
+            r#"
+            INSERT OR IGNORE INTO projects (id, name, path, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            "#,
+        )
+        .bind(&self.project_id)
+        .bind(&self.project_id)
+        .bind(&self.project_id)
+        .bind(now)
+        .bind(now)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| Error::database(format!("Failed to ensure project exists: {e}")))?;
+
+        Ok(())
+    }
 }
 
 #[async_trait]
 impl FileHashRepository for SqliteFileHashRepository {
     async fn get_hash(&self, collection: &str, file_path: &str) -> Result<Option<String>> {
         let result: Option<(String,)> = sqlx::query_as(
-            "SELECT content_hash FROM file_hashes WHERE collection = ? AND file_path = ? AND deleted_at IS NULL",
+            "SELECT content_hash FROM file_hashes WHERE project_id = ? AND collection = ? AND file_path = ? AND deleted_at IS NULL",
         )
+        .bind(&self.project_id)
         .bind(collection)
         .bind(file_path)
         .fetch_optional(&self.pool)
@@ -86,18 +122,20 @@ impl FileHashRepository for SqliteFileHashRepository {
     }
 
     async fn upsert_hash(&self, collection: &str, file_path: &str, hash: &str) -> Result<()> {
+        self.ensure_project_exists().await?;
         let now = Self::now();
 
         sqlx::query(
             r#"
-            INSERT INTO file_hashes (collection, file_path, content_hash, indexed_at, deleted_at)
-            VALUES (?, ?, ?, ?, NULL)
-            ON CONFLICT(collection, file_path) DO UPDATE SET
+            INSERT INTO file_hashes (project_id, collection, file_path, content_hash, indexed_at, deleted_at)
+            VALUES (?, ?, ?, ?, ?, NULL)
+            ON CONFLICT(project_id, collection, file_path) DO UPDATE SET
                 content_hash = excluded.content_hash,
                 indexed_at = excluded.indexed_at,
                 deleted_at = NULL
             "#,
         )
+        .bind(&self.project_id)
         .bind(collection)
         .bind(file_path)
         .bind(hash)
@@ -112,8 +150,11 @@ impl FileHashRepository for SqliteFileHashRepository {
     async fn mark_deleted(&self, collection: &str, file_path: &str) -> Result<()> {
         let now = Self::now();
 
-        sqlx::query("UPDATE file_hashes SET deleted_at = ? WHERE collection = ? AND file_path = ?")
+        sqlx::query(
+            "UPDATE file_hashes SET deleted_at = ? WHERE project_id = ? AND collection = ? AND file_path = ?",
+        )
             .bind(now)
+            .bind(&self.project_id)
             .bind(collection)
             .bind(file_path)
             .execute(&self.pool)
@@ -125,8 +166,9 @@ impl FileHashRepository for SqliteFileHashRepository {
 
     async fn get_indexed_files(&self, collection: &str) -> Result<Vec<String>> {
         let rows: Vec<(String,)> = sqlx::query_as(
-            "SELECT file_path FROM file_hashes WHERE collection = ? AND deleted_at IS NULL",
+            "SELECT file_path FROM file_hashes WHERE project_id = ? AND collection = ? AND deleted_at IS NULL",
         )
+        .bind(&self.project_id)
         .bind(collection)
         .fetch_all(&self.pool)
         .await
@@ -163,8 +205,9 @@ impl FileHashRepository for SqliteFileHashRepository {
 
     async fn tombstone_count(&self, collection: &str) -> Result<i64> {
         let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM file_hashes WHERE collection = ? AND deleted_at IS NOT NULL",
+            "SELECT COUNT(*) FROM file_hashes WHERE project_id = ? AND collection = ? AND deleted_at IS NOT NULL",
         )
+        .bind(&self.project_id)
         .bind(collection)
         .fetch_one(&self.pool)
         .await
@@ -174,7 +217,8 @@ impl FileHashRepository for SqliteFileHashRepository {
     }
 
     async fn clear_collection(&self, collection: &str) -> Result<u64> {
-        let result = sqlx::query("DELETE FROM file_hashes WHERE collection = ?")
+        let result = sqlx::query("DELETE FROM file_hashes WHERE project_id = ? AND collection = ?")
+            .bind(&self.project_id)
             .bind(collection)
             .execute(&self.pool)
             .await
