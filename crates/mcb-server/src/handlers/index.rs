@@ -12,8 +12,8 @@ use rmcp::model::CallToolResult;
 use validator::Validate;
 
 use crate::args::{IndexAction, IndexArgs};
-use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
+use crate::legacy_compat::map_collection_name;
 
 /// Handler for codebase indexing MCP tool operations.
 #[derive(Clone)]

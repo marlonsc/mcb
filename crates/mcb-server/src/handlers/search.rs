@@ -12,8 +12,8 @@ use rmcp::model::{CallToolResult, Content};
 use validator::Validate;
 
 use crate::args::{SearchArgs, SearchResource};
-use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
+use crate::legacy_compat::map_collection_name;
 
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]

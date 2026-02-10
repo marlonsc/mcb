@@ -5,7 +5,7 @@ use rmcp::model::{CallToolResult, Content};
 use serde::Serialize;
 
 use crate::args::VcsArgs;
-use crate::vcs_repository_registry;
+use crate::legacy_compat as vcs_repository_registry;
 
 /// Response structure for listing repositories.
 #[derive(Serialize)]

@@ -59,18 +59,17 @@ pub mod admin;
 pub mod args;
 pub mod auth;
 pub mod builder;
-pub mod collection_mapping;
 pub mod constants;
 pub mod formatter;
 pub mod handlers;
 pub mod hooks;
 pub mod init;
+pub mod legacy_compat;
 pub mod mcp_server;
 pub mod session;
 pub mod tools;
 pub mod transport;
 pub mod utils;
-pub mod vcs_repository_registry;
 
 // Re-export core types for public API
 pub use builder::McpServerBuilder;

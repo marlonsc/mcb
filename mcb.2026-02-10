@@ -1,0 +1,4 @@
+2026-02-10T18:25:33.689972Z  INFO mcb_infrastructure::logging: Logging initialized with level: INFO
+2026-02-10T18:25:33.690021Z  INFO mcb_server::init: Starting MCB standalone mode transport_mode=Stdio
+2026-02-10T18:25:33.690052Z  INFO mcb_infrastructure::di::bootstrap: Initializing application context with provider handles
+2026-02-10T18:25:33.702974Z  INFO mcb_infrastructure::di::bootstrap: Created infrastructure services
