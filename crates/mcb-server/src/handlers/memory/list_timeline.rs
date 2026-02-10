@@ -11,6 +11,7 @@ use crate::error_mapping::{to_opaque_mcp_error, to_opaque_tool_error};
 use crate::formatter::ResponseFormatter;
 
 /// Lists semantic memories based on the provided search query and filters.
+#[tracing::instrument(skip_all)]
 pub async fn list_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -64,6 +65,7 @@ pub async fn list_observations(
 }
 
 /// Retrieves a timeline of observations surrounding an anchor observation.
+#[tracing::instrument(skip_all)]
 pub async fn get_timeline(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,

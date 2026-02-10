@@ -62,6 +62,7 @@ impl IndexHandler {
     }
 
     /// Handle an index tool request.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<IndexArgs>,

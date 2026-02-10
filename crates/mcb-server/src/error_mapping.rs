@@ -1,6 +1,7 @@
 use mcb_domain::error::Error;
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 
+/// Maps domain errors to sanitized MCP errors suitable for external clients.
 pub fn to_opaque_mcp_error(e: Error) -> McpError {
     match &e {
         Error::NotFound { .. } => McpError::invalid_params(e.to_string(), None),
@@ -12,6 +13,7 @@ pub fn to_opaque_mcp_error(e: Error) -> McpError {
     }
 }
 
+/// Builds an opaque tool-call error response without leaking internals.
 pub fn to_opaque_tool_error(e: impl std::fmt::Display) -> CallToolResult {
     tracing::error!(error = %e, "tool operation failed");
     CallToolResult::error(vec![Content::text("internal error")])

@@ -10,6 +10,7 @@ use crate::args::VcsArgs;
 use crate::formatter::ResponseFormatter;
 
 /// Lists all available repositories discovered by the VCS provider.
+#[tracing::instrument(skip_all)]
 pub async fn list_repositories(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,

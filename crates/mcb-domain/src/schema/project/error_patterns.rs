@@ -53,6 +53,16 @@ pub fn indexes() -> Vec<IndexDef> {
             ["category"]
         ),
         index!(
+            "idx_error_patterns_signature",
+            "error_patterns",
+            ["pattern_signature"]
+        ),
+        index!(
+            "idx_error_patterns_embedding",
+            "error_patterns",
+            ["embedding_id"]
+        ),
+        index!(
             "idx_error_patterns_last_seen",
             "error_patterns",
             ["last_seen_at"]

@@ -80,6 +80,7 @@ pub fn list_services(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<Json<ServiceListResponse>, (Status, Json<ServiceErrorResponse>)> {
+    tracing::info!("list_services called");
     let Some(service_manager) = &state.service_manager else {
         return Err((
             Status::ServiceUnavailable,
@@ -120,6 +121,7 @@ pub async fn start_service(
     state: &State<AdminState>,
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
+    tracing::info!("start_service called");
     let Some(service_manager) = &state.service_manager else {
         return Err((
             Status::ServiceUnavailable,
@@ -165,6 +167,7 @@ pub async fn stop_service(
     state: &State<AdminState>,
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
+    tracing::info!("stop_service called");
     let Some(service_manager) = &state.service_manager else {
         return Err((
             Status::ServiceUnavailable,
@@ -210,6 +213,7 @@ pub async fn restart_service(
     state: &State<AdminState>,
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
+    tracing::info!("restart_service called");
     let Some(service_manager) = &state.service_manager else {
         return Err((
             Status::ServiceUnavailable,
@@ -263,6 +267,7 @@ pub async fn services_health(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<Json<ServicesHealthResponse>, (Status, Json<ServiceErrorResponse>)> {
+    tracing::info!("services_health called");
     let Some(service_manager) = &state.service_manager else {
         return Err((
             Status::ServiceUnavailable,

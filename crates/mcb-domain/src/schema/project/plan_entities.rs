@@ -50,10 +50,16 @@ pub fn indexes() -> Vec<IndexDef> {
         index!("idx_plans_status", "plans", ["status"]),
         index!("idx_plan_versions_plan", "plan_versions", ["plan_id"]),
         index!(
+            "idx_plan_versions_created_by",
+            "plan_versions",
+            ["created_by"]
+        ),
+        index!(
             "idx_plan_reviews_version",
             "plan_reviews",
             ["plan_version_id"]
         ),
+        index!("idx_plan_reviews_reviewer", "plan_reviews", ["reviewer_id"]),
     ]
 }
 

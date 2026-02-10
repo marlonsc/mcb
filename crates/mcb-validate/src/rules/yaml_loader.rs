@@ -173,10 +173,10 @@ impl YamlRuleLoader {
 
     /// Load all rules from the rules directory
     pub async fn load_all_rules(&mut self) -> Result<Vec<ValidatedRule>> {
-        if let Some(embedded_rules) = &self.embedded_rules {
-            if !embedded_rules.is_empty() {
-                return self.load_embedded_rules();
-            }
+        if let Some(embedded_rules) = &self.embedded_rules
+            && !embedded_rules.is_empty()
+        {
+            return self.load_embedded_rules();
         }
 
         let mut rules = Vec::new();

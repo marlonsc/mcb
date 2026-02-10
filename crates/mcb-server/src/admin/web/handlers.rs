@@ -23,36 +23,42 @@ const THEME_CSS: &str = include_str!("templates/theme.css");
 /// Dashboard page handler
 #[get("/")]
 pub fn dashboard() -> RawHtml<&'static str> {
+    tracing::info!("dashboard called");
     RawHtml(INDEX_HTML)
 }
 
 /// Dashboard page handler (alias)
 #[get("/ui")]
 pub fn dashboard_ui() -> RawHtml<&'static str> {
+    tracing::info!("dashboard_ui called");
     RawHtml(INDEX_HTML)
 }
 
 /// Configuration page handler
 #[get("/ui/config")]
 pub fn config_page() -> RawHtml<&'static str> {
+    tracing::info!("config_page called");
     RawHtml(CONFIG_HTML)
 }
 
 /// Health status page handler
 #[get("/ui/health")]
 pub fn health_page() -> RawHtml<&'static str> {
+    tracing::info!("health_page called");
     RawHtml(HEALTH_HTML)
 }
 
 /// Jobs page handler
 #[get("/ui/jobs")]
 pub fn jobs_page() -> RawHtml<&'static str> {
+    tracing::info!("jobs_page called");
     RawHtml(JOBS_HTML)
 }
 
 /// Favicon handler - returns a simple SVG icon
 #[get("/favicon.ico")]
 pub fn favicon() -> (ContentType, &'static str) {
+    tracing::info!("favicon called");
     (
         ContentType::SVG,
         r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>"#,
@@ -62,35 +68,41 @@ pub fn favicon() -> (ContentType, &'static str) {
 /// Theme CSS handler
 #[get("/ui/theme.css")]
 pub fn theme_css() -> (ContentType, &'static str) {
+    tracing::info!("theme_css called");
     (ContentType::CSS, THEME_CSS)
 }
 
 /// Shared JavaScript utilities for admin UI
 #[get("/ui/shared.js")]
 pub fn shared_js() -> (ContentType, &'static str) {
+    tracing::info!("shared_js called");
     (ContentType::JavaScript, SHARED_JS)
 }
 
 /// Browse collections page handler
 #[get("/ui/browse")]
 pub fn browse_page() -> RawHtml<&'static str> {
+    tracing::info!("browse_page called");
     RawHtml(BROWSE_HTML)
 }
 
 /// Browse collection files page handler
 #[get("/ui/browse/<_collection>")]
 pub fn browse_collection_page(_collection: &str) -> RawHtml<&'static str> {
+    tracing::info!("browse_collection_page called");
     RawHtml(BROWSE_COLLECTION_HTML)
 }
 
 /// Browse file chunks page handler
 #[get("/ui/browse/<_collection>/file")]
 pub fn browse_file_page(_collection: &str) -> RawHtml<&'static str> {
+    tracing::info!("browse_file_page called");
     RawHtml(BROWSE_FILE_HTML)
 }
 
 /// Browse tree view page handler (Phase 8b Wave 3)
 #[get("/ui/browse/tree")]
 pub fn browse_tree_page() -> RawHtml<&'static str> {
+    tracing::info!("browse_tree_page called");
     RawHtml(BROWSE_TREE_HTML)
 }

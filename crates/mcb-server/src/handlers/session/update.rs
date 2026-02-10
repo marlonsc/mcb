@@ -12,6 +12,7 @@ use crate::formatter::ResponseFormatter;
 use tracing::error;
 
 /// Updates an existing agent session.
+#[tracing::instrument(skip_all)]
 pub async fn update_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,

@@ -9,9 +9,9 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, IssueEntityServiceInterface,
-    MemoryServiceInterface, PlanEntityServiceInterface, ProjectDetectorService,
-    ProjectServiceInterface, SearchServiceInterface, ValidationServiceInterface,
-    VcsEntityServiceInterface,
+    MemoryServiceInterface, OrgEntityServiceInterface, PlanEntityServiceInterface,
+    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface, VcsEntityServiceInterface,
 };
 
 use crate::McpServer;
@@ -34,6 +34,7 @@ pub struct McpServerBuilder {
     vcs_entity_service: Option<Arc<dyn VcsEntityServiceInterface>>,
     plan_entity_service: Option<Arc<dyn PlanEntityServiceInterface>>,
     issue_entity_service: Option<Arc<dyn IssueEntityServiceInterface>>,
+    org_entity_service: Option<Arc<dyn OrgEntityServiceInterface>>,
 }
 
 impl McpServerBuilder {
@@ -144,6 +145,12 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the org entity service
+    pub fn with_org_entity_service(mut self, service: Arc<dyn OrgEntityServiceInterface>) -> Self {
+        self.org_entity_service = Some(service);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -188,6 +195,9 @@ impl McpServerBuilder {
         let issue_entity_service = self
             .issue_entity_service
             .ok_or(BuilderError::MissingDependency("issue entity service"))?;
+        let org_entity_service = self
+            .org_entity_service
+            .ok_or(BuilderError::MissingDependency("org entity service"))?;
 
         let services = crate::mcp_server::McpServices {
             indexing: indexing_service,
@@ -202,6 +212,7 @@ impl McpServerBuilder {
             vcs_entity: vcs_entity_service,
             plan_entity: plan_entity_service,
             issue_entity: issue_entity_service,
+            org_entity: org_entity_service,
         };
 
         Ok(McpServer::new(services))

@@ -40,20 +40,12 @@ impl ValidationServiceInterface for InfraValidationService {
     }
 
     async fn list_validators(&self) -> Result<Vec<String>> {
-        Ok(vec![
-            "clean_architecture".into(),
-            "solid".into(),
-            "quality".into(),
-            "organization".into(),
-            "kiss".into(),
-            "naming".into(),
-            "documentation".into(),
-            "performance".into(),
-            "async_patterns".into(),
-            "dependencies".into(),
-            "patterns".into(),
-            "tests".into(),
-        ])
+        use mcb_validate::ValidatorRegistry;
+
+        Ok(ValidatorRegistry::standard_validator_names()
+            .iter()
+            .map(|name| (*name).to_string())
+            .collect())
     }
 
     async fn validate_file(
@@ -82,20 +74,22 @@ fn run_validation(
     validators: Option<&[String]>,
     severity_filter: Option<&str>,
 ) -> Result<ValidationReport> {
-    use mcb_validate::{ArchitectureValidator, ValidationConfig};
+    use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
 
     let config = ValidationConfig::new(workspace_root);
-    let mut validator = ArchitectureValidator::with_config(config);
+    let registry = ValidatorRegistry::standard_for(workspace_root);
 
     let report = if let Some(names) = validators {
-        let names_ref: Vec<&str> = names.iter().map(|s| s.as_str()).collect();
-        validator
-            .validate_named(&names_ref)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?
+        let names_ref: Vec<&str> = names.iter().map(String::as_str).collect();
+        let violations = registry
+            .validate_named(&config, &names_ref)
+            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+        GenericReporter::create_report(&violations, workspace_root.to_path_buf())
     } else {
-        validator
-            .validate_all()
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?
+        let violations = registry
+            .validate_all(&config)
+            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+        GenericReporter::create_report(&violations, workspace_root.to_path_buf())
     };
 
     Ok(convert_report(report, severity_filter))

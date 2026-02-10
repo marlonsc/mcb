@@ -19,8 +19,8 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
 use mcb_domain::ports::providers::CacheProvider;
 use mcb_domain::ports::services::{
-    IssueEntityServiceInterface, PlanEntityServiceInterface, ProjectServiceInterface,
-    VcsEntityServiceInterface,
+    IssueEntityServiceInterface, OrgEntityServiceInterface, PlanEntityServiceInterface,
+    ProjectServiceInterface, VcsEntityServiceInterface,
 };
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
@@ -65,6 +65,8 @@ pub struct AdminState {
     pub plan_entity: Option<Arc<dyn PlanEntityServiceInterface>>,
     /// Issue entity service for issue/comment/label navigation
     pub issue_entity: Option<Arc<dyn IssueEntityServiceInterface>>,
+    /// Org entity service for organization navigation
+    pub org_entity: Option<Arc<dyn OrgEntityServiceInterface>>,
 }
 
 /// Health check response for admin API
@@ -81,6 +83,7 @@ pub struct AdminHealthResponse {
 /// Health check endpoint
 #[get("/health")]
 pub fn health_check(state: &State<AdminState>) -> Json<AdminHealthResponse> {
+    tracing::info!("health_check called");
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
 
@@ -94,6 +97,7 @@ pub fn health_check(state: &State<AdminState>) -> Json<AdminHealthResponse> {
 /// Get performance metrics endpoint (protected)
 #[get("/metrics")]
 pub fn get_metrics(_auth: AdminAuth, state: &State<AdminState>) -> Json<PerformanceMetricsData> {
+    tracing::info!("get_metrics called");
     let metrics = state.metrics.get_performance_metrics();
     Json(metrics)
 }
@@ -114,6 +118,7 @@ pub struct JobsStatusResponse {
 /// List all background jobs
 #[get("/jobs")]
 pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
+    tracing::info!("get_jobs_status called");
     let operations = state.indexing.get_operations();
 
     let jobs: Vec<Job> = operations
@@ -165,6 +170,7 @@ pub async fn list_browse_projects(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<Json<ProjectsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_projects called");
     let Some(project_workflow) = &state.project_workflow else {
         return Err((
             Status::ServiceUnavailable,
@@ -223,6 +229,15 @@ pub struct IssuesBrowseResponse {
     pub total: usize,
 }
 
+/// Response payload for the organizations browse endpoint.
+#[derive(Serialize)]
+pub struct OrganizationsBrowseResponse {
+    /// List of organizations.
+    pub organizations: Vec<mcb_domain::entities::organization::Organization>,
+    /// Total number of organizations.
+    pub total: usize,
+}
+
 /// List repositories for browse entity graph.
 #[get("/repositories?<project_id>")]
 pub async fn list_browse_repositories(
@@ -230,6 +245,7 @@ pub async fn list_browse_repositories(
     state: &State<AdminState>,
     project_id: Option<String>,
 ) -> Result<Json<RepositoriesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_repositories called");
     let Some(vcs_entity) = &state.vcs_entity else {
         return Err((
             Status::ServiceUnavailable,
@@ -273,6 +289,7 @@ pub async fn list_browse_plans(
     state: &State<AdminState>,
     project_id: Option<String>,
 ) -> Result<Json<PlansBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_plans called");
     let Some(plan_entity) = &state.plan_entity else {
         return Err((
             Status::ServiceUnavailable,
@@ -310,6 +327,7 @@ pub async fn list_browse_issues(
     state: &State<AdminState>,
     project_id: Option<String>,
 ) -> Result<Json<IssuesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_issues called");
     let Some(issue_entity) = &state.issue_entity else {
         return Err((
             Status::ServiceUnavailable,
@@ -339,6 +357,41 @@ pub async fn list_browse_issues(
     }
 }
 
+/// List organizations for browse entity graph.
+#[get("/organizations")]
+pub async fn list_browse_organizations(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+) -> Result<Json<OrganizationsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(org_entity) = &state.org_entity else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Org entity service not available".to_string(),
+            }),
+        ));
+    };
+
+    match org_entity.list_orgs().await {
+        Ok(organizations) => {
+            let total = organizations.len();
+            Ok(Json(OrganizationsBrowseResponse {
+                organizations,
+                total,
+            }))
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list organizations");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list organizations".to_string(),
+                }),
+            ))
+        }
+    }
+}
+
 /// Readiness response
 #[derive(Serialize)]
 pub struct ReadinessResponse {
@@ -360,6 +413,7 @@ pub struct LivenessResponse {
 /// Readiness check endpoint (for k8s/docker health checks)
 #[get("/ready")]
 pub fn readiness_check(state: &State<AdminState>) -> (Status, Json<ReadinessResponse>) {
+    tracing::info!("readiness_check called");
     let metrics = state.metrics.get_performance_metrics();
 
     // Consider ready if server has been up for at least 1 second
@@ -385,6 +439,7 @@ pub fn readiness_check(state: &State<AdminState>) -> (Status, Json<ReadinessResp
 /// Liveness check endpoint (for k8s/docker health checks)
 #[get("/live")]
 pub fn liveness_check(state: &State<AdminState>) -> (Status, Json<LivenessResponse>) {
+    tracing::info!("liveness_check called");
     let metrics = state.metrics.get_performance_metrics();
     (
         Status::Ok,
@@ -458,6 +513,7 @@ pub fn shutdown(
     state: &State<AdminState>,
     request: Json<ShutdownRequest>,
 ) -> (Status, Json<ShutdownResponse>) {
+    tracing::info!("shutdown called");
     let request = request.into_inner();
 
     let Some(coordinator) = &state.shutdown_coordinator else {
@@ -524,6 +580,7 @@ pub fn extended_health_check(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Json<ExtendedHealthResponse> {
+    tracing::info!("extended_health_check called");
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
     let now = current_timestamp();
@@ -665,6 +722,7 @@ pub async fn get_cache_stats(
     state: &State<AdminState>,
 ) -> Result<Json<mcb_domain::ports::providers::cache::CacheStats>, (Status, Json<CacheErrorResponse>)>
 {
+    tracing::info!("get_cache_stats called");
     let Some(cache) = &state.cache else {
         return Err((
             Status::ServiceUnavailable,

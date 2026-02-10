@@ -14,11 +14,12 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
 use mcb_domain::ports::repositories::{
     AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
-    PlanEntityRepository, ProjectRepository, VcsEntityRepository,
+    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
 };
 use mcb_domain::ports::services::{
-    IssueEntityServiceInterface, PlanEntityServiceInterface, ProjectDetectorService,
-    ProjectServiceInterface as ProjectWorkflowService, VcsEntityServiceInterface,
+    IssueEntityServiceInterface, OrgEntityServiceInterface, PlanEntityServiceInterface,
+    ProjectDetectorService, ProjectServiceInterface as ProjectWorkflowService,
+    VcsEntityServiceInterface,
 };
 
 use mcb_providers::database::{
@@ -103,6 +104,8 @@ pub struct AppContext {
     plan_entity_service: Arc<dyn PlanEntityServiceInterface>,
     issue_entity_repository: Arc<dyn IssueEntityRepository>,
     issue_entity_service: Arc<dyn IssueEntityServiceInterface>,
+    org_entity_repository: Arc<dyn OrgEntityRepository>,
+    org_entity_service: Arc<dyn OrgEntityServiceInterface>,
     file_hash_repository: Arc<dyn FileHashRepository>,
 
     // ========================================================================
@@ -253,6 +256,16 @@ impl AppContext {
         self.issue_entity_service.clone()
     }
 
+    /// Get org entity repository
+    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
+        self.org_entity_repository.clone()
+    }
+
+    /// Get org entity service
+    pub fn org_entity_service(&self) -> Arc<dyn OrgEntityServiceInterface> {
+        self.org_entity_service.clone()
+    }
+
     /// Get file hash repository
     pub fn file_hash_repository(&self) -> Arc<dyn FileHashRepository> {
         self.file_hash_repository.clone()
@@ -312,6 +325,7 @@ impl AppContext {
             vcs_entity_service: self.vcs_entity_service(),
             plan_entity_service: self.plan_entity_service(),
             issue_entity_service: self.issue_entity_service(),
+            org_entity_service: self.org_entity_service(),
         };
 
         crate::di::modules::domain_services::DomainServicesFactory::create_services(deps).await
@@ -488,6 +502,14 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
             issue_entity_repository.clone(),
         ),
     );
+    let org_entity_repository: Arc<dyn OrgEntityRepository> = Arc::new(
+        mcb_providers::database::SqliteOrgEntityRepository::new(Arc::clone(&db_executor)),
+    );
+    let org_entity_service: Arc<dyn OrgEntityServiceInterface> = Arc::new(
+        mcb_application::use_cases::org_entity_service::OrgEntityServiceImpl::new(
+            org_entity_repository.clone(),
+        ),
+    );
 
     let highlight_service: Arc<dyn HighlightServiceInterface> =
         Arc::new(HighlightServiceImpl::new());
@@ -530,6 +552,8 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         plan_entity_service,
         issue_entity_repository,
         issue_entity_service,
+        org_entity_repository,
+        org_entity_service,
         file_hash_repository,
         highlight_service,
         crypto_service,

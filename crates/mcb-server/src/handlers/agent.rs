@@ -29,6 +29,7 @@ impl AgentHandler {
     }
 
     /// Handle an agent tool request.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<AgentArgs>,

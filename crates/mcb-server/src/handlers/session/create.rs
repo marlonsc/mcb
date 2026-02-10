@@ -15,6 +15,7 @@ use crate::formatter::ResponseFormatter;
 use tracing::error;
 
 /// Creates a new agent session.
+#[tracing::instrument(skip_all)]
 pub async fn create_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,

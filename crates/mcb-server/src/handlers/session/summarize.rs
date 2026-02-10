@@ -10,6 +10,7 @@ use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Creates or retrieves a session summary.
+#[tracing::instrument(skip_all)]
 pub async fn summarize_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &SessionArgs,

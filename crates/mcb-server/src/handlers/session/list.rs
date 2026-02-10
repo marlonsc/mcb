@@ -11,6 +11,7 @@ use crate::formatter::ResponseFormatter;
 use tracing::error;
 
 /// Lists agent sessions based on filters.
+#[tracing::instrument(skip_all)]
 pub async fn list_sessions(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,

@@ -41,8 +41,8 @@ pub fn tables() -> Vec<TableDef> {
         table!(
             "team_members",
             [
-                crate::col!("team_id", Text),
-                crate::col!("user_id", Text),
+                crate::col!("team_id", Text, pk),
+                crate::col!("user_id", Text, pk),
                 crate::col!("role", Text),
                 crate::col!("joined_at", Integer),
             ]
@@ -68,11 +68,14 @@ pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!("idx_users_org", "users", ["org_id"]),
         index!("idx_users_email", "users", ["email"]),
+        index!("idx_users_api_key_hash", "users", ["api_key_hash"]),
         index!("idx_teams_org", "teams", ["org_id"]),
         index!("idx_team_members_team", "team_members", ["team_id"]),
         index!("idx_team_members_user", "team_members", ["user_id"]),
         index!("idx_api_keys_user", "api_keys", ["user_id"]),
         index!("idx_api_keys_org", "api_keys", ["org_id"]),
+        index!("idx_api_keys_key_hash", "api_keys", ["key_hash"]),
+        index!("idx_organizations_name", "organizations", ["name"]),
     ]
 }
 

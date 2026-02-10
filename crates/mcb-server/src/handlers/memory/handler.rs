@@ -31,6 +31,7 @@ impl MemoryHandler {
     }
 
     /// Handles a memory tool invocation.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<MemoryArgs>,

@@ -53,8 +53,8 @@ pub fn tables() -> Vec<TableDef> {
         table!(
             "issue_label_assignments",
             [
-                crate::col!("issue_id", Text),
-                crate::col!("label_id", Text),
+                crate::col!("issue_id", Text, pk),
+                crate::col!("label_id", Text, pk),
                 crate::col!("created_at", Integer),
             ]
         ),
@@ -70,8 +70,14 @@ pub fn indexes() -> Vec<IndexDef> {
         index!("idx_issues_assignee", "project_issues", ["assignee"]),
         index!("idx_issues_parent", "project_issues", ["parent_issue_id"]),
         index!("idx_issue_comments_issue", "issue_comments", ["issue_id"]),
+        index!("idx_issue_comments_author", "issue_comments", ["author_id"]),
         index!("idx_issue_labels_org", "issue_labels", ["org_id"]),
         index!("idx_issue_labels_project", "issue_labels", ["project_id"]),
+        index!(
+            "idx_issue_label_assignments_issue",
+            "issue_label_assignments",
+            ["issue_id"]
+        ),
         index!(
             "idx_issue_label_assignments_label",
             "issue_label_assignments",

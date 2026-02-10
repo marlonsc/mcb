@@ -5,6 +5,7 @@ pub mod context;
 pub mod indexing;
 pub mod issue_entity;
 pub mod memory;
+pub mod org_entity;
 pub mod plan_entity;
 pub mod project;
 pub mod search;
@@ -22,6 +23,8 @@ pub use issue_entity::MockIssueEntityService;
 #[allow(unused_imports)]
 pub use memory::MockMemoryRepository;
 pub use memory::MockMemoryService;
+#[allow(unused_imports)]
+pub use org_entity::MockOrgEntityService;
 #[allow(unused_imports)]
 pub use plan_entity::MockPlanEntityService;
 #[allow(unused_imports)]

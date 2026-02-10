@@ -94,7 +94,7 @@ See [MCP Tools Documentation](./docs/MCP_TOOLS.md) for full schemas and examples
 
 MCB follows **Clean Architecture** with strict inward-only dependency flow:
 
-```
+```ascii
 ┌─────────────────────────────────────────────────┐
 │                  mcb-server                      │
 │           (MCP protocol, transport)              │

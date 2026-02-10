@@ -11,6 +11,7 @@ use crate::formatter::ResponseFormatter;
 use tracing::error;
 
 /// Retrieves an agent session by ID.
+#[tracing::instrument(skip_all)]
 pub async fn get_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,

@@ -152,8 +152,8 @@ impl HttpTransport {
         use crate::admin::config_handlers::{get_config, reload_config, update_config_section};
         use crate::admin::handlers::{
             extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
-            list_browse_issues, list_browse_plans, list_browse_projects, liveness_check,
-            readiness_check, shutdown,
+            list_browse_issues, list_browse_organizations, list_browse_plans, list_browse_projects,
+            liveness_check, readiness_check, shutdown,
         };
         use crate::admin::lifecycle_handlers::{
             list_services, restart_service, services_health, start_service, stop_service,
@@ -188,6 +188,7 @@ impl HttpTransport {
                         list_browse_projects,
                         list_browse_plans,
                         list_browse_issues,
+                        list_browse_organizations,
                         readiness_check,
                         liveness_check,
                         shutdown,
@@ -461,6 +462,7 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         vcs_entity: state.server.vcs_entity_handler(),
         plan_entity: state.server.plan_entity_handler(),
         issue_entity: state.server.issue_entity_handler(),
+        org_entity: state.server.org_entity_handler(),
         hook_processor: state.server.hook_processor(),
     };
 

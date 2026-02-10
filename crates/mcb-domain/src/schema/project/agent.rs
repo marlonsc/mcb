@@ -74,6 +74,11 @@ pub fn tables() -> Vec<TableDef> {
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!(
+            "idx_agent_sessions_summary",
+            "agent_sessions",
+            ["session_summary_id"]
+        ),
+        index!(
             "idx_agent_sessions_parent",
             "agent_sessions",
             ["parent_session_id"]

@@ -11,6 +11,7 @@ use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Analyzes the impact of changes between branches.
+#[tracing::instrument(skip_all)]
 pub async fn analyze_impact(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,

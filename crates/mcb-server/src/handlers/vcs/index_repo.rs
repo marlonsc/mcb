@@ -12,6 +12,7 @@ use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Indexes a repository for search.
+#[tracing::instrument(skip_all)]
 pub async fn index_repository(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,

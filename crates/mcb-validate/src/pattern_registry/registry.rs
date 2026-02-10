@@ -43,6 +43,7 @@ impl PatternRegistry {
                     .extension()
                     .is_some_and(|ext| ext == "yml" || ext == "yaml")
             })
+            .filter(|e| !is_template_path(e.path()))
         {
             if let Err(e) = registry.load_rule_file(entry.path(), naming_config, project_prefix) {
                 eprintln!(
@@ -63,6 +64,10 @@ impl PatternRegistry {
         naming_config: &crate::config::NamingRulesConfig,
         project_prefix: &str,
     ) -> Result<()> {
+        if is_template_path(path) {
+            return Ok(());
+        }
+
         let content = std::fs::read_to_string(path)?;
         let mut yaml: serde_yaml::Value = serde_yaml::from_str(&content)?;
 
@@ -212,6 +217,11 @@ impl PatternRegistry {
     pub fn is_empty(&self) -> bool {
         self.patterns.is_empty()
     }
+}
+
+fn is_template_path(path: &Path) -> bool {
+    path.components()
+        .any(|component| component.as_os_str() == "templates")
 }
 
 impl Default for PatternRegistry {

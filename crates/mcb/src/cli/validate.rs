@@ -58,7 +58,7 @@ impl ValidationResult {
 impl ValidateArgs {
     /// Execute the validate command
     pub fn execute(self) -> Result<ValidationResult, Box<dyn std::error::Error>> {
-        use mcb_validate::{ArchitectureValidator, ValidationConfig};
+        use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
 
         // Resolve workspace root
         let workspace_root = if self.path.is_absolute() {
@@ -70,17 +70,16 @@ impl ValidateArgs {
         // Build validation config
         let config = ValidationConfig::new(&workspace_root);
 
-        // Create validator
-        let mut validator = ArchitectureValidator::with_config(config);
+        let registry = ValidatorRegistry::standard_for(&workspace_root);
 
         // Run validation
         let report = if let Some(ref validators) = self.validators {
-            // Run specific validators
             let validator_names: Vec<&str> = validators.iter().map(String::as_str).collect();
-            validator.validate_named(&validator_names)?
+            let violations = registry.validate_named(&config, &validator_names)?;
+            GenericReporter::create_report(&violations, workspace_root.clone())
         } else {
-            // Run all validators
-            validator.validate_all()?
+            let violations = registry.validate_all(&config)?;
+            GenericReporter::create_report(&violations, workspace_root.clone())
         };
 
         // Format output

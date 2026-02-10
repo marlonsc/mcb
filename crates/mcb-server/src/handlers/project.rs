@@ -25,6 +25,7 @@ impl ProjectHandler {
     }
 
     /// Route an incoming `project` tool call to the appropriate operation.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<ProjectArgs>,

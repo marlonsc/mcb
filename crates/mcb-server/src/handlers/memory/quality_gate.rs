@@ -15,6 +15,7 @@ use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Stores a quality gate result as a semantic observation.
+#[tracing::instrument(skip_all)]
 pub async fn store_quality_gate(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -97,6 +98,7 @@ pub async fn store_quality_gate(
 }
 
 /// Retrieves stored quality gate results based on filters.
+#[tracing::instrument(skip_all)]
 pub async fn get_quality_gates(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,

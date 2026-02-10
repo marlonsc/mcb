@@ -46,6 +46,7 @@ use super::handlers::AdminState;
 #[allow(unknown_lints, impl_trait_overcaptures, tail_expr_drop_order)]
 #[get("/events")]
 pub async fn events_stream(state: &State<AdminState>) -> EventStream![] {
+    tracing::info!("events_stream called");
     let event_bus = state.event_bus.clone();
 
     EventStream! {

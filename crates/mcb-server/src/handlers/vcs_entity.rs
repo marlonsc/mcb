@@ -23,6 +23,7 @@ impl VcsEntityHandler {
     }
 
     /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<VcsEntityArgs>,
@@ -259,6 +260,7 @@ mod tests {
     use super::*;
     use async_trait::async_trait;
     use mcb_domain::error::Result;
+    use mcb_domain::keys::DEFAULT_ORG_ID;
     use std::sync::Mutex;
 
     struct MockVcsEntityService {

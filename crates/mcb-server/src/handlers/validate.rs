@@ -27,6 +27,7 @@ impl ValidateHandler {
     }
 
     /// Handle a validate tool request.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<ValidateArgs>,

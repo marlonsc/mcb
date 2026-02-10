@@ -14,6 +14,7 @@ use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Stores a new semantic observation with the provided content, type, and tags.
+#[tracing::instrument(skip_all)]
 pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -74,6 +75,7 @@ pub async fn store_observation(
 }
 
 /// Retrieves semantic observations by their unique identifiers.
+#[tracing::instrument(skip_all)]
 pub async fn get_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,

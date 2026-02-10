@@ -6,8 +6,9 @@ use mcb_server::builder::{BuilderError, McpServerBuilder};
 
 use crate::test_utils::mock_services::{
     MockAgentSessionService, MockContextService, MockIndexingService, MockIssueEntityService,
-    MockMemoryService, MockPlanEntityService, MockProjectService, MockProjectWorkflowService,
-    MockSearchService, MockValidationService, MockVcsEntityService, MockVcsProvider,
+    MockMemoryService, MockOrgEntityService, MockPlanEntityService, MockProjectService,
+    MockProjectWorkflowService, MockSearchService, MockValidationService, MockVcsEntityService,
+    MockVcsProvider,
 };
 
 #[test]
@@ -33,6 +34,7 @@ fn test_builder_all_services_provided() {
         .with_vcs_entity_service(Arc::new(MockVcsEntityService::new()))
         .with_plan_entity_service(Arc::new(MockPlanEntityService::new()))
         .with_issue_entity_service(Arc::new(MockIssueEntityService::new()))
+        .with_org_entity_service(Arc::new(MockOrgEntityService::new()))
         .build();
 
     assert!(result.is_ok());
@@ -176,6 +178,7 @@ fn test_try_build_success() {
         .with_vcs_entity_service(Arc::new(MockVcsEntityService::new()))
         .with_plan_entity_service(Arc::new(MockPlanEntityService::new()))
         .with_issue_entity_service(Arc::new(MockIssueEntityService::new()))
+        .with_org_entity_service(Arc::new(MockOrgEntityService::new()))
         .build();
 
     assert!(server.is_ok());

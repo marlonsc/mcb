@@ -14,8 +14,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::test_utils::mock_services::{
-    MockIssueEntityService, MockPlanEntityService, MockProjectRepository, MockVcsEntityService,
-    MockVcsProvider,
+    MockIssueEntityService, MockOrgEntityService, MockPlanEntityService, MockProjectRepository,
+    MockVcsEntityService, MockVcsProvider,
 };
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
@@ -606,6 +606,7 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
         vcs_entity_service: std::sync::Arc::new(MockVcsEntityService::new()),
         plan_entity_service: std::sync::Arc::new(MockPlanEntityService::new()),
         issue_entity_service: std::sync::Arc::new(MockIssueEntityService::new()),
+        org_entity_service: std::sync::Arc::new(MockOrgEntityService::new()),
     };
 
     let services = DomainServicesFactory::create_services(deps)
@@ -625,6 +626,7 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
         .with_vcs_entity_service(services.vcs_entity_service)
         .with_plan_entity_service(services.plan_entity_service)
         .with_issue_entity_service(services.issue_entity_service)
+        .with_org_entity_service(services.org_entity_service)
         .build()
         .expect("Failed to build MCP server");
 

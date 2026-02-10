@@ -11,6 +11,7 @@ use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Searches for a query string within a branch.
+#[tracing::instrument(skip_all)]
 pub async fn search_branch(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,

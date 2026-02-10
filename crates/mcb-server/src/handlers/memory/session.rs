@@ -11,6 +11,7 @@ use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Stores a session summary in the memory service.
+#[tracing::instrument(skip_all)]
 pub async fn store_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -53,6 +54,7 @@ pub async fn store_session(
 }
 
 /// Retrieves a session summary from the memory service.
+#[tracing::instrument(skip_all)]
 pub async fn get_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,

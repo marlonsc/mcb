@@ -282,6 +282,16 @@ pub fn indexes() -> Vec<IndexDef> {
             columns: vec!["created_at".to_string()],
         },
         IndexDef {
+            name: "idx_obs_type".to_string(),
+            table: "observations".to_string(),
+            columns: vec!["observation_type".to_string()],
+        },
+        IndexDef {
+            name: "idx_obs_embedding".to_string(),
+            table: "observations".to_string(),
+            columns: vec!["embedding_id".to_string()],
+        },
+        IndexDef {
             name: "idx_summary_session".to_string(),
             table: "session_summaries".to_string(),
             columns: vec!["session_id".to_string()],

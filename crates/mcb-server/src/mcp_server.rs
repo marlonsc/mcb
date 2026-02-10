@@ -8,9 +8,9 @@ use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, IssueEntityServiceInterface,
-    MemoryServiceInterface, PlanEntityServiceInterface, ProjectDetectorService,
-    ProjectServiceInterface, SearchServiceInterface, ValidationServiceInterface,
-    VcsEntityServiceInterface,
+    MemoryServiceInterface, OrgEntityServiceInterface, PlanEntityServiceInterface,
+    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface, VcsEntityServiceInterface,
 };
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
@@ -20,8 +20,9 @@ use rmcp::model::{
 };
 
 use crate::handlers::{
-    AgentHandler, IndexHandler, IssueEntityHandler, MemoryHandler, PlanEntityHandler,
-    ProjectHandler, SearchHandler, SessionHandler, ValidateHandler, VcsEntityHandler, VcsHandler,
+    AgentHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
+    PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
+    VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::HookProcessor;
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
@@ -66,6 +67,8 @@ pub struct McpServices {
     pub plan_entity: Arc<dyn PlanEntityServiceInterface>,
     /// Issue entity service (issues, comments, labels, assignments)
     pub issue_entity: Arc<dyn IssueEntityServiceInterface>,
+    /// Org entity service (orgs, users, teams, members, api keys)
+    pub org_entity: Arc<dyn OrgEntityServiceInterface>,
 }
 
 impl McpServer {
@@ -91,6 +94,7 @@ impl McpServer {
             vcs_entity: Arc::new(VcsEntityHandler::new(services.vcs_entity.clone())),
             plan_entity: Arc::new(PlanEntityHandler::new(services.plan_entity.clone())),
             issue_entity: Arc::new(IssueEntityHandler::new(services.issue_entity.clone())),
+            org_entity: Arc::new(OrgEntityHandler::new(services.org_entity.clone())),
             hook_processor: Arc::new(hook_processor),
         };
 
@@ -163,6 +167,11 @@ impl McpServer {
         Arc::clone(&self.services.issue_entity)
     }
 
+    /// Access to org entity service.
+    pub fn org_entity_service(&self) -> Arc<dyn OrgEntityServiceInterface> {
+        Arc::clone(&self.services.org_entity)
+    }
+
     /// Access to index handler (for HTTP transport)
     pub fn index_handler(&self) -> Arc<IndexHandler> {
         Arc::clone(&self.handlers.index)
@@ -218,6 +227,11 @@ impl McpServer {
         Arc::clone(&self.handlers.issue_entity)
     }
 
+    /// Access to org entity handler (for HTTP transport)
+    pub fn org_entity_handler(&self) -> Arc<OrgEntityHandler> {
+        Arc::clone(&self.handlers.org_entity)
+    }
+
     /// Access to hook processor (for automatic memory operations)
     pub fn hook_processor(&self) -> Arc<HookProcessor> {
         Arc::clone(&self.handlers.hook_processor)
@@ -250,6 +264,7 @@ tools:
 - vcs_entity: VCS entity CRUD (repositories, branches, worktrees, assignments)
 - plan_entity: Plan entity CRUD (plans, versions, reviews)
 - issue_entity: Issue entity CRUD (issues, comments, labels, label assignments)
+- org_entity: Org entity CRUD (organizations, users, teams, team members, api keys)
 "#
                 .to_string(),
             ),

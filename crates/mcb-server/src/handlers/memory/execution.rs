@@ -68,6 +68,7 @@ impl ValidatedExecutionData {
 }
 
 /// Store an execution observation in memory
+#[tracing::instrument(skip_all)]
 pub async fn store_execution(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -157,6 +158,7 @@ pub async fn store_execution(
 }
 
 /// Retrieve execution observations filtered by session and repo
+#[tracing::instrument(skip_all)]
 pub async fn get_executions(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,

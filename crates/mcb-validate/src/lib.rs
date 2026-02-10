@@ -425,15 +425,6 @@ pub struct ArchitectureValidator {
     async_patterns: AsyncPatternValidator,
     error_boundary: ErrorBoundaryValidator,
     pmat: PmatValidator,
-    // New quality validators (v0.1.2)
-    test_quality: TestQualityValidator,
-    config_quality: ConfigQualityValidator,
-    // Clean Architecture validator (CA001-CA009)
-    clean_architecture: CleanArchitectureValidator,
-    // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
-    visibility: VisibilityValidator,
-    layer_flow: LayerFlowValidator,
-    port_adapter: PortAdapterValidator,
     // Modernization: New generic components
     extractor: RustExtractor,
     naming_config: crate::config::NamingRulesConfig,
@@ -495,22 +486,6 @@ impl ArchitectureValidator {
             async_patterns: AsyncPatternValidator::with_config(config.clone()),
             error_boundary: ErrorBoundaryValidator::with_config(config.clone()),
             pmat: PmatValidator::with_config(config.clone()),
-            // New quality validators (v0.1.2)
-            test_quality: TestQualityValidator::with_config(
-                config.clone(),
-                &file_config.rules.test_quality,
-            ),
-            config_quality: ConfigQualityValidator::with_config(config.clone()),
-            // Clean Architecture validator (CA001-CA009)
-            clean_architecture: CleanArchitectureValidator::with_config(
-                &config,
-                &file_config.rules.clean_architecture,
-                &file_config.rules.naming,
-            ),
-            // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
-            visibility: VisibilityValidator::with_config(&file_config.rules.visibility),
-            layer_flow: LayerFlowValidator::with_config(&file_config.rules.layer_flow),
-            port_adapter: PortAdapterValidator::with_config(&file_config.rules.port_adapter),
             // Modernization: Initialize new components
             extractor: RustExtractor,
             config: ValidationConfig {
@@ -534,78 +509,7 @@ impl ArchitectureValidator {
 
     /// Run all validations and return a comprehensive report
     pub fn validate_all(&mut self) -> Result<GenericReport> {
-        let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
-
-        // Collect all violations, converting to Box<dyn Violation>
-        for v in self.dependency.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.quality.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.patterns.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.tests.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.documentation.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.naming.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.solid.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.organization.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.kiss.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.refactoring.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.implementation.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.performance.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.async_patterns.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.error_boundary.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.pmat.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.test_quality.validate()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.config_quality.validate()? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.clean_architecture.validate_all()? {
-            all_violations.push(Box::new(v));
-        }
-        // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
-        for v in self.visibility.validate(&self.config)? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.layer_flow.validate(&self.config)? {
-            all_violations.push(Box::new(v));
-        }
-        for v in self.port_adapter.validate(&self.config)? {
-            all_violations.push(Box::new(v));
-        }
-
-        Ok(GenericReporter::create_report(
-            &all_violations,
-            self.config.workspace_root.clone(),
-        ))
+        self.validate_with_registry()
     }
 
     /// Run only dependency validation
@@ -956,11 +860,7 @@ impl ArchitectureValidator {
         ValidatorRegistry::standard_for(&self.config.workspace_root)
     }
 
-    /// Validate using the new registry-based system
-    ///
-    /// This runs only the validators that have been migrated to the new
-    /// trait-based architecture. Use `validate_all()` for comprehensive
-    /// validation including legacy validators.
+    /// Validate using the canonical registry-based system
     ///
     /// # Returns
     ///

@@ -301,6 +301,11 @@ impl ProjectSchema {
                 columns: vec!["project_id".to_string()],
             },
             IndexDef {
+                name: "idx_summary_project".to_string(),
+                table: "session_summaries".to_string(),
+                columns: vec!["project_id".to_string()],
+            },
+            IndexDef {
                 name: "idx_file_hashes_project".to_string(),
                 table: "file_hashes".to_string(),
                 columns: vec!["project_id".to_string()],

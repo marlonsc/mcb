@@ -639,10 +639,15 @@ pub struct PlanEntityArgs {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum OrgEntityAction {
+    /// Create a new entity.
     Create,
+    /// Get an entity by identifier.
     Get,
+    /// Update an existing entity.
     Update,
+    /// List entities matching filters.
     List,
+    /// Delete an entity by identifier.
     Delete,
 }
 
@@ -650,30 +655,43 @@ pub enum OrgEntityAction {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum OrgEntityResource {
+    /// Organization resource.
     Org,
+    /// User resource.
     User,
+    /// Team resource.
     Team,
+    /// Team-member link resource.
     TeamMember,
+    /// API key resource.
     ApiKey,
 }
 
 /// Arguments for the consolidated `org_entity` MCP tool
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct OrgEntityArgs {
+    /// Action to perform.
     #[schemars(description = "Action: create, get, update, list, delete")]
     pub action: OrgEntityAction,
+    /// Resource type to target.
     #[schemars(description = "Resource: org, user, team, team_member, api_key")]
     pub resource: OrgEntityResource,
+    /// Resource ID for get/update/delete operations.
     #[schemars(description = "Resource ID (for get/update/delete)")]
     pub id: Option<String>,
+    /// Organization ID for list operations.
     #[schemars(description = "Organization ID (for listing users/teams/api_keys)")]
     pub org_id: Option<String>,
+    /// Team ID used by team-member list/delete.
     #[schemars(description = "Team ID (for listing members)")]
     pub team_id: Option<String>,
+    /// User ID used by team-member delete.
     #[schemars(description = "User ID (for removing team member)")]
     pub user_id: Option<String>,
+    /// Email used for user lookup when ID is omitted.
     #[schemars(description = "Email (for user lookup by email)")]
     pub email: Option<String>,
+    /// JSON payload for create/update actions.
     #[schemars(description = "Data payload for create/update (JSON object)")]
     #[schemars(with = "serde_json::Value")]
     pub data: Option<serde_json::Value>,
