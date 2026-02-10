@@ -497,49 +497,70 @@ pub struct VcsArgs {
 // VCS Entity Tool - Repository, Branch, Worktree, Assignment CRUD
 // =============================================================================
 
+/// CRUD actions for VCS entity resources.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum VcsEntityAction {
+    /// Create a new entity.
     Create,
+    /// Get an entity by ID.
     Get,
+    /// Update an existing entity.
     Update,
+    /// List entities matching criteria.
     List,
+    /// Delete an entity by ID.
     Delete,
+    /// Release an assignment.
     Release,
 }
 
+/// Target resource type for VCS entity operations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum VcsEntityResource {
+    /// Repository resource.
     Repository,
+    /// Branch resource.
     Branch,
+    /// Worktree resource.
     Worktree,
+    /// Agent-worktree assignment resource.
     Assignment,
 }
 
+/// Arguments for the consolidated `vcs_entity` MCP tool.
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct VcsEntityArgs {
+    /// CRUD action to perform.
     #[schemars(description = "Action: create, get, update, list, delete, release")]
     pub action: VcsEntityAction,
 
+    /// Target resource type.
     #[schemars(description = "Resource: repository, branch, worktree, assignment")]
     pub resource: VcsEntityResource,
 
+    /// Resource ID (for get/update/delete/release).
     #[schemars(description = "Resource ID (for get/update/delete/release)")]
     pub id: Option<String>,
 
+    /// Organization ID (uses default if omitted).
     #[schemars(description = "Organization ID (uses default if omitted)")]
     pub org_id: Option<String>,
 
+    /// Project ID (for repository listing).
     #[schemars(description = "Project ID (for repository listing)")]
     pub project_id: Option<String>,
 
+    /// Repository ID (for branch/worktree listing).
     #[schemars(description = "Repository ID (for branch/worktree listing)")]
     pub repository_id: Option<String>,
 
+    /// Worktree ID (for assignment listing).
     #[schemars(description = "Worktree ID (for assignment listing)")]
     pub worktree_id: Option<String>,
 
+    /// Data payload for create/update (JSON object).
     #[schemars(
         description = "Data payload for create/update (JSON object)",
         with = "serde_json::Value"

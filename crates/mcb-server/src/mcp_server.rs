@@ -141,6 +141,7 @@ impl McpServer {
         Arc::clone(&self.services.project_workflow)
     }
 
+    /// Access to VCS entity service.
     pub fn vcs_entity_service(&self) -> Arc<dyn VcsEntityServiceInterface> {
         Arc::clone(&self.services.vcs_entity)
     }

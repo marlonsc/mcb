@@ -11,6 +11,7 @@ pub mod search;
 pub mod session;
 pub mod validate;
 pub mod vcs;
+/// VCS entity CRUD handler.
 pub mod vcs_entity;
 
 pub use agent::AgentHandler;

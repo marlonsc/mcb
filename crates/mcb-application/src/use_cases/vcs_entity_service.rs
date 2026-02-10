@@ -7,11 +7,13 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::VcsEntityRepository;
 use mcb_domain::ports::services::VcsEntityServiceInterface;
 
+/// Application-layer service for VCS entity CRUD operations.
 pub struct VcsEntityServiceImpl {
     repository: Arc<dyn VcsEntityRepository>,
 }
 
 impl VcsEntityServiceImpl {
+    /// Create a new [`VcsEntityServiceImpl`] backed by the given repository.
     pub fn new(repository: Arc<dyn VcsEntityRepository>) -> Self {
         Self { repository }
     }

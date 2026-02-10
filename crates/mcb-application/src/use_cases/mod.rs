@@ -21,6 +21,7 @@ pub mod memory_service;
 pub mod project_service;
 pub mod search_service;
 pub mod validation_service;
+/// VCS entity CRUD service delegating to the repository port.
 pub mod vcs_entity_service;
 pub mod vcs_indexing;
 

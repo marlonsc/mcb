@@ -68,6 +68,7 @@ pub mod mcp_server;
 pub mod session;
 pub mod tools;
 pub mod transport;
+/// Shared utility functions.
 pub mod utils;
 
 // Re-export core types for public API

@@ -9,15 +9,18 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 
+/// Handler for the consolidated `vcs_entity` MCP tool.
 pub struct VcsEntityHandler {
     service: Arc<dyn VcsEntityServiceInterface>,
 }
 
 impl VcsEntityHandler {
+    /// Create a new handler wrapping the given service.
     pub fn new(service: Arc<dyn VcsEntityServiceInterface>) -> Self {
         Self { service }
     }
 
+    /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<VcsEntityArgs>,
