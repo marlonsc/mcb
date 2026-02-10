@@ -56,7 +56,7 @@ Major stabilization release delivering critical bug fixes for Agent, Session, an
 
 - **Rust Tests**: 1,266 passing (0 failures, 11 ignored)
 - **E2E Tests**: 44 passing (6 skipped for missing fixture data)
-- **Total**: 1,3077+ tests across unit, integration, golden, and E2E
+- **Total**: 1,3081+ tests across unit, integration, golden, and E2E
 - **Crates**: 9 workspace members
 - **Integration Gaps**: 3/3 critical validation gaps closed
 - **MCP Compliance**: Strict argument validation per JSON-RPC spec
