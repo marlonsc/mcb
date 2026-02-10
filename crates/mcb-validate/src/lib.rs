@@ -428,7 +428,6 @@ pub struct ArchitectureValidator {
     // Modernization: New generic components
     extractor: RustExtractor,
     naming_config: crate::config::NamingRulesConfig,
-    general_config: crate::config::GeneralConfig,
 }
 
 impl ArchitectureValidator {
@@ -493,7 +492,6 @@ impl ArchitectureValidator {
                 ..config
             },
             naming_config: file_config.rules.naming.clone(),
-            general_config: file_config.general.clone(),
         }
     }
 
@@ -596,11 +594,6 @@ impl ArchitectureValidator {
 
     /// Load and validate all YAML rules with variable substitution
     pub async fn load_yaml_rules(&self) -> Result<Vec<crate::rules::yaml_loader::ValidatedRule>> {
-        let rules_dir = self
-            .config
-            .workspace_root
-            .join(&self.general_config.rules_path);
-
         // Prepare variables for substitution
         let variables_val = serde_yaml::to_value(&self.naming_config).map_err(|e| {
             crate::ValidationError::Config(format!("Failed to serialize naming config: {e}"))
@@ -653,14 +646,6 @@ impl ArchitectureValidator {
         }
 
         let variables = serde_yaml::Value::Mapping(variables);
-
-        if rules_dir.exists() {
-            let mut fs_loader = YamlRuleLoader::with_variables(rules_dir, Some(variables.clone()))?;
-            let fs_rules = fs_loader.load_all_rules().await?;
-            if !fs_rules.is_empty() {
-                return Ok(fs_rules);
-            }
-        }
 
         let embedded_rules = EmbeddedRules::all_yaml();
         let mut loader =

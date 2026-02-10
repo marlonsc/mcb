@@ -295,12 +295,13 @@ mod tests {
         ));
         let config = ValidationConfig::new(".");
 
-        let err = registry
-            .validate_named(&config, &["known", "unknown", "unknown"])
-            .expect_err("expected unknown validator names to fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("Unknown validator(s): unknown"));
-        assert!(msg.contains("Available validators: known"));
+        match registry.validate_named(&config, &["known", "unknown", "unknown"]) {
+            Ok(_) => panic!("expected unknown validator names to fail"),
+            Err(err) => {
+                let msg = err.to_string();
+                assert!(msg.contains("Unknown validator(s): unknown"));
+                assert!(msg.contains("Available validators: known"));
+            }
+        }
     }
 }
