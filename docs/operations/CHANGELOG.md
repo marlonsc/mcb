@@ -74,41 +74,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Success Criteria
 
--   2990+ tests passing (unit, integration, end-to-end)
+-   2995+ tests passing (unit, integration, end-to-end)
 -   85%+ code coverage minimum
 -   Zero architecture violations
 -   Complete documentation and v0.3.0 → v0.4.0 migration guide
 
 ---
 
-## [0.2.1] - 2026-02-10
+## [0.2.0] - 2026-02-10
 
 ### What This Release Is
 
-**MCP Context Browser v0.2.1** is a focused corrective release that closes three critical integration gaps discovered during live MCP validation of v0.2.0.
-
-### Fixed
-
--   **GAP-1 (mcb_validate)**: Restored validator availability in `list_rules` responses, returning the expected populated validator set.
--   **GAP-2 (mcb_vcs)**: Fixed repository discovery by adding recursive Git repository scanning (including nested repositories) in the Git2 provider.
--   **GAP-3 (mcb_session)**: Relaxed session list validation so `action=list` works with minimal parameters (e.g. `limit`) and optional `agent_type` filters.
-
-### Added
-
--   **Gap Regression Coverage**: Added `crates/mcb-server/tests/integration/gap_fixes_e2e.rs` to verify GAP-1, GAP-2, and GAP-3 behavior end-to-end.
-
-### Impact Metrics
-
--   **Integration Gap Coverage**: 3/3 critical v0.2.0 validation gaps closed.
--   **Regression Status**: Dedicated gap-fix integration suite passing.
-
----
-
-## [0.2.0] - 2026-02-09
-
-### What This Release Is
-
-**MCP Context Browser v0.2.0** is a major stabilization release delivering critical bug fixes for the Agent, Session, and Memory subsystems, alongside a comprehensive documentation overhaul. This release solidifies the architecture for the upcoming Workflow System (v0.3.0).
+**MCP Context Browser v0.2.0** is a major stabilization release delivering critical bug fixes for the Agent, Session, and Memory subsystems, strict MCP protocol compliance, integration gap fixes, and a comprehensive documentation overhaul. This release also ships first-class MCB integration into the oh-my-opencode and dotopencode ecosystems, and solidifies the architecture for the upcoming Workflow System (v0.3.0).
 
 ### Fixed
 
@@ -116,7 +93,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Session Schema**: Implemented fallback logic in `handlers/session/create.rs` to correctly handle `agent_type` and `model` fields in session creation payloads.
 -   **Memory Enums**: Improved validation and error messages for `observation_type` in `handlers/memory/helpers.rs`.
 -   **Linting & Quality**: Resolved Clippy errors in `git2_provider.rs` and other modules.
--   **Validation**: Added comprehensive integration tests (`validation_fixes_e2e.rs`) covering the fixed scenarios.
+-   **GAP-1 (mcb_validate)**: Restored validator availability in `list_rules` responses, returning the expected populated validator set.
+-   **GAP-2 (mcb_vcs)**: Fixed repository discovery by adding recursive Git repository scanning (including nested repositories) in the Git2 provider.
+-   **GAP-3 (mcb_session)**: Relaxed session list validation so `action=list` works with minimal parameters (e.g. `limit`) and optional `agent_type` filters.
+-   **Strict `tools/call` Validation**: Non-object `arguments` in MCP `tools/call` requests now correctly return JSON-RPC `-32602` (Invalid Params) instead of being silently dropped. Error mapping from `route_tool_call` inspects error codes to return correct `-32602` vs `-32603`.
+-   **Doctest Compilation**: Fixed registry module doctest return type (`String` → `mcb_domain::Error`) to match `resolve_embedding_provider` signature.
+-   **Admin Web Test**: Updated indexing page assertion to match actual template text ("Indexing Summary").
 
 ### Added
 
@@ -124,6 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **ADR Archive Structure**: New `docs/adr/archive/` directory for superseded decisions.
 -   **Unified Provider Architecture**: Consolidation of provider strategies (ADR-003).
 -   **Release Roadmap**: Clear coordination strategy for v0.3.0 and v0.4.0.
+-   **Gap Regression Coverage**: Added `crates/mcb-server/tests/integration/gap_fixes_e2e.rs` to verify GAP-1, GAP-2, and GAP-3 behavior end-to-end.
+-   **MCP Protocol Compliance Tests**: 3 integration tests for strict argument validation (missing params, non-object arguments, unknown tool).
 
 ### Changed
 
@@ -131,9 +115,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Documentation Structure**: Improved navigation with frontmatter-based indexing.
 -   **Supersession Chains**: Clarified architectural decision history (ADR-012→024→029, etc.).
 
+### Integration
+
+-   **oh-my-opencode**: Explore agent prompt now natively references `mcp_mcb_search` as preferred tool for natural language queries. Librarian agent includes MCB memory/code search in tool reference.
+-   **dotopencode**: `AGENTS.md` and `oc-mcb` skill updated with v0.2.0 final status matrix (5 working, 2 partial, 1 broken).
+
 ### Impact Metrics
 
--   **Tests**: 2990+ tests passing (including new e2e validation tests).
+-   **Tests**: 2995+ tests passing (0 failures, including new e2e and protocol compliance tests).
+-   **Integration Gap Coverage**: 3/3 critical validation gaps closed.
+-   **MCP Compliance**: Strict argument validation enforced per JSON-RPC spec.
 -   **Stability**: Critical persistence and schema bugs resolved.
 -   **Documentation**: 44 ADRs standardized and indexed.
 
@@ -384,7 +375,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Provider Registration**: Compile-time (from runtime discovery)
 -   **Validation Coverage**: 12 architecture patterns automated
 -   **Source Files**: 340 Rust files (from ~300 in v0.1.1)
--   **Test Coverage**: 2990+ tests maintained
+-   **Test Coverage**: 2995+ tests maintained
 -   **Architecture Compliance**: Automated validation of 7-crate clean architecture
 
 ### Next Steps (v0.1.3 or v0.2.0)
@@ -452,7 +443,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   **Clean Architecture**: Complete refactoring with trait-based dependency injection
--   **Test Suite**: Expanded to 2990+ tests organized by Clean Architecture layers
+-   **Test Suite**: Expanded to 2995+ tests organized by Clean Architecture layers
 -   **Configuration**: Modular configuration with cache and limits separated
 -   **Server Operations**: Extracted operations to dedicated module (`src/server/operations.rs`)
 -   **Metrics**: Dedicated metrics module (`src/server/metrics.rs`)
@@ -481,7 +472,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Memory Usage**: Native efficiency (reduced by ~60% vs Node.js)
 -   **Provider Support**: 6 embedding providers, 6 vector stores
 -   **Language Support**: 14 languages with AST parsing
--   **Test Coverage**: 2990+ tests
+-   **Test Coverage**: 2995+ tests
 
 ---
 
