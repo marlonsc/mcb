@@ -635,6 +635,55 @@ pub struct PlanEntityArgs {
     pub data: Option<serde_json::Value>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IssueEntityAction {
+    Create,
+    Get,
+    Update,
+    List,
+    Delete,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IssueEntityResource {
+    Issue,
+    Comment,
+    Label,
+    LabelAssignment,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct IssueEntityArgs {
+    #[schemars(description = "Action: create, get, update, list, delete")]
+    pub action: IssueEntityAction,
+
+    #[schemars(description = "Resource: issue, comment, label, label_assignment")]
+    pub resource: IssueEntityResource,
+
+    #[schemars(description = "Resource ID (for get/update/delete)")]
+    pub id: Option<String>,
+
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
+    #[schemars(description = "Project ID (for issue/label listing)")]
+    pub project_id: Option<String>,
+
+    #[schemars(description = "Issue ID (for comment listing and label assignments)")]
+    pub issue_id: Option<String>,
+
+    #[schemars(description = "Label ID (for label unassignment)")]
+    pub label_id: Option<String>,
+
+    #[schemars(
+        description = "Data payload for create/update (JSON object)",
+        with = "serde_json::Value"
+    )]
+    pub data: Option<serde_json::Value>,
+}
+
 // =============================================================================
 // Project Tool - Consolidates all project_* tools (9 tools → 1)
 // =============================================================================

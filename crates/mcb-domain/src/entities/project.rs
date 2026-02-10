@@ -316,9 +316,14 @@ pub struct ProjectPhase {
 pub struct ProjectIssue {
     /// Unique identifier for the issue.
     pub id: String,
+    /// Organization this issue belongs to (tenant isolation).
+    pub org_id: String,
     /// Identifier of the project this issue belongs to.
     pub project_id: String,
+    /// User identifier of the issue creator.
+    pub created_by: String,
     /// Optional phase this issue belongs to.
+    #[serde(default)]
     pub phase_id: Option<String>,
     /// Concise summary of the issue.
     pub title: String,
@@ -331,15 +336,35 @@ pub struct ProjectIssue {
     /// Priority 0-4 (0=critical, 4=backlog).
     pub priority: i32,
     /// User identifier of the person assigned to this issue.
+    #[serde(default)]
     pub assignee: Option<String>,
     /// Set of tags or categories associated with the issue.
     pub labels: Vec<String>,
+    /// Estimated effort in minutes.
+    #[serde(default)]
+    pub estimated_minutes: Option<i64>,
+    /// Actual effort in minutes.
+    #[serde(default)]
+    pub actual_minutes: Option<i64>,
+    /// Free-form operational notes (Beads-compatible).
+    #[serde(default)]
+    pub notes: String,
+    /// Free-form design notes (Beads-compatible).
+    #[serde(default)]
+    pub design: String,
+    /// Optional parent issue identifier for sub-task relationships.
+    #[serde(default)]
+    pub parent_issue_id: Option<String>,
     /// Timestamp when the issue was created (Unix epoch).
     pub created_at: i64,
     /// Timestamp when the issue was last updated (Unix epoch).
     pub updated_at: i64,
     /// Timestamp when the issue was closed (Unix epoch).
+    #[serde(default)]
     pub closed_at: Option<i64>,
+    /// Human-readable reason why the issue was closed.
+    #[serde(default)]
+    pub closed_reason: String,
 }
 
 /// Represents a directed relationship between two issues.

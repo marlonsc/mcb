@@ -5,6 +5,8 @@
 
 pub mod agent;
 pub mod index;
+/// Issue entity CRUD handler.
+pub mod issue_entity;
 pub mod memory;
 /// Plan entity CRUD handler.
 pub mod plan_entity;
@@ -18,6 +20,7 @@ pub mod vcs_entity;
 
 pub use agent::AgentHandler;
 pub use index::IndexHandler;
+pub use issue_entity::IssueEntityHandler;
 pub use memory::MemoryHandler;
 pub use plan_entity::PlanEntityHandler;
 pub use project::ProjectHandler;

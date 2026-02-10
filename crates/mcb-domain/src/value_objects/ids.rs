@@ -99,3 +99,9 @@ define_id!(
 define_id!(PlanId, "Strong typed identifier for a plan");
 define_id!(PlanVersionId, "Strong typed identifier for a plan version");
 define_id!(PlanReviewId, "Strong typed identifier for a plan review");
+define_id!(IssueId, "Strong typed identifier for a project issue");
+define_id!(
+    IssueCommentId,
+    "Strong typed identifier for an issue comment"
+);
+define_id!(IssueLabelId, "Strong typed identifier for an issue label");

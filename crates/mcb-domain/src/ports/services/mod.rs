@@ -5,6 +5,7 @@ pub mod chunking;
 pub mod context;
 pub mod hash;
 pub mod indexing;
+pub mod issue_entity;
 pub mod memory;
 pub mod plan_entity;
 pub mod project;
@@ -20,6 +21,7 @@ pub use indexing::{
     BatchIndexingServiceInterface, IndexingResult, IndexingServiceInterface, IndexingStats,
     IndexingStatus,
 };
+pub use issue_entity::IssueEntityServiceInterface;
 pub use memory::MemoryServiceInterface;
 pub use plan_entity::PlanEntityServiceInterface;
 pub use project::{ProjectDetectorService, ProjectServiceInterface};

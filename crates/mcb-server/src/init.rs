@@ -147,6 +147,7 @@ async fn run_server_mode(
         project_workflow: Some(server.project_workflow_service()),
         vcs_entity: Some(server.vcs_entity_service()),
         plan_entity: Some(server.plan_entity_service()),
+        issue_entity: Some(server.issue_entity_service()),
     };
 
     let browse_state = BrowseState {
@@ -282,6 +283,7 @@ async fn create_mcp_server(
         vcs: services.vcs_provider,
         vcs_entity: services.vcs_entity_service,
         plan_entity: services.plan_entity_service,
+        issue_entity: services.issue_entity_service,
     };
     let server = McpServer::from_services(mcp_services);
 

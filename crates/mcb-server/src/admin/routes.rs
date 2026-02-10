@@ -17,8 +17,8 @@ use super::browse_handlers::{
 use super::config_handlers::{get_config, reload_config, update_config_section};
 use super::handlers::{
     AdminState, extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
-    list_browse_plans, list_browse_projects, list_browse_repositories, liveness_check,
-    readiness_check, shutdown,
+    list_browse_issues, list_browse_plans, list_browse_projects, list_browse_repositories,
+    liveness_check, readiness_check, shutdown,
 };
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
@@ -76,6 +76,7 @@ pub fn admin_rocket(
             list_browse_projects,
             list_browse_repositories,
             list_browse_plans,
+            list_browse_issues,
             readiness_check,
             liveness_check,
             // Service control

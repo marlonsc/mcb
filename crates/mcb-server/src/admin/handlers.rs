@@ -19,7 +19,8 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
 use mcb_domain::ports::providers::CacheProvider;
 use mcb_domain::ports::services::{
-    PlanEntityServiceInterface, ProjectServiceInterface, VcsEntityServiceInterface,
+    IssueEntityServiceInterface, PlanEntityServiceInterface, ProjectServiceInterface,
+    VcsEntityServiceInterface,
 };
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
@@ -62,6 +63,8 @@ pub struct AdminState {
     pub vcs_entity: Option<Arc<dyn VcsEntityServiceInterface>>,
     /// Plan entity service for plan/version/review navigation
     pub plan_entity: Option<Arc<dyn PlanEntityServiceInterface>>,
+    /// Issue entity service for issue/comment/label navigation
+    pub issue_entity: Option<Arc<dyn IssueEntityServiceInterface>>,
 }
 
 /// Health check response for admin API
@@ -211,6 +214,15 @@ pub struct PlansBrowseResponse {
     pub total: usize,
 }
 
+/// Response payload for the issues browse endpoint.
+#[derive(Serialize)]
+pub struct IssuesBrowseResponse {
+    /// List of issues.
+    pub issues: Vec<mcb_domain::entities::project::ProjectIssue>,
+    /// Total number of issues.
+    pub total: usize,
+}
+
 /// List repositories for browse entity graph.
 #[get("/repositories?<project_id>")]
 pub async fn list_browse_repositories(
@@ -285,6 +297,42 @@ pub async fn list_browse_plans(
                 Status::InternalServerError,
                 Json(CacheErrorResponse {
                     error: "Failed to list plans".to_string(),
+                }),
+            ))
+        }
+    }
+}
+
+/// List issues for browse entity graph.
+#[get("/issues?<project_id>")]
+pub async fn list_browse_issues(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+    project_id: Option<String>,
+) -> Result<Json<IssuesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(issue_entity) = &state.issue_entity else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Issue entity service not available".to_string(),
+            }),
+        ));
+    };
+
+    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    let pid = project_id.as_deref().unwrap_or("");
+
+    match issue_entity.list_issues(org_ctx.org_id.as_str(), pid).await {
+        Ok(issues) => {
+            let total = issues.len();
+            Ok(Json(IssuesBrowseResponse { issues, total }))
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list issues");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list issues".to_string(),
                 }),
             ))
         }

@@ -22,6 +22,8 @@ pub mod api_key;
 pub mod code_chunk;
 /// Entities for codebase state management and change tracking
 pub mod codebase;
+/// Issue comments, labels, and label assignments.
+pub mod issue;
 pub mod memory;
 pub mod observation;
 /// Organization entity (top-level tenant)
@@ -51,6 +53,7 @@ pub use agent::{
 pub use api_key::ApiKey;
 pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
+pub use issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 pub use memory::{
     ErrorPattern, ErrorPatternCategory, ErrorPatternMatch, ExecutionMetadata, ExecutionType,
     MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationMetadata,

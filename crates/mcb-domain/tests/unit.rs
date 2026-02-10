@@ -70,6 +70,8 @@ mod team_tests;
 #[path = "unit/user_tests.rs"]
 mod user_tests;
 
+#[path = "unit/issue_tests.rs"]
+mod issue_tests;
 #[path = "unit/plan_tests.rs"]
 mod plan_tests;
 #[path = "unit/repository_tests.rs"]

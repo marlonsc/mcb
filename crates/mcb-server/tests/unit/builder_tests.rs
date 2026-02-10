@@ -5,9 +5,9 @@ use std::sync::Arc;
 use mcb_server::builder::{BuilderError, McpServerBuilder};
 
 use crate::test_utils::mock_services::{
-    MockAgentSessionService, MockContextService, MockIndexingService, MockMemoryService,
-    MockPlanEntityService, MockProjectService, MockProjectWorkflowService, MockSearchService,
-    MockValidationService, MockVcsEntityService, MockVcsProvider,
+    MockAgentSessionService, MockContextService, MockIndexingService, MockIssueEntityService,
+    MockMemoryService, MockPlanEntityService, MockProjectService, MockProjectWorkflowService,
+    MockSearchService, MockValidationService, MockVcsEntityService, MockVcsProvider,
 };
 
 #[test]
@@ -32,6 +32,7 @@ fn test_builder_all_services_provided() {
         .with_project_workflow_service(Arc::new(MockProjectWorkflowService::new()))
         .with_vcs_entity_service(Arc::new(MockVcsEntityService::new()))
         .with_plan_entity_service(Arc::new(MockPlanEntityService::new()))
+        .with_issue_entity_service(Arc::new(MockIssueEntityService::new()))
         .build();
 
     assert!(result.is_ok());
@@ -174,6 +175,7 @@ fn test_try_build_success() {
         .with_project_workflow_service(Arc::new(MockProjectWorkflowService::new()))
         .with_vcs_entity_service(Arc::new(MockVcsEntityService::new()))
         .with_plan_entity_service(Arc::new(MockPlanEntityService::new()))
+        .with_issue_entity_service(Arc::new(MockIssueEntityService::new()))
         .build();
 
     assert!(server.is_ok());

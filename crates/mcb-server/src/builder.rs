@@ -8,9 +8,10 @@ use std::sync::Arc;
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
-    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    PlanEntityServiceInterface, ProjectDetectorService, ProjectServiceInterface,
-    SearchServiceInterface, ValidationServiceInterface, VcsEntityServiceInterface,
+    ContextServiceInterface, IndexingServiceInterface, IssueEntityServiceInterface,
+    MemoryServiceInterface, PlanEntityServiceInterface, ProjectDetectorService,
+    ProjectServiceInterface, SearchServiceInterface, ValidationServiceInterface,
+    VcsEntityServiceInterface,
 };
 
 use crate::McpServer;
@@ -32,6 +33,7 @@ pub struct McpServerBuilder {
     vcs_provider: Option<Arc<dyn VcsProvider>>,
     vcs_entity_service: Option<Arc<dyn VcsEntityServiceInterface>>,
     plan_entity_service: Option<Arc<dyn PlanEntityServiceInterface>>,
+    issue_entity_service: Option<Arc<dyn IssueEntityServiceInterface>>,
 }
 
 impl McpServerBuilder {
@@ -133,6 +135,15 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the issue entity service
+    pub fn with_issue_entity_service(
+        mut self,
+        service: Arc<dyn IssueEntityServiceInterface>,
+    ) -> Self {
+        self.issue_entity_service = Some(service);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -174,6 +185,9 @@ impl McpServerBuilder {
         let plan_entity_service = self
             .plan_entity_service
             .ok_or(BuilderError::MissingDependency("plan entity service"))?;
+        let issue_entity_service = self
+            .issue_entity_service
+            .ok_or(BuilderError::MissingDependency("issue entity service"))?;
 
         let services = crate::mcp_server::McpServices {
             indexing: indexing_service,
@@ -187,6 +201,7 @@ impl McpServerBuilder {
             vcs: vcs_provider,
             vcs_entity: vcs_entity_service,
             plan_entity: plan_entity_service,
+            issue_entity: issue_entity_service,
         };
 
         Ok(McpServer::new(services))

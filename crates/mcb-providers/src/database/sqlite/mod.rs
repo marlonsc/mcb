@@ -9,6 +9,7 @@
 mod agent_repository;
 mod ddl;
 pub mod executor;
+pub mod issue_entity_repository;
 mod memory_repository;
 mod plan_entity_repository;
 mod project_repository;
@@ -19,6 +20,7 @@ mod vcs_entity_repository;
 pub use agent_repository::SqliteAgentRepository;
 pub use ddl::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 pub use executor::SqliteExecutor;
+pub use issue_entity_repository::SqliteIssueEntityRepository;
 pub use memory_repository::SqliteMemoryRepository;
 pub use plan_entity_repository::SqlitePlanEntityRepository;
 pub use project_repository::SqliteProjectRepository;

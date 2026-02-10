@@ -153,6 +153,7 @@ impl AdminTestHarness {
             project_workflow: None,
             vcs_entity: None,
             plan_entity: None,
+            issue_entity: None,
         }
     }
 
