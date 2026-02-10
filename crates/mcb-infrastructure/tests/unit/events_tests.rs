@@ -1,10 +1,10 @@
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_infrastructure::infrastructure::TokioBroadcastEventBus;
+use mcb_providers::events::TokioEventBusProvider;
 
 #[tokio::test]
 async fn test_event_bus_clone() {
-    let bus = TokioBroadcastEventBus::new();
+    let bus = TokioEventBusProvider::new();
     let cloned = bus.clone();
 
     // Initially no subscribers
@@ -22,26 +22,26 @@ async fn test_event_bus_clone() {
 
 #[test]
 fn test_event_bus_with_capacity() {
-    let bus = TokioBroadcastEventBus::with_capacity(100);
+    let bus = TokioEventBusProvider::with_capacity(100);
     assert!(!bus.has_subscribers());
 }
 
 #[test]
 fn test_event_bus_default() {
-    let bus = TokioBroadcastEventBus::default();
+    let bus = TokioEventBusProvider::default();
     assert!(!bus.has_subscribers());
 }
 
 #[test]
 fn test_event_bus_debug() {
-    let bus = TokioBroadcastEventBus::new();
+    let bus = TokioEventBusProvider::new();
     let debug = format!("{:?}", bus);
-    assert!(debug.contains("TokioBroadcastEventBus"));
+    assert!(debug.contains("TokioEventBusProvider"));
 }
 
 #[tokio::test]
 async fn test_publish_event_no_subscribers() {
-    let bus = TokioBroadcastEventBus::new();
+    let bus = TokioEventBusProvider::new();
     let event = DomainEvent::IndexingStarted {
         collection: "test".to_string(),
         total_files: 5,
@@ -52,14 +52,14 @@ async fn test_publish_event_no_subscribers() {
 
 #[tokio::test]
 async fn test_subscribe_creates_id() {
-    let bus = TokioBroadcastEventBus::new();
+    let bus = TokioEventBusProvider::new();
     let id = bus.subscribe("test-topic").await.unwrap();
     assert!(id.contains("tokio-broadcast-test-topic-"));
 }
 
 #[tokio::test]
 async fn test_publish_invalid_payload() {
-    let bus = TokioBroadcastEventBus::new();
+    let bus = TokioEventBusProvider::new();
     let result = bus.publish("topic", b"not-valid-json").await;
     assert!(result.is_ok());
 }
