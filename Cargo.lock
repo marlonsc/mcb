@@ -3327,7 +3327,7 @@ dependencies = [
 
 [[package]]
 name = "mcb"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clap",
  "mcb-domain",
@@ -3341,7 +3341,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-application"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3361,7 +3361,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-ast-utils"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "mcb-language-support",
  "tempfile",
@@ -3382,7 +3382,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-domain"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -3405,7 +3405,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-infrastructure"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -3495,7 +3495,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-language-support"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "rust-code-analysis",
@@ -3508,7 +3508,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-providers"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -3562,7 +3562,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-server"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3612,7 +3612,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-validate"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "async-trait",

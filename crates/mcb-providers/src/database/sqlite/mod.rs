@@ -13,6 +13,7 @@ mod memory_repository;
 mod project_repository;
 mod provider;
 mod row_convert;
+mod vcs_entity_repository;
 
 pub use agent_repository::SqliteAgentRepository;
 pub use ddl::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
@@ -20,3 +21,4 @@ pub use executor::SqliteExecutor;
 pub use memory_repository::SqliteMemoryRepository;
 pub use project_repository::SqliteProjectRepository;
 pub use provider::*;
+pub use vcs_entity_repository::SqliteVcsEntityRepository;

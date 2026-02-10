@@ -90,3 +90,9 @@ define_id!(
 define_id!(UserId, "Strong typed identifier for a user");
 define_id!(TeamId, "Strong typed identifier for a team");
 define_id!(ApiKeyId, "Strong typed identifier for an API key");
+define_id!(BranchId, "Strong typed identifier for a tracked branch");
+define_id!(WorktreeId, "Strong typed identifier for a worktree");
+define_id!(
+    AssignmentId,
+    "Strong typed identifier for an agent-worktree assignment"
+);

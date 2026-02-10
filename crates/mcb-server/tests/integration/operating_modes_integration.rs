@@ -13,7 +13,9 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::test_utils::mock_services::{MockProjectRepository, MockVcsProvider};
+use crate::test_utils::mock_services::{
+    MockProjectRepository, MockVcsEntityService, MockVcsProvider,
+};
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::ConfigLoader;
@@ -605,6 +607,7 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
         vcs_provider,
         project_service,
         project_workflow_service: project_workflow_service.clone(),
+        vcs_entity_service: std::sync::Arc::new(MockVcsEntityService::new()),
     };
 
     let services = DomainServicesFactory::create_services(deps)
@@ -621,6 +624,7 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
         .with_project_service(services.project_service)
         .with_project_workflow_service(project_workflow_service)
         .with_vcs_provider(services.vcs_provider)
+        .with_vcs_entity_service(services.vcs_entity_service)
         .build()
         .expect("Failed to build MCP server");
 

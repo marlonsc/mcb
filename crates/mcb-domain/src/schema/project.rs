@@ -9,6 +9,7 @@
 pub mod agent;
 pub mod error_patterns;
 pub mod multi_tenant;
+pub mod vcs_entities;
 
 use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 
@@ -263,6 +264,7 @@ impl ProjectSchema {
 
         tables.extend(agent::tables());
         tables.extend(error_patterns::tables());
+        tables.extend(vcs_entities::tables());
         tables
     }
 }
@@ -317,6 +319,7 @@ impl ProjectSchema {
         indexes.extend(agent::indexes());
         indexes.extend(error_patterns::indexes());
         indexes.extend(multi_tenant::indexes());
+        indexes.extend(vcs_entities::indexes());
         indexes
     }
 }
@@ -352,6 +355,7 @@ impl ProjectSchema {
         fks.extend(agent::foreign_keys());
         fks.extend(error_patterns::foreign_keys());
         fks.extend(multi_tenant::foreign_keys());
+        fks.extend(vcs_entities::foreign_keys());
         fks
     }
 
@@ -375,6 +379,7 @@ impl ProjectSchema {
             },
         ];
         ucs.extend(multi_tenant::unique_constraints());
+        ucs.extend(vcs_entities::unique_constraints());
         ucs
     }
 }

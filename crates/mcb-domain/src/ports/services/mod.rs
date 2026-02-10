@@ -9,6 +9,7 @@ pub mod memory;
 pub mod project;
 pub mod search;
 pub mod validation;
+pub mod vcs_entity;
 
 pub use agent::AgentSessionServiceInterface;
 pub use chunking::{ChunkingOptions, ChunkingOrchestratorInterface, ChunkingResult, CodeChunker};
@@ -25,3 +26,4 @@ pub use validation::{
     ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
     ViolationEntry,
 };
+pub use vcs_entity::VcsEntityServiceInterface;

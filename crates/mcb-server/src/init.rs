@@ -145,6 +145,7 @@ async fn run_server_mode(
         service_manager: Some(std::sync::Arc::new(service_manager)),
         cache: Some(app_context.cache_handle().get()),
         project_workflow: Some(server.project_workflow_service()),
+        vcs_entity: Some(server.vcs_entity_service()),
     };
 
     let browse_state = BrowseState {
@@ -278,6 +279,7 @@ async fn create_mcp_server(
         project: services.project_service,
         project_workflow: services.project_workflow_service,
         vcs: services.vcs_provider,
+        vcs_entity: services.vcs_entity_service,
     };
     let server = McpServer::from_services(mcp_services);
 

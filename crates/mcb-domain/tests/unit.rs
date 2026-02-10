@@ -69,3 +69,8 @@ mod organization_tests;
 mod team_tests;
 #[path = "unit/user_tests.rs"]
 mod user_tests;
+
+#[path = "unit/repository_tests.rs"]
+mod repository_tests;
+#[path = "unit/worktree_tests.rs"]
+mod worktree_tests;

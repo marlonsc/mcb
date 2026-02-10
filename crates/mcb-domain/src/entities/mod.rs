@@ -27,6 +27,8 @@ pub mod observation;
 /// Organization entity (top-level tenant)
 pub mod organization;
 pub mod project;
+/// Persisted VCS repository and branch entities (multi-tenant CRUD)
+pub mod repository;
 /// Submodule entity for VCS submodule tracking
 pub mod submodule;
 /// Team and team membership entities
@@ -37,6 +39,8 @@ pub mod user;
 pub mod vcs;
 /// Workflow FSM entities for session state management
 pub mod workflow;
+/// Worktree and agent-worktree assignment entities
+pub mod worktree;
 
 // Re-export commonly used entities
 pub use agent::{
@@ -55,8 +59,10 @@ pub use project::{
     DependencyType, DetectedProject, IssueFilter, IssueStatus, IssueType, PhaseStatus, Project,
     ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,
 };
+pub use repository::{Branch, Repository, VcsType};
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
 pub use team::{Team, TeamMember, TeamMemberRole};
 pub use user::{User, UserRole};
 pub use vcs::{DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};
 pub use workflow::{Transition, TransitionTrigger, WorkflowSession, WorkflowState};
+pub use worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};

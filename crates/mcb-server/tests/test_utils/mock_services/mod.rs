@@ -8,6 +8,7 @@ pub mod project;
 pub mod search;
 pub mod validation;
 pub mod vcs;
+pub mod vcs_entity;
 
 #[allow(unused_imports)]
 pub use agent::MockAgentRepository;
@@ -22,6 +23,8 @@ pub use project::{MockProjectRepository, MockProjectService, MockProjectWorkflow
 pub use search::MockSearchService;
 pub use validation::MockValidationService;
 pub use vcs::MockVcsProvider;
+#[allow(unused_imports)]
+pub use vcs_entity::MockVcsEntityService;
 
 #[cfg(test)]
 mod constructibility {

@@ -494,6 +494,60 @@ pub struct VcsArgs {
     pub limit: Option<u32>,
 }
 // =============================================================================
+// VCS Entity Tool - Repository, Branch, Worktree, Assignment CRUD
+// =============================================================================
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum VcsEntityAction {
+    Create,
+    Get,
+    Update,
+    List,
+    Delete,
+    Release,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum VcsEntityResource {
+    Repository,
+    Branch,
+    Worktree,
+    Assignment,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct VcsEntityArgs {
+    #[schemars(description = "Action: create, get, update, list, delete, release")]
+    pub action: VcsEntityAction,
+
+    #[schemars(description = "Resource: repository, branch, worktree, assignment")]
+    pub resource: VcsEntityResource,
+
+    #[schemars(description = "Resource ID (for get/update/delete/release)")]
+    pub id: Option<String>,
+
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
+    #[schemars(description = "Project ID (for repository listing)")]
+    pub project_id: Option<String>,
+
+    #[schemars(description = "Repository ID (for branch/worktree listing)")]
+    pub repository_id: Option<String>,
+
+    #[schemars(description = "Worktree ID (for assignment listing)")]
+    pub worktree_id: Option<String>,
+
+    #[schemars(
+        description = "Data payload for create/update (JSON object)",
+        with = "serde_json::Value"
+    )]
+    pub data: Option<serde_json::Value>,
+}
+
+// =============================================================================
 // Project Tool - Consolidates all project_* tools (9 tools → 1)
 // =============================================================================
 

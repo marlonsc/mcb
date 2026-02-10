@@ -10,7 +10,7 @@ use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface,
+    ValidationServiceInterface, VcsEntityServiceInterface,
 };
 
 use crate::McpServer;
@@ -30,6 +30,7 @@ pub struct McpServerBuilder {
     project_service: Option<Arc<dyn ProjectDetectorService>>,
     project_workflow_service: Option<Arc<dyn ProjectServiceInterface>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
+    vcs_entity_service: Option<Arc<dyn VcsEntityServiceInterface>>,
 }
 
 impl McpServerBuilder {
@@ -116,6 +117,12 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the VCS entity service
+    pub fn with_vcs_entity_service(mut self, service: Arc<dyn VcsEntityServiceInterface>) -> Self {
+        self.vcs_entity_service = Some(service);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -151,6 +158,9 @@ impl McpServerBuilder {
         let project_workflow_service = self
             .project_workflow_service
             .ok_or(BuilderError::MissingDependency("project workflow service"))?;
+        let vcs_entity_service = self
+            .vcs_entity_service
+            .ok_or(BuilderError::MissingDependency("vcs entity service"))?;
 
         let services = crate::mcp_server::McpServices {
             indexing: indexing_service,
@@ -162,6 +172,7 @@ impl McpServerBuilder {
             project: project_service,
             project_workflow: project_workflow_service,
             vcs: vcs_provider,
+            vcs_entity: vcs_entity_service,
         };
 
         Ok(McpServer::new(services))

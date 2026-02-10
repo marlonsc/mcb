@@ -11,6 +11,7 @@ pub mod search;
 pub mod session;
 pub mod validate;
 pub mod vcs;
+pub mod vcs_entity;
 
 pub use agent::AgentHandler;
 pub use index::IndexHandler;
@@ -20,3 +21,4 @@ pub use search::SearchHandler;
 pub use session::SessionHandler;
 pub use validate::ValidateHandler;
 pub use vcs::VcsHandler;
+pub use vcs_entity::VcsEntityHandler;

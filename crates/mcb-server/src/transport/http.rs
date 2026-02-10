@@ -455,6 +455,7 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         agent: state.server.agent_handler(),
         project: state.server.project_handler(),
         vcs: state.server.vcs_handler(),
+        vcs_entity: state.server.vcs_entity_handler(),
         hook_processor: state.server.hook_processor(),
     };
 

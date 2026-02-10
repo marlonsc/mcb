@@ -13,10 +13,11 @@ use mcb_domain::ports::browse::HighlightServiceInterface;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
 use mcb_domain::ports::repositories::{
-    AgentRepository, FileHashRepository, MemoryRepository, ProjectRepository,
+    AgentRepository, FileHashRepository, MemoryRepository, ProjectRepository, VcsEntityRepository,
 };
 use mcb_domain::ports::services::{
     ProjectDetectorService, ProjectServiceInterface as ProjectWorkflowService,
+    VcsEntityServiceInterface,
 };
 
 use mcb_providers::database::{
@@ -95,6 +96,8 @@ pub struct AppContext {
     vcs_provider: Arc<dyn VcsProvider>,
     project_service: Arc<dyn ProjectDetectorService>,
     project_workflow_service: Arc<dyn ProjectWorkflowService>,
+    vcs_entity_repository: Arc<dyn VcsEntityRepository>,
+    vcs_entity_service: Arc<dyn VcsEntityServiceInterface>,
     file_hash_repository: Arc<dyn FileHashRepository>,
 
     // ========================================================================
@@ -215,6 +218,16 @@ impl AppContext {
         self.project_workflow_service.clone()
     }
 
+    /// Get VCS entity repository
+    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
+        self.vcs_entity_repository.clone()
+    }
+
+    /// Get VCS entity service
+    pub fn vcs_entity_service(&self) -> Arc<dyn VcsEntityServiceInterface> {
+        self.vcs_entity_service.clone()
+    }
+
     /// Get file hash repository
     pub fn file_hash_repository(&self) -> Arc<dyn FileHashRepository> {
         self.file_hash_repository.clone()
@@ -271,6 +284,7 @@ impl AppContext {
             vcs_provider,
             project_service,
             project_workflow_service: self.project_workflow_service(),
+            vcs_entity_service: self.vcs_entity_service(),
         };
 
         crate::di::modules::domain_services::DomainServicesFactory::create_services(deps).await
@@ -423,6 +437,15 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         ),
     );
 
+    let vcs_entity_repository: Arc<dyn VcsEntityRepository> = Arc::new(
+        mcb_providers::database::SqliteVcsEntityRepository::new(Arc::clone(&db_executor)),
+    );
+    let vcs_entity_service: Arc<dyn VcsEntityServiceInterface> = Arc::new(
+        mcb_application::use_cases::vcs_entity_service::VcsEntityServiceImpl::new(
+            vcs_entity_repository.clone(),
+        ),
+    );
+
     let highlight_service: Arc<dyn HighlightServiceInterface> =
         Arc::new(HighlightServiceImpl::new());
 
@@ -458,6 +481,8 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         vcs_provider,
         project_service,
         project_workflow_service,
+        vcs_entity_repository,
+        vcs_entity_service,
         file_hash_repository,
         highlight_service,
         crypto_service,

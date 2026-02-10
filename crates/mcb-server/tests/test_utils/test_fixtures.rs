@@ -204,6 +204,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         .with_project_service(services.project_service)
         .with_project_workflow_service(ctx.project_workflow_service())
         .with_vcs_provider(services.vcs_provider)
+        .with_vcs_entity_service(services.vcs_entity_service)
         .build()
         .expect("Failed to build MCP server");
 

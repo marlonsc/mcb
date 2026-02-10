@@ -10,6 +10,7 @@ use rmcp::model::Tool;
 
 use crate::args::{
     AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
+    VcsEntityArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -88,6 +89,15 @@ impl ToolDefinitions {
         )
     }
 
+    /// Define the `vcs_entity` tool.
+    pub fn vcs_entity() -> Result<Tool, McpError> {
+        Self::create_tool(
+            "vcs_entity",
+            "VCS entity CRUD (repositories, branches, worktrees, assignments)",
+            schemars::schema_for!(VcsEntityArgs),
+        )
+    }
+
     fn create_tool(
         name: &'static str,
         description: &'static str,
@@ -129,5 +139,6 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::agent()?,
         ToolDefinitions::project()?,
         ToolDefinitions::vcs()?,
+        ToolDefinitions::vcs_entity()?,
     ])
 }

@@ -18,7 +18,7 @@ use mcb_domain::ports::admin::{
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
 use mcb_domain::ports::providers::CacheProvider;
-use mcb_domain::ports::services::ProjectServiceInterface;
+use mcb_domain::ports::services::{ProjectServiceInterface, VcsEntityServiceInterface};
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
@@ -56,6 +56,8 @@ pub struct AdminState {
     pub cache: Option<Arc<dyn CacheProvider>>,
     /// Project workflow service for project/phase/issue navigation
     pub project_workflow: Option<Arc<dyn ProjectServiceInterface>>,
+    /// VCS entity service for repository/branch/worktree navigation
+    pub vcs_entity: Option<Arc<dyn VcsEntityServiceInterface>>,
 }
 
 /// Health check response for admin API
@@ -173,6 +175,47 @@ pub async fn list_browse_projects(
         Ok(projects) => {
             let total = projects.len();
             Ok(Json(ProjectsBrowseResponse { projects, total }))
+        }
+        Err(e) => Err((
+            Status::InternalServerError,
+            Json(CacheErrorResponse {
+                error: e.to_string(),
+            }),
+        )),
+    }
+}
+
+#[derive(Serialize)]
+pub struct RepositoriesBrowseResponse {
+    pub repositories: Vec<mcb_domain::entities::repository::Repository>,
+    pub total: usize,
+}
+
+#[get("/repositories?<project_id>")]
+pub async fn list_browse_repositories(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+    project_id: Option<String>,
+) -> Result<Json<RepositoriesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(vcs_entity) = &state.vcs_entity else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "VCS entity service not available".to_string(),
+            }),
+        ));
+    };
+
+    let org_id = mcb_domain::constants::keys::DEFAULT_ORG_ID;
+    let pid = project_id.as_deref().unwrap_or("");
+
+    match vcs_entity.list_repositories(org_id, pid).await {
+        Ok(repositories) => {
+            let total = repositories.len();
+            Ok(Json(RepositoriesBrowseResponse {
+                repositories,
+                total,
+            }))
         }
         Err(e) => Err((
             Status::InternalServerError,
