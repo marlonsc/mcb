@@ -83,19 +83,21 @@ fn corrupted_db_is_backed_up_and_recreated() {
 
     // Give it time to try init, fail, recover, and start
     // We can monitor stderr for the recovery message to exit early
-    let stderr = child.stderr.take().expect("capture stderr");
+    let stderr = if let Some(stderr) = child.stderr.take() {
+        stderr
+    } else {
+        panic!("capture stderr");
+    };
     let reader = BufReader::new(stderr);
     let recovered = Arc::new(AtomicBool::new(false));
     let recovered_clone = recovered.clone();
 
     let log_thread = thread::spawn(move || {
-        for line in reader.lines() {
-            if let Ok(l) = line {
-                if l.contains("backing up and recreating")
-                    || l.contains("Memory database recreated")
-                {
-                    recovered_clone.store(true, Ordering::SeqCst);
-                }
+        for line in reader.lines().map_while(Result::ok) {
+            if line.contains("backing up and recreating")
+                || line.contains("Memory database recreated")
+            {
+                recovered_clone.store(true, Ordering::SeqCst);
             }
         }
     });
@@ -109,6 +111,7 @@ fn corrupted_db_is_backed_up_and_recreated() {
     }
 
     let _ = child.kill();
+    let _ = child.wait();
     let _ = log_thread.join(); // This might hang if reader doesn't close, but child kill closes pipe
 
     let has_backup = fs::read_dir(db_path.parent().unwrap())
@@ -157,6 +160,7 @@ fn ddl_error_messages_include_source_context() {
     }
 
     let _ = child.kill();
+    let _ = child.wait();
 
     let recovery_worked = logs.contains("recreated") || logs.contains("backing up");
     let error_has_context = logs.contains("Observation storage error")
