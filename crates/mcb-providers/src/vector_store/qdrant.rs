@@ -481,7 +481,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use mcb_domain::registry::{
+use mcb_domain::registry::vector_store::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
 

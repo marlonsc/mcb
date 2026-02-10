@@ -6,7 +6,7 @@ use crate::schema::memory::{IndexDef, TableDef};
 /// Returns the table definitions.
 pub fn tables() -> Vec<TableDef> {
     vec![
-        crate::table!(
+        table!(
             "project_phases",
             [
                 crate::col!("id", Text, pk),
@@ -21,7 +21,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("updated_at", Integer),
             ]
         ),
-        crate::table!(
+        table!(
             "project_issues",
             [
                 crate::col!("id", Text, pk),
@@ -39,7 +39,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("closed_at", Integer, nullable),
             ]
         ),
-        crate::table!(
+        table!(
             "project_dependencies",
             [
                 crate::col!("id", Text, pk),
@@ -49,7 +49,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("created_at", Integer),
             ]
         ),
-        crate::table!(
+        table!(
             "project_decisions",
             [
                 crate::col!("id", Text, pk),
@@ -68,40 +68,40 @@ pub fn tables() -> Vec<TableDef> {
 /// Returns the index definitions.
 pub fn indexes() -> Vec<IndexDef> {
     vec![
-        crate::index!(
+        index!(
             "idx_project_phases_project",
             "project_phases",
             ["project_id"]
         ),
-        crate::index!("idx_project_phases_status", "project_phases", ["status"]),
-        crate::index!(
+        index!("idx_project_phases_status", "project_phases", ["status"]),
+        index!(
             "idx_project_issues_project",
             "project_issues",
             ["project_id"]
         ),
-        crate::index!("idx_project_issues_phase", "project_issues", ["phase_id"]),
-        crate::index!("idx_project_issues_status", "project_issues", ["status"]),
-        crate::index!(
+        index!("idx_project_issues_phase", "project_issues", ["phase_id"]),
+        index!("idx_project_issues_status", "project_issues", ["status"]),
+        index!(
             "idx_project_issues_priority",
             "project_issues",
             ["priority"]
         ),
-        crate::index!(
+        index!(
             "idx_project_dependencies_from",
             "project_dependencies",
             ["from_issue_id"]
         ),
-        crate::index!(
+        index!(
             "idx_project_dependencies_to",
             "project_dependencies",
             ["to_issue_id"]
         ),
-        crate::index!(
+        index!(
             "idx_project_decisions_project",
             "project_decisions",
             ["project_id"]
         ),
-        crate::index!(
+        index!(
             "idx_project_decisions_issue",
             "project_decisions",
             ["issue_id"]

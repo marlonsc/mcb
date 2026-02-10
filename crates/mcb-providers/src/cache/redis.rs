@@ -252,7 +252,7 @@ impl std::fmt::Debug for RedisCacheProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use mcb_domain::registry::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
+use mcb_domain::registry::cache::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
 
 /// Factory function for creating Redis cache provider instances.
 fn redis_cache_factory(

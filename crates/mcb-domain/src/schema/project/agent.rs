@@ -7,7 +7,7 @@ use crate::schema::memory::{IndexDef, TableDef};
 /// Returns the table definitions.
 pub fn tables() -> Vec<TableDef> {
     vec![
-        crate::table!(
+        table!(
             "agent_sessions",
             [
                 crate::col!(keys::ID, Text, pk),
@@ -26,7 +26,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!(keys::DELEGATIONS_COUNT, Integer, nullable),
             ]
         ),
-        crate::table!(
+        table!(
             "delegations",
             [
                 crate::col!("id", Text, pk),
@@ -41,7 +41,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("duration_ms", Integer, nullable),
             ]
         ),
-        crate::table!(
+        table!(
             "tool_calls",
             [
                 crate::col!("id", Text, pk),
@@ -54,7 +54,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("created_at", Integer),
             ]
         ),
-        crate::table!(
+        table!(
             "checkpoints",
             [
                 crate::col!("id", Text, pk),
@@ -73,26 +73,26 @@ pub fn tables() -> Vec<TableDef> {
 /// Returns the index definitions.
 pub fn indexes() -> Vec<IndexDef> {
     vec![
-        crate::index!(
+        index!(
             "idx_agent_sessions_parent",
             "agent_sessions",
             ["parent_session_id"]
         ),
-        crate::index!("idx_agent_sessions_type", "agent_sessions", ["agent_type"]),
-        crate::index!(
+        index!("idx_agent_sessions_type", "agent_sessions", ["agent_type"]),
+        index!(
             "idx_agent_sessions_started",
             "agent_sessions",
             ["started_at"]
         ),
-        crate::index!(
+        index!(
             "idx_delegations_parent",
             "delegations",
             ["parent_session_id"]
         ),
-        crate::index!("idx_delegations_child", "delegations", ["child_session_id"]),
-        crate::index!("idx_tool_calls_session", "tool_calls", ["session_id"]),
-        crate::index!("idx_tool_calls_tool", "tool_calls", ["tool_name"]),
-        crate::index!("idx_checkpoints_session", "checkpoints", ["session_id"]),
+        index!("idx_delegations_child", "delegations", ["child_session_id"]),
+        index!("idx_tool_calls_session", "tool_calls", ["session_id"]),
+        index!("idx_tool_calls_tool", "tool_calls", ["tool_name"]),
+        index!("idx_checkpoints_session", "checkpoints", ["session_id"]),
     ]
 }
 

@@ -10,7 +10,7 @@ use mcb_domain::ports::admin::{
     IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsInterface, ShutdownCoordinator,
 };
 use mcb_domain::ports::browse::HighlightServiceInterface;
-use mcb_domain::ports::infrastructure::{DatabaseProvider, EventBusProvider};
+use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
 use mcb_domain::ports::repositories::{
     AgentRepository, FileHashRepository, MemoryRepository, ProjectRepository,
@@ -18,7 +18,11 @@ use mcb_domain::ports::repositories::{
 use mcb_domain::ports::services::{
     ProjectDetectorService, ProjectServiceInterface as ProjectWorkflowService,
 };
-use mcb_providers::database::{SqliteDatabaseProvider, SqliteMemoryRepository};
+
+use mcb_providers::database::{
+    SqliteMemoryRepository, create_agent_repository_from_executor,
+    create_project_repository_from_executor,
+};
 use mcb_providers::storage::{SqliteFileHashConfig, SqliteFileHashRepository};
 use tracing::info;
 
@@ -29,6 +33,7 @@ use crate::di::admin::{
     LanguageAdminInterface, LanguageAdminService, VectorStoreAdminInterface,
     VectorStoreAdminService,
 };
+use crate::di::database_resolver::DatabaseProviderResolver;
 use crate::di::handles::{
     CacheProviderHandle, EmbeddingProviderHandle, LanguageProviderHandle, VectorStoreProviderHandle,
 };
@@ -36,13 +41,11 @@ use crate::di::provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,
 };
-use crate::infrastructure::{
-    admin::{AtomicPerformanceMetrics, DefaultIndexingOperations},
-    events::TokioBroadcastEventBus,
-    lifecycle::DefaultShutdownCoordinator,
-};
+use crate::infrastructure::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+use crate::infrastructure::lifecycle::DefaultShutdownCoordinator;
 use crate::project::ProjectService;
 use crate::services::HighlightServiceImpl;
+use mcb_providers::events::TokioEventBusProvider;
 
 /// Application context with provider handles and infrastructure services
 pub struct AppContext {
@@ -373,7 +376,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Infrastructure Services
     // ========================================================================
 
-    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioBroadcastEventBus::new());
+    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioEventBusProvider::new());
     let shutdown_coordinator: Arc<dyn ShutdownCoordinator> =
         Arc::new(DefaultShutdownCoordinator::new());
     let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
@@ -396,9 +399,9 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
             .join("memory.db")
     });
 
-    let sqlite_provider = SqliteDatabaseProvider;
-    let db_executor = sqlite_provider
-        .connect(memory_db_path.as_path())
+    let db_resolver = DatabaseProviderResolver::new(config.clone());
+    let db_executor = db_resolver
+        .resolve_and_connect(memory_db_path.as_path())
         .await
         .map_err(|e| {
             mcb_domain::error::Error::internal(format!("Failed to create database executor: {e}"))
@@ -406,10 +409,8 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
     let memory_repository: Arc<dyn MemoryRepository> =
         Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
-    let agent_repository =
-        mcb_providers::database::create_agent_repository_from_executor(Arc::clone(&db_executor));
-    let project_repository =
-        mcb_providers::database::create_project_repository_from_executor(Arc::clone(&db_executor));
+    let agent_repository = create_agent_repository_from_executor(Arc::clone(&db_executor));
+    let project_repository = create_project_repository_from_executor(Arc::clone(&db_executor));
     let file_hash_repository: Arc<dyn FileHashRepository> = Arc::new(
         SqliteFileHashRepository::new(Arc::clone(&db_executor), SqliteFileHashConfig::default()),
     );

@@ -107,13 +107,19 @@ async fn run_server_mode(
     let (server, app_context) = create_mcp_server(config.clone()).await?;
     info!("MCP server initialized successfully");
 
+    let event_bus = app_context.event_bus();
+
     // Create admin state for consolidated single-port operation
     // Initialize ConfigWatcher for hot-reload support
     let config_watcher = if let Some(ref path) = config_path {
-        mcb_infrastructure::config::watcher::ConfigWatcher::new(path.clone(), config.clone())
-            .await
-            .ok()
-            .map(std::sync::Arc::new)
+        mcb_infrastructure::config::watcher::ConfigWatcher::new(
+            path.clone(),
+            config.clone(),
+            event_bus.clone(),
+        )
+        .await
+        .ok()
+        .map(std::sync::Arc::new)
     } else {
         None
     };
@@ -135,7 +141,7 @@ async fn run_server_mode(
         config_path,
         shutdown_coordinator: Some(app_context.shutdown()),
         shutdown_timeout_secs: 30,
-        event_bus: app_context.event_bus(),
+        event_bus,
         service_manager: Some(std::sync::Arc::new(service_manager)),
         cache: Some(app_context.cache_handle().get()),
     };

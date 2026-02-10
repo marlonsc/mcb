@@ -27,6 +27,7 @@
 pub mod admin;
 pub mod bootstrap;
 pub mod catalog;
+pub mod database_resolver;
 pub mod dispatch;
 pub mod handle;
 pub mod handles;

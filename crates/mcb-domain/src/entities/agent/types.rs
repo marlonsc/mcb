@@ -31,7 +31,7 @@ impl AgentType {
     }
 }
 
-crate::impl_from_str!(AgentType, "Unknown agent type: {}", {
+impl_from_str!(AgentType, "Unknown agent type: {}", {
     "sisyphus" => Self::Sisyphus,
     "oracle" => Self::Oracle,
     "explore" => Self::Explore,
@@ -65,7 +65,7 @@ impl AgentSessionStatus {
     }
 }
 
-crate::impl_from_str!(AgentSessionStatus, "Unknown agent session status: {}", {
+impl_from_str!(AgentSessionStatus, "Unknown agent session status: {}", {
     "active" => Self::Active,
     "completed" => Self::Completed,
     "failed" => Self::Failed,
@@ -99,7 +99,7 @@ impl CheckpointType {
     }
 }
 
-crate::impl_from_str!(CheckpointType, "Unknown checkpoint type: {}", {
+impl_from_str!(CheckpointType, "Unknown checkpoint type: {}", {
     "git" => Self::Git,
     "file" => Self::File,
     "config" => Self::Config,

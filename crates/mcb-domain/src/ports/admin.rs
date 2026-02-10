@@ -8,9 +8,10 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::registry::{
-    CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig, VectorStoreProviderConfig,
-};
+use crate::registry::cache::CacheProviderConfig;
+use crate::registry::embedding::EmbeddingProviderConfig;
+use crate::registry::language::LanguageProviderConfig;
+use crate::registry::vector_store::VectorStoreProviderConfig;
 use crate::value_objects::{CollectionId, OperationId};
 
 /// Information about an available provider

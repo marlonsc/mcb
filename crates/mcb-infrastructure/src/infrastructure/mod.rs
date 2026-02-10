@@ -17,7 +17,7 @@
 //! mcb-application but are infrastructure concerns, not external providers.
 
 // Internal modules - implementations NOT exported
-pub(crate) mod events;
+// pub(crate) mod events;
 pub(crate) mod lifecycle;
 pub(crate) mod prometheus_metrics;
 
@@ -31,4 +31,4 @@ pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
 // Prometheus metrics - exported for /metrics endpoint
 pub use prometheus_metrics::{PrometheusPerformanceMetrics, export_metrics};
 // Event bus - exported for DI bootstrap and testing
-pub use events::TokioBroadcastEventBus;
+// pub use events::TokioBroadcastEventBus;

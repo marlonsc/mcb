@@ -47,7 +47,6 @@ use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::serde::json::Json;
 use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
-use tokio::sync::broadcast;
 use tracing::{error, info};
 
 use super::types::{McpRequest, McpResponse};
@@ -100,8 +99,6 @@ impl HttpTransportConfig {
 /// Shared state for HTTP transport
 #[derive(Clone)]
 pub struct HttpTransportState {
-    /// Broadcast channel sender for server-sent events (SSE)
-    pub event_tx: broadcast::Sender<String>,
     /// Shared reference to the MCP server instance
     pub server: Arc<McpServer>,
 }
@@ -118,10 +115,9 @@ pub struct HttpTransport {
 impl HttpTransport {
     /// Create a new HTTP transport
     pub fn new(config: HttpTransportConfig, server: Arc<McpServer>) -> Self {
-        let (event_tx, _) = broadcast::channel(100);
         Self {
             config,
-            state: HttpTransportState { event_tx, server },
+            state: HttpTransportState { server },
             admin_state: None,
             auth_config: None,
             browse_state: None,

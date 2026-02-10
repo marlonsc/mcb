@@ -30,9 +30,9 @@ use crate::di::provider_resolvers::{
 };
 use crate::infrastructure::{
     admin::{AtomicPerformanceMetrics, DefaultIndexingOperations},
-    events::TokioBroadcastEventBus,
     lifecycle::DefaultShutdownCoordinator,
 };
+use mcb_providers::events::TokioEventBusProvider;
 
 /// Build the dill Catalog with all application services
 pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
@@ -111,7 +111,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // Create Infrastructure Services
     // ========================================================================
 
-    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioBroadcastEventBus::new());
+    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioEventBusProvider::new());
     let shutdown_coordinator: Arc<dyn ShutdownCoordinator> =
         Arc::new(DefaultShutdownCoordinator::new());
     let performance_metrics: Arc<dyn PerformanceMetricsInterface> =

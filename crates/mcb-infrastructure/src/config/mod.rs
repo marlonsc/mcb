@@ -23,4 +23,4 @@ pub use paths::{
     COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,
     VCS_REGISTRY_FILENAME, config_dir,
 };
-pub use watcher::{ConfigWatchEvent, ConfigWatcher, ConfigWatcherBuilder, ConfigWatcherUtils};
+pub use watcher::{ConfigWatcher, ConfigWatcherBuilder, ConfigWatcherUtils};

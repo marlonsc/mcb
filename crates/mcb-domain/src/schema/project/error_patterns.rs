@@ -6,7 +6,7 @@ use crate::schema::memory::{IndexDef, TableDef};
 /// Returns the table definitions.
 pub fn tables() -> Vec<TableDef> {
     vec![
-        crate::table!(
+        table!(
             "error_patterns",
             [
                 crate::col!("id", Text, pk),
@@ -23,7 +23,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("embedding_id", Text, nullable),
             ]
         ),
-        crate::table!(
+        table!(
             "error_pattern_matches",
             [
                 crate::col!("id", Text, pk),
@@ -42,27 +42,27 @@ pub fn tables() -> Vec<TableDef> {
 /// Returns the index definitions.
 pub fn indexes() -> Vec<IndexDef> {
     vec![
-        crate::index!(
+        index!(
             "idx_error_patterns_project",
             "error_patterns",
             ["project_id"]
         ),
-        crate::index!(
+        index!(
             "idx_error_patterns_category",
             "error_patterns",
             ["category"]
         ),
-        crate::index!(
+        index!(
             "idx_error_patterns_last_seen",
             "error_patterns",
             ["last_seen_at"]
         ),
-        crate::index!(
+        index!(
             "idx_error_pattern_matches_pattern",
             "error_pattern_matches",
             ["pattern_id"]
         ),
-        crate::index!(
+        index!(
             "idx_error_pattern_matches_observation",
             "error_pattern_matches",
             ["observation_id"]

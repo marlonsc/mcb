@@ -14,10 +14,11 @@ use std::sync::Arc;
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
-use mcb_domain::registry::{
-    CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig,
-    VectorStoreProviderConfig, resolve_cache_provider, resolve_embedding_provider,
-    resolve_language_provider, resolve_vector_store_provider,
+use mcb_domain::registry::cache::{CacheProviderConfig, resolve_cache_provider};
+use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_provider};
+use mcb_domain::registry::vector_store::{
+    VectorStoreProviderConfig, resolve_vector_store_provider,
 };
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
@@ -42,7 +43,7 @@ impl EmbeddingProviderResolver {
     }
 
     /// Resolve provider from current application config
-    pub fn resolve_from_config(&self) -> Result<Arc<dyn EmbeddingProvider>, String> {
+    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn EmbeddingProvider>> {
         // First, check direct config (flat env vars like MCP__PROVIDERS__EMBEDDING__PROVIDER)
         if let Some(ref provider_name) = self.config.providers.embedding.provider {
             let mut registry_config = EmbeddingProviderConfig::new(provider_name);
@@ -88,13 +89,13 @@ impl EmbeddingProviderResolver {
     pub fn resolve_from_override(
         &self,
         override_config: &EmbeddingProviderConfig,
-    ) -> Result<Arc<dyn EmbeddingProvider>, String> {
+    ) -> mcb_domain::error::Result<Arc<dyn EmbeddingProvider>> {
         resolve_embedding_provider(override_config)
     }
 
     /// List available embedding providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_domain::registry::list_embedding_providers()
+        mcb_domain::registry::embedding::list_embedding_providers()
     }
 }
 
@@ -123,7 +124,7 @@ impl VectorStoreProviderResolver {
     }
 
     /// Resolve provider from current application config
-    pub fn resolve_from_config(&self) -> Result<Arc<dyn VectorStoreProvider>, String> {
+    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn VectorStoreProvider>> {
         // First, check direct config (flat env vars like MCP__PROVIDERS__VECTOR_STORE__PROVIDER)
         if let Some(ref provider_name) = self.config.providers.vector_store.provider {
             let mut registry_config = VectorStoreProviderConfig::new(provider_name);
@@ -166,13 +167,13 @@ impl VectorStoreProviderResolver {
     pub fn resolve_from_override(
         &self,
         override_config: &VectorStoreProviderConfig,
-    ) -> Result<Arc<dyn VectorStoreProvider>, String> {
+    ) -> mcb_domain::error::Result<Arc<dyn VectorStoreProvider>> {
         resolve_vector_store_provider(override_config)
     }
 
     /// List available vector store providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_domain::registry::list_vector_store_providers()
+        mcb_domain::registry::vector_store::list_vector_store_providers()
     }
 }
 
@@ -201,7 +202,7 @@ impl CacheProviderResolver {
     }
 
     /// Resolve provider from current application config
-    pub fn resolve_from_config(&self) -> Result<Arc<dyn CacheProvider>, String> {
+    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn CacheProvider>> {
         let cache_provider_name = match &self.config.system.infrastructure.cache.provider {
             crate::config::CacheProvider::Moka => "moka",
             crate::config::CacheProvider::Redis => "redis",
@@ -223,13 +224,13 @@ impl CacheProviderResolver {
     pub fn resolve_from_override(
         &self,
         override_config: &CacheProviderConfig,
-    ) -> Result<Arc<dyn CacheProvider>, String> {
+    ) -> mcb_domain::error::Result<Arc<dyn CacheProvider>> {
         resolve_cache_provider(override_config)
     }
 
     /// List available cache providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_domain::registry::list_cache_providers()
+        mcb_domain::registry::cache::list_cache_providers()
     }
 }
 
@@ -258,7 +259,9 @@ impl LanguageProviderResolver {
     }
 
     /// Resolve provider from current application config
-    pub fn resolve_from_config(&self) -> Result<Arc<dyn LanguageChunkingProvider>, String> {
+    pub fn resolve_from_config(
+        &self,
+    ) -> mcb_domain::error::Result<Arc<dyn LanguageChunkingProvider>> {
         // Use config so the field is not dead; language provider is "universal" for now
         let _ = self.config.as_ref();
         let registry_config = LanguageProviderConfig::new("universal");
@@ -269,13 +272,13 @@ impl LanguageProviderResolver {
     pub fn resolve_from_override(
         &self,
         override_config: &LanguageProviderConfig,
-    ) -> Result<Arc<dyn LanguageChunkingProvider>, String> {
+    ) -> mcb_domain::error::Result<Arc<dyn LanguageChunkingProvider>> {
         resolve_language_provider(override_config)
     }
 
     /// List available language providers
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_domain::registry::list_language_providers()
+        mcb_domain::registry::language::list_language_providers()
     }
 }
 

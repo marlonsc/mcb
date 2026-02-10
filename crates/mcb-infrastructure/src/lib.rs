@@ -43,7 +43,6 @@ pub mod cache;
 pub mod config;
 pub mod constants;
 pub mod crypto;
-pub mod database;
 pub mod di;
 pub mod error_ext;
 pub mod health;

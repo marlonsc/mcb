@@ -163,7 +163,7 @@ impl std::fmt::Debug for MokaCacheProvider {
 
 use std::sync::Arc;
 
-use mcb_domain::registry::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
+use mcb_domain::registry::cache::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
 
 /// Factory function for creating Moka cache provider instances.
 fn moka_cache_factory(

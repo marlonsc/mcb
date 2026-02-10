@@ -42,6 +42,10 @@
 //! let embedding = Embedding { vector: vec![0.1, 0.2], model: "test".into(), dimensions: 2 };
 //! ```
 
+/// Common macros
+#[macro_use]
+pub mod macros;
+
 /// Domain-level constants
 pub mod constants;
 /// Core business entities with identity
@@ -62,9 +66,6 @@ pub mod schema;
 pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
-/// Common macros
-#[macro_use]
-pub mod macros;
 
 // Re-export commonly used types for convenience
 pub use constants::*;

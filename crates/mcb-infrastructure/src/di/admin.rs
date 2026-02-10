@@ -19,9 +19,10 @@ pub use mcb_domain::ports::admin::{
 use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
-use mcb_domain::registry::{
-    CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig, VectorStoreProviderConfig,
-};
+use mcb_domain::registry::cache::CacheProviderConfig;
+use mcb_domain::registry::embedding::EmbeddingProviderConfig;
+use mcb_domain::registry::language::LanguageProviderConfig;
+use mcb_domain::registry::vector_store::VectorStoreProviderConfig;
 
 use super::handle::Handle;
 use super::handles::{CacheHandleExt, EmbeddingHandleExt};
@@ -57,9 +58,9 @@ use super::provider_resolvers::{
 /// ```
 pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
     /// Resolve provider from current application config
-    fn resolve_from_config(&self) -> Result<Arc<P>, String>;
+    fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<P>>;
     /// Resolve provider from override config (for admin API)
-    fn resolve_from_override(&self, config: &C) -> Result<Arc<P>, String>;
+    fn resolve_from_override(&self, config: &C) -> mcb_domain::error::Result<Arc<P>>;
     /// List available providers
     fn list_available(&self) -> Vec<(&'static str, &'static str)>;
 }
@@ -71,11 +72,14 @@ pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
 macro_rules! impl_provider_resolver {
     ($resolver:ty, $provider:ty, $config:ty) => {
         impl ProviderResolver<$provider, $config> for $resolver {
-            fn resolve_from_config(&self) -> Result<Arc<$provider>, String> {
+            fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<$provider>> {
                 <$resolver>::resolve_from_config(self)
             }
 
-            fn resolve_from_override(&self, config: &$config) -> Result<Arc<$provider>, String> {
+            fn resolve_from_override(
+                &self,
+                config: &$config,
+            ) -> mcb_domain::error::Result<Arc<$provider>> {
                 <$resolver>::resolve_from_override(self, config)
             }
 
@@ -165,14 +169,20 @@ where
     /// * `Ok(())` - Provider switched successfully
     /// * `Err(String)` - Failed to switch (provider not found, config invalid, etc.)
     pub fn switch_provider(&self, config: &C) -> Result<(), String> {
-        let new_provider = self.resolver.resolve_from_override(config)?;
+        let new_provider = self
+            .resolver
+            .resolve_from_override(config)
+            .map_err(|e| e.to_string())?;
         self.handle.set(new_provider);
         Ok(())
     }
 
     /// Reload provider from current application config
     pub fn reload_from_config(&self) -> Result<(), String> {
-        let provider = self.resolver.resolve_from_config()?;
+        let provider = self
+            .resolver
+            .resolve_from_config()
+            .map_err(|e| e.to_string())?;
         self.handle.set(provider);
         Ok(())
     }

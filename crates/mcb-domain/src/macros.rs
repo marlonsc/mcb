@@ -35,28 +35,36 @@ macro_rules! impl_registry {
             /// Human-readable description
             pub description: &'static str,
             /// Factory function to create provider instance
-            pub factory: fn(&$config) -> Result<std::sync::Arc<dyn $trait>, String>,
+            pub factory: fn(&$config) -> std::result::Result<std::sync::Arc<dyn $trait>, String>,
         }
 
         #[linkme::distributed_slice]
         pub static $slice: [$entry] = [..];
 
         /// Resolve provider by name from registry
-        pub fn $resolve(config: &$config) -> Result<std::sync::Arc<dyn $trait>, String> {
+        pub fn $resolve(config: &$config) -> crate::error::Result<std::sync::Arc<dyn $trait>> {
             let provider_name = &config.provider;
 
             for entry in $slice {
                 if entry.name == provider_name {
-                    return (entry.factory)(config);
+                    return (entry.factory)(config).map_err(|e| {
+                        crate::error::Error::Configuration {
+                            message: e.to_string(),
+                            source: None,
+                        }
+                    });
                 }
             }
 
             let available: Vec<&str> = $slice.iter().map(|e| e.name).collect();
 
-            Err(format!(
-                "Unknown provider '{}'. Available providers: {:?}",
-                provider_name, available
-            ))
+            Err(crate::error::Error::Configuration {
+                message: format!(
+                    "Unknown provider '{}'. Available providers: {:?}",
+                    provider_name, available
+                ),
+                source: None,
+            })
         }
 
         /// List all registered providers

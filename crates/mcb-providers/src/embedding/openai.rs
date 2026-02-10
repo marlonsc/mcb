@@ -184,7 +184,9 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
+use mcb_domain::registry::embedding::{
+    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
+};
 
 /// Factory function for creating OpenAI embedding provider instances.
 fn openai_factory(

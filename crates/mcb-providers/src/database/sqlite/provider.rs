@@ -13,9 +13,26 @@ use super::{
     SqliteAgentRepository, SqliteExecutor, SqliteMemoryRepository, SqliteProjectRepository,
     SqliteSchemaDdlGenerator,
 };
+use mcb_domain::registry::database::{
+    DATABASE_PROVIDERS, DatabaseProviderConfig, DatabaseProviderEntry,
+};
 
 /// SQLite database provider implementation
 pub struct SqliteDatabaseProvider;
+
+/// Provider factory function
+fn create_sqlite_database_provider(
+    _config: &DatabaseProviderConfig,
+) -> std::result::Result<Arc<dyn DatabaseProvider>, String> {
+    Ok(Arc::new(SqliteDatabaseProvider))
+}
+
+#[linkme::distributed_slice(DATABASE_PROVIDERS)]
+static SQLITE_DATABASE_PROVIDER: DatabaseProviderEntry = DatabaseProviderEntry {
+    name: "sqlite",
+    description: "SQLite database backend",
+    factory: create_sqlite_database_provider,
+};
 
 #[async_trait]
 impl DatabaseProvider for SqliteDatabaseProvider {

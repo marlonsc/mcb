@@ -183,7 +183,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::{EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry};
+use mcb_domain::registry::embedding::{
+    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
+};
 
 /// Parse model name string to EmbeddingModel enum
 fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
