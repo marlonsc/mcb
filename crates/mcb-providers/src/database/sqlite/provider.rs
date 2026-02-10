@@ -87,6 +87,8 @@ pub fn create_project_repository_from_executor(
 
 async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
     use mcb_domain::error::Error;
+    tracing::info!("Connecting to SQLite database at: {}", path.display());
+
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
             .map_err(|e| Error::memory_with_source("create db directory", e))?;
@@ -101,26 +103,36 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
             tracing::info!("Memory database initialized at {}", path.display());
             Ok(pool)
         }
-        Err(first_err) if path.exists() => {
-            tracing::warn!(
-                error = %first_err,
-                path = %path.display(),
-                "DDL failed on existing database, backing up and recreating"
-            );
-            pool.close().await;
-            backup_and_remove(&path)?;
+        Err(first_err) => {
+            // Check existence explicitly to debug potential issues
+            let exists = path.exists();
+            if exists {
+                tracing::warn!(
+                    error = %first_err,
+                    path = %path.display(),
+                    "DDL failed on existing database, backing up and recreating"
+                );
+                pool.close().await;
+                backup_and_remove(&path)?;
 
-            let fresh_pool = sqlx::SqlitePool::connect(&db_url)
-                .await
-                .map_err(|e| Error::memory_with_source("reconnect SQLite after backup", e))?;
-            apply_schema(&fresh_pool).await?;
-            tracing::info!(
-                "Memory database recreated at {} (old data backed up)",
-                path.display()
-            );
-            Ok(fresh_pool)
+                let fresh_pool = sqlx::SqlitePool::connect(&db_url)
+                    .await
+                    .map_err(|e| Error::memory_with_source("reconnect SQLite after backup", e))?;
+                apply_schema(&fresh_pool).await?;
+                tracing::info!(
+                    "Memory database recreated at {} (old data backed up)",
+                    path.display()
+                );
+                Ok(fresh_pool)
+            } else {
+                tracing::error!(
+                    error = %first_err,
+                    path = %path.display(),
+                    "DDL failed on NEW database (path.exists()=false). This indicates a serious issue."
+                );
+                Err(first_err)
+            }
         }
-        Err(e) => Err(e),
     }
 }
 
@@ -149,6 +161,13 @@ async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
     let schema = ProjectSchema::definition();
     let ddl = generator.generate_ddl(&schema);
     let ddl_len = ddl.len();
+
+    // Acquire a single connection for all DDL operations to ensure visibility
+    let mut conn = pool
+        .acquire()
+        .await
+        .map_err(|e| Error::memory_with_source("acquire DDL connection", e))?;
+
     for (index, sql) in ddl.into_iter().enumerate() {
         let stmt_preview = sql
             .lines()
@@ -157,7 +176,7 @@ async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
             .chars()
             .take(120)
             .collect::<String>();
-        sqlx::query(&sql).execute(pool).await.map_err(|e| {
+        sqlx::query(&sql).execute(&mut *conn).await.map_err(|e| {
             Error::memory_with_source(
                 format!(
                     "apply DDL statement {}/{} ({})",

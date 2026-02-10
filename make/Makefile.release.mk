@@ -16,8 +16,9 @@ BINARY_NAME := mcb
 SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
 CONFIG_DIR := $(HOME)/.config/mcb
 DATA_DIR := $(HOME)/.local/share/mcb
-SERVICE_HOST := $(shell python3 -c 'import tomllib; print(tomllib.load(open("config/default.toml","rb"))["server"]["network"]["host"])')
-SERVICE_PORT := $(shell python3 -c 'import tomllib; print(tomllib.load(open("config/default.toml","rb"))["server"]["network"]["port"])')
+# Get service host/port (check user config first, fall back to default)
+SERVICE_HOST := $(shell python3 -c 'import tomllib, os; p=os.path.expanduser("~/.config/mcb/mcb.toml"); d=tomllib.load(open(p,"rb")) if os.path.exists(p) else tomllib.load(open("config/default.toml","rb")); print(d.get("server",{}).get("network",{}).get("host", "127.0.0.1"))')
+SERVICE_PORT := $(shell python3 -c 'import tomllib, os; p=os.path.expanduser("~/.config/mcb/mcb.toml"); d=tomllib.load(open(p,"rb")) if os.path.exists(p) else tomllib.load(open("config/default.toml","rb")); print(d.get("server",{}).get("network",{}).get("port", 3000))')
 
 # =============================================================================
 # RELEASE - Full release pipeline
