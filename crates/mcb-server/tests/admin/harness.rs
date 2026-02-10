@@ -152,6 +152,7 @@ impl AdminTestHarness {
             cache: None,
             project_workflow: None,
             vcs_entity: None,
+            plan_entity: None,
         }
     }
 

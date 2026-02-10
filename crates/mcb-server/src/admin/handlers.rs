@@ -18,7 +18,9 @@ use mcb_domain::ports::admin::{
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
 use mcb_domain::ports::providers::CacheProvider;
-use mcb_domain::ports::services::{ProjectServiceInterface, VcsEntityServiceInterface};
+use mcb_domain::ports::services::{
+    PlanEntityServiceInterface, ProjectServiceInterface, VcsEntityServiceInterface,
+};
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
@@ -58,6 +60,8 @@ pub struct AdminState {
     pub project_workflow: Option<Arc<dyn ProjectServiceInterface>>,
     /// VCS entity service for repository/branch/worktree navigation
     pub vcs_entity: Option<Arc<dyn VcsEntityServiceInterface>>,
+    /// Plan entity service for plan/version/review navigation
+    pub plan_entity: Option<Arc<dyn PlanEntityServiceInterface>>,
 }
 
 /// Health check response for admin API
@@ -198,6 +202,15 @@ pub struct RepositoriesBrowseResponse {
     pub total: usize,
 }
 
+/// Response payload for the plans browse endpoint.
+#[derive(Serialize)]
+pub struct PlansBrowseResponse {
+    /// List of plans.
+    pub plans: Vec<mcb_domain::entities::plan::Plan>,
+    /// Total number of plans.
+    pub total: usize,
+}
+
 /// List repositories for browse entity graph.
 #[get("/repositories?<project_id>")]
 pub async fn list_browse_repositories(
@@ -235,6 +248,43 @@ pub async fn list_browse_repositories(
                 Status::InternalServerError,
                 Json(CacheErrorResponse {
                     error: "Failed to list repositories".to_string(),
+                }),
+            ))
+        }
+    }
+}
+
+/// List plans for browse entity graph.
+#[get("/plans?<project_id>")]
+pub async fn list_browse_plans(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+    project_id: Option<String>,
+) -> Result<Json<PlansBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(plan_entity) = &state.plan_entity else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Plan entity service not available".to_string(),
+            }),
+        ));
+    };
+
+    // TODO(phase-1): extract org_id from admin auth context
+    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    let pid = project_id.as_deref().unwrap_or("");
+
+    match plan_entity.list_plans(org_ctx.org_id.as_str(), pid).await {
+        Ok(plans) => {
+            let total = plans.len();
+            Ok(Json(PlansBrowseResponse { plans, total }))
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list plans");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list plans".to_string(),
                 }),
             ))
         }

@@ -69,25 +69,6 @@ Enterprise-grade platform with SLA guarantees, compliance certifications, and hi
 
 ---
 
-## Version History
-
-| Version | Status | Key Features |
-|---------|--------|--------------|
-| v0.0.1 | Released | Initial prototype |
-| v0.0.2 | Released | Core architecture |
-| v0.0.3 | Released | Production foundation |
-| v0.1.0 | Released | Documentation excellence, clean architecture, first stable release |
-| v0.1.1 | Released | Modular crate architecture (7 crates), DI foundation |
-| v0.1.2 | Released | Linkme provider registration, mcb-validate Phases 1-3, Admin UI Browse |
-| v0.1.3 | Released | RCA integration (unwrap_detector), executor deletion, 497 lines removed |
-| v0.1.4 | Released | Complete RCA integration, atty security fix, dependency updates, 3028+ tests |
-| v0.2.0 | **Released** | Documentation refactoring, ADR consolidation, architecture audit |
-| v0.3.0 | **In Development** | Workflow System (ADR-034-038), Git indexing, Session memory, Code browser |
-| v0.4.0 | Planned | Integrated Context System (Phase 9: Knowledge Graph, Hybrid Search, Versioning) |
-| v1.0.0 | Future | Production enterprise |
-
----
-
 ## Development Principles
 
 1. **ADR-Driven**: Architectural decisions documented before implementation

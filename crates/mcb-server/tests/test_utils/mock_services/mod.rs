@@ -4,6 +4,7 @@ pub mod agent;
 pub mod context;
 pub mod indexing;
 pub mod memory;
+pub mod plan_entity;
 pub mod project;
 pub mod search;
 pub mod validation;
@@ -18,6 +19,8 @@ pub use indexing::MockIndexingService;
 #[allow(unused_imports)]
 pub use memory::MockMemoryRepository;
 pub use memory::MockMemoryService;
+#[allow(unused_imports)]
+pub use plan_entity::MockPlanEntityService;
 #[allow(unused_imports)]
 pub use project::{MockProjectRepository, MockProjectService, MockProjectWorkflowService};
 pub use search::MockSearchService;

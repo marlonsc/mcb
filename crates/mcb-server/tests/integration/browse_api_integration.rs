@@ -195,6 +195,7 @@ fn create_test_admin_state() -> AdminState {
         cache: None,
         project_workflow: None,
         vcs_entity: None,
+        plan_entity: None,
     }
 }
 

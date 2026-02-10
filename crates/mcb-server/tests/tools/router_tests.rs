@@ -42,7 +42,7 @@ fn test_tool_definitions_memory() {
 #[test]
 fn test_create_tool_list() {
     let tools = create_tool_list().expect("Should create tool list");
-    assert_eq!(tools.len(), 9, "Should have 9 tools");
+    assert_eq!(tools.len(), 10, "Should have 10 tools");
 
     let names: Vec<&str> = tools.iter().map(|t| &*t.name).collect();
     assert!(names.contains(&"index"));
@@ -54,4 +54,5 @@ fn test_create_tool_list() {
     assert!(names.contains(&"project"));
     assert!(names.contains(&"vcs"));
     assert!(names.contains(&"vcs_entity"));
+    assert!(names.contains(&"plan_entity"));
 }
