@@ -40,7 +40,7 @@ implementation_status: Incomplete
 
 ## Context
 
-The MCP Context Browser depends on external AI and storage services that have varying reliability, cost structures, and performance characteristics. Single-provider architectures create vendor lock-in, single points of failure, and cost optimization challenges.
+The Memory Context Browser depends on external AI and storage services that have varying reliability, cost structures, and performance characteristics. Single-provider architectures create vendor lock-in, single points of failure, and cost optimization challenges.
 
 External dependencies and risks:
 

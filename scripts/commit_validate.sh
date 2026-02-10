@@ -8,12 +8,12 @@ if [[ -f "Makefile" ]]; then
 	fi
 fi
 
-if [[ -f "package.json" ]]; then
-	if grep -q '"lint"' package.json; then
-		pnpm lint
+if [[ -f "tests/package.json" ]]; then
+	if grep -q '"lint"' tests/package.json; then
+		pnpm --dir tests lint
 	fi
-	if grep -q '"type:check"' package.json; then
-		pnpm type:check
+	if grep -q '"type:check"' tests/package.json; then
+		pnpm --dir tests type:check
 	fi
 	exit 0
 fi

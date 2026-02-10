@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This directory contains all Architecture Decision Records (ADRs) for the MCP Context Browser project.
+This directory contains all Architecture Decision Records (ADRs) for the Memory Context Browser project.
 
 ## Current ADRs
 

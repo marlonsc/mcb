@@ -20,7 +20,7 @@ implementation_status: Complete
 
 ## Context
 
-The MCP Context Browser interacts with multiple context sources (local memory, external providers, etc.), originally handled in different ways. Each "provider" of context had its own configurations and initialization, which increased complexity in adding new providers and maintaining consistency. We identified the opportunity to unify how providers are defined and loaded by the system, standardizing the interface and lifecycle. In addition, integrating providers into the DI container (Shaku, later dill) would bring consistency in dependency resolution.
+The Memory Context Browser interacts with multiple context sources (local memory, external providers, etc.), originally handled in different ways. Each "provider" of context had its own configurations and initialization, which increased complexity in adding new providers and maintaining consistency. We identified the opportunity to unify how providers are defined and loaded by the system, standardizing the interface and lifecycle. In addition, integrating providers into the DI container (Shaku, later dill) would bring consistency in dependency resolution.
 
 Additionally, the system depends on external AI and storage services that have varying reliability, cost structures, and performance characteristics. Single-provider architectures create vendor lock-in, single points of failure, and cost optimization challenges. External dependencies include:
 

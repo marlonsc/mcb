@@ -31,7 +31,7 @@ implementation_status: Complete
 
 ## Context
 
-MCP Context Browser provides comprehensive system monitoring and metrics through HTTP endpoints on a unified port, but lacks a user-friendly web interface for administration, configuration, and visualization. Users currently need to interact with the system through:
+Memory Context Browser provides comprehensive system monitoring and metrics through HTTP endpoints on a unified port, but lacks a user-friendly web interface for administration, configuration, and visualization. Users currently need to interact with the system through:
 
 1.  Environment variables for configuration
 2.  MCP protocol tools for basic operations

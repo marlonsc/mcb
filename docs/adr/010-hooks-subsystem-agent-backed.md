@@ -42,7 +42,7 @@ Claude Code provides a hooks system for extending AI assistant behavior at lifec
 
 **Opportunity for integration:**
 
-MCP Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
+Memory Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
 
 -   **Semantic code search**- understand code context
 -   **Session memory**- recall past decisions and observations
@@ -87,7 +87,7 @@ Claude Code Session
         │                         │
         ▼                         ▼
 ┌───────────────────────────────────────────────────┐
-│ MCP Context Browser Server                        │
+│ Memory Context Browser Server                        │
 │                                                   │
 │  ┌─────────────────────────────────────────────┐  │
 │  │ HookService (application layer)             │  │

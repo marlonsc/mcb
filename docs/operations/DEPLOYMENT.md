@@ -2,7 +2,7 @@
 
 ## 🚀 Local Development Setup
 
-MCP Context Browser currently supports local deployment for development and testing. The system is designed as an MCP server that communicates via stdio with AI assistants.
+Memory Context Browser currently supports local deployment for development and testing. The system is designed as an MCP server that communicates via stdio with AI assistants.
 
 ## 📦 Installation
 
@@ -756,7 +756,7 @@ statement_cache_size = 100
 query_timeout_seconds = 30
 ```
 
-This deployment guide provides comprehensive instructions for deploying MCP Context Browser in various environments, from local development to enterprise-scale distributed systems.
+This deployment guide provides comprehensive instructions for deploying Memory Context Browser in various environments, from local development to enterprise-scale distributed systems.
 
 ---
 

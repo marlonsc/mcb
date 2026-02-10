@@ -34,7 +34,7 @@ Accepted
 
 ## Context
 
-The MCP Context Browser codebase has grown organically and accumulated several anti-patterns and technical debt that impact maintainability, reliability, and development velocity. A comprehensive code audit identified critical issues that need addressing before stable release.
+The Memory Context Browser codebase has grown organically and accumulated several anti-patterns and technical debt that impact maintainability, reliability, and development velocity. A comprehensive code audit identified critical issues that need addressing before stable release.
 
 Key problems identified:
 

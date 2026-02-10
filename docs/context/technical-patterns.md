@@ -5,7 +5,7 @@
 
 ## Overview
 
-The MCP Context Browser keeps its codebase aligned with Clean Architecture layers and distributed-provider discovery so the runtime stays lean while each crate can evolve independently.
+The Memory Context Browser keeps its codebase aligned with Clean Architecture layers and distributed-provider discovery so the runtime stays lean while each crate can evolve independently.
 
 ## Key Patterns
 

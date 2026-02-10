@@ -1,7 +1,7 @@
 # MCP CONSOLIDATION ANALYSIS REPORT
 
 **Generated**: 2025-02-05  
-**Project**: MCB (MCP Context Browser)  
+**Project**: MCB (Memory Context Browser)  
 **Scope**: Mapping MCP endpoints for Admin UI reuse
 
 ---

@@ -33,7 +33,7 @@ implementation_status: Partial
 
 ## Context
 
-MCP Context Browser v0.1.0 provides semantic code search but lacks session-level memory persistence. Each Claude Code session starts fresh, losing valuable context:
+Memory Context Browser v0.1.0 provides semantic code search but lacks session-level memory persistence. Each Claude Code session starts fresh, losing valuable context:
 
 **Current problems:**
 
@@ -102,7 +102,7 @@ Claude Code Session
 [Hook Integration] (PostToolUse → save observation)
         ↓
 ┌─────────────────────────────────────────┐
-│ MCP Context Browser Server              │
+│ Memory Context Browser Server              │
 │ ├── MemoryService (new)                 │
 │ ├── SessionManager (new)                │
 │ ├── ObservationStore (reuses VectorStore)│

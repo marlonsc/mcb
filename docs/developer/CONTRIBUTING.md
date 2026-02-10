@@ -1,4 +1,4 @@
-# Contributing to MCP Context Browser
+# Contributing to Memory Context Browser
 
 Thank you for your interest in contributing! This guide helps you get started with development.
 

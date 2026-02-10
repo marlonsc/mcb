@@ -18,7 +18,7 @@ implementation_status: Complete
 
 -   **Deciders:** Project team
 -   **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
--   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-provider-registration-linkme.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-thiserror.md) (thiserror), [ADR-013](./013-clean-architecture-crates.md) (Clean Architecture)
+-   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
 -   **Series:** ADR-034 → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
@@ -313,7 +313,7 @@ pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
 **References:**
 
 -   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — Handle-based DI pattern
--   [ADR-023: Provider Registration with linkme](./023-provider-registration-linkme.md) — Compile-time plugin discovery
+-   [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Compile-time plugin discovery
 
 ---
 
@@ -1422,6 +1422,6 @@ impl SqliteWorkflowEngine {
 -   [smlang-rs](https://crates.io/crates/smlang) — Declarative FSM macro (evaluated, not selected)
 -   [sqlx](https://crates.io/crates/sqlx) — Async SQLite driver
 -   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
--   [ADR-023: Provider Registration with linkme](./023-provider-registration-linkme.md) — Auto-registration
+-   [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Auto-registration
 -   [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md) — Superseded
 -   [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) — Schema reference

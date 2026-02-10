@@ -1,6 +1,6 @@
 # API Reference
 
-This document provides a comprehensive reference of the MCP Context Browser public API.
+This document provides a comprehensive reference of the Memory Context Browser public API.
 
 ## Table of Contents
 

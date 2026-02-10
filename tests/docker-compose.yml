@@ -11,7 +11,7 @@ services:
       MOCKSERVER_INITIALIZATION_JSON_PATH: /config/mockserver-initializer.json
       MOCKSERVER_LOG_LEVEL: INFO
     volumes:
-      - ./tests/docker/mockserver-initializer.json:/config/mockserver-initializer.json:ro
+      - ./docker/mockserver-initializer.json:/config/mockserver-initializer.json:ro
     networks:
       - mcp-test
     healthcheck:
@@ -28,7 +28,7 @@ services:
 #      - "11434:11434"
 #    volumes:
 #      - ollama_data:/root/.ollama
-#      - ./tests/docker/init-ollama.sh:/init-ollama.sh:ro
+#      - ./docker/init-ollama.sh:/init-ollama.sh:ro
 #    networks:
 #      - mcp-test
 #    environment:
@@ -154,8 +154,8 @@ services:
   # Test runner
   test-runner:
     build:
-      context: .
-      dockerfile: tests/docker/Dockerfile.test
+      context: ..
+      dockerfile: docker/Dockerfile.test
     container_name: mcp-test-runner
     environment:
       # Internal services (Docker network)
@@ -171,7 +171,7 @@ services:
       - MCP_NATS_URL=nats://mcp-nats:4222
       - RUST_BACKTRACE=1
     volumes:
-      - .:/app
+      - ..:/app
       - cargo_cache:/usr/local/cargo/registry
     working_dir: /app
     depends_on:

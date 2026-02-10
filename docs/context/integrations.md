@@ -5,7 +5,7 @@
 
 ## Overview
 
-MCP Context Browser composes embedding providers, vector stores, SQLite FTS, and MCP services so semantic search stays performant while mirroring git history and memory data.
+Memory Context Browser composes embedding providers, vector stores, SQLite FTS, and MCP services so semantic search stays performant while mirroring git history and memory data.
 
 ## Key Integrations
 

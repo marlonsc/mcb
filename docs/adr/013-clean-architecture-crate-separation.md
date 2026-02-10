@@ -19,7 +19,7 @@ Updated (v0.1.2) - Added mcb-validate as 8th crate
 
 ## Context
 
-As MCP Context Browser evolved from a monolithic architecture to a production-ready system, the codebase grew to include multiple providers, complex DI patterns, validation systems, and protocol handlers. A monolithic structure created several challenges:
+As Memory Context Browser evolved from a monolithic architecture to a production-ready system, the codebase grew to include multiple providers, complex DI patterns, validation systems, and protocol handlers. A monolithic structure created several challenges:
 
 1.  **Coupling**: Changes to infrastructure affected domain logic
 2.  **Testability**: Testing required loading entire application context

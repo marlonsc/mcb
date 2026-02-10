@@ -1,6 +1,6 @@
 # API Surface Analysis
 
-This document provides an overview of the public API surface of the MCP Context Browser.
+This document provides an overview of the public API surface of the Memory Context Browser.
 
 ## Crate Public APIs
 

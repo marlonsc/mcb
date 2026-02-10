@@ -69,10 +69,10 @@ test-e2e: ## Run E2E tests with Playwright (auto-installs if needed)
 		echo "❌ Error: npx not found. Install Node.js first."; \
 		exit 1; \
 	fi
-	@if [ ! -d node_modules/@playwright ]; then \
+	@if [ ! -d tests/node_modules/@playwright ]; then \
 		echo "📦 Installing Playwright..."; \
-		npm install --save-dev @playwright/test @types/node typescript 2>&1 | grep -v "npm WARN" || true; \
-		npx playwright install chromium --with-deps 2>&1 | tail -5; \
+		npm --prefix tests install --save-dev @playwright/test @types/node typescript 2>&1 | grep -v "npm WARN" || true; \
+		npx --prefix tests playwright install chromium --with-deps 2>&1 | tail -5; \
 	fi
 	@echo "🏗️ Building release binary once for E2E runs..."
 	@cargo build --release --bin mcb

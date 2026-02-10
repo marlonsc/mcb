@@ -85,7 +85,7 @@ Figment (version 0.10.19) provides a unified configuration approach with powerfu
 
 ## Decision
 
-We will migrate from the `config` crate to Figment for all configuration loading across the MCP Context Browser. This decision addresses the need for more robust, maintainable, and feature-rich configuration handling.
+We will migrate from the `config` crate to Figment for all configuration loading across the Memory Context Browser. This decision addresses the need for more robust, maintainable, and feature-rich configuration handling.
 
 ### Migration Scope
 
