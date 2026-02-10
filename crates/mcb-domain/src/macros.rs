@@ -42,13 +42,13 @@ macro_rules! impl_registry {
         pub static $slice: [$entry] = [..];
 
         /// Resolve provider by name from registry
-        pub fn $resolve(config: &$config) -> crate::error::Result<std::sync::Arc<dyn $trait>> {
+        pub fn $resolve(config: &$config) -> $crate::error::Result<std::sync::Arc<dyn $trait>> {
             let provider_name = &config.provider;
 
             for entry in $slice {
                 if entry.name == provider_name {
                     return (entry.factory)(config).map_err(|e| {
-                        crate::error::Error::Configuration {
+                        $crate::error::Error::Configuration {
                             message: e.to_string(),
                             source: None,
                         }
@@ -58,7 +58,7 @@ macro_rules! impl_registry {
 
             let available: Vec<&str> = $slice.iter().map(|e| e.name).collect();
 
-            Err(crate::error::Error::Configuration {
+            Err($crate::error::Error::Configuration {
                 message: format!(
                     "Unknown provider '{}'. Available providers: {:?}",
                     provider_name, available
