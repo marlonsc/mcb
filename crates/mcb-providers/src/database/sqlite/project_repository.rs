@@ -60,7 +60,7 @@ impl ProjectRepository for SqliteProjectRepository {
 
     async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Option<Project>> {
         self.query_one_and_convert(
-            "SELECT * FROM projects WHERE org_id = ? AND id = ?",
+            "SELECT * FROM projects WHERE org_id = ? AND id = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(id.to_string()),
@@ -73,7 +73,7 @@ impl ProjectRepository for SqliteProjectRepository {
 
     async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Option<Project>> {
         self.query_one_and_convert(
-            "SELECT * FROM projects WHERE org_id = ? AND name = ?",
+            "SELECT * FROM projects WHERE org_id = ? AND name = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(name.to_string()),
@@ -86,7 +86,7 @@ impl ProjectRepository for SqliteProjectRepository {
 
     async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Option<Project>> {
         self.query_one_and_convert(
-            "SELECT * FROM projects WHERE org_id = ? AND path = ?",
+            "SELECT * FROM projects WHERE org_id = ? AND path = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(path.to_string()),

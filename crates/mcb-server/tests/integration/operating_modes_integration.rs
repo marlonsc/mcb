@@ -43,17 +43,12 @@ fn get_free_port() -> u16 {
     port
 }
 
-fn create_test_config() -> AppConfig {
+fn create_test_config() -> (AppConfig, tempfile::TempDir) {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
     let mut config = AppConfig::default();
-    let stamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system time")
-        .as_nanos();
-    let thread_id = std::thread::current().id();
-    let db_path =
-        std::env::temp_dir().join(format!("mcb-opmode-test-{}-{:?}.db", stamp, thread_id));
     config.auth.user_db_path = Some(db_path);
-    config
+    (config, temp_dir)
 }
 
 /// Create test configuration for client mode
@@ -420,7 +415,7 @@ fn test_mcp_response_error_serialization_roundtrip() {
 
 #[test]
 fn test_app_config_default_mode_is_standalone() {
-    let config = create_test_config();
+    let (config, _temp_dir) = create_test_config();
 
     assert_eq!(config.mode.mode_type, OperatingMode::Standalone);
     assert!(config.mode.is_standalone());
@@ -428,7 +423,7 @@ fn test_app_config_default_mode_is_standalone() {
 
 #[test]
 fn test_app_config_with_client_mode() {
-    let mut config = create_test_config();
+    let (mut config, _temp_dir) = create_test_config();
     let port = get_free_port();
 
     config.mode = create_client_config(port);
@@ -467,7 +462,7 @@ fn test_get_free_port_returns_different_ports() {
 
 #[tokio::test]
 async fn test_standalone_mode_initializes_providers() {
-    let config = create_test_config();
+    let (config, _temp_dir) = create_test_config();
 
     // In standalone mode, init_app creates local providers
     let ctx = init_app(config).await.expect("Failed to init app");
@@ -486,7 +481,7 @@ async fn test_standalone_mode_initializes_providers() {
 async fn test_mode_selection_affects_nothing_in_standalone() {
     // In standalone mode, we don't connect to any server
     // Everything runs locally
-    let mut config = create_test_config();
+    let (mut config, _temp_dir) = create_test_config();
     config.mode.mode_type = OperatingMode::Standalone;
 
     let ctx = init_app(config).await.expect("Init should succeed");
@@ -504,7 +499,7 @@ async fn test_mode_selection_affects_nothing_in_standalone() {
 
 #[tokio::test]
 async fn test_session_isolation_with_vector_store() {
-    let config = create_test_config();
+    let (config, _temp_dir) = create_test_config();
     let ctx = init_app(config).await.expect("Failed to init app");
 
     let manager = SessionManager::new();
@@ -550,7 +545,7 @@ async fn test_session_isolation_with_vector_store() {
 
 /// Helper to create an MCP server with null providers for testing
 async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
-    let config = create_test_config();
+    let (config, _temp_dir) = create_test_config();
     let ctx = init_app(config.clone()).await.expect("Failed to init app");
 
     // Get providers from context
