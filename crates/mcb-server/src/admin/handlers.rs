@@ -213,28 +213,6 @@ pub struct ProjectsBrowseResponse {
     pub total: usize,
 }
 
-/// Project phases response
-#[derive(Serialize)]
-pub struct ProjectPhasesBrowseResponse {
-    /// Project identifier
-    pub project_id: String,
-    /// Phases for this project
-    pub phases: Vec<mcb_domain::entities::project::ProjectPhase>,
-    /// Total number of phases
-    pub total: usize,
-}
-
-/// Project issues response
-#[derive(Serialize)]
-pub struct ProjectIssuesBrowseResponse {
-    /// Project identifier
-    pub project_id: String,
-    /// Issues for this project
-    pub issues: Vec<mcb_domain::entities::project::ProjectIssue>,
-    /// Total number of issues
-    pub total: usize,
-}
-
 /// List workflow projects for browse entity graph
 #[get("/projects")]
 pub async fn list_browse_projects(
@@ -254,74 +232,6 @@ pub async fn list_browse_projects(
         Ok(projects) => {
             let total = projects.len();
             Ok(Json(ProjectsBrowseResponse { projects, total }))
-        }
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
-    }
-}
-
-/// List phases for a workflow project
-#[get("/projects/<project_id>/phases")]
-pub async fn list_browse_project_phases(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-    project_id: &str,
-) -> Result<Json<ProjectPhasesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
-    let Some(project_workflow) = &state.project_workflow else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(CacheErrorResponse {
-                error: "Project workflow service not available".to_string(),
-            }),
-        ));
-    };
-
-    match project_workflow.list_phases(project_id).await {
-        Ok(phases) => {
-            let total = phases.len();
-            Ok(Json(ProjectPhasesBrowseResponse {
-                project_id: project_id.to_string(),
-                phases,
-                total,
-            }))
-        }
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
-    }
-}
-
-/// List issues for a workflow project
-#[get("/projects/<project_id>/issues")]
-pub async fn list_browse_project_issues(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-    project_id: &str,
-) -> Result<Json<ProjectIssuesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
-    let Some(project_workflow) = &state.project_workflow else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(CacheErrorResponse {
-                error: "Project workflow service not available".to_string(),
-            }),
-        ));
-    };
-
-    match project_workflow.list_issues(project_id, None).await {
-        Ok(issues) => {
-            let total = issues.len();
-            Ok(Json(ProjectIssuesBrowseResponse {
-                project_id: project_id.to_string(),
-                issues,
-                total,
-            }))
         }
         Err(e) => Err((
             Status::InternalServerError,

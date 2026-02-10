@@ -72,7 +72,6 @@ pub use constants::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
-pub use ports::repositories::IssueFilter;
 pub use schema::{
     ForeignKeyDef, MemorySchema, MemorySchemaDdlGenerator, ProjectSchema, SchemaDdlGenerator,
     UniqueConstraintDef,

@@ -6,10 +6,10 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::project::{
-    DependencyType, IssueStatus, IssueType, PhaseStatus, Project, ProjectDecision,
+    DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, Project, ProjectDecision,
     ProjectDependency, ProjectIssue, ProjectPhase,
 };
-use mcb_domain::ports::repositories::{IssueFilter, ProjectRepository};
+use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_providers::database::create_project_repository;
 
 // ============================================================================

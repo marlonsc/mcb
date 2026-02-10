@@ -42,8 +42,8 @@ pub use memory::{
     ObservationType, QualityGateResult, QualityGateStatus, SessionSummary,
 };
 pub use project::{
-    DependencyType, DetectedProject, IssueStatus, IssueType, PhaseStatus, Project, ProjectDecision,
-    ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,
+    DependencyType, DetectedProject, IssueFilter, IssueStatus, IssueType, PhaseStatus, Project,
+    ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,
 };
 pub use submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
 pub use vcs::{DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};

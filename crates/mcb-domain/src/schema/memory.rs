@@ -17,6 +17,12 @@ pub enum ColumnType {
     Boolean,
     /// Binary large object
     Blob,
+    /// JSON data (stored as TEXT in SQLite, JSONB in Postgres)
+    Json,
+    /// UUID (stored as TEXT in SQLite, UUID in Postgres)
+    Uuid,
+    /// Timestamp (stored as INTEGER in SQLite, TIMESTAMPTZ in Postgres)
+    Timestamp,
 }
 
 /// A single column definition.

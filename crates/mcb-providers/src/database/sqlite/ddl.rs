@@ -73,6 +73,9 @@ fn column_type_sqlite(ty: &ColumnType) -> &'static str {
         ColumnType::Real => "REAL",
         ColumnType::Boolean => "INTEGER",
         ColumnType::Blob => "BLOB",
+        ColumnType::Json => "TEXT",
+        ColumnType::Uuid => "TEXT",
+        ColumnType::Timestamp => "INTEGER",
     }
 }
 
