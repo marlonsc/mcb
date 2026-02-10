@@ -2,7 +2,7 @@
 
 Golden tests validate **real** MCP tool behaviour: indexing, search, status, and clear. They run with the real DI stack (NullEmbedding + InMemoryVectorStore) and assert on handler responses and content.
 
-**Locations:** `crates/mcb-server/tests/integration/` (`golden_e2e_complete.rs`, `golden_tools_e2e.rs`, `golden_acceptance_integration.rs`). The legacy `tests/golden/` directory remains as a shim but no longer contains executable tests.  
+**Locations:** `crates/mcb-server/tests/integration/` (`golden_e2e_complete.rs`, `golden_tools_e2e.rs`, `golden_acceptance_integration.rs`) and `tests/golden/` for fixture data only (non-executable).  
 **Run:** `cargo test -p mcb-server golden` or `make test SCOPE=golden`  
 **Fixtures:** `sample_codebase/` (Rust files), `golden_queries.json` (queries + expected_files for E2E via handlers)
 

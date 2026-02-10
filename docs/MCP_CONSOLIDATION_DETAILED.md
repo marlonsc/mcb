@@ -266,7 +266,7 @@ pub async fn handle(
 | `/health` | GET | `health_check` | Public | `AdminHealthResponse` | Server health probe |
 | `/health/extended` | GET | `extended_health_check` | Protected | `ExtendedHealthResponse` | Full health with dependencies |
 | `/metrics` | GET | `get_metrics` | Protected | `PerformanceMetricsData` | Performance metrics |
-| `/indexing` | GET | `get_indexing_status` | Public | `IndexingStatusResponse` | Current indexing status |
+| `/jobs` | GET | `get_jobs_status` | Public | `JobsStatusResponse` | Current background jobs status |
 | `/ready` | GET | `readiness_check` | Public | `ReadinessResponse` | K8s readiness probe |
 | `/live` | GET | `liveness_check` | Public | `LivenessResponse` | K8s liveness probe |
 
@@ -359,7 +359,7 @@ pub struct CollectionInfoResponse {
 | `/ui` | GET | `dashboard_ui` | Public | Dashboard alias |
 | `/ui/config` | GET | `config_page` | Public | Config UI page |
 | `/ui/health` | GET | `health_page` | Public | Health UI page |
-| `/ui/indexing` | GET | `indexing_page` | Public | Indexing UI page |
+| `/ui/jobs` | GET | `jobs_page` | Public | Jobs UI page |
 | `/ui/browse` | GET | `browse_page` | Public | Collection browser page |
 | `/ui/browse/:collection` | GET | `browse_collection_page` | Public | Collection view page |
 | `/ui/browse/:collection/file` | GET | `browse_file_page` | Public | File chunks page |
@@ -696,7 +696,7 @@ pub struct ApiResult<T: Serialize> {
 -   **Reuse**: Wrap MCP `IndexHandler::handle(IndexAction::Status)` as HTTP endpoint
 -   **Effort**: 30 min (create wrapper)
 -   **Benefit**: Unified data source, reduces direct service dependency
--   **Files to Change**: `admin/handlers.rs` (modify `get_indexing_status`)
+-   **Files to Change**: `admin/handlers.rs` (modify `get_jobs_status`)
 -   **Risk**: Low
 -   **ROI**: ✅ HIGH
 

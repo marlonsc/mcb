@@ -204,13 +204,27 @@ fn test_sample_codebase_files_exist() {
     }
 }
 
+/// Create a test configuration with a unique database path to allow parallel execution
+fn unique_test_config() -> AppConfig {
+    let mut config = AppConfig::default();
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time")
+        .as_nanos();
+    let thread_id = std::thread::current().id();
+    let db_path =
+        std::env::temp_dir().join(format!("mcb-golden-test-{}-{:?}.db", stamp, thread_id));
+    config.auth.user_db_path = Some(db_path);
+    config
+}
+
 // ============================================================================
 // Real Provider Tests (using FastEmbed + EdgeVec)
 // ============================================================================
 
 #[tokio::test]
 async fn test_golden_index_real_files() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -280,7 +294,7 @@ async fn test_golden_index_real_files() {
 
 #[tokio::test]
 async fn test_golden_search_validates_expected_files() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -373,7 +387,7 @@ async fn test_golden_search_validates_expected_files() {
 /// (embedding, vector_store, handler, cache, di, error, chunking, etc.)
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -488,7 +502,7 @@ async fn test_golden_full_workflow_end_to_end() {
     // 5. Search with all golden queries
     // 6. Validate expected_files found
 
-    let app_config = AppConfig::default();
+    let app_config = unique_test_config();
     let ctx = init_app(app_config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();

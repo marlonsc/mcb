@@ -16,6 +16,9 @@ BINARY_NAME := mcb
 SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
 CONFIG_DIR := $(HOME)/.config/mcb
 DATA_DIR := $(HOME)/.local/share/mcb
+# Get service host/port (check user config first, fall back to default)
+SERVICE_HOST := $(shell python3 -c 'import tomllib, os; p=os.path.expanduser("~/.config/mcb/mcb.toml"); d=tomllib.load(open(p,"rb")) if os.path.exists(p) else tomllib.load(open("config/default.toml","rb")); print(d.get("server",{}).get("network",{}).get("host", "127.0.0.1"))')
+SERVICE_PORT := $(shell python3 -c 'import tomllib, os; p=os.path.expanduser("~/.config/mcb/mcb.toml"); d=tomllib.load(open(p,"rb")) if os.path.exists(p) else tomllib.load(open("config/default.toml","rb")); print(d.get("server",{}).get("network",{}).get("port", 3000))')
 
 # =============================================================================
 # RELEASE - Full release pipeline
@@ -77,17 +80,17 @@ install-mcp: ## Update Claude Code and Gemini MCP configs
 	@echo "📋 Configuring MCP agent integrations..."
 	@# Require jq for JSON updates (fail early if missing)
 	@command -v jq >/dev/null 2>&1 || { echo "❌ jq is required for MCP config updates"; exit 1; }
-	@# Claude Code .mcp.json - ensure mcb with ["serve"]
+	@# Claude Code .mcp.json - ensure mcb with ["serve", "--config", "<config_dir>/mcb.toml"]
 	@if [ -f ".mcp.json" ]; then \
-		jq '.mcpServers.mcb.args = ["serve"]' .mcp.json > .mcp.json.tmp && \
+		jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' .mcp.json > .mcp.json.tmp && \
 		mv .mcp.json.tmp .mcp.json || { echo "❌ Failed to update Claude Code config"; exit 1; }; \
 		echo "  ✓ Claude Code: .mcp.json configured"; \
 	else \
 		echo "  ⚠ Claude Code: .mcp.json not found (create manually if needed)"; \
 	fi
-	@# Gemini mcp_config.json - ensure mcb with ["serve"]
+	@# Gemini mcp_config.json - ensure mcb with ["serve", "--config", "<config_dir>/mcb.toml"]
 	@if [ -f "$(HOME)/.gemini/antigravity/mcp_config.json" ]; then \
-		jq '.mcpServers.mcb.args = ["serve"]' "$(HOME)/.gemini/antigravity/mcp_config.json" > "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" && \
+		jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' "$(HOME)/.gemini/antigravity/mcp_config.json" > "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" && \
 		mv "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" "$(HOME)/.gemini/antigravity/mcp_config.json" || { echo "❌ Failed to update Gemini config"; exit 1; }; \
 		echo "  ✓ Gemini: mcp_config.json configured"; \
 	else \
@@ -124,11 +127,20 @@ install-validate: ## Validate MCB installation with retries
 		journalctl --user -u mcb.service -n 10 --no-pager 2>/dev/null; \
 		exit 1; \
 	fi
+	@STATE_LINE=$$(systemctl --user show mcb.service -p ActiveState -p SubState -p Result -p ExecMainStatus -p NRestarts --value 2>/dev/null | tr '\n' ' '); \
+	set -- $$STATE_LINE; \
+	ACTIVE=$${1:-unknown}; SUB=$${2:-unknown}; RESULT=$${3:-unknown}; EXIT_CODE=$${4:-1}; RESTARTS=$${5:-0}; \
+	echo "   • State=$$ACTIVE/$$SUB Result=$$RESULT Exit=$$EXIT_CODE Restarts=$$RESTARTS"; \
+	if [ "$$ACTIVE" != "active" ] || [ "$$EXIT_CODE" != "0" ] || [ "$$RESTARTS" -gt 3 ] || [ "$$RESULT" = "exit-code" ]; then \
+		echo "   ❌ Service unhealthy (startup failure or restart loop detected)"; \
+		journalctl --user -u mcb.service -n 30 --no-pager 2>/dev/null; \
+		exit 1; \
+	fi
 	@# 3. HTTP health check (with retries)
 	@echo "3. HTTP server health:"
 	@RETRIES=0; \
 	while [ $$RETRIES -lt 5 ]; do \
-		if curl -s --connect-timeout 2 http://127.0.0.1:8080/healthz 2>/dev/null | grep -q "OK\|status"; then \
+		if curl -s --connect-timeout 2 http://$(SERVICE_HOST):$(SERVICE_PORT)/healthz 2>/dev/null | grep -q "OK\|status"; then \
 			echo "   ✓ HTTP server responding"; \
 			break; \
 		fi; \
@@ -138,6 +150,7 @@ install-validate: ## Validate MCB installation with retries
 	if [ $$RETRIES -eq 5 ]; then \
 		echo "   ❌ HTTP server failed"; \
 		systemctl --user status mcb.service 2>/dev/null; \
+		journalctl --user -u mcb.service -n 30 --no-pager 2>/dev/null; \
 		exit 1; \
 	fi
 	@echo ""
@@ -147,7 +160,7 @@ install-validate: ## Validate MCB installation with retries
 	@echo "   Version: $$($(INSTALL_DIR)/$(INSTALL_BINARY) --version 2>/dev/null)"
 	@echo "   Binary: $(INSTALL_DIR)/$(INSTALL_BINARY)"
 	@echo "   Config: $(CONFIG_DIR)/mcb.toml"
-	@echo "   Server: http://127.0.0.1:8080"
+	@echo "   Server: http://$(SERVICE_HOST):$(SERVICE_PORT)"
 	@echo ""
 	@echo "🎯 Next steps:"
 	@echo "   - MCB is running as systemd service"

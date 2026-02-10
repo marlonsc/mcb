@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 /// Default server URL for client mode
 fn default_server_url() -> String {
-    "http://127.0.0.1:8080".to_string()
+    "http://127.0.0.1:3000".to_string()
 }
 
 /// Operating mode for MCB
@@ -35,7 +35,7 @@ pub enum OperatingMode {
 /// ```toml
 /// [mode]
 /// type = "client"                         # "standalone" or "client"
-/// server_url = "http://127.0.0.1:8080"   # Server URL for client mode
+/// server_url = "http://127.0.0.1:3000"   # Server URL for client mode
 /// session_prefix = "claude"               # Optional prefix for session isolation
 /// ```
 ///
@@ -84,7 +84,7 @@ fn default_max_reconnect_attempts() -> u32 {
 ///
 /// Provides sensible defaults for local development and backwards compatibility:
 /// - Mode: Standalone (local providers)
-/// - Server URL: http://127.0.0.1:8080 (used only in client mode)
+/// - Server URL: http://127.0.0.1:3000 (used only in client mode)
 /// - Timeout: 30 seconds
 /// - Auto-reconnect: enabled with 5 max attempts
 impl Default for ModeConfig {

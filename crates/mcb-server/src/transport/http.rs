@@ -154,6 +154,9 @@ impl HttpTransport {
             extended_health_check, get_cache_stats, get_indexing_status, get_jobs_status,
             get_metrics, health_check, list_browse_projects, liveness_check, readiness_check,
             shutdown,
+            extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
+            list_browse_project_issues, list_browse_project_phases, list_browse_projects,
+            liveness_check, readiness_check, shutdown,
         };
         use crate::admin::lifecycle_handlers::{
             list_services, restart_service, services_health, start_service, stop_service,
@@ -184,7 +187,6 @@ impl HttpTransport {
                         health_check,
                         extended_health_check,
                         get_metrics,
-                        get_indexing_status,
                         get_jobs_status,
                         list_browse_projects,
                         readiness_check,

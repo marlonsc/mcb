@@ -49,7 +49,7 @@ ci: ## Complete CI pipeline (lint + test + validate + audit)
 	@$(MAKE) audit
 	@echo "CI pipeline passed!"
 
-ci-full: ## Full CI validation matching GitHub Actions (lint + test + validate + audit + docs + coverage)
+ci-full: ## Full CI validation matching GitHub Actions (lint + test + startup + validate + audit + docs + coverage)
 	@echo "==================================================================="
 	@echo "Running FULL CI pipeline (matches GitHub Actions exactly)"
 	@echo "==================================================================="
@@ -60,16 +60,19 @@ ci-full: ## Full CI validation matching GitHub Actions (lint + test + validate +
 	@echo "Step 2/6: Unit and integration tests (4 threads to prevent timeouts)..."
 	@$(MAKE) test SCOPE=all TEST_THREADS=4
 	@echo ""
-	@echo "Step 3/6: Architecture validation (strict)..."
+	@echo "Step 3/7: Startup smoke tests (DDL/init failure detection)..."
+	@$(MAKE) test-startup
+	@echo ""
+	@echo "Step 4/7: Architecture validation (strict)..."
 	@$(MAKE) validate STRICT=1
 	@echo ""
-	@echo "Step 4/6: Golden acceptance tests (2 threads for acceptance tests)..."
+	@echo "Step 5/7: Golden acceptance tests (2 threads for acceptance tests)..."
 	@$(MAKE) test SCOPE=golden TEST_THREADS=2
 	@echo ""
-	@echo "Step 5/6: Security audit..."
+	@echo "Step 6/7: Security audit..."
 	@$(MAKE) audit
 	@echo ""
-	@echo "Step 6/6: Documentation build..."
+	@echo "Step 7/7: Documentation build..."
 	@$(MAKE) docs
 	@echo ""
 	@echo "==================================================================="

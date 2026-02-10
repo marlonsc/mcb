@@ -19,7 +19,7 @@
 //! | `/health` | GET | Health check with uptime |
 //! | `/health/extended` | GET | Extended health with dependency status |
 //! | `/metrics` | GET | Performance metrics |
-//! | `/indexing` | GET | Indexing operations status |
+//! | `/jobs` | GET | Background jobs status |
 //! | `/ready` | GET | Kubernetes readiness probe |
 //! | `/live` | GET | Kubernetes liveness probe |
 //! | `/shutdown` | POST | Initiate graceful server shutdown |

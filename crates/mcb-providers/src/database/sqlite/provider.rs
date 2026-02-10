@@ -87,6 +87,8 @@ pub fn create_project_repository_from_executor(
 
 async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
     use mcb_domain::error::Error;
+    tracing::info!("Connecting to SQLite database at: {}", path.display());
+
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
             .map_err(|e| Error::memory_with_source("create db directory", e))?;
@@ -95,9 +97,62 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
     let pool = sqlx::SqlitePool::connect(&db_url)
         .await
         .map_err(|e| Error::memory_with_source("connect SQLite", e))?;
-    apply_schema(&pool).await?;
-    tracing::info!("Memory database initialized at {}", path.display());
-    Ok(pool)
+
+    match apply_schema(&pool).await {
+        Ok(()) => {
+            tracing::info!("Memory database initialized at {}", path.display());
+            Ok(pool)
+        }
+        Err(first_err) => {
+            // Check existence explicitly to debug potential issues
+            let exists = path.exists();
+            if exists {
+                tracing::warn!(
+                    error = %first_err,
+                    path = %path.display(),
+                    "DDL failed on existing database, backing up and recreating"
+                );
+                pool.close().await;
+                backup_and_remove(&path)?;
+
+                let fresh_pool = sqlx::SqlitePool::connect(&db_url)
+                    .await
+                    .map_err(|e| Error::memory_with_source("reconnect SQLite after backup", e))?;
+                apply_schema(&fresh_pool).await?;
+                tracing::info!(
+                    "Memory database recreated at {} (old data backed up)",
+                    path.display()
+                );
+                Ok(fresh_pool)
+            } else {
+                tracing::error!(
+                    error = %first_err,
+                    path = %path.display(),
+                    "DDL failed on NEW database (path.exists()=false). This indicates a serious issue."
+                );
+                Err(first_err)
+            }
+        }
+    }
+}
+
+fn backup_and_remove(path: &std::path::Path) -> Result<()> {
+    use mcb_domain::error::Error;
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let backup = path.with_extension(format!("db.bak.{stamp}"));
+    std::fs::rename(path, &backup)
+        .map_err(|e| Error::memory_with_source("backup old database", e))?;
+    for ext in &["db-wal", "db-shm"] {
+        let wal = path.with_extension(ext);
+        if wal.exists() {
+            let _ = std::fs::remove_file(&wal);
+        }
+    }
+    tracing::info!(backup = %backup.display(), "Old database backed up");
+    Ok(())
 }
 
 async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
@@ -105,11 +160,33 @@ async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
     let generator = SqliteSchemaDdlGenerator;
     let schema = ProjectSchema::definition();
     let ddl = generator.generate_ddl(&schema);
-    for sql in ddl {
-        sqlx::query(&sql)
-            .execute(pool)
-            .await
-            .map_err(|e| Error::memory_with_source("apply DDL", e))?;
+    let ddl_len = ddl.len();
+
+    // Acquire a single connection for all DDL operations to ensure visibility
+    let mut conn = pool
+        .acquire()
+        .await
+        .map_err(|e| Error::memory_with_source("acquire DDL connection", e))?;
+
+    for (index, sql) in ddl.into_iter().enumerate() {
+        let stmt_preview = sql
+            .lines()
+            .next()
+            .unwrap_or(sql.as_str())
+            .chars()
+            .take(120)
+            .collect::<String>();
+        sqlx::query(&sql).execute(&mut *conn).await.map_err(|e| {
+            Error::memory_with_source(
+                format!(
+                    "apply DDL statement {}/{} ({})",
+                    index + 1,
+                    ddl_len,
+                    stmt_preview
+                ),
+                e,
+            )
+        })?;
     }
     Ok(())
 }

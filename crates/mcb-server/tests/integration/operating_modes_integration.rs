@@ -121,7 +121,7 @@ fn test_mode_config_toml_with_defaults() {
 
     assert!(config.is_standalone());
     // Check defaults are applied
-    assert_eq!(config.server_url(), "http://127.0.0.1:8080");
+    assert_eq!(config.server_url(), "http://127.0.0.1:3000");
     assert!(config.auto_reconnect);
     assert_eq!(config.max_reconnect_attempts, 5);
 }

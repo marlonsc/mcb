@@ -20,10 +20,7 @@ impl MemorySchemaDdlGenerator for SqliteMemoryDdlGenerator {
             stmts.push(table_to_sqlite_ddl(table, &[]));
         }
         if let Some(fts) = &schema.fts {
-            stmts.push(fts_to_sqlite_ddl(fts));
-            stmts.push(trigger_after_insert_sqlite(fts));
-            stmts.push(trigger_after_delete_sqlite(fts));
-            stmts.push(trigger_after_update_sqlite(fts));
+            stmts.extend(rebuild_fts_sqlite(fts));
         }
         for idx in &schema.indexes {
             stmts.push(index_to_sqlite_ddl(idx));
@@ -54,10 +51,7 @@ impl SchemaDdlGenerator for SqliteSchemaDdlGenerator {
             stmts.push(table_to_sqlite_ddl_with_fk(table, &uniques, &fks));
         }
         if let Some(fts) = &schema.fts {
-            stmts.push(fts_to_sqlite_ddl(fts));
-            stmts.push(trigger_after_insert_sqlite(fts));
-            stmts.push(trigger_after_delete_sqlite(fts));
-            stmts.push(trigger_after_update_sqlite(fts));
+            stmts.extend(rebuild_fts_sqlite(fts));
         }
         for idx in &schema.indexes {
             stmts.push(index_to_sqlite_ddl(idx));
@@ -122,12 +116,39 @@ fn table_to_sqlite_ddl_with_fk(
     )
 }
 
-fn fts_to_sqlite_ddl(fts: &FtsDef) -> String {
+/// Drop stale FTS table + triggers, recreate from current schema, repopulate.
+///
+/// `IF NOT EXISTS` silently keeps old FTS/trigger definitions on schema
+/// evolution, so we always drop and recreate to guarantee consistency.
+fn rebuild_fts_sqlite(fts: &FtsDef) -> Vec<String> {
     let content_cols = fts.content_columns.join(", ");
-    format!(
-        "CREATE VIRTUAL TABLE IF NOT EXISTS {} USING fts5({}, {} UNINDEXED)",
-        fts.virtual_table_name, content_cols, fts.id_column
-    )
+    let content_col = fts
+        .content_columns
+        .first()
+        .map_or("content", String::as_str);
+
+    vec![
+        "DROP TRIGGER IF EXISTS obs_ai".to_string(),
+        "DROP TRIGGER IF EXISTS obs_ad".to_string(),
+        "DROP TRIGGER IF EXISTS obs_au".to_string(),
+        format!("DROP TABLE IF EXISTS {}", fts.virtual_table_name),
+        format!(
+            "CREATE VIRTUAL TABLE {} USING fts5({}, {} UNINDEXED)",
+            fts.virtual_table_name, content_cols, fts.id_column
+        ),
+        format!(
+            "INSERT OR IGNORE INTO {}({}, {}) SELECT {}, {} FROM {}",
+            fts.virtual_table_name,
+            fts.id_column,
+            content_col,
+            fts.id_column,
+            content_col,
+            fts.content_table,
+        ),
+        trigger_after_insert_sqlite(fts),
+        trigger_after_delete_sqlite(fts),
+        trigger_after_update_sqlite(fts),
+    ]
 }
 
 fn trigger_after_insert_sqlite(fts: &FtsDef) -> String {
@@ -136,7 +157,7 @@ fn trigger_after_insert_sqlite(fts: &FtsDef) -> String {
         .first()
         .map_or("content", String::as_str);
     format!(
-        r"CREATE TRIGGER IF NOT EXISTS obs_ai AFTER INSERT ON {} BEGIN
+        r"CREATE TRIGGER obs_ai AFTER INSERT ON {} BEGIN
   INSERT INTO {}({}, {}) VALUES (new.{}, new.{});
 END;",
         fts.content_table,
@@ -150,7 +171,7 @@ END;",
 
 fn trigger_after_delete_sqlite(fts: &FtsDef) -> String {
     format!(
-        r"CREATE TRIGGER IF NOT EXISTS obs_ad AFTER DELETE ON {} BEGIN
+        r"CREATE TRIGGER obs_ad AFTER DELETE ON {} BEGIN
   DELETE FROM {} WHERE {} = old.{};
 END;",
         fts.content_table, fts.virtual_table_name, fts.id_column, fts.id_column
@@ -163,7 +184,7 @@ fn trigger_after_update_sqlite(fts: &FtsDef) -> String {
         .first()
         .map_or("content", String::as_str);
     format!(
-        r"CREATE TRIGGER IF NOT EXISTS obs_au AFTER UPDATE ON {} BEGIN
+        r"CREATE TRIGGER obs_au AFTER UPDATE ON {} BEGIN
   DELETE FROM {} WHERE {} = old.{};
   INSERT INTO {}({}, {}) VALUES (new.{}, new.{});
 END;",

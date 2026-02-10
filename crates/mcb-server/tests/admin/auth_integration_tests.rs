@@ -348,9 +348,9 @@ async fn test_ready_public_no_auth_required() {
     );
 }
 
-/// Test: /indexing should work WITHOUT API key and return valid status
+/// Test: /jobs should work WITHOUT API key and return valid status
 #[rocket::async_test]
-async fn test_indexing_public_no_auth_required() {
+async fn test_jobs_public_no_auth_required() {
     let harness = AdminTestHarness::new().with_auth(TEST_API_KEY);
     let op_id = harness
         .indexing()
@@ -360,42 +360,34 @@ async fn test_indexing_public_no_auth_required() {
         .update_progress(&op_id, Some("src/main.rs".to_string()), 25);
     let (client, _, _) = harness.build_client().await;
 
-    let response = client.get("/indexing").dispatch().await;
+    let response = client.get("/jobs").dispatch().await;
 
     assert_eq!(
         response.status(),
         Status::Ok,
-        "GET /indexing should work without API key (public endpoint)"
+        "GET /jobs should work without API key (public endpoint)"
     );
 
     // Validate response body contains real indexing data
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
-    assert_eq!(
-        json["is_indexing"], true,
-        "Should show indexing in progress"
-    );
-    assert_eq!(
-        json["active_operations"], 1,
-        "Should have 1 active operation"
-    );
+    assert_eq!(json["running"], 1, "Should show one running job");
+    assert_eq!(json["queued"], 0, "Should have 0 queued jobs");
+    assert_eq!(json["total"], 1, "Should have 1 total job");
 
-    let ops = json["operations"].as_array().expect("operations is array");
+    let ops = json["jobs"].as_array().expect("jobs is array");
     assert_eq!(ops.len(), 1, "Should have exactly 1 operation");
 
     let op = &ops[0];
+    assert_eq!(op["label"], "test-collection", "Collection should match");
     assert_eq!(
-        op["collection"], "test-collection",
-        "Collection should match"
-    );
-    assert_eq!(
-        op["current_file"], "src/main.rs",
+        op["current_item"], "src/main.rs",
         "Current file should match"
     );
-    assert_eq!(op["processed_files"], 25, "Processed files should be 25");
-    assert_eq!(op["total_files"], 100, "Total files should be 100");
-    assert_eq!(op["progress_percent"], 25.0, "Progress should be 25%");
+    assert_eq!(op["processed_items"], 25, "Processed files should be 25");
+    assert_eq!(op["total_items"], 100, "Total files should be 100");
+    assert_eq!(op["progress_percent"], 25, "Progress should be 25%");
 }
 
 // =============================================================================

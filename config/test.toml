@@ -5,19 +5,11 @@ level = "WARN"
 type = "standalone"
 
 [server]
-host = "127.0.0.1"
-port = 18080
 transport_mode = "stdio"
 
 [server.network]
 host = "127.0.0.1"
 port = 18080
-
-[metrics]
-enabled = true
-
-[admin]
-enabled = true
 
 [providers.embedding.configs.default]
 provider = "fastembed"
@@ -26,11 +18,5 @@ model = "AllMiniLML6V2"
 [providers.vector_store.configs.default]
 provider = "edgevec"
 
-[providers.cache.default]
-type = "moka"
-
-[providers.language_chunking.default]
-type = "null"
-
-[cache]
+[system.infrastructure.cache]
 enabled = false

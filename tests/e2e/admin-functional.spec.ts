@@ -25,12 +25,12 @@ test.describe('Admin Functional Tests - Real Data Processing', () => {
     await expect(statusElement).toBeVisible({ timeout: 10000 });
   });
 
-  test('Indexing page should show indexing status', async ({ page }) => {
-    await page.goto(`${baseURL}/ui/indexing`);
+  test('Jobs page should show jobs status', async ({ page }) => {
+    await page.goto(`${baseURL}/ui/jobs`);
     
     const content = await page.content();
     
-    expect(content).toContain('Indexing');
+    expect(content).toMatch(/Jobs|Indexing/);
     expect(content).toMatch(/status|idle|running|complete/i);
   });
 
@@ -82,16 +82,16 @@ test.describe('Admin API Integration Tests', () => {
     expect(data).toBeDefined();
   });
 
-  test('Indexing status endpoint should return status', async ({ request }) => {
-    const response = await request.get(`${baseURL}/indexing`);
+  test('Jobs status endpoint should return status', async ({ request }) => {
+    const response = await request.get(`${baseURL}/jobs`);
     
     expect(response.ok()).toBeTruthy();
     
     const data = await response.json();
-    // Check for actual fields in IndexingStatusResponse
-    expect(data).toHaveProperty('is_indexing');
-    expect(data).toHaveProperty('active_operations');
-    expect(Array.isArray(data.operations)).toBeTruthy();
+    expect(data).toHaveProperty('total');
+    expect(data).toHaveProperty('running');
+    expect(data).toHaveProperty('queued');
+    expect(Array.isArray(data.jobs)).toBeTruthy();
   });
 
   test('Collections endpoint should return array', async ({ request }) => {
@@ -110,7 +110,7 @@ test.describe('Theme and UX Tests', () => {
       '/ui',
       '/ui/config',
       '/ui/health',
-      '/ui/indexing',
+      '/ui/jobs',
       '/ui/browse',
     ];
 
@@ -186,7 +186,7 @@ test.describe('Error Handling and Edge Cases', () => {
   });
 
   test('Server should handle rapid page navigation', async ({ page }) => {
-    const pages = ['/', '/ui/health', '/ui/config', '/ui/indexing', '/ui/browse'];
+    const pages = ['/', '/ui/health', '/ui/config', '/ui/jobs', '/ui/browse'];
     
     for (let i = 0; i < 3; i++) {
       for (const pagePath of pages) {

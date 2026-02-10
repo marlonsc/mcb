@@ -61,8 +61,8 @@ pub use admin::{metrics_handler, MetricsResponse};
 
 Environment variables:
 
--   `MCP_METRICS_ENABLED=true` - Enable metrics collection
--   `MCP_PORT=3000` - Unified HTTP port (Admin + Metrics + MCP)
+-   `MCP__SYSTEM__INFRASTRUCTURE__METRICS__ENABLED=true` - Enable metrics collection
+-   `MCP__SERVER__NETWORK__PORT=3000` - Unified HTTP port (Admin + Metrics + MCP)
 
 ## Cross-References
 

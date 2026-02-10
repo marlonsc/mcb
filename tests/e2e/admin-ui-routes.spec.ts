@@ -53,12 +53,12 @@ test.describe('Admin UI Routes - HTTP Accessibility', () => {
     expect(html).toContain('Health');
   });
 
-  test('/ui/indexing should return indexing status page', async ({ page }) => {
-    const response = await page.goto(`${baseURL}/ui/indexing`);
+  test('/ui/jobs should return jobs status page', async ({ page }) => {
+    const response = await page.goto(`${baseURL}/ui/jobs`);
     
     expect(response?.status()).toBe(200);
     const html = await page.content();
-    expect(html).toContain('Indexing');
+    expect(html).toMatch(/Jobs|Indexing/);
   });
 
   test('/ui/browse should return browse collections page', async ({ page }) => {
@@ -96,7 +96,7 @@ test.describe('Admin UI Routes - HTTP Accessibility', () => {
       '/ui',
       '/ui/config',
       '/ui/health',
-      '/ui/indexing',
+      '/ui/jobs',
       '/ui/browse',
       '/favicon.ico',
       '/ui/theme.css',

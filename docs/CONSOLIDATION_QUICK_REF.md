@@ -14,7 +14,7 @@
 
 ```
 MCP:  IndexHandler::handle(IndexAction::Status) → JSON
-Admin: GET /indexing (currently calls service directly)
+Admin: GET /jobs (unified jobs status endpoint)
 → Wrap MCP, eliminate duplication
 ```
 
@@ -30,7 +30,7 @@ Admin: (Currently no search endpoint)
 ### #3: Response Type Consolidation (4 hours) - ⭐⭐ ROI
 
 ```
-Current: AdminHealthResponse, IndexingStatusResponse, ... (9 types)
+Current: AdminHealthResponse, JobsStatusResponse, ... (9 types)
 Target:  ApiResponse<T> wrapper
 → Reduces boilerplate by 30%
 → Consistent error handling
@@ -112,7 +112,7 @@ Legend: ✅✅ Ready to use | ✅ Minor work | ⚠️ Medium adaptation | ❌ Se
 
 ```
 ❌ AdminHealthResponse (only in /health)
-❌ IndexingStatusResponse (only in /indexing)
+❌ Obsolete IndexingStatusResponse (replaced by JobsStatusResponse on /jobs)
 ❌ ReadinessResponse (only in /ready)
 ❌ LivenessResponse (only in /live)
 ❌ ShutdownResponse (only in /shutdown)

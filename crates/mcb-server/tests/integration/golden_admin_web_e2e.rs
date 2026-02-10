@@ -56,9 +56,9 @@ async fn test_admin_rocket_health_page_is_accessible() {
     assert_eq!(response.status(), Status::Ok);
 }
 
-/// Test that legacy /ui/indexing route is removed (use /ui/jobs instead)
+/// Test that removed /ui/indexing route returns 404 (use /ui/jobs instead)
 #[rocket::async_test]
-async fn test_admin_rocket_legacy_indexing_route_removed() {
+async fn test_admin_rocket_removed_indexing_route_returns_not_found() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
 
     let response = client.get("/ui/indexing").dispatch().await;
