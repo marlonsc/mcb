@@ -27,17 +27,17 @@
 //! # }
 //! ```
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use futures::stream;
-use mcb_application::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
-use std::sync::Arc;
+use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use tokio::sync::broadcast;
 use tracing::{debug, warn};
 
-/// Default channel capacity
-const DEFAULT_CAPACITY: usize = 1024;
+use crate::constants::EVENTS_TOKIO_DEFAULT_CAPACITY;
 
 /// Event bus provider using tokio broadcast channels
 ///
@@ -59,7 +59,7 @@ pub struct TokioEventBusProvider {
 impl TokioEventBusProvider {
     /// Create a new tokio event bus with default capacity (1024)
     pub fn new() -> Self {
-        Self::with_capacity(DEFAULT_CAPACITY)
+        Self::with_capacity(EVENTS_TOKIO_DEFAULT_CAPACITY)
     }
 
     /// Create with custom capacity
@@ -164,6 +164,3 @@ impl EventBusProvider for TokioEventBusProvider {
         Ok(id)
     }
 }
-
-// Keep backward compatibility with old name
-pub type TokioEventPublisher = TokioEventBusProvider;

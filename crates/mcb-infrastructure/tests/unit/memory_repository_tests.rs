@@ -1,42 +1,35 @@
-use mcb_domain::entities::memory::{Observation, ObservationType};
-use mcb_domain::ports::MemoryRepository;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_providers::database::{SqliteExecutor, create_memory_repository_in_memory};
 use std::sync::Arc;
 
-async fn create_test_project(executor: &SqliteExecutor, project_id: &str) {
-    let now = chrono::Utc::now().timestamp();
-    executor
-        .execute(
-            "INSERT INTO projects (id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-            &[
-                SqlParam::String(project_id.to_string()),
-                SqlParam::String(project_id.to_string()),
-                SqlParam::String("/test".to_string()),
-                SqlParam::I64(now),
-                SqlParam::I64(now),
-            ],
-        )
-        .await
-        .unwrap();
-}
+use mcb_domain::entities::memory::{Observation, ObservationType};
+use mcb_domain::ports::MemoryRepository;
+use mcb_domain::ports::infrastructure::DatabaseExecutor;
+use mcb_domain::value_objects::ObservationId;
+use mcb_providers::database::{create_memory_repository, create_memory_repository_with_executor};
+
+use super::test_utils::create_test_project;
 
 #[tokio::test]
-async fn test_memory_repository_in_memory_creates() {
-    let repo: Arc<dyn MemoryRepository> = create_memory_repository_in_memory().await.unwrap();
-    let results = repo.search_fts("test", 1).await.unwrap();
+async fn test_memory_repository_creates() {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+
+    let repo: Arc<dyn MemoryRepository> = create_memory_repository(db_path).await.unwrap();
+    let results = repo.search("test", 1).await.unwrap();
     assert!(results.is_empty());
 }
 
 #[tokio::test]
 async fn test_memory_repository_store_and_get_observation() {
-    let (repo, executor): (Arc<dyn MemoryRepository>, SqliteExecutor) =
-        mcb_providers::database::create_memory_repository_in_memory_with_executor()
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+
+    let (repo, executor): (Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>) =
+        create_memory_repository_with_executor(db_path)
             .await
             .unwrap();
 
     let project_id = "test-project";
-    create_test_project(&executor, project_id).await;
+    create_test_project(executor.as_ref(), project_id).await;
 
     let obs = Observation {
         id: "id1".to_string(),
@@ -44,13 +37,16 @@ async fn test_memory_repository_store_and_get_observation() {
         content: "content".to_string(),
         content_hash: "hash1".to_string(),
         tags: vec![],
-        observation_type: ObservationType::Context,
+        r#type: ObservationType::Context,
         metadata: Default::default(),
         created_at: 0,
         embedding_id: None,
     };
     repo.store_observation(&obs).await.unwrap();
-    let got = repo.get_observation("id1").await.unwrap();
+    let got = repo
+        .get_observation(&ObservationId::new("id1"))
+        .await
+        .unwrap();
     assert!(got.is_some());
     assert_eq!(got.unwrap().content, "content");
 }

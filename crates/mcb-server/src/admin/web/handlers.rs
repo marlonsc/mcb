@@ -12,10 +12,13 @@ use rocket::response::content::RawHtml;
 const INDEX_HTML: &str = include_str!("templates/index.html");
 const CONFIG_HTML: &str = include_str!("templates/config.html");
 const HEALTH_HTML: &str = include_str!("templates/health.html");
-const INDEXING_HTML: &str = include_str!("templates/indexing.html");
+const JOBS_HTML: &str = include_str!("templates/jobs.html");
 const BROWSE_HTML: &str = include_str!("templates/browse.html");
 const BROWSE_COLLECTION_HTML: &str = include_str!("templates/browse_collection.html");
 const BROWSE_FILE_HTML: &str = include_str!("templates/browse_file.html");
+const BROWSE_TREE_HTML: &str = include_str!("templates/browse_tree.html");
+const SHARED_JS: &str = include_str!("templates/shared.js");
+const THEME_CSS: &str = include_str!("templates/theme.css");
 
 /// Dashboard page handler
 #[get("/")]
@@ -41,10 +44,10 @@ pub fn health_page() -> RawHtml<&'static str> {
     RawHtml(HEALTH_HTML)
 }
 
-/// Indexing status page handler
-#[get("/ui/indexing")]
-pub fn indexing_page() -> RawHtml<&'static str> {
-    RawHtml(INDEXING_HTML)
+/// Jobs page handler
+#[get("/ui/jobs")]
+pub fn jobs_page() -> RawHtml<&'static str> {
+    RawHtml(JOBS_HTML)
 }
 
 /// Favicon handler - returns a simple SVG icon
@@ -54,6 +57,18 @@ pub fn favicon() -> (ContentType, &'static str) {
         ContentType::SVG,
         r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>"#,
     )
+}
+
+/// Theme CSS handler
+#[get("/ui/theme.css")]
+pub fn theme_css() -> (ContentType, &'static str) {
+    (ContentType::CSS, THEME_CSS)
+}
+
+/// Shared JavaScript utilities for admin UI
+#[get("/ui/shared.js")]
+pub fn shared_js() -> (ContentType, &'static str) {
+    (ContentType::JavaScript, SHARED_JS)
 }
 
 /// Browse collections page handler
@@ -72,4 +87,10 @@ pub fn browse_collection_page(_collection: &str) -> RawHtml<&'static str> {
 #[get("/ui/browse/<_collection>/file")]
 pub fn browse_file_page(_collection: &str) -> RawHtml<&'static str> {
     RawHtml(BROWSE_FILE_HTML)
+}
+
+/// Browse tree view page handler (Phase 8b Wave 3)
+#[get("/ui/browse/tree")]
+pub fn browse_tree_page() -> RawHtml<&'static str> {
+    RawHtml(BROWSE_TREE_HTML)
 }

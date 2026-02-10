@@ -1,4 +1,16 @@
-# ADR 009: Persistent Session Memory v0.2.0
+---
+adr: 9
+title: Persistent Session Memory v0.2.0
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: [1, 2, 3, 7, 8, 10, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Partial
+---
+
+## ADR 009: Persistent Session Memory v0.2.0
 
 ## Status
 
@@ -12,7 +24,7 @@
 > -   `crates/mcb-domain/src/memory.rs` - Memory domain types
 > -   `crates/mcb-application/src/ports/providers/memory.rs` - MemoryProvider port trait
 > -   `crates/mcb-application/src/use_cases/session.rs` - Session manager service
-> -   `crates/mcb-application/src/use_cases/memory_search.rs` - Memory search service
+> -   `crates/mcb-application/src/use_cases/memory (action=list, resource=observation).rs` - Memory search service
 > -   `crates/mcb-application/src/use_cases/context_injection.rs` - Context injection
 > -   `crates/mcb-providers/src/memory/` - Memory provider implementations
 > -   `crates/mcb-server/src/handlers/memory_tools.rs` - MCP tool handlers
@@ -21,7 +33,7 @@
 
 ## Context
 
-MCP Context Browser v0.1.0 provides semantic code search but lacks session-level memory persistence. Each Claude Code session starts fresh, losing valuable context:
+Memory Context Browser v0.1.0 provides semantic code search but lacks session-level memory persistence. Each Claude Code session starts fresh, losing valuable context:
 
 **Current problems:**
 
@@ -62,18 +74,18 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 
 | ADR Original Name | Canonical Name (v1.0.0) | Rationale |
 |-------------------|-------------------------|-----------|
-| `search` | `memory_search` | Avoids collision with `search_code` |
-| `timeline` | `memory_timeline` | Explicit memory domain |
-| `get_observations` | `memory_get_observations` | Consistent namespace |
-| `store_observation` | `memory_store_observation` | Matches existing tool |
-| `inject_context` | `memory_inject_context` | Avoids future collisions |
+| `search` | `memory (action=list, resource=observation)` | Avoids collision with `search (resource=code)` |
+| `timeline` | `memory (action=timeline, resource=observation)` | Explicit memory domain |
+| `get_observations` | `memory (action=get, resource=observation)` | Consistent namespace |
+| `memory (action=store, resource=observation)` | `memory (action=store, resource=observation)` | Matches tool |
+| `inject_context` | `memory (action=inject, resource=observation)` | Avoids future collisions |
 
 **Existing tools retained** (already namespaced):
 
--   `store_observation` → alias for `memory_store_observation`
--   `search_memories` → alias for `memory_search`
--   `get_session_summary` → unchanged (session domain)
--   `create_session_summary` → unchanged (session domain)
+-   `memory (action=store, resource=observation)` → alias for `memory (action=store, resource=observation)`
+-   `search (resource=memory)` → alias for `memory (action=list, resource=observation)`
+-   `session (action=summarize)` → unchanged (session domain)
+-   `session (action=summarize)` → unchanged (session domain)
 
 **Compatibility policy**:
 
@@ -90,7 +102,7 @@ Claude Code Session
 [Hook Integration] (PostToolUse → save observation)
         ↓
 ┌─────────────────────────────────────────┐
-│ MCP Context Browser Server              │
+│ Memory Context Browser Server              │
 │ ├── MemoryService (new)                 │
 │ ├── SessionManager (new)                │
 │ ├── ObservationStore (reuses VectorStore)│
@@ -326,7 +338,7 @@ pub trait MemoryProvider: Send + Sync {
     // === Observation Operations ===
 
     /// Store a new observation
-    async fn store_observation(&self, obs: &Observation) -> Result<u64>;
+    async fn memory (action=store, resource=observation)(&self, obs: &Observation) -> Result<u64>;
 
     /// Get observation by ID
     async fn get_observation(&self, id: u64) -> Result<Option<Observation>>;
@@ -472,7 +484,7 @@ impl SqliteMemoryProvider {
 
 #[async_trait]
 impl MemoryProvider for SqliteMemoryProvider {
-    async fn store_observation(&self, obs: &Observation) -> Result<u64> {
+    async fn memory (action=store, resource=observation)(&self, obs: &Observation) -> Result<u64> {
         let facts_json = serde_json::to_string(&obs.facts)?;
         let concepts_json = serde_json::to_string(&obs.concepts)?;
         let files_read_json = serde_json::to_string(&obs.files_read)?;
@@ -651,12 +663,12 @@ impl SessionManager {
     }
 
     /// Store a tool observation
-    pub async fn store_observation(
+    pub async fn memory (action=store, resource=observation)(
         &self,
         session_id: &str,
         observation: Observation,
     ) -> Result<u64> {
-        let obs_id = self.memory_provider.store_observation(&observation).await?;
+        let obs_id = self.memory_provider.memory (action=store, resource=observation)(&observation).await?;
 
         let _ = self.event_tx.send(SessionEvent::ObservationStored {
             session_id: session_id.to_string(),
@@ -697,7 +709,7 @@ impl SessionManager {
 
 ### Phase 5: Memory Search Service
 
-**Create**: `crates/mcb-application/src/use_cases/memory_search.rs`
+**Create**: `crates/mcb-application/src/use_cases/memory (action=list, resource=observation).rs`
 
 ```rust
 use std::sync::Arc;
@@ -794,7 +806,7 @@ impl MemorySearchService {
 
 ```rust
 use std::sync::Arc;
-use crate::application::memory_search::MemorySearchService;
+use crate::application::memory (action=list, resource=observation)::MemorySearchService;
 use crate::domain::memory::*;
 use crate::domain::ports::memory::SearchQuery;
 
@@ -926,11 +938,11 @@ fn type_emoji(t: &ObservationType) -> &'static str {
 ```rust
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use crate::application::memory_search::MemorySearchService;
+use crate::application::memory (action=list, resource=observation)::MemorySearchService;
 use crate::application::session::SessionManager;
 use crate::application::context_injection::ContextInjectionService;
 
-/// Tool: memory_search - Step 1 of 3-layer workflow
+/// Tool: memory (action=list, resource=observation) - Step 1 of 3-layer workflow
 #[derive(Debug, Deserialize)]
 pub struct MemorySearchInput {
     pub query: Option<String>,
@@ -947,7 +959,7 @@ pub struct MemorySearchInput {
     pub order_by: Option<String>,
 }
 
-/// Tool: memory_timeline - Step 2 of 3-layer workflow
+/// Tool: memory (action=timeline, resource=observation) - Step 2 of 3-layer workflow
 #[derive(Debug, Deserialize)]
 pub struct MemoryTimelineInput {
     /// Anchor observation ID (or query to find it)
@@ -958,14 +970,14 @@ pub struct MemoryTimelineInput {
     pub project: Option<String>,
 }
 
-/// Tool: memory_get_observations - Step 3 of 3-layer workflow
+/// Tool: memory (action=get, resource=observation) - Step 3 of 3-layer workflow
 #[derive(Debug, Deserialize)]
 pub struct MemoryGetObservationsInput {
     pub ids: Vec<u64>,
     pub project: Option<String>,
 }
 
-/// Tool: memory_store_observation - PostToolUse hook integration
+/// Tool: memory (action=store, resource=observation) - PostToolUse hook integration
 #[derive(Debug, Deserialize)]
 pub struct MemoryStoreObservationInput {
     pub session_id: String,
@@ -975,7 +987,7 @@ pub struct MemoryStoreObservationInput {
     pub project: String,
 }
 
-/// Tool: memory_inject_context - SessionStart hook integration
+/// Tool: memory (action=inject, resource=observation) - SessionStart hook integration
 #[derive(Debug, Deserialize)]
 pub struct MemoryInjectContextInput {
     pub project: String,
@@ -991,7 +1003,7 @@ pub struct MemoryToolsHandler {
 }
 
 impl MemoryToolsHandler {
-    pub async fn handle_memory_search(&self, input: MemorySearchInput) -> Result<serde_json::Value> {
+    pub async fn handle_memory (action=list, resource=observation)(&self, input: MemorySearchInput) -> Result<serde_json::Value> {
         let query = SearchQuery {
             query: input.query,
             project: input.project,
@@ -1009,11 +1021,11 @@ impl MemoryToolsHandler {
         Ok(serde_json::json!({
             "count": results.len(),
             "results": results,
-            "hint": "Use memory_timeline(anchor=ID) for context, memory_get_observations(ids=[...]) for details"
+            "hint": "Use memory (action=timeline, resource=observation)(anchor=ID) for context, memory (action=get, resource=observation)(ids=[...]) for details"
         }))
     }
 
-    pub async fn handle_memory_timeline(&self, input: MemoryTimelineInput) -> Result<serde_json::Value> {
+    pub async fn handle_memory (action=timeline, resource=observation)(&self, input: MemoryTimelineInput) -> Result<serde_json::Value> {
         let anchor_id = match (input.anchor, input.query) {
             (Some(id), _) => id,
             (None, Some(q)) => {
@@ -1040,12 +1052,12 @@ impl MemoryToolsHandler {
         Ok(serde_json::to_value(context)?)
     }
 
-    pub async fn handle_memory_get_observations(&self, input: MemoryGetObservationsInput) -> Result<serde_json::Value> {
+    pub async fn handle_memory (action=get, resource=observation)(&self, input: MemoryGetObservationsInput) -> Result<serde_json::Value> {
         let observations = self.search_service.get_observations(&input.ids).await?;
         Ok(serde_json::to_value(observations)?)
     }
 
-    pub async fn handle_memory_inject_context(&self, input: MemoryInjectContextInput) -> Result<serde_json::Value> {
+    pub async fn handle_memory (action=inject, resource=observation)(&self, input: MemoryInjectContextInput) -> Result<serde_json::Value> {
         let config = ContextInjectionConfig {
             observation_limit: input.observation_limit.unwrap_or(20),
             ..Default::default()
@@ -1071,14 +1083,14 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
         ToolInfo {
             name: "__MEMORY_WORKFLOW".to_string(),
             description: "3-LAYER WORKFLOW (ALWAYS FOLLOW):\n\
-                1. memory_search(query) -> Get index with IDs (~50-100 tokens/result)\n\
-                2. memory_timeline(anchor=ID) -> Get context around interesting results\n\
-                3. memory_get_observations([IDs]) -> Fetch full details ONLY for filtered IDs\n\
+                1. memory (action=list, resource=observation)(query) -> Get index with IDs (~50-100 tokens/result)\n\
+                2. memory (action=timeline, resource=observation)(anchor=ID) -> Get context around interesting results\n\
+                3. memory (action=get, resource=observation)([IDs]) -> Fetch full details ONLY for filtered IDs\n\
                 NEVER fetch full details without filtering first. 10x token savings.".to_string(),
             input_schema: json!({"type": "object", "properties": {}}),
         },
         ToolInfo {
-            name: "memory_search".to_string(),
+            name: "memory (action=list, resource=observation)".to_string(),
             description: "[EXPERIMENTAL] Step 1: Search memory. Returns index with IDs. \
                 Params: query, limit, project, type, obs_type, dateStart, dateEnd, offset, orderBy".to_string(),
             input_schema: json!({
@@ -1093,7 +1105,7 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "memory_timeline".to_string(),
+            name: "memory (action=timeline, resource=observation)".to_string(),
             description: "[EXPERIMENTAL] Step 2: Get context around results. \
                 Params: anchor (observation ID) OR query (finds anchor automatically), \
                 depth_before, depth_after, project".to_string(),
@@ -1109,7 +1121,7 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "memory_get_observations".to_string(),
+            name: "memory (action=get, resource=observation)".to_string(),
             description: "[EXPERIMENTAL] Step 3: Fetch full details for filtered IDs. \
                 Params: ids (array of observation IDs, required), orderBy, limit, project".to_string(),
             input_schema: json!({
@@ -1126,7 +1138,7 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "memory_store_observation".to_string(),
+name: "memory (action=store, resource=observation)".to_string(),
             description: "[EXPERIMENTAL] Store tool observation (for PostToolUse hook integration)".to_string(),
             input_schema: json!({
                 "type": "object",
@@ -1141,7 +1153,7 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "memory_inject_context".to_string(),
+            name: "memory (action=inject, resource=observation)".to_string(),
             description: "[EXPERIMENTAL] Generate context for SessionStart hook injection".to_string(),
             input_schema: json!({
                 "type": "object",
@@ -1300,7 +1312,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 | `crates/mcb-providers/src/memory/mod.rs` | Memory providers module |
 | `crates/mcb-providers/src/memory/sqlite_memory.rs` | SQLite implementation |
 | `crates/mcb-application/src/use_cases/session.rs` | Session manager service |
-| `crates/mcb-application/src/use_cases/memory_search.rs` | Memory search service |
+| `crates/mcb-application/src/use_cases/memory (action=list, resource=observation).rs` | Memory search service |
 | `crates/mcb-application/src/use_cases/context_injection.rs` | Context generation |
 | `crates/mcb-server/src/handlers/memory_tools.rs` | MCP tool handlers |
 | `crates/mcb-infrastructure/src/config/memory.rs` | Memory configuration |
@@ -1314,7 +1326,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 | `crates/mcb-domain/src/mod.rs` | Export memory module |
 | `crates/mcb-application/src/ports/providers/mod.rs` | Export MemoryProvider |
 | `crates/mcb-providers/src/lib.rs` | Export memory providers |
-| `crates/mcb-application/src/use_cases/mod.rs` | Export session, memory_search, context_injection |
+| `crates/mcb-application/src/use_cases/mod.rs` | Export session, memory (action=list, resource=observation), context_injection |
 | `crates/mcb-server/src/mcp_server.rs` | Register memory tools |
 | `crates/mcb-infrastructure/src/config/mod.rs` | Export memory config |
 | `crates/mcb-infrastructure/src/di/modules/mod.rs` | Wire memory services |
@@ -1410,7 +1422,7 @@ fn reciprocal_rank_fusion(
 
 -   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - MemoryProvider follows trait-based DI
 -   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage operations
--   [ADR-030: Multi-Provider Strategy](030-multi-provider-strategy.md) - Memory provider routing
+-   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Memory provider routing
 -   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Memory dashboard UI
 -   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git-tagged observations
 -   [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - Hook observation storage

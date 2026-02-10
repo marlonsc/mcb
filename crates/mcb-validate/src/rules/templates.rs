@@ -2,9 +2,10 @@
 //!
 //! Provides template inheritance and variable substitution for DRY rule definitions.
 
-use serde_yaml;
 use std::collections::HashMap;
 use std::path::Path;
+
+use serde_yaml;
 use walkdir::WalkDir;
 
 use crate::Result;
@@ -36,7 +37,7 @@ impl TemplateEngine {
             return Ok(()); // No templates directory, that's fine
         }
 
-        for entry in WalkDir::new(&templates_dir) {
+        for entry in WalkDir::new(&templates_dir).follow_links(false) {
             let entry = entry.map_err(|e| crate::ValidationError::Io(e.into()))?;
             let path = entry.path();
 
@@ -46,8 +47,8 @@ impl TemplateEngine {
                         .and_then(|name| name.to_str())
                         .ok_or_else(|| {
                             crate::ValidationError::Config(format!(
-                                "Invalid template filename: {:?}",
-                                path
+                                "Invalid template filename: {}",
+                                path.display()
                             ))
                         })?;
 
@@ -58,7 +59,7 @@ impl TemplateEngine {
                 let template: serde_yaml::Value =
                     serde_yaml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
                         file: path.to_path_buf(),
-                        message: format!("Template parse error: {}", e),
+                        message: format!("Template parse error: {e}"),
                     })?;
 
                 // Verify this is actually a template
@@ -87,7 +88,7 @@ impl TemplateEngine {
         rule: &serde_yaml::Value,
     ) -> Result<serde_yaml::Value> {
         let template = self.templates.get(template_name).ok_or_else(|| {
-            crate::ValidationError::Config(format!("Template '{}' not found", template_name))
+            crate::ValidationError::Config(format!("Template '{template_name}' not found"))
         })?;
 
         // Start with the template as base
@@ -134,8 +135,8 @@ impl TemplateEngine {
         }
     }
 
-    /// Substitute variables in the form {{variable_name}}
-    fn substitute_variables(
+    /// Substitute variables in the form {{`variable_name`}}
+    pub fn substitute_variables(
         &self,
         value: &mut serde_yaml::Value,
         variables: &serde_yaml::Value,
@@ -165,7 +166,7 @@ impl TemplateEngine {
 
         // Find all {{variable}} patterns
         let var_pattern = regex::Regex::new(r"\{\{(\w+)\}\}")
-            .map_err(|e| crate::ValidationError::Config(format!("Regex error: {}", e)))?;
+            .map_err(|e| crate::ValidationError::Config(format!("Regex error: {e}")))?;
 
         for capture in var_pattern.captures_iter(input) {
             if let Some(var_name) = capture.get(1) {
@@ -193,12 +194,11 @@ impl TemplateEngine {
                         .collect();
                     Ok(strings.join(","))
                 }
-                _ => Ok(format!("{:?}", value)),
+                _ => Ok(format!("{value:?}")),
             }
         } else {
             Err(crate::ValidationError::Config(format!(
-                "Variable '{}' not found",
-                var_name
+                "Variable '{var_name}' not found"
             )))
         }
     }
@@ -216,8 +216,9 @@ impl TemplateEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_load_templates() {

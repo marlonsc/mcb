@@ -1,4 +1,16 @@
-# ADR 017: Phased Feature Integration Roadmap
+---
+adr: 17
+title: Phased Feature Integration Roadmap
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [12, 13, 16, 20]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 017: Phased Feature Integration Roadmap
 
 ## Status
 
@@ -71,7 +83,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 -   Port SATD detector
 -   Analysis adapters in mcb-providers
 
-**Tools**: 9 (+analyze_complexity, +tdg_score, +satd_detect)
+**Tools**: 9 (+validate (action=analyze), +tdg_score, +satd_detect)
 **Tests**: 1500+ (includes PMAT tests)
 
 ### Phase 4: v0.4.0 - Extended Analysis

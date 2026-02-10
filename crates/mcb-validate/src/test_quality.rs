@@ -6,49 +6,72 @@
 //! - Detects missing test implementations
 //! - Ensures tests have proper documentation
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use std::path::{Path, PathBuf};
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+
+use crate::config::TestQualityRulesConfig;
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig, ValidationError};
 
 /// Test quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TestQualityViolation {
     /// Test with `#[ignore]` attribute missing justification
     IgnoreWithoutJustification {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the ignored test function.
         test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// todo!() macro in test fixture without proper stub marker
     TodoInTestFixture {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the function in the test fixture containing the todo!() macro.
         function_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test function with empty body
     EmptyTestBody {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the test function that has an empty body.
         test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test missing documentation comment
     TestMissingDocumentation {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the test function that is missing documentation.
         test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test with only assert!(true) or similar stub
     StubTestAssertion {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the test function that contains a stub assertion.
         test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
@@ -188,36 +211,53 @@ impl Violation for TestQualityViolation {
 
 /// Test quality validator
 pub struct TestQualityValidator {
+    /// Configuration for validation scans
     config: ValidationConfig,
+    rules: TestQualityRulesConfig,
 }
 
 impl TestQualityValidator {
-    /// Create a new test quality validator with the given configuration
-    pub fn new(config: ValidationConfig) -> Self {
-        Self { config }
+    /// Create a new test quality validator with the given workspace root
+    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+        let root: std::path::PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.test_quality)
     }
 
-    /// Create a validator with a custom configuration (alias for new)
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self::new(config)
+    /// Create a validator with a custom configuration
+    pub fn with_config(config: ValidationConfig, rules: &TestQualityRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
     /// Validate test quality across all test files
     pub fn validate(&self) -> Result<Vec<TestQualityViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
 
         // Regex patterns
-        let ignore_pattern = Regex::new(r"#\[ignore\]").unwrap();
-        let test_pattern = Regex::new(r"#\[test\]|#\[tokio::test\]").unwrap();
-        let fn_pattern = Regex::new(r"fn\s+(\w+)").unwrap();
-        let todo_pattern = Regex::new(r"todo!\(").unwrap();
-        let empty_body_pattern = Regex::new(r"\{\s*\}").unwrap();
-        let stub_assert_pattern =
-            Regex::new(r"assert!\(true\)|assert_eq!\(true,\s*true\)").unwrap();
-        let doc_comment_pattern = Regex::new(r"^\s*///").unwrap();
+        let ignore_pattern = Regex::new(r"#\[ignore\]")
+            .map_err(|e| ValidationError::InvalidRegex(format!("ignore_pattern: {e}")))?;
+        let test_pattern = Regex::new(r"#\[test\]|#\[tokio::test\]")
+            .map_err(|e| ValidationError::InvalidRegex(format!("test_pattern: {e}")))?;
+        let fn_pattern = Regex::new(r"fn\s+(\w+)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("fn_pattern: {e}")))?;
+        let todo_pattern = Regex::new(r"todo!\(")
+            .map_err(|e| ValidationError::InvalidRegex(format!("todo_pattern: {e}")))?;
+        let empty_body_pattern = Regex::new(r"\{\s*\}")
+            .map_err(|e| ValidationError::InvalidRegex(format!("empty_body_pattern: {e}")))?;
+        let stub_assert_pattern = Regex::new(r"assert!\(true\)|assert_eq!\(true,\s*true\)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("stub_assert_pattern: {e}")))?;
+        let doc_comment_pattern = Regex::new(r"^\s*///")
+            .map_err(|e| ValidationError::InvalidRegex(format!("doc_comment_pattern: {e}")))?;
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| {
@@ -258,6 +298,7 @@ impl TestQualityValidator {
                     &lines,
                     &test_pattern,
                     &stub_assert_pattern,
+                    &fn_pattern,
                     &mut violations,
                 );
             }
@@ -266,6 +307,7 @@ impl TestQualityValidator {
         Ok(violations)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn check_ignored_tests(
         &self,
         file: &Path,
@@ -279,12 +321,11 @@ impl TestQualityValidator {
         for (i, line) in lines.iter().enumerate() {
             if ignore_pattern.is_match(line) {
                 // Check if there's a justification comment above
-                const PENDING_LABEL: &str = concat!("T", "O", "D", "O");
                 let has_justification = i > 0 && {
                     let prev_line = lines[i - 1];
                     prev_line.contains("Requires")
                         || prev_line.contains("requires")
-                        || prev_line.contains(PENDING_LABEL)
+                        || prev_line.contains(crate::constants::PENDING_LABEL_TODO)
                         || prev_line.contains("WIP")
                 };
 
@@ -312,8 +353,7 @@ impl TestQualityValidator {
         fn_pattern: &Regex,
         violations: &mut Vec<TestQualityViolation>,
     ) {
-        // Skip if this is a validation test file (intentional test cases)
-        if file.to_string_lossy().contains("mcb-validate/src/") {
+        if self.should_skip_path(file) {
             return;
         }
 
@@ -358,22 +398,19 @@ impl TestQualityValidator {
                     // Check if the function body is empty (just {})
                     if let Some(body_start) = (fn_line_idx..fn_line_idx + 3)
                         .find(|&idx| idx < lines.len() && lines[idx].contains('{'))
+                        && (empty_body_pattern.is_match(lines[body_start])
+                            || (body_start + 1 < lines.len()
+                                && lines[body_start + 1].trim() == "}"))
+                        && let Some(test_name) = fn_pattern
+                            .captures(lines[fn_line_idx])
+                            .and_then(|c| c.get(1))
                     {
-                        if empty_body_pattern.is_match(lines[body_start])
-                            || (body_start + 1 < lines.len() && lines[body_start + 1].trim() == "}")
-                        {
-                            if let Some(test_name) = fn_pattern
-                                .captures(lines[fn_line_idx])
-                                .and_then(|c| c.get(1))
-                            {
-                                violations.push(TestQualityViolation::EmptyTestBody {
-                                    file: file.to_path_buf(),
-                                    line: fn_line_idx + 1,
-                                    test_name: test_name.as_str().to_string(),
-                                    severity: Severity::Error,
-                                });
-                            }
-                        }
+                        violations.push(TestQualityViolation::EmptyTestBody {
+                            file: file.to_path_buf(),
+                            line: fn_line_idx + 1,
+                            test_name: test_name.as_str().to_string(),
+                            severity: Severity::Error,
+                        });
                     }
                 }
             }
@@ -386,22 +423,19 @@ impl TestQualityValidator {
         lines: &[&str],
         test_pattern: &Regex,
         stub_assert_pattern: &Regex,
+        fn_pattern: &Regex,
         violations: &mut Vec<TestQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
             if test_pattern.is_match(line) {
-                // Look for stub assertions in the next 20 lines (typical test body)
                 for offset in 0..20 {
                     if i + offset >= lines.len() {
                         break;
                     }
                     if stub_assert_pattern.is_match(lines[i + offset]) {
-                        if let Some(test_name) = self.find_test_name(
-                            lines,
-                            i,
-                            test_pattern,
-                            &Regex::new(r"fn\s+(\w+)").unwrap(),
-                        ) {
+                        if let Some(test_name) =
+                            self.find_test_name(lines, i, test_pattern, fn_pattern)
+                        {
                             violations.push(TestQualityViolation::StubTestAssertion {
                                 file: file.to_path_buf(),
                                 line: i + offset + 1,
@@ -423,12 +457,12 @@ impl TestQualityValidator {
         _test_pattern: &Regex,
         fn_pattern: &Regex,
     ) -> Option<String> {
-        // Look for function name in next few lines
-        for i in start_idx..std::cmp::min(start_idx + 5, lines.len()) {
-            if let Some(captures) = fn_pattern.captures(lines[i]) {
-                if let Some(name) = captures.get(1) {
-                    return Some(name.as_str().to_string());
-                }
+        let end = std::cmp::min(start_idx + 5, lines.len());
+        for line in lines.iter().take(end).skip(start_idx) {
+            if let Some(captures) = fn_pattern.captures(line)
+                && let Some(name) = captures.get(1)
+            {
+                return Some(name.as_str().to_string());
             }
         }
         None
@@ -442,13 +476,22 @@ impl TestQualityValidator {
     ) -> Option<String> {
         // Look backwards for function name
         for i in (0..=start_idx).rev().take(10) {
-            if let Some(captures) = fn_pattern.captures(lines[i]) {
-                if let Some(name) = captures.get(1) {
-                    return Some(name.as_str().to_string());
-                }
+            if let Some(captures) = fn_pattern.captures(lines[i])
+                && let Some(name) = captures.get(1)
+            {
+                return Some(name.as_str().to_string());
             }
         }
         None
+    }
+
+    /// Check if a path should be skipped based on configuration
+    fn should_skip_path(&self, path: &Path) -> bool {
+        let path_str = path.to_string_lossy();
+        self.rules
+            .excluded_paths
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 

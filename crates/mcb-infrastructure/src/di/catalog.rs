@@ -1,27 +1,19 @@
-//! dill Catalog - IoC Container Configuration
+//! Dill Catalog Configuration
 //!
-//! This module provides the dill-based IoC container that wraps the existing
-//! manual DI pattern. It uses `add_value()` for services created by the
-//! linkme registry system and manual constructors.
-//!
-//! ## Architecture
-//!
-//! ```text
-//! linkme (compile-time)     dill Catalog (runtime)
-//! ─────────────────────     ─────────────────────
-//! EMBEDDING_PROVIDERS  →    resolve_providers()
-//!                                  ↓
-//!                           CatalogBuilder::add_value(provider)
-//!                                  ↓
-//!                           Catalog::get_one::<dyn EmbeddingProvider>()
-//! ```
-//!
-//! ## Usage
-//!
-//! ```text
-//! let catalog = build_catalog(config).await?;
-//! let embedding: Arc<dyn EmbeddingProvider> = catalog.get_one()?;
-//! ```
+//! Configures the dill IoC container with all infrastructure services.
+
+use std::sync::Arc;
+
+use dill::{Catalog, CatalogBuilder};
+use mcb_domain::error::Result;
+use mcb_domain::ports::admin::{
+    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
+};
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::providers::{
+    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+};
+use tracing::info;
 
 use crate::config::AppConfig;
 use crate::di::admin::{
@@ -37,67 +29,25 @@ use crate::di::provider_resolvers::{
     VectorStoreProviderResolver,
 };
 use crate::infrastructure::{
-    PrometheusPerformanceMetrics,
-    admin::{NullIndexingOperations, NullPerformanceMetrics},
-    auth::NullAuthService,
-    events::TokioBroadcastEventBus,
+    admin::{AtomicPerformanceMetrics, DefaultIndexingOperations},
     lifecycle::DefaultShutdownCoordinator,
-    metrics::NullSystemMetricsCollector,
-    snapshot::NullSnapshotProvider,
-    sync::NullSyncProvider,
 };
-use dill::{Catalog, CatalogBuilder};
-use mcb_application::decorators::InstrumentedEmbeddingProvider;
-use mcb_domain::error::Result;
-use mcb_domain::ports::admin::{
-    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
-};
-use mcb_domain::ports::infrastructure::{
-    AuthServiceInterface, EventBusProvider, SnapshotProvider, SyncProvider,
-    SystemMetricsCollectorInterface,
-};
-use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
-};
-use std::sync::Arc;
-use tracing::{info, warn};
+use mcb_providers::events::TokioEventBusProvider;
 
 /// Build the dill Catalog with all application services
-///
-/// This function creates the IoC container with:
-/// - External providers (resolved via linkme registry)
-/// - Provider handles (for runtime switching)
-/// - Admin services (for API-based provider management)
-/// - Infrastructure services (null implementations by default)
-///
-/// # Type Bindings
-///
-/// The catalog binds these trait objects for dependency injection:
-///
-/// | Trait | Resolved From |
-/// |-------|---------------|
-/// | `dyn EmbeddingProvider` | linkme registry → config → handle |
-/// | `dyn VectorStoreProvider` | linkme registry → config → handle |
-/// | `dyn CacheProvider` | linkme registry → config → handle |
-/// | `dyn LanguageChunkingProvider` | linkme registry → config → handle |
-/// | `dyn AuthServiceInterface` | NullAuthService (default) |
-/// | `dyn EventBusProvider` | TokioBroadcastEventBus (default) |
-///
 pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    info!("Building dill Catalog with provider handles");
+    info!("Building dill Catalog");
 
     let config = Arc::new(config);
 
     // ========================================================================
-    // Create Resolvers (components that use linkme registry)
+    // Create Resolvers
     // ========================================================================
 
     let embedding_resolver = Arc::new(EmbeddingProviderResolver::new(config.clone()));
     let vector_store_resolver = Arc::new(VectorStoreProviderResolver::new(config.clone()));
     let cache_resolver = Arc::new(CacheProviderResolver::new(config.clone()));
     let language_resolver = Arc::new(LanguageProviderResolver::new(config.clone()));
-
-    info!("Created provider resolvers");
 
     // ========================================================================
     // Resolve initial providers from config
@@ -120,150 +70,84 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("Language: {e}")))?;
 
-    info!(
-        "Resolved providers: embedding={}, vector_store={}, cache={}, language={}",
-        embedding_provider.provider_name(),
-        vector_store_provider.provider_name(),
-        cache_provider.provider_name(),
-        language_provider.provider_name()
-    );
-
     // ========================================================================
-    // Create Infrastructure Services (needed before handles for decorator)
+    // Create Handles
     // ========================================================================
 
-    let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
-        if config.system.infrastructure.metrics.enabled {
-            match PrometheusPerformanceMetrics::try_new() {
-                Ok(metrics) => {
-                    info!("Prometheus metrics initialized successfully");
-                    Arc::new(metrics)
-                }
-                Err(e) => {
-                    warn!(
-                        "Failed to initialize Prometheus metrics: {}, falling back to null metrics",
-                        e
-                    );
-                    Arc::new(NullPerformanceMetrics)
-                }
-            }
-        } else {
-            Arc::new(NullPerformanceMetrics)
-        };
-
-    // ========================================================================
-    // Optionally wrap embedding provider with instrumentation (SOLID O/C)
-    // ========================================================================
-
-    let final_embedding_provider: Arc<dyn EmbeddingProvider> =
-        if config.system.infrastructure.metrics.enabled {
-            info!("Metrics enabled: wrapping embedding provider with instrumentation");
-            Arc::new(InstrumentedEmbeddingProvider::new(
-                embedding_provider.clone(),
-                performance_metrics.clone(),
-            ))
-        } else {
-            embedding_provider.clone()
-        };
-
-    // ========================================================================
-    // Create Handles (RwLock wrappers for runtime switching)
-    // ========================================================================
-
-    let embedding_handle = Arc::new(EmbeddingProviderHandle::new(final_embedding_provider));
+    let embedding_handle = Arc::new(EmbeddingProviderHandle::new(embedding_provider.clone()));
     let vector_store_handle = Arc::new(VectorStoreProviderHandle::new(
         vector_store_provider.clone(),
     ));
     let cache_handle = Arc::new(CacheProviderHandle::new(cache_provider.clone()));
     let language_handle = Arc::new(LanguageProviderHandle::new(language_provider.clone()));
 
-    info!("Created provider handles");
-
     // ========================================================================
-    // Create Admin Services (for API-based provider management)
+    // Create Admin Services
     // ========================================================================
 
     let embedding_admin: Arc<dyn EmbeddingAdminInterface> = Arc::new(EmbeddingAdminService::new(
+        "Embedding Service",
         embedding_resolver.clone(),
         embedding_handle.clone(),
     ));
-    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = Arc::new(
-        VectorStoreAdminService::new(vector_store_resolver.clone(), vector_store_handle.clone()),
-    );
+    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> =
+        Arc::new(VectorStoreAdminService::new(
+            "Vector Store Service",
+            vector_store_resolver.clone(),
+            vector_store_handle.clone(),
+        ));
     let cache_admin: Arc<dyn CacheAdminInterface> = Arc::new(CacheAdminService::new(
+        "Cache Service",
         cache_resolver.clone(),
         cache_handle.clone(),
     ));
     let language_admin: Arc<dyn LanguageAdminInterface> = Arc::new(LanguageAdminService::new(
+        "Language Service",
         language_resolver.clone(),
         language_handle.clone(),
     ));
 
-    info!("Created admin services");
-
     // ========================================================================
-    // Create Remaining Infrastructure Services
+    // Create Infrastructure Services
     // ========================================================================
 
-    let auth_service: Arc<dyn AuthServiceInterface> = Arc::new(NullAuthService::new());
-    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioBroadcastEventBus::new());
-    let metrics_collector: Arc<dyn SystemMetricsCollectorInterface> =
-        Arc::new(NullSystemMetricsCollector::new());
-    let sync_provider: Arc<dyn SyncProvider> = Arc::new(NullSyncProvider::new());
-    let snapshot_provider: Arc<dyn SnapshotProvider> = Arc::new(NullSnapshotProvider::new());
+    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioEventBusProvider::new());
     let shutdown_coordinator: Arc<dyn ShutdownCoordinator> =
         Arc::new(DefaultShutdownCoordinator::new());
+    let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
+        Arc::new(AtomicPerformanceMetrics::new());
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
-        Arc::new(NullIndexingOperations);
+        Arc::new(DefaultIndexingOperations::new());
 
     info!("Created infrastructure services");
 
     // ========================================================================
-    // Build the Catalog with all services
+    // Build the Catalog
     // ========================================================================
 
     let catalog = CatalogBuilder::new()
-        // Configuration
         .add_value(config)
-        // Provider traits (via handles)
         .add_value(embedding_provider)
         .add_value(vector_store_provider)
         .add_value(cache_provider)
         .add_value(language_provider)
-        // Provider handles (for runtime switching)
         .add_value(embedding_handle)
         .add_value(vector_store_handle)
         .add_value(cache_handle)
         .add_value(language_handle)
-        // Provider resolvers (linkme registry access)
         .add_value(embedding_resolver)
         .add_value(vector_store_resolver)
         .add_value(cache_resolver)
         .add_value(language_resolver)
-        // Admin services (API-based provider management)
         .add_value(embedding_admin)
         .add_value(vector_store_admin)
         .add_value(cache_admin)
         .add_value(language_admin)
-        // Infrastructure services
-        .add_value(auth_service)
         .add_value(event_bus)
-        .add_value(metrics_collector)
-        .add_value(sync_provider)
-        .add_value(snapshot_provider)
         .add_value(shutdown_coordinator)
         .add_value(performance_metrics)
         .add_value(indexing_operations)
         .build();
 
-    info!("Built dill Catalog with {} services", 20);
-
     Ok(catalog)
 }
-
-// Note: Provider access should go through AppContext, not directly via catalog.
-// The dill Catalog is used for infrastructure service lifecycle management.
-// Providers are accessed via: app_context.embedding_handle().get()
-//
-// The catalog stores handles and resolvers for internal use, but the recommended
-// pattern for external access is through AppContext methods.

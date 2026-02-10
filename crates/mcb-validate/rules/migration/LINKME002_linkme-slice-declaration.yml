@@ -10,10 +10,10 @@ description: "Provider registry missing #[linkme::distributed_slice] declaration
 rationale: "All provider registries must use linkme distributed slices"
 
 rule: |
-  rule LinkmeSliceDeclaration "Check for linkme slice declaration" {
-      when
-          ProviderRegistry() &&
-          !HasAttribute("linkme::distributed_slice")
-      then
-          Violation("Provider registry missing #[linkme::distributed_slice] declaration");
-  }
+    rule LinkmeSliceDeclaration "Check for linkme slice declaration" {
+        when
+            ProviderRegistry() &&
+            !HasAttribute("linkme::distributed_slice")
+        then
+            Violation("Provider registry missing #[linkme::distributed_slice] declaration");
+    }

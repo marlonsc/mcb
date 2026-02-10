@@ -1,6 +1,0 @@
-# Clippy configuration for MCP Context Browser
-
-# Allow certain lints in test code
-allow-unwrap-in-tests = true
-allow-expect-in-tests = true
-allow-print-in-tests = true

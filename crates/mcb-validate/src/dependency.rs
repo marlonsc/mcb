@@ -1,114 +1,67 @@
 //! Dependency Graph Validation
 //!
 //! Validates Clean Architecture layer boundaries:
-//! - mcb-domain: No internal dependencies (pure domain entities)
-//! - mcb-application: Only mcb-domain (use cases and ports)
-//! - mcb-providers: mcb-domain and mcb-application (adapter implementations)
-//! - mcb-infrastructure: mcb-domain, mcb-application, and mcb-providers (DI composition root)
-//! - mcb-server: mcb-domain, mcb-application, and mcb-infrastructure (transport layer)
+//! - domain: No internal dependencies (pure domain entities)
+//! - application: Only domain (use cases and ports)
+//! - providers: domain and application (adapter implementations)
+//! - infrastructure: domain, application, and providers (DI composition root)
+//! - server: domain, application, and infrastructure (transport layer)
 //! - mcb: All crates (facade that re-exports entire public API)
+
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
 
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
-use walkdir::WalkDir;
-
-/// Allowed dependencies for each crate in Clean Architecture
-///
-/// Architecture layers:
-/// - mcb-domain: Pure domain layer (entities, value objects, events) - no internal deps
-/// - mcb-application: Use cases and business logic orchestration (ports included) - depends on mcb-domain
-/// - mcb-providers: Adapter implementations of application ports - depends on mcb-domain and mcb-application
-/// - mcb-infrastructure: DI composition root and cross-cutting concerns - depends on mcb-domain, mcb-application, and mcb-providers
-/// - mcb-server: Transport layer - depends on mcb-domain, mcb-application, and mcb-infrastructure
-/// - mcb: Facade crate that re-exports the entire public API
-/// - mcb-validate: Development tool, not part of runtime dependency graph
-const ALLOWED_DEPS: &[(&str, &[&str])] = &[
-    ("mcb-domain", &[]),
-    ("mcb-application", &["mcb-domain"]),
-    ("mcb-providers", &["mcb-domain", "mcb-application"]),
-    (
-        "mcb-infrastructure",
-        // Note: mcb-validate is an optional dependency for architecture validation feature
-        // This dependency is behind the "validation" feature flag and is not a runtime dependency
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-providers",
-            "mcb-validate",
-        ],
-    ),
-    (
-        "mcb-server",
-        // Note: mcb-providers dependency is required for linkme compile-time registration
-        // The `extern crate mcb_providers;` in main.rs forces linkme to register all providers
-        // This is a compile-time requirement, not a runtime dependency violation
-        // Providers are still accessed only through mcb-infrastructure's DI system at runtime
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-infrastructure",
-            "mcb-providers",
-        ],
-    ),
-    (
-        "mcb",
-        // Note: mcb-validate is allowed for `mcb validate` CLI subcommand
-        // This is a compile-time dependency that enables the validation CLI
-        &[
-            "mcb-domain",
-            "mcb-application",
-            "mcb-infrastructure",
-            "mcb-server",
-            "mcb-providers",
-            "mcb-validate",
-        ],
-    ),
-    // mcb-validate: Development tool with shared language/AST utilities
-    // mcb-language-support and mcb-ast-utils are shared infrastructure crates
-    // that provide language detection and AST traversal utilities
-    ("mcb-validate", &["mcb-language-support", "mcb-ast-utils"]),
-    // Shared infrastructure crates - no dependencies on main architecture
-    ("mcb-language-support", &[]),
-    ("mcb-ast-utils", &["mcb-language-support"]),
-];
 
 /// Dependency violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DependencyViolation {
     /// Forbidden dependency in Cargo.toml
     ForbiddenCargoDepedency {
+        /// Name of the crate that contains the forbidden dependency.
         crate_name: String,
+        /// Name of the crate that is forbidden as a dependency.
         forbidden_dep: String,
+        /// Path to the Cargo.toml file containing the violation.
         location: PathBuf,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Forbidden use statement in source code
     ForbiddenUseStatement {
+        /// Name of the crate where the violation was found.
         crate_name: String,
+        /// Name of the crate whose items are being incorrectly imported.
         forbidden_dep: String,
+        /// Path to the source file containing the violation.
         file: PathBuf,
+        /// Line number where the forbidden `use` statement occurs.
         line: usize,
+        /// The content of the line containing the violation.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Circular dependency detected
     CircularDependency {
+        /// The sequence of crates forming the dependency cycle.
         cycle: Vec<String>,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
 impl DependencyViolation {
+    /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::ForbiddenCargoDepedency { severity, .. } => *severity,
-            Self::ForbiddenUseStatement { severity, .. } => *severity,
-            Self::CircularDependency { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -169,9 +122,9 @@ impl Violation for DependencyViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::ForbiddenCargoDepedency { severity, .. } => *severity,
-            Self::ForbiddenUseStatement { severity, .. } => *severity,
-            Self::CircularDependency { severity, .. } => *severity,
+            Self::ForbiddenCargoDepedency { severity, .. }
+            | Self::ForbiddenUseStatement { severity, .. }
+            | Self::CircularDependency { severity, .. } => *severity,
         }
     }
 
@@ -197,20 +150,22 @@ impl Violation for DependencyViolation {
                 forbidden_dep,
                 ..
             } => Some(format!(
-                "Remove {} from {}/Cargo.toml",
-                forbidden_dep, crate_name
+                "Remove {forbidden_dep} from {crate_name}/Cargo.toml"
             )),
             Self::ForbiddenUseStatement { forbidden_dep, .. } => {
-                Some(format!("Access {} through allowed layer", forbidden_dep))
+                Some(format!("Access {forbidden_dep} through allowed layer"))
             }
             Self::CircularDependency { .. } => {
-                Some("Extract shared types to mcb-domain".to_string())
+                Some("Extract shared types to the domain crate".to_string())
             }
         }
     }
 }
 
-/// Dependency validator
+/// Validates Clean Architecture dependency rules across crates.
+///
+/// Ensures that crates only depend on allowed layers according to Clean Architecture principles.
+/// Validates both Cargo.toml dependencies and use statements in source code.
 pub struct DependencyValidator {
     config: ValidationConfig,
     allowed_deps: HashMap<String, HashSet<String>>,
@@ -224,13 +179,33 @@ impl DependencyValidator {
 
     /// Create a validator with custom configuration for multi-directory support
     pub fn with_config(config: ValidationConfig) -> Self {
+        use crate::pattern_registry::PATTERNS;
         let mut allowed_deps = HashMap::new();
-        for (crate_name, deps) in ALLOWED_DEPS {
-            allowed_deps.insert(
-                crate_name.to_string(),
-                deps.iter().map(std::string::ToString::to_string).collect(),
+
+        // Load from YAML rules CA001-CA016
+        // We look for any CA rules that have crate_name and allowed_dependencies in their config
+        for i in 1..=20 {
+            // Check both CAXXX and LAYERXXX (legacy mapping)
+            let ids = [format!("CA{:03}", i), format!("LAYER{:03}", i)];
+            for rule_id in ids {
+                if let Some(config_val) = PATTERNS.get_config(&rule_id)
+                    && let Some(crate_name) = config_val.get("crate_name").and_then(|v| v.as_str())
+                {
+                    let deps: HashSet<String> = PATTERNS
+                        .get_config_list(&rule_id, "allowed_dependencies")
+                        .into_iter()
+                        .collect();
+                    allowed_deps.insert(crate_name.to_string(), deps);
+                }
+            }
+        }
+
+        if allowed_deps.is_empty() {
+            panic!(
+                "DependencyValidator: No allowed dependencies found in YAML rules CA001-CA016. Configuration is required in crates/mcb-validate/rules/."
             );
         }
+
         Self {
             config,
             allowed_deps,
@@ -307,6 +282,7 @@ impl DependencyValidator {
             }
 
             for entry in WalkDir::new(&crate_src)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -389,7 +365,7 @@ impl DependencyValidator {
         for start in graph.keys() {
             let mut visited = HashSet::new();
             let mut path = Vec::new();
-            if let Some(cycle) = self.find_cycle(&graph, start, &mut visited, &mut path) {
+            if let Some(cycle) = find_cycle_impl(&graph, start, &mut visited, &mut path) {
                 violations.push(DependencyViolation::CircularDependency {
                     cycle,
                     severity: Severity::Error,
@@ -399,65 +375,63 @@ impl DependencyValidator {
 
         Ok(violations)
     }
+}
 
-    #[allow(clippy::only_used_in_recursion)]
-    fn find_cycle(
-        &self,
-        graph: &HashMap<String, HashSet<String>>,
-        node: &str,
-        visited: &mut HashSet<String>,
-        path: &mut Vec<String>,
-    ) -> Option<Vec<String>> {
-        if path.contains(&node.to_string()) {
-            let cycle_start = path.iter().position(|n| n == node)?;
-            let mut cycle: Vec<String> = path[cycle_start..].to_vec();
-            cycle.push(node.to_string());
-            return Some(cycle);
-        }
+/// Detects cycles in the dependency graph using depth-first search.
+///
+/// Recursively traverses the dependency graph to find circular dependencies.
+/// Returns the cycle path if found, or None if no cycle exists from this node.
+///
+/// # Arguments
+/// * `graph` - The dependency graph mapping crate names to their dependencies
+/// * `node` - The current node being visited
+/// * `visited` - Set of nodes already fully explored
+/// * `path` - Current path being explored (used to detect cycles)
+fn find_cycle_impl(
+    graph: &HashMap<String, HashSet<String>>,
+    node: &str,
+    visited: &mut HashSet<String>,
+    path: &mut Vec<String>,
+) -> Option<Vec<String>> {
+    if path.contains(&node.to_string()) {
+        let cycle_start = path.iter().position(|n| n == node)?;
+        let mut cycle: Vec<String> = path[cycle_start..].to_vec();
+        cycle.push(node.to_string());
+        return Some(cycle);
+    }
 
-        if visited.contains(node) {
-            return None;
-        }
+    if visited.contains(node) {
+        return None;
+    }
 
-        visited.insert(node.to_string());
-        path.push(node.to_string());
+    visited.insert(node.to_string());
+    path.push(node.to_string());
 
-        if let Some(deps) = graph.get(node) {
-            for dep in deps {
-                if let Some(cycle) = self.find_cycle(graph, dep, visited, path) {
-                    return Some(cycle);
-                }
+    if let Some(deps) = graph.get(node) {
+        for dep in deps {
+            if let Some(cycle) = find_cycle_impl(graph, dep, visited, path) {
+                return Some(cycle);
             }
         }
-
-        path.pop();
-        None
     }
+
+    path.pop();
+    None
 }
 
-impl crate::validator_trait::Validator for DependencyValidator {
-    fn name(&self) -> &'static str {
-        "dependency"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates Clean Architecture layer dependencies"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    DependencyValidator,
+    "dependency",
+    "Validates Clean Architecture layer dependencies"
+);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_workspace() -> TempDir {
         let temp = TempDir::new().unwrap();
@@ -521,8 +495,7 @@ mcb-domain = { path = "../mcb-domain" }
         let violations = validator.validate_cargo_dependencies().unwrap();
         assert!(
             violations.is_empty(),
-            "Expected no violations, got: {:?}",
-            violations
+            "Expected no violations, got: {violations:?}"
         );
     }
 

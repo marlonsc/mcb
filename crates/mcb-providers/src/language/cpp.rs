@@ -1,11 +1,12 @@
 //! C++ language processor for AST-based code chunking.
 
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::Language;
+
 use crate::language::common::{
     AST_NODE_STRUCT_SPECIFIER, BaseProcessor, CHUNK_SIZE_CPP, LanguageConfig, LanguageProcessor,
     NodeExtractionRule, TS_NODE_FUNCTION_DEFINITION,
 };
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
 
 /// C++ language processor.
 pub struct CppProcessor {
@@ -34,11 +35,6 @@ impl CppProcessor {
                 priority: 5,
                 include_context: true,
             }])
-            .with_fallback_patterns(vec![
-                r"^class ".to_string(),
-                r"^struct ".to_string(),
-                r"^[a-zA-Z_].*\(.*\)\s*\{".to_string(),
-            ])
             .with_chunk_size(CHUNK_SIZE_CPP);
 
         Self {
@@ -61,15 +57,5 @@ impl LanguageProcessor for CppProcessor {
     ) -> Vec<CodeChunk> {
         self.processor
             .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-
-    fn extract_chunks_fallback(
-        &self,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_fallback(content, file_name, language)
     }
 }

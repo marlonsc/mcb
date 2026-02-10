@@ -26,8 +26,8 @@ impl Default for Config {
         Self {
             host: "127.0.0.1".to_string(),
             port: 8080,
-            embedding_provider: "null".to_string(),
-            vector_store_provider: "memory".to_string(),
+            embedding_provider: "fastembed".to_string(),
+            vector_store_provider: "edgevec".to_string(),
         }
     }
 }

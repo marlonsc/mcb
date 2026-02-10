@@ -2,33 +2,50 @@
 //!
 //! Validates proper use of pub(crate), pub, and private visibility.
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
-use crate::{Result, ValidationConfig};
+use std::collections::HashSet;
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::Serialize;
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::config::VisibilityRulesConfig;
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::{Result, ValidationConfig};
 
 /// Visibility Violations
 #[derive(Debug, Clone, Serialize)]
 pub enum VisibilityViolation {
+    /// Internal helper is public but should be restricted.
     InternalHelperTooPublic {
+        /// Name of the helper item.
         item_name: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
+    /// Domain type visibility is too restricted (should be public).
     DomainTypeTooRestricted {
+        /// Name of the domain type.
         type_name: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
+    /// Utility module exposes too many public items.
     UtilityModuleTooPublic {
+        /// Name of the utility module.
         module_name: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
 }
 
+/// Display implementation for visibility violations.
 impl std::fmt::Display for VisibilityViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -69,6 +86,7 @@ impl std::fmt::Display for VisibilityViolation {
     }
 }
 
+/// Violation trait implementation for visibility violations.
 impl Violation for VisibilityViolation {
     fn id(&self) -> &str {
         match self {
@@ -123,20 +141,47 @@ impl Violation for VisibilityViolation {
 }
 
 /// Visibility Validator
-pub struct VisibilityValidator;
-
-impl Default for VisibilityValidator {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct VisibilityValidator {
+    internal_dirs: Vec<String>,
+    exempted_items: HashSet<String>,
+    utility_module_patterns: Vec<String>,
+    pub_count_threshold: usize,
+    scan_crates: Vec<String>,
+    enabled: bool,
 }
 
 impl VisibilityValidator {
-    pub fn new() -> Self {
-        Self
+    /// Creates a new visibility validator, loading configuration from files.
+    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+        let file_config = crate::config::FileConfig::load(workspace_root);
+        Self::with_config(&file_config.rules.visibility)
     }
 
+    /// Creates a new visibility validator with current configuration.
+    pub fn with_config(config: &VisibilityRulesConfig) -> Self {
+        let internal_dirs = config.internal_dirs.clone();
+        let exempted_items: HashSet<String> = config.exempted_items.iter().cloned().collect();
+        let utility_module_patterns = config.utility_module_patterns.clone();
+        let pub_count_threshold = config.pub_count_threshold;
+        let scan_crates = config.scan_crates.clone();
+        let enabled = config.enabled;
+
+        Self {
+            internal_dirs,
+            exempted_items,
+            utility_module_patterns,
+            pub_count_threshold,
+            scan_crates,
+            enabled,
+        }
+    }
+
+    /// Validates visibility rules for the given configuration.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<VisibilityViolation>> {
+        if !self.enabled {
+            return Ok(Vec::new());
+        }
+
         let mut violations = Vec::new();
         violations.extend(self.check_internal_helpers(config)?);
         violations.extend(self.check_utility_modules(config)?);
@@ -148,23 +193,18 @@ impl VisibilityValidator {
         config: &ValidationConfig,
     ) -> Result<Vec<VisibilityViolation>> {
         let mut violations = Vec::new();
-        let internal_dirs = [
-            "crates/mcb-infrastructure/src/utils",
-            "crates/mcb-providers/src/utils",
-            "crates/mcb-server/src/utils",
-            "crates/mcb-application/src/utils",
-        ];
 
         let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type|const|static)\s+(\w+)").unwrap();
         let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
 
-        for dir_path in &internal_dirs {
+        for dir_path in &self.internal_dirs {
             let full_path = config.workspace_root.join(dir_path);
             if !full_path.exists() {
                 continue;
             }
 
             for entry in WalkDir::new(&full_path)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
             {
@@ -183,21 +223,7 @@ impl VisibilityValidator {
                     if let Some(captures) = pub_item_re.captures(trimmed) {
                         let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
                         // Skip exempted items:
-                        // - Error types and Result aliases (standard pattern)
-                        // - Documented public utilities (FileUtils, TimedOperation, HttpResponseUtils)
-                        // - Common method names that are part of public types
-                        if item_name.starts_with("Error")
-                            || item_name == "Result"
-                            || item_name == "FileUtils"
-                            || item_name == "TimedOperation"
-                            || item_name == "HttpResponseUtils"
-                            || item_name == "start"
-                            || item_name == "new"
-                            || item_name == "elapsed"
-                            || item_name == "elapsed_ms"
-                            || item_name == "elapsed_secs"
-                            || item_name == "remaining"
-                        {
+                        if self.exempted_items.contains(item_name) {
                             continue;
                         }
 
@@ -215,17 +241,11 @@ impl VisibilityValidator {
 
     fn check_utility_modules(&self, config: &ValidationConfig) -> Result<Vec<VisibilityViolation>> {
         let mut violations = Vec::new();
-        let utility_patterns = ["common.rs", "helpers.rs", "internal.rs", "compat.rs"];
 
         let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type)\s+(\w+)").unwrap();
         let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
 
-        for crate_name in [
-            "mcb-infrastructure",
-            "mcb-providers",
-            "mcb-server",
-            "mcb-application",
-        ] {
+        for crate_name in &self.scan_crates {
             let crate_src = config
                 .workspace_root
                 .join("crates")
@@ -236,6 +256,7 @@ impl VisibilityValidator {
             }
 
             for entry in WalkDir::new(&crate_src)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
             {
@@ -245,7 +266,10 @@ impl VisibilityValidator {
                 }
 
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if !utility_patterns.contains(&file_name) {
+                if !self
+                    .utility_module_patterns
+                    .contains(&file_name.to_string())
+                {
                     continue;
                 }
 
@@ -262,7 +286,7 @@ impl VisibilityValidator {
                     }
                 }
 
-                if pub_count > 3 {
+                if pub_count > self.pub_count_threshold {
                     violations.push(VisibilityViolation::UtilityModuleTooPublic {
                         module_name: file_name.trim_end_matches(".rs").to_string(),
                         file: path.to_path_buf(),
@@ -275,6 +299,7 @@ impl VisibilityValidator {
     }
 }
 
+/// Validator trait implementation for visibility validation.
 impl crate::validator_trait::Validator for VisibilityValidator {
     fn name(&self) -> &'static str {
         "visibility"

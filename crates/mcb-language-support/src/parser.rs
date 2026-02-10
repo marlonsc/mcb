@@ -3,9 +3,10 @@
 //! Provides async parsing of source code using rust-code-analysis.
 //! The `Parser` trait allows for extensible parsing implementations.
 
+use std::path::Path;
+
 use async_trait::async_trait;
 use rust_code_analysis::{FuncSpace, LANG, get_function_spaces};
-use std::path::Path;
 
 use crate::detection::LanguageDetector;
 use crate::error::{LanguageError, Result};
@@ -119,6 +120,19 @@ impl Default for RcaParser {
     }
 }
 
+/// Convert RCA f64 metric to usize (non-negative, rounded); saturates on overflow.
+fn f64_to_usize(v: f64) -> usize {
+    if v.is_nan() || v < 0.0 {
+        return 0;
+    }
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let u = v.round() as u64;
+    if u > usize::MAX as u64 {
+        return usize::MAX;
+    }
+    usize::try_from(u).unwrap_or(usize::MAX)
+}
+
 impl RcaParser {
     /// Create a new RCA-based parser
     pub fn new() -> Self {
@@ -128,19 +142,14 @@ impl RcaParser {
     }
 
     /// Extract metrics from a `FuncSpace`
-    #[allow(
-        clippy::cast_possible_truncation,
-        clippy::cast_sign_loss,
-        reason = "RCA returns f64 but values are always non-negative integers"
-    )]
     fn extract_file_metrics(space: &FuncSpace) -> ParsedFileMetrics {
         let m = &space.metrics;
         ParsedFileMetrics {
-            sloc: m.loc.sloc() as usize,
-            ploc: m.loc.ploc() as usize,
-            lloc: m.loc.lloc() as usize,
-            cloc: m.loc.cloc() as usize,
-            blank: m.loc.blank() as usize,
+            sloc: f64_to_usize(m.loc.sloc()),
+            ploc: f64_to_usize(m.loc.ploc()),
+            lloc: f64_to_usize(m.loc.lloc()),
+            cloc: f64_to_usize(m.loc.cloc()),
+            blank: f64_to_usize(m.loc.blank()),
             cyclomatic: m.cyclomatic.cyclomatic(),
             cognitive: m.cognitive.cognitive(),
             maintainability_index: m.mi.mi_original(),
@@ -148,11 +157,6 @@ impl RcaParser {
     }
 
     /// Extract function metrics from a `FuncSpace`
-    #[allow(
-        clippy::cast_possible_truncation,
-        clippy::cast_sign_loss,
-        reason = "RCA returns f64 but values are always non-negative integers"
-    )]
     fn extract_function_metrics(space: &FuncSpace) -> ParsedFunctionMetrics {
         let m = &space.metrics;
         ParsedFunctionMetrics {
@@ -161,9 +165,9 @@ impl RcaParser {
             halstead_volume: m.halstead.volume(),
             halstead_difficulty: m.halstead.difficulty(),
             halstead_effort: m.halstead.effort(),
-            sloc: m.loc.sloc() as usize,
-            nargs: m.nargs.fn_args_sum() as usize,
-            nexits: m.nexits.exit_sum() as usize,
+            sloc: f64_to_usize(m.loc.sloc()),
+            nargs: f64_to_usize(m.nargs.fn_args_sum()),
+            nexits: f64_to_usize(m.nexits.exit_sum()),
         }
     }
 
@@ -230,5 +234,3 @@ impl Parser for RcaParser {
         Self::parse_with_lang(content, lang, language, path)
     }
 }
-
-// Tests moved to tests/unit/parser_tests.rs

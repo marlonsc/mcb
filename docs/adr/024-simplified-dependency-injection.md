@@ -1,4 +1,16 @@
-# ADR 024: Shaku to dill DI Migration
+---
+adr: 24
+title: Shaku to dill DI Migration
+status: SUPERSEDED
+created: 
+updated: 2026-02-05
+related: [2, 12, 13, 27]
+supersedes: []
+superseded_by: [29]
+implementation_status: Complete
+---
+
+## ADR 024: Shaku to dill DI Migration
 
 ## Status
 

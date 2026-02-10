@@ -20,7 +20,6 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use async_trait::async_trait;
-
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::PerformanceMetricsInterface;
 use mcb_domain::ports::providers::EmbeddingProvider;

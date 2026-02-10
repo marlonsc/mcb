@@ -1,13 +1,13 @@
-# MCP Context Browser
+# Memory Context Browser
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.1.5-blue)](https://github.com/marlonsc/mcb/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases)
 
 **Model Context Protocol Server**- Provides semantic code search and analysis capabilities to AI assistants through a standardized MCP interface.
 
-## 🎯 Current Capabilities (v0.1.5)
+## 🎯 Current Capabilities (v0.2.0)
 
 ### Core Features
 
@@ -48,7 +48,7 @@ make test
 
 ## 🧪 Testing
 
-The project has 1924+ tests with comprehensive coverage:
+The project has 1,2995+ tests with comprehensive coverage:
 
 ```bash
 

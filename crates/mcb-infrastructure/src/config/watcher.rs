@@ -2,44 +2,39 @@
 //!
 //! Provides automatic configuration reloading when the configuration file changes.
 
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use chrono::Utc;
+use mcb_domain::error::{Error, Result};
+use mcb_domain::events::DomainEvent;
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
+use tokio::runtime::Handle;
+use tokio::sync::RwLock;
+use tracing::warn;
+
 use crate::config::AppConfig;
 use crate::config::loader::ConfigLoader;
 use crate::error_ext::ErrorContext;
 use crate::logging::log_config_loaded;
-use mcb_domain::error::{Error, Result};
-use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
-use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::runtime::Handle;
-use tokio::sync::RwLock;
-use tokio::sync::broadcast::{self, Receiver, Sender};
-
-/// Configuration watch event
-#[derive(Debug, Clone)]
-pub enum ConfigWatchEvent {
-    /// Configuration reloaded successfully
-    Reloaded(Box<AppConfig>),
-    /// Configuration reload failed
-    ReloadFailed(String),
-    /// Watcher started
-    Started,
-    /// Watcher stopped
-    Stopped,
-}
 
 /// Configuration watcher for hot-reloading
 pub struct ConfigWatcher {
     config_path: PathBuf,
     loader: ConfigLoader,
     current_config: Arc<RwLock<AppConfig>>,
-    event_sender: Sender<ConfigWatchEvent>,
+    event_bus: Arc<dyn EventBusProvider>,
     _watcher: RecommendedWatcher,
 }
 
 impl ConfigWatcher {
     /// Create a new configuration watcher
-    pub async fn new(config_path: PathBuf, initial_config: AppConfig) -> Result<Self> {
-        let (event_sender, _) = broadcast::channel(16);
+    pub async fn new(
+        config_path: PathBuf,
+        initial_config: AppConfig,
+        event_bus: Arc<dyn EventBusProvider>,
+    ) -> Result<Self> {
         let current_config = Arc::new(RwLock::new(initial_config));
         let loader = ConfigLoader::new().with_config_path(&config_path);
 
@@ -48,7 +43,7 @@ impl ConfigWatcher {
             config_path.clone(),
             Arc::clone(&current_config),
             loader.clone(),
-            event_sender.clone(),
+            Arc::clone(&event_bus),
         )
         .await?;
 
@@ -61,7 +56,7 @@ impl ConfigWatcher {
             config_path,
             loader,
             current_config,
-            event_sender,
+            event_bus,
             _watcher: watcher,
         })
     }
@@ -71,11 +66,6 @@ impl ConfigWatcher {
         self.current_config.read().await.clone()
     }
 
-    /// Subscribe to configuration change events
-    pub fn subscribe(&self) -> Receiver<ConfigWatchEvent> {
-        self.event_sender.subscribe()
-    }
-
     /// Manually trigger a configuration reload
     pub async fn reload(&self) -> Result<AppConfig> {
         let new_config = self.loader.load()?;
@@ -83,10 +73,7 @@ impl ConfigWatcher {
         // Update current config
         *self.current_config.write().await = new_config.clone();
 
-        // Send reload event
-        let _ = self
-            .event_sender
-            .send(ConfigWatchEvent::Reloaded(Box::new(new_config.clone())));
+        Self::publish_config_reloaded(self.event_bus.as_ref()).await;
 
         log_config_loaded(&self.config_path, true);
 
@@ -103,7 +90,7 @@ impl ConfigWatcher {
         config_path: PathBuf,
         current_config: Arc<RwLock<AppConfig>>,
         loader: ConfigLoader,
-        event_sender: Sender<ConfigWatchEvent>,
+        event_bus: Arc<dyn EventBusProvider>,
     ) -> Result<RecommendedWatcher> {
         let config_path_clone = config_path.clone();
         // Capture the Tokio runtime handle to use from the notify callback thread
@@ -114,7 +101,7 @@ impl ConfigWatcher {
                 let config_path = config_path_clone.clone();
                 let current_config = Arc::clone(&current_config);
                 let loader = loader.clone();
-                let event_sender = event_sender.clone();
+                let event_bus = Arc::clone(&event_bus);
 
                 // Use the captured runtime handle to spawn tasks from the notify thread
                 runtime_handle.spawn(async move {
@@ -125,16 +112,13 @@ impl ConfigWatcher {
                                     config_path,
                                     current_config,
                                     loader,
-                                    event_sender,
+                                    event_bus,
                                 )
                                 .await;
                             }
                         }
                         Err(e) => {
-                            let _ = event_sender.send(ConfigWatchEvent::ReloadFailed(format!(
-                                "File watch error: {}",
-                                e
-                            )));
+                            warn!(error = %e, "File watch error");
                         }
                     }
                 });
@@ -162,7 +146,7 @@ impl ConfigWatcher {
         config_path: PathBuf,
         current_config: Arc<RwLock<AppConfig>>,
         loader: ConfigLoader,
-        event_sender: Sender<ConfigWatchEvent>,
+        event_bus: Arc<dyn EventBusProvider>,
     ) {
         // Add a small delay to avoid reading partially written files
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
@@ -170,19 +154,28 @@ impl ConfigWatcher {
         match loader.load() {
             Ok(new_config) => {
                 // Update current config
-                *current_config.write().await = new_config.clone();
-
-                // Send reload event
-                let _ = event_sender.send(ConfigWatchEvent::Reloaded(Box::new(new_config)));
+                *current_config.write().await = new_config;
+                Self::publish_config_reloaded(event_bus.as_ref()).await;
 
                 log_config_loaded(&config_path, true);
             }
             Err(e) => {
-                let error_msg = format!("Failed to reload configuration: {}", e);
-                let _ = event_sender.send(ConfigWatchEvent::ReloadFailed(error_msg));
+                warn!(error = %e, "Failed to reload configuration");
 
                 log_config_loaded(&config_path, false);
             }
+        }
+    }
+
+    async fn publish_config_reloaded(event_bus: &dyn EventBusProvider) {
+        if let Err(e) = event_bus
+            .publish_event(DomainEvent::ConfigReloaded {
+                section: "all".to_string(),
+                timestamp: Utc::now(),
+            })
+            .await
+        {
+            warn!(error = %e, "Failed to publish config reload event");
         }
     }
 }
@@ -191,6 +184,7 @@ impl ConfigWatcher {
 pub struct ConfigWatcherBuilder {
     config_path: Option<PathBuf>,
     initial_config: Option<AppConfig>,
+    event_bus: Option<Arc<dyn EventBusProvider>>,
 }
 
 impl ConfigWatcherBuilder {
@@ -199,6 +193,7 @@ impl ConfigWatcherBuilder {
         Self {
             config_path: None,
             initial_config: None,
+            event_bus: None,
         }
     }
 
@@ -214,6 +209,12 @@ impl ConfigWatcherBuilder {
         self
     }
 
+    /// Set the event bus provider used for config notifications
+    pub fn with_event_bus(mut self, event_bus: Arc<dyn EventBusProvider>) -> Self {
+        self.event_bus = Some(event_bus);
+        self
+    }
+
     /// Build the configuration watcher
     pub async fn build(self) -> Result<ConfigWatcher> {
         let config_path = self.config_path.ok_or_else(|| Error::Configuration {
@@ -226,7 +227,12 @@ impl ConfigWatcherBuilder {
             source: None,
         })?;
 
-        ConfigWatcher::new(config_path, initial_config).await
+        let event_bus = self.event_bus.ok_or_else(|| Error::Configuration {
+            message: "Event bus is required".to_string(),
+            source: None,
+        })?;
+
+        ConfigWatcher::new(config_path, initial_config, event_bus).await
     }
 }
 
@@ -249,8 +255,9 @@ impl ConfigWatcherUtils {
     pub async fn watch_config_file(
         config_path: PathBuf,
         initial_config: AppConfig,
+        event_bus: Arc<dyn EventBusProvider>,
     ) -> Result<ConfigWatcher> {
-        ConfigWatcher::new(config_path, initial_config).await
+        ConfigWatcher::new(config_path, initial_config, event_bus).await
     }
 
     // NOTE: is_file_watching_supported() was removed per ADR-025.

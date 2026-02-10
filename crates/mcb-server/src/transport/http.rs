@@ -3,7 +3,15 @@
 //! Implements MCP protocol over HTTP using Server-Sent Events (SSE).
 //! This transport allows web clients to connect to the MCP server.
 //!
-//! # Supported Methods
+//! # Architecture
+//!
+//! This transport consolidates all HTTP endpoints into a single port:
+//! - MCP protocol endpoints (`/mcp`, `/events`)
+//! - Health/readiness probes (`/healthz`, `/readyz`)
+//! - Admin API endpoints (`/health`, `/config`, `/collections`, etc.)
+//! - Prometheus metrics (`/metrics`)
+//!
+//! # Supported MCP Methods
 //!
 //! | Method | Description |
 //! |--------|-------------|
@@ -28,40 +36,48 @@
 //! # Migration Note
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
+//! Consolidated Admin API into single port in v0.2.0.
 
-use super::types::{McpRequest, McpResponse};
-use crate::McpServer;
-use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
-use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use std::net::SocketAddr;
+use std::sync::Arc;
+
 use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
-use rocket::response::stream::{Event, EventStream};
 use rocket::serde::json::Json;
 use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
-use std::net::SocketAddr;
-use std::sync::Arc;
-use tokio::sync::broadcast;
 use tracing::{error, info};
+
+use super::types::{McpRequest, McpResponse};
+use crate::McpServer;
+use crate::admin::auth::AdminAuthConfig;
+use crate::admin::browse_handlers::BrowseState;
+use crate::admin::handlers::AdminState;
+use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
+use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use mcb_infrastructure::config::ConfigLoader;
 
 /// HTTP transport configuration
 #[derive(Debug, Clone)]
 pub struct HttpTransportConfig {
-    /// Host to bind to
+    /// Host address to bind the HTTP server (e.g., "127.0.0.1", "0.0.0.0")
     pub host: String,
-    /// Port to listen on
+    /// Port number for the HTTP server
     pub port: u16,
-    /// Enable CORS for browser access
+    /// Whether to enable CORS headers for cross-origin requests
     pub enable_cors: bool,
 }
 
 impl Default for HttpTransportConfig {
     fn default() -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("HttpTransportConfig::default requires loadable configuration file");
         Self {
-            host: "127.0.0.1".to_string(),
-            port: 8080,
-            enable_cors: true,
+            host: config.server.network.host,
+            port: config.server.network.port,
+            enable_cors: config.server.cors.cors_enabled,
         }
     }
 }
@@ -69,10 +85,13 @@ impl Default for HttpTransportConfig {
 impl HttpTransportConfig {
     /// Create config for localhost with specified port
     pub fn localhost(port: u16) -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("HttpTransportConfig::localhost requires loadable configuration file");
         Self {
-            host: "127.0.0.1".to_string(),
+            host: config.server.network.host,
             port,
-            enable_cors: true,
+            enable_cors: config.server.cors.cors_enabled,
         }
     }
 
@@ -80,47 +99,136 @@ impl HttpTransportConfig {
     pub fn socket_addr(&self) -> SocketAddr {
         format!("{}:{}", self.host, self.port)
             .parse()
-            .unwrap_or_else(|_| SocketAddr::from(([127, 0, 0, 1], self.port)))
+            .expect("Invalid host/port in configuration")
     }
 }
 
 /// Shared state for HTTP transport
 #[derive(Clone)]
 pub struct HttpTransportState {
-    /// Broadcast channel for SSE events
-    pub event_tx: broadcast::Sender<String>,
-    /// MCP server reference (for handling requests)
+    /// Shared reference to the MCP server instance
     pub server: Arc<McpServer>,
 }
 
-/// HTTP transport server
+/// HTTP transport server with optional admin API integration
 pub struct HttpTransport {
     config: HttpTransportConfig,
     state: HttpTransportState,
+    admin_state: Option<AdminState>,
+    auth_config: Option<Arc<AdminAuthConfig>>,
+    browse_state: Option<BrowseState>,
 }
 
 impl HttpTransport {
     /// Create a new HTTP transport
     pub fn new(config: HttpTransportConfig, server: Arc<McpServer>) -> Self {
-        let (event_tx, _) = broadcast::channel(100);
         Self {
             config,
-            state: HttpTransportState { event_tx, server },
+            state: HttpTransportState { server },
+            admin_state: None,
+            auth_config: None,
+            browse_state: None,
         }
     }
 
-    /// Build the Rocket application
+    /// Add admin API state for consolidated single-port operation
+    pub fn with_admin(
+        mut self,
+        admin_state: AdminState,
+        auth_config: Arc<AdminAuthConfig>,
+        browse_state: Option<BrowseState>,
+    ) -> Self {
+        self.admin_state = Some(admin_state);
+        self.auth_config = Some(auth_config);
+        self.browse_state = browse_state;
+        self
+    }
+
+    /// Build the Rocket application with MCP and optional Admin routes
     pub fn rocket(&self) -> Rocket<Build> {
-        let mut rocket = rocket::build().manage(self.state.clone()).mount(
-            "/",
-            routes![
-                handle_mcp_request,
-                handle_sse,
-                healthz,
-                readyz,
-                metrics_endpoint
-            ],
-        );
+        use crate::admin::browse_handlers::{
+            get_collection_tree, get_file_chunks, list_collection_files, list_collections,
+        };
+        use crate::admin::config_handlers::{get_config, reload_config, update_config_section};
+        use crate::admin::handlers::{
+            extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
+            list_browse_project_issues, list_browse_project_phases, list_browse_projects,
+            liveness_check, readiness_check, shutdown,
+        };
+        use crate::admin::lifecycle_handlers::{
+            list_services, restart_service, services_health, start_service, stop_service,
+        };
+        use crate::admin::sse::events_stream;
+        use crate::admin::web::handlers::{
+            browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
+            dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
+        };
+
+        let mut rocket = rocket::build()
+            .manage(self.state.clone())
+            .mount("/", routes![handle_mcp_request, healthz, readyz]);
+
+        // Mount admin routes if admin state is provided
+        // Note: /events and /metrics routes are provided by admin routes (events_stream, get_metrics)
+        if let Some(ref admin_state) = self.admin_state {
+            rocket = rocket
+                .manage(admin_state.clone())
+                .manage(
+                    self.auth_config
+                        .clone()
+                        .unwrap_or_else(|| Arc::new(AdminAuthConfig::default())),
+                )
+                .mount(
+                    "/",
+                    routes![
+                        health_check,
+                        extended_health_check,
+                        get_metrics,
+                        get_jobs_status,
+                        list_browse_projects,
+                        list_browse_project_phases,
+                        list_browse_project_issues,
+                        readiness_check,
+                        liveness_check,
+                        shutdown,
+                        get_config,
+                        reload_config,
+                        update_config_section,
+                        list_services,
+                        services_health,
+                        start_service,
+                        stop_service,
+                        restart_service,
+                        get_cache_stats,
+                        events_stream,
+                        dashboard,
+                        dashboard_ui,
+                        favicon,
+                        config_page,
+                        health_page,
+                        jobs_page,
+                        browse_page,
+                        browse_collection_page,
+                        browse_file_page,
+                        browse_tree_page,
+                        theme_css,
+                        shared_js,
+                    ],
+                );
+
+            // Add browse routes if BrowseState is available
+            if let Some(ref browse) = self.browse_state {
+                rocket = rocket.manage(browse.clone()).mount(
+                    "/",
+                    routes![
+                        list_collections,
+                        list_collection_files,
+                        get_file_chunks,
+                        get_collection_tree,
+                    ],
+                );
+            }
+        }
 
         if self.config.enable_cors {
             rocket = rocket.attach(Cors);
@@ -151,8 +259,6 @@ impl HttpTransport {
     /// Start with graceful shutdown
     ///
     /// Note: Rocket handles graceful shutdown internally via Ctrl+C.
-    /// The shutdown_signal parameter is kept for API compatibility but
-    /// uses Rocket's built-in shutdown mechanism.
     pub async fn start_with_shutdown(
         self,
         _shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
@@ -284,7 +390,16 @@ fn parse_tool_call_params(
         ))?
         .to_string();
 
-    let arguments = params.get("arguments").and_then(|v| v.as_object().cloned());
+    let arguments = match params.get("arguments") {
+        None | Some(serde_json::Value::Null) => None,
+        Some(value) => {
+            let object = value.as_object().cloned().ok_or((
+                JSONRPC_INVALID_PARAMS,
+                "Invalid 'arguments' parameter for tools/call: expected object",
+            ))?;
+            Some(object)
+        }
+    };
 
     Ok(CallToolRequestParams {
         name: tool_name.into(),
@@ -299,11 +414,12 @@ fn tool_result_to_json(result: rmcp::model::CallToolResult) -> serde_json::Value
     let content_json: Vec<serde_json::Value> = result
         .content
         .iter()
-        .map(|content| {
-            serde_json::to_value(content).unwrap_or(serde_json::json!({
+        .map(|content| match serde_json::to_value(content) {
+            Ok(value) => value,
+            Err(e) => serde_json::json!({
                 "type": "text",
-                "text": "Error serializing content"
-            }))
+                "text": format!("Error serializing content: {}", e)
+            }),
         })
         .collect();
 
@@ -334,54 +450,31 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
     };
 
     let handlers = ToolHandlers {
-        index_codebase: state.server.index_codebase_handler(),
-        search_code: state.server.search_code_handler(),
-        get_indexing_status: state.server.get_indexing_status_handler(),
-        clear_index: state.server.clear_index_handler(),
-        validate_architecture: state.server.validate_architecture_handler(),
-        validate_file: state.server.validate_file_handler(),
-        list_validators: state.server.list_validators_handler(),
-        get_validation_rules: state.server.get_validation_rules_handler(),
-        analyze_complexity: state.server.analyze_complexity_handler(),
-        index_vcs_repository: state.server.index_vcs_repository_handler(),
-        search_branch: state.server.search_branch_handler(),
-        list_repositories: state.server.list_repositories_handler(),
-        compare_branches: state.server.compare_branches_handler(),
-        analyze_impact: state.server.analyze_impact_handler(),
-        store_observation: state.server.store_observation_handler(),
-        search_memories: state.server.search_memories_handler(),
-        get_session_summary: state.server.get_session_summary_handler(),
-        create_session_summary: state.server.create_session_summary_handler(),
-        memory_timeline: state.server.memory_timeline_handler(),
-        memory_get_observations: state.server.memory_get_observations_handler(),
-        memory_inject_context: state.server.memory_inject_context_handler(),
-        memory_search: state.server.memory_search_handler(),
+        index: state.server.index_handler(),
+        search: state.server.search_handler(),
+        validate: state.server.validate_handler(),
+        memory: state.server.memory_handler(),
+        session: state.server.session_handler(),
+        agent: state.server.agent_handler(),
+        project: state.server.project_handler(),
+        vcs: state.server.vcs_handler(),
+        hook_processor: state.server.hook_processor(),
     };
 
     match route_tool_call(call_request, &handlers).await {
         Ok(result) => McpResponse::success(request.id.clone(), tool_result_to_json(result)),
         Err(e) => {
             error!(error = ?e, "Tool call failed");
+            let code = if e.code.0 == JSONRPC_INVALID_PARAMS {
+                JSONRPC_INVALID_PARAMS
+            } else {
+                JSONRPC_INTERNAL_ERROR
+            };
             McpResponse::error(
                 request.id.clone(),
-                JSONRPC_INTERNAL_ERROR,
+                code,
                 format!("Tool call failed: {:?}", e),
             )
-        }
-    }
-}
-
-/// Handle SSE connection for server-to-client events
-#[get("/events")]
-fn handle_sse(state: &State<HttpTransportState>) -> EventStream![] {
-    let mut rx = state.event_tx.subscribe();
-
-    EventStream! {
-        loop {
-            match rx.recv().await {
-                Ok(data) => yield Event::data(data),
-                Err(_) => break,
-            }
         }
     }
 }
@@ -408,13 +501,4 @@ fn readyz(_state: &State<HttpTransportState>) -> &'static str {
     // Returns OK if server is running. Provider health checks are available
     // via the /health endpoint which returns detailed status JSON.
     "OK"
-}
-
-/// Prometheus metrics endpoint
-///
-/// Exports all registered Prometheus metrics in text format.
-/// Used by Prometheus scraper to collect metrics.
-#[get("/metrics")]
-fn metrics_endpoint() -> String {
-    mcb_infrastructure::infrastructure::export_metrics()
 }

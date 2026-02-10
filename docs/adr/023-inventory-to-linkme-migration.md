@@ -1,4 +1,16 @@
-# ADR 023: Inventory to Linkme Migration
+---
+adr: 23
+title: Inventory to Linkme Migration
+status: ACCEPTED
+created: 
+updated: 2026-02-05
+related: [2, 3, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
+## ADR 023: Inventory to Linkme Migration
 
 ## Status
 

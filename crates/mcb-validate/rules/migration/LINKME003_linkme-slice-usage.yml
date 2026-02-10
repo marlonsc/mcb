@@ -10,10 +10,10 @@ description: "Provider registration missing #[linkme::distributed_slice(NAME)] a
 rationale: "All provider implementations must be registered via linkme slices"
 
 rule: |
-  rule LinkmeSliceUsage "Check for linkme slice usage" {
-      when
-          ProviderImplementation() &&
-          !HasAttribute("linkme::distributed_slice(")
-      then
-          Violation("Provider registration missing #[linkme::distributed_slice(NAME)] attribute");
-  }
+    rule LinkmeSliceUsage "Check for linkme slice usage" {
+        when
+            ProviderImplementation() &&
+            !HasAttribute("linkme::distributed_slice(")
+        then
+            Violation("Provider registration missing #[linkme::distributed_slice(NAME)] attribute");
+    }

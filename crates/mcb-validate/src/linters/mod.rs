@@ -9,42 +9,7 @@ pub mod parsers;
 pub mod runners;
 pub mod types;
 
-// Re-export public types and interfaces
 pub use engine::LinterEngine;
 pub use executor::YamlRuleExecutor;
 pub use runners::{ClippyLinter, RuffLinter};
 pub use types::{LintViolation, LinterType};
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_linter_engine_creation() {
-        let engine = LinterEngine::new();
-        assert!(!engine.enabled_linters().is_empty());
-    }
-
-    #[test]
-    fn test_ruff_severity_mapping() {
-        assert_eq!(super::parsers::map_ruff_severity("F401"), "error");
-        assert_eq!(super::parsers::map_ruff_severity("W291"), "warning");
-        assert_eq!(super::parsers::map_ruff_severity("I001"), "info");
-    }
-
-    #[test]
-    fn test_clippy_level_mapping() {
-        assert_eq!(super::parsers::map_clippy_level("error"), "error");
-        assert_eq!(super::parsers::map_clippy_level("warning"), "warning");
-        assert_eq!(super::parsers::map_clippy_level("note"), "info");
-    }
-
-    #[tokio::test]
-    async fn test_linter_engine_execution() {
-        let engine = LinterEngine::new();
-
-        // Test with non-existent files (should not panic)
-        let result = engine.check_files(&[]).await;
-        assert!(result.is_ok());
-    }
-}

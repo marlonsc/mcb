@@ -13,12 +13,26 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
-use mcb_application::ports::registry::cache::*;
-use mcb_application::ports::registry::embedding::*;
-use mcb_application::ports::registry::language::*;
-use mcb_application::ports::registry::vector_store::*;
+use mcb_domain::registry::cache::*;
+use mcb_domain::registry::embedding::*;
+use mcb_domain::registry::language::*;
+use mcb_domain::registry::vector_store::*;
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
+
+fn unique_test_config() -> AppConfig {
+    let mut config = AppConfig::default();
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time")
+        .as_nanos();
+    let thread_id = std::thread::current().id();
+    let db_path =
+        std::env::temp_dir().join(format!("mcb-errrecovery-test-{}-{:?}.db", stamp, thread_id));
+    config.auth.user_db_path = Some(db_path);
+    config
+}
 
 // ============================================================================
 // Provider Resolution Error Handling
@@ -34,8 +48,11 @@ fn test_unknown_embedding_provider_error_message() {
     // Use match to avoid unwrap_err requiring Debug on Ok type
     match result {
         Err(err) => {
+            let err_text = err.to_string();
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err_text.contains("Unknown")
+                    || err_text.contains("not found")
+                    || err_text.contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -53,8 +70,11 @@ fn test_unknown_vector_store_provider_error_message() {
 
     match result {
         Err(err) => {
+            let err_text = err.to_string();
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err_text.contains("Unknown")
+                    || err_text.contains("not found")
+                    || err_text.contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -72,8 +92,11 @@ fn test_unknown_cache_provider_error_message() {
 
     match result {
         Err(err) => {
+            let err_text = err.to_string();
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err_text.contains("Unknown")
+                    || err_text.contains("not found")
+                    || err_text.contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -91,8 +114,11 @@ fn test_unknown_language_provider_error_message() {
 
     match result {
         Err(err) => {
+            let err_text = err.to_string();
             assert!(
-                err.contains("Unknown") || err.contains("not found") || err.contains("nonexistent"),
+                err_text.contains("Unknown")
+                    || err_text.contains("not found")
+                    || err_text.contains("nonexistent"),
                 "Error should mention the issue. Got: {}",
                 err
             );
@@ -107,7 +133,7 @@ fn test_unknown_language_provider_error_message() {
 
 #[tokio::test]
 async fn test_search_empty_collection_returns_empty_not_error() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -117,7 +143,7 @@ async fn test_search_empty_collection_returns_empty_not_error() {
 
     // Create empty collection
     vector_store
-        .create_collection(collection, 384)
+        .create_collection(&CollectionId::new(collection), 384)
         .await
         .expect("Create collection");
 
@@ -128,7 +154,12 @@ async fn test_search_empty_collection_returns_empty_not_error() {
         .expect("Embed");
 
     let results = vector_store
-        .search_similar(collection, &query_embedding[0].vector, 10, None)
+        .search_similar(
+            &CollectionId::new(collection),
+            &query_embedding[0].vector,
+            10,
+            None,
+        )
         .await
         .expect("Search should not error on empty collection");
 
@@ -144,8 +175,7 @@ async fn test_search_empty_collection_returns_empty_not_error() {
 
 #[tokio::test]
 async fn test_init_app_with_default_config_succeeds() {
-    // Default config should always work (uses null/memory providers)
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let result = init_app(config).await;
 
     assert!(
@@ -157,7 +187,7 @@ async fn test_init_app_with_default_config_succeeds() {
 
 #[tokio::test]
 async fn test_provider_handles_return_valid_instances() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     // All handles should return valid providers
@@ -186,7 +216,7 @@ async fn test_provider_handles_return_valid_instances() {
 
 #[tokio::test]
 async fn test_failed_search_doesnt_corrupt_state() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -196,7 +226,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
 
     // Create and populate collection
     vector_store
-        .create_collection(collection, 384)
+        .create_collection(&CollectionId::new(collection), 384)
         .await
         .expect("Create collection");
 
@@ -212,7 +242,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
     }];
 
     vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -221,7 +251,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
 
     // This might fail, but shouldn't corrupt the collection
     let _ = vector_store
-        .search_similar(collection, &wrong_dim_vector, 10, None)
+        .search_similar(&CollectionId::new(collection), &wrong_dim_vector, 10, None)
         .await;
 
     // Original search should still work
@@ -231,7 +261,12 @@ async fn test_failed_search_doesnt_corrupt_state() {
         .expect("Embed");
 
     let results = vector_store
-        .search_similar(collection, &correct_query[0].vector, 10, None)
+        .search_similar(
+            &CollectionId::new(collection),
+            &correct_query[0].vector,
+            10,
+            None,
+        )
         .await
         .expect("Search should still work after failed attempt");
 
@@ -281,7 +316,7 @@ fn test_resolve_with_empty_config_values() {
 
 #[tokio::test]
 async fn test_concurrent_handle_access() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let handle = ctx.embedding_handle();

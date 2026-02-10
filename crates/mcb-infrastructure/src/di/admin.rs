@@ -9,42 +9,27 @@
 //! Admin API → AdminService.switch_provider() → Resolver → Handle.set()
 //! ```
 
+use std::sync::Arc;
+
+pub use mcb_domain::ports::admin::{
+    CacheAdminInterface, DependencyHealth, DependencyHealthCheck, EmbeddingAdminInterface,
+    LanguageAdminInterface, LifecycleManaged, PortServiceState, ProviderInfo,
+    VectorStoreAdminInterface,
+};
+use mcb_domain::ports::providers::{
+    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+};
+use mcb_domain::registry::cache::CacheProviderConfig;
+use mcb_domain::registry::embedding::EmbeddingProviderConfig;
+use mcb_domain::registry::language::LanguageProviderConfig;
+use mcb_domain::registry::vector_store::VectorStoreProviderConfig;
+
 use super::handle::Handle;
 use super::handles::{CacheHandleExt, EmbeddingHandleExt};
 use super::provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,
 };
-use mcb_application::ports::registry::{
-    CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig, VectorStoreProviderConfig,
-};
-use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
-};
-use std::sync::Arc;
-
-// ============================================================================
-// Common Types
-// ============================================================================
-
-/// Information about an available provider
-#[derive(Debug, Clone)]
-pub struct ProviderInfo {
-    /// Provider name (used in config)
-    pub name: String,
-    /// Human-readable description
-    pub description: String,
-}
-
-impl ProviderInfo {
-    /// Create new provider info
-    pub fn new(name: impl Into<String>, description: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            description: description.into(),
-        }
-    }
-}
 
 // ============================================================================
 // Resolver Trait - Common Interface for All Provider Resolvers
@@ -73,9 +58,9 @@ impl ProviderInfo {
 /// ```
 pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
     /// Resolve provider from current application config
-    fn resolve_from_config(&self) -> Result<Arc<P>, String>;
+    fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<P>>;
     /// Resolve provider from override config (for admin API)
-    fn resolve_from_override(&self, config: &C) -> Result<Arc<P>, String>;
+    fn resolve_from_override(&self, config: &C) -> mcb_domain::error::Result<Arc<P>>;
     /// List available providers
     fn list_available(&self) -> Vec<(&'static str, &'static str)>;
 }
@@ -84,79 +69,47 @@ pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
 // Resolver Trait Implementations
 // ============================================================================
 
-impl ProviderResolver<dyn EmbeddingProvider, EmbeddingProviderConfig>
-    for EmbeddingProviderResolver
-{
-    fn resolve_from_config(&self) -> Result<Arc<dyn EmbeddingProvider>, String> {
-        EmbeddingProviderResolver::resolve_from_config(self)
-    }
+macro_rules! impl_provider_resolver {
+    ($resolver:ty, $provider:ty, $config:ty) => {
+        impl ProviderResolver<$provider, $config> for $resolver {
+            fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<$provider>> {
+                <$resolver>::resolve_from_config(self)
+            }
 
-    fn resolve_from_override(
-        &self,
-        config: &EmbeddingProviderConfig,
-    ) -> Result<Arc<dyn EmbeddingProvider>, String> {
-        EmbeddingProviderResolver::resolve_from_override(self, config)
-    }
+            fn resolve_from_override(
+                &self,
+                config: &$config,
+            ) -> mcb_domain::error::Result<Arc<$provider>> {
+                <$resolver>::resolve_from_override(self, config)
+            }
 
-    fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        EmbeddingProviderResolver::list_available(self)
-    }
+            fn list_available(&self) -> Vec<(&'static str, &'static str)> {
+                <$resolver>::list_available(self)
+            }
+        }
+    };
 }
 
-impl ProviderResolver<dyn VectorStoreProvider, VectorStoreProviderConfig>
-    for VectorStoreProviderResolver
-{
-    fn resolve_from_config(&self) -> Result<Arc<dyn VectorStoreProvider>, String> {
-        VectorStoreProviderResolver::resolve_from_config(self)
-    }
-
-    fn resolve_from_override(
-        &self,
-        config: &VectorStoreProviderConfig,
-    ) -> Result<Arc<dyn VectorStoreProvider>, String> {
-        VectorStoreProviderResolver::resolve_from_override(self, config)
-    }
-
-    fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        VectorStoreProviderResolver::list_available(self)
-    }
-}
-
-impl ProviderResolver<dyn CacheProvider, CacheProviderConfig> for CacheProviderResolver {
-    fn resolve_from_config(&self) -> Result<Arc<dyn CacheProvider>, String> {
-        CacheProviderResolver::resolve_from_config(self)
-    }
-
-    fn resolve_from_override(
-        &self,
-        config: &CacheProviderConfig,
-    ) -> Result<Arc<dyn CacheProvider>, String> {
-        CacheProviderResolver::resolve_from_override(self, config)
-    }
-
-    fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        CacheProviderResolver::list_available(self)
-    }
-}
-
-impl ProviderResolver<dyn LanguageChunkingProvider, LanguageProviderConfig>
-    for LanguageProviderResolver
-{
-    fn resolve_from_config(&self) -> Result<Arc<dyn LanguageChunkingProvider>, String> {
-        LanguageProviderResolver::resolve_from_config(self)
-    }
-
-    fn resolve_from_override(
-        &self,
-        config: &LanguageProviderConfig,
-    ) -> Result<Arc<dyn LanguageChunkingProvider>, String> {
-        LanguageProviderResolver::resolve_from_override(self, config)
-    }
-
-    fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        LanguageProviderResolver::list_available(self)
-    }
-}
+impl_provider_resolver!(
+    EmbeddingProviderResolver,
+    dyn EmbeddingProvider,
+    EmbeddingProviderConfig
+);
+impl_provider_resolver!(
+    VectorStoreProviderResolver,
+    dyn VectorStoreProvider,
+    VectorStoreProviderConfig
+);
+impl_provider_resolver!(
+    CacheProviderResolver,
+    dyn CacheProvider,
+    CacheProviderConfig
+);
+impl_provider_resolver!(
+    LanguageProviderResolver,
+    dyn LanguageChunkingProvider,
+    LanguageProviderConfig
+);
 
 // ============================================================================
 // Generic Admin Service
@@ -174,6 +127,7 @@ impl ProviderResolver<dyn LanguageChunkingProvider, LanguageProviderConfig>
 /// * `P` - Provider trait type (e.g., `dyn EmbeddingProvider`)
 /// * `C` - Config type for the provider
 pub struct AdminService<R, P: ?Sized + Send + Sync, C> {
+    name: String,
     resolver: Arc<R>,
     handle: Arc<Handle<P>>,
     _config_marker: std::marker::PhantomData<C>,
@@ -185,8 +139,9 @@ where
     P: ?Sized + Send + Sync,
 {
     /// Create a new admin service
-    pub fn new(resolver: Arc<R>, handle: Arc<Handle<P>>) -> Self {
+    pub fn new(name: impl Into<String>, resolver: Arc<R>, handle: Arc<Handle<P>>) -> Self {
         Self {
+            name: name.into(),
             resolver,
             handle,
             _config_marker: std::marker::PhantomData,
@@ -214,16 +169,62 @@ where
     /// * `Ok(())` - Provider switched successfully
     /// * `Err(String)` - Failed to switch (provider not found, config invalid, etc.)
     pub fn switch_provider(&self, config: &C) -> Result<(), String> {
-        let new_provider = self.resolver.resolve_from_override(config)?;
+        let new_provider = self
+            .resolver
+            .resolve_from_override(config)
+            .map_err(|e| e.to_string())?;
         self.handle.set(new_provider);
         Ok(())
     }
 
     /// Reload provider from current application config
     pub fn reload_from_config(&self) -> Result<(), String> {
-        let provider = self.resolver.resolve_from_config()?;
+        let provider = self
+            .resolver
+            .resolve_from_config()
+            .map_err(|e| e.to_string())?;
         self.handle.set(provider);
         Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl<R, P, C> LifecycleManaged for AdminService<R, P, C>
+where
+    R: ProviderResolver<P, C>,
+    P: ?Sized + Send + Sync,
+    C: Send + Sync,
+{
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    async fn start(&self) -> mcb_domain::error::Result<()> {
+        // Admin services are always "started" as they manage handles
+        Ok(())
+    }
+
+    async fn stop(&self) -> mcb_domain::error::Result<()> {
+        // Cannot stop an admin service
+        Ok(())
+    }
+
+    fn state(&self) -> PortServiceState {
+        // Always considered running as they are infrastructure
+        PortServiceState::Running
+    }
+
+    async fn health_check(&self) -> DependencyHealthCheck {
+        DependencyHealthCheck {
+            name: self.name.clone(),
+            status: DependencyHealth::Healthy,
+            message: Some(format!("Service active: {}", self.name)),
+            latency_ms: None,
+            last_check: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+        }
     }
 }
 
@@ -234,106 +235,6 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AdminService").finish()
     }
-}
-
-// ============================================================================
-// Admin Service Interfaces (Traits)
-// ============================================================================
-
-/// Interface for embedding provider admin operations
-///
-/// # Example
-///
-/// ```
-/// use mcb_infrastructure::di::admin::{EmbeddingAdminInterface, ProviderInfo};
-///
-/// fn list_embedding_providers(admin: &dyn EmbeddingAdminInterface) -> Vec<String> {
-///     admin.list_providers()
-///         .into_iter()
-///         .map(|info| info.name)
-///         .collect()
-/// }
-/// ```
-pub trait EmbeddingAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available embedding providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Get current provider name
-    fn current_provider(&self) -> String;
-    /// Switch to a different embedding provider
-    fn switch_provider(&self, config: EmbeddingProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
-
-/// Interface for vector store provider admin operations
-///
-/// # Example
-///
-/// ```
-/// use mcb_infrastructure::di::admin::{VectorStoreAdminInterface, ProviderInfo};
-///
-/// fn list_vector_providers(admin: &dyn VectorStoreAdminInterface) -> Vec<String> {
-///     admin.list_providers()
-///         .into_iter()
-///         .map(|info| info.name)
-///         .collect()
-/// }
-/// ```
-pub trait VectorStoreAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available vector store providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Switch to a different vector store provider
-    fn switch_provider(&self, config: VectorStoreProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
-
-/// Interface for cache provider admin operations
-///
-/// # Example
-///
-/// ```
-/// use mcb_infrastructure::di::admin::{CacheAdminInterface, ProviderInfo};
-///
-/// fn list_cache_providers(admin: &dyn CacheAdminInterface) -> Vec<String> {
-///     admin.list_providers()
-///         .into_iter()
-///         .map(|info| info.name)
-///         .collect()
-/// }
-/// ```
-pub trait CacheAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available cache providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Get current provider name
-    fn current_provider(&self) -> String;
-    /// Switch to a different cache provider
-    fn switch_provider(&self, config: CacheProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
-
-/// Interface for language provider admin operations
-///
-/// # Example
-///
-/// ```
-/// use mcb_infrastructure::di::admin::{LanguageAdminInterface, ProviderInfo};
-///
-/// fn list_language_providers(admin: &dyn LanguageAdminInterface) -> Vec<String> {
-///     admin.list_providers()
-///         .into_iter()
-///         .map(|info| info.name)
-///         .collect()
-/// }
-/// ```
-pub trait LanguageAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available language providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Switch to a different language provider
-    fn switch_provider(&self, config: LanguageProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
 }
 
 // ============================================================================
@@ -360,66 +261,62 @@ pub type LanguageAdminService =
 // Trait Implementations for Specific Admin Services
 // ============================================================================
 
-impl EmbeddingAdminInterface for EmbeddingAdminService {
-    fn list_providers(&self) -> Vec<ProviderInfo> {
-        AdminService::list_providers(self)
-    }
+macro_rules! impl_admin_interface {
+    ($service:ty, $trait:ty, $config:ty) => {
+        impl $trait for $service {
+            fn list_providers(&self) -> Vec<ProviderInfo> {
+                AdminService::list_providers(self)
+            }
 
-    fn current_provider(&self) -> String {
-        self.handle.provider_name()
-    }
+            fn switch_provider(&self, config: $config) -> Result<(), String> {
+                AdminService::switch_provider(self, &config)
+            }
 
-    fn switch_provider(&self, config: EmbeddingProviderConfig) -> Result<(), String> {
-        AdminService::switch_provider(self, &config)
-    }
+            fn reload_from_config(&self) -> Result<(), String> {
+                AdminService::reload_from_config(self)
+            }
+        }
+    };
+    ($service:ty, $trait:ty, $config:ty, with_current_provider) => {
+        impl $trait for $service {
+            fn list_providers(&self) -> Vec<ProviderInfo> {
+                AdminService::list_providers(self)
+            }
 
-    fn reload_from_config(&self) -> Result<(), String> {
-        AdminService::reload_from_config(self)
-    }
+            fn current_provider(&self) -> String {
+                self.handle.provider_name()
+            }
+
+            fn switch_provider(&self, config: $config) -> Result<(), String> {
+                AdminService::switch_provider(self, &config)
+            }
+
+            fn reload_from_config(&self) -> Result<(), String> {
+                AdminService::reload_from_config(self)
+            }
+        }
+    };
 }
 
-impl VectorStoreAdminInterface for VectorStoreAdminService {
-    fn list_providers(&self) -> Vec<ProviderInfo> {
-        AdminService::list_providers(self)
-    }
-
-    fn switch_provider(&self, config: VectorStoreProviderConfig) -> Result<(), String> {
-        AdminService::switch_provider(self, &config)
-    }
-
-    fn reload_from_config(&self) -> Result<(), String> {
-        AdminService::reload_from_config(self)
-    }
-}
-
-impl CacheAdminInterface for CacheAdminService {
-    fn list_providers(&self) -> Vec<ProviderInfo> {
-        AdminService::list_providers(self)
-    }
-
-    fn current_provider(&self) -> String {
-        self.handle.provider_name()
-    }
-
-    fn switch_provider(&self, config: CacheProviderConfig) -> Result<(), String> {
-        AdminService::switch_provider(self, &config)
-    }
-
-    fn reload_from_config(&self) -> Result<(), String> {
-        AdminService::reload_from_config(self)
-    }
-}
-
-impl LanguageAdminInterface for LanguageAdminService {
-    fn list_providers(&self) -> Vec<ProviderInfo> {
-        AdminService::list_providers(self)
-    }
-
-    fn switch_provider(&self, config: LanguageProviderConfig) -> Result<(), String> {
-        AdminService::switch_provider(self, &config)
-    }
-
-    fn reload_from_config(&self) -> Result<(), String> {
-        AdminService::reload_from_config(self)
-    }
-}
+impl_admin_interface!(
+    EmbeddingAdminService,
+    EmbeddingAdminInterface,
+    EmbeddingProviderConfig,
+    with_current_provider
+);
+impl_admin_interface!(
+    VectorStoreAdminService,
+    VectorStoreAdminInterface,
+    VectorStoreProviderConfig
+);
+impl_admin_interface!(
+    CacheAdminService,
+    CacheAdminInterface,
+    CacheProviderConfig,
+    with_current_provider
+);
+impl_admin_interface!(
+    LanguageAdminService,
+    LanguageAdminInterface,
+    LanguageProviderConfig
+);

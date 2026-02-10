@@ -6,3 +6,376 @@ fn test_current_timestamp_reports_recent_time() {
     assert!(ts > 1_700_000_000, "Timestamp should be after 2023");
     assert!(ts < 2_000_000_000, "Timestamp should be before 2033");
 }
+
+#[cfg(test)]
+mod rrf_tests {
+    use std::sync::Arc;
+
+    use async_trait::async_trait;
+    use mcb_application::use_cases::memory_service::MemoryServiceImpl;
+    use mcb_domain::entities::memory::{
+        MemoryFilter, Observation, ObservationMetadata, ObservationType, SessionSummary,
+    };
+    use mcb_domain::error::Result;
+    use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
+    use mcb_domain::ports::services::MemoryServiceInterface;
+    use mcb_domain::utils::compute_content_hash;
+    use mcb_domain::value_objects::{ObservationId, SearchResult, SessionId};
+
+    use crate::test_utils::{MockEmbeddingProvider, MockVectorStoreProvider};
+
+    // ---- Mock MemoryRepository ----
+
+    struct MockMemoryRepo {
+        observations: Vec<Observation>,
+        fts_results: Vec<FtsSearchResult>,
+    }
+
+    #[async_trait]
+    impl MemoryRepository for MockMemoryRepo {
+        async fn store_observation(&self, _observation: &Observation) -> Result<()> {
+            Ok(())
+        }
+
+        async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
+            Ok(self
+                .observations
+                .iter()
+                .find(|o| o.id == id.as_str())
+                .cloned())
+        }
+
+        async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
+            Ok(self
+                .observations
+                .iter()
+                .find(|o| o.content_hash == content_hash)
+                .cloned())
+        }
+
+        async fn search(&self, _query: &str, _limit: usize) -> Result<Vec<FtsSearchResult>> {
+            Ok(self.fts_results.clone())
+        }
+
+        async fn delete_observation(&self, _id: &ObservationId) -> Result<()> {
+            Ok(())
+        }
+
+        async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
+            let id_strings: Vec<&str> = ids.iter().map(|id| id.as_str()).collect();
+            Ok(self
+                .observations
+                .iter()
+                .filter(|o| id_strings.contains(&o.id.as_str()))
+                .cloned()
+                .collect())
+        }
+
+        async fn get_timeline(
+            &self,
+            _anchor_id: &ObservationId,
+            _before: usize,
+            _after: usize,
+            _filter: Option<MemoryFilter>,
+        ) -> Result<Vec<Observation>> {
+            Ok(vec![])
+        }
+
+        async fn store_session_summary(&self, _summary: &SessionSummary) -> Result<()> {
+            Ok(())
+        }
+
+        async fn get_session_summary(
+            &self,
+            _session_id: &SessionId,
+        ) -> Result<Option<SessionSummary>> {
+            Ok(None)
+        }
+    }
+
+    // ---- Helper ----
+
+    fn make_observation(id: &str, content: &str) -> Observation {
+        Observation {
+            id: id.to_string(),
+            project_id: "test-project".to_string(),
+            content: content.to_string(),
+            content_hash: compute_content_hash(content),
+            tags: vec![],
+            r#type: ObservationType::Context,
+            metadata: ObservationMetadata::default(),
+            created_at: 1_700_000_000,
+            embedding_id: None,
+        }
+    }
+
+    fn make_observation_with_meta(
+        id: &str,
+        content: &str,
+        session: Option<&str>,
+        branch: Option<&str>,
+        commit: Option<&str>,
+    ) -> Observation {
+        let mut obs = make_observation(id, content);
+        if let Some(s) = session {
+            obs.metadata.session_id = Some(s.to_string());
+        }
+        if let Some(b) = branch {
+            obs.metadata.branch = Some(b.to_string());
+        }
+        if let Some(c) = commit {
+            obs.metadata.commit = Some(c.to_string());
+        }
+        obs
+    }
+
+    fn create_test_service(
+        repo: Arc<MockMemoryRepo>,
+        vector_store: Arc<MockVectorStoreProvider>,
+        embedding_provider: Arc<MockEmbeddingProvider>,
+    ) -> MemoryServiceImpl {
+        MemoryServiceImpl::new(
+            "test-project".to_string(),
+            repo,
+            embedding_provider,
+            vector_store,
+        )
+    }
+
+    // ---- Tests ----
+
+    /// Verifies Reciprocal Rank Fusion correctly combines FTS and vector results.
+    #[tokio::test]
+    async fn test_rrf_hybrid_search_combines_fts_and_vector() {
+        let obs_a = make_observation("obs-a", "content about rust generics");
+        let obs_b = make_observation("obs-b", "content about python types");
+
+        let fts_results = vec![
+            FtsSearchResult {
+                id: "obs-b".to_string(),
+                rank: -2.0,
+            },
+            FtsSearchResult {
+                id: "obs-a".to_string(),
+                rank: -1.5,
+            },
+        ];
+
+        let vector_results = vec![SearchResult {
+            id: "vec-1".to_string(),
+            file_path: String::new(),
+            start_line: 0,
+            content: "content about rust generics".to_string(),
+            score: 0.95,
+            language: "rust".to_string(),
+        }];
+
+        let repo = Arc::new(MockMemoryRepo {
+            observations: vec![obs_a.clone(), obs_b.clone()],
+            fts_results,
+        });
+
+        let vector_store = Arc::new(MockVectorStoreProvider::with_results(vector_results));
+
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+
+        let service = create_test_service(repo, vector_store, embedding_provider);
+
+        let results = service
+            .search_memories("rust generics", None, 10)
+            .await
+            .expect("search should succeed");
+
+        assert!(results.len() >= 2);
+        assert_eq!(results[0].id, "obs-a");
+        assert_eq!(results[1].id, "obs-b");
+        assert!(results[0].similarity_score > results[1].similarity_score);
+    }
+
+    #[tokio::test]
+    async fn test_rrf_fallback_to_fts_when_vector_empty() {
+        let obs_a = make_observation("obs-a", "debugging tokio runtime");
+        let obs_b = make_observation("obs-b", "async runtime patterns");
+
+        let fts_results = vec![
+            FtsSearchResult {
+                id: "obs-a".to_string(),
+                rank: -2.5,
+            },
+            FtsSearchResult {
+                id: "obs-b".to_string(),
+                rank: -1.0,
+            },
+        ];
+
+        let repo = Arc::new(MockMemoryRepo {
+            observations: vec![obs_a, obs_b],
+            fts_results,
+        });
+
+        let vector_store = Arc::new(MockVectorStoreProvider::new());
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+
+        let service = create_test_service(repo, vector_store, embedding_provider);
+
+        let results = service
+            .search_memories("tokio runtime", None, 10)
+            .await
+            .expect("search should succeed");
+
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].id, "obs-a");
+        assert_eq!(results[1].id, "obs-b");
+    }
+
+    #[tokio::test]
+    async fn test_rrf_respects_memory_filter() {
+        let obs_a = make_observation_with_meta(
+            "obs-a",
+            "session one observation",
+            Some("session-1"),
+            None,
+            None,
+        );
+        let obs_b = make_observation_with_meta(
+            "obs-b",
+            "session two observation",
+            Some("session-2"),
+            None,
+            None,
+        );
+
+        let fts_results = vec![
+            FtsSearchResult {
+                id: "obs-a".to_string(),
+                rank: -2.0,
+            },
+            FtsSearchResult {
+                id: "obs-b".to_string(),
+                rank: -1.5,
+            },
+        ];
+
+        let repo = Arc::new(MockMemoryRepo {
+            observations: vec![obs_a, obs_b],
+            fts_results,
+        });
+
+        let vector_store = Arc::new(MockVectorStoreProvider::new());
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+
+        let service = create_test_service(repo, vector_store, embedding_provider);
+
+        let filter = MemoryFilter {
+            session_id: Some("session-1".to_string()),
+            ..Default::default()
+        };
+
+        let results = service
+            .search_memories("observation", Some(filter), 10)
+            .await
+            .expect("search should succeed");
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, "obs-a");
+    }
+
+    #[tokio::test]
+    async fn test_filter_by_branch() {
+        let obs_a = make_observation_with_meta(
+            "obs-a",
+            "feature branch work",
+            None,
+            Some("feature/auth"),
+            None,
+        );
+        let obs_b =
+            make_observation_with_meta("obs-b", "main branch work", None, Some("main"), None);
+
+        let fts_results = vec![
+            FtsSearchResult {
+                id: "obs-a".to_string(),
+                rank: -2.0,
+            },
+            FtsSearchResult {
+                id: "obs-b".to_string(),
+                rank: -1.5,
+            },
+        ];
+
+        let repo = Arc::new(MockMemoryRepo {
+            observations: vec![obs_a, obs_b],
+            fts_results,
+        });
+
+        let vector_store = Arc::new(MockVectorStoreProvider::new());
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+
+        let service = create_test_service(repo, vector_store, embedding_provider);
+
+        let filter = MemoryFilter {
+            branch: Some("feature/auth".to_string()),
+            ..Default::default()
+        };
+
+        let results = service
+            .search_memories("branch work", Some(filter), 10)
+            .await
+            .expect("search should succeed");
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, "obs-a");
+    }
+
+    #[tokio::test]
+    async fn test_filter_by_commit() {
+        let obs_a = make_observation_with_meta(
+            "obs-a",
+            "commit abc observation",
+            None,
+            None,
+            Some("abc123"),
+        );
+        let obs_b = make_observation_with_meta(
+            "obs-b",
+            "commit def observation",
+            None,
+            None,
+            Some("def456"),
+        );
+
+        let fts_results = vec![
+            FtsSearchResult {
+                id: "obs-a".to_string(),
+                rank: -2.0,
+            },
+            FtsSearchResult {
+                id: "obs-b".to_string(),
+                rank: -1.5,
+            },
+        ];
+
+        let repo = Arc::new(MockMemoryRepo {
+            observations: vec![obs_a, obs_b],
+            fts_results,
+        });
+
+        let vector_store = Arc::new(MockVectorStoreProvider::new());
+        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+
+        let service = create_test_service(repo, vector_store, embedding_provider);
+
+        let filter = MemoryFilter {
+            commit: Some("abc123".to_string()),
+            ..Default::default()
+        };
+
+        let results = service
+            .search_memories("commit observation", Some(filter), 10)
+            .await
+            .expect("search should succeed");
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, "obs-a");
+    }
+}

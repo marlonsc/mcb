@@ -16,11 +16,27 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
+use std::sync::Arc;
+
 use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use serde_json::json;
-use std::sync::Arc;
+
+/// Create a test configuration with a unique database path to allow parallel execution
+fn unique_test_config() -> AppConfig {
+    let mut config = AppConfig::default();
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time")
+        .as_nanos();
+    let thread_id = std::thread::current().id();
+    let db_path =
+        std::env::temp_dir().join(format!("mcb-fullstack-test-{}-{:?}.db", stamp, thread_id));
+    config.auth.user_db_path = Some(db_path);
+    config
+}
 
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {
@@ -61,8 +77,7 @@ async fn main() {
 
 #[tokio::test]
 async fn test_init_app_creates_working_context() {
-    // Initialize app through DI
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let result = init_app(config).await;
 
     assert!(
@@ -81,26 +96,26 @@ async fn test_init_app_creates_working_context() {
     let embedding = ctx.embedding_handle().get();
     assert_eq!(
         embedding.provider_name(),
-        "null",
-        "Default should be null provider"
+        "fastembed",
+        "Default should be fastembed (local) provider"
     );
     assert_eq!(
         embedding.dimensions(),
         384,
-        "Null provider has 384 dimensions"
+        "FastEmbed provider has 384 dimensions"
     );
 
     // Verify vector store handle returns a real provider
     let vector_store = ctx.vector_store_handle().get();
     assert!(
-        vector_store.provider_name() == "in_memory" || vector_store.provider_name() == "memory",
-        "Default should be in-memory vector store"
+        vector_store.provider_name() == "edgevec",
+        "Default should be edgevec vector store"
     );
 }
 
 #[tokio::test]
 async fn test_embedding_generates_real_vectors() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -136,8 +151,8 @@ async fn test_embedding_generates_real_vectors() {
             i
         );
         assert_eq!(
-            emb.model, "null-test",
-            "Embedding {} should be from null-test model",
+            emb.model, "AllMiniLML6V2",
+            "Embedding should have model name for index {}",
             i
         );
     }
@@ -145,7 +160,7 @@ async fn test_embedding_generates_real_vectors() {
 
 #[tokio::test]
 async fn test_full_index_and_search_flow() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -156,7 +171,7 @@ async fn test_full_index_and_search_flow() {
 
     // Step 1: Create collection
     vector_store
-        .create_collection(collection, 384)
+        .create_collection(&CollectionId::new(collection), 384)
         .await
         .expect("Collection creation should succeed");
 
@@ -184,7 +199,7 @@ async fn test_full_index_and_search_flow() {
 
     // Step 4: Insert into vector store
     let ids = vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert should succeed");
 
@@ -199,11 +214,11 @@ async fn test_full_index_and_search_flow() {
     let query_vector = &query_embeddings[0].vector;
 
     let results = vector_store
-        .search_similar(collection, query_vector, 5, None)
+        .search_similar(&CollectionId::new(collection), query_vector, 5, None)
         .await
         .expect("Search should succeed");
 
-    // Validate: we should find results (with deterministic NullEmbeddingProvider)
+    // Validate: we should find results (with local FastEmbedProvider)
     assert!(
         !results.is_empty(),
         "Search should return results after indexing real data"
@@ -222,7 +237,7 @@ async fn test_full_index_and_search_flow() {
 
 #[tokio::test]
 async fn test_provider_handles_return_same_instance() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     // Get embedding provider twice via handle
@@ -239,7 +254,7 @@ async fn test_provider_handles_return_same_instance() {
 
 #[tokio::test]
 async fn test_multiple_collections_isolated() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -250,11 +265,11 @@ async fn test_multiple_collections_isolated() {
     let collection_b = "isolation_test_b";
 
     vector_store
-        .create_collection(collection_a, 384)
+        .create_collection(&CollectionId::new(collection_a), 384)
         .await
         .expect("Create collection A");
     vector_store
-        .create_collection(collection_b, 384)
+        .create_collection(&CollectionId::new(collection_b), 384)
         .await
         .expect("Create collection B");
 
@@ -274,7 +289,7 @@ async fn test_multiple_collections_isolated() {
         .collect();
 
     vector_store
-        .insert_vectors(collection_a, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection_a), &embeddings, metadata)
         .await
         .expect("Insert into A");
 
@@ -285,12 +300,22 @@ async fn test_multiple_collections_isolated() {
         .expect("Query embed");
 
     let results_a = vector_store
-        .search_similar(collection_a, &query_emb[0].vector, 10, None)
+        .search_similar(
+            &CollectionId::new(collection_a),
+            &query_emb[0].vector,
+            10,
+            None,
+        )
         .await
         .expect("Search A");
 
     let results_b = vector_store
-        .search_similar(collection_b, &query_emb[0].vector, 10, None)
+        .search_similar(
+            &CollectionId::new(collection_b),
+            &query_emb[0].vector,
+            10,
+            None,
+        )
         .await
         .expect("Search B");
 
@@ -304,7 +329,7 @@ async fn test_multiple_collections_isolated() {
 
 #[tokio::test]
 async fn test_embedding_dimensions_consistent() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();

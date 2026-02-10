@@ -129,7 +129,7 @@ impl TokenFingerprinter {
     }
 
     /// Fingerprint a file's tokens and add to the map
-    pub fn fingerprint_file(&mut self, file: PathBuf, tokens: &[Token]) {
+    pub fn fingerprint_file(&mut self, file: &std::path::Path, tokens: &[Token]) {
         if tokens.len() < self.window_size {
             return;
         }
@@ -142,34 +142,34 @@ impl TokenFingerprinter {
         // Store first fingerprint
         let fingerprint = Fingerprint::new(hash);
         let location = FingerprintLocation {
-            file: file.clone(),
+            file: file.to_path_buf(),
             start_line: tokens[0].line,
             end_line: tokens[self.window_size - 1].line,
             token_count: self.window_size,
         };
         self.fingerprint_map
             .entry(fingerprint)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(location);
 
         // Roll through remaining tokens
         for i in 1..=(tokens.len() - self.window_size) {
             hash = self.rolling_hash(
                 hash,
-                &token_strs[i - 1],
-                &token_strs[i + self.window_size - 1],
+                token_strs[i - 1],
+                token_strs[i + self.window_size - 1],
             );
 
             let fingerprint = Fingerprint::new(hash);
             let location = FingerprintLocation {
-                file: file.clone(),
+                file: file.to_path_buf(),
                 start_line: tokens[i].line,
                 end_line: tokens[i + self.window_size - 1].line,
                 token_count: self.window_size,
             };
             self.fingerprint_map
                 .entry(fingerprint)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(location);
         }
     }
@@ -332,8 +332,8 @@ mod tests {
         let tokens1 = make_tokens(&["fn", "foo", "(", ")", "{", "}"]);
         let tokens2 = make_tokens(&["fn", "foo", "(", ")", "{", "}"]);
 
-        fp.fingerprint_file(PathBuf::from("file1.rs"), &tokens1);
-        fp.fingerprint_file(PathBuf::from("file2.rs"), &tokens2);
+        fp.fingerprint_file(&PathBuf::from("file1.rs"), &tokens1);
+        fp.fingerprint_file(&PathBuf::from("file2.rs"), &tokens2);
 
         let matches = fp.find_duplicates();
         assert!(!matches.is_empty(), "Should find duplicates");
@@ -345,7 +345,7 @@ mod tests {
 
         // Same file, same tokens - should not report overlapping matches
         let tokens = make_tokens(&["a", "b", "c", "d", "e"]);
-        fp.fingerprint_file(PathBuf::from("file1.rs"), &tokens);
+        fp.fingerprint_file(&PathBuf::from("file1.rs"), &tokens);
 
         let matches = fp.find_duplicates();
         // All fingerprints in the same file will be from different positions
@@ -390,8 +390,8 @@ mod tests {
         let tokens1 = make_tokens(&["a", "b", "c"]);
         let tokens2 = make_tokens(&["a", "b", "d"]); // Shares "a", "b"
 
-        fp.fingerprint_file(PathBuf::from("file1.rs"), &tokens1);
-        fp.fingerprint_file(PathBuf::from("file2.rs"), &tokens2);
+        fp.fingerprint_file(&PathBuf::from("file1.rs"), &tokens1);
+        fp.fingerprint_file(&PathBuf::from("file2.rs"), &tokens2);
 
         let stats = fp.stats();
         assert!(

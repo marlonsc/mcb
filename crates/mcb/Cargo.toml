@@ -1,16 +1,19 @@
 [package]
 name = "mcb"
-version = "0.1.5"
-edition = "2024"
-authors = ["Marlon Costa <marlonsc@gmail.com>"]
-license = "MIT"
 keywords = ["mcp", "semantic-search", "code-analysis", "vector-embeddings"]
-categories = ["development-tools", "api-bindings", "science::artificial-intelligence"]
+categories = [
+    "development-tools",
+    "api-bindings",
+    "science::artificial-intelligence",
+]
 description = "MCP Context Browser - A Model Context Protocol server for semantic code analysis using vector embeddings"
-readme = "README.md"
-repository = "https://github.com/marlonsc/mcb"
-homepage = "https://github.com/marlonsc/mcb"
-rust-version = "1.89"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "mcb"
@@ -19,6 +22,9 @@ path = "src/lib.rs"
 [[bin]]
 name = "mcb"
 path = "src/main.rs"
+
+[lints]
+workspace = true
 
 [dependencies]
 # Domain layer - re-exported for public API
@@ -31,7 +37,7 @@ mcb-server = { path = "../mcb-server" }
 mcb-infrastructure = { path = "../mcb-infrastructure" }
 
 # Providers - MUST be in dependencies (not dev-dependencies) for linkme inventory registration
-mcb-providers = { path = "../mcb-providers", features = ["full"] }
+mcb-providers = { path = "../mcb-providers" }
 
 # Validation - for mcb validate subcommand
 mcb-validate = { path = "../mcb-validate" }

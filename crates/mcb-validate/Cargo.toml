@@ -1,11 +1,15 @@
 [package]
 name = "mcb-validate"
-version = "0.1.5"
-edition.workspace = true
-license.workspace = true
 description = "Architecture validation for MCP Context Browser workspace"
-# Disable auto-discovery of benchmarks (bench files exist but are work-in-progress)
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 autobenches = false
+autotests = false
 
 [lints]
 workspace = true
@@ -36,6 +40,9 @@ serde_yaml.workspace = true
 # TOML parsing for Cargo.toml
 toml.workspace = true
 
+# Configuration management (layered providers)
+figment = { workspace = true }
+
 # Cargo metadata parsing (replaces manual Cargo.toml parsing)
 cargo_metadata.workspace = true
 
@@ -46,8 +53,8 @@ anyhow.workspace = true
 # Date/time for timestamps
 chrono.workspace = true
 
-# CLI (optional)
-clap = { workspace = true, optional = true }
+# CLI
+clap = { workspace = true }
 
 # Rule Engines - Core do sistema
 rust-rule-engine.workspace = true
@@ -71,6 +78,9 @@ jsonpath-rust.workspace = true
 # Lazy static values
 once_cell.workspace = true
 
+# Graph algorithms
+petgraph.workspace = true
+
 # Code metrics analysis - using rust-code-analysis fork with tree-sitter 0.26.3 + Kotlin
 rust-code-analysis.workspace = true
 
@@ -91,15 +101,18 @@ tokio.workspace = true
 
 # Logging
 tracing.workspace = true
+criterion.workspace = true
+
+# Explicit test targets — prevents test_utils.rs and test_constants.rs
+# from being auto-discovered as standalone test binaries.
+[[test]]
+name = "unit"
+path = "tests/unit.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration.rs"
 
 [dev-dependencies]
 tempfile.workspace = true
-
-[features]
-default = []
-cli = ["clap"]
-
-# Binary will be added when CLI feature is implemented
-# [[bin]]
-# name = "mcb-validate"
-# required-features = ["cli"]
+serde_yaml.workspace = true

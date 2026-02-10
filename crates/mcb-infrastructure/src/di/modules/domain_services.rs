@@ -9,15 +9,11 @@
 //! using constructor injection, because they require runtime configuration
 //! (embedding provider, vector store, cache).
 
-use crate::cache::provider::SharedCacheProvider;
-use crate::config::AppConfig;
-use crate::crypto::CryptoService;
-use mcb_application::domain_services::memory::MemoryServiceInterface;
-use mcb_application::domain_services::search::{
-    ContextServiceInterface, IndexingServiceInterface, SearchServiceInterface,
-};
+use std::sync::Arc;
+
 use mcb_application::use_cases::{
-    ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl, SearchServiceImpl,
+    AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl,
+    SearchServiceImpl,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
@@ -25,54 +21,120 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
-use mcb_domain::ports::repositories::MemoryRepository;
-use mcb_domain::ports::services::ValidationServiceInterface;
-use mcb_providers::git::Git2Provider;
-use std::sync::Arc;
+use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
+use mcb_domain::ports::services::{
+    AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
+    MemoryServiceInterface, ProjectDetectorService, ProjectServiceInterface,
+    SearchServiceInterface, ValidationServiceInterface,
+};
 
 use super::super::bootstrap::AppContext;
-
-// Use infrastructure validation service when validation feature is enabled
-#[cfg(feature = "validation")]
+use crate::cache::provider::SharedCacheProvider;
+use crate::config::AppConfig;
+use mcb_domain::ports::providers::CryptoProvider;
+// Use infrastructure validation service
 use crate::validation::InfraValidationService;
 
-// Use null validation from domain when validation feature is disabled
-#[cfg(not(feature = "validation"))]
-use mcb_domain::ports::services::NullValidationService;
-
 /// Domain services container
+///
+/// Holds all assembled domain service implementations for use throughout the application.
+/// This container is created by `DomainServicesFactory` and provides access to all
+/// domain-level services that depend on infrastructure components.
 #[derive(Clone)]
 pub struct DomainServicesContainer {
+    /// Service for managing context and semantic search operations
     pub context_service: Arc<dyn ContextServiceInterface>,
+    /// Service for searching across indexed code and memory
     pub search_service: Arc<dyn SearchServiceInterface>,
+    /// Service for indexing code and managing the search index
     pub indexing_service: Arc<dyn IndexingServiceInterface>,
+    /// Service for validating domain objects and operations
     pub validation_service: Arc<dyn ValidationServiceInterface>,
+    /// Service for managing persistent memory and observations
     pub memory_service: Arc<dyn MemoryServiceInterface>,
+    /// Service for managing agent sessions and state
+    pub agent_session_service: Arc<dyn AgentSessionServiceInterface>,
+    /// Service for detecting and managing project information
+    pub project_service: Arc<dyn ProjectDetectorService>,
+    /// Service for managing project workflow resources
+    pub project_workflow_service: Arc<dyn ProjectServiceInterface>,
+    /// Provider for version control system operations
     pub vcs_provider: Arc<dyn VcsProvider>,
 }
 
 /// Runtime dependencies required to assemble Phase 6 services (Memory Search + Hybrid Search).
 ///
-/// Contains providers, repositories, caches, and event buses that map directly to the Phase 6 pipeline
-/// described in `.planning/STATE.md` and `docs/context/project-state.md` so injecting the right
-/// combination keeps the memory/indexing services aligned with the roadmap.
+/// Contains all infrastructure components needed to construct domain service implementations
+/// at runtime. These dependencies are gathered from the application context and passed to
+/// the factory for service assembly.
+///
+/// # Fields
+///
+/// * `project_id` - Unique identifier for the current project
+/// * `cache` - Shared cache provider for service-level caching
+/// * `crypto` - Cryptographic service for secure operations
+/// * `config` - Application configuration
+/// * `embedding_provider` - Provider for generating vector embeddings
+/// * `vector_store_provider` - Provider for vector storage and retrieval
+/// * `language_chunker` - Provider for language-aware code chunking
+/// * `indexing_ops` - Interface for indexing operations
+/// * `event_bus` - Event bus for domain events
+/// * `memory_repository` - Repository for memory persistence
+/// * `agent_repository` - Repository for agent session data
+/// * `vcs_provider` - Version control system provider
+/// * `project_service` - Service for project detection and management
 pub struct ServiceDependencies {
+    /// Unique identifier for the current project
     pub project_id: String,
+    /// Shared cache provider for service-level caching
     pub cache: SharedCacheProvider,
-    pub crypto: CryptoService,
+    /// Cryptographic service for secure operations
+    pub crypto: Arc<dyn CryptoProvider>,
+    /// Application configuration
     pub config: AppConfig,
+    /// Provider for generating vector embeddings
     pub embedding_provider: Arc<dyn EmbeddingProvider>,
+    /// Provider for vector storage and retrieval
     pub vector_store_provider: Arc<dyn VectorStoreProvider>,
+    /// Provider for language-aware code chunking
     pub language_chunker: Arc<dyn LanguageChunkingProvider>,
+    /// Interface for indexing operations
     pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    /// Event bus for domain events
     pub event_bus: Arc<dyn EventBusProvider>,
+    /// Repository for memory persistence
     pub memory_repository: Arc<dyn MemoryRepository>,
+    /// Repository for agent session data
+    pub agent_repository: Arc<dyn AgentRepository>,
+    /// Version control system provider
+    pub vcs_provider: Arc<dyn VcsProvider>,
+    /// Service for project detection and management
+    pub project_service: Arc<dyn ProjectDetectorService>,
+    /// Service for project workflow management
+    pub project_workflow_service: Arc<dyn ProjectServiceInterface>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
 pub struct DomainServicesFactory;
 
 impl DomainServicesFactory {
+    /// Creates all domain services from runtime dependencies.
+    ///
+    /// Assembles the complete set of domain service implementations using constructor injection.
+    /// This factory method is called at runtime to create services that require dynamic configuration
+    /// (embedding provider, vector store, cache).
+    ///
+    /// # Arguments
+    ///
+    /// * `deps` - Runtime dependencies including providers, repositories, and configuration
+    ///
+    /// # Returns
+    ///
+    /// A `DomainServicesContainer` with all services initialized and ready for use.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if service initialization fails.
     pub async fn create_services(deps: ServiceDependencies) -> Result<DomainServicesContainer> {
         let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(
             deps.cache.into(),
@@ -91,15 +153,8 @@ impl DomainServicesFactory {
                 deps.event_bus,
             ));
 
-        #[cfg(feature = "validation")]
         let validation_service: Arc<dyn ValidationServiceInterface> =
             Arc::new(InfraValidationService::new());
-
-        #[cfg(not(feature = "validation"))]
-        let validation_service: Arc<dyn ValidationServiceInterface> =
-            Arc::new(NullValidationService::new());
-
-        let vcs_provider: Arc<dyn VcsProvider> = Arc::new(Git2Provider::new());
 
         let memory_service: Arc<dyn MemoryServiceInterface> = Arc::new(MemoryServiceImpl::new(
             deps.project_id.clone(),
@@ -108,13 +163,19 @@ impl DomainServicesFactory {
             deps.vector_store_provider,
         ));
 
+        let agent_session_service: Arc<dyn AgentSessionServiceInterface> =
+            Arc::new(AgentSessionServiceImpl::new(deps.agent_repository));
+
         Ok(DomainServicesContainer {
             context_service,
             search_service,
             indexing_service,
             validation_service,
             memory_service,
-            vcs_provider,
+            agent_session_service,
+            project_service: deps.project_service,
+            project_workflow_service: deps.project_workflow_service,
+            vcs_provider: deps.vcs_provider,
         })
     }
 
@@ -122,15 +183,10 @@ impl DomainServicesFactory {
     pub async fn create_indexing_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn IndexingServiceInterface>> {
-        // Get providers from handles (runtime-swappable)
-        let language_chunker = app_context.language_handle().get();
-
-        // Create context service first (dependency)
-        let context_service = Self::create_context_service(app_context).await?;
-
-        // Get indexing operations tracker and event bus from context
         let indexing_ops = app_context.indexing();
         let event_bus = app_context.event_bus();
+        let language_chunker = app_context.language_handle().get();
+        let context_service = Self::create_context_service(app_context).await?;
 
         Ok(Arc::new(IndexingServiceImpl::new(
             context_service,
@@ -144,7 +200,6 @@ impl DomainServicesFactory {
     pub async fn create_context_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn ContextServiceInterface>> {
-        // Get providers from handles (runtime-swappable)
         let cache_provider = app_context.cache_handle().get();
         let embedding_provider = app_context.embedding_handle().get();
         let vector_store_provider = app_context.vector_store_handle().get();
@@ -160,9 +215,7 @@ impl DomainServicesFactory {
     pub async fn create_search_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn SearchServiceInterface>> {
-        // Create context service first (dependency)
         let context_service = Self::create_context_service(app_context).await?;
-
         Ok(Arc::new(SearchServiceImpl::new(context_service)))
     }
 }

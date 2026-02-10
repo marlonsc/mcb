@@ -3,14 +3,15 @@
 //! Uses the domain port [`DatabaseExecutor`] and [`SqlRow`]; repositories depend
 //! on these traits and do not use sqlx directly.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use sqlx::Column;
 use sqlx::Row;
 use sqlx::sqlite::SqliteRow;
-use std::collections::HashMap;
-use std::sync::Arc;
 
 /// Row adapter that copies column values from a SQLite row so it can be returned
 /// as `Arc<dyn SqlRow>` without holding a reference to the connection.
@@ -96,6 +97,7 @@ impl SqliteExecutor {
             q = match p {
                 SqlParam::String(s) => q.bind(s.as_str()),
                 SqlParam::I64(n) => q.bind(*n),
+                SqlParam::Bool(b) => q.bind(*b),
                 SqlParam::Null => q.bind(Option::<String>::None),
             };
         }
@@ -115,6 +117,7 @@ impl SqliteExecutor {
             q = match p {
                 SqlParam::String(s) => q.bind(s.as_str()),
                 SqlParam::I64(n) => q.bind(*n),
+                SqlParam::Bool(b) => q.bind(*b),
                 SqlParam::Null => q.bind(Option::<String>::None),
             };
         }
@@ -138,6 +141,7 @@ impl SqliteExecutor {
             q = match p {
                 SqlParam::String(s) => q.bind(s.as_str()),
                 SqlParam::I64(n) => q.bind(*n),
+                SqlParam::Bool(b) => q.bind(*b),
                 SqlParam::Null => q.bind(Option::<String>::None),
             };
         }
@@ -167,5 +171,16 @@ impl DatabaseExecutor for SqliteExecutor {
 
     async fn query_all(&self, sql: &str, params: &[SqlParam]) -> Result<Vec<Arc<dyn SqlRow>>> {
         self.query_all_impl(sql, params).await
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+impl SqliteExecutor {
+    /// Get reference to inner pool
+    pub fn pool(&self) -> &sqlx::SqlitePool {
+        &self.pool
     }
 }

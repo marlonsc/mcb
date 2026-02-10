@@ -43,3 +43,17 @@ impl Default for SubmoduleDiscoveryConfig {
         }
     }
 }
+
+impl SubmoduleInfo {
+    /// Get the collection name for this submodule in hybrid search.
+    #[must_use]
+    pub fn collection_name(&self, parent_collection: &str) -> String {
+        format!("{}/{}", parent_collection, self.path.replace('/', "-"))
+    }
+
+    /// Get the stable repo identifier for this submodule.
+    #[must_use]
+    pub fn repo_id(&self) -> String {
+        format!("{}:{}", self.parent_repo_id, self.path)
+    }
+}

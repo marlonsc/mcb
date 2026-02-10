@@ -1,4 +1,16 @@
-# ADR 006: Code Audit and Architecture Improvements
+---
+adr: 6
+title: Code Audit and Architecture Improvements
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 3, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
+## ADR 006: Code Audit and Architecture Improvements
 
 ## Status
 
@@ -22,7 +34,7 @@ Accepted
 
 ## Context
 
-The MCP Context Browser codebase has grown organically and accumulated several anti-patterns and technical debt that impact maintainability, reliability, and development velocity. A comprehensive code audit identified critical issues that need addressing before stable release.
+The Memory Context Browser codebase has grown organically and accumulated several anti-patterns and technical debt that impact maintainability, reliability, and development velocity. A comprehensive code audit identified critical issues that need addressing before stable release.
 
 Key problems identified:
 
@@ -346,7 +358,7 @@ v0.2.0 is purely architectural:
 -   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Trait-based DI patterns
 -   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async provider execution
 -   [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Architecture visualization
--   [ADR-030: Multi-Provider Strategy](030-multi-provider-strategy.md) - Provider routing and failover
+-   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing and failover
 -   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI patterns
 -   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
 

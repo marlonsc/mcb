@@ -3,13 +3,19 @@
 //! Moved from inline tests in src/value_objects/browse.rs
 //! per test organization standards.
 
-use mcb_domain::value_objects::browse::{CollectionInfo, FileInfo};
+use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo};
 
 #[test]
 fn test_collection_info_new() {
-    let info = CollectionInfo::new("test-collection", 100, 10, Some(1705680000), "milvus");
+    let info = CollectionInfo::new(
+        CollectionId::new("test-collection"),
+        100,
+        10,
+        Some(1705680000),
+        "milvus",
+    );
 
-    assert_eq!(info.name, "test-collection");
+    assert_eq!(info.id.as_str(), "test-collection");
     assert_eq!(info.vector_count, 100);
     assert_eq!(info.file_count, 10);
     assert_eq!(info.last_indexed, Some(1705680000));
@@ -18,7 +24,7 @@ fn test_collection_info_new() {
 
 #[test]
 fn test_collection_info_serialization() {
-    let info = CollectionInfo::new("test", 50, 5, None, "in_memory");
+    let info = CollectionInfo::new(CollectionId::new("test"), 50, 5, None, "in_memory");
     let json = serde_json::to_string(&info).expect("serialization should succeed");
     let deserialized: CollectionInfo =
         serde_json::from_str(&json).expect("deserialization should succeed");

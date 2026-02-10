@@ -22,11 +22,12 @@
 //! # }
 //! ```
 
+use std::sync::{Arc, RwLock};
+
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
 use redis::{AsyncCommands, Client, aio::MultiplexedConnection};
-use std::sync::{Arc, RwLock};
 
 /// Redis cache provider
 ///
@@ -251,7 +252,7 @@ impl std::fmt::Debug for RedisCacheProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use mcb_application::ports::registry::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
+use mcb_domain::registry::cache::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
 
 /// Factory function for creating Redis cache provider instances.
 fn redis_cache_factory(

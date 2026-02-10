@@ -4,436 +4,351 @@
 //! These traits break the circular dependency where infrastructure/di
 //! previously imported from server layer.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::registry::cache::CacheProviderConfig;
+use crate::registry::embedding::EmbeddingProviderConfig;
+use crate::registry::language::LanguageProviderConfig;
+use crate::registry::vector_store::VectorStoreProviderConfig;
+use crate::value_objects::{CollectionId, OperationId};
+
+/// Information about an available provider
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderInfo {
+    /// Provider name (used in config)
+    pub name: String,
+    /// Human-readable description
+    pub description: String,
+}
+
+impl ProviderInfo {
+    /// Create new provider info
+    pub fn new(name: impl Into<String>, description: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            description: description.into(),
+        }
+    }
+}
+
+/// Interface for embedding provider admin operations
+#[async_trait::async_trait]
+pub trait EmbeddingAdminInterface: Send + Sync + std::fmt::Debug {
+    /// List all available embedding providers
+    fn list_providers(&self) -> Vec<ProviderInfo>;
+    /// Get current provider name
+    fn current_provider(&self) -> String;
+    /// Switch to a different embedding provider
+    fn switch_provider(&self, config: EmbeddingProviderConfig) -> Result<(), String>;
+    /// Reload provider from current application config
+    fn reload_from_config(&self) -> Result<(), String>;
+}
+
+/// Interface for vector store provider admin operations
+#[async_trait::async_trait]
+pub trait VectorStoreAdminInterface: Send + Sync + std::fmt::Debug {
+    /// List all available vector store providers
+    fn list_providers(&self) -> Vec<ProviderInfo>;
+    /// Switch to a different vector store provider
+    fn switch_provider(&self, config: VectorStoreProviderConfig) -> Result<(), String>;
+    /// Reload provider from current application config
+    fn reload_from_config(&self) -> Result<(), String>;
+}
+
+/// Interface for cache provider admin operations
+#[async_trait::async_trait]
+pub trait CacheAdminInterface: Send + Sync + std::fmt::Debug {
+    /// List all available cache providers
+    fn list_providers(&self) -> Vec<ProviderInfo>;
+    /// Get current provider name
+    fn current_provider(&self) -> String;
+    /// Switch to a different cache provider
+    fn switch_provider(&self, config: CacheProviderConfig) -> Result<(), String>;
+    /// Reload provider from current application config
+    fn reload_from_config(&self) -> Result<(), String>;
+}
+
+/// Interface for language provider admin operations
+#[async_trait::async_trait]
+pub trait LanguageAdminInterface: Send + Sync + std::fmt::Debug {
+    /// List all available language providers
+    fn list_providers(&self) -> Vec<ProviderInfo>;
+    /// Switch to a different language provider
+    fn switch_provider(&self, config: LanguageProviderConfig) -> Result<(), String>;
+    /// Reload provider from current application config
+    fn reload_from_config(&self) -> Result<(), String>;
+}
 
 // ============================================================================
 // Performance Metrics Types
 // ============================================================================
 
-/// Performance metrics data
-///
-/// This type is defined in domain to allow the trait to be used
-/// without circular dependencies on server layer.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Data structure for detailed performance metrics
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PerformanceMetricsData {
-    /// Total Queries
+    /// Total queries processed
     pub total_queries: u64,
-    /// Successful Queries
+    /// Total successful queries
     pub successful_queries: u64,
-    /// Failed Queries
+    /// Number of failed queries
     pub failed_queries: u64,
-    /// Average Response Time Ms
+    /// Average response time in milliseconds
     pub average_response_time_ms: f64,
-    /// Cache Hit Rate
+    /// Cache hit rate (0.0 to 1.0)
     pub cache_hit_rate: f64,
-    /// Active Connections
-    pub active_connections: u32,
-    /// Uptime Seconds
+    /// Number of currently active connections
+    pub active_connections: usize,
+    /// Server uptime in seconds
     pub uptime_seconds: u64,
 }
 
-// ============================================================================
-// Performance Metrics Interface
-// ============================================================================
-
-/// Real-time performance metrics tracking interface
-///
-/// Domain port for tracking server performance metrics including
-/// queries, response times, cache hits, and active connections.
-///
-/// # Example
-///
-/// ```no_run
-/// use mcb_domain::ports::admin::PerformanceMetricsInterface;
-/// use std::sync::Arc;
-///
-/// fn record_metrics(metrics: Arc<dyn PerformanceMetricsInterface>) {
-///     // Record a successful query with 50ms response time (cache miss)
-///     metrics.record_query(50, true, false);
-///
-///     // Track active connections
-///     metrics.update_active_connections(1);  // connection opened
-///     metrics.update_active_connections(-1); // connection closed
-///
-///     // Get current metrics snapshot
-///     let stats = metrics.get_performance_metrics();
-///     println!("Uptime: {}s, Queries: {}", stats.uptime_seconds, stats.total_queries);
-/// }
-/// ```
+/// Interface for tracking performance metrics
 pub trait PerformanceMetricsInterface: Send + Sync {
     /// Get server uptime in seconds
     fn uptime_secs(&self) -> u64;
-
-    /// Record a query with its metrics
+    /// Record a query execution
     fn record_query(&self, response_time_ms: u64, success: bool, cache_hit: bool);
-
-    /// Update active connection count (positive to add, negative to remove)
+    /// Update active connections count
     fn update_active_connections(&self, delta: i64);
-
-    /// Get current performance metrics snapshot
+    /// Get current performance metrics
     fn get_performance_metrics(&self) -> PerformanceMetricsData;
 }
 
 // ============================================================================
-// Indexing Operations Types
+// Indexing & Validation Operations Types
 // ============================================================================
 
-/// Tracks ongoing indexing operations
-#[derive(Debug, Clone)]
-pub struct IndexingOperation {
-    /// Operation ID
-    pub id: String,
-    /// Collection being indexed
-    pub collection: String,
-    /// Current file being processed
-    pub current_file: Option<String>,
-    /// Total files to process
-    pub total_files: usize,
-    /// Files processed so far
-    pub processed_files: usize,
-    /// Operation start timestamp (Unix timestamp)
-    pub start_timestamp: u64,
-}
-
-// ============================================================================
-// Indexing Operations Interface
-// ============================================================================
-
-/// Interface for indexing operations tracking
-///
-/// Domain port for tracking ongoing indexing operations in the MCP server.
-///
-/// # Example
-///
-/// ```no_run
-/// use mcb_domain::ports::admin::IndexingOperationsInterface;
-/// use std::sync::Arc;
-///
-/// fn show_operations(tracker: Arc<dyn IndexingOperationsInterface>) {
-///     // Get all active indexing operations
-///     let operations = tracker.get_operations();
-///     for (id, op) in operations {
-///         println!("Operation {}: {}/{} files in {}",
-///             id, op.processed_files, op.total_files, op.collection);
-///     }
-/// }
-///
-/// fn start_indexing(tracker: Arc<dyn IndexingOperationsInterface>) {
-///     // Start tracking a new operation
-///     let operation_id = tracker.start_operation("my-collection", 100);
-///
-///     // Update progress as files are processed
-///     tracker.update_progress(&operation_id, Some("src/main.rs".to_string()), 50);
-///
-///     // Mark operation complete when done
-///     tracker.complete_operation(&operation_id);
-/// }
-/// ```
-pub trait IndexingOperationsInterface: Send + Sync {
-    /// Get the map of ongoing indexing operations
-    fn get_operations(&self) -> HashMap<String, IndexingOperation>;
-
-    /// Start tracking a new indexing operation
-    ///
-    /// Returns a unique operation ID that can be used to update progress
-    /// and complete the operation.
-    fn start_operation(&self, collection: &str, total_files: usize) -> String;
-
-    /// Update progress for an ongoing operation
-    ///
-    /// # Arguments
-    /// * `operation_id` - The ID returned by `start_operation`
-    /// * `current_file` - Optional path of the file currently being processed
-    /// * `processed` - Number of files processed so far
-    fn update_progress(&self, operation_id: &str, current_file: Option<String>, processed: usize);
-
-    /// Complete and remove an operation from tracking
-    ///
-    /// After calling this, the operation will no longer appear in `get_operations()`.
-    fn complete_operation(&self, operation_id: &str);
-}
-
-// ============================================================================
-// Service Lifecycle Management
-// ============================================================================
-
-/// Health status for a service dependency
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-pub enum DependencyHealth {
-    /// Service is healthy and responsive
-    Healthy,
-    /// Service is degraded but functional
-    Degraded,
-    /// Service is unhealthy or unresponsive
-    Unhealthy,
-    /// Health status is unknown (not checked)
-    #[default]
-    Unknown,
-}
-
-/// Detailed health check result for a service dependency
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct DependencyHealthCheck {
-    /// Name of the dependency
-    pub name: String,
-    /// Health status
-    pub status: DependencyHealth,
-    /// Optional message providing more details
-    pub message: Option<String>,
-    /// Latency in milliseconds (if applicable)
-    pub latency_ms: Option<u64>,
-    /// Last check timestamp (Unix timestamp)
-    pub last_check: u64,
-}
-
-/// Port service lifecycle state (simplified, Copy-able version)
-///
-/// This is a simplified version of ServiceState for port interfaces.
-/// For domain events with failure reasons, use `mcb_domain::events::ServiceState`.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
-pub enum PortServiceState {
-    /// Service is starting up
+/// Status of an indexing operation
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum IndexingOperationStatus {
+    /// Indicates the operation is initializing.
     Starting,
-    /// Service is running normally
-    Running,
-    /// Service is shutting down
-    Stopping,
-    /// Service is stopped
-    #[default]
-    Stopped,
+    /// Indicates the operation is currently running.
+    InProgress,
+    /// Indicates the operation finished successfully.
+    Completed,
+    /// Indicates the operation failed with an error message.
+    Failed(String),
 }
 
-/// Lifecycle management interface for services
-///
-/// Domain port for managing service lifecycle including start, stop,
-/// restart, and health checks.
-///
-/// # Example
-///
-/// ```no_run
-/// use mcb_domain::ports::admin::{LifecycleManaged, PortServiceState};
-/// use std::sync::Arc;
-///
-/// async fn check_service(service: Arc<dyn LifecycleManaged>) -> mcb_domain::Result<()> {
-///     // Check service state
-///     if service.state() == PortServiceState::Running {
-///         // Perform health check
-///         let health = service.health_check().await;
-///         println!("Service health: {:?}", health.status);
-///     }
-///
-///     // Graceful shutdown
-///     service.stop().await?;
-///     Ok(())
-/// }
-/// ```
-#[async_trait::async_trait]
-pub trait LifecycleManaged: Send + Sync {
-    /// Get the service name
-    fn name(&self) -> &str;
-
-    /// Get the current service state
-    fn state(&self) -> PortServiceState;
-
-    /// Start the service
-    async fn start(&self) -> crate::error::Result<()>;
-
-    /// Stop the service gracefully
-    async fn stop(&self) -> crate::error::Result<()>;
-
-    /// Restart the service
-    async fn restart(&self) -> crate::error::Result<()> {
-        self.stop().await?;
-        self.start().await
-    }
-
-    /// Perform a health check on this service
-    async fn health_check(&self) -> DependencyHealthCheck;
-}
-
-// ============================================================================
-// Shutdown Coordination
-// ============================================================================
-
-/// Shutdown coordinator for managing graceful server shutdown
-///
-/// This interface allows components to signal and check shutdown status.
-/// The actual signaling mechanism is implementation-specific (e.g., broadcast channels).
-///
-/// # Example
-///
-/// ```no_run
-/// use mcb_domain::ports::admin::ShutdownCoordinator;
-/// use std::sync::Arc;
-///
-/// fn handle_shutdown(coordinator: Arc<dyn ShutdownCoordinator>) {
-///     // Check if shutdown has been requested
-///     if coordinator.is_shutting_down() {
-///         println!("Shutdown in progress, stopping work");
-///     }
-///
-///     // To trigger shutdown (e.g., from admin API)
-///     coordinator.signal_shutdown();
-/// }
-/// ```
-pub trait ShutdownCoordinator: Send + Sync {
-    /// Signal all components to begin shutdown
-    fn signal_shutdown(&self);
-
-    /// Check if shutdown has been signaled
-    fn is_shutting_down(&self) -> bool;
-}
-
-/// Extended health check response including dependency status
+/// Data about an ongoing indexing operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExtendedHealthResponse {
-    /// Overall server status
-    pub status: &'static str,
-    /// Server uptime in seconds
-    pub uptime_seconds: u64,
-    /// Number of active indexing operations
-    pub active_indexing_operations: usize,
-    /// Health checks for dependencies
-    pub dependencies: Vec<DependencyHealthCheck>,
-    /// Overall dependencies health status
-    pub dependencies_status: DependencyHealth,
+pub struct IndexingOperation {
+    /// Unique identifier for the operation.
+    pub id: OperationId,
+    /// Identifier of the collection being indexed.
+    pub collection: CollectionId,
+    /// Current status of the operation.
+    pub status: IndexingOperationStatus,
+    /// Total number of files to process.
+    pub total_files: usize,
+    /// Number of files processed so far.
+    pub processed_files: usize,
+    /// Path of the file currently being processed.
+    pub current_file: Option<String>,
+    /// Timestamp when the operation started.
+    pub started_at: chrono::DateTime<chrono::Utc>,
 }
 
-// ============================================================================
-// Validation Operations Types
-// ============================================================================
+/// Interface for tracking indexing operations
+pub trait IndexingOperationsInterface: Send + Sync {
+    /// Get all tracking operations
+    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation>;
+    /// Start tracking a new indexing operation
+    fn start_operation(&self, collection: &CollectionId, total_files: usize) -> OperationId;
+    /// Update progress of an operation
+    fn update_progress(
+        &self,
+        operation_id: &OperationId,
+        current_file: Option<String>,
+        processed: usize,
+    );
+    /// Mark operation as completed
+    fn complete_operation(&self, operation_id: &OperationId);
+}
 
-/// Tracks ongoing validation operations
-#[derive(Debug, Clone)]
+/// Status of a validation operation
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ValidationStatus {
+    /// Indicates the operation is waiting to start.
+    Queued,
+    /// Indicates the operation is currently executing.
+    InProgress,
+    /// Indicates the operation finished.
+    Completed,
+    /// Indicates the operation failed with an error.
+    Failed(String),
+    /// Indicates the operation was manually stopped.
+    Canceled,
+}
+
+/// Result metadata for a completed validation operation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidationOperationResult {
+    /// Total number of rule violations found.
+    pub total_violations: usize,
+    /// Number of error-level violations.
+    pub errors: usize,
+    /// Number of warning-level violations.
+    pub warnings: usize,
+    /// Whether the validation passed acceptance criteria.
+    pub passed: bool,
+}
+
+/// Data about an ongoing validation operation
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationOperation {
-    /// Operation ID
-    pub id: String,
-    /// Workspace being validated
+    /// Unique identifier for the operation.
+    pub id: OperationId,
+    /// Target workspace or directory being validated.
     pub workspace: String,
-    /// Validators being run
+    /// Current status of the operation.
+    pub status: ValidationStatus,
+    /// List of validator names enabled for this operation.
     pub validators: Vec<String>,
-    /// Current file being processed
+    /// Progress percentage (0-100).
+    pub progress_percent: u8,
+    /// Path of the file currently being validated.
     pub current_file: Option<String>,
-    /// Total files to process
-    pub total_files: usize,
-    /// Files processed so far
-    pub processed_files: usize,
-    /// Operation start timestamp (Unix timestamp)
-    pub start_timestamp: u64,
-    /// Validation result (set when complete)
+    /// Number of items processed so far.
+    pub processed_items: usize,
+    /// Total number of items to process.
+    pub total_items: usize,
+    /// Timestamp when the operation started.
+    pub started_at: chrono::DateTime<chrono::Utc>,
+    /// Timestamp when the operation completed (if applicable).
+    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// Final result of the validation (if completed).
     pub result: Option<ValidationOperationResult>,
 }
 
-/// Result of a completed validation operation
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ValidationOperationResult {
-    /// Total violations found
-    pub total_violations: usize,
-    /// Number of errors
-    pub errors: usize,
-    /// Number of warnings
-    pub warnings: usize,
-    /// Number of infos
-    pub infos: usize,
-    /// Whether validation passed (no errors)
-    pub passed: bool,
-    /// Duration in milliseconds
-    pub duration_ms: u64,
-}
-
-// ============================================================================
-// Validation Operations Interface
-// ============================================================================
-
-/// Interface for validation operations tracking
-///
-/// Domain port for tracking ongoing validation operations, following the
-/// same pattern as [`IndexingOperationsInterface`].
-///
-/// # Example
-///
-/// ```no_run
-/// use mcb_domain::ports::admin::ValidationOperationsInterface;
-/// use std::sync::Arc;
-///
-/// fn show_operations(tracker: Arc<dyn ValidationOperationsInterface>) {
-///     // Get all active validation operations
-///     let operations = tracker.get_operations();
-///     for (id, op) in operations {
-///         println!("Operation {}: {}/{} files in {}",
-///             id, op.processed_files, op.total_files, op.workspace);
-///     }
-/// }
-///
-/// fn start_validation(tracker: Arc<dyn ValidationOperationsInterface>) {
-///     // Start tracking a new operation
-///     let validators = ["clean_architecture", "solid"].map(String::from);
-///     let operation_id = tracker.start_operation(".", &validators);
-///
-///     // Update progress as files are processed
-///     tracker.update_progress(&operation_id, Some("src/main.rs".to_string()), 50, 100);
-///
-///     // Mark operation complete when done
-///     use mcb_domain::ports::admin::ValidationOperationResult;
-///     let result = ValidationOperationResult {
-///         total_violations: 5,
-///         errors: 1,
-///         warnings: 3,
-///         infos: 1,
-///         passed: false,
-///         duration_ms: 1500,
-///     };
-///     tracker.complete_operation(&operation_id, result);
-/// }
-/// ```
+/// Interface for tracking validation operations
 pub trait ValidationOperationsInterface: Send + Sync {
-    /// Get the map of ongoing validation operations
-    fn get_operations(&self) -> HashMap<String, ValidationOperation>;
-
-    /// Get a specific operation by ID
-    fn get_operation(&self, operation_id: &str) -> Option<ValidationOperation>;
-
-    /// Start tracking a new validation operation
-    ///
-    /// # Arguments
-    /// * `workspace` - Path to workspace being validated
-    /// * `validators` - List of validators being run
-    ///
-    /// # Returns
-    /// A unique operation ID that can be used to update progress
-    fn start_operation(&self, workspace: &str, validators: &[String]) -> String;
-
-    /// Update progress for an ongoing operation
-    ///
-    /// # Arguments
-    /// * `operation_id` - The ID returned by `start_operation`
-    /// * `current_file` - Optional path of the file currently being processed
-    /// * `processed` - Number of files processed so far
-    /// * `total` - Total number of files to process
+    /// Get all validation operations
+    fn get_operations(&self) -> HashMap<OperationId, ValidationOperation>;
+    /// Get a specific operation
+    fn get_operation(&self, operation_id: &OperationId) -> Option<ValidationOperation>;
+    /// Start a new validation operation
+    fn start_operation(&self, workspace: &str, validators: &[String]) -> OperationId;
+    /// Update progress
     fn update_progress(
         &self,
-        operation_id: &str,
+        operation_id: &OperationId,
         current_file: Option<String>,
         processed: usize,
         total: usize,
     );
+    /// Mark as completed
+    fn complete_operation(&self, operation_id: &OperationId, result: ValidationOperationResult);
+    /// Cancel an operation
+    fn cancel_operation(&self, operation_id: &OperationId);
+    /// Check if in progress
+    fn is_in_progress(&self, operation_id: &OperationId) -> bool;
+}
 
-    /// Complete an operation with its result
-    ///
-    /// After calling this, the operation status changes to complete
-    /// and the result is stored for retrieval.
-    ///
-    /// # Arguments
-    /// * `operation_id` - The operation ID
-    /// * `result` - The validation result
-    fn complete_operation(&self, operation_id: &str, result: ValidationOperationResult);
+// ============================================================================
+// Lifecycle & Health Types
+// ============================================================================
 
-    /// Cancel an ongoing operation
-    ///
-    /// Removes the operation from tracking without storing a result.
-    fn cancel_operation(&self, operation_id: &str);
+/// Current state of a port service
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub enum PortServiceState {
+    /// Service is initializing.
+    Starting,
+    /// Service is fully operational.
+    Running,
+    /// Service is shutting down.
+    Stopping,
+    /// Service is stopped.
+    #[default]
+    Stopped,
+}
 
-    /// Check if an operation is still in progress
-    fn is_in_progress(&self, operation_id: &str) -> bool;
+/// Health status for a system dependency
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub enum DependencyHealth {
+    /// Dependency is operating normally.
+    Healthy,
+    /// Dependency is operating with reduced functionality or high latency.
+    Degraded,
+    /// Dependency is unavailable or malfunctioning.
+    Unhealthy,
+    /// Health status has not yet been determined.
+    #[default]
+    Unknown,
+}
+
+/// Health information for a system dependency
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct DependencyHealthCheck {
+    /// Name of the dependency.
+    pub name: String,
+    /// Current health status.
+    pub status: DependencyHealth,
+    /// Optional status message or error description.
+    pub message: Option<String>,
+    /// Response latency in milliseconds (if applicable).
+    pub latency_ms: Option<u64>,
+    /// Timestamp of the last check (Unix epoch).
+    pub last_check: u64,
+}
+
+/// Extended health response with detailed dependency info
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtendedHealthResponse {
+    /// Overall system status string.
+    pub status: &'static str,
+    /// System uptime in seconds.
+    pub uptime_seconds: u64,
+    /// Number of active indexing operations.
+    pub active_indexing_operations: usize,
+    /// List of health checks for individual dependencies.
+    pub dependencies: Vec<DependencyHealthCheck>,
+    /// Aggregated status of all dependencies.
+    pub dependencies_status: DependencyHealth,
+}
+
+/// Interface for graceful shutdown coordination
+pub trait ShutdownCoordinator: Send + Sync {
+    /// Signals the system to initiate shutdown sequence.
+    fn signal_shutdown(&self);
+    /// Checks if a shutdown has been signaled.
+    fn is_shutting_down(&self) -> bool;
+}
+
+/// Managed lifecycle for background services
+#[async_trait::async_trait]
+pub trait LifecycleManaged: Send + Sync {
+    /// Returns the name of the service.
+    fn name(&self) -> &str;
+    /// Starts the service.
+    async fn start(&self) -> crate::error::Result<()>;
+    /// Stops the service.
+    async fn stop(&self) -> crate::error::Result<()>;
+    /// Restarts the service by stopping and then starting it.
+    async fn restart(&self) -> crate::error::Result<()> {
+        self.stop().await?;
+        self.start().await
+    }
+    /// Returns the current state of the service.
+    fn state(&self) -> PortServiceState;
+    /// Performs a health check on the service.
+    async fn health_check(&self) -> DependencyHealthCheck {
+        DependencyHealthCheck {
+            name: self.name().to_string(),
+            status: match self.state() {
+                PortServiceState::Running => DependencyHealth::Healthy,
+                PortServiceState::Starting => DependencyHealth::Unknown,
+                _ => DependencyHealth::Unhealthy,
+            },
+            message: None,
+            latency_ms: None,
+            last_check: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+        }
+    }
 }

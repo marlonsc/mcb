@@ -26,44 +26,32 @@ curl -s http://localhost:8222/healthz
 ### Run All Integration Tests
 
 ```bash
-
-# Option 1: Redis + NATS only (lightweight)
-docker-compose -f docker-compose.testing.yml up -d
-make test
-# docker-compose -f docker-compose.testing.yml down -v when done
-
-# Option 2: Full stack (Ollama, Milvus, etc.) via make docker-up
+# Option 1: Start all infrastructure services
 make docker-up
 make test
-make docker-down
+# make docker-down when done
+
+# Option 2: Full stack including test-runner container
+docker-compose up
 ```
 
-`make docker-up` uses `docker-compose.yml` (Ollama, Milvus, OpenAI mock). For Redis and NATS only, use `docker-compose.testing.yml` as above.
+`make docker-up` now uses a unified `docker-compose.yml` that includes OpenAI mock, Ollama, Milvus, Redis, and NATS.
 
 ## Detailed Setup
 
-### 1. Start Host Services
+### 1. Start Infrastructure Services
 
-**Option A: Manual startup**
-
-```bash
-
-# Terminal 1: Redis
-redis-server --port 6379
-
-# Terminal 2: NATS with JetStream
-nats-server --jetstream
-```
-
-**Option B: Using Docker containers (recommended)**
+**Using Docker containers (recommended)**
 
 ```bash
+# Start all services
+make docker-up
 
-# Start with custom docker-compose
-docker-compose -f docker-compose.testing.yml up -d
+# Or start specific services if needed
+docker-compose up -d redis nats
 
 # Verify services
-docker-compose -f docker-compose.testing.yml ps
+make docker
 ```
 
 **Option C: System services**
@@ -95,16 +83,13 @@ If Redis/NATS-specific test targets (e.g. `redis_cache_integration`, `nats_event
 
 #### Method 2: Docker services + local tests
 
-Start Redis and NATS via `docker-compose.testing.yml`, then run tests on the host:
+Start services via `docker-compose.yml`, then run tests on the host:
 
 ```bash
-
-docker-compose -f docker-compose.testing.yml up -d
+make docker-up
 REDIS_URL=redis://127.0.0.1:6379 NATS_URL=nats://127.0.0.1:4222 make test
-docker-compose -f docker-compose.testing.yml down -v
+make docker-down
 ```
-
-For the full stack (Ollama, Milvus): `make docker-up` then `make test` then `make docker-down`.
 
 #### Method 3: Full Docker Compose (Container Test Runner)
 
@@ -214,22 +199,21 @@ docker-compose down -v
 docker-compose logs -f test-runner
 ```
 
-### docker-compose.testing.yml
+### Unified docker-compose.yml
 
-Lightweight compose with only Redis and NATS for quick testing:
+The project uses a unified `docker-compose.yml` for all infrastructure needs.
 
 **Usage:**
 
 ```bash
-
-# Start only Redis and NATS
-docker-compose -f docker-compose.testing.yml up -d
+# Start all services
+make docker-up
 
 # Run tests
 make test
 
 # Stop services
-docker-compose -f docker-compose.testing.yml down -v
+make docker-down
 ```
 
 ## Service Detection
@@ -258,14 +242,13 @@ make docker-logs               # View Docker logs
 make docker                    # Show Docker service status
 ```
 
-For Redis + NATS only, use `docker-compose -f docker-compose.testing.yml up -d` (and `down -v` when done). `make docker-up` uses the main compose, not the testing one.
+For Redis + NATS only, use `docker-compose up -d redis nats` (and `docker-compose stop redis nats` when done). `make docker-up` starts the full stack.
 
 ## Troubleshooting
 
 ### Redis Connection Refused
 
 ```bash
-
 # Check if Redis is running
 redis-cli ping
 
@@ -273,13 +256,12 @@ redis-cli ping
 redis-server --port 6379 --appendonly yes
 
 # Or with Docker
-docker-compose -f docker-compose.testing.yml up -d redis
+docker-compose up -d redis
 ```
 
 ### NATS Connection Refused
 
 ```bash
-
 # Check if NATS is running
 telnet localhost 4222
 
@@ -287,7 +269,7 @@ telnet localhost 4222
 nats-server --jetstream
 
 # Or with Docker
-docker-compose -f docker-compose.testing.yml up -d nats
+docker-compose up -d nats
 ```
 
 ### host.docker.internal not working (Linux)
@@ -409,7 +391,7 @@ jobs:
 
 -   [Redis Documentation](https://redis.io/documentation)
 -   [NATS Documentation](https://docs.nats.io/)
--   [MCP Context Browser Architecture](./architecture/ARCHITECTURE.md)
+-   [Memory Context Browser Architecture](./architecture/ARCHITECTURE.md)
 -   [ADR-005: Context Cache Support (Moka and Redis)](./adr/005-context-cache-support.md)
 
 ## Contributing

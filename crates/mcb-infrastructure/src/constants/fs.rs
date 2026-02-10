@@ -1,0 +1,8 @@
+pub const DEFAULT_FILE_PERMISSIONS: u32 = 0o644;
+pub const DEFAULT_DIR_PERMISSIONS: u32 = 0o755;
+pub const MAX_SNAPSHOT_FILE_SIZE: usize = 100 * 1024 * 1024;
+pub const BACKUP_FILE_EXTENSION: &str = ".backup";
+pub const TEMP_FILE_PREFIX: &str = "mcb_temp_";
+pub const FILESYSTEM_VECTOR_STORE_MAX_PER_SHARD: usize = 100_000;
+pub const FILESYSTEM_VECTOR_STORE_INDEX_CACHE_SIZE: usize = 10_000;
+pub const FILESYSTEM_BYTES_PER_DIMENSION: usize = 4;

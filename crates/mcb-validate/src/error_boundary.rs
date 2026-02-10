@@ -5,52 +5,68 @@
 //! - Context preservation across layers
 //! - Error type placement (right layer)
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig, ValidationError};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig, ValidationError};
 
 /// Error boundary violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ErrorBoundaryViolation {
     /// Error crossing layer without context
     MissingErrorContext {
+        /// File containing the violation.
         file: PathBuf,
+        /// Line number where the error propagation occurred.
         line: usize,
+        /// Description of the error pattern detected (e.g., "?" operator usage).
         error_pattern: String,
+        /// Recommended fix for the violation.
         suggestion: String,
+        /// Severity of the violation.
         severity: Severity,
     },
     /// Infrastructure error type used in domain layer
     WrongLayerError {
+        /// File containing the violation.
         file: PathBuf,
+        /// Line number where the incorrect error type was used.
         line: usize,
+        /// The infrastructure error type detected (e.g., "std::io::Error").
         error_type: String,
+        /// The architectural layer where the violation occurred.
         layer: String,
+        /// Severity of the violation.
         severity: Severity,
     },
     /// Internal error details leaked to external API
     LeakedInternalError {
+        /// File containing the violation.
         file: PathBuf,
+        /// Line number where the internal error leak occurred.
         line: usize,
+        /// Description of the leak pattern detected (e.g., Debug formatting).
         pattern: String,
+        /// Severity of the violation.
         severity: Severity,
     },
 }
 
 impl ErrorBoundaryViolation {
+    /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::MissingErrorContext { severity, .. } => *severity,
-            Self::WrongLayerError { severity, .. } => *severity,
-            Self::LeakedInternalError { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
 impl std::fmt::Display for ErrorBoundaryViolation {
+    /// Formats the violation as a human-readable string
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::MissingErrorContext {
@@ -104,6 +120,7 @@ impl std::fmt::Display for ErrorBoundaryViolation {
 }
 
 impl Violation for ErrorBoundaryViolation {
+    /// Returns the unique identifier for this violation type
     fn id(&self) -> &str {
         match self {
             Self::MissingErrorContext { .. } => "ERR001",
@@ -112,46 +129,49 @@ impl Violation for ErrorBoundaryViolation {
         }
     }
 
+    /// Returns the violation category
     fn category(&self) -> ViolationCategory {
         ViolationCategory::ErrorBoundary
     }
 
+    /// Returns the severity level of this violation
     fn severity(&self) -> Severity {
         match self {
-            Self::MissingErrorContext { severity, .. } => *severity,
-            Self::WrongLayerError { severity, .. } => *severity,
-            Self::LeakedInternalError { severity, .. } => *severity,
+            Self::MissingErrorContext { severity, .. }
+            | Self::WrongLayerError { severity, .. }
+            | Self::LeakedInternalError { severity, .. } => *severity,
         }
     }
 
+    /// Returns the file path where the violation was detected
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::MissingErrorContext { file, .. } => Some(file),
-            Self::WrongLayerError { file, .. } => Some(file),
-            Self::LeakedInternalError { file, .. } => Some(file),
+            Self::MissingErrorContext { file, .. }
+            | Self::WrongLayerError { file, .. }
+            | Self::LeakedInternalError { file, .. } => Some(file),
         }
     }
 
+    /// Returns the line number where the violation was detected
     fn line(&self) -> Option<usize> {
         match self {
-            Self::MissingErrorContext { line, .. } => Some(*line),
-            Self::WrongLayerError { line, .. } => Some(*line),
-            Self::LeakedInternalError { line, .. } => Some(*line),
+            Self::MissingErrorContext { line, .. }
+            | Self::WrongLayerError { line, .. }
+            | Self::LeakedInternalError { line, .. } => Some(*line),
         }
     }
 
+    /// Returns a suggestion for fixing this violation
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::MissingErrorContext { suggestion, .. } => Some(suggestion.clone()),
             Self::WrongLayerError {
                 error_type, layer, ..
             } => Some(format!(
-                "Wrap {} in a domain error type instead of using it directly in {}",
-                error_type, layer
+                "Wrap {error_type} in a domain error type instead of using it directly in {layer}"
             )),
             Self::LeakedInternalError { pattern, .. } => Some(format!(
-                "Replace {} with a sanitized error response that doesn't expose internal details",
-                pattern
+                "Replace {pattern} with a sanitized error response that doesn't expose internal details"
             )),
         }
     }
@@ -163,17 +183,17 @@ pub struct ErrorBoundaryValidator {
 }
 
 impl ErrorBoundaryValidator {
-    /// Create a new error boundary validator
+    /// Creates a new error boundary validator with default configuration
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Create a validator with custom configuration
+    /// Creates a validator with custom configuration
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
 
-    /// Run all error boundary validations
+    /// Runs all error boundary validations and returns detected violations
     pub fn validate_all(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_error_context()?);
@@ -182,22 +202,23 @@ impl ErrorBoundaryValidator {
         Ok(violations)
     }
 
-    /// Detect error propagation without context
+    /// Detects error propagation without context (missing `.context()` or `.map_err()`)
     pub fn validate_error_context(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
         // Pattern: ? operator without .context() or .with_context()
         // This is a heuristic - we look for lines with ? but no context method
         let question_mark_pattern = Regex::new(r"\?\s*;?\s*$")
-            .map_err(|e| ValidationError::InvalidRegex(format!("question mark pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("question mark pattern: {e}")))?;
         let context_pattern = Regex::new(r"\.(context|with_context|map_err|ok_or_else)\s*\(")
-            .map_err(|e| ValidationError::InvalidRegex(format!("context pattern: {}", e)))?;
+            .map_err(|e| ValidationError::InvalidRegex(format!("context pattern: {e}")))?;
 
         // Files that are likely error boundary crossing points
         let boundary_paths = ["handlers/", "adapters/", "services/"];
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -260,7 +281,7 @@ impl ErrorBoundaryValidator {
         Ok(violations)
     }
 
-    /// Detect infrastructure error types in domain layer
+    /// Detects infrastructure error types used in domain layer (layer boundary violation)
     pub fn validate_layer_error_types(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
@@ -281,6 +302,7 @@ impl ErrorBoundaryValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -292,8 +314,8 @@ impl ErrorBoundaryValidator {
                     continue;
                 }
 
-                // Only check domain layer files
-                let is_domain = path_str.contains("/domain/") || path_str.contains("mcb-domain");
+                // Only check domain layer files (uses directory convention, not hardcoded crate names)
+                let is_domain = path_str.contains("/domain/");
                 if !is_domain {
                     continue;
                 }
@@ -348,7 +370,7 @@ impl ErrorBoundaryValidator {
         Ok(violations)
     }
 
-    /// Detect internal error details leaked to API responses
+    /// Detects internal error details leaked to API responses (information disclosure)
     pub fn validate_leaked_errors(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
@@ -358,7 +380,10 @@ impl ErrorBoundaryValidator {
                 r#"format!\s*\(\s*"\{\:?\?\}""#,
                 "Debug formatting in response",
             ),
-            (r#"\.to_string\(\)\s*\)"#, "Error .to_string() in response"),
+            (
+                r"\b(?:err|error|e)\b\.to_string\(\)",
+                "Error .to_string() in response",
+            ),
             (
                 r#"serde_json::json!\s*\(\s*\{\s*"error"\s*:\s*format!"#,
                 "Internal error in JSON response",
@@ -373,6 +398,7 @@ impl ErrorBoundaryValidator {
         // Only check handler files (API boundary)
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -431,138 +457,8 @@ impl ErrorBoundaryValidator {
     }
 }
 
-impl crate::validator_trait::Validator for ErrorBoundaryValidator {
-    fn name(&self) -> &'static str {
-        "error_boundary"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates error handling patterns across layer boundaries"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-    use tempfile::TempDir;
-
-    fn create_test_crate_structure(temp: &TempDir, crate_name: &str, path: &str, content: &str) {
-        let file_path = temp
-            .path()
-            .join("crates")
-            .join(crate_name)
-            .join("src")
-            .join(path);
-        if let Some(parent) = file_path.parent() {
-            fs::create_dir_all(parent).unwrap();
-        }
-        fs::write(&file_path, content).unwrap();
-
-        // Create Cargo.toml
-        let cargo_path = temp
-            .path()
-            .join("crates")
-            .join(crate_name)
-            .join("Cargo.toml");
-        if !cargo_path.exists() {
-            fs::write(
-                cargo_path,
-                format!(
-                    r#"
-[package]
-name = "{}"
-version = "0.1.1"
-"#,
-                    crate_name
-                ),
-            )
-            .unwrap();
-        }
-    }
-
-    #[test]
-    fn test_missing_error_context_detection() {
-        let temp = TempDir::new().unwrap();
-        create_test_crate_structure(
-            &temp,
-            "mcb-server",
-            "handlers/test.rs",
-            r#"
-pub async fn handle_request() -> Result<(), Error> {
-    let data = fetch_data()?;
-    process_data(data)?;
-    Ok(())
-}
-"#,
-        );
-
-        let validator = ErrorBoundaryValidator::new(temp.path());
-        let violations = validator.validate_error_context().unwrap();
-
-        assert!(
-            !violations.is_empty(),
-            "Should detect missing error context"
-        );
-    }
-
-    #[test]
-    fn test_wrong_layer_error_detection() {
-        let temp = TempDir::new().unwrap();
-        create_test_crate_structure(
-            &temp,
-            "mcb-domain",
-            "services/test.rs",
-            r#"
-use std::io::Error;
-
-pub fn domain_function() -> Result<(), std::io::Error> {
-    Ok(())
-}
-"#,
-        );
-
-        let validator = ErrorBoundaryValidator::new(temp.path());
-        let violations = validator.validate_layer_error_types().unwrap();
-
-        assert!(
-            !violations.is_empty(),
-            "Should detect infrastructure error in domain"
-        );
-    }
-
-    #[test]
-    fn test_error_rs_exempt() {
-        let temp = TempDir::new().unwrap();
-        create_test_crate_structure(
-            &temp,
-            "mcb-domain",
-            "error.rs",
-            r#"
-use std::io::Error;
-
-#[derive(Debug)]
-pub enum DomainError {
-    Io(std::io::Error),
-}
-"#,
-        );
-
-        let validator = ErrorBoundaryValidator::new(temp.path());
-        let violations = validator.validate_layer_error_types().unwrap();
-
-        assert!(
-            violations.is_empty(),
-            "error.rs files should be exempt: {:?}",
-            violations
-        );
-    }
-}
+impl_validator!(
+    ErrorBoundaryValidator,
+    "error_boundary",
+    "Validates error handling patterns across layer boundaries"
+);

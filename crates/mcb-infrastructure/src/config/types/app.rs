@@ -1,17 +1,18 @@
 //! Main application configuration
 
-use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-// Re-export all config types from consolidated modules
+use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
+use serde::{Deserialize, Serialize};
+
+// Re-export all config types from modules
 pub use super::infrastructure::{
     CacheProvider, CacheSystemConfig, LimitsConfig, LoggingConfig, MetricsConfig, ResilienceConfig,
 };
 pub use super::mode::{ModeConfig, OperatingMode};
 pub use super::server::{
-    ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig,
-    TransportMode,
+    ServerConfig, ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig, ServerNetworkConfig,
+    ServerSslConfig, ServerTimeoutConfig, TransportMode,
 };
 pub use super::system::{
     AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusConfig,
@@ -53,7 +54,7 @@ pub struct VectorStoreConfigContainer {
 }
 
 /// Provider configurations
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvidersConfig {
     /// Embedding provider configuration
     #[serde(default)]
@@ -61,6 +62,21 @@ pub struct ProvidersConfig {
     /// Vector store provider configuration
     #[serde(default)]
     pub vector_store: VectorStoreConfigContainer,
+}
+
+impl Default for ProvidersConfig {
+    fn default() -> Self {
+        Self {
+            embedding: EmbeddingConfigContainer {
+                provider: Some("fastembed".to_string()),
+                ..Default::default()
+            },
+            vector_store: VectorStoreConfigContainer {
+                provider: Some("edgevec".to_string()),
+                ..Default::default()
+            },
+        }
+    }
 }
 
 /// Infrastructure configurations

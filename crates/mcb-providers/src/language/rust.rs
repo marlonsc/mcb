@@ -1,10 +1,11 @@
 //! Rust language processor for AST-based code chunking.
 
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::Language;
+
 use crate::language::common::{
     BaseProcessor, CHUNK_SIZE_RUST, LanguageConfig, LanguageProcessor, NodeExtractionRule,
 };
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
 
 /// Rust language processor with comprehensive AST extraction rules.
 pub struct RustProcessor {
@@ -22,7 +23,6 @@ impl RustProcessor {
     pub fn new() -> Self {
         let config = LanguageConfig::new(tree_sitter_rust::LANGUAGE.into())
             .with_rules(Self::extraction_rules())
-            .with_fallback_patterns(Self::fallback_patterns())
             .with_chunk_size(CHUNK_SIZE_RUST);
 
         Self {
@@ -48,24 +48,6 @@ impl RustProcessor {
             NodeExtractionRule::tertiary(&["type_item", "use_declaration"]),
         ]
     }
-
-    fn fallback_patterns() -> Vec<String> {
-        [
-            "fn ",
-            "struct ",
-            "impl ",
-            "pub fn ",
-            "pub struct ",
-            "enum ",
-            "trait ",
-            "mod ",
-            "const ",
-            "static ",
-        ]
-        .iter()
-        .map(|p| format!("^{}", p))
-        .collect()
-    }
 }
 
 impl LanguageProcessor for RustProcessor {
@@ -82,15 +64,5 @@ impl LanguageProcessor for RustProcessor {
     ) -> Vec<CodeChunk> {
         self.processor
             .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-
-    fn extract_chunks_fallback(
-        &self,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_fallback(content, file_name, language)
     }
 }

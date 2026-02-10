@@ -10,13 +10,13 @@ description: "Domain layer should only contain traits and value objects"
 rationale: "Implementations belong in infrastructure/providers layers"
 
 rule: |
-  rule DomainTraitsOnly "Domain Contains Only Traits" {
-      when
-          Crate(name == "mcb-domain") &&
-          File(path contains "src/") &&
-          (Struct() || Impl() || Function()) &&
-          !Trait() &&
-          !ValueObject()
-      then
-          Violation("Domain layer should only contain traits and value objects");
-  }
+    rule DomainTraitsOnly "Domain Contains Only Traits" {
+        when
+            Crate(name == "{{domain_crate}}") &&
+            File(path contains "src/") &&
+            (Struct() || Impl() || Function()) &&
+            !Trait() &&
+            !ValueObject()
+        then
+            Violation("Domain layer should only contain traits and value objects");
+    }

@@ -13,13 +13,15 @@
 Description=MCB - Semantic Code Search Server
 Documentation=https://github.com/anthropics/mcb
 After=default.target
+StartLimitIntervalSec=90
+StartLimitBurst=3
 
 [Service]
 Type=simple
 
 # Binary in server mode (HTTP daemon)
 # Config auto-discovered at ~/.config/mcb/mcb.toml
-ExecStart=%h/.local/bin/mcb --server
+ExecStart=%h/.local/bin/mcb serve --server --config %h/.config/mcb/mcb.toml
 
 # Reload via SIGUSR1 triggers exec-based respawn (preserves PID)
 ExecReload=/bin/kill -SIGUSR1 $MAINPID

@@ -70,8 +70,6 @@ pub struct LanguageConfig {
     pub ts_language: tree_sitter::Language,
     /// Node extraction rules
     pub extraction_rules: Vec<NodeExtractionRule>,
-    /// Fallback patterns for regex-based chunking
-    pub fallback_patterns: Vec<String>,
     /// Chunk size for generic fallback
     pub chunk_size: usize,
 }
@@ -82,7 +80,6 @@ impl LanguageConfig {
         Self {
             ts_language: language,
             extraction_rules: Vec::new(),
-            fallback_patterns: Vec::new(),
             chunk_size: DEFAULT_CHUNK_SIZE,
         }
     }
@@ -96,12 +93,6 @@ impl LanguageConfig {
     /// Add multiple extraction rules
     pub fn with_rules(mut self, rules: Vec<NodeExtractionRule>) -> Self {
         self.extraction_rules.extend(rules);
-        self
-    }
-
-    /// Add fallback patterns
-    pub fn with_fallback_patterns(mut self, patterns: Vec<String>) -> Self {
-        self.fallback_patterns = patterns;
         self
     }
 

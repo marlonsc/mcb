@@ -2,9 +2,10 @@
 //!
 //! Automatically loads and validates YAML-based rules with template support.
 
+use std::path::{Path, PathBuf};
+
 use serde::{Deserialize, Serialize};
 use serde_yaml;
-use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 use super::templates::TemplateEngine;
@@ -14,18 +15,29 @@ use crate::Result;
 /// Loaded and validated YAML rule
 #[derive(Debug, Clone)]
 pub struct ValidatedRule {
+    /// Unique identifier for the rule.
     pub id: String,
+    /// Human-readable name of the rule.
     pub name: String,
+    /// Category of the rule (e.g., quality, security).
     pub category: String,
+    /// Severity level (error, warning, info).
     pub severity: String,
+    /// Whether the rule is active.
     pub enabled: bool,
+    /// Detailed description of what the rule checks.
     pub description: String,
+    /// Explanation of why this rule exists.
     pub rationale: String,
+    /// The engine used to execute this rule.
     pub engine: String,
+    /// Engine-specific configuration.
     pub config: serde_json::Value,
+    /// Raw rule definition.
     pub rule_definition: serde_json::Value,
+    /// List of available automated fixes.
     pub fixes: Vec<RuleFix>,
-    /// Linter codes to execute (e.g., ["F401"] for Ruff, ["clippy::unwrap_used"] for Clippy)
+    /// Linter codes to execute (e.g., `["F401"]` for Ruff, `["clippy::unwrap_used"]` for Clippy)
     pub lint_select: Vec<String>,
     /// Custom message for violations
     pub message: Option<String>,
@@ -66,7 +78,7 @@ pub struct MetricThresholdConfig {
 pub struct AstSelector {
     /// Programming language (e.g., "rust", "python")
     pub language: String,
-    /// AST node type to match (e.g., "call_expression", "function_definition")
+    /// AST node type to match (e.g., "`call_expression`", "`function_definition`")
     pub node_type: String,
     /// Tree-sitter query pattern (optional, for complex matching)
     pub pattern: Option<String>,
@@ -75,25 +87,42 @@ pub struct AstSelector {
 /// Suggested fix for a rule violation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleFix {
+    /// Type of fix (e.g., replacement, suppression).
     pub fix_type: String,
+    /// Pattern to replace (if applicable).
     pub pattern: Option<String>,
+    /// Message describing the fix.
     pub message: String,
 }
 
 /// YAML rule loader with automatic discovery
 pub struct YamlRuleLoader {
+    /// Validator for checking YAML syntax against schema
     validator: YamlRuleValidator,
+    /// Engine for processing rule templates and inheritance
     template_engine: TemplateEngine,
+    /// Directory containing the rule definitions
     rules_dir: PathBuf,
+    /// Variables for template substitution (e.g. from config)
+    variables: Option<serde_yaml::Value>,
 }
 
 impl YamlRuleLoader {
     /// Create a new YAML rule loader
     pub fn new(rules_dir: PathBuf) -> Result<Self> {
+        Self::with_variables(rules_dir, None)
+    }
+
+    /// Create a new YAML rule loader with variables
+    pub fn with_variables(
+        rules_dir: PathBuf,
+        variables: Option<serde_yaml::Value>,
+    ) -> Result<Self> {
         Ok(Self {
             validator: YamlRuleValidator::new()?,
             template_engine: TemplateEngine::new(),
             rules_dir,
+            variables,
         })
     }
 
@@ -105,7 +134,7 @@ impl YamlRuleLoader {
         self.template_engine.load_templates(&self.rules_dir).await?;
 
         // Load rule files
-        for entry in WalkDir::new(&self.rules_dir) {
+        for entry in WalkDir::new(&self.rules_dir).follow_links(false) {
             let entry = entry.map_err(|e| crate::ValidationError::Io(std::io::Error::other(e)))?;
             let path = entry.path();
 
@@ -127,7 +156,7 @@ impl YamlRuleLoader {
         let yaml_value: serde_yaml::Value =
             serde_yaml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
-                message: format!("YAML parse error: {}", e),
+                message: format!("YAML parse error: {e}"),
             })?;
 
         // Check if this is a template
@@ -143,8 +172,24 @@ impl YamlRuleLoader {
         // Apply template if specified
         let processed_yaml =
             if let Some(template_name) = yaml_value.get("_template").and_then(|v| v.as_str()) {
+                // Merge variables into rule definition so template specific logic can access them
+                let template_args = if let Some(vars) = &self.variables {
+                    let mut args = vars.clone();
+                    // Simple shallow merge of rule over variables (for template arguments)
+                    if let serde_yaml::Value::Mapping(args_map) = &mut args
+                        && let serde_yaml::Value::Mapping(rule_map) = &yaml_value
+                    {
+                        for (k, v) in rule_map {
+                            args_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    args
+                } else {
+                    yaml_value.clone()
+                };
+
                 self.template_engine
-                    .apply_template(template_name, &yaml_value)?
+                    .apply_template(template_name, &template_args)?
             } else {
                 yaml_value
             };
@@ -158,18 +203,25 @@ impl YamlRuleLoader {
                 processed_yaml
             };
 
-        // Convert to JSON for validation
+        // Substitute globals if provided
+        let mut final_yaml = processed_yaml;
+        if let Some(vars) = &self.variables {
+            self.template_engine
+                .substitute_variables(&mut final_yaml, vars)?;
+        }
+
+        // Convert to JSON for validating
         let json_value: serde_json::Value =
-            serde_json::to_value(processed_yaml).map_err(|e| crate::ValidationError::Parse {
+            serde_json::to_value(final_yaml).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
-                message: format!("YAML to JSON conversion error: {}", e),
+                message: format!("YAML to JSON conversion error: {e}"),
             })?;
 
         // Validate against schema
         self.validator.validate_rule(&json_value)?;
 
         // Convert to validated rule
-        let validated_rule = self.yaml_to_validated_rule(json_value)?;
+        let validated_rule = self.yaml_to_validated_rule(&json_value)?;
 
         Ok(vec![validated_rule])
     }
@@ -180,8 +232,9 @@ impl YamlRuleLoader {
             && !path.to_string_lossy().contains("/templates/")
     }
 
-    /// Convert YAML/JSON value to ValidatedRule
-    fn yaml_to_validated_rule(&self, value: serde_json::Value) -> Result<ValidatedRule> {
+    /// Convert YAML/JSON value to `ValidatedRule`
+    #[allow(clippy::too_many_lines)]
+    fn yaml_to_validated_rule(&self, value: &serde_json::Value) -> Result<ValidatedRule> {
         let obj = value
             .as_object()
             .ok_or_else(|| crate::ValidationError::Config("Rule must be an object".to_string()))?;
@@ -346,12 +399,11 @@ impl YamlRuleLoader {
         // For now, just search in the rules directory
         for entry in WalkDir::new(&self.rules_dir).into_iter().flatten() {
             let path = entry.path();
-            if self.is_rule_file(path) {
-                if let Ok(content) = std::fs::read_to_string(path) {
-                    if content.contains(&format!("id: {}", rule_id)) {
-                        return Some(path.to_path_buf());
-                    }
-                }
+            if self.is_rule_file(path)
+                && let Ok(content) = std::fs::read_to_string(path)
+                && content.contains(&format!("id: {rule_id}"))
+            {
+                return Some(path.to_path_buf());
             }
         }
         None

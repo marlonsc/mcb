@@ -7,7 +7,6 @@
 //!
 //! | Provider | Type | Status |
 //! |----------|------|--------|
-//! | NullEmbeddingProvider | Testing | Complete |
 //! | OllamaEmbeddingProvider | Local | Complete |
 //! | OpenAIEmbeddingProvider | Cloud | Complete |
 //! | VoyageAIEmbeddingProvider | Cloud | Complete |
@@ -18,7 +17,7 @@
 //! ## Provider Selection Guide
 //!
 //! ### Development/Testing
-//! - **Default**: Use `NullEmbeddingProvider` for unit tests
+//! - **Default**: Use `FastEmbedProvider` for local testing (no external dependencies)
 //!
 //! ### Local/Privacy-First
 //! - **Ollama**: Local LLM server with embedding models
@@ -29,24 +28,18 @@
 //! - **VoyageAI**: Optimized for code embeddings
 //! - **Gemini**: Google ecosystem integration
 
-#[cfg(feature = "embedding-anthropic")]
 pub mod anthropic;
-#[cfg(feature = "embedding-fastembed")]
 pub mod fastembed;
 pub mod gemini;
 pub(crate) mod helpers;
-pub mod null;
 pub mod ollama;
 pub mod openai;
 pub mod voyageai;
 
 // Re-export for convenience
-#[cfg(feature = "embedding-anthropic")]
 pub use anthropic::AnthropicEmbeddingProvider;
-#[cfg(feature = "embedding-fastembed")]
 pub use fastembed::FastEmbedProvider;
 pub use gemini::GeminiEmbeddingProvider;
-pub use null::NullEmbeddingProvider;
 pub use ollama::OllamaEmbeddingProvider;
 pub use openai::OpenAIEmbeddingProvider;
 pub use voyageai::VoyageAIEmbeddingProvider;

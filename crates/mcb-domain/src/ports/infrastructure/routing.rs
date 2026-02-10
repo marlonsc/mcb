@@ -5,10 +5,12 @@
 //! vector stores, and other backend services based on health, cost,
 //! and quality requirements.
 
-use crate::error::Result;
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::error::Result;
 
 /// Health status for a provider
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

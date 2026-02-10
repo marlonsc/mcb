@@ -1,6 +1,6 @@
 # Documentation Templates
 
-This directory contains templates and standards for MCP Context Browser documentation.
+This directory contains templates and standards for Memory Context Browser documentation.
 
 ## 📋 Available Templates
 

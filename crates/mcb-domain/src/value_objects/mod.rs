@@ -21,15 +21,20 @@ pub mod browse;
 pub mod config;
 /// Semantic embedding value objects
 pub mod embedding;
+pub mod ids;
 /// Search-related value objects
 pub mod search;
 /// Type definitions for dynamic domain concepts
 pub mod types;
 
 // Re-export commonly used value objects
-pub use browse::{CollectionInfo, FileInfo};
+pub use browse::{
+    CollectionInfo, FileInfo, FileNode, FileTreeNode, HighlightCategory, HighlightSpan,
+    HighlightedCode,
+};
 pub use config::{CacheConfig, EmbeddingConfig, VectorStoreConfig};
 pub use embedding::Embedding;
+pub use ids::*;
 pub use search::SearchResult;
 pub use types::{
     CacheProviderKind, EmbeddingProviderKind, Language, OperationType, SupportedLanguage,

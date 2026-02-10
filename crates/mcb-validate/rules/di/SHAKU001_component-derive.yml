@@ -7,13 +7,13 @@ enabled: true
 engine: "rust-rule-engine"
 
 description: "Port implementation missing #[derive(Component)]"
-rationale: "All port implementations must be Shaku components for DI"
+rationale: "All port implementations must be dill providers for DI (ADR-029)"
 
 rule: |
-  rule ComponentDeriveRequired "Check for Component derive" {
-      when
-          AST.Struct(implements_port == true) &&
-          !HasAttribute("derive(Component)")
-      then
-          Violation("Port implementation missing #[derive(Component)]");
-  }
+    rule ComponentDeriveRequired "Check for Component derive" {
+        when
+            AST.Struct(implements_port == true) &&
+            !HasAttribute("derive(Component)")
+        then
+            Violation("Port implementation missing #[derive(Component)]");
+    }

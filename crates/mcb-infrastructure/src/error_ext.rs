@@ -3,8 +3,9 @@
 //! Provides context extension methods for domain errors and infrastructure-specific
 //! error handling utilities.
 
-use mcb_domain::error::{Error, Result};
 use std::fmt;
+
+use mcb_domain::error::{Error, Result};
 
 /// Extension trait for adding context to errors
 ///

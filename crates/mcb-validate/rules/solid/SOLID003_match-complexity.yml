@@ -11,15 +11,15 @@ rationale: "Consider using polymorphism or strategy pattern"
 
 patterns:
   match_keyword: '\bmatch\b'
-  match_arrow: '=>'
-  panic_macros: '(panic!|todo!|unimplemented!)'
+  match_arrow: "=>"
+  panic_macros: "(panic!|todo!|unimplemented!)"
   impl_only_decl: 'impl(?:<[^>]*>)?\s+([A-Z][a-zA-Z0-9_]*)'
   string_match: 'match\s+\w+\.as_str\(\)|match\s+[&]?\w+\s*\{\s*"[^"]+"\s*=>'
   string_arm: '^\s*"[^"]+"\s*=>'
 
 config:
   max_arms: 10
-  exclude_patterns: ["**/tests/**"]
+  exclude_patterns: []
 
 rule: |
   rule MatchComplexity "Check match arm count" {

@@ -7,7 +7,6 @@ use mcb_validate::ast::UnwrapDetector;
 use mcb_validate::clean_architecture::CleanArchitectureValidator;
 use mcb_validate::duplication::{tokenize_source, DuplicationAnalyzer, DuplicationThresholds};
 use mcb_validate::generic_reporter::GenericReporter;
-use mcb_validate::validator_trait::Validator;
 use mcb_validate::violation_trait::Violation;
 use mcb_validate::ValidationConfig;
 use std::fs;
@@ -300,9 +299,7 @@ fn bench_scalability(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("tokenize", multiplier),
             &code,
-            |b, code| {
-                b.iter(|| tokenize_source(black_box(code), "rust"))
-            },
+            |b, code| b.iter(|| tokenize_source(black_box(code), "rust")),
         );
 
         group.bench_with_input(

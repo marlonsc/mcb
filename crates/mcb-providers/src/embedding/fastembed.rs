@@ -5,11 +5,10 @@
 
 use async_trait::async_trait;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
-use tokio::sync::{mpsc, oneshot};
-
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use tokio::sync::{mpsc, oneshot};
 
 use crate::constants::EMBEDDING_DIMENSION_FASTEMBED_DEFAULT;
 
@@ -183,10 +182,10 @@ impl FastEmbedActor {
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
+use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 
 /// Parse model name string to EmbeddingModel enum
 fn parse_embedding_model(model_name: &str) -> EmbeddingModel {

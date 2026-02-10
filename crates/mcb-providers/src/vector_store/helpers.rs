@@ -77,3 +77,29 @@ pub fn parse_score_from_json(
         .or_else(|| item[fallback_field].as_f64())
         .unwrap_or(0.0)
 }
+
+/// Build a list of [`FileInfo`] from search results by grouping on `file_path`.
+///
+/// This logic is shared across vector store providers (Pinecone, Qdrant, etc.)
+/// whose `list_file_paths` implementation follows the same pattern:
+/// call `list_vectors`, then aggregate results by file.
+pub fn build_file_info_from_results(
+    results: Vec<mcb_domain::value_objects::SearchResult>,
+) -> Vec<mcb_domain::value_objects::FileInfo> {
+    use std::collections::HashMap;
+
+    let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
+    for result in results {
+        let entry = file_map
+            .entry(result.file_path)
+            .or_insert_with(|| (0, result.language));
+        entry.0 += 1;
+    }
+
+    file_map
+        .into_iter()
+        .map(|(path, (chunk_count, language))| {
+            mcb_domain::value_objects::FileInfo::new(path, chunk_count, language, None)
+        })
+        .collect()
+}

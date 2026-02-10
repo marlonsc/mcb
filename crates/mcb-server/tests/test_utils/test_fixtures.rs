@@ -2,21 +2,83 @@
 //!
 //! Provides factory functions for creating test data and temporary directories.
 
-use mcb_application::ValidationService;
-use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
+use std::path::{Path, PathBuf};
+
 use mcb_domain::SearchResult;
-use mcb_infrastructure::cache::provider::SharedCacheProvider;
+use mcb_domain::ports::services::IndexingResult;
 use mcb_infrastructure::config::types::AppConfig;
-use mcb_infrastructure::crypto::CryptoService;
 use mcb_infrastructure::di::bootstrap::init_app;
-use mcb_infrastructure::di::modules::domain_services::{
-    DomainServicesFactory, ServiceDependencies,
-};
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
-use std::path::PathBuf;
-use std::sync::Arc;
 use tempfile::TempDir;
+
+#[allow(unused_imports)]
+use crate::test_utils::mock_services::MockMemoryRepository;
+
+// -----------------------------------------------------------------------------
+// Golden test helpers (shared by tests/golden and integration)
+// -----------------------------------------------------------------------------
+
+pub const GOLDEN_COLLECTION: &str = "mcb_golden_test";
+
+/// Path to sample_codebase fixture (used by golden tests).
+pub fn sample_codebase_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample_codebase")
+}
+
+/// Extract text content from CallToolResult for assertions (joined by space).
+pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
+    extract_text_content_with_sep(&res.content, " ")
+}
+
+/// Extract text content from Content slice, joining with newline.
+///
+/// Shared helper used by golden integration tests and tools e2e tests.
+#[allow(dead_code)]
+pub fn extract_text_content(content: &[rmcp::model::Content]) -> String {
+    extract_text_content_with_sep(content, "\n")
+}
+
+/// Internal helper: extract text from Content with a configurable separator.
+fn extract_text_content_with_sep(content: &[rmcp::model::Content], sep: &str) -> String {
+    content
+        .iter()
+        .filter_map(|c| {
+            if let Ok(v) = serde_json::to_value(c) {
+                v.get("text").and_then(|t| t.as_str()).map(String::from)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(sep)
+}
+
+/// Parse "**Results found:** N" from search response text.
+pub fn golden_parse_results_found(text: &str) -> Option<usize> {
+    let prefix = "**Results found:**";
+    text.find(prefix).and_then(|i| {
+        let rest = text[i + prefix.len()..].trim_start();
+        let num_str: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+        num_str.parse().ok()
+    })
+}
+
+/// Count result lines (each has "📁") in search response.
+pub fn golden_count_result_entries(text: &str) -> usize {
+    text.lines().filter(|line| line.contains("📁")).count()
+}
+
+/// Expected files in sample_codebase for search assertions.
+pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
+    "embedding.rs",
+    "vector_store.rs",
+    "handlers.rs",
+    "cache.rs",
+    "di.rs",
+    "error.rs",
+    "chunking.rs",
+];
 
 /// Create a temporary codebase directory with sample code files
 pub fn create_temp_codebase() -> (TempDir, PathBuf) {
@@ -79,44 +141,6 @@ pub fn create_test_indexing_result(
     }
 }
 
-/// Create a test indexing result with specific error messages
-pub fn create_test_indexing_result_with_errors(
-    files_processed: usize,
-    chunks_created: usize,
-    errors: Vec<String>,
-) -> IndexingResult {
-    IndexingResult {
-        files_processed,
-        chunks_created,
-        files_skipped: 0,
-        errors,
-        operation_id: None,
-        status: "completed".to_string(),
-    }
-}
-
-/// Create an idle indexing status (not indexing)
-pub fn create_idle_status() -> IndexingStatus {
-    IndexingStatus {
-        is_indexing: false,
-        progress: 0.0,
-        current_file: None,
-        total_files: 0,
-        processed_files: 0,
-    }
-}
-
-/// Create an in-progress indexing status
-pub fn create_in_progress_status(progress: f64, current_file: &str) -> IndexingStatus {
-    IndexingStatus {
-        is_indexing: true,
-        progress,
-        current_file: Some(current_file.to_string()),
-        total_files: 100,
-        processed_files: (progress * 100.0) as usize,
-    }
-}
-
 /// Create a single test search result
 pub fn create_test_search_result(
     file_path: &str,
@@ -148,59 +172,42 @@ pub fn create_test_search_results(count: usize) -> Vec<SearchResult> {
         .collect()
 }
 
-/// Create an MCP server with null providers for testing
+/// Create an MCP server with default providers (SQLite, EdgeVec, FastEmbed, Tokio)
 ///
-/// This uses the default AppConfig which initializes null providers,
-/// suitable for unit tests that don't need real embedding/vector store.
-pub async fn create_test_mcp_server() -> McpServer {
-    let config = AppConfig::default();
-    let ctx = init_app(config.clone()).await.expect("Failed to init app");
+/// This uses the default AppConfig and initializes real providers,
+/// suitable for all tests unless specific mocks are required.
+///
+/// Returns (server, temp_dir) - temp_dir must be kept alive by caller.
+pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
+    // Create temp dir for SQLite DB and other files
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
 
-    // Get providers from context
-    let embedding_provider = ctx.embedding_handle().get();
-    let vector_store_provider = ctx.vector_store_handle().get();
-    let language_chunker = ctx.language_handle().get();
-    let cache_provider = ctx.cache_handle().get();
-    let indexing_ops = ctx.indexing();
-    let event_bus = ctx.event_bus();
+    let mut config = AppConfig::default();
+    // Configure SQLite path to use temp dir
+    config.auth.user_db_path = Some(db_path.clone());
 
-    // Create shared cache provider for domain services factory
-    let shared_cache = SharedCacheProvider::from_arc(cache_provider);
+    let ctx = init_app(config).await.expect("Failed to init app");
 
-    // Create crypto service with random key for tests
-    let master_key = CryptoService::generate_master_key();
-    let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
-
-    let memory_repository = Arc::new(crate::test_utils::mock_services::MockMemoryRepository::new());
-
-    let deps = ServiceDependencies {
-        project_id: "test-project".to_string(),
-        cache: shared_cache,
-        crypto,
-        config,
-        embedding_provider,
-        vector_store_provider,
-        language_chunker,
-        indexing_ops,
-        event_bus,
-        memory_repository,
-    };
-
-    let services = DomainServicesFactory::create_services(deps)
+    let services = ctx
+        .build_domain_services()
         .await
         .expect("Failed to create services");
 
-    let validation_service = Arc::new(ValidationService::new());
-
-    McpServerBuilder::new()
+    let server = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
-        .with_validation_service(validation_service)
+        .with_validation_service(services.validation_service)
         .with_memory_service(services.memory_service)
+        .with_agent_session_service(services.agent_session_service)
+        .with_project_service(services.project_service)
+        .with_project_workflow_service(ctx.project_workflow_service())
         .with_vcs_provider(services.vcs_provider)
         .build()
-        .expect("Failed to build MCP server")
+        .expect("Failed to build MCP server");
+
+    (server, temp_dir)
 }
 
 #[cfg(test)]
@@ -209,16 +216,10 @@ mod tests {
 
     /// Smoke test so fixture helpers are not reported as dead code in the unit test target.
     #[test]
-    fn fixture_helpers_used_in_unit_target() {
+    fn test_fixture_helpers_used_in_unit_target() {
         let (_temp, path) = create_temp_codebase();
         assert!(path.join("lib.rs").exists());
         let r = create_test_indexing_result(2, 10, 0);
         assert_eq!(r.files_processed, 2);
-        let r2 = create_test_indexing_result_with_errors(1, 5, vec!["err".to_string()]);
-        assert_eq!(r2.errors.len(), 1);
-        let idle = create_idle_status();
-        assert!(!idle.is_indexing);
-        let prog = create_in_progress_status(0.5, "src/main.rs");
-        assert!(prog.is_indexing);
     }
 }

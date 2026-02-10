@@ -1,4 +1,16 @@
-# ADR 001: Modular Crates Architecture
+---
+adr: 1
+title: Modular Crates Architecture
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [2, 3, 4, 5]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
+## ADR 001: Modular Crates Architecture
 
 ## Status
 
@@ -8,7 +20,7 @@
 
 ## Context
 
-Initially, the MCP Context Browser had a monolithic architecture. As the project grew, the need for better code organization, separation of concerns, and component reusability emerged. We evaluated adopting a modular architecture by dividing the system into multiple Rust crates, each responsible for a specific domain or functionality (e.g., core server crate, context providers crate, inter-module communication crate, etc.). We also considered how to manage the orderly initialization and shutdown of modules in a resilient manner.
+Initially, the Memory Context Browser had a monolithic architecture. As the project grew, the need for better code organization, separation of concerns, and component reusability emerged. We evaluated adopting a modular architecture by dividing the system into multiple Rust crates, each responsible for a specific domain or functionality (e.g., core server crate, context providers crate, inter-module communication crate, etc.). We also considered how to manage the orderly initialization and shutdown of modules in a resilient manner.
 
 ## Decision
 

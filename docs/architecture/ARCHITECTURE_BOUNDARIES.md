@@ -1,10 +1,10 @@
 # Architecture Boundaries - Layer Rules and Module Ownership
 
-**Version**: v0.1.5
+**Version**: v0.2.0
 **Status**: Baseline Documentation
 **Last Updated**: 2026-01-28
 
-This document defines the strict architectural boundaries for the MCB (MCP Context Browser) project following Clean Architecture principles with 8 workspace crates.
+This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 8 workspace crates.
 
 ---
 
@@ -272,7 +272,7 @@ pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>>
 
 -   MCP server: `MCPServer`
 -   Transport: `HttpTransport`, `StdioTransport`
--   Handlers: `index_codebase`, `search_code`, `get_indexing_status`, `clear_index`
+-   Handlers: `index (action=start)`, `search (resource=code)`, `index (action=status)`, `index (action=clear)`
 
 **Module Structure**:
 
@@ -471,7 +471,6 @@ Architecture validation: 0 violations
 **Phase 4**: Quality Analysis
 
 -   Visibility rules (VIS001: `pub` vs `pub(crate)`)
--   Code quality (QUAL020: unjustified `#[allow(dead_code)]`)
 -   Documentation (DOC002: missing struct docs)
 
 **Phase 5**: Integration Validation
@@ -535,7 +534,7 @@ make validate QUICK=1  # Fast validation
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v0.1.5 | 2026-01-28 | Baseline documentation for architecture boundaries |
+| v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
 
 ---
 

@@ -5,6 +5,13 @@
 //! The auth, snapshot, and sync tests require the `test-utils` feature:
 //! `cargo test -p mcb-infrastructure --test unit --features test-utils`
 
+// Shared test utilities (single declaration for all unit tests)
+#[path = "test_utils/mod.rs"]
+mod test_utils;
+
+#[path = "unit/admin_tests.rs"]
+mod admin_tests;
+
 #[path = "unit/constants_tests.rs"]
 mod constants_tests;
 
@@ -13,6 +20,9 @@ mod crypto_tests;
 
 #[path = "unit/error_ext_tests.rs"]
 mod error_ext_tests;
+
+#[path = "unit/events_tests.rs"]
+mod events_tests;
 
 #[path = "unit/health_tests.rs"]
 mod health_tests;
@@ -35,23 +45,9 @@ mod config_figment_tests;
 #[path = "unit/prometheus_metrics_tests.rs"]
 mod prometheus_metrics_tests;
 
-// Validation service tests - require validation feature
-#[cfg(feature = "validation")]
+// Validation service tests
 #[path = "unit/validation_service_tests.rs"]
 mod validation_service_tests;
-
-// Infrastructure service tests (require test-utils feature)
-#[cfg(feature = "test-utils")]
-#[path = "unit/auth_tests.rs"]
-mod auth_tests;
-
-#[cfg(feature = "test-utils")]
-#[path = "unit/snapshot_tests.rs"]
-mod snapshot_tests;
-
-#[cfg(feature = "test-utils")]
-#[path = "unit/sync_tests.rs"]
-mod sync_tests;
 
 #[path = "unit/file_hash_tests.rs"]
 mod file_hash_tests;
@@ -64,3 +60,12 @@ mod memory_fts_tests;
 
 #[path = "unit/memory_repository_tests.rs"]
 mod memory_repository_tests;
+
+// #[path = "unit/memory_provider_tests.rs"]
+// mod memory_provider_tests;
+
+#[path = "unit/mcp_context_config_tests.rs"]
+mod mcp_context_config_tests;
+
+#[path = "unit/service_tests.rs"]
+mod service_tests;

@@ -1,86 +1,116 @@
 //! KISS Principle Validation
 //!
 //! Validates code against the KISS principle (Keep It Simple, Stupid):
-//! - Struct field count (max 7)
+//! - Struct field count (max 12)
 //! - Function parameter count (max 5)
 //! - Builder complexity (max 7 optional fields)
 //! - Nesting depth (max 3 levels)
 //! - Function length (max 50 lines)
 
+use std::path::PathBuf;
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
+
+use crate::config::KISSRulesConfig;
 use crate::thresholds::{
     MAX_BUILDER_FIELDS, MAX_DI_CONTAINER_FIELDS, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS,
     MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS,
 };
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use walkdir::WalkDir;
 
 /// KISS violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum KissViolation {
-    /// Struct with too many fields (>7)
+    /// Struct with too many fields (>12)
     StructTooManyFields {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the struct.
         struct_name: String,
+        /// Number of fields in the struct.
         field_count: usize,
+        /// Maximum allowed fields.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Function with too many parameters (>5)
     FunctionTooManyParams {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the function.
         function_name: String,
+        /// Number of parameters in the function.
         param_count: usize,
+        /// Maximum allowed parameters.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Builder with too many optional fields (>7)
     BuilderTooComplex {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the builder struct.
         builder_name: String,
+        /// Number of optional fields in the builder.
         optional_field_count: usize,
+        /// Maximum allowed optional fields.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Nested conditionals too deep (>3 levels)
     DeepNesting {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Current nesting level.
         nesting_level: usize,
+        /// Maximum allowed nesting level.
         max_allowed: usize,
+        /// Contextual code snippet.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Function too long (>50 lines)
     FunctionTooLong {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the function.
         function_name: String,
+        /// Number of lines in the function.
         line_count: usize,
+        /// Maximum allowed lines.
         max_allowed: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
 impl KissViolation {
+    /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::StructTooManyFields { severity, .. } => *severity,
-            Self::FunctionTooManyParams { severity, .. } => *severity,
-            Self::BuilderTooComplex { severity, .. } => *severity,
-            Self::DeepNesting { severity, .. } => *severity,
-            Self::FunctionTooLong { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -198,31 +228,31 @@ impl Violation for KissViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::StructTooManyFields { severity, .. } => *severity,
-            Self::FunctionTooManyParams { severity, .. } => *severity,
-            Self::BuilderTooComplex { severity, .. } => *severity,
-            Self::DeepNesting { severity, .. } => *severity,
-            Self::FunctionTooLong { severity, .. } => *severity,
+            Self::StructTooManyFields { severity, .. }
+            | Self::FunctionTooManyParams { severity, .. }
+            | Self::BuilderTooComplex { severity, .. }
+            | Self::DeepNesting { severity, .. }
+            | Self::FunctionTooLong { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::StructTooManyFields { file, .. } => Some(file),
-            Self::FunctionTooManyParams { file, .. } => Some(file),
-            Self::BuilderTooComplex { file, .. } => Some(file),
-            Self::DeepNesting { file, .. } => Some(file),
-            Self::FunctionTooLong { file, .. } => Some(file),
+            Self::StructTooManyFields { file, .. }
+            | Self::FunctionTooManyParams { file, .. }
+            | Self::BuilderTooComplex { file, .. }
+            | Self::DeepNesting { file, .. }
+            | Self::FunctionTooLong { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::StructTooManyFields { line, .. } => Some(*line),
-            Self::FunctionTooManyParams { line, .. } => Some(*line),
-            Self::BuilderTooComplex { line, .. } => Some(*line),
-            Self::DeepNesting { line, .. } => Some(*line),
-            Self::FunctionTooLong { line, .. } => Some(*line),
+            Self::StructTooManyFields { line, .. }
+            | Self::FunctionTooManyParams { line, .. }
+            | Self::BuilderTooComplex { line, .. }
+            | Self::DeepNesting { line, .. }
+            | Self::FunctionTooLong { line, .. } => Some(*line),
         }
     }
 
@@ -234,9 +264,8 @@ impl Violation for KissViolation {
                 max_allowed,
                 ..
             } => Some(format!(
-                "Split '{}' into smaller structs or use composition. \
-                 {} fields exceeds the maximum of {}.",
-                struct_name, field_count, max_allowed
+                "Split '{struct_name}' into smaller structs or use composition. \
+                 {field_count} fields exceeds the maximum of {max_allowed}."
             )),
             Self::FunctionTooManyParams {
                 function_name,
@@ -244,9 +273,8 @@ impl Violation for KissViolation {
                 max_allowed,
                 ..
             } => Some(format!(
-                "Refactor '{}' to use a config/options struct instead of {} parameters. \
-                 Maximum allowed is {}.",
-                function_name, param_count, max_allowed
+                "Refactor '{function_name}' to use a config/options struct instead of {param_count} parameters. \
+                 Maximum allowed is {max_allowed}."
             )),
             Self::BuilderTooComplex {
                 builder_name,
@@ -254,9 +282,8 @@ impl Violation for KissViolation {
                 max_allowed,
                 ..
             } => Some(format!(
-                "Split '{}' into smaller builders or use builder composition. \
-                 {} optional fields exceeds the maximum of {}.",
-                builder_name, optional_field_count, max_allowed
+                "Split '{builder_name}' into smaller builders or use builder composition. \
+                 {optional_field_count} optional fields exceeds the maximum of {max_allowed}."
             )),
             Self::DeepNesting {
                 nesting_level,
@@ -264,8 +291,7 @@ impl Violation for KissViolation {
                 ..
             } => Some(format!(
                 "Extract nested logic into separate functions using early returns or guard clauses. \
-                 Nesting depth {} exceeds the maximum of {}.",
-                nesting_level, max_allowed
+                 Nesting depth {nesting_level} exceeds the maximum of {max_allowed}."
             )),
             Self::FunctionTooLong {
                 function_name,
@@ -273,9 +299,8 @@ impl Violation for KissViolation {
                 max_allowed,
                 ..
             } => Some(format!(
-                "Break '{}' into smaller, focused functions. \
-                 {} lines exceeds the maximum of {}.",
-                function_name, line_count, max_allowed
+                "Break '{function_name}' into smaller, focused functions. \
+                 {line_count} lines exceeds the maximum of {max_allowed}."
             )),
         }
     }
@@ -284,23 +309,32 @@ impl Violation for KissViolation {
 /// KISS principle validator
 pub struct KissValidator {
     config: ValidationConfig,
+    rules: KISSRulesConfig,
+    /// Maximum allowed fields in a struct.
     max_struct_fields: usize,
+    /// Maximum allowed parameters in a function.
     max_function_params: usize,
+    /// Maximum allowed optional fields in a builder.
     max_builder_fields: usize,
+    /// Maximum allowed nesting depth.
     max_nesting_depth: usize,
+    /// Maximum allowed lines in a function.
     max_function_lines: usize,
 }
 
 impl KissValidator {
     /// Create a new KISS validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.kiss)
     }
 
     /// Create a validator with custom configuration for multi-directory support
-    pub fn with_config(config: ValidationConfig) -> Self {
+    pub fn with_config(config: ValidationConfig, rules: &KISSRulesConfig) -> Self {
         Self {
             config,
+            rules: rules.clone(),
             max_struct_fields: MAX_STRUCT_FIELDS,
             max_function_params: MAX_FUNCTION_PARAMS,
             max_builder_fields: MAX_BUILDER_FIELDS,
@@ -310,12 +344,14 @@ impl KissValidator {
     }
 
     /// Set custom max struct fields
+    #[must_use]
     pub fn with_max_struct_fields(mut self, max: usize) -> Self {
         self.max_struct_fields = max;
         self
     }
 
     /// Set custom max function parameters
+    #[must_use]
     pub fn with_max_function_params(mut self, max: usize) -> Self {
         self.max_function_params = max;
         self
@@ -323,6 +359,9 @@ impl KissValidator {
 
     /// Run all KISS validations
     pub fn validate_all(&self) -> Result<Vec<KissViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_struct_fields()?);
         violations.extend(self.validate_function_params()?);
@@ -339,12 +378,12 @@ impl KissValidator {
             Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{").expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -366,16 +405,14 @@ impl KissValidator {
                         test_brace_depth = brace_depth;
                     }
 
-                    // Track brace depth
-                    brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                    brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                    let open_c = line.chars().filter(|c| *c == '{').count();
+                    let close_c = line.chars().filter(|c| *c == '}').count();
+                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
 
-                    // Exit test module when braces close
                     if in_test_module && brace_depth < test_brace_depth {
                         in_test_module = false;
                     }
-
-                    // Skip test modules
                     if in_test_module {
                         continue;
                     }
@@ -428,17 +465,12 @@ impl KissValidator {
         .expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
-                continue;
-            }
-
-            // Skip mcb-providers - complex storage operations by design (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -467,16 +499,14 @@ impl KissValidator {
                         test_brace_depth = brace_depth;
                     }
 
-                    // Track brace depth
-                    brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                    brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                    let open_c = line.chars().filter(|c| *c == '{').count();
+                    let close_c = line.chars().filter(|c| *c == '}').count();
+                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
 
-                    // Exit test module when braces close
                     if in_test_module && brace_depth < test_brace_depth {
                         in_test_module = false;
                     }
-
-                    // Skip test modules
                     if in_test_module {
                         continue;
                     }
@@ -527,12 +557,12 @@ impl KissValidator {
         let option_pattern = Regex::new(r"Option<").expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -573,17 +603,12 @@ impl KissValidator {
             Regex::new(r"\b(if|match|for|while|loop)\b").expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
-                continue;
-            }
-
-            // Skip mcb-providers - complex storage operations by design (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -621,9 +646,8 @@ impl KissValidator {
 
                         // Check if too deep and not already reported nearby
                         if nesting_depth > self.max_nesting_depth {
-                            let nearby_reported = reported_lines
-                                .iter()
-                                .any(|&l| (l as isize - line_num as isize).abs() < 5);
+                            let nearby_reported =
+                                reported_lines.iter().any(|&l| l.abs_diff(line_num) < 5);
 
                             if !nearby_reported {
                                 violations.push(KissViolation::DeepNesting {
@@ -639,12 +663,10 @@ impl KissValidator {
                         }
                     }
 
-                    // Track brace depth for control flow
                     let open_braces = line.chars().filter(|c| *c == '{').count();
                     let close_braces = line.chars().filter(|c| *c == '}').count();
-
-                    brace_depth += open_braces as i32;
-                    brace_depth -= close_braces as i32;
+                    brace_depth += i32::try_from(open_braces).unwrap_or(i32::MAX);
+                    brace_depth -= i32::try_from(close_braces).unwrap_or(i32::MAX);
 
                     // Decrease nesting on closing braces
                     if close_braces > 0 && nesting_depth > 0 {
@@ -669,17 +691,12 @@ impl KissValidator {
             Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)").expect("Invalid regex");
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
-                continue;
-            }
-
-            // Skip mcb-providers - complex provider implementations by design (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -717,16 +734,14 @@ impl KissValidator {
                         test_brace_depth = brace_depth;
                     }
 
-                    // Track brace depth
-                    brace_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                    brace_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                    let open_c = line.chars().filter(|c| *c == '{').count();
+                    let close_c = line.chars().filter(|c| *c == '}').count();
+                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
 
-                    // Exit test module when braces close
                     if in_test_module && brace_depth < test_brace_depth {
                         in_test_module = false;
                     }
-
-                    // Skip test modules
                     if in_test_module {
                         continue;
                     }
@@ -898,22 +913,19 @@ impl KissValidator {
 
         line_count
     }
-}
 
-impl crate::validator_trait::Validator for KissValidator {
-    fn name(&self) -> &'static str {
-        "kiss"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates KISS principle (Keep It Simple, Stupid)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
+
+impl_validator!(
+    KissValidator,
+    "kiss",
+    "Validates KISS principle (Keep It Simple, Stupid)"
+);

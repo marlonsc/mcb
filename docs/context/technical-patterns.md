@@ -5,7 +5,7 @@
 
 ## Overview
 
-The MCP Context Browser keeps its codebase aligned with Clean Architecture layers and distributed-provider discovery so the runtime stays lean while each crate can evolve independently.
+The Memory Context Browser keeps its codebase aligned with Clean Architecture layers and distributed-provider discovery so the runtime stays lean while each crate can evolve independently.
 
 ## Key Patterns
 
@@ -68,7 +68,7 @@ impl Error {
 
 -   Phase 6 "Memory Search" is in progress with plan 06-02 (Hybrid Search Implementation) next in line.
 -   The project batches FTS5 infrastructure work (triggers, deduplication by SHA256) before layering vector search on top again.
-**When to use:** Align any new feature with the release branch `release/v0.1.5` and cross-check against the plan checklist so Phase 6 artifacts stay coordinated.
+**When to use:** Align any new feature with the release branch `release/v0.2.0` and cross-check against the plan checklist so Phase 6 artifacts stay coordinated.
 
 ### Metrics awareness
 

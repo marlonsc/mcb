@@ -44,7 +44,11 @@ impl UniversalLanguageChunker {
     }
 
     /// Split content by semantic boundaries
-    fn split_by_semantic_boundaries(&self, content: &str, nodes: &[AstNode]) -> Vec<(usize, usize)> {
+    fn split_by_semantic_boundaries(
+        &self,
+        content: &str,
+        nodes: &[AstNode],
+    ) -> Vec<(usize, usize)> {
         // Semantic splitting logic
         Vec::new()
     }

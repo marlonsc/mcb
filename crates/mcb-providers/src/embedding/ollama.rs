@@ -6,18 +6,16 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use reqwest::Client;
-
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use reqwest::Client;
 
 use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
     EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
     EMBEDDING_DIMENSION_OLLAMA_NOMIC,
 };
-
 /// Error message for request timeouts
 use crate::utils::HttpResponseUtils;
 
@@ -178,16 +176,16 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
+use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 
 /// Factory function for creating Ollama embedding provider instances.
 fn ollama_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use super::helpers::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
+    use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let base_url = config
         .base_url

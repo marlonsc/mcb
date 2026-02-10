@@ -3,11 +3,11 @@
 //! Defines the LanguageProcessor trait that provides a common interface
 //! for language-specific chunking logic.
 
-use super::config::LanguageConfig;
-use super::fallback::GenericFallbackChunker;
-use super::traverser::AstTraverser;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
+
+use super::config::LanguageConfig;
+use super::traverser::AstTraverser;
 
 /// Trait for language-specific processing
 ///
@@ -24,9 +24,6 @@ use mcb_domain::value_objects::Language;
 /// //
 /// // Extract chunks using AST
 /// // let chunks = processor.extract_chunks_with_tree_sitter(&tree, content, "main.rs", &Language::Rust);
-/// //
-/// // Or use fallback for unsupported syntax
-/// // let chunks = processor.extract_chunks_fallback(content, "main.rs", &Language::Rust);
 /// ```
 pub trait LanguageProcessor: Send + Sync {
     /// Get language configuration
@@ -36,14 +33,6 @@ pub trait LanguageProcessor: Send + Sync {
     fn extract_chunks_with_tree_sitter(
         &self,
         tree: &tree_sitter::Tree,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk>;
-
-    /// Extract chunks using fallback method
-    fn extract_chunks_fallback(
-        &self,
         content: &str,
         file_name: &str,
         language: &Language,
@@ -118,14 +107,5 @@ impl LanguageProcessor for BaseProcessor {
         }
 
         chunks
-    }
-
-    fn extract_chunks_fallback(
-        &self,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        GenericFallbackChunker::new(self.config()).chunk_with_patterns(content, file_name, language)
     }
 }

@@ -1,4 +1,16 @@
-# ADR 031: Documentation Excellence
+---
+adr: 31
+title: Documentation Excellence
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [3, 6, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 031: Documentation Excellence
 
 ## Status
 
@@ -13,7 +25,7 @@ Accepted
 
 ## Context
 
-The MCP Context Browser project has established a SOLID technical foundation with production-ready reliability features, comprehensive observability, and enterprise-grade architecture. However, the documentation remains manually maintained with custom bash scripts, creating a maintenance burden and limiting the project's ability to serve as a reference implementation for documentation excellence in the Rust ecosystem.
+The Memory Context Browser project has established a SOLID technical foundation with production-ready reliability features, comprehensive observability, and enterprise-grade architecture. However, the documentation remains manually maintained with custom bash scripts, creating a maintenance burden and limiting the project's ability to serve as a reference implementation for documentation excellence in the Rust ecosystem.
 
 Current documentation challenges:
 

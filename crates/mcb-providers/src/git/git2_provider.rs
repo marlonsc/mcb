@@ -1,5 +1,7 @@
 //! Git2-based implementation of VcsProvider
 
+use std::path::{Path, PathBuf};
+
 use async_trait::async_trait;
 use git2::{BranchType, Repository, Sort};
 use mcb_domain::{
@@ -9,13 +11,13 @@ use mcb_domain::{
     error::{Error, Result},
     ports::providers::VcsProvider,
 };
-use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 /// Git implementation of VcsProvider using libgit2.
 pub struct Git2Provider;
 
 impl Git2Provider {
+    /// Create a new Git2 provider instance
     #[must_use]
     pub fn new() -> Self {
         Self
@@ -97,21 +99,21 @@ impl VcsProvider for Git2Provider {
         let branches = Self::list_branch_names(&repo)?;
         let remote_url = Self::get_remote_url(&repo);
 
-        Ok(VcsRepository {
+        Ok(VcsRepository::new(
             id,
-            path: path.to_path_buf(),
+            path.to_path_buf(),
             default_branch,
             branches,
             remote_url,
-        })
+        ))
     }
 
     fn repository_id(&self, repo: &VcsRepository) -> RepositoryId {
-        repo.id.clone()
+        repo.id().clone()
     }
 
     async fn list_branches(&self, repo: &VcsRepository) -> Result<Vec<VcsBranch>> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let branches = git_repo
             .branches(Some(BranchType::Local))
@@ -135,20 +137,20 @@ impl VcsProvider for Git2Provider {
                 .map(|c| c.id().to_string())
                 .unwrap_or_default();
 
-            let is_default = name == repo.default_branch;
+            let is_default = name == repo.default_branch();
 
             let upstream = branch
                 .upstream()
                 .ok()
                 .and_then(|u| u.name().ok().flatten().map(String::from));
 
-            result.push(VcsBranch {
-                id: format!("{}::{}", repo.id, name),
+            result.push(VcsBranch::new(
+                format!("{}::{}", repo.id(), name),
                 name,
                 head_commit,
                 is_default,
                 upstream,
-            });
+            ));
         }
 
         Ok(result)
@@ -160,7 +162,7 @@ impl VcsProvider for Git2Provider {
         branch: &str,
         limit: Option<usize>,
     ) -> Result<Vec<VcsCommit>> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let branch_ref = git_repo
             .find_branch(branch, BranchType::Local)
@@ -205,22 +207,22 @@ impl VcsProvider for Git2Provider {
             let author = commit.author();
             let parent_hashes: Vec<String> = commit.parent_ids().map(|id| id.to_string()).collect();
 
-            commits.push(VcsCommit {
-                id: format!("{}:{}", repo.id, oid),
-                hash: oid.to_string(),
-                message: commit.message().unwrap_or("").to_string(),
-                author: author.name().unwrap_or("Unknown").to_string(),
-                author_email: author.email().unwrap_or("").to_string(),
-                timestamp: commit.time().seconds(),
+            commits.push(VcsCommit::new(
+                format!("{}:{}", repo.id(), oid),
+                oid.to_string(),
+                commit.message().unwrap_or("").to_string(),
+                author.name().unwrap_or("Unknown").to_string(),
+                author.email().unwrap_or("").to_string(),
+                commit.time().seconds(),
                 parent_hashes,
-            });
+            ));
         }
 
         Ok(commits)
     }
 
     async fn list_files(&self, repo: &VcsRepository, branch: &str) -> Result<Vec<PathBuf>> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let branch_ref = git_repo
             .find_branch(branch, BranchType::Local)
@@ -239,15 +241,15 @@ impl VcsProvider for Git2Provider {
 
         let mut files = Vec::new();
         tree.walk(git2::TreeWalkMode::PreOrder, |dir, entry| {
-            if entry.kind() == Some(git2::ObjectType::Blob) {
-                if let Some(name) = entry.name() {
-                    let path = if dir.is_empty() {
-                        PathBuf::from(name)
-                    } else {
-                        PathBuf::from(dir).join(name)
-                    };
-                    files.push(path);
-                }
+            if entry.kind() == Some(git2::ObjectType::Blob)
+                && let Some(name) = entry.name()
+            {
+                let path = if dir.is_empty() {
+                    PathBuf::from(name)
+                } else {
+                    PathBuf::from(dir).join(name)
+                };
+                files.push(path);
             }
             git2::TreeWalkResult::Ok
         })
@@ -257,7 +259,7 @@ impl VcsProvider for Git2Provider {
     }
 
     async fn read_file(&self, repo: &VcsRepository, branch: &str, path: &Path) -> Result<String> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let branch_ref = git_repo
             .find_branch(branch, BranchType::Local)
@@ -308,7 +310,7 @@ impl VcsProvider for Git2Provider {
         base_ref: &str,
         head_ref: &str,
     ) -> Result<RefDiff> {
-        let git_repo = Self::open_repo(&repo.path)?;
+        let git_repo = Self::open_repo(repo.path())?;
 
         let base_obj = git_repo
             .revparse_single(base_ref)
@@ -381,7 +383,43 @@ impl VcsProvider for Git2Provider {
             total_deletions,
         })
     }
-}
 
-#[cfg(test)]
-mod tests;
+    async fn list_repositories(&self, root: &Path) -> Result<Vec<VcsRepository>> {
+        use walkdir::WalkDir;
+
+        let mut repositories = Vec::new();
+
+        // Check if root itself is a repository
+        let root_is_repo = root.join(".git").exists();
+        if root_is_repo && let Ok(repo) = self.open_repository(root).await {
+            repositories.push(repo);
+        }
+
+        // Recursively scan subdirectories for repositories (limit depth to 3)
+        // Use walkdir instead of fs::read_dir for recursion
+        let walker = WalkDir::new(root)
+            .min_depth(1)
+            .max_depth(3)
+            .follow_links(false)
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+            .filter(|e| e.file_type().is_dir());
+
+        for entry in walker {
+            let path = entry.path();
+            // Skip .git directories themselves
+            if path.file_name().and_then(|n| n.to_str()) == Some(".git") {
+                continue;
+            }
+
+            // Check for .git child directory
+            if path.join(".git").exists()
+                && let Ok(repo) = self.open_repository(path).await
+            {
+                repositories.push(repo);
+            }
+        }
+
+        Ok(repositories)
+    }
+}

@@ -3,11 +3,11 @@
 //! Provides tree-sitter based complexity analysis independent of rust-code-analysis.
 //! This module calculates cyclomatic and nesting complexity directly from AST.
 
+use mcb_language_support::LanguageId;
 use tree_sitter::Node;
 
 use crate::cursor::CursorUtils;
 use crate::walker::TreeWalker;
-use mcb_language_support::LanguageId;
 
 /// Complexity metrics for a code unit
 #[derive(Debug, Clone, Default)]
@@ -214,5 +214,3 @@ pub fn count_parameters(function_node: Node<'_>) -> usize {
     }
     0
 }
-
-// Tests moved to tests/unit/complexity_tests.rs

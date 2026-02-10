@@ -3,6 +3,16 @@
 //! Provides the main IntelligentChunker that orchestrates language-specific
 //! chunking using tree-sitter and fallback methods.
 
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::LazyLock;
+
+use async_trait::async_trait;
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::services::chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
+use mcb_domain::value_objects::Language;
+
 use super::common::constants::CHUNK_SIZE_GENERIC;
 use super::detection::{is_language_supported, language_from_extension};
 use super::{
@@ -10,14 +20,6 @@ use super::{
     KotlinProcessor, LanguageProcessor, PhpProcessor, PythonProcessor, RubyProcessor,
     RustProcessor, SwiftProcessor,
 };
-use async_trait::async_trait;
-use mcb_application::domain_services::chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::error::{Error, Result};
-use mcb_domain::value_objects::Language;
-use std::collections::HashMap;
-use std::path::Path;
-use std::sync::LazyLock;
 
 /// Language processor registry
 pub(crate) static LANGUAGE_PROCESSORS: LazyLock<
@@ -99,7 +101,6 @@ impl IntelligentChunker {
         language: &Language,
     ) -> Vec<CodeChunk> {
         if let Some(processor) = LANGUAGE_PROCESSORS.get(language) {
-            // Try tree-sitter parsing first
             match self.parse_with_tree_sitter(content, processor.get_language()) {
                 Ok(tree) => {
                     let chunks = processor
@@ -108,17 +109,14 @@ impl IntelligentChunker {
                         return chunks;
                     }
                 }
-                Err(_) => {
-                    // Fall back to pattern-based chunking
-                    let chunks = processor.extract_chunks_fallback(content, file_name, language);
-                    if !chunks.is_empty() {
-                        return chunks;
-                    }
+                Err(e) => {
+                    tracing::warn!(
+                        "Tree-sitter parse failed for {file_name}: {e}, using generic chunking"
+                    );
                 }
             }
         }
 
-        // Ultimate fallback to generic chunking
         self.chunk_generic(content, file_name, language)
     }
 
@@ -299,10 +297,10 @@ impl mcb_domain::ports::providers::LanguageChunkingProvider for UniversalLanguag
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
+use mcb_domain::ports::providers::LanguageChunkingProvider as LanguageProviderPort;
+use mcb_domain::registry::language::{
     LANGUAGE_PROVIDERS, LanguageProviderConfig, LanguageProviderEntry,
 };
-use mcb_domain::ports::providers::LanguageChunkingProvider as LanguageProviderPort;
 
 /// Factory function for creating universal language chunking provider instances.
 fn universal_language_factory(

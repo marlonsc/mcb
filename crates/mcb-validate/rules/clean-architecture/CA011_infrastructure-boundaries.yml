@@ -1,0 +1,42 @@
+_template: "cargo_dependency_check"
+id: "CA011"
+name: "Infrastructure Layer Boundaries"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Infrastructure crate depends on domain, application, providers, and validate"
+rationale: "Infrastructure serves as the composition root and manages external system integration"
+
+crate_name: "{{infrastructure_crate}}"
+forbidden_prefixes: []
+allowed_dependencies:
+  [
+    "{{domain_crate}}",
+    "{{application_crate}}",
+    "{{providers_crate}}",
+    "{{validate_crate}}",
+  ]
+
+config:
+  crate_name: "{{infrastructure_crate}}"
+  forbidden_prefixes: []
+  allowed_dependencies:
+    [
+      "{{domain_crate}}",
+      "{{application_crate}}",
+      "{{providers_crate}}",
+      "{{validate_crate}}",
+    ]
+
+rule: |
+  rule InfrastructureBoundaries "Infrastructure Layer Boundaries" {
+      when
+          Facts.crate_name == "{{infrastructure_crate}}" &&
+          (Facts.crate_{{infrastructure_module}}_depends_on_{{server_module}} == true)
+      then
+          Facts.violation_triggered = true;
+          Facts.violation_message = "Infrastructure layer cannot depend on server layer";
+          Facts.violation_rule_name = "CA011";
+  }

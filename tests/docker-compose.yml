@@ -1,0 +1,210 @@
+version: "3.8"
+
+services:
+  # OpenAI API Mock Server
+  openai-mock:
+    image: mockserver/mockserver:5.15.0
+    container_name: mcp-openai-mock
+    ports:
+      - "1080:1080"
+    environment:
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/mockserver-initializer.json
+      MOCKSERVER_LOG_LEVEL: INFO
+    volumes:
+      - ./docker/mockserver-initializer.json:/config/mockserver-initializer.json:ro
+    networks:
+      - mcp-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1080/mockserver/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+#  # Ollama for embeddings
+#  ollama:
+#    image: ollama/ollama:latest
+#    container_name: mcp-ollama
+#    ports:
+#      - "11434:11434"
+#    volumes:
+#      - ollama_data:/root/.ollama
+#      - ./docker/init-ollama.sh:/init-ollama.sh:ro
+#    networks:
+#      - mcp-test
+#    environment:
+#      - OLLAMA_HOST=0.0.0.0
+#      - OLLAMA_KEEP_ALIVE=24h
+#    healthcheck:
+#      test: ["CMD", "ollama", "list", "|", "grep", "nomic-embed-text"]
+#      interval: 15s
+#      timeout: 10s
+#      retries: 10
+#    command: ["sh", "-c", "serve & /init-ollama.sh && wait"]
+
+  # Redis - Cache layer
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --appendfsync everysec
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - mcp-test
+
+  # NATS - Event bus
+  nats:
+    image: nats:2-alpine
+    container_name: mcp-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats_data:/data
+    command:
+      - nats-server
+      - --port
+      - "4222"
+      - --http_port
+      - "8222"
+      - --jetstream
+      - --store_dir
+      - /data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4222"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mcp-test
+
+  # Milvus vector database
+  milvus-etcd:
+    container_name: mcp-milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.25
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - milvus_etcd:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - mcp-test
+
+  milvus-minio:
+    container_name: mcp-milvus-minio
+    image: minio/minio:RELEASE.2024-05-28T17-19-04Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    volumes:
+      - milvus_minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - mcp-test
+
+  milvus-standalone:
+    container_name: mcp-milvus-standalone
+    image: milvusdb/milvus:v2.6.9
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: mcp-milvus-etcd:2379
+      MINIO_ADDRESS: mcp-milvus-minio:9000
+      MINIO_REGION: us-east-1
+    volumes:
+      - milvus_standalone:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - milvus-etcd
+      - milvus-minio
+    networks:
+      - mcp-test
+
+  # Test runner
+  test-runner:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.test
+    container_name: mcp-test-runner
+    environment:
+      # Internal services (Docker network)
+      - OPENAI_BASE_URL=http://mcp-openai-mock:1080
+      # - OLLAMA_BASE_URL=http://mcp-ollama:11434
+      - OLLAMA_BASE_URL=http://localhost:11434
+      - MILVUS_ADDRESS=http://mcp-milvus-standalone:19530
+      - REDIS_URL=redis://mcp-redis:6379
+      - NATS_URL=nats://mcp-nats:4222
+      - MCP_CACHE__BACKEND=redis
+      - MCP_CACHE__URL=redis://mcp-redis:6379
+      - MCP_EVENT_BUS_TYPE=nats
+      - MCP_NATS_URL=nats://mcp-nats:4222
+      - RUST_BACKTRACE=1
+    volumes:
+      - ..:/app
+      - cargo_cache:/usr/local/cargo/registry
+    working_dir: /app
+    depends_on:
+      openai-mock:
+        condition: service_healthy
+      #ollama:
+      #  condition: service_healthy
+      milvus-standalone:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - mcp-test
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      [
+        "sh",
+        "-c",
+        "echo '⏳ Waiting for all services to be ready...' && sleep 10 && echo '🚀 Starting integration tests...' && make test",
+      ]
+
+volumes:
+  ollama_data:
+  milvus_etcd:
+  milvus_minio:
+  milvus_standalone:
+  redis_data:
+  nats_data:
+  cargo_cache:
+
+networks:
+  mcp-test:
+    driver: bridge

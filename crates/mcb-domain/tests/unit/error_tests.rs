@@ -84,23 +84,7 @@ fn test_cache_error() {
     }
 }
 
-#[test]
-fn test_string_error() {
-    let error: Error = "Simple string error".into();
-    match error {
-        Error::String(msg) => assert_eq!(msg, "Simple string error"),
-        _ => panic!("Expected String error"),
-    }
-}
-
-#[test]
-fn test_error_from_string() {
-    let error: Error = String::from("String error").into();
-    match error {
-        Error::String(msg) => assert_eq!(msg, "String error"),
-        _ => panic!("Expected String error"),
-    }
-}
+// Obsolete tests removed
 
 #[test]
 fn test_error_display() {

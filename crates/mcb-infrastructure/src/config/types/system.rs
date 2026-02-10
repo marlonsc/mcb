@@ -1,21 +1,31 @@
 //! System configuration types
 //!
-//! Consolidated configuration for system concerns:
+//! configuration for system concerns:
 //! auth, event_bus, backup, sync, snapshot, daemon, and operations.
 
-use crate::constants::*;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::constants::auth::*;
+use crate::constants::events::*;
+use crate::constants::fs::*;
+use crate::constants::ops::*;
+use crate::constants::process::*;
+use crate::constants::sync::*;
 
 // ============================================================================
 // Authentication Configuration
 // ============================================================================
 
-/// Password hashing algorithms
+/// Password hashing algorithms for authentication.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PasswordAlgorithm {
+    /// Argon2 password hashing algorithm.
     Argon2,
+    /// Bcrypt password hashing algorithm.
     Bcrypt,
+    /// PBKDF2 password hashing algorithm.
     Pbkdf2,
 }
 
@@ -150,8 +160,6 @@ pub enum EventBusProvider {
     Tokio,
     /// Distributed message queue (NATS)
     Nats,
-    /// No-op event bus for testing
-    Null,
 }
 
 /// EventBus configuration
@@ -182,11 +190,11 @@ impl Default for EventBusConfig {
     fn default() -> Self {
         Self {
             provider: EventBusProvider::Tokio,
-            capacity: 1024,
+            capacity: EVENT_BUS_DEFAULT_CAPACITY,
             nats_url: None,
             nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_string()),
-            connection_timeout_ms: 5000,
-            max_reconnect_attempts: 5,
+            connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
+            max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
     }
 }
@@ -208,13 +216,6 @@ impl EventBusConfig {
         Self {
             provider: EventBusProvider::Nats,
             nats_url: Some(url.into()),
-            ..Default::default()
-        }
-    }
-
-    pub fn null() -> Self {
-        Self {
-            provider: EventBusProvider::Null,
             ..Default::default()
         }
     }
@@ -305,7 +306,7 @@ impl Default for SyncConfig {
             batch_size: SYNC_BATCH_SIZE,
             debounce_delay_ms: SYNC_DEBOUNCE_DELAY_MS,
             timeout_secs: SYNC_TIMEOUT_SECS,
-            max_concurrent: 10,
+            max_concurrent: SYNC_MAX_CONCURRENT,
         }
     }
 }

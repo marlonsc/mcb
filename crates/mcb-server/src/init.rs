@@ -35,13 +35,16 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use mcb_infrastructure::cache::provider::SharedCacheProvider;
-use mcb_infrastructure::config::{AppConfig, OperatingMode, TransportMode};
-use mcb_infrastructure::crypto::CryptoService;
+use mcb_infrastructure::config::{
+    AppConfig,
+    types::{OperatingMode, TransportMode},
+};
 use tracing::{error, info, warn};
 
 use crate::McpServer;
-use crate::McpServerBuilder;
+use crate::admin::auth::AdminAuthConfig;
+use crate::admin::browse_handlers::BrowseState;
+use crate::admin::handlers::AdminState;
 use crate::transport::http::{HttpTransport, HttpTransportConfig};
 use crate::transport::stdio::StdioServerExt;
 
@@ -71,7 +74,7 @@ pub async fn run(
 
     if server_mode {
         // Explicit server mode via --server flag
-        run_server_mode(config).await
+        run_server_mode(config, config_path.map(|p| p.to_path_buf())).await
     } else {
         // Check config for operating mode
         match config.mode.mode_type {
@@ -81,42 +84,76 @@ pub async fn run(
     }
 }
 
-/// Legacy entry point for backwards compatibility
-///
-/// Runs in standalone mode (equivalent to `run(config_path, false)` with standalone config)
-#[deprecated(since = "0.2.0", note = "Use `run(config_path, server_mode)` instead")]
-pub async fn run_server(config_path: Option<&Path>) -> Result<(), Box<dyn std::error::Error>> {
-    run(config_path, false).await
-}
-
 // =============================================================================
 // Operating Modes
 // =============================================================================
 
 /// Run as server daemon (HTTP + optional stdio based on transport_mode)
-///
-/// This mode is activated by the `--server` flag. The server accepts
-/// connections from MCB clients and processes MCP requests.
-///
-/// Transport mode is still controlled by `config.server.transport_mode`:
-/// - `Http`: HTTP only
-/// - `Hybrid`: HTTP + stdio (default for server mode)
-async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_server_mode(
+    config: AppConfig,
+    config_path: Option<std::path::PathBuf>,
+) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         transport_mode = ?config.server.transport_mode,
         host = %config.server.network.host,
         port = %config.server.network.port,
-        "Starting MCB server daemon"
+        "Starting MCB server daemon (single port)"
     );
 
     let transport_mode = config.server.transport_mode;
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let server = create_mcp_server(config).await?;
+    let (server, app_context) = create_mcp_server(config.clone()).await?;
     info!("MCP server initialized successfully");
 
-    // In server mode, we prefer hybrid or http transport
+    let event_bus = app_context.event_bus();
+
+    // Create admin state for consolidated single-port operation
+    // Initialize ConfigWatcher for hot-reload support
+    let config_watcher = if let Some(ref path) = config_path {
+        mcb_infrastructure::config::watcher::ConfigWatcher::new(
+            path.clone(),
+            config.clone(),
+            event_bus.clone(),
+        )
+        .await
+        .ok()
+        .map(std::sync::Arc::new)
+    } else {
+        None
+    };
+
+    // Initialize ServiceManager for lifecycle operations
+    let service_manager =
+        mcb_infrastructure::infrastructure::ServiceManager::new(app_context.event_bus());
+
+    // Register services from AppContext
+    for service in &app_context.lifecycle_services {
+        service_manager.register(service.clone());
+    }
+
+    let admin_state = AdminState {
+        metrics: app_context.performance(),
+        indexing: app_context.indexing(),
+        config_watcher,
+        current_config: config.clone(),
+        config_path,
+        shutdown_coordinator: Some(app_context.shutdown()),
+        shutdown_timeout_secs: 30,
+        event_bus,
+        service_manager: Some(std::sync::Arc::new(service_manager)),
+        cache: Some(app_context.cache_handle().get()),
+        project_workflow: Some(server.project_workflow_service()),
+    };
+
+    let browse_state = BrowseState {
+        browser: app_context.vector_store_handle().get(),
+        highlight_service: app_context.highlight_service(),
+    };
+
+    let auth_config = std::sync::Arc::new(AdminAuthConfig::default());
+
     match transport_mode {
         TransportMode::Stdio => {
             warn!(
@@ -125,16 +162,32 @@ async fn run_server_mode(config: AppConfig) -> Result<(), Box<dyn std::error::Er
             run_stdio_transport(server).await
         }
         TransportMode::Http => {
-            info!(host = %http_host, port = http_port, "Starting HTTP transport");
-            run_http_transport(server, &http_host, http_port).await
+            info!(host = %http_host, port = http_port, "Starting HTTP transport (MCP + Admin)");
+            run_http_transport_with_admin(
+                server,
+                &http_host,
+                http_port,
+                admin_state,
+                auth_config,
+                Some(browse_state),
+            )
+            .await
         }
         TransportMode::Hybrid => {
             info!(
                 host = %http_host,
                 port = http_port,
-                "Starting hybrid transport (stdio + HTTP)"
+                "Starting hybrid transport (stdio + HTTP with Admin)"
             );
-            run_hybrid_transport(server, &http_host, http_port).await
+            run_hybrid_transport_with_admin(
+                server,
+                &http_host,
+                http_port,
+                admin_state,
+                auth_config,
+                Some(browse_state),
+            )
+            .await
         }
     }
 }
@@ -154,7 +207,7 @@ async fn run_standalone(config: AppConfig) -> Result<(), Box<dyn std::error::Err
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let server = create_mcp_server(config).await?;
+    let (server, _app_context) = create_mcp_server(config).await?;
     info!("MCP server initialized successfully");
 
     start_transport(server, transport_mode, &http_host, http_port).await
@@ -205,64 +258,30 @@ fn load_config(config_path: Option<&Path>) -> Result<AppConfig, Box<dyn std::err
 // =============================================================================
 
 /// Create and configure the MCP server with all services
-async fn create_mcp_server(config: AppConfig) -> Result<McpServer, Box<dyn std::error::Error>> {
+async fn create_mcp_server(
+    config: AppConfig,
+) -> Result<(McpServer, mcb_infrastructure::di::bootstrap::AppContext), Box<dyn std::error::Error>>
+{
     // Create AppContext with resolved providers
     let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
 
-    // Get all providers from handles (runtime-swappable via admin API)
-    let embedding_provider = app_context.embedding_handle().get();
-    let vector_store_provider = app_context.vector_store_handle().get();
-    let cache_provider = app_context.cache_handle().get();
-    let language_chunker = app_context.language_handle().get();
+    // Build domain services from AppContext
+    let services = app_context.build_domain_services().await?;
 
-    // Create shared cache provider (conversion for domain services factory)
-    let shared_cache = SharedCacheProvider::from_arc(cache_provider);
-    let crypto = create_crypto_service(&config).await?;
-
-    let indexing_ops = app_context.indexing();
-    let event_bus = app_context.event_bus();
-
-    let memory_db_path = dirs::data_local_dir()
-        .or_else(|| std::env::current_dir().ok())
-        .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join(".mcb")
-        .join("memory.db");
-    let memory_repository = mcb_providers::database::create_memory_repository(memory_db_path)
-        .await
-        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
-
-    let project_id = std::env::current_dir()
-        .ok()
-        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
-        .unwrap_or_else(|| "default".to_string());
-
-    let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
-        project_id,
-        cache: shared_cache,
-        crypto,
-        config,
-        embedding_provider,
-        vector_store_provider,
-        language_chunker,
-        indexing_ops,
-        event_bus,
-        memory_repository,
+    let mcp_services = crate::mcp_server::McpServices {
+        indexing: services.indexing_service,
+        context: services.context_service,
+        search: services.search_service,
+        validation: services.validation_service,
+        memory: services.memory_service,
+        agent_session: services.agent_session_service,
+        project: services.project_service,
+        project_workflow: services.project_workflow_service,
+        vcs: services.vcs_provider,
     };
-    let services =
-        mcb_infrastructure::di::modules::domain_services::DomainServicesFactory::create_services(
-            deps,
-        )
-        .await?;
+    let server = McpServer::from_services(mcp_services);
 
-    McpServerBuilder::new()
-        .with_indexing_service(services.indexing_service)
-        .with_context_service(services.context_service)
-        .with_search_service(services.search_service)
-        .with_validation_service(services.validation_service)
-        .with_memory_service(services.memory_service)
-        .with_vcs_provider(services.vcs_provider)
-        .try_build()
-        .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
+    Ok((server, app_context))
 }
 
 // =============================================================================
@@ -304,10 +323,7 @@ async fn run_stdio_transport(server: McpServer) -> Result<(), Box<dyn std::error
     server.serve_stdio().await
 }
 
-/// Run the server with HTTP transport only
-///
-/// Starts an HTTP server that handles MCP requests via REST API
-/// and provides Server-Sent Events for server-to-client notifications.
+/// Run HTTP transport with MCP endpoints only (no admin)
 async fn run_http_transport(
     server: McpServer,
     host: &str,
@@ -326,25 +342,42 @@ async fn run_http_transport(
         .map_err(|e| -> Box<dyn std::error::Error> { e })
 }
 
-/// Run the server with both stdio and HTTP transports simultaneously
-///
-/// Spawns both transports as concurrent tasks. This allows the server to:
-/// - Serve CLI tools via stdin/stdout
-/// - Serve web clients via HTTP
-///
-/// If either transport fails, the error is logged and the other continues.
-/// The function returns when both transports have finished.
+/// Run HTTP transport with consolidated MCP + Admin endpoints
+async fn run_http_transport_with_admin(
+    server: McpServer,
+    host: &str,
+    port: u16,
+    admin_state: AdminState,
+    auth_config: std::sync::Arc<AdminAuthConfig>,
+    browse_state: Option<BrowseState>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let http_config = HttpTransportConfig {
+        host: host.to_string(),
+        port,
+        enable_cors: true,
+    };
+
+    let http_transport = HttpTransport::new(http_config, Arc::new(server)).with_admin(
+        admin_state,
+        auth_config,
+        browse_state,
+    );
+    http_transport
+        .start()
+        .await
+        .map_err(|e| -> Box<dyn std::error::Error> { e })
+}
+
+/// Run hybrid transport (stdio + HTTP) without admin
 async fn run_hybrid_transport(
     server: McpServer,
     host: &str,
     port: u16,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Clone server for each transport (McpServer is Clone)
     let stdio_server = server.clone();
     let http_server = Arc::new(server);
     let http_host = host.to_string();
 
-    // Spawn stdio transport task
     let stdio_handle = tokio::spawn(async move {
         info!("Hybrid: starting stdio transport");
         if let Err(e) = stdio_server.serve_stdio().await {
@@ -353,7 +386,6 @@ async fn run_hybrid_transport(
         info!("Hybrid: stdio transport finished");
     });
 
-    // Spawn HTTP transport task
     let http_handle = tokio::spawn(async move {
         info!("Hybrid: starting HTTP transport on {}:{}", http_host, port);
         let http_config = HttpTransportConfig {
@@ -369,40 +401,69 @@ async fn run_hybrid_transport(
         info!("Hybrid: HTTP transport finished");
     });
 
-    // Wait for both transports to finish (join keeps both running)
     let (stdio_result, http_result) = tokio::join!(stdio_handle, http_handle);
 
     if let Err(e) = stdio_result {
         error!(error = %e, "Hybrid: stdio transport task panicked");
-    } else {
-        info!("Hybrid: stdio transport task completed");
     }
-
     if let Err(e) = http_result {
         error!(error = %e, "Hybrid: HTTP transport task panicked");
-    } else {
-        info!("Hybrid: HTTP transport task completed");
     }
 
     Ok(())
 }
 
-// =============================================================================
-// Crypto Service Creation
-// =============================================================================
+/// Run hybrid transport (stdio + HTTP) with consolidated Admin endpoints
+async fn run_hybrid_transport_with_admin(
+    server: McpServer,
+    host: &str,
+    port: u16,
+    admin_state: AdminState,
+    auth_config: std::sync::Arc<AdminAuthConfig>,
+    browse_state: Option<BrowseState>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let stdio_server = server.clone();
+    let http_server = Arc::new(server);
+    let http_host = host.to_string();
 
-/// Create crypto service from configuration
-///
-/// Uses JWT secret from config if available (32+ bytes), otherwise generates a random key.
-async fn create_crypto_service(
-    config: &AppConfig,
-) -> Result<CryptoService, Box<dyn std::error::Error>> {
-    // AES-GCM requires exactly 32 bytes for the key
-    let master_key = if config.auth.jwt.secret.len() >= 32 {
-        config.auth.jwt.secret.as_bytes()[..32].to_vec()
-    } else {
-        CryptoService::generate_master_key()
-    };
+    let stdio_handle = tokio::spawn(async move {
+        info!("Hybrid: starting stdio transport");
+        if let Err(e) = stdio_server.serve_stdio().await {
+            error!(error = %e, "Hybrid: stdio transport failed");
+        }
+        info!("Hybrid: stdio transport finished");
+    });
 
-    CryptoService::new(master_key).map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
+    let http_handle = tokio::spawn(async move {
+        info!(
+            "Hybrid: starting HTTP+Admin transport on {}:{}",
+            http_host, port
+        );
+        let http_config = HttpTransportConfig {
+            host: http_host,
+            port,
+            enable_cors: true,
+        };
+
+        let http_transport = HttpTransport::new(http_config, http_server).with_admin(
+            admin_state,
+            auth_config,
+            browse_state,
+        );
+        if let Err(e) = http_transport.start().await {
+            error!(error = %e, "Hybrid: HTTP+Admin transport failed");
+        }
+        info!("Hybrid: HTTP+Admin transport finished");
+    });
+
+    let (stdio_result, http_result) = tokio::join!(stdio_handle, http_handle);
+
+    if let Err(e) = stdio_result {
+        error!(error = %e, "Hybrid: stdio transport task panicked");
+    }
+    if let Err(e) = http_result {
+        error!(error = %e, "Hybrid: HTTP transport task panicked");
+    }
+
+    Ok(())
 }

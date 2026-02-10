@@ -1,4 +1,16 @@
-# ADR 002: Async-First Architecture
+---
+adr: 2
+title: Async-First Architecture
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 3, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
+## ADR 002: Async-First Architecture
 
 ## Status
 
@@ -19,7 +31,7 @@ Accepted
 
 ## Context
 
-The MCP Context Browser handles AI operations (embedding generation, vector searches) and large codebase processing that require high performance and concurrency. The system needs to handle multiple concurrent users, process large codebases efficiently, and integrate with external APIs that may have high latency.
+The Memory Context Browser handles AI operations (embedding generation, vector searches) and large codebase processing that require high performance and concurrency. The system needs to handle multiple concurrent users, process large codebases efficiently, and integrate with external APIs that may have high latency.
 
 Key performance requirements:
 
@@ -233,7 +245,7 @@ pub async fn handle_index_request(&self, request: IndexRequest) -> Result<IndexR
     // Use timeout for external operations
     let result = tokio::time::timeout(
         Duration::from_secs(30),
-        self.indexing_service.index_codebase(&request.path)
+        self.indexing_service.index (action=start)(&request.path)
     ).await
     .map_err(|_| Error::timeout("Indexing timed out"))??;
 
@@ -328,7 +340,7 @@ As MCB evolves to include CPU-intensive code analysis features (v0.3.0+), the as
 ```rust
 #[async_trait]
 pub trait CodeAnalyzer: Send + Sync {
-    async fn analyze_complexity(&self, path: &Path) -> Result<ComplexityReport> {
+    async fn validate (action=analyze)(&self, path: &Path) -> Result<ComplexityReport> {
         // 1. Read file (I/O - Tokio)
         let content = tokio::fs::read_to_string(path).await?;
 
@@ -373,7 +385,7 @@ fn compute_complexity(content: &str) -> Result<ComplexityReport> {
 ## Related ADRs
 
 -   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider interfaces with async traits
--   [ADR-030: Multi-Provider Strategy](030-multi-provider-strategy.md) - Async provider selection and failover
+-   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Async provider selection and failover
 -   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Async initialization in factories
 -   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
 

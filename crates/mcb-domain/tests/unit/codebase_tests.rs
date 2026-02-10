@@ -3,8 +3,9 @@
 //! Tests the CodebaseSnapshot and FileSnapshot entities, including
 //! change tracking functionality.
 
-use mcb_domain::entities::codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 use std::collections::HashMap;
+
+use mcb_domain::entities::codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 
 #[test]
 fn test_file_snapshot_creation() {

@@ -26,10 +26,14 @@ Core MCP protocol server implementation with JSON-RPC handling.
 
 MCP tool implementations:
 
--   `index_codebase.rs` - Index repository tool
--   `search_code.rs` - Semantic search tool
--   `get_indexing_status.rs` - Status query tool
--   `clear_index.rs` - Index clearing tool
+-   `index` - Index operations (start/status/clear)
+-   `search` - Unified search (code/memory)
+-   `validate` - Validation + complexity analysis
+-   `memory` - Memory storage, retrieval, timeline, inject
+-   `session` - Session lifecycle + summaries
+-   `agent` - Agent activity logging
+-   `project` - Project workflow operations
+-   `vcs` - Repository operations
 
 ### Admin API (`admin/`)
 
@@ -70,10 +74,14 @@ crates/mcb-server/src/
 │   ├── service.rs            # Admin service
 │   └── mod.rs
 ├── handlers/
-│   ├── index_codebase.rs     # Index tool
-│   ├── search_code.rs        # Search tool
-│   ├── get_indexing_status.rs # Status tool
-│   ├── clear_index.rs        # Clear tool
+│   ├── agent.rs
+│   ├── index.rs
+│   ├── memory.rs
+│   ├── project.rs
+│   ├── search.rs
+│   ├── session.rs
+│   ├── validate.rs
+│   ├── vcs.rs
 │   └── mod.rs
 ├── transport/
 │   ├── http.rs               # HTTP server
@@ -111,7 +119,7 @@ Server tests are located in `crates/mcb-server/tests/`.
 
 ## Project Alignment
 
--   **Phase context**: Keep HTTP transport work in lockstep with `docs/context/project-state.md`/`.planning/STATE.md` so Phase 6 Hybrid Search (06-02) and release `release/v0.1.5` remain synchronized.
+-   **Phase context**: Keep HTTP transport work in lockstep with `docs/context/project-state.md`/`.planning/STATE.md` so Phase 6 Hybrid Search (06-02) and release `release/v0.2.0` remain synchronized.
 -   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` describes the layering that this module sits atop, while `docs/context/technical-patterns.md` captures patterns for MCP tooling and provider registration.
 -   **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` for the v0.2.0 objectives (git-aware indexing, session memory, advanced browser) and `docs/context/domain-concepts.md` for domain usage.
 -   **Operational metrics**: When tools or admin handlers change, reflect the counts in `docs/operations/CHANGELOG.md` and `docs/operations/CI_OPTIMIZATION_VALIDATION.md` so the documentation and tests stay aligned.

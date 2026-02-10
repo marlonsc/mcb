@@ -71,17 +71,17 @@
 -   `host` (default: `127.0.0.1`)
 -   `port` (default: `3000`)
 -   **Env Vars**:
--   `MCP_SERVER__HOST`
--   `MCP_SERVER__PORT`
+-   `MCP__SERVER__NETWORK__HOST`
+-   `MCP__SERVER__NETWORK__PORT`
 
 #### ✅ src/infrastructure/config/metrics.rs
 
 -   **Status**: PASSED
 -   **Parameters**: 3
 -   `enabled` (default: true, via `MCP_METRICS_ENABLED`)
--   `port` (default: 3001, via `MCP_PORT`)
+-   `port` (default: 3000, via `MCP__SERVER__NETWORK__PORT`)
 -   `rate_limiting` (nested RateLimitConfig)
--   **Env Vars**: `MCP_METRICS_ENABLED`, `MCP_PORT`
+-   **Env Vars**: `MCP__SYSTEM__INFRASTRUCTURE__METRICS__ENABLED`, `MCP__SERVER__NETWORK__PORT`
 -   **Notes**: Unified port for Admin + Metrics APIs
 
 ---

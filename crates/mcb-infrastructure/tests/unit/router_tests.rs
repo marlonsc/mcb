@@ -3,13 +3,12 @@
 //! Tests the InMemoryHealthMonitor state transitions and DefaultProviderRouter
 //! provider selection logic based on health status.
 
-use mcb_application::ports::infrastructure::routing::{
+use std::sync::Arc;
+
+use mcb_domain::ports::infrastructure::routing::{
     ProviderContext, ProviderHealthStatus, ProviderRouter,
 };
-use mcb_infrastructure::routing::{
-    DefaultProviderRouter, HealthMonitor, InMemoryHealthMonitor, NullHealthMonitor,
-};
-use std::sync::Arc;
+use mcb_infrastructure::routing::{DefaultProviderRouter, HealthMonitor, InMemoryHealthMonitor};
 
 // =============================================================================
 // InMemoryHealthMonitor Tests
@@ -117,47 +116,6 @@ fn test_get_all_health() {
         all_health.get("provider-b"),
         Some(&ProviderHealthStatus::Degraded)
     );
-}
-
-// =============================================================================
-// NullHealthMonitor Tests (for comparison/completeness)
-// =============================================================================
-
-/// Test null health monitor always returns healthy
-#[test]
-fn test_null_health_monitor_returns_healthy() {
-    let monitor = NullHealthMonitor::new();
-
-    let status = monitor.get_health("any-provider");
-    assert_eq!(status, ProviderHealthStatus::Healthy);
-
-    let status = monitor.get_health("unknown");
-    assert_eq!(status, ProviderHealthStatus::Healthy);
-}
-
-/// Test null health monitor ignores failures
-#[test]
-fn test_null_health_monitor_ignores_failures() {
-    let monitor = NullHealthMonitor::new();
-
-    // Record many failures
-    for _ in 0..10 {
-        monitor.record_failure("failing-provider");
-    }
-
-    // Still healthy (null impl ignores failures)
-    assert_eq!(
-        monitor.get_health("failing-provider"),
-        ProviderHealthStatus::Healthy
-    );
-}
-
-/// Test null health monitor returns empty stats
-#[test]
-fn test_null_health_monitor_empty_stats() {
-    let monitor = NullHealthMonitor::new();
-    let all_health = monitor.get_all_health();
-    assert!(all_health.is_empty());
 }
 
 // =============================================================================

@@ -128,7 +128,7 @@ The FastEmbed Provider:
 
 1.  Uses the `fastembed` library for ONNX inference
 2.  Loads optimized sentence-transformers models
-3.  Implements the `EmbeddingProvider` trait of MCP Context Browser
+3.  Implements the `EmbeddingProvider` trait of Memory Context Browser
 4.  Provides a consistent interface with other providers
 5.  Manages automatic model cache
 

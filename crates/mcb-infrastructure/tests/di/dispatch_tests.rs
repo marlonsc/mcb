@@ -41,12 +41,12 @@ async fn test_di_container_builder() {
 async fn test_provider_selection_from_config() {
     // Test that providers are correctly selected based on configuration
 
-    // Test with null providers (default)
+    // Test with local providers (fastembed, memory)
     let mut config = AppConfig::default();
     config.providers.embedding.configs.insert(
         "default".to_string(),
         EmbeddingConfig {
-            provider: "null".to_string(),
+            provider: "fastembed".to_string(),
             model: "test".to_string(),
             api_key: None,
             base_url: None,
@@ -57,7 +57,7 @@ async fn test_provider_selection_from_config() {
     config.providers.vector_store.configs.insert(
         "default".to_string(),
         VectorStoreConfig {
-            provider: "null".to_string(),
+            provider: "edgevec".to_string(),
             address: None,
             token: None,
             collection: Some("test".to_string()),
@@ -68,13 +68,16 @@ async fn test_provider_selection_from_config() {
 
     let app_context = init_app(config)
         .await
-        .expect("Should initialize with null providers");
+        .expect("Should initialize with local providers");
 
     // Verify correct providers were selected via handles
-    assert_eq!(app_context.embedding_handle().get().provider_name(), "null");
+    assert_eq!(
+        app_context.embedding_handle().get().provider_name(),
+        "fastembed"
+    );
     assert_eq!(
         app_context.vector_store_handle().get().provider_name(),
-        "null"
+        "edgevec"
     );
     assert_eq!(app_context.cache_handle().get().provider_name(), "moka"); // default cache
     assert_eq!(
@@ -168,34 +171,10 @@ async fn test_infrastructure_services_from_app_context() {
 
     // Verify infrastructure services are accessible
     // Arc<dyn Trait> types have a strong_count >= 1 if valid
-    let auth = app_context.auth();
-    assert!(
-        std::sync::Arc::strong_count(&auth) >= 1,
-        "Auth service should have valid Arc reference"
-    );
-
     let event_bus = app_context.event_bus();
     assert!(
         std::sync::Arc::strong_count(&event_bus) >= 1,
         "EventBus service should have valid Arc reference"
-    );
-
-    let metrics = app_context.metrics();
-    assert!(
-        std::sync::Arc::strong_count(&metrics) >= 1,
-        "Metrics service should have valid Arc reference"
-    );
-
-    let sync = app_context.sync();
-    assert!(
-        std::sync::Arc::strong_count(&sync) >= 1,
-        "Sync service should have valid Arc reference"
-    );
-
-    let snapshot = app_context.snapshot();
-    assert!(
-        std::sync::Arc::strong_count(&snapshot) >= 1,
-        "Snapshot service should have valid Arc reference"
     );
 
     let shutdown = app_context.shutdown();

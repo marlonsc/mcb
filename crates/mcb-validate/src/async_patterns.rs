@@ -1,65 +1,85 @@
 //! Async Pattern Validation
 //!
 //! Detects async-specific anti-patterns based on Tokio documentation:
-//! - Blocking in async (std::thread::sleep, std::sync::Mutex in async)
-//! - block_on() in async context
-//! - Spawn patterns (missing JoinHandle handling)
+//! - Blocking in async (`std::thread::sleep`, `std::sync::Mutex` in async)
+//! - `block_on()` in async context
+//! - Spawn patterns (missing `JoinHandle` handling)
 //! - Wrong mutex types in async code
+
+use std::path::PathBuf;
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
 
 use crate::pattern_registry::PATTERNS;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use walkdir::WalkDir;
 
 /// Async violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AsyncViolation {
     /// Blocking call in async function
     BlockingInAsync {
+        /// File containing the violation.
         file: PathBuf,
+        /// Line number where the blocking call was detected.
         line: usize,
+        /// Description of the blocking call detected (e.g., "std::thread::sleep").
         blocking_call: String,
+        /// Recommended non-blocking alternative (e.g., "Use tokio::time::sleep").
         suggestion: String,
+        /// Severity of the violation.
         severity: Severity,
     },
-    /// block_on() used in async context
+    /// `block_on()` used in async context
     BlockOnInAsync {
+        /// File containing the violation.
         file: PathBuf,
+        /// Line number where the `block_on` call was detected.
         line: usize,
+        /// Context snippet of the call for easier identification.
         context: String,
+        /// Severity of the violation.
         severity: Severity,
     },
-    /// std::sync::Mutex used in async code (should use tokio::sync::Mutex)
+    /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
     WrongMutexType {
+        /// File containing the violation.
         file: PathBuf,
+        /// Line number where the incorrect mutex usage was detected.
         line: usize,
+        /// The type of mutex being used (e.g., "std::sync::Mutex").
         mutex_type: String,
+        /// Recommended async-safe alternative.
         suggestion: String,
+        /// Severity of the violation.
         severity: Severity,
     },
-    /// Spawn without awaiting JoinHandle
+    /// Spawn without awaiting `JoinHandle`
     UnawaitedSpawn {
+        /// File containing the violation.
         file: PathBuf,
+        /// Line number where the unawaited spawn was detected.
         line: usize,
+        /// Context snippet of the spawn call.
         context: String,
+        /// Severity of the violation.
         severity: Severity,
     },
 }
 
+/// Helper methods for async violations.
 impl AsyncViolation {
+    /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::BlockingInAsync { severity, .. } => *severity,
-            Self::BlockOnInAsync { severity, .. } => *severity,
-            Self::WrongMutexType { severity, .. } => *severity,
-            Self::UnawaitedSpawn { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
+/// Display implementation for async violations.
 impl std::fmt::Display for AsyncViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -127,6 +147,7 @@ impl std::fmt::Display for AsyncViolation {
     }
 }
 
+/// Violation trait implementation for async violations.
 impl Violation for AsyncViolation {
     fn id(&self) -> &str {
         match self {
@@ -142,34 +163,40 @@ impl Violation for AsyncViolation {
     }
 
     fn severity(&self) -> Severity {
-        self.severity()
+        match self {
+            Self::BlockingInAsync { severity, .. }
+            | Self::BlockOnInAsync { severity, .. }
+            | Self::WrongMutexType { severity, .. }
+            | Self::UnawaitedSpawn { severity, .. } => *severity,
+        }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::BlockingInAsync { file, .. } => Some(file),
-            Self::BlockOnInAsync { file, .. } => Some(file),
-            Self::WrongMutexType { file, .. } => Some(file),
-            Self::UnawaitedSpawn { file, .. } => Some(file),
+            Self::BlockingInAsync { file, .. }
+            | Self::BlockOnInAsync { file, .. }
+            | Self::WrongMutexType { file, .. }
+            | Self::UnawaitedSpawn { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::BlockingInAsync { line, .. } => Some(*line),
-            Self::BlockOnInAsync { line, .. } => Some(*line),
-            Self::WrongMutexType { line, .. } => Some(*line),
-            Self::UnawaitedSpawn { line, .. } => Some(*line),
+            Self::BlockingInAsync { line, .. }
+            | Self::BlockOnInAsync { line, .. }
+            | Self::WrongMutexType { line, .. }
+            | Self::UnawaitedSpawn { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::BlockingInAsync { suggestion, .. } => Some(suggestion.clone()),
+            Self::BlockingInAsync { suggestion, .. } | Self::WrongMutexType { suggestion, .. } => {
+                Some(suggestion.clone())
+            }
             Self::BlockOnInAsync { .. } => {
                 Some("Use .await instead of block_on() in async context".to_string())
             }
-            Self::WrongMutexType { suggestion, .. } => Some(suggestion.clone()),
             Self::UnawaitedSpawn { .. } => Some(
                 "Assign JoinHandle to a variable or use let _ = to explicitly ignore".to_string(),
             ),
@@ -204,6 +231,7 @@ impl AsyncPatternValidator {
     }
 
     /// Detect blocking calls in async functions
+    #[allow(clippy::too_many_lines)]
     pub fn validate_blocking_in_async(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
@@ -266,6 +294,7 @@ impl AsyncPatternValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -304,10 +333,11 @@ impl AsyncPatternValidator {
                         async_fn_depth = 0;
                     }
 
-                    // Track brace depth
                     if in_async_fn {
-                        async_fn_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                        async_fn_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                        let open = line.chars().filter(|c| *c == '{').count();
+                        let close = line.chars().filter(|c| *c == '}').count();
+                        async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
+                        async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
 
                         // Check for blocking calls
                         for (pattern, desc, sugg) in &compiled_blocking {
@@ -333,7 +363,7 @@ impl AsyncPatternValidator {
         Ok(violations)
     }
 
-    /// Detect block_on() usage in async context
+    /// Detect `block_on()` usage in async context
     pub fn validate_block_on_usage(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
@@ -354,6 +384,7 @@ impl AsyncPatternValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -392,10 +423,11 @@ impl AsyncPatternValidator {
                         async_fn_depth = 0;
                     }
 
-                    // Track brace depth
                     if in_async_fn {
-                        async_fn_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                        async_fn_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                        let open = line.chars().filter(|c| *c == '{').count();
+                        let close = line.chars().filter(|c| *c == '}').count();
+                        async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
+                        async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
 
                         // Check for block_on calls
                         for pattern in &compiled_block_on {
@@ -420,7 +452,7 @@ impl AsyncPatternValidator {
         Ok(violations)
     }
 
-    /// Detect std::sync::Mutex usage in files with async code
+    /// Detect `std::sync::Mutex` usage in files with async code
     pub fn validate_mutex_types(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
@@ -457,6 +489,7 @@ impl AsyncPatternValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -550,6 +583,7 @@ impl AsyncPatternValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -613,29 +647,19 @@ impl AsyncPatternValidator {
     }
 }
 
-impl crate::validator_trait::Validator for AsyncPatternValidator {
-    fn name(&self) -> &'static str {
-        "async_patterns"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates async patterns (blocking calls, mutex types, spawn patterns)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    AsyncPatternValidator,
+    "async_patterns",
+    "Validates async patterns (blocking calls, mutex types, spawn patterns)"
+);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
         let crate_dir = temp.path().join("crates").join(name).join("src");
@@ -648,10 +672,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -663,11 +686,11 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 async fn bad_function() {
     std::thread::sleep(std::time::Duration::from_secs(1));
 }
-"#,
+",
         );
 
         let validator = AsyncPatternValidator::new(temp.path());
@@ -682,14 +705,14 @@ async fn bad_function() {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Mutex;
 
 async fn use_mutex() {
     let m = Mutex::new(0);
     let guard = m.lock().await;
 }
-"#,
+",
         );
 
         let validator = AsyncPatternValidator::new(temp.path());
@@ -707,14 +730,14 @@ async fn use_mutex() {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Mutex;
 
 fn sync_function() {
     let m = Mutex::new(0);
     let guard = m.lock().unwrap();
 }
-"#,
+",
         );
 
         let validator = AsyncPatternValidator::new(temp.path());
@@ -722,8 +745,7 @@ fn sync_function() {
 
         assert!(
             violations.is_empty(),
-            "Files without async code should be exempt: {:?}",
-            violations
+            "Files without async code should be exempt: {violations:?}"
         );
     }
 
@@ -733,7 +755,7 @@ fn sync_function() {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub async fn good_code() {}
 
 #[cfg(test)]
@@ -742,7 +764,7 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 }
-"#,
+",
         );
 
         let validator = AsyncPatternValidator::new(temp.path());
@@ -750,8 +772,7 @@ mod tests {
 
         assert!(
             violations.is_empty(),
-            "Test modules should be exempt: {:?}",
-            violations
+            "Test modules should be exempt: {violations:?}"
         );
     }
 }

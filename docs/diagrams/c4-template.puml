@@ -1,7 +1,7 @@
 @startuml C4 Template
 !include <C4/C4_Container>
 
-' C4 Model Template for MCP Context Browser
+' C4 Model Template for Memory Context Browser
 ' Copy this template and customize for specific diagrams
 
 ' Level 1: System Context

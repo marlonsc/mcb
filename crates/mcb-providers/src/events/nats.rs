@@ -26,18 +26,18 @@
 //! # }
 //! ```
 
+use std::sync::Arc;
+
 use async_nats::Client;
 use async_trait::async_trait;
 use futures::{StreamExt, stream};
-use mcb_application::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
-use std::sync::Arc;
+use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 
-/// Default subject for domain events
-const DEFAULT_SUBJECT: &str = "mcb.events";
+use crate::constants::NATS_DEFAULT_SUBJECT;
 
 /// Event bus provider using NATS for distributed systems
 ///
@@ -68,7 +68,7 @@ impl NatsEventBusProvider {
     ///
     /// Returns an error if connection to NATS server fails.
     pub async fn new(url: &str) -> Result<Self> {
-        Self::with_subject(url, DEFAULT_SUBJECT).await
+        Self::with_subject(url, NATS_DEFAULT_SUBJECT).await
     }
 
     /// Create with custom subject
@@ -270,6 +270,3 @@ impl EventBusProvider for NatsEventBusProvider {
         Ok(sub_id)
     }
 }
-
-// Keep backward compatibility with old name
-pub type NatsEventPublisher = NatsEventBusProvider;

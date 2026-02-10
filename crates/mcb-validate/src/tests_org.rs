@@ -5,83 +5,109 @@
 //! - Test file naming conventions
 //! - Test function naming conventions
 
+use std::path::PathBuf;
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
+
 use crate::pattern_registry::PATTERNS;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use walkdir::WalkDir;
 
 /// Test organization violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TestViolation {
     /// Inline test module found in src/
     InlineTestModule {
+        /// File containing the inline test module.
         file: PathBuf,
+        /// Line number where the `mod tests` block or `#[cfg(test)]` starts.
         line: usize,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test file with incorrect naming
     BadTestFileName {
+        /// File with the non-compliant name.
         file: PathBuf,
+        /// Description of the naming issue and suggested corrective action.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test function with incorrect naming
     BadTestFunctionName {
+        /// File containing the incorrectly named test function.
         file: PathBuf,
+        /// Line number where the test function is defined.
         line: usize,
+        /// The current non-compliant name of the test function.
         function_name: String,
+        /// The suggested compliant name for the test function.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Test without assertion
     TestWithoutAssertion {
+        /// File containing the test function.
         file: PathBuf,
+        /// Line number where the test function starts.
         line: usize,
+        /// Name of the test function lacking assertions.
         function_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Trivial assertion that always passes (assert!(true), assert_eq!(1, 1))
+    /// Trivial assertion that always passes
     TrivialAssertion {
+        /// File containing the trivial assertion.
         file: PathBuf,
+        /// Line number where the trivial assertion occurs.
         line: usize,
+        /// Name of the test function containing the trivial assertion.
         function_name: String,
+        /// The content of the trivial assertion (e.g., `assert!(true)`).
         assertion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Test only uses .unwrap() as assertion (crash = pass)
+    /// Test only uses .unwrap() as assertion
     UnwrapOnlyAssertion {
+        /// File containing the unwrap-only test.
         file: PathBuf,
+        /// Line number of the test function.
         line: usize,
+        /// Name of the test function that relies solely on `.unwrap()`.
         function_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Test body is only comments (no code)
+    /// Test body is only comments
     CommentOnlyTest {
+        /// File containing the empty/comment-only test.
         file: PathBuf,
+        /// Line number of the test function definition.
         line: usize,
+        /// Name of the test function that contains no executable code.
         function_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
 impl TestViolation {
+    /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::InlineTestModule { severity, .. } => *severity,
-            Self::BadTestFileName { severity, .. } => *severity,
-            Self::BadTestFunctionName { severity, .. } => *severity,
-            Self::TestWithoutAssertion { severity, .. } => *severity,
-            Self::TrivialAssertion { severity, .. } => *severity,
-            Self::UnwrapOnlyAssertion { severity, .. } => *severity,
-            Self::CommentOnlyTest { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
 impl std::fmt::Display for TestViolation {
+    /// Formats the violation as a human-readable string.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::InlineTestModule { file, line, .. } => {
@@ -181,6 +207,7 @@ impl std::fmt::Display for TestViolation {
 }
 
 impl Violation for TestViolation {
+    /// Returns the unique violation identifier code.
     fn id(&self) -> &str {
         match self {
             Self::InlineTestModule { .. } => "TEST001",
@@ -193,61 +220,65 @@ impl Violation for TestViolation {
         }
     }
 
+    /// Returns the category of the violation.
     fn category(&self) -> ViolationCategory {
         ViolationCategory::Testing
     }
 
+    /// Returns the severity level of the violation.
     fn severity(&self) -> Severity {
         match self {
-            Self::InlineTestModule { severity, .. } => *severity,
-            Self::BadTestFileName { severity, .. } => *severity,
-            Self::BadTestFunctionName { severity, .. } => *severity,
-            Self::TestWithoutAssertion { severity, .. } => *severity,
-            Self::TrivialAssertion { severity, .. } => *severity,
-            Self::UnwrapOnlyAssertion { severity, .. } => *severity,
-            Self::CommentOnlyTest { severity, .. } => *severity,
+            Self::InlineTestModule { severity, .. }
+            | Self::BadTestFileName { severity, .. }
+            | Self::BadTestFunctionName { severity, .. }
+            | Self::TestWithoutAssertion { severity, .. }
+            | Self::TrivialAssertion { severity, .. }
+            | Self::UnwrapOnlyAssertion { severity, .. }
+            | Self::CommentOnlyTest { severity, .. } => *severity,
         }
     }
 
+    /// Returns the file path associated with the violation, if any.
     fn file(&self) -> Option<&std::path::PathBuf> {
         match self {
-            Self::InlineTestModule { file, .. } => Some(file),
-            Self::BadTestFileName { file, .. } => Some(file),
-            Self::BadTestFunctionName { file, .. } => Some(file),
-            Self::TestWithoutAssertion { file, .. } => Some(file),
-            Self::TrivialAssertion { file, .. } => Some(file),
-            Self::UnwrapOnlyAssertion { file, .. } => Some(file),
-            Self::CommentOnlyTest { file, .. } => Some(file),
+            Self::InlineTestModule { file, .. }
+            | Self::BadTestFileName { file, .. }
+            | Self::BadTestFunctionName { file, .. }
+            | Self::TestWithoutAssertion { file, .. }
+            | Self::TrivialAssertion { file, .. }
+            | Self::UnwrapOnlyAssertion { file, .. }
+            | Self::CommentOnlyTest { file, .. } => Some(file),
         }
     }
 
+    /// Returns the line number associated with the violation, if any.
     fn line(&self) -> Option<usize> {
         match self {
-            Self::InlineTestModule { line, .. } => Some(*line),
             Self::BadTestFileName { .. } => None,
-            Self::BadTestFunctionName { line, .. } => Some(*line),
-            Self::TestWithoutAssertion { line, .. } => Some(*line),
-            Self::TrivialAssertion { line, .. } => Some(*line),
-            Self::UnwrapOnlyAssertion { line, .. } => Some(*line),
-            Self::CommentOnlyTest { line, .. } => Some(*line),
+            Self::InlineTestModule { line, .. }
+            | Self::BadTestFunctionName { line, .. }
+            | Self::TestWithoutAssertion { line, .. }
+            | Self::TrivialAssertion { line, .. }
+            | Self::UnwrapOnlyAssertion { line, .. }
+            | Self::CommentOnlyTest { line, .. } => Some(*line),
         }
     }
 
+    /// Returns a suggestion for fixing the violation, if available.
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::InlineTestModule { .. } => {
                 Some("Move test module to tests/ directory".to_string())
             }
-            Self::BadTestFileName { suggestion, .. } => Some(format!("Rename to {}", suggestion)),
-            Self::BadTestFunctionName { suggestion, .. } => {
-                Some(format!("Rename to {}", suggestion))
+            Self::BadTestFileName { suggestion, .. }
+            | Self::BadTestFunctionName { suggestion, .. } => {
+                Some(format!("Rename to {suggestion}"))
             }
             Self::TestWithoutAssertion { function_name, .. } => Some(format!(
-                "Add assertion to {} or use smoke test suffix",
-                function_name
+                "Add assertion to {function_name} or use smoke test suffix"
             )),
             Self::TrivialAssertion { assertion, .. } => {
-                Some(format!("Replace {} with meaningful assertion", assertion))
+                Some(format!("Replace {assertion} with meaningful assertion"))
             }
             Self::UnwrapOnlyAssertion { .. } => Some(
                 "Add explicit assert! or assert_eq! instead of relying on .unwrap()".to_string(),
@@ -259,7 +290,13 @@ impl Violation for TestViolation {
     }
 }
 
-/// Test organization validator
+/// Validates test organization and quality across a codebase.
+///
+/// Checks for:
+/// - Inline test modules in src/ (should be in tests/)
+/// - Test file naming conventions
+/// - Test function naming conventions
+/// - Test quality (assertions, trivial tests, etc.)
 pub struct TestValidator {
     config: ValidationConfig,
 }
@@ -270,12 +307,12 @@ impl TestValidator {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Create a validator with custom configuration for multi-directory support
+    /// Creates a validator with custom configuration for multi-directory support.
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
 
-    /// Run all test organization validations
+    /// Runs all test organization validations and returns violations found.
     pub fn validate_all(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_no_inline_tests()?);
@@ -286,7 +323,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Verify no #[cfg(test)] mod tests {} in src/
+    /// Verifies that no `#[cfg(test)] mod tests {}` blocks exist in src/ directory.
     pub fn validate_no_inline_tests(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
         let cfg_test_pattern = PATTERNS.get("TEST001.cfg_test");
@@ -299,6 +336,7 @@ impl TestValidator {
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -333,7 +371,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Validate that tests are properly organized in subdirectories
+    /// Validates that tests are properly organized in subdirectories (unit/, integration/, e2e/).
     pub fn validate_test_directory_structure(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
 
@@ -351,7 +389,7 @@ impl TestValidator {
             if !unit_exists && !integration_exists {
                 let has_test_files = std::fs::read_dir(&tests_dir)
                     .map(|entries| {
-                        entries.filter_map(|e| e.ok()).any(|e| {
+                        entries.filter_map(std::result::Result::ok).any(|e| {
                             let path = e.path();
                             path.is_file()
                                 && path.extension().and_then(|x| x.to_str()) == Some("rs")
@@ -412,7 +450,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Check test file naming conventions and directory structure
+    /// Checks test file naming conventions and directory structure compliance.
     pub fn validate_test_naming(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
 
@@ -426,6 +464,7 @@ impl TestValidator {
             // in any subdirectory structure as long as they have entry points
 
             for entry in WalkDir::new(&tests_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -462,8 +501,7 @@ impl TestValidator {
                             violations.push(TestViolation::BadTestFileName {
                                 file: path.to_path_buf(),
                                 suggestion: format!(
-                                    "{}_tests.rs (unit tests must end with _tests)",
-                                    file_name
+                                    "{file_name}_tests.rs (unit tests must end with _tests)"
                                 ),
                                 severity: Severity::Warning,
                             });
@@ -479,7 +517,7 @@ impl TestValidator {
                         if !is_valid_integration {
                             violations.push(TestViolation::BadTestFileName {
                                 file: path.to_path_buf(),
-                                suggestion: format!("{}_integration.rs or {}_workflow.rs (integration tests should indicate their purpose)", file_name, file_name),
+                                suggestion: format!("{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"),
                                 severity: Severity::Info,
                             });
                         }
@@ -493,7 +531,7 @@ impl TestValidator {
                         if !is_valid_e2e {
                             violations.push(TestViolation::BadTestFileName {
                                 file: path.to_path_buf(),
-                                suggestion: format!("{}_e2e.rs or test_{}.rs (e2e tests should indicate they're end-to-end)", file_name, file_name),
+                                suggestion: format!("{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"),
                                 severity: Severity::Info,
                             });
                         }
@@ -530,7 +568,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Verify test functions follow naming pattern
+    /// Verifies that test functions follow the `test_*` naming pattern.
     pub fn validate_test_function_naming(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
         let test_attr_pattern = Regex::new(r"#\[test\]").unwrap();
@@ -558,6 +596,7 @@ impl TestValidator {
             }
 
             for entry in WalkDir::new(&tests_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -584,7 +623,7 @@ impl TestValidator {
                                         file: entry.path().to_path_buf(),
                                         line: fn_line_idx + 1,
                                         function_name: fn_name.to_string(),
-                                        suggestion: format!("test_{}", fn_name),
+                                        suggestion: format!("test_{fn_name}"),
                                         severity: Severity::Warning,
                                     });
                                 }
@@ -642,7 +681,8 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Validate test quality (trivial assertions, unwrap-only, comment-only)
+    /// Validates test quality by checking for trivial assertions, unwrap-only tests, and comment-only tests.
+    #[allow(clippy::too_many_lines)]
     pub fn validate_test_quality(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
 
@@ -685,6 +725,7 @@ impl TestValidator {
             }
 
             for entry in WalkDir::new(&tests_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -727,10 +768,14 @@ impl TestValidator {
                                         started = true;
                                     }
                                     if started {
-                                        brace_depth +=
-                                            check_line.chars().filter(|c| *c == '{').count() as i32;
-                                        brace_depth -=
-                                            check_line.chars().filter(|c| *c == '}').count() as i32;
+                                        brace_depth += i32::try_from(
+                                            check_line.chars().filter(|c| *c == '{').count(),
+                                        )
+                                        .unwrap_or(0);
+                                        brace_depth -= i32::try_from(
+                                            check_line.chars().filter(|c| *c == '}').count(),
+                                        )
+                                        .unwrap_or(0);
                                         body_lines.push((idx, check_line));
                                         if brace_depth <= 0 {
                                             break;
@@ -819,25 +864,14 @@ impl TestValidator {
         Ok(violations)
     }
 
+    /// Retrieves the source directories to validate.
     fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {
         self.config.get_source_dirs()
     }
 }
 
-impl crate::validator_trait::Validator for TestValidator {
-    fn name(&self) -> &'static str {
-        "tests_org"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates test organization and quality"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    TestValidator,
+    "tests_org",
+    "Validates test organization and quality"
+);

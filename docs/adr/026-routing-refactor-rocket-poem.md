@@ -1,4 +1,16 @@
-# ADR 026: API Routing Refactor (Rocket vs Poem)
+---
+adr: 26
+title: API Routing Refactor (Rocket vs Poem)
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [7, 11]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 026: API Routing Refactor (Rocket vs Poem)
 
 ## Status
 

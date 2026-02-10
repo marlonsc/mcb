@@ -1,12 +1,12 @@
-@startuml System Context - MCP Context Browser
+@startuml System Context - Memory Context Browser
 !include <C4/C4_Container>
 
-title System Context - MCP Context Browser
+title System Context - Memory Context Browser
 
 Person(ai_user, "AI Assistant User", "Uses AI assistants like Claude Desktop, ChatGPT")
 Person(developer, "Developer", "Writes and maintains code")
 
-System(mcp_server, "MCP Context Browser", "Provides semantic code search and analysis capabilities")
+System(mcp_server, "Memory Context Browser", "Provides semantic code search and analysis capabilities")
 System(codebase, "Code Repository", "Git repositories with source code files")
 System_Ext(ai_provider, "AI Provider", "OpenAI, Anthropic, Ollama for embeddings")
 System_Ext(vector_db, "Vector Database", "Milvus, Pinecone, Qdrant for vector storage")

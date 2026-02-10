@@ -47,11 +47,29 @@ fn get_mcb_path() -> PathBuf {
     );
 }
 
+/// Spawn mcb with test-safe configuration (no external service dependencies)
+fn create_test_command(mcb_path: &PathBuf) -> Command {
+    let mut cmd = Command::new(mcb_path);
+    let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/test.toml");
+    let unique_db = format!(
+        "/tmp/mcb-stdio-{}-{}.db",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time")
+            .as_nanos()
+    );
+    cmd.arg("serve");
+    cmd.arg("--config").arg(config_path);
+    cmd.env("MCP__AUTH__USER_DB_PATH", unique_db);
+    cmd
+}
+
 /// Helper to spawn mcb binary with stdio transport
 fn spawn_mcb_stdio() -> std::process::Child {
     let mcb_path = get_mcb_path();
 
-    Command::new(&mcb_path)
+    create_test_command(&mcb_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -72,11 +90,19 @@ fn send_request_get_response(
 
     // Read response line
     let mut response_line = String::new();
-    stdout
-        .read_line(&mut response_line)
-        .expect("Failed to read response");
+    match stdout.read_line(&mut response_line) {
+        Ok(0) => panic!("EOF reading stdout - server likely crashed. Check stderr."),
+        Ok(_) => {}
+        Err(e) => panic!("Failed to read response: {}", e),
+    }
 
-    serde_json::from_str(&response_line).expect("Failed to parse JSON response")
+    match serde_json::from_str(&response_line) {
+        Ok(val) => val,
+        Err(e) => {
+            eprintln!("Failed to parse JSON response: {}", response_line);
+            panic!("JSON parse error: {}", e);
+        }
+    }
 }
 
 /// Create the MCP initialize request required to start a session
@@ -268,22 +294,13 @@ fn test_stdio_roundtrip_tools_list() {
         .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
         .collect();
 
-    assert!(
-        tool_names.contains(&"index_codebase"),
-        "Missing index_codebase tool"
-    );
-    assert!(
-        tool_names.contains(&"search_code"),
-        "Missing search_code tool"
-    );
-    assert!(
-        tool_names.contains(&"get_indexing_status"),
-        "Missing get_indexing_status tool"
-    );
-    assert!(
-        tool_names.contains(&"clear_index"),
-        "Missing clear_index tool"
-    );
+    assert!(tool_names.contains(&"index"), "Missing index tool");
+    assert!(tool_names.contains(&"search"), "Missing search tool");
+    assert!(tool_names.contains(&"validate"), "Missing validate tool");
+    assert!(tool_names.contains(&"memory"), "Missing memory tool");
+    assert!(tool_names.contains(&"session"), "Missing session tool");
+    assert!(tool_names.contains(&"agent"), "Missing agent tool");
+    assert!(tool_names.contains(&"vcs"), "Missing vcs tool");
 
     drop(stdin);
     let _ = child.kill();
@@ -412,6 +429,11 @@ fn test_stdio_logs_go_to_stderr() {
     // Give some time for stderr to accumulate logs
     std::thread::sleep(Duration::from_millis(100));
 
+    // Terminate process before reading stderr to avoid blocking on open pipe
+    drop(stdin);
+    let _ = child.kill();
+    let _ = child.wait();
+
     // Check if stderr has content (logs)
     // Note: We can't guarantee logs are present, but if they are, they should be on stderr
     let stderr_lines: Vec<_> = stderr_reader.lines().take(10).collect();
@@ -429,7 +451,5 @@ fn test_stdio_logs_go_to_stderr() {
         }
     }
 
-    drop(stdin);
-    let _ = child.kill();
-    let _ = child.wait();
+    // Process already terminated above.
 }

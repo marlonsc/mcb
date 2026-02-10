@@ -4,10 +4,10 @@
 # Parameters: BUMP (from main Makefile)
 # =============================================================================
 
-.PHONY: release install install-validate version
+.PHONY: release install install-validate install-mcp version
 
-# Get version from mcb crate Cargo.toml
-VERSION := $(shell grep '^version' crates/mcb/Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
+# Get version from root Cargo.toml (workspace)
+VERSION := $(shell grep '^version =' Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
 
 # Installation directories
 INSTALL_DIR := $(HOME)/.local/bin
@@ -16,6 +16,9 @@ BINARY_NAME := mcb
 SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
 CONFIG_DIR := $(HOME)/.config/mcb
 DATA_DIR := $(HOME)/.local/share/mcb
+# Get service host/port (check user config first, fall back to default)
+SERVICE_HOST := $(shell python3 -c 'import tomllib, os; p=os.path.expanduser("~/.config/mcb/mcb.toml"); d=tomllib.load(open(p,"rb")) if os.path.exists(p) else tomllib.load(open("config/default.toml","rb")); print(d.get("server",{}).get("network",{}).get("host", "127.0.0.1"))')
+SERVICE_PORT := $(shell python3 -c 'import tomllib, os; p=os.path.expanduser("~/.config/mcb/mcb.toml"); d=tomllib.load(open(p,"rb")) if os.path.exists(p) else tomllib.load(open("config/default.toml","rb")); print(d.get("server",{}).get("network",{}).get("port", 3000))')
 
 # =============================================================================
 # RELEASE - Full release pipeline
@@ -37,72 +40,132 @@ release: ## Full release pipeline (lint + test + validate + build)
 # INSTALL - Install release binary + systemd service
 # =============================================================================
 
-install: ## Install release binary + systemd service to user directories
-	@echo "Installing MCB v$(VERSION)..."
+install: ## Install release binary + systemd service to user directories (fully automatic)
+	@echo "🚀 Installing MCB v$(VERSION)..."
 	@$(MAKE) build RELEASE=1
-	@# Create directories
-	@mkdir -p $(INSTALL_DIR)
-	@mkdir -p $(SYSTEMD_USER_DIR)
-	@mkdir -p $(CONFIG_DIR)
-	@mkdir -p $(DATA_DIR)
-	@# FIRST: Stop systemd and kill ALL mcb server processes
-	@echo "Stopping MCB service and processes..."
-	@-systemctl --user stop mcb.service 2>/dev/null || true
-	@sleep 1
-	@-pkill -9 -f "\.local/bin/mcb" 2>/dev/null || true
-	@-pkill -9 -f "mcb --server" 2>/dev/null || true
-	@sleep 1
-	@# Backup old binary
-	@if [ -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" ]; then \
-		mv "$(INSTALL_DIR)/$(INSTALL_BINARY)" "$(INSTALL_DIR)/$(INSTALL_BINARY).old"; \
-	fi
-	@# Install binary
-	@cp target/release/$(BINARY_NAME) $(INSTALL_DIR)/$(INSTALL_BINARY)
-	@chmod +x $(INSTALL_DIR)/$(INSTALL_BINARY)
-	@# Install systemd service
-	@cp systemd/mcb.service $(SYSTEMD_USER_DIR)/mcb.service
-	@# Reload and start systemd service
-	@systemctl --user daemon-reload
-	@systemctl --user enable mcb.service
-	@systemctl --user start mcb.service
-	@echo ""
-	@echo "✓ Installed v$(VERSION) to $(INSTALL_DIR)/$(INSTALL_BINARY)"
-	@echo "✓ Systemd service installed and started"
-	@ls -lh $(INSTALL_DIR)/$(INSTALL_BINARY) | awk '{print "  Size: "$$5"  Modified: "$$6" "$$7" "$$8}'
-	@if [ -f "$(INSTALL_DIR)/$(INSTALL_BINARY).old" ]; then echo "  Old binary: $(INSTALL_DIR)/$(INSTALL_BINARY).old (remove if not needed)"; fi
-	@# Run validation
+	@mkdir -p $(INSTALL_DIR) $(SYSTEMD_USER_DIR) $(CONFIG_DIR) $(DATA_DIR) || { echo "❌ Failed to create directories"; exit 1; }
+	@# Stop service and wait for binary to be released
+	@echo "  Stopping existing MCB..."
+	@-systemctl --user stop mcb.service 2>/dev/null
+	@WAIT=0; while [ $$WAIT -lt 10 ]; do \
+		if ! pgrep -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" >/dev/null 2>&1; then break; fi; \
+		sleep 1; WAIT=$$((WAIT + 1)); \
+	done
+	@-pkill -9 -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" 2>/dev/null; sleep 1
+	@# Wait for file lock release (fuser check with timeout)
+	@WAIT=0; while [ $$WAIT -lt 5 ]; do \
+		if ! fuser "$(INSTALL_DIR)/$(INSTALL_BINARY)" >/dev/null 2>&1; then break; fi; \
+		sleep 1; WAIT=$$((WAIT + 1)); \
+	done
+	@# Atomic install: copy to temp, then rename (rename is atomic on same filesystem)
+	@rm -f "$(INSTALL_DIR)/$(INSTALL_BINARY).new" 2>/dev/null
+	@cp target/release/$(BINARY_NAME) "$(INSTALL_DIR)/$(INSTALL_BINARY).new" || { echo "❌ Failed to copy binary"; exit 1; }
+	@chmod +x "$(INSTALL_DIR)/$(INSTALL_BINARY).new"
+	@rm -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" 2>/dev/null
+	@mv "$(INSTALL_DIR)/$(INSTALL_BINARY).new" "$(INSTALL_DIR)/$(INSTALL_BINARY)" || { echo "❌ Failed to install binary"; exit 1; }
+	@if ! $(INSTALL_DIR)/$(INSTALL_BINARY) --version >/dev/null 2>&1; then echo "❌ Binary validation failed"; exit 1; fi
+	@cp systemd/mcb.service $(SYSTEMD_USER_DIR)/mcb.service || { echo "❌ Failed to install systemd service"; exit 1; }
+	@systemctl --user daemon-reload || { echo "❌ Failed to reload systemd"; exit 1; }
+	@systemctl --user enable mcb.service || { echo "❌ Failed to enable service"; exit 1; }
+	@systemctl --user start mcb.service || { echo "❌ Failed to start service"; exit 1; }
+	@sleep 2
+	@$(MAKE) install-mcp
 	@$(MAKE) install-validate
+
+# =============================================================================
+# INSTALL-MCP - Update agent configs to use MCB server with "serve" subcommand
+# =============================================================================
+
+install-mcp: ## Update Claude Code and Gemini MCP configs
+	@echo "📋 Configuring MCP agent integrations..."
+	@# Require jq for JSON updates (fail early if missing)
+	@command -v jq >/dev/null 2>&1 || { echo "❌ jq is required for MCP config updates"; exit 1; }
+	@# Claude Code .mcp.json - ensure mcb with ["serve", "--config", "<config_dir>/mcb.toml"]
+	@if [ -f ".mcp.json" ]; then \
+		jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' .mcp.json > .mcp.json.tmp && \
+		mv .mcp.json.tmp .mcp.json || { echo "❌ Failed to update Claude Code config"; exit 1; }; \
+		echo "  ✓ Claude Code: .mcp.json configured"; \
+	else \
+		echo "  ⚠ Claude Code: .mcp.json not found (create manually if needed)"; \
+	fi
+	@# Gemini mcp_config.json - ensure mcb with ["serve", "--config", "<config_dir>/mcb.toml"]
+	@if [ -f "$(HOME)/.gemini/antigravity/mcp_config.json" ]; then \
+		jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' "$(HOME)/.gemini/antigravity/mcp_config.json" > "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" && \
+		mv "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" "$(HOME)/.gemini/antigravity/mcp_config.json" || { echo "❌ Failed to update Gemini config"; exit 1; }; \
+		echo "  ✓ Gemini: mcp_config.json configured"; \
+	else \
+		echo "  ⚠ Gemini: mcp_config.json not found (optional)"; \
+	fi
+	@echo "  ℹ MCB core config: ~/.config/mcb/mcb.toml (providers, vector store, ports)"
 
 # =============================================================================
 # INSTALL-VALIDATE - Install and validate the binary works
 # =============================================================================
 
-install-validate: ## Validate MCB installation
+install-validate: ## Validate MCB installation with retries
 	@echo ""
-	@echo "Validating installation..."
-	@echo "1. Binary version:"
-	@$(INSTALL_DIR)/$(INSTALL_BINARY) --version 2>/dev/null && echo "   ✓ Binary runs successfully" || (echo "   ✗ Binary failed" && exit 1)
-	@echo ""
-	@echo "2. Systemd service status:"
-	@if systemctl --user is-active --quiet mcb.service 2>/dev/null; then \
-		echo "   ✓ Service is active"; \
-	else \
-		echo "   ⚠ Service is not active"; \
-		echo "   Checking logs..."; \
-		journalctl --user -u mcb.service -n 5 --no-pager 2>/dev/null || true; \
+	@echo "🔍 Validating MCB installation..."
+	@# 1. Binary version check
+	@echo "1. Binary executable:"
+	@if ! $(INSTALL_DIR)/$(INSTALL_BINARY) --version 2>/dev/null | grep -q "mcb"; then \
+		echo "   ❌ Binary failed"; exit 1; \
+	fi
+	@echo "   ✓ Binary working"
+	@# 2. Service status (with wait for startup)
+	@echo "2. Systemd service:"
+	@RETRIES=0; \
+	while [ $$RETRIES -lt 5 ]; do \
+		if systemctl --user is-active --quiet mcb.service 2>/dev/null; then \
+			echo "   ✓ Service active"; \
+			break; \
+		fi; \
+		RETRIES=$$((RETRIES + 1)); \
+		if [ $$RETRIES -lt 5 ]; then sleep 1; fi; \
+	done; \
+	if [ $$RETRIES -eq 5 ]; then \
+		echo "   ❌ Service failed to start"; \
+		journalctl --user -u mcb.service -n 10 --no-pager 2>/dev/null; \
+		exit 1; \
+	fi
+	@STATE_LINE=$$(systemctl --user show mcb.service -p ActiveState -p SubState -p Result -p ExecMainStatus -p NRestarts --value 2>/dev/null | tr '\n' ' '); \
+	set -- $$STATE_LINE; \
+	ACTIVE=$${1:-unknown}; SUB=$${2:-unknown}; RESULT=$${3:-unknown}; EXIT_CODE=$${4:-1}; RESTARTS=$${5:-0}; \
+	echo "   • State=$$ACTIVE/$$SUB Result=$$RESULT Exit=$$EXIT_CODE Restarts=$$RESTARTS"; \
+	if [ "$$ACTIVE" != "active" ] || [ "$$EXIT_CODE" != "0" ] || [ "$$RESTARTS" -gt 3 ] || [ "$$RESULT" = "exit-code" ]; then \
+		echo "   ❌ Service unhealthy (startup failure or restart loop detected)"; \
+		journalctl --user -u mcb.service -n 30 --no-pager 2>/dev/null; \
+		exit 1; \
+	fi
+	@# 3. HTTP health check (with retries)
+	@echo "3. HTTP server health:"
+	@RETRIES=0; \
+	while [ $$RETRIES -lt 5 ]; do \
+		if curl -s --connect-timeout 2 http://$(SERVICE_HOST):$(SERVICE_PORT)/healthz 2>/dev/null | grep -q "OK\|status"; then \
+			echo "   ✓ HTTP server responding"; \
+			break; \
+		fi; \
+		RETRIES=$$((RETRIES + 1)); \
+		if [ $$RETRIES -lt 5 ]; then sleep 1; fi; \
+	done; \
+	if [ $$RETRIES -eq 5 ]; then \
+		echo "   ❌ HTTP server failed"; \
+		systemctl --user status mcb.service 2>/dev/null; \
+		journalctl --user -u mcb.service -n 30 --no-pager 2>/dev/null; \
+		exit 1; \
 	fi
 	@echo ""
-	@echo "3. HTTP health check:"
-	@sleep 2
-	@if curl -s --connect-timeout 2 http://127.0.0.1:8080/healthz >/dev/null 2>&1; then \
-		echo "   ✓ Health endpoint responding"; \
-		curl -s http://127.0.0.1:8080/healthz 2>/dev/null | head -c 200 || true; \
-		echo ""; \
-	else \
-		echo "   ⚠ Health endpoint not responding (may be starting up)"; \
-	fi
+	@echo "✅ All validation checks passed!"
 	@echo ""
-	@echo "✓ Validation complete"
+	@echo "📊 System Status:"
+	@echo "   Version: $$($(INSTALL_DIR)/$(INSTALL_BINARY) --version 2>/dev/null)"
+	@echo "   Binary: $(INSTALL_DIR)/$(INSTALL_BINARY)"
+	@echo "   Config: $(CONFIG_DIR)/mcb.toml"
+	@echo "   Server: http://$(SERVICE_HOST):$(SERVICE_PORT)"
+	@echo ""
+	@echo "🎯 Next steps:"
+	@echo "   - MCB is running as systemd service"
+	@echo "   - Available via MCP in Claude Code (.mcp.json) and Gemini"
+	@echo "   - View logs: journalctl --user -u mcb.service -f"
 
 # =============================================================================
 # VERSION (BUMP=patch|minor|major|check)

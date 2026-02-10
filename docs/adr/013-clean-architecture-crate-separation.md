@@ -1,4 +1,16 @@
-# ADR 013: Clean Architecture Crate Separation
+---
+adr: 13
+title: Clean Architecture Crate Separation
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 3, 6, 7, 11, 12, 27, 31]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 013: Clean Architecture Crate Separation
 
 ## Status
 
@@ -7,7 +19,7 @@ Updated (v0.1.2) - Added mcb-validate as 8th crate
 
 ## Context
 
-As MCP Context Browser evolved from a monolithic architecture to a production-ready system, the codebase grew to include multiple providers, complex DI patterns, validation systems, and protocol handlers. A monolithic structure created several challenges:
+As Memory Context Browser evolved from a monolithic architecture to a production-ready system, the codebase grew to include multiple providers, complex DI patterns, validation systems, and protocol handlers. A monolithic structure created several challenges:
 
 1.  **Coupling**: Changes to infrastructure affected domain logic
 2.  **Testability**: Testing required loading entire application context
@@ -335,7 +347,7 @@ async fn test_full_indexing_flow() {
 -   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider trait patterns
 -   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async patterns per layer
 -   [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider interface
--   [ADR-030: Multi-Provider Strategy](030-multi-provider-strategy.md) - mcb-providers organization
+-   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - mcb-providers organization
 -   [ADR-031: Documentation Excellence](031-documentation-excellence.md) - Documentation per crate
 -   [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality standards per layer
 -   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - mcb-server admin module

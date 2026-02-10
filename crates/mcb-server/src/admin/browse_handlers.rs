@@ -11,23 +11,30 @@
 //! | `/collections/:name/files` | GET | List files in a collection |
 //! | `/collections/:name/files/*path/chunks` | GET | Get chunks for a file |
 
+use std::sync::Arc;
+
+use mcb_domain::ports::browse::HighlightServiceInterface;
 use mcb_domain::ports::providers::VectorStoreBrowser;
+use mcb_domain::value_objects::CollectionId;
+use mcb_domain::value_objects::FileTreeNode;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get};
-use std::sync::Arc;
 
 use super::auth::AdminAuth;
 use super::models::{
     ChunkDetailResponse, ChunkListResponse, CollectionInfoResponse, CollectionListResponse,
     FileInfoResponse, FileListResponse,
 };
+use crate::constants::LIST_FILE_PATHS_LIMIT;
 
 /// Browse handler state containing the vector store browser
 #[derive(Clone)]
 pub struct BrowseState {
     /// Vector store browser for collection/file navigation
     pub browser: Arc<dyn VectorStoreBrowser>,
+    /// Highlight service for code syntax highlighting
+    pub highlight_service: Arc<dyn HighlightServiceInterface>,
 }
 
 /// Error response for browse operations
@@ -81,7 +88,7 @@ pub async fn list_collections(
     let collection_responses: Vec<CollectionInfoResponse> = collections
         .into_iter()
         .map(|c| CollectionInfoResponse {
-            name: c.name,
+            name: c.id.into_string(),
             vector_count: c.vector_count,
             file_count: c.file_count,
             last_indexed: c.last_indexed,
@@ -117,10 +124,11 @@ pub async fn list_collection_files(
     limit: Option<usize>,
 ) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
     let limit = limit.unwrap_or(100);
+    let collection = CollectionId::new(name);
 
     let files = state
         .browser
-        .list_file_paths(name, limit)
+        .list_file_paths(&collection, limit)
         .await
         .map_err(|e| {
             // Check if it's a collection not found error
@@ -178,10 +186,11 @@ pub async fn get_file_chunks(
     path: std::path::PathBuf,
 ) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
     let file_path = path.to_string_lossy().to_string();
+    let collection_id = CollectionId::new(name);
 
     let chunks = state
         .browser
-        .get_chunks_by_file(name, &file_path)
+        .get_chunks_by_file(&collection_id, &file_path)
         .await
         .map_err(|e| {
             let error_msg = e.to_string();
@@ -198,24 +207,47 @@ pub async fn get_file_chunks(
             }
         })?;
 
-    let chunk_responses: Vec<ChunkDetailResponse> = chunks
-        .into_iter()
-        .map(|c| {
-            // Estimate end line from content
-            let line_count = c.content.lines().count() as u32;
-            let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
+    let mut chunk_responses = Vec::with_capacity(chunks.len());
+    for c in chunks {
+        // Estimate end line from content
+        let line_count = c.content.lines().count() as u32;
+        let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
 
-            ChunkDetailResponse {
-                id: c.id,
-                content: c.content,
-                file_path: c.file_path,
-                start_line: c.start_line,
-                end_line,
-                language: c.language,
-                score: c.score,
+        // Generate server-side highlighting via injected service
+        let (highlighted_html, content, language) = match state
+            .highlight_service
+            .highlight(&c.content, &c.language)
+            .await
+        {
+            Ok(h) => {
+                let html =
+                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&h);
+                (html, c.content, c.language)
             }
-        })
-        .collect();
+            Err(_) => {
+                // Move content/language into fallback HighlightedCode to avoid cloning
+                let fallback = mcb_domain::value_objects::browse::HighlightedCode::new(
+                    c.content,
+                    vec![],
+                    c.language,
+                );
+                let html =
+                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&fallback);
+                (html, fallback.original, fallback.language)
+            }
+        };
+
+        chunk_responses.push(ChunkDetailResponse {
+            id: c.id,
+            content,
+            highlighted_html,
+            file_path: c.file_path,
+            start_line: c.start_line,
+            end_line,
+            language,
+            score: c.score,
+        });
+    }
 
     let total = chunk_responses.len();
     Ok(Json(ChunkListResponse {
@@ -226,4 +258,75 @@ pub async fn get_file_chunks(
     }))
 }
 
-// Tests moved to tests/unit/browse_handlers_tests.rs per test organization standards
+/// Get file tree for a collection
+///
+/// Returns a hierarchical tree structure of all indexed files in the
+/// collection, organized by directory. Useful for tree view navigation.
+#[get("/collections/<name>/tree")]
+pub async fn get_collection_tree(
+    _auth: AdminAuth,
+    state: &State<BrowseState>,
+    name: &str,
+) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
+    let collection_id = CollectionId::new(name);
+    let files = state
+        .browser
+        .list_file_paths(&collection_id, LIST_FILE_PATHS_LIMIT)
+        .await
+        .map_err(|e| {
+            let error_msg = e.to_string();
+            if error_msg.contains("not found") || error_msg.contains("does not exist") {
+                (
+                    Status::NotFound,
+                    Json(BrowseErrorResponse::not_found("Collection")),
+                )
+            } else {
+                (
+                    Status::InternalServerError,
+                    Json(BrowseErrorResponse::internal(error_msg)),
+                )
+            }
+        })?;
+
+    let mut root = FileTreeNode::directory(name, "");
+
+    for file in files {
+        let parts: Vec<&str> = file.path.split('/').collect();
+        insert_into_tree(&mut root, &parts, &file);
+    }
+
+    root.sort_children();
+    Ok(Json(root))
+}
+
+fn insert_into_tree(
+    node: &mut FileTreeNode,
+    parts: &[&str],
+    file: &mcb_domain::value_objects::FileInfo,
+) {
+    if parts.is_empty() {
+        return;
+    }
+
+    let name = parts[0];
+    let is_file = parts.len() == 1;
+
+    if is_file {
+        let file_node = FileTreeNode::file(name, &file.path, file.chunk_count, &file.language);
+        *node = node.clone().with_child(file_node);
+    } else {
+        let child_idx = node.children.iter().position(|c| c.name == name);
+        if let Some(idx) = child_idx {
+            insert_into_tree(&mut node.children[idx], &parts[1..], file);
+        } else {
+            let current_path = if node.path.is_empty() {
+                name.to_string()
+            } else {
+                format!("{}/{}", node.path, name)
+            };
+            let mut dir_node = FileTreeNode::directory(name, &current_path);
+            insert_into_tree(&mut dir_node, &parts[1..], file);
+            *node = node.clone().with_child(dir_node);
+        }
+    }
+}

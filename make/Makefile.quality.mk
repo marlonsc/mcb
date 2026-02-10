@@ -4,7 +4,7 @@
 # Parameters: FIX, CI_MODE, STRICT, QUICK, LCOV (from main Makefile)
 # =============================================================================
 
-.PHONY: quality fmt lint validate audit coverage update
+.PHONY: check quality fmt lint validate audit coverage update qlty-check qlty-smells
 
 # =============================================================================
 # QUALITY - Full check (fmt + lint + test)
@@ -16,6 +16,12 @@ quality: ## Full check: fmt + lint + test (pre-commit gate)
 	@$(MAKE) lint
 	@$(MAKE) test SCOPE=all
 	@echo "Quality checks passed."
+
+check: ## Non-mutating check: lint + test
+	@echo "Running checks (lint + test)..."
+	@$(MAKE) lint
+	@$(MAKE) test SCOPE=all
+	@echo "Checks passed."
 
 # =============================================================================
 # FMT - Format Rust and Markdown
@@ -36,17 +42,17 @@ lint: ## Check code quality (FIX=1 to auto-fix, CI_MODE=1 for Rust 2024)
 ifeq ($(FIX),1)
 	@echo "Auto-fixing code..."
 	cargo fmt
-	cargo clippy --fix --allow-dirty --all-targets --features "full"
+	cargo clippy --fix --allow-dirty --all-targets
 else ifeq ($(CI_MODE),1)
 	@echo "CI lint with Rust 2024 checks..."
 	cargo fmt --all -- --check
-	RUSTFLAGS="$(RUST_2024_LINTS)" cargo clippy --all-targets --features "full" -- -D warnings \
+	RUSTFLAGS="$(RUST_2024_LINTS)" cargo clippy --all-targets -- -D warnings \
 		-D clippy::multiple_unsafe_ops_per_block \
 		-D clippy::undocumented_unsafe_blocks
 else
 	@echo "Checking code quality..."
 	cargo fmt --all -- --check
-	cargo clippy --all-targets --features "full" -- -D warnings
+	cargo clippy --all-targets -- -D warnings
 endif
 
 # =============================================================================
@@ -109,3 +115,22 @@ update: ## Update Cargo dependencies
 	@echo "Updating dependencies..."
 	cargo update
 	@echo "Dependencies updated"
+
+# =============================================================================
+# QLTY-CHECK - Run qlty check and analyze results
+# =============================================================================
+
+qlty-check: ## Run qlty check and analyze results
+	@echo "Running qlty check..."
+	@qlty check --all --sarif > qlty.check.lst || true
+	@echo "Analyzing results..."
+	@python3 scripts/analyze_checks.py
+	@echo "Done. Results saved to qlty.check.lst"
+
+qlty-smells: ## Run qlty smells and analyze results
+	@echo "Running qlty smells..."
+	@qlty smells --all --sarif > qlty.smells.lst || true
+	@echo "Analyzing smells..."
+	@python3 scripts/analyze_smells.py
+	@echo "Done. Results saved to qlty.smells.lst"
+

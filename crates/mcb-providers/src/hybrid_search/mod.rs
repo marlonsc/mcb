@@ -51,7 +51,6 @@
 //! | Provider | Description | Use Case |
 //! |----------|-------------|----------|
 //! | `HybridSearchEngine` | Full BM25 + semantic hybrid | Production search |
-//! | `NullHybridSearchProvider` | Pass-through (no BM25) | Testing, development |
 //!
 //! ## BM25 Algorithm
 //!
@@ -67,9 +66,7 @@
 
 pub mod bm25;
 pub mod engine;
-pub mod null;
 
 // Re-export main types
 pub use bm25::{BM25Params, BM25Scorer};
 pub use engine::HybridSearchEngine;
-pub use null::NullHybridSearchProvider;

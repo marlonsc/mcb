@@ -11,8 +11,10 @@
 #      GITHUB_TOKEN cannot approve PRs per GitHub restriction)
 #
 # Security:
-#   - Only runs for dependabot[bot] actor
+#   - Only runs for dependabot[bot] user who created the PR
 #   - Requires CI to pass before merge (configure in branch protection)
+#   - Uses pull_request trigger (safer than pull_request_target)
+#   - Requires Dependabot secrets configured for write permissions
 # =============================================================================
 
 name: Dependabot Auto-Merge
@@ -21,19 +23,19 @@ permissions:
   contents: write
   pull-requests: write
 
-on:  # yamllint disable-line rule:truthy
-  pull_request_target:
+on: # yamllint disable-line rule:truthy
+  pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
   auto-merge:
     name: Auto-Merge Dependabot
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v2
+        uses: dependabot/fetch-metadata@dbb049abf0d677abbd7f7eee0375145b417fdd34 # v2.3.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
@@ -49,11 +51,12 @@ jobs:
       - name: Auto-approve major updates (review only, no merge)
         if: >-
           steps.metadata.outputs.update-type == 'version-update:semver-major'
-        run: |
-          echo "::notice ::Major update detected: ${{ steps.metadata.outputs.dependency-names }}"
-          echo "Major updates require manual review and merge."
-          gh pr comment "$PR_URL" --body \
-            "**Major version update detected.** This PR requires manual review before merging."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEP_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+        run: |
+          echo "::notice ::Major update detected: $DEP_NAMES"
+          echo "Major updates require manual review and merge."
+          gh pr comment "$PR_URL" --body \
+            "**Major version update detected.** This PR requires manual review before merging."

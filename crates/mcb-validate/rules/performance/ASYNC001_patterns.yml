@@ -18,7 +18,7 @@ patterns:
   fn_decl: '(?:pub\s+)?(?:async\s+)?fn\s+(\w+)'
 
 config:
-  exclude_patterns: ["**/tests/**"]
+  exclude_patterns: []
 
 rule: |
   rule AsyncPatterns "Validate async code patterns" {

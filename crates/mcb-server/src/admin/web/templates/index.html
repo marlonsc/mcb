@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - MCP Context Browser Admin</title>
+    <title>Dashboard - Memory Context Browser Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <link rel="stylesheet" href="/ui/theme.css">
+    <script src="/ui/shared.js"></script>
     <style>
         .status-healthy { color: #16a34a; }
         .status-degraded { color: #ca8a04; }
@@ -16,11 +18,11 @@
         .status-stopped { color: #6b7280; }
         .status-starting { color: #2563eb; }
         .status-stopping { color: #ca8a04; }
-        .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
+        .card { background: var(--card-bg, white); border-radius: 0.5rem; box-shadow: 0 1px 3px var(--card-shadow, rgba(0,0,0,0.1)); padding: 1.5rem; }
         .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; cursor: pointer; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-primary { background: #2563eb; color: white; }
-        .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+        .btn-primary { background: var(--accent, #2563eb); color: white; }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-hover, #1d4ed8); }
         .btn-success { background: #16a34a; color: white; }
         .btn-success:hover:not(:disabled) { background: #15803d; }
         .btn-warning { background: #ca8a04; color: white; }
@@ -41,72 +43,56 @@
         .event-error { border-color: #dc2626; background: #fef2f2; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-gray-800 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <span class="text-xl font-bold">MCP Context Browser</span>
-                    <span class="ml-2 text-sm text-gray-400">Admin</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span id="sse-status" class="flex items-center text-sm">
-                        <span class="sse-indicator sse-disconnected" id="sse-indicator"></span>
-                        <span id="sse-text">Disconnected</span>
-                    </span>
-                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-900">Dashboard</a>
-                    <a href="/ui/config" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Config</a>
-                    <a href="/ui/health" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Health</a>
-                    <a href="/ui/indexing" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Indexing</a>
-                    <a href="/ui/browse" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Browse</a>
-                </div>
+<body class="bg-primary text-primary min-h-screen">
+    <div id="app-shell">
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold">Dashboard</h1>
+                <p class="mt-2 text-secondary">System overview and real-time metrics via SSE</p>
             </div>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p class="mt-2 text-gray-600">System overview and real-time metrics via SSE</p>
+            <span id="sse-status" class="flex items-center text-sm">
+                <span class="sse-indicator sse-disconnected" id="sse-indicator"></span>
+                <span id="sse-text">Disconnected</span>
+            </span>
         </div>
 
         <!-- Health Status Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="card" id="health-card">
-                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Status</h3>
-                <p class="mt-2 text-3xl font-semibold status-healthy" id="status-value">HEALTHY</p>
+                <h3 class="text-sm font-medium text-secondary uppercase tracking-wider">Status</h3>
+                <p class="mt-2 text-3xl font-semibold text-muted" id="status-value">Loading...</p>
             </div>
 
             <div class="card" id="uptime-card">
-                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Uptime</h3>
-                <p class="mt-2 text-3xl font-semibold text-gray-900" id="uptime-value">--</p>
+                <h3 class="text-sm font-medium text-secondary uppercase tracking-wider">Uptime</h3>
+                <p class="mt-2 text-3xl font-semibold" id="uptime-value">Loading...</p>
             </div>
 
             <div class="card" id="active-ops-card">
-                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Active Operations</h3>
-                <p class="mt-2 text-3xl font-semibold text-gray-900" id="active-ops-value">--</p>
+                <h3 class="text-sm font-medium text-secondary uppercase tracking-wider">Active Operations</h3>
+                <p class="mt-2 text-3xl font-semibold" id="active-ops-value">Loading...</p>
             </div>
         </div>
 
         <!-- Metrics Section -->
         <div class="card mb-8" id="metrics-section">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h2>
+            <h2 class="text-lg font-semibold mb-4">Performance Metrics</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
-                    <p class="text-sm text-gray-500">Total Queries</p>
-                    <p class="text-2xl font-semibold" id="metric-total-queries">--</p>
+                    <p class="text-sm text-secondary">Total Queries</p>
+                    <p class="text-2xl font-semibold" id="metric-total-queries">Loading...</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Success Rate</p>
-                    <p class="text-2xl font-semibold" id="metric-success-rate">--</p>
+                    <p class="text-sm text-secondary">Success Rate</p>
+                    <p class="text-2xl font-semibold" id="metric-success-rate">Loading...</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Cache Hit Rate</p>
-                    <p class="text-2xl font-semibold" id="metric-cache-hit">--</p>
+                    <p class="text-sm text-secondary">Cache Hit Rate</p>
+                    <p class="text-2xl font-semibold" id="metric-cache-hit">Loading...</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Avg Response Time</p>
-                    <p class="text-2xl font-semibold" id="metric-avg-response">--</p>
+                    <p class="text-sm text-secondary">Avg Response Time</p>
+                    <p class="text-2xl font-semibold" id="metric-avg-response">Loading...</p>
                 </div>
             </div>
         </div>
@@ -114,28 +100,28 @@
         <!-- Services Section -->
         <div class="card mb-8">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-900">Services</h2>
+                <h2 class="text-lg font-semibold">Services</h2>
                 <button class="btn btn-primary btn-sm" onclick="refreshServices()">Refresh</button>
             </div>
             <div id="services-list" class="space-y-3">
-                <p class="text-gray-500 text-sm">Loading services...</p>
+                <p class="text-secondary text-sm">Loading services...</p>
             </div>
         </div>
 
         <!-- Event Log Section -->
         <div class="card mb-8">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-900">Live Event Log</h2>
+                <h2 class="text-lg font-semibold">Live Event Log</h2>
                 <button class="btn btn-sm btn-secondary" onclick="clearEventLog()">Clear</button>
             </div>
             <div id="event-log" class="event-log">
-                <p class="text-gray-500 text-sm text-center py-4">Waiting for events...</p>
+                <p class="text-secondary text-sm text-center py-4">Waiting for events...</p>
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="card">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <h2 class="text-lg font-semibold mb-4">Quick Actions</h2>
             <div class="flex flex-wrap gap-4">
                 <button class="btn btn-primary"
                         hx-post="/config/reload"
@@ -155,13 +141,7 @@
                 </button>
             </div>
         </div>
-    </main>
-
-    <footer class="bg-gray-800 text-gray-400 py-4 mt-8">
-        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-            MCP Context Browser v0.1.1 | Admin Panel | SSE Real-time Updates
-        </div>
-    </footer>
+    </div>
 
     <script>
         // =========================================================================
@@ -209,7 +189,7 @@
 
             eventTypes.forEach(eventType => {
                 eventSource.addEventListener(eventType, function(e) {
-                    handleEvent(eventType, JSON.parse(e.data));
+                    handleEvent(eventType, parseJsonSafe(e.data, {}));
                 });
             });
         }
@@ -246,14 +226,18 @@
                     break;
 
                 case 'IndexingProgress':
-                    const progress = data.total_files > 0
-                        ? Math.round((data.processed_files / data.total_files) * 100)
-                        : 0;
-                    addEventToLog('indexing', `Indexing progress: ${progress}% (${data.processed_files}/${data.total_files})`);
+                    {
+                        const total = toIntegerSafe(data.total, 0);
+                        const processed = toIntegerSafe(data.processed, 0);
+                        const progress = total > 0
+                            ? Math.round((processed / total) * 100)
+                            : 0;
+                        addEventToLog('indexing', `Indexing progress: ${progress}% (${processed}/${total})`);
+                    }
                     break;
 
                 case 'IndexingCompleted':
-                    addEventToLog('indexing', `Indexing completed: ${data.collection || 'unknown'} - ${data.total_indexed || 0} chunks indexed`);
+                    addEventToLog('indexing', `Indexing completed: ${data.collection || 'unknown'} - ${toIntegerSafe(data.chunks, 0)} chunks indexed`);
                     break;
 
                 case 'ConfigReloaded':
@@ -266,11 +250,11 @@
                     break;
 
                 case 'MetricsSnapshot':
-                    handleMetricsSnapshot(data);
+                    refreshMetrics();
                     break;
 
                 case 'SearchExecuted':
-                    addEventToLog('indexing', `Search executed: "${data.query?.substring(0, 30)}..." - ${data.results_count || 0} results`);
+                    addEventToLog('indexing', `Search executed: "${(data.query || '').toString().substring(0, 30)}..." - ${toIntegerSafe(data.results, 0)} results`);
                     break;
 
                 case 'CacheInvalidate':
@@ -313,12 +297,43 @@
             }
         }
 
+        async function refreshMetrics() {
+            try {
+                const metricsResponse = await adminFetch('/metrics');
+                if (!metricsResponse.ok) {
+                    document.getElementById('metric-total-queries').textContent = '0';
+                    document.getElementById('metric-success-rate').textContent = '0.0%';
+                    document.getElementById('metric-cache-hit').textContent = '0.0%';
+                    document.getElementById('metric-avg-response').textContent = '0.0ms';
+                    return;
+                }
+                const metrics = await metricsResponse.json();
+                const totalQueries = toIntegerSafe(metrics.total_queries, 0);
+                const successfulQueries = toIntegerSafe(metrics.successful_queries, 0);
+                const cacheHitRate = toNumberSafe(metrics.cache_hit_rate, 0);
+                const avgResponseMs = toNumberSafe(metrics.average_response_time_ms, 0);
+
+                document.getElementById('metric-total-queries').textContent = String(totalQueries);
+                const successRate = totalQueries > 0
+                    ? ((successfulQueries / totalQueries) * 100).toFixed(1)
+                    : '0.0';
+                document.getElementById('metric-success-rate').textContent = successRate + '%';
+                document.getElementById('metric-cache-hit').textContent = (cacheHitRate * 100).toFixed(1) + '%';
+                document.getElementById('metric-avg-response').textContent = avgResponseMs.toFixed(1) + 'ms';
+            } catch (e) {
+                document.getElementById('metric-total-queries').textContent = '0';
+                document.getElementById('metric-success-rate').textContent = '0.0%';
+                document.getElementById('metric-cache-hit').textContent = '0.0%';
+                document.getElementById('metric-avg-response').textContent = '0.0ms';
+            }
+        }
+
         // =========================================================================
         // Event Log Management
         // =========================================================================
         function addEventToLog(type, message) {
             const log = document.getElementById('event-log');
-            const emptyMessage = log.querySelector('.text-gray-500');
+             const emptyMessage = log.querySelector('.text-secondary');
             if (emptyMessage) {
                 emptyMessage.remove();
             }
@@ -340,13 +355,7 @@
 
         function clearEventLog() {
             const log = document.getElementById('event-log');
-            log.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Event log cleared</p>';
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+             log.innerHTML = '<p class="text-secondary text-sm text-center py-4">Event log cleared</p>';
         }
 
         // =========================================================================
@@ -354,8 +363,9 @@
         // =========================================================================
         async function refreshServices() {
             try {
-                const response = await fetch('/services');
-                const services = await response.json();
+                const response = await adminFetch('/services');
+                const payload = await response.json();
+                const services = toArraySafe(payload && payload.services);
                 renderServices(services);
             } catch (e) {
                 console.error('Error fetching services:', e);
@@ -368,15 +378,18 @@
             const container = document.getElementById('services-list');
 
             if (!services || services.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-sm">No services registered</p>';
+                 container.innerHTML = '<p class="text-secondary text-sm">No services registered</p>';
                 return;
             }
 
-            container.innerHTML = services.map(service => `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            container.innerHTML = services.map(service => {
+                const stateLower = String(service.state || '').toLowerCase();
+                const safeStateClass = ['running', 'stopped', 'starting', 'stopping'].includes(stateLower) ? stateLower : 'stopped';
+                return `
+                 <div class="flex items-center justify-between p-3 rounded-lg" style="background: var(--bg-secondary)">
                     <div>
                         <span class="font-medium">${escapeHtml(service.name)}</span>
-                        <span class="ml-2 text-sm status-${service.state.toLowerCase()}">${service.state}</span>
+                        <span class="ml-2 text-sm status-${safeStateClass}">${escapeHtml(String(service.state || ''))}</span>
                     </div>
                     <div class="space-x-2">
                         <button class="btn btn-success btn-sm"
@@ -395,12 +408,13 @@
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function controlService(name, action) {
             try {
-                const response = await fetch(`/services/${encodeURIComponent(name)}/${action}`, {
+                const response = await adminFetch(`/services/${encodeURIComponent(name)}/${action}`, {
                     method: 'POST'
                 });
 
@@ -419,8 +433,9 @@
 
         async function healthCheckAll() {
             try {
-                const response = await fetch('/services/health');
-                const checks = await response.json();
+                const response = await adminFetch('/services/health');
+                const payload = await response.json();
+                const checks = toArraySafe(payload && payload.checks);
 
                 checks.forEach(check => {
                     addEventToLog('health', `${check.name}: ${check.status} ${check.message ? '- ' + check.message : ''}`);
@@ -439,42 +454,20 @@
             try {
                 const healthResponse = await fetch('/health');
                 const health = await healthResponse.json();
-                document.getElementById('status-value').textContent = health.status.toUpperCase();
-                document.getElementById('status-value').className = 'mt-2 text-3xl font-semibold status-' + health.status;
-                document.getElementById('uptime-value').textContent = formatUptime(health.uptime_seconds);
-                document.getElementById('active-ops-value').textContent = health.active_indexing_operations;
+                const status = (health.status || 'unknown').toString().toLowerCase();
+                document.getElementById('status-value').textContent = status.toUpperCase();
+                document.getElementById('status-value').className = 'mt-2 text-3xl font-semibold status-' + status;
+                document.getElementById('uptime-value').textContent = formatUptime(toIntegerSafe(health.uptime_seconds, 0));
+                document.getElementById('active-ops-value').textContent = String(toIntegerSafe(health.active_indexing_operations, 0));
             } catch (e) {
                 console.error('Error loading health:', e);
             }
 
             // Load metrics
-            try {
-                const metricsResponse = await fetch('/metrics');
-                const metrics = await metricsResponse.json();
-                document.getElementById('metric-total-queries').textContent = metrics.total_queries;
-                const successRate = metrics.total_queries > 0
-                    ? ((metrics.successful_queries / metrics.total_queries) * 100).toFixed(1)
-                    : '0.0';
-                document.getElementById('metric-success-rate').textContent = successRate + '%';
-                document.getElementById('metric-cache-hit').textContent = (metrics.cache_hit_rate * 100).toFixed(1) + '%';
-                document.getElementById('metric-avg-response').textContent = metrics.average_response_time_ms.toFixed(1) + 'ms';
-            } catch (e) {
-                console.error('Error loading metrics:', e);
-            }
+            await refreshMetrics();
 
             // Load services
             refreshServices();
-        }
-
-        function formatUptime(seconds) {
-            const days = Math.floor(seconds / 86400);
-            const hours = Math.floor((seconds % 86400) / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = Math.floor(seconds % 60);
-            if (days > 0) return `${days}d ${hours}h ${mins}m`;
-            if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
-            if (mins > 0) return `${mins}m ${secs}s`;
-            return `${secs}s`;
         }
 
         // =========================================================================

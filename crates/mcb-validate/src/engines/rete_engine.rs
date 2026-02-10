@@ -4,7 +4,7 @@
 //! Use this engine for complex GRL rules with when/then syntax.
 //!
 //! Uses `cargo_metadata` for reliable Cargo.toml/workspace parsing.
-//! Fails fast if cargo_metadata is unavailable.
+//! Fails fast if `cargo_metadata` is unavailable.
 
 use async_trait::async_trait;
 use cargo_metadata::MetadataCommand;
@@ -14,9 +14,6 @@ use serde_json::Value;
 use crate::Result;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
 use crate::violation_trait::{Severity, ViolationCategory};
-
-/// Prefix for internal workspace dependencies (mcb-*)
-const INTERNAL_DEP_PREFIX: &str = "mcb-";
 
 /// RETE Engine wrapper for rust-rule-engine library
 pub struct ReteEngine {
@@ -41,26 +38,31 @@ impl ReteEngine {
     /// Load GRL rules into the knowledge base
     pub fn load_grl(&mut self, grl_code: &str) -> Result<()> {
         let rules = GRLParser::parse_rules(grl_code)
-            .map_err(|e| crate::ValidationError::Config(format!("Failed to parse GRL: {}", e)))?;
+            .map_err(|e| crate::ValidationError::Config(format!("Failed to parse GRL: {e}")))?;
 
         for rule in rules {
-            self.kb.add_rule(rule).map_err(|e| {
-                crate::ValidationError::Config(format!("Failed to add rule: {}", e))
-            })?;
+            self.kb
+                .add_rule(rule)
+                .map_err(|e| crate::ValidationError::Config(format!("Failed to add rule: {e}")))?;
         }
 
         Ok(())
     }
 
-    /// Build facts from rule context using cargo_metadata
+    /// Build facts from rule context using `cargo_metadata`
     ///
     /// IMPORTANT: All facts MUST use "Facts." prefix to match GRL syntax.
     /// GRL conditions like `Facts.has_internal_dependencies == true` require
     /// facts to be set with `facts.set("Facts.has_internal_dependencies", ...)`.
     ///
-    /// Requires cargo_metadata to succeed. Fails fast if unavailable.
+    /// Requires `cargo_metadata` to succeed. Fails fast if unavailable.
+    #[allow(clippy::unused_self)]
     fn build_facts(&self, context: &RuleContext) -> Result<Facts> {
         let facts = Facts::new();
+
+        // Load file configuration to get internal_dep_prefix
+        let file_config = crate::config::FileConfig::load(&context.workspace_root);
+        let internal_dep_prefix = &file_config.general.internal_dep_prefix;
 
         // Use cargo_metadata for reliable workspace/package parsing
         let manifest_path = context.workspace_root.join("Cargo.toml");
@@ -92,12 +94,14 @@ impl ReteEngine {
                         // Create fact: Facts.crate_{package}_depends_on_{dep} = true
                         // cargo_metadata 0.23 uses PackageName, convert to String for comparison
                         let pkg_name = package.name.to_string();
-                        let dep_name = dep.name.to_string();
-                        let key = format!("Facts.crate_{}_depends_on_{}", pkg_name, dep_name);
+                        let dep_name = dep.name.clone();
+                        let key = format!("Facts.crate_{pkg_name}_depends_on_{dep_name}");
                         facts.set(&key, RreValue::Boolean(true));
 
-                        // Count internal dependencies (mcb-*)
-                        if dep_name.starts_with(INTERNAL_DEP_PREFIX) {
+                        // Count internal dependencies using configured prefix
+                        if !internal_dep_prefix.is_empty()
+                            && dep_name.starts_with(internal_dep_prefix)
+                        {
                             internal_deps_count += 1;
                         }
                     }
@@ -121,8 +125,7 @@ impl ReteEngine {
             }
             Err(e) => {
                 return Err(crate::ValidationError::Config(format!(
-                    "cargo_metadata failed: {}",
-                    e
+                    "cargo_metadata failed: {e}"
                 )));
             }
         }
@@ -158,7 +161,7 @@ impl ReteEngine {
         let mut engine = RustRuleEngine::new(self.kb.clone());
         let result = engine
             .execute(&facts)
-            .map_err(|e| crate::ValidationError::Config(format!("RETE execution failed: {}", e)))?;
+            .map_err(|e| crate::ValidationError::Config(format!("RETE execution failed: {e}")))?;
 
         // Convert results to violations
         let mut violations = Vec::new();

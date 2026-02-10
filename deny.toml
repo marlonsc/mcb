@@ -1,0 +1,26 @@
+[advisories]
+ignore = [
+    "RUSTSEC-2023-0089",  # atomic-polyfill unmaintained - transitive via fastembed
+    "RUSTSEC-2025-0119",  # number_prefix unmaintained - transitive via fastembed  
+    "RUSTSEC-2024-0436",  # paste unmaintained (author: "finished") - transitive via fastembed
+    "RUSTSEC-2023-0071",  # rsa timing attack - NO FIX AVAILABLE
+    "CVE-2023-49092",     # rsa timing attack (same as above)
+    "RUSTSEC-2025-0134",  # rustls-pemfile unmaintained - transitive via async-nats/milvus
+]
+
+[bans]
+multiple-versions = "allow"
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

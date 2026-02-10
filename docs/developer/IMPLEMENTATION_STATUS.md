@@ -56,7 +56,7 @@
 | `src/linters/ruff.rs` | No | - |
 | `tests/integration_linters.rs` | Yes | 9,707 bytes |
 
-**Note**: Linter code appears consolidated in mod.rs instead of separate files.
+**Note**: Linter code appears in mod.rs instead of separate files.
 
 ### Phase 2: AST Queries - VERIFIED ✅
 
@@ -189,7 +189,7 @@
 | `src/clean_architecture.rs` | Yes | 584 lines | CleanArchitectureValidator (CA001-CA006 violations) |
 | `tests/integration_architecture.rs` | Yes | ~500 lines | 11 integration tests for architecture validation |
 
-**Note**: Implementation consolidated in clean_architecture.rs rather than separate directory.
+**Note**: Implementation in clean_architecture.rs rather than separate directory.
 
 **Violation Types Implemented**:
 

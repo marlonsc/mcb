@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the automated CI/CD pipeline and release process for MCP Context Browser. The system uses:
+This document describes the automated CI/CD pipeline and release process for Memory Context Browser. The system uses:
 
 -   **Local Validation**: Git pre-commit hooks and `make` targets for fast feedback
 -   **GitHub Actions**: Automated CI pipeline matching local validation
@@ -59,6 +59,22 @@ make ci-local
 
 # Or manually run lint + quick validate
 make lint CI_MODE=1 && make validate QUICK=1
+```
+
+### Commit Orchestrator (Local)
+
+```bash
+# Analyze staged changes
+./scripts/commit_analyze.sh
+
+# Run pre-commit validation (same as hook)
+make commit-validate
+
+# Commit (updates Beads if issue ID in branch/footers)
+make commit
+
+# Optional interactive push
+make push-confirm
 ```
 
 ### Bypassing Pre-commit (Not Recommended)

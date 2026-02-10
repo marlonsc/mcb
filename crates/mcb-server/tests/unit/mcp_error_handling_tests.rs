@@ -5,12 +5,12 @@
 //!
 //! Phase 2 of v0.1.2: These tests verify that errors return `is_error: Some(true)`
 //! and contain proper troubleshooting information.
-#![allow(clippy::collapsible_if)]
 
-use mcb_application::domain_services::search::{IndexingResult, IndexingStatus};
-use mcb_server::formatter::ResponseFormatter;
 use std::path::Path;
 use std::time::Duration;
+
+use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
+use mcb_server::formatter::ResponseFormatter;
 
 use crate::test_utils::test_fixtures::{create_test_search_result, create_test_search_results};
 
@@ -243,8 +243,8 @@ fn test_format_indexing_success_contains_next_steps() {
 
     // Verify next steps guidance is provided
     assert!(
-        text.contains("search_code"),
-        "Success response MUST mention search_code for next steps. Got: {}",
+        text.contains("search"),
+        "Success response MUST mention search for next steps. Got: {}",
         text
     );
 }
@@ -576,10 +576,10 @@ fn extract_text_content(content: &[rmcp::model::Content]) -> String {
         .iter()
         .filter_map(|c| {
             // Content can be serialized to JSON and we can extract text from there
-            if let Ok(json) = serde_json::to_value(c) {
-                if let Some(text) = json.get("text") {
-                    return text.as_str().map(|s| s.to_string());
-                }
+            if let Ok(json) = serde_json::to_value(c)
+                && let Some(text) = json.get("text")
+            {
+                return text.as_str().map(|s| s.to_string());
             }
             None
         })
@@ -592,25 +592,28 @@ fn extract_text_content(content: &[rmcp::model::Content]) -> String {
 // =============================================================================
 
 mod handler_error_tests {
-    use super::*;
-    use mcb_server::args::IndexCodebaseArgs;
-    use mcb_server::handlers::IndexCodebaseHandler;
-    use rmcp::handler::server::wrapper::Parameters;
     use std::sync::Arc;
 
+    use mcb_server::args::{IndexAction, IndexArgs};
+    use mcb_server::handlers::IndexHandler;
+    use rmcp::handler::server::wrapper::Parameters;
+
+    use super::*;
     use crate::test_utils::mock_services::MockIndexingService;
 
     #[tokio::test]
     async fn test_handler_service_error_has_is_error_true() {
         let mock_service = MockIndexingService::new().with_failure("Storage quota exceeded");
-        let handler = IndexCodebaseHandler::new(Arc::new(mock_service));
+        let handler = IndexHandler::new(Arc::new(mock_service));
 
         // Create a temp directory for valid path
         let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
-        let args = IndexCodebaseArgs {
-            path: temp_dir.path().to_string_lossy().to_string(),
+        let args = IndexArgs {
+            action: IndexAction::Start,
+            path: Some(temp_dir.path().to_string_lossy().to_string()),
             collection: Some("test".to_string()),
             extensions: None,
+            exclude_dirs: None,
             ignore_patterns: None,
             max_file_size: None,
             follow_symlinks: None,
@@ -638,13 +641,15 @@ mod handler_error_tests {
     async fn test_handler_service_error_contains_error_message() {
         let error_msg = "Database connection failed";
         let mock_service = MockIndexingService::new().with_failure(error_msg);
-        let handler = IndexCodebaseHandler::new(Arc::new(mock_service));
+        let handler = IndexHandler::new(Arc::new(mock_service));
 
         let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
-        let args = IndexCodebaseArgs {
-            path: temp_dir.path().to_string_lossy().to_string(),
+        let args = IndexArgs {
+            action: IndexAction::Start,
+            path: Some(temp_dir.path().to_string_lossy().to_string()),
             collection: Some("test".to_string()),
             extensions: None,
+            exclude_dirs: None,
             ignore_patterns: None,
             max_file_size: None,
             follow_symlinks: None,

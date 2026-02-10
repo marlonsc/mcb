@@ -2,11 +2,12 @@
 //!
 //! Tracks provider health status based on success/failure reports.
 
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::time::Instant;
+
 use async_trait::async_trait;
 use dashmap::DashMap;
 use mcb_domain::ports::infrastructure::routing::ProviderHealthStatus;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::time::Instant;
 
 /// Health data for a single provider
 #[derive(Debug)]
@@ -158,41 +159,5 @@ impl HealthMonitor for InMemoryHealthMonitor {
             .iter()
             .map(|entry| (entry.key().clone(), entry.value().status))
             .collect()
-    }
-}
-
-/// Null health monitor for testing
-///
-/// Always reports all providers as healthy.
-pub struct NullHealthMonitor;
-
-impl NullHealthMonitor {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for NullHealthMonitor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl HealthMonitor for NullHealthMonitor {
-    fn get_health(&self, _provider_id: &str) -> ProviderHealthStatus {
-        ProviderHealthStatus::Healthy
-    }
-
-    fn record_success(&self, _provider_id: &str) {
-        // No-op
-    }
-
-    fn record_failure(&self, _provider_id: &str) {
-        // No-op
-    }
-
-    fn get_all_health(&self) -> std::collections::HashMap<String, ProviderHealthStatus> {
-        std::collections::HashMap::new()
     }
 }

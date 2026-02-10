@@ -1,0 +1,120 @@
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
+use mcb_domain::ports::providers::VcsProvider;
+use mcb_infrastructure::config::McpContextConfig;
+use rmcp::ErrorData as McpError;
+use rmcp::model::{CallToolResult, Content};
+
+use super::responses::{IndexResult, repo_path};
+use crate::args::VcsArgs;
+use crate::formatter::ResponseFormatter;
+use crate::vcs_repository_registry;
+
+/// Indexes a repository for search.
+pub async fn index_repository(
+    vcs_provider: &Arc<dyn VcsProvider>,
+    args: &VcsArgs,
+) -> Result<CallToolResult, McpError> {
+    let path = match repo_path(args) {
+        Ok(p) => p,
+        Err(error_result) => return Ok(error_result),
+    };
+    let repo = match vcs_provider.open_repository(Path::new(&path)).await {
+        Ok(repo) => repo,
+        Err(e) => {
+            return Ok(CallToolResult::error(vec![Content::text(format!(
+                "Failed to open repository: {e}"
+            ))]));
+        }
+    };
+
+    // Load config from repository path
+    let config = McpContextConfig::load_from_path_or_default(Path::new(&path));
+
+    // Determine depth: args.depth > config.git.depth > default 1000
+    let depth = args.depth.unwrap_or(config.git.depth);
+
+    let branches = args
+        .branches
+        .clone()
+        .unwrap_or_else(|| vec![repo.default_branch().to_string()]);
+    let mut total_files = 0;
+    for branch in &branches {
+        match vcs_provider.list_files(&repo, branch).await {
+            Ok(files) => {
+                let filtered_files = filter_files_by_patterns(&files, &config.git.ignore_patterns);
+                total_files += filtered_files.len();
+            }
+            Err(e) => {
+                return Ok(CallToolResult::error(vec![Content::text(format!(
+                    "Failed to list files in branch {branch}: {e}"
+                ))]));
+            }
+        }
+    }
+    let commits_indexed = if args.include_commits.unwrap_or(false) {
+        let mut count = 0;
+        for branch in &branches {
+            if let Ok(commits) = vcs_provider
+                .commit_history(&repo, branch, Some(depth))
+                .await
+            {
+                count += commits.len();
+            }
+        }
+        count
+    } else {
+        0
+    };
+    let result = IndexResult {
+        repository_id: repo.id().to_string(),
+        path: repo.path().to_string_lossy().to_string(),
+        default_branch: repo.default_branch().to_string(),
+        branches_found: branches.clone(),
+        total_files,
+        commits_indexed,
+    };
+    let _ = vcs_repository_registry::record_repository(repo.id(), repo.path());
+    ResponseFormatter::json_success(&result)
+}
+
+/// Filter files by ignore patterns (gitignore-style)
+fn filter_files_by_patterns(files: &[PathBuf], patterns: &[String]) -> Vec<PathBuf> {
+    if patterns.is_empty() {
+        return files.to_vec();
+    }
+
+    files
+        .iter()
+        .filter(|file| !should_ignore_file(file, patterns))
+        .cloned()
+        .collect()
+}
+
+/// Check if a file should be ignored based on patterns
+fn should_ignore_file(file: &Path, patterns: &[String]) -> bool {
+    let file_str = file.to_string_lossy();
+
+    for pattern in patterns {
+        // Handle directory patterns (ending with /)
+        if pattern.ends_with('/') {
+            let dir_pattern = &pattern[..pattern.len() - 1];
+            if file_str.contains(dir_pattern) {
+                return true;
+            }
+        }
+        // Handle wildcard patterns (*.ext)
+        else if let Some(ext) = pattern.strip_prefix('*') {
+            if file_str.ends_with(ext) {
+                return true;
+            }
+        }
+        // Handle exact matches and path patterns
+        else if file_str.contains(pattern) || file_str.ends_with(pattern) {
+            return true;
+        }
+    }
+
+    false
+}

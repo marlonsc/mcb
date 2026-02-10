@@ -48,15 +48,16 @@
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
-    CacheProviderConfig, EmbeddingProviderConfig, LanguageProviderConfig,
-    VectorStoreProviderConfig, resolve_cache_provider, resolve_embedding_provider,
-    resolve_language_provider, resolve_vector_store_provider,
-};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{
     CacheProvider as CacheProviderTrait, EmbeddingProvider, LanguageChunkingProvider,
     VectorStoreProvider,
+};
+use mcb_domain::registry::cache::{CacheProviderConfig, resolve_cache_provider};
+use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_provider};
+use mcb_domain::registry::vector_store::{
+    VectorStoreProviderConfig, resolve_vector_store_provider,
 };
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
@@ -91,7 +92,7 @@ impl std::fmt::Debug for ResolvedProviders {
 
 /// Resolve all providers from application configuration
 ///
-/// Queries the inventory registry to find and instantiate providers
+/// Queries the linkme registry to find and instantiate providers
 /// based on the names specified in configuration.
 ///
 /// # Arguments
@@ -226,14 +227,14 @@ fn vector_store_config_to_registry(config: &VectorStoreConfig) -> VectorStorePro
     }
 }
 
-/// Default embedding config for testing
+/// Default embedding config for testing (uses local FastEmbed)
 fn default_embedding_config() -> EmbeddingProviderConfig {
-    EmbeddingProviderConfig::new("null")
+    EmbeddingProviderConfig::new("fastembed")
 }
 
-/// Default vector store config for testing
+/// Default vector store config for testing (local EdgeVec HNSW)
 fn default_vector_store_config() -> VectorStoreProviderConfig {
-    VectorStoreProviderConfig::new("memory")
+    VectorStoreProviderConfig::new("edgevec")
 }
 
 /// List all available providers across all categories
@@ -244,10 +245,10 @@ fn default_vector_store_config() -> VectorStoreProviderConfig {
 /// Struct containing lists of available providers by category
 pub fn list_available_providers() -> AvailableProviders {
     AvailableProviders {
-        embedding: mcb_application::ports::registry::list_embedding_providers(),
-        vector_store: mcb_application::ports::registry::list_vector_store_providers(),
-        cache: mcb_application::ports::registry::list_cache_providers(),
-        language: mcb_application::ports::registry::list_language_providers(),
+        embedding: mcb_domain::registry::embedding::list_embedding_providers(),
+        vector_store: mcb_domain::registry::vector_store::list_vector_store_providers(),
+        cache: mcb_domain::registry::cache::list_cache_providers(),
+        language: mcb_domain::registry::language::list_language_providers(),
     }
 }
 

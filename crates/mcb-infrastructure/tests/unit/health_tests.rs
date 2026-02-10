@@ -1,5 +1,4 @@
 //! Health Check Tests
-#![allow(clippy::manual_range_contains)]
 
 use mcb_infrastructure::health::{
     HealthCheck, HealthChecker, HealthRegistry, HealthResponse, HealthStatus, checkers,
@@ -83,9 +82,8 @@ async fn test_system_health_checker_returns_real_cpu_metrics() {
         .as_f64()
         .expect("cpu_usage_percent should be a number");
 
-    // CPU usage should be a valid percentage (0-100)
     assert!(
-        cpu_usage >= 0.0 && cpu_usage <= 100.0,
+        (0.0..=100.0).contains(&cpu_usage),
         "CPU usage must be between 0 and 100, got: {}",
         cpu_usage
     );
@@ -136,7 +134,7 @@ async fn test_system_health_checker_returns_real_memory_metrics() {
         memory_total
     );
     assert!(
-        memory_percent >= 0.0 && memory_percent <= 100.0,
+        (0.0..=100.0).contains(&memory_percent),
         "Memory percent must be between 0 and 100, got: {}",
         memory_percent
     );

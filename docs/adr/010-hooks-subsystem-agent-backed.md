@@ -1,4 +1,16 @@
-# ADR 010: Hooks Subsystem with Agent-Backed Processing
+---
+adr: 10
+title: Hooks Subsystem with Agent-Backed Processing
+status: PROPOSED
+created: 
+updated: 2026-02-05
+related: [1, 2, 7, 8, 9, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Partial
+---
+
+## ADR 010: Hooks Subsystem with Agent-Backed Processing
 
 ## Status
 
@@ -30,7 +42,7 @@ Claude Code provides a hooks system for extending AI assistant behavior at lifec
 
 **Opportunity for integration:**
 
-MCP Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
+Memory Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
 
 -   **Semantic code search**- understand code context
 -   **Session memory**- recall past decisions and observations
@@ -75,7 +87,7 @@ Claude Code Session
         │                         │
         ▼                         ▼
 ┌───────────────────────────────────────────────────┐
-│ MCP Context Browser Server                        │
+│ Memory Context Browser Server                        │
 │                                                   │
 │  ┌─────────────────────────────────────────────┐  │
 │  │ HookService (application layer)             │  │
@@ -809,7 +821,7 @@ impl HookService {
         // Store observations via memory provider (ADR 009 integration)
         if let Some(memory) = &self.memory_provider {
             for obs in &final_output.observations {
-                if let Err(e) = memory.store_observation(obs).await {
+                if let Err(e) = memory.memory (action=store, resource=observation)(obs).await {
                     tracing::warn!("[HOOKS] Failed to store observation: {}", e);
                 }
             }
@@ -1137,7 +1149,7 @@ if let Some(git) = &self.git_provider {
 ### With ADR 009 (Memory)
 
 1.**Context retrieval**: Use `MemoryProvider.search_observations()` for context injection
-2.**Observation storage**: Store hook observations via `MemoryProvider.store_observation()`
+2.**Observation storage**: Store hook observations via `MemoryProvider.memory (action=store, resource=observation)()`
 3.**Shared types**: Reuse `Observation`, `ObservationType` from memory domain
 
 ## Related ADRs

@@ -4,15 +4,23 @@
 //! for all system components. This module manages the application's
 //! configuration lifecycle.
 
-pub mod data;
 pub mod loader;
-pub mod providers;
-pub mod server;
+pub mod mcp_context_config;
+pub mod paths;
 pub mod types;
 pub mod watcher;
 
-pub use data::*;
-pub use loader::*;
-pub use providers::*;
-pub use server::*;
-pub use watcher::*;
+// Re-export main configuration types
+pub use types::{
+    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, LoggingConfig, ServerConfig,
+    ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig, ServerNetworkConfig,
+    ServerSslConfig, ServerTimeoutConfig, TransportMode,
+};
+
+pub use loader::ConfigLoader;
+pub use mcp_context_config::{ConfigError, GitConfig, McpContextConfig};
+pub use paths::{
+    COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,
+    VCS_REGISTRY_FILENAME, config_dir,
+};
+pub use watcher::{ConfigWatcher, ConfigWatcherBuilder, ConfigWatcherUtils};

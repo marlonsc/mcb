@@ -1,4 +1,16 @@
-# ADR 012: Two-Layer Dependency Injection Strategy
+---
+adr: 12
+title: Two-Layer Dependency Injection Strategy
+status: SUPERSEDED
+created: 
+updated: 2026-02-05
+related: [1, 2, 3, 6, 7, 8, 9, 10, 13, 24]
+supersedes: []
+superseded_by: [29]
+implementation_status: Incomplete
+---
+
+## ADR 012: Two-Layer Dependency Injection Strategy
 
 ## Status
 
@@ -12,7 +24,7 @@
 
 ## Context
 
-The MCP Context Browser uses Shaku as its dependency injection framework. During the Clean Architecture refactoring (January 2026), we discovered that a pure compile-time DI approach via Shaku modules doesn't fit all our service creation needs.
+The Memory Context Browser uses Shaku as its dependency injection framework. During the Clean Architecture refactoring (January 2026), we discovered that a pure compile-time DI approach via Shaku modules doesn't fit all our service creation needs.
 
 ### The Challenge
 
@@ -200,7 +212,7 @@ The public service interfaces will remain stable. Only the internal composition 
 
 -   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Trait-based provider DI
 -   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - **SUPERSEDED** by [ADR 024](024-simplified-dependency-injection.md)
--   [ADR-030: Multi-Provider Strategy](030-multi-provider-strategy.md) - Provider factory selection
+-   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider factory selection
 -   [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - DI pattern enforcement
 -   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - AdminService DI
 -   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - GitProvider factory (v0.2.0)

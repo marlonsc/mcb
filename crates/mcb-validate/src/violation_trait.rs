@@ -3,9 +3,10 @@
 //! Generic trait for all architecture violations. This enables a unified
 //! way to handle violations across all validators.
 
-use serde::Serialize;
 use std::fmt::Display;
 use std::path::PathBuf;
+
+use serde::Serialize;
 
 // Re-export Severity from parent module for convenience
 pub use super::Severity;
@@ -21,31 +22,31 @@ pub enum ViolationCategory {
     Organization,
     /// SOLID principles
     Solid,
-    /// Dependency injection and Shaku patterns
+    /// Dependency injection patterns
     DependencyInjection,
-    /// Configuration patterns (Figment, config crate)
+    /// Configuration patterns
     Configuration,
-    /// Web framework patterns (Rocket, Axum)
+    /// Web framework patterns
     WebFramework,
     /// Performance patterns
     Performance,
-    /// Async patterns
+    /// Asynchronous programming patterns
     Async,
     /// Documentation quality
     Documentation,
-    /// Test organization
+    /// Test organization and quality
     Testing,
     /// Naming conventions
     Naming,
-    /// KISS principle (complexity)
+    /// KISS principle (simplicity)
     Kiss,
     /// Refactoring completeness
     Refactoring,
     /// Error handling boundaries
     ErrorBoundary,
-    /// Implementation quality
+    /// Implementation details
     Implementation,
-    /// PMAT integration
+    /// Project Management and Tracking integration
     Pmat,
 }
 
@@ -56,7 +57,7 @@ impl Display for ViolationCategory {
             Self::Quality => write!(f, "Quality"),
             Self::Organization => write!(f, "Organization"),
             Self::Solid => write!(f, "SOLID"),
-            Self::DependencyInjection => write!(f, "DI/Shaku"),
+            Self::DependencyInjection => write!(f, "DI/dill"),
             Self::Configuration => write!(f, "Configuration"),
             Self::WebFramework => write!(f, "Web Framework"),
             Self::Performance => write!(f, "Performance"),

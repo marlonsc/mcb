@@ -1,9 +1,3 @@
-// Clippy allows for complex patterns in validation code
-// These allows are needed for mcb-validate which has complex parsing and validation logic
-#![allow(clippy::all)]
-#![allow(clippy::pedantic)]
-#![allow(clippy::restriction)]
-
 //! Architecture Validation for MCP Context Browser
 //!
 //! This crate provides comprehensive validation of workspace crates against:
@@ -30,6 +24,9 @@
 //! let mut validator = ArchitectureValidator::with_config(config);
 //! let report = validator.validate_all()?;
 //! ```
+
+// === Centralized Constants ===
+pub mod constants;
 
 // === Centralized Thresholds (Phase 2 DRY) ===
 pub mod thresholds;
@@ -61,6 +58,10 @@ pub mod linters;
 
 // === AST Analysis (Phase 2 - Pure Rust Pipeline) ===
 pub mod ast;
+
+// === New Fact Extractor & Graph (Modernization) ===
+pub mod extractor;
+pub mod graph;
 
 // === Metrics Analysis (Phase 4 - Complexity Metrics) ===
 pub mod metrics;
@@ -95,8 +96,66 @@ pub mod tests_org;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use thiserror::Error;
 
+use extractor::RustExtractor;
+
+// Re-export AST module types (RCA-based)
+pub use ast::{
+    AstDecoder, AstNode, AstParseResult, AstQuery, AstQueryBuilder, AstQueryPatterns, AstViolation,
+    Position, QueryCondition, Span, UnwrapDetection, UnwrapDetector,
+};
+// Re-export RCA types for direct usage (NO wrappers)
+pub use ast::{Callback, LANG, Node, ParserTrait, Search, action, find, guess_language};
+// New validators for PMAT integration
+pub use async_patterns::{AsyncPatternValidator, AsyncViolation};
+// Re-export new validators
+pub use clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
+// Re-export configuration system
+pub use config::{
+    ArchitectureRulesConfig, FileConfig, GeneralConfig, OrganizationRulesConfig,
+    QualityRulesConfig, RulesConfig, SolidRulesConfig, ValidatorsConfig,
+};
+pub use config_quality::{ConfigQualityValidator, ConfigQualityViolation};
+// Re-export legacy validators
+pub use dependency::{DependencyValidator, DependencyViolation};
+pub use documentation::{DocumentationValidator, DocumentationViolation};
+// Re-export rule registry and YAML system
+pub use engines::{HybridRuleEngine, RuleEngineType};
+pub use error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
+// Re-export new DRY violation system
+pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary, ViolationEntry};
+pub use implementation::{ImplementationQualityValidator, ImplementationViolation};
+pub use kiss::{KissValidator, KissViolation};
+pub use layer_flow::{LayerFlowValidator, LayerFlowViolation};
+// Re-export linter integration
+pub use linters::{
+    ClippyLinter, LintViolation, LinterEngine, LinterType, RuffLinter, YamlRuleExecutor,
+};
+// Re-export Metrics module types (Phase 4) - RCA-based
+pub use metrics::{
+    MetricThreshold, MetricThresholds, MetricType, MetricViolation, RcaAnalyzer,
+    RcaFunctionMetrics, RcaMetrics,
+};
+pub use naming::{NamingValidator, NamingViolation};
+pub use organization::{OrganizationValidator, OrganizationViolation};
+pub use pattern_validator::{PatternValidator, PatternViolation};
+pub use performance::{PerformanceValidator, PerformanceViolation};
+pub use pmat::{PmatValidator, PmatViolation};
+pub use port_adapter::{PortAdapterValidator, PortAdapterViolation};
+pub use quality::{QualityValidator, QualityViolation};
+// Re-export ComponentType for strict directory validation
+pub use refactoring::{RefactoringValidator, RefactoringViolation};
+pub use reporter::{Reporter, ValidationReport, ValidationSummary};
+pub use rules::templates::TemplateEngine;
+pub use rules::yaml_loader::{
+    AstSelector, MetricThresholdConfig, MetricsConfig, RuleFix, ValidatedRule, YamlRuleLoader,
+};
+pub use rules::yaml_validator::YamlRuleValidator;
+pub use rules::{Rule, RuleRegistry};
+pub use solid::{SolidValidator, SolidViolation};
+pub use test_quality::{TestQualityValidator, TestQualityViolation};
+pub use tests_org::{TestValidator, TestViolation};
+use thiserror::Error;
 // Re-export centralized thresholds
 pub use thresholds::{
     MAX_BUILDER_FIELDS, MAX_COGNITIVE_COMPLEXITY, MAX_CYCLOMATIC_COMPLEXITY,
@@ -104,76 +163,9 @@ pub use thresholds::{
     MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS, MAX_STRUCT_LINES,
     MAX_TRAIT_METHODS, ValidationThresholds, thresholds,
 };
-
-// Re-export new DRY violation system
-pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary, ViolationEntry};
-pub use reporter::{Reporter, ValidationReport, ValidationSummary};
 pub use validator_trait::{LegacyValidatorAdapter, Validator, ValidatorRegistry};
 pub use violation_trait::{Violation, ViolationCategory};
-
-// Re-export configuration system
-pub use config::{
-    ArchitectureRulesConfig, FileConfig, GeneralConfig, OrganizationRulesConfig,
-    QualityRulesConfig, RulesConfig, SolidRulesConfig, ValidatorsConfig,
-};
-
-// Re-export rule registry and YAML system
-pub use engines::{HybridRuleEngine, RuleEngineType};
-pub use rules::templates::TemplateEngine;
-pub use rules::yaml_loader::{
-    AstSelector, MetricThresholdConfig, MetricsConfig, RuleFix, ValidatedRule, YamlRuleLoader,
-};
-pub use rules::yaml_validator::YamlRuleValidator;
-pub use rules::{Rule, RuleRegistry};
-
-// Re-export linter integration
-pub use linters::{
-    ClippyLinter, LintViolation, LinterEngine, LinterType, RuffLinter, YamlRuleExecutor,
-};
-
-// Re-export AST module types (RCA-based)
-pub use ast::{
-    AstDecoder, AstNode, AstParseResult, AstQuery, AstQueryBuilder, AstQueryPatterns, AstViolation,
-    Position, QueryCondition, Span, UnwrapDetection, UnwrapDetector,
-};
-
-// Re-export RCA types for direct usage (NO wrappers)
-pub use ast::{Callback, LANG, Node, ParserTrait, Search, action, find, guess_language};
-
-// Re-export Metrics module types (Phase 4) - RCA-based
-pub use metrics::{
-    MetricThreshold, MetricThresholds, MetricType, MetricViolation, RcaAnalyzer,
-    RcaFunctionMetrics, RcaMetrics,
-};
-
-// Re-export new validators
-pub use clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
-pub use config_quality::{ConfigQualityValidator, ConfigQualityViolation};
-pub use layer_flow::{LayerFlowValidator, LayerFlowViolation};
-pub use port_adapter::{PortAdapterValidator, PortAdapterViolation};
-pub use test_quality::{TestQualityValidator, TestQualityViolation};
 pub use visibility::{VisibilityValidator, VisibilityViolation};
-
-// Re-export legacy validators
-pub use dependency::{DependencyValidator, DependencyViolation};
-pub use documentation::{DocumentationValidator, DocumentationViolation};
-pub use implementation::{ImplementationQualityValidator, ImplementationViolation};
-pub use kiss::{KissValidator, KissViolation};
-pub use naming::{NamingValidator, NamingViolation};
-pub use organization::{OrganizationValidator, OrganizationViolation};
-pub use pattern_validator::{PatternValidator, PatternViolation};
-pub use quality::{QualityValidator, QualityViolation};
-
-// Re-export ComponentType for strict directory validation
-pub use refactoring::{RefactoringValidator, RefactoringViolation};
-pub use solid::{SolidValidator, SolidViolation};
-pub use tests_org::{TestValidator, TestViolation};
-
-// New validators for PMAT integration
-pub use async_patterns::{AsyncPatternValidator, AsyncViolation};
-pub use error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
-pub use performance::{PerformanceValidator, PerformanceViolation};
-pub use pmat::{PmatValidator, PmatViolation};
 
 // Re-export ValidationConfig for multi-directory support
 // ValidationConfig is defined in this module
@@ -218,44 +210,18 @@ impl ValidationConfig {
 
     /// Add an additional source path to validate
     ///
-    /// Paths can be absolute or relative to workspace_root.
+    /// Paths can be absolute or relative to `workspace_root`.
+    #[must_use]
     pub fn with_additional_path(mut self, path: impl Into<PathBuf>) -> Self {
         self.additional_src_paths.push(path.into());
         self
     }
 
     /// Add an exclude pattern (files/directories matching this will be skipped)
+    #[must_use]
     pub fn with_exclude_pattern(mut self, pattern: impl Into<String>) -> Self {
         self.exclude_patterns.push(pattern.into());
         self
-    }
-
-    /// Check if a path is from a legacy/additional source (not main crates/)
-    pub fn is_legacy_path(&self, path: &Path) -> bool {
-        for additional_path in &self.additional_src_paths {
-            let full_path = if additional_path.is_absolute() {
-                additional_path.clone()
-            } else {
-                self.workspace_root.join(additional_path)
-            };
-
-            // Canonicalize if possible for accurate comparison
-            if let (Ok(canonical_full), Ok(canonical_path)) =
-                (full_path.canonicalize(), path.canonicalize())
-            {
-                if canonical_path.starts_with(&canonical_full) {
-                    return true;
-                }
-            }
-
-            // Fallback to string-based check
-            if let (Some(full_str), Some(path_str)) = (full_path.to_str(), path.to_str()) {
-                if path_str.contains(full_str) || path_str.contains("src/") {
-                    return true;
-                }
-            }
-        }
-        false
     }
 
     /// Check if a path should be excluded based on patterns
@@ -272,6 +238,9 @@ impl ValidationConfig {
     pub fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut dirs = Vec::new();
 
+        // Load file configuration to get skip_crates
+        let file_config = FileConfig::load(&self.workspace_root);
+
         // Original crates/ scanning
         let crates_dir = self.workspace_root.join("crates");
         if crates_dir.exists() {
@@ -279,11 +248,13 @@ impl ValidationConfig {
                 let entry = entry?;
                 let path = entry.path();
 
-                // Skip mcb-validate (dev tooling validates production, not itself)
-                // Skip mcb (facade crate with minimal re-exports)
-                if path
-                    .file_name()
-                    .is_some_and(|n| n == "mcb" || n == "mcb-validate")
+                // Skip crates specified in configuration (e.g., validate crate itself, facade crates)
+                if let Some(file_name) = path.file_name().and_then(|n| n.to_str())
+                    && file_config
+                        .general
+                        .skip_crates
+                        .iter()
+                        .any(|skip| skip == file_name)
                 {
                     continue;
                 }
@@ -312,11 +283,6 @@ impl ValidationConfig {
     /// Get actual source directories to scan for Rust files
     ///
     /// For crate directories (containing `src/` subdirectory), returns `<dir>/src/`.
-    /// For flat source directories (like `../src/`), returns the directory itself.
-    ///
-    /// This handles both:
-    /// - Workspace crates: `crates/mcb-domain/` → scans `crates/mcb-domain/src/`
-    /// - Legacy source: `../src/` → scans `../src/` directly
     pub fn get_scan_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut scan_dirs = Vec::new();
 
@@ -325,13 +291,8 @@ impl ValidationConfig {
             if src_subdir.exists() && src_subdir.is_dir() {
                 // Crate-style: has src/ subdirectory
                 scan_dirs.push(src_subdir);
-            } else if self.is_legacy_path(&dir) {
-                // Legacy flat directory: scan directly
-                scan_dirs.push(dir);
-            } else {
-                // Standard crate without src/ directory yet - skip
-                continue;
             }
+            // Standard crate without src/ directory yet - skip (implicit continue)
         }
 
         Ok(scan_dirs)
@@ -341,24 +302,36 @@ impl ValidationConfig {
 /// Validation error types
 #[derive(Error, Debug)]
 pub enum ValidationError {
+    /// I/O error
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// Parse error
     #[error("Parse error in {file}: {message}")]
-    Parse { file: PathBuf, message: String },
+    Parse {
+        /// Path to the file that failed to parse
+        file: PathBuf,
+        /// Error message
+        message: String,
+    },
 
+    /// TOML parse error
     #[error("TOML parse error: {0}")]
     Toml(#[from] toml::de::Error),
 
+    /// YAML parse error
     #[error("YAML parse error: {0}")]
     Yaml(#[from] serde_yaml::Error),
 
+    /// Configuration error
     #[error("Configuration error: {0}")]
     Config(String),
 
+    /// Invalid regex pattern
     #[error("Invalid regex pattern: {0}")]
     InvalidRegex(String),
 
+    /// Pattern not found
     #[error("Pattern not found: {0}")]
     PatternNotFound(String),
 }
@@ -366,8 +339,11 @@ pub enum ValidationError {
 /// Severity level for violations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Severity {
+    /// Error severity
     Error,
+    /// Warning severity
     Warning,
+    /// Info severity
     Info,
 }
 
@@ -454,6 +430,10 @@ pub struct ArchitectureValidator {
     visibility: VisibilityValidator,
     layer_flow: LayerFlowValidator,
     port_adapter: PortAdapterValidator,
+    // Modernization: New generic components
+    extractor: RustExtractor,
+    naming_config: crate::config::NamingRulesConfig,
+    general_config: crate::config::GeneralConfig,
 }
 
 impl ArchitectureValidator {
@@ -482,36 +462,59 @@ impl ArchitectureValidator {
     /// ```
     pub fn with_config(config: ValidationConfig) -> Self {
         let root = config.workspace_root.clone();
+        // Load file configuration (rules)
+        let file_config = FileConfig::load(&root);
+
         Self {
             dependency: DependencyValidator::with_config(config.clone()),
             quality: QualityValidator::with_config(config.clone()),
-            patterns: PatternValidator::with_config(config.clone()),
+            patterns: PatternValidator::with_config(config.clone(), &file_config.rules.patterns),
             tests: TestValidator::with_config(config.clone()),
             documentation: DocumentationValidator::with_config(config.clone()),
-            naming: NamingValidator::with_config(config.clone()),
+            naming: NamingValidator::with_config(config.clone(), &file_config.rules.naming),
             solid: SolidValidator::with_config(config.clone()),
             organization: OrganizationValidator::with_config(config.clone()),
-            kiss: KissValidator::with_config(config.clone()),
-            refactoring: RefactoringValidator::with_config(config.clone()),
-            implementation: ImplementationQualityValidator::with_config(config.clone()),
+            kiss: KissValidator::with_config(config.clone(), &file_config.rules.kiss),
+            refactoring: RefactoringValidator::with_config(
+                config.clone(),
+                &file_config.rules.refactoring,
+            ),
+            implementation: ImplementationQualityValidator::with_config(
+                config.clone(),
+                &file_config.rules.implementation,
+            ),
             // New validators for PMAT integration
-            performance: PerformanceValidator::with_config(config.clone()),
+            performance: PerformanceValidator::with_config(
+                config.clone(),
+                &file_config.rules.performance,
+            ),
             async_patterns: AsyncPatternValidator::with_config(config.clone()),
             error_boundary: ErrorBoundaryValidator::with_config(config.clone()),
             pmat: PmatValidator::with_config(config.clone()),
             // New quality validators (v0.1.2)
-            test_quality: TestQualityValidator::with_config(config.clone()),
+            test_quality: TestQualityValidator::with_config(
+                config.clone(),
+                &file_config.rules.test_quality,
+            ),
             config_quality: ConfigQualityValidator::with_config(config.clone()),
             // Clean Architecture validator (CA001-CA009)
-            clean_architecture: CleanArchitectureValidator::with_config(config.clone()),
+            clean_architecture: CleanArchitectureValidator::with_config(
+                &config,
+                &file_config.rules.clean_architecture,
+                &file_config.rules.naming,
+            ),
             // New architecture validators (VIS001-VIS003, LAYER001-LAYER003, PORT001-PORT004)
-            visibility: VisibilityValidator::new(),
-            layer_flow: LayerFlowValidator::new(),
-            port_adapter: PortAdapterValidator::new(),
+            visibility: VisibilityValidator::with_config(&file_config.rules.visibility),
+            layer_flow: LayerFlowValidator::with_config(&file_config.rules.layer_flow),
+            port_adapter: PortAdapterValidator::with_config(&file_config.rules.port_adapter),
+            // Modernization: Initialize new components
+            extractor: RustExtractor,
             config: ValidationConfig {
                 workspace_root: root,
                 ..config
             },
+            naming_config: file_config.rules.naming.clone(),
+            general_config: file_config.general.clone(),
         }
     }
 
@@ -683,11 +686,67 @@ impl ArchitectureValidator {
         YamlRuleValidator::new()
     }
 
-    /// Load and validate all YAML rules
+    /// Load and validate all YAML rules with variable substitution
     pub async fn load_yaml_rules(&self) -> Result<Vec<crate::rules::yaml_loader::ValidatedRule>> {
-        let rules_dir = self.config.workspace_root.join("crates/mcb-validate/rules");
+        let rules_dir = self
+            .config
+            .workspace_root
+            .join(&self.general_config.rules_path);
 
-        let mut loader = YamlRuleLoader::new(rules_dir)?;
+        // Prepare variables for substitution
+        let variables_val = serde_yaml::to_value(&self.naming_config).map_err(|e| {
+            crate::ValidationError::Config(format!("Failed to serialize naming config: {e}"))
+        })?;
+
+        let mut variables = variables_val
+            .as_mapping()
+            .ok_or_else(|| {
+                crate::ValidationError::Config("Naming config is not a mapping".to_string())
+            })?
+            .clone();
+
+        // Add underscored module names (e.g., domain_module from domain_crate)
+        let crates = [
+            "domain",
+            "application",
+            "providers",
+            "infrastructure",
+            "server",
+            "validate",
+            "language_support",
+            "ast_utils",
+        ];
+        for name in crates {
+            let key = format!("{name}_crate");
+            if let Some(val) = variables.get(serde_yaml::Value::String(key.clone()))
+                && let Some(s) = val.as_str()
+            {
+                let module_name = s.replace('-', "_");
+                variables.insert(
+                    serde_yaml::Value::String(format!("{name}_module")),
+                    serde_yaml::Value::String(module_name),
+                );
+            }
+        }
+
+        if let Some(domain_val) =
+            variables.get(serde_yaml::Value::String("domain_crate".to_string()))
+            && let Some(domain_str) = domain_val.as_str()
+        {
+            let prefix = if let Some(idx) = domain_str.find('-') {
+                domain_str[0..idx].to_string()
+            } else {
+                domain_str.to_string()
+            };
+            variables.insert(
+                serde_yaml::Value::String("project_prefix".to_string()),
+                serde_yaml::Value::String(prefix),
+            );
+        }
+
+        let variables = serde_yaml::Value::Mapping(variables);
+
+        let mut loader = YamlRuleLoader::with_variables(rules_dir, Some(variables))?;
         loader.load_all_rules().await
     }
 
@@ -703,6 +762,36 @@ impl ArchitectureValidator {
         // Scan for files to validate
         let file_contents = self.scan_files_for_validation()?;
 
+        // === MODERNIZATION: Extract Facts & Build Graph ===
+        let mut all_facts = Vec::new();
+        // Use a local graph for this validation session
+        let mut dep_graph = crate::graph::DependencyGraph::new();
+
+        for file_path_str in file_contents.keys() {
+            let path = Path::new(file_path_str);
+            // Only analyze Rust files for now
+            if path.extension().and_then(|e| e.to_str()) == Some("rs") {
+                // Convert relative path to absolute if needed, or rely on what scan_files_for_validation returns.
+                // scan_files_for_validation likely returns paths relative to workspace or absolute.
+                // RustExtractor expects a path it can read via fs::read.
+                // If file_contents already has the content, we should modify RustExtractor to take content?
+                // But RustExtractor currently does fs::read.
+                // Let's assume paths are valid for fs::read.
+
+                match self.extractor.extract_facts(path) {
+                    Ok(facts) => all_facts.extend(facts),
+                    Err(_e) => {
+                        // Silently ignore extraction errors for now to avoid noise
+                    }
+                }
+            }
+        }
+
+        dep_graph.build(&all_facts);
+
+        let facts_arc = std::sync::Arc::new(all_facts);
+        let graph_arc = std::sync::Arc::new(dep_graph);
+
         for rule in rules.into_iter().filter(|r| r.enabled) {
             let context = engines::hybrid_engine::RuleContext {
                 workspace_root: self.config.workspace_root.clone(),
@@ -710,6 +799,8 @@ impl ArchitectureValidator {
                 ast_data: HashMap::new(),   // Would be populated by scanner
                 cargo_data: HashMap::new(), // Would be populated by scanner
                 file_contents: file_contents.clone(),
+                facts: facts_arc.clone(),
+                graph: graph_arc.clone(),
             };
 
             // Determine severity
@@ -722,17 +813,35 @@ impl ArchitectureValidator {
             // Determine category
             let category = match rule.category.to_lowercase().as_str() {
                 "architecture" | "clean-architecture" => ViolationCategory::Architecture,
-                "quality" => ViolationCategory::Quality,
                 "performance" => ViolationCategory::Performance,
                 "organization" => ViolationCategory::Organization,
                 "solid" => ViolationCategory::Solid,
                 "di" | "dependency-injection" => ViolationCategory::DependencyInjection,
                 "migration" => ViolationCategory::Configuration, // Use Configuration for migration rules
+                // Default to Quality for "quality" and any unmatched category
                 _ => ViolationCategory::Quality,
             };
 
             // Check if this is a lint-based rule
-            if !rule.lint_select.is_empty() {
+            if rule.lint_select.is_empty() {
+                // Use rule engine execution
+                let engine_type = match rule.engine.as_str() {
+                    "rust-rule-engine" => RuleEngineType::RustRuleEngine,
+                    // Default to RustyRules for "rusty-rules" and any unmatched engine
+                    _ => RuleEngineType::RustyRules,
+                };
+
+                let result = engine
+                    .execute_rule(&rule.id, engine_type, &rule.rule_definition, &context)
+                    .await?;
+
+                violations.extend(
+                    result
+                        .violations
+                        .into_iter()
+                        .map(|v| Box::new(v) as Box<dyn Violation>),
+                );
+            } else {
                 // Use linter execution
                 let result = engine
                     .execute_lint_rule(
@@ -743,24 +852,6 @@ impl ArchitectureValidator {
                         severity,
                         category,
                     )
-                    .await?;
-
-                violations.extend(
-                    result
-                        .violations
-                        .into_iter()
-                        .map(|v| Box::new(v) as Box<dyn Violation>),
-                );
-            } else {
-                // Use rule engine execution
-                let engine_type = match rule.engine.as_str() {
-                    "rust-rule-engine" => RuleEngineType::RustRuleEngine,
-                    "rusty-rules" => RuleEngineType::RustyRules,
-                    _ => RuleEngineType::RustyRules, // Default
-                };
-
-                let result = engine
-                    .execute_rule(&rule.id, engine_type, &rule.rule_definition, &context)
                     .await?;
 
                 violations.extend(
@@ -793,35 +884,44 @@ impl ArchitectureValidator {
     }
 
     /// Recursively scan a directory for source files
+    ///
+    /// SAFETY: Uses WalkDir with symlink protection to prevent infinite loops
     fn scan_directory(
         &self,
         dir: &Path,
         file_contents: &mut HashMap<String, String>,
     ) -> Result<()> {
+        use walkdir::WalkDir;
+
         if !dir.exists() || !dir.is_dir() {
             return Ok(());
         }
 
-        for entry in std::fs::read_dir(dir)? {
-            let entry = entry?;
+        // Use WalkDir with symlink protection instead of manual recursion
+        for entry in WalkDir::new(dir)
+            .follow_links(false)
+            .follow_links(false) // CRITICAL: Prevent circular symlink loops
+            .max_depth(100) // Reasonable depth limit to prevent stack overflow
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+        {
             let path = entry.path();
 
-            if self.config.should_exclude(&path) {
+            if self.config.should_exclude(path) {
                 continue;
             }
 
-            if path.is_dir() {
-                self.scan_directory(&path, file_contents)?;
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 // Include common source file extensions
                 let is_source = matches!(
                     ext,
                     "rs" | "py" | "js" | "ts" | "go" | "java" | "c" | "cpp" | "h" | "hpp"
                 );
-                if is_source {
-                    if let Ok(content) = std::fs::read_to_string(&path) {
-                        file_contents.insert(path.to_string_lossy().to_string(), content);
-                    }
+                if is_source
+                    && entry.file_type().is_file()
+                    && let Ok(content) = std::fs::read_to_string(path)
+                {
+                    file_contents.insert(path.to_string_lossy().to_string(), content);
                 }
             }
         }
@@ -831,13 +931,13 @@ impl ArchitectureValidator {
 
     // ========== Registry-Based Validation (Phase 7) ==========
 
-    /// Create a ValidatorRegistry with the standard new validators
+    /// Create a `ValidatorRegistry` with the standard new validators
     ///
     /// This registry contains validators that implement the new `Validator` trait:
-    /// - CleanArchitectureValidator
-    /// - LayerFlowValidator
-    /// - PortAdapterValidator
-    /// - VisibilityValidator
+    /// - `CleanArchitectureValidator`
+    /// - `LayerFlowValidator`
+    /// - `PortAdapterValidator`
+    /// - `VisibilityValidator`
     pub fn new_validator_registry(&self) -> ValidatorRegistry {
         ValidatorRegistry::standard_for(&self.config.workspace_root)
     }
@@ -867,13 +967,13 @@ impl ArchitectureValidator {
     ///
     /// # Arguments
     ///
-    /// * `names` - Names of validators to run (e.g., &["clean_architecture", "layer_flow"])
+    /// * `names` - Names of validators to run (e.g., `&["clean_architecture", "layer_flow"]`)
     ///
     /// # Available validators
     ///
-    /// - "clean_architecture" - Clean Architecture compliance
-    /// - "layer_flow" - Layer dependency rules
-    /// - "port_adapter" - Port/adapter patterns
+    /// - "`clean_architecture`" - Clean Architecture compliance
+    /// - "`layer_flow`" - Layer dependency rules
+    /// - "`port_adapter`" - Port/adapter patterns
     /// - "visibility" - Visibility modifiers
     pub fn validate_named(&self, names: &[&str]) -> Result<GenericReport> {
         let registry = self.new_validator_registry();
@@ -899,12 +999,11 @@ pub fn find_workspace_root_from(start: &Path) -> Option<PathBuf> {
     let mut current = start.to_path_buf();
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
-                    return Some(current);
-                }
-            }
+        if cargo_toml.exists()
+            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
+            && content.contains("[workspace]")
+        {
+            return Some(current);
         }
         if !current.pop() {
             return None;

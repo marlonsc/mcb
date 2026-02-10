@@ -1,9 +1,23 @@
-# ADR 030: Multi-Provider Strategy
+---
+adr: 30
+title: Multi-Provider Strategy
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: [1, 2, 12, 13]
+supersedes: []
+superseded_by: []
+implementation_status: Incomplete
+---
+
+## ADR 030: Multi-Provider Strategy
 
 ## Status
 
-Accepted
+**into ADR-003** (Unified Provider Architecture & Routing)
 
+> This ADR has been into [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md). All multi-provider routing, failover, and health monitoring strategies are now documented in ADR-003. This document is retained for historical reference only.
+>
 > Full multi-provider routing implemented in `crates/mcb-providers/src/routing/`:
 >
 > **Routing Components** (`crates/mcb-providers/src/routing/`):
@@ -26,7 +40,7 @@ Accepted
 
 ## Context
 
-The MCP Context Browser depends on external AI and storage services that have varying reliability, cost structures, and performance characteristics. Single-provider architectures create vendor lock-in, single points of failure, and cost optimization challenges.
+The Memory Context Browser depends on external AI and storage services that have varying reliability, cost structures, and performance characteristics. Single-provider architectures create vendor lock-in, single points of failure, and cost optimization challenges.
 
 External dependencies and risks:
 

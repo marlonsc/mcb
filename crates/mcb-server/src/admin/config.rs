@@ -19,11 +19,14 @@
 //! - Database passwords
 //! - Encryption keys
 
+use std::collections::HashMap;
+
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use mcb_infrastructure::config::data::AppConfig;
+use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::types::{CacheSystemConfig, LimitsConfig, MetricsConfig};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::constants::VALID_SECTIONS;
 
 /// Configuration response (sanitized for API output)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,7 +82,6 @@ impl SanitizedConfig {
             host: config.server.network.host.clone(),
             port: config.server.network.port,
             transport_mode: format!("{:?}", config.server.transport_mode),
-            admin_port: config.server.network.admin_port,
             https: config.server.ssl.https,
         }
     }
@@ -128,7 +130,7 @@ impl SanitizedConfig {
                 .logging
                 .file_output
                 .as_ref()
-                .map(|p| p.display().to_string()),
+                .map(|p: &std::path::PathBuf| p.display().to_string()),
         }
     }
 
@@ -166,8 +168,6 @@ pub struct ServerConfigView {
     pub port: u16,
     /// Transport mode (Stdio, Http, Hybrid)
     pub transport_mode: String,
-    /// Admin API port
-    pub admin_port: u16,
     /// HTTPS enabled
     pub https: bool,
 }
@@ -355,16 +355,6 @@ impl ConfigSectionUpdateResponse {
         }
     }
 }
-
-/// Valid configuration sections for updates
-pub const VALID_SECTIONS: &[&str] = &[
-    "server",
-    "logging",
-    "cache",
-    "metrics",
-    "limits",
-    "resilience",
-];
 
 /// Check if a section name is valid for updates
 pub fn is_valid_section(section: &str) -> bool {

@@ -20,7 +20,17 @@ metrics:
   maintainability_index:
     min: 65
     severity: warning
-    languages: ["rust", "python", "javascript", "typescript", "java", "c", "cpp", "kotlin"]
+    languages:
+      [
+        "rust",
+        "python",
+        "javascript",
+        "typescript",
+        "java",
+        "c",
+        "cpp",
+        "kotlin",
+      ]
 
 thresholds:
   - value: 65

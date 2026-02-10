@@ -78,9 +78,9 @@ mod tests {
     }
 
     #[test]
-    fn test_vector_store_config_filesystem() {
+    fn test_vector_store_config_edgevec() {
         let config = VectorStoreConfig {
-            provider: "filesystem".to_string(),
+            provider: "edgevec".to_string(),
             address: None,
             token: None,
             collection: Some("local-vectors".to_string()),
@@ -88,7 +88,7 @@ mod tests {
             timeout_secs: None,
         };
 
-        assert_eq!(config.provider, "filesystem");
+        assert_eq!(config.provider, "edgevec");
         assert_eq!(config.address, None);
         assert_eq!(config.token, None);
         assert_eq!(config.collection, Some("local-vectors".to_string()));

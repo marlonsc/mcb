@@ -4,9 +4,11 @@
 //! These entities enable the system to track changes over time and
 //! maintain consistency across indexing operations.
 
-use crate::value_objects::Language;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::value_objects::Language;
 
 /// Entity: File State for Change Tracking
 ///

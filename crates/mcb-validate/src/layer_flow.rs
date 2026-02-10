@@ -1,36 +1,55 @@
 //! Layer Event Flow Validation
 //!
 //! Validates that dependencies flow in correct Clean Architecture direction:
-//! mcb-domain -> mcb-application -> mcb-providers -> mcb-infrastructure -> mcb-server
+//! domain -> application -> providers -> infrastructure -> server
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
-use crate::{Result, ValidationConfig};
-use regex::Regex;
-use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+
+use regex::Regex;
+use serde::Serialize;
 use walkdir::WalkDir;
+
+use crate::config::LayerFlowRulesConfig;
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::{Result, ValidationConfig};
 
 /// Layer Flow Violations
 #[derive(Debug, Clone, Serialize)]
 pub enum LayerFlowViolation {
+    /// Dependency detected that violates the allowed layer flow.
     ForbiddenDependency {
+        /// Name of the crate containing the violation.
         source_crate: String,
+        /// Name of the crate being illegally imported.
         target_crate: String,
+        /// The specific import path used in the source code.
         import_path: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
+    /// Circular dependency detected between crates.
     CircularDependency {
+        /// Name of the first crate involved in the circular dependency.
         crate_a: String,
+        /// Name of the second crate involved in the circular dependency.
         crate_b: String,
+        /// File where the dependency is declared (e.g., a Cargo.toml file).
         file: PathBuf,
+        /// Line number where the declaration was found (usually 1 for Cargo.toml).
         line: usize,
     },
+    /// Domain layer importing external crates (should be pure).
     DomainExternalDependency {
+        /// Name of the domain crate containing the external dependency.
         crate_name: String,
+        /// Name of the external crate being imported.
         external_crate: String,
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
     },
 }
@@ -126,11 +145,10 @@ impl Violation for LayerFlowViolation {
                 target_crate,
                 ..
             } => Some(format!(
-                "Remove {} from {} - violates CA",
-                target_crate, source_crate
+                "Remove {target_crate} from {source_crate} - violates CA"
             )),
             Self::CircularDependency { .. } => {
-                Some("Extract shared types to mcb-domain".to_string())
+                Some("Extract shared types to the domain crate".to_string())
             }
             Self::DomainExternalDependency { .. } => {
                 Some("Domain should only use std/serde/thiserror".to_string())
@@ -139,58 +157,35 @@ impl Violation for LayerFlowViolation {
     }
 }
 
-struct LayerRules {
-    forbidden: HashMap<&'static str, HashSet<&'static str>>,
-}
-
-impl Default for LayerRules {
-    fn default() -> Self {
-        let mut forbidden = HashMap::new();
-        forbidden.insert(
-            "mcb-domain",
-            [
-                "mcb-application",
-                "mcb-providers",
-                "mcb-infrastructure",
-                "mcb-server",
-            ]
-            .into_iter()
-            .collect(),
-        );
-        forbidden.insert(
-            "mcb-application",
-            ["mcb-providers", "mcb-infrastructure", "mcb-server"]
-                .into_iter()
-                .collect(),
-        );
-        forbidden.insert(
-            "mcb-providers",
-            ["mcb-infrastructure", "mcb-server"].into_iter().collect(),
-        );
-        forbidden.insert("mcb-infrastructure", ["mcb-server"].into_iter().collect());
-        forbidden.insert("mcb-server", ["mcb-providers"].into_iter().collect());
-        Self { forbidden }
-    }
-}
-
 /// Layer Flow Validator
 pub struct LayerFlowValidator {
-    rules: LayerRules,
-}
-
-impl Default for LayerFlowValidator {
-    fn default() -> Self {
-        Self::new()
-    }
+    /// Forbidden dependency mappings: source_crate -> forbidden_target_crates
+    forbidden_dependencies: HashMap<String, HashSet<String>>,
+    /// List of crates to check for circular dependencies
+    circular_dependency_check_crates: Vec<String>,
 }
 
 impl LayerFlowValidator {
-    pub fn new() -> Self {
+    /// Creates a new layer flow validator, loading rules from configuration.
+    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+        let file_config = crate::config::FileConfig::load(workspace_root);
+        Self::with_config(&file_config.rules.layer_flow)
+    }
+
+    /// Creates a new layer flow validator with current configuration.
+    pub fn with_config(config: &LayerFlowRulesConfig) -> Self {
+        let mut forbidden_dependencies = HashMap::new();
+        for (k, v) in &config.forbidden_dependencies {
+            forbidden_dependencies.insert(k.clone(), v.iter().cloned().collect());
+        }
+
         Self {
-            rules: LayerRules::default(),
+            forbidden_dependencies,
+            circular_dependency_check_crates: config.circular_dependency_check_crates.clone(),
         }
     }
 
+    /// Validates the layer flow constraints for the given configuration.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<LayerFlowViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.check_forbidden_imports(config)?);
@@ -208,18 +203,19 @@ impl LayerFlowValidator {
             return Ok(violations);
         }
 
-        let import_pattern = Regex::new(r"use\s+(mcb_\w+)").expect("Invalid regex");
+        let import_pattern = Regex::new(r"use\s+([\w][\w\d_]*)").expect("Invalid regex");
 
-        for crate_name in self.rules.forbidden.keys() {
-            let crate_dir = crates_dir.join(crate_name).join("src");
-            if !crate_dir.exists() {
+        for crate_name in self.forbidden_dependencies.keys() {
+            let crate_src_dir = crates_dir.join(crate_name).join("src");
+            if !crate_src_dir.exists() {
                 continue;
             }
 
-            let forbidden_deps = &self.rules.forbidden[crate_name];
+            let forbidden_deps = &self.forbidden_dependencies[crate_name];
             let crate_name_underscored = crate_name.replace('-', "_");
 
-            for entry in WalkDir::new(&crate_dir)
+            for entry in WalkDir::new(&crate_src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
             {
@@ -268,15 +264,9 @@ impl LayerFlowValidator {
         }
 
         let mut deps: HashMap<String, HashSet<String>> = HashMap::new();
-        let crate_names = [
-            "mcb-domain",
-            "mcb-application",
-            "mcb-providers",
-            "mcb-infrastructure",
-            "mcb-server",
-        ];
+        let crate_names = &self.circular_dependency_check_crates;
 
-        for crate_name in &crate_names {
+        for crate_name in crate_names {
             let cargo_toml = crates_dir.join(crate_name).join("Cargo.toml");
             if !cargo_toml.exists() {
                 continue;
@@ -306,17 +296,17 @@ impl LayerFlowValidator {
                 }
 
                 // Only match actual dependency declarations, not any mention of crate name
-                // Look for patterns like: mcb-domain = { path = ... } or mcb-domain.path = ...
-                for dep_crate in &crate_names {
-                    if *dep_crate != *crate_name
-                        && (trimmed.starts_with(*dep_crate)
-                            || trimmed.contains(&format!("\"{}\"", dep_crate)))
+                // Look for patterns like: crate-name = { path = ... } or crate-name.path = ...
+                for dep_crate in crate_names {
+                    if dep_crate != crate_name
+                        && (trimmed.starts_with(dep_crate)
+                            || trimmed.contains(&format!("\"{dep_crate}\"")))
                     {
-                        crate_deps.insert((*dep_crate).to_string());
+                        crate_deps.insert(dep_crate.to_string());
                     }
                 }
             }
-            deps.insert((*crate_name).to_string(), crate_deps);
+            deps.insert(crate_name.to_string(), crate_deps);
         }
 
         let crate_list: Vec<_> = deps.keys().cloned().collect();
@@ -358,12 +348,14 @@ impl crate::validator_trait::Validator for LayerFlowValidator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use tempfile::TempDir;
+
+    use super::LayerFlowValidator;
 
     #[test]
-    fn test_layer_rules() {
-        let rules = LayerRules::default();
-        assert!(rules.forbidden["mcb-domain"].contains("mcb-providers"));
-        assert!(rules.forbidden["mcb-server"].contains("mcb-providers"));
+    fn test_layer_flow_init() {
+        // Just verify it doesn't panic if initialized correctly
+        let temp = TempDir::new().unwrap();
+        let _ = LayerFlowValidator::new(temp.path());
     }
 }

@@ -2,7 +2,7 @@
 
 ## 🚀 Local Development Setup
 
-MCP Context Browser currently supports local deployment for development and testing. The system is designed as an MCP server that communicates via stdio with AI assistants.
+Memory Context Browser currently supports local deployment for development and testing. The system is designed as an MCP server that communicates via stdio with AI assistants.
 
 ## 📦 Installation
 
@@ -199,7 +199,6 @@ services:
     build: .
     ports:
 -   "3000:3000"
--   "9090:9090"  # Metrics endpoint
     environment:
 -   MCP_MODE=distributed
 -   STORAGE_PROVIDER=milvus
@@ -558,9 +557,9 @@ data:
 ```bash
 
 # Core settings
-export MCP_MODE=distributed
-export MCP_HOST=0.0.0.0
-export MCP_PORT=3000
+export MCP__SERVER__TRANSPORT_MODE=http
+export MCP__SERVER__NETWORK__HOST=0.0.0.0
+export MCP__SERVER__NETWORK__PORT=3000
 
 # Database
 export DATABASE_URL=postgresql://user:password@host:5432/db
@@ -611,7 +610,7 @@ cargo run --bin connectivity-test
 ```bash
 
 # Prometheus metrics
-curl http://localhost:9090/metrics
+curl http://localhost:3000/metrics
 
 # Health check
 curl http://localhost:3000/health
@@ -757,7 +756,7 @@ statement_cache_size = 100
 query_timeout_seconds = 30
 ```
 
-This deployment guide provides comprehensive instructions for deploying MCP Context Browser in various environments, from local development to enterprise-scale distributed systems.
+This deployment guide provides comprehensive instructions for deploying Memory Context Browser in various environments, from local development to enterprise-scale distributed systems.
 
 ---
 

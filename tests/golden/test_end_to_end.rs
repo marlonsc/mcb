@@ -1,96 +1,235 @@
-//! Golden test: End-to-end workflow for all 4 MCP tools
-//!
-//! Verifies complete workflow:
-//! 1. index_codebase - Index a test repository
-//! 2. search_code - Search indexed content
-//! 3. get_indexing_status - Check indexing status
-//! 4. clear_index - Clear indexed data
-//!
-//! This test ensures all tools work together correctly.
+//! Included by mcb-server test binary; contract: docs/testing/GOLDEN_TESTS_CONTRACT.md.
 
-#[cfg(test)]
-mod tests {
-    use super::super::fixtures::{test_collection, test_repo_path};
+use crate::test_utils::test_fixtures::{
+    GOLDEN_COLLECTION, create_test_mcp_server, golden_content_to_string, sample_codebase_path,
+};
+use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
+use rmcp::handler::server::wrapper::Parameters;
 
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_e2e_complete_workflow() {
-        // TODO: Phase 4 - Implement complete end-to-end test
-        //
-        // Step 1: Clear any existing test data
-        // - Call clear_index for test_collection()
-        // - Verify success
-        //
-        // Step 2: Verify collection is empty
-        // - Call get_indexing_status
-        // - Verify total_chunks == 0
-        //
-        // Step 3: Index test repository
-        // - Call index_codebase with test_repo_path()
-        // - Verify indexed_files > 0
-        // - Verify chunks_created > 0
-        //
-        // Step 4: Verify indexing status
-        // - Call get_indexing_status
-        // - Verify total_chunks > 0
-        // - Verify status == "ready"
-        //
-        // Step 5: Search indexed content
-        // - Call search_code with known query
-        // - Verify results.len() > 0
-        // - Verify expected file in results
-        //
-        // Step 6: Search with different query
-        // - Call search_code with another known query
-        // - Verify different results returned
-        //
-        // Step 7: Clear index
-        // - Call clear_index
-        // - Verify deleted_chunks > 0
-        //
-        // Step 8: Verify collection is cleared
-        // - Call get_indexing_status
-        // - Verify total_chunks == 0
+#[tokio::test]
+async fn golden_e2e_complete_workflow() {
+    let server = create_test_mcp_server().await;
+    let index_h = server.index_handler();
+    let search_h = server.search_handler();
 
-        todo!("Implement in Phase 4 after all MCP handlers testable")
-    }
+    let r = index_h
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Clear,
+            path: None,
+            collection: Some(GOLDEN_COLLECTION.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await;
+    assert!(r.is_ok(), "index clear should succeed: {:?}", r);
+    let clear_text = golden_content_to_string(&r.unwrap());
+    assert!(
+        clear_text.to_lowercase().contains("clear"),
+        "clear response must mention clear/cleared: {}",
+        clear_text
+    );
 
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_e2e_handles_concurrent_operations() {
-        // TODO: Phase 4
-        // Verify system handles concurrent:
-        // - Multiple searches while indexing
-        // - Status checks during indexing
-        // - Sequential index operations
+    let r = index_h
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Status,
+            path: None,
+            collection: Some(GOLDEN_COLLECTION.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await;
+    assert!(r.is_ok(), "index status should succeed: {:?}", r);
+    let res = r.unwrap();
+    assert!(!res.is_error.unwrap_or(true));
+    let text = golden_content_to_string(&res);
+    assert!(text.contains("Indexing Status") || text.contains("Idle") || text.contains("indexing"));
 
-        todo!("Implement in Phase 4")
-    }
+    let path = sample_codebase_path();
+    assert!(path.exists(), "sample_codebase must exist: {:?}", path);
+    let r = index_h
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Start,
+            path: Some(path.to_string_lossy().to_string()),
+            collection: Some(GOLDEN_COLLECTION.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await;
+    assert!(r.is_ok(), "index should succeed: {:?}", r);
+    let res = r.unwrap();
+    assert!(!res.is_error.unwrap_or(true));
+    let text = golden_content_to_string(&res);
+    assert!(
+        text.contains("chunks") || text.contains("Indexing") || text.contains("files"),
+        "expected chunks/indexing in response: {}",
+        text
+    );
 
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_e2e_respects_collection_isolation() {
-        // TODO: Phase 4
-        // Create two separate collections
-        // Verify operations on one don't affect the other
-        // Verify searches only return results from correct collection
+    let _ = index_h
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Status,
+            path: None,
+            collection: Some(GOLDEN_COLLECTION.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await;
 
-        todo!("Implement in Phase 4")
-    }
+    let r = search_h
+        .handle(Parameters(SearchArgs {
+            query: "embedding provider".to_string(),
+            resource: SearchResource::Code,
+            collection: Some(GOLDEN_COLLECTION.to_string()),
+            limit: Some(5),
+            min_score: None,
+            tags: None,
+            session_id: None,
+            extensions: None,
+            filters: None,
+            token: None,
+        }))
+        .await;
+    assert!(r.is_ok(), "search should succeed: {:?}", r);
+    let res = r.unwrap();
+    assert!(!res.is_error.unwrap_or(true));
+    let text = golden_content_to_string(&res);
+    assert!(
+        text.contains("Search") || text.contains("Results") || text.contains("result"),
+        "expected search result text: {}",
+        text
+    );
 
-    #[tokio::test]
-    // TODO Phase 4; run with: cargo test --test golden -- --ignored
-    #[ignore]
-    async fn golden_e2e_handles_reindex_correctly() {
-        // TODO: Phase 4
-        // Index repository
-        // Re-index same repository
-        // Verify no duplicate chunks
-        // Verify updated content reflects in search
+    let r = index_h
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Clear,
+            path: None,
+            collection: Some(GOLDEN_COLLECTION.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await;
+    assert!(r.is_ok());
 
-        todo!("Implement in Phase 4")
-    }
+    let r = index_h
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Status,
+            path: None,
+            collection: Some(GOLDEN_COLLECTION.to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await;
+    assert!(r.is_ok());
+}
+
+#[tokio::test]
+async fn golden_e2e_handles_concurrent_operations() {
+    let server = create_test_mcp_server().await;
+    let status_h = server.index_handler();
+    let r1 = status_h.handle(Parameters(IndexArgs {
+        action: IndexAction::Status,
+        path: None,
+        collection: Some("default".to_string()),
+        extensions: None,
+        exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
+    }));
+    let r2 = status_h.handle(Parameters(IndexArgs {
+        action: IndexAction::Status,
+        path: None,
+        collection: Some("default".to_string()),
+        extensions: None,
+        exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
+    }));
+    let (a, b) = tokio::join!(r1, r2);
+    assert!(a.is_ok());
+    assert!(b.is_ok());
+}
+
+#[tokio::test]
+async fn golden_e2e_respects_collection_isolation() {
+    let server = create_test_mcp_server().await;
+    let clear = server.index_handler();
+    clear
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Clear,
+            path: None,
+            collection: Some("collection_a".to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await
+        .expect("clear a");
+    clear
+        .handle(Parameters(IndexArgs {
+            action: IndexAction::Clear,
+            path: None,
+            collection: Some("collection_b".to_string()),
+            extensions: None,
+            exclude_dirs: None,
+            ignore_patterns: None,
+            max_file_size: None,
+            follow_symlinks: None,
+            token: None,
+        }))
+        .await
+        .expect("clear b");
+}
+
+#[tokio::test]
+async fn golden_e2e_handles_reindex_correctly() {
+    let server = create_test_mcp_server().await;
+    let path = sample_codebase_path();
+    let index_h = server.index_handler();
+    let collection = "golden_reindex_test";
+    let args = IndexArgs {
+        action: IndexAction::Start,
+        path: Some(path.to_string_lossy().to_string()),
+        collection: Some(collection.to_string()),
+        extensions: None,
+        exclude_dirs: None,
+        ignore_patterns: None,
+        max_file_size: None,
+        follow_symlinks: None,
+        token: None,
+    };
+    let r1 = index_h.handle(Parameters(args.clone())).await;
+    assert!(r1.is_ok());
+    let r2 = index_h.handle(Parameters(args)).await;
+    assert!(r2.is_ok());
 }

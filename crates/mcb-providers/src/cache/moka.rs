@@ -17,12 +17,14 @@
 //! let provider = MokaCacheProvider::with_config(1000, Duration::from_secs(300));
 //! ```
 
-use crate::constants::CACHE_DEFAULT_SIZE_LIMIT;
+use std::time::Duration;
+
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
 use moka::future::Cache;
-use std::time::Duration;
+
+use crate::constants::CACHE_DEFAULT_SIZE_LIMIT;
 
 /// Moka-based in-memory cache provider
 ///
@@ -30,7 +32,7 @@ use std::time::Duration;
 /// Supports configurable capacity and TTL.
 ///
 /// Created at runtime via factory pattern.
-/// For testing, use `NullCacheProvider`.
+/// For testing, use `MokaCacheProvider::new()` (local in-memory).
 #[derive(Clone)]
 pub struct MokaCacheProvider {
     cache: Cache<String, Vec<u8>>,
@@ -161,7 +163,7 @@ impl std::fmt::Debug for MokaCacheProvider {
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
+use mcb_domain::registry::cache::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
 
 /// Factory function for creating Moka cache provider instances.
 fn moka_cache_factory(

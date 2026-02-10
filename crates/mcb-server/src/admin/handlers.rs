@@ -6,22 +6,27 @@
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 //! Authentication guards added in v0.1.2.
 
-use mcb_application::ports::admin::{
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use mcb_domain::ports::admin::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
     IndexingOperationsInterface, PerformanceMetricsData, PerformanceMetricsInterface,
     ShutdownCoordinator,
 };
-use mcb_application::ports::infrastructure::EventBusProvider;
-use mcb_application::ports::providers::CacheProvider;
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
+use mcb_domain::ports::providers::CacheProvider;
+use mcb_domain::ports::services::ProjectServiceInterface;
+use mcb_domain::value_objects::OperationId;
+use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use mcb_infrastructure::infrastructure::ServiceManager;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get, post};
 use serde::Serialize;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tracing::info;
 
 use super::auth::AdminAuth;
@@ -35,6 +40,8 @@ pub struct AdminState {
     pub indexing: Arc<dyn IndexingOperationsInterface>,
     /// Configuration watcher for hot-reload support
     pub config_watcher: Option<Arc<ConfigWatcher>>,
+    /// Current configuration snapshot (read-only fallback if watcher unavailable)
+    pub current_config: AppConfig,
     /// Configuration file path (for updates)
     pub config_path: Option<PathBuf>,
     /// Shutdown coordinator for graceful shutdown
@@ -47,6 +54,8 @@ pub struct AdminState {
     pub service_manager: Option<Arc<ServiceManager>>,
     /// Cache provider for stats
     pub cache: Option<Arc<dyn CacheProvider>>,
+    /// Project workflow service for project/phase/issue navigation
+    pub project_workflow: Option<Arc<dyn ProjectServiceInterface>>,
 }
 
 /// Health check response for admin API
@@ -80,76 +89,202 @@ pub fn get_metrics(_auth: AdminAuth, state: &State<AdminState>) -> Json<Performa
     Json(metrics)
 }
 
-/// Indexing status response
+/// Jobs status response (unified job tracking)
 #[derive(Serialize)]
-pub struct IndexingStatusResponse {
-    /// Whether indexing is currently active
-    pub is_indexing: bool,
-    /// Number of active operations
-    pub active_operations: usize,
-    /// Details of each operation
-    pub operations: Vec<IndexingOperationStatus>,
+pub struct JobsStatusResponse {
+    /// Total number of tracked jobs
+    pub total: usize,
+    /// Number of currently running jobs
+    pub running: usize,
+    /// Number of queued jobs
+    pub queued: usize,
+    /// Job details
+    pub jobs: Vec<Job>,
 }
 
-/// Individual indexing operation status
-#[derive(Serialize)]
-pub struct IndexingOperationStatus {
-    /// Operation ID
-    pub id: String,
-    /// Collection being indexed
-    pub collection: String,
-    /// Current file being processed
-    pub current_file: Option<String>,
-    /// Progress as percentage
-    pub progress_percent: f32,
-    /// Files processed
-    pub processed_files: usize,
-    /// Total files
-    pub total_files: usize,
-}
-
-/// Get indexing status endpoint
-#[get("/indexing")]
-pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResponse> {
+/// List all background jobs
+#[get("/jobs")]
+pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
     let operations = state.indexing.get_operations();
 
-    let operation_statuses: Vec<IndexingOperationStatus> = operations
+    let jobs: Vec<Job> = operations
         .values()
         .map(|op| {
             let progress = if op.total_files > 0 {
-                (op.processed_files as f32 / op.total_files as f32) * 100.0
+                ((op.processed_files as f64 / op.total_files as f64) * 100.0) as u8
             } else {
-                0.0
+                0
             };
-
-            IndexingOperationStatus {
+            Job {
                 id: op.id.clone(),
-                collection: op.collection.clone(),
-                current_file: op.current_file.clone(),
+                job_type: JobType::Indexing,
+                label: op.collection.to_string(),
+                status: JobStatus::Running,
                 progress_percent: progress,
-                processed_files: op.processed_files,
-                total_files: op.total_files,
+                processed_items: op.processed_files,
+                total_items: op.total_files,
+                current_item: op.current_file.clone(),
+                created_at: op.started_at,
+                started_at: Some(op.started_at),
+                completed_at: None,
+                result: None,
             }
         })
         .collect();
 
-    Json(IndexingStatusResponse {
-        is_indexing: !operation_statuses.is_empty(),
-        active_operations: operation_statuses.len(),
-        operations: operation_statuses,
+    let running = jobs.len();
+    Json(JobsStatusResponse {
+        total: running,
+        running,
+        queued: 0,
+        jobs,
     })
+}
+
+/// Projects list response for browse entity navigation
+#[derive(Serialize)]
+pub struct ProjectsBrowseResponse {
+    /// List of projects
+    pub projects: Vec<mcb_domain::entities::project::Project>,
+    /// Total number of projects
+    pub total: usize,
+}
+
+/// Project phases response
+#[derive(Serialize)]
+pub struct ProjectPhasesBrowseResponse {
+    /// Project identifier
+    pub project_id: String,
+    /// Phases for this project
+    pub phases: Vec<mcb_domain::entities::project::ProjectPhase>,
+    /// Total number of phases
+    pub total: usize,
+}
+
+/// Project issues response
+#[derive(Serialize)]
+pub struct ProjectIssuesBrowseResponse {
+    /// Project identifier
+    pub project_id: String,
+    /// Issues for this project
+    pub issues: Vec<mcb_domain::entities::project::ProjectIssue>,
+    /// Total number of issues
+    pub total: usize,
+}
+
+/// List workflow projects for browse entity graph
+#[get("/projects")]
+pub async fn list_browse_projects(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+) -> Result<Json<ProjectsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(project_workflow) = &state.project_workflow else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Project workflow service not available".to_string(),
+            }),
+        ));
+    };
+
+    match project_workflow.list_projects().await {
+        Ok(projects) => {
+            let total = projects.len();
+            Ok(Json(ProjectsBrowseResponse { projects, total }))
+        }
+        Err(e) => Err((
+            Status::InternalServerError,
+            Json(CacheErrorResponse {
+                error: e.to_string(),
+            }),
+        )),
+    }
+}
+
+/// List phases for a workflow project
+#[get("/projects/<project_id>/phases")]
+pub async fn list_browse_project_phases(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+    project_id: &str,
+) -> Result<Json<ProjectPhasesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(project_workflow) = &state.project_workflow else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Project workflow service not available".to_string(),
+            }),
+        ));
+    };
+
+    match project_workflow.list_phases(project_id).await {
+        Ok(phases) => {
+            let total = phases.len();
+            Ok(Json(ProjectPhasesBrowseResponse {
+                project_id: project_id.to_string(),
+                phases,
+                total,
+            }))
+        }
+        Err(e) => Err((
+            Status::InternalServerError,
+            Json(CacheErrorResponse {
+                error: e.to_string(),
+            }),
+        )),
+    }
+}
+
+/// List issues for a workflow project
+#[get("/projects/<project_id>/issues")]
+pub async fn list_browse_project_issues(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+    project_id: &str,
+) -> Result<Json<ProjectIssuesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(project_workflow) = &state.project_workflow else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Project workflow service not available".to_string(),
+            }),
+        ));
+    };
+
+    match project_workflow.list_issues(project_id, None).await {
+        Ok(issues) => {
+            let total = issues.len();
+            Ok(Json(ProjectIssuesBrowseResponse {
+                project_id: project_id.to_string(),
+                issues,
+                total,
+            }))
+        }
+        Err(e) => Err((
+            Status::InternalServerError,
+            Json(CacheErrorResponse {
+                error: e.to_string(),
+            }),
+        )),
+    }
 }
 
 /// Readiness response
 #[derive(Serialize)]
 pub struct ReadinessResponse {
+    /// Whether the server is ready to accept requests
     pub ready: bool,
+    /// Server uptime in seconds
+    pub uptime_seconds: u64,
 }
 
 /// Liveness response
 #[derive(Serialize)]
 pub struct LivenessResponse {
+    /// Whether the server process is alive and responding
     pub alive: bool,
+    /// Server uptime in seconds
+    pub uptime_seconds: u64,
 }
 
 /// Readiness check endpoint (for k8s/docker health checks)
@@ -159,19 +294,35 @@ pub fn readiness_check(state: &State<AdminState>) -> (Status, Json<ReadinessResp
 
     // Consider ready if server has been up for at least 1 second
     if metrics.uptime_seconds >= 1 {
-        (Status::Ok, Json(ReadinessResponse { ready: true }))
+        (
+            Status::Ok,
+            Json(ReadinessResponse {
+                ready: true,
+                uptime_seconds: metrics.uptime_seconds,
+            }),
+        )
     } else {
         (
             Status::ServiceUnavailable,
-            Json(ReadinessResponse { ready: false }),
+            Json(ReadinessResponse {
+                ready: false,
+                uptime_seconds: metrics.uptime_seconds,
+            }),
         )
     }
 }
 
 /// Liveness check endpoint (for k8s/docker health checks)
 #[get("/live")]
-pub fn liveness_check() -> (Status, Json<LivenessResponse>) {
-    (Status::Ok, Json(LivenessResponse { alive: true }))
+pub fn liveness_check(state: &State<AdminState>) -> (Status, Json<LivenessResponse>) {
+    let metrics = state.metrics.get_performance_metrics();
+    (
+        Status::Ok,
+        Json(LivenessResponse {
+            alive: true,
+            uptime_seconds: metrics.uptime_seconds,
+        }),
+    )
 }
 
 // ============================================================================
@@ -336,7 +487,7 @@ fn current_timestamp() -> u64 {
 /// Build dependency health checks from metrics and operations
 fn build_dependency_checks(
     metrics: &PerformanceMetricsData,
-    operations: &std::collections::HashMap<String, IndexingOperation>,
+    operations: &std::collections::HashMap<OperationId, IndexingOperation>,
     now: u64,
 ) -> Vec<DependencyHealthCheck> {
     vec![
@@ -366,7 +517,7 @@ fn build_embedding_health(metrics: &PerformanceMetricsData, now: u64) -> Depende
 
 /// Build vector store health check
 fn build_vector_store_health(
-    operations: &std::collections::HashMap<String, IndexingOperation>,
+    operations: &std::collections::HashMap<OperationId, IndexingOperation>,
     now: u64,
 ) -> DependencyHealthCheck {
     DependencyHealthCheck {
@@ -427,6 +578,7 @@ fn calculate_overall_health(dependencies: &[DependencyHealthCheck]) -> Dependenc
 /// Cache error response
 #[derive(Serialize)]
 pub struct CacheErrorResponse {
+    /// Error message describing the cache operation failure
     pub error: String,
 }
 
@@ -441,10 +593,8 @@ pub struct CacheErrorResponse {
 pub async fn get_cache_stats(
     _auth: AdminAuth,
     state: &State<AdminState>,
-) -> Result<
-    Json<mcb_application::ports::providers::cache::CacheStats>,
-    (Status, Json<CacheErrorResponse>),
-> {
+) -> Result<Json<mcb_domain::ports::providers::cache::CacheStats>, (Status, Json<CacheErrorResponse>)>
+{
     let Some(cache) = &state.cache else {
         return Err((
             Status::ServiceUnavailable,

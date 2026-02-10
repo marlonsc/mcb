@@ -1,6 +1,6 @@
 # Quickstart Guide
 
-Get MCP Context Browser v0.1.4 running in 5 minutes.
+Get Memory Context Browser v0.2.0 running in 5 minutes.
 
 ## 1. Download
 
@@ -80,22 +80,22 @@ Restart Claude Desktop, then ask:
 
 > "Index my project at /path/to/myproject"
 
-Claude will use the `index_codebase` tool to index your code.
+Claude will use the `index (action=start)` tool to index your code.
 
 Then search:
 
 > "Find where user authentication is handled"
 
-Claude will use `search_code` to find relevant code.
+Claude will use `search (resource=code)` to find relevant code.
 
 ## Available MCP Tools
 
 | Tool | What it does |
 |------|--------------|
-| `index_codebase` | Index a directory for semantic search |
-| `search_code` | Search indexed code with natural language |
-| `get_indexing_status` | Check indexing progress |
-| `clear_index` | Remove indexed data |
+| `index (action=start)` | Index a directory for semantic search |
+| `search (resource=code)` | Search indexed code with natural language |
+| `index (action=status)` | Check indexing progress |
+| `index (action=clear)` | Remove indexed data |
 
 ## Supported Languages (12)
 

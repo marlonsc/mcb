@@ -2,80 +2,107 @@
 //!
 //! Validates naming conventions:
 //! - Structs/Enums/Traits: CamelCase
-//! - Functions/Methods: snake_case
-//! - Constants: SCREAMING_SNAKE_CASE
-//! - Modules/Files: snake_case
+//! - Functions/Methods: `snake_case`
+//! - Constants: `SCREAMING_SNAKE_CASE`
+//! - Modules/Files: `snake_case`
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::config::NamingRulesConfig;
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Naming violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NamingViolation {
     /// Bad struct/enum/trait name (should be CamelCase)
     BadTypeName {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the type.
         name: String,
+        /// Expected case format (e.g., "CamelCase").
         expected_case: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Bad function/method name (should be snake_case)
+    /// Bad function/method name (should be `snake_case`)
     BadFunctionName {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the function.
         name: String,
+        /// Expected case format (e.g., "snake_case").
         expected_case: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Bad constant name (should be SCREAMING_SNAKE_CASE)
+    /// Bad constant name (should be `SCREAMING_SNAKE_CASE`)
     BadConstantName {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the constant.
         name: String,
+        /// Expected case format (e.g., "SCREAMING_SNAKE_CASE").
         expected_case: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Bad module/file name (should be snake_case)
+    /// Bad module/file name (should be `snake_case`)
     BadModuleName {
+        /// Path to the module or file.
         path: PathBuf,
+        /// Expected case format.
         expected_case: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// File suffix doesn't match component type
     BadFileSuffix {
+        /// Path to the file.
         path: PathBuf,
+        /// Component type detected.
         component_type: String,
+        /// Current file suffix.
         current_suffix: String,
+        /// Expected file suffix.
         expected_suffix: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// File name doesn't follow CA naming convention
     BadCaNaming {
+        /// Path to the file.
         path: PathBuf,
+        /// Detected Clean Architecture component type.
         detected_type: String,
+        /// Description of the issue.
         issue: String,
+        /// Suggested fix.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
 impl NamingViolation {
+    /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::BadTypeName { severity, .. } => *severity,
-            Self::BadFunctionName { severity, .. } => *severity,
-            Self::BadConstantName { severity, .. } => *severity,
-            Self::BadModuleName { severity, .. } => *severity,
-            Self::BadFileSuffix { severity, .. } => *severity,
-            Self::BadCaNaming { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -196,34 +223,34 @@ impl Violation for NamingViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::BadTypeName { severity, .. } => *severity,
-            Self::BadFunctionName { severity, .. } => *severity,
-            Self::BadConstantName { severity, .. } => *severity,
-            Self::BadModuleName { severity, .. } => *severity,
-            Self::BadFileSuffix { severity, .. } => *severity,
-            Self::BadCaNaming { severity, .. } => *severity,
+            Self::BadTypeName { severity, .. }
+            | Self::BadFunctionName { severity, .. }
+            | Self::BadConstantName { severity, .. }
+            | Self::BadModuleName { severity, .. }
+            | Self::BadFileSuffix { severity, .. }
+            | Self::BadCaNaming { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::BadTypeName { file, .. } => Some(file),
-            Self::BadFunctionName { file, .. } => Some(file),
-            Self::BadConstantName { file, .. } => Some(file),
-            Self::BadModuleName { path, .. } => Some(path),
-            Self::BadFileSuffix { path, .. } => Some(path),
-            Self::BadCaNaming { path, .. } => Some(path),
+            Self::BadTypeName { file, .. }
+            | Self::BadFunctionName { file, .. }
+            | Self::BadConstantName { file, .. } => Some(file),
+            Self::BadModuleName { path, .. }
+            | Self::BadFileSuffix { path, .. }
+            | Self::BadCaNaming { path, .. } => Some(path),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::BadTypeName { line, .. } => Some(*line),
-            Self::BadFunctionName { line, .. } => Some(*line),
-            Self::BadConstantName { line, .. } => Some(*line),
-            Self::BadModuleName { .. } => None,
-            Self::BadFileSuffix { .. } => None,
-            Self::BadCaNaming { .. } => None,
+            Self::BadTypeName { line, .. }
+            | Self::BadFunctionName { line, .. }
+            | Self::BadConstantName { line, .. } => Some(*line),
+            Self::BadModuleName { .. } | Self::BadFileSuffix { .. } | Self::BadCaNaming { .. } => {
+                None
+            }
         }
     }
 
@@ -233,54 +260,63 @@ impl Violation for NamingViolation {
                 name,
                 expected_case,
                 ..
-            } => Some(format!("Rename '{}' to {} format", name, expected_case)),
-            Self::BadFunctionName {
+            }
+            | Self::BadFunctionName {
                 name,
                 expected_case,
                 ..
-            } => Some(format!("Rename '{}' to {} format", name, expected_case)),
-            Self::BadConstantName {
+            }
+            | Self::BadConstantName {
                 name,
                 expected_case,
                 ..
-            } => Some(format!("Rename '{}' to {} format", name, expected_case)),
+            } => Some(format!("Rename '{name}' to {expected_case} format")),
             Self::BadModuleName {
                 path,
                 expected_case,
                 ..
             } => {
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-                Some(format!(
-                    "Rename '{}' to {} format",
-                    file_name, expected_case
-                ))
+                Some(format!("Rename '{file_name}' to {expected_case} format"))
             }
             Self::BadFileSuffix {
                 expected_suffix, ..
-            } => Some(format!("Add '{}' suffix to file name", expected_suffix)),
+            } => Some(format!("Add '{expected_suffix}' suffix to file name")),
             Self::BadCaNaming { suggestion, .. } => Some(suggestion.clone()),
         }
     }
 }
 
-/// Naming validator
+/// Validates naming conventions across Rust code.
+///
+/// Checks that structs, enums, traits use CamelCase; functions and methods use snake_case;
+/// constants use SCREAMING_SNAKE_CASE; and modules/files use snake_case.
 pub struct NamingValidator {
     config: ValidationConfig,
+    rules: NamingRulesConfig,
 }
 
 impl NamingValidator {
-    /// Create a new naming validator
+    /// Creates a new naming validator, loading configuration from files.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.naming)
     }
 
-    /// Create a validator with custom configuration for multi-directory support
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+    /// Creates a validator with custom configuration.
+    pub fn with_config(config: ValidationConfig, rules: &NamingRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
-    /// Run all naming validations
+    /// Runs all naming validations and returns collected violations.
     pub fn validate_all(&self) -> Result<Vec<NamingViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_type_names()?);
         violations.extend(self.validate_function_names()?);
@@ -291,7 +327,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate struct/enum/trait names are CamelCase
+    /// Validates that struct, enum, and trait names follow CamelCase convention.
     pub fn validate_type_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -306,6 +342,7 @@ impl NamingValidator {
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -367,7 +404,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate function/method names are snake_case
+    /// Validates that function and method names follow snake_case convention.
     pub fn validate_function_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -381,6 +418,7 @@ impl NamingValidator {
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -413,7 +451,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate constants are SCREAMING_SNAKE_CASE
+    /// Validates that constants and statics follow SCREAMING_SNAKE_CASE convention.
     pub fn validate_constant_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -428,6 +466,7 @@ impl NamingValidator {
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -469,7 +508,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate module/file names are snake_case
+    /// Validates that module and file names follow snake_case convention.
     pub fn validate_module_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -480,6 +519,7 @@ impl NamingValidator {
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -508,7 +548,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate file suffixes match component types per CA naming conventions
+    /// Validates that file suffixes match component types per Clean Architecture naming conventions.
     pub fn validate_file_suffixes(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -521,6 +561,7 @@ impl NamingValidator {
             let crate_name = crate_dir.file_name().and_then(|s| s.to_str()).unwrap_or("");
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -551,7 +592,7 @@ impl NamingValidator {
                 }
 
                 // Check handler files in server crate
-                if crate_name == "mcb-server" && path_str.contains("/handlers/") {
+                if crate_name == self.rules.server_crate && path_str.contains("/handlers/") {
                     // Handlers should have descriptive names (snake_case tool names)
                     // but NOT have _handler suffix (that's redundant with directory)
                     if file_name.ends_with("_handler") {
@@ -571,7 +612,7 @@ impl NamingValidator {
                 // so we skip suffix validation for that directory
                 if path_str.contains("/services/")
                     && !path_str.contains("/domain_services/")
-                    && crate_name != "mcb-domain"
+                    && crate_name != self.rules.domain_crate
                     && !file_name.ends_with("_service")
                     && file_name != "mod"
                 {
@@ -604,7 +645,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validate Clean Architecture naming conventions
+    /// Validates Clean Architecture naming conventions for files and components.
     pub fn validate_ca_naming(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
@@ -617,6 +658,7 @@ impl NamingValidator {
             let crate_name = crate_dir.file_name().and_then(|s| s.to_str()).unwrap_or("");
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -631,7 +673,7 @@ impl NamingValidator {
                 }
 
                 // Domain crate: port traits should be in ports/
-                if crate_name == "mcb-domain" {
+                if crate_name == self.rules.domain_crate {
                     // Files with "provider" in name should be in ports/providers/
                     if file_name.contains("provider")
                         && !path_str.contains("/ports/providers/")
@@ -659,7 +701,7 @@ impl NamingValidator {
                 }
 
                 // Infrastructure crate: adapters should be in adapters/
-                if crate_name == "mcb-infrastructure" {
+                if crate_name == self.rules.infrastructure_crate {
                     // Implementation files should be in adapters/
                     if (file_name.ends_with("_impl") || file_name.contains("adapter"))
                         && !path_str.contains("/adapters/")
@@ -687,7 +729,7 @@ impl NamingValidator {
                 }
 
                 // Server crate: handlers should be in handlers/ or admin/
-                if crate_name == "mcb-server" {
+                if crate_name == self.rules.server_crate {
                     // Allow handlers in handlers/, admin/, or tools/ directories
                     let in_allowed_handler_dir = path_str.contains("/handlers/")
                         || path_str.contains("/admin/")
@@ -708,7 +750,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Extract suffix from file name (part after last underscore)
+    /// Extracts the suffix from a file name (part after the last underscore).
     fn get_suffix<'a>(&self, name: &'a str) -> &'a str {
         if let Some(pos) = name.rfind('_') {
             &name[pos..]
@@ -717,7 +759,7 @@ impl NamingValidator {
         }
     }
 
-    /// Check if name is CamelCase
+    /// Checks if a name follows CamelCase convention.
     fn is_camel_case(&self, name: &str) -> bool {
         if name.is_empty() {
             return false;
@@ -740,15 +782,20 @@ impl NamingValidator {
         name.chars().any(|c| c.is_ascii_lowercase())
     }
 
-    /// Check if name is snake_case
-    fn is_snake_case(&self, name: &str) -> bool {
+    /// Helper to validate snake-like case conventions.
+    fn is_valid_snake_case(&self, name: &str, is_uppercase: bool) -> bool {
         if name.is_empty() {
             return false;
         }
 
-        // Must be all lowercase or underscores or digits
+        // Must be all lowercase/uppercase (depending on is_uppercase) or underscores or digits
         for c in name.chars() {
-            if !c.is_ascii_lowercase() && c != '_' && !c.is_ascii_digit() {
+            let valid_case = if is_uppercase {
+                c.is_ascii_uppercase()
+            } else {
+                c.is_ascii_lowercase()
+            };
+            if !valid_case && c != '_' && !c.is_ascii_digit() {
                 return false;
             }
         }
@@ -757,21 +804,14 @@ impl NamingValidator {
         !name.chars().next().is_some_and(|c| c.is_ascii_digit())
     }
 
-    /// Check if name is SCREAMING_SNAKE_CASE
+    /// Checks if a name follows snake_case convention.
+    fn is_snake_case(&self, name: &str) -> bool {
+        self.is_valid_snake_case(name, false)
+    }
+
+    /// Checks if a name follows SCREAMING_SNAKE_CASE convention.
     fn is_screaming_snake_case(&self, name: &str) -> bool {
-        if name.is_empty() {
-            return false;
-        }
-
-        // Must be all uppercase or underscores or digits
-        for c in name.chars() {
-            if !c.is_ascii_uppercase() && c != '_' && !c.is_ascii_digit() {
-                return false;
-            }
-        }
-
-        // Can't start with digit
-        !name.chars().next().is_some_and(|c| c.is_ascii_digit())
+        self.is_valid_snake_case(name, true)
     }
 
     fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {
@@ -779,23 +819,11 @@ impl NamingValidator {
     }
 }
 
-impl crate::validator_trait::Validator for NamingValidator {
-    fn name(&self) -> &'static str {
-        "naming"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates naming conventions (CamelCase, snake_case, SCREAMING_SNAKE_CASE)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    NamingValidator,
+    "naming",
+    "Validates naming conventions (CamelCase, snake_case, SCREAMING_SNAKE_CASE)"
+);
 
 #[cfg(test)]
 mod tests {

@@ -11,12 +11,14 @@ use crate::Result;
 
 /// Unified linter interface
 pub struct LinterEngine {
+    /// List of linters to be used during check
     enabled_linters: Vec<LinterType>,
     /// Specific lint codes to enable (for Clippy lints that are "allow" by default)
     lint_codes: Vec<String>,
 }
 
 impl LinterEngine {
+    /// Create a new linter engine with standard linters (Ruff and Clippy)
     pub fn new() -> Self {
         Self {
             enabled_linters: vec![LinterType::Ruff, LinterType::Clippy],
@@ -24,6 +26,7 @@ impl LinterEngine {
         }
     }
 
+    /// Create a new linter engine with a custom list of linters
     pub fn with_linters(linters: Vec<LinterType>) -> Self {
         Self {
             enabled_linters: linters,
@@ -39,21 +42,23 @@ impl LinterEngine {
         }
     }
 
+    /// Execute all enabled linters against the provided files
     pub async fn check_files(&self, files: &[&Path]) -> Result<Vec<LintViolation>> {
         let mut all_violations = Vec::new();
 
         // Check if Ruff is available and run it
-        if self.enabled_linters.contains(&LinterType::Ruff) {
-            if let Ok(violations) = RuffLinter::check_files(files).await {
-                all_violations.extend(violations);
-            }
+        if self.enabled_linters.contains(&LinterType::Ruff)
+            && let Ok(violations) = RuffLinter::check_files(files).await
+        {
+            all_violations.extend(violations);
         }
 
         // For Clippy, we need to check if any Rust files are present
         if self.enabled_linters.contains(&LinterType::Clippy) {
-            let has_rust_files = files
-                .iter()
-                .any(|f| f.extension().is_some_and(|ext| ext == "rs"));
+            let has_rust_files = files.iter().any(|f| {
+                LinterType::Clippy
+                    .matches_extension(f.extension().and_then(std::ffi::OsStr::to_str))
+            });
             if has_rust_files {
                 // Find project root (simplified - assumes files are in a Cargo project)
                 if let Some(project_root) = find_project_root(files) {
@@ -71,6 +76,7 @@ impl LinterEngine {
         Ok(all_violations)
     }
 
+    /// Map a linter-specific code to a custom rule ID
     pub fn map_lint_to_rule(&self, lint_code: &str) -> Option<&'static str> {
         match lint_code {
             // Ruff mappings

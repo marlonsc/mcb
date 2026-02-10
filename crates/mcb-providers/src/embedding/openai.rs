@@ -6,11 +6,10 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use reqwest::Client;
-
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use reqwest::Client;
 
 use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
@@ -184,16 +183,16 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
+use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 
 /// Factory function for creating OpenAI embedding provider instances.
 fn openai_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use super::helpers::http::create_http_provider_config;
+    use crate::utils::http::create_http_provider_config;
 
     let cfg = create_http_provider_config(config, "OpenAI", "text-embedding-3-small")?;
 

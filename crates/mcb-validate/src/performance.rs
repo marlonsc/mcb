@@ -6,70 +6,99 @@
 //! - Arc/Mutex overuse
 //! - Inefficient iterator patterns
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::config::PerformanceRulesConfig;
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Performance violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PerformanceViolation {
-    /// .clone() called inside a loop
+    /// .`clone()` called inside a loop
     CloneInLoop {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Code context showing the clone call.
         context: String,
+        /// Suggested improvement.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Vec/String allocation inside a loop
     AllocationInLoop {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Type of allocation detected (e.g., "Vec::new()").
         allocation_type: String,
+        /// Suggested improvement.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// `Arc<Mutex<T>>` where simpler patterns would work
     ArcMutexOveruse {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The overuse pattern detected.
         pattern: String,
+        /// Suggested alternative.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Inefficient iterator pattern
     InefficientIterator {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The inefficient pattern detected.
         pattern: String,
+        /// Suggested optimized pattern.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Inefficient string handling
     InefficientString {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The inefficient string pattern detected.
         pattern: String,
+        /// Suggested optimization.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
 impl PerformanceViolation {
+    /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::CloneInLoop { severity, .. } => *severity,
-            Self::AllocationInLoop { severity, .. } => *severity,
-            Self::ArcMutexOveruse { severity, .. } => *severity,
-            Self::InefficientIterator { severity, .. } => *severity,
-            Self::InefficientString { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
+/// Display implementation for performance violations.
+///
+/// Formats violations as human-readable messages with file location, line number,
+/// and context about the performance issue detected.
 impl std::fmt::Display for PerformanceViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -157,6 +186,10 @@ impl std::fmt::Display for PerformanceViolation {
     }
 }
 
+/// Violation trait implementation for performance violations.
+///
+/// Provides violation metadata including ID, category, severity, file location,
+/// line number, and remediation suggestions for performance anti-patterns.
 impl Violation for PerformanceViolation {
     fn id(&self) -> &str {
         match self {
@@ -174,41 +207,41 @@ impl Violation for PerformanceViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::CloneInLoop { severity, .. } => *severity,
-            Self::AllocationInLoop { severity, .. } => *severity,
-            Self::ArcMutexOveruse { severity, .. } => *severity,
-            Self::InefficientIterator { severity, .. } => *severity,
-            Self::InefficientString { severity, .. } => *severity,
+            Self::CloneInLoop { severity, .. }
+            | Self::AllocationInLoop { severity, .. }
+            | Self::ArcMutexOveruse { severity, .. }
+            | Self::InefficientIterator { severity, .. }
+            | Self::InefficientString { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::CloneInLoop { file, .. } => Some(file),
-            Self::AllocationInLoop { file, .. } => Some(file),
-            Self::ArcMutexOveruse { file, .. } => Some(file),
-            Self::InefficientIterator { file, .. } => Some(file),
-            Self::InefficientString { file, .. } => Some(file),
+            Self::CloneInLoop { file, .. }
+            | Self::AllocationInLoop { file, .. }
+            | Self::ArcMutexOveruse { file, .. }
+            | Self::InefficientIterator { file, .. }
+            | Self::InefficientString { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::CloneInLoop { line, .. } => Some(*line),
-            Self::AllocationInLoop { line, .. } => Some(*line),
-            Self::ArcMutexOveruse { line, .. } => Some(*line),
-            Self::InefficientIterator { line, .. } => Some(*line),
-            Self::InefficientString { line, .. } => Some(*line),
+            Self::CloneInLoop { line, .. }
+            | Self::AllocationInLoop { line, .. }
+            | Self::ArcMutexOveruse { line, .. }
+            | Self::InefficientIterator { line, .. }
+            | Self::InefficientString { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::CloneInLoop { suggestion, .. } => Some(suggestion.clone()),
-            Self::AllocationInLoop { suggestion, .. } => Some(suggestion.clone()),
-            Self::ArcMutexOveruse { suggestion, .. } => Some(suggestion.clone()),
-            Self::InefficientIterator { suggestion, .. } => Some(suggestion.clone()),
-            Self::InefficientString { suggestion, .. } => Some(suggestion.clone()),
+            Self::CloneInLoop { suggestion, .. }
+            | Self::AllocationInLoop { suggestion, .. }
+            | Self::ArcMutexOveruse { suggestion, .. }
+            | Self::InefficientIterator { suggestion, .. }
+            | Self::InefficientString { suggestion, .. } => Some(suggestion.clone()),
         }
     }
 }
@@ -216,21 +249,30 @@ impl Violation for PerformanceViolation {
 /// Performance pattern validator
 pub struct PerformanceValidator {
     config: ValidationConfig,
+    rules: PerformanceRulesConfig,
 }
 
 impl PerformanceValidator {
     /// Create a new performance validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.performance)
     }
 
     /// Create a validator with custom configuration
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+    pub fn with_config(config: ValidationConfig, rules: &PerformanceRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
     /// Run all performance validations
     pub fn validate_all(&self) -> Result<Vec<PerformanceViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_clone_in_loops()?);
         violations.extend(self.validate_allocation_in_loops()?);
@@ -240,7 +282,7 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
-    /// Detect .clone() calls inside loops
+    /// Detect .`clone()` calls inside loops
     pub fn validate_clone_in_loops(&self) -> Result<Vec<PerformanceViolation>> {
         let mut violations = Vec::new();
 
@@ -248,11 +290,11 @@ impl PerformanceValidator {
         let clone_pattern = Regex::new(r"\.clone\(\)").unwrap();
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-providers - complex storage operations often require clones (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -294,15 +336,15 @@ impl PerformanceValidator {
                     // Track loop entry
                     if loop_start_pattern.is_match(trimmed) {
                         in_loop = true;
-                        loop_depth = 1;
+                        loop_depth = 0;
                     }
 
-                    // Track brace depth within loop
                     if in_loop {
-                        loop_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                        loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                        let o = line.chars().filter(|c| *c == '{').count();
+                        let c = line.chars().filter(|c| *c == '}').count();
+                        loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
+                        loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
 
-                        // Check for clone in loop
                         if clone_pattern.is_match(line) {
                             // Skip if it's a method definition
                             if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
@@ -346,7 +388,7 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
-    /// Detect Vec::new() or String::new() inside loops
+    /// Detect `Vec::new()` or `String::new()` inside loops
     pub fn validate_allocation_in_loops(&self) -> Result<Vec<PerformanceViolation>> {
         let mut violations = Vec::new();
 
@@ -366,11 +408,11 @@ impl PerformanceValidator {
             .collect();
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-providers - complex storage operations need loop allocations (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -406,13 +448,14 @@ impl PerformanceValidator {
                     // Track loop entry
                     if loop_start_pattern.is_match(trimmed) {
                         in_loop = true;
-                        loop_depth = 1;
+                        loop_depth = 0;
                     }
 
-                    // Track brace depth within loop
                     if in_loop {
-                        loop_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                        loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+                        let o = line.chars().filter(|c| *c == '{').count();
+                        let c = line.chars().filter(|c| *c == '}').count();
+                        loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
+                        loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
 
                         // Check for allocations in loop
                         for (pattern, alloc_type) in &compiled_patterns {
@@ -439,28 +482,23 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
-    /// Detect Arc/Mutex overuse patterns
-    pub fn validate_arc_mutex_overuse(&self) -> Result<Vec<PerformanceViolation>> {
+    /// Helper: Scan files and apply pattern matching with a custom violation builder
+    fn scan_files_with_patterns<F>(
+        &self,
+        compiled_patterns: &[(Regex, &str, &str)],
+        make_violation: F,
+    ) -> Result<Vec<PerformanceViolation>>
+    where
+        F: Fn(PathBuf, usize, &str, &str) -> PerformanceViolation,
+    {
         let mut violations = Vec::new();
 
-        let overuse_patterns = [
-            (r"Arc<Arc<", "Nested Arc<Arc<>>", "Use single Arc instead"),
-            (r"Mutex<bool>", "Mutex<bool>", "Use AtomicBool instead"),
-            (r"Mutex<usize>", "Mutex<usize>", "Use AtomicUsize instead"),
-            (r"Mutex<u32>", "Mutex<u32>", "Use AtomicU32 instead"),
-            (r"Mutex<u64>", "Mutex<u64>", "Use AtomicU64 instead"),
-            (r"Mutex<i32>", "Mutex<i32>", "Use AtomicI32 instead"),
-            (r"Mutex<i64>", "Mutex<i64>", "Use AtomicI64 instead"),
-            (r"RwLock<bool>", "RwLock<bool>", "Use AtomicBool instead"),
-        ];
-
-        let compiled_patterns: Vec<_> = overuse_patterns
-            .iter()
-            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
-            .collect();
-
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -491,16 +529,15 @@ impl PerformanceValidator {
                         continue;
                     }
 
-                    // Check for overuse patterns
-                    for (pattern, desc, sugg) in &compiled_patterns {
+                    // Check for patterns
+                    for (pattern, desc, sugg) in compiled_patterns {
                         if pattern.is_match(line) {
-                            violations.push(PerformanceViolation::ArcMutexOveruse {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                pattern: desc.to_string(),
-                                suggestion: sugg.to_string(),
-                                severity: Severity::Info,
-                            });
+                            violations.push(make_violation(
+                                entry.path().to_path_buf(),
+                                line_num + 1,
+                                desc,
+                                sugg,
+                            ));
                         }
                     }
                 }
@@ -510,10 +547,37 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
+    /// Detect Arc/Mutex overuse patterns
+    pub fn validate_arc_mutex_overuse(&self) -> Result<Vec<PerformanceViolation>> {
+        let overuse_patterns = [
+            (r"Arc<Arc<", "Nested Arc<Arc<>>", "Use single Arc instead"),
+            (r"Mutex<bool>", "Mutex<bool>", "Use AtomicBool instead"),
+            (r"Mutex<usize>", "Mutex<usize>", "Use AtomicUsize instead"),
+            (r"Mutex<u32>", "Mutex<u32>", "Use AtomicU32 instead"),
+            (r"Mutex<u64>", "Mutex<u64>", "Use AtomicU64 instead"),
+            (r"Mutex<i32>", "Mutex<i32>", "Use AtomicI32 instead"),
+            (r"Mutex<i64>", "Mutex<i64>", "Use AtomicI64 instead"),
+            (r"RwLock<bool>", "RwLock<bool>", "Use AtomicBool instead"),
+        ];
+
+        let compiled_patterns: Vec<_> = overuse_patterns
+            .iter()
+            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
+            .collect();
+
+        self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
+            PerformanceViolation::ArcMutexOveruse {
+                file,
+                line,
+                pattern: pattern.to_string(),
+                suggestion: suggestion.to_string(),
+                severity: Severity::Info,
+            }
+        })
+    }
+
     /// Detect inefficient iterator patterns
     pub fn validate_inefficient_iterators(&self) -> Result<Vec<PerformanceViolation>> {
-        let mut violations = Vec::new();
-
         let inefficient_patterns = [
             (
                 r"\.iter\(\)\.cloned\(\)\.take\(",
@@ -542,61 +606,19 @@ impl PerformanceValidator {
             .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
             .collect();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
-                    continue;
-                }
-
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_test_module = false;
-
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
-
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Check for inefficient patterns
-                    for (pattern, desc, sugg) in &compiled_patterns {
-                        if pattern.is_match(line) {
-                            violations.push(PerformanceViolation::InefficientIterator {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                pattern: desc.to_string(),
-                                suggestion: sugg.to_string(),
-                                severity: Severity::Info,
-                            });
-                        }
-                    }
-                }
+        self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
+            PerformanceViolation::InefficientIterator {
+                file,
+                line,
+                pattern: pattern.to_string(),
+                suggestion: suggestion.to_string(),
+                severity: Severity::Info,
             }
-        }
-
-        Ok(violations)
+        })
     }
 
     /// Detect inefficient string handling patterns
     pub fn validate_inefficient_strings(&self) -> Result<Vec<PerformanceViolation>> {
-        let mut violations = Vec::new();
-
         let inefficient_patterns = [
             (
                 r#"format!\s*\(\s*"\{\}"\s*,\s*\w+\s*\)"#,
@@ -620,81 +642,39 @@ impl PerformanceValidator {
             .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
             .collect();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
-                    continue;
-                }
-
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_test_module = false;
-
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
-
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Check for inefficient patterns
-                    for (pattern, desc, sugg) in &compiled_patterns {
-                        if pattern.is_match(line) {
-                            violations.push(PerformanceViolation::InefficientString {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                pattern: desc.to_string(),
-                                suggestion: sugg.to_string(),
-                                severity: Severity::Info,
-                            });
-                        }
-                    }
-                }
+        self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
+            PerformanceViolation::InefficientString {
+                file,
+                line,
+                pattern: pattern.to_string(),
+                suggestion: suggestion.to_string(),
+                severity: Severity::Info,
             }
-        }
-
-        Ok(violations)
+        })
+    }
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 
-impl crate::validator_trait::Validator for PerformanceValidator {
-    fn name(&self) -> &'static str {
-        "performance"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates performance patterns (clones, allocations, Arc/Mutex usage)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    PerformanceValidator,
+    "performance",
+    "Validates performance patterns (clones, allocations, Arc/Mutex usage)"
+);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
         let crate_dir = temp.path().join("crates").join(name).join("src");
@@ -707,10 +687,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -722,14 +701,14 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn process_items(items: Vec<String>) {
     for item in &items {
         // Direct clone in function call - detectable pattern
         process(item.clone());
     }
 }
-"#,
+",
         );
 
         let validator = PerformanceValidator::new(temp.path());
@@ -744,14 +723,14 @@ pub fn process_items(items: Vec<String>) {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn process_many() {
     for i in 0..100 {
         let mut v = Vec::new();
         v.push(i);
     }
 }
-"#,
+",
         );
 
         let validator = PerformanceValidator::new(temp.path());
@@ -766,13 +745,13 @@ pub fn process_many() {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Mutex;
 
 pub struct Counter {
     value: Mutex<bool>,
 }
-"#,
+",
         );
 
         let validator = PerformanceValidator::new(temp.path());
@@ -806,8 +785,7 @@ mod tests {
 
         assert!(
             violations.is_empty(),
-            "Test modules should be exempt: {:?}",
-            violations
+            "Test modules should be exempt: {violations:?}"
         );
     }
 }

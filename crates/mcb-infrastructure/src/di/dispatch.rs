@@ -3,15 +3,16 @@
 //! Coordinates the initialization and dispatch of infrastructure components,
 //! ensuring proper dependency order and lifecycle management.
 //!
-//! All components are resolved via Shaku DI - no manual factories.
+//! All components are resolved via dill IoC - no manual factories.
+
+use mcb_domain::error::Result;
 
 use crate::config::AppConfig;
 use crate::di::bootstrap::{DiContainer, init_app};
-use mcb_domain::error::Result;
 
 /// Component dispatcher for infrastructure initialization
 ///
-/// Uses Shaku DI to resolve all components - no manual factories.
+/// Uses dill IoC to resolve all components - no manual factories.
 pub struct ComponentDispatcher {
     config: AppConfig,
 }
@@ -22,7 +23,7 @@ impl ComponentDispatcher {
         Self { config }
     }
 
-    /// Dispatch and initialize all infrastructure components via Shaku DI
+    /// Dispatch and initialize all infrastructure components via dill IoC
     pub async fn dispatch(&self) -> Result<DiContainer> {
         init_app(self.config.clone()).await
     }
@@ -30,7 +31,7 @@ impl ComponentDispatcher {
 
 /// Infrastructure component initializer
 ///
-/// Uses Shaku DI for all component resolution.
+/// Uses dill IoC for all component resolution.
 pub struct InfrastructureInitializer {
     dispatcher: ComponentDispatcher,
 }
@@ -48,12 +49,12 @@ impl InfrastructureInitializer {
         &self.dispatcher.config
     }
 
-    /// Initialize all infrastructure components via Shaku DI
+    /// Initialize all infrastructure components via dill IoC
     pub async fn initialize(&self) -> Result<DiContainer> {
         // Initialize logging first
         self.initialize_logging()?;
 
-        // Dispatch all components via Shaku DI
+        // Dispatch all components via dill IoC
         let container = self.dispatcher.dispatch().await?;
 
         // Log successful initialization

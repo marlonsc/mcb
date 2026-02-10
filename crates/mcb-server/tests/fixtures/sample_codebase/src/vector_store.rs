@@ -14,7 +14,12 @@ pub trait VectorStoreProvider: Send + Sync {
     fn search_similar(&self, collection: &str, vector: &[f32], limit: usize) -> Vec<SearchResult>;
 
     /// Insert vectors into collection
-    fn insert_vectors(&self, collection: &str, vectors: &[Vec<f32>], metadata: Vec<HashMap<String, String>>);
+    fn insert_vectors(
+        &self,
+        collection: &str,
+        vectors: &[Vec<f32>],
+        metadata: Vec<HashMap<String, String>>,
+    );
 }
 
 /// Search result from vector store
@@ -47,7 +52,10 @@ impl MilvusVectorStore {
 impl VectorStoreProvider for MilvusVectorStore {
     fn create_collection(&self, name: &str, dimensions: usize) {
         // Milvus collection creation
-        println!("Creating collection {} with {} dimensions", name, dimensions);
+        println!(
+            "Creating collection {} with {} dimensions",
+            name, dimensions
+        );
     }
 
     fn search_similar(&self, collection: &str, vector: &[f32], limit: usize) -> Vec<SearchResult> {
@@ -55,7 +63,12 @@ impl VectorStoreProvider for MilvusVectorStore {
         Vec::new()
     }
 
-    fn insert_vectors(&self, collection: &str, vectors: &[Vec<f32>], metadata: Vec<HashMap<String, String>>) {
+    fn insert_vectors(
+        &self,
+        collection: &str,
+        vectors: &[Vec<f32>],
+        metadata: Vec<HashMap<String, String>>,
+    ) {
         // Milvus vector insertion
         println!("Inserting {} vectors into {}", vectors.len(), collection);
     }
@@ -79,11 +92,21 @@ impl VectorStoreProvider for InMemoryVectorStore {
         // In-memory collection creation
     }
 
-    fn search_similar(&self, _collection: &str, _vector: &[f32], _limit: usize) -> Vec<SearchResult> {
+    fn search_similar(
+        &self,
+        _collection: &str,
+        _vector: &[f32],
+        _limit: usize,
+    ) -> Vec<SearchResult> {
         Vec::new()
     }
 
-    fn insert_vectors(&self, _collection: &str, _vectors: &[Vec<f32>], _metadata: Vec<HashMap<String, String>>) {
+    fn insert_vectors(
+        &self,
+        _collection: &str,
+        _vectors: &[Vec<f32>],
+        _metadata: Vec<HashMap<String, String>>,
+    ) {
         // In-memory vector insertion
     }
 }

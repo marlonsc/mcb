@@ -12,7 +12,7 @@
 
 dev: ## Development server with auto-reload
 	@echo "Starting development server..."
-	cargo watch -x 'run --features full' 2>/dev/null || cargo run --features full
+	cargo watch -x 'run' 2>/dev/null || cargo run
 
 # =============================================================================
 # DOCKER - Docker service operations
@@ -20,21 +20,21 @@ dev: ## Development server with auto-reload
 
 docker: ## Show Docker services status
 	@echo "Docker Services:"
-	@docker-compose ps 2>/dev/null || echo "No docker-compose.yml found or Docker not running"
+	@docker-compose -f tests/docker-compose.yml ps 2>/dev/null || echo "No tests/docker-compose.yml found or Docker not running"
 
 docker-up: ## Start Docker test services
 	@echo "Starting Docker test services..."
-	docker-compose up -d
+	docker-compose -f tests/docker-compose.yml up -d
 	@sleep 5
 	@echo "Services started"
 
 docker-down: ## Stop Docker test services
 	@echo "Stopping Docker test services..."
-	docker-compose down -v
+	docker-compose -f tests/docker-compose.yml down -v
 	@echo "Services stopped"
 
 docker-logs: ## View Docker service logs
-	docker-compose logs -f
+	docker-compose -f tests/docker-compose.yml logs -f
 
 # =============================================================================
 # INSTALL-HOOKS - Install git hooks

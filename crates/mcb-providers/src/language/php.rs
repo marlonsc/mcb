@@ -1,11 +1,12 @@
 //! PHP language processor for AST-based code chunking.
 
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::Language;
+
 use crate::language::common::{
     BaseProcessor, CHUNK_SIZE_PHP, LanguageConfig, LanguageProcessor, NodeExtractionRule,
     TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DEFINITION, TS_NODE_METHOD_DECLARATION,
 };
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
 
 /// PHP language processor.
 pub struct PhpProcessor {
@@ -34,11 +35,6 @@ impl PhpProcessor {
                 priority: 5,
                 include_context: true,
             }])
-            .with_fallback_patterns(vec![
-                r"^function ".to_string(),
-                r"^\s*public function ".to_string(),
-                r"^class ".to_string(),
-            ])
             .with_chunk_size(CHUNK_SIZE_PHP);
 
         Self {
@@ -61,15 +57,5 @@ impl LanguageProcessor for PhpProcessor {
     ) -> Vec<CodeChunk> {
         self.processor
             .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-
-    fn extract_chunks_fallback(
-        &self,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_fallback(content, file_name, language)
     }
 }

@@ -1,6 +1,6 @@
 # Module Structure
 
-This document shows the hierarchical structure of modules in the MCP Context Browser.
+This document shows the hierarchical structure of modules in the Memory Context Browser.
 
 ## Crate Structure (Clean Architecture Monorepo)
 

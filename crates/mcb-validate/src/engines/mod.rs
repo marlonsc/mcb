@@ -17,7 +17,7 @@ pub mod expression_engine;
 pub mod hybrid_engine;
 pub mod rete_engine;
 pub mod router;
-pub mod rust_rule_engine;
+
 pub mod rusty_rules_engine;
 pub mod validator_engine;
 
@@ -27,6 +27,6 @@ pub use hybrid_engine::{
 };
 pub use rete_engine::ReteEngine;
 pub use router::{RoutedEngine, RuleEngineRouter};
-pub use rust_rule_engine::RustRuleEngineWrapper;
+
 pub use rusty_rules_engine::RustyRulesEngineWrapper;
 pub use validator_engine::ValidatorEngine;

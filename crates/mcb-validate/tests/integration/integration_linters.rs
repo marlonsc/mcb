@@ -6,11 +6,11 @@
 //! - `LintViolation` structs are properly populated
 //! - `lint_select` codes are correctly categorized
 
-use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
-use mcb_validate::{ValidatedRule, YamlRuleLoader};
 use std::path::PathBuf;
 
-#[allow(dead_code)]
+use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
+use mcb_validate::{ValidatedRule, YamlRuleLoader};
+
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -38,6 +38,30 @@ macro_rules! require_tool {
             return;
         }
     };
+}
+
+/// Helper to get default substitution variables for integration tests
+fn get_default_substitution_variables() -> serde_yaml::Value {
+    let json = serde_json::json!({
+        "project_prefix": "mcb",
+        "domain_crate": "mcb-domain",
+        "application_crate": "mcb-application",
+        "infrastructure_crate": "mcb-infrastructure",
+        "server_crate": "mcb-server",
+        "providers_crate": "mcb-providers",
+        "domain_module": "mcb_domain",
+        "application_module": "mcb_application",
+        "infrastructure_module": "mcb_infrastructure",
+        "server_module": "mcb_server",
+        "providers_module": "mcb_providers",
+        "validate_crate": "mcb-validate",
+        "validate_module": "mcb_validate",
+        "language_support_crate": "mcb-language-support",
+        "language_support_module": "mcb_language_support",
+        "ast_utils_crate": "mcb-ast-utils",
+        "ast_utils_module": "mcb_ast_utils"
+    });
+    serde_yaml::to_value(json).unwrap()
 }
 
 // ==================== Unit Tests for Linter Types ====================
@@ -749,8 +773,11 @@ async fn test_e2e_yaml_file_to_linter_violations() {
     );
 
     // Load rules from YAML files using YamlRuleLoader
-    let mut loader =
-        YamlRuleLoader::new(rules_dir.clone()).expect("YamlRuleLoader should initialize");
+    let mut loader = YamlRuleLoader::with_variables(
+        rules_dir.clone(),
+        Some(get_default_substitution_variables()),
+    )
+    .expect("YamlRuleLoader should initialize");
 
     let rules = loader
         .load_all_rules()
@@ -826,8 +853,11 @@ async fn test_e2e_yaml_clippy_rule_loads() {
     let rules_dir = get_rules_dir();
 
     // Load rules from YAML files
-    let mut loader =
-        YamlRuleLoader::new(rules_dir.clone()).expect("YamlRuleLoader should initialize");
+    let mut loader = YamlRuleLoader::with_variables(
+        rules_dir.clone(),
+        Some(get_default_substitution_variables()),
+    )
+    .expect("YamlRuleLoader should initialize");
 
     let rules = loader
         .load_all_rules()
@@ -865,7 +895,9 @@ async fn test_e2e_yaml_clippy_rule_loads() {
 async fn test_all_yaml_rules_with_lint_select_load() {
     let rules_dir = get_rules_dir();
 
-    let mut loader = YamlRuleLoader::new(rules_dir).expect("YamlRuleLoader should initialize");
+    let mut loader =
+        YamlRuleLoader::with_variables(rules_dir, Some(get_default_substitution_variables()))
+            .expect("YamlRuleLoader should initialize");
 
     let rules = loader
         .load_all_rules()
@@ -902,8 +934,11 @@ async fn test_e2e_yaml_clippy_rule_execution() {
     let rules_dir = get_rules_dir();
 
     // Step 1: Load QUAL001 rule from YAML
-    let mut loader =
-        YamlRuleLoader::new(rules_dir.clone()).expect("YamlRuleLoader should initialize");
+    let mut loader = YamlRuleLoader::with_variables(
+        rules_dir.clone(),
+        Some(get_default_substitution_variables()),
+    )
+    .expect("YamlRuleLoader should initialize");
 
     let rules = loader
         .load_all_rules()

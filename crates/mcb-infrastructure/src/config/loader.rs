@@ -5,15 +5,18 @@
 //!
 //! Uses Figment for configuration management (migrated from config crate in v0.1.2).
 
-use crate::config::AppConfig;
-use crate::constants::*;
-use crate::error_ext::ErrorContext;
-use crate::logging::log_config_loaded;
-use figment::Figment;
-use figment::providers::{Env, Format, Serialized, Toml};
-use mcb_domain::error::{Error, Result};
 use std::env;
 use std::path::{Path, PathBuf};
+
+use figment::Figment;
+use figment::providers::{Env, Format, Toml};
+use mcb_domain::error::{Error, Result};
+
+use crate::config::AppConfig;
+use crate::constants::auth::*;
+use crate::constants::config::*;
+use crate::error_ext::ErrorContext;
+use crate::logging::log_config_loaded;
 
 /// Configuration loader service
 #[derive(Clone)]
@@ -49,28 +52,33 @@ impl ConfigLoader {
     /// Load configuration from all sources
     ///
     /// Configuration sources are merged in this order (later sources override earlier):
-    /// 1. Default values from `AppConfig::default()`
-    /// 2. TOML configuration file (if exists)
+    /// 1. Default TOML configuration file (`config/default.toml`) (required)
+    /// 2. Optional TOML override file (`--config`) (if provided)
     /// 3. Environment variables with `MCP__` prefix (e.g., `MCP__SERVER__NETWORK__PORT`)
     pub fn load(&self) -> Result<AppConfig> {
-        // Start with default configuration
-        let mut figment = Figment::new().merge(Serialized::defaults(AppConfig::default()));
+        let default_path = Self::find_defaults_file_path().ok_or_else(|| {
+            Error::ConfigMissing(
+                "Default configuration file not found. Expected config/default.toml".to_string(),
+            )
+        })?;
+        log_config_loaded(&default_path, true);
 
-        // Add configuration file if specified
+        // Source of truth starts from canonical defaults file only.
+        // Runtime must not rely on hardcoded struct defaults.
+        let mut figment = Figment::new().merge(Toml::file(&default_path));
+
         if let Some(config_path) = &self.config_path {
-            if config_path.exists() {
+            if !config_path.exists() {
+                log_config_loaded(config_path, false);
+                return Err(Error::ConfigMissing(format!(
+                    "Configuration file not found: {}",
+                    config_path.display()
+                )));
+            }
+
+            if config_path != &default_path {
                 figment = figment.merge(Toml::file(config_path));
                 log_config_loaded(config_path, true);
-            } else {
-                log_config_loaded(config_path, false);
-            }
-        } else {
-            // Try to find default config file
-            if let Some(default_path) = Self::find_default_config_path() {
-                if default_path.exists() {
-                    figment = figment.merge(Toml::file(&default_path));
-                    log_config_loaded(&default_path, true);
-                }
             }
         }
 
@@ -79,8 +87,8 @@ impl ConfigLoader {
         // Prefix is MCP__ (double underscore) to match mcp-config.json env format
         // lowercase(true) converts PROVIDERS__EMBEDDING to providers.embedding
         figment = figment.merge(
-            Env::prefixed(&format!("{}__", self.env_prefix))
-                .split("__")
+            Env::prefixed(&format!("{}{}", self.env_prefix, CONFIG_ENV_SEPARATOR))
+                .split(CONFIG_ENV_SEPARATOR)
                 .lowercase(true),
         );
 
@@ -115,47 +123,31 @@ impl ConfigLoader {
         self.config_path.as_deref()
     }
 
-    /// Find default configuration file paths to try
+    /// Find canonical defaults file path to try
     ///
-    /// Per ADR-025: No implicit fallbacks. Only valid paths are considered.
-    /// If a directory (config_dir, home_dir) is unavailable, it is skipped
-    /// rather than silently falling back to an empty path.
-    fn find_default_config_path() -> Option<PathBuf> {
+    /// Per configuration policy, runtime defaults must come from a defaults TOML file,
+    /// not from hardcoded Rust constants.
+    fn find_defaults_file_path() -> Option<PathBuf> {
         let current_dir = env::current_dir().ok()?;
 
-        // Build candidate list, filtering out unavailable paths
-        // No unwrap_or_default() - skip unavailable directories instead
-        let mut candidates = vec![
-            Some(current_dir.join(DEFAULT_CONFIG_FILENAME)),
-            Some(
-                current_dir
-                    .join(DEFAULT_CONFIG_DIR)
-                    .join(DEFAULT_CONFIG_FILENAME),
-            ),
-        ];
-
-        // Add XDG config dir if available (no fallback)
-        if let Some(config_dir) = dirs::config_dir() {
-            candidates.push(Some(
-                config_dir
-                    .join(DEFAULT_CONFIG_DIR)
-                    .join(DEFAULT_CONFIG_FILENAME),
-            ));
+        // Search current directory and its ancestors for config/default.toml
+        for dir in current_dir.ancestors() {
+            let candidate = dir.join("config").join("default.toml");
+            if candidate.exists() {
+                return Some(candidate);
+            }
         }
 
-        // Add home dir if available (no fallback)
-        if let Some(home_dir) = dirs::home_dir() {
-            candidates.push(Some(
-                home_dir
-                    .join(format!(".{}", DEFAULT_CONFIG_DIR))
-                    .join(DEFAULT_CONFIG_FILENAME),
-            ));
+        // Search from crate location up to workspace root for config/default.toml
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        for dir in manifest_dir.ancestors() {
+            let candidate = dir.join("config").join("default.toml");
+            if candidate.exists() {
+                return Some(candidate);
+            }
         }
 
-        candidates
-            .into_iter()
-            .flatten() // Remove None values
-            .find(|path| path.exists())
+        None
     }
 
     /// Validate configuration values
@@ -180,17 +172,17 @@ fn validate_app_config(config: &AppConfig) -> Result<()> {
 
 fn validate_server_config(config: &AppConfig) -> Result<()> {
     if config.server.network.port == 0 {
-        return Err(Error::Configuration {
+        return Err(Error::ConfigInvalid {
+            key: "server.network.port".to_string(),
             message: "Server port cannot be 0".to_string(),
-            source: None,
         });
     }
     if config.server.ssl.https
         && (config.server.ssl.ssl_cert_path.is_none() || config.server.ssl.ssl_key_path.is_none())
     {
-        return Err(Error::Configuration {
+        return Err(Error::ConfigInvalid {
+            key: "server.ssl".to_string(),
             message: "SSL certificate and key paths are required when HTTPS is enabled".to_string(),
-            source: None,
         });
     }
     Ok(())
@@ -199,14 +191,17 @@ fn validate_server_config(config: &AppConfig) -> Result<()> {
 fn validate_auth_config(config: &AppConfig) -> Result<()> {
     if config.auth.enabled {
         if config.auth.jwt.secret.is_empty() {
-            return Err(Error::Configuration {
+            return Err(Error::ConfigInvalid {
+                key: "auth.jwt.secret".to_string(),
                 message: "JWT secret cannot be empty when authentication is enabled".to_string(),
-                source: None,
             });
         }
-        if config.auth.jwt.secret.len() < 32 {
+        if config.auth.jwt.secret.len() < MIN_JWT_SECRET_LENGTH {
             return Err(Error::Configuration {
-                message: "JWT secret should be at least 32 characters long".to_string(),
+                message: format!(
+                    "JWT secret should be at least {} characters long",
+                    MIN_JWT_SECRET_LENGTH
+                ),
                 source: None,
             });
         }
@@ -286,80 +281,6 @@ fn validate_operations_config(config: &AppConfig) -> Result<()> {
 
 /// Returns default ConfigLoader for loading application configuration from files
 impl Default for ConfigLoader {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Configuration builder for programmatic configuration
-pub struct ConfigBuilder {
-    config: AppConfig,
-}
-
-impl ConfigBuilder {
-    /// Create a new configuration builder with defaults
-    pub fn new() -> Self {
-        Self {
-            config: AppConfig::default(),
-        }
-    }
-
-    /// Set server configuration
-    pub fn with_server(mut self, server: crate::config::data::ServerConfig) -> Self {
-        self.config.server = server;
-        self
-    }
-
-    /// Set logging configuration
-    pub fn with_logging(mut self, logging: crate::config::data::LoggingConfig) -> Self {
-        self.config.logging = logging;
-        self
-    }
-
-    /// Add embedding provider configuration
-    pub fn with_embedding_provider(
-        mut self,
-        name: String,
-        config: mcb_domain::value_objects::EmbeddingConfig,
-    ) -> Self {
-        self.config.providers.embedding.configs.insert(name, config);
-        self
-    }
-
-    /// Add vector store provider configuration
-    pub fn with_vector_store_provider(
-        mut self,
-        name: String,
-        config: mcb_domain::value_objects::VectorStoreConfig,
-    ) -> Self {
-        self.config
-            .providers
-            .vector_store
-            .configs
-            .insert(name, config);
-        self
-    }
-
-    /// Set authentication configuration
-    pub fn with_auth(mut self, auth: crate::config::data::AuthConfig) -> Self {
-        self.config.auth = auth;
-        self
-    }
-
-    /// Set cache system configuration
-    pub fn with_cache(mut self, cache: crate::config::data::CacheSystemConfig) -> Self {
-        self.config.system.infrastructure.cache = cache;
-        self
-    }
-
-    /// Build the configuration
-    pub fn build(self) -> AppConfig {
-        self.config
-    }
-}
-
-/// Returns default ConfigBuilder with default application configuration
-impl Default for ConfigBuilder {
     fn default() -> Self {
         Self::new()
     }

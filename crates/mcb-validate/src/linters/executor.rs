@@ -1,6 +1,7 @@
 //! YAML Rule Executor Module
 //!
-//! Executes YAML rules that use lint_select for linter-based validation.
+//! Executes YAML rules that use `lint_select` for linter-based validation.
+//! Linters (Clippy for Rust, Ruff for Python) are auto-detected from the codes.
 
 use std::path::{Path, PathBuf};
 
@@ -9,20 +10,20 @@ use super::types::{LintViolation, LinterType};
 use crate::Result;
 use crate::rules::yaml_loader::ValidatedRule;
 
-/// Execute a YAML rule that uses lint_select for linter-based validation
+/// Execute a YAML rule that uses `lint_select` for linter-based validation
 ///
 /// This is the Phase 1 deliverable: YAML rule → linter → violations pipeline
 pub struct YamlRuleExecutor;
 
 impl YamlRuleExecutor {
-    /// Execute a rule's lint_select codes against files
+    /// Execute a rule's `lint_select` codes against files
     ///
     /// # Arguments
-    /// * `rule` - The validated YAML rule with lint_select codes
+    /// * `rule` - The validated YAML rule with `lint_select` codes
     /// * `files` - Files to check (Python for Ruff, Rust for Clippy)
     ///
     /// # Returns
-    /// Violations that match the rule's lint_select codes
+    /// Violations that match the rule's `lint_select` codes
     pub async fn execute_rule(rule: &ValidatedRule, files: &[&Path]) -> Result<Vec<LintViolation>> {
         // Skip if no lint_select codes
         if rule.lint_select.is_empty() {
@@ -51,12 +52,10 @@ impl YamlRuleExecutor {
             .into_iter()
             .filter(|v| rule.lint_select.contains(&v.rule))
             .map(|mut v| {
-                // Apply rule's custom message if provided
                 if let Some(ref msg) = rule.message {
-                    v.message = msg.clone();
+                    v.message.clone_from(msg);
                 }
-                // Set category from rule
-                v.category = rule.category.clone();
+                v.category.clone_from(&rule.category);
                 v
             })
             .collect();
@@ -74,20 +73,14 @@ impl YamlRuleExecutor {
         let mut files: Vec<PathBuf> = Vec::new();
 
         for entry in walkdir::WalkDir::new(dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
             .filter(|e| e.file_type().is_file())
         {
             let path = entry.path();
-            let ext = path.extension().and_then(|e| e.to_str());
-
-            // Collect Python files for Ruff
-            if linters.contains(&LinterType::Ruff) && ext == Some("py") {
-                files.push(path.to_path_buf());
-            }
-
-            // Collect Rust files for Clippy
-            if linters.contains(&LinterType::Clippy) && ext == Some("rs") {
+            let ext = path.extension().and_then(std::ffi::OsStr::to_str);
+            if linters.iter().any(|lt| lt.matches_extension(ext)) {
                 files.push(path.to_path_buf());
             }
         }
@@ -96,7 +89,7 @@ impl YamlRuleExecutor {
         Self::execute_rule(rule, &file_refs).await
     }
 
-    /// Detect which linters to use based on lint_select codes
+    /// Detect which linters to use based on `lint_select` codes
     fn detect_linters_from_codes(codes: &[String]) -> Vec<LinterType> {
         let mut linters = Vec::new();
 

@@ -1,10 +1,11 @@
-# MCP Context Browser - Documentation
+# Memory Context Browser - Documentation
 
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcb/actions)
-[![Version](https://img.shields.io/badge/version-0.1.4-blue)](https://github.com/marlonsc/mcb/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases)
 [![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](docs/architecture/ARCHITECTURE.md)
+[![ADRs](https://img.shields.io/badge/ADRs-46-blue)](adr/README.md)
 
-**Comprehensive documentation for the MCP Context Browser project**
+**Comprehensive documentation for the Memory Context Browser project**
 
 ## 📚 Documentation Structure
 
@@ -15,7 +16,7 @@ This documentation is organized into focused sections for different audiences an
 User-facing documentation for installation, usage, and features.
 
 -   **[README](user-guide/README.md)** - Project overview, quick start, and basic usage
--   **[Features](user-guide/README.md#current-capabilities-v014)** - Current capabilities and features
+-   **[Features](user-guide/README.md)** - Current capabilities and features
 
 ### 🛠️ Developer Guide
 
@@ -32,7 +33,7 @@ Technical architecture documentation following C4 model principles.
 -   **[Architecture Diagrams](diagrams/)** - Visual architecture documentation
 -   [System Context](diagrams/generated/index.html) - System boundaries and external systems
 -   [Container Architecture](diagrams/generated/index.html) - Service and deployment architecture
--   **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions
+-   **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions (46 ADRs total)
     -   [ADR 001: Modular Crates Architecture](adr/001-modular-crates-architecture.md)
     -   [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
     -   [ADR 003: Unified Provider Architecture](adr/003-unified-provider-architecture.md)
@@ -42,9 +43,10 @@ Technical architecture documentation following C4 model principles.
     -   [ADR 029: Hexagonal Architecture with dill](adr/029-hexagonal-architecture-dill.md) - DI IoC
     -   [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
     -   [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
-    -   [Full ADR Index](adr/README.md) - 31 ADRs total
+    -   [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)
+    -   [Full ADR Index](adr/README.md) - 46 ADRs total
 
-### 📦 Modules (v0.1.4 Crate Structure)
+### 📦 Modules (v0.2.0 Crate Structure)
 
 Module documentation organized by the eight-crate Clean Architecture:
 

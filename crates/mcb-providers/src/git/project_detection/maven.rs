@@ -4,15 +4,14 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use quick_xml::Reader;
-use quick_xml::events::Event;
-use tokio::fs::read_to_string;
-
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::project_detection::{
     ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
 };
+use quick_xml::Reader;
+use quick_xml::events::Event;
+use tokio::fs::read_to_string;
 
 use super::PROJECT_DETECTORS;
 
@@ -20,6 +19,7 @@ use super::PROJECT_DETECTORS;
 pub struct MavenDetector;
 
 impl MavenDetector {
+    /// Create a new Maven detector
     #[must_use]
     pub fn new(_config: &ProjectDetectorConfig) -> Self {
         Self
@@ -53,7 +53,9 @@ impl MavenDetector {
                     }
                 }
                 Ok(Event::Text(e)) => {
-                    let text = e.unescape().ok()?.to_string();
+                    // In quick-xml 0.39, BytesText doesn't have unescape() method
+                    // We decode the bytes directly to string
+                    let text = String::from_utf8_lossy(e.as_ref()).to_string();
 
                     if Self::path_matches(&current_path, &["project", "groupId"])
                         && group_id.is_empty()
@@ -87,7 +89,7 @@ impl MavenDetector {
                     {
                         if !dep_artifact_id.is_empty() {
                             let dep = if dep_group_id.is_empty() {
-                                dep_artifact_id.clone()
+                                std::mem::take(&mut dep_artifact_id)
                             } else {
                                 format!("{}:{}", dep_group_id, dep_artifact_id)
                             };

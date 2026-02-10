@@ -2,45 +2,38 @@
 //!
 //! Provides the composition root using runtime-swappable provider handles
 //! and direct infrastructure service storage.
-//!
-//! ## Architecture
-//!
-//! External providers (embedding, vector_store, cache, language) are resolved
-//! via the linkme-based registry system. Provider Handles allow runtime switching
-//! via admin API. Infrastructure services are stored directly in AppContext.
-//!
-//! ```text
-//! AppConfig → Resolvers → Handles (RwLock) → Domain Services
-//!                ↑              ↑
-//!            linkme         AdminServices
-//!           registry       (switch via API)
-//! ```
-//!
-//! ## Usage
-//!
-//! ```text
-//! // Create AppContext with provider handles
-//! let context = init_app(AppConfig::default()).await?;
-//!
-//! // Get provider handles (runtime-swappable)
-//! let embedding = context.embedding_handle();
-//! let current_provider = embedding.get();
-//!
-//! // Switch provider via admin service
-//! let admin = context.embedding_admin();
-//! admin.switch_provider(new_config)?;
-//!
-//! // Access infrastructure services directly
-//! let auth = context.auth();
-//! let event_bus = context.event_bus();
-//! ```
+
+use std::sync::Arc;
+
+use mcb_domain::error::Result;
+use mcb_domain::ports::admin::{
+    IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsInterface, ShutdownCoordinator,
+};
+use mcb_domain::ports::browse::HighlightServiceInterface;
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
+use mcb_domain::ports::repositories::{
+    AgentRepository, FileHashRepository, MemoryRepository, ProjectRepository,
+};
+use mcb_domain::ports::services::{
+    ProjectDetectorService, ProjectServiceInterface as ProjectWorkflowService,
+};
+
+use mcb_providers::database::{
+    SqliteMemoryRepository, create_agent_repository_from_executor,
+    create_project_repository_from_executor,
+};
+use mcb_providers::storage::{SqliteFileHashConfig, SqliteFileHashRepository};
+use tracing::info;
 
 use crate::config::AppConfig;
+use crate::crypto::CryptoService;
 use crate::di::admin::{
     CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
     LanguageAdminInterface, LanguageAdminService, VectorStoreAdminInterface,
     VectorStoreAdminService,
 };
+use crate::di::database_resolver::DatabaseProviderResolver;
 use crate::di::handles::{
     CacheProviderHandle, EmbeddingProviderHandle, LanguageProviderHandle, VectorStoreProviderHandle,
 };
@@ -48,33 +41,13 @@ use crate::di::provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,
 };
-use crate::infrastructure::{
-    admin::{DefaultIndexingOperations, NullPerformanceMetrics},
-    auth::NullAuthService,
-    events::TokioBroadcastEventBus,
-    lifecycle::DefaultShutdownCoordinator,
-    metrics::NullSystemMetricsCollector,
-    snapshot::NullSnapshotProvider,
-    sync::NullSyncProvider,
-};
-use mcb_domain::error::Result;
-use mcb_domain::ports::admin::{
-    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
-};
-use mcb_domain::ports::infrastructure::{
-    AuthServiceInterface, EventBusProvider, SnapshotProvider, SyncProvider,
-    SystemMetricsCollectorInterface,
-};
-use std::sync::Arc;
-use tracing::info;
+use crate::infrastructure::admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+use crate::infrastructure::lifecycle::DefaultShutdownCoordinator;
+use crate::project::ProjectService;
+use crate::services::HighlightServiceImpl;
+use mcb_providers::events::TokioEventBusProvider;
 
 /// Application context with provider handles and infrastructure services
-///
-/// This is the composition root that combines:
-/// - Provider handles (runtime-swappable via RwLock)
-/// - Provider resolvers (linkme registry access)
-/// - Admin services (switch providers via API)
-/// - Infrastructure services (direct storage)
 pub struct AppContext {
     /// Application configuration
     pub config: Arc<AppConfig>,
@@ -89,15 +62,10 @@ pub struct AppContext {
 
     // ========================================================================
     // Provider Resolvers (linkme registry access)
-    // Reserved for future admin API operations (list/switch providers)
     // ========================================================================
-    #[allow(dead_code)] // Reserved for admin API: list available providers
     embedding_resolver: Arc<EmbeddingProviderResolver>,
-    #[allow(dead_code)] // Reserved for admin API: list available providers
     vector_store_resolver: Arc<VectorStoreProviderResolver>,
-    #[allow(dead_code)] // Reserved for admin API: list available providers
     cache_resolver: Arc<CacheProviderResolver>,
-    #[allow(dead_code)] // Reserved for admin API: list available providers
     language_resolver: Arc<LanguageProviderResolver>,
 
     // ========================================================================
@@ -111,21 +79,32 @@ pub struct AppContext {
     // ========================================================================
     // Infrastructure Services (direct storage)
     // ========================================================================
-    auth_service: Arc<dyn AuthServiceInterface>,
     event_bus: Arc<dyn EventBusProvider>,
-    metrics_collector: Arc<dyn SystemMetricsCollectorInterface>,
-    sync_provider: Arc<dyn SyncProvider>,
-    snapshot_provider: Arc<dyn SnapshotProvider>,
     shutdown_coordinator: Arc<dyn ShutdownCoordinator>,
     performance_metrics: Arc<dyn PerformanceMetricsInterface>,
     indexing_operations: Arc<dyn IndexingOperationsInterface>,
+    /// Services eligible for lifecycle management
+    pub lifecycle_services: Vec<Arc<dyn LifecycleManaged>>,
+
+    // ========================================================================
+    // Domain Services & Repositories (auto-registered)
+    // ========================================================================
+    memory_repository: Arc<dyn MemoryRepository>,
+    agent_repository: Arc<dyn AgentRepository>,
+    project_repository: Arc<dyn ProjectRepository>,
+    vcs_provider: Arc<dyn VcsProvider>,
+    project_service: Arc<dyn ProjectDetectorService>,
+    project_workflow_service: Arc<dyn ProjectWorkflowService>,
+    file_hash_repository: Arc<dyn FileHashRepository>,
+
+    // ========================================================================
+    // Infrastructure Services
+    // ========================================================================
+    highlight_service: Arc<dyn HighlightServiceInterface>,
+    crypto_service: Arc<dyn CryptoProvider>,
 }
 
 impl AppContext {
-    // ========================================================================
-    // Provider Handles (runtime-swappable)
-    // ========================================================================
-
     /// Get embedding provider handle
     pub fn embedding_handle(&self) -> Arc<EmbeddingProviderHandle> {
         self.embedding_handle.clone()
@@ -146,11 +125,27 @@ impl AppContext {
         self.language_handle.clone()
     }
 
-    // ========================================================================
-    // Admin Services (switch providers via API)
-    // ========================================================================
+    /// Get embedding provider resolver
+    pub fn embedding_resolver(&self) -> Arc<EmbeddingProviderResolver> {
+        self.embedding_resolver.clone()
+    }
 
-    /// Get embedding admin service for runtime provider switching
+    /// Get vector store provider resolver
+    pub fn vector_store_resolver(&self) -> Arc<VectorStoreProviderResolver> {
+        self.vector_store_resolver.clone()
+    }
+
+    /// Get cache provider resolver
+    pub fn cache_resolver(&self) -> Arc<CacheProviderResolver> {
+        self.cache_resolver.clone()
+    }
+
+    /// Get language provider resolver
+    pub fn language_resolver(&self) -> Arc<LanguageProviderResolver> {
+        self.language_resolver.clone()
+    }
+
+    /// Get embedding admin service
     pub fn embedding_admin(&self) -> Arc<dyn EmbeddingAdminInterface> {
         self.embedding_admin.clone()
     }
@@ -170,33 +165,9 @@ impl AppContext {
         self.language_admin.clone()
     }
 
-    // ========================================================================
-    // Infrastructure Services (direct access)
-    // ========================================================================
-
-    /// Get auth service
-    pub fn auth(&self) -> Arc<dyn AuthServiceInterface> {
-        self.auth_service.clone()
-    }
-
     /// Get event bus
     pub fn event_bus(&self) -> Arc<dyn EventBusProvider> {
         self.event_bus.clone()
-    }
-
-    /// Get metrics collector
-    pub fn metrics(&self) -> Arc<dyn SystemMetricsCollectorInterface> {
-        self.metrics_collector.clone()
-    }
-
-    /// Get sync provider
-    pub fn sync(&self) -> Arc<dyn SyncProvider> {
-        self.sync_provider.clone()
-    }
-
-    /// Get snapshot provider
-    pub fn snapshot(&self) -> Arc<dyn SnapshotProvider> {
-        self.snapshot_provider.clone()
     }
 
     /// Get shutdown coordinator
@@ -213,6 +184,97 @@ impl AppContext {
     pub fn indexing(&self) -> Arc<dyn IndexingOperationsInterface> {
         self.indexing_operations.clone()
     }
+
+    /// Get memory repository
+    pub fn memory_repository(&self) -> Arc<dyn MemoryRepository> {
+        self.memory_repository.clone()
+    }
+
+    /// Get agent repository
+    pub fn agent_repository(&self) -> Arc<dyn AgentRepository> {
+        self.agent_repository.clone()
+    }
+
+    /// Get project repository
+    pub fn project_repository(&self) -> Arc<dyn ProjectRepository> {
+        self.project_repository.clone()
+    }
+
+    /// Get VCS provider
+    pub fn vcs_provider(&self) -> Arc<dyn VcsProvider> {
+        self.vcs_provider.clone()
+    }
+
+    /// Get project service
+    pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
+        self.project_service.clone()
+    }
+
+    /// Get project workflow service
+    pub fn project_workflow_service(&self) -> Arc<dyn ProjectWorkflowService> {
+        self.project_workflow_service.clone()
+    }
+
+    /// Get file hash repository
+    pub fn file_hash_repository(&self) -> Arc<dyn FileHashRepository> {
+        self.file_hash_repository.clone()
+    }
+
+    /// Get highlight service
+    pub fn highlight_service(&self) -> Arc<dyn HighlightServiceInterface> {
+        self.highlight_service.clone()
+    }
+
+    /// Get crypto service
+    pub fn crypto_service(&self) -> Arc<dyn CryptoProvider> {
+        self.crypto_service.clone()
+    }
+
+    /// Build domain services for the server layer
+    /// This method creates all domain services needed by McpServer
+    pub async fn build_domain_services(
+        &self,
+    ) -> Result<crate::di::modules::domain_services::DomainServicesContainer> {
+        let embedding_provider = self.embedding_handle().get();
+        let vector_store_provider = self.vector_store_handle().get();
+        let cache_provider = self.cache_handle().get();
+        let language_chunker = self.language_handle().get();
+
+        let shared_cache = crate::cache::provider::SharedCacheProvider::from_arc(cache_provider);
+        let crypto = self.crypto_service();
+
+        let indexing_ops = self.indexing();
+        let event_bus = self.event_bus();
+
+        let project_id = std::env::current_dir()
+            .ok()
+            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+            .unwrap_or_else(|| "default".to_string());
+
+        let memory_repository = self.memory_repository();
+        let agent_repository = self.agent_repository();
+        let vcs_provider = self.vcs_provider();
+        let project_service = self.project_service();
+
+        let deps = crate::di::modules::domain_services::ServiceDependencies {
+            project_id,
+            cache: shared_cache,
+            crypto,
+            config: (*self.config).clone(),
+            embedding_provider,
+            vector_store_provider,
+            language_chunker,
+            indexing_ops,
+            event_bus,
+            memory_repository,
+            agent_repository,
+            vcs_provider,
+            project_service,
+            project_workflow_service: self.project_workflow_service(),
+        };
+
+        crate::di::modules::domain_services::DomainServicesFactory::create_services(deps).await
+    }
 }
 
 impl std::fmt::Debug for AppContext {
@@ -227,30 +289,19 @@ impl std::fmt::Debug for AppContext {
 }
 
 /// Initialize application context with provider handles and infrastructure services
-///
-/// Creates:
-/// - Provider Resolvers (using linkme registry)
-/// - Provider Handles (RwLock for runtime switching)
-/// - Admin Services (for API-based provider management)
-/// - Infrastructure Services (null implementations by default)
-///
-/// Note: Providers are auto-registered via linkme distributed slices when
-/// mcb-providers is linked. No explicit registration call is needed.
 pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     info!("Initializing application context with provider handles");
 
     let config = Arc::new(config);
 
     // ========================================================================
-    // Create Resolvers (components that use linkme registry)
+    // Create Resolvers
     // ========================================================================
 
     let embedding_resolver = Arc::new(EmbeddingProviderResolver::new(config.clone()));
     let vector_store_resolver = Arc::new(VectorStoreProviderResolver::new(config.clone()));
     let cache_resolver = Arc::new(CacheProviderResolver::new(config.clone()));
     let language_resolver = Arc::new(LanguageProviderResolver::new(config.clone()));
-
-    info!("Created provider resolvers");
 
     // ========================================================================
     // Resolve initial providers from config
@@ -272,16 +323,8 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("Language: {e}")))?;
 
-    info!(
-        "Resolved providers: embedding={}, vector_store={}, cache={}, language={}",
-        embedding_provider.provider_name(),
-        vector_store_provider.provider_name(),
-        cache_provider.provider_name(),
-        language_provider.provider_name()
-    );
-
     // ========================================================================
-    // Create Handles (RwLock wrappers for runtime switching)
+    // Create Handles
     // ========================================================================
 
     let embedding_handle = Arc::new(EmbeddingProviderHandle::new(embedding_provider));
@@ -289,48 +332,107 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     let cache_handle = Arc::new(CacheProviderHandle::new(cache_provider));
     let language_handle = Arc::new(LanguageProviderHandle::new(language_provider));
 
-    info!("Created provider handles");
-
     // ========================================================================
-    // Create Admin Services (for API-based provider management)
+    // Create Admin Services
     // ========================================================================
 
-    let embedding_admin: Arc<dyn EmbeddingAdminInterface> = Arc::new(EmbeddingAdminService::new(
+    let embedding_admin_svc = Arc::new(EmbeddingAdminService::new(
+        "Embedding Service",
         embedding_resolver.clone(),
         embedding_handle.clone(),
     ));
-    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = Arc::new(
-        VectorStoreAdminService::new(vector_store_resolver.clone(), vector_store_handle.clone()),
-    );
-    let cache_admin: Arc<dyn CacheAdminInterface> = Arc::new(CacheAdminService::new(
+    let embedding_admin: Arc<dyn EmbeddingAdminInterface> = embedding_admin_svc.clone();
+
+    let vector_store_admin_svc = Arc::new(VectorStoreAdminService::new(
+        "Vector Store Service",
+        vector_store_resolver.clone(),
+        vector_store_handle.clone(),
+    ));
+    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = vector_store_admin_svc.clone();
+
+    let cache_admin_svc = Arc::new(CacheAdminService::new(
+        "Cache Service",
         cache_resolver.clone(),
         cache_handle.clone(),
     ));
-    let language_admin: Arc<dyn LanguageAdminInterface> = Arc::new(LanguageAdminService::new(
+    let cache_admin: Arc<dyn CacheAdminInterface> = cache_admin_svc.clone();
+
+    let language_admin_svc = Arc::new(LanguageAdminService::new(
+        "Language Service",
         language_resolver.clone(),
         language_handle.clone(),
     ));
+    let language_admin: Arc<dyn LanguageAdminInterface> = language_admin_svc.clone();
 
-    info!("Created admin services");
+    // Collect lifecycle managed services
+    let lifecycle_services: Vec<Arc<dyn LifecycleManaged>> = vec![
+        embedding_admin_svc,
+        vector_store_admin_svc,
+        cache_admin_svc,
+        language_admin_svc,
+    ];
 
     // ========================================================================
-    // Create Infrastructure Services (null implementations by default)
+    // Create Infrastructure Services
     // ========================================================================
 
-    let auth_service: Arc<dyn AuthServiceInterface> = Arc::new(NullAuthService::new());
-    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioBroadcastEventBus::new());
-    let metrics_collector: Arc<dyn SystemMetricsCollectorInterface> =
-        Arc::new(NullSystemMetricsCollector::new());
-    let sync_provider: Arc<dyn SyncProvider> = Arc::new(NullSyncProvider::new());
-    let snapshot_provider: Arc<dyn SnapshotProvider> = Arc::new(NullSnapshotProvider::new());
+    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioEventBusProvider::new());
     let shutdown_coordinator: Arc<dyn ShutdownCoordinator> =
         Arc::new(DefaultShutdownCoordinator::new());
     let performance_metrics: Arc<dyn PerformanceMetricsInterface> =
-        Arc::new(NullPerformanceMetrics);
+        Arc::new(AtomicPerformanceMetrics::new());
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 
     info!("Created infrastructure services");
+
+    // ========================================================================
+    // Create Domain Services & Repositories
+    // ========================================================================
+
+    // Use configured path or fallback to default
+    let memory_db_path = config.auth.user_db_path.clone().unwrap_or_else(|| {
+        dirs::data_local_dir()
+            .or_else(|| std::env::current_dir().ok())
+            .unwrap_or_else(|| std::path::PathBuf::from("."))
+            .join(".mcb")
+            .join("memory.db")
+    });
+
+    let db_resolver = DatabaseProviderResolver::new(config.clone());
+    let db_executor = db_resolver
+        .resolve_and_connect(memory_db_path.as_path())
+        .await
+        .map_err(|e| {
+            mcb_domain::error::Error::internal(format!("Failed to create database executor: {e}"))
+        })?;
+
+    let memory_repository: Arc<dyn MemoryRepository> =
+        Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
+    let agent_repository = create_agent_repository_from_executor(Arc::clone(&db_executor));
+    let project_repository = create_project_repository_from_executor(Arc::clone(&db_executor));
+    let file_hash_repository: Arc<dyn FileHashRepository> = Arc::new(
+        SqliteFileHashRepository::new(Arc::clone(&db_executor), SqliteFileHashConfig::default()),
+    );
+
+    let vcs_provider = crate::di::vcs::default_vcs_provider();
+    let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
+    let project_workflow_service: Arc<dyn ProjectWorkflowService> = Arc::new(
+        mcb_application::use_cases::project_service::ProjectServiceImpl::new(
+            project_repository.clone(),
+        ),
+    );
+
+    let highlight_service: Arc<dyn HighlightServiceInterface> =
+        Arc::new(HighlightServiceImpl::new());
+
+    // ========================================================================
+    // Create Crypto Service
+    // ========================================================================
+
+    let crypto_service = Arc::new(create_crypto_service(&config)?);
+
+    info!("Created domain services and repositories");
 
     Ok(AppContext {
         config,
@@ -346,14 +448,20 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         vector_store_admin,
         cache_admin,
         language_admin,
-        auth_service,
         event_bus,
-        metrics_collector,
-        sync_provider,
-        snapshot_provider,
         shutdown_coordinator,
         performance_metrics,
         indexing_operations,
+        memory_repository,
+        agent_repository,
+        project_repository,
+        vcs_provider,
+        project_service,
+        project_workflow_service,
+        file_hash_repository,
+        highlight_service,
+        crypto_service,
+        lifecycle_services,
     })
 }
 
@@ -363,10 +471,20 @@ pub async fn init_test_app() -> Result<AppContext> {
     init_app(config).await
 }
 
-/// Type alias for dispatch.rs compatibility
 pub type DiContainer = AppContext;
 
-/// Convenience function to create context for testing
+/// Create a test DI container with default configuration
 pub async fn create_test_container() -> Result<AppContext> {
     init_test_app().await
+}
+
+/// Create crypto service from configuration
+fn create_crypto_service(config: &AppConfig) -> Result<CryptoService> {
+    let master_key = if config.auth.jwt.secret.len() >= 32 {
+        config.auth.jwt.secret.as_bytes()[..32].to_vec()
+    } else {
+        CryptoService::generate_master_key()
+    };
+
+    CryptoService::new(master_key)
 }

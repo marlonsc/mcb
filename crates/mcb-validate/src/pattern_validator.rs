@@ -6,65 +6,88 @@
 //! - Error types use `crate::error::Result<T>`
 //! - Provider pattern compliance
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::config::PatternRulesConfig;
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Pattern violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PatternViolation {
     /// Concrete type used in DI instead of trait object
     ConcreteTypeInDi {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The concrete type found.
         concrete_type: String,
+        /// Suggested replacement.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Async trait missing Send + Sync bounds
     MissingSendSync {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// The missing bounds.
         missing_bound: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Async trait missing #[async_trait] attribute
+    /// Async trait missing #[`async_trait`] attribute
     MissingAsyncTrait {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Using std::result::Result instead of crate::error::Result
+    /// Using `std::result::Result` instead of `crate::error::Result`
     RawResultType {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Context code snippet.
         context: String,
+        /// Suggested replacement.
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Missing Interface trait bound for Shaku DI
+    /// Missing Interface trait bound for dill DI
     MissingInterfaceBound {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// Name of the trait.
         trait_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
 impl PatternViolation {
+    /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::ConcreteTypeInDi { severity, .. } => *severity,
-            Self::MissingSendSync { severity, .. } => *severity,
-            Self::MissingAsyncTrait { severity, .. } => *severity,
-            Self::RawResultType { severity, .. } => *severity,
-            Self::MissingInterfaceBound { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -164,54 +187,57 @@ impl Violation for PatternViolation {
 
     fn category(&self) -> ViolationCategory {
         match self {
-            Self::ConcreteTypeInDi { .. } => ViolationCategory::DependencyInjection,
-            Self::MissingSendSync { .. } => ViolationCategory::Async,
-            Self::MissingAsyncTrait { .. } => ViolationCategory::Async,
+            Self::ConcreteTypeInDi { .. } | Self::MissingInterfaceBound { .. } => {
+                ViolationCategory::DependencyInjection
+            }
+            Self::MissingSendSync { .. } | Self::MissingAsyncTrait { .. } => {
+                ViolationCategory::Async
+            }
             Self::RawResultType { .. } => ViolationCategory::Quality,
-            Self::MissingInterfaceBound { .. } => ViolationCategory::DependencyInjection,
         }
     }
 
     fn severity(&self) -> Severity {
         match self {
-            Self::ConcreteTypeInDi { severity, .. } => *severity,
-            Self::MissingSendSync { severity, .. } => *severity,
-            Self::MissingAsyncTrait { severity, .. } => *severity,
-            Self::RawResultType { severity, .. } => *severity,
-            Self::MissingInterfaceBound { severity, .. } => *severity,
+            Self::ConcreteTypeInDi { severity, .. }
+            | Self::MissingSendSync { severity, .. }
+            | Self::MissingAsyncTrait { severity, .. }
+            | Self::RawResultType { severity, .. }
+            | Self::MissingInterfaceBound { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::ConcreteTypeInDi { file, .. } => Some(file),
-            Self::MissingSendSync { file, .. } => Some(file),
-            Self::MissingAsyncTrait { file, .. } => Some(file),
-            Self::RawResultType { file, .. } => Some(file),
-            Self::MissingInterfaceBound { file, .. } => Some(file),
+            Self::ConcreteTypeInDi { file, .. }
+            | Self::MissingSendSync { file, .. }
+            | Self::MissingAsyncTrait { file, .. }
+            | Self::RawResultType { file, .. }
+            | Self::MissingInterfaceBound { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::ConcreteTypeInDi { line, .. } => Some(*line),
-            Self::MissingSendSync { line, .. } => Some(*line),
-            Self::MissingAsyncTrait { line, .. } => Some(*line),
-            Self::RawResultType { line, .. } => Some(*line),
-            Self::MissingInterfaceBound { line, .. } => Some(*line),
+            Self::ConcreteTypeInDi { line, .. }
+            | Self::MissingSendSync { line, .. }
+            | Self::MissingAsyncTrait { line, .. }
+            | Self::RawResultType { line, .. }
+            | Self::MissingInterfaceBound { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::ConcreteTypeInDi { suggestion, .. } => Some(format!("Use {}", suggestion)),
+            Self::ConcreteTypeInDi { suggestion, .. } | Self::RawResultType { suggestion, .. } => {
+                Some(format!("Use {suggestion}"))
+            }
             Self::MissingSendSync { missing_bound, .. } => {
-                Some(format!("Add {} bounds to trait", missing_bound))
+                Some(format!("Add {missing_bound} bounds to trait"))
             }
             Self::MissingAsyncTrait { .. } => Some("Add #[async_trait] attribute".to_string()),
-            Self::RawResultType { suggestion, .. } => Some(format!("Use {}", suggestion)),
             Self::MissingInterfaceBound { .. } => {
-                Some("Add : Interface bound for Shaku DI".to_string())
+                Some("Add : Interface bound for dill DI".to_string())
             }
         }
     }
@@ -220,21 +246,30 @@ impl Violation for PatternViolation {
 /// Pattern validator
 pub struct PatternValidator {
     config: ValidationConfig,
+    rules: PatternRulesConfig,
 }
 
 impl PatternValidator {
     /// Create a new pattern validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.patterns)
     }
 
     /// Create a validator with custom configuration for multi-directory support
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+    pub fn with_config(config: ValidationConfig, rules: &PatternRulesConfig) -> Self {
+        Self {
+            config,
+            rules: rules.clone(),
+        }
     }
 
     /// Run all pattern validations
     pub fn validate_all(&self) -> Result<Vec<PatternViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_trait_based_di()?);
         violations.extend(self.validate_async_traits()?);
@@ -247,46 +282,30 @@ impl PatternValidator {
         let mut violations = Vec::new();
 
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
-        let arc_pattern = Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").unwrap();
+        let arc_pattern = Regex::new(&self.rules.arc_pattern).unwrap_or_else(|_| {
+            Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").expect("Invalid default regex")
+        });
 
         // Known concrete types that are OK to use directly
-        let allowed_concrete = [
-            // Standard library sync primitives
-            "String",
-            "Mutex",
-            "RwLock",
-            "AtomicBool",
-            "AtomicUsize",
-            "AtomicU32",
-            "AtomicU64",
-            "AtomicI32",
-            "AtomicI64",
-            "Notify",
-            "Barrier",
-            "Semaphore",
-            "Once",
-            // Infrastructure services that are intentionally concrete
-            "CryptoService", // Encryption service - no need for trait abstraction
-            // Handler types that are final implementations
-            "ToolHandler",
-            "ResourceHandler",
-            "PromptHandler",
-            "AdminHandler",
-            "ToolRouter",
-        ];
+        let allowed_concrete = &self.rules.allowed_concrete_types;
 
         // Provider trait names that should use Arc<dyn ...>
-        // Note: "Handler" is excluded - handlers are typically final implementations
-        let provider_traits = ["Provider", "Service", "Repository", "Interface"];
+        let provider_traits = &self.rules.provider_trait_suffixes;
+
+        if allowed_concrete.is_empty() {
+            // Warn or panic if config is unexpectedly empty?
+            // panic!("PatternValidator: Rule CA017 missing 'allowed_concrete_types' in YAML config.");
+        }
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
+        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate (contains test examples of bad patterns)
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -309,18 +328,18 @@ impl PatternValidator {
                         let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip allowed concrete types
-                        if allowed_concrete.contains(&type_name) {
+                        if allowed_concrete.iter().any(|s| s == type_name) {
                             continue;
                         }
 
                         // Skip if already using dyn (handled by different pattern)
-                        if line.contains(&format!("Arc<dyn {}", type_name)) {
+                        if line.contains(&format!("Arc<dyn {type_name}")) {
                             continue;
                         }
 
                         // Skip decorator pattern: Arc<Type<T>> (generic wrapper types)
                         // e.g., Arc<EncryptedProvider<P>> where P is a generic
-                        if line.contains(&format!("Arc<{}<", type_name)) {
+                        if line.contains(&format!("Arc<{type_name}<")) {
                             continue;
                         }
 
@@ -352,8 +371,8 @@ impl PatternValidator {
                             violations.push(PatternViolation::ConcreteTypeInDi {
                                 file: entry.path().to_path_buf(),
                                 line: line_num + 1,
-                                concrete_type: format!("Arc<{}>", type_name),
-                                suggestion: format!("Arc<dyn {}>", trait_name),
+                                concrete_type: format!("Arc<{type_name}>"),
+                                suggestion: format!("Arc<dyn {trait_name}>"),
                                 severity: Severity::Warning,
                             });
                         }
@@ -365,7 +384,7 @@ impl PatternValidator {
         Ok(violations)
     }
 
-    /// Check async traits have #[async_trait] and Send + Sync bounds
+    /// Check async traits have #[`async_trait`] and Send + Sync bounds
     pub fn validate_async_traits(&self) -> Result<Vec<PatternViolation>> {
         let mut violations = Vec::new();
 
@@ -378,8 +397,13 @@ impl PatternValidator {
         let allow_async_fn_trait = Regex::new(r"#\[allow\(async_fn_in_trait\)\]").unwrap();
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
+        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
+            if self.should_skip_crate(&src_dir) {
+                continue;
+            }
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -479,19 +503,19 @@ impl PatternValidator {
             Regex::new(r"Result<[^,]+,\s*([A-Za-z][A-Za-z0-9_:]+)>").expect("Invalid regex");
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
+        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
-            // Skip mcb-providers - factory functions use std::result::Result<..., String>
-            // by design for linkme registry compatibility (ADR-029)
-            if src_dir.to_string_lossy().contains("mcb-providers") {
+            // Skip manually excluded crates for result check (e.g. mcb-providers)
+            if self.should_skip_result_check(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -500,9 +524,15 @@ impl PatternValidator {
 
                 // Skip error-related files (they define/extend error types)
                 let file_name = entry.path().file_name().and_then(|n| n.to_str());
+                let parent_name = entry
+                    .path()
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str());
                 if file_name.is_some_and(|n| {
                     n == "error.rs" || n == "error_ext.rs" || n.starts_with("error")
-                }) {
+                }) || parent_name.is_some_and(|p| p == "error")
+                {
                     continue;
                 }
 
@@ -553,31 +583,39 @@ impl PatternValidator {
 
         Ok(violations)
     }
+
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
+    }
+
+    /// Check if a crate should be skipped for result checking
+    fn should_skip_result_check(&self, src_dir: &std::path::Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        self.rules
+            .result_check_excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
+    }
 }
 
-impl crate::validator_trait::Validator for PatternValidator {
-    fn name(&self) -> &'static str {
-        "patterns"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates code patterns (DI, async traits, error handling)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
-    }
-}
+impl_validator!(
+    PatternValidator,
+    "patterns",
+    "Validates code patterns (DI, async traits, error handling)"
+);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
         let crate_dir = temp.path().join("crates").join(name).join("src");
@@ -590,10 +628,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -605,7 +642,7 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Arc;
 
 pub struct MyServiceImpl;
@@ -613,7 +650,7 @@ pub struct MyServiceImpl;
 pub struct Container {
     service: Arc<MyServiceImpl>,
 }
-"#,
+",
         );
 
         let validator = PatternValidator::new(temp.path());
@@ -639,7 +676,7 @@ pub struct Container {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 use std::sync::Arc;
 
 pub trait MyService: Send + Sync {}
@@ -647,7 +684,7 @@ pub trait MyService: Send + Sync {}
 pub struct Container {
     service: Arc<dyn MyService>,
 }
-"#,
+",
         );
 
         let validator = PatternValidator::new(temp.path());
@@ -655,8 +692,7 @@ pub struct Container {
 
         assert!(
             violations.is_empty(),
-            "Arc<dyn Trait> should be allowed: {:?}",
-            violations
+            "Arc<dyn Trait> should be allowed: {violations:?}"
         );
     }
 
@@ -666,11 +702,11 @@ pub struct Container {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub fn bad_function() -> std::result::Result<i32, String> {
     Ok(42)
 }
-"#,
+",
         );
 
         let validator = PatternValidator::new(temp.path());

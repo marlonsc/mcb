@@ -2,7 +2,6 @@
 //!
 //! Run with: `cargo test -p mcb-providers --test unit --features hybrid-search`
 
-#[cfg(feature = "hybrid-search")]
 #[path = "unit/hybrid_search_tests.rs"]
 mod hybrid_search_tests;
 
@@ -27,6 +26,14 @@ mod npm_tests;
 #[path = "unit/python_tests.rs"]
 mod python_tests;
 
-#[cfg(feature = "memory-sqlite")]
 #[path = "unit/ddl_tests.rs"]
 mod ddl_tests;
+
+#[path = "unit/project_repository_tests.rs"]
+mod project_repository_tests;
+
+#[path = "unit/agent_repository_tests.rs"]
+mod agent_repository_tests;
+
+#[path = "unit/transitions_tests.rs"]
+mod transitions_tests;

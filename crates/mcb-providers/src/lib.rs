@@ -3,16 +3,18 @@
 //! This crate contains all user-selectable provider implementations following
 //! Clean Architecture principles. Each provider implements a port (trait)
 //! defined in `mcb-domain`.
+#![allow(missing_docs)]
+#![allow(unsafe_code)]
 //!
 //! ## Provider Categories
 //!
 //! | Category | Port | Implementations |
 //! |----------|------|-----------------|
-//! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed, Null |
-//! | Vector Store | `VectorStoreProvider` | InMemory, Encrypted, Null, EdgeVec, Filesystem, Milvus |
-//! | Cache | `CacheProvider` | Moka, Redis, Null |
-//! | Events | `EventPublisher` | Tokio, Nats, Null |
-//! | Hybrid Search | `HybridSearchProvider` | HybridSearchEngine, Null |
+//! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed |
+//! | Vector Store | `VectorStoreProvider` | EdgeVec, Encrypted, Milvus, Pinecone, Qdrant |
+//! | Cache | `CacheProvider` | Moka, Redis |
+//! | Events | `EventPublisher` | Tokio, Nats |
+//! | Hybrid Search | `HybridSearchProvider` | HybridSearchEngine |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
 //!
 //! ## Feature Flags
@@ -33,7 +35,6 @@
 //! ```
 
 // Allow collapsible_if for complex conditional logic
-#![allow(clippy::collapsible_if)]
 
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};
@@ -41,9 +42,7 @@ pub use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
     VectorStoreProvider,
 };
-
 // Re-export CryptoProvider from domain (for encrypted vector store)
-#[cfg(feature = "vectorstore-encrypted")]
 pub use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 
 /// Provider-specific constants
@@ -93,21 +92,17 @@ pub mod language;
 ///
 /// Implements `HybridSearchProvider` trait for combined BM25 + semantic search.
 /// Provides BM25 text ranking algorithm and hybrid score fusion.
-#[cfg(feature = "hybrid-search")]
 pub mod hybrid_search;
 
-// Re-export hybrid search providers when feature is enabled
-#[cfg(feature = "hybrid-search")]
-pub use hybrid_search::{HybridSearchEngine, NullHybridSearchProvider};
+// Re-export hybrid search providers
+pub use hybrid_search::HybridSearchEngine;
 
 /// Database providers (memory repository backends)
 ///
 /// Each backend (SQLite, PostgreSQL, MySQL) has its own submodule and
 /// implements the generic schema DDL in its dialect.
-#[cfg(feature = "memory-sqlite")]
 pub mod database;
 
-#[cfg(feature = "memory-sqlite")]
 pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 
 /// Git-related providers for repository operations
@@ -115,3 +110,12 @@ pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 /// Provides project type detection (Cargo, npm, Python, Go, Maven) and
 /// submodule discovery with recursive traversal.
 pub mod git;
+/// Workflow FSM provider for ADR-034
+///
+/// Implements state machine transitions and session management
+pub mod workflow;
+
+/// Storage provider implementations
+///
+/// Implements repository ports for storage backends (FileHash).
+pub mod storage;

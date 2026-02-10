@@ -1,8 +1,9 @@
 //! Unit tests for Prometheus performance metrics
 
+use std::time::Duration;
+
 use mcb_domain::ports::infrastructure::PerformanceMetricsCollector;
 use mcb_infrastructure::infrastructure::PrometheusPerformanceMetrics;
-use std::time::Duration;
 
 #[test]
 fn test_prometheus_metrics_creation() {

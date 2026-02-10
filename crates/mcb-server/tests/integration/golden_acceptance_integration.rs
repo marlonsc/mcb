@@ -1,7 +1,7 @@
 //! Golden Acceptance Tests for v0.1.2
 //!
 //! This module validates the core functionality of MCP Context Browser using
-//! real providers (NullEmbeddingProvider + InMemoryVectorStore) for deterministic testing.
+//! real local providers (FastEmbedProvider + EdgeVec) for testing.
 //!
 //! ## Key Principle
 //!
@@ -16,15 +16,17 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
-use mcb_domain::entities::CodeChunk;
-// Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
-use mcb_infrastructure::config::AppConfig;
-use mcb_infrastructure::di::bootstrap::init_app;
-use serde_json::json;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::time::{Duration, Instant};
+
+use mcb_domain::entities::CodeChunk;
+// Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
+use mcb_domain::value_objects::CollectionId;
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::di::bootstrap::init_app;
+use serde_json::json;
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -202,13 +204,27 @@ fn test_sample_codebase_files_exist() {
     }
 }
 
+/// Create a test configuration with a unique database path to allow parallel execution
+fn unique_test_config() -> AppConfig {
+    let mut config = AppConfig::default();
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time")
+        .as_nanos();
+    let thread_id = std::thread::current().id();
+    let db_path =
+        std::env::temp_dir().join(format!("mcb-golden-test-{}-{:?}.db", stamp, thread_id));
+    config.auth.user_db_path = Some(db_path);
+    config
+}
+
 // ============================================================================
-// Real Provider Tests (using NullEmbedding + InMemoryVectorStore)
+// Real Provider Tests (using FastEmbed + EdgeVec)
 // ============================================================================
 
 #[tokio::test]
 async fn test_golden_index_real_files() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -222,7 +238,7 @@ async fn test_golden_index_real_files() {
 
     // Step 1: Create collection
     let create_result = vector_store
-        .create_collection(collection, embedding.dimensions())
+        .create_collection(&CollectionId::new(collection), embedding.dimensions())
         .await;
     assert!(
         create_result.is_ok(),
@@ -243,8 +259,8 @@ async fn test_golden_index_real_files() {
     let embed_time = start.elapsed();
 
     assert!(
-        embed_time < Duration::from_millis(500),
-        "Embedding should be fast with NullProvider: {:?}",
+        embed_time < Duration::from_secs(15),
+        "Embedding should be fast with FastEmbed: {:?}",
         embed_time
     );
 
@@ -265,7 +281,7 @@ async fn test_golden_index_real_files() {
 
     // Step 4: Insert into vector store
     let ids = vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert should succeed");
 
@@ -278,7 +294,7 @@ async fn test_golden_index_real_files() {
 
 #[tokio::test]
 async fn test_golden_search_validates_expected_files() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -290,7 +306,7 @@ async fn test_golden_search_validates_expected_files() {
 
     // Setup: Create collection and index real files
     vector_store
-        .create_collection(collection, embedding.dimensions())
+        .create_collection(&CollectionId::new(collection), embedding.dimensions())
         .await
         .expect("Create collection");
 
@@ -308,7 +324,7 @@ async fn test_golden_search_validates_expected_files() {
         .collect();
 
     vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -323,7 +339,7 @@ async fn test_golden_search_validates_expected_files() {
 
     let results = vector_store
         .search_similar(
-            collection,
+            &CollectionId::new(collection),
             &query_embedding[0].vector,
             golden_config.config.top_k,
             None,
@@ -365,13 +381,13 @@ async fn test_golden_search_validates_expected_files() {
 
 /// Test that validates all golden queries find their expected files.
 ///
-/// Uses NullEmbeddingProvider with keyword-based embeddings that enable
+/// Uses FastEmbedProvider (local) with embeddings that enable
 /// semantic-like matching without requiring external embedding services.
-/// The provider generates distinctive vectors based on domain keywords
+/// The provider generates vectors based on domain keywords
 /// (embedding, vector_store, handler, cache, di, error, chunking, etc.)
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() {
-    let config = AppConfig::default();
+    let config = unique_test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -383,7 +399,7 @@ async fn test_golden_all_queries_find_expected_files() {
 
     // Setup collection with real files
     vector_store
-        .create_collection(collection, embedding.dimensions())
+        .create_collection(&CollectionId::new(collection), embedding.dimensions())
         .await
         .expect("Create collection");
 
@@ -401,7 +417,7 @@ async fn test_golden_all_queries_find_expected_files() {
         .collect();
 
     vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -419,7 +435,7 @@ async fn test_golden_all_queries_find_expected_files() {
 
         let results = vector_store
             .search_similar(
-                collection,
+                &CollectionId::new(collection),
                 &query_embedding[0].vector,
                 golden_config.config.top_k,
                 None,
@@ -486,7 +502,7 @@ async fn test_golden_full_workflow_end_to_end() {
     // 5. Search with all golden queries
     // 6. Validate expected_files found
 
-    let app_config = AppConfig::default();
+    let app_config = unique_test_config();
     let ctx = init_app(app_config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
@@ -498,7 +514,7 @@ async fn test_golden_full_workflow_end_to_end() {
 
     // Create collection
     vector_store
-        .create_collection(collection, embedding.dimensions())
+        .create_collection(&CollectionId::new(collection), embedding.dimensions())
         .await
         .expect("Create collection");
 
@@ -517,7 +533,7 @@ async fn test_golden_full_workflow_end_to_end() {
         .collect();
 
     let ids = vector_store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -534,7 +550,7 @@ async fn test_golden_full_workflow_end_to_end() {
 
         let results = vector_store
             .search_similar(
-                collection,
+                &CollectionId::new(collection),
                 &query_embedding[0].vector,
                 golden_config.config.top_k,
                 None,

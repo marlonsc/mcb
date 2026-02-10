@@ -1,74 +1,91 @@
 use std::io::Write;
+use std::sync::Arc;
 
+use mcb_domain::ports::repositories::FileHashRepository;
+use mcb_infrastructure::config::types::AppConfig;
+use mcb_infrastructure::di::bootstrap::init_app;
 use tempfile::NamedTempFile;
 
-use mcb_infrastructure::storage::file_hash::FileHashStore;
+async fn create_repo() -> Arc<dyn FileHashRepository> {
+    let unique = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let db_path = std::env::temp_dir().join(format!("mcb-file-hash-tests-{unique}.db"));
+
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(db_path);
+
+    let ctx = init_app(config).await.unwrap();
+    ctx.file_hash_repository()
+}
 
 #[tokio::test]
 async fn test_has_changed() {
-    let store = FileHashStore::in_memory().await.unwrap();
+    let repo = create_repo().await;
 
     // New file
-    assert!(store.has_changed("test", "new.rs", "hash1").await.unwrap());
+    assert!(repo.has_changed("test", "new.rs", "hash1").await.unwrap());
 
     // Insert
-    store.upsert_hash("test", "new.rs", "hash1").await.unwrap();
+    repo.upsert_hash("test", "new.rs", "hash1").await.unwrap();
 
     // Same hash
-    assert!(!store.has_changed("test", "new.rs", "hash1").await.unwrap());
+    assert!(!repo.has_changed("test", "new.rs", "hash1").await.unwrap());
 
     // Different hash
-    assert!(store.has_changed("test", "new.rs", "hash2").await.unwrap());
+    assert!(repo.has_changed("test", "new.rs", "hash2").await.unwrap());
 }
 
 #[tokio::test]
 async fn test_tombstone() {
-    let store = FileHashStore::in_memory().await.unwrap();
+    let repo = create_repo().await;
 
-    store.upsert_hash("test", "file.rs", "hash").await.unwrap();
-    store.mark_deleted("test", "file.rs").await.unwrap();
+    repo.upsert_hash("test", "file.rs", "hash").await.unwrap();
+    repo.mark_deleted("test", "file.rs").await.unwrap();
 
     // Should not be found after tombstone
-    let hash = store.get_hash("test", "file.rs").await.unwrap();
+    let hash = repo.get_hash("test", "file.rs").await.unwrap();
     assert!(hash.is_none());
 }
 
 #[tokio::test]
 async fn test_resurrect_after_tombstone() {
-    let store = FileHashStore::in_memory().await.unwrap();
+    let repo = create_repo().await;
 
-    store.upsert_hash("test", "file.rs", "hash1").await.unwrap();
-    store.mark_deleted("test", "file.rs").await.unwrap();
+    repo.upsert_hash("test", "file.rs", "hash1").await.unwrap();
+    repo.mark_deleted("test", "file.rs").await.unwrap();
 
     // Upsert clears tombstone
-    store.upsert_hash("test", "file.rs", "hash2").await.unwrap();
+    repo.upsert_hash("test", "file.rs", "hash2").await.unwrap();
 
-    let hash = store.get_hash("test", "file.rs").await.unwrap();
+    let hash = repo.get_hash("test", "file.rs").await.unwrap();
     assert_eq!(hash, Some("hash2".to_string()));
 }
 
 #[tokio::test]
 async fn test_get_indexed_files() {
-    let store = FileHashStore::in_memory().await.unwrap();
+    let repo = create_repo().await;
 
-    store.upsert_hash("col", "a.rs", "h1").await.unwrap();
-    store.upsert_hash("col", "b.rs", "h2").await.unwrap();
-    store.upsert_hash("col", "c.rs", "h3").await.unwrap();
-    store.mark_deleted("col", "b.rs").await.unwrap();
+    repo.upsert_hash("col", "a.rs", "h1").await.unwrap();
+    repo.upsert_hash("col", "b.rs", "h2").await.unwrap();
+    repo.upsert_hash("col", "c.rs", "h3").await.unwrap();
+    repo.mark_deleted("col", "b.rs").await.unwrap();
 
-    let files = store.get_indexed_files("col").await.unwrap();
+    let files = repo.get_indexed_files("col").await.unwrap();
     assert_eq!(files.len(), 2);
     assert!(files.contains(&"a.rs".to_string()));
     assert!(files.contains(&"c.rs".to_string()));
     assert!(!files.contains(&"b.rs".to_string()));
 }
 
-#[test]
-fn test_compute_file_hash() {
+#[tokio::test]
+async fn test_compute_file_hash() {
+    let repo = create_repo().await;
     let mut temp = NamedTempFile::new().unwrap();
     write!(temp, "Hello, World!").unwrap();
 
-    let hash = FileHashStore::compute_file_hash(temp.path()).unwrap();
+    let hash = repo.compute_hash(temp.path()).unwrap();
     // SHA-256 of "Hello, World!"
     assert_eq!(
         hash,

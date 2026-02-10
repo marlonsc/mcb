@@ -8,11 +8,11 @@
 //! - **postgres** – (future) PostgreSQL adapter and DDL
 //! - **mysql** – (future) MySQL adapter and DDL
 
-#[cfg(feature = "memory-sqlite")]
 pub mod sqlite;
-#[cfg(feature = "memory-sqlite")]
 pub use sqlite::{
-    SqliteDatabaseProvider, SqliteExecutor, SqliteMemoryDdlGenerator, SqliteMemoryRepository,
-    SqliteSchemaDdlGenerator, create_memory_repository, create_memory_repository_in_memory,
-    create_memory_repository_in_memory_with_executor,
+    SqliteAgentRepository, SqliteDatabaseProvider, SqliteExecutor, SqliteMemoryDdlGenerator,
+    SqliteMemoryRepository, SqliteProjectRepository, SqliteSchemaDdlGenerator,
+    create_agent_repository, create_agent_repository_from_executor, create_memory_repository,
+    create_memory_repository_with_executor, create_project_repository,
+    create_project_repository_from_executor,
 };

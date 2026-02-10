@@ -1,0 +1,2 @@
+pub const REDIS_DEFAULT_PORT: u16 = 6379;
+pub const OLLAMA_DEFAULT_PORT: u16 = 11434;

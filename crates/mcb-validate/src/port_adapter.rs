@@ -2,37 +2,59 @@
 //!
 //! Validates Clean Architecture port/adapter patterns.
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
-use crate::{Result, ValidationConfig};
+use std::path::PathBuf;
+
 use regex::Regex;
 use serde::Serialize;
-use std::path::PathBuf;
 use walkdir::WalkDir;
+
+use crate::config::PortAdapterRulesConfig;
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::{Result, ValidationConfig};
 
 /// Port/Adapter Violations
 #[derive(Debug, Clone, Serialize)]
 pub enum PortAdapterViolation {
+    /// Adapter lacks a corresponding port implementation
     AdapterMissingPortImpl {
+        /// Name of the adapter that is missing an implementation of its corresponding port.
         adapter_name: String,
+        /// File where the adapter is defined.
         file: PathBuf,
+        /// Line number where the adapter definition begins.
         line: usize,
     },
+    /// Adapter depends on another concrete adapter instead of a port
     AdapterUsesAdapter {
+        /// Name of the adapter that contains the violation.
         adapter_name: String,
+        /// Name of the concrete adapter being incorrectly referenced.
         other_adapter: String,
+        /// File where the incorrect usage occurred.
         file: PathBuf,
+        /// Line number where the incorrect usage occurred.
         line: usize,
     },
+    /// Port has too many methods (violates ISP)
     PortTooLarge {
+        /// Name of the port (trait) that has too many methods.
         trait_name: String,
+        /// The total number of methods found in the port.
         method_count: usize,
+        /// File where the port is defined.
         file: PathBuf,
+        /// Line number where the port definition begins.
         line: usize,
     },
+    /// Port has too few methods (may indicate over-fragmentation)
     PortTooSmall {
+        /// Name of the port (trait) that has too few methods.
         trait_name: String,
+        /// The total number of methods found in the port.
         method_count: usize,
+        /// File where the port is defined.
         file: PathBuf,
+        /// Line number where the port definition begins.
         line: usize,
     },
 }
@@ -151,20 +173,32 @@ impl Violation for PortAdapterViolation {
     }
 }
 
-/// Port/Adapter Compliance Validator
-pub struct PortAdapterValidator;
-
-impl Default for PortAdapterValidator {
-    fn default() -> Self {
-        Self::new()
-    }
+/// Validates Clean Architecture port/adapter patterns and interface segregation.
+pub struct PortAdapterValidator {
+    max_port_methods: usize,
+    adapter_suffixes: Vec<String>,
+    ports_dir: String,
+    providers_dir: String,
 }
 
 impl PortAdapterValidator {
-    pub fn new() -> Self {
-        Self
+    /// Creates a new port/adapter validator, loading configuration from files.
+    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+        let file_config = crate::config::FileConfig::load(workspace_root);
+        Self::with_config(&file_config.rules.port_adapter)
     }
 
+    /// Creates a new port/adapter validator with current configuration.
+    pub fn with_config(config: &PortAdapterRulesConfig) -> Self {
+        Self {
+            max_port_methods: config.max_port_methods,
+            adapter_suffixes: config.adapter_suffixes.clone(),
+            ports_dir: config.ports_dir.clone(),
+            providers_dir: config.providers_dir.clone(),
+        }
+    }
+
+    /// Validates port/adapter compliance for the given configuration.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<PortAdapterViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.check_port_trait_sizes(config)?);
@@ -177,9 +211,7 @@ impl PortAdapterValidator {
         config: &ValidationConfig,
     ) -> Result<Vec<PortAdapterViolation>> {
         let mut violations = Vec::new();
-        let ports_dir = config
-            .workspace_root
-            .join("crates/mcb-application/src/ports");
+        let ports_dir = config.workspace_root.join(&self.ports_dir);
         if !ports_dir.exists() {
             return Ok(violations);
         }
@@ -188,6 +220,7 @@ impl PortAdapterValidator {
         let fn_re = Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").unwrap();
 
         for entry in WalkDir::new(&ports_dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {
@@ -217,10 +250,10 @@ impl PortAdapterValidator {
                     brace_depth += line.matches('{').count();
                     brace_depth -= line.matches('}').count();
 
-                    if fn_re.is_match(line) {
-                        if let Some((_, _, ref mut count)) = current_trait {
-                            *count += 1;
-                        }
+                    if fn_re.is_match(line)
+                        && let Some((_, _, ref mut count)) = current_trait
+                    {
+                        *count += 1;
                     }
 
                     if brace_depth == 0 && current_trait.is_some() {
@@ -231,7 +264,7 @@ impl PortAdapterValidator {
 
                         // Flag ports with too many methods (violates ISP)
                         // Single-method interfaces are valid per ISP - don't flag them
-                        if method_count > 10 {
+                        if method_count > self.max_port_methods {
                             violations.push(PortAdapterViolation::PortTooLarge {
                                 trait_name,
                                 method_count,
@@ -253,18 +286,18 @@ impl PortAdapterValidator {
         config: &ValidationConfig,
     ) -> Result<Vec<PortAdapterViolation>> {
         let mut violations = Vec::new();
-        let providers_dir = config.workspace_root.join("crates/mcb-providers/src");
+        let providers_dir = config.workspace_root.join(&self.providers_dir);
         if !providers_dir.exists() {
             return Ok(violations);
         }
 
-        let adapter_suffixes = ["Provider", "Repository", "Adapter", "Client"];
         let adapter_import_re = Regex::new(
             r"use\s+(?:crate|super)::(?:\w+::)*(\w+(?:Provider|Repository|Adapter|Client))",
         )
         .unwrap();
 
         for entry in WalkDir::new(&providers_dir)
+            .follow_links(false)
             .into_iter()
             .filter_map(std::result::Result::ok)
         {
@@ -282,7 +315,7 @@ impl PortAdapterValidator {
                 || path
                     .parent()
                     .and_then(|p| p.file_name())
-                    .map_or(false, |n| n == "tests")
+                    .is_some_and(|n| n == "tests")
             {
                 continue;
             }
@@ -302,7 +335,7 @@ impl PortAdapterValidator {
                         continue;
                     }
 
-                    for suffix in &adapter_suffixes {
+                    for suffix in &self.adapter_suffixes {
                         if imported.ends_with(suffix) && !imported.starts_with("dyn") {
                             violations.push(PortAdapterViolation::AdapterUsesAdapter {
                                 adapter_name: current_adapter.to_string(),

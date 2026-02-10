@@ -100,6 +100,12 @@ pub const CACHE_NAMESPACE_SEPARATOR: &str = ":";
 // EVENTS PROVIDER CONSTANTS
 // ============================================================================
 
+/// NATS default subject for domain events
+pub const NATS_DEFAULT_SUBJECT: &str = "mcb.events";
+
+/// Tokio broadcast event bus default channel capacity
+pub const EVENTS_TOKIO_DEFAULT_CAPACITY: usize = 1024;
+
 /// NATS default connection timeout in seconds
 pub const NATS_CONNECT_TIMEOUT_SECS: u64 = 10;
 
@@ -270,8 +276,21 @@ pub const MILVUS_IVFFLAT_NLIST: u32 = 128;
 /// Milvus default port
 pub const MILVUS_DEFAULT_PORT: u16 = 19530;
 
+/// Milvus default connection timeout in seconds
+pub const MILVUS_DEFAULT_TIMEOUT_SECS: u64 = 10;
+
 /// Milvus default query limit for aggregation queries
 pub const MILVUS_DEFAULT_QUERY_LIMIT: i64 = 10_000;
+
+/// Milvus pagination batch size (keeps gRPC responses under 4MB limit)
+pub const MILVUS_QUERY_BATCH_SIZE: usize = 100;
+
+// ============================================================================
+// QDRANT VECTOR STORE CONSTANTS
+// ============================================================================
+
+/// Qdrant default server port
+pub const QDRANT_DEFAULT_PORT: u16 = 6333;
 
 // ============================================================================
 // HYBRID SEARCH CONSTANTS

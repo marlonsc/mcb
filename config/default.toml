@@ -1,215 +1,148 @@
-# MCP Context Browser - Default Configuration
-# Only essential parameters are specified here.
-# All other parameters use sensible defaults from the code.
-# See docs/CONFIGURATION_DEFAULTS.md for complete reference.
-#
-# Last Updated: 2026-01-12
+# MCP Context Browser - canonical defaults
 
-# ============================================================================
-# APPLICATION - Metadata
-# ============================================================================
-name = "MCP Context Browser"
+[mode]
+type = "standalone"
+server_url = "http://127.0.0.1:3000"
+session_prefix = ""
+timeout_secs = 30
+auto_reconnect = true
+max_reconnect_attempts = 5
 
-# ============================================================================
-# SERVER - Core Network Settings
-# ============================================================================
 [server]
-host = "0.0.0.0"          # Listen on all interfaces
-port = 3000               # MCP server port
+transport_mode = "stdio"
 
-# ============================================================================
-# METRICS & MONITORING - HTTP Server for Admin Dashboard
-# ============================================================================
-[metrics]
-enabled = true            # Enable metrics/admin HTTP server
+[server.network]
+host = "0.0.0.0"
+port = 3000
 
-# Rate limiting configuration
-[metrics.rate_limiting]
-enabled = false           # Disable rate limiting by default
-window_seconds = 60       # Rate limit window
-max_requests_per_window = 1000  # Requests per window
-burst_allowance = 100     # Burst allowance
+[server.ssl]
+https = false
+ssl_cert_path = ""
+ssl_key_path = ""
 
-# Rate limiting backend (in-memory or redis)
-[metrics.rate_limiting.backend]
-type = "memory"           # Use in-memory backend for rate limiting
+[server.timeouts]
+request_timeout_secs = 30
+connection_timeout_secs = 10
+max_request_body_size = 10485760
 
-# ============================================================================
-# DATABASE - Optional SQL Database Configuration
-# ============================================================================
-[database]
-enabled = false           # Enable database integration
-url = ""                  # Database connection URL (PostgreSQL recommended)
-max_connections = 20      # Maximum connection pool size
-min_idle = 5              # Minimum idle connections
-max_lifetime = 1800       # Maximum connection lifetime (seconds, default: 1800 = 30 minutes)
-idle_timeout = 600        # Idle timeout before closing (seconds, default: 600 = 10 minutes)
-connection_timeout = 30   # Connection timeout (seconds, default: 30)
+[server.cors]
+cors_enabled = true
+cors_origins = ["*"]
 
-# ============================================================================
-# AUTHENTICATION - API Access Control
-# ============================================================================
+[providers.embedding]
+provider = "fastembed"
+
+[providers.embedding.configs.default]
+provider = "fastembed"
+model = "AllMiniLML6V2"
+dimensions = 384
+
+[providers.vector_store]
+provider = "edgevec"
+
+[providers.vector_store.configs.default]
+provider = "edgevec"
+dimensions = 384
+
+[logging]
+level = "info"
+json_format = false
+file_output = ""
+max_file_size = 10485760
+max_files = 5
+
 [auth]
-enabled = false           # Enable authentication (JWT)
-jwt_secret = ""           # JWT signing secret (empty when disabled)
-jwt_expiration = 86400    # Token expiration in seconds (24 hours)
-jwt_issuer = "mcb"  # JWT issuer claim
+enabled = false
+user_db_path = ""
+password_algorithm = "Argon2"
 
-# ============================================================================
-# ADMIN INTERFACE - Dashboard & Web UI
-# ============================================================================
-[admin]
-enabled = true            # Enable admin dashboard
-jwt_expiration = 3600     # Token expiration in seconds (1 hour)
-# SECURITY: Credentials MUST be set via environment variables:
-#   MCP_ADMIN_USERNAME - Admin username (required)
-#   MCP_ADMIN_PASSWORD - Admin password (min 8 chars, required)
-#   MCP_ADMIN_JWT_SECRET - JWT signing secret (min 32 chars, required)
-# The server will fail to start if these are not set when admin is enabled.
+[auth.jwt]
+secret = ""
+expiration_secs = 86400
+refresh_expiration_secs = 604800
 
-# ============================================================================
-# EMBEDDING PROVIDERS - AI Model for Semantic Search
-# ============================================================================
-#
-# Available providers: openai, ollama, gemini, voyageai, fastembed, null
-# Provider selection is runtime-configurable via this setting
-[providers.embedding.default]
-type = "fastembed"
-
-[providers.embedding.ollama]
-model = "nomic-embed-text"
-base_url = "http://localhost:11434"
-dimensions = 768
-
-[providers.embedding.openai]
-provider = "openai"
-model = "text-embedding-3-small"
-api_key = "sk-your-openai-key-here"
-
-# ============================================================================
-# VECTOR STORE - Where Embeddings are Stored
-# ============================================================================
-# DEFAULT: filesystem (lightweight, works offline, no external service needed)
-# Filesystem is the default because it's self-contained and always available
-[providers.vector_store.default]
-type = "filesystem"               # Use filesystem for vector storage (local, no external service)
-
-[providers.vector_store.filesystem]
-address = "./data/vectors"         # Default filesystem path (relative to working directory)
-
-# ============================================================================
-# HYBRID SEARCH - Combined BM25 + Vector Search
-# ============================================================================
-[hybrid_search]
-enabled = true            # Enable hybrid search
-bm25_weight = 0.4         # Weight for BM25 text search (0-1)
-semantic_weight = 0.6     # Weight for vector similarity search (0-1)
-bm25_k1 = 1.2             # BM25 k1 parameter (affects term saturation)
-bm25_b = 0.75             # BM25 b parameter (field length normalization)
-
-# ============================================================================
-# CACHE - Performance Caching Layer
-# ============================================================================
-[cache]
-enabled = true                    # Enable caching
-
-# Cache backend configuration
-[cache.backend]
-type = "local"                    # Use local Moka cache (default, recommended)
-                                  # Change to "redis" for distributed caching
-
-# Local cache settings (used when type = "local")
-[cache.backend.local]
-max_entries = 10000               # Maximum number of entries
-default_ttl_seconds = 3600        # Default time-to-live (1 hour)
-
-
-[cache.backend.redis]
-url = "redis://localhost:6379"
-pool_size = 10
-default_ttl_seconds = 3600
-
-# Cache namespace-specific settings (all use code defaults if not specified)
-[cache.namespaces.embeddings]
-ttl_seconds = 7200              # Cache embeddings for 2 hours
-max_entries = 5000
-compression = true
-
-[cache.namespaces.search_results]
-ttl_seconds = 1800              # Cache search results for 30 minutes
-max_entries = 2000
-compression = false
-
-[cache.namespaces.metadata]
-ttl_seconds = 3600              # Cache metadata for 1 hour
-max_entries = 1000
-compression = false
-
-[cache.namespaces.provider_responses]
-ttl_seconds = 300               # Cache provider responses for 5 minutes
-max_entries = 3000
-compression = true
-
-[cache.namespaces.sync_batches]
-ttl_seconds = 86400             # Keep sync batches for 24 hours
-max_entries = 1000
-compression = false
-
-# ============================================================================
-# DAEMON - Background Process Configuration
-# ============================================================================
-[daemon]
-cleanup_interval_secs = 30        # How often to clean up locks (seconds)
-monitoring_interval_secs = 30     # How often to monitor health (seconds)
-max_lock_age_secs = 300           # Max age of lock before cleanup (seconds)
-
-# ============================================================================
-# DATA DIRECTORIES - XDG Standard Locations
-# ============================================================================
-# All data (snapshots, history, encryption keys, circuit breakers, etc.)
-# Default: ~/.local/share/mcb/ (XDG_DATA_HOME standard)
-# These are the base directories where all application state is stored
-[data]
-# Base data directory - all application state stored here
-# Uses XDG standard: ~/.local/share/mcb/
-# Can override with environment variable: MCP__DATA__BASE_DIR
-base_dir = "~/.local/share/mcb"
-
-# Optional: Override individual subdirectories (uncomment to customize)
-# snapshots_dir = "~/.local/share/mcb/snapshots"
-# config_history_dir = "~/.local/share/mcb/config-history"
-# encryption_keys_dir = "~/.local/share/mcb/encryption"
-# circuit_breakers_dir = "~/.local/share/mcb/circuit-breakers"
-
-# ============================================================================
-# SYNCHRONIZATION - File Watching & Indexing
-# ============================================================================
-[sync]
-interval_ms = 900000              # Full sync interval (15 minutes)
-debounce_ms = 60000               # Debounce for file watches (60 seconds)
-
-# ============================================================================
-# RESOURCE LIMITS - Protect against resource exhaustion
-# ============================================================================
-[resource_limits]
+[auth.api_key]
 enabled = true
+header = "X-API-Key"
 
-[resource_limits.memory]
-max_usage_percent = 85.0
-max_per_operation = 536870912  # 512MB
-warning_threshold = 75.0
+[auth.admin]
+enabled = false
+header = "X-Admin-Key"
 
-[resource_limits.cpu]
-max_usage_percent = 80.0
-warning_threshold = 70.0
+[system.infrastructure.cache]
+enabled = true
+provider = "Moka"
+default_ttl_secs = 3600
+max_size = 1000000
+redis_url = ""
+redis_pool_size = 10
+namespace = "mcp"
 
-[resource_limits.disk]
-max_usage_percent = 90.0
-min_free_space = 1073741824  # 1GB
-warning_threshold = 80.0
+[system.infrastructure.event_bus]
+provider = "tokio"
+capacity = 1024
+nats_url = ""
+nats_client_name = "mcp-context-browser"
+connection_timeout_ms = 5000
+max_reconnect_attempts = 5
 
-[resource_limits.operations]
-max_concurrent_indexing = 4
-max_concurrent_search = 10
-max_concurrent_embedding = 5
-max_queue_size = 100
+[system.infrastructure.metrics]
+enabled = true
+collection_interval_secs = 10
+prefix = "mcp"
+endpoint_enabled = true
+endpoint_path = "/metrics"
+exporter_url = ""
+
+[system.infrastructure.resilience]
+circuit_breaker_failure_threshold = 5
+circuit_breaker_timeout_secs = 30
+circuit_breaker_success_threshold = 3
+rate_limiter_rps = 100
+rate_limiter_burst = 200
+retry_attempts = 3
+retry_delay_ms = 1000
+
+[system.infrastructure.limits]
+memory_limit = 2147483648
+cpu_limit = 4
+disk_io_limit = 104857600
+max_connections = 1000
+max_requests_per_connection = 100
+
+[system.data.snapshot]
+enabled = true
+directory = "./snapshots"
+max_file_size = 104857600
+compression_enabled = true
+change_detection_enabled = true
+
+[system.data.sync]
+enabled = true
+watching_enabled = true
+batch_size = 100
+debounce_delay_ms = 1000
+timeout_secs = 60
+max_concurrent = 4
+
+[system.data.backup]
+enabled = false
+directory = "./backups"
+interval_secs = 86400
+max_backups = 7
+compress = true
+encrypt = false
+encryption_key = ""
+
+[operations_daemon.daemon]
+enabled = true
+check_interval_secs = 30
+restart_delay_secs = 5
+max_restart_attempts = 10
+auto_start = true
+
+[operations_daemon.operations]
+tracking_enabled = true
+cleanup_interval_secs = 3600
+retention_secs = 2592000
+max_operations_in_memory = 10000

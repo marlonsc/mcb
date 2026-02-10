@@ -3,10 +3,11 @@
 //! Parses Cargo.toml files to extract declared dependencies for validation.
 //! Used to check if libraries used in code are properly declared.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 use crate::Result;
@@ -106,7 +107,7 @@ impl CargoDependencyParser {
         let mut deps = HashMap::new();
 
         // Find all crate directories (directories with Cargo.toml)
-        let crate_dirs = self.find_crate_dirs()?;
+        let crate_dirs = self.find_crate_dirs();
 
         for crate_dir in crate_dirs {
             let cargo_toml_path = crate_dir.join("Cargo.toml");
@@ -120,32 +121,30 @@ impl CargoDependencyParser {
     }
 
     /// Find all crate directories in the workspace
-    fn find_crate_dirs(&self) -> Result<Vec<PathBuf>> {
+    fn find_crate_dirs(&self) -> Vec<PathBuf> {
         let mut crates = Vec::new();
 
-        // Check workspace root first
         if self.workspace_root.join("Cargo.toml").exists() {
             crates.push(self.workspace_root.clone());
         }
 
-        // Find member crates (common patterns)
         for entry in WalkDir::new(&self.workspace_root)
-            .max_depth(3) // Don't go too deep
+            .follow_links(false)
+            .follow_links(false)
+            .max_depth(3)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
         {
             let path = entry.path();
-            if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml") {
-                if let Some(parent) = path.parent() {
-                    // Skip workspace root Cargo.toml (already added)
-                    if parent != self.workspace_root {
-                        crates.push(parent.to_path_buf());
-                    }
-                }
+            if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml")
+                && let Some(parent) = path.parent()
+                && parent != self.workspace_root
+            {
+                crates.push(parent.to_path_buf());
             }
         }
 
-        Ok(crates)
+        crates
     }
 
     /// Parse a single Cargo.toml file
@@ -154,24 +153,19 @@ impl CargoDependencyParser {
         let value: toml::Value =
             toml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
                 file: path.to_path_buf(),
-                message: format!("Failed to parse Cargo.toml: {}", e),
+                message: format!("Failed to parse Cargo.toml: {e}"),
             })?;
 
         let mut deps = HashMap::new();
 
-        // Parse [dependencies] section
         if let Some(deps_section) = value.get("dependencies") {
-            self.parse_dependency_table(deps_section, &mut deps, false)?;
+            self.parse_dependency_table(deps_section, &mut deps, false);
         }
-
-        // Parse [dev-dependencies] section (marked as declared for validation)
         if let Some(dev_deps_section) = value.get("dev-dependencies") {
-            self.parse_dependency_table(dev_deps_section, &mut deps, false)?;
+            self.parse_dependency_table(dev_deps_section, &mut deps, false);
         }
-
-        // Parse [build-dependencies] section (marked as declared for validation)
         if let Some(build_deps_section) = value.get("build-dependencies") {
-            self.parse_dependency_table(build_deps_section, &mut deps, false)?;
+            self.parse_dependency_table(build_deps_section, &mut deps, false);
         }
 
         Ok(CrateDependencies { deps })
@@ -183,76 +177,73 @@ impl CargoDependencyParser {
         deps_section: &toml::Value,
         deps: &mut HashMap<String, DependencyInfo>,
         is_optional: bool,
-    ) -> Result<()> {
+    ) {
         if let Some(table) = deps_section.as_table() {
             for (name, config) in table {
-                let info = self.parse_dependency_config(config, is_optional)?;
+                let info = self.parse_dependency_config(config, is_optional);
                 deps.insert(name.clone(), info);
             }
         }
-        Ok(())
     }
 
     /// Parse individual dependency configuration
-    fn parse_dependency_config(
-        &self,
-        config: &toml::Value,
-        is_optional: bool,
-    ) -> Result<DependencyInfo> {
+    fn parse_dependency_config(&self, config: &toml::Value, is_optional: bool) -> DependencyInfo {
         match config {
             // Simple version string: serde = "1.0"
-            toml::Value::String(version) => Ok(DependencyInfo {
+            toml::Value::String(version) => DependencyInfo {
                 declared: !is_optional,
                 used_in_code: false,
                 version: Some(version.clone()),
                 features: Vec::new(),
-            }),
+            },
 
             // Table format: serde = { version = "1.0", features = ["derive"] }
             toml::Value::Table(table) => {
                 let version = table
                     .get("version")
                     .and_then(|v| v.as_str())
-                    .map(|s| s.to_string());
+                    .map(std::string::ToString::to_string);
 
                 let features = table
                     .get("features")
                     .and_then(|v| v.as_array())
                     .map(|arr| {
                         arr.iter()
-                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .filter_map(|v| v.as_str().map(std::string::ToString::to_string))
                             .collect()
                     })
                     .unwrap_or_default();
 
                 let optional = table
                     .get("optional")
-                    .and_then(|v| v.as_bool())
+                    .and_then(toml::Value::as_bool)
                     .unwrap_or(false);
 
-                Ok(DependencyInfo {
+                DependencyInfo {
                     declared: !is_optional && !optional,
                     used_in_code: false,
                     version,
                     features,
-                })
+                }
             }
 
-            _ => Ok(DependencyInfo {
+            _ => DependencyInfo {
                 declared: !is_optional,
                 used_in_code: false,
                 version: None,
                 features: Vec::new(),
-            }),
+            },
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_parse_simple_dependency() {

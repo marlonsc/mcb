@@ -3,19 +3,23 @@
 //! Implements the EmbeddingProvider port using VoyageAI's embedding API.
 //! Optimized for code embeddings with voyage-code-3 model.
 
-use async_trait::async_trait;
-use reqwest::Client;
+use std::time::Duration;
 
+use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use reqwest::Client;
 
 use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
 use crate::embedding::helpers::constructor;
-use crate::utils::{HttpResponseUtils, parse_embedding_vector};
+use crate::utils::HttpResponseUtils;
+use crate::utils::http::{
+    create_http_provider_config, handle_request_error, parse_embedding_vector,
+};
 
 /// VoyageAI embedding provider
 ///
@@ -27,6 +31,7 @@ use crate::utils::{HttpResponseUtils, parse_embedding_vector};
 /// ```rust,no_run
 /// use mcb_providers::embedding::VoyageAIEmbeddingProvider;
 /// use reqwest::Client;
+/// use std::time::Duration;
 ///
 /// fn example() {
 ///     let client = Client::new();
@@ -34,6 +39,7 @@ use crate::utils::{HttpResponseUtils, parse_embedding_vector};
 ///         "voyage-your-api-key".to_string(),
 ///         None,
 ///         "voyage-code-3".to_string(),
+///         Duration::from_secs(30),
 ///         client,
 ///     );
 /// }
@@ -42,6 +48,7 @@ pub struct VoyageAIEmbeddingProvider {
     api_key: String,
     base_url: Option<String>,
     model: String,
+    timeout: Duration,
     http_client: Client,
 }
 
@@ -52,11 +59,13 @@ impl VoyageAIEmbeddingProvider {
     /// * `api_key` - VoyageAI API key
     /// * `base_url` - Optional custom base URL (defaults to VoyageAI API)
     /// * `model` - Model name (e.g., "voyage-code-3")
+    /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
     pub fn new(
         api_key: String,
         base_url: Option<String>,
         model: String,
+        timeout: Duration,
         http_client: Client,
     ) -> Self {
         let api_key = constructor::validate_api_key(&api_key);
@@ -65,6 +74,7 @@ impl VoyageAIEmbeddingProvider {
             api_key,
             base_url,
             model,
+            timeout,
             http_client,
         }
     }
@@ -107,10 +117,11 @@ impl VoyageAIEmbeddingProvider {
             .post(format!("{}/embeddings", self.effective_base_url()))
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", CONTENT_TYPE_JSON)
+            .timeout(self.timeout)
             .json(&payload)
             .send()
             .await
-            .map_err(|e| Error::embedding(format!("HTTP request failed: {}", e)))?;
+            .map_err(|e| handle_request_error(e, self.timeout, "VoyageAI"))?;
 
         HttpResponseUtils::check_and_parse(response, "VoyageAI").await
     }
@@ -172,33 +183,23 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
 
 use std::sync::Arc;
 
-use mcb_application::ports::registry::{
+use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
 
 /// Factory function for creating VoyageAI embedding provider instances.
 fn voyageai_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use super::helpers::http::create_default_client;
-
-    let api_key = config
-        .api_key
-        .clone()
-        .ok_or_else(|| "VoyageAI requires api_key".to_string())?;
-    let base_url = config.base_url.clone();
-    let model = config
-        .model
-        .clone()
-        .unwrap_or_else(|| "voyage-code-3".to_string());
-    let http_client = create_default_client()?;
+    let cfg = create_http_provider_config(config, "VoyageAI", "voyage-code-3")?;
 
     Ok(Arc::new(VoyageAIEmbeddingProvider::new(
-        api_key,
-        base_url,
-        model,
-        http_client,
+        cfg.api_key,
+        cfg.base_url,
+        cfg.model,
+        cfg.timeout,
+        cfg.client,
     )))
 }
 

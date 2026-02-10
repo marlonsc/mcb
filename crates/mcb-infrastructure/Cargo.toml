@@ -1,20 +1,19 @@
 [package]
 name = "mcb-infrastructure"
-version = "0.1.5"
-edition = "2024"
-authors = ["Marlon Costa <marlonsc@gmail.com>"]
-license = "MIT"
 keywords = ["infrastructure", "mcp", "semantic-search"]
 categories = ["development-tools", "api-bindings"]
 description = "Infrastructure layer for MCP Context Browser - Cross-cutting technical concerns"
-readme = "README.md"
-repository = "https://github.com/marlonsc/mcb"
-homepage = "https://github.com/marlonsc/mcb"
-rust-version = "1.89"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "mcb_infrastructure"
-path = "src/mod.rs"
+path = "src/lib.rs"
 
 [dependencies]
 # Domain layer - core business logic and port traits
@@ -37,7 +36,6 @@ thiserror = { workspace = true }
 # Logging
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-# NOTE: atty removed in v0.1.4 - using std::io::IsTerminal (stable since Rust 1.70)
 
 # Configuration
 figment = { workspace = true }
@@ -72,7 +70,6 @@ aes-gcm = { workspace = true }
 rand = { workspace = true }
 
 # Authentication
-# jsonwebtoken removed - unused dependency (RUSTSEC-2023-0071)
 bcrypt = { workspace = true }
 argon2 = { workspace = true }
 base64 = { workspace = true }
@@ -91,8 +88,6 @@ hex = { workspace = true }
 # Utilities
 uuid = { workspace = true }
 dirs = { workspace = true }
-
-# NOTE: HTTP server dependencies (axum, tower) removed in v0.1.2 - now in mcb-server only
 
 # System metrics
 sysinfo = { workspace = true }
@@ -158,23 +153,37 @@ tracing-appender = { workspace = true }
 # SQLite for file hash storage (Phase 3: Incremental indexing)
 sqlx = { workspace = true }
 
+# Syntax highlighting
+tree-sitter = { workspace = true }
+tree-sitter-highlight = { workspace = true }
+html-escape = { workspace = true }
+tree-sitter-rust = { workspace = true }
+tree-sitter-python = { workspace = true }
+tree-sitter-javascript = { workspace = true }
+tree-sitter-typescript = { workspace = true }
+tree-sitter-go = { workspace = true }
+tree-sitter-java = { workspace = true }
+tree-sitter-c = { workspace = true }
+tree-sitter-cpp = { workspace = true }
+tree-sitter-c-sharp = { workspace = true }
+tree-sitter-ruby = { workspace = true }
+tree-sitter-php = { workspace = true }
+tree-sitter-swift = { workspace = true }
+tree-sitter-kotlin-ng = { workspace = true }
+
 # Benchmarking
 criterion = { workspace = true }
 
 # Links providers into linkme distributed slices
 mcb-providers = { path = "../mcb-providers" }
 
-# Architecture validation (optional, for MCP tool integration)
-mcb-validate = { path = "../mcb-validate", optional = true }
+# Architecture validation (for MCP tool integration)
+mcb-validate = { path = "../mcb-validate" }
 
-[features]
-default = ["validation"]
-# Export internal test utilities (null implementations) for integration tests
-test-utils = []
-# Enable architecture validation via mcb-validate
-validation = ["mcb-validate"]
+[lints]
+workspace = true
 
 [dev-dependencies]
-tempfile = "3.10"
+tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 serial_test = { workspace = true }

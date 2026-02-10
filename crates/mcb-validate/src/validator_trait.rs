@@ -3,9 +3,10 @@
 //! Provides a unified interface for all validators and a registry
 //! for managing and running validators.
 
+use anyhow::Result;
+
 use crate::ValidationConfig;
 use crate::violation_trait::Violation;
-use anyhow::Result;
 
 /// All validators implement this trait
 ///
@@ -57,6 +58,7 @@ impl ValidatorRegistry {
     }
 
     /// Register a validator (builder pattern)
+    #[must_use]
     pub fn with_validator(mut self, validator: Box<dyn Validator>) -> Self {
         self.register(validator);
         self
@@ -119,11 +121,11 @@ impl ValidatorRegistry {
     ///
     /// This registers all built-in validators with default configuration.
     /// Validators include:
-    /// - Architecture: clean_architecture, layer_flow, port_adapter, visibility
+    /// - Architecture: `clean_architecture`, `layer_flow`, `port_adapter`, visibility
     /// - Dependencies: dependency
-    /// - Quality: quality, solid, naming, patterns, documentation, tests_org
-    /// - Performance: performance, async_patterns, kiss, pmat
-    /// - Organization: organization, implementation, refactoring, error_boundary
+    /// - Quality: quality, solid, naming, patterns, documentation, `tests_org`
+    /// - Performance: performance, `async_patterns`, kiss, pmat
+    /// - Organization: organization, implementation, refactoring, `error_boundary`
     pub fn standard() -> Self {
         Self::standard_for(".")
     }
@@ -131,46 +133,43 @@ impl ValidatorRegistry {
     /// Create a registry with standard validators for a specific workspace
     pub fn standard_for(workspace_root: impl Into<std::path::PathBuf>) -> Self {
         // Architecture validators
+        // Performance validators
+        use crate::async_patterns::AsyncPatternValidator;
         use crate::clean_architecture::CleanArchitectureValidator;
-        use crate::layer_flow::LayerFlowValidator;
-        use crate::port_adapter::PortAdapterValidator;
-        use crate::visibility::VisibilityValidator;
-
         // Dependency validators
         use crate::dependency::DependencyValidator;
-        // Note: ShakuValidator removed - now using inventory-based plugin architecture
+        // Note: Legacy validator removed - now using linkme-based plugin architecture
 
         // Quality validators
         use crate::documentation::DocumentationValidator;
-        use crate::naming::NamingValidator;
-        use crate::pattern_validator::PatternValidator;
-        use crate::quality::QualityValidator;
-        use crate::solid::SolidValidator;
-        use crate::tests_org::TestValidator;
-
-        // Performance validators
-        use crate::async_patterns::AsyncPatternValidator;
-        use crate::kiss::KissValidator;
-        use crate::performance::PerformanceValidator;
-        use crate::pmat::PmatValidator;
-
         // Organization validators
         use crate::error_boundary::ErrorBoundaryValidator;
         use crate::implementation::ImplementationQualityValidator;
+        use crate::kiss::KissValidator;
+        use crate::layer_flow::LayerFlowValidator;
+        use crate::naming::NamingValidator;
         use crate::organization::OrganizationValidator;
+        use crate::pattern_validator::PatternValidator;
+        use crate::performance::PerformanceValidator;
+        use crate::pmat::PmatValidator;
+        use crate::port_adapter::PortAdapterValidator;
+        use crate::quality::QualityValidator;
         use crate::refactoring::RefactoringValidator;
+        use crate::solid::SolidValidator;
+        use crate::tests_org::TestValidator;
+        use crate::visibility::VisibilityValidator;
 
         let root = workspace_root.into();
 
         Self::new()
             // Architecture
             .with_validator(Box::new(CleanArchitectureValidator::new(&root)))
-            .with_validator(Box::new(LayerFlowValidator::new()))
-            .with_validator(Box::new(PortAdapterValidator::new()))
-            .with_validator(Box::new(VisibilityValidator::new()))
+            .with_validator(Box::new(LayerFlowValidator::new(&root)))
+            .with_validator(Box::new(PortAdapterValidator::new(&root)))
+            .with_validator(Box::new(VisibilityValidator::new(&root)))
             // Dependencies
             .with_validator(Box::new(DependencyValidator::new(&root)))
-            // Note: ShakuValidator removed - now using inventory-based plugin architecture
+            // Note: Legacy validator removed - now using linkme-based plugin architecture
             // Quality
             .with_validator(Box::new(QualityValidator::new(&root)))
             .with_validator(Box::new(SolidValidator::new(&root)))
@@ -199,8 +198,11 @@ pub struct LegacyValidatorAdapter<F>
 where
     F: Fn(&ValidationConfig) -> Result<Vec<Box<dyn Violation>>> + Send + Sync,
 {
+    /// Unique name of the validator
     name: &'static str,
+    /// Detailed description of what it validates
     description: &'static str,
+    /// Function that performs the validation
     validate_fn: F,
 }
 

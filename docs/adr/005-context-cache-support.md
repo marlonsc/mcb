@@ -1,4 +1,16 @@
-# ADR 005: Context Cache Support (Moka and Redis)
+---
+adr: 5
+title: Context Cache Support (Moka and Redis)
+status: IMPLEMENTED
+created: 
+updated: 2026-02-05
+related: []
+supersedes: []
+superseded_by: []
+implementation_status: Complete
+---
+
+## ADR 005: Context Cache Support (Moka and Redis)
 
 ## Status
 
@@ -16,4 +28,4 @@ We implemented a configurable caching system, with Moka as the default provider 
 
 ## Consequences
 
-The cache addition significantly improved performance in repetitive operations, reducing MCP Context Browser response latency, especially when consulted frequently by agents. With Moka, we obtained low latency and configuration simplicity (just adjusting size/TTL limits in configuration). When opting for Redis in distributed environments, we achieved cache consistency between instances and optional data persistence of cached context, at the cost of depending on more services (there may be increased operational complexity and external failure points). This flexibility attends various use cases: developers can start simple with Moka and scale to Redis as needed, maintaining unchanged application code. ADR pending: Formalize cache expiration and invalidation policies in a future architectural record. Currently, default policies (TTL, max size) are defined in code/config, but we recommend documenting them in detail and revisiting the cache strategy as data volume grows or new requirements emerge (e.g., LRU vs LFU, write-through behavior).
+The cache addition significantly improved performance in repetitive operations, reducing Memory Context Browser response latency, especially when consulted frequently by agents. With Moka, we obtained low latency and configuration simplicity (just adjusting size/TTL limits in configuration). When opting for Redis in distributed environments, we achieved cache consistency between instances and optional data persistence of cached context, at the cost of depending on more services (there may be increased operational complexity and external failure points). This flexibility attends various use cases: developers can start simple with Moka and scale to Redis as needed, maintaining unchanged application code. ADR pending: Formalize cache expiration and invalidation policies in a future architectural record. Currently, default policies (TTL, max size) are defined in code/config, but we recommend documenting them in detail and revisiting the cache strategy as data volume grows or new requirements emerge (e.g., LRU vs LFU, write-through behavior).

@@ -8,114 +8,106 @@
 //! - Deleted module references
 //! - Dead code from refactoring
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+
+use regex::Regex;
+use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
-/// Known migration patterns that are expected during refactoring.
-/// These are pairs of crates where duplicates are expected temporarily.
-const KNOWN_MIGRATION_PAIRS: &[(&str, &str)] = &[
-    ("mcb-providers", "mcb-infrastructure"),
-    ("mcb-domain", "mcb-infrastructure"), // Domain types may be mirrored in infrastructure
-];
-
-/// Utility types that are intentionally duplicated to avoid cross-crate dependencies.
-/// These are common patterns that don't indicate incomplete migration.
-const UTILITY_TYPES: &[&str] = &[
-    "JsonExt",           // JSON extension trait
-    "HttpResponseUtils", // HTTP response helpers
-    "CacheStats",        // Cache statistics (implementation-specific)
-    "TimedOperation",    // Timing utilities
-];
-
-/// Generic type names that are expected to appear in multiple places.
-/// These include common patterns like Error/Result as well as layer-specific
-/// config types that are intentionally different per CA layer.
-const GENERIC_TYPE_NAMES: &[&str] = &[
-    "Error",
-    "Result",
-    "Config",
-    "Builder",
-    "Context",
-    "State",
-    "Options",
-    "Params",
-    "Settings",
-    "Message", // Common for actor patterns
-    "Request",
-    "Response",
-    "CacheConfig", // Layer-specific config schemas are valid in CA
-];
+use crate::config::RefactoringRulesConfig;
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Refactoring completeness violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RefactoringViolation {
     /// Import statement referencing non-existent module/item
     OrphanImport {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number where the orphan import is defined.
         line: usize,
+        /// The import path that cannot be resolved (e.g., `use crate::deleted::Item`).
         import_path: String,
+        /// Suggested remediation action (e.g., "Remove the import").
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Same type name defined in multiple locations (incomplete migration)
     DuplicateDefinition {
+        /// Name of the duplicated type (struct, trait, or enum).
         type_name: String,
+        /// List of files where the duplicate definitions were found.
         locations: Vec<PathBuf>,
+        /// Suggested remediation action (e.g., "Consolidate to a single location").
         suggestion: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// New source file without corresponding test file
     MissingTestFile {
+        /// The source file that lacks a corresponding test file.
         source_file: PathBuf,
+        /// The expected path where the test file should be located.
         expected_test: PathBuf,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// pub use/mod statement for item that doesn't exist
     StaleReExport {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the stale re-export or module declaration.
         line: usize,
+        /// The re-exported item or module name that is stale.
         re_export: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// File/module that was deleted but is still referenced
     DeletedModuleReference {
+        /// File referencing the deleted module via a `mod` statement.
         referencing_file: PathBuf,
+        /// Line number of the `mod` declaration.
         line: usize,
+        /// Name of the module that no longer exists on disk.
         deleted_module: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 
     /// Dead code left from refactoring (unused after move)
     RefactoringDeadCode {
+        /// File containing the suspected dead code.
         file: PathBuf,
+        /// Name of the item suspected to be dead.
         item_name: String,
+        /// Type of the item (e.g., `struct`, `function`, `enum`).
         item_type: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
 impl RefactoringViolation {
+    /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        match self {
-            Self::OrphanImport { severity, .. } => *severity,
-            Self::DuplicateDefinition { severity, .. } => *severity,
-            Self::MissingTestFile { severity, .. } => *severity,
-            Self::StaleReExport { severity, .. } => *severity,
-            Self::DeletedModuleReference { severity, .. } => *severity,
-            Self::RefactoringDeadCode { severity, .. } => *severity,
-        }
+        <Self as Violation>::severity(self)
     }
 }
 
+/// Display implementation for refactoring violations.
+///
+/// Formats violations as human-readable messages with file location, line number,
+/// and context about the refactoring issue detected.
 impl std::fmt::Display for RefactoringViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -209,6 +201,10 @@ impl std::fmt::Display for RefactoringViolation {
     }
 }
 
+/// Violation trait implementation for refactoring violations.
+///
+/// Provides violation metadata including ID, category, severity, file location,
+/// line number, and remediation suggestions for refactoring completeness issues.
 impl Violation for RefactoringViolation {
     fn id(&self) -> &str {
         match self {
@@ -227,43 +223,43 @@ impl Violation for RefactoringViolation {
 
     fn severity(&self) -> Severity {
         match self {
-            Self::OrphanImport { severity, .. } => *severity,
-            Self::DuplicateDefinition { severity, .. } => *severity,
-            Self::MissingTestFile { severity, .. } => *severity,
-            Self::StaleReExport { severity, .. } => *severity,
-            Self::DeletedModuleReference { severity, .. } => *severity,
-            Self::RefactoringDeadCode { severity, .. } => *severity,
+            Self::OrphanImport { severity, .. }
+            | Self::DuplicateDefinition { severity, .. }
+            | Self::MissingTestFile { severity, .. }
+            | Self::StaleReExport { severity, .. }
+            | Self::DeletedModuleReference { severity, .. }
+            | Self::RefactoringDeadCode { severity, .. } => *severity,
         }
     }
 
     fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::OrphanImport { file, .. } => Some(file),
+            Self::OrphanImport { file, .. }
+            | Self::StaleReExport { file, .. }
+            | Self::RefactoringDeadCode { file, .. } => Some(file),
             Self::DuplicateDefinition { locations, .. } => locations.first(),
             Self::MissingTestFile { source_file, .. } => Some(source_file),
-            Self::StaleReExport { file, .. } => Some(file),
             Self::DeletedModuleReference {
                 referencing_file, ..
             } => Some(referencing_file),
-            Self::RefactoringDeadCode { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::OrphanImport { line, .. } => Some(*line),
-            Self::DuplicateDefinition { .. } => None,
-            Self::MissingTestFile { .. } => None,
-            Self::StaleReExport { line, .. } => Some(*line),
-            Self::DeletedModuleReference { line, .. } => Some(*line),
-            Self::RefactoringDeadCode { .. } => None,
+            Self::OrphanImport { line, .. }
+            | Self::StaleReExport { line, .. }
+            | Self::DeletedModuleReference { line, .. } => Some(*line),
+            Self::DuplicateDefinition { .. }
+            | Self::MissingTestFile { .. }
+            | Self::RefactoringDeadCode { .. } => None,
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::OrphanImport { suggestion, .. } => Some(suggestion.clone()),
-            Self::DuplicateDefinition { suggestion, .. } => Some(suggestion.clone()),
+            Self::OrphanImport { suggestion, .. }
+            | Self::DuplicateDefinition { suggestion, .. } => Some(suggestion.clone()),
             Self::MissingTestFile {
                 source_file,
                 expected_test,
@@ -274,19 +270,17 @@ impl Violation for RefactoringViolation {
                 source_file.display()
             )),
             Self::StaleReExport { re_export, .. } => {
-                Some(format!("Remove or update the re-export '{}'", re_export))
+                Some(format!("Remove or update the re-export '{re_export}'"))
             }
             Self::DeletedModuleReference { deleted_module, .. } => Some(format!(
-                "Remove the mod declaration for '{}' or create the module file",
-                deleted_module
+                "Remove the mod declaration for '{deleted_module}' or create the module file"
             )),
             Self::RefactoringDeadCode {
                 item_name,
                 item_type,
                 ..
             } => Some(format!(
-                "Remove the unused {} '{}' or add #[allow(dead_code)] if intentional",
-                item_type, item_name
+                "Remove the unused {item_type} '{item_name}' or use it"
             )),
         }
     }
@@ -295,21 +289,58 @@ impl Violation for RefactoringViolation {
 /// Refactoring completeness validator
 pub struct RefactoringValidator {
     config: ValidationConfig,
+    rules: RefactoringRulesConfig,
+    generic_type_names: HashSet<String>,
+    utility_types: HashSet<String>,
+    known_migration_pairs: Vec<(String, String)>,
+    skip_files: HashSet<String>,
+    skip_dir_patterns: Vec<String>,
 }
 
 impl RefactoringValidator {
     /// Create a new refactoring validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+        let root: PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.refactoring)
     }
 
     /// Create a validator with custom configuration
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
+    pub fn with_config(config: ValidationConfig, rules: &RefactoringRulesConfig) -> Self {
+        let generic_type_names: HashSet<String> =
+            rules.generic_type_names.iter().cloned().collect();
+        let utility_types: HashSet<String> = rules.utility_types.iter().cloned().collect();
+        let skip_files: HashSet<String> = rules.skip_files.iter().cloned().collect();
+        let skip_dir_patterns = rules.skip_dir_patterns.clone();
+
+        let known_migration_pairs = rules
+            .known_migration_pairs
+            .iter()
+            .filter_map(|pair| {
+                if pair.len() == 2 {
+                    Some((pair[0].clone(), pair[1].clone()))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        Self {
+            config,
+            rules: rules.clone(),
+            generic_type_names,
+            utility_types,
+            known_migration_pairs,
+            skip_files,
+            skip_dir_patterns,
+        }
     }
 
     /// Run all refactoring validations
     pub fn validate_all(&self) -> Result<Vec<RefactoringViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
+        }
         let mut violations = Vec::new();
         violations.extend(self.validate_duplicate_definitions()?);
         violations.extend(self.validate_missing_test_files()?);
@@ -328,12 +359,12 @@ impl RefactoringValidator {
         let mut definitions: HashMap<String, Vec<PathBuf>> = HashMap::new();
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -356,7 +387,7 @@ impl RefactoringValidator {
                     let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                     // Skip generic names that are expected to appear in multiple places
-                    if GENERIC_TYPE_NAMES.contains(&type_name) {
+                    if self.generic_type_names.contains(type_name) {
                         continue;
                     }
 
@@ -389,16 +420,13 @@ impl RefactoringValidator {
 
                     let suggestion = match severity {
                         Severity::Info => format!(
-                            "Type '{}' exists in {:?}. This is a known migration pattern - consolidate when migration completes.",
-                            type_name, crates
+                            "Type '{type_name}' exists in {crates:?}. This is a known migration pattern - consolidate when migration completes."
                         ),
                         Severity::Warning => format!(
-                            "Type '{}' is defined in {:?}. Consider consolidating to one location.",
-                            type_name, crates
+                            "Type '{type_name}' is defined in {crates:?}. Consider consolidating to one location."
                         ),
                         Severity::Error => format!(
-                            "Type '{}' is unexpectedly defined in multiple crates: {:?}. This requires immediate consolidation.",
-                            type_name, crates
+                            "Type '{type_name}' is unexpectedly defined in multiple crates: {crates:?}. This requires immediate consolidation."
                         ),
                     };
 
@@ -438,14 +466,14 @@ impl RefactoringValidator {
     /// Categorize duplicate severity based on known patterns
     fn categorize_duplicate_severity(&self, type_name: &str, crates: &HashSet<String>) -> Severity {
         // Check if this is an intentionally duplicated utility type
-        if UTILITY_TYPES.contains(&type_name) {
+        if self.utility_types.contains(type_name) {
             return Severity::Info;
         }
 
         // Check if the crates match a known migration pattern
         let crate_vec: Vec<&String> = crates.iter().collect();
         if crate_vec.len() == 2 {
-            for (crate_a, crate_b) in KNOWN_MIGRATION_PAIRS {
+            for (crate_a, crate_b) in &self.known_migration_pairs {
                 if (crate_vec[0].as_str() == *crate_a && crate_vec[1].as_str() == *crate_b)
                     || (crate_vec[0].as_str() == *crate_b && crate_vec[1].as_str() == *crate_a)
                 {
@@ -474,8 +502,8 @@ impl RefactoringValidator {
             .any(|p| type_name.ends_with(p))
         {
             // Check if any known migration pair is involved
-            for (crate_a, crate_b) in KNOWN_MIGRATION_PAIRS {
-                if crates.contains(*crate_a) || crates.contains(*crate_b) {
+            for (crate_a, crate_b) in &self.known_migration_pairs {
+                if crates.contains(crate_a) || crates.contains(crate_b) {
                     return Severity::Warning; // Migration-related, but should be tracked
                 }
             }
@@ -486,66 +514,18 @@ impl RefactoringValidator {
     }
 
     /// Check for source files without corresponding test files
+    #[allow(clippy::too_many_lines)]
     pub fn validate_missing_test_files(&self) -> Result<Vec<RefactoringViolation>> {
         let mut violations = Vec::new();
-
-        // Files that don't need dedicated tests (re-exports, utilities, infrastructure)
-        const SKIP_FILES: &[&str] = &[
-            // Standard files
-            "mod",
-            "lib",
-            "main",
-            "prelude",
-            "constants",
-            "types",
-            "error",
-            "errors",
-            "helpers",
-            "utils",
-            "common",
-            "config",
-            "builder",
-            "factory",
-            // Domain service interfaces (tested via integration)
-            "indexing",
-            "search_repository",
-            // Server infrastructure (tested via e2e/integration tests)
-            "metrics",
-            "components",
-            "operations",
-            "rate_limit_middleware",
-            "security",
-            "mcp_server",
-            "init",
-        ];
-
-        // Directory patterns that are tested via integration tests
-        // These directories have tests in tests/{dir_name}/ subdirectories
-        const SKIP_DIR_PATTERNS: &[&str] = &[
-            "providers",
-            "adapters",
-            "language",
-            "embedding",
-            "vector_store",
-            "cache",
-            "hybrid_search",
-            "events",
-            "chunking",
-            "http",
-            "di",
-            "admin",    // Admin handlers have tests in tests/admin/
-            "handlers", // Handlers have tests in tests/handlers/
-            "config",   // Config modules have tests in tests/config/
-            "tools",    // Tools have tests in tests/tools/
-            "utils",    // Utilities have tests in tests/utils/
-            "ports",    // Port traits have tests in tests/ports/
-        ];
-
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
             let tests_dir = crate_dir.join("tests");
 
             if !src_dir.exists() {
+                continue;
+            }
+
+            if self.should_skip_crate(&crate_dir) {
                 continue;
             }
 
@@ -560,6 +540,7 @@ impl RefactoringValidator {
             let mut test_dirs: std::collections::HashSet<String> = std::collections::HashSet::new();
 
             for entry in WalkDir::new(&tests_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
             {
@@ -575,15 +556,16 @@ impl RefactoringValidator {
                             test_files.insert(base.to_string());
                         }
                     }
-                } else if path.is_dir() {
-                    if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
-                        test_dirs.insert(name.to_string());
-                    }
+                } else if path.is_dir()
+                    && let Some(name) = path.file_name().and_then(|s| s.to_str())
+                {
+                    test_dirs.insert(name.to_string());
                 }
             }
 
             // Check each source file
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -592,7 +574,7 @@ impl RefactoringValidator {
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
                 // Skip common files that don't need dedicated tests
-                if SKIP_FILES.contains(&file_name) {
+                if self.skip_files.contains(file_name) {
                     continue;
                 }
 
@@ -601,17 +583,25 @@ impl RefactoringValidator {
                 let path_str = relative.to_string_lossy();
 
                 // Skip files in directories that are tested via integration tests
-                let in_skip_dir = SKIP_DIR_PATTERNS
+                let in_skip_dir = self
+                    .skip_dir_patterns
                     .iter()
                     .any(|pattern| path_str.contains(pattern));
                 if in_skip_dir {
                     continue;
                 }
 
+                // Check if file has inline tests (#[cfg(test)] module)
+                let content = std::fs::read_to_string(path)?;
+                if content.contains("#[cfg(test)]") {
+                    // File has inline tests, skip it
+                    continue;
+                }
+
                 // Check if this file or its parent module has a test
                 let has_test = test_files.contains(file_name)
-                    || test_files.contains(&format!("{}_test", file_name))
-                    || test_files.contains(&format!("{}_tests", file_name));
+                    || test_files.contains(&format!("{file_name}_test"))
+                    || test_files.contains(&format!("{file_name}_tests"));
 
                 // For files in subdirectories, also check parent directory coverage
                 let parent_covered = if relative.components().count() > 1 {
@@ -622,8 +612,8 @@ impl RefactoringValidator {
                         .unwrap_or("");
                     test_files.contains(parent_name)
                         || test_dirs.contains(parent_name)
-                        || test_files.contains(&format!("{}_test", parent_name))
-                        || test_files.contains(&format!("{}_tests", parent_name))
+                        || test_files.contains(&format!("{parent_name}_test"))
+                        || test_files.contains(&format!("{parent_name}_tests"))
                 } else {
                     false
                 };
@@ -631,7 +621,7 @@ impl RefactoringValidator {
                 if !has_test && !parent_covered {
                     violations.push(RefactoringViolation::MissingTestFile {
                         source_file: path.to_path_buf(),
-                        expected_test: tests_dir.join(format!("{}_test.rs", file_name)),
+                        expected_test: tests_dir.join(format!("{file_name}_test.rs")),
                         severity: Severity::Warning, // Warning, not Error - tests are quality, not critical
                     });
                 }
@@ -647,12 +637,12 @@ impl RefactoringValidator {
         let mod_pattern = Regex::new(r"(?:pub\s+)?mod\s+([a-z_][a-z0-9_]*)(?:\s*;)").unwrap();
 
         for src_dir in self.config.get_scan_dirs()? {
-            // Skip mcb-validate itself
-            if src_dir.to_string_lossy().contains("mcb-validate") {
+            if self.should_skip_crate(&src_dir) {
                 continue;
             }
 
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
@@ -667,20 +657,18 @@ impl RefactoringValidator {
                         let mod_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Check if module file exists (Rust: same dir or parent_name/mod_name)
-                        let mod_file = parent_dir.join(format!("{}.rs", mod_name));
+                        let mod_file = parent_dir.join(format!("{mod_name}.rs"));
                         let mod_dir = parent_dir.join(mod_name).join("mod.rs");
                         let module_subdir = path.file_stem().and_then(|s| s.to_str()).map(|stem| {
                             (
-                                parent_dir.join(stem).join(format!("{}.rs", mod_name)),
+                                parent_dir.join(stem).join(format!("{mod_name}.rs")),
                                 parent_dir.join(stem).join(mod_name).join("mod.rs"),
                             )
                         });
 
                         let exists = mod_file.exists()
                             || mod_dir.exists()
-                            || module_subdir
-                                .map(|(f, d)| f.exists() || d.exists())
-                                .unwrap_or(false);
+                            || module_subdir.is_some_and(|(f, d)| f.exists() || d.exists());
 
                         if !exists {
                             violations.push(RefactoringViolation::DeletedModuleReference {
@@ -708,11 +696,7 @@ impl RefactoringValidator {
                 let entry = entry?;
                 let path = entry.path();
 
-                // Skip mcb-validate
-                if path
-                    .file_name()
-                    .is_some_and(|n| n == "mcb-validate" || n == "mcb")
-                {
+                if self.should_skip_crate(&path) {
                     continue;
                 }
 
@@ -724,31 +708,30 @@ impl RefactoringValidator {
 
         Ok(dirs)
     }
-}
 
-impl crate::validator_trait::Validator for RefactoringValidator {
-    fn name(&self) -> &'static str {
-        "refactoring"
-    }
-
-    fn description(&self) -> &'static str {
-        "Validates refactoring completeness (duplicate definitions, missing tests, stale references)"
-    }
-
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate_all()?;
-        Ok(violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
+    /// Check if a crate should be skipped based on configuration
+    fn should_skip_crate(&self, crate_dir: &std::path::Path) -> bool {
+        let path_str = crate_dir.to_string_lossy();
+        self.rules
+            .excluded_crates
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
+
+impl_validator!(
+    RefactoringValidator,
+    "refactoring",
+    "Validates refactoring completeness (duplicate definitions, missing tests, stale references)"
+);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
         let crate_dir = temp.path().join("crates").join(name).join("src");
@@ -761,10 +744,9 @@ mod tests {
             format!(
                 r#"
 [package]
-name = "{}"
+name = "{name}"
 version = "0.1.1"
-"#,
-                name
+"#
             ),
         )
         .unwrap();
@@ -782,22 +764,22 @@ version = "0.1.1"
         create_test_crate(
             &temp,
             "mcb-domain",
-            r#"
+            r"
 pub struct MyService {
     pub name: String,
 }
-"#,
+",
         );
 
         // Create second crate with same MyService
         create_test_crate(
             &temp,
             "mcb-server",
-            r#"
+            r"
 pub struct MyService {
     pub id: u64,
 }
-"#,
+",
         );
 
         let validator = RefactoringValidator::new(temp.path());
@@ -814,10 +796,10 @@ pub struct MyService {
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub mod existing;
 pub mod deleted_module;  // This module doesn't exist
-"#,
+",
         );
 
         // Create existing.rs
@@ -844,11 +826,11 @@ pub mod deleted_module;  // This module doesn't exist
         create_test_crate(
             &temp,
             "mcb-test",
-            r#"
+            r"
 pub mod inline {
     pub fn hello() {}
 }
-"#,
+",
         );
 
         let validator = RefactoringValidator::new(temp.path());

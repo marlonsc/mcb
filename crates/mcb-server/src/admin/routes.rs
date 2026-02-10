@@ -6,22 +6,28 @@
 //! Authentication integration added in v0.1.2.
 //! Browse API added in v0.1.2 for code navigation.
 
-use rocket::{Build, Rocket, routes};
 use std::sync::Arc;
+
+use rocket::{Build, Rocket, routes};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::{
-    BrowseState, get_file_chunks, list_collection_files, list_collections,
+    BrowseState, get_collection_tree, get_file_chunks, list_collection_files, list_collections,
 };
 use super::config_handlers::{get_config, reload_config, update_config_section};
 use super::handlers::{
-    AdminState, extended_health_check, get_cache_stats, get_indexing_status, get_metrics,
-    health_check, liveness_check, readiness_check, shutdown,
+    AdminState, extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
+    list_browse_project_issues, list_browse_project_phases, list_browse_projects, liveness_check,
+    readiness_check, shutdown,
 };
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
 };
 use super::sse::events_stream;
+use super::web::handlers::{
+    browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
+    dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
+};
 
 /// Create the admin API rocket instance
 ///
@@ -29,7 +35,7 @@ use super::sse::events_stream;
 /// - GET /health - Health check with uptime and status
 /// - GET /health/extended - Extended health check with dependency status
 /// - GET /metrics - Performance metrics
-/// - GET /indexing - Indexing operations status
+/// - GET /jobs - Jobs operations status
 /// - GET /ready - Kubernetes readiness probe (public)
 /// - GET /live - Kubernetes liveness probe (public)
 /// - POST /shutdown - Initiate graceful server shutdown (protected)
@@ -66,7 +72,10 @@ pub fn admin_rocket(
             health_check,
             extended_health_check,
             get_metrics,
-            get_indexing_status,
+            get_jobs_status,
+            list_browse_projects,
+            list_browse_project_phases,
+            list_browse_project_issues,
             readiness_check,
             liveness_check,
             // Service control
@@ -85,6 +94,19 @@ pub fn admin_rocket(
             restart_service,
             // Cache management
             get_cache_stats,
+            // Web UI routes
+            dashboard,
+            dashboard_ui,
+            favicon,
+            config_page,
+            health_page,
+            jobs_page,
+            browse_page,
+            browse_collection_page,
+            browse_file_page,
+            browse_tree_page,
+            theme_css,
+            shared_js,
         ],
     );
 
@@ -92,7 +114,12 @@ pub fn admin_rocket(
     if let Some(browse) = browse_state {
         rocket = rocket.manage(browse).mount(
             "/",
-            routes![list_collections, list_collection_files, get_file_chunks,],
+            routes![
+                list_collections,
+                list_collection_files,
+                get_file_chunks,
+                get_collection_tree,
+            ],
         );
     }
 

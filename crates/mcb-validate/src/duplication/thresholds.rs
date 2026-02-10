@@ -62,6 +62,7 @@ impl std::fmt::Display for DuplicationType {
 }
 
 /// Configuration thresholds for duplication detection
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DuplicationThresholds {
     /// Minimum number of lines for a clone to be reported
@@ -178,7 +179,10 @@ mod tests {
     fn test_strict_thresholds() {
         let thresholds = DuplicationThresholds::strict();
         assert_eq!(thresholds.min_lines, 4);
-        assert_eq!(thresholds.similarity_threshold, 0.90);
+        assert!(
+            (thresholds.similarity_threshold - 0.90).abs() < f64::EPSILON,
+            "similarity_threshold should be 0.90"
+        );
     }
 
     #[test]

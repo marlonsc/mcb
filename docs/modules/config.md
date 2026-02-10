@@ -66,8 +66,8 @@ pub struct AuthConfig {
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MCP_PORT` | Server port | 3000 |
-| `MCP_HOST` | Server host | 0.0.0.0 |
+| `MCP__SERVER__NETWORK__PORT` | Server port | 3000 |
+| `MCP__SERVER__NETWORK__HOST` | Server host | 0.0.0.0 |
 | `MCP_JWT_SECRET` | JWT signing secret | (required) |
 | `MCP_CACHE_ENABLED` | Enable caching | true |
 | `MCP_LOG_FORMAT` | Log format (JSON/text) | text |

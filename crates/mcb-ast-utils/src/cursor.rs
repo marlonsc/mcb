@@ -16,21 +16,13 @@ impl CursorUtils {
         let mut current = node;
 
         while let Some(parent) = current.parent() {
-            // Find the index of current among parent's children
             let mut cursor = parent.walk();
-            let mut idx = 0;
-            if cursor.goto_first_child() {
-                loop {
-                    if cursor.node().id() == current.id() {
-                        path.push((current.kind().to_string(), idx));
-                        break;
-                    }
-                    idx += 1;
-                    if !cursor.goto_next_sibling() {
-                        break;
-                    }
-                }
-            }
+            let idx = parent
+                .children(&mut cursor)
+                .position(|child| child.id() == current.id())
+                .unwrap_or(0);
+
+            path.push((current.kind().to_string(), idx));
             current = parent;
         }
 
@@ -41,26 +33,15 @@ impl CursorUtils {
 
     /// Get all siblings of a node
     pub fn siblings(node: Node<'_>) -> Vec<Node<'_>> {
-        let Some(parent) = node.parent() else {
-            return Vec::new();
-        };
-
-        let mut siblings = Vec::new();
-        let mut cursor = parent.walk();
-
-        if cursor.goto_first_child() {
-            loop {
-                let sibling = cursor.node();
-                if sibling.id() != node.id() {
-                    siblings.push(sibling);
-                }
-                if !cursor.goto_next_sibling() {
-                    break;
-                }
-            }
-        }
-
-        siblings
+        node.parent()
+            .map(|parent| {
+                let mut cursor = parent.walk();
+                parent
+                    .children(&mut cursor)
+                    .filter(|child| child.id() != node.id())
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     /// Get the previous sibling of a node
@@ -75,69 +56,31 @@ impl CursorUtils {
 
     /// Count children of a specific kind
     pub fn count_children_of_kind(node: Node<'_>, kind: &str) -> usize {
-        let mut count = 0;
         let mut cursor = node.walk();
-
-        if cursor.goto_first_child() {
-            loop {
-                if cursor.node().kind() == kind {
-                    count += 1;
-                }
-                if !cursor.goto_next_sibling() {
-                    break;
-                }
-            }
-        }
-
-        count
+        node.children(&mut cursor)
+            .filter(|child| child.kind() == kind)
+            .count()
     }
 
     /// Get all children of a specific kind
     pub fn children_of_kind<'a>(node: Node<'a>, kind: &str) -> Vec<Node<'a>> {
-        let mut children = Vec::new();
         let mut cursor = node.walk();
-
-        if cursor.goto_first_child() {
-            loop {
-                if cursor.node().kind() == kind {
-                    children.push(cursor.node());
-                }
-                if !cursor.goto_next_sibling() {
-                    break;
-                }
-            }
-        }
-
-        children
+        node.children(&mut cursor)
+            .filter(|child| child.kind() == kind)
+            .collect()
     }
 
     /// Get the first child of a specific kind
     pub fn first_child_of_kind<'a>(node: Node<'a>, kind: &str) -> Option<Node<'a>> {
         let mut cursor = node.walk();
-
-        if cursor.goto_first_child() {
-            loop {
-                if cursor.node().kind() == kind {
-                    return Some(cursor.node());
-                }
-                if !cursor.goto_next_sibling() {
-                    break;
-                }
-            }
-        }
-
-        None
+        node.children(&mut cursor)
+            .find(|child| child.kind() == kind)
     }
 
     /// Get named children (excluding anonymous nodes like punctuation)
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "Child count is always small"
-    )]
     pub fn named_children(node: Node<'_>) -> Vec<Node<'_>> {
-        (0..node.named_child_count())
-            .filter_map(|i| node.named_child(i as u32))
-            .collect()
+        let mut cursor = node.walk();
+        node.named_children(&mut cursor).collect()
     }
 
     /// Get child by field name
@@ -161,5 +104,3 @@ impl CursorUtils {
         }
     }
 }
-
-// Tests moved to tests/unit/cursor_tests.rs

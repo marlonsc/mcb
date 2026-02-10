@@ -1,16 +1,28 @@
 //! Admin API server
 //!
-//! HTTP server for the admin API running on a separate port.
+//! HTTP server builder for admin API routes.
+//!
+//! ## Wiring
+//!
+//! The default startup path in `init.rs` mounts admin routes into the unified HTTP server.
+//! `AdminApi` remains available for explicit embedding scenarios.
+//!
+//! - **Config (GET/PATCH /config)**: Call `.with_config_watcher(config_watcher, config_path)` so
+//!   `AdminState` has a config watcher; otherwise GET /config returns 503 and PATCH is unusable.
+//! - **Browse (GET /collections, ...)**: Call `.with_browse_state(browse_state)` so browse routes
+//!   are mounted; otherwise /collections returns 404.
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
-use mcb_application::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
-use mcb_application::ports::infrastructure::EventBusProvider;
-use mcb_infrastructure::config::watcher::ConfigWatcher;
-use rocket::config::{Config as RocketConfig, LogLevel};
 use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
+use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_infrastructure::config::ConfigLoader;
+use mcb_infrastructure::config::watcher::ConfigWatcher;
+use rocket::config::{Config as RocketConfig, LogLevel};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::BrowseState;
@@ -28,9 +40,12 @@ pub struct AdminApiConfig {
 
 impl Default for AdminApiConfig {
     fn default() -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("AdminApiConfig::default requires loadable configuration file");
         Self {
-            host: "127.0.0.1".to_string(),
-            port: 9090,
+            host: config.server.network.host,
+            port: config.server.network.port,
         }
     }
 }
@@ -38,24 +53,21 @@ impl Default for AdminApiConfig {
 impl AdminApiConfig {
     /// Create config for localhost with specified port
     pub fn localhost(port: u16) -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("AdminApiConfig::localhost requires loadable configuration file");
         Self {
-            host: "127.0.0.1".to_string(),
+            host: config.server.network.host,
             port,
         }
     }
 
     /// Get the Rocket configuration
     pub fn rocket_config(&self) -> RocketConfig {
-        // mcb-validate-ignore: hardcoded_fallback - fallback IP is safe and always valid
-        let address: IpAddr = self.host.parse().unwrap_or_else(|_| {
-            "127.0.0.1"
-                .parse()
-                .map_err(|e| {
-                    tracing::error!("Failed to parse fallback IP 127.0.0.1: {}", e);
-                    e
-                })
-                .expect("Hardcoded fallback IP should always parse")
-        });
+        let address: IpAddr = self
+            .host
+            .parse()
+            .expect("Invalid admin host in configuration");
         RocketConfig {
             address,
             port: self.port,
@@ -87,12 +99,14 @@ impl AdminApi {
                 metrics,
                 indexing,
                 config_watcher: None,
+                current_config: mcb_infrastructure::config::AppConfig::default(),
                 config_path: None,
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
                 event_bus,
                 service_manager: None,
                 cache: None,
+                project_workflow: None,
             },
             auth_config: Arc::new(AdminAuthConfig::default()),
             browse_state: None,
@@ -113,12 +127,14 @@ impl AdminApi {
                 metrics,
                 indexing,
                 config_watcher: None,
+                current_config: mcb_infrastructure::config::AppConfig::default(),
                 config_path: None,
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
                 event_bus,
                 service_manager: None,
                 cache: None,
+                project_workflow: None,
             },
             auth_config: Arc::new(auth_config),
             browse_state: None,
@@ -141,12 +157,14 @@ impl AdminApi {
                 metrics,
                 indexing,
                 config_watcher: Some(config_watcher),
+                current_config: mcb_infrastructure::config::AppConfig::default(),
                 config_path: Some(config_path),
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
                 event_bus,
                 service_manager: None,
                 cache: None,
+                project_workflow: None,
             },
             auth_config: Arc::new(auth_config),
             browse_state: None,
@@ -178,10 +196,10 @@ impl AdminApi {
             admin_rocket(self.state, self.auth_config, self.browse_state).configure(rocket_config);
 
         rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Rocket launch failed: {}", e),
-            )) as Box<dyn std::error::Error + Send + Sync>
+            Box::new(std::io::Error::other(format!(
+                "Rocket launch failed: {}",
+                e
+            ))) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
         Ok(())
@@ -190,8 +208,6 @@ impl AdminApi {
     /// Start the admin API server with graceful shutdown
     ///
     /// Note: Rocket handles graceful shutdown internally via Ctrl+C or SIGTERM.
-    /// The shutdown_signal parameter is kept for API compatibility but Rocket
-    /// manages its own shutdown lifecycle.
     pub async fn start_with_shutdown(
         self,
         shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
@@ -209,10 +225,10 @@ impl AdminApi {
             .ignite()
             .await
             .map_err(|e| {
-                Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Rocket ignite failed: {}", e),
-                )) as Box<dyn std::error::Error + Send + Sync>
+                Box::new(std::io::Error::other(format!(
+                    "Rocket ignite failed: {}",
+                    e
+                ))) as Box<dyn std::error::Error + Send + Sync>
             })?;
 
         // Spawn a task to handle the external shutdown signal
@@ -223,10 +239,10 @@ impl AdminApi {
         });
 
         rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Rocket launch failed: {}", e),
-            )) as Box<dyn std::error::Error + Send + Sync>
+            Box::new(std::io::Error::other(format!(
+                "Rocket launch failed: {}",
+                e
+            ))) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
         Ok(())

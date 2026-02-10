@@ -11,10 +11,10 @@
 // Force linkme registration of all providers from mcb-providers
 extern crate mcb_providers;
 
-use mcb_application::ports::registry::cache::*;
-use mcb_application::ports::registry::embedding::*;
-use mcb_application::ports::registry::language::*;
-use mcb_application::ports::registry::vector_store::*;
+use mcb_domain::registry::cache::*;
+use mcb_domain::registry::embedding::*;
+use mcb_domain::registry::language::*;
+use mcb_domain::registry::vector_store::*;
 
 // ============================================================================
 // Embedding Registry Tests - Real Provider Resolution
@@ -42,50 +42,54 @@ mod embedding_registry_tests {
     }
 
     #[test]
-    fn test_list_providers_includes_null_provider() {
+    fn test_list_providers_includes_fastembed_provider() {
         // With extern crate mcb_providers, providers should be registered
         let providers = list_embedding_providers();
 
-        // Should have at least the null provider
+        // Should have at least the fastembed provider (local)
         assert!(
             !providers.is_empty(),
             "Should have registered providers (linkme should work with extern crate)"
         );
 
-        // Verify null provider is registered
-        let has_null = providers.iter().any(|(name, _)| *name == "null");
+        // Verify fastembed (local) provider is registered
+        let has_fastembed = providers.iter().any(|(name, _)| *name == "fastembed");
         assert!(
-            has_null,
-            "Null provider should be registered. Available: {:?}",
+            has_fastembed,
+            "FastEmbed (local) provider should be registered. Available: {:?}",
             providers
         );
     }
 
-    #[test]
-    fn test_resolve_null_embedding_provider() {
-        // Create config for null provider
-        let config = EmbeddingProviderConfig::new("null");
+    #[tokio::test]
+    async fn test_resolve_fastembed_provider() {
+        // Create config for fastembed (local) provider
+        let config = EmbeddingProviderConfig::new("fastembed");
 
         // Resolve should succeed with real factory function
         let result = resolve_embedding_provider(&config);
 
         assert!(
             result.is_ok(),
-            "Should resolve null provider, got error: {}",
+            "Should resolve fastembed provider, got error: {}",
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
-                .unwrap_or("unknown")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         );
 
         // Verify the resolved provider has expected properties
         let provider = result.expect("Provider should be valid");
-        assert_eq!(provider.provider_name(), "null", "Should be null provider");
+        assert_eq!(
+            provider.provider_name(),
+            "fastembed",
+            "Should be fastembed (local) provider"
+        );
         assert_eq!(
             provider.dimensions(),
             384,
-            "Null provider has 384 dimensions"
+            "FastEmbed (AllMiniLML6V2) has 384 dimensions"
         );
     }
 
@@ -101,7 +105,7 @@ mod embedding_registry_tests {
         match result {
             Err(err) => {
                 assert!(
-                    err.contains("Unknown embedding provider"),
+                    err.to_string().contains("Unknown provider"),
                     "Error should describe the issue: {}",
                     err
                 );
@@ -135,14 +139,16 @@ mod vector_store_registry_tests {
 
     #[test]
     fn test_config_builder() {
+        let milvus_uri = std::env::var("MILVUS_ADDRESS")
+            .unwrap_or_else(|_| "http://localhost:19530".to_string());
         let config = VectorStoreProviderConfig::new("milvus")
-            .with_uri("http://localhost:19530")
+            .with_uri(&milvus_uri)
             .with_collection("embeddings")
             .with_dimensions(384)
             .with_encryption("secret-key");
 
         assert_eq!(config.provider, "milvus");
-        assert_eq!(config.uri, Some("http://localhost:19530".to_string()));
+        assert_eq!(config.uri, Some(milvus_uri));
         assert_eq!(config.collection, Some("embeddings".to_string()));
         assert_eq!(config.dimensions, Some(384));
         assert_eq!(config.encrypted, Some(true));
@@ -157,38 +163,36 @@ mod vector_store_registry_tests {
             "Should have registered vector store providers"
         );
 
-        // Check for memory/null provider
-        let has_memory = providers
-            .iter()
-            .any(|(name, _)| *name == "memory" || *name == "null");
+        // Check for edgevec (local) provider
+        let has_edgevec = providers.iter().any(|(name, _)| *name == "edgevec");
         assert!(
-            has_memory,
-            "Should have memory or null vector store provider. Available: {:?}",
+            has_edgevec,
+            "Should have edgevec vector store provider. Available: {:?}",
             providers
         );
     }
 
-    #[test]
-    fn test_resolve_memory_vector_store_provider() {
-        let config = VectorStoreProviderConfig::new("memory");
+    #[tokio::test]
+    async fn test_resolve_edgevec_vector_store_provider() {
+        let config = VectorStoreProviderConfig::new("edgevec");
 
         let result = resolve_vector_store_provider(&config);
 
         assert!(
             result.is_ok(),
-            "Should resolve memory vector store, got error: {}",
+            "Should resolve edgevec vector store, got error: {}",
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
-                .unwrap_or("unknown")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         );
 
         let provider = result.expect("Provider should be valid");
-        // In-memory provider should work
-        assert!(
-            provider.provider_name() == "in_memory" || provider.provider_name() == "memory",
-            "Should be in-memory provider"
+        assert_eq!(
+            provider.provider_name(),
+            "edgevec",
+            "Should be edgevec (local HNSW) provider"
         );
     }
 }
@@ -203,14 +207,16 @@ mod cache_registry_tests {
 
     #[test]
     fn test_config_builder() {
+        let redis_uri =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
         let config = CacheProviderConfig::new("redis")
-            .with_uri("redis://localhost:6379")
+            .with_uri(&redis_uri)
             .with_max_size(10000)
             .with_ttl_secs(3600)
             .with_namespace("mcb");
 
         assert_eq!(config.provider, "redis");
-        assert_eq!(config.uri, Some("redis://localhost:6379".to_string()));
+        assert_eq!(config.uri, Some(redis_uri));
         assert_eq!(config.max_size, Some(10000));
         assert_eq!(config.ttl_secs, Some(3600));
         assert_eq!(config.namespace, Some("mcb".to_string()));
@@ -225,36 +231,36 @@ mod cache_registry_tests {
             "Should have registered cache providers"
         );
 
-        // Check for null provider
-        let has_null = providers.iter().any(|(name, _)| *name == "null");
+        // Check for moka (local) provider
+        let has_moka = providers.iter().any(|(name, _)| *name == "moka");
         assert!(
-            has_null,
-            "Should have null cache provider. Available: {:?}",
+            has_moka,
+            "Should have moka cache provider. Available: {:?}",
             providers
         );
     }
 
     #[test]
-    fn test_resolve_null_cache_provider() {
-        let config = CacheProviderConfig::new("null");
+    fn test_resolve_moka_cache_provider() {
+        let config = CacheProviderConfig::new("moka");
 
         let result = resolve_cache_provider(&config);
 
         assert!(
             result.is_ok(),
-            "Should resolve null cache provider, got error: {}",
+            "Should resolve moka cache provider, got error: {}",
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
-                .unwrap_or("unknown")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         );
 
         let provider = result.expect("Provider should be valid");
         assert_eq!(
             provider.provider_name(),
-            "null",
-            "Should be null cache provider"
+            "moka",
+            "Should be moka (local) cache provider"
         );
     }
 }
@@ -289,13 +295,11 @@ mod language_registry_tests {
             "Should have registered language providers"
         );
 
-        // Check for universal or null provider
-        let has_universal = providers
-            .iter()
-            .any(|(name, _)| *name == "universal" || *name == "null");
+        // Check for universal (local) provider
+        let has_universal = providers.iter().any(|(name, _)| *name == "universal");
         assert!(
             has_universal,
-            "Should have universal or null language provider. Available: {:?}",
+            "Should have universal language provider. Available: {:?}",
             providers
         );
     }
@@ -312,8 +316,8 @@ mod language_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.as_str())
-                .unwrap_or("unknown")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         );
     }
 }
@@ -352,19 +356,19 @@ mod integration_tests {
         );
     }
 
-    #[test]
-    fn test_null_providers_available_for_testing() {
-        // Null providers should be available for testing scenarios
-        let null_embedding = resolve_embedding_provider(&EmbeddingProviderConfig::new("null"));
-        let null_cache = resolve_cache_provider(&CacheProviderConfig::new("null"));
+    #[tokio::test]
+    async fn test_local_providers_available_for_testing() {
+        // Local providers should be available for testing scenarios
+        let embedding = resolve_embedding_provider(&EmbeddingProviderConfig::new("fastembed"));
+        let cache = resolve_cache_provider(&CacheProviderConfig::new("moka"));
 
         assert!(
-            null_embedding.is_ok(),
-            "Null embedding provider should be resolvable for tests"
+            embedding.is_ok(),
+            "FastEmbed (local) embedding provider should be resolvable for tests"
         );
         assert!(
-            null_cache.is_ok(),
-            "Null cache provider should be resolvable for tests"
+            cache.is_ok(),
+            "Moka (local) cache provider should be resolvable for tests"
         );
     }
 }

@@ -7,3 +7,6 @@ mod entity_value_object;
 
 #[path = "integration/semantic_search_workflow.rs"]
 mod semantic_search;
+
+#[path = "integration/file_tree_node_integration.rs"]
+mod file_tree_node_integration;

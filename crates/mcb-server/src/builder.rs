@@ -3,13 +3,17 @@
 //! Builder pattern for constructing MCP servers with dependency injection.
 //! Ensures all required dependencies are provided before server construction.
 
-use crate::McpServer;
-use mcb_application::{
-    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    SearchServiceInterface, ValidationServiceInterface,
-};
-use mcb_domain::ports::providers::VcsProvider;
 use std::sync::Arc;
+
+use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::services::{
+    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
+    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface,
+};
+
+use crate::McpServer;
 
 /// Builder for MCP Server with dependency injection
 ///
@@ -22,6 +26,9 @@ pub struct McpServerBuilder {
     search_service: Option<Arc<dyn SearchServiceInterface>>,
     validation_service: Option<Arc<dyn ValidationServiceInterface>>,
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
+    agent_session_service: Option<Arc<dyn AgentSessionServiceInterface>>,
+    project_service: Option<Arc<dyn ProjectDetectorService>>,
+    project_workflow_service: Option<Arc<dyn ProjectServiceInterface>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
 }
 
@@ -85,6 +92,30 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the agent session service
+    pub fn with_agent_session_service(
+        mut self,
+        service: Arc<dyn AgentSessionServiceInterface>,
+    ) -> Self {
+        self.agent_session_service = Some(service);
+        self
+    }
+
+    /// Set the project detector service
+    pub fn with_project_service(mut self, service: Arc<dyn ProjectDetectorService>) -> Self {
+        self.project_service = Some(service);
+        self
+    }
+
+    /// Set the project workflow service
+    pub fn with_project_workflow_service(
+        mut self,
+        service: Arc<dyn ProjectServiceInterface>,
+    ) -> Self {
+        self.project_workflow_service = Some(service);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -93,16 +124,6 @@ impl McpServerBuilder {
     /// # Errors
     /// Returns `BuilderError::MissingDependency` if any required service is not provided
     pub fn build(self) -> Result<McpServer, BuilderError> {
-        self.try_build()
-    }
-
-    /// Try to build the MCP server (alias for `build`)
-    ///
-    /// This method is kept for API compatibility.
-    ///
-    /// # Returns
-    /// A Result containing the McpServer or an error if dependencies are missing
-    pub fn try_build(self) -> Result<McpServer, BuilderError> {
         let indexing_service = self
             .indexing_service
             .ok_or(BuilderError::MissingDependency("indexing service"))?;
@@ -118,18 +139,32 @@ impl McpServerBuilder {
         let memory_service = self
             .memory_service
             .ok_or(BuilderError::MissingDependency("memory service"))?;
+        let agent_session_service = self
+            .agent_session_service
+            .ok_or(BuilderError::MissingDependency("agent session service"))?;
         let vcs_provider = self
             .vcs_provider
             .ok_or(BuilderError::MissingDependency("vcs provider"))?;
+        let project_service = self
+            .project_service
+            .ok_or(BuilderError::MissingDependency("project service"))?;
+        let project_workflow_service = self
+            .project_workflow_service
+            .ok_or(BuilderError::MissingDependency("project workflow service"))?;
 
-        Ok(McpServer::new(
-            indexing_service,
-            context_service,
-            search_service,
-            validation_service,
-            memory_service,
-            vcs_provider,
-        ))
+        let services = crate::mcp_server::McpServices {
+            indexing: indexing_service,
+            context: context_service,
+            search: search_service,
+            validation: validation_service,
+            memory: memory_service,
+            agent_session: agent_session_service,
+            project: project_service,
+            project_workflow: project_workflow_service,
+            vcs: vcs_provider,
+        };
+
+        Ok(McpServer::new(services))
     }
 }
 

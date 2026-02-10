@@ -3,15 +3,17 @@
 //! Real and null implementations of admin port traits.
 //! Moved from mcb-providers to mcb-infrastructure per Clean Architecture.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::time::Instant;
+
 use dashmap::DashMap;
 use mcb_domain::ports::admin::{
     IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
     PerformanceMetricsInterface,
 };
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use mcb_domain::value_objects::{CollectionId, OperationId};
 use uuid::Uuid;
 
 // ============================================================================
@@ -130,38 +132,8 @@ impl PerformanceMetricsInterface for AtomicPerformanceMetrics {
             failed_queries: failed,
             average_response_time_ms,
             cache_hit_rate,
-            active_connections: self.active_connections.load(Ordering::Relaxed),
+            active_connections: self.active_connections.load(Ordering::Relaxed) as usize,
             uptime_seconds: self.uptime_secs(),
-        }
-    }
-}
-
-// ============================================================================
-// Performance Metrics - Null Implementation
-// ============================================================================
-
-/// Null implementation of PerformanceMetricsInterface for testing
-#[derive(Default)]
-pub struct NullPerformanceMetrics;
-
-impl PerformanceMetricsInterface for NullPerformanceMetrics {
-    fn uptime_secs(&self) -> u64 {
-        0
-    }
-
-    fn record_query(&self, _response_time_ms: u64, _success: bool, _cache_hit: bool) {}
-
-    fn update_active_connections(&self, _delta: i64) {}
-
-    fn get_performance_metrics(&self) -> PerformanceMetricsData {
-        PerformanceMetricsData {
-            total_queries: 0,
-            successful_queries: 0,
-            failed_queries: 0,
-            average_response_time_ms: 0.0,
-            cache_hit_rate: 0.0,
-            active_connections: 0,
-            uptime_seconds: 0,
         }
     }
 }
@@ -175,7 +147,7 @@ impl PerformanceMetricsInterface for NullPerformanceMetrics {
 /// Thread-safe implementation using DashMap for concurrent access.
 pub struct DefaultIndexingOperations {
     /// Active indexing operations by ID
-    operations: Arc<DashMap<String, IndexingOperation>>,
+    operations: Arc<DashMap<OperationId, IndexingOperation>>,
 }
 
 impl DefaultIndexingOperations {
@@ -192,15 +164,20 @@ impl DefaultIndexingOperations {
     }
 
     /// Start tracking a new indexing operation (inherent impl; trait delegates here).
-    pub fn start_operation_internal(&self, collection: &str, total_files: usize) -> String {
-        let id = Uuid::new_v4().to_string();
+    pub fn start_operation_internal(
+        &self,
+        collection: &CollectionId,
+        total_files: usize,
+    ) -> OperationId {
+        let id = OperationId::new(Uuid::new_v4().to_string());
         let operation = IndexingOperation {
             id: id.clone(),
-            collection: collection.to_string(),
+            collection: collection.clone(),
             current_file: None,
+            status: mcb_domain::ports::admin::IndexingOperationStatus::Starting,
             total_files,
             processed_files: 0,
-            start_timestamp: current_timestamp(),
+            started_at: chrono::Utc::now(),
         };
         self.operations.insert(id.clone(), operation);
         id
@@ -209,7 +186,7 @@ impl DefaultIndexingOperations {
     /// Update progress for an operation
     pub fn update_progress(
         &self,
-        operation_id: &str,
+        operation_id: &OperationId,
         current_file: Option<String>,
         processed: usize,
     ) {
@@ -220,7 +197,7 @@ impl DefaultIndexingOperations {
     }
 
     /// Complete and remove an operation
-    pub fn complete_operation(&self, operation_id: &str) {
+    pub fn complete_operation(&self, operation_id: &OperationId) {
         self.operations.remove(operation_id);
     }
 
@@ -242,65 +219,27 @@ impl Default for DefaultIndexingOperations {
 }
 
 impl IndexingOperationsInterface for DefaultIndexingOperations {
-    fn get_operations(&self) -> HashMap<String, IndexingOperation> {
+    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         self.operations
             .iter()
             .map(|entry| (entry.key().clone(), entry.value().clone()))
             .collect()
     }
 
-    fn start_operation(&self, collection: &str, total_files: usize) -> String {
+    fn start_operation(&self, collection: &CollectionId, total_files: usize) -> OperationId {
         self.start_operation_internal(collection, total_files)
-    }
-
-    fn update_progress(&self, operation_id: &str, current_file: Option<String>, processed: usize) {
-        DefaultIndexingOperations::update_progress(self, operation_id, current_file, processed);
-    }
-
-    fn complete_operation(&self, operation_id: &str) {
-        DefaultIndexingOperations::complete_operation(self, operation_id);
-    }
-}
-
-// ============================================================================
-// Indexing Operations - Null Implementation
-// ============================================================================
-
-/// Null implementation of IndexingOperationsInterface for testing
-#[derive(Default)]
-pub struct NullIndexingOperations;
-
-impl IndexingOperationsInterface for NullIndexingOperations {
-    fn get_operations(&self) -> HashMap<String, IndexingOperation> {
-        HashMap::new()
-    }
-
-    fn start_operation(&self, _collection: &str, _total_files: usize) -> String {
-        String::new() // no-op
     }
 
     fn update_progress(
         &self,
-        _operation_id: &str,
-        _current_file: Option<String>,
-        _processed: usize,
+        operation_id: &OperationId,
+        current_file: Option<String>,
+        processed: usize,
     ) {
-        // no-op
+        DefaultIndexingOperations::update_progress(self, operation_id, current_file, processed);
     }
 
-    fn complete_operation(&self, _operation_id: &str) {
-        // no-op
+    fn complete_operation(&self, operation_id: &OperationId) {
+        DefaultIndexingOperations::complete_operation(self, operation_id);
     }
-}
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-/// Get current Unix timestamp
-fn current_timestamp() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0)
 }

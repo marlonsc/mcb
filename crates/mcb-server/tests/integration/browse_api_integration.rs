@@ -2,24 +2,28 @@
 //!
 //! Tests the REST API for browsing indexed collections, files, and chunks.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use async_trait::async_trait;
-use mcb_application::ports::admin::{
+use mcb_domain::ports::admin::{
     IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
     PerformanceMetricsInterface,
 };
-use mcb_application::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
-use mcb_domain::error::Result;
-use mcb_domain::events::DomainEvent;
+use mcb_domain::ports::browse::HighlightServiceInterface;
+use mcb_domain::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
 use mcb_domain::ports::providers::VectorStoreBrowser;
-use mcb_domain::value_objects::{CollectionInfo, FileInfo, SearchResult};
+use mcb_domain::value_objects::browse::HighlightedCode;
+use mcb_domain::value_objects::{
+    CollectionId, CollectionInfo, FileInfo, OperationId, SearchResult,
+};
+use mcb_domain::{DomainEvent, Result as DomainResult};
 use mcb_server::admin::auth::AdminAuthConfig;
 use mcb_server::admin::browse_handlers::BrowseState;
 use mcb_server::admin::handlers::AdminState;
 use mcb_server::admin::routes::admin_rocket;
 use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
-use std::collections::HashMap;
-use std::sync::Arc;
 
 /// Mock VectorStoreBrowser for testing
 pub struct MockVectorStoreBrowser {
@@ -55,20 +59,42 @@ impl MockVectorStoreBrowser {
 
 #[async_trait]
 impl VectorStoreBrowser for MockVectorStoreBrowser {
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+    async fn list_collections(&self) -> DomainResult<Vec<CollectionInfo>> {
         Ok(self.collections.clone())
     }
 
-    async fn list_file_paths(&self, _collection: &str, limit: usize) -> Result<Vec<FileInfo>> {
+    async fn list_file_paths(
+        &self,
+        _collection: &CollectionId,
+        limit: usize,
+    ) -> DomainResult<Vec<FileInfo>> {
         Ok(self.files.iter().take(limit).cloned().collect())
     }
 
     async fn get_chunks_by_file(
         &self,
-        _collection: &str,
+        _collection: &CollectionId,
         _file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
+    ) -> DomainResult<Vec<SearchResult>> {
         Ok(self.chunks.clone())
+    }
+}
+
+/// Mock HighlightService for testing
+pub struct MockHighlightService;
+
+#[async_trait]
+impl HighlightServiceInterface for MockHighlightService {
+    async fn highlight(
+        &self,
+        code: &str,
+        language: &str,
+    ) -> std::result::Result<HighlightedCode, mcb_domain::error::Error> {
+        Ok(HighlightedCode {
+            original: code.to_string(),
+            spans: Vec::new(),
+            language: language.to_string(),
+        })
     }
 }
 
@@ -105,24 +131,24 @@ impl PerformanceMetricsInterface for MockMetrics {
 struct MockIndexing;
 
 impl IndexingOperationsInterface for MockIndexing {
-    fn get_operations(&self) -> HashMap<String, IndexingOperation> {
+    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         HashMap::new()
     }
 
-    fn start_operation(&self, _collection: &str, _total_files: usize) -> String {
-        "mock-operation-id".to_string()
+    fn start_operation(&self, _collection: &CollectionId, _total_files: usize) -> OperationId {
+        OperationId::new("mock-operation-id")
     }
 
     fn update_progress(
         &self,
-        _operation_id: &str,
+        _operation_id: &OperationId,
         _current_file: Option<String>,
         _processed: usize,
     ) {
         // No-op for mock
     }
 
-    fn complete_operation(&self, _operation_id: &str) {
+    fn complete_operation(&self, _operation_id: &OperationId) {
         // No-op for mock
     }
 }
@@ -132,11 +158,11 @@ struct MockEventBus;
 
 #[async_trait]
 impl EventBusProvider for MockEventBus {
-    async fn publish_event(&self, _event: DomainEvent) -> Result<()> {
+    async fn publish_event(&self, _event: DomainEvent) -> DomainResult<()> {
         Ok(())
     }
 
-    async fn subscribe_events(&self) -> Result<DomainEventStream> {
+    async fn subscribe_events(&self) -> DomainResult<DomainEventStream> {
         // Return an empty stream
         Ok(Box::pin(futures::stream::empty()))
     }
@@ -145,11 +171,11 @@ impl EventBusProvider for MockEventBus {
         false
     }
 
-    async fn publish(&self, _topic: &str, _payload: &[u8]) -> Result<()> {
+    async fn publish(&self, _topic: &str, _payload: &[u8]) -> DomainResult<()> {
         Ok(())
     }
 
-    async fn subscribe(&self, _topic: &str) -> Result<String> {
+    async fn subscribe(&self, _topic: &str) -> DomainResult<String> {
         Ok("mock-subscription".to_string())
     }
 }
@@ -160,12 +186,14 @@ fn create_test_admin_state() -> AdminState {
         metrics: Arc::new(MockMetrics),
         indexing: Arc::new(MockIndexing),
         config_watcher: None,
+        current_config: mcb_infrastructure::config::types::AppConfig::default(),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,
         event_bus: Arc::new(MockEventBus),
         service_manager: None,
         cache: None,
+        project_workflow: None,
     }
 }
 
@@ -189,6 +217,7 @@ async fn test_list_collections_empty() {
     let browser = MockVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -215,6 +244,7 @@ async fn test_list_collections_with_data() {
     let browser = MockVectorStoreBrowser::new().with_collections(collections);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -242,6 +272,7 @@ async fn test_list_files_in_collection() {
     let browser = MockVectorStoreBrowser::new().with_files(files);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -283,6 +314,7 @@ async fn test_get_file_chunks() {
     let browser = MockVectorStoreBrowser::new().with_chunks(chunks);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -305,6 +337,7 @@ async fn test_browse_requires_auth() {
     let browser = MockVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -325,6 +358,7 @@ async fn test_browse_invalid_auth() {
     let browser = MockVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -345,11 +379,21 @@ async fn test_browse_invalid_auth() {
 }
 
 // ============================================================================
-// Real End-to-End Tests with InMemoryVectorStore
+// Real End-to-End Tests with EdgeVecVectorStore
 // ============================================================================
 
+use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::value_objects::Embedding;
-use mcb_providers::vector_store::in_memory::InMemoryVectorStoreProvider;
+use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
+
+/// Creates a test vector store instance (EdgeVec in-memory)
+fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
+    let config = EdgeVecConfig {
+        dimensions: 384,
+        ..Default::default()
+    };
+    EdgeVecVectorStoreProvider::new(config).expect("Failed to create test vector store")
+}
 
 /// Helper to create metadata for a code chunk
 fn create_chunk_metadata(
@@ -379,13 +423,12 @@ fn create_dummy_embedding(dimensions: usize) -> Embedding {
     }
 }
 
-/// Populate an in-memory vector store with test data simulating real indexed code
-async fn populate_test_store(store: &InMemoryVectorStoreProvider, collection: &str) {
-    use mcb_domain::ports::providers::VectorStoreProvider;
-
+/// Populate vector store with test data simulating real indexed code
+async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) {
+    let collection_id = CollectionId::new(collection);
     // Create collection
     store
-        .create_collection(collection, 384)
+        .create_collection(&collection_id, 384)
         .await
         .expect("Failed to create collection");
 
@@ -453,7 +496,7 @@ async fn populate_test_store(store: &InMemoryVectorStoreProvider, collection: &s
         .collect();
 
     store
-        .insert_vectors(collection, &embeddings, metadata)
+        .insert_vectors(&collection_id, &embeddings, metadata)
         .await
         .expect("Failed to insert vectors");
 }
@@ -461,7 +504,7 @@ async fn populate_test_store(store: &InMemoryVectorStoreProvider, collection: &s
 #[tokio::test]
 async fn test_e2e_real_store_list_collections() {
     // Create real in-memory store
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
 
     // Populate with test data
     populate_test_store(&store, "test_project").await;
@@ -469,6 +512,7 @@ async fn test_e2e_real_store_list_collections() {
     // Create browse state with real store
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -500,16 +544,17 @@ async fn test_e2e_real_store_list_collections() {
     assert_eq!(collection["name"], "test_project");
     assert_eq!(collection["vector_count"], 8, "Should have 8 chunks total");
     assert_eq!(collection["file_count"], 4, "Should have 4 unique files");
-    assert_eq!(collection["provider"], "in_memory");
+    assert_eq!(collection["provider"], "edgevec");
 }
 
 #[tokio::test]
 async fn test_e2e_real_store_list_files() {
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
     populate_test_store(&store, "test_project").await;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -563,11 +608,12 @@ async fn test_e2e_real_store_list_files() {
 
 #[tokio::test]
 async fn test_e2e_real_store_get_file_chunks() {
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
     populate_test_store(&store, "test_project").await;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -637,11 +683,12 @@ async fn test_e2e_real_store_navigate_full_flow() {
     // 3. Select a file and view chunks
     // 4. Validate data at each step
 
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
     populate_test_store(&store, "my_rust_project").await;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -723,11 +770,12 @@ async fn test_e2e_real_store_navigate_full_flow() {
 
 #[tokio::test]
 async fn test_e2e_real_store_collection_not_found() {
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
     populate_test_store(&store, "existing_collection").await;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -749,7 +797,7 @@ async fn test_e2e_real_store_collection_not_found() {
 
 #[tokio::test]
 async fn test_e2e_real_store_multiple_collections() {
-    let store = InMemoryVectorStoreProvider::new();
+    let store = create_test_vector_store();
 
     // Create multiple collections
     populate_test_store(&store, "project_alpha").await;
@@ -757,6 +805,7 @@ async fn test_e2e_real_store_multiple_collections() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
+        highlight_service: Arc::new(MockHighlightService),
     };
 
     let client = create_test_client(browse_state).await;

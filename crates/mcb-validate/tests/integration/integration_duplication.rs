@@ -13,14 +13,15 @@
 
 #[cfg(test)]
 mod duplication_integration_tests {
+    use std::fs;
+    use std::io::Write;
+    use std::path::PathBuf;
+
     use mcb_validate::duplication::{
         DuplicationAnalyzer, DuplicationThresholds, DuplicationType, TokenFingerprinter,
         tokenize_source,
     };
     use mcb_validate::violation_trait::Violation;
-    use std::fs;
-    use std::io::Write;
-    use std::path::PathBuf;
     use tempfile::TempDir;
 
     fn create_temp_file(dir: &TempDir, name: &str, content: &str) -> PathBuf {
@@ -97,8 +98,8 @@ mod duplication_integration_tests {
 
         // Use fingerprinter to check
         let mut fingerprinter = TokenFingerprinter::new(5);
-        fingerprinter.fingerprint_file(PathBuf::from("file1.rs"), &tokens1);
-        fingerprinter.fingerprint_file(PathBuf::from("file2.rs"), &tokens2);
+        fingerprinter.fingerprint_file(&PathBuf::from("file1.rs"), &tokens1);
+        fingerprinter.fingerprint_file(&PathBuf::from("file2.rs"), &tokens2);
 
         let matches = fingerprinter.find_duplicates();
 

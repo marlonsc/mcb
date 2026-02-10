@@ -10,11 +10,11 @@ description: "Handler uses concrete type instead of Arc<dyn Trait>"
 rationale: "Handlers should depend on abstractions, not concretions"
 
 rule: |
-  rule ConcreteTypeInHandler "Check for concrete types in handlers" {
-      when
-          Handler() &&
-          UsesConcreteType() &&
-          !UsesArcDynTrait()
-      then
-          Violation("Handler uses concrete type instead of Arc<dyn Trait>");
-  }
+    rule ConcreteTypeInHandler "Check for concrete types in handlers" {
+        when
+            Handler() &&
+            UsesConcreteType() &&
+            !UsesArcDynTrait()
+        then
+            Violation("Handler uses concrete type instead of Arc<dyn Trait>");
+    }

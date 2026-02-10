@@ -9,7 +9,7 @@
 
 ## Overview
 
-The infrastructure module provides shared technical services and cross-cutting concerns for the MCP Context Browser system. It implements dill-based dependency injection (ADR-029), Figment configuration, caching, health checks, and null adapters for testing.
+The infrastructure module provides shared technical services and cross-cutting concerns for the Memory Context Browser system. It implements dill-based dependency injection (ADR-029), Figment configuration, caching, health checks, and null adapters for testing.
 
 ## Key Components
 
@@ -143,7 +143,7 @@ Infrastructure tests are located in `crates/mcb-infrastructure/tests/`.
 
 ## Project Alignment
 
--   **Phase context**: Keep infrastructure work tied to `docs/context/project-state.md` and `.planning/STATE.md`, ensuring Phase 6 Hybrid Search (06-02 plan) uses these DI/configuration layers without drifting ahead of the release control branch (`release/v0.1.5`).
+-   **Phase context**: Keep infrastructure work tied to `docs/context/project-state.md` and `.planning/STATE.md`, ensuring Phase 6 Hybrid Search (06-02 plan) uses these DI/configuration layers without drifting ahead of the release control branch (`release/v0.2.0`).
 -   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the layered wiring and `docs/context/technical-patterns.md` documents linkme/provider registration so every adapter matches compiled routing expectations.
 -   **Roadmap signals**: Anchor infrastructure decisions in `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` (validated requirements, debt) so features like provider health checks and session memory inherit the correct dependencies.
 -   **Operational metrics**: Sync with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for metrics when adjusting caches, health, or DI to maintain the declared `0 architecture violations` and `~1805 tests` commitments.

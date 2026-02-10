@@ -3,18 +3,16 @@
 //! Implements `ValidationServiceInterface` using mcb-validate for
 //! architecture validation.
 
+use std::path::Path;
+
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::services::{
     ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
     ViolationEntry,
 };
-use std::path::Path;
 
 /// Infrastructure validation service using mcb-validate
-///
-/// This is the real implementation that delegates to mcb-validate.
-/// Named differently from mcb-application's stub to avoid REF002 violation.
 pub struct InfraValidationService;
 
 impl InfraValidationService {
@@ -205,12 +203,11 @@ fn find_workspace_root(start: &Path) -> Option<std::path::PathBuf> {
 
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
-                    return Some(current);
-                }
-            }
+        if cargo_toml.exists()
+            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
+            && content.contains("[workspace]")
+        {
+            return Some(current);
         }
         if !current.pop() {
             return None;

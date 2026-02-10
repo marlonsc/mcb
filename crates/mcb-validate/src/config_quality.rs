@@ -6,51 +6,75 @@
 //! - Detects default values without documentation
 //! - Ensures proper use of configuration patterns
 
-use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use std::path::{Path, PathBuf};
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+
+use crate::violation_trait::{Violation, ViolationCategory};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Configuration quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConfigQualityViolation {
     /// Hardcoded string in configuration that should be configurable
     HardcodedConfigString {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The hardcoded string value found in the configuration.
         string_value: String,
+        /// Context describing where the hardcoded string is used (e.g., "HTTP header").
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Magic number in code outside constants module
     MagicNumber {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The magic number value found.
         number: String,
+        /// Context describing where the magic number is used.
         context: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Default implementation without documentation
     UndocumentedDefault {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number where the `Default` implementation begins.
         line: usize,
+        /// Name of the struct that has an undocumented `Default` implementation.
         struct_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Configuration field without documentation
     UndocumentedConfigField {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number where the configuration field is defined.
         line: usize,
+        /// Name of the configuration field that is missing documentation.
         field_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
     /// Hardcoded namespace or prefix that should be configurable
     HardcodedNamespace {
+        /// File where the violation occurred.
         file: PathBuf,
+        /// Line number of the violation.
         line: usize,
+        /// The hardcoded namespace string found.
         namespace: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
@@ -227,6 +251,7 @@ impl ConfigQualityValidator {
 
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|e| {
@@ -278,18 +303,18 @@ impl ConfigQualityValidator {
         violations: &mut Vec<ConfigQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if let Some(captures) = namespace_pattern.captures(line) {
-                if let Some(namespace) = captures.get(1) {
-                    let namespace_str = namespace.as_str();
-                    // Skip if it's already using a constant or documented default
-                    if !self.is_documented_or_constant(lines, i) {
-                        violations.push(ConfigQualityViolation::HardcodedNamespace {
-                            file: file.to_path_buf(),
-                            line: i + 1,
-                            namespace: namespace_str.to_string(),
-                            severity: Severity::Warning,
-                        });
-                    }
+            if let Some(captures) = namespace_pattern.captures(line)
+                && let Some(namespace) = captures.get(1)
+            {
+                let namespace_str = namespace.as_str();
+                // Skip if it's already using a constant or documented default
+                if !self.is_documented_or_constant(lines, i) {
+                    violations.push(ConfigQualityViolation::HardcodedNamespace {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        namespace: namespace_str.to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
             }
         }
@@ -303,19 +328,19 @@ impl ConfigQualityValidator {
         violations: &mut Vec<ConfigQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if let Some(captures) = client_name_pattern.captures(line) {
-                if let Some(client_name) = captures.get(1) {
-                    let client_name_str = client_name.as_str();
-                    // This is actually acceptable as a default - skip if properly documented
-                    if !self.is_documented_or_constant(lines, i) {
-                        violations.push(ConfigQualityViolation::HardcodedConfigString {
-                            file: file.to_path_buf(),
-                            line: i + 1,
-                            string_value: client_name_str.to_string(),
-                            context: "client_name".to_string(),
-                            severity: Severity::Info,
-                        });
-                    }
+            if let Some(captures) = client_name_pattern.captures(line)
+                && let Some(client_name) = captures.get(1)
+            {
+                let client_name_str = client_name.as_str();
+                // This is actually acceptable as a default - skip if properly documented
+                if !self.is_documented_or_constant(lines, i) {
+                    violations.push(ConfigQualityViolation::HardcodedConfigString {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        string_value: client_name_str.to_string(),
+                        context: "client_name".to_string(),
+                        severity: Severity::Info,
+                    });
                 }
             }
         }
@@ -329,21 +354,22 @@ impl ConfigQualityValidator {
         violations: &mut Vec<ConfigQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if let Some(captures) = header_pattern.captures(line) {
-                if let Some(header) = captures.get(1) {
-                    let header_str = header.as_str();
-                    // Skip if it's a well-known constant like API_KEY_HEADER
-                    if header_str.starts_with("X-") && !line.contains("API_KEY_HEADER") {
-                        if !self.is_documented_or_constant(lines, i) {
-                            violations.push(ConfigQualityViolation::HardcodedConfigString {
-                                file: file.to_path_buf(),
-                                line: i + 1,
-                                string_value: header_str.to_string(),
-                                context: "HTTP header".to_string(),
-                                severity: Severity::Warning,
-                            });
-                        }
-                    }
+            if let Some(captures) = header_pattern.captures(line)
+                && let Some(header) = captures.get(1)
+            {
+                let header_str = header.as_str();
+                // Skip if it's a well-known constant like API_KEY_HEADER
+                if header_str.starts_with("X-")
+                    && !line.contains("API_KEY_HEADER")
+                    && !self.is_documented_or_constant(lines, i)
+                {
+                    violations.push(ConfigQualityViolation::HardcodedConfigString {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        string_value: header_str.to_string(),
+                        context: "HTTP header".to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
             }
         }
@@ -357,22 +383,22 @@ impl ConfigQualityValidator {
         violations: &mut Vec<ConfigQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if let Some(captures) = default_impl_pattern.captures(line) {
-                if let Some(struct_name) = captures.get(1) {
-                    // Check if there's a doc comment above
-                    let has_doc_comment = i > 0 && {
-                        lines[i - 1].trim().starts_with("///")
-                            || (i > 1 && lines[i - 2].trim().starts_with("///"))
-                    };
+            if let Some(captures) = default_impl_pattern.captures(line)
+                && let Some(struct_name) = captures.get(1)
+            {
+                // Check if there's a doc comment above
+                let has_doc_comment = i > 0 && {
+                    lines[i - 1].trim().starts_with("///")
+                        || (i > 1 && lines[i - 2].trim().starts_with("///"))
+                };
 
-                    if !has_doc_comment {
-                        violations.push(ConfigQualityViolation::UndocumentedDefault {
-                            file: file.to_path_buf(),
-                            line: i + 1,
-                            struct_name: struct_name.as_str().to_string(),
-                            severity: Severity::Info,
-                        });
-                    }
+                if !has_doc_comment {
+                    violations.push(ConfigQualityViolation::UndocumentedDefault {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        struct_name: struct_name.as_str().to_string(),
+                        severity: Severity::Info,
+                    });
                 }
             }
         }

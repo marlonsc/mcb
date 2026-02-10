@@ -10,26 +10,21 @@
 use std::io::{self, BufRead, Write};
 use std::time::Duration;
 
+use mcb_domain::value_objects::ids::SessionId;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use super::types::{McpRequest, McpResponse};
-
-/// JSON-RPC 2.0 error codes
-const JSONRPC_PARSE_ERROR: i32 = -32700;
-const JSONRPC_INTERNAL_ERROR: i32 = -32603;
+use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
 
 /// MCP client transport configuration
-///
-/// Note: Named `McpClientConfig` to distinguish from `HttpClientConfig` in
-/// mcb-providers which configures HTTP client pooling for API providers.
 #[derive(Debug, Clone)]
 pub struct McpClientConfig {
     /// Server URL (e.g., "http://127.0.0.1:8080")
     pub server_url: String,
 
     /// Session ID for this client connection
-    pub session_id: String,
+    pub session_id: SessionId,
 
     /// Request timeout
     pub timeout: Duration,
@@ -62,8 +57,8 @@ impl HttpClientTransport {
         timeout: Duration,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let session_id = match session_prefix {
-            Some(prefix) => format!("{}_{}", prefix, Uuid::new_v4()),
-            None => Uuid::new_v4().to_string(),
+            Some(prefix) => SessionId::new(format!("{}_{}", prefix, Uuid::new_v4())),
+            None => SessionId::new(Uuid::new_v4().to_string()),
         };
 
         let config = McpClientConfig {
@@ -153,7 +148,7 @@ impl HttpClientTransport {
             .client
             .post(&url)
             .header("Content-Type", "application/json")
-            .header("X-Session-Id", &self.config.session_id)
+            .header("X-Session-Id", self.config.session_id.as_str())
             .json(request)
             .send()
             .await?;
@@ -170,7 +165,7 @@ impl HttpClientTransport {
 
     /// Get the session ID for this client
     pub fn session_id(&self) -> &str {
-        &self.config.session_id
+        self.config.session_id.as_str()
     }
 
     /// Get the server URL
@@ -227,6 +222,3 @@ impl HttpClientTransport {
         Ok(())
     }
 }
-
-// Tests moved to crates/mcb-server/tests/integration/operating_modes_integration.rs
-// See: test_http_client_* tests for coverage
