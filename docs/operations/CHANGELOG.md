@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **MCP Context Browser** will be documented in this file.
+All notable changes to **Memory Context Browser** will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.2.0** is a major stabilization release delivering critical bug fixes for the Agent, Session, and Memory subsystems, strict MCP protocol compliance, integration gap fixes, and a comprehensive documentation overhaul. This release also ships first-class MCB integration into the oh-my-opencode and dotopencode ecosystems, and solidifies the architecture for the upcoming Workflow System (v0.3.0).
+**Memory Context Browser v0.2.0** is a major stabilization release delivering critical bug fixes for the Agent, Session, and Memory subsystems, strict MCP protocol compliance, integration gap fixes, and a comprehensive documentation overhaul. This release also ships first-class MCB integration into the oh-my-opencode and dotopencode ecosystems, and solidifies the architecture for the upcoming Workflow System (v0.3.0).
 
 ### Fixed
 
@@ -134,7 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.5** delivers new providers, health endpoints, and code quality improvements following DRY/SOLID principles. This release adds Anthropic embedding, Pinecone and Qdrant vector store providers, plus Kubernetes-ready health endpoints.
+**Memory Context Browser v0.1.5** delivers new providers, health endpoints, and code quality improvements following DRY/SOLID principles. This release adds Anthropic embedding, Pinecone and Qdrant vector store providers, plus Kubernetes-ready health endpoints.
 
 <!-- markdownlint-disable MD044 -->
 ### Added
@@ -173,7 +173,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.4** delivers RCA integration, security fixes, and dependency updates. This release migrates AST analysis to Rust-code-analysis, removes the deprecated `atty` crate, and includes all Dependabot security updates.
+**Memory Context Browser v0.1.4** delivers RCA integration, security fixes, and dependency updates. This release migrates AST analysis to Rust-code-analysis, removes the deprecated `atty` crate, and includes all Dependabot security updates.
 
 <!-- markdownlint-disable MD044 -->
 ### Added
@@ -211,7 +211,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.3** delivers config consolidation and validation fixes. 16 config files to 6, all 23 validation violations resolved.
+**Memory Context Browser v0.1.3** delivers config consolidation and validation fixes. 16 config files to 6, all 23 validation violations resolved.
 
 ### Changed
 
@@ -224,7 +224,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Was Planned For
 
-**MCP Context Browser v0.1.3** was planned to deliver architecture evolution introducing bounded contexts, explicit engine contracts, and incremental indexing - inspired by kamu-cli's production Onion/Clean patterns while maintaining backward compatibility. This has been deferred to v0.2.0.
+**Memory Context Browser v0.1.3** was planned to deliver architecture evolution introducing bounded contexts, explicit engine contracts, and incremental indexing - inspired by kamu-cli's production Onion/Clean patterns while maintaining backward compatibility. This has been deferred to v0.2.0.
 
 ### Added
 
@@ -278,7 +278,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.2** delivers provider modernization and architecture validation capabilities. This release replaces the inventory-based provider registration with compile-time linkme distributed slices and introduces the mcb-validate crate for automated architecture enforcement.
+**Memory Context Browser v0.1.2** delivers provider modernization and architecture validation capabilities. This release replaces the inventory-based provider registration with compile-time linkme distributed slices and introduces the mcb-validate crate for automated architecture enforcement.
 
 ### Added
 
@@ -392,7 +392,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.0**is the first stable release, delivering a complete drop-in replacement for Claude-context with superior performance, expanded language support, and enterprise-grade architecture. This release represents the culmination of extensive refactoring and feature development.
+**Memory Context Browser v0.1.0**is the first stable release, delivering a complete drop-in replacement for Claude-context with superior performance, expanded language support, and enterprise-grade architecture. This release represents the culmination of extensive refactoring and feature development.
 
 ### Added
 
@@ -480,7 +480,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.1.0**establishes the project as a reference implementation for documentation excellence in Rust projects. This release transforms documentation from an afterthought into a core engineering discipline.
+**Memory Context Browser v0.1.0**establishes the project as a reference implementation for documentation excellence in Rust projects. This release transforms documentation from an afterthought into a core engineering discipline.
 
 ### Added
 
@@ -514,7 +514,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.0.3**is a strong production foundation release that establishes enterprise-grade reliability and observability. This release successfully transforms the system from a development prototype into a production-capable MCP server with sophisticated monitoring, intelligent routing, and robust error handling.
+**Memory Context Browser v0.0.3**is a strong production foundation release that establishes enterprise-grade reliability and observability. This release successfully transforms the system from a development prototype into a production-capable MCP server with sophisticated monitoring, intelligent routing, and robust error handling.
 
 ### Added
 
@@ -574,7 +574,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.0.2**is a documentation and infrastructure release that establishes comprehensive project documentation and development infrastructure. This release focuses on making the codebase accessible to contributors and establishing professional development practices.
+**Memory Context Browser v0.0.2**is a documentation and infrastructure release that establishes comprehensive project documentation and development infrastructure. This release focuses on making the codebase accessible to contributors and establishing professional development practices.
 
 ### Added
 
@@ -607,7 +607,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What This Release Is
 
-**MCP Context Browser v0.0.1**is an architectural foundation release. It establishes a SOLID, extensible codebase for semantic code search while implementing only basic functionality.
+**Memory Context Browser v0.0.1**is an architectural foundation release. It establishes a SOLID, extensible codebase for semantic code search while implementing only basic functionality.
 
 ### Added
 

@@ -3,7 +3,7 @@
 **Version**: 0.2.0  
 **Updated**: 2026-02-05
 
-MCP Context Browser uses Figment for configuration management per [ADR-025](adr/025-figment-configuration.md).
+Memory Context Browser uses Figment for configuration management per [ADR-025](adr/025-figment-configuration.md).
 
 ## Overview
 

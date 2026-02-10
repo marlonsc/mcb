@@ -391,7 +391,7 @@ jobs:
 
 -   [Redis Documentation](https://redis.io/documentation)
 -   [NATS Documentation](https://docs.nats.io/)
--   [MCP Context Browser Architecture](./architecture/ARCHITECTURE.md)
+-   [Memory Context Browser Architecture](./architecture/ARCHITECTURE.md)
 -   [ADR-005: Context Cache Support (Moka and Redis)](./adr/005-context-cache-support.md)
 
 ## Contributing

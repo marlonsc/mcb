@@ -1,4 +1,4 @@
-# MCP Context Browser - Comprehensive Architecture Documentation
+# Memory Context Browser - Comprehensive Architecture Documentation
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
@@ -27,7 +27,7 @@
 
 ### Project Overview
 
-MCP Context Browser is a high-performance, extensible Model Context Protocol (MCP) server that provides semantic code search and analysis capabilities to AI assistants. The system transforms natural language queries into vector embeddings and performs similarity searches across indexed codebases, enabling intelligent code discovery and analysis.
+Memory Context Browser is a high-performance, extensible Model Context Protocol (MCP) server that provides semantic code search and analysis capabilities to AI assistants. The system transforms natural language queries into vector embeddings and performs similarity searches across indexed codebases, enabling intelligent code discovery and analysis.
 
 ### Core Capabilities
 
@@ -73,7 +73,7 @@ graph TB
         VCS[Version Control<br/>Git, SVN]
     end
 
-    subgraph "MCP Context Browser"
+    subgraph "Memory Context Browser"
         MCP[MCP Server<br/>Protocol Handler]
         CORE[Core Services<br/>Search, Index, Context]
         PROVIDERS[Provider Layer<br/>AI + Storage]
@@ -104,7 +104,7 @@ graph TB
 
 ### System Purpose
 
-MCP Context Browser serves as a semantic code intelligence layer between AI assistants and codebases, enabling:
+Memory Context Browser serves as a semantic code intelligence layer between AI assistants and codebases, enabling:
 
 -   **Natural Language Code Search**: Find code by describing functionality
 -   **Intelligent Code Analysis**: Understand code relationships and patterns
@@ -156,7 +156,7 @@ MCP Context Browser serves as a semantic code intelligence layer between AI assi
 
 ```mermaid
 graph TB
-    subgraph "MCP Context Browser System"
+    subgraph "Memory Context Browser System"
         subgraph "API Layer"
             MCP[MCP Server<br/>Protocol Handler]
             REST[REST API<br/>HTTP/JSON]
@@ -538,7 +538,7 @@ All 20+ port traits are defined in mcb-domain and registered in dill Catalog for
 
 ### Clean Architecture Principles
 
-MCP Context Browser implements Robert C. Martin's Clean Architecture with strict layer separation. The key principles are:
+Memory Context Browser implements Robert C. Martin's Clean Architecture with strict layer separation. The key principles are:
 
 1.  **Dependency Rule**: Dependencies only point inward (toward the domain)
 2.  **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
@@ -2446,6 +2446,6 @@ impl BackupManager {
 
 ---
 
-This comprehensive architecture documentation provides a SOLID foundation for understanding, maintaining, and evolving the MCP Context Browser system. The modular, extensible design ensures long-term maintainability while supporting the ambitious roadmap of features and integrations.
+This comprehensive architecture documentation provides a SOLID foundation for understanding, maintaining, and evolving the Memory Context Browser system. The modular, extensible design ensures long-term maintainability while supporting the ambitious roadmap of features and integrations.
 
 For questions or contributions, please refer to the [CONTRIBUTING.md](../developer/CONTRIBUTING.md) guide or open an issue on GitHub.

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This roadmap outlines the development of MCP Context Browser, a drop-in replacement for Claude-context with enhanced capabilities for semantic code search.
+This roadmap outlines the development of Memory Context Browser, a drop-in replacement for Claude-context with enhanced capabilities for semantic code search.
 
 ---
 
@@ -14,7 +14,7 @@ This roadmap outlines the development of MCP Context Browser, a drop-in replacem
 **Release Date**: February 9, 2026
 **Key Architecture**: ADR-003 (Provider), ADR-029 (Hexagonal DI), Stabilization Fixes
 
-MCP Context Browser v0.2.0 completes documentation refactoring and delivers critical stabilization fixes for Agent, Session, and Memory subsystems.
+Memory Context Browser v0.2.0 completes documentation refactoring and delivers critical stabilization fixes for Agent, Session, and Memory subsystems.
 
 #### Achievements
 
@@ -70,7 +70,7 @@ This phase addresses remaining feature gaps to fully enable "Project as Central 
 **Target Date**: Q1 2026 (4-8 weeks)
 **Key Architecture**: ADR-034 (FSM), ADR-035 (Scout), ADR-036 (Policies), ADR-037 (Orchestrator), ADR-038 (Tiers)
 
-MCP Context Browser v0.3.0 implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
+Memory Context Browser v0.3.0 implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
 
 #### Planned Achievements
 
@@ -112,7 +112,7 @@ MCP Context Browser v0.3.0 implements complete workflow system with FSM-based ta
 **Target Date**: Q2 2026 (after v0.3.0)
 **Key Architecture**: ADR-041-046 (Context System), depends on v0.3.0 APIs
 
-MCP Context Browser v0.4.0 implements integrated context system with multi-agent collaboration, context merging, and session lifecycle management.
+Memory Context Browser v0.4.0 implements integrated context system with multi-agent collaboration, context merging, and session lifecycle management.
 
 #### Planned Achievements
 
@@ -157,7 +157,7 @@ MCP Context Browser v0.4.0 implements integrated context system with multi-agent
 **Release Date**: January 28, 2026
 **Key Architecture**: ADR-001 (Modular Crates), ADR-002 (Async-First), ADR-029 (Hexagonal DI)
 
-MCP Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes security vulnerabilities, and updates dependencies.
+Memory Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes security vulnerabilities, and updates dependencies.
 
 #### Achievements
 
@@ -199,7 +199,7 @@ MCP Context Browser v0.1.4 completes Rust-code-analysis (RCA) integration, fixes
 **Release Date**: January 18, 2026
 **Key Architecture**: ADR-023 (Linkme Migration), ADR-027 (Architecture Evolution)
 
-MCP Context Browser v0.1.2 modernizes provider registration using compile-time linkme distributed slices and introduces the mcb-validate crate scaffolding.
+Memory Context Browser v0.1.2 modernizes provider registration using compile-time linkme distributed slices and introduces the mcb-validate crate scaffolding.
 
 #### Achievements
 
@@ -259,7 +259,7 @@ MCP Context Browser v0.1.2 modernizes provider registration using compile-time l
 **Release Date**: January 11, 2026
 **Key Architecture**: ADR-001 (Modular Crates), ADR-002 (Async-First), ADR-013 (Clean Architecture)
 
-MCP Context Browser v0.1.0 is the first stable release, providing a complete drop-in replacement for Claude-context with superior performance and expanded capabilities.
+Memory Context Browser v0.1.0 is the first stable release, providing a complete drop-in replacement for Claude-context with superior performance and expanded capabilities.
 
 #### Achievements
 
@@ -288,7 +288,7 @@ MCP Context Browser v0.1.0 is the first stable release, providing a complete dro
 
 #### Vision
 
-Transform MCP Context Browser into a comprehensive development platform combining FSM-based task orchestration with git-aware semantic search, persistent cross-session memory, and IDE-like code browsing.
+Transform Memory Context Browser into a comprehensive development platform combining FSM-based task orchestration with git-aware semantic search, persistent cross-session memory, and IDE-like code browsing.
 
 #### Objectives
 

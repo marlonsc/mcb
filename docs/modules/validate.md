@@ -7,7 +7,7 @@
 
 ## Overview
 
-The validation module provides comprehensive architecture enforcement and code quality validation for the MCP Context Browser project. It implements a multi-phase validation pipeline that ensures Clean Architecture compliance, code quality standards, and architectural decision record (ADR) adherence.
+The validation module provides comprehensive architecture enforcement and code quality validation for the Memory Context Browser project. It implements a multi-phase validation pipeline that ensures Clean Architecture compliance, code quality standards, and architectural decision record (ADR) adherence.
 
 ## Architecture
 

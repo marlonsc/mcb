@@ -36,9 +36,9 @@ if ! command -v docker &>/dev/null; then
 	exit 1
 fi
 
-# Check if docker-compose is available
-if ! command -v docker-compose &>/dev/null; then
-	log_error "docker-compose is not installed. Please install docker-compose to run integration tests."
+# Check if docker-compose -f tests/docker-compose.yml is available
+if ! command -v docker-compose -f tests/docker-compose.yml &>/dev/null; then
+	log_error "docker-compose -f tests/docker-compose.yml is not installed. Please install docker-compose -f tests/docker-compose.yml to run integration tests."
 	exit 1
 fi
 
@@ -47,22 +47,22 @@ cd "$PROJECT_ROOT"
 case "${1:-}" in
 start)
 	log_info "Starting infrastructure services (Redis, NATS, etc.)..."
-	docker-compose up -d redis nats
+	docker-compose -f tests/docker-compose.yml up -d redis nats
 
 	log_info "Waiting for services to be healthy..."
 	sleep 5
 
 	# Check Redis
-	if docker-compose exec -T redis redis-cli ping >/dev/null 2>&1; then
+	if docker-compose -f tests/docker-compose.yml exec -T redis redis-cli ping >/dev/null 2>&1; then
 		log_success "Redis is healthy"
 	else
 		log_error "Redis failed to start"
-		docker-compose logs redis
+		docker-compose -f tests/docker-compose.yml logs redis
 		exit 1
 	fi
 
 	# Check NATS
-	if docker-compose exec -T nats wget --spider -q http://localhost:8222/healthz >/dev/null 2>&1; then
+	if docker-compose -f tests/docker-compose.yml exec -T nats wget --spider -q http://localhost:8222/healthz >/dev/null 2>&1; then
 		log_success "NATS is healthy"
 	else
 		log_warn "NATS health check inconclusive (may still be starting)"
@@ -71,24 +71,24 @@ start)
 
 stop)
 	log_info "Stopping infrastructure services..."
-	docker-compose stop redis nats
+	docker-compose -f tests/docker-compose.yml stop redis nats
 	log_success "Services stopped"
 	;;
 
 restart)
 	log_info "Restarting services..."
-	docker-compose restart redis nats
+	docker-compose -f tests/docker-compose.yml restart redis nats
 	sleep 3
 	log_success "Services restarted"
 	;;
 
 logs)
-	docker-compose logs -f redis nats
+	docker-compose -f tests/docker-compose.yml logs -f redis nats
 	;;
 
 test)
 	log_info "Starting all infrastructure services..."
-	docker-compose up -d
+	docker-compose -f tests/docker-compose.yml up -d
 
 	log_info "Waiting for services to be ready..."
 	sleep 5
@@ -106,7 +106,7 @@ test)
 	log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 	log_info "Cleaning up services..."
-	docker-compose down -v
+	docker-compose -f tests/docker-compose.yml down -v
 	log_success "Cleanup complete"
 	;;
 

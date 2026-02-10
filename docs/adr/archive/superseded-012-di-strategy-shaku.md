@@ -12,7 +12,7 @@
 
 ## Context
 
-The MCP Context Browser uses Shaku as its dependency injection framework. During the Clean Architecture refactoring (January 2026), we discovered that a pure compile-time DI approach via Shaku modules doesn't fit all our service creation needs.
+The Memory Context Browser uses Shaku as its dependency injection framework. During the Clean Architecture refactoring (January 2026), we discovered that a pure compile-time DI approach via Shaku modules doesn't fit all our service creation needs.
 
 ### The Challenge
 

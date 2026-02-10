@@ -1,12 +1,12 @@
-@startuml Container - MCP Context Browser
+@startuml Container - Memory Context Browser
 !include <C4/C4_Container>
 
-title Container - MCP Context Browser
+title Container - Memory Context Browser
 
 Person(ai_user, "AI Assistant User", "Uses AI assistants for code queries")
 Person(developer, "Developer", "Manages code indexing and searching")
 
-System_Boundary(mcp_system, "MCP Context Browser") {
+System_Boundary(mcp_system, "Memory Context Browser") {
     Container(mcp_server, "MCP Server", "Rust/Tokio", "Protocol handler, tool dispatcher")
     Container(core_services, "Core Services", "Rust", "Business logic, orchestration")
     Container(provider_layer, "Provider Layer", "Rust + SDKs", "AI and storage provider abstractions")

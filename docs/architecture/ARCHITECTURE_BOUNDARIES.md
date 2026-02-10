@@ -4,7 +4,7 @@
 **Status**: Baseline Documentation
 **Last Updated**: 2026-01-28
 
-This document defines the strict architectural boundaries for the MCB (MCP Context Browser) project following Clean Architecture principles with 8 workspace crates.
+This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 8 workspace crates.
 
 ---
 

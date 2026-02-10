@@ -18,7 +18,7 @@ implementation_status: Complete
 
 -   **Deciders:** Project team
 -   **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies), [ADR-037](./037-workflow-orchestrator.md) (Orchestrator)
--   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture), [ADR-023](./023-provider-registration-linkme.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-033](./033-mcp-handler-consolidation.md) (MCP Handlers)
+-   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-033](./033-mcp-handler-consolidation.md) (MCP Handlers)
 -   **Supersedes:** None (integrating series)
 -   **Series:** [ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md) → **ADR-038**
 
@@ -1083,5 +1083,4 @@ If implementation reveals critical issues (e.g., SQLite concurrency problems, po
 -   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI container
 -   [ADR-013: Clean Architecture Crate Separation](./013-clean-architecture-crate-separation.md) — Crate boundaries
 -   [ADR-025: Figment Configuration Migration](./025-figment-configuration.md) — Configuration loading
--   [Planning Documents](./../planning/COMPREHENSIVE-VALIDATION-REPORT.md) — Exhaustive validation analysis
--   [Critical Analysis](./../planning/ADR-034-037-CRITICAL-ANALYSIS.md) — 5 P1 issues, 8 P2 gaps, recommendations
+

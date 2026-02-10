@@ -9,7 +9,7 @@
 
 ## Overview
 
-The infrastructure module provides shared technical services and cross-cutting concerns for the MCP Context Browser system. It implements dill-based dependency injection (ADR-029), Figment configuration, caching, health checks, and null adapters for testing.
+The infrastructure module provides shared technical services and cross-cutting concerns for the Memory Context Browser system. It implements dill-based dependency injection (ADR-029), Figment configuration, caching, health checks, and null adapters for testing.
 
 ## Key Components
 

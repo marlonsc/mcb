@@ -1,6 +1,6 @@
 # Environment Variables Reference
 
-Complete reference for all environment variables supported by MCP Context Browser.
+Complete reference for all environment variables supported by Memory Context Browser.
 
 **Version**: 0.1.4
 **Last Updated**: 2026-01-28
@@ -11,7 +11,7 @@ See also [CONFIGURATION.md](../CONFIGURATION.md) for Figment-based config (ADR-0
 
 ## Overview
 
-MCP Context Browser uses a hierarchical configuration system:
+Memory Context Browser uses a hierarchical configuration system:
 
 1.**Configuration Files**: `config/default.toml` and `config/local.toml`
 2.**Environment Variables**: Override config file settings with prefix `MCP__`

@@ -32,7 +32,7 @@ implementation_status: Incomplete
 
 ## Context
 
-MCP Context Browser v0.1.0 provides efficient semantic code search but lacks version control system awareness. This limits its usefulness in real-world scenarios:
+Memory Context Browser v0.1.0 provides efficient semantic code search but lacks version control system awareness. This limits its usefulness in real-world scenarios:
 
 **Current problems:**
 

@@ -1,235 +1,179 @@
-# MCP Context Browser
+# MCB — Memory Context Browser
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
+[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
-[![Roadmap](https://img.shields.io/badge/roadmap-v0.3.0%20%2B%20v0.4.0-lightgreen)](./RELEASE_ROADMAP_v0.3.0-v0.4.0.md)
+[![Version](https://img.shields.io/badge/version-0.2.0-green)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
 
-**High-performance MCP server for semantic code search using vector embeddings**
+**Memory Context Browser** (MCB) is a high-performance [MCP](https://modelcontextprotocol.io/) server
+that gives AI coding agents persistent memory, semantic code search, and deep codebase
+understanding — all through the standard Model Context Protocol.
 
-## Overview
+## Features
 
-MCP Context Browser is a Model Context Protocol (MCP) server that provides semantic code search capabilities using vector embeddings. Transform natural language queries into code search across indexed codebases, enabling intelligent code discovery and analysis. Built with Clean Architecture principles in Rust with comprehensive provider support.
+- 🔍 **Semantic Code Search** — Natural language queries over indexed codebases using vector embeddings
+- 🧠 **Persistent Memory** — Cross-session observation storage with timeline, tagging, and context injection
+- 🏗️ **Multi-Provider Architecture** — 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) and 6 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
+- 🌳 **AST-Aware Analysis** — Tree-sitter parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
+- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 2900+ tests)
+- 🔌 **MCP Protocol Native** — Seamless integration with Claude Desktop, Claude Code, and any MCP-compatible client
+- 🔒 **Git-Aware Indexing** — Repository-level context with branch comparison and impact analysis
 
-**Current Version**: 0.2.0  
-**In Development**: v0.3.0 (Workflow System), v0.4.0 (Integrated Context System)
+## Quick Start
 
-See [`CLAUDE.md`](./CLAUDE.md) for development guide and [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md) for complete architecture documentation.
+### Prerequisites
 
-## Installation
+- Rust 1.92+ (`rustup` recommended)
+- `make` and a POSIX shell
+- An embedding provider: [Ollama](https://ollama.ai/) (local, free) or an API key (OpenAI, VoyageAI, Gemini)
 
-### From source (recommended)
-
-Prerequisites: Rust toolchain (1.89+), `make`, and a POSIX shell.
+### Build & Install
 
 ```bash
+git clone https://github.com/marlonsc/mcb.git
+cd mcb
+
 # Build release binary
 make build-release
 
-# Install as a user systemd service (installs to ~/.claude/servers/claude-context-mcp)
+# Install as a systemd user service
 make install
 ```
 
-For a faster dev install, use `make install-debug`. If you prefer to run without systemd, build with `make build-release` and run `target/release/mcb` directly.
+### Configure
 
-### Main Features
+```bash
+# Option A: Local embeddings (free, no API key)
+export EMBEDDING_PROVIDER=fastembed
 
--   **Semantic Code Search**: Natural language queries → code discovery using vector embeddings
--   **Clean Architecture**: 8 crates (domain, application, infrastructure, providers, server, validate) per Clean Architecture layers
--   **Provider Ecosystem**: 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null), 6 vector stores (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
--   **Multi-Language Support**: AST-based parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
--   **Architecture Validation**: mcb-validate crate, Phases 1–7 (CA001–CA009, metrics, duplication); 2959+ tests project-wide
--   **Linkme Provider Registration**: Compile-time provider discovery (zero runtime overhead)
--   **Workflow System** (v0.3.0): FSM-based task orchestration with context awareness and policy enforcement
--   **Integrated Context** (v0.4.0 - Planned): Knowledge graph, hybrid search, freshness tracking, time-travel queries (blocked on v0.3.0)
+# Option B: Ollama (local, more models)
+export EMBEDDING_PROVIDER=ollama
+export OLLAMA_BASE_URL=http://localhost:11434
+
+# Option C: Cloud embeddings
+export EMBEDDING_PROVIDER=openai
+export OPENAI_API_KEY=sk-your-key
+```
+
+See [Configuration Guide](./docs/CONFIGURATION.md) for all options.
+
+### Integrate with Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "mcb": {
+      "command": "mcb",
+      "args": ["serve", "--stdio"]
+    }
+  }
+}
+```
+
+## MCP Tools
+
+MCB exposes 8 tools through the MCP protocol:
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mcb_index` | Index codebases for semantic search (start, status, clear) | ✅ Stable |
+| `mcb_search` | Semantic search across code and memory | ✅ Stable |
+| `mcb_memory` | Store, retrieve, and query persistent observations | ✅ Stable |
+| `mcb_validate` | Architecture validation and complexity analysis | ✅ Stable |
+| `mcb_vcs` | Git operations — repo indexing, branch comparison, impact analysis | ✅ Stable |
+| `mcb_session` | Session lifecycle management and summaries | ✅ Stable |
+| `mcb_agent` | Agent activity logging and tracking | ✅ Stable |
+| `mcb_project` | Project workflow management (phases, issues, decisions) | 🚧 Preview |
+
+See [MCP Tools Documentation](./docs/MCP_TOOLS.md) for full schemas and examples.
 
 ## Architecture
 
-MCP Context Browser follows **Clean Architecture** with strict layer separation across 8 Cargo workspace crates:
+MCB follows **Clean Architecture** with strict inward-only dependency flow:
 
 ```
-crates/
-├── mcb/                 # Facade crate (re-exports public API)
-├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
-├── mcb-application/     # Layer 2: Use cases, services orchestration
-├── mcb-providers/       # Layer 3: Provider implementations (embedding, vector stores)
-├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging
-├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
-└── mcb-validate/        # Dev tooling: architecture validation (Phases 1–7)
+┌─────────────────────────────────────────────────┐
+│                  mcb-server                      │
+│           (MCP protocol, transport)              │
+├─────────────────────────────────────────────────┤
+│              mcb-infrastructure                  │
+│        (DI, config, cache, logging)              │
+├─────────────────────────────────────────────────┤
+│              mcb-application                     │
+│          (use cases, orchestration)              │
+├─────────────────────────────────────────────────┤
+│                mcb-domain                        │
+│         (entities, ports, errors)                │
+└─────────────────────────────────────────────────┘
+         ▲                        ▲
+    mcb-providers            mcb-validate
+  (embeddings, stores)    (architecture rules)
 ```
 
-**Dependency Direction** (inward only):
+8 workspace crates enforce layer boundaries at compile time via
+[linkme](https://crates.io/crates/linkme) provider registration (zero runtime overhead).
 
-```
-mcb-server → mcb-infrastructure → mcb-application → mcb-domain
-                    ↓
-              mcb-providers
-```
+See [Architecture Documentation](./docs/architecture/ARCHITECTURE.md) for detailed design
+and [ADR index](./docs/adr/) for all 46 Architecture Decision Records.
 
-### Key Architectural Decisions
+## Documentation
 
-**Foundation (v0.1.0+)**:
+### Getting Started
 
--   **ADR-001**: Modular Crates Architecture – 8 crates, separation of concerns
--   **ADR-002**: Async-First Architecture – Tokio throughout
--   **ADR-013**: Clean Architecture Crate Separation – Port/Adapter pattern
+- [Quick Start Guide](./docs/user-guide/QUICKSTART.md) — Build, configure, and run in 5 minutes
+- [Configuration Reference](./docs/CONFIGURATION.md) — All environment variables and config file options
 
-**Dependency Injection (v0.1.2+)**:
+### Architecture & Design
 
--   **ADR-029**: Hexagonal Architecture with dill – DI IoC container, handles, linkme registry (replaces Shaku)
--   **ADR-023**: Inventory to Linkme Migration – Compile-time provider registration
+- [Architecture Overview](./docs/architecture/ARCHITECTURE.md) — Clean Architecture layers, crate map, dependency flow
+- [Architecture Decision Records](./docs/adr/) — 46 ADRs documenting every major design choice
+- [MCP Tools Schema](./docs/MCP_TOOLS.md) — Full tool API documentation
 
-**Provider Architecture (v0.2.0+)**:
+### Developer Guide
 
--   **ADR-003**: Unified Provider Architecture & Routing – embedding and vector store strategies
--   **ADR-030**: Multi-Provider Strategy (superseded by ADR-003)
+- [Contributing](./docs/developer/CONTRIBUTING.md) — Development setup, coding standards, PR process
+- [Roadmap](./docs/developer/ROADMAP.md) — Version plans and feature timeline
+- [Integration Tests](./docs/INTEGRATION_TESTS.md) — Test infrastructure and patterns
 
-**Workflow System (v0.3.0 - In Development)**:
+### Operations
 
--   **ADR-034**: Workflow Core FSM – State machine for task orchestration
--   **ADR-035**: Context Scout Architecture – Context gathering and search
--   **ADR-036**: Enforcement Policies – Policy engine for workflow validation
--   **ADR-037**: Orchestrator Pattern – Multi-layer task coordination
--   **ADR-038**: Multi-Tier Execution – Hierarchical execution tiers
-
-**Integrated Context (v0.4.0 - Planned)**:
-
--   **ADR-041**: Context System Architecture – 5-layer integrated context (graph → search → versioning → policies)
--   **ADR-042**: Knowledge Graph – petgraph-based relationships, tree-sitter semantic extraction
--   **ADR-043**: Hybrid Search – RRF fusion of semantic + BM25 ranking with freshness weighting
--   **ADR-044**: Lightweight Discovery Models – AST-based routing, rhai rules, optional ML
--   **ADR-045**: Context Versioning – Immutable snapshots, time-travel queries, TTL garbage collection
--   **ADR-046**: FSM & Policy Integration – Workflow gating, scope boundaries, compensation rollback
-
-**Planned (v0.2.0+)**:
-
--   **ADR-008**: Git-Aware Semantic Indexing – Repository context and multi-branch support
--   **ADR-009**: Persistent Session Memory – Cross-session observation storage
--   **ADR-034-038**: Workflow System – FSM, context discovery, policy enforcement, orchestration, multi-tier
-
-See [`docs/adr/`](./docs/adr/) for complete Architecture Decision Records (46 total) and [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md) for detailed architecture documentation.
-
-## Usage
-
-### Requirements
-
--   Rust 1.89+ (edition 2024)
--   For embedding providers: API keys (OpenAI, VoyageAI, Gemini) or local Ollama instance
--   For vector stores: Milvus/Qdrant instance (or use in-memory for development)
-
-### Build and Run
-
-```bash
-# Build
-make build-release
-
-# Run tests
-make test
-
-# Validate architecture
-make validate
-```
-
-### MCP Tools
-
-The server exposes 8 MCP tools:
-
-| Tool | Purpose |
-|------|---------|
-| `index` | Index operations (start/status/clear) |
-| `search` | Unified search for code and memory |
-| `validate` | Validation and complexity analysis |
-| `memory` | Memory storage, retrieval, timeline, inject |
-| `session` | Session lifecycle + summaries |
-| `agent` | Agent activity logging |
-| `project` | Project workflow operations |
-| `vcs` | Repository operations |
-
-### Configuration
-
-Configure via environment variables (see [`CLAUDE.md`](./CLAUDE.md) for details):
-
-```bash
-# Embedding provider (openai, voyageai, ollama, gemini, fastembed)
-export EMBEDDING_PROVIDER=ollama
-export OLLAMA_MODEL=nomic-embed-text
-
-# Vector store (in-memory, encrypted, null)
-export VECTOR_STORE_PROVIDER=in-memory
-```
-
-See [`docs/CONFIGURATION.md`](./docs/CONFIGURATION.md) for complete configuration guide.
+- [Changelog](./docs/operations/CHANGELOG.md) — Release history and migration notes
+- [Migration Guide](./docs/migration/FROM_CLAUDE_CONTEXT.md) — Upgrading from the previous project version
 
 ## Development
 
-### Commands
-
-Always use `make` commands (see [`CLAUDE.md`](./CLAUDE.md)):
-
 ```bash
 make build          # Debug build
-make build-release  # Release build
-make test           # All tests (950+)
-make quality        # Full check: fmt + lint + test
-make validate       # Architecture validation
+make build-release  # Optimized release build
+make test           # Run all tests (~2900+)
+make lint           # Clippy + format check
+make validate       # Architecture rule enforcement
+make quality        # Full pipeline: fmt + lint + test + validate
 ```
 
 ### Quality Gates
 
--   All tests pass (`make test`)
--   Clean Rust lint (`make lint`); clean Markdown lint (`make docs-lint`)
--   Zero architecture violations (`make validate`)
--   No new `unwrap/expect` in code
+All contributions must pass:
 
-See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for contribution guidelines.
+- `make lint` — Zero Clippy warnings, consistent formatting
+- `make test` — All tests green
+- `make validate` — Zero architecture violations
+- No `unwrap()`/`expect()` in production code paths
 
-## Testing
+## Planned
 
-2959+ tests covering all layers:
+- **v0.3.0** — Workflow system: FSM-based task orchestration, context scout, policy enforcement
+- **v0.4.0** — Integrated context: knowledge graph, hybrid search (semantic + BM25), time-travel queries
 
-```bash
-make test           # All tests
-make test-unit      # Unit tests only
-cargo test test_name -- --nocapture  # Single test
-```
-
-Test organization:
-
--   **Domain layer**: Entity and value object tests
--   **Application layer**: Service and use case tests
--   **Infrastructure layer**: DI, config, cache tests
--   **Providers**: Embedding and vector store provider tests
--   **mcb-validate**: Architecture validation (Phases 1–7, 2959+ tests)
-
-See [`docs/INTEGRATION_TESTS.md`](./docs/INTEGRATION_TESTS.md) for testing documentation.
-
-## Documentation
-
--   **Quick Start**: [`docs/user-guide/QUICKSTART.md`](./docs/user-guide/QUICKSTART.md)
--   **Architecture**: [`docs/architecture/ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md)
--   **Development**: [`CLAUDE.md`](./CLAUDE.md) and [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md)
--   **Roadmap**: [`docs/developer/ROADMAP.md`](./docs/developer/ROADMAP.md)
--   **Changelog**: [`docs/operations/CHANGELOG.md`](./docs/operations/CHANGELOG.md)
--   **ADRs**: [`docs/adr/`](./docs/adr/) - Architecture Decision Records
--   **Migration**: [`docs/migration/FROM_CLAUDE_CONTEXT.md`](./docs/migration/FROM_CLAUDE_CONTEXT.md)
--   **API (docs.rs)**: [mcb](https://docs.rs/mcb) (when published)
+See [Roadmap](./docs/developer/ROADMAP.md) for details.
 
 ## Contributing
 
-Contributions welcome! See [`docs/developer/CONTRIBUTING.md`](./docs/developer/CONTRIBUTING.md) for guidelines.
-
-Quality requirements:
-
--   Follow Clean Architecture principles
--   Add tests for new features
--   Update ADRs for architectural changes
--   Run `make quality` before committing
+Contributions are welcome! Please read the [Contributing Guide](./docs/developer/CONTRIBUTING.md)
+for development setup, coding standards, and the PR process.
 
 ## License
 
-MIT Licensed - Open source and free for commercial and personal use.
-
----
-
-**Last Updated**: 2026-01-28
+[MIT](./LICENSE) — Open source, free for commercial and personal use.

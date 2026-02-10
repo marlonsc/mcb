@@ -1,6 +1,6 @@
 # Module Dependencies
 
-This document shows the crate dependencies of the MCP Context Browser.
+This document shows the crate dependencies of the Memory Context Browser.
 
 ## Crate Dependency Graph
 
@@ -30,7 +30,7 @@ digraph {
     "mcb-validate" [fillcolor=lightyellow];
     "mcb-validate" -> "mcb-domain";
 
-    label="MCP Context Browser Crate Dependencies (v0.1.4)";
+    label="Memory Context Browser Crate Dependencies (v0.1.4)";
 }
 ```
 
