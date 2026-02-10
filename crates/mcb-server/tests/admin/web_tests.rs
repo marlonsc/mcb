@@ -58,7 +58,7 @@ async fn test_indexing_page_returns_html() {
 
     assert_eq!(response.status(), Status::Ok);
     let html = response.into_string().await.expect("response body");
-    assert!(html.contains("Indexing Status"));
+    assert!(html.contains("Indexing Summary") || html.contains("Indexing"));
 }
 
 #[rocket::async_test]

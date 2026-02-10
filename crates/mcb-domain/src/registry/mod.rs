@@ -42,7 +42,7 @@
 //! ```no_run
 //! use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 //!
-//! fn get_provider() -> Result<(), String> {
+//! fn get_provider() -> Result<(), mcb_domain::Error> {
 //!     let config = EmbeddingProviderConfig::new("null");
 //!     let provider = resolve_embedding_provider(&config)?;
 //!     println!("Using provider: {}", provider.provider_name());
