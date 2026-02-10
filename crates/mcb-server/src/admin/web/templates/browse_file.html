@@ -8,13 +8,6 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="/ui/theme.css">
     <script src="/ui/shared.js"></script>
-    <script>
-        // Theme initialization (runs before Alpine)
-        (function() {
-            const saved = localStorage.getItem('mcb-theme');
-            if (saved) document.documentElement.setAttribute('data-theme', saved);
-        })();
-    </script>
     <style>
         .card { background: var(--card-bg); border-radius: 0.5rem; box-shadow: 0 1px 3px var(--card-shadow); }
         .chunk-header { background: var(--nav-bg); color: var(--nav-text); padding: 0.75rem 1rem; font-size: 0.875rem; }
@@ -30,45 +23,7 @@
     </style>
 </head>
 <body class="min-h-screen bg-primary text-primary">
-    <nav class="nav-theme">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <span class="text-xl font-bold">MCP Context Browser</span>
-                    <span class="ml-2 text-sm text-gray-400">Admin</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Dashboard</a>
-                    <a href="/ui/config" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Config</a>
-                    <a href="/ui/health" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Health</a>
-                    <a href="/ui/indexing" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Indexing</a>
-                    <a href="/ui/browse" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-900 text-white">Browse</a>
-                    
-                    <!-- Theme Toggle -->
-                    <button x-data="{ 
-                        theme: localStorage.getItem('mcb-theme') || 'auto',
-                        toggle() {
-                            const next = { auto: 'light', light: 'dark', dark: 'auto' };
-                            this.theme = next[this.theme];
-                            if (this.theme === 'auto') {
-                                localStorage.removeItem('mcb-theme');
-                                document.documentElement.removeAttribute('data-theme');
-                            } else {
-                                localStorage.setItem('mcb-theme', this.theme);
-                                document.documentElement.setAttribute('data-theme', this.theme);
-                            }
-                        }
-                    }" @click="toggle()" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white" title="Toggle Theme">
-                        <span x-show="theme === 'auto'">Auto</span>
-                        <span x-show="theme === 'light'">Light</span>  
-                        <span x-show="theme === 'dark'">Dark</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="app-shell">
         <!-- Breadcrumb -->
         <nav class="mb-4 text-sm">
             <ol class="flex items-center space-x-2 flex-wrap">
@@ -96,13 +51,7 @@
                 <p class="text-secondary">Loading code chunks...</p>
             </div>
         </div>
-    </main>
-
-    <footer class="nav-theme py-4 mt-8">
-        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-            MCP Context Browser v0.1.5 | Browse Indexed Code
-        </div>
-    </footer>
+    </div>
 
     <script>
         // Parse URL params
@@ -167,7 +116,7 @@
                                 <span class="chunk-lines">Lines ${toIntegerSafe(chunk.start_line, 0)} - ${toIntegerSafe(chunk.end_line, 0)}</span>
                                 <span class="chunk-id">${escapeHtml(String(chunk.id || '').substring(0, 12))}...</span>
                             </div>
-                            <button onclick="copyChunk(${idx})" class="text-sm text-gray-400 hover:text-white transition-colors">
+                            <button onclick="copyChunk(${idx})" class="text-sm text-secondary hover:text-white transition-colors">
                                 Copy
                             </button>
                         </div>

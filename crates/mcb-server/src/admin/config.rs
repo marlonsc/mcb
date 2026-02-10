@@ -82,7 +82,6 @@ impl SanitizedConfig {
             host: config.server.network.host.clone(),
             port: config.server.network.port,
             transport_mode: format!("{:?}", config.server.transport_mode),
-            admin_port: config.server.network.admin_port,
             https: config.server.ssl.https,
         }
     }
@@ -169,8 +168,6 @@ pub struct ServerConfigView {
     pub port: u16,
     /// Transport mode (Stdio, Http, Hybrid)
     pub transport_mode: String,
-    /// Admin API port
-    pub admin_port: u16,
     /// HTTPS enabled
     pub https: bool,
 }

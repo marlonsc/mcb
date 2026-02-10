@@ -270,6 +270,3 @@ impl EventBusProvider for NatsEventBusProvider {
         Ok(sub_id)
     }
 }
-
-// Keep backward compatibility with old name
-pub type NatsEventPublisher = NatsEventBusProvider;

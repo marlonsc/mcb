@@ -92,7 +92,7 @@ impl std::fmt::Debug for ResolvedProviders {
 
 /// Resolve all providers from application configuration
 ///
-/// Queries the inventory registry to find and instantiate providers
+/// Queries the linkme registry to find and instantiate providers
 /// based on the names specified in configuration.
 ///
 /// # Arguments

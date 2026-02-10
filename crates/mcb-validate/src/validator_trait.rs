@@ -138,7 +138,7 @@ impl ValidatorRegistry {
         use crate::clean_architecture::CleanArchitectureValidator;
         // Dependency validators
         use crate::dependency::DependencyValidator;
-        // Note: ShakuValidator removed - now using inventory-based plugin architecture
+        // Note: Legacy validator removed - now using linkme-based plugin architecture
 
         // Quality validators
         use crate::documentation::DocumentationValidator;
@@ -169,7 +169,7 @@ impl ValidatorRegistry {
             .with_validator(Box::new(VisibilityValidator::new(&root)))
             // Dependencies
             .with_validator(Box::new(DependencyValidator::new(&root)))
-            // Note: ShakuValidator removed - now using inventory-based plugin architecture
+            // Note: Legacy validator removed - now using linkme-based plugin architecture
             // Quality
             .with_validator(Box::new(QualityValidator::new(&root)))
             .with_validator(Box::new(SolidValidator::new(&root)))

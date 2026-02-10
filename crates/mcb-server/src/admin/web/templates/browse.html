@@ -9,66 +9,53 @@
     <link rel="stylesheet" href="/ui/theme.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="/ui/shared.js"></script>
-    <script>
-        // Theme initialization (runs before Alpine)
-        (function() {
-            const saved = localStorage.getItem('mcb-theme');
-            if (saved) document.documentElement.setAttribute('data-theme', saved);
-        })();
-    </script>
     <style>
         .card { background: var(--card-bg); border-radius: 0.5rem; box-shadow: 0 1px 3px var(--card-shadow); padding: 1.5rem; }
         .card:hover { box-shadow: 0 4px 6px var(--card-shadow); }
         .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; cursor: pointer; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--bg-secondary); }
         .stat-value { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); }
         .stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+        .entity-item { border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem; }
+        .entity-item:last-child { margin-bottom: 0; }
+        .entity-item.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
     </style>
 </head>
 <body class="min-h-screen bg-primary text-primary">
-    <nav class="nav-theme">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <span class="text-xl font-bold">MCP Context Browser</span>
-                    <span class="ml-2 text-sm text-gray-400">Admin</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Dashboard</a>
-                    <a href="/ui/config" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Config</a>
-                    <a href="/ui/health" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Health</a>
-                    <a href="/ui/indexing" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Indexing</a>
-                    <a href="/ui/browse" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-900 text-white">Browse</a>
-                    
-                    <!-- Theme Toggle -->
-                    <button x-data="{ 
-                        theme: localStorage.getItem('mcb-theme') || 'auto',
-                        toggle() {
-                            const next = { auto: 'light', light: 'dark', dark: 'auto' };
-                            this.theme = next[this.theme];
-                            if (this.theme === 'auto') {
-                                localStorage.removeItem('mcb-theme');
-                                document.documentElement.removeAttribute('data-theme');
-                            } else {
-                                localStorage.setItem('mcb-theme', this.theme);
-                                document.documentElement.setAttribute('data-theme', this.theme);
-                            }
-                        }
-                    }" @click="toggle()" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white" title="Toggle Theme">
-                        <span x-show="theme === 'auto'">Auto</span>
-                        <span x-show="theme === 'light'">Light</span>  
-                        <span x-show="theme === 'dark'">Dark</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="app-shell">
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-primary">Browse Indexed Code</h1>
-            <p class="mt-2 text-secondary">Explore collections, files, and code chunks</p>
+            <p class="mt-2 text-secondary">Explore collections and workflow entities with linked navigation</p>
+        </div>
+
+        <div class="card mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-primary">Workflow Entity Graph</h2>
+                <button class="btn btn-secondary" onclick="loadWorkflowGraph()">Refresh Graph</button>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div>
+                    <h3 class="text-sm font-medium text-secondary uppercase tracking-wider mb-2">Projects</h3>
+                    <div id="projects-list" class="card" style="padding: 0.75rem; min-height: 12rem;">
+                        <p class="text-secondary text-sm">Loading projects...</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-secondary uppercase tracking-wider mb-2">Phases</h3>
+                    <div id="phases-list" class="card" style="padding: 0.75rem; min-height: 12rem;">
+                        <p class="text-secondary text-sm">Select a project</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-secondary uppercase tracking-wider mb-2">Issues</h3>
+                    <div id="issues-list" class="card" style="padding: 0.75rem; min-height: 12rem;">
+                        <p class="text-secondary text-sm">Select a project or phase</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Collections Grid -->
@@ -86,18 +73,19 @@
                 </div>
             </div>
         </div>
-    </main>
-
-    <footer class="nav-theme py-4 mt-8">
-        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-            MCP Context Browser v0.1.5 | Browse Indexed Code
-        </div>
-    </footer>
+    </div>
 
     <script>
+        var workflowProjects = [];
+        var workflowPhases = [];
+        var workflowIssues = [];
+        var selectedProjectId = '';
+        var selectedPhaseId = '';
+        var knownCollections = [];
+
         async function loadCollections() {
             const grid = document.getElementById('collections-grid');
-            grid.innerHTML = '<div class="card flex items-center justify-center h-32"><p class="text-gray-500">Loading...</p></div>';
+             grid.innerHTML = '<div class="card flex items-center justify-center h-32"><p class="text-secondary">Loading...</p></div>';
 
             try {
                 const response = await adminFetch('/collections');
@@ -105,14 +93,15 @@
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 const data = await response.json();
-                renderCollections(toArraySafe(data && data.collections));
+                knownCollections = toArraySafe(data && data.collections);
+                renderCollections(knownCollections);
             } catch (e) {
                 console.error('Error loading collections:', e);
                 grid.innerHTML = `
                     <div class="card flex flex-col items-center justify-center h-32 col-span-full">
                         <p class="text-red-500 font-medium">Error loading collections</p>
-                        <p class="text-gray-500 text-sm mt-2">${escapeHtml(e.message)}</p>
-                        <p class="text-gray-400 text-xs mt-2">Ensure browse state is configured on the server.</p>
+                        <p class="text-secondary text-sm mt-2">${escapeHtml(e.message)}</p>
+                         <p class="text-secondary text-xs mt-2">Ensure browse state is configured on the server.</p>
                     </div>
                 `;
             }
@@ -124,8 +113,8 @@
             if (!collections || collections.length === 0) {
                 grid.innerHTML = `
                     <div class="card flex flex-col items-center justify-center h-32 col-span-full">
-                        <p class="text-gray-500 font-medium">No collections found</p>
-                        <p class="text-gray-400 text-sm mt-2">Index a codebase to see it here.</p>
+                         <p class="text-secondary font-medium">No collections found</p>
+                         <p class="text-secondary text-sm mt-2">Index a codebase to see it here.</p>
                     </div>
                 `;
                 return;
@@ -173,8 +162,131 @@
             return new Date(safeTs * 1000).toLocaleString();
         }
 
+        async function loadWorkflowGraph() {
+            const projectsList = document.getElementById('projects-list');
+            projectsList.innerHTML = '<p class="text-secondary text-sm">Loading projects...</p>';
+            document.getElementById('phases-list').innerHTML = '<p class="text-secondary text-sm">Select a project</p>';
+            document.getElementById('issues-list').innerHTML = '<p class="text-secondary text-sm">Select a project or phase</p>';
+
+            try {
+                const response = await adminFetch('/projects');
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                const data = await response.json();
+                workflowProjects = toArraySafe(data && data.projects);
+                selectedProjectId = '';
+                selectedPhaseId = '';
+                renderProjects();
+            } catch (e) {
+                projectsList.innerHTML = '<p class="text-red-500 text-sm">Failed to load projects: ' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        function renderProjects() {
+            const projectsList = document.getElementById('projects-list');
+            if (workflowProjects.length === 0) {
+                projectsList.innerHTML = '<p class="text-secondary text-sm">No workflow projects found.</p>';
+                return;
+            }
+
+            projectsList.innerHTML = workflowProjects.map(function (project) {
+                var selected = selectedProjectId === project.id ? ' active' : '';
+                var matchingCollection = knownCollections.find(function (c) { return c.name === project.name; });
+                var collectionLink = matchingCollection
+                    ? '<a href="/ui/browse/' + encodeURIComponent(matchingCollection.name) + '" class="text-xs text-primary" style="text-decoration: underline;">Open collection</a>'
+                    : '<a href="/ui/browse" class="text-xs text-secondary" style="text-decoration: underline;">Find collection</a>';
+                return '<div class="entity-item' + selected + '">' +
+                    '<button class="w-full text-left" onclick="selectProject(decodeURIComponent(\'' + encodeURIComponent(String(project.id || '')) + '\'))">' +
+                    '<p class="font-medium text-primary truncate">' + escapeHtml(project.name || project.id) + '</p>' +
+                    '<p class="text-xs text-secondary truncate">' + escapeHtml(project.path || '') + '</p>' +
+                    '</button>' +
+                    '<div class="mt-2">' + collectionLink + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        async function selectProject(projectId) {
+            selectedProjectId = projectId;
+            selectedPhaseId = '';
+            renderProjects();
+
+            const phaseEl = document.getElementById('phases-list');
+            const issueEl = document.getElementById('issues-list');
+            phaseEl.innerHTML = '<p class="text-secondary text-sm">Loading phases...</p>';
+            issueEl.innerHTML = '<p class="text-secondary text-sm">Loading issues...</p>';
+
+            try {
+                const responses = await Promise.all([
+                    adminFetch('/projects/' + encodeURIComponent(projectId) + '/phases'),
+                    adminFetch('/projects/' + encodeURIComponent(projectId) + '/issues')
+                ]);
+                if (!responses[0].ok) throw new Error('Failed phases request: HTTP ' + responses[0].status);
+                if (!responses[1].ok) throw new Error('Failed issues request: HTTP ' + responses[1].status);
+
+                const phasesPayload = await responses[0].json();
+                const issuesPayload = await responses[1].json();
+                workflowPhases = toArraySafe(phasesPayload && phasesPayload.phases);
+                workflowIssues = toArraySafe(issuesPayload && issuesPayload.issues);
+
+                renderPhases();
+                renderIssues();
+            } catch (e) {
+                phaseEl.innerHTML = '<p class="text-red-500 text-sm">Failed to load phases: ' + escapeHtml(e.message) + '</p>';
+                issueEl.innerHTML = '<p class="text-red-500 text-sm">Failed to load issues: ' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        function renderPhases() {
+            const phaseEl = document.getElementById('phases-list');
+            if (workflowPhases.length === 0) {
+                phaseEl.innerHTML = '<p class="text-secondary text-sm">No phases for selected project.</p>';
+                return;
+            }
+            phaseEl.innerHTML = workflowPhases.map(function (phase) {
+                var selected = selectedPhaseId === phase.id ? ' active' : '';
+                return '<div class="entity-item' + selected + '">' +
+                    '<button class="w-full text-left" onclick="selectPhase(decodeURIComponent(\'' + encodeURIComponent(String(phase.id || '')) + '\'))">' +
+                    '<p class="font-medium text-primary">' + escapeHtml(phase.name || phase.id) + '</p>' +
+                    '<p class="text-xs text-secondary">' + escapeHtml(String(phase.status || '')) + '</p>' +
+                    '</button>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function selectPhase(phaseId) {
+            selectedPhaseId = selectedPhaseId === phaseId ? '' : phaseId;
+            renderPhases();
+            renderIssues();
+        }
+
+        function renderIssues() {
+            const issueEl = document.getElementById('issues-list');
+            var filtered = workflowIssues;
+            if (selectedPhaseId !== '') {
+                filtered = workflowIssues.filter(function (issue) { return issue.phase_id === selectedPhaseId; });
+            }
+
+            if (filtered.length === 0) {
+                issueEl.innerHTML = '<p class="text-secondary text-sm">No issues for current selection.</p>';
+                return;
+            }
+
+            issueEl.innerHTML = filtered.map(function (issue) {
+                var priority = toIntegerSafe(issue.priority, 0);
+                return '<div class="entity-item">' +
+                    '<p class="font-medium text-primary truncate">' + escapeHtml(issue.title || issue.id) + '</p>' +
+                    '<p class="text-xs text-secondary">' + escapeHtml(String(issue.status || '')) + ' · P' + priority + '</p>' +
+                    '<p class="text-xs text-muted mt-1 truncate">' + escapeHtml(issue.id || '') + '</p>' +
+                    '</div>';
+            }).join('');
+        }
+
         // Load on page ready
-        document.addEventListener('DOMContentLoaded', loadCollections);
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCollections();
+            loadWorkflowGraph();
+        });
     </script>
 </body>
 </html>

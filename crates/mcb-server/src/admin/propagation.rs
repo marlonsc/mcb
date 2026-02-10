@@ -147,7 +147,6 @@ pub mod callbacks {
             info!(
                 transport_mode = ?config.server.transport_mode,
                 http_port = config.server.network.port,
-                admin_port = config.server.network.admin_port,
                 cache_enabled = config.system.infrastructure.cache.enabled,
                 "Configuration change logged"
             );

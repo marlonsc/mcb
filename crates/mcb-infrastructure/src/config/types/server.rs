@@ -40,10 +40,6 @@ pub struct ServerNetworkConfig {
 
     /// Server port
     pub port: u16,
-
-    /// Admin API port (separate from main server port)
-    #[serde(default = "default_admin_port")]
-    pub admin_port: u16,
 }
 
 /// SSL/TLS configuration for server
@@ -102,22 +98,15 @@ pub struct ServerConfig {
     pub cors: ServerCorsConfig,
 }
 
-/// Default admin port (9090)
-fn default_admin_port() -> u16 {
-    DEFAULT_ADMIN_PORT
-}
-
 // Default implementations for config structs
 
 /// Returns default network configuration with:
 /// - Host and port from infrastructure constants
-/// - Admin API port: 9090
 impl Default for ServerNetworkConfig {
     fn default() -> Self {
         Self {
             host: DEFAULT_SERVER_HOST.to_string(),
             port: DEFAULT_HTTP_PORT,
-            admin_port: default_admin_port(),
         }
     }
 }

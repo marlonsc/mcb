@@ -6,14 +6,14 @@ severity: "error"
 enabled: true
 engine: "rust-rule-engine"
 
-description: "Shaku component missing #[shaku(interface = ...)]"
-rationale: "Interface annotation connects component to its port trait"
+description: "dill provider missing interface binding annotation"
+rationale: "Interface annotation connects provider to its port trait (ADR-029)"
 
 rule: |
-    rule InterfaceAnnotationRequired "Check for shaku interface annotation" {
+    rule InterfaceAnnotationRequired "Check for dill interface annotation" {
         when
             HasAttribute("derive(Component)") &&
-            !HasAttribute("shaku(interface")
+            !HasAttribute("dill(interface")
         then
-            Violation("Shaku component missing #[shaku(interface = ...)]");
+            Violation("dill provider missing interface binding annotation");
     }

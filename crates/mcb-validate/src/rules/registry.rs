@@ -442,10 +442,10 @@ pub fn constructor_injection_rules() -> Vec<Rule> {
     vec![
         migration_rule(
             "CTOR001",
-            "Shaku Migration Required",
+            "Legacy DI Migration Required",
             ViolationCategory::DependencyInjection,
-            "Code still uses Shaku DI patterns (#[derive(Component)], module! macro)",
-            "Shaku DI is being replaced by direct constructor injection for simplicity",
+            "Code still uses legacy DI patterns (#[derive(Component)], module! macro)",
+            "Legacy DI is replaced by dill IoC + linkme registry",
         ),
         di_rule(
             "CTOR002",

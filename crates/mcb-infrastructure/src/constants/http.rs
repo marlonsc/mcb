@@ -1,9 +1,6 @@
 /// Default HTTP server port.
 pub const DEFAULT_HTTP_PORT: u16 = 8080;
 
-/// Default admin server port.
-pub const DEFAULT_ADMIN_PORT: u16 = 9090;
-
 /// Default HTTPS server port.
 pub const DEFAULT_HTTPS_PORT: u16 = 8443;
 

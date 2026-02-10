@@ -334,7 +334,7 @@ fn test_linkme_validator() {
     assert_eq!(2 + 2, 4);
 }
 
-// LATER: Enable when Phase 3.2 (Shaku → Constructor Injection) is implemented
+// LATER: Enable when Phase 3.2 (dill constructor injection) is implemented
 #[test]
 fn test_constructor_injection_validator() {
     // Test that ConstructorInjectionValidator can be instantiated (basic smoke test)

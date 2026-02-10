@@ -69,7 +69,7 @@ pub enum PatternViolation {
         /// Severity level of the violation.
         severity: Severity,
     },
-    /// Missing Interface trait bound for Shaku DI
+    /// Missing Interface trait bound for dill DI
     MissingInterfaceBound {
         /// File where the violation occurred.
         file: PathBuf,
@@ -237,7 +237,7 @@ impl Violation for PatternViolation {
             }
             Self::MissingAsyncTrait { .. } => Some("Add #[async_trait] attribute".to_string()),
             Self::MissingInterfaceBound { .. } => {
-                Some("Add : Interface bound for Shaku DI".to_string())
+                Some("Add : Interface bound for dill DI".to_string())
             }
         }
     }

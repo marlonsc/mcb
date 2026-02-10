@@ -16,6 +16,7 @@ use std::time::Duration;
 use crate::test_utils::mock_services::{MockProjectRepository, MockVcsProvider};
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::types::{AppConfig, ModeConfig, OperatingMode};
 use mcb_infrastructure::crypto::CryptoService;
 use mcb_infrastructure::di::bootstrap::init_app;
@@ -225,8 +226,9 @@ fn test_session_prefix_hash_uniqueness() {
 fn test_http_transport_config_localhost() {
     let port = get_free_port();
     let config = HttpTransportConfig::localhost(port);
+    let loaded = ConfigLoader::new().load().expect("load config");
 
-    assert_eq!(config.host, "127.0.0.1");
+    assert_eq!(config.host, loaded.server.network.host);
     assert_eq!(config.port, port);
     assert!(config.enable_cors);
 }
@@ -236,17 +238,19 @@ fn test_http_transport_config_socket_addr() {
     let port = get_free_port();
     let config = HttpTransportConfig::localhost(port);
     let addr = config.socket_addr();
+    let loaded = ConfigLoader::new().load().expect("load config");
 
     assert_eq!(addr.port(), port);
-    assert_eq!(addr.ip().to_string(), "127.0.0.1");
+    assert_eq!(addr.ip().to_string(), loaded.server.network.host);
 }
 
 #[test]
 fn test_http_transport_config_default() {
     let config = HttpTransportConfig::default();
+    let loaded = ConfigLoader::new().load().expect("load config");
 
-    assert_eq!(config.host, "127.0.0.1");
-    assert_eq!(config.port, 8080);
+    assert_eq!(config.host, loaded.server.network.host);
+    assert_eq!(config.port, loaded.server.network.port);
     assert!(config.enable_cors);
 }
 

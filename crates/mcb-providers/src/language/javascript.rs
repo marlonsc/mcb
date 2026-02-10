@@ -44,14 +44,6 @@ impl JavaScriptProcessor {
                 priority: 5,
                 include_context: true,
             }])
-            .with_fallback_patterns(vec![
-                r"^function ".to_string(),
-                r"^class ".to_string(),
-                r"^const .* = ".to_string(),
-                r"^export ".to_string(),
-                r"^interface ".to_string(),
-                r"^type ".to_string(),
-            ])
             .with_chunk_size(CHUNK_SIZE_JAVASCRIPT);
 
         Self {
@@ -74,15 +66,5 @@ impl LanguageProcessor for JavaScriptProcessor {
     ) -> Vec<CodeChunk> {
         self.processor
             .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-
-    fn extract_chunks_fallback(
-        &self,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_fallback(content, file_name, language)
     }
 }

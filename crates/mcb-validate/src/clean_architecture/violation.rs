@@ -3,7 +3,7 @@
 //! Validates strict Clean Architecture compliance:
 //! - Domain layer contains only traits and types (minimal implementations)
 //! - Handlers use dependency injection (no direct service creation)
-//! - Port implementations have Shaku Component derive
+//! - Port implementations have dill provider registration
 //! - Entities have identity fields
 //! - Value objects are immutable
 //! - Server layer boundaries are respected
@@ -42,7 +42,7 @@ pub enum CleanArchitectureViolation {
         /// Severity level of the violation.
         severity: Severity,
     },
-    /// Port implementation missing Shaku Component derive
+    /// Port implementation missing dill provider registration
     PortMissingComponentDerive {
         /// File where the violation occurred.
         file: PathBuf,

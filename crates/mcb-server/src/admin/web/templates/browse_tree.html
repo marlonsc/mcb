@@ -9,12 +9,6 @@
     <link rel="stylesheet" href="/ui/theme.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="/ui/shared.js"></script>
-    <script>
-        (function() {
-            const saved = localStorage.getItem('mcb-theme');
-            if (saved) document.documentElement.setAttribute('data-theme', saved);
-        })();
-    </script>
     <style>
         .tree-item { padding: 0.25rem 0; }
         .tree-node { display: flex; align-items: center; padding: 0.25rem 0.5rem; cursor: pointer; border-radius: 0.25rem; }
@@ -28,40 +22,7 @@
     </style>
 </head>
 <body class="min-h-screen bg-primary text-primary">
-    <nav class="nav-theme">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <span class="text-xl font-bold">MCP Context Browser</span>
-                    <span class="ml-2 text-sm text-gray-400">Admin</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Dashboard</a>
-                    <a href="/ui/browse" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">Browse</a>
-                    <button x-data="{ 
-                        theme: localStorage.getItem('mcb-theme') || 'auto',
-                        toggle() {
-                            const next = { auto: 'light', light: 'dark', dark: 'auto' };
-                            this.theme = next[this.theme];
-                            if (this.theme === 'auto') {
-                                localStorage.removeItem('mcb-theme');
-                                document.documentElement.removeAttribute('data-theme');
-                            } else {
-                                localStorage.setItem('mcb-theme', this.theme);
-                                document.documentElement.setAttribute('data-theme', this.theme);
-                            }
-                        }
-                    }" @click="toggle()" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 text-white">
-                        <span x-show="theme === 'auto'">Auto</span>
-                        <span x-show="theme === 'light'">Light</span>  
-                        <span x-show="theme === 'dark'">Dark</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="app-shell">
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-primary">Browse Collection Tree</h1>
             <p class="mt-2 text-secondary">Navigate your indexed codebase with keyboard shortcuts</p>
@@ -183,7 +144,7 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
     <script>
         function treeApp() {
@@ -198,7 +159,7 @@
                 async init() {
                     // Load collections
                     try {
-                        const res = await fetch('/api/admin/collections');
+                        const res = await adminFetch('/collections');
                         const data = await res.json();
                         this.collections = data.collections || [];
                     } catch (e) {
@@ -213,7 +174,7 @@
                     this.filteredTree = null;
                     
                     try {
-                        const res = await fetch(`/api/admin/collections/${name}/tree`);
+                        const res = await adminFetch(`/collections/${name}/tree`);
                         const data = await res.json();
                         this.tree = data.tree || [];
                         this.addDepthMetadata(this.tree);

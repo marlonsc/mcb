@@ -52,27 +52,34 @@ impl ConfigLoader {
     /// Load configuration from all sources
     ///
     /// Configuration sources are merged in this order (later sources override earlier):
-    /// 1. Default values from `AppConfig::default()`
-    /// 2. TOML configuration file (if exists)
+    /// 1. Default TOML configuration file (`config/default.toml`) (required)
+    /// 2. Optional TOML override file (`--config`) (if provided)
     /// 3. Environment variables with `MCP__` prefix (e.g., `MCP__SERVER__NETWORK__PORT`)
     pub fn load(&self) -> Result<AppConfig> {
-        // Start with default configuration
-        let mut figment = Figment::new().merge(Serialized::defaults(AppConfig::default()));
+        let default_path = Self::find_defaults_file_path().ok_or_else(|| {
+            Error::ConfigMissing(
+                "Default configuration file not found. Expected config/default.toml".to_string(),
+            )
+        })?;
+        log_config_loaded(&default_path, true);
 
-        // Add configuration file if specified
+        // Start with struct defaults for schema completeness, then override from defaults file
+        let mut figment = Figment::new()
+            .merge(Serialized::defaults(AppConfig::default()))
+            .merge(Toml::file(&default_path));
+
         if let Some(config_path) = &self.config_path {
-            if config_path.exists() {
+            if !config_path.exists() {
+                log_config_loaded(config_path, false);
+                return Err(Error::ConfigMissing(format!(
+                    "Configuration file not found: {}",
+                    config_path.display()
+                )));
+            }
+
+            if config_path != &default_path {
                 figment = figment.merge(Toml::file(config_path));
                 log_config_loaded(config_path, true);
-            } else {
-                log_config_loaded(config_path, false);
-            }
-        } else {
-            if let Some(default_path) = Self::find_default_config_path()
-                && default_path.exists()
-            {
-                figment = figment.merge(Toml::file(&default_path));
-                log_config_loaded(&default_path, true);
             }
         }
 
@@ -117,47 +124,31 @@ impl ConfigLoader {
         self.config_path.as_deref()
     }
 
-    /// Find default configuration file paths to try
+    /// Find canonical defaults file path to try
     ///
-    /// Per ADR-025: No implicit fallbacks. Only valid paths are considered.
-    /// If a directory (config_dir, home_dir) is unavailable, it is skipped
-    /// rather than silently falling back to an empty path.
-    fn find_default_config_path() -> Option<PathBuf> {
+    /// Per configuration policy, runtime defaults must come from a defaults TOML file,
+    /// not from hardcoded Rust constants.
+    fn find_defaults_file_path() -> Option<PathBuf> {
         let current_dir = env::current_dir().ok()?;
 
-        // Build candidate list, filtering out unavailable paths
-        // No unwrap_or_default() - skip unavailable directories instead
-        let mut candidates = vec![
-            Some(current_dir.join(DEFAULT_CONFIG_FILENAME)),
-            Some(
-                current_dir
-                    .join(DEFAULT_CONFIG_DIR)
-                    .join(DEFAULT_CONFIG_FILENAME),
-            ),
-        ];
-
-        // Add XDG config dir if available (no fallback)
-        if let Some(config_dir) = dirs::config_dir() {
-            candidates.push(Some(
-                config_dir
-                    .join(DEFAULT_CONFIG_DIR)
-                    .join(DEFAULT_CONFIG_FILENAME),
-            ));
+        // Search current directory and its ancestors for config/default.toml
+        for dir in current_dir.ancestors() {
+            let candidate = dir.join("config").join("default.toml");
+            if candidate.exists() {
+                return Some(candidate);
+            }
         }
 
-        // Add home dir if available (no fallback)
-        if let Some(home_dir) = dirs::home_dir() {
-            candidates.push(Some(
-                home_dir
-                    .join(format!(".{}", DEFAULT_CONFIG_DIR))
-                    .join(DEFAULT_CONFIG_FILENAME),
-            ));
+        // Search from crate location up to workspace root for config/default.toml
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        for dir in manifest_dir.ancestors() {
+            let candidate = dir.join("config").join("default.toml");
+            if candidate.exists() {
+                return Some(candidate);
+            }
         }
 
-        candidates
-            .into_iter()
-            .flatten() // Remove None values
-            .find(|path| path.exists())
+        None
     }
 
     /// Validate configuration values

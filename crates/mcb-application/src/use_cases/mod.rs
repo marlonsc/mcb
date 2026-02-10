@@ -11,7 +11,7 @@
 //!
 //! ## Dependency Injection
 //!
-//! All use cases are designed to work with dependency injection via Shaku.
+//! All use cases are designed to work with dependency injection via dill IoC.
 //! They receive their dependencies (ports) through constructor injection.
 
 pub mod agent_session_service;

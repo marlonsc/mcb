@@ -6,13 +6,12 @@ type = "standalone"
 
 [server]
 host = "127.0.0.1"
-port = 3001
-transport_mode = "http"
+port = 18080
+transport_mode = "stdio"
 
 [server.network]
 host = "127.0.0.1"
-port = 3001
-admin_port = 3001
+port = 18080
 
 [metrics]
 enabled = true

@@ -35,12 +35,6 @@ impl KotlinProcessor {
                 priority: 5,
                 include_context: true,
             }])
-            .with_fallback_patterns(vec![
-                r"^fun ".to_string(),
-                r"^class ".to_string(),
-                r"^data class ".to_string(),
-                r"^object ".to_string(),
-            ])
             .with_chunk_size(CHUNK_SIZE_KOTLIN);
 
         Self {
@@ -63,15 +57,5 @@ impl LanguageProcessor for KotlinProcessor {
     ) -> Vec<CodeChunk> {
         self.processor
             .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-
-    fn extract_chunks_fallback(
-        &self,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_fallback(content, file_name, language)
     }
 }

@@ -56,12 +56,21 @@ async fn test_admin_rocket_health_page_is_accessible() {
     assert_eq!(response.status(), Status::Ok);
 }
 
-/// Test that /ui/indexing is accessible via admin_rocket
+/// Test that legacy /ui/indexing route is removed (use /ui/jobs instead)
 #[rocket::async_test]
-async fn test_admin_rocket_indexing_page_is_accessible() {
+async fn test_admin_rocket_legacy_indexing_route_removed() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
 
     let response = client.get("/ui/indexing").dispatch().await;
+    assert_eq!(response.status(), Status::NotFound);
+}
+
+/// Test that /ui/jobs is accessible via admin_rocket
+#[rocket::async_test]
+async fn test_admin_rocket_jobs_page_is_accessible() {
+    let (client, _, _) = AdminTestHarness::new().build_client().await;
+
+    let response = client.get("/ui/jobs").dispatch().await;
     assert_eq!(response.status(), Status::Ok);
 }
 

@@ -2,6 +2,7 @@
 //!
 //! Configuration types and utilities for MCP server transports.
 
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::{ServerConfig, TransportMode};
 
 /// Transport configuration for MCP server
@@ -21,10 +22,13 @@ pub struct TransportConfig {
 /// Returns default TransportConfig with Stdio mode and no HTTP configuration
 impl Default for TransportConfig {
     fn default() -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("TransportConfig::default requires loadable configuration file");
         Self {
-            mode: TransportMode::Stdio,
-            http_port: None,
-            http_host: None,
+            mode: config.server.transport_mode,
+            http_port: Some(config.server.network.port),
+            http_host: Some(config.server.network.host),
         }
     }
 }
@@ -41,19 +45,25 @@ impl TransportConfig {
 
     /// Create HTTP-only transport config
     pub fn http(port: u16) -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("TransportConfig::http requires loadable configuration file");
         Self {
             mode: TransportMode::Http,
             http_port: Some(port),
-            http_host: Some("127.0.0.1".to_string()),
+            http_host: Some(config.server.network.host),
         }
     }
 
     /// Create hybrid transport config (both stdio and HTTP)
     pub fn hybrid(http_port: u16) -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("TransportConfig::hybrid requires loadable configuration file");
         Self {
             mode: TransportMode::Hybrid,
             http_port: Some(http_port),
-            http_host: Some("127.0.0.1".to_string()),
+            http_host: Some(config.server.network.host),
         }
     }
 

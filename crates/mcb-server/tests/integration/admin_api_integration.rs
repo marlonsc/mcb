@@ -16,6 +16,7 @@ use mcb_domain::ports::admin::{
 };
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::value_objects::{CollectionId, OperationId};
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_server::admin::{AdminApi, AdminApiConfig};
 use serde_json::json;
 
@@ -107,12 +108,12 @@ fn create_test_admin_api() -> AdminApi {
     let indexing = Arc::new(MockIndexing) as Arc<dyn IndexingOperationsInterface>;
     let event_bus = Arc::new(MockEventBus) as Arc<dyn EventBusProvider>;
 
-    AdminApi::new(
-        AdminApiConfig::localhost(9091),
-        metrics,
-        indexing,
-        event_bus,
-    )
+    let config = AdminApiConfig {
+        port: 9091,
+        ..AdminApiConfig::default()
+    };
+
+    AdminApi::new(config, metrics, indexing, event_bus)
 }
 
 /// Test: GET /admin/provider/current returns current provider
@@ -174,9 +175,14 @@ async fn test_admin_api_provider_switch() {
 /// Test: AdminApi can be created with custom config
 #[tokio::test]
 async fn test_admin_api_creation_with_config() {
-    let config = AdminApiConfig::localhost(9092);
+    let config = AdminApiConfig {
+        port: 9092,
+        ..AdminApiConfig::default()
+    };
     assert_eq!(config.port, 9092);
-    assert_eq!(config.host, "127.0.0.1");
+
+    let loaded_config = ConfigLoader::new().load().expect("load config");
+    assert_eq!(config.host, loaded_config.server.network.host);
 
     let _admin_api = create_test_admin_api();
 }

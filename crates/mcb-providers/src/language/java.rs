@@ -35,13 +35,6 @@ impl JavaProcessor {
                 priority: 5,
                 include_context: true,
             }])
-            .with_fallback_patterns(vec![
-                r"^\s*public ".to_string(),
-                r"^\s*private ".to_string(),
-                r"^\s*protected ".to_string(),
-                r"^\s*class ".to_string(),
-                r"^\s*interface ".to_string(),
-            ])
             .with_chunk_size(CHUNK_SIZE_JAVA);
 
         Self {
@@ -64,15 +57,5 @@ impl LanguageProcessor for JavaProcessor {
     ) -> Vec<CodeChunk> {
         self.processor
             .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-
-    fn extract_chunks_fallback(
-        &self,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_fallback(content, file_name, language)
     }
 }

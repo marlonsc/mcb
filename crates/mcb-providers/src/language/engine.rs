@@ -101,7 +101,6 @@ impl IntelligentChunker {
         language: &Language,
     ) -> Vec<CodeChunk> {
         if let Some(processor) = LANGUAGE_PROCESSORS.get(language) {
-            // Try tree-sitter parsing first
             match self.parse_with_tree_sitter(content, processor.get_language()) {
                 Ok(tree) => {
                     let chunks = processor
@@ -110,17 +109,14 @@ impl IntelligentChunker {
                         return chunks;
                     }
                 }
-                Err(_) => {
-                    // Fall back to pattern-based chunking
-                    let chunks = processor.extract_chunks_fallback(content, file_name, language);
-                    if !chunks.is_empty() {
-                        return chunks;
-                    }
+                Err(e) => {
+                    tracing::warn!(
+                        "Tree-sitter parse failed for {file_name}: {e}, using generic chunking"
+                    );
                 }
             }
         }
 
-        // Ultimate fallback to generic chunking
         self.chunk_generic(content, file_name, language)
     }
 

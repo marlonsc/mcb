@@ -1,22 +1,22 @@
 schema: "rule/v1"
 id: "CTOR001"
-name: "Shaku Migration Required"
+name: "Legacy DI Migration Required"
 category: "dependency_injection"
 severity: "error"
 enabled: true
 engine: "rust-rule-engine"
 
-description: "Code still uses Shaku DI patterns (#[derive(Component)], module! macro)"
-rationale: "Shaku DI is being replaced by direct constructor injection for simplicity"
+description: "Code still uses legacy DI patterns (#[derive(Component)], module! macro)"
+rationale: "Legacy DI is replaced by dill IoC + linkme registry (ADR-029)"
 
 config:
   migration_deadline: "v0.2.0"
 
 rule: |
-  rule ShakuMigrationRequired "Check for Shaku DI usage" {
+  rule LegacyDIMigrationRequired "Check for legacy DI usage" {
       when
           HasAttribute("derive(Component)") ||
           UsesMacro("module!")
       then
-          Violation("Code still uses Shaku DI patterns, migrate to constructor injection by ${migration_deadline}");
+          Violation("Code still uses legacy DI patterns, migrate to dill/linkme by ${migration_deadline}");
   }

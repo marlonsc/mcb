@@ -57,7 +57,7 @@ impl Display for ViolationCategory {
             Self::Quality => write!(f, "Quality"),
             Self::Organization => write!(f, "Organization"),
             Self::Solid => write!(f, "SOLID"),
-            Self::DependencyInjection => write!(f, "DI/Shaku"),
+            Self::DependencyInjection => write!(f, "DI/dill"),
             Self::Configuration => write!(f, "Configuration"),
             Self::WebFramework => write!(f, "Web Framework"),
             Self::Performance => write!(f, "Performance"),

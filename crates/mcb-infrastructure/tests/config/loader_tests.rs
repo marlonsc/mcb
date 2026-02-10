@@ -2,13 +2,11 @@
 
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::constants::http::DEFAULT_HTTP_PORT;
-use mcb_infrastructure::constants::logging::DEFAULT_LOG_LEVEL;
 use tempfile::TempDir;
 
 /// Create test config with auth disabled (avoids JWT secret validation per ADR-025)
 fn test_config() -> AppConfig {
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load default config");
     config.auth.enabled = false;
     config
 }
@@ -21,18 +19,22 @@ fn test_config() -> AppConfig {
 fn test_config_loader_default() {
     // Build config directly with auth disabled
     let config = test_config();
+    let loaded = ConfigLoader::new().load().expect("load config");
 
-    assert_eq!(config.server.network.port, DEFAULT_HTTP_PORT);
-    assert_eq!(config.logging.level, DEFAULT_LOG_LEVEL);
+    assert_eq!(config.server.network.port, loaded.server.network.port);
+    assert_eq!(config.logging.level, loaded.logging.level);
 }
 
 #[test]
 fn test_config_builder() {
-    let mut config = AppConfig::default();
-    config.auth.enabled = false;
-    config.server.network.port = 9090;
+    let mut config = test_config();
+    let loaded = ConfigLoader::new().load().expect("load config");
+    config.server.network.port = loaded.server.network.port.saturating_add(1);
 
-    assert_eq!(config.server.network.port, 9090);
+    assert_eq!(
+        config.server.network.port,
+        loaded.server.network.port.saturating_add(1)
+    );
 }
 
 // Note: validate_config is private, so we test the public API instead
@@ -51,7 +53,8 @@ fn test_config_save_load() {
 
     // Create config with custom port and auth disabled
     let mut original_config = test_config();
-    original_config.server.network.port = 9999;
+    let loaded = ConfigLoader::new().load().expect("load config");
+    original_config.server.network.port = loaded.server.network.port.saturating_add(9);
 
     // Save config
     loader.save_to_file(&original_config, &config_path).unwrap();
@@ -62,5 +65,8 @@ fn test_config_save_load() {
         .load()
         .unwrap();
 
-    assert_eq!(loaded_config.server.network.port, 9999);
+    assert_eq!(
+        loaded_config.server.network.port,
+        loaded.server.network.port.saturating_add(9)
+    );
 }

@@ -16,7 +16,9 @@ use mcb_domain::ports::admin::{
     ShutdownCoordinator,
 };
 use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
 use mcb_domain::ports::providers::CacheProvider;
+use mcb_domain::ports::services::ProjectServiceInterface;
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
@@ -52,6 +54,8 @@ pub struct AdminState {
     pub service_manager: Option<Arc<ServiceManager>>,
     /// Cache provider for stats
     pub cache: Option<Arc<dyn CacheProvider>>,
+    /// Project workflow service for project/phase/issue navigation
+    pub project_workflow: Option<Arc<dyn ProjectServiceInterface>>,
 }
 
 /// Health check response for admin API
@@ -146,6 +150,186 @@ pub fn get_indexing_status(state: &State<AdminState>) -> Json<IndexingStatusResp
         active_operations: operation_statuses.len(),
         operations: operation_statuses,
     })
+}
+
+/// Jobs status response (unified job tracking)
+#[derive(Serialize)]
+pub struct JobsStatusResponse {
+    /// Total number of tracked jobs
+    pub total: usize,
+    /// Number of currently running jobs
+    pub running: usize,
+    /// Number of queued jobs
+    pub queued: usize,
+    /// Job details
+    pub jobs: Vec<Job>,
+}
+
+/// List all background jobs
+#[get("/jobs")]
+pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
+    let operations = state.indexing.get_operations();
+
+    let jobs: Vec<Job> = operations
+        .values()
+        .map(|op| {
+            let progress = if op.total_files > 0 {
+                ((op.processed_files as f64 / op.total_files as f64) * 100.0) as u8
+            } else {
+                0
+            };
+            Job {
+                id: op.id.clone(),
+                job_type: JobType::Indexing,
+                label: op.collection.to_string(),
+                status: JobStatus::Running,
+                progress_percent: progress,
+                processed_items: op.processed_files,
+                total_items: op.total_files,
+                current_item: op.current_file.clone(),
+                created_at: op.started_at,
+                started_at: Some(op.started_at),
+                completed_at: None,
+                result: None,
+            }
+        })
+        .collect();
+
+    let running = jobs.len();
+    Json(JobsStatusResponse {
+        total: running,
+        running,
+        queued: 0,
+        jobs,
+    })
+}
+
+/// Projects list response for browse entity navigation
+#[derive(Serialize)]
+pub struct ProjectsBrowseResponse {
+    /// List of projects
+    pub projects: Vec<mcb_domain::entities::project::Project>,
+    /// Total number of projects
+    pub total: usize,
+}
+
+/// Project phases response
+#[derive(Serialize)]
+pub struct ProjectPhasesBrowseResponse {
+    /// Project identifier
+    pub project_id: String,
+    /// Phases for this project
+    pub phases: Vec<mcb_domain::entities::project::ProjectPhase>,
+    /// Total number of phases
+    pub total: usize,
+}
+
+/// Project issues response
+#[derive(Serialize)]
+pub struct ProjectIssuesBrowseResponse {
+    /// Project identifier
+    pub project_id: String,
+    /// Issues for this project
+    pub issues: Vec<mcb_domain::entities::project::ProjectIssue>,
+    /// Total number of issues
+    pub total: usize,
+}
+
+/// List workflow projects for browse entity graph
+#[get("/projects")]
+pub async fn list_browse_projects(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+) -> Result<Json<ProjectsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(project_workflow) = &state.project_workflow else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Project workflow service not available".to_string(),
+            }),
+        ));
+    };
+
+    match project_workflow.list_projects().await {
+        Ok(projects) => {
+            let total = projects.len();
+            Ok(Json(ProjectsBrowseResponse { projects, total }))
+        }
+        Err(e) => Err((
+            Status::InternalServerError,
+            Json(CacheErrorResponse {
+                error: e.to_string(),
+            }),
+        )),
+    }
+}
+
+/// List phases for a workflow project
+#[get("/projects/<project_id>/phases")]
+pub async fn list_browse_project_phases(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+    project_id: &str,
+) -> Result<Json<ProjectPhasesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(project_workflow) = &state.project_workflow else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Project workflow service not available".to_string(),
+            }),
+        ));
+    };
+
+    match project_workflow.list_phases(project_id).await {
+        Ok(phases) => {
+            let total = phases.len();
+            Ok(Json(ProjectPhasesBrowseResponse {
+                project_id: project_id.to_string(),
+                phases,
+                total,
+            }))
+        }
+        Err(e) => Err((
+            Status::InternalServerError,
+            Json(CacheErrorResponse {
+                error: e.to_string(),
+            }),
+        )),
+    }
+}
+
+/// List issues for a workflow project
+#[get("/projects/<project_id>/issues")]
+pub async fn list_browse_project_issues(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+    project_id: &str,
+) -> Result<Json<ProjectIssuesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(project_workflow) = &state.project_workflow else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Project workflow service not available".to_string(),
+            }),
+        ));
+    };
+
+    match project_workflow.list_issues(project_id, None).await {
+        Ok(issues) => {
+            let total = issues.len();
+            Ok(Json(ProjectIssuesBrowseResponse {
+                project_id: project_id.to_string(),
+                issues,
+                total,
+            }))
+        }
+        Err(e) => Err((
+            Status::InternalServerError,
+            Json(CacheErrorResponse {
+                error: e.to_string(),
+            }),
+        )),
+    }
 }
 
 /// Readiness response

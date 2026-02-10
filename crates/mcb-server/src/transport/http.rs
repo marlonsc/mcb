@@ -56,6 +56,7 @@ use crate::admin::browse_handlers::BrowseState;
 use crate::admin::handlers::AdminState;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use mcb_infrastructure::config::ConfigLoader;
 
 /// HTTP transport configuration
 #[derive(Debug, Clone)]
@@ -70,10 +71,13 @@ pub struct HttpTransportConfig {
 
 impl Default for HttpTransportConfig {
     fn default() -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("HttpTransportConfig::default requires loadable configuration file");
         Self {
-            host: "127.0.0.1".to_string(),
-            port: 8080,
-            enable_cors: true,
+            host: config.server.network.host,
+            port: config.server.network.port,
+            enable_cors: config.server.cors.cors_enabled,
         }
     }
 }
@@ -81,10 +85,13 @@ impl Default for HttpTransportConfig {
 impl HttpTransportConfig {
     /// Create config for localhost with specified port
     pub fn localhost(port: u16) -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("HttpTransportConfig::localhost requires loadable configuration file");
         Self {
-            host: "127.0.0.1".to_string(),
+            host: config.server.network.host,
             port,
-            enable_cors: true,
+            enable_cors: config.server.cors.cors_enabled,
         }
     }
 
@@ -92,7 +99,7 @@ impl HttpTransportConfig {
     pub fn socket_addr(&self) -> SocketAddr {
         format!("{}:{}", self.host, self.port)
             .parse()
-            .unwrap_or_else(|_| SocketAddr::from(([127, 0, 0, 1], self.port)))
+            .expect("Invalid host/port in configuration")
     }
 }
 
@@ -144,8 +151,9 @@ impl HttpTransport {
         };
         use crate::admin::config_handlers::{get_config, reload_config, update_config_section};
         use crate::admin::handlers::{
-            extended_health_check, get_cache_stats, get_indexing_status, get_metrics, health_check,
-            liveness_check, readiness_check, shutdown,
+            extended_health_check, get_cache_stats, get_indexing_status, get_jobs_status,
+            get_metrics, health_check, list_browse_project_issues, list_browse_project_phases,
+            list_browse_projects, liveness_check, readiness_check, shutdown,
         };
         use crate::admin::lifecycle_handlers::{
             list_services, restart_service, services_health, start_service, stop_service,
@@ -153,7 +161,7 @@ impl HttpTransport {
         use crate::admin::sse::events_stream;
         use crate::admin::web::handlers::{
             browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
-            dashboard, dashboard_ui, favicon, health_page, indexing_page, shared_js, theme_css,
+            dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
         };
 
         let mut rocket = rocket::build()
@@ -177,6 +185,10 @@ impl HttpTransport {
                         extended_health_check,
                         get_metrics,
                         get_indexing_status,
+                        get_jobs_status,
+                        list_browse_projects,
+                        list_browse_project_phases,
+                        list_browse_project_issues,
                         readiness_check,
                         liveness_check,
                         shutdown,
@@ -195,7 +207,7 @@ impl HttpTransport {
                         favicon,
                         config_page,
                         health_page,
-                        indexing_page,
+                        jobs_page,
                         browse_page,
                         browse_collection_page,
                         browse_file_page,

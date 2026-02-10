@@ -50,8 +50,18 @@ fn get_mcb_path() -> PathBuf {
 /// Spawn mcb with test-safe configuration (no external service dependencies)
 fn create_test_command(mcb_path: &PathBuf) -> Command {
     let mut cmd = Command::new(mcb_path);
+    let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/test.toml");
+    let unique_db = format!(
+        "/tmp/mcb-stdio-{}-{}.db",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time")
+            .as_nanos()
+    );
     cmd.arg("serve");
-    cmd.arg("--config").arg("config/test.toml");
+    cmd.arg("--config").arg(config_path);
+    cmd.env("MCP__AUTH__USER_DB_PATH", unique_db);
     cmd
 }
 
@@ -419,6 +429,11 @@ fn test_stdio_logs_go_to_stderr() {
     // Give some time for stderr to accumulate logs
     std::thread::sleep(Duration::from_millis(100));
 
+    // Terminate process before reading stderr to avoid blocking on open pipe
+    drop(stdin);
+    let _ = child.kill();
+    let _ = child.wait();
+
     // Check if stderr has content (logs)
     // Note: We can't guarantee logs are present, but if they are, they should be on stderr
     let stderr_lines: Vec<_> = stderr_reader.lines().take(10).collect();
@@ -436,7 +451,5 @@ fn test_stdio_logs_go_to_stderr() {
         }
     }
 
-    drop(stdin);
-    let _ = child.kill();
-    let _ = child.wait();
+    // Process already terminated above.
 }

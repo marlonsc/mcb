@@ -24,6 +24,8 @@ pub mod admin;
 pub mod browse;
 /// Infrastructure service ports
 pub mod infrastructure;
+/// Generic background job management ports
+pub mod jobs;
 /// External service provider ports
 pub mod providers;
 /// Repository ports for data persistence
@@ -44,6 +46,9 @@ pub use infrastructure::{
     LockProvider, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
     SnapshotProvider, SqlParam, SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions,
     SyncProvider, SyncResult, SystemMetrics, SystemMetricsCollectorInterface,
+};
+pub use jobs::{
+    Job, JobCounts, JobId, JobManagerInterface, JobProgressUpdate, JobResult, JobStatus, JobType,
 };
 pub use providers::{
     CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats, CryptoProvider,

@@ -193,6 +193,7 @@ fn create_test_admin_state() -> AdminState {
         event_bus: Arc::new(MockEventBus),
         service_manager: None,
         cache: None,
+        project_workflow: None,
     }
 }
 

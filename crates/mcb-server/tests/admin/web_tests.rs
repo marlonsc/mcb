@@ -49,16 +49,28 @@ async fn test_health_page_returns_html() {
 }
 
 #[rocket::async_test]
-async fn test_indexing_page_returns_html() {
+async fn test_jobs_page_returns_html() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/jobs").dispatch().await;
+
+    assert_eq!(response.status(), Status::Ok);
+    let html = response.into_string().await.expect("response body");
+    assert!(
+        html.contains("Indexing Summary") || html.contains("Indexing") || html.contains("Jobs")
+    );
+}
+
+#[rocket::async_test]
+async fn test_legacy_indexing_route_removed() {
     let client = Client::tracked(web_rocket())
         .await
         .expect("valid rocket instance");
 
     let response = client.get("/ui/indexing").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
-    assert!(html.contains("Indexing Summary") || html.contains("Indexing"));
+    assert_eq!(response.status(), Status::NotFound);
 }
 
 #[rocket::async_test]

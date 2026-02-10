@@ -1,11 +1,11 @@
 //! Admin API server
 //!
-//! HTTP server for the admin API running on a separate port (see `AdminApiConfig`).
+//! HTTP server builder for admin API routes.
 //!
 //! ## Wiring
 //!
-//! The default server startup in `init.rs` does **not** start this admin server. For the admin
-//! web UI and REST API to be available, the application must explicitly build and start `AdminApi`:
+//! The default startup path in `init.rs` mounts admin routes into the unified HTTP server.
+//! `AdminApi` remains available for explicit embedding scenarios.
 //!
 //! - **Config (GET/PATCH /config)**: Call `.with_config_watcher(config_watcher, config_path)` so
 //!   `AdminState` has a config watcher; otherwise GET /config returns 503 and PATCH is unusable.
@@ -20,6 +20,7 @@ use std::sync::Arc;
 
 use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use rocket::config::{Config as RocketConfig, LogLevel};
 
@@ -39,9 +40,12 @@ pub struct AdminApiConfig {
 
 impl Default for AdminApiConfig {
     fn default() -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("AdminApiConfig::default requires loadable configuration file");
         Self {
-            host: "127.0.0.1".to_string(),
-            port: 9090,
+            host: config.server.network.host,
+            port: config.server.network.port,
         }
     }
 }
@@ -49,24 +53,21 @@ impl Default for AdminApiConfig {
 impl AdminApiConfig {
     /// Create config for localhost with specified port
     pub fn localhost(port: u16) -> Self {
+        let config = ConfigLoader::new()
+            .load()
+            .expect("AdminApiConfig::localhost requires loadable configuration file");
         Self {
-            host: "127.0.0.1".to_string(),
+            host: config.server.network.host,
             port,
         }
     }
 
     /// Get the Rocket configuration
     pub fn rocket_config(&self) -> RocketConfig {
-        // mcb-validate-ignore: hardcoded_fallback - fallback IP is safe and always valid
-        let address: IpAddr = self.host.parse().unwrap_or_else(|_| {
-            "127.0.0.1"
-                .parse()
-                .map_err(|e| {
-                    tracing::error!("Failed to parse fallback IP 127.0.0.1: {}", e);
-                    e
-                })
-                .expect("Hardcoded fallback IP should always parse")
-        });
+        let address: IpAddr = self
+            .host
+            .parse()
+            .expect("Invalid admin host in configuration");
         RocketConfig {
             address,
             port: self.port,
@@ -105,6 +106,7 @@ impl AdminApi {
                 event_bus,
                 service_manager: None,
                 cache: None,
+                project_workflow: None,
             },
             auth_config: Arc::new(AdminAuthConfig::default()),
             browse_state: None,
@@ -132,6 +134,7 @@ impl AdminApi {
                 event_bus,
                 service_manager: None,
                 cache: None,
+                project_workflow: None,
             },
             auth_config: Arc::new(auth_config),
             browse_state: None,
@@ -161,6 +164,7 @@ impl AdminApi {
                 event_bus,
                 service_manager: None,
                 cache: None,
+                project_workflow: None,
             },
             auth_config: Arc::new(auth_config),
             browse_state: None,

@@ -199,7 +199,6 @@ services:
     build: .
     ports:
 -   "3000:3000"
--   "9090:9090"  # Metrics endpoint
     environment:
 -   MCP_MODE=distributed
 -   STORAGE_PROVIDER=milvus
@@ -611,7 +610,7 @@ cargo run --bin connectivity-test
 ```bash
 
 # Prometheus metrics
-curl http://localhost:9090/metrics
+curl http://localhost:3000/metrics
 
 # Health check
 curl http://localhost:3000/health

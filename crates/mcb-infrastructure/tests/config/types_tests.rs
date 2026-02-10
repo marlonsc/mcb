@@ -29,12 +29,10 @@ fn test_server_network_config() {
     let network = ServerNetworkConfig {
         host: "0.0.0.0".to_string(),
         port: 9000,
-        admin_port: 9001,
     };
 
     assert_eq!(network.host, "0.0.0.0");
     assert_eq!(network.port, 9000);
-    assert_eq!(network.admin_port, 9001);
 }
 
 #[test]

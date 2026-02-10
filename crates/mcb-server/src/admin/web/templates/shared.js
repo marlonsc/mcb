@@ -93,4 +93,107 @@
         if (mins > 0) return `${mins}m ${secs}s`;
         return `${secs}s`;
     };
+
+    var NAV_ITEMS = [
+        { href: '/',            label: 'Dashboard' },
+        { href: '/ui/config',   label: 'Config' },
+        { href: '/ui/health',   label: 'Health' },
+        { href: '/ui/jobs',      label: 'Jobs' },
+        { href: '/ui/browse',   label: 'Browse' }
+    ];
+
+    function currentNavPath() {
+        var p = window.location.pathname.replace(/\/+$/, '') || '/';
+        if (p === '/ui') return '/';
+        return p;
+    }
+
+    function isNavActive(href) {
+        var cur = currentNavPath();
+        if (href === '/') return cur === '/' || cur === '/ui';
+        return cur.indexOf(href) === 0;
+    }
+
+    function getTheme() {
+        return localStorage.getItem('mcb-theme') || 'auto';
+    }
+
+    function cycleTheme() {
+        var order = { auto: 'light', light: 'dark', dark: 'auto' };
+        var next = order[getTheme()] || 'auto';
+        if (next === 'auto') {
+            localStorage.removeItem('mcb-theme');
+            document.documentElement.removeAttribute('data-theme');
+        } else {
+            localStorage.setItem('mcb-theme', next);
+            document.documentElement.setAttribute('data-theme', next);
+        }
+        var btn = document.getElementById('mcb-theme-toggle');
+        if (btn) btn.textContent = next.charAt(0).toUpperCase() + next.slice(1);
+    }
+
+    window.mcbInjectShell = function () {
+        var shell = document.getElementById('app-shell');
+        if (!shell) return;
+
+        var cur = currentNavPath();
+
+        var links = NAV_ITEMS.map(function (item) {
+            var cls = 'nav-link' + (isNavActive(item.href) ? ' active' : '');
+            return '<a href="' + item.href + '" class="' + cls + '">' + item.label + '</a>';
+        }).join('');
+
+        var themeLabel = getTheme();
+        themeLabel = themeLabel.charAt(0).toUpperCase() + themeLabel.slice(1);
+
+        var nav = '<nav class="app-nav">' +
+            '<div class="nav-inner">' +
+                '<div class="nav-brand">' +
+                    '<span class="nav-brand-title">MCP Context Browser</span>' +
+                    '<span class="nav-brand-sub">Admin</span>' +
+                '</div>' +
+                '<div class="nav-links">' +
+                    links +
+                    '<button id="mcb-theme-toggle" class="nav-theme-btn" title="Toggle Theme" aria-label="Toggle Theme" onclick="cycleTheme()">' + themeLabel + '</button>' +
+                '</div>' +
+            '</div>' +
+        '</nav>';
+
+        var content = shell.innerHTML;
+        shell.innerHTML = '';
+        shell.className = 'app-shell';
+
+        var navDiv = document.createElement('div');
+        navDiv.innerHTML = nav;
+        shell.insertBefore(navDiv.firstChild, null);
+
+        var main = document.createElement('main');
+        main.className = 'app-main';
+        main.innerHTML = content;
+        shell.appendChild(main);
+
+        var footer = document.createElement('footer');
+        footer.className = 'app-footer';
+        footer.innerHTML = '<div class="footer-inner">MCP Context Browser v0.1.5 | Admin Panel</div>';
+        shell.appendChild(footer);
+    };
+
+    window.cycleTheme = cycleTheme;
+
+    (function () {
+        var saved = localStorage.getItem('mcb-theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+    })();
+
+    function initShell() {
+        if (document.getElementById('app-shell')) {
+            window.mcbInjectShell();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initShell);
+    } else {
+        initShell();
+    }
 })();

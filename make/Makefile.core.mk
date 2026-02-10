@@ -7,8 +7,8 @@
 .PHONY: build test test-rust test-e2e test-e2e-ui test-e2e-debug clean
 
 # Test ports (avoid conflicts with production on 8080)
-export MCP_PORT ?= 13001
 export MCB_TEST_PORT ?= 18080
+export MCP_PORT ?= $(MCB_TEST_PORT)
 
 # Test thread count (parallelization - use fewer threads on CI to reduce timeout issues)
 export TEST_THREADS ?= 0

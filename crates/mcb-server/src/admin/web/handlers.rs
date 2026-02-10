@@ -44,9 +44,9 @@ pub fn health_page() -> RawHtml<&'static str> {
     RawHtml(HEALTH_HTML)
 }
 
-/// Indexing status page handler
-#[get("/ui/indexing")]
-pub fn indexing_page() -> RawHtml<&'static str> {
+/// Jobs page handler
+#[get("/ui/jobs")]
+pub fn jobs_page() -> RawHtml<&'static str> {
     RawHtml(INDEXING_HTML)
 }
 

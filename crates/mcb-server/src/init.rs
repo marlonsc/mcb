@@ -144,6 +144,7 @@ async fn run_server_mode(
         event_bus,
         service_manager: Some(std::sync::Arc::new(service_manager)),
         cache: Some(app_context.cache_handle().get()),
+        project_workflow: Some(server.project_workflow_service()),
     };
 
     let browse_state = BrowseState {

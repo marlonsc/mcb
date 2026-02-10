@@ -34,11 +34,6 @@ impl RubyProcessor {
                 priority: 5,
                 include_context: true,
             }])
-            .with_fallback_patterns(vec![
-                r"^def ".to_string(),
-                r"^class ".to_string(),
-                r"^module ".to_string(),
-            ])
             .with_chunk_size(CHUNK_SIZE_RUBY);
 
         Self {
@@ -61,15 +56,5 @@ impl LanguageProcessor for RubyProcessor {
     ) -> Vec<CodeChunk> {
         self.processor
             .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-
-    fn extract_chunks_fallback(
-        &self,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_fallback(content, file_name, language)
     }
 }

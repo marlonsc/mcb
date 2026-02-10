@@ -26,7 +26,7 @@ thiserror = { workspace = true }
 # Async traits - needed for port definitions
 async-trait = { workspace = true }
 
-# Dependency injection interfaces - shaku traits are pure
+# Dependency injection interfaces - port traits for dill IoC
 
 # Schema generation for MCP - pure lib acceptable for domain
 schemars = { workspace = true }

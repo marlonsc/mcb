@@ -150,6 +150,7 @@ impl AdminTestHarness {
             event_bus: Arc::new(TestEventBus),
             service_manager: None,
             cache: None,
+            project_workflow: None,
         }
     }
 

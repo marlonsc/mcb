@@ -16,8 +16,9 @@ use super::browse_handlers::{
 };
 use super::config_handlers::{get_config, reload_config, update_config_section};
 use super::handlers::{
-    AdminState, extended_health_check, get_cache_stats, get_indexing_status, get_metrics,
-    health_check, liveness_check, readiness_check, shutdown,
+    AdminState, extended_health_check, get_cache_stats, get_indexing_status, get_jobs_status,
+    get_metrics, health_check, list_browse_project_issues, list_browse_project_phases,
+    list_browse_projects, liveness_check, readiness_check, shutdown,
 };
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
@@ -25,7 +26,7 @@ use super::lifecycle_handlers::{
 use super::sse::events_stream;
 use super::web::handlers::{
     browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
-    dashboard, dashboard_ui, favicon, health_page, indexing_page, shared_js, theme_css,
+    dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
 };
 
 /// Create the admin API rocket instance
@@ -34,7 +35,7 @@ use super::web::handlers::{
 /// - GET /health - Health check with uptime and status
 /// - GET /health/extended - Extended health check with dependency status
 /// - GET /metrics - Performance metrics
-/// - GET /indexing - Indexing operations status
+/// - GET /jobs - Jobs operations status
 /// - GET /ready - Kubernetes readiness probe (public)
 /// - GET /live - Kubernetes liveness probe (public)
 /// - POST /shutdown - Initiate graceful server shutdown (protected)
@@ -72,6 +73,10 @@ pub fn admin_rocket(
             extended_health_check,
             get_metrics,
             get_indexing_status,
+            get_jobs_status,
+            list_browse_projects,
+            list_browse_project_phases,
+            list_browse_project_issues,
             readiness_check,
             liveness_check,
             // Service control
@@ -96,7 +101,7 @@ pub fn admin_rocket(
             favicon,
             config_page,
             health_page,
-            indexing_page,
+            jobs_page,
             browse_page,
             browse_collection_page,
             browse_file_page,
