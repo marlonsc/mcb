@@ -32,5 +32,5 @@ Pinecone, Encrypted, Milvus, EdgeVec, Qdrant
 
 ---
 
-*Generated: 2026-02-11 18:52:06*
+*Generated: 2026-02-11 18:56:08*
 *Source: `scripts/docs/extract-metrics.sh`*
