@@ -32,6 +32,8 @@ pub mod auth;
 pub mod browse_handlers;
 pub mod config;
 pub mod config_handlers;
+/// Generic CRUD adapter bridging entity handlers with domain services.
+pub mod crud_adapter;
 pub mod handlers;
 pub mod lifecycle_handlers;
 pub mod models;
