@@ -62,6 +62,12 @@ pub fn web_rocket() -> Rocket<Build> {
             entity_handlers::entities_index,
             entity_handlers::entities_list,
             entity_handlers::entities_new_form,
+            entity_handlers::entities_detail,
+            entity_handlers::entities_edit_form,
+            entity_handlers::entities_delete_confirm,
+            entity_handlers::entities_create,
+            entity_handlers::entities_update,
+            entity_handlers::entities_delete,
         ],
     )
 }
@@ -84,5 +90,11 @@ pub fn web_routes() -> Vec<rocket::Route> {
         entity_handlers::entities_index,
         entity_handlers::entities_list,
         entity_handlers::entities_new_form,
+        entity_handlers::entities_detail,
+        entity_handlers::entities_edit_form,
+        entity_handlers::entities_delete_confirm,
+        entity_handlers::entities_create,
+        entity_handlers::entities_update,
+        entity_handlers::entities_delete,
     ]
 }

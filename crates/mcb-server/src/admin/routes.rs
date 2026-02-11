@@ -25,7 +25,10 @@ use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
 };
 use super::sse::events_stream;
-use super::web::entity_handlers::{entities_index, entities_list, entities_new_form};
+use super::web::entity_handlers::{
+    entities_create, entities_delete, entities_delete_confirm, entities_detail, entities_edit_form,
+    entities_index, entities_list, entities_new_form, entities_update,
+};
 use super::web::handlers::{
     browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
     dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
@@ -120,6 +123,12 @@ pub fn admin_rocket(
             entities_index,
             entities_list,
             entities_new_form,
+            entities_detail,
+            entities_edit_form,
+            entities_delete_confirm,
+            entities_create,
+            entities_update,
+            entities_delete,
         ],
     );
 

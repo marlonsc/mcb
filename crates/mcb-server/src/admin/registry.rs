@@ -15,18 +15,17 @@ use serde::Serialize;
 use serde_json::Value;
 
 /// Metadata for a single entity field, derived from JSON Schema properties.
-/// Pre-computes boolean flags for Handlebars template branching.
 #[derive(Debug, Clone, Serialize)]
 pub struct AdminFieldMeta {
-    /// Field name matching the struct field (e.g. "created_at").
+    /// Field name matching the struct field (e.g. `created_at`).
     pub name: String,
-    /// Human-readable label (e.g. "Created At").
+    /// Human-readable label (e.g. `Created At`).
     pub label: String,
-    /// HTML input type (text, number, checkbox, select, textarea, datetime-local).
+    /// HTML input type: text, number, checkbox, select, textarea, datetime-local.
     pub input_type: String,
-    /// Whether this field should be rendered as readonly (id, timestamps).
+    /// True for id, `created_at`, `updated_at`.
     pub readonly: bool,
-    /// Whether this field should be hidden from the UI (hashes, secrets).
+    /// True for `*_hash`, password, secret fields.
     pub hidden: bool,
     /// Pre-computed: `input_type == "textarea"`.
     pub is_textarea: bool,
@@ -34,6 +33,8 @@ pub struct AdminFieldMeta {
     pub is_checkbox: bool,
     /// Pre-computed: `input_type == "select"`.
     pub is_select: bool,
+    /// Enum variant names for `<select>` dropdowns (empty when not an enum).
+    pub enum_values: Vec<String>,
 }
 
 /// Static metadata for a registered admin entity.
@@ -245,21 +246,29 @@ fn schema_json<T: JsonSchema>() -> Value {
 }
 
 fn extract_fields(schema: &Value) -> Vec<AdminFieldMeta> {
+    let defs = schema.get("$defs");
+
     let mut fields = schema
         .get("properties")
         .and_then(Value::as_object)
         .map(|properties| {
             properties
                 .iter()
-                .map(|(name, field_schema)| AdminFieldMeta {
-                    input_type: detect_input_type(name, field_schema).to_string(),
-                    name: name.clone(),
-                    label: to_title(name),
-                    readonly: is_readonly_field(name),
-                    hidden: is_hidden_field(name),
-                    is_textarea: detect_input_type(name, field_schema).as_ref() == "textarea",
-                    is_checkbox: detect_input_type(name, field_schema).as_ref() == "checkbox",
-                    is_select: detect_input_type(name, field_schema).as_ref() == "select",
+                .map(|(name, field_schema)| {
+                    let resolved = resolve_ref(field_schema, defs);
+                    let input_type = detect_input_type(name, &resolved);
+                    let enum_values = extract_enum_values(&resolved);
+                    AdminFieldMeta {
+                        name: name.clone(),
+                        label: to_title(name),
+                        readonly: is_readonly_field(name),
+                        hidden: is_hidden_field(name),
+                        is_textarea: input_type.as_ref() == "textarea",
+                        is_checkbox: input_type.as_ref() == "checkbox",
+                        is_select: input_type.as_ref() == "select",
+                        input_type: input_type.into_owned(),
+                        enum_values,
+                    }
                 })
                 .collect::<Vec<_>>()
         })
@@ -267,6 +276,34 @@ fn extract_fields(schema: &Value) -> Vec<AdminFieldMeta> {
 
     fields.sort_by(|a, b| a.name.cmp(&b.name));
     fields
+}
+
+fn resolve_ref<'a>(field_schema: &'a Value, defs: Option<&'a Value>) -> Cow<'a, Value> {
+    if let Some(ref_path) = field_schema.get("$ref").and_then(Value::as_str) {
+        let ref_name = ref_path.strip_prefix("#/$defs/").unwrap_or(ref_path);
+        if let Some(resolved) = defs.and_then(|d| d.get(ref_name)) {
+            return Cow::Borrowed(resolved);
+        }
+    }
+    Cow::Borrowed(field_schema)
+}
+
+fn extract_enum_values(schema: &Value) -> Vec<String> {
+    if let Some(one_of) = schema.get("oneOf").and_then(Value::as_array) {
+        return one_of
+            .iter()
+            .filter_map(|variant| variant.get("const").and_then(Value::as_str))
+            .map(String::from)
+            .collect();
+    }
+    if let Some(enum_arr) = schema.get("enum").and_then(Value::as_array) {
+        return enum_arr
+            .iter()
+            .filter_map(Value::as_str)
+            .map(String::from)
+            .collect();
+    }
+    Vec::new()
 }
 
 fn is_hidden_field(name: &str) -> bool {
@@ -278,7 +315,7 @@ fn is_readonly_field(name: &str) -> bool {
 }
 
 fn detect_input_type<'a>(name: &str, field_schema: &'a Value) -> Cow<'a, str> {
-    if field_schema.get("enum").is_some() {
+    if field_schema.get("enum").is_some() || field_schema.get("oneOf").is_some() {
         return Cow::Borrowed("select");
     }
 
@@ -408,6 +445,53 @@ mod tests {
                 }
                 if field.is_select {
                     assert_eq!(field.input_type, "select", "{}.{}", entity.slug, field.name);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_plan_status_field_has_enum_values() {
+        let entity = AdminRegistry::find("plans").unwrap();
+        let fields = entity.fields();
+        let status = fields.iter().find(|f| f.name == "status").unwrap();
+        assert!(status.is_select, "status should be a select field");
+        assert!(
+            !status.enum_values.is_empty(),
+            "status should have enum values"
+        );
+        assert!(
+            status.enum_values.contains(&"Draft".to_string()),
+            "PlanStatus should contain Draft"
+        );
+        assert!(
+            status.enum_values.contains(&"Active".to_string()),
+            "PlanStatus should contain Active"
+        );
+    }
+
+    #[test]
+    fn test_enum_values_empty_for_string_fields() {
+        let entity = AdminRegistry::find("organizations").unwrap();
+        let fields = entity.fields();
+        let name_field = fields.iter().find(|f| f.name == "name").unwrap();
+        assert!(
+            name_field.enum_values.is_empty(),
+            "string fields should have no enum values"
+        );
+    }
+
+    #[test]
+    fn test_select_fields_always_have_enum_values() {
+        for entity in AdminRegistry::all() {
+            for field in entity.fields() {
+                if field.is_select {
+                    assert!(
+                        !field.enum_values.is_empty(),
+                        "{}.{} is select but has no enum values",
+                        entity.slug,
+                        field.name
+                    );
                 }
             }
         }

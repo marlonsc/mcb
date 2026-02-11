@@ -30,8 +30,9 @@
                     {{#each ../field_names}}
                     <td>{{lookup ../this this}}</td>
                     {{/each}}
-                    <td>
-                        <a class="btn btn-secondary btn-sm" href="#">View</a>
+                    <td class="flex gap-2">
+                        <a class="btn btn-secondary btn-sm" href="/ui/entities/{{../../entity_slug}}/{{lookup this "id"}}">View</a>
+                        <a class="btn btn-primary btn-sm" href="/ui/entities/{{../../entity_slug}}/{{lookup this "id"}}/edit">Edit</a>
                     </td>
                 </tr>
                 {{/each}}
