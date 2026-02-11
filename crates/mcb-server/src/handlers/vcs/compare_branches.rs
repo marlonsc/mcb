@@ -7,7 +7,7 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{BranchComparison, BranchDiffFile, repo_path};
 use crate::args::VcsArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Compares two branches and returns the diff.
@@ -31,13 +31,13 @@ pub async fn compare_branches(
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(to_contextual_tool_error(e));
         }
     };
     let diff = match vcs_provider.diff_refs(&repo, &base, &head).await {
         Ok(diff) => diff,
         Err(e) => {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(to_contextual_tool_error(e));
         }
     };
     let files = diff

@@ -18,7 +18,7 @@ use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingResult, IndexingServiceInterface,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
-use tracing::{debug, info, warn};
+use tracing::{error, info, warn};
 
 use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS, SUPPORTED_EXTENSIONS};
 
@@ -262,16 +262,15 @@ impl IndexingServiceImpl {
         let total = files.len();
         let mut chunks_created = 0usize;
         let mut files_processed = 0usize;
+        let mut failed_files: Vec<String> = Vec::new();
 
         for (i, file_path) in files.iter().enumerate() {
-            // Update progress tracker
             service.indexing_ops.update_progress(
                 &operation_id,
                 Some(file_path.display().to_string()),
                 i,
             );
 
-            // Publish progress event periodically
             if i % PROGRESS_UPDATE_INTERVAL == 0
                 && let Err(e) = service
                     .event_bus
@@ -283,14 +282,14 @@ impl IndexingServiceImpl {
                     })
                     .await
             {
-                debug!("Failed to publish progress event: {}", e);
+                warn!("Failed to publish progress event: {}", e);
             }
 
-            // Read and process file
             let content = match tokio::fs::read_to_string(&file_path).await {
                 Ok(c) => c,
                 Err(e) => {
-                    debug!("Failed to read file {}: {}", file_path.display(), e);
+                    warn!(file = %file_path.display(), error = %e, "Failed to read file during indexing");
+                    failed_files.push(file_path.display().to_string());
                     continue;
                 }
             };
@@ -303,7 +302,8 @@ impl IndexingServiceImpl {
                 .store_chunks(&collection, &chunks)
                 .await
             {
-                debug!("Failed to store chunks for {}: {}", file_path.display(), e);
+                error!(file = %file_path.display(), error = %e, "Failed to store chunks — vector store or embedding provider may be unreachable");
+                failed_files.push(file_path.display().to_string());
                 continue;
             }
 
@@ -311,18 +311,22 @@ impl IndexingServiceImpl {
             chunks_created += chunks.len();
         }
 
-        // Update final progress
         service
             .indexing_ops
             .update_progress(&operation_id, None, total);
 
-        // Complete and remove operation
         service.indexing_ops.complete_operation(&operation_id);
 
         let duration_ms = start.elapsed().as_millis() as u64;
+        let error_count = failed_files.len();
 
-        let result = IndexingProgress::with_counts(files_processed, chunks_created, 0, vec![])
-            .into_result(Some(operation_id), "completed");
+        let result = IndexingProgress::with_counts(
+            files_processed,
+            chunks_created,
+            error_count,
+            failed_files.clone(),
+        )
+        .into_result(Some(operation_id), "completed");
 
         if let Err(e) = service
             .event_bus
@@ -336,9 +340,21 @@ impl IndexingServiceImpl {
             warn!("Failed to publish IndexingCompleted event: {}", e);
         }
 
-        info!(
-            "Indexing completed: {} files, {} chunks in {}ms",
-            result.files_processed, result.chunks_created, duration_ms
-        );
+        if error_count > 0 {
+            error!(
+                files_processed = files_processed,
+                chunks_created = chunks_created,
+                errors = error_count,
+                duration_ms = duration_ms,
+                "Indexing completed with errors"
+            );
+        } else {
+            info!(
+                files_processed = files_processed,
+                chunks_created = chunks_created,
+                duration_ms = duration_ms,
+                "Indexing completed successfully"
+            );
+        }
     }
 }

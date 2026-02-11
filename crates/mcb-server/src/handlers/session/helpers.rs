@@ -35,17 +35,17 @@ impl SessionHelpers {
         crate::utils::json::get_required_str(data, key)
     }
 
-    /// Parse a string into an AgentType.
+    /// Parse an agent type string, returning an MCP error listing valid types on failure.
     pub fn parse_agent_type(value: &str) -> Result<AgentType, McpError> {
         value
             .parse()
-            .map_err(|_| McpError::invalid_params("Invalid agent_type", None))
+            .map_err(|e: String| McpError::invalid_params(e, None))
     }
 
-    /// Parse a string into an AgentSessionStatus.
+    /// Parse an agent session status string, returning an MCP error on invalid input.
     pub fn parse_status(value: &str) -> Result<AgentSessionStatus, McpError> {
         value
             .parse()
-            .map_err(|_| McpError::invalid_params("Invalid status", None))
+            .map_err(|e: String| McpError::invalid_params(e, None))
     }
 }

@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Stores a quality gate result as a semantic observation.
@@ -93,7 +93,7 @@ pub async fn store_quality_gate(
             "observation_id": observation_id,
             "deduplicated": deduplicated,
         })),
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }
 
@@ -153,6 +153,6 @@ pub async fn get_quality_gates(
                 "quality_gates": gates,
             }))
         }
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

@@ -45,6 +45,7 @@ use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::serde::json::Json;
 use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
+use rocket_dyn_templates::Template;
 use tracing::{error, info};
 
 use super::types::{McpRequest, McpResponse};
@@ -52,6 +53,7 @@ use crate::McpServer;
 use crate::admin::auth::AdminAuthConfig;
 use crate::admin::browse_handlers::BrowseState;
 use crate::admin::handlers::AdminState;
+use crate::admin::web::router::template_dir;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 use mcb_infrastructure::config::ConfigLoader;
@@ -162,8 +164,11 @@ impl HttpTransport {
             dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
         };
 
-        let mut rocket = rocket::build()
+        let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
+
+        let mut rocket = rocket::custom(figment)
             .manage(self.state.clone())
+            .attach(Template::fairing())
             .mount("/", routes![handle_mcp_request, healthz, readyz]);
 
         // Mount admin routes if admin state is provided
@@ -243,7 +248,8 @@ impl HttpTransport {
 
         let figment = rocket::Config::figment()
             .merge(("address", self.config.host.clone()))
-            .merge(("port", self.config.port));
+            .merge(("port", self.config.port))
+            .merge(("template_dir", template_dir()));
 
         let rocket = self.rocket().configure(figment);
 

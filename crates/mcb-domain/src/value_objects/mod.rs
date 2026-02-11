@@ -24,6 +24,8 @@ pub mod embedding;
 pub mod ids;
 /// Organization tenant context
 pub mod org_context;
+/// Project identity auto-resolved from git repository
+pub mod project_context;
 /// Search-related value objects
 pub mod search;
 /// Type definitions for dynamic domain concepts
@@ -38,6 +40,7 @@ pub use config::{CacheConfig, EmbeddingConfig, VectorStoreConfig};
 pub use embedding::Embedding;
 pub use ids::*;
 pub use org_context::OrgContext;
+pub use project_context::ProjectContext;
 pub use search::SearchResult;
 pub use types::{
     CacheProviderKind, EmbeddingProviderKind, Language, OperationType, SupportedLanguage,

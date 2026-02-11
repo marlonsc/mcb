@@ -76,21 +76,15 @@ impl MemoryHelpers {
     ///
     /// Returns an error result if the string does not match any valid execution type.
     pub fn parse_execution_type(value: &str) -> Result<ExecutionType, CallToolResult> {
-        value.parse().map_err(|_| {
-            CallToolResult::error(vec![Content::text(format!(
-                "Unknown execution type: {value}"
-            ))])
-        })
+        value
+            .parse()
+            .map_err(|e: String| CallToolResult::error(vec![Content::text(e)]))
     }
 
-    /// Parses a string into a `QualityGateStatus`.
-    ///
-    /// Returns an error result if the string does not match any valid quality gate status.
+    /// Parse a quality gate status string, returning a contextual error on invalid input.
     pub fn parse_quality_gate_status(value: &str) -> Result<QualityGateStatus, CallToolResult> {
-        value.parse().map_err(|_| {
-            CallToolResult::error(vec![Content::text(format!(
-                "Unknown quality gate status: {value}"
-            ))])
-        })
+        value
+            .parse()
+            .map_err(|e: String| CallToolResult::error(vec![Content::text(e)]))
     }
 }

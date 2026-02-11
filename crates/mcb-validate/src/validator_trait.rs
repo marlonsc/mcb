@@ -4,6 +4,7 @@
 //! for managing and running validators.
 
 use anyhow::Result;
+use tracing::warn;
 
 use crate::ValidationConfig;
 use crate::violation_trait::Violation;
@@ -101,10 +102,10 @@ impl ValidatorRegistry {
                 match validator.validate(config) {
                     Ok(violations) => all_violations.extend(violations),
                     Err(e) => {
-                        eprintln!(
-                            "Warning: Validator '{}' failed, skipping: {}",
-                            validator.name(),
-                            e
+                        warn!(
+                            validator = %validator.name(),
+                            error = %e,
+                            "Validator failed, skipping"
                         );
                     }
                 }
@@ -149,10 +150,10 @@ impl ValidatorRegistry {
                 match validator.validate(config) {
                     Ok(violations) => all_violations.extend(violations),
                     Err(e) => {
-                        eprintln!(
-                            "Warning: Validator '{}' failed, skipping: {}",
-                            validator.name(),
-                            e
+                        warn!(
+                            validator = %validator.name(),
+                            error = %e,
+                            "Validator failed, skipping"
                         );
                     }
                 }

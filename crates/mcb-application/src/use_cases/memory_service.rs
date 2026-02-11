@@ -235,7 +235,16 @@ impl MemoryServiceImpl {
             ),
         );
         let fts_results = fts_result?;
-        let vector_results = vector_result.unwrap_or_default();
+        let (vector_results, _vector_search_failed) = match vector_result {
+            Ok(results) => (results, false),
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "Vector search failed — falling back to FTS-only results"
+                );
+                (Vec::new(), true)
+            }
+        };
 
         let mut rrf_scores: HashMap<String, f32> = HashMap::new();
 

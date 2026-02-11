@@ -8,7 +8,7 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{IndexResult, repo_path};
 use crate::args::VcsArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Indexes a repository for search.
@@ -24,7 +24,7 @@ pub async fn index_repository(
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(to_contextual_tool_error(e));
         }
     };
 
@@ -47,7 +47,7 @@ pub async fn index_repository(
             }
             Err(e) => {
                 let _ = branch;
-                return Ok(to_opaque_tool_error(e));
+                return Ok(to_contextual_tool_error(e));
             }
         }
     }

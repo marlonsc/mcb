@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use tracing::error;
 
@@ -83,7 +83,7 @@ pub async fn create_session(
         })),
         Err(e) => {
             error!("Failed to create agent session: {:?}", e);
-            Ok(to_opaque_tool_error(e))
+            Ok(to_contextual_tool_error(e))
         }
     }
 }

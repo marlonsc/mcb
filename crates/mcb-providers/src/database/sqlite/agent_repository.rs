@@ -29,6 +29,40 @@ impl SqliteAgentRepository {
 #[async_trait]
 impl AgentRepository for SqliteAgentRepository {
     async fn create_session(&self, session: &AgentSession) -> Result<()> {
+        // Ensure default org exists (FK: projects.org_id → organizations.id)
+        self.executor
+            .execute(
+                "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                &[
+                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
+                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_NAME.to_string()),
+                    SqlParam::String("default".to_string()),
+                    SqlParam::String("{}".to_string()),
+                    SqlParam::I64(session.started_at),
+                    SqlParam::I64(session.started_at),
+                ],
+            )
+            .await
+            .map_err(|e| Error::memory_with_source("auto-create default org", e))?;
+
+        if let Some(project_id) = &session.project_id {
+            // Auto-create project if missing to prevent FK constraint violation
+            self.executor
+                .execute(
+                    "INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                    &[
+                        SqlParam::String(project_id.clone()),
+                        SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
+                        SqlParam::String(format!("Project {}", project_id)),
+                        SqlParam::String("default".to_string()),
+                        SqlParam::I64(session.started_at),
+                        SqlParam::I64(session.started_at),
+                    ],
+                )
+                .await
+                .map_err(|e| Error::memory_with_source("auto-create project", e))?;
+        }
+
         let params = [
             SqlParam::String(session.id.clone()),
             SqlParam::String(session.session_summary_id.clone()),

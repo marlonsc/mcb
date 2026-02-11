@@ -11,7 +11,7 @@ use rmcp::model::{CallToolResult, Content};
 use validator::Validate;
 
 use crate::args::{ValidateAction, ValidateArgs, ValidateScope};
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Handler for code validation MCP tool operations.
@@ -106,7 +106,7 @@ impl ValidateHandler {
                             "count": rules.len(),
                             "filter": category,
                         })),
-                        Err(e) => Ok(to_opaque_tool_error(e)),
+                        Err(e) => Ok(to_contextual_tool_error(e)),
                     }
                 } else {
                     match self.validation_service.list_validators().await {
@@ -115,7 +115,7 @@ impl ValidateHandler {
                             "count": validators.len(),
                             "description": "Available validation rules",
                         })),
-                        Err(e) => Ok(to_opaque_tool_error(e)),
+                        Err(e) => Ok(to_contextual_tool_error(e)),
                     }
                 }
             }
@@ -145,7 +145,7 @@ impl ValidateHandler {
                         "functions": report.functions,
                         "analysis_time_ms": timer.elapsed().as_millis(),
                     })),
-                    Err(e) => Ok(to_opaque_tool_error(e)),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
         }

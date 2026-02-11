@@ -13,7 +13,7 @@ use validator::Validate;
 use super::helpers::MemoryHelpers;
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Handler for memory-related MCP tool operations.
@@ -106,7 +106,7 @@ impl MemoryHandler {
             match serde_json::from_value(serde_json::Value::Object(data.clone())) {
                 Ok(p) => p,
                 Err(e) => {
-                    return Ok(to_opaque_tool_error(e));
+                    return Ok(to_contextual_tool_error(e));
                 }
             };
 
@@ -114,7 +114,7 @@ impl MemoryHandler {
             Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                 "id": id,
             })),
-            Err(e) => Ok(to_opaque_tool_error(e)),
+            Err(e) => Ok(to_contextual_tool_error(e)),
         }
     }
 
@@ -138,7 +138,7 @@ impl MemoryHandler {
                 "count": patterns.len(),
                 "patterns": patterns,
             })),
-            Err(e) => Ok(to_opaque_tool_error(e)),
+            Err(e) => Ok(to_contextual_tool_error(e)),
         }
     }
 

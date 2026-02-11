@@ -13,7 +13,7 @@ use rmcp::model::{CallToolResult, Content};
 use validator::Validate;
 
 use crate::args::{SearchArgs, SearchResource};
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::collections::normalize_collection_name;
 
@@ -43,7 +43,9 @@ impl SearchHandler {
         Parameters(args): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
         if let Err(e) = args.validate() {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(CallToolResult::error(vec![Content::text(format!(
+                "Invalid argument: {e}"
+            ))]));
         }
 
         let org_ctx = OrgContext::default();
@@ -78,7 +80,7 @@ impl SearchHandler {
                         timer.elapsed(),
                         limit,
                     ),
-                    Err(e) => Ok(to_opaque_tool_error(e)),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
             SearchResource::Memory | SearchResource::Context => {
@@ -128,7 +130,7 @@ impl SearchHandler {
                         .map_err(fmt_err)?;
                         Ok(response)
                     }
-                    Err(e) => Ok(to_opaque_tool_error(e)),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
         }
