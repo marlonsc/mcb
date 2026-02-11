@@ -45,7 +45,7 @@ pub struct HealthCheck {
     /// Current status
     pub status: HealthStatus,
     /// Timestamp of last check
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp: i64,
     /// Response time in milliseconds
     pub response_time_ms: u64,
     /// Optional error message
@@ -60,7 +60,7 @@ impl HealthCheck {
         Self {
             name: name.into(),
             status: HealthStatus::Up,
-            timestamp: chrono::Utc::now(),
+            timestamp: chrono::Utc::now().timestamp(),
             response_time_ms: 0,
             error: None,
             details: None,
@@ -72,7 +72,7 @@ impl HealthCheck {
         Self {
             name: name.into(),
             status: HealthStatus::Down,
-            timestamp: chrono::Utc::now(),
+            timestamp: chrono::Utc::now().timestamp(),
             response_time_ms: 0,
             error,
             details: None,
@@ -84,7 +84,7 @@ impl HealthCheck {
         Self {
             name: name.into(),
             status: HealthStatus::Degraded,
-            timestamp: chrono::Utc::now(),
+            timestamp: chrono::Utc::now().timestamp(),
             response_time_ms: 0,
             error: details,
             details: None,
@@ -110,7 +110,7 @@ pub struct HealthResponse {
     /// Overall system status
     pub status: HealthStatus,
     /// Timestamp of the health check
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp: i64,
     /// Total response time in milliseconds
     pub response_time_ms: u64,
     /// Individual health check results
@@ -130,7 +130,7 @@ impl HealthResponse {
     pub fn new() -> Self {
         Self {
             status: HealthStatus::Up,
-            timestamp: chrono::Utc::now(),
+            timestamp: chrono::Utc::now().timestamp(),
             response_time_ms: 0,
             checks: HashMap::new(),
             system: SystemInfo::default(),
@@ -415,7 +415,7 @@ pub mod checkers {
             HealthCheck {
                 name: "system".to_string(),
                 status,
-                timestamp: chrono::Utc::now(),
+                timestamp: chrono::Utc::now().timestamp(),
                 response_time_ms: start_time.elapsed().as_millis() as u64,
                 error: None,
                 details: Some(serde_json::json!({

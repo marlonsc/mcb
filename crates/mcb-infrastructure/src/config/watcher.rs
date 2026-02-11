@@ -5,7 +5,6 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use chrono::Utc;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::EventBusProvider;
@@ -171,7 +170,7 @@ impl ConfigWatcher {
         if let Err(e) = event_bus
             .publish_event(DomainEvent::ConfigReloaded {
                 section: "all".to_string(),
-                timestamp: Utc::now(),
+                timestamp: chrono::Utc::now().timestamp(),
             })
             .await
         {
