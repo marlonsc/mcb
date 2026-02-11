@@ -17,6 +17,7 @@ pub struct VcsEntityHandler {
 }
 
 impl VcsEntityHandler {
+    /// Create a new handler backed by the given repository.
     pub fn new(repo: Arc<dyn VcsEntityRepository>) -> Self {
         Self { repo }
     }

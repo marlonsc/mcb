@@ -149,22 +149,27 @@ impl McpServer {
         Arc::clone(&self.services.project)
     }
 
+    /// Access to project workflow repository
     pub fn project_workflow_repository(&self) -> Arc<dyn ProjectRepository> {
         Arc::clone(&self.services.project_workflow)
     }
 
+    /// Access to VCS entity repository
     pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
         Arc::clone(&self.services.vcs_entity)
     }
 
+    /// Access to plan entity repository
     pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
         Arc::clone(&self.services.plan_entity)
     }
 
+    /// Access to issue entity repository
     pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
         Arc::clone(&self.services.issue_entity)
     }
 
+    /// Access to org entity repository
     pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
         Arc::clone(&self.services.org_entity)
     }

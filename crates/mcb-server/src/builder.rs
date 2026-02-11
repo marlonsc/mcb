@@ -114,26 +114,31 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the project workflow repository
     pub fn with_project_workflow_service(mut self, repo: Arc<dyn ProjectRepository>) -> Self {
         self.project_repository = Some(repo);
         self
     }
 
+    /// Set the VCS entity repository
     pub fn with_vcs_entity_repository(mut self, repo: Arc<dyn VcsEntityRepository>) -> Self {
         self.vcs_entity_repository = Some(repo);
         self
     }
 
+    /// Set the plan entity repository
     pub fn with_plan_entity_repository(mut self, repo: Arc<dyn PlanEntityRepository>) -> Self {
         self.plan_entity_repository = Some(repo);
         self
     }
 
+    /// Set the issue entity repository
     pub fn with_issue_entity_repository(mut self, repo: Arc<dyn IssueEntityRepository>) -> Self {
         self.issue_entity_repository = Some(repo);
         self
     }
 
+    /// Set the org entity repository
     pub fn with_org_entity_repository(mut self, repo: Arc<dyn OrgEntityRepository>) -> Self {
         self.org_entity_repository = Some(repo);
         self

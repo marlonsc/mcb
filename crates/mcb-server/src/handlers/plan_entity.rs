@@ -16,6 +16,7 @@ pub struct PlanEntityHandler {
 }
 
 impl PlanEntityHandler {
+    /// Create a new handler backed by the given repository.
     pub fn new(repo: Arc<dyn PlanEntityRepository>) -> Self {
         Self { repo }
     }

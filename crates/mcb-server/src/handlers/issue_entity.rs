@@ -17,6 +17,7 @@ pub struct IssueEntityHandler {
 }
 
 impl IssueEntityHandler {
+    /// Create a new handler backed by the given repository.
     pub fn new(repo: Arc<dyn IssueEntityRepository>) -> Self {
         Self { repo }
     }

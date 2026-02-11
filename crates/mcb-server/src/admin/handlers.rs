@@ -57,10 +57,15 @@ pub struct AdminState {
     pub service_manager: Option<Arc<ServiceManager>>,
     /// Cache provider for stats
     pub cache: Option<Arc<dyn CacheProvider>>,
+    /// Project workflow repository
     pub project_workflow: Option<Arc<dyn ProjectRepository>>,
+    /// VCS entity repository
     pub vcs_entity: Option<Arc<dyn VcsEntityRepository>>,
+    /// Plan entity repository
     pub plan_entity: Option<Arc<dyn PlanEntityRepository>>,
+    /// Issue entity repository
     pub issue_entity: Option<Arc<dyn IssueEntityRepository>>,
+    /// Org entity repository
     pub org_entity: Option<Arc<dyn OrgEntityRepository>>,
 }
 
