@@ -9,6 +9,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use tracing;
 
 use super::expression_engine::ExpressionEngine;
 use super::rete_engine::ReteEngine;
@@ -279,11 +280,11 @@ impl HybridRuleEngine {
             match handle.await {
                 Ok((rule_id, Ok(result))) => results.push((rule_id, result)),
                 Ok((rule_id, Err(e))) => {
-                    eprintln!("Warning: Rule '{rule_id}' execution error: {e}");
+                    tracing::warn!("Rule '{rule_id}' execution error: {e}");
                     // Continue with other tasks
                 }
                 Err(e) => {
-                    eprintln!("Warning: Task join error: {e}");
+                    tracing::warn!("Task join error: {e}");
                     // Continue with other tasks
                 }
             }

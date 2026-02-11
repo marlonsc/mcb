@@ -3,17 +3,32 @@ use serde::{Deserialize, Serialize};
 /// Enumeration of available agent types in the system.
 ///
 /// Each agent type represents a specialized role in the workflow orchestration system:
-/// - `Sisyphus`: Focused executor for task implementation
+/// - `Sisyphus`: Primary orchestration agent with full tool access
 /// - `Oracle`: Architecture reviewer and decision maker
-/// - `Explore`: Research and investigation specialist
+/// - `Explore`: Codebase exploration and pattern analysis specialist
+/// - `Prometheus`: Strategic planning and roadmap creation
+/// - `Momus`: Plan and work verification specialist
+/// - `Librarian`: External documentation and OSS research specialist
+/// - `Metis`: Pre-planning analysis and feasibility checks
+/// - `SisyphusJunior`: Focused task executor for delegated work
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AgentType {
-    /// Sisyphus agent - focused executor for implementing tasks
+    /// Sisyphus agent - primary orchestration agent with full tool access
     Sisyphus,
     /// Oracle agent - architecture reviewer and decision maker
     Oracle,
-    /// Explore agent - research and investigation specialist
+    /// Explore agent - codebase exploration and pattern analysis specialist
     Explore,
+    /// Prometheus agent - strategic planning and roadmap creation
+    Prometheus,
+    /// Momus agent - plan and work verification specialist
+    Momus,
+    /// Librarian agent - external documentation and OSS research specialist
+    Librarian,
+    /// Metis agent - pre-planning analysis and feasibility checks
+    Metis,
+    /// SisyphusJunior agent - focused task executor for delegated work
+    SisyphusJunior,
 }
 
 impl AgentType {
@@ -27,6 +42,11 @@ impl AgentType {
             Self::Sisyphus => "sisyphus",
             Self::Oracle => "oracle",
             Self::Explore => "explore",
+            Self::Prometheus => "prometheus",
+            Self::Momus => "momus",
+            Self::Librarian => "librarian",
+            Self::Metis => "metis",
+            Self::SisyphusJunior => "sisyphus-junior",
         }
     }
 }
@@ -35,6 +55,13 @@ impl_from_str!(AgentType, "Unknown agent type: {}", {
     "sisyphus" => Self::Sisyphus,
     "oracle" => Self::Oracle,
     "explore" => Self::Explore,
+    "prometheus" => Self::Prometheus,
+    "momus" => Self::Momus,
+    "librarian" => Self::Librarian,
+    "metis" => Self::Metis,
+    "sisyphus-junior" => Self::SisyphusJunior,
+    "sisyphus_junior" => Self::SisyphusJunior,
+    "junior" => Self::SisyphusJunior,
 });
 
 /// Enumeration of possible states for an agent session.
