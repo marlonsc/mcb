@@ -18,12 +18,12 @@ Admin: GET /jobs (unified jobs status endpoint)
 → Wrap MCP, eliminate duplication
 ```
 
-### #2: Collection Search (2 hours) - ⭐⭐⭐ ROI  
+### #2: Collection Search (2 hours) - ⭐⭐⭐ ROI
 
 ```
 MCP:  SearchHandler::handle(SearchResource::Code) → results
 Admin: (Currently no search endpoint)
-→ Add GET /collections/:name/search?q=... 
+→ Add GET /collections/:name/search?q=...
 → Enables semantic search UI
 ```
 
@@ -164,22 +164,22 @@ match service.operation().await {
 
 ### Tier 1: Quick Wins (< 2 hrs, high impact)
 
-1.  ⭐⭐⭐ Index Status Wrapper
-2.  ⭐⭐⭐ Collection Search
-3.  ⭐⭐ Validation Endpoints
-4.  ⭐⭐ Complexity Analysis
+1. ⭐⭐⭐ Index Status Wrapper
+2. ⭐⭐⭐ Collection Search
+3. ⭐⭐ Validation Endpoints
+4. ⭐⭐ Complexity Analysis
 
 ### Tier 2: Medium Effort (2-4 hrs)
 
-1.  ⭐⭐⭐ Response Type Consolidation
-2.  ⭐⭐ Memory Browsing
-3.  ⭐⭐ VCS Operations
-4.  ⭐⭐ Session Browsing
+1. ⭐⭐⭐ Response Type Consolidation
+2. ⭐⭐ Memory Browsing
+3. ⭐⭐ VCS Operations
+4. ⭐⭐ Session Browsing
 
 ### Tier 3: Strategic (4+ hrs)
 
-1.  ⭐⭐⭐ Project Handler
-2.  ⭐⭐⭐⭐ Unified Facade
+1. ⭐⭐⭐ Project Handler
+2. ⭐⭐⭐⭐ Unified Facade
 
 ## ✅ Success Metrics
 
@@ -193,11 +193,11 @@ match service.operation().await {
 
 ## 🚀 Next Steps
 
-1.  **Review** - Approve consolidation strategy
-2.  **Break Down** - Create GitHub issues for each phase
-3.  **Implement** - Start Phase 1 (quick wins)
-4.  **Test** - Validate each phase
-5.  **Document** - Update API docs
+1. **Review** - Approve consolidation strategy
+2. **Break Down** - Create GitHub issues for each phase
+3. **Implement** - Start Phase 1 (quick wins)
+4. **Test** - Validate each phase
+5. **Document** - Update API docs
 
 ---
 

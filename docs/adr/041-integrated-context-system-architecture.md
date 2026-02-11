@@ -2,7 +2,7 @@
 adr: 41
 title: Integrated Context System Architecture v0.4.0
 status: PROPOSED
-created: 
+created:
 updated: 2026-02-05
 related: []
 supersedes: []
@@ -12,10 +12,10 @@ implementation_status: Incomplete
 
 ## ADR-041: Integrated Context System Architecture v0.4.0
 
-**Status**: Proposed  
-**Date**: 2026-02-05  
-**Deciders**: MCB Architecture Team  
-**Related**: ADR-034, ADR-035, ADR-036, ADR-037 (Workflow series)  
+**Status**: Proposed
+**Date**: 2026-02-05
+**Deciders**: MCB Architecture Team
+**Related**: ADR-034, ADR-035, ADR-036, ADR-037 (Workflow series)
 **Series**: ADR-041 → ADR-042 → ADR-043 → ADR-044 → ADR-045 → ADR-046
 
 ## Context
@@ -23,7 +23,7 @@ implementation_status: Incomplete
 MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.4.0 must unify these into an **integrated context system** that combines:
 
 -   VCS data (git history, branches, commits)
--   Code indexing (AST chunks, relationships)  
+-   Code indexing (AST chunks, relationships)
 -   Session history (workflow state + transitions)
 -   Chat memories (observations + tags + session context)
 -   Project hierarchy (plans, tasks, scopes from Beads)
@@ -33,11 +33,11 @@ into a **single queryable knowledge base** with explicit freshness tracking, ver
 
 **Problem Statement**:
 
-1.  **No unified context**: Code search, git history, memory, and workflow state are separate systems. Queries cannot reason across all information sources.
-2.  **No freshness guarantees**: Caches expire, git state changes, but consumers don't know context age or staleness.
-3.  **No versioning**: Context snapshots lost between sessions. Cannot time-travel to "how did code look at 14:30?"
-4.  **No semantic relationships**: Code chunks are independent; no graph of dependencies, calls, data flows.
-5.  **Scope boundary enforcement**: No way to isolate context by task/scope/policy without manual filtering.
+1. **No unified context**: Code search, git history, memory, and workflow state are separate systems. Queries cannot reason across all information sources.
+2. **No freshness guarantees**: Caches expire, git state changes, but consumers don't know context age or staleness.
+3. **No versioning**: Context snapshots lost between sessions. Cannot time-travel to "how did code look at 14:30?"
+4. **No semantic relationships**: Code chunks are independent; no graph of dependencies, calls, data flows.
+5. **Scope boundary enforcement**: No way to isolate context by task/scope/policy without manual filtering.
 
 ## Decision
 
@@ -150,29 +150,29 @@ pub trait ContextGraphTraversal: Send + Sync {
 
 ### Layer Breakdown
 
-**Layer 1: Data Sources**  
+**Layer 1: Data Sources**
 
--   Existing: Memory system, VCS provider, code indexing  
+-   Existing: Memory system, VCS provider, code indexing
 -   Changes: Add session_id FK, freshness tracking, last_modified timestamps
 
-**Layer 2: Versioning (ADR-045)**  
+**Layer 2: Versioning (ADR-045)**
 
--   New: ContextRepository storing immutable snapshots  
+-   New: ContextRepository storing immutable snapshots
 -   Technology: SQLite (primary) + im::Vector (in-memory cache) + serde for serialization
 
-**Layer 3: Knowledge Graph (ADR-042)**  
+**Layer 3: Knowledge Graph (ADR-042)**
 
--   New: CodeGraph built via tree-sitter-graph + petgraph  
+-   New: CodeGraph built via tree-sitter-graph + petgraph
 -   Technology: petgraph DAG + daggy + slotmap
 
-**Layer 4: Search (ADR-043)**  
+**Layer 4: Search (ADR-043)**
 
--   New: HybridSearcher composing tantivy + vecstore + graph  
+-   New: HybridSearcher composing tantivy + vecstore + graph
 -   Technology: tantivy (FTS) + vecstore (HNSW vectors) + RRF fusion
 
-**Layer 5: Policies (ADR-046)**  
+**Layer 5: Policies (ADR-046)**
 
--   Integration: ContextValidationResult checks policies  
+-   Integration: ContextValidationResult checks policies
 -   Technology: Policy trait (existing from ADR-036)
 
 ### Crate Structure

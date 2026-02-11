@@ -21,23 +21,23 @@ Before optimization:
 
 **Changes**:
 
-1.  **CI Workflow Path Filters** (`src/**`, `crates/**`, `tests/**`, `Cargo.toml`, `.github/workflows/ci.yml`)
+1. **CI Workflow Path Filters** (`src/**`, `crates/**`, `tests/**`, `Cargo.toml`, `.github/workflows/ci.yml`)
 
 -   Skip CI entirely when only docs change
 -   Skip CI when only scripts change
 
-1.  **Coverage Job Conditional** (`if: github.event_name == 'push' && github.ref == 'refs/heads/main'`)
+1. **Coverage Job Conditional** (`if: github.event_name == 'push' && github.ref == 'refs/heads/main'`)
 
 -   Only run on main branch merges
 -   Skip on all PRs and develop branch
 -   Expensive tarpaulin job only runs where it matters
 
-1.  **CodeQL Workflow Path Filters** (same code paths as CI)
+1. **CodeQL Workflow Path Filters** (same code paths as CI)
 
 -   Security analysis only when code changes
 -   Skip docs-only and configuration-only changes
 
-1.  **Tarpaulin Integration Test Exclusion**
+1. **Tarpaulin Integration Test Exclusion**
 
 -   Created `.tarpaulin.toml` configuration
 -   Updated `make coverage` to exclude integration tests and admin tests
@@ -61,18 +61,18 @@ Monthly savings: ~160 jobs (34% reduction)
 
 **Changes**:
 
-1.  **Split Test Job** into conditional variants:
+1. **Split Test Job** into conditional variants:
 
 -   `test-pr`: Runs ONLY on `pull_request` events, tests `stable` only
 -   `test-main`: Runs ONLY on `push` to `main`, tests `stable` + `beta`
 
-1.  **Updated Job Dependencies**:
+1. **Updated Job Dependencies**:
 
 -   `golden-tests`: Depends on `test-main` (not `test`)
 -   `coverage`: Depends on `test-main` (not `test`)
 -   Both jobs now have explicit `if:` conditionals
 
-1.  **Clear Job Intent**:
+1. **Clear Job Intent**:
 
 -   PR validation: Fast feedback (stable only)
 -   Main verification: Comprehensive (stable + beta)
@@ -127,13 +127,13 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'src/**'
-      - 'crates/**'
-      - 'tests/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '.github/workflows/ci.yml'
-      - '.github/setup-ci.sh'
+      -   'src/**'
+      -   'crates/**'
+      -   'tests/**'
+      -   'Cargo.toml'
+      -   'Cargo.lock'
+      -   '.github/workflows/ci.yml'
+      -   '.github/setup-ci.sh'
   pull_request:
     branches: [main, develop]
     paths: [same as push]
@@ -147,11 +147,11 @@ on:
     branches: [main]
     tags: ['v*']
     paths:
-      - 'src/**'
-      - 'crates/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '.github/workflows/codeql.yml'
+      -   'src/**'
+      -   'crates/**'
+      -   'Cargo.toml'
+      -   'Cargo.lock'
+      -   '.github/workflows/codeql.yml'
 ```
 
 ## Workflow Execution Scenarios
@@ -220,11 +220,11 @@ on:
 
 ### Validation Tests
 
-1.  **PR with code change**: Verify test-pr runs, coverage skipped
-2.  **PR with docs change**: Verify entire CI skipped
-3.  **Push to main with code**: Verify test-main (stable+beta) runs, coverage runs
-4.  **Push to main with docs**: Verify only docs jobs run
-5.  **Coverage execution**: Verify tarpaulin completes without timeout
+1. **PR with code change**: Verify test-pr runs, coverage skipped
+2. **PR with docs change**: Verify entire CI skipped
+3. **Push to main with code**: Verify test-main (stable+beta) runs, coverage runs
+4. **Push to main with docs**: Verify only docs jobs run
+5. **Coverage execution**: Verify tarpaulin completes without timeout
 
 ### Key Metrics to Track
 
@@ -236,28 +236,28 @@ on:
 
 ## Known Limitations
 
-1.  **Beta tests on main only**: PRs don't test beta Rust channel
+1. **Beta tests on main only**: PRs don't test beta Rust channel
 
 -   Mitigation: Main branch catch issues before release
 -   Trade-off acceptable: Dev feedback speed vs comprehensive testing
 
-1.  **Integration tests excluded from coverage**: Milvus/Ollama requirements
+1. **Integration tests excluded from coverage**: Milvus/Ollama requirements
 
 -   Mitigation: Integration tests still run in full test suite
 -   Trade-off acceptable: Coverage on unit/stable code vs external service dependency
 
-1.  **No cross-platform testing on PR**: Only Linux tested
+1. **No cross-platform testing on PR**: Only Linux tested
 
 -   Mitigation: Release builds catch platform-specific issues
 -   Trade-off acceptable: PR feedback speed vs pre-release validation
 
 ## Future Optimizations (Out of Scope)
 
-1.  **Distributed coverage**: Run coverage on multiple platforms
-2.  **Dynamic matrix**: Skip matrix based on code analysis
-3.  **Composite action caching**: Cache setup steps
-4.  **Service containers**: Conditionally spin up Milvus/Ollama for selective tests
-5.  **Workflow reusability**: DRY up workflow definitions
+1. **Distributed coverage**: Run coverage on multiple platforms
+2. **Dynamic matrix**: Skip matrix based on code analysis
+3. **Composite action caching**: Cache setup steps
+4. **Service containers**: Conditionally spin up Milvus/Ollama for selective tests
+5. **Workflow reusability**: DRY up workflow definitions
 
 ## Commits
 

@@ -2,7 +2,7 @@
 adr: 6
 title: Code Audit and Architecture Improvements
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 2, 3, 12, 13]
 supersedes: []
@@ -18,19 +18,19 @@ Accepted
 
 > Major improvements completed:
 >
-> -   Provider pattern with trait-based DI across all providers
-> -   Async-first architecture with 480+ async functions
-> -   thiserror-based error handling throughout
-> -   File sizes reduced (most < 500 lines)
-> -   Test coverage improved to 308+ tests (100% pass rate)
+> - Provider pattern with trait-based DI across all providers
+> - Async-first architecture with 480+ async functions
+> - thiserror-based error handling throughout
+> - File sizes reduced (most < 500 lines)
+> - Test coverage improved to 308+ tests (100% pass rate)
 >
 > **v0.1.1 Modular Architecture Updates:**
 >
-> -   ✅ **Eight-crate Clean Architecture** implemented (see [ADR-013](013-clean-architecture-crate-separation.md))
-> -   ✅ **20+ port traits** in `crates/mcb-application/src/ports/`
-> -   ✅ **Two-layer DI strategy** (see [ADR-012](012-di-strategy-two-layer-approach.md))
-> -   ✅ **All traits extend `shaku::Interface`** for DI compatibility
-> -   ✅ **mcb-validate crate** enforces architecture boundaries
+> - ✅ **Eight-crate Clean Architecture** implemented (see [ADR-013](013-clean-architecture-crate-separation.md))
+> - ✅ **20+ port traits** in `crates/mcb-application/src/ports/`
+> - ✅ **Two-layer DI strategy** (see [ADR-012](012-di-strategy-two-layer-approach.md))
+> - ✅ **All traits extend `shaku::Interface`** for DI compatibility
+> - ✅ **mcb-validate crate** enforces architecture boundaries
 
 ## Context
 
@@ -60,14 +60,14 @@ Implement comprehensive architectural improvements following SOLID principles, m
 
 Key architectural decisions:
 
-1.  **Break down giant structures**into focused modules following SRP
-2.  **Eliminate all unwrap/expect**with proper error handling using thiserror
-3.  **Implement Strategy Pattern**for provider abstractions
-4.  **Add Builder Pattern**for complex configuration objects
-5.  **Introduce Repository Pattern**for data access layers
-6.  **Establish proper Dependency Injection**using trait bounds instead of `Arc<ConcreteType>`
-7.  **Add comprehensive input validation**using the validator crate
-8.  **Implement TDD approach**with mockall for comprehensive testing
+1. **Break down giant structures**into focused modules following SRP
+2. **Eliminate all unwrap/expect**with proper error handling using thiserror
+3. **Implement Strategy Pattern**for provider abstractions
+4. **Add Builder Pattern**for complex configuration objects
+5. **Introduce Repository Pattern**for data access layers
+6. **Establish proper Dependency Injection**using trait bounds instead of `Arc<ConcreteType>`
+7. **Add comprehensive input validation**using the validator crate
+8. **Implement TDD approach**with mockall for comprehensive testing
 
 ## Consequences
 
@@ -149,10 +149,10 @@ pub trait EmbeddingProvider: Send + Sync {
 
 **Migration Path:**
 
-1.  Create new module structure alongside existing code
-2.  Implement new types with backward compatibility
-3.  Gradually migrate usage from old to new APIs
-4.  Remove old code after full migration
+1. Create new module structure alongside existing code
+2. Implement new types with backward compatibility
+3. Gradually migrate usage from old to new APIs
+4. Remove old code after full migration
 
 ### Phase 2: Design Patterns (Weeks 3-4)
 
@@ -292,9 +292,9 @@ The code audit work has been extended to prepare the codebase for multi-domain a
 
 **v0.3.0+**:
 
-1.  **Analysis Domain**: Complexity analysis, technical debt detection, quality metrics
-2.  **Quality Domain**: Quality gates, metric aggregation, baseline comparisons
-3.  **Git Domain**: Repository operations, commit analysis, context generation
+1. **Analysis Domain**: Complexity analysis, technical debt detection, quality metrics
+2. **Quality Domain**: Quality gates, metric aggregation, baseline comparisons
+3. **Git Domain**: Repository operations, commit analysis, context generation
 
 ### Organizational Changes (v0.3.0)
 

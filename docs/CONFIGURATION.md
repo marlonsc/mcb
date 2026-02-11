@@ -1,6 +1,6 @@
 # Configuration Reference
 
-**Version**: 0.2.0  
+**Version**: 0.2.0
 **Updated**: 2026-02-05
 
 Memory Context Browser uses Figment for configuration management per [ADR-025](adr/025-figment-configuration.md).
@@ -9,9 +9,9 @@ Memory Context Browser uses Figment for configuration management per [ADR-025](a
 
 All configuration follows a strict precedence order (later sources override earlier):
 
-1.  **Default values** (built into code)
-2.  **TOML configuration file** (`.mcp-context.toml` or `mcb.toml`)
-3.  **Environment variables** (highest precedence)
+1. **Default values** (built into code)
+2. **TOML configuration file** (`.mcp-context.toml` or `mcb.toml`)
+3. **Environment variables** (highest precedence)
 
 ## Environment Variable Pattern
 
@@ -28,6 +28,7 @@ MCP__<SECTION>__<SUBSECTION>__<KEY>
 ### Examples
 
 ```bash
+
 # Embedding provider
 export MCP__PROVIDERS__EMBEDDING__PROVIDER=ollama
 export MCP__PROVIDERS__EMBEDDING__MODEL=nomic-embed-text
@@ -86,10 +87,10 @@ When not using TOML configuration:
 
 Default search locations (in order):
 
-1.  `./mcb.toml` (current directory)
-2.  `./mcb/mcb.toml` (mcb subdirectory)
-3.  `$XDG_CONFIG_HOME/mcb/mcb.toml` (XDG config directory)
-4.  `~/.mcb/mcb.toml` (home directory)
+1. `./mcb.toml` (current directory)
+2. `./mcb/mcb.toml` (mcb subdirectory)
+3. `$XDG_CONFIG_HOME/mcb/mcb.toml` (XDG config directory)
+4. `~/.mcb/mcb.toml` (home directory)
 
 ### Example `mcb.toml`
 
@@ -111,6 +112,7 @@ expiration_secs = 86400
 [auth.admin]
 enabled = false
 header = "X-Admin-Key"
+
 # key = "your-admin-key"  # Optional
 
 [providers.embedding]
@@ -153,12 +155,14 @@ Place `.mcp-context.toml` in the root of your repository:
 
 ```toml
 [git]
+
 # Git-specific configuration for multi-branch indexing
 depth = 100              # Number of commits to analyze (default: 1000)
 branches = ["main", "develop"]  # Branches to index (default: ["main", "HEAD"])
 include_submodules = true       # Include git submodules (default: true)
 
 # File filtering patterns (glob-style)
+
 # Supports: wildcards (*.log), directories (target/), exact names (node_modules)
 ignore_patterns = [
   "*.log",              # Ignore all .log files
@@ -239,6 +243,7 @@ This ensures **backward compatibility** with v0.1.x projects.
 Environment variables override `.mcp-context.toml` values:
 
 ```bash
+
 # Override depth via environment
 export MCP__GIT__DEPTH=50
 
@@ -264,24 +269,24 @@ The following environment variables are **no longer supported**:
 
 ### Breaking Changes in v0.1.2
 
-1.  **JWT Secret Required**: The default JWT secret is now empty. When authentication is enabled, you **must** configure `MCP__AUTH__JWT__SECRET` with at least 32 characters.
+1. **JWT Secret Required**: The default JWT secret is now empty. When authentication is enabled, you **must** configure `MCP__AUTH__JWT__SECRET` with at least 32 characters.
 
-2.  **Environment Variable Prefix**: All environment variables now use `MCP__` prefix (double underscore) instead of `MCB_`.
+2. **Environment Variable Prefix**: All environment variables now use `MCP__` prefix (double underscore) instead of `MCB_`.
 
-3.  **Config Watching**: File watching is now configured via `watching_enabled` in config instead of an environment variable.
+3. **Config Watching**: File watching is now configured via `watching_enabled` in config instead of an environment variable.
 
 ## Validation
 
 Configuration is validated at startup. The following cause startup failure:
 
-1.  **Server port 0** when not using random port allocation
-2.  **HTTPS enabled without SSL certificate/key paths**
-3.  **Auth enabled with empty/short JWT secret** (< 32 chars)
-4.  **Cache enabled with TTL = 0**
-5.  **Memory/CPU limit = 0**
-6.  **Daemon enabled with max_restart_attempts = 0**
-7.  **Backup enabled with interval = 0**
-8.  **Operations tracking enabled with cleanup_interval = 0 or retention = 0**
+1. **Server port 0** when not using random port allocation
+2. **HTTPS enabled without SSL certificate/key paths**
+3. **Auth enabled with empty/short JWT secret** (< 32 chars)
+4. **Cache enabled with TTL = 0**
+5. **Memory/CPU limit = 0**
+6. **Daemon enabled with max_restart_attempts = 0**
+7. **Backup enabled with interval = 0**
+8. **Operations tracking enabled with cleanup_interval = 0 or retention = 0**
 
 ## Provider Configuration
 

@@ -29,21 +29,21 @@ make quality
 
 ## 🔄 Development Workflow
 
-1.  **Choose Task**: Check [GitHub Issues](https://github.com/marlonsc/mcb/issues) for tasks
-2.  **Create Branch**: Use descriptive names
+1. **Choose Task**: Check [GitHub Issues](https://github.com/marlonsc/mcb/issues) for tasks
+2. **Create Branch**: Use descriptive names
 
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
-1.  **Make Changes**: Implement your feature or fix
-2.  **Test Changes**: Ensure tests pass
+1. **Make Changes**: Implement your feature or fix
+2. **Test Changes**: Ensure tests pass
 
    ```bash
    make test
    ```
 
-1.  **Submit PR**: Create pull request with clear description
+1. **Submit PR**: Create pull request with clear description
 
 ## 📝 Coding Standards
 
@@ -96,6 +96,7 @@ docs: update contribution guide
 ### Commit Orchestrator (Local)
 
 ```bash
+
 # Analyze staged changes
 ./scripts/commit_analyze.sh
 
@@ -161,10 +162,10 @@ Include:
 
 ### Review Process
 
-1.  Automated checks run (tests, linting)
-2.  Code review by maintainers
-3.  Changes requested or approved
-4.  Merge when approved
+1. Automated checks run (tests, linting)
+2. Code review by maintainers
+3. Changes requested or approved
+4. Merge when approved
 
 ## 🐛 Reporting Issues
 

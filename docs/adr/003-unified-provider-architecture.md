@@ -2,7 +2,7 @@
 adr: 3
 title: Unified Provider Architecture & Routing
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 2, 4, 12, 13, 29]
 supersedes: []
@@ -272,6 +272,7 @@ impl CostTracker {
 ### Configuration Management
 
 ```toml
+
 # config/providers.toml
 [providers]
 

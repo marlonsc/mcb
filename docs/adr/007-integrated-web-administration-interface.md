@@ -2,7 +2,7 @@
 adr: 7
 title: Integrated Web Administration Interface
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 2, 6, 8, 12, 13]
 supersedes: []
@@ -18,25 +18,25 @@ implementation_status: Complete
 
 > Backend infrastructure implemented in `crates/mcb-server/src/admin/`:
 >
-> -   AdminService trait with 32 methods (traits.rs)
-> -   AdminServiceImpl with full implementation (implementation.rs, helpers/)
-> -   REST API routes for config, health, backup, maintenance (routes.rs, handlers.rs)
-> -   JWT authentication integration
-> -   **New (v0.2.0)**:
->     -   Unified port architecture (MCP + Admin + Metrics on port 3000)
->     -   Subsystem control via EventBus (6 new AdminService methods)
->     -   Configuration persistence with explicit save pattern
->     -   14 SystemEvent variants for inter-subsystem communication
-> -   **Pending**: Frontend HTML/CSS/JS refinement, WebSocket real-time updates
+> - AdminService trait with 32 methods (traits.rs)
+> - AdminServiceImpl with full implementation (implementation.rs, helpers/)
+> - REST API routes for config, health, backup, maintenance (routes.rs, handlers.rs)
+> - JWT authentication integration
+> - **New (v0.2.0)**:
+>   - Unified port architecture (MCP + Admin + Metrics on port 3000)
+>   - Subsystem control via EventBus (6 new AdminService methods)
+>   - Configuration persistence with explicit save pattern
+>   - 14 SystemEvent variants for inter-subsystem communication
+> - **Pending**: Frontend HTML/CSS/JS refinement, WebSocket real-time updates
 
 ## Context
 
 Memory Context Browser provides comprehensive system monitoring and metrics through HTTP endpoints on a unified port, but lacks a user-friendly web interface for administration, configuration, and visualization. Users currently need to interact with the system through:
 
-1.  Environment variables for configuration
-2.  MCP protocol tools for basic operations
-3.  HTTP API endpoints for metrics (no authentication)
-4.  Terminal/command-line for management tasks
+1. Environment variables for configuration
+2. MCP protocol tools for basic operations
+3. HTTP API endpoints for metrics (no authentication)
+4. Terminal/command-line for management tasks
 
 This creates barriers for non-technical users and makes it difficult to:
 
@@ -57,12 +57,12 @@ The existing infrastructure already includes:
 
 We will implement an integrated web administration interface that runs on the same port as the metrics server (3000), providing a modern, responsive web UI for:
 
-1.  **System Dashboard**: Real-time metrics visualization with interactive charts
-2.  **Configuration Management**: Dynamic provider and system configuration
-3.  **Provider Management**: Add/remove/configure embedding and vector store providers
-4.  **Index Management**: Control indexing operations, view status, clear indexes
-5.  **Security**: Basic authentication for administrative access
-6.  **Monitoring**: Enhanced health monitoring and alerting
+1. **System Dashboard**: Real-time metrics visualization with interactive charts
+2. **Configuration Management**: Dynamic provider and system configuration
+3. **Provider Management**: Add/remove/configure embedding and vector store providers
+4. **Index Management**: Control indexing operations, view status, clear indexes
+5. **Security**: Basic authentication for administrative access
+6. **Monitoring**: Enhanced health monitoring and alerting
 
 The interface will be implemented using:
 
@@ -194,11 +194,11 @@ crates/mcb-server/src/admin/web/templates/
 
 ### Migration Path
 
-1.  **Phase 1**: Extend HTTP server with admin routes
-2.  **Phase 2**: Implement authentication middleware
-3.  **Phase 3**: Create basic HTML/CSS/JS interface
-4.  **Phase 4**: Add WebSocket support for real-time updates
-5.  **Phase 5**: Implement advanced features (charts, provider management)
+1. **Phase 1**: Extend HTTP server with admin routes
+2. **Phase 2**: Implement authentication middleware
+3. **Phase 3**: Create basic HTML/CSS/JS interface
+4. **Phase 4**: Add WebSocket support for real-time updates
+5. **Phase 5**: Implement advanced features (charts, provider management)
 
 ### Performance Considerations
 

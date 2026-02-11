@@ -336,8 +336,8 @@ bd create "Release v0.4.0" -t task -p 1
 
 ## Next Steps
 
-1.  Review ADR-034-037 (Phase 8 foundation)
-2.  Review ADR-041-046 (Phase 9 design)
-3.  Create Beads issues for each task
-4.  Start Week 1 (Feb 17)
-5.  Track progress weekly
+1. Review ADR-034-037 (Phase 8 foundation)
+2. Review ADR-041-046 (Phase 9 design)
+3. Create Beads issues for each task
+4. Start Week 1 (Feb 17)
+5. Track progress weekly

@@ -2,7 +2,7 @@
 adr: 2
 title: Async-First Architecture
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 3, 12, 13]
 supersedes: []
@@ -20,11 +20,11 @@ Accepted
 >
 > **Async Distribution by Crate**:
 >
-> -   `mcb-domain` - Port traits with async methods (`async_trait`)
-> -   `mcb-application` - Use case services (ContextService, SearchService, IndexingService)
-> -   `mcb-providers` - Provider implementations (embedding, vector_store, cache)
-> -   `mcb-infrastructure` - DI bootstrap, factories, event bus
-> -   `mcb-server` - MCP protocol handlers, admin API
+> - `mcb-domain` - Port traits with async methods (`async_trait`)
+> - `mcb-application` - Use case services (ContextService, SearchService, IndexingService)
+> - `mcb-providers` - Provider implementations (embedding, vector_store, cache)
+> - `mcb-infrastructure` - DI bootstrap, factories, event bus
+> - `mcb-server` - MCP protocol handlers, admin API
 >
 > All provider ports use `async_trait` and extend `shaku::Interface` for DI compatibility.
 > Structured concurrency with `tokio::spawn` and async channels.
@@ -330,10 +330,10 @@ As MCB evolves to include CPU-intensive code analysis features (v0.3.0+), the as
 
 ### Rationale
 
-1.  **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound work
-2.  **Rayon for Compute**: Rayon's work-stealing scheduler is proven for CPU-bound parallelism
-3.  **PMAT Integration**: Upcoming PMAT analysis code uses Rayon extensively with proven performance
-4.  **No Conflicts**: Tokio and Rayon are complementary and don't interfere with each other
+1. **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound work
+2. **Rayon for Compute**: Rayon's work-stealing scheduler is proven for CPU-bound parallelism
+3. **PMAT Integration**: Upcoming PMAT analysis code uses Rayon extensively with proven performance
+4. **No Conflicts**: Tokio and Rayon are complementary and don't interfere with each other
 
 ### Implementation Pattern
 

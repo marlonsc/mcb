@@ -61,10 +61,10 @@ pub fn new_with_providers(
 
 **Responsibilities**:
 
-1.  Generate embeddings via AI providers
-2.  Store and retrieve vectors
-3.  Handle batch processing
-4.  Collect performance metrics
+1. Generate embeddings via AI providers
+2. Store and retrieve vectors
+3. Handle batch processing
+4. Collect performance metrics
 
 **Related**: [providers.md](./providers.md), [domain.md](./domain.md)
 
@@ -76,10 +76,10 @@ Processes codebases and creates searchable vector indexes.
 
 **Responsibilities**:
 
-1.  Repository scanning and file discovery
-2.  Language detection and AST parsing
-3.  Incremental indexing with change detection
-4.  Chunk generation and metadata extraction
+1. Repository scanning and file discovery
+2. Language detection and AST parsing
+3. Incremental indexing with change detection
+4. Chunk generation and metadata extraction
 
 **Related**: [chunking.md](./chunking.md), [domain.md](./domain.md)
 
@@ -91,10 +91,10 @@ Executes semantic similarity searches across indexed codebases.
 
 **Responsibilities**:
 
-1.  Query processing and embedding generation
-2.  Vector similarity search execution
-3.  Result ranking and filtering
-4.  Response caching and optimization
+1. Query processing and embedding generation
+2. Vector similarity search execution
+3. Result ranking and filtering
+4. Response caching and optimization
 
 **Related**: [providers.md](./providers.md)
 
@@ -106,27 +106,27 @@ Coordinates batch chunking operations across files.
 
 **Responsibilities**:
 
-1.  Process multiple files in parallel
-2.  Coordinate with language processors
-3.  Handle file batching and error recovery
+1. Process multiple files in parallel
+2. Coordinate with language processors
+3. Handle file batching and error recovery
 
 ## Integration Points
 
 ### AI Providers
 
-1.  OpenAI, Ollama, Gemini, VoyageAI, FastEmbed
-2.  Intelligent routing with failover
-3.  See [providers.md](./providers.md)
+1. OpenAI, Ollama, Gemini, VoyageAI, FastEmbed
+2. Intelligent routing with failover
+3. See [providers.md](./providers.md)
 
 ### Vector Storage
 
-1.  InMemory (development), Encrypted (sensitive data)
-2.  See [providers.md](./providers.md)
+1. InMemory (development), Encrypted (sensitive data)
+2. See [providers.md](./providers.md)
 
 ### MCP Protocol
 
-1.  Standardized interface with AI assistants
-2.  See [server.md](./server.md)
+1. Standardized interface with AI assistants
+2. See [server.md](./server.md)
 
 ## Key Exports
 

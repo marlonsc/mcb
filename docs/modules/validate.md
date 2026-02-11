@@ -71,11 +71,11 @@ Code metrics analysis using Rust-code-analysis:
 -   `rca_analyzer.rs` - Rust-code-analysis integration (feature-gated)
 -   `thresholds.rs` - Metric threshold definitions
 -   **Supported Metrics**:
-    -   Cyclomatic Complexity
-    -   Cognitive Complexity
-    -   Halstead Volume/Difficulty/Effort
-    -   Maintainability Index
-    -   SLOC/PLOC/LLOC/CLOC
+  -   Cyclomatic Complexity
+  -   Cognitive Complexity
+  -   Halstead Volume/Difficulty/Effort
+  -   Maintainability Index
+  -   SLOC/PLOC/LLOC/CLOC
 -   **Status**: ✅ 9/9 tests pass
 
 ### Duplication Detection (`duplication/`)
@@ -86,10 +86,10 @@ Code clone detection using Rabin-Karp algorithm:
 -   `fingerprint.rs` - Token fingerprinting
 -   `thresholds.rs` - Duplication type definitions
 -   **Clone Types**:
-    -   Type 1: Exact clones (100% identical)
-    -   Type 2: Renamed clones (identifiers changed, 95%+ similarity)
-    -   Type 3: Gapped clones (small modifications, 80%+ similarity)
-    -   Type 4: Semantic clones (future, 70%+ similarity)
+  -   Type 1: Exact clones (100% identical)
+  -   Type 2: Renamed clones (identifiers changed, 95%+ similarity)
+  -   Type 3: Gapped clones (small modifications, 80%+ similarity)
+  -   Type 4: Semantic clones (future, 70%+ similarity)
 -   **Status**: ✅ 11/11 tests pass
 
 ### Clean Architecture (`clean_architecture.rs`)
@@ -116,13 +116,13 @@ YAML-based rule definitions:
 -   `registry.rs` - Rule registry and lookup
 -   `templates/` - Rule templates for common patterns
 -   **Rule Categories**:
-    -   `clean-architecture/` - CA001-CA009
-    -   `migration/` - 12 migration detection rules (inventory→linkme, shaku→dill, etc.)
-    -   `quality/` - Code quality rules
-    -   `metrics/` - Metric thresholds
-    -   `duplication/` - Clone detection rules
-    -   `testing/` - Test organization rules
-    -   `solid/` - SOLID principle enforcement
+  -   `clean-architecture/` - CA001-CA009
+  -   `migration/` - 12 migration detection rules (inventory→linkme, shaku→dill, etc.)
+  -   `quality/` - Code quality rules
+  -   `metrics/` - Metric thresholds
+  -   `duplication/` - Clone detection rules
+  -   `testing/` - Test organization rules
+  -   `solid/` - SOLID principle enforcement
 
 ### Integration Tests (`tests/integration/`)
 
@@ -142,19 +142,20 @@ Comprehensive integration test suite:
 Performance benchmarks:
 
 -   `validation_benchmark.rs` - 7 benchmark groups:
-    -   unwrap_detection
-    -   tokenization
-    -   duplication_analysis
-    -   architecture_validation
-    -   report_generation
-    -   config
-    -   scalability
+  -   unwrap_detection
+  -   tokenization
+  -   duplication_analysis
+  -   architecture_validation
+  -   report_generation
+  -   config
+  -   scalability
 
 ## Usage
 
 ### Command Line
 
 ```bash
+
 # Run all validation rules
 make validate
 

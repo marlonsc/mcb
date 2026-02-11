@@ -2,7 +2,7 @@
 adr: 29
 title: Hexagonal Architecture with dill IoC
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: []
 supersedes: []
@@ -22,14 +22,14 @@ implementation_status: Incomplete
 
 The previous architecture (ADR-024) used a handle-based DI pattern with linkme registry for compile-time provider discovery. While effective, this approach had coupling issues:
 
-1.  **Infrastructure imported concrete types from Application**
+1. **Infrastructure imported concrete types from Application**
     -   `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
 
-2.  **Application ports were duplicated**
+2. **Application ports were duplicated**
     -   `mcb-domain/src/ports/providers/` (correct location)
     -   `mcb-application/src/ports/providers/` (duplication)
 
-3.  **No IoC container for service lifecycle management**
+3. **No IoC container for service lifecycle management**
     -   Manual wiring in bootstrap.rs
     -   No dependency graph validation
 
@@ -154,22 +154,22 @@ New mcb-validate rules enforce the architecture:
 
 ### Positive
 
-1.  **Clear layer separation**: Ports in domain, implementations in providers
-2.  **IoC container benefits**: dill Catalog manages service lifecycle
-3.  **Gradual migration**: `add_value()` allows mixing with existing pattern
-4.  **Compile-time validation**: mcb-validate enforces architecture
-5.  **Runtime switching**: Provider handles still support admin API
+1. **Clear layer separation**: Ports in domain, implementations in providers
+2. **IoC container benefits**: dill Catalog manages service lifecycle
+3. **Gradual migration**: `add_value()` allows mixing with existing pattern
+4. **Compile-time validation**: mcb-validate enforces architecture
+5. **Runtime switching**: Provider handles still support admin API
 
 ### Negative
 
-1.  **Additional dependency**: dill crate added to workspace
-2.  **Learning curve**: Developers must understand dill API
-3.  **Migration effort**: Existing code updated to new import paths
+1. **Additional dependency**: dill crate added to workspace
+2. **Learning curve**: Developers must understand dill API
+3. **Migration effort**: Existing code updated to new import paths
 
 ### Neutral
 
-1.  **Bootstrap still exists**: `init_app()` wraps `build_catalog()`
-2.  **AppContext unchanged**: Same public interface for consumers
+1. **Bootstrap still exists**: `init_app()` wraps `build_catalog()`
+2. **AppContext unchanged**: Same public interface for consumers
 
 ## References
 

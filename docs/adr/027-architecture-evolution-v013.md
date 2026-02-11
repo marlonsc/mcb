@@ -2,7 +2,7 @@
 adr: 27
 title: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [8, 13, 24]
 supersedes: []
@@ -42,11 +42,11 @@ Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production cod
 
 ### Problems Addressed
 
-1.  **Layer-centric organization**: Finding code by feature requires knowing which layer it belongs to
-2.  **Implicit engine contracts**: Providers are loosely coupled without formal engine semantics
-3.  **Full re-indexing**: Unchanged files are re-processed unnecessarily
-4.  **Limited operability**: No standard deployment patterns for production
-5.  **No quality metrics**: Search relevance changes go undetected
+1. **Layer-centric organization**: Finding code by feature requires knowing which layer it belongs to
+2. **Implicit engine contracts**: Providers are loosely coupled without formal engine semantics
+3. **Full re-indexing**: Unchanged files are re-processed unnecessarily
+4. **Limited operability**: No standard deployment patterns for production
+5. **No quality metrics**: Search relevance changes go undetected
 
 ## Decision
 

@@ -10,11 +10,11 @@ This document describes the automated CI/CD pipeline and release process for Mem
 
 ## Table of Contents
 
-1.  [Local Validation (Pre-commit)](#local-validation-pre-commit)
-2.  [CI Pipeline (GitHub Actions)](#ci-pipeline-github-actions)
-3.  [Automated Release Deployment](#automated-release-deployment)
-4.  [Test Timeout Management](#test-timeout-management)
-5.  [Troubleshooting](#troubleshooting)
+1. [Local Validation (Pre-commit)](#local-validation-pre-commit)
+2. [CI Pipeline (GitHub Actions)](#ci-pipeline-github-actions)
+3. [Automated Release Deployment](#automated-release-deployment)
+4. [Test Timeout Management](#test-timeout-management)
+5. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -35,6 +35,7 @@ This installs `.git/hooks/pre-commit` which runs validation checks automatically
 The pre-commit hook runs the same checks as the CI pipeline but **skips tests** for fast feedback (< 30 seconds typical):
 
 ```bash
+
 # Step 1: Lint checks (Rust 2024 compliance)
 make lint CI_MODE=1
 
@@ -54,6 +55,7 @@ make validate QUICK=1
 To run pre-commit validation without committing:
 
 ```bash
+
 # Run exactly what pre-commit hook runs
 make ci-local
 
@@ -64,6 +66,7 @@ make lint CI_MODE=1 && make validate QUICK=1
 ### Commit Orchestrator (Local)
 
 ```bash
+
 # Analyze staged changes
 ./scripts/commit_analyze.sh
 
@@ -95,9 +98,9 @@ git commit --no-verify
 
 The CI pipeline runs automatically on:
 
-1.  **Push to main or develop**: Runs on every push
-2.  **Pull requests**: Validates changes before merge
-3.  **Tag push**: Triggers release workflow (see below)
+1. **Push to main or develop**: Runs on every push
+2. **Pull requests**: Validates changes before merge
+3. **Tag push**: Triggers release workflow (see below)
 
 ### CI Jobs and Dependencies
 
@@ -133,15 +136,22 @@ lint → test ──┬→ validate → release-build
 To run the **exact same pipeline locally** before pushing:
 
 ```bash
+
 # Full CI pipeline (matches GitHub exactly)
 make ci-full
 
 # This runs:
+
 # 1. Lint (Rust 2024 compliance)
+
 # 2. Unit and integration tests (4 threads to prevent timeouts)
+
 # 3. Architecture validation (strict mode)
+
 # 4. Golden acceptance tests (2 threads)
+
 # 5. Security audit
+
 # 6. Documentation build
 ```
 
@@ -150,6 +160,7 @@ make ci-full
 Check GitHub Actions for detailed results:
 
 ```bash
+
 # View latest workflow runs
 gh run list --workflow=ci.yml -L 5
 
@@ -169,6 +180,7 @@ gh run view <run-id> -j <job-name>
 Releases are triggered by pushing a version tag to main:
 
 ```bash
+
 # Bump version (choose one)
 make version BUMP=patch  # 0.1.2 → 0.1.3
 make version BUMP=minor  # 0.1.2 → 0.2.0
@@ -188,7 +200,7 @@ git push origin v0.1.4
 
 The release workflow is triggered by tags matching `v*` pattern and performs:
 
-1.  **Pre-Release Validation**: Runs full CI validation
+1. **Pre-Release Validation**: Runs full CI validation
 
 -   Lint (Rust 2024 compliance)
 -   Unit tests (4 threads)
@@ -197,13 +209,13 @@ The release workflow is triggered by tags matching `v*` pattern and performs:
 -   Security audit
 -   Documentation build
 
-1.  **Build Release Artifacts**: Compiles for all platforms
+1. **Build Release Artifacts**: Compiles for all platforms
 
 -   Linux: `mcb-x86_64-linux-gnu`
 -   macOS: `mcb-x86_64-macos`
 -   Windows: `mcb-x86_64-windows.exe`
 
-1.  **Create GitHub Release**: Publishes release with:
+1. **Create GitHub Release**: Publishes release with:
 
 -   Automatic changelog (git log since previous release)
 -   All binary artifacts as downloads
@@ -252,6 +264,7 @@ Tests can timeout in CI due to:
 The CI pipeline uses thread limiting to prevent timeouts:
 
 ```bash
+
 # In GitHub Actions CI:
 make test TEST_THREADS=4          # 4 parallel test threads (instead of auto)
 make test SCOPE=golden TEST_THREADS=2  # Acceptance tests with 2 threads
@@ -272,6 +285,7 @@ make test SCOPE=golden TEST_THREADS=2  # Acceptance tests with 2 threads
 **For local development:**
 
 ```bash
+
 # Run tests with limited parallelization
 make test TEST_THREADS=4
 
@@ -282,7 +296,7 @@ make ci-full
 **For GitHub Actions CI:** Edit `.github/workflows/ci.yml` and adjust:
 
 ```yaml
-- run: make test TEST_THREADS=4  # Increase/decrease as needed
+-   run: make test TEST_THREADS=4  # Increase/decrease as needed
 ```
 
 ### Monitoring Test Performance
@@ -290,6 +304,7 @@ make ci-full
 Check CI logs for timeout issues:
 
 ```bash
+
 # View test job logs
 gh run view <run-id> -j test --log
 
@@ -307,6 +322,7 @@ gh run view <run-id> -j test --log
 **Solution**:
 
 ```bash
+
 # Reinstall hooks
 make install-hooks
 
@@ -318,14 +334,15 @@ cat .git/hooks/pre-commit
 
 **Possible causes:**
 
-1.  Different environment (macOS vs Linux)
-2.  Different Rust versions
-3.  Cache issues
-4.  Race conditions in tests
+1. Different environment (macOS vs Linux)
+2. Different Rust versions
+3. Cache issues
+4. Race conditions in tests
 
 **Solutions:**
 
 ```bash
+
 # Run exact CI validation
 make ci-full
 
@@ -343,19 +360,19 @@ rustc --version  # Should be stable
 
 **Solutions:**
 
-1.  **Increase timeout** in `.github/workflows/ci.yml`:
+1. **Increase timeout** in `.github/workflows/ci.yml`:
 
    ```yaml
    timeout-minutes: 45
    ```
 
-1.  **Reduce parallelization**:
+1. **Reduce parallelization**:
 
    ```yaml
-   - run: make test TEST_THREADS=2
+   -   run: make test TEST_THREADS=2
    ```
 
-1.  **Run tests locally** to identify slow tests:
+1. **Run tests locally** to identify slow tests:
 
    ```bash
    make test TEST_THREADS=4
@@ -367,14 +384,14 @@ rustc --version  # Should be stable
 
 **Check**:
 
-1.  All CI checks passed before release job
-2.  Built locally successfully
+1. All CI checks passed before release job
+2. Built locally successfully
 
    ```bash
    make build RELEASE=1
    ```
 
-1.  No uncommitted changes in version
+1. No uncommitted changes in version
 
    ```bash
    git status
@@ -387,6 +404,7 @@ rustc --version  # Should be stable
 **Check**:
 
 ```bash
+
 # View release workflow runs
 gh run list --workflow=release.yml -L 5
 
@@ -407,6 +425,7 @@ gh run view <run-id> --log
 ### Local Commands
 
 ```bash
+
 # Install pre-commit hooks
 make install-hooks
 
@@ -439,6 +458,7 @@ gh run view <run-id>
 ### Makefile Parameters
 
 ```bash
+
 # Test parallelization
 make test TEST_THREADS=4
 

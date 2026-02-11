@@ -21,45 +21,45 @@ Major stabilization release delivering critical bug fixes for Agent, Session, an
 
 ### Fixed
 
-- **SQLite DDL Startup**: Replaced fragile FTS/trigger creation with `rebuild_fts_sqlite()` — drops and recreates FTS tables, triggers, and repopulates data. Eliminates `SQLITE_BUSY` failures on concurrent schema evolution.
-- **SQLite Recovery**: Added backup-and-recreate recovery path when DDL operations fail on corrupted databases.
-- **Agent SQL Storage**: Fixed "Failed to store tool call" error — correct repository dependency chain (Project -> Session -> Agent).
-- **Session Schema**: Fallback logic for `agent_type` and `model` fields in session creation payloads.
-- **Memory Enums**: Improved validation and error messages for `observation_type`.
-- **Strict `tools/call` Validation**: Non-object `arguments` now return JSON-RPC `-32602` (Invalid Params) instead of being silently dropped.
-- **Test Isolation**: All integration tests use `unique_test_config()` with unique temp DB paths per test, eliminating SQLite I/O contention during parallel execution.
-- **Playwright E2E**: Fixed `test.describe()` not found error in CI by removing per-file spec iteration — Playwright now discovers all specs from `testDir`.
-- **ADR Broken Links**: Fixed 3 cross-reference patterns across 4 ADRs (034/036/037/038).
-- **Doctest Compilation**: Fixed registry module doctest return type.
+-   **SQLite DDL Startup**: Replaced fragile FTS/trigger creation with `rebuild_fts_sqlite()` — drops and recreates FTS tables, triggers, and repopulates data. Eliminates `SQLITE_BUSY` failures on concurrent schema evolution.
+-   **SQLite Recovery**: Added backup-and-recreate recovery path when DDL operations fail on corrupted databases.
+-   **Agent SQL Storage**: Fixed "Failed to store tool call" error — correct repository dependency chain (Project -> Session -> Agent).
+-   **Session Schema**: Fallback logic for `agent_type` and `model` fields in session creation payloads.
+-   **Memory Enums**: Improved validation and error messages for `observation_type`.
+-   **Strict `tools/call` Validation**: Non-object `arguments` now return JSON-RPC `-32602` (Invalid Params) instead of being silently dropped.
+-   **Test Isolation**: All integration tests use `unique_test_config()` with unique temp DB paths per test, eliminating SQLite I/O contention during parallel execution.
+-   **Playwright E2E**: Fixed `test.describe()` not found error in CI by removing per-file spec iteration — Playwright now discovers all specs from `testDir`.
+-   **ADR Broken Links**: Fixed 3 cross-reference patterns across 4 ADRs (034/036/037/038).
+-   **Doctest Compilation**: Fixed registry module doctest return type.
 
 ### Added
 
-- **Startup Smoke Tests**: New `startup_smoke_integration.rs` with process-spawning tests for DDL/init failure detection.
-- **CI Startup Job**: `startup-smoke` job in GitHub Actions CI pipeline.
-- **ADR Archive Structure**: `docs/adr/archive/` directory for superseded decisions.
-- **YAML Frontmatter**: All 44+ ADRs now include standardized frontmatter.
-- **Gap Regression Tests**: `gap_fixes_e2e.rs` for GAP-1, GAP-2, GAP-3 verification.
-- **MCP Protocol Tests**: 3 integration tests for strict argument validation.
-- **Systemd Hardening**: `StartLimitIntervalSec=90` + `StartLimitBurst=3` in service file.
+-   **Startup Smoke Tests**: New `startup_smoke_integration.rs` with process-spawning tests for DDL/init failure detection.
+-   **CI Startup Job**: `startup-smoke` job in GitHub Actions CI pipeline.
+-   **ADR Archive Structure**: `docs/adr/archive/` directory for superseded decisions.
+-   **YAML Frontmatter**: All 44+ ADRs now include standardized frontmatter.
+-   **Gap Regression Tests**: `gap_fixes_e2e.rs` for GAP-1, GAP-2, GAP-3 verification.
+-   **MCP Protocol Tests**: 3 integration tests for strict argument validation.
+-   **Systemd Hardening**: `StartLimitIntervalSec=90` + `StartLimitBurst=3` in service file.
 
 ### Changed
 
-- **Rebranding**: "MCP Context Browser" renamed to "Memory Context Browser" across all 98+ occurrences (docs, templates, configs, README).
-- **Filesystem Reorganization**: `docker-compose.yml`, `package.json`, `package-lock.json` moved to `tests/`. All Makefile, CI, and script references updated.
-- **README Rewrite**: Complete professional rewrite (179 lines) with badges, feature overview, Quick Start, MCP Tools table, and ASCII architecture diagram.
-- **Documentation Updates**: All docs updated to v0.2.0 (QUICKSTART, ARCHITECTURE, ENVIRONMENT_VARIABLES, docs/README).
-- **ADR Status Standardization**: All ADRs use 5-value status set (IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED).
-- **Legacy Removal**: Removed `/indexing` admin route (migrated to `/jobs`), deleted `ADMIN_SERVICE_DEFAULT_PORT` constant, removed tracked log artifacts.
-- **Repository Cleanup**: 32 cruft files removed (reports, temp scripts, test logs, unused configs, screenshots).
+-   **Rebranding**: "MCP Context Browser" renamed to "Memory Context Browser" across all 98+ occurrences (docs, templates, configs, README).
+-   **Filesystem Reorganization**: `docker-compose.yml`, `package.json`, `package-lock.json` moved to `tests/`. All Makefile, CI, and script references updated.
+-   **README Rewrite**: Complete professional rewrite (179 lines) with badges, feature overview, Quick Start, MCP Tools table, and ASCII architecture diagram.
+-   **Documentation Updates**: All docs updated to v0.2.0 (QUICKSTART, ARCHITECTURE, ENVIRONMENT_VARIABLES, docs/README).
+-   **ADR Status Standardization**: All ADRs use 5-value status set (IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED).
+-   **Legacy Removal**: Removed `/indexing` admin route (migrated to `/jobs`), deleted `ADMIN_SERVICE_DEFAULT_PORT` constant, removed tracked log artifacts.
+-   **Repository Cleanup**: 32 cruft files removed (reports, temp scripts, test logs, unused configs, screenshots).
 
 ### Metrics
 
-- **Rust Tests**: 1,266 passing (0 failures, 11 ignored)
-- **E2E Tests**: 44 passing (6 skipped for missing fixture data)
-- **Total**: 1,2995+ tests across unit, integration, golden, and E2E
-- **Crates**: 9 workspace members
-- **Integration Gaps**: 3/3 critical validation gaps closed
-- **MCP Compliance**: Strict argument validation per JSON-RPC spec
+-   **Rust Tests**: 1,266 passing (0 failures, 11 ignored)
+-   **E2E Tests**: 44 passing (6 skipped for missing fixture data)
+-   **Total**: 1,2995+ tests across unit, integration, golden, and E2E
+-   **Crates**: 9 workspace members
+-   **Integration Gaps**: 3/3 critical validation gaps closed
+-   **MCP Compliance**: Strict argument validation per JSON-RPC spec
 
 ---
 
@@ -71,23 +71,23 @@ New providers, health endpoints, and code quality improvements following DRY/SOL
 
 ### Added
 
-- **Anthropic Embedding Provider**: Full Voyage AI model support with configurable dimensions.
-- **Pinecone Vector Store Provider**: Production-ready cloud vector database integration.
-- **Qdrant Vector Store Provider**: Self-hosted vector search with gRPC support.
-- **Health Endpoints**: `/healthz` (liveness) and `/readyz` (readiness) for container orchestration.
-- **Performance Metrics Decorator**: SOLID-compliant instrumented embedding provider.
-- **Golden Test Framework**: Architecture boundary test scaffolding (ADR-027).
+-   **Anthropic Embedding Provider**: Full Voyage AI model support with configurable dimensions.
+-   **Pinecone Vector Store Provider**: Production-ready cloud vector database integration.
+-   **Qdrant Vector Store Provider**: Self-hosted vector search with gRPC support.
+-   **Health Endpoints**: `/healthz` (liveness) and `/readyz` (readiness) for container orchestration.
+-   **Performance Metrics Decorator**: SOLID-compliant instrumented embedding provider.
+-   **Golden Test Framework**: Architecture boundary test scaffolding (ADR-027).
 
 ### Changed
 
-- **DRY Refactoring**: Shared HTTP helpers across embedding/vector store providers (~200 lines deduplicated).
-- **CI/CD**: Auto-merge Dependabot PRs (patch/minor), auto-tag on release branch merge.
-- **Test Organization**: Inline tests moved to proper test directories.
+-   **DRY Refactoring**: Shared HTTP helpers across embedding/vector store providers (~200 lines deduplicated).
+-   **CI/CD**: Auto-merge Dependabot PRs (patch/minor), auto-tag on release branch merge.
+-   **Test Organization**: Inline tests moved to proper test directories.
 
 ### Fixed
 
-- All architecture validation errors resolved (0 errors, 4 warnings).
-- Validation service properly wired through DI system.
+-   All architecture validation errors resolved (0 errors, 4 warnings).
+-   Validation service properly wired through DI system.
 
 ---
 
@@ -99,21 +99,21 @@ Rust-code-analysis integration, security fixes, and dependency updates.
 
 ### Added
 
-- **RCA Integration**: Migrated `unwrap_detector.rs` to Rust-code-analysis Callback pattern.
+-   **RCA Integration**: Migrated `unwrap_detector.rs` to Rust-code-analysis Callback pattern.
 
 ### Changed
 
-- **Dependencies**: uuid, clap, rust-rule-engine, jsonwebtoken, dirs, moka, chrono, thiserror, proc-macro2 updated.
-- **Terminal Detection**: Replaced `atty` with `std::io::IsTerminal` (stable since Rust 1.70).
+-   **Dependencies**: uuid, clap, rust-rule-engine, jsonwebtoken, dirs, moka, chrono, thiserror, proc-macro2 updated.
+-   **Terminal Detection**: Replaced `atty` with `std::io::IsTerminal` (stable since Rust 1.70).
 
 ### Removed
 
-- `atty` dependency (security advisory GHSA-g98v-hv3f-hcfr).
-- Legacy AST executor code (240 lines).
+-   `atty` dependency (security advisory GHSA-g98v-hv3f-hcfr).
+-   Legacy AST executor code (240 lines).
 
 ### Security
 
-- **GHSA-g98v-hv3f-hcfr**: Fixed by removing `atty` dependency.
+-   **GHSA-g98v-hv3f-hcfr**: Fixed by removing `atty` dependency.
 
 ---
 
@@ -133,13 +133,13 @@ Provider registration modernization (inventory -> linkme compile-time) and archi
 
 ### Added
 
-- **mcb-validate Crate**: Architecture validation with 12 migration rules, tree-sitter AST parsing, linter integration.
-- **Linkme Registration**: All 15 providers migrated to compile-time distributed slices.
-- **Admin UI Code Browser**: VectorStoreBrowser trait, 6 provider implementations, 3 UI pages with Prism.js highlighting.
+-   **mcb-validate Crate**: Architecture validation with 12 migration rules, tree-sitter AST parsing, linter integration.
+-   **Linkme Registration**: All 15 providers migrated to compile-time distributed slices.
+-   **Admin UI Code Browser**: VectorStoreBrowser trait, 6 provider implementations, 3 UI pages with Prism.js highlighting.
 
 ### Changed
 
-- Provider registration moved from runtime inventory to compile-time linkme (zero overhead).
+-   Provider registration moved from runtime inventory to compile-time linkme (zero overhead).
 
 ---
 
@@ -151,11 +151,11 @@ First stable release — complete drop-in replacement for Claude-context with 14
 
 ### Added
 
-- 14 languages processors with AST parsing.
-- HTTP transport foundation with session management.
-- Binary auto-respawn, connection tracking, signal handling.
-- Systemd user-level service integration.
-- Migration guide from Claude-context.
+-   14 languages processors with AST parsing.
+-   HTTP transport foundation with session management.
+-   Binary auto-respawn, connection tracking, signal handling.
+-   Systemd user-level service integration.
+-   Migration guide from Claude-context.
 
 ---
 
@@ -185,6 +185,6 @@ Architectural foundation — modular design, SOLID principles, provider framewor
 
 ## Cross-References
 
-- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
-- **Roadmap**: [ROADMAP.md](../developer/ROADMAP.md)
-- **Contributing**: [CONTRIBUTING.md](../developer/CONTRIBUTING.md)
+-   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+-   **Roadmap**: [ROADMAP.md](../developer/ROADMAP.md)
+-   **Contributing**: [CONTRIBUTING.md](../developer/CONTRIBUTING.md)

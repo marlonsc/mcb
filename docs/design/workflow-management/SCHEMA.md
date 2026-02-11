@@ -6,9 +6,9 @@
 
 ## Design Principles
 
-1.  **Extend, don't replace** - Usar infraestrutura existente
-2.  **Naming per ADR-009** - Tools: `agent_`, `quality_`, `memory_`, `project_`
-3.  **Tables per MCB pattern** - Entity names sem prefixos genéricos
+1. **Extend, don't replace** - Usar infraestrutura existente
+2. **Naming per ADR-009** - Tools: `agent_`, `quality_`, `memory_`, `project_`
+3. **Tables per MCB pattern** - Entity names sem prefixos genéricos
 
 ---
 

@@ -2,7 +2,7 @@
 adr: 13
 title: Clean Architecture Crate Separation
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 2, 3, 6, 7, 11, 12, 27, 31]
 supersedes: []
@@ -21,11 +21,11 @@ Updated (v0.1.2) - Added mcb-validate as 8th crate
 
 As Memory Context Browser evolved from a monolithic architecture to a production-ready system, the codebase grew to include multiple providers, complex DI patterns, validation systems, and protocol handlers. A monolithic structure created several challenges:
 
-1.  **Coupling**: Changes to infrastructure affected domain logic
-2.  **Testability**: Testing required loading entire application context
-3.  **Compilation**: Small changes triggered full rebuilds
-4.  **Clarity**: No clear boundaries for where code belongs
-5.  **Dependency Direction**: Violations of dependency inversion were easy to introduce
+1. **Coupling**: Changes to infrastructure affected domain logic
+2. **Testability**: Testing required loading entire application context
+3. **Compilation**: Small changes triggered full rebuilds
+4. **Clarity**: No clear boundaries for where code belongs
+5. **Dependency Direction**: Violations of dependency inversion were easy to introduce
 
 The Clean Architecture pattern, as described by Robert C. Martin, addresses these concerns through strict layer separation with dependencies pointing inward toward the domain.
 
@@ -262,10 +262,10 @@ Arrow direction: depends on
 
 ## Clean Architecture Rules Enforced
 
-1.  **Dependency Rule**: Dependencies only point inward (toward domain)
-2.  **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
-3.  **Entity Rule**: Domain entities have no external dependencies
-4.  **Use Case Rule**: Application layer orchestrates, doesn't implement infrastructure
+1. **Dependency Rule**: Dependencies only point inward (toward domain)
+2. **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
+3. **Entity Rule**: Domain entities have no external dependencies
+4. **Use Case Rule**: Application layer orchestrates, doesn't implement infrastructure
 
 ## Validation
 
@@ -310,17 +310,17 @@ cargo run -p mcb-validate
 
 ### Adding a New Provider
 
-1.  Create implementation in `mcb-providers/src/<category>/`
-2.  Implement the port trait from `mcb-application/src/ports/`
-3.  Add feature flag in `mcb-providers/Cargo.toml`
-4.  Register in factory in `mcb-infrastructure/src/di/factory/`
+1. Create implementation in `mcb-providers/src/<category>/`
+2. Implement the port trait from `mcb-application/src/ports/`
+3. Add feature flag in `mcb-providers/Cargo.toml`
+4. Register in factory in `mcb-infrastructure/src/di/factory/`
 
 ### Adding a New Use Case
 
-1.  Define service interface in `mcb-application/src/ports/`
-2.  Implement service in `mcb-application/src/services/`
-3.  Inject port dependencies via constructor
-4.  Wire in `mcb-infrastructure/src/di/` if needed
+1. Define service interface in `mcb-application/src/ports/`
+2. Implement service in `mcb-application/src/services/`
+3. Inject port dependencies via constructor
+4. Wire in `mcb-infrastructure/src/di/` if needed
 
 ### Testing Patterns
 

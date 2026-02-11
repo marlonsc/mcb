@@ -64,19 +64,19 @@ Structured logging configuration:
 Null implementations for DI testing:
 
 -   `infrastructure/` - Null adapters for infrastructure ports
-    -   `NullAuthService`
-    -   `NullEventBus`
-    -   `NullSyncProvider`
-    -   `NullLockProvider`
-    -   `NullSnapshotProvider`
-    -   `NullStateStoreProvider`
-    -   `NullPerformanceMetrics`
-    -   `NullIndexingOperations`
-    -   `NullSystemMetricsCollector`
+  -   `NullAuthService`
+  -   `NullEventBus`
+  -   `NullSyncProvider`
+  -   `NullLockProvider`
+  -   `NullSnapshotProvider`
+  -   `NullStateStoreProvider`
+  -   `NullPerformanceMetrics`
+  -   `NullIndexingOperations`
+  -   `NullSystemMetricsCollector`
 -   `providers/` - Provider adapter bindings
 -   `repository/` - Repository adapters
-    -   `NullChunkRepository`
-    -   `NullSearchRepository`
+  -   `NullChunkRepository`
+  -   `NullSearchRepository`
 
 ## File Structure
 

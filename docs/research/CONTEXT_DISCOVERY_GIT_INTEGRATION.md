@@ -1,6 +1,6 @@
 # Production-Grade Context Discovery & Git Integration Research
 
-**Research Date:** 2026-02-05  
+**Research Date:** 2026-02-05
 **Focus:** ADR-035 (ContextScout) Analysis + Production Patterns
 
 ---
@@ -9,9 +9,9 @@
 
 Analysis of ADR-035 (Context Scout) against production-grade context management patterns reveals **three critical gaps**:
 
-1.  **External Tracker Integration**: ADR-035 assumes all state in SQLite; doesn't address GitHub/GitLab/Jira APIs
-2.  **Race Condition Prevention**: No handling of concurrent read-only queries on git2 + SQLite simultaneously
-3.  **Cache Invalidation Signals**: TTL-only caching misses event-driven invalidation opportunities
+1. **External Tracker Integration**: ADR-035 assumes all state in SQLite; doesn't address GitHub/GitLab/Jira APIs
+2. **Race Condition Prevention**: No handling of concurrent read-only queries on git2 + SQLite simultaneously
+3. **Cache Invalidation Signals**: TTL-only caching misses event-driven invalidation opportunities
 
 **Recommendation**: Extend ADR-035 with tracker integration layer + event invalidation hook.
 
@@ -97,15 +97,15 @@ tokio::task::spawn_blocking(move || {
 
 ADR-035 reads from two sources simultaneously:
 
-1.  **git2**: Blocking FFI, spawned on Tokio blocking thread
-2.  **SQLite**: Async via sqlx, can overlap with git2 operations
+1. **git2**: Blocking FFI, spawned on Tokio blocking thread
+2. **SQLite**: Async via sqlx, can overlap with git2 operations
 
 ```rust
 // This can cause stale composite context
 async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
     let git = self.git_status(project_root).await?;      // Reads at T1
     let tracker = self.tracker_state(&self.config.project_id).await?;  // Reads at T2
-    
+
     // Between T1 and T2, git state might have changed!
     // Example: User commits between git read and tracker read
 }
@@ -113,19 +113,19 @@ async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
 
 ### Race Condition Scenarios
 
-1.  **Git-Tracker Skew**: User commits while `discover()` is running
+1. **Git-Tracker Skew**: User commits while `discover()` is running
 
 -   Git shows new commit
 -   Tracker shows old issue status
 -   Context is inconsistent
 
-1.  **Concurrent Session Writes**: Two OpenCode sessions discover simultaneously
+1. **Concurrent Session Writes**: Two OpenCode sessions discover simultaneously
 
 -   git2 can read concurrently (OK)
 -   SQLite WAL mode allows one writer + many readers
 -   But both sessions see same stale context, cache it, diverge
 
-1.  **Index/State Mismatch**: git status queried before index is written
+1. **Index/State Mismatch**: git status queried before index is written
 
 -   Git sees uncommitted file
 -   Index not yet synced
@@ -140,12 +140,12 @@ async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
 pub async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
     let git_at_t0 = self.git_status(project_root).await?;
     let timestamp_t0 = Utc::now();
-    
+
     let tracker = self.tracker_state_at(
         &self.config.project_id,
         timestamp_t0  // Query tracker state at SAME instant
     ).await?;
-    
+
     // Return context with explicit snapshot timestamp
     Ok(ProjectContext {
         ...,
@@ -255,20 +255,20 @@ impl TrackerClient {
     pub async fn fetch_issues(&self) -> Result<Vec<Issue>> {
         // 1. Check rate limit tokens
         self.rate_limit.wait_if_needed().await;
-        
+
         // 2. Make request with circuit breaker
         let res = self.client.get(...).send().await?;
-        
+
         // 3. Update rate limit from response headers
         if let Some(remaining) = res.headers().get("X-RateLimit-Remaining") {
             self.rate_limit.set_remaining(remaining.to_str()?.parse()?);
         }
-        
+
         // 4. Back off if approaching limit
         if self.rate_limit.remaining() < THRESHOLD {
             self.rate_limit.exponential_backoff().await;
         }
-        
+
         Ok(res.json().await?)
     }
 }
@@ -326,10 +326,10 @@ let git_cache = Cache::builder()
 pub enum CacheStrategy {
     // Stable: branch name rarely changes
     Branch { ttl: Duration },     // 5min (300s)
-    
+
     // Semi-stable: status changes frequently but not every operation
     Status { ttl: Duration },     // 30s
-    
+
     // Volatile: changes per operation
     Conflicts { ttl: Duration },  // 5s
 }
@@ -342,7 +342,7 @@ impl CachedContextScout {
                 return Ok(cached);
             }
         }
-        
+
         // Re-fetch on stale
         self.fetch_git_status(path).await
     }
@@ -354,7 +354,7 @@ impl CachedContextScout {
 ```rust
 pub async fn watch_git_changes(&self, repo_path: &Path) {
     let (tx, mut rx) = tokio::sync::mpsc::channel(100);
-    
+
     // Watch .git/index for changes
     let watcher = notify::recommended_watcher(
         move |event: notify::Result<notify::Event>| {
@@ -365,7 +365,7 @@ pub async fn watch_git_changes(&self, repo_path: &Path) {
             }
         }
     )?;
-    
+
     while let Some(invalidation) = rx.recv().await {
         match invalidation {
             CacheInvalidation::Git(path) => {
@@ -384,17 +384,17 @@ pub async fn watch_git_changes(&self, repo_path: &Path) {
 pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
     // 1. Invalidate old cache
     self.git_cache.invalidate(repo_path).await;
-    
+
     // 2. Fetch fresh state synchronously
     let fresh = tokio::task::spawn_blocking({
         let path = repo_path.to_path_buf();
         move || discover_git_status(&path, 10)
     })
     .await??;
-    
+
     // 3. Populate cache with fresh data
     self.git_cache.insert(repo_path.to_path_buf(), fresh).await;
-    
+
     Ok(())
 }
 ```
@@ -454,13 +454,13 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 pub trait IssueTrackerProvider: Send + Sync {
     /// List issues in "ready" state (no blockers)
     async fn ready_issues(&self, project_id: &str) -> Result<Vec<IssueSummary>>;
-    
+
     /// List in-progress issues
     async fn in_progress_issues(&self, project_id: &str) -> Result<Vec<IssueSummary>>;
-    
+
     /// List blocked issues with blockers
     async fn blocked_issues(&self, project_id: &str) -> Result<Vec<(IssueSummary, Vec<String>)>>;
-    
+
     /// Current phase (if tracked by tracker)
     async fn current_phase(&self, project_id: &str) -> Result<Option<PhaseSummary>>;
 }
@@ -531,15 +531,15 @@ impl AdaptiveRateLimiter {
             // Reset window has passed
             self.remaining.store(self.limit.load(Ordering::Relaxed), Ordering::Relaxed);
         }
-        
+
         // Exponential backoff if low
         if self.remaining.load(Ordering::Relaxed) < THRESHOLD {
             tokio::time::sleep(Duration::from_secs(2)).await;
         }
-        
+
         self.remaining.fetch_sub(1, Ordering::Relaxed);
     }
-    
+
     pub fn update_from_headers(&self, headers: &HeaderMap) {
         if let Some(remaining) = headers.get("X-RateLimit-Remaining") {
             let v = remaining.to_str().ok().and_then(|s| s.parse().ok());
@@ -566,11 +566,11 @@ impl AdaptiveRateLimiter {
 pub struct ProjectContext {
     pub id: String,
     pub project_root: PathBuf,
-    
+
     pub git: GitContext,
     pub tracker: TrackerContext,
     pub config: ProjectConfig,
-    
+
     // NEW: Snapshot metadata
     pub snapshot_instant: DateTime<Utc>,        // When discovered
     pub snapshot_components: SnapshotComponent, // Which parts are fresh
@@ -581,10 +581,10 @@ pub struct ProjectContext {
 pub enum ConsistencyLevel {
     /// All components read at same instant
     Strict,
-    
+
     /// Components may differ by < 1 minute
     Eventual,
-    
+
     /// Components may differ arbitrarily (using cache)
     Cached,
 }
@@ -614,7 +614,7 @@ pub trait TrackerWithFallback: IssueTrackerProvider {
             Err(e) => Err(e),
         }
     }
-    
+
     async fn update_cache(&self, project_id: &str, issues: &[IssueSummary]);
     async fn get_cached(&self, project_id: &str) -> Result<TrackerContext>;
 }
@@ -647,21 +647,21 @@ pub trait TrackerWithFallback: IssueTrackerProvider {
 
 ### Phase 1: Foundation (Minimal)
 
-1.  Add `IssueTrackerProvider` trait to `mcb-domain`
-2.  Implement `SqliteTrackerProvider` (refactored ADR-035)
-3.  Enhance error handling for tracker failures
+1. Add `IssueTrackerProvider` trait to `mcb-domain`
+2. Implement `SqliteTrackerProvider` (refactored ADR-035)
+3. Enhance error handling for tracker failures
 
 ### Phase 2: External Integration (Optional)
 
-1.  `GitHubTrackerProvider` via `octokit` or `github-rest`
-2.  `JiraProvider` via `jira-rs` or REST client
-3.  Rate limiter + fallback pattern
+1. `GitHubTrackerProvider` via `octokit` or `github-rest`
+2. `JiraProvider` via `jira-rs` or REST client
+3. Rate limiter + fallback pattern
 
 ### Phase 3: Optimization (Future)
 
-1.  File watcher for git index changes
-2.  Event-driven invalidation signals
-3.  Composite snapshot consistency tracking
+1. File watcher for git index changes
+2. Event-driven invalidation signals
+3. Composite snapshot consistency tracking
 
 ---
 
@@ -698,19 +698,19 @@ All production tools separate **local repo discovery** (git2 or gix) from **exte
 
 ### Recommended Next Steps
 
-1.  **ADR-035A: Tracker Provider Abstraction**
+1. **ADR-035A: Tracker Provider Abstraction**
 
 -   Extend `ContextScoutProvider` with tracker trait
 -   Support pluggable GitHub/GitLab/Jira providers
 -   Define fallback behavior for external outages
 
-1.  **ADR-035B: Cache Invalidation Signals**
+1. **ADR-035B: Cache Invalidation Signals**
 
 -   Event-driven invalidation (file watch + manual signals)
 -   Composite snapshot consistency tracking
 -   Differential TTL by data stability
 
-1.  **ADR-035C: Rate Limiting & Resilience**
+1. **ADR-035C: Rate Limiting & Resilience**
 
 -   Adaptive rate limiter for external APIs
 -   Circuit breaker pattern

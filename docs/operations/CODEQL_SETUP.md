@@ -25,18 +25,18 @@ O Default Setup do GitHub:
 
 Para verificar se o CodeQL está ativo:
 
-1.  Acesse o repositório: [GitHub](https://github.com/marlonsc/mcb)
-2.  Vá para a aba **Security** (no topo do repositório)
-3.  Clique em **Code scanning** no menu lateral
-4.  Você deve ver os resultados das análises CodeQL
+1. Acesse o repositório: [GitHub](https://github.com/marlonsc/mcb)
+2. Vá para a aba **Security** (no topo do repositório)
+3. Clique em **Code scanning** no menu lateral
+4. Você deve ver os resultados das análises CodeQL
 
 ## 🔧 Habilitar/Desabilitar Default Setup
 
 Se precisar gerenciar o CodeQL:
 
-1.  Acesse **Settings** → **Code security and analysis**
-2.  Encontre **CodeQL analysis**
-3.  Use o menu (•••) para:
+1. Acesse **Settings** → **Code security and analysis**
+2. Encontre **CodeQL analysis**
+3. Use o menu (•••) para:
 
 -   **Edit**: Modificar configurações
 -   **Disable CodeQL**: Desabilitar temporariamente

@@ -2,7 +2,7 @@
 adr: 22
 title: Continuous Integration Strategy
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [13, 17, 20]
 supersedes: []
@@ -46,12 +46,12 @@ strategy:
 
 **Every PR must pass**:
 
-1.  `cargo fmt --check` (formatting)
-2.  `cargo clippy -- -D warnings` (linting)
-3.  `cargo test --all-features` (all tests)
-4.  `cargo test --no-default-features` (minimal build)
-5.  `cargo bench` (no performance regression > 10%)
-6.  `cargo doc` (documentation builds)
+1. `cargo fmt --check` (formatting)
+2. `cargo clippy -- -D warnings` (linting)
+3. `cargo test --all-features` (all tests)
+4. `cargo test --no-default-features` (minimal build)
+5. `cargo bench` (no performance regression > 10%)
+6. `cargo doc` (documentation builds)
 
 ### Benchmark Tracking
 

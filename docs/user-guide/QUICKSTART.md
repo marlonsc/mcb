@@ -146,9 +146,9 @@ curl http://localhost:19530/v1/vector/health  # Milvus
 
 ### Claude doesn't see the tools
 
-1.  Check config file location
-2.  Restart Claude Desktop
-3.  Look for errors in Claude's logs
+1. Check config file location
+2. Restart Claude Desktop
+3. Look for errors in Claude's logs
 
 ## Next Steps
 

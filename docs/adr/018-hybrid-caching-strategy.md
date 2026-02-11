@@ -2,7 +2,7 @@
 adr: 18
 title: Hybrid Caching Strategy
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 13]
 supersedes: []
@@ -24,8 +24,8 @@ Code analysis is CPU-intensive (500ms-5s per file). Caching is critical.
 
 **Two proven patterns**:
 
-1.  **MCB**: Moka async cache with TTL (fast lookups, memory-based)
-2.  **PMAT**: SHA256 file hashing for invalidation (accurate change detection)
+1. **MCB**: Moka async cache with TTL (fast lookups, memory-based)
+2. **PMAT**: SHA256 file hashing for invalidation (accurate change detection)
 
 ## Decision
 

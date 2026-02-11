@@ -34,17 +34,17 @@ Technical architecture documentation following C4 model principles.
 -   [System Context](diagrams/generated/index.html) - System boundaries and external systems
 -   [Container Architecture](diagrams/generated/index.html) - Service and deployment architecture
 -   **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions (46 ADRs total)
-    -   [ADR 001: Modular Crates Architecture](adr/001-modular-crates-architecture.md)
-    -   [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
-    -   [ADR 003: Unified Provider Architecture](adr/003-unified-provider-architecture.md)
-    -   [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) - v0.1.2
-    -   [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) - v0.1.2
-    -   [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029
-    -   [ADR 029: Hexagonal Architecture with dill](adr/029-hexagonal-architecture-dill.md) - DI IoC
-    -   [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
-    -   [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
-    -   [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)
-    -   [Full ADR Index](adr/README.md) - 46 ADRs total
+  -   [ADR 001: Modular Crates Architecture](adr/001-modular-crates-architecture.md)
+  -   [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
+  -   [ADR 003: Unified Provider Architecture](adr/003-unified-provider-architecture.md)
+  -   [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) - v0.1.2
+  -   [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) - v0.1.2
+  -   [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029
+  -   [ADR 029: Hexagonal Architecture with dill](adr/029-hexagonal-architecture-dill.md) - DI IoC
+  -   [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
+  -   [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
+  -   [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)
+  -   [Full ADR Index](adr/README.md) - 46 ADRs total
 
 ### 📦 Modules (v0.2.0 Crate Structure)
 
@@ -76,6 +76,7 @@ Documentation templates and standards.
 This documentation is fully automated and validated. Use these commands:
 
 ```bash
+
 # Generate all documentation (metrics, Rust API docs, mdbook)
 make docs
 
@@ -112,11 +113,11 @@ make adr-new
 
 ## 🎯 Documentation Principles
 
-1.  **Single Source of Truth**: Documentation stays synchronized with code
-2.  **Audience-Specific**: Different views for different stakeholders
-3.  **Automated Maintenance**: No manual updates required
-4.  **Version Controlled**: All documentation is version controlled
-5.  **Quality Assured**: Automated validation and consistency checks
+1. **Single Source of Truth**: Documentation stays synchronized with code
+2. **Audience-Specific**: Different views for different stakeholders
+3. **Automated Maintenance**: No manual updates required
+4. **Version Controlled**: All documentation is version controlled
+5. **Quality Assured**: Automated validation and consistency checks
 
 ## 📈 Documentation Metrics
 
@@ -129,11 +130,11 @@ make adr-new
 
 When contributing to documentation:
 
-1.  **Use Templates**- Follow established templates for consistency
-2.  **Automate Updates**- Ensure documentation updates are automated
-3.  **Validate Changes** - Run `make docs-validate` before committing
-4.  **Update References**- Keep cross-references current
-5.  **Follow Standards**- Adhere to established formatting and structure
+1. **Use Templates**- Follow established templates for consistency
+2. **Automate Updates**- Ensure documentation updates are automated
+3. **Validate Changes** - Run `make docs-validate` before committing
+4. **Update References**- Keep cross-references current
+5. **Follow Standards**- Adhere to established formatting and structure
 
 ## 🔍 Finding Information
 

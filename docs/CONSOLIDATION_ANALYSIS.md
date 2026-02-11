@@ -1,6 +1,6 @@
 # MCP Consolidation Analysis Summary
 
-**Generated**: 2025-02-05  
+**Generated**: 2025-02-05
 **Scope**: Comprehensive mapping of MCP handlers + Admin UI endpoints for code reuse
 
 ## Key Metrics
@@ -45,56 +45,56 @@ HTTP REST endpoints for:
 
 ### Tier 1: Quick Wins (< 2 hours each)
 
-1.  **INDEX STATUS → HTTP WRAPPER** (30 min) - ✅ HIGH ROI
+1. **INDEX STATUS → HTTP WRAPPER** (30 min) - ✅ HIGH ROI
 
 -   Wrap MCP `IndexHandler::handle(IndexAction::Status)` as HTTP endpoint
 -   Eliminates duplicate status logic
 
-1.  **COLLECTION SEARCH** (2 hours) - ✅ HIGH ROI
+1. **COLLECTION SEARCH** (2 hours) - ✅ HIGH ROI
 
 -   Add `/collections/:name/search?q=...` using MCP SearchHandler
 -   Enables semantic search UI in admin
 
-1.  **VALIDATION ENDPOINTS** (1 hour) - ✅ MEDIUM ROI
+1. **VALIDATION ENDPOINTS** (1 hour) - ✅ MEDIUM ROI
 
 -   Wrap MCP `ValidateHandler` for HTTP access
 -   Admin can trigger validation without MCP client
 
-1.  **COMPLEXITY ANALYSIS** (1 hour) - ✅ MEDIUM ROI
+1. **COMPLEXITY ANALYSIS** (1 hour) - ✅ MEDIUM ROI
 
 -   Expose code complexity analysis via HTTP
 -   Extends admin UI capabilities
 
 ### Tier 2: Medium Effort, High Value (2-4 hours each)
 
-1.  **RESPONSE TYPE CONSOLIDATION** (4 hours) - ✅ MEDIUM-HIGH ROI
+1. **RESPONSE TYPE CONSOLIDATION** (4 hours) - ✅ MEDIUM-HIGH ROI
 
 -   Replace 10+ single-use response types with `ApiResponse<T>` wrapper
 -   Reduces boilerplate by ~30%, improves consistency
 
-1.  **MEMORY BROWSING** (3 hours) - ✅ MEDIUM ROI
+1. **MEMORY BROWSING** (3 hours) - ✅ MEDIUM ROI
 
 -   Add HTTP endpoints for observation timeline
 -   Enables admin debug UI for memory operations
 
-1.  **VCS OPERATIONS** (2-3 hours) - ✅ MEDIUM ROI
+1. **VCS OPERATIONS** (2-3 hours) - ✅ MEDIUM ROI
 
 -   Expose branch comparison, impact analysis via HTTP
 -   Enables VCS browsing UI
 
-1.  **SESSION BROWSING** (2 hours) - ✅ MEDIUM ROI
+1. **SESSION BROWSING** (2 hours) - ✅ MEDIUM ROI
 
 -   Add HTTP endpoints for session listing/details
 -   Read-only admin UI for agent session monitoring
 
 ### Tier 3: Long-term Strategic (4+ hours)
 
-1.  **PROJECT HANDLER** (8 hours) - ✅ HIGH ROI (long-term)
+1. **PROJECT HANDLER** (8 hours) - ✅ HIGH ROI (long-term)
 
 -   Implement service lifecycle in MCP
 -   Admin UI delegates to MCP for service control
 
-1.  **UNIFIED SERVICE FACADE** (16+ hours) - ✅ TRANSFORMATIONAL ROI
+1. **UNIFIED SERVICE FACADE** (16+ hours) - ✅ TRANSFORMATIONAL ROI
     -   Single interface providing both HTTP and MCP access
     -   Response types unified across protocols
     -   Role-based filtering everywhere
@@ -138,8 +138,8 @@ pub fn handler(
 ### Dead Weight (Single-Use Types)
 
 ```
-AdminHealthResponse, IndexingStatusResponse, ReadinessResponse, 
-LivenessResponse, ShutdownResponse, CacheErrorResponse, 
+AdminHealthResponse, IndexingStatusResponse, ReadinessResponse,
+LivenessResponse, ShutdownResponse, CacheErrorResponse,
 ServiceListResponse, ServiceActionResponse, ServiceErrorResponse
 ```
 
@@ -261,11 +261,11 @@ let Some(resource) = &state.resource else {
 
 ## Next Steps
 
-1.  **Review & Approval** - Team consensus on consolidation strategy
-2.  **Create Issues** - Break down into implementable tasks
-3.  **Phase 1 Implementation** - Start with quick wins
-4.  **Continuous Testing** - Validate each phase before proceeding
-5.  **Documentation** - Update API docs with new endpoints
+1. **Review & Approval** - Team consensus on consolidation strategy
+2. **Create Issues** - Break down into implementable tasks
+3. **Phase 1 Implementation** - Start with quick wins
+4. **Continuous Testing** - Validate each phase before proceeding
+5. **Documentation** - Update API docs with new endpoints
 
 ---
 
