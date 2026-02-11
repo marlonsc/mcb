@@ -71,6 +71,7 @@ jobs:
           done
           if ! git diff --staged --quiet; then
             git commit -m "docs: auto-update README and project metrics [skip ci]"
+            git pull origin main --rebase
             git push origin main
           else
             echo "No changes to commit"
