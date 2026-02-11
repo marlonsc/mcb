@@ -37,6 +37,7 @@ async fn test_validation_agent_sql_storage_flow() {
     let result = agent_h
         .handle(Parameters(AgentArgs {
             action: AgentAction::LogTool,
+            org_id: None,
             session_id: mcb_domain::value_objects::SessionId::new("missing-session"),
             data: json!({
                 "tool_name": "test",
@@ -67,6 +68,7 @@ async fn test_validation_session_create_schema_fallback() {
     let result = session_h
         .handle(Parameters(SessionArgs {
             action: SessionAction::Create,
+            org_id: None,
             agent_type: None, // MISSING
             data: Some(json!({
                 "session_summary_id": "summ-1",
@@ -102,6 +104,7 @@ async fn test_validation_memory_observation_enum_error() {
         .handle(Parameters(MemoryArgs {
             action: MemoryAction::Store,
             resource: MemoryResource::Observation,
+            org_id: None,
             data: Some(json!({
                 "content": "test",
                 "observation_type": "INVALID_TYPE"

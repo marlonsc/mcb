@@ -30,6 +30,7 @@ fn search_args(query: &str, collection: Option<String>, limit: Option<u32>) -> S
     SearchArgs {
         query: query.to_string(),
         resource: SearchResource::Code,
+        org_id: None,
         collection,
         extensions: None,
         filters: None,

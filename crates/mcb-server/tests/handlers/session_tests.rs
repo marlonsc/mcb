@@ -18,6 +18,7 @@ macro_rules! session_test {
 
             let args = SessionArgs {
                 action: $action,
+                org_id: None,
                 session_id: Some($session_id),
                 data: None,
                 project_id: None,
@@ -42,6 +43,7 @@ macro_rules! session_test {
 
             let args = SessionArgs {
                 action: $action,
+                org_id: None,
                 session_id: None,
                 data: Some($data),
                 project_id: None $(.or($project_id))?,
@@ -67,6 +69,7 @@ macro_rules! session_test {
 
             let args = SessionArgs {
                 action: $action,
+                org_id: None,
                 session_id: None,
                 data: $data,
                 project_id: None $(.or($project_id))?,

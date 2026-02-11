@@ -11,6 +11,7 @@ pub(crate) fn create_base_memory_args(
     MemoryArgs {
         action,
         resource,
+        org_id: None,
         data,
         ids,
         project_id: Some("test-project".to_string()),
