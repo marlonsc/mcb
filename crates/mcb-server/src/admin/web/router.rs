@@ -11,7 +11,7 @@ use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use rocket::{Build, Rocket, routes};
-use rocket_dyn_templates::{Engines, Template};
+use rocket_dyn_templates::Template;
 
 use super::entity_handlers;
 use super::handlers;
@@ -67,7 +67,7 @@ fn default_admin_state() -> AdminState {
     }
 }
 
-/// Returns the path to the templates directory (Handlebars + Tera).
+/// Returns the path to the templates directory (Handlebars).
 ///
 /// Searches multiple candidate locations to support both workspace-level
 /// execution (cargo test from root) and crate-level execution.
@@ -103,9 +103,11 @@ pub fn web_rocket() -> Rocket<Build> {
 
     rocket::custom(figment)
         .manage(default_admin_state())
-        .attach(Template::custom(|_engines: &mut Engines| {
-            // T15 will register Tera custom filters here
-        }))
+        .attach(Template::custom(
+            |_engines: &mut rocket_dyn_templates::Engines| {
+                // T15 will register Handlebars custom filters here
+            },
+        ))
         .mount(
             "/",
             routes![

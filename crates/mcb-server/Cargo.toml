@@ -61,7 +61,7 @@ clap = { workspace = true }
 
 # HTTP server - migrated from Axum to Rocket in v0.1.2 (ADR-026)
 rocket = { workspace = true }
-rocket_dyn_templates = { workspace = true , features = ["handlebars", "tera"] }
+rocket_dyn_templates = { workspace = true , features = ["handlebars"] }
 
 # HTTP client - for client mode connecting to remote server
 reqwest = { workspace = true }
@@ -71,7 +71,6 @@ rmcp = { workspace = true }
 
 # Template engines
 handlebars = { workspace = true }
-tera = { workspace = true }
 
 # Markdown processing
 pulldown-cmark = { workspace = true }
