@@ -1,7 +1,7 @@
 # OpenCode → MCB Migration Plan
 
-**Date**: 2026-02-08  
-**Version**: 1.0  
+**Date**: 2026-02-08
+**Version**: 1.0
 **Scope**: Complete mapping of OpenCode components to MCB replacements
 
 ---
@@ -55,7 +55,7 @@ This document maps every OpenCode hook, skill, command, and agent to its MCB rep
 ```
 File: ~/.config/opencode/AGENTS.md (line 16)
 
-6. **Explore** (Explorer): Codebase exploration and pattern analysis 
+6. **Explore** (Explorer): Codebase exploration and pattern analysis
    using `grep`, `glob`, and `ast-grep`.
 
 Usage in delegation:
@@ -169,10 +169,10 @@ mcp_mcb_session(action="end", data={
 File: ~/.config/opencode/command/oc-init.md
 
 Creates:
-- .planning/ directory structure
-- ROADMAP.md, STATE.md, REQUIREMENTS.md
-- Beads initialization
-- NO semantic index created
+-   .planning/ directory structure
+-   ROADMAP.md, STATE.md, REQUIREMENTS.md
+-   Beads initialization
+-   NO semantic index created
 ```
 
 **MCB Enhancement**:
@@ -282,7 +282,7 @@ File: ~/.config/opencode/hooks/oc-state-machine.sh
 State Management (lines 9-24):
   _default_session=$(cfg '.session.states[0]')  # NEW, RESUMED, ACTIVE, STALE
   _default_project=$(cfg '.project.states[0]')  # INIT, PLANNING, EXECUTING...
-  
+
   _sess=$(state '.session.state')
   update_state '.session.state' "\"$_sess\""
 
@@ -396,10 +396,10 @@ Session Detection (lines 52-79):
 
 Loads Skills (lines 12-18):
   load_skills:
-    - oc-workflow-integration
-    - oc-task-management
-    - oc-memory
-    - oc-session-tracker
+    -   oc-workflow-integration
+    -   oc-task-management
+    -   oc-memory
+    -   oc-session-tracker
 ```
 
 **MCB Enhancement**:
@@ -441,9 +441,9 @@ if (session.is_new) {
 File: ~/.config/opencode/command/oc-plan.md
 
 Research Phase:
-  - Spawns librarian agent for external docs
-  - Reads .planning/*.md files manually
-  - No pattern memory search
+  -   Spawns librarian agent for external docs
+  -   Reads .planning/*.md files manually
+  -   No pattern memory search
 ```
 
 **MCB Enhancement**:
@@ -550,7 +550,7 @@ File: ~/.config/opencode/AGENTS.md
 
 Current flow for context gathering:
 1. task(subagent_type="explore", prompt="Find X in code")
-2. task(subagent_type="librarian", prompt="Find X in docs")  
+2. task(subagent_type="librarian", prompt="Find X in docs")
 3. memory(mode="search", query="X decisions")
 4. Manually combine results
 
@@ -666,9 +666,9 @@ const deps = await mcp_mcb_search(
 File: ~/.config/opencode/command/oc-debug.md
 
 Current debugging:
-- Manual git checkout to previous versions
-- Read code, compare manually
-- No semantic comparison
+-   Manual git checkout to previous versions
+-   Read code, compare manually
+-   No semantic comparison
 ```
 
 **MCB Enhancement**:

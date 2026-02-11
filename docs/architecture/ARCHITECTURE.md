@@ -10,16 +10,16 @@
 
 ## Table of Contents
 
-1.  [Executive Summary](#executive-summary)
-2.  [System Context](#system-context)
-3.  [Container Architecture](#container-architecture)
-4.  [Component Architecture](#component-architecture)
-5.  [Data Architecture](#data-architecture)
-6.  [Security Architecture](#security-architecture)
-7.  [Quality Attributes](#quality-attributes)
-8.  [Architecture Decision Records](#architecture-decision-records)
-9.  [Deployment & Operations](#deployment--operations)
-10.  [Evolution & Roadmap](#evolution--roadmap)
+1. [Executive Summary](#executive-summary)
+2. [System Context](#system-context)
+3. [Container Architecture](#container-architecture)
+4. [Component Architecture](#component-architecture)
+5. [Data Architecture](#data-architecture)
+6. [Security Architecture](#security-architecture)
+7. [Quality Attributes](#quality-attributes)
+8. [Architecture Decision Records](#architecture-decision-records)
+9. [Deployment & Operations](#deployment--operations)
+10. [Evolution & Roadmap](#evolution--roadmap)
 
 ---
 
@@ -540,10 +540,10 @@ All 20+ port traits are defined in mcb-domain and registered in dill Catalog for
 
 Memory Context Browser implements Robert C. Martin's Clean Architecture with strict layer separation. The key principles are:
 
-1.  **Dependency Rule**: Dependencies only point inward (toward the domain)
-2.  **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
-3.  **Entity Rule**: Domain entities have no external dependencies
-4.  **Use Case Rule**: Application layer orchestrates without implementing infrastructure
+1. **Dependency Rule**: Dependencies only point inward (toward the domain)
+2. **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
+3. **Entity Rule**: Domain entities have no external dependencies
+4. **Use Case Rule**: Application layer orchestrates without implementing infrastructure
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -1272,9 +1272,9 @@ CREATE INDEX idx_chunks_metadata ON code_chunks USING GIN(metadata);
 
 **Multi-Level Caching**:
 
-1.  **Application Cache**: Redis for search results and embeddings
-2.  **Provider Cache**: In-memory LRU cache for frequently accessed data
-3.  **CDN Cache**: For static assets and documentation
+1. **Application Cache**: Redis for search results and embeddings
+2. **Provider Cache**: In-memory LRU cache for frequently accessed data
+3. **CDN Cache**: For static assets and documentation
 
 ```rust
 #[derive(Clone)]
@@ -2042,11 +2042,11 @@ See [ADR index](../adr/README.md) for the full list.
 
 ### ADR Maintenance Process
 
-1.  **Proposal**: Create ADR in draft status with problem statement and context
-2.  **Discussion**: Technical review and stakeholder feedback
-3.  **Decision**: Accept/reject with documented rationale
-4.  **Implementation**: Update code and documentation
-5.  **Review**: Periodic review and potential supersession
+1. **Proposal**: Create ADR in draft status with problem statement and context
+2. **Discussion**: Technical review and stakeholder feedback
+3. **Decision**: Accept/reject with documented rationale
+4. **Implementation**: Update code and documentation
+5. **Review**: Periodic review and potential supersession
 
 ---
 
@@ -2131,10 +2131,10 @@ spec:
 
 #### Configuration Hierarchy
 
-1.  **Default Configuration**: Compiled-in defaults
-2.  **Environment Variables**: Runtime overrides
-3.  **Configuration Files**: TOML/YAML files
-4.  **Secrets**: External secret management
+1. **Default Configuration**: Compiled-in defaults
+2. **Environment Variables**: Runtime overrides
+3. **Configuration Files**: TOML/YAML files
+4. **Secrets**: External secret management
 
 ```rust
 #[derive(Clone)]
@@ -2416,17 +2416,17 @@ impl BackupManager {
 
 #### Immediate Priorities
 
-1.  **Test Coverage**: Increase unit and integration test coverage to >90%
-2.  **Performance Optimization**: Implement caching layers and query optimization
-3.  **Error Handling**: Enhance error recovery and graceful degradation
-4.  **Documentation**: Complete API documentation and user guides
+1. **Test Coverage**: Increase unit and integration test coverage to >90%
+2. **Performance Optimization**: Implement caching layers and query optimization
+3. **Error Handling**: Enhance error recovery and graceful degradation
+4. **Documentation**: Complete API documentation and user guides
 
 #### Architectural Improvements
 
-1.  **Event-Driven Architecture**: Implement event sourcing for better auditability
-2.  **CQRS Pattern**: Separate read and write models for better scalability
-3.  **Service Mesh**: Istio integration for advanced service management
-4.  **GraphQL API**: More flexible query interface alongside REST
+1. **Event-Driven Architecture**: Implement event sourcing for better auditability
+2. **CQRS Pattern**: Separate read and write models for better scalability
+3. **Service Mesh**: Istio integration for advanced service management
+4. **GraphQL API**: More flexible query interface alongside REST
 
 ### Success Metrics
 

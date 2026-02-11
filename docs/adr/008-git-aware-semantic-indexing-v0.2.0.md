@@ -2,7 +2,7 @@
 adr: 8
 title: Git-Aware Semantic Indexing v0.2.0
 status: PROPOSED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 2, 3, 9, 12, 13]
 supersedes: []
@@ -18,17 +18,17 @@ implementation_status: Incomplete
 
 > Not yet implemented. Key dependencies:
 >
-> -   git2 crate not in Cargo.toml
-> -   No `crates/mcb-domain/src/git.rs` or `crates/mcb-providers/src/git/`
-> -   No GitProvider trait or implementation
-> -   Blocking: Requires git2 dependency and new module structure
+> - git2 crate not in Cargo.toml
+> - No `crates/mcb-domain/src/git.rs` or `crates/mcb-providers/src/git/`
+> - No GitProvider trait or implementation
+> - Blocking: Requires git2 dependency and new module structure
 >
 > **Target crate structure (v0.2.0)**:
 >
-> -   `crates/mcb-domain/src/git.rs` - Git domain types
-> -   `crates/mcb-application/src/ports/providers/git.rs` - GitProvider trait
-> -   `crates/mcb-providers/src/git/` - git2 implementation
-> -   `crates/mcb-application/src/use_cases/git_indexing.rs` - Git-aware indexing service
+> - `crates/mcb-domain/src/git.rs` - Git domain types
+> - `crates/mcb-application/src/ports/providers/git.rs` - GitProvider trait
+> - `crates/mcb-providers/src/git/` - git2 implementation
+> - `crates/mcb-application/src/use_cases/git_indexing.rs` - Git-aware indexing service
 
 ## Context
 

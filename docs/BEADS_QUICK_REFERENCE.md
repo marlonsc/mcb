@@ -114,19 +114,24 @@ One JSON object per line:
 
 ```yaml
 sync-branch: "beads-sync"        # Git branch for syncing
+
 # issue-prefix: "mcb"            # Issue prefix
+
 # no-db: false                   # Use JSONL only
+
 # no-daemon: false               # Disable daemon
+
 # no-auto-flush: false           # Disable auto-export
+
 # no-auto-import: false          # Disable auto-import
 ```
 
 ## Git Integration
 
-1.  **bd sync**: Export SQLite → JSONL → git commit → git push
-2.  **Auto-sync**: Daemon auto-flushes on mutations (debounced)
-3.  **Merge conflicts**: Intelligent JSONL merge driver
-4.  **Worktrees**: `.git/beads-worktrees/beads-sync/` for parallel sync
+1. **bd sync**: Export SQLite → JSONL → git commit → git push
+2. **Auto-sync**: Daemon auto-flushes on mutations (debounced)
+3. **Merge conflicts**: Intelligent JSONL merge driver
+4. **Worktrees**: `.git/beads-worktrees/beads-sync/` for parallel sync
 
 ## Performance
 
@@ -139,13 +144,13 @@ sync-branch: "beads-sync"        # Git branch for syncing
 
 ### Tables to Create
 
-1.  issues (with all fields)
-2.  labels (many-to-many)
-3.  dependencies (relationships)
-4.  comments (discussions)
-5.  events (audit trail)
-6.  config (settings)
-7.  metadata (database metadata)
+1. issues (with all fields)
+2. labels (many-to-many)
+3. dependencies (relationships)
+4. comments (discussions)
+5. events (audit trail)
+6. config (settings)
+7. metadata (database metadata)
 
 ### Key Relationships
 

@@ -182,7 +182,7 @@ impl EmbeddingProviderHandle {
     pub async fn get(&self) -> Arc<dyn EmbeddingProvider> {
         self.inner.read().await.clone()
     }
-    
+
     pub async fn set(&self, provider: Arc<dyn EmbeddingProvider>) {
         *self.inner.write().await = provider;
     }
@@ -198,7 +198,7 @@ impl EmbeddingAdminInterface for EmbeddingAdminService {
         let provider = EMBEDDING_PROVIDERS.iter()
             .find(|p| p.name == name)
             .ok_or(Error::ProviderNotFound)?;
-        
+
         let new_provider = (provider.factory)()?;
         self.handle.set(new_provider).await;
         Ok(())
@@ -320,7 +320,7 @@ mcb (facade)
 
 ### Pattern 1: Adding a New Embedding Provider
 
-1.  **Implement the port** (already exists in mcb-domain):
+1. **Implement the port** (already exists in mcb-domain):
 
 ```rust
 pub trait EmbeddingProvider: Send + Sync {
@@ -328,7 +328,7 @@ pub trait EmbeddingProvider: Send + Sync {
 }
 ```
 
-1.  **Create provider in mcb-providers**:
+1. **Create provider in mcb-providers**:
 
 ```rust
 pub struct MyEmbeddingProvider {
@@ -343,7 +343,7 @@ impl EmbeddingProvider for MyEmbeddingProvider {
 }
 ```
 
-1.  **Register via linkme**:
+1. **Register via linkme**:
 
 ```rust
 #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
@@ -354,7 +354,7 @@ static MY_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 };
 ```
 
-1.  **Use in infrastructure**:
+1. **Use in infrastructure**:
 
 ```rust
 // Automatically discovered and available for switching
@@ -367,7 +367,7 @@ pub async fn switch_to_my_provider(admin: &dyn EmbeddingAdminInterface) {
 
 ### Pattern 2: Adding a New Service
 
-1.  **Define service in mcb-application**:
+1. **Define service in mcb-application**:
 
 ```rust
 pub struct MyService {
@@ -382,7 +382,7 @@ impl MyService {
 }
 ```
 
-1.  **Register in DI container** (mcb-infrastructure):
+1. **Register in DI container** (mcb-infrastructure):
 
 ```rust
 pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
@@ -390,7 +390,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
         embedding_provider.clone(),
         vector_store.clone(),
     ));
-    
+
     CatalogBuilder::new()
         // ... existing registrations
         .add_value(my_service)
@@ -398,7 +398,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 }
 ```
 
-1.  **Add MCP tool handler** (mcb-server):
+1. **Add MCP tool handler** (mcb-server):
 
 ```rust
 pub async fn handle_my_tool(
@@ -412,7 +412,7 @@ pub async fn handle_my_tool(
 
 ### Pattern 3: Adding a New Port (Interface)
 
-1.  **Define port in mcb-domain**:
+1. **Define port in mcb-domain**:
 
 ```rust
 pub trait MyProvider: Send + Sync {
@@ -420,7 +420,7 @@ pub trait MyProvider: Send + Sync {
 }
 ```
 
-1.  **Implement in mcb-providers**:
+1. **Implement in mcb-providers**:
 
 ```rust
 pub struct MyProviderImpl;
@@ -433,7 +433,7 @@ impl MyProvider for MyProviderImpl {
 }
 ```
 
-1.  **Register in mcb-application** (if using registry):
+1. **Register in mcb-application** (if using registry):
 
 ```rust
 #[linkme::distributed_slice]
@@ -446,7 +446,7 @@ static MY_IMPL: MyProviderEntry = MyProviderEntry {
 };
 ```
 
-1.  **Use in services** (mcb-application):
+1. **Use in services** (mcb-application):
 
 ```rust
 pub struct MyService {

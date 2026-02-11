@@ -2,7 +2,7 @@
 adr: 26
 title: API Routing Refactor (Rocket vs Poem)
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [7, 11]
 supersedes: []
@@ -48,17 +48,17 @@ let router = Router::new()
 
 #### Developer Experience Issues
 
-1.  **Manual route building**: Each route requires explicit registration
-2.  **Middleware complexity**: Tower ecosystem has steep learning curve
-3.  **Handler coupling**: Routes are defined separately from handler functions
-4.  **No built-in features**: Missing common web framework conveniences
+1. **Manual route building**: Each route requires explicit registration
+2. **Middleware complexity**: Tower ecosystem has steep learning curve
+3. **Handler coupling**: Routes are defined separately from handler functions
+4. **No built-in features**: Missing common web framework conveniences
 
 #### Maintenance Issues
 
-1.  **Route scattering**: Routes defined far from handler implementations
-2.  **Middleware orchestration**: Complex Tower middleware composition
-3.  **Error handling**: Manual error response formatting
-4.  **Testing**: Difficult to test routes in isolation
+1. **Route scattering**: Routes defined far from handler implementations
+2. **Middleware orchestration**: Complex Tower middleware composition
+3. **Error handling**: Manual error response formatting
+4. **Testing**: Difficult to test routes in isolation
 
 ### Alternative Frameworks Evaluation
 
@@ -130,15 +130,15 @@ After comprehensive evaluation of framework alternatives, we will migrate from A
 
 #### Primary Selection Factors
 
-1.  **Developer Experience**: Rocket's attribute-based routing (`#[get("/path")]`) is more intuitive than Axum's programmatic approach, especially for teams familiar with web frameworks like Express.js, Flask, or Spring Boot.
+1. **Developer Experience**: Rocket's attribute-based routing (`#[get("/path")]`) is more intuitive than Axum's programmatic approach, especially for teams familiar with web frameworks like Express.js, Flask, or Spring Boot.
 
-2.  **Ecosystem Maturity**: Rocket has been stable in the Rust ecosystem for years with extensive documentation, community support, and proven production usage.
+2. **Ecosystem Maturity**: Rocket has been stable in the Rust ecosystem for years with extensive documentation, community support, and proven production usage.
 
-3.  **Built-in Features**: Rocket includes batteries like form handling, validation, templating, and session management out of the Box, reducing the need for external crates.
+3. **Built-in Features**: Rocket includes batteries like form handling, validation, templating, and session management out of the Box, reducing the need for external crates.
 
-4.  **Compile-time Safety**: Rocket performs route conflict detection and validation at compile time, catching routing errors early.
+4. **Compile-time Safety**: Rocket performs route conflict detection and validation at compile time, catching routing errors early.
 
-5.  **Framework Consistency**: Rocket provides a cohesive framework experience rather than Axum's minimal approach that requires assembling multiple Tower middleware crates.
+5. **Framework Consistency**: Rocket provides a cohesive framework experience rather than Axum's minimal approach that requires assembling multiple Tower middleware crates.
 
 #### Performance Trade-off Analysis
 
@@ -266,27 +266,27 @@ impl Fairing for RequestLogger {
 
 #### Phase 1: Infrastructure Migration
 
-1.  Replace Axum dependency with Rocket in `Cargo.toml`
-2.  Create Rocket application bootstrap in `mcb-server/src/main.rs`
-3.  Migrate basic health check and metrics endpoints
+1. Replace Axum dependency with Rocket in `Cargo.toml`
+2. Create Rocket application bootstrap in `mcb-server/src/main.rs`
+3. Migrate basic health check and metrics endpoints
 
 #### Phase 2: Admin API Migration
 
-1.  Convert admin routes from Axum to Rocket attribute-based routing
-2.  Migrate state management and dependency injection
-3.  Update error handling to Rocket patterns
+1. Convert admin routes from Axum to Rocket attribute-based routing
+2. Migrate state management and dependency injection
+3. Update error handling to Rocket patterns
 
 #### Phase 3: Advanced Features
 
-1.  Implement authentication and authorization using Rocket's guard system
-2.  Add request/response processing with Rocket's data guards
-3.  Migrate WebSocket/SSE functionality if needed
+1. Implement authentication and authorization using Rocket's guard system
+2. Add request/response processing with Rocket's data guards
+3. Migrate WebSocket/SSE functionality if needed
 
 #### Phase 4: Testing and Validation
 
-1.  Update integration tests for Rocket
-2.  Validate API contract compliance
-3.  Performance testing and optimization
+1. Update integration tests for Rocket
+2. Validate API contract compliance
+3. Performance testing and optimization
 
 ## Consequences
 
@@ -315,25 +315,25 @@ impl Fairing for RequestLogger {
 
 ### Phase 1: Evaluation
 
-1.  Create prototype implementations with both Rocket and Poem
-2.  Benchmark performance, compile times, and developer experience
-3.  Evaluate ecosystem support and documentation quality
-4.  Make final framework choice based on criteria
+1. Create prototype implementations with both Rocket and Poem
+2. Benchmark performance, compile times, and developer experience
+3. Evaluate ecosystem support and documentation quality
+4. Make final framework choice based on criteria
 
 ### Phase 2: Rocket Migration
 
-1.  Add Rocket dependency alongside Axum
-2.  Create Rocket handlers for existing endpoints
-3.  Migrate middleware and state management
-4.  Update error handling to Rocket patterns
-5.  Parallel testing of both implementations
+1. Add Rocket dependency alongside Axum
+2. Create Rocket handlers for existing endpoints
+3. Migrate middleware and state management
+4. Update error handling to Rocket patterns
+5. Parallel testing of both implementations
 
 ### Phase 3: Cleanup
 
-1.  Remove Axum dependencies
-2.  Update all routing documentation
-3.  Comprehensive integration testing
-4.  Performance validation
+1. Remove Axum dependencies
+2. Update all routing documentation
+3. Comprehensive integration testing
+4. Performance validation
 
 ### Alternative: Poem Evaluation
 

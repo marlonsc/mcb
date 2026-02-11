@@ -2,7 +2,7 @@
 adr: 14
 title: Multi-Domain Architecture Strategy
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [12, 13]
 supersedes: []
@@ -66,10 +66,10 @@ mcb/
 
 ### Domain Principles
 
-1.  **Independence**: Each domain can be developed/tested separately
-2.  **Ports & Adapters**: Domain logic only depends on interfaces
-3.  **Incremental Growth**: Add domains without touching existing ones
-4.  **Shared Libraries**: Common code in workspace crates
+1. **Independence**: Each domain can be developed/tested separately
+2. **Ports & Adapters**: Domain logic only depends on interfaces
+3. **Incremental Growth**: Add domains without touching existing ones
+4. **Shared Libraries**: Common code in workspace crates
 
 ### Integration Strategy
 

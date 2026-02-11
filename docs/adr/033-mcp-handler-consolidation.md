@@ -2,7 +2,7 @@
 adr: 33
 title: MCP Handler Consolidation
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: []
 supersedes: []
@@ -110,9 +110,9 @@ struct ProjectArgs {
 
 ### Migration Path
 
-1.  **Phase 1**: Add new tools alongside existing
-2.  **Phase 2**: Deprecate old tools (mark as [DEPRECATED] in description)
-3.  **Phase 3**: Remove deprecated tools after 1 release cycle
+1. **Phase 1**: Add new tools alongside existing
+2. **Phase 2**: Deprecate old tools (mark as [DEPRECATED] in description)
+3. **Phase 3**: Remove deprecated tools after 1 release cycle
 
 ### Tool Count Reduction
 

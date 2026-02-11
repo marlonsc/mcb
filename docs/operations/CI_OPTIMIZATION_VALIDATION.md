@@ -11,13 +11,13 @@ This document tracks validation of CI optimizations before considering them prod
 
 ### ✅ Completed Validations
 
-1.  **Test Matrix Logic** (Commit: d211ffe)
+1. **Test Matrix Logic** (Commit: d211ffe)
 
 -   [x] Verified `release-build` dependency updated from `test` to `test-main`
 -   [x] Confirmed job dependencies are syntactically correct
 -   [x] Validated workflow file passes YAML validation
 
-1.  **Tarpaulin Installation** (Locally tested 2026-01-28)
+1. **Tarpaulin Installation** (Locally tested 2026-01-28)
 
 -   [x] Cargo-tarpaulin v0.35.1 installed successfully
 -   [x] Tarpaulin binary available and executable
@@ -58,6 +58,7 @@ This document tracks validation of CI optimizations before considering them prod
 **Steps**:
 
 ```bash
+
 # 1. Install tarpaulin
 cargo install cargo-tarpaulin --locked
 
@@ -101,9 +102,9 @@ Cover: X% (Y out of Z lines)
 
 **Setup**:
 
-1.  Create branch from current commit
-2.  Modify only documentation files
-3.  Create PR to main
+1. Create branch from current commit
+2. Modify only documentation files
+3. Create PR to main
 
 **Test Scenario**:
 
@@ -141,9 +142,9 @@ git commit -m "docs: test documentation-only PR"
 
 **Setup**:
 
-1.  Create branch from current commit
-2.  Modify a source file
-3.  Create PR to main
+1. Create branch from current commit
+2. Modify a source file
+3. Create PR to main
 
 **Test Scenario**:
 
@@ -184,9 +185,9 @@ git commit -m "test: verify CI runs on code changes"
 
 **Setup**:
 
-1.  Create branch from current commit
-2.  Modify `.github/workflows/ci.yml`
-3.  Create PR to main
+1. Create branch from current commit
+2. Modify `.github/workflows/ci.yml`
+3. Create PR to main
 
 **Test Scenario**:
 
@@ -212,11 +213,11 @@ git commit -m "test: verify CI runs on workflow changes"
 **Evidence**:
 
 -   PR to main should show:
-    -   ✅ Lint job
-    -   ✅ Test-PR job with name "Test (PR - Stable)"
-    -   ❌ NO Test-Main job
-    -   ❌ NO Golden-Tests job
-    -   ❌ NO Coverage job
+  -   ✅ Lint job
+  -   ✅ Test-PR job with name "Test (PR - Stable)"
+  -   ❌ NO Test-Main job
+  -   ❌ NO Golden-Tests job
+  -   ❌ NO Coverage job
 
 **What NOT to See**:
 
@@ -232,17 +233,17 @@ git commit -m "test: verify CI runs on workflow changes"
 
 **Setup**:
 
-1.  Create branch from release/v0.1.4
-2.  Push to main
+1. Create branch from release/v0.1.4
+2. Push to main
 
 **Evidence**:
 
 -   Push to main should show:
-    -   ✅ Lint job
-    -   ✅ Test-Main jobs (stable AND beta - 2 matrix runs)
-    -   ✅ Golden-Tests job
-    -   ✅ Coverage job
-    -   ✅ Release-Build jobs (3 platforms)
+  -   ✅ Lint job
+  -   ✅ Test-Main jobs (stable AND beta - 2 matrix runs)
+  -   ✅ Golden-Tests job
+  -   ✅ Coverage job
+  -   ✅ Release-Build jobs (3 platforms)
 
 **What to Verify**:
 
@@ -259,10 +260,10 @@ git commit -m "test: verify CI runs on workflow changes"
 **Evidence**:
 
 -   Coverage job in main push should:
-    -   ✅ Install tarpaulin via setup-ci.sh --install-coverage
-    -   ✅ Run `make coverage LCOV=1 TEST_THREADS=4`
-    -   ✅ Upload to codecov
-    -   ✅ Complete within 30-minute timeout
+  -   ✅ Install tarpaulin via setup-ci.sh --install-coverage
+  -   ✅ Run `make coverage LCOV=1 TEST_THREADS=4`
+  -   ✅ Upload to codecov
+  -   ✅ Complete within 30-minute timeout
 
 **Metrics to Check**:
 
@@ -327,6 +328,7 @@ git commit -m "test: verify CI runs on workflow changes"
 If validations fail, rollback strategy:
 
 ```bash
+
 # Revert the three optimization commits
 git revert d211ffe    # Fix release-build dependency
 git revert a29e1d6    # Phase 2 test matrix split

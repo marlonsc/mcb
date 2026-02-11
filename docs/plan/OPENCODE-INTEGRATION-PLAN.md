@@ -1,6 +1,6 @@
 # MCB-OpenCode Integration Plan
 
-**Date**: 2026-02-08  
+**Date**: 2026-02-08
 **Goal**: Replace heavy agent work with MCB project-memory-context pattern
 
 ---
@@ -19,10 +19,10 @@
 └──────────────────────────────────────────────────────────────┘
 
 Problems:
-- Each agent spawns, reads files, searches - expensive
-- No unified context across agents
-- Memory/observations not linked to project
-- Session context lost between invocations
+-   Each agent spawns, reads files, searches - expensive
+-   No unified context across agents
+-   Memory/observations not linked to project
+-   Session context lost between invocations
 ```
 
 ---
@@ -213,6 +213,7 @@ mcp_mcb_search(resource="context", query="X", project_id="opencode")
 Add project-aware wrappers:
 
 ```markdown
+
 ## Project-Aware Usage
 
 # Initialize project (once)
@@ -300,7 +301,7 @@ mcp_mcb_memory(project_id="opencode", ...)
 
 ## Next Actions
 
-1.  **Immediate**: Use Phase A capabilities (code search only)
-2.  **Agent work**: Fix mcb-ibnx (memory query) - highest impact
-3.  **Agent work**: Fix mcb-e2uy (project workflow) - enables full pattern
-4.  **Validation**: Re-run integration tests after each fix
+1. **Immediate**: Use Phase A capabilities (code search only)
+2. **Agent work**: Fix mcb-ibnx (memory query) - highest impact
+3. **Agent work**: Fix mcb-e2uy (project workflow) - enables full pattern
+4. **Validation**: Re-run integration tests after each fix

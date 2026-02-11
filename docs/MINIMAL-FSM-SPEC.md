@@ -131,7 +131,7 @@ pub struct FreshnessPolicy {
 #[async_trait::async_trait]
 impl Policy for FreshnessPolicy {
     fn name(&self) -> &str { "freshness" }
-    
+
     async fn evaluate(&self, context: &ProjectContext) -> PolicyResult {
         let age = chrono::Utc::now() - context.last_sync;
         if age.num_seconds() > self.max_age_secs as i64 {

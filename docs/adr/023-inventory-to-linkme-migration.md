@@ -2,7 +2,7 @@
 adr: 23
 title: Inventory to Linkme Migration
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [2, 3, 13]
 supersedes: []
@@ -23,27 +23,27 @@ implementation_status: Complete
 
 The current codebase uses the `inventory` crate for plugin registration, which provides compile-time collection of static items through procedural macros (`inventory::submit!` and `inventory::collect!`). While functional, this approach has several drawbacks:
 
-1.  **Heavy infrastructure**: Generates significant boilerplate code for registration
-2.  **Limited platform support**: May not work well with WebAssembly (WASM) targets
-3.  **Complex macros**: Requires understanding of inventory's macro system
-4.  **Maintenance overhead**: Additional dependency that could be simplified
+1. **Heavy infrastructure**: Generates significant boilerplate code for registration
+2. **Limited platform support**: May not work well with WebAssembly (WASM) targets
+3. **Complex macros**: Requires understanding of inventory's macro system
+4. **Maintenance overhead**: Additional dependency that could be simplified
 
 The `linkme` crate offers an alternative approach using distributed slices, which are aggregated by the linker at compile time. This approach:
 
-1.  **Eliminates boilerplate**: Uses simple attribute macros instead of complex registration calls
-2.  **Broader platform support**: Works with WASM and other constrained environments
-3.  **Simpler API**: Just add `#[linkme::distributed_slice]` and static items are automatically collected
-4.  **Better performance**: Linker-based collection is more efficient than runtime iteration
+1. **Eliminates boilerplate**: Uses simple attribute macros instead of complex registration calls
+2. **Broader platform support**: Works with WASM and other constrained environments
+3. **Simpler API**: Just add `#[linkme::distributed_slice]` and static items are automatically collected
+4. **Better performance**: Linker-based collection is more efficient than runtime iteration
 
 ## Decision
 
 We will migrate from `inventory` to `linkme` for all plugin registration across the codebase. The migration will:
 
-1.  Replace `inventory::collect!` declarations with `linkme::distributed_slice!`
-2.  Replace `inventory::submit!` calls with simple static item declarations using `#[linkme::distributed_slice(MY_SLICE)]`
-3.  Update all provider registration code (embedding, vector store, cache, language providers)
-4.  Maintain the same runtime API for provider discovery and resolution
-5.  Remove the `inventory` dependency and add `linkme`
+1. Replace `inventory::collect!` declarations with `linkme::distributed_slice!`
+2. Replace `inventory::submit!` calls with simple static item declarations using `#[linkme::distributed_slice(MY_SLICE)]`
+3. Update all provider registration code (embedding, vector store, cache, language providers)
+4. Maintain the same runtime API for provider discovery and resolution
+5. Remove the `inventory` dependency and add `linkme`
 
 ### Migration Pattern
 
@@ -103,11 +103,11 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Implementation Plan
 
-1.  **Phase 1**: Add linkme dependency and create migration utility functions
-2.  **Phase 2**: Migrate one provider type (e.g., embedding) as proof of concept
-3.  **Phase 3**: Migrate remaining provider types (vector store, cache, language)
-4.  **Phase 4**: Remove inventory dependency and clean up old code
-5.  **Phase 5**: Comprehensive testing and validation
+1. **Phase 1**: Add linkme dependency and create migration utility functions
+2. **Phase 2**: Migrate one provider type (e.g., embedding) as proof of concept
+3. **Phase 3**: Migrate remaining provider types (vector store, cache, language)
+4. **Phase 4**: Remove inventory dependency and clean up old code
+5. **Phase 5**: Comprehensive testing and validation
 
 ## Implementation Status
 

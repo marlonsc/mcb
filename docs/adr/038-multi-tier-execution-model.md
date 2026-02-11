@@ -2,7 +2,7 @@
 adr: 38
 title: Multi-Tier Execution Model — Integration of ADR-034–037
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-06
 related: [13, 23, 25, 29, 33]
 supersedes: []
@@ -33,10 +33,10 @@ ADR-034 through ADR-037 define four sequential architectural concerns:
 
 Each ADR defines a provider trait and entities, consumed by the next layer. However, **the relationships between entities, concurrency model, and Git integration are scattered across four documents**. This makes it difficult for implementers to understand:
 
-1.  How do `Project`, `Plan`, `Task`, `Session`, `Agent`, and `Operator` entities relate?
-2.  What is the concurrency model? Can tasks run in parallel? Sessions?
-3.  How does Git worktree isolation work with concurrent sessions?
-4.  What is the exact operator workflow for approving code changes?
+1. How do `Project`, `Plan`, `Task`, `Session`, `Agent`, and `Operator` entities relate?
+2. What is the concurrency model? Can tasks run in parallel? Sessions?
+3. How does Git worktree isolation work with concurrent sessions?
+4. What is the exact operator workflow for approving code changes?
 
 **This ADR** unifies ADR-034–037 into a complete execution model by:
 
@@ -110,9 +110,9 @@ All five entities work together to form a complete execution hierarchy:
 
 **Lifecycle**:
 
-1.  **Created**: Operator initializes project via MCP `project:init` tool
-2.  **Active**: Plans and sessions execute within project scope
-3.  **Archived**: No new sessions created; read-only for historical queries
+1. **Created**: Operator initializes project via MCP `project:init` tool
+2. **Active**: Plans and sessions execute within project scope
+3. **Archived**: No new sessions created; read-only for historical queries
 
 **Concurrency**: Unlimited projects can run independently. No lock required at project level.
 
@@ -137,9 +137,9 @@ All five entities work together to form a complete execution hierarchy:
 
 **Lifecycle**:
 
-1.  **Open**: Defined in Beads, no active sessions yet
-2.  **InProgress**: ≥1 task has active session
-3.  **Closed**: All tasks completed; operator marks via MCP
+1. **Open**: Defined in Beads, no active sessions yet
+2. **InProgress**: ≥1 task has active session
+3. **Closed**: All tasks completed; operator marks via MCP
 
 **Integration with Workflow**:
 
@@ -456,7 +456,7 @@ OR at any point:
 -   Executing → Verifying: Agents completed (or timeout)
 -   Verifying → AwaitingMerge: All policy checks pass (tests, reviews, security scans)
 -   AwaitingMerge → Merged: (can be skipped if auto-merge enabled)
--   -   → Failed: At any point if error or operator rejection
+-   - → Failed: At any point if error or operator rejection
 
 #### 2.3 OperatorState (Decision Loop)
 
@@ -519,7 +519,7 @@ Project A                Project B                Project C
   ├─ Plans               ├─ Plans                ├─ Plans
   ├─ Sessions            ├─ Sessions             ├─ Sessions
   └─ Agents              └─ Agents               └─ Agents
-  
+
 (all parallel, no contention)
 ```
 
@@ -534,7 +534,7 @@ Project A
   ├─ Phase 1 (Tasks A1, A2, A3)
   ├─ Phase 2 (Tasks B1, B2)
   └─ Phase 3 (Tasks C1)
-  
+
 Plans can overlap:
   T=0:   A1 session starts
   T=1:   A2 session starts
@@ -597,7 +597,7 @@ Session A (task_id = beads-123)
   │
   └─ Agent 3 (Tester)
      └─ Runs: make test (reads both previous modifications)
-     
+
 (all 3 run in parallel on same worktree)
 ```
 
@@ -664,9 +664,9 @@ Action:
 
 ```
 Agents modify:
-  - src/ files
-  - test files
-  - docs/
+  -   src/ files
+  -   test files
+  -   docs/
 
 All changes committed to worktree branch:
   git add .
@@ -677,14 +677,14 @@ All changes committed to worktree branch:
 
 ```
 Operator reviews:
-  - git log {worktree_branch}...main (show commits)
-  - git diff main (show changes)
-  - test output, lint results
+  -   git log {worktree_branch}...main (show commits)
+  -   git diff main (show changes)
+  -   test output, lint results
 
 Operator decides:
-  - Approve: next stage
-  - RequestChanges: agents re-execute
-  - Reject: compensation (see below)
+  -   Approve: next stage
+  -   RequestChanges: agents re-execute
+  -   Reject: compensation (see below)
 ```
 
 **Stage 4: Merge (SessionState = AwaitingMerge → Merged)**
@@ -771,9 +771,9 @@ The operator is the bottleneck and decision-maker. The workflow accommodates thr
 -   Human operator decides next step
 -   Operator reviews error, code, logs
 -   Three options:
-    1.  **Retry**: Re-run agents from Executing
-    2.  **Fix**: Modify code manually, resubmit
-    3.  **Abort**: Reject and rollback
+    1. **Retry**: Re-run agents from Executing
+    2. **Fix**: Modify code manually, resubmit
+    3. **Abort**: Reject and rollback
 -   Used for policy failures, merge conflicts, unclear errors
 -   Operator overhead: ~10-30 minutes per incident
 
@@ -816,9 +816,9 @@ project:decide <session_id> {
 
 ```
 Preconditions:
-  - Tests pass (RequireTests policy)
-  - No blocker issues (ReviewApproval policy)
-  - Optional: security scan passed
+  -   Tests pass (RequireTests policy)
+  -   No blocker issues (ReviewApproval policy)
+  -   Optional: security scan passed
 
 Actions:
   1. Transition: Verifying → AwaitingMerge
@@ -827,7 +827,7 @@ Actions:
   4. Outcome: Code merged, session completed
 
 Override example:
-  - Tests failed, but operator overrides: 
+  -   Tests failed, but operator overrides:
     project:decide approve --reason "known failure, non-blocking"
     --override_policies RequireTests
     (stored as audit event for review)
@@ -837,7 +837,7 @@ Override example:
 
 ```
 Preconditions:
-  - None (operator can request changes at any time)
+  -   None (operator can request changes at any time)
 
 Actions:
   1. Store decision in session_decisions table
@@ -846,33 +846,33 @@ Actions:
   4. Operator review loop repeats
 
 Example:
-  - Operator finds: missing docstring, suboptimal variable name
-  - Requests: "Add docstring to X function; rename variable B to C for clarity"
-  - Agents re-run with modified instructions
-  - Operator reviews again
+  -   Operator finds: missing docstring, suboptimal variable name
+  -   Requests: "Add docstring to X function; rename variable B to C for clarity"
+  -   Agents re-run with modified instructions
+  -   Operator reviews again
 ```
 
 **Decision 3: Reject**
 
 ```
 Preconditions:
-  - Code has blocker issue (security, correctness, etc.)
+  -   Code has blocker issue (security, correctness, etc.)
 
 Actions:
   1. Store decision in session_decisions table
   2. Select compensation strategy based on error type
   3. Transition: Verifying → Failed
   4. Compensation triggered:
-     - AutoRevert: reset worktree, end session
-     - ManualReview: session stays at Failed, awaits operator next action
-     - ApproveAndMerge: (shouldn't happen for reject)
-     
+     -   AutoRevert: reset worktree, end session
+     -   ManualReview: session stays at Failed, awaits operator next action
+     -   ApproveAndMerge: (shouldn't happen for reject)
+
 Example:
-  - Operator finds: security vulnerability
-  - Decision: Reject with AutoRevert
-  - Action: Worktree discarded
-  - Outcome: Session failed, task still Open in Beads
-  - Next step: Operator reopens task, creates new session
+  -   Operator finds: security vulnerability
+  -   Decision: Reject with AutoRevert
+  -   Action: Worktree discarded
+  -   Outcome: Session failed, task still Open in Beads
+  -   Next step: Operator reopens task, creates new session
 ```
 
 #### 5.3 Timeout Recovery
@@ -889,8 +889,8 @@ Actions:
   4. Manager notified to reassign or close
 
 Configurable timeouts:
-  - project.operator_decision_timeout_hours = 72
-  - project.auto_escalation_days = 7
+  -   project.operator_decision_timeout_hours = 72
+  -   project.auto_escalation_days = 7
 ```
 
 ## Consequences
@@ -1069,10 +1069,10 @@ CREATE TABLE session_agents (
 
 If implementation reveals critical issues (e.g., SQLite concurrency problems, policy conflicts):
 
-1.  **Disable at MCP level**: Remove workflow tools from MCP handler, revert to shell scripts
-2.  **Keep database**: Leave SQLite data for analysis and migration
-3.  **Document lessons learned**: ADR update with failure analysis
-4.  **Reassess**: Decide on redesign (alternative: async actor model like Tokio with state machines)
+1. **Disable at MCP level**: Remove workflow tools from MCP handler, revert to shell scripts
+2. **Keep database**: Leave SQLite data for analysis and migration
+3. **Document lessons learned**: ADR update with failure analysis
+4. **Reassess**: Decide on redesign (alternative: async actor model like Tokio with state machines)
 
 ## References
 
@@ -1083,4 +1083,3 @@ If implementation reveals critical issues (e.g., SQLite concurrency problems, po
 -   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI container
 -   [ADR-013: Clean Architecture Crate Separation](./013-clean-architecture-crate-separation.md) — Crate boundaries
 -   [ADR-025: Figment Configuration Migration](./025-figment-configuration.md) — Configuration loading
-

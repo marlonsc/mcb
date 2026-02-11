@@ -20,11 +20,11 @@ implementation_status: Incomplete
 
 MCB currently lacks a centralized "Project" entity that coordinates various dimensions of the system. While it provides semantic search and workflow management, these are often disconnected. Gaps identified in the comprehensive gap analysis (GAP-H1, GAP-E2) highlight the need for a unified project architecture that serves as a central hub for:
 
-1.  **Project-Repository Link**: 1:1 mapping between projects and git repositories.
-2.  **Multi-Collection Support**: Handling multiple vector collections per worktree.
-3.  **Multi-Session Management**: Tracking user, agent, and worktree context across sessions.
-4.  **Multi-User & Multi-Agent Coordination**: Supporting parallel agent sessions and operator roles.
-5.  **Worktree Support**: Ensuring each git worktree has an isolated semantic index.
+1. **Project-Repository Link**: 1:1 mapping between projects and git repositories.
+2. **Multi-Collection Support**: Handling multiple vector collections per worktree.
+3. **Multi-Session Management**: Tracking user, agent, and worktree context across sessions.
+4. **Multi-User & Multi-Agent Coordination**: Supporting parallel agent sessions and operator roles.
+5. **Worktree Support**: Ensuring each git worktree has an isolated semantic index.
 
 ## Decision
 

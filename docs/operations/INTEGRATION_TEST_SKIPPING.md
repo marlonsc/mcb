@@ -228,6 +228,7 @@ Tests with skip macros run:
 -   Never timeout or fail due to service unavailability
 
 ```bash
+
 # Runs all tests, skipping those with unavailable services
 make test
 
@@ -239,7 +240,7 @@ cargo test -p mcb-server --test integration
 
 CI should:
 
-1.  **Skip integration tests by default** in fast CI path:
+1. **Skip integration tests by default** in fast CI path:
 
    ```yaml
    test-pr:
@@ -247,7 +248,7 @@ CI should:
      run: cargo test --lib
    ```
 
-1.  **Run full tests (with skipping) on main branch**:
+1. **Run full tests (with skipping) on main branch**:
 
    ```yaml
    test-main:
@@ -256,7 +257,7 @@ CI should:
      # Services not available in GH Actions, so tests skip gracefully
    ```
 
-1.  **Run against services in E2E environment** (future):
+1. **Run against services in E2E environment** (future):
 
    ```yaml
    test-e2e:
@@ -264,7 +265,7 @@ CI should:
        milvus:
          image: milvusdb/milvus
          ports:
-           - 19530
+           -   19530
      run: cargo test
      # Full integration tests run because Milvus is available
    ```
@@ -275,19 +276,19 @@ CI should:
 
 If tests skip even though services are running:
 
-1.  **Check service is on correct port**:
+1. **Check service is on correct port**:
 
    ```bash
    netstat -tlnp | grep -E "19530|11434|5432|6379"
    ```
 
-1.  **Test detection manually**:
+1. **Test detection manually**:
 
    ```bash
    cargo test -p mcb-server test_service_detection_logic -- --nocapture
    ```
 
-1.  **Check firewall/localhost resolution**:
+1. **Check firewall/localhost resolution**:
 
    ```bash
    nc -zv 127.0.0.1 19530
@@ -298,9 +299,9 @@ If tests skip even though services are running:
 
 If tests timeout:
 
-1.  **Verify skip macro is at test start** (not after async operations)
-2.  **Check if skip is conditional** on wrong service
-3.  **Increase timeout temporarily for debugging**:
+1. **Verify skip macro is at test start** (not after async operations)
+2. **Check if skip is conditional** on wrong service
+3. **Increase timeout temporarily for debugging**:
 
    ```rust
    skip_if_service_unavailable!("Milvus", is_milvus_available());
@@ -317,7 +318,7 @@ If tests timeout:
 
 ## Future Improvements
 
-1.  **Service availability reporting**: Summary of which services were available during test run
-2.  **Conditional test groups**: Run full suite only if all services available
-3.  **Docker Compose for local E2E**: Auto-start services for comprehensive testing
-4.  **Coverage integration**: Exclude skipped tests from coverage calculations
+1. **Service availability reporting**: Summary of which services were available during test run
+2. **Conditional test groups**: Run full suite only if all services available
+3. **Docker Compose for local E2E**: Auto-start services for comprehensive testing
+4. **Coverage integration**: Exclude skipped tests from coverage calculations

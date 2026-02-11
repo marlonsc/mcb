@@ -10,12 +10,12 @@ This document defines the strict architectural boundaries for the MCB (Memory Co
 
 ## Table of Contents
 
-1.  [Crate Structure](#crate-structure)
-2.  [Layer Dependency Rules](#layer-dependency-rules)
-3.  [Port/Adapter Pattern](#portadapter-pattern)
-4.  [Module Ownership](#module-ownership)
-5.  [Boundary Violations](#boundary-violations)
-6.  [Validation Rules](#validation-rules)
+1. [Crate Structure](#crate-structure)
+2. [Layer Dependency Rules](#layer-dependency-rules)
+3. [Port/Adapter Pattern](#portadapter-pattern)
+4. [Module Ownership](#module-ownership)
+5. [Boundary Violations](#boundary-violations)
+6. [Validation Rules](#validation-rules)
 
 ---
 
@@ -382,9 +382,9 @@ impl ContextService {
 
 ### Ownership Rules
 
-1.  **Single Owner**: Each module has exactly one owning crate
-2.  **No Duplication**: Types/traits defined once, re-exported if needed
-3.  **Clear Boundaries**: Cross-crate imports are explicit and justified
+1. **Single Owner**: Each module has exactly one owning crate
+2. **No Duplication**: Types/traits defined once, re-exported if needed
+3. **Clear Boundaries**: Cross-crate imports are explicit and justified
 
 ### Ownership Map
 
@@ -441,6 +441,7 @@ impl ContextService {
 ### Automated Checks (mcb-validate)
 
 ```bash
+
 # Run architecture validation
 make validate
 
@@ -497,8 +498,9 @@ Architecture validation: 0 violations
 ### CI/CD Pipeline
 
 ```yaml
+
 # .github/workflows/ci.yml
-- name: Validate Architecture
+-   name: Validate Architecture
   run: make validate
 
 # Fails if any violations detected
@@ -507,6 +509,7 @@ Architecture validation: 0 violations
 ### Pre-Commit Hook
 
 ```bash
+
 # .git/hooks/pre-commit
 make validate QUICK=1  # Fast validation
 ```

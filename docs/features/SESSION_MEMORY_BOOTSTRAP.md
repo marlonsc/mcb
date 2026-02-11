@@ -118,9 +118,9 @@ Git Context: branch={memory_context.get('git_context', {}).get('branch')},
              commit={memory_context.get('git_context', {}).get('commit')}
 
 ## Instructions
-- Reference memory when appropriate
-- Build on previous decisions and learnings
-- Maintain architectural consistency
+-   Reference memory when appropriate
+-   Build on previous decisions and learnings
+-   Maintain architectural consistency
 """
 ```
 
@@ -129,12 +129,16 @@ Git Context: branch={memory_context.get('git_context', {}).get('branch')},
 When starting MCB with session memory support:
 
 ```bash
+
 # Start with session memory injection
 mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 # Will automatically:
+
 # 1. Query memory for session observations
+
 # 2. Inject context into prompt
+
 # 3. Make observations available for hybrid search
 ```
 
@@ -168,8 +172,8 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 ```
 [DECISION] Context: Migrated from FSTree to SQLite for memory persistence
-- Rationale: Need indexed search + dynamic filtering
-- Trade-offs: Added external dependency but massive performance gain (10x faster)
+-   Rationale: Need indexed search + dynamic filtering
+-   Trade-offs: Added external dependency but massive performance gain (10x faster)
 ```
 
 **Current SessionStart:**
@@ -184,9 +188,9 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 ```
 [CODE_CHANGE] Implemented memory::FTS5 integration
-- Files: crates/mcb-infrastructure/src/repositories/memory.rs
-- Commit: a1b2c3d4...
-- Branch: feature/memory-search
+-   Files: crates/mcb-infrastructure/src/repositories/memory.rs
+-   Commit: a1b2c3d4...
+-   Branch: feature/memory-search
 ```
 
 **Current SessionStart:**
@@ -201,9 +205,9 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 ```
 [LEARNING] git_commit field was needed for observation context
-- Issue: Couldn't filter by specific commit range
-- Solution: Added commit to ObservationMetadata
-- Impact: Enables git-aware memory filtering
+-   Issue: Couldn't filter by specific commit range
+-   Solution: Added commit to ObservationMetadata
+-   Impact: Enables git-aware memory filtering
 ```
 
 **Current SessionStart:**
@@ -217,6 +221,7 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 ### Environment Variables
 
 ```bash
+
 # Optional: Customize memory injection behavior
 MCB_MEMORY_MAX_TOKENS=8000          # Max tokens in injected context
 MCB_MEMORY_INJECT_LIMIT=15          # Default observation count
@@ -254,10 +259,10 @@ See `mcb_domain::ports::MemoryServiceInterface` for service-level configuration.
 
 ## Next Steps (Phase 8+)
 
-1.  **Browser Integration** (Phase 8): Display memory context in code browser
-2.  **Real-time Updates** (Phase 8): SSE streaming of memory during indexing
-3.  **Multi-Model Support** (Phase 9): Optimize for GPT-4, Gemini, etc.
-4.  **Semantic Compression** (Phase 10): Automatically compress old memory
+1. **Browser Integration** (Phase 8): Display memory context in code browser
+2. **Real-time Updates** (Phase 8): SSE streaming of memory during indexing
+3. **Multi-Model Support** (Phase 9): Optimize for GPT-4, Gemini, etc.
+4. **Semantic Compression** (Phase 10): Automatically compress old memory
 
 ---
 

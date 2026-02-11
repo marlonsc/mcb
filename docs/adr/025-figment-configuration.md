@@ -2,7 +2,7 @@
 adr: 25
 title: Figment Configuration Migration
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [13, 21]
 supersedes: []
@@ -52,12 +52,12 @@ let config: AppConfig = builder.build()?.try_deserialize()?;
 
 ### Current Limitations
 
-1.  **Manual orchestration**: Each source must be explicitly added and configured
-2.  **Repetitive setup**: Similar patterns repeated across different configuration needs
-3.  **Format coupling**: Hard-coded format handling (TOML vs JSON vs YAML)
-4.  **Precedence complexity**: Source precedence depends on addition order
-5.  **Limited error context**: Basic deserialization errors without source attribution
-6.  **No profile support**: Manual handling of development/production environments
+1. **Manual orchestration**: Each source must be explicitly added and configured
+2. **Repetitive setup**: Similar patterns repeated across different configuration needs
+3. **Format coupling**: Hard-coded format handling (TOML vs JSON vs YAML)
+4. **Precedence complexity**: Source precedence depends on addition order
+5. **Limited error context**: Basic deserialization errors without source attribution
+6. **No profile support**: Manual handling of development/production environments
 
 ### Figment as Solution
 
@@ -91,20 +91,20 @@ We will migrate from the `config` crate to Figment for all configuration loading
 
 The migration will affect all configuration loading points:
 
-1.  **Infrastructure configuration** (`mcb-infrastructure/src/config/loader.rs`)
-2.  **Server startup configuration** (`mcb-server/src/init.rs`)
-3.  **Admin interface configuration** (`mcb-server/src/admin/config.rs`)
-4.  **Provider-specific configuration** (embedding, vector store, cache providers)
+1. **Infrastructure configuration** (`mcb-infrastructure/src/config/loader.rs`)
+2. **Server startup configuration** (`mcb-server/src/init.rs`)
+3. **Admin interface configuration** (`mcb-server/src/admin/config.rs`)
+4. **Provider-specific configuration** (embedding, vector store, cache providers)
 
 ### Technical Migration Strategy
 
 #### Core Changes
 
-1.  **Replace `config::Config`** with `figment::Figment` as the central configuration type
-2.  **Use `Figment::new().merge()`** fluent API for source composition
-3.  **Leverage Figment's built-in providers** for TOML, environment variables, and custom sources
-4.  **Maintain the same `AppConfig` structure** for API compatibility
-5.  **Add profile support** for development/production environment switching
+1. **Replace `config::Config`** with `figment::Figment` as the central configuration type
+2. **Use `Figment::new().merge()`** fluent API for source composition
+3. **Leverage Figment's built-in providers** for TOML, environment variables, and custom sources
+4. **Maintain the same `AppConfig` structure** for API compatibility
+5. **Add profile support** for development/production environment switching
 
 #### Provider Migration
 
@@ -234,23 +234,23 @@ Caused by:
 
 ### Phase 1: Compatibility Layer
 
-1.  Add Figment dependency alongside existing config crate
-2.  Create compatibility functions that wrap Figment with config crate API
-3.  Update tests to work with both systems
+1. Add Figment dependency alongside existing config crate
+2. Create compatibility functions that wrap Figment with config crate API
+3. Update tests to work with both systems
 
 ### Phase 2: Gradual Migration
 
-1.  Migrate infrastructure configuration first
-2.  Update application configuration loading
-3.  Migrate server startup configuration
-4.  Add profile support for development/production
+1. Migrate infrastructure configuration first
+2. Update application configuration loading
+3. Migrate server startup configuration
+4. Add profile support for development/production
 
 ### Phase 3: Cleanup
 
-1.  Remove config crate dependency
-2.  Delete compatibility layer
-3.  Update all documentation
-4.  Comprehensive testing
+1. Remove config crate dependency
+2. Delete compatibility layer
+3. Update all documentation
+4. Comprehensive testing
 
 ## Validation Criteria
 

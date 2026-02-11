@@ -2,7 +2,7 @@
 adr: 11
 title: HTTP Transport - Request-Response Pattern Over SSE Streaming
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 2, 7, 12, 13]
 supersedes: []
@@ -19,9 +19,9 @@ implementation_status: Complete
 > Implemented with POST request-response pattern. SSE streaming deferred to v0.2.0.
 > Current implementation in `crates/mcb-server/src/transport/http.rs` provides:
 >
-> -   POST /MCP for client-to-server requests with immediate responses
-> -   GET /MCP returns 501 Not Implemented with clear messaging
-> -   Session management and message buffering infrastructure ready for future SSE support
+> - POST /MCP for client-to-server requests with immediate responses
+> - GET /MCP returns 501 Not Implemented with clear messaging
+> - Session management and message buffering infrastructure ready for future SSE support
 
 ## Context
 

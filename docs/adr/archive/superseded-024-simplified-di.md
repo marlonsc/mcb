@@ -16,10 +16,10 @@ The current dependency injection system uses Shaku (version 0.6), a compile-time
 
 ### Problems with Shaku
 
-1.  **Macro complexity**: `#[derive(Component)]`, `#[shaku(interface = ...)]`, `#[shaku(inject)]` everywhere
-2.  **Build time impact**: Extensive macro expansion slows compilation
-3.  **Module sync**: Manual maintenance of module definitions as services change
-4.  **Over-engineering**: DI container complexity exceeds project needs
+1. **Macro complexity**: `#[derive(Component)]`, `#[shaku(interface = ...)]`, `#[shaku(inject)]` everywhere
+2. **Build time impact**: Extensive macro expansion slows compilation
+3. **Module sync**: Manual maintenance of module definitions as services change
+4. **Over-engineering**: DI container complexity exceeds project needs
 
 ### DI Library Research
 
@@ -36,19 +36,19 @@ We evaluated modern Rust DI alternatives:
 
 After implementing the dill catalog approach, we discovered that `dill::Catalog::get_one()` doesn't work well with `add_value` for interface resolution. Instead, we adopted a handle-based pattern that provides:
 
-1.  **Runtime provider switching** via RwLock handles
-2.  **Compile-time discovery** via linkme distributed slices
-3.  **Admin API support** for provider management
-4.  **Direct service storage** for infrastructure components
+1. **Runtime provider switching** via RwLock handles
+2. **Compile-time discovery** via linkme distributed slices
+3. **Admin API support** for provider management
+4. **Direct service storage** for infrastructure components
 
 ## Decision
 
 We replace Shaku-based DI with a handle-based pattern:
 
-1.  **Provider Handles**: RwLock wrappers allowing runtime provider switching
-2.  **Provider Resolvers**: Components that access the linkme registry
-3.  **Admin Services**: API endpoints for switching providers at runtime
-4.  **Direct Storage**: Infrastructure services stored directly in AppContext
+1. **Provider Handles**: RwLock wrappers allowing runtime provider switching
+2. **Provider Resolvers**: Components that access the linkme registry
+3. **Admin Services**: API endpoints for switching providers at runtime
+4. **Direct Storage**: Infrastructure services stored directly in AppContext
 
 ### Architecture Overview
 

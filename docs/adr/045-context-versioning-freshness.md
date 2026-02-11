@@ -2,7 +2,7 @@
 adr: 45
 title: Context Versioning & Freshness Tracking
 status: PROPOSED
-created: 
+created:
 updated: 2026-02-05
 related: []
 supersedes: []
@@ -12,10 +12,10 @@ implementation_status: Incomplete
 
 ## ADR-045: Context Versioning & Freshness Tracking
 
-**Status**: Proposed  
-**Date**: 2026-02-05  
-**Deciders**: MCB Architecture Team  
-**Related**: ADR-041 (Context System), ADR-035 (Context Scout)  
+**Status**: Proposed
+**Date**: 2026-02-05
+**Deciders**: MCB Architecture Team
+**Related**: ADR-041 (Context System), ADR-035 (Context Scout)
 **Predecessor**: ADR-035 defines ContextFreshness enum
 
 ## Problem
@@ -24,10 +24,10 @@ ADR-035 defines freshness as explicit metadata: Fresh / Acceptable / Stale / Sta
 
 But questions remain:
 
-1.  **How to capture context at a point in time?** Code changes, git state changes, but we need "context as it was at 14:30:00"
-2.  **How to track changes?** When code is modified, which context becomes stale?
-3.  **How to version?** Store snapshots or compute on-demand?
-4.  **How to scale?** 1000+ snapshots in a day = memory pressure
+1. **How to capture context at a point in time?** Code changes, git state changes, but we need "context as it was at 14:30:00"
+2. **How to track changes?** When code is modified, which context becomes stale?
+3. **How to version?** Store snapshots or compute on-demand?
+4. **How to scale?** 1000+ snapshots in a day = memory pressure
 
 **This ADR specifies versioning strategy and staleness propagation.**
 
@@ -92,7 +92,7 @@ impl StalenessComputer {
         let age = SystemTime::now()
             .duration_since(snapshot.timestamp)
             .unwrap_or_default();
-        
+
         // Signal-based override
         match signals {
             StalenessSignal::GitHookTriggered { .. } => {
@@ -104,7 +104,7 @@ impl StalenessComputer {
             },
             _ => {},
         }
-        
+
         // Time-based staleness
         if age < self.time_thresholds.fresh_max_age {
             Ok(ContextFreshness::Fresh)
@@ -117,7 +117,7 @@ impl StalenessComputer {
             let has_changes = self.vcs_provider
                 .has_changes_since(snapshot.vcs_state.commit_hash.as_str())
                 .await?;
-            
+
             if has_changes {
                 Ok(ContextFreshness::StaleWithRisk)
             } else {
@@ -135,14 +135,14 @@ impl StalenessComputer {
 pub trait TimelineQuery: Send + Sync {
     // Get context snapshot created at or before given timestamp
     async fn get_at(&self, timestamp: SystemTime) -> Result<ContextSnapshot>;
-    
+
     // Get timeline of changes between two timestamps
     async fn between(
         &self,
         start: SystemTime,
         end: SystemTime,
     ) -> Result<TimelineChange>;
-    
+
     // Get "closest" snapshot to a timestamp (within margin)
     async fn closest(&self, timestamp: SystemTime, margin: Duration) -> Result<ContextSnapshot>;
 }
@@ -159,15 +159,15 @@ pub struct TimelineChange {
 impl TimelineQuery for VersionedContextStore {
     async fn get_at(&self, timestamp: SystemTime) -> Result<ContextSnapshot> {
         let versions = self.versions.read().await;
-        
+
         // Binary search for closest snapshot before timestamp
         let idx = versions.iter()
             .position(|s| s.timestamp <= timestamp)
             .ok_or(Error::NoSnapshotBefore)?;
-        
+
         Ok(versions[idx].clone())
     }
-    
+
     async fn between(
         &self,
         start: SystemTime,
@@ -175,7 +175,7 @@ impl TimelineQuery for VersionedContextStore {
     ) -> Result<TimelineChange> {
         let from = self.get_at(start).await?;
         let to = self.get_at(end).await?;
-        
+
         TimelineChange {
             from_snapshot: from.clone(),
             to_snapshot: to.clone(),
@@ -320,15 +320,15 @@ let snapshot = ContextSnapshot {
 **Resolution**:
 
 -   **Added**: "ADR-035 Contract Assumptions" section documenting:
-    -   ContextFreshness entity definition and reuse
-    -   CachedContextScout TTL and invalidation strategy
-    -   How v0.4.0 freshness tracking EXTENDS (not replaces) ADR-035
-    -   Explicit dependency: v0.4.0 ContextVersioning depends on ADR-035 ContextFreshness
-    -   Snapshot lifecycle showing freshness integration
+  -   ContextFreshness entity definition and reuse
+  -   CachedContextScout TTL and invalidation strategy
+  -   How v0.4.0 freshness tracking EXTENDS (not replaces) ADR-035
+  -   Explicit dependency: v0.4.0 ContextVersioning depends on ADR-035 ContextFreshness
+  -   Snapshot lifecycle showing freshness integration
 
 **Rationale**: Clear documentation of cross-ADR dependencies prevents implementation bugs and ensures ADR-035 (ACCEPTED/locked) is not accidentally modified during Phase 9 implementation.
 
 ---
 
-**Depends on**: ADR-041 (context), ADR-035 (freshness enum)  
+**Depends on**: ADR-041 (context), ADR-035 (freshness enum)
 **Feeds**: ADR-046 (compensation + rollback uses snapshots)

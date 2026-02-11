@@ -6,13 +6,13 @@ Complete schema reference for `.mcp-context.toml` git-aware indexing configurati
 
 ## Table of Contents
 
-1.  [Overview](#overview)
-2.  [File Location](#file-location)
-3.  [Schema Reference](#schema-reference)
-4.  [Examples](#examples)
-5.  [Pattern Syntax](#pattern-syntax)
-6.  [Environment Variables](#environment-variables)
-7.  [Validation](#validation)
+1. [Overview](#overview)
+2. [File Location](#file-location)
+3. [Schema Reference](#schema-reference)
+4. [Examples](#examples)
+5. [Pattern Syntax](#pattern-syntax)
+6. [Environment Variables](#environment-variables)
+7. [Validation](#validation)
 
 ---
 
@@ -49,26 +49,38 @@ Place `.mcp-context.toml` in your repository root:
 
 ```toml
 [git]
+
 # Depth: Number of commits to analyze
+
 # Type: integer
+
 # Default: 1000
+
 # Valid Range: 1-10000
 depth = 100
 
 # Branches: Which branches to index
-# Type: array of strings  
+
+# Type: array of strings
+
 # Default: ["main", "HEAD"]
+
 # Supports: branch names, patterns (main, develop, feature/*)
 branches = ["main", "develop", "staging"]
 
 # Include Submodules: Whether to index submodules
+
 # Type: boolean
+
 # Default: true
 include_submodules = true
 
 # Ignore Patterns: Files/directories to skip
+
 # Type: array of strings
+
 # Default: [] (index everything)
+
 # Syntax: glob patterns (see Pattern Syntax section)
 ignore_patterns = [
   "target/",
@@ -197,6 +209,7 @@ ignore_patterns = [
 Override config file values with environment variables (highest precedence):
 
 ```bash
+
 # Override depth
 export MCP__GIT__DEPTH=50
 
@@ -236,6 +249,7 @@ include_submodules = "yes"# ❌ Should be boolean
 ### Defaults Used When Missing
 
 ```toml
+
 # If .mcp-context.toml is absent or section incomplete:
 [git]
 depth = 1000                    # Default
@@ -249,15 +263,20 @@ ignore_patterns = []            # Default (no ignores)
 ## Complete Example
 
 ```toml
+
 # .mcp-context.toml
+
 # MCB v0.2.0 - Git-aware indexing configuration
 
 [git]
+
 # How many commits to analyze
+
 # Use 50-100 for quick indexing, 500+ for comprehensive analysis
 depth = 100
 
 # Which branches to index for analysis
+
 # Supports branch names or patterns
 branches = [
   "main",
@@ -269,6 +288,7 @@ branches = [
 include_submodules = true
 
 # Files and directories to ignore
+
 # Supports: directories (dir/), extensions (*.ext), exact names (file.txt)
 ignore_patterns = [
   # Build artifacts
@@ -276,35 +296,35 @@ ignore_patterns = [
   "dist/",
   "build/",
   "out/",
-  
+
   # Dependencies
   "node_modules/",
   ".venv/",
   "venv/",
   "__pycache__/",
-  
+
   # IDE/Editor
   ".vscode/",
   ".idea/",
   ".vs/",
   "*.swp",
   "*.swo",
-  
+
   # Lock files
   "Cargo.lock",
   "package-lock.json",
   "yarn.lock",
   "poetry.lock",
-  
+
   # Logs and temp
   "*.log",
   "*.tmp",
   "*.bak",
-  
+
   # System
   ".DS_Store",
   "Thumbs.db",
-  
+
   # Git
   ".git/",
   ".gitignore"

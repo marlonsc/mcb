@@ -2,7 +2,7 @@
 adr: 19
 title: Error Handling Strategy
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [13, 16]
 supersedes: []
@@ -27,9 +27,9 @@ MCB uses typed errors (`thiserror`). PMAT uses `anyhow::Error`.
 
 **Layered error handling**:
 
-1.  **Domain Layer**: Typed errors with `thiserror`
-2.  **Adapter Layer**: Convert `anyhow` → typed errors
-3.  **PMAT Libraries**: Keep `anyhow` (unchanged)
+1. **Domain Layer**: Typed errors with `thiserror`
+2. **Adapter Layer**: Convert `anyhow` → typed errors
+3. **PMAT Libraries**: Keep `anyhow` (unchanged)
 
 ### Example
 

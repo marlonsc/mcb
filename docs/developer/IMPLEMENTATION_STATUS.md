@@ -319,11 +319,11 @@ All framework migrations completed.
 
 Per ADR-027, next version focuses on:
 
-1.  Bounded context organization
-2.  Engine contracts
-3.  Incremental indexing
-4.  Node mode
-5.  Relevance testing
+1. Bounded context organization
+2. Engine contracts
+3. Incremental indexing
+4. Node mode
+5. Relevance testing
 
 See `docs/adr/027-architecture-evolution-v013.md` for details.
 
@@ -333,11 +333,11 @@ See `docs/adr/027-architecture-evolution-v013.md` for details.
 
 This document was created by:
 
-1.  Reading plan files
-2.  Listing actual directory contents (`ls -la`)
-3.  Checking file existence with `Glob`
-4.  Running tests with `make test`
-5.  Checking ADR status with file reads
+1. Reading plan files
+2. Listing actual directory contents (`ls -la`)
+3. Checking file existence with `Glob`
+4. Running tests with `make test`
+5. Checking ADR status with file reads
 
 **Auditor**: Claude Code Session
 **Date**: 2026-01-28

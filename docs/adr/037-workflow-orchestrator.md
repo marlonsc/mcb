@@ -2,7 +2,7 @@
 adr: 37
 title: Workflow Orchestrator — Coordination and MCP Integration
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-06
 related: [23, 25, 29, 33]
 supersedes: []
@@ -35,10 +35,10 @@ Each provider has a clean port trait, a linkme-registered implementation, and is
 
 **This ADR** defines:
 
-1.  `WorkflowService` — an application service (in `mcb-application`) that orchestrates all three providers
-2.  A `workflow` MCP tool (following ADR-033 action-based pattern) exposed via `mcb-server`
-3.  An event system for workflow state changes
-4.  DI registration integrating all workflow components into the existing `build_catalog()`
+1. `WorkflowService` — an application service (in `mcb-application`) that orchestrates all three providers
+2. A `workflow` MCP tool (following ADR-033 action-based pattern) exposed via `mcb-server`
+3. An event system for workflow state changes
+4. DI registration integrating all workflow components into the existing `build_catalog()`
 
 ### Requirements
 
@@ -90,25 +90,25 @@ pub struct MultiTierConcurrency {
         max_parallel: Unlimited,
         requires_operator_approval: false,
     },
-    
+
     /// Multiple tasks per plan (bounded by WIP policy from ADR-036)
     pub tasks_per_plan: ConcurrencyPolicy {
         max_parallel: dynamic, // from PolicyGuardProvider
         requires_operator_approval: false, // policies block, don't require approval
     },
-    
+
     /// Multiple sessions per task (operator controls via session manager)
     pub sessions_per_task: ConcurrencyPolicy {
         max_parallel: 10, // configurable, per-operator limit
         requires_operator_approval: true, // operator confirms resuming abandoned session
     },
-    
+
     /// Multiple agents per session (bounded thread pool)
     pub agents_per_session: ConcurrencyPolicy {
         max_parallel: 4, // configured in WorkflowService
         requires_operator_approval: false,
     },
-    
+
     /// Operator decisions are sequential (one at a time per task)
     pub operator_decisions: ConcurrencyPolicy {
         max_parallel: 1, // per task
@@ -119,30 +119,30 @@ pub struct MultiTierConcurrency {
 
 #### Execution Flow
 
-1.  **Project Creation**: Operator creates or opens a project (workspace root)
-2.  **Plan Discovery**: WorkflowService queries Beads for plans/phases in this project
-3.  **Task Selection**: Operator selects a task from Beads (ready, no blockers)
-4.  **Session Start**: Create WorkflowSession with:
+1. **Project Creation**: Operator creates or opens a project (workspace root)
+2. **Plan Discovery**: WorkflowService queries Beads for plans/phases in this project
+3. **Task Selection**: Operator selects a task from Beads (ready, no blockers)
+4. **Session Start**: Create WorkflowSession with:
 
 -   `task_id` (reference to Beads task, not copy)
 -   `operator_id` (current human operator)
 -   `state: Initializing`
 
-1.  **Context Discovery**: ContextScoutProvider discovers Git, project structure, dependencies
-2.  **Policy Evaluation**: PolicyGuardProvider evaluates concurrency, branching, merge policies
-3.  **Agent Pool Start**: Spawn agents (bounded, configurable pool size)
-4.  **Agents Execute**: Multiple agents run in parallel within session
+1. **Context Discovery**: ContextScoutProvider discovers Git, project structure, dependencies
+2. **Policy Evaluation**: PolicyGuardProvider evaluates concurrency, branching, merge policies
+3. **Agent Pool Start**: Spawn agents (bounded, configurable pool size)
+4. **Agents Execute**: Multiple agents run in parallel within session
 
 -   Code changes, tests, commits happen in isolated worktrees
 -   Each agent heartbeats to session manager
 
-1.  **Operator Gate**: On completion, await operator approval:
+1. **Operator Gate**: On completion, await operator approval:
 
 -   Review changes, run tests, approve merge
 -   Or: trigger compensation (AutoRevert, ManualReview, ApproveAndMerge)
 
-1.  **State Transition**: Execute FSM transition (Ready → Executing → Completed or Failed)
-2.  **Cleanup**: Close session, cleanup worktrees, record final state
+1. **State Transition**: Execute FSM transition (Ready → Executing → Completed or Failed)
+2. **Cleanup**: Close session, cleanup worktrees, record final state
 
 ---
 
@@ -175,7 +175,7 @@ pub enum WorkflowEvent {
         error: String,
         compensation_triggered: bool,
     },
-    
+
     // State transitions
     StateTransitioned {
         session_id: String,
@@ -189,7 +189,7 @@ pub enum WorkflowEvent {
         policy_violation: String,
         blocker: String,
     },
-    
+
     // Compensation lifecycle
     CompensationTriggered {
         session_id: String,
@@ -203,7 +203,7 @@ pub enum WorkflowEvent {
         session_id: String,
         error: String,
     },
-    
+
     // Operator decisions
     OperatorApproved {
         session_id: String,
@@ -221,7 +221,7 @@ pub enum WorkflowEvent {
         override_type: String, // "force_transition", "cancel_agents", "skip_policy"
         reason: String,
     },
-    
+
     // Agent lifecycle
     AgentStarted {
         session_id: String,
@@ -238,7 +238,7 @@ pub enum WorkflowEvent {
         agent_id: String,
         error: String,
     },
-    
+
     // Context discovery
     ContextDiscovered {
         session_id: String,
@@ -321,7 +321,7 @@ CREATE TABLE workflow_events (
     operator_id TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    
+
     INDEX idx_session (session_id),
     INDEX idx_timestamp (timestamp),
     INDEX idx_event_type (event_type),
@@ -333,24 +333,24 @@ CREATE TABLE workflow_events (
 
 ```sql
 -- Timeline of a session
-SELECT * FROM workflow_events 
+SELECT * FROM workflow_events
 WHERE session_id = 'sess-abc123'
 ORDER BY timestamp ASC;
 
 -- State transitions only
-SELECT * FROM workflow_events 
-WHERE session_id = 'sess-abc123' 
+SELECT * FROM workflow_events
+WHERE session_id = 'sess-abc123'
 AND event_type = 'StateTransitioned'
 ORDER BY timestamp;
 
 -- What blocked this session?
-SELECT * FROM workflow_events 
-WHERE session_id = 'sess-abc123' 
+SELECT * FROM workflow_events
+WHERE session_id = 'sess-abc123'
 AND event_type = 'TransitionBlocked'
 LIMIT 1;
 
 -- All decisions by operator
-SELECT * FROM workflow_events 
+SELECT * FROM workflow_events
 WHERE operator_id = 'op-user123'
 AND event_type IN ('OperatorApproved', 'OperatorRejected', 'OperatorOverride')
 ORDER BY timestamp DESC;
@@ -388,7 +388,7 @@ impl WebhookExecutor {
             .headers(to_headers(&webhook.headers))
             .body(body)
             .timeout(Duration::from_secs(webhook.timeout_secs));
-        
+
         // Retry on 5xx errors
         for attempt in 0..webhook.retries {
             match request.send().await {
@@ -415,14 +415,14 @@ impl WebhookExecutor {
 impl WorkflowService {
     pub async fn emit_event(&self, event: WorkflowEvent) -> Result<()> {
         let session_id = extract_session_id(&event);
-        
+
         // 1. Store in database (source of truth, immutable)
         self.db.record_event(&event).await?;
-        
+
         // 2. Publish to message queue (for external subscribers)
         let topic = format!("workflow.{}", event_type(&event));
         self.queue.publish(&topic, &event).await?;
-        
+
         // 3. Call registered webhooks (external integrations)
         if let Some(webhooks) = self.webhook_registry.get(&session_id) {
             for webhook in webhooks {
@@ -435,7 +435,7 @@ impl WorkflowService {
                 }
             }
         }
-        
+
         Ok(())
     }
 }
@@ -464,7 +464,7 @@ impl WorkflowService {
     pub async fn open_task(&self, beads_task_id: &str) -> Result<WorkflowSession> {
         // 1. Fetch task from Beads (read-only reference)
         let beads_task = self.beads_client.get_task(beads_task_id).await?;
-        
+
         // 2. Check dependencies (Beads tells us what blocks this task)
         let blockers = self.beads_client.get_blockers(beads_task_id).await?;
         if !blockers.is_empty() {
@@ -473,7 +473,7 @@ impl WorkflowService {
                 blockers,
             });
         }
-        
+
         // 3. Create WorkflowSession (NOT copying task data, just storing reference)
         let session = WorkflowSession {
             id: generate_session_id(),
@@ -485,10 +485,10 @@ impl WorkflowService {
             last_activity: now(),
             ..Default::default()
         };
-        
+
         // 4. Store session in workflow database (NOT synced back to Beads)
         self.db.create_session(&session).await?;
-        
+
         // 5. Emit event
         self.emit_event(WorkflowEvent::SessionCreated {
             session_id: session.id.clone(),
@@ -496,10 +496,10 @@ impl WorkflowService {
             operator_id: session.operator_id.clone(),
             timestamp: now(),
         }).await?;
-        
+
         // 6. Start session (discover context, evaluate policies)
         self.start_session(&session).await?;
-        
+
         Ok(session)
     }
 }
@@ -513,29 +513,29 @@ pub async fn on_session_completed(
     session_id: &str,
 ) -> Result<()> {
     let session = self.db.get_session(session_id).await?;
-    
+
     // Query Beads: what tasks depend on this one?
     let dependents = self.beads_client
         .get_dependents(&session.task_id)
         .await?;
-    
+
     // Auto-create sessions for unblocked dependents (optional, may require approval)
     for dependent_task_id in dependents {
         let blockers = self.beads_client
             .get_blockers(&dependent_task_id)
             .await?;
-        
+
         if blockers.is_empty() {
             // This dependent is now unblocked
             tracing::info!("Dependent task unblocked: {}", dependent_task_id);
-            
+
             // Emit event (dashboard can auto-offer to open it)
             self.emit_event(WorkflowEvent::TaskUnblocked {
                 task_id: dependent_task_id.clone(),
             }).await?;
         }
     }
-    
+
     Ok(())
 }
 ```
@@ -549,19 +549,19 @@ pub async fn transition(
     trigger: TransitionTrigger,
 ) -> Result<Transition> {
     let session = self.db.get_session(session_id).await?;
-    
+
     // Re-check Beads: did dependencies change?
     let blockers = self.beads_client
         .get_blockers(&session.task_id)
         .await?;
-    
+
     if !blockers.is_empty() {
         return Err(WorkflowError::TaskBlockedByDependencies {
             task_id: session.task_id.clone(),
             blockers,
         });
     }
-    
+
     // Continue with normal transition (policy checks, FSM)
     // ...
     Ok(transition)
@@ -573,9 +573,9 @@ pub async fn transition(
 Workflow does **NOT** update Beads task status. Beads is the source of truth for task metadata:
 
 -   If operator closes session as "completed", Beads task status is updated via:
-    -   Manual operator action in OpenCode UI
-    -   Separate Beads API call (not from Workflow)
-    -   Not automatic from Workflow completion
+  -   Manual operator action in OpenCode UI
+  -   Separate Beads API call (not from Workflow)
+  -   Not automatic from Workflow completion
 
 This preserves the separation: Beads is task-oriented (planning), Workflow is execution-oriented (doing).
 
@@ -615,56 +615,56 @@ impl SessionManager {
             config,
             heartbeat_tracker: Arc::new(RwLock::new(HashMap::new())),
         };
-        
+
         // Spawn background cleanup task
         manager.spawn_cleanup_task();
-        
+
         manager
     }
-    
+
     /// Register a new session.
     pub async fn register_session(&self, session: &WorkflowSession) -> Result<()> {
         // Check limits
         let operator_sessions = self.db
             .count_sessions_by_operator(&session.operator_id)
             .await?;
-        
+
         if operator_sessions >= self.config.max_sessions_per_operator {
             return Err(WorkflowError::SessionLimitExceeded {
                 operator_id: session.operator_id.clone(),
                 limit: self.config.max_sessions_per_operator,
             });
         }
-        
+
         let total = self.db.count_all_sessions().await?;
         if total >= self.config.max_total_sessions {
             return Err(WorkflowError::GlobalSessionLimitExceeded {
                 limit: self.config.max_total_sessions,
             });
         }
-        
+
         // Record heartbeat
         self.heartbeat_tracker
             .write()
             .await
             .insert(session.id.clone(), Instant::now());
-        
+
         Ok(())
     }
-    
+
     /// Heartbeat from agent (refresh activity timestamp).
     pub async fn heartbeat(&self, session_id: &str) -> Result<()> {
         self.heartbeat_tracker
             .write()
             .await
             .insert(session_id.to_string(), Instant::now());
-        
+
         // Update last_activity in database
         self.db.touch_session(session_id).await?;
-        
+
         Ok(())
     }
-    
+
     /// Detect and recover orphaned sessions.
     pub async fn detect_orphaned(&self) -> Result<Vec<String>> {
         let mut orphaned = Vec::new();
@@ -673,13 +673,13 @@ impl SessionManager {
         let threshold = Duration::from_secs(
             self.config.heartbeat_interval_secs * self.config.orphan_threshold as u64
         );
-        
+
         for (session_id, last_beat) in tracker.iter() {
             if now.duration_since(*last_beat) > threshold {
                 orphaned.push(session_id.clone());
             }
         }
-        
+
         // For each orphaned session: emit event, pause agents, offer recovery
         for session_id in &orphaned {
             self.emit_event(WorkflowEvent::SessionOrphaned {
@@ -687,10 +687,10 @@ impl SessionManager {
                 last_activity: self.db.get_session_activity(session_id).await?,
             }).await?;
         }
-        
+
         Ok(orphaned)
     }
-    
+
     /// Allow operator to resume abandoned session.
     pub async fn resume_session(&self, session_id: &str) -> Result<()> {
         // Re-register heartbeat
@@ -698,24 +698,24 @@ impl SessionManager {
             .write()
             .await
             .insert(session_id.to_string(), Instant::now());
-        
+
         // Update session state
         self.db.touch_session(session_id).await?;
-        
+
         // Agents can resume
         Ok(())
     }
-    
+
     /// Background cleanup task (runs every 60 seconds).
     fn spawn_cleanup_task(&self) {
         let db = self.db.clone();
         let timeout = Duration::from_secs(self.config.session_timeout_secs);
-        
+
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(60));
             loop {
                 interval.tick().await;
-                
+
                 if let Ok(expired) = db.list_expired_sessions(timeout).await {
                     for session_id in expired {
                         let _ = db.cleanup_session(&session_id).await;
@@ -777,36 +777,36 @@ impl CompensationHandler for DefaultCompensationHandler {
         action: CompensationType,
     ) -> Result<CompensationResult> {
         let session = self.db.get_session(session_id).await?;
-        
+
         match action {
             CompensationType::AutoRevert { keep_branch } => {
                 self.emit_event(WorkflowEvent::CompensationTriggered {
                     session_id: session_id.to_string(),
                     action_type: "AutoRevert".to_string(),
                 }).await?;
-                
+
                 // 1. Reset to pre-session state
                 self.git_client
                     .reset(&session.branch, &session.initial_commit)
                     .await?;
-                
+
                 // 2. Close worktree
                 self.git_client
                     .close_worktree(&session.worktree_path)
                     .await?;
-                
+
                 // 3. Optional: delete branch
                 if !keep_branch {
                     self.git_client
                         .delete_branch(&session.branch)
                         .await?;
                 }
-                
+
                 self.emit_event(WorkflowEvent::CompensationCompleted {
                     session_id: session_id.to_string(),
                     details: "Reverted all changes, closed worktree".to_string(),
                 }).await?;
-                
+
                 Ok(CompensationResult {
                     success: true,
                     message: "Session reverted".to_string(),
@@ -818,16 +818,16 @@ impl CompensationHandler for DefaultCompensationHandler {
                     },
                 })
             }
-            
+
             CompensationType::ManualReview { deadline_secs } => {
                 self.emit_event(WorkflowEvent::CompensationTriggered {
                     session_id: session_id.to_string(),
                     action_type: "ManualReview".to_string(),
                 }).await?;
-                
+
                 // Pause agents, wait for operator decision
                 // Event will be shown in dashboard; operator approves or rejects
-                
+
                 Ok(CompensationResult {
                     success: true,
                     message: "Awaiting operator decision".to_string(),
@@ -840,7 +840,7 @@ impl CompensationHandler for DefaultCompensationHandler {
                     },
                 })
             }
-            
+
             CompensationType::ApproveAndMerge {
                 target_branch,
                 require_checks,
@@ -849,7 +849,7 @@ impl CompensationHandler for DefaultCompensationHandler {
                     session_id: session_id.to_string(),
                     action_type: "ApproveAndMerge".to_string(),
                 }).await?;
-                
+
                 // 1. Create PR if not exists
                 let pr = self.pr_client
                     .create_or_get_pr(
@@ -858,7 +858,7 @@ impl CompensationHandler for DefaultCompensationHandler {
                         &session.task_id,
                     )
                     .await?;
-                
+
                 // 2. Run checks (CI)
                 if require_checks {
                     let checks = self.pr_client.wait_for_checks(&pr.id, 30 * 60).await?;
@@ -869,20 +869,20 @@ impl CompensationHandler for DefaultCompensationHandler {
                         });
                     }
                 }
-                
+
                 // 3. Merge PR
                 self.pr_client.merge_pr(&pr.id).await?;
-                
+
                 // 4. Close worktree
                 self.git_client
                     .close_worktree(&session.worktree_path)
                     .await?;
-                
+
                 self.emit_event(WorkflowEvent::CompensationCompleted {
                     session_id: session_id.to_string(),
                     details: format!("Merged PR #{} into {}", pr.id, target_branch),
                 }).await?;
-                
+
                 Ok(CompensationResult {
                     success: true,
                     message: "Changes merged successfully".to_string(),
@@ -911,18 +911,18 @@ impl SideEffectsManager {
     ) -> Result<()> {
         // 1. Close worktree
         git_client.close_worktree(&session.worktree_path).await?;
-        
+
         // 2. Delete temporary files
         if let Some(temp_dir) = &session.temp_dir {
             tokio::fs::remove_dir_all(temp_dir).await?;
         }
-        
+
         // 3. Notify team (if integration configured)
         notifier.send_message(
             "workflow_completed",
             &format!("Session {} completed for task {}", session.id, session.task_id),
         ).await?;
-        
+
         Ok(())
     }
 }
@@ -1552,13 +1552,17 @@ impl SessionManager {
 ### 11. Configuration
 
 ```toml
+
 # config/default.toml — [orchestrator] section
 
 [orchestrator]
+
 # Maximum concurrent workflow sessions.
 max_sessions = 10
+
 # Session timeout in seconds (auto-cleanup after inactivity).
 session_timeout_seconds = 3600
+
 # Event channel capacity.
 event_channel_capacity = 256
 ```
@@ -1639,15 +1643,15 @@ fn default_channel_capacity() -> usize { 256 }
 
 ### Code Changes
 
-1.  Add `workflow_service.rs` to `mcb-application/src/services/`
-2.  Add `session_manager.rs` to `mcb-application/src/services/`
-3.  Add `workflow.rs` handler to `mcb-server/src/handlers/`
-4.  Add `workflow_catalog.rs` to `mcb-infrastructure/src/di/`
-5.  Add handle types (`WorkflowEngineHandle`, `ContextScoutHandle`, `PolicyGuardHandle`)
-6.  Add `OrchestratorConfig` to `mcb-infrastructure/src/config/`
-7.  Extend `AppContext` with workflow fields
-8.  Register `workflow` tool in MCP server tool list
-9.  Add `[orchestrator]` section to `config/default.toml`
+1. Add `workflow_service.rs` to `mcb-application/src/services/`
+2. Add `session_manager.rs` to `mcb-application/src/services/`
+3. Add `workflow.rs` handler to `mcb-server/src/handlers/`
+4. Add `workflow_catalog.rs` to `mcb-infrastructure/src/di/`
+5. Add handle types (`WorkflowEngineHandle`, `ContextScoutHandle`, `PolicyGuardHandle`)
+6. Add `OrchestratorConfig` to `mcb-infrastructure/src/config/`
+7. Extend `AppContext` with workflow fields
+8. Register `workflow` tool in MCP server tool list
+9. Add `[orchestrator]` section to `config/default.toml`
 
 ### Migration
 

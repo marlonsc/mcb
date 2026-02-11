@@ -2,7 +2,7 @@
 adr: 15
 title: Workspace Structure for Shared Libraries
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [13, 14]
 supersedes: []
@@ -126,15 +126,15 @@ pub trait MetricsCalculator: Send + Sync {
 
 ### v0.3.0 (Future - Full Implementation)
 
-1.  Create `libs/tree-sitter-analysis/`
-2.  Create `libs/code-metrics/`
-3.  Create `libs/analysis-core/`
-4.  Extract existing chunking code to library
-5.  Port PMAT algorithms
+1. Create `libs/tree-sitter-analysis/`
+2. Create `libs/code-metrics/`
+3. Create `libs/analysis-core/`
+4. Extract existing chunking code to library
+5. Port PMAT algorithms
 
 ### v0.5.0 (Future)
 
-1.  Consider extracting git utilities to `libs/git-analysis/`
+1. Consider extracting git utilities to `libs/git-analysis/`
 
 ## Related ADRs
 

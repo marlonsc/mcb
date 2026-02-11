@@ -2,7 +2,7 @@
 adr: 36
 title: Enforcement Layer — Policies and Guards
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-06
 related: [23, 25, 29]
 supersedes: []
@@ -376,10 +376,10 @@ Policies execute at **five distinct points** in the workflow lifecycle. Understa
 // Compile-time policies run in the build pipeline
 // cargo build -> cargo check -> rustfmt check -> proceed or fail
 if !code_compiles {
-    return Err(PolicyViolation { 
-        policy: "syntax_check", 
-        message: "Code does not compile", 
-        severity: ERROR 
+    return Err(PolicyViolation {
+        policy: "syntax_check",
+        message: "Code does not compile",
+        severity: ERROR
     });
 }
 ```
@@ -417,6 +417,7 @@ if !code_compiles {
 **Example**:
 
 ```bash
+
 # Git pre-commit hook pseudo-code
 git diff --staged | check_formatting()  # WARN if rustfmt violations
 git diff --staged | check_whitespace()  # ERROR if trailing spaces
@@ -435,10 +436,10 @@ validate_commit_message()  # ERROR if not conventional commit
 **Context Available**:
 
 -   Full `ProjectContext` (from ADR-035) including:
-    -   Git state (branch, worktree status, commits)
-    -   Issue tracker state (open/in-progress/closed counts)
-    -   Task WIP counts
-    -   Environment details (project root, config)
+  -   Git state (branch, worktree status, commits)
+  -   Issue tracker state (open/in-progress/closed counts)
+  -   Task WIP counts
+  -   Environment details (project root, config)
 -   `TransitionTrigger` (which command triggered this)
 
 **Policies Applicable**:
@@ -464,19 +465,19 @@ validate_commit_message()  # ERROR if not conventional commit
 impl WorkflowService {
     pub async fn start_verification(&self, claim: &str) -> Result<(), WorkflowError> {
         let context = self.context_scout.gather().await?;
-        
+
         // BEFORE state transition, evaluate policies
         let policy_result = self.policy_guard.evaluate(
             &TransitionTrigger::StartVerification { claim },
             &context
         ).await?;
-        
+
         if !policy_result.allowed {
             return Err(WorkflowError::PolicyViolation {
                 violations: policy_result.violations,
             });
         }
-        
+
         // Now safe to proceed with FSM transition
         self.fsm.transition(State::Verifying).await?;
         Ok(())
@@ -519,6 +520,7 @@ impl WorkflowService {
 **Example**:
 
 ```yaml
+
 # .github/workflows/ci.yml
 name: CI
 
@@ -526,32 +528,32 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      -   main
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      
+      -   uses: actions/checkout@v4
+      -   uses: dtolnay/rust-toolchain@stable
+
       # Policy: Require Tests
-      - name: Run tests
+      -   name: Run tests
         run: cargo test --release
         # Blocks merge if any test fails (ERROR)
-      
+
       # Policy: Code Coverage
-      - name: Coverage check
+      -   name: Coverage check
         run: cargo tarpaulin --out Xml --fail-under 70
         # Blocks merge if coverage < 70% (ERROR)
-      
+
       # Policy: Security Scan
-      - name: Audit dependencies
+      -   name: Audit dependencies
         run: cargo audit --deny warnings
         # Blocks merge on critical CVE (ERROR)
-      
+
       # Policy: License Compliance
-      - name: Check licenses
+      -   name: Check licenses
         run: cargo deny check
         # Blocks merge on unapproved license (ERROR)
 ```
@@ -588,28 +590,29 @@ jobs:
 **Example**:
 
 ```yaml
+
 # .github/workflows/post-merge.yml
 name: Post-Merge Verification
 
 on:
   push:
     branches:
-      - main
+      -   main
 
 jobs:
   smoke-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      
+      -   uses: actions/checkout@v4
+      -   uses: dtolnay/rust-toolchain@stable
+
       # Policy: Smoke Tests on Main
-      - name: Run smoke tests
+      -   name: Run smoke tests
         run: cargo test --release --test '*'
         # Failure: ERROR (requires hotfix to main)
-      
+
       # Policy: Documentation Updated
-      - name: Verify docs updated
+      -   name: Verify docs updated
         run: |
           if git diff HEAD~1 --name-only | grep -q "\.rs$"; then
             if ! git diff HEAD~1 --name-only | grep -qE "(CHANGELOG|ARCHITECTURE|README)"; then
@@ -617,9 +620,9 @@ jobs:
             fi
           fi
         # Violation: WARN (advisory)
-      
+
       # Policy: Version Bump
-      - name: Check version increment
+      -   name: Check version increment
         run: |
           PREV_VERSION=$(git show HEAD~1:Cargo.toml | grep "^version" | head -1)
           CURR_VERSION=$(grep "^version" Cargo.toml | head -1)
@@ -672,10 +675,12 @@ if context.tracker.in_progress.len() >= config.max_in_progress {
 **Remediation**:
 
 ```bash
+
 # To resolve WIP limit violation:
 bd list --status=in_progress  # See what's in-progress
 bd close <id>                  # Close completed tasks
 bd update <id> --status=completed  # Mark as complete
+
 # Then retry the transition
 ```
 
@@ -704,7 +709,7 @@ allow_untracked = true  # Ignore untracked files (only check staged/unstaged)
 
 ```rust
 let dirty_count = git.staged_files + git.unstaged_files + git.conflicted_files
-    + if config.allow_untracked { 0 } else { git.untracked_files };
+    -   if config.allow_untracked { 0 } else { git.untracked_files };
 
 if dirty_count > 0 {
     let details = format!("{} staged, {} unstaged, {} conflicted",
@@ -721,12 +726,15 @@ if dirty_count > 0 {
 **Remediation**:
 
 ```bash
+
 # To resolve dirty worktree:
 git status                    # See what's dirty
 git add .                     # Stage changes
 git commit -m "work in progress"  # Commit with message
+
 # Or stash if unsure:
 git stash
+
 # Then retry the transition
 ```
 
@@ -748,6 +756,7 @@ git stash
 [policies.branch_naming]
 enabled = true
 severity = "error"
+
 # Regex pattern: feature/*, fix/*, release/*, docs/*, etc.
 pattern = "^(feature|fix|release|docs|chore|test|refactor)/[a-z0-9-]+$"
 expected_format = "feature/foo-bar, fix/bug-123, release/1.2.3"
@@ -770,7 +779,9 @@ if !regex.is_match(&context.git.branch) {
 **Remediation**:
 
 ```bash
+
 # To resolve branch naming violation:
+
 # Option 1: Create new branch with correct name
 git checkout -b feature/correct-name
 git cherry-pick <commit-hash>  # Copy work
@@ -830,12 +841,15 @@ if !output.status.success() {
 **Remediation**:
 
 ```bash
+
 # To resolve test failure:
 cargo test --release          # Run tests locally to see failures
+
 # Fix code / tests as needed
 cargo test --release          # Verify tests pass
 git add .
 git commit -m "fix: tests passing"
+
 # Then retry the transition
 ```
 
@@ -886,18 +900,27 @@ if code_changed && !changelog_changed {
 **Remediation**:
 
 ```bash
+
 # To resolve changelog warning:
+
 # Edit CHANGELOG.md and add entry at top
 vim CHANGELOG.md
+
 # Follow "Unreleased" section format:
+
 # ## [Unreleased]
+
 # ### Added
+
 # - New feature description
+
 # ### Fixed
+
 # - Bug fix description
 
 git add CHANGELOG.md
 git commit --amend  # or new commit if allowed
+
 # Violation is advisory (WARN), so doesn't block merge
 ```
 
@@ -946,11 +969,16 @@ if !regex.is_match(&commit_message) {
 **Remediation**:
 
 ```bash
+
 # To resolve commit message format violation:
 git commit --amend -m "feat(guards): add WIP limit policy"
+
 # Follow format: type(scope): description
+
 # Types: feat, fix, docs, style, refactor, test, chore, perf
+
 # Scope: optional, brief module name (guards, core, config, etc.)
+
 # Description: imperative mood, lowercase first letter
 ```
 
@@ -1010,20 +1038,25 @@ if pr.reviews.iter().any(|r| r.state == "changes_requested") {
 **Remediation**:
 
 ```bash
+
 # To resolve code review gate violation:
+
 # 1. Ensure PR is created and pushed
 git push -u origin feature/my-feature
 
 # 2. Request review from a colleague on GitHub
+
 # (Navigate to PR, request reviewer)
 
 # 3. Address feedback from review
+
 # Make requested changes:
 git add .
 git commit -m "fix: address review feedback"
 git push
 
 # 4. Reviewer approves (GitHub UI)
+
 # Then merge is allowed
 ```
 
@@ -1076,9 +1109,12 @@ if coverage_pct < config.threshold {
 **Remediation**:
 
 ```bash
+
 # To resolve code coverage violation:
 cargo tarpaulin --out Html  # Generate coverage report
+
 # Open tarpaulin-report.html to see uncovered lines
+
 # Add tests for uncovered code:
 #[cfg(test)]
 mod tests {
@@ -1091,6 +1127,7 @@ mod tests {
 }
 cargo test                  # Verify tests pass
 cargo tarpaulin --out Xml   # Re-run coverage
+
 # Repeat until threshold reached
 ```
 
@@ -1155,18 +1192,22 @@ if !deny_output.status.success() {
 **Remediation**:
 
 ```bash
+
 # To resolve security scan violation:
 cargo audit              # See vulnerabilities
 cargo update             # Update to patched versions
+
 # Or if no patch available:
 cargo audit --deny warnings --ignore <advisory-id>
 
 cargo deny check          # See license/policy issues
+
 # Edit deny.toml to allow approved licenses
 vim Cargo.deny
 
 cargo audit              # Verify resolved
 cargo deny check
+
 # Then retry merge
 ```
 
@@ -1222,19 +1263,28 @@ if !Regex::new(r"^\d+\.\d+\.\d+$")?.is_match(&current_version) {
 **Remediation**:
 
 ```bash
+
 # To resolve version bump warning:
+
 # In Cargo.toml, update version following semantic versioning:
+
 # - Patch (0.1.1 -> 0.1.2) for bug fixes
+
 # - Minor (0.1.0 -> 0.2.0) for new features
+
 # - Major (1.0.0 -> 2.0.0) for breaking changes
 
 vim Cargo.toml
+
 # Change: version = "0.1.0"
+
 #    To:  version = "0.2.0"
 
 git add Cargo.toml
 git commit -m "chore: bump version to 0.2.0"
+
 # WARN is advisory, so doesn't block merge
+
 # But fix it for consistent release management
 ```
 
@@ -1294,7 +1344,9 @@ if code_changed && !docs_changed {
 **Remediation**:
 
 ```bash
+
 # To resolve documentation update warning:
+
 # 1. Create follow-up PR or issue for documentation
 bd create --title="Docs: Update README for feature X" --type=task --priority=2
 
@@ -1306,6 +1358,7 @@ git commit -m "docs: update for new feature X"
 git push
 
 # WARN is advisory, so merge can proceed
+
 # But create follow-up issue if docs not updated immediately
 ```
 
@@ -1347,17 +1400,17 @@ This section defines how policy violations are evaluated, combined, and enforced
 ```rust
 pub fn evaluate_policies(policies: Vec<PolicyResult>) -> PolicyResult {
     let mut combined = PolicyResult::pass();
-    
+
     for policy_result in policies {
         // If ANY error found, combined becomes denied
         if !policy_result.allowed && policy_result.has_errors() {
             combined.allowed = false;
         }
-        
+
         // Merge all violations (for reporting)
         combined.violations.extend(policy_result.violations);
     }
-    
+
     combined
 }
 
@@ -1372,7 +1425,7 @@ if !combined.allowed {
 
 // If only WARNINGs, proceed but log them
 if combined.has_warnings() {
-    warn!("Policy warnings (non-blocking): {}", 
+    warn!("Policy warnings (non-blocking): {}",
         combined.format_violations());
 }
 
@@ -1408,7 +1461,7 @@ let result = policy_guard.evaluate(trigger, context).await?;
 if !result.allowed {
     // Option 1: Fix the violation (recommended)
     // ... fix code, commit, try again ...
-    
+
     // Option 2: Override (operator must provide reason)
     let override_reason = "Emergency: hotfix for production issue";
     let result = policy_guard.evaluate_with_override(
@@ -1416,7 +1469,7 @@ if !result.allowed {
         context,
         Some(override_reason),
     ).await?;
-    
+
     // Override logged to audit trail
     audit_log::log_policy_override(
         operator,
@@ -1452,17 +1505,17 @@ pub struct AllPolicies {
 impl AllPolicies {
     pub async fn check(&self) -> PolicyResult {
         let mut result = PolicyResult::pass();
-        
+
         for policy in &self.policies {
             let sub_result = policy.check(trigger, context).await?;
             result.merge(sub_result);
-            
+
             // Short-circuit on ERROR if fail_fast enabled
             if self.fail_fast && result.has_errors() {
                 return Ok(result);
             }
         }
-        
+
         Ok(result)
     }
 }
@@ -1482,18 +1535,18 @@ pub struct AnyPolicy {
 impl AnyPolicy {
     pub async fn check(&self) -> PolicyResult {
         let mut all_violations = Vec::new();
-        
+
         for policy in &self.policies {
             let sub_result = policy.check(trigger, context).await?;
-            
+
             // If any policy passes, we're done
             if sub_result.allowed && !sub_result.has_errors() {
                 return Ok(PolicyResult::pass());
             }
-            
+
             all_violations.extend(sub_result.violations);
         }
-        
+
         // None passed
         Ok(PolicyResult {
             allowed: false,
@@ -1572,9 +1625,11 @@ Policy B requires: Branch must start with "release/"
 -   If unavoidable: operator chooses which policy to override.
 
 ```toml
+
 # mcb.toml - ensure non-conflicting policies
 [policies.branch_naming]
 pattern = "^(feature|fix|release|docs)/[a-z0-9-]+$"
+
 # This pattern allows all three prefixes, no conflict
 ```
 
@@ -1622,14 +1677,14 @@ pub struct ProjectContext {
         untracked_files: usize,
         conflicted_files: usize,
     },
-    
+
     // Issue tracker state
     pub tracker: TrackerContext {
         open_count: usize,
         in_progress: Vec<Issue>,
         closed_count: usize,
     },
-    
+
     // Project metadata
     pub project_root: PathBuf,
     pub config: ProjectConfig,
@@ -1652,11 +1707,14 @@ This enables **context-aware policies** that adapt to project state, not just st
 ### 8. Configuration (Figment)
 
 ```toml
+
 # config/default.toml — [policies] section (all 11 policies)
 
 [policies]
+
 # Global enable/disable for all policy evaluation.
 enabled = true
+
 # fail_fast = true stops on first error. false collects all violations.
 fail_fast = false
 
@@ -2067,12 +2125,12 @@ fn configurable_guard_factory(
 
 ### Code Changes
 
-1.  Add `policy.rs` entities to `mcb-domain/src/entities/`
-2.  Add `policy_guard.rs` and `policy.rs` ports to `mcb-domain/src/ports/providers/`
-3.  Add `GUARD_PROVIDERS` slice to `mcb-application/src/registry/`
-4.  Add `guard/` module to `mcb-providers/src/` with provider, composition, and **11 built-in policies**
-5.  Add `PoliciesConfig` and 11 settings structs to `mcb-infrastructure/src/config/`
-6.  Add `[policies]` section to `config/default.toml` with configurations for all 11 policies
+1. Add `policy.rs` entities to `mcb-domain/src/entities/`
+2. Add `policy_guard.rs` and `policy.rs` ports to `mcb-domain/src/ports/providers/`
+3. Add `GUARD_PROVIDERS` slice to `mcb-application/src/registry/`
+4. Add `guard/` module to `mcb-providers/src/` with provider, composition, and **11 built-in policies**
+5. Add `PoliciesConfig` and 11 settings structs to `mcb-infrastructure/src/config/`
+6. Add `[policies]` section to `config/default.toml` with configurations for all 11 policies
 
 ### Testing
 

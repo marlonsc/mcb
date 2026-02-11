@@ -18,14 +18,14 @@ The Memory Context Browser uses Shaku as its dependency injection framework. Dur
 
 Different service categories have different requirements:
 
-1.  **Infrastructure services** (cache, auth, events, metrics):
+1. **Infrastructure services** (cache, auth, events, metrics):
 
 -   Stateless or simple state
 -   Can be instantiated at compile-time with default values
 -   Don't require async initialization
 -   Have predictable construction parameters
 
-1.  **Application services** (indexing, search, context):
+1. **Application services** (indexing, search, context):
 
 -   Require runtime configuration (API keys, endpoints, model names)
 -   Need async initialization (connecting to vector stores, loading models)
@@ -112,10 +112,10 @@ let services = DomainServicesFactory::create_services(
 
 ### Why This Works
 
-1.  **Testing**: Tests use Shaku modules directly, getting null providers automatically
-2.  **Production**: Server initialization creates real providers from config
-3.  **Flexibility**: New providers can be added without changing DI modules
-4.  **Clear separation**: Infrastructure (Shaku) vs Application (runtime factories)
+1. **Testing**: Tests use Shaku modules directly, getting null providers automatically
+2. **Production**: Server initialization creates real providers from config
+3. **Flexibility**: New providers can be added without changing DI modules
+4. **Clear separation**: Infrastructure (Shaku) vs Application (runtime factories)
 
 ## Consequences
 
