@@ -13,6 +13,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 DRY_RUN=false
 VERBOSE=false
+PROPAGATE=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -23,6 +24,10 @@ while [[ $# -gt 0 ]]; do
 		;;
 	--verbose | -v)
 		VERBOSE=true
+		shift
+		;;
+	--propagate)
+		PROPAGATE=true
 		shift
 		;;
 	*) shift ;;
@@ -258,11 +263,20 @@ if $DRY_RUN; then
 	echo ""
 fi
 
-update_version_badges
-update_capabilities
-update_adr_counts
-update_version_headers
 generate_metrics_file
 
+if $PROPAGATE; then
+	echo ""
+	echo "📢 Propagating metrics into documentation files..."
+	update_version_badges
+	update_capabilities
+	update_adr_counts
+	update_version_headers
+fi
+
 echo ""
-echo "✅ Metrics injection complete"
+echo "✅ Metrics injection complete (centralized in docs/generated/METRICS.md)"
+if ! $PROPAGATE; then
+	echo "ℹ️  To also propagate counts into README/CHANGELOG/user-guide, run:"
+	echo "   ./scripts/docs/inject-metrics.sh --propagate"
+fi

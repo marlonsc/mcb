@@ -162,12 +162,7 @@ pub use tests_org::{TestValidator, TestViolation};
 use thiserror::Error;
 // Re-export centralized thresholds
 pub use declarative_validator::DeclarativeValidator;
-pub use thresholds::{
-    MAX_BUILDER_FIELDS, MAX_COGNITIVE_COMPLEXITY, MAX_CYCLOMATIC_COMPLEXITY,
-    MAX_DI_CONTAINER_FIELDS, MAX_FILE_LINES, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS,
-    MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS, MAX_STRUCT_LINES,
-    MAX_TRAIT_METHODS, ValidationThresholds, thresholds,
-};
+pub use thresholds::{ValidationThresholds, thresholds};
 pub use validator_trait::{Validator, ValidatorRegistry};
 pub use violation_trait::{Violation, ViolationCategory};
 pub use visibility::{VisibilityValidator, VisibilityViolation};
