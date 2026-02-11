@@ -153,13 +153,14 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
-    async fn get_org(&self, id: &str) -> Result<Option<Organization>> {
+    async fn get_org(&self, id: &str) -> Result<Organization> {
         self.query_one(
             "SELECT * FROM organizations WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_org,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Organization {id}")))
     }
 
     async fn list_orgs(&self) -> Result<Vec<Organization>> {
@@ -209,16 +210,17 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
-    async fn get_user(&self, id: &str) -> Result<Option<User>> {
+    async fn get_user(&self, id: &str) -> Result<User> {
         self.query_one(
             "SELECT * FROM users WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_user,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("User {id}")))
     }
 
-    async fn get_user_by_email(&self, org_id: &str, email: &str) -> Result<Option<User>> {
+    async fn get_user_by_email(&self, org_id: &str, email: &str) -> Result<User> {
         self.query_one(
             "SELECT * FROM users WHERE org_id = ? AND email = ?",
             &[
@@ -227,7 +229,8 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             ],
             row_to_user,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("User {email}")))
     }
 
     async fn list_users(&self, org_id: &str) -> Result<Vec<User>> {
@@ -279,13 +282,14 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
-    async fn get_team(&self, id: &str) -> Result<Option<Team>> {
+    async fn get_team(&self, id: &str) -> Result<Team> {
         self.query_one(
             "SELECT * FROM teams WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_team,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Team {id}")))
     }
 
     async fn list_teams(&self, org_id: &str) -> Result<Vec<Team>> {
@@ -360,13 +364,14 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
-    async fn get_api_key(&self, id: &str) -> Result<Option<ApiKey>> {
+    async fn get_api_key(&self, id: &str) -> Result<ApiKey> {
         self.query_one(
             "SELECT * FROM api_keys WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_api_key,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("ApiKey {id}")))
     }
 
     async fn list_api_keys(&self, org_id: &str) -> Result<Vec<ApiKey>> {

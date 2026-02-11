@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::PlanEntityRepository;
 use mcb_domain::ports::services::PlanEntityServiceInterface;
 
@@ -27,10 +27,7 @@ impl PlanEntityServiceInterface for PlanEntityServiceImpl {
     }
 
     async fn get_plan(&self, org_id: &str, id: &str) -> Result<Plan> {
-        self.repository
-            .get_plan(org_id, id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Plan {id}")))
+        self.repository.get_plan(org_id, id).await
     }
 
     async fn list_plans(&self, org_id: &str, project_id: &str) -> Result<Vec<Plan>> {
@@ -50,10 +47,7 @@ impl PlanEntityServiceInterface for PlanEntityServiceImpl {
     }
 
     async fn get_plan_version(&self, id: &str) -> Result<PlanVersion> {
-        self.repository
-            .get_plan_version(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("PlanVersion {id}")))
+        self.repository.get_plan_version(id).await
     }
 
     async fn list_plan_versions_by_plan(&self, plan_id: &str) -> Result<Vec<PlanVersion>> {
@@ -65,10 +59,7 @@ impl PlanEntityServiceInterface for PlanEntityServiceImpl {
     }
 
     async fn get_plan_review(&self, id: &str) -> Result<PlanReview> {
-        self.repository
-            .get_plan_review(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("PlanReview {id}")))
+        self.repository.get_plan_review(id).await
     }
 
     async fn list_plan_reviews_by_version(&self, plan_version_id: &str) -> Result<Vec<PlanReview>> {

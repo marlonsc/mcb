@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::repository::{Branch, Repository};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::VcsEntityRepository;
 use mcb_domain::ports::services::VcsEntityServiceInterface;
 
@@ -28,10 +28,7 @@ impl VcsEntityServiceInterface for VcsEntityServiceImpl {
     }
 
     async fn get_repository(&self, org_id: &str, id: &str) -> Result<Repository> {
-        self.repository
-            .get_repository(org_id, id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Repository {id}")))
+        self.repository.get_repository(org_id, id).await
     }
 
     async fn list_repositories(&self, org_id: &str, project_id: &str) -> Result<Vec<Repository>> {
@@ -53,10 +50,7 @@ impl VcsEntityServiceInterface for VcsEntityServiceImpl {
     }
 
     async fn get_branch(&self, id: &str) -> Result<Branch> {
-        self.repository
-            .get_branch(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Branch {id}")))
+        self.repository.get_branch(id).await
     }
 
     async fn list_branches(&self, repository_id: &str) -> Result<Vec<Branch>> {
@@ -78,10 +72,7 @@ impl VcsEntityServiceInterface for VcsEntityServiceImpl {
     }
 
     async fn get_worktree(&self, id: &str) -> Result<Worktree> {
-        self.repository
-            .get_worktree(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Worktree {id}")))
+        self.repository.get_worktree(id).await
     }
 
     async fn list_worktrees(&self, repository_id: &str) -> Result<Vec<Worktree>> {
@@ -103,10 +94,7 @@ impl VcsEntityServiceInterface for VcsEntityServiceImpl {
     }
 
     async fn get_assignment(&self, id: &str) -> Result<AgentWorktreeAssignment> {
-        self.repository
-            .get_assignment(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Assignment {id}")))
+        self.repository.get_assignment(id).await
     }
 
     async fn list_assignments_by_worktree(

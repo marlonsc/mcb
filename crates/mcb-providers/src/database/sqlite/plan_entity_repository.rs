@@ -117,7 +117,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             .await
     }
 
-    async fn get_plan(&self, org_id: &str, id: &str) -> Result<Option<Plan>> {
+    async fn get_plan(&self, org_id: &str, id: &str) -> Result<Plan> {
         self.query_one(
             "SELECT * FROM plans WHERE org_id = ? AND id = ?",
             &[
@@ -126,7 +126,8 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             ],
             row_to_plan,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Plan {id}")))
     }
 
     async fn list_plans(&self, org_id: &str, project_id: &str) -> Result<Vec<Plan>> {
@@ -186,13 +187,14 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             .await
     }
 
-    async fn get_plan_version(&self, id: &str) -> Result<Option<PlanVersion>> {
+    async fn get_plan_version(&self, id: &str) -> Result<PlanVersion> {
         self.query_one(
             "SELECT * FROM plan_versions WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_plan_version,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("PlanVersion {id}")))
     }
 
     async fn list_plan_versions_by_plan(&self, plan_id: &str) -> Result<Vec<PlanVersion>> {
@@ -220,13 +222,14 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             .await
     }
 
-    async fn get_plan_review(&self, id: &str) -> Result<Option<PlanReview>> {
+    async fn get_plan_review(&self, id: &str) -> Result<PlanReview> {
         self.query_one(
             "SELECT * FROM plan_reviews WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_plan_review,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("PlanReview {id}")))
     }
 
     async fn list_plan_reviews_by_version(&self, plan_version_id: &str) -> Result<Vec<PlanReview>> {

@@ -164,7 +164,7 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             .await
     }
 
-    async fn get_issue(&self, org_id: &str, id: &str) -> Result<Option<ProjectIssue>> {
+    async fn get_issue(&self, org_id: &str, id: &str) -> Result<ProjectIssue> {
         self.query_one(
             "SELECT * FROM project_issues WHERE org_id = ? AND id = ?",
             &[
@@ -173,7 +173,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             ],
             row_to_issue,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Issue {id}")))
     }
 
     async fn list_issues(&self, org_id: &str, project_id: &str) -> Result<Vec<ProjectIssue>> {
@@ -247,13 +248,14 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             .await
     }
 
-    async fn get_comment(&self, id: &str) -> Result<Option<IssueComment>> {
+    async fn get_comment(&self, id: &str) -> Result<IssueComment> {
         self.query_one(
             "SELECT * FROM issue_comments WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_comment,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("IssueComment {id}")))
     }
 
     async fn list_comments_by_issue(&self, issue_id: &str) -> Result<Vec<IssueComment>> {
@@ -290,13 +292,14 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             .await
     }
 
-    async fn get_label(&self, id: &str) -> Result<Option<IssueLabel>> {
+    async fn get_label(&self, id: &str) -> Result<IssueLabel> {
         self.query_one(
             "SELECT * FROM issue_labels WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_label,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("IssueLabel {id}")))
     }
 
     async fn list_labels(&self, org_id: &str, project_id: &str) -> Result<Vec<IssueLabel>> {

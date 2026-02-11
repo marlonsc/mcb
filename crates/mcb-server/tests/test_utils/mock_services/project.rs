@@ -67,22 +67,22 @@ impl ProjectRepository for MockProjectRepository {
         &self,
         _org_id: &str,
         _id: &str,
-    ) -> mcb_domain::error::Result<Option<mcb_domain::entities::project::Project>> {
-        Ok(None)
+    ) -> mcb_domain::error::Result<mcb_domain::entities::project::Project> {
+        Err(mcb_domain::error::Error::not_found("Project not found"))
     }
     async fn get_by_name(
         &self,
         _org_id: &str,
         _name: &str,
-    ) -> mcb_domain::error::Result<Option<mcb_domain::entities::project::Project>> {
-        Ok(None)
+    ) -> mcb_domain::error::Result<mcb_domain::entities::project::Project> {
+        Err(mcb_domain::error::Error::not_found("Project not found"))
     }
     async fn get_by_path(
         &self,
         _org_id: &str,
         _path: &str,
-    ) -> mcb_domain::error::Result<Option<mcb_domain::entities::project::Project>> {
-        Ok(None)
+    ) -> mcb_domain::error::Result<mcb_domain::entities::project::Project> {
+        Err(mcb_domain::error::Error::not_found("Project not found"))
     }
     async fn list(
         &self,

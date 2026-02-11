@@ -5,7 +5,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::IssueEntityRepository;
 use mcb_domain::ports::services::IssueEntityServiceInterface;
 
@@ -28,10 +28,7 @@ impl IssueEntityServiceInterface for IssueEntityServiceImpl {
     }
 
     async fn get_issue(&self, org_id: &str, id: &str) -> Result<ProjectIssue> {
-        self.repository
-            .get_issue(org_id, id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Issue {id}")))
+        self.repository.get_issue(org_id, id).await
     }
 
     async fn list_issues(&self, org_id: &str, project_id: &str) -> Result<Vec<ProjectIssue>> {
@@ -51,10 +48,7 @@ impl IssueEntityServiceInterface for IssueEntityServiceImpl {
     }
 
     async fn get_comment(&self, id: &str) -> Result<IssueComment> {
-        self.repository
-            .get_comment(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("IssueComment {id}")))
+        self.repository.get_comment(id).await
     }
 
     async fn list_comments_by_issue(&self, issue_id: &str) -> Result<Vec<IssueComment>> {
@@ -70,10 +64,7 @@ impl IssueEntityServiceInterface for IssueEntityServiceImpl {
     }
 
     async fn get_label(&self, id: &str) -> Result<IssueLabel> {
-        self.repository
-            .get_label(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("IssueLabel {id}")))
+        self.repository.get_label(id).await
     }
 
     async fn list_labels(&self, org_id: &str, project_id: &str) -> Result<Vec<IssueLabel>> {

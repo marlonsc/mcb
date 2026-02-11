@@ -58,7 +58,7 @@ impl ProjectRepository for SqliteProjectRepository {
             .await
     }
 
-    async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Option<Project>> {
+    async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project> {
         self.query_one_and_convert(
             "SELECT * FROM projects WHERE org_id = ? AND id = ? LIMIT 1",
             &[
@@ -68,10 +68,11 @@ impl ProjectRepository for SqliteProjectRepository {
             row_convert::row_to_project,
             "project",
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Project {id}")))
     }
 
-    async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Option<Project>> {
+    async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project> {
         self.query_one_and_convert(
             "SELECT * FROM projects WHERE org_id = ? AND name = ? LIMIT 1",
             &[
@@ -81,10 +82,11 @@ impl ProjectRepository for SqliteProjectRepository {
             row_convert::row_to_project,
             "project",
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Project {name}")))
     }
 
-    async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Option<Project>> {
+    async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Project> {
         self.query_one_and_convert(
             "SELECT * FROM projects WHERE org_id = ? AND path = ? LIMIT 1",
             &[
@@ -94,7 +96,8 @@ impl ProjectRepository for SqliteProjectRepository {
             row_convert::row_to_project,
             "project",
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Project {path}")))
     }
 
     async fn list(&self, org_id: &str) -> Result<Vec<Project>> {

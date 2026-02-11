@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::Project;
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::project::ProjectServiceInterface;
 
@@ -23,10 +23,7 @@ impl ProjectServiceImpl {
 #[async_trait]
 impl ProjectServiceInterface for ProjectServiceImpl {
     async fn get_project(&self, org_id: &str, id: &str) -> Result<Project> {
-        self.repository
-            .get_by_id(org_id, id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Project {}", id)))
+        self.repository.get_by_id(org_id, id).await
     }
 
     async fn list_projects(&self, org_id: &str) -> Result<Vec<Project>> {

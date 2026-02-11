@@ -70,20 +70,17 @@ async fn test_create_project() {
         .get_by_id(DEFAULT_ORG_ID, "proj-1")
         .await
         .expect("Failed to get project");
-    assert!(retrieved.is_some());
-    assert_eq!(retrieved.unwrap().name, "Test Project");
+    assert_eq!(retrieved.name, "Test Project");
 }
 
 #[tokio::test]
 async fn test_get_project_by_id() {
     let (repo, project, _temp) = setup_with_project("proj-2", "Project 2", "/path/2").await;
 
-    let retrieved = repo
+    let p = repo
         .get_by_id(DEFAULT_ORG_ID, "proj-2")
         .await
         .expect("Failed to get project");
-    assert!(retrieved.is_some());
-    let p = retrieved.unwrap();
     assert_eq!(p.id, project.id);
     assert_eq!(p.org_id, DEFAULT_ORG_ID);
     assert_eq!(p.name, project.name);
@@ -94,11 +91,11 @@ async fn test_get_project_by_id() {
 async fn test_get_project_by_id_not_found() {
     let (repo, _temp) = setup_repository().await;
 
-    let retrieved = repo
-        .get_by_id(DEFAULT_ORG_ID, "nonexistent")
-        .await
-        .expect("Failed to query");
-    assert!(retrieved.is_none());
+    let result = repo.get_by_id(DEFAULT_ORG_ID, "nonexistent").await;
+    assert!(
+        result.is_err(),
+        "Expected not-found error for nonexistent project"
+    );
 }
 
 #[tokio::test]
@@ -109,8 +106,7 @@ async fn test_get_project_by_name() {
         .get_by_name(DEFAULT_ORG_ID, "Unique Name")
         .await
         .expect("Failed to get project by name");
-    assert!(retrieved.is_some());
-    assert_eq!(retrieved.unwrap().id, "proj-3");
+    assert_eq!(retrieved.id, "proj-3");
 }
 
 #[tokio::test]
@@ -121,8 +117,7 @@ async fn test_get_project_by_path() {
         .get_by_path(DEFAULT_ORG_ID, "/unique/path")
         .await
         .expect("Failed to get project by path");
-    assert!(retrieved.is_some());
-    assert_eq!(retrieved.unwrap().id, "proj-4");
+    assert_eq!(retrieved.id, "proj-4");
 }
 
 #[tokio::test]
@@ -164,12 +159,10 @@ async fn test_update_project() {
         .await
         .expect("Failed to update project");
 
-    let retrieved = repo
+    let p = repo
         .get_by_id(DEFAULT_ORG_ID, "proj-7")
         .await
         .expect("Failed to get project");
-    assert!(retrieved.is_some());
-    let p = retrieved.unwrap();
     assert_eq!(p.name, "Updated Name");
     assert_eq!(p.path, "/updated/path");
     assert_eq!(p.updated_at, 2000000i64);
@@ -183,11 +176,11 @@ async fn test_delete_project() {
         .await
         .expect("Failed to delete project");
 
-    let retrieved = repo
-        .get_by_id(DEFAULT_ORG_ID, "proj-8")
-        .await
-        .expect("Failed to query");
-    assert!(retrieved.is_none());
+    let result = repo.get_by_id(DEFAULT_ORG_ID, "proj-8").await;
+    assert!(
+        result.is_err(),
+        "Expected not-found error for deleted project"
+    );
 }
 
 #[tokio::test]
@@ -226,7 +219,7 @@ async fn test_org_isolation() {
     };
     repo.create(&project).await.expect("create");
 
-    assert!(repo.get_by_id("org-A", "proj-iso").await.unwrap().is_some());
-    assert!(repo.get_by_id("org-B", "proj-iso").await.unwrap().is_none());
+    assert!(repo.get_by_id("org-A", "proj-iso").await.is_ok());
+    assert!(repo.get_by_id("org-B", "proj-iso").await.is_err());
     assert!(repo.list("org-B").await.unwrap().is_empty());
 }

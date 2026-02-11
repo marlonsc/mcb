@@ -133,7 +133,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
-    async fn get_repository(&self, org_id: &str, id: &str) -> Result<Option<Repository>> {
+    async fn get_repository(&self, org_id: &str, id: &str) -> Result<Repository> {
         self.query_one(
             "SELECT * FROM repositories WHERE org_id = ? AND id = ?",
             &[
@@ -142,7 +142,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             ],
             row_to_repository,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Repository {id}")))
     }
 
     async fn list_repositories(&self, org_id: &str, project_id: &str) -> Result<Vec<Repository>> {
@@ -208,13 +209,14 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
-    async fn get_branch(&self, id: &str) -> Result<Option<Branch>> {
+    async fn get_branch(&self, id: &str) -> Result<Branch> {
         self.query_one(
             "SELECT * FROM branches WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_branch,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Branch {id}")))
     }
 
     async fn list_branches(&self, repository_id: &str) -> Result<Vec<Branch>> {
@@ -276,13 +278,14 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
-    async fn get_worktree(&self, id: &str) -> Result<Option<Worktree>> {
+    async fn get_worktree(&self, id: &str) -> Result<Worktree> {
         self.query_one(
             "SELECT * FROM worktrees WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_worktree,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Worktree {id}")))
     }
 
     async fn list_worktrees(&self, repository_id: &str) -> Result<Vec<Worktree>> {
@@ -342,13 +345,14 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
-    async fn get_assignment(&self, id: &str) -> Result<Option<AgentWorktreeAssignment>> {
+    async fn get_assignment(&self, id: &str) -> Result<AgentWorktreeAssignment> {
         self.query_one(
             "SELECT * FROM agent_worktree_assignments WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_assignment,
         )
-        .await
+        .await?
+        .ok_or_else(|| Error::not_found(format!("Assignment {id}")))
     }
 
     async fn list_assignments_by_worktree(

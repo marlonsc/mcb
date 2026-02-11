@@ -10,9 +10,9 @@ use crate::error::Result;
 #[async_trait]
 pub trait ProjectRepository: Send + Sync {
     async fn create(&self, project: &Project) -> Result<()>;
-    async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Option<Project>>;
-    async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Option<Project>>;
-    async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Option<Project>>;
+    async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project>;
+    async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project>;
+    async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Project>;
     async fn list(&self, org_id: &str) -> Result<Vec<Project>>;
     async fn update(&self, project: &Project) -> Result<()>;
     async fn delete(&self, org_id: &str, id: &str) -> Result<()>;

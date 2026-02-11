@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::OrgEntityRepository;
 use mcb_domain::ports::services::OrgEntityServiceInterface;
 
@@ -27,10 +27,7 @@ impl OrgEntityServiceInterface for OrgEntityServiceImpl {
     }
 
     async fn get_org(&self, id: &str) -> Result<Organization> {
-        self.repository
-            .get_org(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Organization {id}")))
+        self.repository.get_org(id).await
     }
 
     async fn list_orgs(&self) -> Result<Vec<Organization>> {
@@ -50,17 +47,11 @@ impl OrgEntityServiceInterface for OrgEntityServiceImpl {
     }
 
     async fn get_user(&self, id: &str) -> Result<User> {
-        self.repository
-            .get_user(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("User {id}")))
+        self.repository.get_user(id).await
     }
 
     async fn get_user_by_email(&self, org_id: &str, email: &str) -> Result<User> {
-        self.repository
-            .get_user_by_email(org_id, email)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("User {email}")))
+        self.repository.get_user_by_email(org_id, email).await
     }
 
     async fn list_users(&self, org_id: &str) -> Result<Vec<User>> {
@@ -80,10 +71,7 @@ impl OrgEntityServiceInterface for OrgEntityServiceImpl {
     }
 
     async fn get_team(&self, id: &str) -> Result<Team> {
-        self.repository
-            .get_team(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("Team {id}")))
+        self.repository.get_team(id).await
     }
 
     async fn list_teams(&self, org_id: &str) -> Result<Vec<Team>> {
@@ -111,10 +99,7 @@ impl OrgEntityServiceInterface for OrgEntityServiceImpl {
     }
 
     async fn get_api_key(&self, id: &str) -> Result<ApiKey> {
-        self.repository
-            .get_api_key(id)
-            .await?
-            .ok_or_else(|| Error::not_found(format!("ApiKey {id}")))
+        self.repository.get_api_key(id).await
     }
 
     async fn list_api_keys(&self, org_id: &str) -> Result<Vec<ApiKey>> {
