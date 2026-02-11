@@ -37,6 +37,7 @@ pub mod thresholds;
 pub mod violation_trait;
 #[macro_use]
 pub mod violation_macro;
+pub mod declarative_validator;
 pub mod generic_reporter;
 /// Declarative registration macros used by validator composition.
 pub mod macros;
@@ -160,6 +161,7 @@ pub use test_quality::{TestQualityValidator, TestQualityViolation};
 pub use tests_org::{TestValidator, TestViolation};
 use thiserror::Error;
 // Re-export centralized thresholds
+pub use declarative_validator::DeclarativeValidator;
 pub use thresholds::{
     MAX_BUILDER_FIELDS, MAX_COGNITIVE_COMPLEXITY, MAX_CYCLOMATIC_COMPLEXITY,
     MAX_DI_CONTAINER_FIELDS, MAX_FILE_LINES, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS,
