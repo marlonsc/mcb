@@ -14,6 +14,7 @@
 /// Schema-driven entity CRUD handlers using Handlebars templates.
 pub mod entity_handlers;
 pub mod handlers;
+pub mod helpers;
 pub mod router;
 pub mod view_model;
 
