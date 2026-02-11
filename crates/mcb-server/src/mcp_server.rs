@@ -5,11 +5,14 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::repositories::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
+    VcsEntityRepository,
+};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface,
+    ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
@@ -19,8 +22,9 @@ use rmcp::model::{
 };
 
 use crate::handlers::{
-    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
-    ValidateHandler, VcsHandler,
+    AgentHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
+    PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
+    VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::HookProcessor;
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
@@ -55,10 +59,18 @@ pub struct McpServices {
     pub agent_session: Arc<dyn AgentSessionServiceInterface>,
     /// Project detector service
     pub project: Arc<dyn ProjectDetectorService>,
-    /// Project workflow service
-    pub project_workflow: Arc<dyn ProjectServiceInterface>,
+    /// Project workflow repository
+    pub project_workflow: Arc<dyn ProjectRepository>,
     /// VCS provider
     pub vcs: Arc<dyn VcsProvider>,
+    /// VCS entity repository (repos, branches, worktrees)
+    pub vcs_entity: Arc<dyn VcsEntityRepository>,
+    /// Plan entity repository (plans, versions, reviews)
+    pub plan_entity: Arc<dyn PlanEntityRepository>,
+    /// Issue entity repository (issues, comments, labels, assignments)
+    pub issue_entity: Arc<dyn IssueEntityRepository>,
+    /// Org entity repository (orgs, users, teams, members, api keys)
+    pub org_entity: Arc<dyn OrgEntityRepository>,
 }
 
 impl McpServer {
@@ -81,6 +93,10 @@ impl McpServer {
             agent: Arc::new(AgentHandler::new(services.agent_session.clone())),
             project: Arc::new(ProjectHandler::new(services.project_workflow.clone())),
             vcs: Arc::new(VcsHandler::new(services.vcs.clone())),
+            vcs_entity: Arc::new(VcsEntityHandler::new(services.vcs_entity.clone())),
+            plan_entity: Arc::new(PlanEntityHandler::new(services.plan_entity.clone())),
+            issue_entity: Arc::new(IssueEntityHandler::new(services.issue_entity.clone())),
+            org_entity: Arc::new(OrgEntityHandler::new(services.org_entity.clone())),
             hook_processor: Arc::new(hook_processor),
         };
 
@@ -133,9 +149,29 @@ impl McpServer {
         Arc::clone(&self.services.project)
     }
 
-    /// Access to project workflow service
-    pub fn project_workflow_service(&self) -> Arc<dyn ProjectServiceInterface> {
+    /// Access to project workflow repository.
+    pub fn project_workflow_repository(&self) -> Arc<dyn ProjectRepository> {
         Arc::clone(&self.services.project_workflow)
+    }
+
+    /// Access to VCS entity repository.
+    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
+        Arc::clone(&self.services.vcs_entity)
+    }
+
+    /// Access to plan entity repository.
+    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
+        Arc::clone(&self.services.plan_entity)
+    }
+
+    /// Access to issue entity repository.
+    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
+        Arc::clone(&self.services.issue_entity)
+    }
+
+    /// Access to organization entity repository.
+    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
+        Arc::clone(&self.services.org_entity)
     }
 
     /// Access to index handler (for HTTP transport)
@@ -178,6 +214,26 @@ impl McpServer {
         Arc::clone(&self.handlers.project)
     }
 
+    /// Access to VCS entity handler (for HTTP transport)
+    pub fn vcs_entity_handler(&self) -> Arc<VcsEntityHandler> {
+        Arc::clone(&self.handlers.vcs_entity)
+    }
+
+    /// Access to plan entity handler (for HTTP transport)
+    pub fn plan_entity_handler(&self) -> Arc<PlanEntityHandler> {
+        Arc::clone(&self.handlers.plan_entity)
+    }
+
+    /// Access to issue entity handler (for HTTP transport)
+    pub fn issue_entity_handler(&self) -> Arc<IssueEntityHandler> {
+        Arc::clone(&self.handlers.issue_entity)
+    }
+
+    /// Access to org entity handler (for HTTP transport)
+    pub fn org_entity_handler(&self) -> Arc<OrgEntityHandler> {
+        Arc::clone(&self.handlers.org_entity)
+    }
+
     /// Access to hook processor (for automatic memory operations)
     pub fn hook_processor(&self) -> Arc<HookProcessor> {
         Arc::clone(&self.handlers.hook_processor)
@@ -207,6 +263,10 @@ tools:
 - agent: Agent activity logging
 - project: Project workflow management
 - vcs: Repository operations
+- vcs_entity: VCS entity CRUD (repositories, branches, worktrees, assignments)
+- plan_entity: Plan entity CRUD (plans, versions, reviews)
+- issue_entity: Issue entity CRUD (issues, comments, labels, label assignments)
+- org_entity: Org entity CRUD (organizations, users, teams, team members, api keys)
 "#
                 .to_string(),
             ),

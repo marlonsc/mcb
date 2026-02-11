@@ -30,9 +30,6 @@ mod highlight_service_tests;
 #[path = "unit/mcp_protocol_tests.rs"]
 mod mcp_protocol_tests;
 
-#[path = "unit/collection_mapping_tests.rs"]
-mod collection_mapping_tests;
-
 // #[path = "unit/vcs_registry_tests.rs"]
 // mod vcs_registry_tests; // Missing file
 #[path = "unit/fixtures_smoke.rs"]

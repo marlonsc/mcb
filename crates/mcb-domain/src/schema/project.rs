@@ -8,7 +8,10 @@
 
 pub mod agent;
 pub mod error_patterns;
-pub mod workflow;
+pub mod issue_entities;
+pub mod multi_tenant;
+pub mod plan_entities;
+pub mod vcs_entities;
 
 use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 
@@ -57,7 +60,10 @@ impl ProjectSchema {
     }
 
     fn tables() -> Vec<TableDef> {
-        let mut tables = vec![
+        // Multi-tenant tables must come first (organizations referenced by projects.org_id)
+        let mut tables = multi_tenant::tables();
+
+        tables.extend(vec![
             TableDef {
                 name: "projects".to_string(),
                 columns: vec![
@@ -70,10 +76,18 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
+                        name: "org_id".to_string(),
+                        type_: ColumnType::Text,
+                        primary_key: false,
+                        unique: false,
+                        not_null: true,
+                        auto_increment: false,
+                    },
+                    ColumnDef {
                         name: "name".to_string(),
                         type_: ColumnType::Text,
                         primary_key: false,
-                        unique: true,
+                        unique: false,
                         not_null: true,
                         auto_increment: false,
                     },
@@ -103,7 +117,6 @@ impl ProjectSchema {
                     },
                 ],
             },
-            // collections: user name <-> vector store name (replaces collection_mapping.json)
             TableDef {
                 name: "collections".to_string(),
                 columns: vec![
@@ -149,7 +162,7 @@ impl ProjectSchema {
                     },
                 ],
             },
-        ];
+        ]);
 
         // Add memory tables (observations, session_summaries)
         let memory_tables = super::memory::tables().into_iter().map(|mut t| {
@@ -253,7 +266,9 @@ impl ProjectSchema {
 
         tables.extend(agent::tables());
         tables.extend(error_patterns::tables());
-        tables.extend(workflow::tables());
+        tables.extend(issue_entities::tables());
+        tables.extend(plan_entities::tables());
+        tables.extend(vcs_entities::tables());
         tables
     }
 }
@@ -271,6 +286,11 @@ impl ProjectSchema {
     fn indexes() -> Vec<IndexDef> {
         let mut indexes = vec![
             IndexDef {
+                name: "idx_projects_org".to_string(),
+                table: "projects".to_string(),
+                columns: vec!["org_id".to_string()],
+            },
+            IndexDef {
                 name: "idx_collections_project".to_string(),
                 table: "collections".to_string(),
                 columns: vec!["project_id".to_string()],
@@ -278,6 +298,11 @@ impl ProjectSchema {
             IndexDef {
                 name: "idx_obs_project".to_string(),
                 table: "observations".to_string(),
+                columns: vec!["project_id".to_string()],
+            },
+            IndexDef {
+                name: "idx_summary_project".to_string(),
+                table: "session_summaries".to_string(),
                 columns: vec!["project_id".to_string()],
             },
             IndexDef {
@@ -302,7 +327,10 @@ impl ProjectSchema {
 
         indexes.extend(agent::indexes());
         indexes.extend(error_patterns::indexes());
-        indexes.extend(workflow::indexes());
+        indexes.extend(issue_entities::indexes());
+        indexes.extend(multi_tenant::indexes());
+        indexes.extend(plan_entities::indexes());
+        indexes.extend(vcs_entities::indexes());
         indexes
     }
 }
@@ -337,12 +365,19 @@ impl ProjectSchema {
         ];
         fks.extend(agent::foreign_keys());
         fks.extend(error_patterns::foreign_keys());
-        fks.extend(workflow::foreign_keys());
+        fks.extend(issue_entities::foreign_keys());
+        fks.extend(multi_tenant::foreign_keys());
+        fks.extend(plan_entities::foreign_keys());
+        fks.extend(vcs_entities::foreign_keys());
         fks
     }
 
     fn unique_constraints() -> Vec<UniqueConstraintDef> {
-        vec![
+        let mut ucs = vec![
+            UniqueConstraintDef {
+                table: "projects".to_string(),
+                columns: vec!["org_id".to_string(), "name".to_string()],
+            },
             UniqueConstraintDef {
                 table: "collections".to_string(),
                 columns: vec!["project_id".to_string(), "name".to_string()],
@@ -355,7 +390,12 @@ impl ProjectSchema {
                     "file_path".to_string(),
                 ],
             },
-        ]
+        ];
+        ucs.extend(multi_tenant::unique_constraints());
+        ucs.extend(issue_entities::unique_constraints());
+        ucs.extend(plan_entities::unique_constraints());
+        ucs.extend(vcs_entities::unique_constraints());
+        ucs
     }
 }
 

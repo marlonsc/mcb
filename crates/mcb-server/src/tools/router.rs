@@ -10,11 +10,13 @@ use rmcp::model::{CallToolRequestParams, CallToolResult};
 use tracing::warn;
 
 use crate::args::{
-    AgentArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs, ValidateArgs, VcsArgs,
+    AgentArgs, IndexArgs, IssueEntityArgs, MemoryArgs, OrgEntityArgs, PlanEntityArgs, ProjectArgs,
+    SearchArgs, SessionArgs, ValidateArgs, VcsArgs, VcsEntityArgs,
 };
 use crate::handlers::{
-    AgentHandler, IndexHandler, MemoryHandler, ProjectHandler, SearchHandler, SessionHandler,
-    ValidateHandler, VcsHandler,
+    AgentHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
+    PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
+    VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::{HookProcessor, PostToolUseContext};
 
@@ -37,6 +39,14 @@ pub struct ToolHandlers {
     pub project: Arc<ProjectHandler>,
     /// Handler for VCS operations.
     pub vcs: Arc<VcsHandler>,
+    /// Handler for VCS entity CRUD.
+    pub vcs_entity: Arc<VcsEntityHandler>,
+    /// Handler for plan entity CRUD.
+    pub plan_entity: Arc<PlanEntityHandler>,
+    /// Handler for issue entity CRUD.
+    pub issue_entity: Arc<IssueEntityHandler>,
+    /// Handler for org entity CRUD.
+    pub org_entity: Arc<OrgEntityHandler>,
     /// Processor for tool execution hooks.
     pub hook_processor: Arc<HookProcessor>,
 }
@@ -83,6 +93,22 @@ pub async fn route_tool_call(
         "vcs" => {
             let args = parse_args::<VcsArgs>(&request)?;
             handlers.vcs.handle(Parameters(args)).await
+        }
+        "vcs_entity" => {
+            let args = parse_args::<VcsEntityArgs>(&request)?;
+            handlers.vcs_entity.handle(Parameters(args)).await
+        }
+        "plan_entity" => {
+            let args = parse_args::<PlanEntityArgs>(&request)?;
+            handlers.plan_entity.handle(Parameters(args)).await
+        }
+        "issue_entity" => {
+            let args = parse_args::<IssueEntityArgs>(&request)?;
+            handlers.issue_entity.handle(Parameters(args)).await
+        }
+        "org_entity" => {
+            let args = parse_args::<OrgEntityArgs>(&request)?;
+            handlers.org_entity.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

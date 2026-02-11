@@ -21,11 +21,14 @@ use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository};
+use mcb_domain::ports::repositories::{
+    AgentRepository, IssueEntityRepository, MemoryRepository, OrgEntityRepository,
+    PlanEntityRepository, ProjectRepository, VcsEntityRepository,
+};
 use mcb_domain::ports::services::{
     AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
-    MemoryServiceInterface, ProjectDetectorService, ProjectServiceInterface,
-    SearchServiceInterface, ValidationServiceInterface,
+    MemoryServiceInterface, ProjectDetectorService, SearchServiceInterface,
+    ValidationServiceInterface,
 };
 
 use super::super::bootstrap::AppContext;
@@ -56,10 +59,18 @@ pub struct DomainServicesContainer {
     pub agent_session_service: Arc<dyn AgentSessionServiceInterface>,
     /// Service for detecting and managing project information
     pub project_service: Arc<dyn ProjectDetectorService>,
-    /// Service for managing project workflow resources
-    pub project_workflow_service: Arc<dyn ProjectServiceInterface>,
+    /// Repository for project CRUD operations
+    pub project_repository: Arc<dyn ProjectRepository>,
     /// Provider for version control system operations
     pub vcs_provider: Arc<dyn VcsProvider>,
+    /// Repository for VCS entity CRUD (repos, branches, worktrees)
+    pub vcs_entity_repository: Arc<dyn VcsEntityRepository>,
+    /// Repository for plan entity CRUD (plans, versions, reviews)
+    pub plan_entity_repository: Arc<dyn PlanEntityRepository>,
+    /// Repository for issue entity CRUD (issues, comments, labels)
+    pub issue_entity_repository: Arc<dyn IssueEntityRepository>,
+    /// Repository for org entity CRUD (orgs, users, teams, members, api keys)
+    pub org_entity_repository: Arc<dyn OrgEntityRepository>,
 }
 
 /// Runtime dependencies required to assemble Phase 6 services (Memory Search + Hybrid Search).
@@ -110,8 +121,16 @@ pub struct ServiceDependencies {
     pub vcs_provider: Arc<dyn VcsProvider>,
     /// Service for project detection and management
     pub project_service: Arc<dyn ProjectDetectorService>,
-    /// Service for project workflow management
-    pub project_workflow_service: Arc<dyn ProjectServiceInterface>,
+    /// Repository for project CRUD
+    pub project_repository: Arc<dyn ProjectRepository>,
+    /// Repository for VCS entity CRUD
+    pub vcs_entity_repository: Arc<dyn VcsEntityRepository>,
+    /// Repository for plan entity CRUD
+    pub plan_entity_repository: Arc<dyn PlanEntityRepository>,
+    /// Repository for issue entity CRUD
+    pub issue_entity_repository: Arc<dyn IssueEntityRepository>,
+    /// Repository for org entity CRUD
+    pub org_entity_repository: Arc<dyn OrgEntityRepository>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
@@ -137,7 +156,7 @@ impl DomainServicesFactory {
     /// Returns an error if service initialization fails.
     pub async fn create_services(deps: ServiceDependencies) -> Result<DomainServicesContainer> {
         let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(
-            deps.cache.into(),
+            deps.cache.as_provider(),
             Arc::clone(&deps.embedding_provider),
             Arc::clone(&deps.vector_store_provider),
         ));
@@ -174,8 +193,12 @@ impl DomainServicesFactory {
             memory_service,
             agent_session_service,
             project_service: deps.project_service,
-            project_workflow_service: deps.project_workflow_service,
+            project_repository: deps.project_repository,
             vcs_provider: deps.vcs_provider,
+            vcs_entity_repository: deps.vcs_entity_repository,
+            plan_entity_repository: deps.plan_entity_repository,
+            issue_entity_repository: deps.issue_entity_repository,
+            org_entity_repository: deps.org_entity_repository,
         })
     }
 

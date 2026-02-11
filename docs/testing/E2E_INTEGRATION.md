@@ -159,16 +159,16 @@ jobs:
 
 ### When Adding New Routes
 
-1. **Add to `admin/web/handlers.rs`**
-2. **Mount in `admin/routes.rs`** (CRITICAL - this is where v0.2.0 bug happened)
-3. **Add Layer 2 test** in `golden_admin_web_e2e.rs`
-4. **Add Layer 3 test** in `admin-ui-routes.spec.ts`
+1.  **Add to `admin/web/handlers.rs`**
+2.  **Mount in `admin/routes.rs`** (CRITICAL - this is where v0.2.0 bug happened)
+3.  **Add Layer 2 test** in `golden_admin_web_e2e.rs`
+4.  **Add Layer 3 test** in `admin-ui-routes.spec.ts`
 
 ### When Routes Return 404
 
-1. Check Layer 3 first: `make test-e2e`
-2. If failing, check Layer 2: `cargo test golden_admin_web_e2e`
-3. If passing, check `admin/routes.rs` - routes might not be mounted
+1.  Check Layer 3 first: `make test-e2e`
+2.  If failing, check Layer 2: `cargo test golden_admin_web_e2e`
+3.  If passing, check `admin/routes.rs` - routes might not be mounted
 
 ## Troubleshooting
 

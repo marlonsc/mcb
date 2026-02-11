@@ -3,13 +3,15 @@ use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use super::responses::{BranchComparison, BranchDiffFile, repo_path};
 use crate::args::VcsArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Compares two branches and returns the diff.
+#[tracing::instrument(skip_all)]
 pub async fn compare_branches(
     vcs_provider: &Arc<dyn VcsProvider>,
     args: &VcsArgs,
@@ -29,17 +31,13 @@ pub async fn compare_branches(
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to open repository: {e}"
-            ))]));
+            return Ok(to_opaque_tool_error(e));
         }
     };
     let diff = match vcs_provider.diff_refs(&repo, &base, &head).await {
         Ok(diff) => diff,
         Err(e) => {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to diff branches: {e}"
-            ))]));
+            return Ok(to_opaque_tool_error(e));
         }
     };
     let files = diff

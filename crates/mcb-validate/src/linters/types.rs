@@ -2,6 +2,10 @@
 //!
 //! Core types and data structures for linter integration.
 
+use std::path::PathBuf;
+
+use crate::violation_trait::{Severity, Violation, ViolationCategory};
+
 /// Unified structure representing a code violation found by any linter.
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct LintViolation {
@@ -19,6 +23,81 @@ pub struct LintViolation {
     pub severity: String,
     /// The category of the violation (e.g., "style", "correctness").
     pub category: String,
+    /// Cached PathBuf for `Violation::file()` trait method.
+    #[serde(skip)]
+    pub file_path_cache: Option<PathBuf>,
+}
+
+impl LintViolation {
+    /// Materializes the cached `PathBuf` from the `file` string field.
+    pub fn ensure_file_path(&mut self) {
+        if self.file_path_cache.is_none() {
+            self.file_path_cache = Some(PathBuf::from(&self.file));
+        }
+    }
+
+    fn parsed_severity(&self) -> Severity {
+        match self.severity.to_ascii_lowercase().as_str() {
+            "error" => Severity::Error,
+            "info" => Severity::Info,
+            _ => Severity::Warning,
+        }
+    }
+
+    fn parsed_category(&self) -> ViolationCategory {
+        match self.category.to_ascii_lowercase().as_str() {
+            "architecture" | "clean-architecture" => ViolationCategory::Architecture,
+            "quality" | "duplication" | "metrics" => ViolationCategory::Quality,
+            "organization" => ViolationCategory::Organization,
+            "solid" => ViolationCategory::Solid,
+            "di" => ViolationCategory::DependencyInjection,
+            "configuration" => ViolationCategory::Configuration,
+            "web-framework" => ViolationCategory::WebFramework,
+            "performance" => ViolationCategory::Performance,
+            "async" => ViolationCategory::Async,
+            "documentation" => ViolationCategory::Documentation,
+            "testing" => ViolationCategory::Testing,
+            "naming" => ViolationCategory::Naming,
+            "kiss" => ViolationCategory::Kiss,
+            "refactoring" | "migration" => ViolationCategory::Refactoring,
+            "error_boundary" => ViolationCategory::ErrorBoundary,
+            "implementation" => ViolationCategory::Implementation,
+            "pmat" => ViolationCategory::Pmat,
+            _ => ViolationCategory::Quality,
+        }
+    }
+}
+
+impl std::fmt::Display for LintViolation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}] {}", self.rule, self.message)
+    }
+}
+
+impl Violation for LintViolation {
+    fn id(&self) -> &str {
+        &self.rule
+    }
+
+    fn category(&self) -> ViolationCategory {
+        self.parsed_category()
+    }
+
+    fn severity(&self) -> Severity {
+        self.parsed_severity()
+    }
+
+    fn file(&self) -> Option<&PathBuf> {
+        self.file_path_cache.as_ref()
+    }
+
+    fn line(&self) -> Option<usize> {
+        Some(self.line)
+    }
+
+    fn message(&self) -> String {
+        self.message.clone()
+    }
 }
 
 /// Supported external linter tools.

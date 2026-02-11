@@ -121,6 +121,3 @@ impl ModeConfig {
         self.session_prefix.as_deref()
     }
 }
-
-// Tests moved to crates/mcb-server/tests/integration/operating_modes_integration.rs
-// See: test_mode_config_* tests for coverage

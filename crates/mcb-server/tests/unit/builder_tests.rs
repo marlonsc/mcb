@@ -5,9 +5,10 @@ use std::sync::Arc;
 use mcb_server::builder::{BuilderError, McpServerBuilder};
 
 use crate::test_utils::mock_services::{
-    MockAgentSessionService, MockContextService, MockIndexingService, MockMemoryService,
-    MockProjectService, MockProjectWorkflowService, MockSearchService, MockValidationService,
-    MockVcsProvider,
+    MockAgentSessionService, MockContextService, MockIndexingService, MockIssueEntityRepository,
+    MockMemoryService, MockOrgEntityRepository, MockPlanEntityRepository,
+    MockProjectDetectorService, MockProjectRepository, MockSearchService, MockValidationService,
+    MockVcsEntityRepository, MockVcsProvider,
 };
 
 #[test]
@@ -28,8 +29,12 @@ fn test_builder_all_services_provided() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .with_project_service(Arc::new(MockProjectService::new()))
-        .with_project_workflow_service(Arc::new(MockProjectWorkflowService::new()))
+        .with_project_service(Arc::new(MockProjectDetectorService::new()))
+        .with_project_workflow_service(Arc::new(MockProjectRepository::new()))
+        .with_vcs_entity_repository(Arc::new(MockVcsEntityRepository::new()))
+        .with_plan_entity_repository(Arc::new(MockPlanEntityRepository::new()))
+        .with_issue_entity_repository(Arc::new(MockIssueEntityRepository::new()))
+        .with_org_entity_repository(Arc::new(MockOrgEntityRepository::new()))
         .build();
 
     assert!(result.is_ok());
@@ -168,8 +173,12 @@ fn test_try_build_success() {
         .with_memory_service(memory_service)
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
-        .with_project_service(Arc::new(MockProjectService::new()))
-        .with_project_workflow_service(Arc::new(MockProjectWorkflowService::new()))
+        .with_project_service(Arc::new(MockProjectDetectorService::new()))
+        .with_project_workflow_service(Arc::new(MockProjectRepository::new()))
+        .with_vcs_entity_repository(Arc::new(MockVcsEntityRepository::new()))
+        .with_plan_entity_repository(Arc::new(MockPlanEntityRepository::new()))
+        .with_issue_entity_repository(Arc::new(MockIssueEntityRepository::new()))
+        .with_org_entity_repository(Arc::new(MockOrgEntityRepository::new()))
         .build();
 
     assert!(server.is_ok());

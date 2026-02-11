@@ -2,12 +2,11 @@
 //!
 //! Validates YAML rules against JSON Schema using jsonschema crate.
 
-use std::path::Path;
-
 use jsonschema::Validator;
 use serde_json::Value;
 
 use crate::Result;
+use crate::embedded_rules::EmbeddedRules;
 
 /// Validator for YAML-based rules using JSON Schema
 pub struct YamlRuleValidator {
@@ -17,14 +16,11 @@ pub struct YamlRuleValidator {
 impl YamlRuleValidator {
     /// Create a new validator with the schema
     pub fn new() -> Result<Self> {
-        let schema_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("rules/schema.json");
-
-        let schema_content =
-            std::fs::read_to_string(&schema_path).map_err(crate::ValidationError::Io)?;
+        let schema_content = EmbeddedRules::SCHEMA_JSON;
 
         let schema_value: Value =
-            serde_json::from_str(&schema_content).map_err(|e| crate::ValidationError::Parse {
-                file: schema_path,
+            serde_json::from_str(schema_content).map_err(|e| crate::ValidationError::Parse {
+                file: "embedded://rules/schema.json".into(),
                 message: format!("Schema parse error: {e}"),
             })?;
 

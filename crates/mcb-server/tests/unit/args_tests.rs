@@ -4,6 +4,7 @@ use validator::Validate;
 #[test]
 fn test_search_args_valid() {
     let args = SearchArgs {
+        org_id: None,
         query: "find authentication functions".to_string(),
         resource: SearchResource::Code,
         collection: Some("test".to_string()),
@@ -22,6 +23,7 @@ fn test_search_args_valid() {
 #[test]
 fn test_search_args_empty_query() {
     let args = SearchArgs {
+        org_id: None,
         query: "".to_string(),
         resource: SearchResource::Code,
         collection: None,
@@ -40,6 +42,7 @@ fn test_search_args_empty_query() {
 #[test]
 fn test_search_args_invalid_score() {
     let args = SearchArgs {
+        org_id: None,
         query: "test".to_string(),
         resource: SearchResource::Code,
         collection: None,

@@ -24,6 +24,14 @@ use mcb_domain::registry::vector_store::*;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 
+fn test_config() -> (AppConfig, tempfile::TempDir) {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(db_path);
+    (config, temp_dir)
+}
+
 // ============================================================================
 // Registry Completeness Validation
 // ============================================================================
@@ -106,9 +114,8 @@ fn test_all_expected_language_providers_registered() {
 
 #[tokio::test]
 async fn test_config_provider_names_match_resolved_providers() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
 
-    // Get expected provider name from config
     let expected_embedding = config
         .providers
         .embedding
@@ -116,7 +123,6 @@ async fn test_config_provider_names_match_resolved_providers() {
         .clone()
         .unwrap_or_else(|| "fastembed".to_string());
 
-    // Initialize app and get resolved provider
     let ctx = init_app(config).await.expect("init_app should succeed");
     let embedding = ctx.embedding_handle().get();
 
@@ -129,7 +135,7 @@ async fn test_config_provider_names_match_resolved_providers() {
 
 #[tokio::test]
 async fn test_handle_based_di_prevents_direct_construction() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     // Get provider via handle (correct DI usage)
@@ -145,7 +151,7 @@ async fn test_handle_based_di_prevents_direct_construction() {
 
 #[tokio::test]
 async fn test_multiple_handles_reference_same_underlying_provider() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     // Get embedding handle twice
@@ -203,7 +209,7 @@ async fn test_provider_factories_return_working_providers() {
 
 #[tokio::test]
 async fn test_admin_services_accessible_via_context() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     // Admin services should be accessible and functional

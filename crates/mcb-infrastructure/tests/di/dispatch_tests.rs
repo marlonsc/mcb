@@ -13,9 +13,17 @@ use mcb_infrastructure::di::bootstrap::init_app;
 // Force linkme registration by linking mcb_providers crate
 extern crate mcb_providers;
 
+fn test_config() -> (AppConfig, tempfile::TempDir) {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let db_path = temp_dir.path().join("test.db");
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(db_path);
+    (config, temp_dir)
+}
+
 #[tokio::test]
 async fn test_di_container_builder() {
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let result = init_app(config).await;
 
     assert!(
@@ -41,8 +49,8 @@ async fn test_di_container_builder() {
 async fn test_provider_selection_from_config() {
     // Test that providers are correctly selected based on configuration
 
-    // Test with local providers (fastembed, memory)
-    let mut config = AppConfig::default();
+    let (_base, _temp) = test_config();
+    let mut config = _base;
     config.providers.embedding.configs.insert(
         "default".to_string(),
         EmbeddingConfig {
@@ -88,14 +96,7 @@ async fn test_provider_selection_from_config() {
 
 #[tokio::test]
 async fn test_provider_resolution_uses_registry() {
-    // Test that provider resolution uses the registry system, not hardcoded instances
-
-    // This test verifies the Clean Architecture pattern:
-    // - Configuration drives provider selection
-    // - Registry resolves provider by name
-    // - Services use providers through traits (no concrete knowledge)
-
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let app_context = init_app(config)
         .await
         .expect("Should initialize successfully");
@@ -135,9 +136,7 @@ async fn test_provider_resolution_uses_registry() {
 
 #[tokio::test]
 async fn test_admin_services_are_accessible() {
-    // Test that admin services for runtime provider switching are accessible
-
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let app_context = init_app(config)
         .await
         .expect("Should initialize successfully");
@@ -162,9 +161,7 @@ async fn test_admin_services_are_accessible() {
 
 #[tokio::test]
 async fn test_infrastructure_services_from_app_context() {
-    // Test that infrastructure services are accessible from the AppContext
-
-    let config = AppConfig::default();
+    let (config, _temp) = test_config();
     let app_context = init_app(config)
         .await
         .expect("Should initialize successfully");

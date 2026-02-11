@@ -11,4 +11,3 @@ mod responses;
 mod search_branch;
 
 pub use handler::VcsHandler;
-pub use responses::*;

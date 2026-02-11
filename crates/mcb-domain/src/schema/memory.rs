@@ -11,6 +11,18 @@ pub enum ColumnType {
     Text,
     /// 64-bit integer
     Integer,
+    /// Floating-point number
+    Real,
+    /// Boolean (stored as INTEGER 0/1 in SQLite)
+    Boolean,
+    /// Binary large object
+    Blob,
+    /// JSON data (stored as TEXT in SQLite, JSONB in Postgres)
+    Json,
+    /// UUID (stored as TEXT in SQLite, UUID in Postgres)
+    Uuid,
+    /// Timestamp (stored as INTEGER in SQLite, TIMESTAMPTZ in Postgres)
+    Timestamp,
 }
 
 /// A single column definition.
@@ -268,6 +280,16 @@ pub fn indexes() -> Vec<IndexDef> {
             name: "idx_obs_created".to_string(),
             table: "observations".to_string(),
             columns: vec!["created_at".to_string()],
+        },
+        IndexDef {
+            name: "idx_obs_type".to_string(),
+            table: "observations".to_string(),
+            columns: vec!["observation_type".to_string()],
+        },
+        IndexDef {
+            name: "idx_obs_embedding".to_string(),
+            table: "observations".to_string(),
+            columns: vec!["embedding_id".to_string()],
         },
         IndexDef {
             name: "idx_summary_session".to_string(),

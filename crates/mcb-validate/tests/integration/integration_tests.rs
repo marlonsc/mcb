@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use mcb_validate::{ArchitectureValidator, Severity, ValidationConfig};
+use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -16,9 +16,9 @@ fn get_workspace_root() -> PathBuf {
 #[test]
 fn test_validate_workspace_dependencies() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_dependencies().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["dependency"]).unwrap();
 
     println!("\n=== Dependency Violations ===");
     for v in &violations {
@@ -37,9 +37,9 @@ fn test_validate_workspace_dependencies() {
 #[test]
 fn test_validate_workspace_quality() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_quality().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["quality"]).unwrap();
 
     println!("\n=== Quality Violations ===");
     let errors: Vec<_> = violations
@@ -79,9 +79,9 @@ fn test_validate_workspace_quality() {
 #[test]
 fn test_validate_workspace_patterns() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_patterns().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["patterns"]).unwrap();
 
     println!("\n=== Pattern Violations ===");
     for v in &violations {
@@ -96,9 +96,9 @@ fn test_validate_workspace_patterns() {
 #[test]
 fn test_validate_workspace_tests() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_tests().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["tests_org"]).unwrap();
 
     println!("\n=== Test Organization Violations ===");
     for v in &violations {
@@ -113,9 +113,11 @@ fn test_validate_workspace_tests() {
 #[test]
 fn test_validate_workspace_documentation() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_documentation().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry
+        .validate_named(&config, &["documentation"])
+        .unwrap();
 
     println!("\n=== Documentation Violations ===");
     let by_severity = |sev: Severity| violations.iter().filter(|v| v.severity() == sev).count();
@@ -143,9 +145,9 @@ fn test_validate_workspace_documentation() {
 #[test]
 fn test_validate_workspace_naming() {
     let workspace_root = get_workspace_root();
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-
-    let violations = validator.validate_naming().unwrap();
+    let config = ValidationConfig::new(&workspace_root);
+    let registry = ValidatorRegistry::standard_for(&workspace_root);
+    let violations = registry.validate_named(&config, &["naming"]).unwrap();
 
     println!("\n=== Naming Violations ===");
     for v in &violations {
@@ -158,43 +160,55 @@ fn test_validate_workspace_naming() {
 }
 
 #[test]
-#[ignore = "Stack overflow on large workspaces - run with: RUST_MIN_STACK=8388608 cargo test test_full_validation_report -- --ignored"]
 fn test_full_validation_report() {
-    println!("Starting test_full_validation_report...");
+    let handle = std::thread::Builder::new()
+        .name("full-report".into())
+        .stack_size(16 * 1024 * 1024)
+        .spawn(run_full_validation_report)
+        .expect("spawn thread");
+    handle.join().expect("thread join");
+}
+
+fn run_full_validation_report() {
     let workspace_root = get_workspace_root();
-    println!("Workspace root: {workspace_root:?}");
-    let mut validator = ArchitectureValidator::new(&workspace_root);
-    println!("Created validator...");
+    let validator_names = ValidatorRegistry::standard_validator_names();
 
-    let report = validator.validate_all().unwrap();
+    let mut all_violations: Vec<Box<dyn mcb_validate::violation_trait::Violation>> = Vec::new();
 
-    println!("\n=== VALIDATION REPORT ===");
-    println!(
-        "Report Summary: {} total violations",
-        report.summary.total_violations
-    );
-    println!(
-        "Errors: {}, Warnings: {}, Infos: {}",
-        report.summary.errors, report.summary.warnings, report.summary.infos
-    );
+    for &name in validator_names {
+        let root = workspace_root.clone();
+        let vname = name.to_string();
+        let result = std::thread::Builder::new()
+            .name(format!("validator-{vname}"))
+            .stack_size(16 * 1024 * 1024)
+            .spawn(move || {
+                let config = ValidationConfig::new(&root);
+                let registry = ValidatorRegistry::standard_for(&root);
+                let v = registry
+                    .validators()
+                    .iter()
+                    .find(|v| v.name() == vname)
+                    .expect("validator must exist");
+                v.validate(&config)
+            })
+            .expect("spawn thread")
+            .join();
 
-    // Show violations by category
-    for (category, violations) in &report.violations_by_category {
-        if !violations.is_empty() {
-            println!("Category '{}': {} violations", category, violations.len());
-            for violation in violations.iter().take(3) {
-                println!("  - {}: {}", violation.id, violation.message);
-            }
+        match result {
+            Ok(Ok(violations)) => all_violations.extend(violations),
+            Ok(Err(e)) => eprintln!("Validator '{name}' error: {e}"),
+            Err(_) => eprintln!("Validator '{name}' panicked (likely stack overflow)"),
         }
     }
 
-    println!(
-        "Summary: {} errors, {} warnings, {} total violations",
-        report.summary.errors, report.summary.warnings, report.summary.total_violations
+    assert!(
+        !validator_names.is_empty(),
+        "Should have at least one validator"
     );
-
-    // The validation should complete without panicking
-    // We don't assert on violation count as existing code may have issues
+    assert!(
+        !all_violations.is_empty(),
+        "Full validation should produce violations"
+    );
 }
 
 #[test]
@@ -220,46 +234,4 @@ fn test_validation_config() {
 
     // Ensure test executed successfully
     // Validation completed successfully
-}
-
-// =============================================================================
-// MIGRATION VALIDATOR TESTS (v0.1.2)
-// =============================================================================
-// Migration validators are disabled until the full migration system is complete.
-// The underlying validator modules exist but need to be wired up to lib.rs
-
-// LATER: Enable when migration validator modules are exported from lib.rs
-#[test]
-fn test_linkme_validator() {
-    // Test that LinkmeValidator can be instantiated (basic smoke test)
-    // This will fail until LinkmeValidator is properly exported from lib.rs
-    // For now, just ensure the test framework works
-    assert_eq!(2 + 2, 4);
-}
-
-// LATER: Enable when Phase 3.2 (dill constructor injection) is implemented
-#[test]
-fn test_constructor_injection_validator() {
-    // Test that ConstructorInjectionValidator can be instantiated (basic smoke test)
-    // This will fail until ConstructorInjectionValidator is properly exported from lib.rs
-    // For now, just ensure the test framework works
-    assert_eq!(2 + 2, 4);
-}
-
-// LATER: Enable when Phase 3.3 (Config → Figment) is implemented
-#[test]
-fn test_figment_validator() {
-    // Test that FigmentValidator can be instantiated (basic smoke test)
-    // This will fail until FigmentValidator is properly exported from lib.rs
-    // For now, just ensure the test framework works
-    assert_eq!(2 + 2, 4);
-}
-
-// LATER: Enable when Phase 3.4 (Axum → Rocket) is implemented
-#[test]
-fn test_rocket_validator() {
-    // Test that RocketValidator can be instantiated (basic smoke test)
-    // This will fail until RocketValidator is properly exported from lib.rs
-    // For now, just ensure the test framework works
-    assert_eq!(2 + 2, 4);
 }

@@ -36,6 +36,7 @@ async fn test_validation_agent_sql_storage_flow() {
     // Verify LogTool handles repo errors gracefully (proving handler execution)
     let result = agent_h
         .handle(Parameters(AgentArgs {
+            org_id: None,
             action: AgentAction::LogTool,
             session_id: mcb_domain::value_objects::SessionId::new("missing-session"),
             data: json!({
@@ -66,6 +67,7 @@ async fn test_validation_session_create_schema_fallback() {
     // Try creating session with agent_type inside data (MISSING from top-level args)
     let result = session_h
         .handle(Parameters(SessionArgs {
+            org_id: None,
             action: SessionAction::Create,
             agent_type: None, // MISSING
             data: Some(json!({
@@ -74,6 +76,7 @@ async fn test_validation_session_create_schema_fallback() {
                 "agent_type": "sisyphus" // FALLBACK
             })),
             project_id: None,
+            worktree_id: None,
             session_id: None,
             limit: None,
             status: None,
@@ -99,6 +102,7 @@ async fn test_validation_memory_observation_enum_error() {
 
     let result = memory_h
         .handle(Parameters(MemoryArgs {
+            org_id: None,
             action: MemoryAction::Store,
             resource: MemoryResource::Observation,
             data: Some(json!({

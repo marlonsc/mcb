@@ -6,11 +6,14 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::repositories::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
+    VcsEntityRepository,
+};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
-    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface,
+    ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
 
 use crate::McpServer;
@@ -28,8 +31,12 @@ pub struct McpServerBuilder {
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
     agent_session_service: Option<Arc<dyn AgentSessionServiceInterface>>,
     project_service: Option<Arc<dyn ProjectDetectorService>>,
-    project_workflow_service: Option<Arc<dyn ProjectServiceInterface>>,
+    project_repository: Option<Arc<dyn ProjectRepository>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
+    vcs_entity_repository: Option<Arc<dyn VcsEntityRepository>>,
+    plan_entity_repository: Option<Arc<dyn PlanEntityRepository>>,
+    issue_entity_repository: Option<Arc<dyn IssueEntityRepository>>,
+    org_entity_repository: Option<Arc<dyn OrgEntityRepository>>,
 }
 
 impl McpServerBuilder {
@@ -107,12 +114,33 @@ impl McpServerBuilder {
         self
     }
 
-    /// Set the project workflow service
-    pub fn with_project_workflow_service(
-        mut self,
-        service: Arc<dyn ProjectServiceInterface>,
-    ) -> Self {
-        self.project_workflow_service = Some(service);
+    /// Set the project workflow repository used by admin CRUD endpoints.
+    pub fn with_project_workflow_service(mut self, repo: Arc<dyn ProjectRepository>) -> Self {
+        self.project_repository = Some(repo);
+        self
+    }
+
+    /// Set the VCS entity repository used by admin CRUD endpoints.
+    pub fn with_vcs_entity_repository(mut self, repo: Arc<dyn VcsEntityRepository>) -> Self {
+        self.vcs_entity_repository = Some(repo);
+        self
+    }
+
+    /// Set the plan entity repository used by admin CRUD endpoints.
+    pub fn with_plan_entity_repository(mut self, repo: Arc<dyn PlanEntityRepository>) -> Self {
+        self.plan_entity_repository = Some(repo);
+        self
+    }
+
+    /// Set the issue entity repository used by admin CRUD endpoints.
+    pub fn with_issue_entity_repository(mut self, repo: Arc<dyn IssueEntityRepository>) -> Self {
+        self.issue_entity_repository = Some(repo);
+        self
+    }
+
+    /// Set the organization entity repository used by admin CRUD endpoints.
+    pub fn with_org_entity_repository(mut self, repo: Arc<dyn OrgEntityRepository>) -> Self {
+        self.org_entity_repository = Some(repo);
         self
     }
 
@@ -148,9 +176,21 @@ impl McpServerBuilder {
         let project_service = self
             .project_service
             .ok_or(BuilderError::MissingDependency("project service"))?;
-        let project_workflow_service = self
-            .project_workflow_service
-            .ok_or(BuilderError::MissingDependency("project workflow service"))?;
+        let project_repository = self
+            .project_repository
+            .ok_or(BuilderError::MissingDependency("project repository"))?;
+        let vcs_entity_repository = self
+            .vcs_entity_repository
+            .ok_or(BuilderError::MissingDependency("vcs entity repository"))?;
+        let plan_entity_repository = self
+            .plan_entity_repository
+            .ok_or(BuilderError::MissingDependency("plan entity repository"))?;
+        let issue_entity_repository = self
+            .issue_entity_repository
+            .ok_or(BuilderError::MissingDependency("issue entity repository"))?;
+        let org_entity_repository = self
+            .org_entity_repository
+            .ok_or(BuilderError::MissingDependency("org entity repository"))?;
 
         let services = crate::mcp_server::McpServices {
             indexing: indexing_service,
@@ -160,8 +200,12 @@ impl McpServerBuilder {
             memory: memory_service,
             agent_session: agent_session_service,
             project: project_service,
-            project_workflow: project_workflow_service,
+            project_workflow: project_repository,
             vcs: vcs_provider,
+            vcs_entity: vcs_entity_repository,
+            plan_entity: plan_entity_repository,
+            issue_entity: issue_entity_repository,
+            org_entity: org_entity_repository,
         };
 
         Ok(McpServer::new(services))

@@ -45,6 +45,29 @@ impl Default for ValidatorRegistry {
 }
 
 impl ValidatorRegistry {
+    /// Canonical validator names used by registry-based execution.
+    pub const STANDARD_VALIDATOR_NAMES: &'static [&'static str] = &[
+        "clean_architecture",
+        "layer_flow",
+        "port_adapter",
+        "visibility",
+        "dependency",
+        "quality",
+        "solid",
+        "naming",
+        "patterns",
+        "documentation",
+        "tests_org",
+        "performance",
+        "async_patterns",
+        "kiss",
+        "pmat",
+        "organization",
+        "implementation",
+        "refactoring",
+        "error_boundary",
+    ];
+
     /// Create an empty registry
     pub fn new() -> Self {
         Self {
@@ -97,6 +120,28 @@ impl ValidatorRegistry {
         config: &ValidationConfig,
         names: &[&str],
     ) -> Result<Vec<Box<dyn Violation>>> {
+        let mut available = std::collections::BTreeSet::new();
+        for validator in &self.validators {
+            available.insert(validator.name());
+        }
+
+        let mut unknown: Vec<&str> = names
+            .iter()
+            .copied()
+            .filter(|name| !available.contains(name))
+            .collect();
+        unknown.sort_unstable();
+        unknown.dedup();
+
+        if !unknown.is_empty() {
+            let available_list = available.into_iter().collect::<Vec<_>>().join(", ");
+            return Err(anyhow::anyhow!(
+                "Unknown validator(s): {}. Available validators: {}",
+                unknown.join(", "),
+                available_list
+            ));
+        }
+
         let mut all_violations = Vec::new();
 
         for validator in &self.validators {
@@ -117,122 +162,102 @@ impl ValidatorRegistry {
         Ok(all_violations)
     }
 
-    /// Create a registry with standard validators
-    ///
-    /// This registers all built-in validators with default configuration.
-    /// Validators include:
-    /// - Architecture: `clean_architecture`, `layer_flow`, `port_adapter`, visibility
-    /// - Dependencies: dependency
-    /// - Quality: quality, solid, naming, patterns, documentation, `tests_org`
-    /// - Performance: performance, `async_patterns`, kiss, pmat
-    /// - Organization: organization, implementation, refactoring, `error_boundary`
-    pub fn standard() -> Self {
-        Self::standard_for(".")
-    }
-
     /// Create a registry with standard validators for a specific workspace
     pub fn standard_for(workspace_root: impl Into<std::path::PathBuf>) -> Self {
-        // Architecture validators
-        // Performance validators
-        use crate::async_patterns::AsyncPatternValidator;
-        use crate::clean_architecture::CleanArchitectureValidator;
-        // Dependency validators
-        use crate::dependency::DependencyValidator;
-        // Note: Legacy validator removed - now using linkme-based plugin architecture
-
-        // Quality validators
-        use crate::documentation::DocumentationValidator;
-        // Organization validators
-        use crate::error_boundary::ErrorBoundaryValidator;
-        use crate::implementation::ImplementationQualityValidator;
-        use crate::kiss::KissValidator;
-        use crate::layer_flow::LayerFlowValidator;
-        use crate::naming::NamingValidator;
-        use crate::organization::OrganizationValidator;
-        use crate::pattern_validator::PatternValidator;
-        use crate::performance::PerformanceValidator;
-        use crate::pmat::PmatValidator;
-        use crate::port_adapter::PortAdapterValidator;
-        use crate::quality::QualityValidator;
-        use crate::refactoring::RefactoringValidator;
-        use crate::solid::SolidValidator;
-        use crate::tests_org::TestValidator;
-        use crate::visibility::VisibilityValidator;
-
         let root = workspace_root.into();
+        crate::mk_validators!(
+            &root;
+            crate::clean_architecture::CleanArchitectureValidator,
+            crate::layer_flow::LayerFlowValidator,
+            crate::port_adapter::PortAdapterValidator,
+            crate::visibility::VisibilityValidator,
+            crate::dependency::DependencyValidator,
+            crate::quality::QualityValidator,
+            crate::solid::SolidValidator,
+            crate::naming::NamingValidator,
+            crate::pattern_validator::PatternValidator,
+            crate::documentation::DocumentationValidator,
+            crate::tests_org::TestValidator,
+            crate::performance::PerformanceValidator,
+            crate::async_patterns::AsyncPatternValidator,
+            crate::kiss::KissValidator,
+            crate::pmat::PmatValidator,
+            crate::organization::OrganizationValidator,
+            crate::implementation::ImplementationQualityValidator,
+            crate::refactoring::RefactoringValidator,
+            crate::error_boundary::ErrorBoundaryValidator,
+        )
+    }
 
-        Self::new()
-            // Architecture
-            .with_validator(Box::new(CleanArchitectureValidator::new(&root)))
-            .with_validator(Box::new(LayerFlowValidator::new(&root)))
-            .with_validator(Box::new(PortAdapterValidator::new(&root)))
-            .with_validator(Box::new(VisibilityValidator::new(&root)))
-            // Dependencies
-            .with_validator(Box::new(DependencyValidator::new(&root)))
-            // Note: Legacy validator removed - now using linkme-based plugin architecture
-            // Quality
-            .with_validator(Box::new(QualityValidator::new(&root)))
-            .with_validator(Box::new(SolidValidator::new(&root)))
-            .with_validator(Box::new(NamingValidator::new(&root)))
-            .with_validator(Box::new(PatternValidator::new(&root)))
-            .with_validator(Box::new(DocumentationValidator::new(&root)))
-            .with_validator(Box::new(TestValidator::new(&root)))
-            // Performance
-            .with_validator(Box::new(PerformanceValidator::new(&root)))
-            .with_validator(Box::new(AsyncPatternValidator::new(&root)))
-            .with_validator(Box::new(KissValidator::new(&root)))
-            .with_validator(Box::new(PmatValidator::new(&root)))
-            // Organization
-            .with_validator(Box::new(OrganizationValidator::new(&root)))
-            .with_validator(Box::new(ImplementationQualityValidator::new(&root)))
-            .with_validator(Box::new(RefactoringValidator::new(&root)))
-            .with_validator(Box::new(ErrorBoundaryValidator::new(&root)))
+    /// Return canonical validator names for public API consumers.
+    pub fn standard_validator_names() -> &'static [&'static str] {
+        Self::STANDARD_VALIDATOR_NAMES
     }
 }
 
-/// Helper struct for wrapping existing validators
-///
-/// This allows existing validators to be used with the new registry
-/// during the migration period.
-pub struct LegacyValidatorAdapter<F>
-where
-    F: Fn(&ValidationConfig) -> Result<Vec<Box<dyn Violation>>> + Send + Sync,
-{
-    /// Unique name of the validator
-    name: &'static str,
-    /// Detailed description of what it validates
-    description: &'static str,
-    /// Function that performs the validation
-    validate_fn: F,
-}
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
 
-impl<F> LegacyValidatorAdapter<F>
-where
-    F: Fn(&ValidationConfig) -> Result<Vec<Box<dyn Violation>>> + Send + Sync,
-{
-    /// Create a new adapter
-    pub fn new(name: &'static str, description: &'static str, validate_fn: F) -> Self {
-        Self {
-            name,
-            description,
-            validate_fn,
+    use anyhow::Result;
+
+    use super::{Validator, ValidatorRegistry};
+    use crate::ValidationConfig;
+    use crate::violation_trait::Violation;
+
+    struct DummyValidator {
+        name: &'static str,
+    }
+
+    impl Validator for DummyValidator {
+        fn name(&self) -> &'static str {
+            self.name
+        }
+
+        fn validate(&self, _config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
+            Ok(Vec::new())
         }
     }
-}
 
-impl<F> Validator for LegacyValidatorAdapter<F>
-where
-    F: Fn(&ValidationConfig) -> Result<Vec<Box<dyn Violation>>> + Send + Sync,
-{
-    fn name(&self) -> &'static str {
-        self.name
+    #[test]
+    fn test_canonical_registry_completeness() {
+        let registry = ValidatorRegistry::standard_for(".");
+        let names: Vec<&'static str> = registry
+            .validators()
+            .iter()
+            .map(|validator| validator.name())
+            .collect();
+
+        let actual: BTreeSet<&'static str> = names.iter().copied().collect();
+        let expected: BTreeSet<&'static str> = ValidatorRegistry::standard_validator_names()
+            .iter()
+            .copied()
+            .collect();
+
+        assert_eq!(
+            actual, expected,
+            "registry validator set must match canonical list"
+        );
+        assert_eq!(
+            names.len(),
+            expected.len(),
+            "registry must not contain duplicate validators"
+        );
     }
 
-    fn description(&self) -> &'static str {
-        self.description
-    }
+    #[test]
+    fn test_validate_named_rejects_unknown_validators() {
+        let registry =
+            ValidatorRegistry::new().with_validator(Box::new(DummyValidator { name: "known" }));
+        let config = ValidationConfig::new(".");
 
-    fn validate(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
-        (self.validate_fn)(config)
+        match registry.validate_named(&config, &["known", "unknown", "unknown"]) {
+            Ok(_) => panic!("expected unknown validator names to fail"),
+            Err(err) => {
+                let msg = err.to_string();
+                assert!(msg.contains("Unknown validator(s): unknown"));
+                assert!(msg.contains("Available validators: known"));
+            }
+        }
     }
 }

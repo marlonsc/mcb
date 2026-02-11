@@ -4,7 +4,7 @@
 # Professional, minimal verb set - each verb does ONE thing
 # =============================================================================
 
-.PHONY: docs docs-serve docs-check docs-setup docs-sync docs-build rust-docs diagrams adr adr-new docs-lint docs-validate docs-auto docs-fix docs-metrics
+.PHONY: docs docs-serve docs-check docs-setup docs-sync docs-build rust-docs diagrams adr adr-new docs-lint docs-validate docs-auto docs-fix docs-metrics docs-metrics-propagate
 
 # Path to mdbook
 MDBOOK := $(HOME)/.cargo/bin/mdbook
@@ -110,5 +110,8 @@ docs-fix: docs-metrics ## Fix markdown (metrics + markdownlint -f). Run before c
 # Metrics - Auto-update documentation with current project metrics
 # =============================================================================
 
-docs-metrics: ## Update all documentation with current metrics (single source of truth)
+docs-metrics: ## Update docs/generated/METRICS.md with current project metrics
 	@./scripts/docs/inject-metrics.sh
+
+docs-metrics-propagate: ## Propagate metrics into README, CHANGELOG, user-guide (for releases)
+	@./scripts/docs/inject-metrics.sh --propagate

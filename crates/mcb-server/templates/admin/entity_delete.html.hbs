@@ -1,0 +1,32 @@
+{{#*inline "page"}}
+<div class="breadcrumb">
+    <a href="/ui/entities">Entities</a>
+    <span class="separator">/</span>
+    <a href="/ui/entities/{{entity_slug}}">{{entity_slug}}</a>
+    <span class="separator">/</span>
+    <a href="/ui/entities/{{entity_slug}}/{{entity_id}}">{{entity_id}}</a>
+    <span class="separator">/</span>
+    <span>Delete</span>
+</div>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-primary">{{title}}</h1>
+    <p class="mt-2 text-secondary">Group: <span class="badge badge-blue">{{entity_group}}</span></p>
+</div>
+
+<div class="card" style="max-width: 36rem;">
+    <div class="text-center py-4">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+        <h2 class="text-xl font-semibold mb-2">Confirm Deletion</h2>
+        <p class="text-secondary mb-6">
+            Are you sure you want to delete record <strong>{{entity_id}}</strong>?
+            This action cannot be undone.
+        </p>
+        <form method="post" action="/ui/entities/{{entity_slug}}/{{entity_id}}/delete" class="flex gap-3 justify-center">
+            <button class="btn btn-danger" type="submit">Delete</button>
+            <a class="btn btn-secondary" href="/ui/entities/{{entity_slug}}/{{entity_id}}">Cancel</a>
+        </form>
+    </div>
+</div>
+{{/inline}}
+{{> admin/layout}}

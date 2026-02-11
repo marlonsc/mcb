@@ -1,0 +1,47 @@
+{{#*inline "page"}}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-primary">Entities</h1>
+    <p class="mt-2 text-secondary">Schema-driven entity catalog — auto-generated from domain definitions</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="card">
+        <div class="stat-label">Total Entities</div>
+        <div class="stat-value">{{entity_count}}</div>
+    </div>
+    <div class="card">
+        <div class="stat-label">Entity Groups</div>
+        <div class="stat-value">{{group_count}}</div>
+    </div>
+    <div class="card">
+        <div class="stat-label">Generated From</div>
+        <div class="stat-value text-sm">JsonSchema</div>
+    </div>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Entity</th>
+                <th>Group</th>
+                <th>Visible Fields</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each entities}}
+            <tr>
+                <td class="font-medium">{{title}}</td>
+                <td><span class="badge badge-blue">{{group}}</span></td>
+                <td>{{field_count}}</td>
+                <td>
+                    <a class="btn btn-primary btn-sm" href="/ui/entities/{{slug}}">Open</a>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+{{/inline}}
+{{> admin/layout}}

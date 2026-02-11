@@ -12,8 +12,8 @@ use rmcp::model::CallToolResult;
 use validator::Validate;
 
 use crate::args::{IndexAction, IndexArgs};
-use crate::collection_mapping::map_collection_name;
 use crate::formatter::ResponseFormatter;
+use crate::utils::collections::normalize_collection_name;
 
 /// Handler for codebase indexing MCP tool operations.
 #[derive(Clone)]
@@ -48,11 +48,12 @@ impl IndexHandler {
             ));
         }
         let collection_name = args.collection.as_deref().unwrap_or("default");
-        let collection_id = match map_collection_name(collection_name) {
+        let collection_id = match normalize_collection_name(collection_name) {
             Ok(id) => id,
             Err(e) => {
+                let _ = e;
                 return Err(ResponseFormatter::format_indexing_error(
-                    &format!("Failed to map collection name '{}': {}", collection_name, e),
+                    &format!("Failed to map collection name '{}'", collection_name),
                     &path,
                 ));
             }
@@ -61,12 +62,13 @@ impl IndexHandler {
     }
 
     /// Handle an index tool request.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<IndexArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|e| McpError::invalid_params(format!("Invalid arguments: {e}"), None))?;
+            .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
         match args.action {
             IndexAction::Start => {
@@ -85,10 +87,13 @@ impl IndexHandler {
                         &path,
                         timer.elapsed(),
                     )),
-                    Err(e) => Ok(ResponseFormatter::format_indexing_error(
-                        &format!("Indexing failed: {}", e),
-                        &path,
-                    )),
+                    Err(e) => {
+                        let _ = e;
+                        Ok(ResponseFormatter::format_indexing_error(
+                            "Indexing failed",
+                            &path,
+                        ))
+                    }
                 }
             }
             IndexAction::Status => {
@@ -97,11 +102,12 @@ impl IndexHandler {
             }
             IndexAction::Clear => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
-                let milvus_collection = match map_collection_name(collection_name) {
+                let milvus_collection = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
                     Err(e) => {
+                        let _ = e;
                         return Ok(ResponseFormatter::format_indexing_error(
-                            &format!("Failed to map collection name '{}': {}", collection_name, e),
+                            &format!("Failed to map collection name '{}'", collection_name),
                             &PathBuf::from("."),
                         ));
                     }

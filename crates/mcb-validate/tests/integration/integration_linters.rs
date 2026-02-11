@@ -290,6 +290,7 @@ fn test_lint_violation_structure() {
         message: "Unused import".to_string(),
         severity: "error".to_string(),
         category: "quality".to_string(),
+        file_path_cache: None,
     };
 
     assert_eq!(violation.rule, "F401");
@@ -355,8 +356,6 @@ fn test_public_api_accessible() {
 // Run with: cargo test --package mcb-validate -- --ignored
 
 /// Test real ruff execution against Python files
-///
-/// Phase 1 deliverable: "cargo test `integration_linters` passes with real Clippy/Ruff output"
 #[test]
 fn test_ruff_real_execution() {
     use std::process::Command;
@@ -423,8 +422,6 @@ def example():
 }
 
 /// Test real clippy execution against Rust code
-///
-/// Phase 1 deliverable: "cargo test `integration_linters` passes with real Clippy/Ruff output"
 #[test]
 fn test_clippy_real_execution() {
     use std::process::Command;

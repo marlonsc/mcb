@@ -15,6 +15,46 @@ use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
+use std::path::PathBuf;
+use std::sync::OnceLock;
+
+fn find_test_config_path() -> Option<PathBuf> {
+    let mut candidates = Vec::new();
+
+    if let Ok(current_dir) = std::env::current_dir() {
+        for dir in current_dir.ancestors() {
+            candidates.push(dir.join("config").join("tests.toml"));
+        }
+    }
+
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    for dir in manifest_dir.ancestors() {
+        candidates.push(dir.join("config").join("tests.toml"));
+    }
+
+    candidates.into_iter().find(|path| path.exists())
+}
+
+fn test_services_table() -> Option<&'static toml::value::Table> {
+    static TEST_SERVICES: OnceLock<Option<toml::value::Table>> = OnceLock::new();
+
+    TEST_SERVICES
+        .get_or_init(|| {
+            let config_path = find_test_config_path()?;
+            let content = std::fs::read_to_string(config_path).ok()?;
+            let value = toml::from_str::<toml::Value>(&content).ok()?;
+            value.get("test_services")?.as_table().cloned()
+        })
+        .as_ref()
+}
+
+fn test_service_url(key: &str) -> String {
+    test_services_table()
+        .and_then(|services| services.get(key))
+        .and_then(|value| value.as_str())
+        .map(str::to_string)
+        .unwrap_or_else(|| panic!("missing test_services.{key} in config/tests.toml"))
+}
 
 // ============================================================================
 // Embedding Registry Tests - Real Provider Resolution
@@ -139,8 +179,10 @@ mod vector_store_registry_tests {
 
     #[test]
     fn test_config_builder() {
-        let milvus_uri =
+        let milvus_uri = test_service_url("milvus_address");
+        let strict_milvus_uri =
             mcb_domain::test_services_config::required_test_service_url("milvus_address");
+        assert_eq!(milvus_uri, strict_milvus_uri);
         let config = VectorStoreProviderConfig::new("milvus")
             .with_uri(&milvus_uri)
             .with_collection("embeddings")
@@ -207,7 +249,10 @@ mod cache_registry_tests {
 
     #[test]
     fn test_config_builder() {
-        let redis_uri = mcb_domain::test_services_config::required_test_service_url("redis_url");
+        let redis_uri = test_service_url("redis_url");
+        let strict_redis_uri =
+            mcb_domain::test_services_config::required_test_service_url("redis_url");
+        assert_eq!(redis_uri, strict_redis_uri);
         let config = CacheProviderConfig::new("redis")
             .with_uri(&redis_uri)
             .with_max_size(10000)

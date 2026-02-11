@@ -1,5 +1,6 @@
 //! Project entities for repository management and detection.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Registered project in MCB - serves as root entity linking collections, observations, and file hashes.
@@ -7,6 +8,8 @@ use serde::{Deserialize, Serialize};
 pub struct Project {
     /// Unique identifier for the project.
     pub id: String,
+    /// Organization this project belongs to (tenant isolation).
+    pub org_id: String,
     /// Display name of the project.
     pub name: String,
     /// Absolute filesystem path to the project root.
@@ -109,7 +112,7 @@ pub struct DetectedProject {
 }
 
 // ============================================================================
-// Phase 5: Workflow State (ADR-032)
+// Workflow State
 // ============================================================================
 
 /// Represents the execution state of a project phase.
@@ -157,7 +160,7 @@ impl std::str::FromStr for PhaseStatus {
 }
 
 /// Classifies the nature of a project issue.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum IssueType {
     /// Represents a unit of work to be performed.
     Task,
@@ -201,7 +204,7 @@ impl std::str::FromStr for IssueType {
 }
 
 /// Tracks the lifecycle state of an issue.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum IssueStatus {
     /// Indicates the issue is new and awaiting action.
     Open,
@@ -310,13 +313,18 @@ pub struct ProjectPhase {
 }
 
 /// Represents a unit of work, bug, or feature request within a project.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ProjectIssue {
     /// Unique identifier for the issue.
     pub id: String,
+    /// Organization this issue belongs to (tenant isolation).
+    pub org_id: String,
     /// Identifier of the project this issue belongs to.
     pub project_id: String,
+    /// User identifier of the issue creator.
+    pub created_by: String,
     /// Optional phase this issue belongs to.
+    #[serde(default)]
     pub phase_id: Option<String>,
     /// Concise summary of the issue.
     pub title: String,
@@ -329,15 +337,35 @@ pub struct ProjectIssue {
     /// Priority 0-4 (0=critical, 4=backlog).
     pub priority: i32,
     /// User identifier of the person assigned to this issue.
+    #[serde(default)]
     pub assignee: Option<String>,
     /// Set of tags or categories associated with the issue.
     pub labels: Vec<String>,
+    /// Estimated effort in minutes.
+    #[serde(default)]
+    pub estimated_minutes: Option<i64>,
+    /// Actual effort in minutes.
+    #[serde(default)]
+    pub actual_minutes: Option<i64>,
+    /// Free-form operational notes (Beads-compatible).
+    #[serde(default)]
+    pub notes: String,
+    /// Free-form design notes (Beads-compatible).
+    #[serde(default)]
+    pub design: String,
+    /// Optional parent issue identifier for sub-task relationships.
+    #[serde(default)]
+    pub parent_issue_id: Option<String>,
     /// Timestamp when the issue was created (Unix epoch).
     pub created_at: i64,
     /// Timestamp when the issue was last updated (Unix epoch).
     pub updated_at: i64,
     /// Timestamp when the issue was closed (Unix epoch).
+    #[serde(default)]
     pub closed_at: Option<i64>,
+    /// Human-readable reason why the issue was closed.
+    #[serde(default)]
+    pub closed_reason: String,
 }
 
 /// Represents a directed relationship between two issues.

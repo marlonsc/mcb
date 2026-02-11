@@ -37,7 +37,7 @@ Thumbs.db
 .agent/
 .codex/
 .cursor/
-.gemini/
+# .gemini/ — UN-IGNORED: contains Gemini Code Assist config (config.yaml, styleguide.md)
 .opencode/
 .arbor/
 openspec/
@@ -233,3 +233,4 @@ reference/
 .mypy_cache/
 .pytest_cache/
 .venv/
+

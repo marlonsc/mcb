@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// Represents the status of a quality gate check.
@@ -60,8 +59,7 @@ pub struct QualityGateResult {
     pub status: QualityGateStatus,
     /// Optional message providing additional details about the result.
     pub message: Option<String>,
-    /// Timestamp when the quality gate was executed.
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: i64,
     /// Optional identifier linking this result to a specific execution context.
     pub execution_id: Option<String>,
 }

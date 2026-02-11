@@ -15,7 +15,10 @@ use mcb_domain::ports::admin::{
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
 use mcb_domain::ports::providers::CacheProvider;
-use mcb_domain::ports::services::ProjectServiceInterface;
+use mcb_domain::ports::repositories::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
+    VcsEntityRepository,
+};
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
@@ -51,8 +54,16 @@ pub struct AdminState {
     pub service_manager: Option<Arc<ServiceManager>>,
     /// Cache provider for stats
     pub cache: Option<Arc<dyn CacheProvider>>,
-    /// Project workflow service for project/phase/issue navigation
-    pub project_workflow: Option<Arc<dyn ProjectServiceInterface>>,
+    /// Project workflow repository used by admin CRUD pages.
+    pub project_workflow: Option<Arc<dyn ProjectRepository>>,
+    /// VCS entity repository used by admin CRUD pages.
+    pub vcs_entity: Option<Arc<dyn VcsEntityRepository>>,
+    /// Plan entity repository used by admin CRUD pages.
+    pub plan_entity: Option<Arc<dyn PlanEntityRepository>>,
+    /// Issue entity repository used by admin CRUD pages.
+    pub issue_entity: Option<Arc<dyn IssueEntityRepository>>,
+    /// Organization entity repository used by admin CRUD pages.
+    pub org_entity: Option<Arc<dyn OrgEntityRepository>>,
 }
 
 /// Health check response for admin API
@@ -69,6 +80,7 @@ pub struct AdminHealthResponse {
 /// Health check endpoint
 #[get("/health")]
 pub fn health_check(state: &State<AdminState>) -> Json<AdminHealthResponse> {
+    tracing::info!("health_check called");
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
 
@@ -82,6 +94,7 @@ pub fn health_check(state: &State<AdminState>) -> Json<AdminHealthResponse> {
 /// Get performance metrics endpoint (protected)
 #[get("/metrics")]
 pub fn get_metrics(_auth: AdminAuth, state: &State<AdminState>) -> Json<PerformanceMetricsData> {
+    tracing::info!("get_metrics called");
     let metrics = state.metrics.get_performance_metrics();
     Json(metrics)
 }
@@ -102,6 +115,7 @@ pub struct JobsStatusResponse {
 /// List all background jobs
 #[get("/jobs")]
 pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
+    tracing::info!("get_jobs_status called");
     let operations = state.indexing.get_operations();
 
     let jobs: Vec<Job> = operations
@@ -147,34 +161,13 @@ pub struct ProjectsBrowseResponse {
     pub total: usize,
 }
 
-/// Project phases response
-#[derive(Serialize)]
-pub struct ProjectPhasesBrowseResponse {
-    /// Project identifier
-    pub project_id: String,
-    /// Phases for this project
-    pub phases: Vec<mcb_domain::entities::project::ProjectPhase>,
-    /// Total number of phases
-    pub total: usize,
-}
-
-/// Project issues response
-#[derive(Serialize)]
-pub struct ProjectIssuesBrowseResponse {
-    /// Project identifier
-    pub project_id: String,
-    /// Issues for this project
-    pub issues: Vec<mcb_domain::entities::project::ProjectIssue>,
-    /// Total number of issues
-    pub total: usize,
-}
-
 /// List workflow projects for browse entity graph
 #[get("/projects")]
 pub async fn list_browse_projects(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<Json<ProjectsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_projects called");
     let Some(project_workflow) = &state.project_workflow else {
         return Err((
             Status::ServiceUnavailable,
@@ -184,85 +177,212 @@ pub async fn list_browse_projects(
         ));
     };
 
-    match project_workflow.list_projects().await {
+    // TODO(phase-1): extract org_id from admin auth context
+    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    match project_workflow.list(org_ctx.org_id.as_str()).await {
         Ok(projects) => {
             let total = projects.len();
             Ok(Json(ProjectsBrowseResponse { projects, total }))
         }
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list projects");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list projects".to_string(),
+                }),
+            ))
+        }
     }
 }
 
-/// List phases for a workflow project
-#[get("/projects/<project_id>/phases")]
-pub async fn list_browse_project_phases(
+/// Response payload for the repositories browse endpoint.
+#[derive(Serialize)]
+pub struct RepositoriesBrowseResponse {
+    /// List of repositories.
+    pub repositories: Vec<mcb_domain::entities::repository::Repository>,
+    /// Total number of repositories.
+    pub total: usize,
+}
+
+/// Response payload for the plans browse endpoint.
+#[derive(Serialize)]
+pub struct PlansBrowseResponse {
+    /// List of plans.
+    pub plans: Vec<mcb_domain::entities::plan::Plan>,
+    /// Total number of plans.
+    pub total: usize,
+}
+
+/// Response payload for the issues browse endpoint.
+#[derive(Serialize)]
+pub struct IssuesBrowseResponse {
+    /// List of issues.
+    pub issues: Vec<mcb_domain::entities::project::ProjectIssue>,
+    /// Total number of issues.
+    pub total: usize,
+}
+
+/// Response payload for the organizations browse endpoint.
+#[derive(Serialize)]
+pub struct OrganizationsBrowseResponse {
+    /// List of organizations.
+    pub organizations: Vec<mcb_domain::entities::organization::Organization>,
+    /// Total number of organizations.
+    pub total: usize,
+}
+
+/// List repositories for browse entity graph.
+#[get("/repositories?<project_id>")]
+pub async fn list_browse_repositories(
     _auth: AdminAuth,
     state: &State<AdminState>,
-    project_id: &str,
-) -> Result<Json<ProjectPhasesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
-    let Some(project_workflow) = &state.project_workflow else {
+    project_id: Option<String>,
+) -> Result<Json<RepositoriesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_repositories called");
+    let Some(vcs_entity) = &state.vcs_entity else {
         return Err((
             Status::ServiceUnavailable,
             Json(CacheErrorResponse {
-                error: "Project workflow service not available".to_string(),
+                error: "VCS entity service not available".to_string(),
             }),
         ));
     };
 
-    match project_workflow.list_phases(project_id).await {
-        Ok(phases) => {
-            let total = phases.len();
-            Ok(Json(ProjectPhasesBrowseResponse {
-                project_id: project_id.to_string(),
-                phases,
+    // TODO(phase-1): extract org_id from admin auth context
+    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    let pid = project_id.as_deref().unwrap_or("");
+
+    match vcs_entity
+        .list_repositories(org_ctx.org_id.as_str(), pid)
+        .await
+    {
+        Ok(repositories) => {
+            let total = repositories.len();
+            Ok(Json(RepositoriesBrowseResponse {
+                repositories,
                 total,
             }))
         }
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list repositories");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list repositories".to_string(),
+                }),
+            ))
+        }
     }
 }
 
-/// List issues for a workflow project
-#[get("/projects/<project_id>/issues")]
-pub async fn list_browse_project_issues(
+/// List plans for browse entity graph.
+#[get("/plans?<project_id>")]
+pub async fn list_browse_plans(
     _auth: AdminAuth,
     state: &State<AdminState>,
-    project_id: &str,
-) -> Result<Json<ProjectIssuesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
-    let Some(project_workflow) = &state.project_workflow else {
+    project_id: Option<String>,
+) -> Result<Json<PlansBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_plans called");
+    let Some(plan_entity) = &state.plan_entity else {
         return Err((
             Status::ServiceUnavailable,
             Json(CacheErrorResponse {
-                error: "Project workflow service not available".to_string(),
+                error: "Plan entity service not available".to_string(),
             }),
         ));
     };
 
-    match project_workflow.list_issues(project_id, None).await {
+    // TODO(phase-1): extract org_id from admin auth context
+    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    let pid = project_id.as_deref().unwrap_or("");
+
+    match plan_entity.list_plans(org_ctx.org_id.as_str(), pid).await {
+        Ok(plans) => {
+            let total = plans.len();
+            Ok(Json(PlansBrowseResponse { plans, total }))
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list plans");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list plans".to_string(),
+                }),
+            ))
+        }
+    }
+}
+
+/// List issues for browse entity graph.
+#[get("/issues?<project_id>")]
+pub async fn list_browse_issues(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+    project_id: Option<String>,
+) -> Result<Json<IssuesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_issues called");
+    let Some(issue_entity) = &state.issue_entity else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Issue entity service not available".to_string(),
+            }),
+        ));
+    };
+
+    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    let pid = project_id.as_deref().unwrap_or("");
+
+    match issue_entity.list_issues(org_ctx.org_id.as_str(), pid).await {
         Ok(issues) => {
             let total = issues.len();
-            Ok(Json(ProjectIssuesBrowseResponse {
-                project_id: project_id.to_string(),
-                issues,
+            Ok(Json(IssuesBrowseResponse { issues, total }))
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list issues");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list issues".to_string(),
+                }),
+            ))
+        }
+    }
+}
+
+/// List organizations for browse entity graph.
+#[get("/organizations")]
+pub async fn list_browse_organizations(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+) -> Result<Json<OrganizationsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    let Some(org_entity) = &state.org_entity else {
+        return Err((
+            Status::ServiceUnavailable,
+            Json(CacheErrorResponse {
+                error: "Org entity service not available".to_string(),
+            }),
+        ));
+    };
+
+    match org_entity.list_orgs().await {
+        Ok(organizations) => {
+            let total = organizations.len();
+            Ok(Json(OrganizationsBrowseResponse {
+                organizations,
                 total,
             }))
         }
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to list organizations");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to list organizations".to_string(),
+                }),
+            ))
+        }
     }
 }
 
@@ -287,6 +407,7 @@ pub struct LivenessResponse {
 /// Readiness check endpoint (for k8s/docker health checks)
 #[get("/ready")]
 pub fn readiness_check(state: &State<AdminState>) -> (Status, Json<ReadinessResponse>) {
+    tracing::info!("readiness_check called");
     let metrics = state.metrics.get_performance_metrics();
 
     // Consider ready if server has been up for at least 1 second
@@ -312,6 +433,7 @@ pub fn readiness_check(state: &State<AdminState>) -> (Status, Json<ReadinessResp
 /// Liveness check endpoint (for k8s/docker health checks)
 #[get("/live")]
 pub fn liveness_check(state: &State<AdminState>) -> (Status, Json<LivenessResponse>) {
+    tracing::info!("liveness_check called");
     let metrics = state.metrics.get_performance_metrics();
     (
         Status::Ok,
@@ -385,6 +507,7 @@ pub fn shutdown(
     state: &State<AdminState>,
     request: Json<ShutdownRequest>,
 ) -> (Status, Json<ShutdownResponse>) {
+    tracing::info!("shutdown called");
     let request = request.into_inner();
 
     let Some(coordinator) = &state.shutdown_coordinator else {
@@ -451,6 +574,7 @@ pub fn extended_health_check(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Json<ExtendedHealthResponse> {
+    tracing::info!("extended_health_check called");
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
     let now = current_timestamp();
@@ -592,6 +716,7 @@ pub async fn get_cache_stats(
     state: &State<AdminState>,
 ) -> Result<Json<mcb_domain::ports::providers::cache::CacheStats>, (Status, Json<CacheErrorResponse>)>
 {
+    tracing::info!("get_cache_stats called");
     let Some(cache) = &state.cache else {
         return Err((
             Status::ServiceUnavailable,
@@ -603,11 +728,14 @@ pub async fn get_cache_stats(
 
     match cache.stats().await {
         Ok(stats) => Ok(Json(stats)),
-        Err(e) => Err((
-            Status::InternalServerError,
-            Json(CacheErrorResponse {
-                error: e.to_string(),
-            }),
-        )),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to get cache stats");
+            Err((
+                Status::InternalServerError,
+                Json(CacheErrorResponse {
+                    error: "Failed to retrieve cache statistics".to_string(),
+                }),
+            ))
+        }
     }
 }

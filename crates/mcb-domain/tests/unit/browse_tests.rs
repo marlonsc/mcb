@@ -1,7 +1,4 @@
-//! Unit tests for browse value objects
-//!
-//! Moved from inline tests in src/value_objects/browse.rs
-//! per test organization standards.
+//! Unit tests for browse value objects.
 
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo};
 

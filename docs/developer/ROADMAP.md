@@ -69,22 +69,6 @@ Enterprise-grade platform with SLA guarantees, compliance certifications, and hi
 
 ---
 
-## Version History
-
-| Version | Date | Key Changes |
-|---------|------|-------------|
-| v0.0.1 | 2026-01-06 | Architectural foundation, provider framework |
-| v0.0.2 | 2026-01-06 | Documentation, CI/CD infrastructure |
-| v0.0.3 | 2026-01-07 | Circuit breaker, health checks, Gemini/VoyageAI providers |
-| v0.1.0 | 2026-01-11 | First stable release, 14 languages, systemd integration |
-| v0.1.2 | 2026-01-18 | Linkme provider registration, mcb-validate crate, Admin UI |
-| v0.1.3 | 2026-01-27 | Config consolidation, validation fixes |
-| v0.1.4 | 2026-01-28 | RCA integration, security fixes |
-| v0.1.5 | 2026-01-31 | Anthropic/Pinecone/Qdrant providers, health endpoints |
-| **v0.2.0** | **2026-02-10** | **Stabilization, rebranding, DDL fix, test isolation, docs overhaul** |
-
----
-
 ## Development Principles
 
 1. **ADR-Driven**: Architectural decisions documented before implementation

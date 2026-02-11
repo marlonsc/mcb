@@ -106,12 +106,12 @@ pub struct Job {
     pub total_items: usize,
     /// Description of the item currently being processed
     pub current_item: Option<String>,
-    /// When the job was created/queued
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    /// When the job started running (if applicable)
-    pub started_at: Option<chrono::DateTime<chrono::Utc>>,
-    /// When the job reached a terminal state (if applicable)
-    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// When the job was created/queued (Unix epoch seconds)
+    pub created_at: i64,
+    /// When the job started running (Unix epoch seconds, if applicable)
+    pub started_at: Option<i64>,
+    /// When the job reached a terminal state (Unix epoch seconds, if applicable)
+    pub completed_at: Option<i64>,
     /// Result metadata (populated on completion)
     pub result: Option<JobResult>,
 }
@@ -128,7 +128,7 @@ impl Job {
             processed_items: 0,
             total_items: 0,
             current_item: None,
-            created_at: chrono::Utc::now(),
+            created_at: chrono::Utc::now().timestamp(),
             started_at: None,
             completed_at: None,
             result: None,

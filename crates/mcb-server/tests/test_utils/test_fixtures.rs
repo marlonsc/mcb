@@ -12,9 +12,6 @@ use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use tempfile::TempDir;
 
-#[allow(unused_imports)]
-use crate::test_utils::mock_services::MockMemoryRepository;
-
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
 // -----------------------------------------------------------------------------
@@ -34,7 +31,6 @@ pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
 /// Extract text content from Content slice, joining with newline.
 ///
 /// Shared helper used by golden integration tests and tools e2e tests.
-#[allow(dead_code)]
 pub fn extract_text_content(content: &[rmcp::model::Content]) -> String {
     extract_text_content_with_sep(content, "\n")
 }
@@ -202,8 +198,12 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
         .with_project_service(services.project_service)
-        .with_project_workflow_service(ctx.project_workflow_service())
+        .with_project_workflow_service(services.project_repository)
         .with_vcs_provider(services.vcs_provider)
+        .with_vcs_entity_repository(services.vcs_entity_repository)
+        .with_plan_entity_repository(services.plan_entity_repository)
+        .with_issue_entity_repository(services.issue_entity_repository)
+        .with_org_entity_repository(services.org_entity_repository)
         .build()
         .expect("Failed to build MCP server");
 

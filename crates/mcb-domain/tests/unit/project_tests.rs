@@ -135,7 +135,9 @@ fn test_project_phase_construction() {
 fn test_project_issue_construction() {
     let issue = ProjectIssue {
         id: "iss-001".to_string(),
+        org_id: "org-1".to_string(),
         project_id: "proj-1".to_string(),
+        created_by: "creator".to_string(),
         phase_id: Some("ph-001".to_string()),
         title: "Fix bug".to_string(),
         description: "Something is broken".to_string(),
@@ -144,9 +146,15 @@ fn test_project_issue_construction() {
         priority: 1,
         assignee: Some("alice".to_string()),
         labels: vec!["urgent".to_string()],
+        estimated_minutes: None,
+        actual_minutes: None,
+        notes: String::new(),
+        design: String::new(),
+        parent_issue_id: None,
         created_at: 1000,
         updated_at: 1000,
         closed_at: None,
+        closed_reason: String::new(),
     };
     assert_eq!(issue.id, "iss-001");
     assert_eq!(issue.priority, 1);

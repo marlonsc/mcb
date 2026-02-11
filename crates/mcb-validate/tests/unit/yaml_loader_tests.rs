@@ -2,8 +2,60 @@
 
 #[cfg(test)]
 mod yaml_loader_tests {
+    use std::collections::BTreeSet;
+    use std::path::Path;
+
+    use mcb_validate::EmbeddedRules;
+    use mcb_validate::FileConfig;
     use mcb_validate::rules::yaml_loader::YamlRuleLoader;
     use tempfile::TempDir;
+
+    fn build_substitution_variables(workspace_root: &Path) -> serde_yaml::Value {
+        let file_config = FileConfig::load(workspace_root);
+        let variables_val = serde_yaml::to_value(&file_config.rules.naming).expect("yaml value");
+        let mut variables = variables_val
+            .as_mapping()
+            .expect("naming config mapping")
+            .clone();
+
+        let crates = [
+            "domain",
+            "application",
+            "providers",
+            "infrastructure",
+            "server",
+            "validate",
+            "language_support",
+            "ast_utils",
+        ];
+        for name in crates {
+            let key = format!("{name}_crate");
+            if let Some(val) = variables.get(serde_yaml::Value::String(key.clone()))
+                && let Some(s) = val.as_str()
+            {
+                variables.insert(
+                    serde_yaml::Value::String(format!("{name}_module")),
+                    serde_yaml::Value::String(s.replace('-', "_")),
+                );
+            }
+        }
+
+        if let Some(domain_val) = variables.get(serde_yaml::Value::String("domain_crate".into()))
+            && let Some(domain_str) = domain_val.as_str()
+        {
+            let prefix = if let Some(idx) = domain_str.find('-') {
+                domain_str[0..idx].to_string()
+            } else {
+                domain_str.to_string()
+            };
+            variables.insert(
+                serde_yaml::Value::String("project_prefix".into()),
+                serde_yaml::Value::String(prefix),
+            );
+        }
+
+        serde_yaml::Value::Mapping(variables)
+    }
 
     #[tokio::test]
     async fn test_load_valid_rule() {
@@ -102,7 +154,7 @@ config:
 
     #[tokio::test]
     async fn test_yaml_rule_execution_detects_violations() {
-        use mcb_validate::ArchitectureValidator;
+        use mcb_validate::{ValidationConfig, ValidatorRegistry};
 
         // Use a known workspace root path (go up from mcb-validate crate to workspace)
         let workspace_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -112,32 +164,15 @@ config:
             .unwrap()
             .to_path_buf();
 
-        let validator = ArchitectureValidator::new(&workspace_root);
+        let config = ValidationConfig::new(&workspace_root);
+        let registry = ValidatorRegistry::standard_for(&workspace_root);
 
-        // Test that YAML-based validation can execute rules
-        match validator.validate_with_yaml_rules().await {
+        match registry.validate_named(&config, &["quality"]) {
             Ok(report) => {
                 println!("YAML validation completed successfully");
-                println!(
-                    "Total violations found: {}",
-                    report.summary.total_violations
-                );
+                println!("Total violations found: {}", report.len());
 
-                // Debug: print all violations found
-                for (category, violations) in &report.violations_by_category {
-                    println!("Category '{}': {} violations", category, violations.len());
-                    for violation in violations.iter().take(3) {
-                        println!("  - {}: {}", violation.id, violation.message);
-                    }
-                }
-
-                // Check if QUAL006 (file size rule) was loaded and executed
-                let qual006_violations = report
-                    .violations_by_category
-                    .get("quality")
-                    .map_or(0, |violations| {
-                        violations.iter().filter(|v| v.id == "QUAL006").count()
-                    });
+                let qual006_violations = report.iter().filter(|v| v.id() == "QUAL006").count();
 
                 if qual006_violations > 0 {
                     println!(
@@ -147,7 +182,6 @@ config:
                     println!("⚠️  QUAL006 detected 0 violations - rule may not be working");
                 }
 
-                // The rule should at least be loaded and executed without panicking
                 println!("✅ YAML rule execution completed successfully!");
             }
             Err(e) => {
@@ -159,5 +193,52 @@ config:
 
         // Ensure test executed successfully
         // Test completed successfully
+    }
+
+    #[tokio::test]
+    async fn test_embedded_rules_load() {
+        let workspace_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let variables = build_substitution_variables(&workspace_root);
+        let embedded = EmbeddedRules::all_yaml();
+        let mut loader =
+            YamlRuleLoader::from_embedded_with_variables(&embedded, Some(variables)).unwrap();
+        let rules = loader.load_all_rules().await.unwrap();
+
+        assert!(!rules.is_empty());
+        assert!(rules.iter().any(|rule| rule.id == "CA001"));
+    }
+
+    #[tokio::test]
+    async fn test_embedded_rules_equivalence() {
+        let workspace_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+
+        let file_config = FileConfig::load(&workspace_root);
+        let rules_dir = workspace_root.join(file_config.general.rules_path);
+        let variables = build_substitution_variables(&workspace_root);
+
+        let mut fs_loader =
+            YamlRuleLoader::with_variables(rules_dir, Some(variables.clone())).unwrap();
+        let fs_rules = fs_loader.load_all_rules().await.unwrap();
+
+        let embedded = EmbeddedRules::all_yaml();
+        let mut embedded_loader =
+            YamlRuleLoader::from_embedded_with_variables(&embedded, Some(variables)).unwrap();
+        let embedded_rules = embedded_loader.load_all_rules().await.unwrap();
+
+        let fs_ids: BTreeSet<String> = fs_rules.into_iter().map(|rule| rule.id).collect();
+        let embedded_ids: BTreeSet<String> =
+            embedded_rules.into_iter().map(|rule| rule.id).collect();
+
+        assert_eq!(embedded_ids, fs_ids);
     }
 }

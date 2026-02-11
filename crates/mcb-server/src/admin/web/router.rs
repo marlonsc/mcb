@@ -2,9 +2,88 @@
 //!
 //! Router configuration for the admin web interface.
 
-use rocket::{Build, Rocket, routes};
+use std::sync::Arc;
 
+use async_trait::async_trait;
+use mcb_domain::error::Result;
+use mcb_domain::events::DomainEvent;
+use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+use rocket::{Build, Rocket, routes};
+use rocket_dyn_templates::Template;
+
+use super::entity_handlers;
 use super::handlers;
+use crate::admin::handlers::AdminState;
+
+/// Minimal no-op event bus for the standalone web UI Rocket instance.
+///
+/// Used by [`web_rocket`] so that Rocket's sentinel check for
+/// `Option<&State<AdminState>>` in entity handlers passes without
+/// requiring a full production event bus.
+struct NullEventBus;
+
+#[async_trait]
+impl EventBusProvider for NullEventBus {
+    async fn publish_event(&self, _event: DomainEvent) -> Result<()> {
+        Ok(())
+    }
+    async fn subscribe_events(&self) -> Result<DomainEventStream> {
+        Ok(Box::pin(futures::stream::empty()))
+    }
+    fn has_subscribers(&self) -> bool {
+        false
+    }
+    async fn publish(&self, _topic: &str, _payload: &[u8]) -> Result<()> {
+        Ok(())
+    }
+    async fn subscribe(&self, _topic: &str) -> Result<String> {
+        Ok(String::new())
+    }
+}
+
+/// Build a minimal [`AdminState`] with no real service backends.
+///
+/// Entity handlers degrade gracefully (return empty lists / null records)
+/// when the service adapters resolve to `None`.
+fn default_admin_state() -> AdminState {
+    AdminState {
+        metrics: Arc::new(AtomicPerformanceMetrics::new()),
+        indexing: Arc::new(DefaultIndexingOperations::new()),
+        config_watcher: None,
+        current_config: AppConfig::default(),
+        config_path: None,
+        shutdown_coordinator: None,
+        shutdown_timeout_secs: 30,
+        event_bus: Arc::new(NullEventBus),
+        service_manager: None,
+        cache: None,
+        project_workflow: None,
+        vcs_entity: None,
+        plan_entity: None,
+        issue_entity: None,
+        org_entity: None,
+    }
+}
+
+/// Returns the path to the Handlebars templates directory.
+///
+/// Searches multiple candidate locations to support both workspace-level
+/// execution (cargo test from root) and crate-level execution.
+#[must_use]
+pub fn template_dir() -> String {
+    let candidates = ["crates/mcb-server/templates", "templates"];
+    for candidate in &candidates {
+        let path = std::path::Path::new(candidate);
+        if path.exists() && path.is_dir() {
+            tracing::debug!(template_dir = %candidate, "Resolved template directory");
+            return (*candidate).to_string();
+        }
+    }
+    tracing::warn!("No template directory found, using default 'templates'");
+    "templates".to_string()
+}
 
 /// Create the admin web UI rocket instance
 ///
@@ -20,39 +99,35 @@ use super::handlers;
 /// - GET `/ui/browse/tree` - Browse tree view page (Wave 3)
 /// - GET `/favicon.ico` - Favicon
 pub fn web_rocket() -> Rocket<Build> {
-    rocket::build().mount(
-        "/",
-        routes![
-            handlers::dashboard,
-            handlers::dashboard_ui,
-            handlers::config_page,
-            handlers::health_page,
-            handlers::jobs_page,
-            handlers::browse_page,
-            handlers::browse_collection_page,
-            handlers::browse_file_page,
-            handlers::browse_tree_page,
-            handlers::shared_js,
-            handlers::theme_css,
-            handlers::favicon,
-        ],
-    )
-}
+    let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
 
-/// Get routes for mounting in a parent Rocket instance
-pub fn web_routes() -> Vec<rocket::Route> {
-    routes![
-        handlers::dashboard,
-        handlers::dashboard_ui,
-        handlers::config_page,
-        handlers::health_page,
-        handlers::jobs_page,
-        handlers::browse_page,
-        handlers::browse_collection_page,
-        handlers::browse_file_page,
-        handlers::browse_tree_page,
-        handlers::shared_js,
-        handlers::theme_css,
-        handlers::favicon,
-    ]
+    rocket::custom(figment)
+        .manage(default_admin_state())
+        .attach(Template::fairing())
+        .mount(
+            "/",
+            routes![
+                handlers::dashboard,
+                handlers::dashboard_ui,
+                handlers::config_page,
+                handlers::health_page,
+                handlers::jobs_page,
+                handlers::browse_page,
+                handlers::browse_collection_page,
+                handlers::browse_file_page,
+                handlers::browse_tree_page,
+                handlers::shared_js,
+                handlers::theme_css,
+                handlers::favicon,
+                entity_handlers::entities_index,
+                entity_handlers::entities_list,
+                entity_handlers::entities_new_form,
+                entity_handlers::entities_detail,
+                entity_handlers::entities_edit_form,
+                entity_handlers::entities_delete_confirm,
+                entity_handlers::entities_create,
+                entity_handlers::entities_update,
+                entity_handlers::entities_delete,
+            ],
+        )
 }

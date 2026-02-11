@@ -48,6 +48,7 @@ pub async fn get_config(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> (Status, Json<ConfigResponse>) {
+    tracing::info!("get_config called");
     let config = if let Some(watcher) = &state.config_watcher {
         watcher.get_config().await
     } else {
@@ -83,6 +84,7 @@ pub async fn reload_config(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> (Status, Json<ConfigReloadResponse>) {
+    tracing::info!("reload_config called");
     let Some(watcher) = &state.config_watcher else {
         return (
             Status::ServiceUnavailable,
@@ -123,6 +125,7 @@ pub async fn update_config_section(
     section: &str,
     request: Json<ConfigSectionUpdateRequest>,
 ) -> (Status, Json<ConfigSectionUpdateResponse>) {
+    tracing::info!("update_config_section called");
     let request = request.into_inner();
 
     // Validate and get required resources

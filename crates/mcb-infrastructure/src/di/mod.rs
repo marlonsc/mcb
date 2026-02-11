@@ -28,7 +28,6 @@ pub mod admin;
 pub mod bootstrap;
 pub mod catalog;
 pub mod database_resolver;
-pub mod dispatch;
 pub mod handle;
 pub mod handles;
 pub mod modules;
@@ -43,7 +42,6 @@ pub use admin::{
 };
 pub use bootstrap::*;
 pub use catalog::build_catalog;
-pub use dispatch::*;
 pub use handle::Handle;
 pub use handles::{
     CacheHandleExt, CacheProviderHandle, EmbeddingHandleExt, EmbeddingProviderHandle,

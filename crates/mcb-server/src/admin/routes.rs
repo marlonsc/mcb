@@ -5,6 +5,7 @@
 use std::sync::Arc;
 
 use rocket::{Build, Rocket, routes};
+use rocket_dyn_templates::Template;
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::{
@@ -13,17 +14,22 @@ use super::browse_handlers::{
 use super::config_handlers::{get_config, reload_config, update_config_section};
 use super::handlers::{
     AdminState, extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
-    list_browse_project_issues, list_browse_project_phases, list_browse_projects, liveness_check,
-    readiness_check, shutdown,
+    list_browse_issues, list_browse_organizations, list_browse_plans, list_browse_projects,
+    list_browse_repositories, liveness_check, readiness_check, shutdown,
 };
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
 };
 use super::sse::events_stream;
+use super::web::entity_handlers::{
+    entities_create, entities_delete, entities_delete_confirm, entities_detail, entities_edit_form,
+    entities_index, entities_list, entities_new_form, entities_update,
+};
 use super::web::handlers::{
     browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
     dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
 };
+use super::web::router::template_dir;
 
 /// Create the admin API rocket instance
 ///
@@ -58,7 +64,12 @@ pub fn admin_rocket(
     auth_config: Arc<AdminAuthConfig>,
     browse_state: Option<BrowseState>,
 ) -> Rocket<Build> {
-    let mut rocket = rocket::build().manage(state).manage(auth_config);
+    let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
+
+    let mut rocket = rocket::custom(figment)
+        .manage(state)
+        .manage(auth_config)
+        .attach(Template::fairing());
 
     // Mount base routes
     rocket = rocket.mount(
@@ -70,8 +81,10 @@ pub fn admin_rocket(
             get_metrics,
             get_jobs_status,
             list_browse_projects,
-            list_browse_project_phases,
-            list_browse_project_issues,
+            list_browse_repositories,
+            list_browse_plans,
+            list_browse_issues,
+            list_browse_organizations,
             readiness_check,
             liveness_check,
             // Service control
@@ -103,6 +116,15 @@ pub fn admin_rocket(
             browse_tree_page,
             theme_css,
             shared_js,
+            entities_index,
+            entities_list,
+            entities_new_form,
+            entities_detail,
+            entities_edit_form,
+            entities_delete_confirm,
+            entities_create,
+            entities_update,
+            entities_delete,
         ],
     );
 

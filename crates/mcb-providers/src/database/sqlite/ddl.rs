@@ -64,6 +64,12 @@ fn column_type_sqlite(ty: &ColumnType) -> &'static str {
     match ty {
         ColumnType::Text => "TEXT",
         ColumnType::Integer => "INTEGER",
+        ColumnType::Real => "REAL",
+        ColumnType::Boolean => "INTEGER",
+        ColumnType::Blob => "BLOB",
+        ColumnType::Json => "TEXT",
+        ColumnType::Uuid => "TEXT",
+        ColumnType::Timestamp => "INTEGER",
     }
 }
 
@@ -76,12 +82,20 @@ fn table_to_sqlite_ddl_with_fk(
     unique_constraints: &[&UniqueConstraintDef],
     foreign_keys: &[&ForeignKeyDef],
 ) -> String {
+    let pk_cols: Vec<&str> = table
+        .columns
+        .iter()
+        .filter(|c| c.primary_key)
+        .map(|c| c.name.as_str())
+        .collect();
+    let is_composite_pk = pk_cols.len() > 1;
+
     let cols: Vec<String> = table
         .columns
         .iter()
         .map(|c| {
             let mut s = format!("{} {}", c.name, column_type_sqlite(&c.type_));
-            if c.primary_key {
+            if c.primary_key && !is_composite_pk {
                 s.push_str(" PRIMARY KEY");
                 if c.auto_increment && matches!(c.type_, ColumnType::Integer) {
                     s.push_str(" AUTOINCREMENT");
@@ -90,7 +104,9 @@ fn table_to_sqlite_ddl_with_fk(
             if c.unique && !c.primary_key {
                 s.push_str(" UNIQUE");
             }
-            if c.not_null && !c.primary_key {
+            // Composite PK columns get NOT NULL (SQLite requires it explicitly
+            // for composite PKs, unlike single-column PKs which imply it).
+            if c.not_null && (!c.primary_key || is_composite_pk) {
                 s.push_str(" NOT NULL");
             }
             if let Some(fk) = foreign_keys.iter().find(|fk| fk.from_column == c.name) {
@@ -100,6 +116,9 @@ fn table_to_sqlite_ddl_with_fk(
         })
         .collect();
     let mut parts = cols;
+    if is_composite_pk {
+        parts.push(format!("PRIMARY KEY({})", pk_cols.join(", ")));
+    }
     for u in unique_constraints {
         parts.push(format!("UNIQUE({})", u.columns.join(", ")));
     }

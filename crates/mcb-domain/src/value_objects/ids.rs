@@ -83,3 +83,25 @@ define_id!(
     OperationId,
     "Strong typed identifier for an indexing operation"
 );
+define_id!(
+    OrgId,
+    "Strong typed identifier for an organization (tenant isolation)"
+);
+define_id!(UserId, "Strong typed identifier for a user");
+define_id!(TeamId, "Strong typed identifier for a team");
+define_id!(ApiKeyId, "Strong typed identifier for an API key");
+define_id!(BranchId, "Strong typed identifier for a tracked branch");
+define_id!(WorktreeId, "Strong typed identifier for a worktree");
+define_id!(
+    AssignmentId,
+    "Strong typed identifier for an agent-worktree assignment"
+);
+define_id!(PlanId, "Strong typed identifier for a plan");
+define_id!(PlanVersionId, "Strong typed identifier for a plan version");
+define_id!(PlanReviewId, "Strong typed identifier for a plan review");
+define_id!(IssueId, "Strong typed identifier for a project issue");
+define_id!(
+    IssueCommentId,
+    "Strong typed identifier for an issue comment"
+);
+define_id!(IssueLabelId, "Strong typed identifier for an issue label");

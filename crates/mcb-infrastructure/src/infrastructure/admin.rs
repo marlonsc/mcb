@@ -1,7 +1,6 @@
 //! Admin Service Implementations
 //!
 //! Real and null implementations of admin port traits.
-//! Moved from mcb-providers to mcb-infrastructure per Clean Architecture.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -177,7 +176,7 @@ impl DefaultIndexingOperations {
             status: mcb_domain::ports::admin::IndexingOperationStatus::Starting,
             total_files,
             processed_files: 0,
-            started_at: chrono::Utc::now(),
+            started_at: chrono::Utc::now().timestamp(),
         };
         self.operations.insert(id.clone(), operation);
         id

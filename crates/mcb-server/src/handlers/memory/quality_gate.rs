@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use chrono::TimeZone;
 use mcb_domain::entities::memory::{
     MemoryFilter, ObservationMetadata, ObservationType, QualityGateResult,
 };
@@ -12,9 +11,11 @@ use uuid::Uuid;
 
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Stores a quality gate result as a semantic observation.
+#[tracing::instrument(skip_all)]
 pub async fn store_quality_gate(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -39,9 +40,8 @@ pub async fn store_quality_gate(
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
-    let timestamp = MemoryHelpers::get_i64(data, "timestamp")
-        .and_then(|ts| chrono::Utc.timestamp_opt(ts, 0).single())
-        .unwrap_or_else(chrono::Utc::now);
+    let timestamp =
+        MemoryHelpers::get_i64(data, "timestamp").unwrap_or_else(|| chrono::Utc::now().timestamp());
     let quality_gate = QualityGateResult {
         id: Uuid::new_v4().to_string(),
         gate_name: gate_name.clone(),
@@ -93,14 +93,12 @@ pub async fn store_quality_gate(
             "observation_id": observation_id,
             "deduplicated": deduplicated,
         })),
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to store quality gate: {}",
-            e
-        ))])),
+        Err(e) => Ok(to_opaque_tool_error(e)),
     }
 }
 
 /// Retrieves stored quality gate results based on filters.
+#[tracing::instrument(skip_all)]
 pub async fn get_quality_gates(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -155,9 +153,6 @@ pub async fn get_quality_gates(
                 "quality_gates": gates,
             }))
         }
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to get quality gates: {}",
-            e
-        ))])),
+        Err(e) => Ok(to_opaque_tool_error(e)),
     }
 }

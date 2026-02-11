@@ -1,0 +1,119 @@
+{{#*inline "head_extra"}}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <style>
+        .file-row { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
+        .file-row:last-child { border-bottom: none; }
+        .file-row:hover { background: var(--bg-secondary); }
+        .lang-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .lang-rust { background: #fef3c7; color: #92400e; }
+        .lang-python { background: #dbeafe; color: #1d4ed8; }
+        .lang-javascript { background: #fef9c3; color: #854d0e; }
+        .lang-typescript { background: #dbeafe; color: #1d4ed8; }
+        .lang-go { background: #d1fae5; color: #047857; }
+        .lang-java { background: #fee2e2; color: #991b1b; }
+        .lang-default { background: #f3f4f6; color: #374151; }
+    </style>
+{{/inline}}
+
+{{#*inline "page"}}
+<nav class="mb-4 text-sm">
+    <ol class="flex items-center space-x-2">
+        <li><a href="/ui/browse" class="text-blue-600 hover:underline">Collections</a></li>
+        <li><span class="text-secondary">/</span></li>
+        <li class="text-primary font-medium" id="collection-name">Loading...</li>
+    </ol>
+</nav>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-primary" id="page-title">Files</h1>
+    <p class="mt-2 text-secondary" id="page-subtitle">Browse indexed files in this collection</p>
+</div>
+
+<div class="card">
+    <div class="flex items-center justify-between p-4 border-b border-theme">
+        <div class="flex items-center space-x-4">
+            <input type="text" id="search-input" placeholder="Filter files..."
+                   class="border border-theme rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-primary text-primary"
+                   oninput="filterFiles()">
+            <span id="file-count" class="text-sm text-secondary">Loading...</span>
+        </div>
+        <button class="btn btn-primary" onclick="loadFiles()">Refresh</button>
+    </div>
+    <div id="files-list">
+        <div class="file-row flex items-center justify-center py-8">
+            <p class="text-secondary">Loading files...</p>
+        </div>
+    </div>
+</div>
+{{/inline}}
+
+{{#*inline "page_scripts"}}
+<script>
+    var pathParts = window.location.pathname.split('/');
+    var collectionName = decodeURIComponent(pathParts[pathParts.length - 1]);
+    var allFiles = [];
+    document.getElementById('collection-name').textContent = collectionName;
+    document.getElementById('page-title').textContent = collectionName;
+
+    function getLangClass(lang) {
+        var l = String(lang||'').toLowerCase();
+        var map = {rust:'lang-rust',python:'lang-python',javascript:'lang-javascript',typescript:'lang-typescript',go:'lang-go',java:'lang-java'};
+        return map[l] || 'lang-default';
+    }
+    function formatSize(bytes) { var b = toNumberSafe(bytes,0); if(b>=1048576) return (b/1048576).toFixed(1)+' MB'; if(b>=1024) return (b/1024).toFixed(1)+' KB'; return b+' B'; }
+
+    async function loadFiles() {
+        var list = document.getElementById('files-list');
+        list.innerHTML = '<div class="file-row flex items-center justify-center py-8"><p class="text-secondary">Loading...</p></div>';
+        try {
+            var resp = await adminFetch('/collections/' + encodeURIComponent(collectionName) + '/files?limit=1000');
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            var data = await resp.json();
+            allFiles = toArraySafe(data && data.files);
+            document.getElementById('file-count').textContent = toIntegerSafe(data && data.total, allFiles.length) + ' files';
+            renderFiles(allFiles);
+        } catch(e) {
+            document.getElementById('file-count').textContent = '\u2014';
+            list.innerHTML = '<div class="file-row flex flex-col items-center justify-center py-8"><p class="text-red-500 font-medium">Error loading files</p><p class="text-secondary text-sm mt-2">' + escapeHtml(e.message) + '</p></div>';
+        }
+    }
+
+    function filterFiles() {
+        var q = document.getElementById('search-input').value.toLowerCase();
+        renderFiles(allFiles.filter(function(f) { return String(f.path||'').toLowerCase().indexOf(q)>=0 || String(f.language||'').toLowerCase().indexOf(q)>=0; }));
+    }
+
+    function renderFiles(files) {
+        var list = document.getElementById('files-list');
+        if (!files || files.length === 0) { list.innerHTML = '<div class="file-row flex flex-col items-center justify-center py-8"><p class="text-secondary">No files found</p></div>'; return; }
+        list.innerHTML = files.map(function(f) {
+            return '<a href="/ui/browse/' + encodeURIComponent(collectionName) + '/file?path=' + encodeURIComponent(f.path) + '" class="file-row flex items-center justify-between block">' +
+                '<div class="flex items-center space-x-3 min-w-0"><svg class="w-5 h-5 text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' +
+                '<span class="truncate text-primary">' + escapeHtml(f.path) + '</span></div>' +
+                '<div class="flex items-center space-x-4 flex-shrink-0 ml-4"><span class="lang-badge ' + getLangClass(f.language) + '">' + escapeHtml(String(f.language||'unknown')) + '</span>' +
+                '<span class="text-sm text-secondary">' + toIntegerSafe(f.chunk_count,0) + ' chunks</span>' +
+                (f.size_bytes ? '<span class="text-sm text-muted">' + formatSize(f.size_bytes) + '</span>' : '') +
+                '<svg class="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div></a>';
+        }).join('');
+    }
+
+    var selectedIndex = -1;
+    document.addEventListener('keydown', function(e) {
+        if (document.activeElement === document.getElementById('search-input')) { if (e.key==='Escape') { document.getElementById('search-input').blur(); e.preventDefault(); } return; }
+        var rows = document.querySelectorAll('#files-list a.file-row');
+        if (rows.length === 0) return;
+        if (e.key==='j'||e.key==='ArrowDown') { selectedIndex = Math.min(selectedIndex+1,rows.length-1); } else if (e.key==='k'||e.key==='ArrowUp') { selectedIndex = Math.max(selectedIndex-1,0); }
+        else if (e.key==='g') { selectedIndex = e.shiftKey ? rows.length-1 : 0; }
+        else if (e.key==='Enter' && selectedIndex>=0 && rows[selectedIndex]) { rows[selectedIndex].click(); return; }
+        else if (e.key==='/') { document.getElementById('search-input').focus(); e.preventDefault(); return; }
+        else return;
+        e.preventDefault();
+        rows.forEach(function(r) { r.classList.remove('bg-selected','ring-2','ring-blue-500'); });
+        if (selectedIndex>=0 && rows[selectedIndex]) { rows[selectedIndex].classList.add('bg-selected','ring-2','ring-blue-500'); rows[selectedIndex].scrollIntoView({block:'nearest'}); }
+    });
+
+    document.addEventListener('DOMContentLoaded', loadFiles);
+</script>
+{{/inline}}
+
+{{> admin/layout}}

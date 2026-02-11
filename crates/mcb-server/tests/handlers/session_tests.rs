@@ -17,10 +17,12 @@ macro_rules! session_test {
             let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
 
             let args = SessionArgs {
+                org_id: None,
                 action: $action,
                 session_id: Some($session_id),
                 data: None,
                 project_id: None,
+                worktree_id: None,
                 agent_type: None,
                 status: None,
                 limit: None,
@@ -40,10 +42,12 @@ macro_rules! session_test {
             let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
 
             let args = SessionArgs {
+                org_id: None,
                 action: $action,
                 session_id: None,
                 data: Some($data),
                 project_id: None $(.or($project_id))?,
+                worktree_id: None,
                 agent_type: None $(.or($agent_type))?,
                 status: None,
                 limit: None,
@@ -64,10 +68,12 @@ macro_rules! session_test {
             let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
 
             let args = SessionArgs {
+                org_id: None,
                 action: $action,
                 session_id: None,
                 data: $data,
                 project_id: None $(.or($project_id))?,
+                worktree_id: None,
                 agent_type: None $(.or($agent_type))?,
                 status: None,
                 limit: None,

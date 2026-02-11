@@ -228,9 +228,3 @@ impl NamespacedCacheProvider {
         self.provider.clone()
     }
 }
-
-impl From<SharedCacheProvider> for Arc<dyn CacheProvider> {
-    fn from(shared: SharedCacheProvider) -> Self {
-        shared.provider
-    }
-}

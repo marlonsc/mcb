@@ -35,7 +35,10 @@ pub(crate) fn validate_collection_name(collection: &str) -> Result<(), Validatio
 pub mod consolidated;
 
 pub use consolidated::{
-    AgentAction, AgentArgs, IndexAction, IndexArgs, MemoryAction, MemoryArgs, MemoryResource,
-    ProjectAction, ProjectArgs, ProjectResource, SearchArgs, SearchResource, SessionAction,
-    SessionArgs, ValidateAction, ValidateArgs, ValidateScope, VcsAction, VcsArgs,
+    AgentAction, AgentArgs, IndexAction, IndexArgs, IssueEntityAction, IssueEntityArgs,
+    IssueEntityResource, MemoryAction, MemoryArgs, MemoryResource, OrgEntityAction, OrgEntityArgs,
+    OrgEntityResource, PlanEntityAction, PlanEntityArgs, PlanEntityResource, ProjectAction,
+    ProjectArgs, ProjectResource, SearchArgs, SearchResource, SessionAction, SessionArgs,
+    ValidateAction, ValidateArgs, ValidateScope, VcsAction, VcsArgs, VcsEntityAction,
+    VcsEntityArgs, VcsEntityResource,
 };

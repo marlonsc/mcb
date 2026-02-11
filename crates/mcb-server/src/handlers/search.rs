@@ -6,14 +6,16 @@ use std::time::Instant;
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
+use mcb_domain::value_objects::OrgContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
 use validator::Validate;
 
 use crate::args::{SearchArgs, SearchResource};
-use crate::collection_mapping::map_collection_name;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::collections::normalize_collection_name;
 
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]
@@ -35,16 +37,17 @@ impl SearchHandler {
     }
 
     /// Handle a search tool request.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
         if let Err(e) = args.validate() {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Invalid arguments: {}",
-                e
-            ))]));
+            return Ok(to_opaque_tool_error(e));
         }
+
+        let org_ctx = OrgContext::default();
+        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
 
         let query = args.query.trim();
         if query.is_empty() {
@@ -56,13 +59,10 @@ impl SearchHandler {
         match args.resource {
             SearchResource::Code => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
-                let collection_id = match map_collection_name(collection_name) {
+                let collection_id = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
                     Err(e) => {
-                        return Ok(CallToolResult::error(vec![Content::text(format!(
-                            "Failed to map collection name '{}': {}",
-                            collection_name, e
-                        ))]));
+                        return Ok(to_opaque_tool_error(e));
                     }
                 };
                 let timer = Instant::now();
@@ -78,10 +78,7 @@ impl SearchHandler {
                         timer.elapsed(),
                         limit,
                     ),
-                    Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                        "Search failed for query '{}': {}",
-                        query, e
-                    ))])),
+                    Err(e) => Ok(to_opaque_tool_error(e)),
                 }
             }
             SearchResource::Memory | SearchResource::Context => {
@@ -120,11 +117,8 @@ impl SearchHandler {
                                 })
                             })
                             .collect();
-                        let fmt_err = |e: McpError| {
-                            McpError::internal_error(
-                                format!("Failed to format memory search results: {e}"),
-                                None,
-                            )
+                        let fmt_err = |_e: McpError| {
+                            McpError::internal_error("failed to format memory search results", None)
                         };
                         let response = ResponseFormatter::json_success(&serde_json::json!({
                             "query": query,
@@ -134,10 +128,7 @@ impl SearchHandler {
                         .map_err(fmt_err)?;
                         Ok(response)
                     }
-                    Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                        "Memory search failed for query '{}': {}",
-                        query, e
-                    ))])),
+                    Err(e) => Ok(to_opaque_tool_error(e)),
                 }
             }
         }

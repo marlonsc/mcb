@@ -78,6 +78,7 @@ pub async fn list_collections(
     _auth: AdminAuth,
     state: &State<BrowseState>,
 ) -> Result<Json<CollectionListResponse>, (Status, Json<BrowseErrorResponse>)> {
+    tracing::info!("list_collections called");
     let collections = state.browser.list_collections().await.map_err(|e| {
         (
             Status::InternalServerError,
@@ -123,6 +124,7 @@ pub async fn list_collection_files(
     name: &str,
     limit: Option<usize>,
 ) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
+    tracing::info!("list_collection_files called");
     let limit = limit.unwrap_or(100);
     let collection = CollectionId::new(name);
 
@@ -185,6 +187,7 @@ pub async fn get_file_chunks(
     name: &str,
     path: std::path::PathBuf,
 ) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
+    tracing::info!("get_file_chunks called");
     let file_path = path.to_string_lossy().to_string();
     let collection_id = CollectionId::new(name);
 
@@ -268,6 +271,7 @@ pub async fn get_collection_tree(
     state: &State<BrowseState>,
     name: &str,
 ) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
+    tracing::info!("get_collection_tree called");
     let collection_id = CollectionId::new(name);
     let files = state
         .browser

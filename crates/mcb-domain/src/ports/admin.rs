@@ -148,8 +148,8 @@ pub struct IndexingOperation {
     pub processed_files: usize,
     /// Path of the file currently being processed.
     pub current_file: Option<String>,
-    /// Timestamp when the operation started.
-    pub started_at: chrono::DateTime<chrono::Utc>,
+    /// Timestamp when the operation started (Unix epoch seconds).
+    pub started_at: i64,
 }
 
 /// Interface for tracking indexing operations
@@ -216,10 +216,10 @@ pub struct ValidationOperation {
     pub processed_items: usize,
     /// Total number of items to process.
     pub total_items: usize,
-    /// Timestamp when the operation started.
-    pub started_at: chrono::DateTime<chrono::Utc>,
-    /// Timestamp when the operation completed (if applicable).
-    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// Timestamp when the operation started (Unix epoch seconds).
+    pub started_at: i64,
+    /// Timestamp when the operation completed (Unix epoch seconds, if applicable).
+    pub completed_at: Option<i64>,
     /// Final result of the validation (if completed).
     pub result: Option<ValidationOperationResult>,
 }

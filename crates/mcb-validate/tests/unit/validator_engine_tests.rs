@@ -1,6 +1,4 @@
 //! Unit tests for `ValidatorEngine`.
-//!
-//! Moved from inline tests in `src/engines/validator_engine.rs`.
 
 use mcb_validate::engines::ValidatorEngine;
 

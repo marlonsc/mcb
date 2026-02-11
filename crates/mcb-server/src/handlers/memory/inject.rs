@@ -11,6 +11,7 @@ use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 
 /// Injects semantic memory context into the MCP tool result based on the provided filter.
+#[tracing::instrument(skip_all)]
 pub async fn inject_context(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,

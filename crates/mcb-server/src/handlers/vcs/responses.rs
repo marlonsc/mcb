@@ -1,11 +1,9 @@
 use std::path::PathBuf;
 
-use mcb_domain::entities::vcs::RepositoryId;
 use rmcp::model::{CallToolResult, Content};
 use serde::Serialize;
 
 use crate::args::VcsArgs;
-use crate::vcs_repository_registry;
 
 /// Response structure for listing repositories.
 #[derive(Serialize)]
@@ -141,15 +139,9 @@ pub fn repo_path(args: &VcsArgs) -> Result<PathBuf, CallToolResult> {
         return Ok(PathBuf::from(path));
     }
     if let Some(repo_id) = args.repo_id.as_ref() {
-        let id = RepositoryId::from(repo_id.as_str());
-        match vcs_repository_registry::lookup_repository_path(&id) {
-            Ok(path) => return Ok(path),
-            Err(_) => {
-                return Err(CallToolResult::error(vec![Content::text(format!(
-                    "Repository not found: {repo_id}"
-                ))]));
-            }
-        }
+        return Err(CallToolResult::error(vec![Content::text(format!(
+            "Repository not found: {repo_id}. Provide repo_path instead."
+        ))]));
     }
     Err(CallToolResult::error(vec![Content::text(
         "Missing repo_path or repo_id",

@@ -59,9 +59,12 @@ pub mod admin;
 pub mod args;
 pub mod auth;
 pub mod builder;
-pub mod collection_mapping;
 pub mod constants;
+/// Error mapping helpers for MCP-safe responses.
+pub mod error_mapping;
 pub mod formatter;
+/// Shared helper functions for tool handlers.
+pub mod handler_helpers;
 pub mod handlers;
 pub mod hooks;
 pub mod init;
@@ -69,8 +72,8 @@ pub mod mcp_server;
 pub mod session;
 pub mod tools;
 pub mod transport;
+/// Shared utility functions.
 pub mod utils;
-pub mod vcs_repository_registry;
 
 // Re-export core types for public API
 pub use builder::McpServerBuilder;

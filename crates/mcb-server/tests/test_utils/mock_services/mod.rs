@@ -3,11 +3,15 @@
 pub mod agent;
 pub mod context;
 pub mod indexing;
+pub mod issue_entity;
 pub mod memory;
+pub mod org_entity;
+pub mod plan_entity;
 pub mod project;
 pub mod search;
 pub mod validation;
 pub mod vcs;
+pub mod vcs_entity;
 
 #[allow(unused_imports)]
 pub use agent::MockAgentRepository;
@@ -15,13 +19,21 @@ pub use agent::MockAgentSessionService;
 pub use context::MockContextService;
 pub use indexing::MockIndexingService;
 #[allow(unused_imports)]
+pub use issue_entity::MockIssueEntityRepository;
+#[allow(unused_imports)]
 pub use memory::MockMemoryRepository;
 pub use memory::MockMemoryService;
 #[allow(unused_imports)]
-pub use project::{MockProjectRepository, MockProjectService, MockProjectWorkflowService};
+pub use org_entity::MockOrgEntityRepository;
+#[allow(unused_imports)]
+pub use plan_entity::MockPlanEntityRepository;
+#[allow(unused_imports)]
+pub use project::{MockProjectDetectorService, MockProjectRepository};
 pub use search::MockSearchService;
 pub use validation::MockValidationService;
 pub use vcs::MockVcsProvider;
+#[allow(unused_imports)]
+pub use vcs_entity::MockVcsEntityRepository;
 
 #[cfg(test)]
 mod constructibility {
@@ -90,9 +102,12 @@ mod constructibility {
         let memory = MockMemoryService::new();
         assert!(memory.observations.lock().unwrap().is_empty());
 
+        let _agent_repo = MockAgentRepository::new();
+        let _memory_repo = MockMemoryRepository::new();
+
         let vcs = MockVcsProvider::new().with_failure();
         assert!(vcs.should_fail.load(Ordering::SeqCst));
 
-        let _project = MockProjectService::new();
+        let _project = MockProjectDetectorService::new();
     }
 }

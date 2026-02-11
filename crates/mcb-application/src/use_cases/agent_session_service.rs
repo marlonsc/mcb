@@ -75,6 +75,14 @@ impl AgentSessionServiceInterface for AgentSessionServiceImpl {
         self.repository.list_sessions(query).await
     }
 
+    async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
+        self.repository.list_sessions_by_project(project_id).await
+    }
+
+    async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
+        self.repository.list_sessions_by_worktree(worktree_id).await
+    }
+
     async fn end_session(
         &self,
         id: &str,

@@ -1,0 +1,50 @@
+{{#*inline "page"}}
+<div class="breadcrumb">
+    <a href="/ui/entities">Entities</a>
+    <span class="separator">/</span>
+    <span>{{title}}</span>
+</div>
+
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-primary">{{title}}</h1>
+        <p class="mt-2 text-secondary">Group: <span class="badge badge-blue">{{entity_group}}</span></p>
+    </div>
+    <a class="btn btn-primary" href="/ui/entities/{{entity_slug}}/new">+ New {{title}}</a>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                {{#each fields}}
+                <th>{{label}}</th>
+                {{/each}}
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#if has_records}}
+                {{#each records}}
+                <tr>
+                    {{#each ../field_names}}
+                    <td>{{lookup ../this this}}</td>
+                    {{/each}}
+                    <td class="flex gap-2">
+                        <a class="btn btn-secondary btn-sm" href="/ui/entities/{{../../entity_slug}}/{{lookup this "id"}}">View</a>
+                        <a class="btn btn-primary btn-sm" href="/ui/entities/{{../../entity_slug}}/{{lookup this "id"}}/edit">Edit</a>
+                    </td>
+                </tr>
+                {{/each}}
+            {{else}}
+            <tr>
+                <td class="text-secondary text-center py-8" colspan="99">
+                    No records yet. <a href="/ui/entities/{{entity_slug}}/new" class="text-accent" style="color: var(--accent);">Create one</a>
+                </td>
+            </tr>
+            {{/if}}
+        </tbody>
+    </table>
+</div>
+{{/inline}}
+{{> admin/layout}}

@@ -18,7 +18,6 @@ use super::rusty_rules_engine::RustyRulesEngineWrapper;
 use super::validator_engine::ValidatorEngine;
 use crate::Result;
 use crate::ValidationConfig;
-use crate::linters::{LintViolation, LinterEngine, LinterType};
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 
 /// Types of rule engines supported
@@ -314,10 +313,10 @@ impl HybridRuleEngine {
         self.cache.clear();
     }
 
-    /// Execute linter-based validation for rules with `lint_select`
+    /// Execute linter-based validation for rules with `lint_select`.
     ///
-    /// This method runs Ruff and/or Clippy based on the lint codes specified
-    /// in the rule's `lint_select` field and filters the results.
+    /// Delegates to [`YamlRuleExecutor`] for linter detection and execution,
+    /// then converts [`LintViolation`]s to [`RuleViolation`]s.
     pub async fn execute_lint_rule(
         &self,
         rule_id: &str,
@@ -327,57 +326,51 @@ impl HybridRuleEngine {
         severity: Severity,
         category: ViolationCategory,
     ) -> Result<RuleResult> {
+        use crate::linters::YamlRuleExecutor;
+        use crate::rules::yaml_loader::ValidatedRule;
+
         let start_time = std::time::Instant::now();
-        let mut violations = Vec::new();
 
-        // Determine which linters to run based on lint codes
-        let (ruff_codes, clippy_codes) = Self::categorize_lint_codes(lint_select);
+        let stub_rule = ValidatedRule {
+            id: rule_id.to_string(),
+            name: String::new(),
+            category: String::new(),
+            severity: String::new(),
+            enabled: true,
+            description: String::new(),
+            rationale: String::new(),
+            engine: String::new(),
+            config: serde_json::Value::Null,
+            rule_definition: serde_json::Value::Null,
+            fixes: Vec::new(),
+            lint_select: lint_select.to_vec(),
+            message: custom_message.map(String::from),
+            selectors: Vec::new(),
+            ast_query: None,
+            metrics: None,
+        };
 
-        // Collect files to check from context
         let files: Vec<std::path::PathBuf> = context
             .file_contents
             .keys()
             .map(std::path::PathBuf::from)
             .collect();
-
         let file_refs: Vec<&std::path::Path> =
             files.iter().map(std::path::PathBuf::as_path).collect();
 
-        // Run Ruff for Python lint codes
-        if !ruff_codes.is_empty() && !file_refs.is_empty() {
-            let linter = LinterEngine::with_linters(vec![LinterType::Ruff]);
-            if let Ok(lint_violations) = linter.check_files(&file_refs).await {
-                for lv in lint_violations {
-                    if ruff_codes.contains(&lv.rule) {
-                        violations.push(Self::lint_to_rule_violation(
-                            &lv,
-                            rule_id,
-                            custom_message,
-                            severity,
-                            category,
-                        ));
-                    }
-                }
-            }
-        }
+        let lint_violations = YamlRuleExecutor::execute_rule(&stub_rule, &file_refs).await?;
 
-        // Run Clippy for Rust lint codes
-        if !clippy_codes.is_empty() {
-            let linter = LinterEngine::with_linters(vec![LinterType::Clippy]);
-            if let Ok(lint_violations) = linter.check_files(&file_refs).await {
-                for lv in lint_violations {
-                    if clippy_codes.contains(&lv.rule) {
-                        violations.push(Self::lint_to_rule_violation(
-                            &lv,
-                            rule_id,
-                            custom_message,
-                            severity,
-                            category,
-                        ));
-                    }
-                }
-            }
-        }
+        let violations: Vec<RuleViolation> = lint_violations
+            .into_iter()
+            .map(|lv| {
+                let msg = custom_message
+                    .map_or_else(|| lv.message.clone(), |m| format!("{m}: {}", lv.message));
+                RuleViolation::new(rule_id, category, severity, msg)
+                    .with_file(std::path::PathBuf::from(&lv.file))
+                    .with_location(lv.line, lv.column)
+                    .with_context(format!("Linter: {} ({})", lv.rule, lv.category))
+            })
+            .collect();
 
         #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
@@ -386,40 +379,6 @@ impl HybridRuleEngine {
             violations,
             execution_time_ms: execution_time,
         })
-    }
-
-    /// Categorize lint codes into Ruff vs Clippy
-    fn categorize_lint_codes(codes: &[String]) -> (Vec<String>, Vec<String>) {
-        let mut ruff_codes = Vec::new();
-        let mut clippy_codes = Vec::new();
-
-        for code in codes {
-            if code.starts_with("clippy::") {
-                clippy_codes.push(code.clone());
-            } else {
-                // Ruff codes are typically like F401, E501, W291, etc.
-                ruff_codes.push(code.clone());
-            }
-        }
-
-        (ruff_codes, clippy_codes)
-    }
-
-    /// Convert a `LintViolation` to a `RuleViolation`
-    fn lint_to_rule_violation(
-        lv: &LintViolation,
-        rule_id: &str,
-        custom_message: Option<&str>,
-        severity: Severity,
-        category: ViolationCategory,
-    ) -> RuleViolation {
-        let message =
-            custom_message.map_or_else(|| lv.message.clone(), |m| format!("{}: {}", m, lv.message));
-
-        RuleViolation::new(rule_id, category, severity, message)
-            .with_file(std::path::PathBuf::from(&lv.file))
-            .with_location(lv.line, lv.column)
-            .with_context(format!("Linter: {} ({})", lv.rule, lv.category))
     }
 
     /// Check if a rule uses `lint_select` (linter-based validation)

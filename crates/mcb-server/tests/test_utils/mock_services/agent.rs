@@ -13,13 +13,11 @@ use mcb_domain::ports::services::AgentSessionServiceInterface;
 
 use crate::test_utils::helpers::{arc_mutex_hashmap, arc_mutex_vec};
 
-#[allow(dead_code)]
 pub struct MockAgentSessionService {
     sessions: Arc<Mutex<HashMap<String, AgentSession>>>,
 }
 
 impl MockAgentSessionService {
-    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             sessions: arc_mutex_hashmap(),
@@ -30,18 +28,36 @@ impl MockAgentSessionService {
 #[async_trait]
 impl AgentSessionServiceInterface for MockAgentSessionService {
     async fn create_session(&self, session: AgentSession) -> Result<String> {
+        self.sessions
+            .lock()
+            .expect("Lock poisoned")
+            .insert(session.id.clone(), session.clone());
         Ok(session.id.clone())
     }
 
-    async fn get_session(&self, _session_id: &str) -> Result<Option<AgentSession>> {
-        Ok(None)
+    async fn get_session(&self, session_id: &str) -> Result<Option<AgentSession>> {
+        let sessions = self.sessions.lock().expect("Lock poisoned");
+        Ok(sessions.get(session_id).cloned())
     }
 
-    async fn update_session(&self, _session: AgentSession) -> Result<()> {
+    async fn update_session(&self, session: AgentSession) -> Result<()> {
+        self.sessions
+            .lock()
+            .expect("Lock poisoned")
+            .insert(session.id.clone(), session);
         Ok(())
     }
 
     async fn list_sessions(&self, _query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
+        let sessions = self.sessions.lock().expect("Lock poisoned");
+        Ok(sessions.values().cloned().collect())
+    }
+
+    async fn list_sessions_by_project(&self, _project_id: &str) -> Result<Vec<AgentSession>> {
+        Ok(vec![])
+    }
+
+    async fn list_sessions_by_worktree(&self, _worktree_id: &str) -> Result<Vec<AgentSession>> {
         Ok(vec![])
     }
 
@@ -75,7 +91,6 @@ impl AgentSessionServiceInterface for MockAgentSessionService {
     }
 }
 
-#[allow(dead_code)]
 pub struct MockAgentRepository {
     sessions: Arc<Mutex<HashMap<String, AgentSession>>>,
     delegations: Arc<Mutex<Vec<Delegation>>>,
@@ -83,7 +98,6 @@ pub struct MockAgentRepository {
     checkpoints: Arc<Mutex<HashMap<String, Checkpoint>>>,
 }
 
-#[allow(dead_code)]
 impl MockAgentRepository {
     pub fn new() -> Self {
         Self {
@@ -115,6 +129,18 @@ impl MockAgentRepository {
 
         if let Some(status) = &query.status
             && &session.status != status
+        {
+            return false;
+        }
+
+        if let Some(project_id) = &query.project_id
+            && session.project_id.as_ref() != Some(project_id)
+        {
+            return false;
+        }
+
+        if let Some(worktree_id) = &query.worktree_id
+            && session.worktree_id.as_ref() != Some(worktree_id)
         {
             return false;
         }
@@ -156,6 +182,22 @@ impl AgentRepository for MockAgentRepository {
         }
 
         Ok(all)
+    }
+
+    async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
+        self.list_sessions(AgentSessionQuery {
+            project_id: Some(project_id.to_string()),
+            ..AgentSessionQuery::default()
+        })
+        .await
+    }
+
+    async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
+        self.list_sessions(AgentSessionQuery {
+            worktree_id: Some(worktree_id.to_string()),
+            ..AgentSessionQuery::default()
+        })
+        .await
     }
 
     async fn store_delegation(&self, delegation: &Delegation) -> Result<()> {

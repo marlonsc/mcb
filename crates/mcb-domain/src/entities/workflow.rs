@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 /// Workflow session states. Each variant carries context-specific data.
@@ -157,8 +157,8 @@ pub struct Transition {
     pub trigger: TransitionTrigger,
     /// Result of any guard condition check (optional).
     pub guard_result: Option<String>,
-    /// Timestamp when the transition occurred.
-    pub timestamp: DateTime<Utc>,
+    /// Timestamp when the transition occurred (Unix epoch seconds).
+    pub timestamp: i64,
 }
 
 impl Transition {
@@ -178,7 +178,7 @@ impl Transition {
             to_state,
             trigger,
             guard_result,
-            timestamp: Utc::now(),
+            timestamp: Utc::now().timestamp(),
         }
     }
 }
@@ -192,10 +192,8 @@ pub struct WorkflowSession {
     pub project_id: String,
     /// Current state of the workflow.
     pub current_state: WorkflowState,
-    /// Timestamp when the session was created.
-    pub created_at: DateTime<Utc>,
-    /// Timestamp when the session was last updated.
-    pub updated_at: DateTime<Utc>,
+    pub created_at: i64,
+    pub updated_at: i64,
     /// Version number for optimistic concurrency control.
     pub version: u32,
 }
@@ -203,7 +201,7 @@ pub struct WorkflowSession {
 impl WorkflowSession {
     /// Creates a new workflow session in Initializing state.
     pub fn new(id: String, project_id: String) -> Self {
-        let now = Utc::now();
+        let now = Utc::now().timestamp();
         Self {
             id,
             project_id,

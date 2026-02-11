@@ -10,10 +10,12 @@ use uuid::Uuid;
 
 use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 use tracing::error;
 
 /// Creates a new agent session.
+#[tracing::instrument(skip_all)]
 pub async fn create_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
@@ -69,6 +71,9 @@ pub async fn create_session(
         token_count: None,
         tool_calls_count: None,
         delegations_count: None,
+        project_id: SessionHelpers::get_str(data, schema::PROJECT_ID).or(args.project_id.clone()),
+        worktree_id: SessionHelpers::get_str(data, schema::WORKTREE_ID)
+            .or(args.worktree_id.clone()),
     };
     match agent_service.create_session(session).await {
         Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
@@ -78,10 +83,7 @@ pub async fn create_session(
         })),
         Err(e) => {
             error!("Failed to create agent session: {:?}", e);
-            Ok(CallToolResult::error(vec![Content::text(format!(
-                "Failed to create agent session: {}",
-                e
-            ))]))
+            Ok(to_opaque_tool_error(e))
         }
     }
 }

@@ -7,9 +7,11 @@ use rmcp::model::{CallToolResult, Content};
 
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
+use crate::error_mapping::to_opaque_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Stores a session summary in the memory service.
+#[tracing::instrument(skip_all)]
 pub async fn store_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -47,14 +49,12 @@ pub async fn store_session(
             "summary_id": summary_id,
             "session_id": session_id_str,
         })),
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to create session summary: {}",
-            e
-        ))])),
+        Err(e) => Ok(to_opaque_tool_error(e)),
     }
 }
 
 /// Retrieves a session summary from the memory service.
+#[tracing::instrument(skip_all)]
 pub async fn get_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -79,9 +79,6 @@ pub async fn get_session(
         Ok(None) => Ok(CallToolResult::error(vec![Content::text(
             "Session summary not found",
         )])),
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to get session summary: {}",
-            e
-        ))])),
+        Err(e) => Ok(to_opaque_tool_error(e)),
     }
 }

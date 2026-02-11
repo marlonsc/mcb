@@ -56,3 +56,9 @@ serde_json = { workspace = true }
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 targets = ["x86_64-unknown-linux-gnu"]
+
+[dev-dependencies]
+rstest = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }

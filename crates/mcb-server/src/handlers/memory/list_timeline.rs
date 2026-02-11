@@ -7,9 +7,11 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
 use crate::args::MemoryArgs;
+use crate::error_mapping::{to_opaque_mcp_error, to_opaque_tool_error};
 use crate::formatter::ResponseFormatter;
 
 /// Lists semantic memories based on the provided search query and filters.
+#[tracing::instrument(skip_all)]
 pub async fn list_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -63,6 +65,7 @@ pub async fn list_observations(
 }
 
 /// Retrieves a timeline of observations surrounding an anchor observation.
+#[tracing::instrument(skip_all)]
 pub async fn get_timeline(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
@@ -70,12 +73,7 @@ pub async fn get_timeline(
     let anchor_id = if let Some(anchor_id) = args.anchor_id.clone() {
         anchor_id
     } else if let Some(query) = args.query.clone() {
-        let search_err = |e: mcb_domain::Error| {
-            McpError::internal_error(
-                format!("Failed to search memories for timeline anchor: {e}"),
-                None,
-            )
-        };
+        let search_err = |e: mcb_domain::Error| to_opaque_mcp_error(e);
         let results = memory_service
             .search_memories(&query, None, 1)
             .await
@@ -132,9 +130,6 @@ pub async fn get_timeline(
                 "timeline": items,
             }))
         }
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to get timeline: {}",
-            e
-        ))])),
+        Err(e) => Ok(to_opaque_tool_error(e)),
     }
 }

@@ -106,6 +106,10 @@ pub struct SearchArgs {
     #[schemars(description = "Resource to search: code or memory")]
     pub resource: SearchResource,
 
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
     /// Collection name.
     #[schemars(description = "Collection name", with = "String")]
     pub collection: Option<String>,
@@ -251,6 +255,10 @@ pub struct MemoryArgs {
     )]
     pub resource: MemoryResource,
 
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
     /// Data payload for store actions (JSON object).
     #[schemars(
         description = "Data payload for store actions (JSON object)",
@@ -356,6 +364,10 @@ pub struct SessionArgs {
     #[schemars(description = "Action: create, get, update, list, summarize")]
     pub action: SessionAction,
 
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
     /// Session ID (required for get, update, summarize).
     #[schemars(
         description = "Session ID (required for get, update, summarize)",
@@ -373,6 +385,10 @@ pub struct SessionArgs {
     /// Filter by project ID.
     #[schemars(description = "Filter by project ID", with = "String")]
     pub project_id: Option<String>,
+
+    /// Filter by worktree ID.
+    #[schemars(description = "Filter by worktree ID", with = "String")]
+    pub worktree_id: Option<String>,
 
     /// Filter by agent type.
     #[schemars(description = "Filter by agent type", with = "String")]
@@ -407,6 +423,10 @@ pub struct AgentArgs {
     /// Action: log_tool, log_delegation.
     #[schemars(description = "Action: log_tool, log_delegation")]
     pub action: AgentAction,
+
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
 
     /// Session ID for the agent.
     #[schemars(description = "Session ID for the agent")]
@@ -446,6 +466,10 @@ pub struct VcsArgs {
         description = "Action: list_repositories, index_repository, compare_branches, search_branch, analyze_impact"
     )]
     pub action: VcsAction,
+
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
 
     /// Repository identifier.
     #[schemars(description = "Repository identifier", with = "String")]
@@ -493,6 +517,279 @@ pub struct VcsArgs {
     #[schemars(description = "Limit for search or list actions", with = "u32")]
     pub limit: Option<u32>,
 }
+// =============================================================================
+// VCS Entity Tool - Repository, Branch, Worktree, Assignment CRUD
+// =============================================================================
+
+/// CRUD actions for VCS entity resources.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum VcsEntityAction {
+    /// Create a new entity.
+    Create,
+    /// Get an entity by ID.
+    Get,
+    /// Update an existing entity.
+    Update,
+    /// List entities matching criteria.
+    List,
+    /// Delete an entity by ID.
+    Delete,
+    /// Release an assignment.
+    Release,
+}
+
+/// Target resource type for VCS entity operations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum VcsEntityResource {
+    /// Repository resource.
+    Repository,
+    /// Branch resource.
+    Branch,
+    /// Worktree resource.
+    Worktree,
+    /// Agent-worktree assignment resource.
+    Assignment,
+}
+
+/// Arguments for the consolidated `vcs_entity` MCP tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct VcsEntityArgs {
+    /// CRUD action to perform.
+    #[schemars(description = "Action: create, get, update, list, delete, release")]
+    pub action: VcsEntityAction,
+
+    /// Target resource type.
+    #[schemars(description = "Resource: repository, branch, worktree, assignment")]
+    pub resource: VcsEntityResource,
+
+    /// Resource ID (for get/update/delete/release).
+    #[schemars(description = "Resource ID (for get/update/delete/release)")]
+    pub id: Option<String>,
+
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
+    /// Project ID (for repository listing).
+    #[schemars(description = "Project ID (for repository listing)")]
+    pub project_id: Option<String>,
+
+    /// Repository ID (for branch/worktree listing).
+    #[schemars(description = "Repository ID (for branch/worktree listing)")]
+    pub repository_id: Option<String>,
+
+    /// Worktree ID (for assignment listing).
+    #[schemars(description = "Worktree ID (for assignment listing)")]
+    pub worktree_id: Option<String>,
+
+    /// Data payload for create/update (JSON object).
+    #[schemars(
+        description = "Data payload for create/update (JSON object)",
+        with = "serde_json::Value"
+    )]
+    pub data: Option<serde_json::Value>,
+}
+
+/// CRUD actions for plan entity resources.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PlanEntityAction {
+    /// Create a new entity.
+    Create,
+    /// Get an entity by ID.
+    Get,
+    /// Update an existing entity.
+    Update,
+    /// List entities matching criteria.
+    List,
+    /// Delete an entity by ID.
+    Delete,
+}
+
+/// Target resource type for plan entity operations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PlanEntityResource {
+    /// Plan resource.
+    Plan,
+    /// Plan version resource.
+    Version,
+    /// Plan review resource.
+    Review,
+}
+
+/// Arguments for the consolidated `plan_entity` MCP tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct PlanEntityArgs {
+    /// CRUD action to perform.
+    #[schemars(description = "Action: create, get, update, list, delete")]
+    pub action: PlanEntityAction,
+
+    /// Target resource type.
+    #[schemars(description = "Resource: plan, version, review")]
+    pub resource: PlanEntityResource,
+
+    /// Resource ID (for get/update/delete).
+    #[schemars(description = "Resource ID (for get/update/delete)")]
+    pub id: Option<String>,
+
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
+    /// Project ID (for plan listing).
+    #[schemars(description = "Project ID (for plan listing)")]
+    pub project_id: Option<String>,
+
+    /// Plan ID (for version listing).
+    #[schemars(description = "Plan ID (for version listing)")]
+    pub plan_id: Option<String>,
+
+    /// Plan version ID (for review listing).
+    #[schemars(description = "Plan version ID (for review listing)")]
+    pub plan_version_id: Option<String>,
+
+    /// Data payload for create/update (JSON object).
+    #[schemars(
+        description = "Data payload for create/update (JSON object)",
+        with = "serde_json::Value"
+    )]
+    pub data: Option<serde_json::Value>,
+}
+
+/// Actions for org entity resource management
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OrgEntityAction {
+    /// Create a new entity.
+    Create,
+    /// Get an entity by identifier.
+    Get,
+    /// Update an existing entity.
+    Update,
+    /// List entities matching filters.
+    List,
+    /// Delete an entity by identifier.
+    Delete,
+}
+
+/// Types of org entity resources
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OrgEntityResource {
+    /// Organization resource.
+    Org,
+    /// User resource.
+    User,
+    /// Team resource.
+    Team,
+    /// Team-member link resource.
+    TeamMember,
+    /// API key resource.
+    ApiKey,
+}
+
+/// Arguments for the consolidated `org_entity` MCP tool
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct OrgEntityArgs {
+    /// Action to perform.
+    #[schemars(description = "Action: create, get, update, list, delete")]
+    pub action: OrgEntityAction,
+    /// Resource type to target.
+    #[schemars(description = "Resource: org, user, team, team_member, api_key")]
+    pub resource: OrgEntityResource,
+    /// Resource ID for get/update/delete operations.
+    #[schemars(description = "Resource ID (for get/update/delete)")]
+    pub id: Option<String>,
+    /// Organization ID for list operations.
+    #[schemars(description = "Organization ID (for listing users/teams/api_keys)")]
+    pub org_id: Option<String>,
+    /// Team ID used by team-member list/delete.
+    #[schemars(description = "Team ID (for listing members)")]
+    pub team_id: Option<String>,
+    /// User ID used by team-member delete.
+    #[schemars(description = "User ID (for removing team member)")]
+    pub user_id: Option<String>,
+    /// Email used for user lookup when ID is omitted.
+    #[schemars(description = "Email (for user lookup by email)")]
+    pub email: Option<String>,
+    /// JSON payload for create/update actions.
+    #[schemars(description = "Data payload for create/update (JSON object)")]
+    #[schemars(with = "serde_json::Value")]
+    pub data: Option<serde_json::Value>,
+}
+
+/// CRUD actions for issue entity resources.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IssueEntityAction {
+    /// Create a new entity.
+    Create,
+    /// Get an entity by ID.
+    Get,
+    /// Update an existing entity.
+    Update,
+    /// List entities matching criteria.
+    List,
+    /// Delete an entity by ID.
+    Delete,
+}
+
+/// Target resource type for issue entity operations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IssueEntityResource {
+    /// Issue resource.
+    Issue,
+    /// Comment resource.
+    Comment,
+    /// Label resource.
+    Label,
+    /// Label assignment resource.
+    LabelAssignment,
+}
+
+/// Arguments for the consolidated `issue_entity` MCP tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct IssueEntityArgs {
+    /// CRUD action to perform.
+    #[schemars(description = "Action: create, get, update, list, delete")]
+    pub action: IssueEntityAction,
+
+    /// Target resource type.
+    #[schemars(description = "Resource: issue, comment, label, label_assignment")]
+    pub resource: IssueEntityResource,
+
+    /// Resource ID (for get/update/delete).
+    #[schemars(description = "Resource ID (for get/update/delete)")]
+    pub id: Option<String>,
+
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
+    /// Project ID (for issue/label listing).
+    #[schemars(description = "Project ID (for issue/label listing)")]
+    pub project_id: Option<String>,
+
+    /// Issue ID (for comment listing and label assignments).
+    #[schemars(description = "Issue ID (for comment listing and label assignments)")]
+    pub issue_id: Option<String>,
+
+    /// Label ID (for label unassignment).
+    #[schemars(description = "Label ID (for label unassignment)")]
+    pub label_id: Option<String>,
+
+    /// Data payload for create/update (JSON object).
+    #[schemars(
+        description = "Data payload for create/update (JSON object)",
+        with = "serde_json::Value"
+    )]
+    pub data: Option<serde_json::Value>,
+}
+
 // =============================================================================
 // Project Tool - Consolidates all project_* tools (9 tools → 1)
 // =============================================================================

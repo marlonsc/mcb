@@ -21,9 +21,6 @@ pub mod db;
 /// Vector embedding provider and dimension constants.
 pub mod embedding;
 
-/// Error message templates and constants.
-pub mod error_msgs;
-
 /// Event system and messaging constants.
 pub mod events;
 
@@ -53,9 +50,6 @@ pub mod metadata;
 
 /// Metrics collection and reporting constants.
 pub mod metrics;
-
-/// Network communication constants.
-pub mod network;
 
 /// Operations and workflow constants.
 pub mod ops;

@@ -230,11 +230,6 @@ impl ConfigQualityValidator {
         Self { config }
     }
 
-    /// Create a validator with a custom configuration (alias for new)
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self::new(config)
-    }
-
     /// Validate configuration quality across all config files
     pub fn validate(&self) -> Result<Vec<ConfigQualityViolation>> {
         let mut violations = Vec::new();
