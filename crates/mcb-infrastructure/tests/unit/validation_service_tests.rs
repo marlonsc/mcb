@@ -25,33 +25,47 @@ async fn test_list_validators() {
 }
 
 #[tokio::test]
-#[ignore = "Stack overflow on large workspaces - requires RUST_MIN_STACK=8388608"]
 async fn test_validate_mcb_workspace_quality_only() {
     let workspace_root = get_workspace_root();
     let service = InfraValidationService::new();
 
-    let result = service
-        .validate(&workspace_root, Some(&["quality".to_string()]), None)
-        .await;
+    let result = std::thread::Builder::new()
+        .name("validate-quality".into())
+        .stack_size(8 * 1024 * 1024)
+        .spawn(move || {
+            tokio::runtime::Runtime::new()
+                .unwrap()
+                .block_on(service.validate(&workspace_root, Some(&["quality".to_string()]), None))
+        })
+        .expect("spawn thread")
+        .join()
+        .expect("thread join");
 
     assert!(result.is_ok());
 }
 
 #[tokio::test]
-#[ignore = "Stack overflow on large workspaces - requires RUST_MIN_STACK=8388608"]
 async fn test_validate_with_specific_validator() {
     let workspace_root = get_workspace_root();
     let service = InfraValidationService::new();
-    let result = service
-        .validate(
-            &workspace_root,
-            Some(&["quality".to_string()]),
-            Some("warning"),
-        )
-        .await;
+
+    let result = std::thread::Builder::new()
+        .name("validate-specific".into())
+        .stack_size(8 * 1024 * 1024)
+        .spawn(move || {
+            tokio::runtime::Runtime::new()
+                .unwrap()
+                .block_on(service.validate(
+                    &workspace_root,
+                    Some(&["quality".to_string()]),
+                    Some("warning"),
+                ))
+        })
+        .expect("spawn thread")
+        .join()
+        .expect("thread join");
 
     assert!(result.is_ok());
     let report = result.unwrap();
-    // Quality validator should return a valid report
     assert!(report.passed || !report.violations.is_empty());
 }

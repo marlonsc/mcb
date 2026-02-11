@@ -37,3 +37,15 @@ mod agent_repository_tests;
 
 #[path = "unit/transitions_tests.rs"]
 mod transitions_tests;
+
+#[path = "unit/org_entity_repository_tests.rs"]
+mod org_entity_repository_tests;
+
+#[path = "unit/vcs_entity_repository_tests.rs"]
+mod vcs_entity_repository_tests;
+
+#[path = "unit/plan_entity_repository_tests.rs"]
+mod plan_entity_repository_tests;
+
+#[path = "unit/issue_entity_repository_tests.rs"]
+mod issue_entity_repository_tests;
