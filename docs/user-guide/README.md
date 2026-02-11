@@ -48,7 +48,7 @@ make test
 
 ## 🧪 Testing
 
-The project has 3,087+ tests with comprehensive coverage:
+The project has 3,151+ tests with comprehensive coverage:
 
 ```bash
 
