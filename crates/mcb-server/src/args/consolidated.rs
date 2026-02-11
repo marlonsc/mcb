@@ -106,6 +106,10 @@ pub struct SearchArgs {
     #[schemars(description = "Resource to search: code or memory")]
     pub resource: SearchResource,
 
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
     /// Collection name.
     #[schemars(description = "Collection name", with = "String")]
     pub collection: Option<String>,
@@ -251,6 +255,10 @@ pub struct MemoryArgs {
     )]
     pub resource: MemoryResource,
 
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
     /// Data payload for store actions (JSON object).
     #[schemars(
         description = "Data payload for store actions (JSON object)",
@@ -356,6 +364,10 @@ pub struct SessionArgs {
     #[schemars(description = "Action: create, get, update, list, summarize")]
     pub action: SessionAction,
 
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
     /// Session ID (required for get, update, summarize).
     #[schemars(
         description = "Session ID (required for get, update, summarize)",
@@ -412,6 +424,10 @@ pub struct AgentArgs {
     #[schemars(description = "Action: log_tool, log_delegation")]
     pub action: AgentAction,
 
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
+
     /// Session ID for the agent.
     #[schemars(description = "Session ID for the agent")]
     pub session_id: SessionId,
@@ -450,6 +466,10 @@ pub struct VcsArgs {
         description = "Action: list_repositories, index_repository, compare_branches, search_branch, analyze_impact"
     )]
     pub action: VcsAction,
+
+    /// Organization ID (uses default if omitted).
+    #[schemars(description = "Organization ID (uses default if omitted)")]
+    pub org_id: Option<String>,
 
     /// Repository identifier.
     #[schemars(description = "Repository identifier", with = "String")]

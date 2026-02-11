@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::value_objects::OrgContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -33,6 +34,9 @@ impl VcsHandler {
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
+
+        let org_ctx = OrgContext::default();
+        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
 
         match args.action {
             VcsAction::ListRepositories => {

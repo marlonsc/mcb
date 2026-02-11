@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::value_objects::OrgContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -41,6 +42,9 @@ impl SessionHandler {
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
+
+        let org_ctx = OrgContext::default();
+        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
 
         match args.action {
             SessionAction::Create => create::create_session(&self.agent_service, &args).await,
