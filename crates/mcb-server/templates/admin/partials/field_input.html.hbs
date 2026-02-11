@@ -1,0 +1,16 @@
+{{#if is_textarea}}
+<textarea id="{{name}}" name="{{name}}" rows="4" {{#if readonly}}readonly{{/if}}>{{lookup ../record name}}</textarea>
+{{else if is_checkbox}}
+<div style="margin-bottom: 1rem;">
+    <input id="{{name}}" name="{{name}}" type="checkbox" style="width: auto; margin-right: 0.5rem;" {{#if readonly}}disabled{{/if}} />
+</div>
+{{else if is_select}}
+<select id="{{name}}" name="{{name}}" {{#if readonly}}disabled{{/if}}>
+    <option value="">Select...</option>
+    {{#each enum_values}}
+    <option value="{{this}}">{{this}}</option>
+    {{/each}}
+</select>
+{{else}}
+<input id="{{name}}" name="{{name}}" type="{{input_type}}" value="{{lookup ../record name}}" {{#if readonly}}readonly{{/if}} />
+{{/if}}

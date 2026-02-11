@@ -1,11 +1,12 @@
 //! ApiKey entity — bearer tokens for authenticating users and agents.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// An API key is a bearer credential scoped to a user within an
 /// organization. Keys can be narrowed by JSON-encoded scopes and
 /// optionally expire. Revocation is tracked via `revoked_at`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ApiKey {
     /// Unique identifier (UUID).
     pub id: String,

@@ -1,9 +1,10 @@
 //! Issue-related entities used by the `issue_entity` domain.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A comment authored on a project issue.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct IssueComment {
     /// Unique identifier for the comment.
     pub id: String,
@@ -18,7 +19,7 @@ pub struct IssueComment {
 }
 
 /// A reusable issue label scoped to org and project.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct IssueLabel {
     /// Unique identifier for the label.
     pub id: String,
@@ -35,7 +36,7 @@ pub struct IssueLabel {
 }
 
 /// Junction entity assigning labels to issues.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct IssueLabelAssignment {
     /// Issue identifier.
     pub issue_id: String,

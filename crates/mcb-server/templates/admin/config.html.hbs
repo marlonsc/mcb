@@ -1,0 +1,177 @@
+{{#*inline "head_extra"}}
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <style>
+        .btn-success { background: #16a34a; color: white; }
+        .btn-success:hover { background: #15803d; }
+        pre { background: var(--bg-code, #1f2937); color: var(--text-primary, #f3f4f6); padding: 1rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; }
+        .config-section { margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.375rem; }
+        .config-section h4 { font-weight: 600; margin-bottom: 0.5rem; }
+        .input-field { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color, #d1d5db); border-radius: 0.375rem; }
+        .input-field:focus { outline: none; border-color: var(--accent, #2563eb); box-shadow: 0 0 0 2px rgba(59,130,246,0.12); }
+        .notification { padding: 1rem; border-radius: 0.375rem; margin-bottom: 1rem; }
+        .notification-success { background: #dcfce7; color: #166534; }
+        .notification-error { background: #fee2e2; color: #991b1b; }
+    </style>
+{{/inline}}
+
+{{#*inline "page"}}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold">Configuration</h1>
+    <p class="mt-2 text-secondary">View and manage server configuration</p>
+</div>
+
+<div id="notification-area"></div>
+
+<div class="card mb-6">
+    <div class="flex justify-between items-center">
+        <h2 class="text-lg font-semibold">Configuration Actions</h2>
+        <div class="flex space-x-4">
+            <button class="btn btn-secondary" hx-get="/config" hx-target="#config-display" hx-swap="innerHTML">Refresh</button>
+            <button id="reload-config-button" class="btn btn-primary" onclick="reloadConfigFromFile()">Reload from File</button>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <h2 class="text-lg font-semibold mb-4">Current Configuration</h2>
+    <div id="config-display" hx-get="/config" hx-trigger="load, configReloaded from:body">
+        <div class="animate-pulse">
+            <div class="h-64 rounded" style="background: var(--bg-tertiary)"></div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 class="text-lg font-semibold mb-4">Update Configuration Section</h2>
+    <p class="text-secondary mb-4">Modify individual configuration sections. Changes are applied immediately.</p>
+
+    <div class="config-section">
+        <h4>Cache Configuration</h4>
+        <form id="config-cache-form" onsubmit="return applyConfigSection(event, 'cache');">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-secondary mb-1">Enabled</label>
+                    <select name="enabled" class="input-field" id="config-cache-enabled">
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-secondary mb-1">Max Size (bytes)</label>
+                    <input type="number" name="max_size" class="input-field" id="config-cache-max-size" min="0" placeholder="—">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Apply Cache Settings</button>
+        </form>
+    </div>
+
+    <div class="config-section">
+        <h4>Server Configuration</h4>
+        <form id="config-server-form" onsubmit="return applyConfigSection(event, 'server');">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-secondary mb-1">Host</label>
+                    <input type="text" name="host" id="config-server-host" class="input-field" placeholder="—">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-secondary mb-1">Port</label>
+                    <input type="number" name="port" id="config-server-port" class="input-field" min="1" max="65535" placeholder="—">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Apply Server Settings</button>
+        </form>
+    </div>
+</div>
+{{/inline}}
+
+{{#*inline "page_scripts"}}
+<script>
+    function populateConfigForms(data) {
+        if (!data || !data.config) return;
+        var c = data.config;
+        if (c.cache) {
+            var enabledEl = document.getElementById('config-cache-enabled');
+            if (enabledEl) enabledEl.value = c.cache.enabled ? 'true' : 'false';
+            var maxSizeEl = document.getElementById('config-cache-max-size');
+            if (maxSizeEl) { var ms = toIntegerSafe(c.cache.max_size, null); maxSizeEl.value = ms == null ? '' : String(ms); }
+        }
+        if (c.server) {
+            var hostEl = document.getElementById('config-server-host');
+            if (hostEl && c.server.host != null) hostEl.value = c.server.host;
+            var portEl = document.getElementById('config-server-port');
+            if (portEl) { var p = toIntegerSafe(c.server.port, null); portEl.value = p == null ? '' : String(p); }
+        }
+    }
+
+    async function applyConfigSection(evt, section) {
+        evt.preventDefault();
+        var notification = document.getElementById('notification-area');
+        var values;
+        if (section === 'cache') {
+            var maxSizeEl = document.getElementById('config-cache-max-size');
+            var maxSize = maxSizeEl && maxSizeEl.value !== '' ? parseInt(maxSizeEl.value, 10) : null;
+            if (maxSize === null || isNaN(maxSize) || maxSize < 0) {
+                notification.innerHTML = '<div class="notification notification-error">Max size is required and must be a non-negative number.</div>';
+                setTimeout(function() { notification.innerHTML = ''; }, 3000);
+                return false;
+            }
+            values = { enabled: document.getElementById('config-cache-enabled').value === 'true', max_size: maxSize };
+        } else if (section === 'server') {
+            var hostEl = document.getElementById('config-server-host');
+            var portEl = document.getElementById('config-server-port');
+            var host = hostEl && hostEl.value ? hostEl.value.trim() : '';
+            var port = portEl && portEl.value !== '' ? parseInt(portEl.value, 10) : null;
+            if (!host || port === null || port < 1 || port > 65535) {
+                notification.innerHTML = '<div class="notification notification-error">Host and port are required; port must be 1-65535.</div>';
+                setTimeout(function() { notification.innerHTML = ''; }, 3000);
+                return false;
+            }
+            values = { host: host, port: port };
+        } else { return false; }
+        try {
+            var resp = await adminFetch('/config/' + section, { method: 'PATCH', body: JSON.stringify({ values: values }) });
+            var data = await resp.json().catch(function() { return {}; });
+            if (resp.ok && data.success) {
+                notification.innerHTML = '<div class="notification notification-success">' + escapeHtml(data.message || 'Configuration updated.') + '</div>';
+                document.body.dispatchEvent(new CustomEvent('configReloaded'));
+            } else {
+                notification.innerHTML = '<div class="notification notification-error">' + escapeHtml(data.message || 'Failed to update configuration.') + '</div>';
+            }
+        } catch(e) {
+            notification.innerHTML = '<div class="notification notification-error">Request failed: ' + escapeHtml(String(e.message)) + '</div>';
+        }
+        setTimeout(function() { notification.innerHTML = ''; }, 3000);
+        return false;
+    }
+
+    async function reloadConfigFromFile() {
+        var notification = document.getElementById('notification-area');
+        if (!window.confirm('Reload configuration from file? This will apply any changes made to the config file.')) return;
+        try {
+            var resp = await adminFetch('/config/reload', { method: 'POST' });
+            var data = await resp.json().catch(function() { return {}; });
+            if (resp.ok && data.success) {
+                notification.innerHTML = '<div class="notification notification-success">Configuration reloaded successfully!</div>';
+                document.body.dispatchEvent(new CustomEvent('configReloaded'));
+            } else {
+                notification.innerHTML = '<div class="notification notification-error">' + escapeHtml(data.message || 'Failed to reload configuration') + '</div>';
+            }
+        } catch(e) {
+            notification.innerHTML = '<div class="notification notification-error">Request failed: ' + escapeHtml(String(e&&e.message?e.message:e)) + '</div>';
+        }
+        setTimeout(function() { notification.innerHTML = ''; }, 3000);
+    }
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'config-display') {
+            try {
+                var data = parseJsonSafe(evt.detail.xhr.responseText, {});
+                document.getElementById('config-display').innerHTML = '<pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+                populateConfigForms(data);
+            } catch(e) {}
+        }
+    });
+</script>
+{{/inline}}
+
+{{> admin/layout}}

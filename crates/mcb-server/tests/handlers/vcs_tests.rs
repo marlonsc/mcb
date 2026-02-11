@@ -13,7 +13,6 @@ async fn test_vcs_list_repositories_success() {
 
     let args = VcsArgs {
         action: VcsAction::ListRepositories,
-        org_id: None,
         repo_id: None,
         repo_path: None,
         base_branch: None,
@@ -39,7 +38,6 @@ async fn test_vcs_list_repositories_with_limit() {
 
     let args = VcsArgs {
         action: VcsAction::ListRepositories,
-        org_id: None,
         repo_id: None,
         repo_path: None,
         base_branch: None,
@@ -65,7 +63,6 @@ async fn test_vcs_list_repositories_no_limit() {
 
     let args = VcsArgs {
         action: VcsAction::ListRepositories,
-        org_id: None,
         repo_id: None,
         repo_path: None,
         base_branch: None,
@@ -91,7 +88,6 @@ async fn test_vcs_index_repository_success() {
 
     let args = VcsArgs {
         action: VcsAction::IndexRepository,
-        org_id: None,
         repo_id: Some("repo-123".to_string()),
         repo_path: Some("/path/to/repo".to_string()),
         base_branch: Some("main".to_string()),
@@ -117,7 +113,6 @@ async fn test_vcs_index_repository_with_repo_path() {
 
     let args = VcsArgs {
         action: VcsAction::IndexRepository,
-        org_id: None,
         repo_id: None,
         repo_path: Some("/path/to/repo".to_string()),
         base_branch: Some("main".to_string()),
@@ -142,7 +137,6 @@ async fn test_vcs_analyze_impact_with_defaults() {
 
     let args = VcsArgs {
         action: VcsAction::AnalyzeImpact,
-        org_id: None,
         repo_id: Some("repo-123".to_string()),
         repo_path: Some("/path/to/repo".to_string()),
         base_branch: None,
@@ -167,7 +161,6 @@ async fn test_vcs_analyze_impact_missing_repo_path() {
 
     let args = VcsArgs {
         action: VcsAction::AnalyzeImpact,
-        org_id: None,
         repo_id: None,
         repo_path: None,
         base_branch: Some("main".to_string()),

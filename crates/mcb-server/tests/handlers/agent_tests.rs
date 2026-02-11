@@ -15,7 +15,6 @@ async fn test_agent_log_tool_success() {
 
     let args = AgentArgs {
         action: AgentAction::LogTool,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!({
             "tool_name": "search_code",
@@ -39,7 +38,6 @@ async fn test_agent_log_tool_missing_tool_name() {
 
     let args = AgentArgs {
         action: AgentAction::LogTool,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!({
             "params_summary": "query: test",
@@ -64,7 +62,6 @@ async fn test_agent_log_tool_with_error() {
 
     let args = AgentArgs {
         action: AgentAction::LogTool,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!({
             "tool_name": "search_code",
@@ -88,7 +85,6 @@ async fn test_agent_log_tool_invalid_data_format() {
 
     let args = AgentArgs {
         action: AgentAction::LogTool,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!("not an object"),
     };
@@ -110,7 +106,6 @@ async fn test_agent_log_delegation_success() {
 
     let args = AgentArgs {
         action: AgentAction::LogDelegation,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!({
             "child_session_id": "child-session-123",
@@ -134,7 +129,6 @@ async fn test_agent_log_delegation_missing_child_session_id() {
 
     let args = AgentArgs {
         action: AgentAction::LogDelegation,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!({
             "agent_type": "search_agent",
@@ -159,7 +153,6 @@ async fn test_agent_log_delegation_with_result() {
 
     let args = AgentArgs {
         action: AgentAction::LogDelegation,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!({
             "child_session_id": "child-session-456",
@@ -184,7 +177,6 @@ async fn test_agent_log_delegation_invalid_data_format() {
 
     let args = AgentArgs {
         action: AgentAction::LogDelegation,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!(["not", "an", "object"]),
     };
@@ -206,7 +198,6 @@ async fn test_agent_log_tool_empty_session_id() {
 
     let args = AgentArgs {
         action: AgentAction::LogTool,
-        org_id: None,
         session_id: SessionId::new(""),
         data: json!({
             "tool_name": "search_code",
@@ -226,7 +217,6 @@ async fn test_agent_log_tool_with_all_optional_fields() {
 
     let args = AgentArgs {
         action: AgentAction::LogTool,
-        org_id: None,
         session_id: SessionId::new("test-session"),
         data: json!({
             "tool_name": "index_codebase",

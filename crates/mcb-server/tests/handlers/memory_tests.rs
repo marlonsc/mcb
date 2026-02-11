@@ -62,7 +62,6 @@ async fn test_memory_store_execution_success() {
     let args = MemoryArgs {
         action: MemoryAction::Store,
         resource: MemoryResource::Execution,
-        org_id: None,
         data: Some(json!({
             "command": "test command",
             "exit_code": 0,
@@ -100,7 +99,6 @@ async fn test_memory_store_quality_gate_success() {
     let args = MemoryArgs {
         action: MemoryAction::Store,
         resource: MemoryResource::QualityGate,
-        org_id: None,
         data: Some(json!({
             "gate_name": "test_gate",
             "status": "passed",
@@ -136,7 +134,6 @@ async fn test_memory_store_session_success() {
     let args = MemoryArgs {
         action: MemoryAction::Store,
         resource: MemoryResource::Session,
-        org_id: None,
         data: Some(json!({
             "session_id": "test-session",
             "summary": "Test session summary"
@@ -171,7 +168,6 @@ async fn test_memory_get_observation_success() {
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::Observation,
-        org_id: None,
         data: None,
         ids: Some(vec!["obs-1".to_string(), "obs-2".to_string()]),
         project_id: Some("test-project".to_string()),
@@ -203,7 +199,6 @@ async fn test_memory_get_observation_missing_ids() {
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::Observation,
-        org_id: None,
         data: None,
         ids: None,
         project_id: Some("test-project".to_string()),
@@ -238,7 +233,6 @@ async fn test_memory_get_execution_success() {
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::Execution,
-        org_id: None,
         data: None,
         ids: Some(vec!["exec-1".to_string()]),
         project_id: Some("test-project".to_string()),
@@ -270,7 +264,6 @@ async fn test_memory_get_quality_gate_success() {
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::QualityGate,
-        org_id: None,
         data: None,
         ids: Some(vec!["qg-1".to_string()]),
         project_id: Some("test-project".to_string()),
@@ -302,7 +295,6 @@ async fn test_memory_get_session_success() {
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::Session,
-        org_id: None,
         data: None,
         ids: None,
         project_id: Some("test-project".to_string()),
@@ -333,7 +325,6 @@ async fn test_memory_inject_with_filters() {
     let args = MemoryArgs {
         action: MemoryAction::Inject,
         resource: MemoryResource::Observation,
-        org_id: None,
         data: None,
         ids: None,
         project_id: Some("test-project".to_string()),

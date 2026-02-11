@@ -1,11 +1,12 @@
 //! User entity — a human or service account within an organization.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A user belongs to exactly one organization and can be a member of
 /// multiple teams. Users authenticate via API keys (Phase 1) and
 /// external IdP / OAuth in later phases.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct User {
     /// Unique identifier (UUID).
     pub id: String,
@@ -26,7 +27,7 @@ pub struct User {
 }
 
 /// Role a user holds within an organization.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum UserRole {
     /// Full administrative access.
     Admin,
