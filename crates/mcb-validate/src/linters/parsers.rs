@@ -54,6 +54,7 @@ pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
                 message: ruff_violation.message,
                 severity: map_ruff_severity(&ruff_violation.code),
                 category: "quality".to_string(),
+                file_path_cache: None,
             });
         }
         return violations;
@@ -70,6 +71,7 @@ pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
                 message: ruff_violation.message,
                 severity: map_ruff_severity(&ruff_violation.code),
                 category: "quality".to_string(),
+                file_path_cache: None,
             });
         }
     }
@@ -152,6 +154,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
                     "correctness"
                 }
                 .to_string(),
+                file_path_cache: None,
             });
         }
     }

@@ -290,6 +290,7 @@ fn test_lint_violation_structure() {
         message: "Unused import".to_string(),
         severity: "error".to_string(),
         category: "quality".to_string(),
+        file_path_cache: None,
     };
 
     assert_eq!(violation.rule, "F401");

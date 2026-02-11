@@ -148,13 +148,13 @@ pub use port_adapter::{PortAdapterValidator, PortAdapterViolation};
 pub use quality::{QualityValidator, QualityViolation};
 // Re-export ComponentType for strict directory validation
 pub use refactoring::{RefactoringValidator, RefactoringViolation};
-pub use reporter::{Reporter, ValidationReport, ValidationSummary};
+
 pub use rules::templates::TemplateEngine;
 pub use rules::yaml_loader::{
     AstSelector, MetricThresholdConfig, MetricsConfig, RuleFix, ValidatedRule, YamlRuleLoader,
 };
 pub use rules::yaml_validator::YamlRuleValidator;
-pub use rules::{Rule, RuleRegistry};
+
 pub use solid::{SolidValidator, SolidViolation};
 pub use test_quality::{TestQualityValidator, TestQualityViolation};
 pub use tests_org::{TestValidator, TestViolation};
