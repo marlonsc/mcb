@@ -50,7 +50,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 # Configuration
 figment = { version = "0.10", features = ["toml", "env"] }
-toml = "0.9"
+toml = "1.0"
 
 # HTTP client
 reqwest = { version = "0.13", features = ["json", "__tls"] }
@@ -227,8 +227,8 @@ linkme = "0.3"
 # Development/testing
 tempfile = "3.25"
 serial_test = "3.2"
-rstest = "0.24"
-mockall = "0.13"
+rstest = "0.26"
+mockall = "0.14"
 insta = "1.34"
 
 # ============================================
