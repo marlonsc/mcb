@@ -7,8 +7,11 @@ use rocket::form::Form;
 use rocket::http::Status;
 use rocket::response::{Redirect, status};
 
+use std::collections::HashSet;
+
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
+use crate::admin::web::filter::FilterParams;
 use crate::admin::web::view_model::nav_groups;
 use crate::admin::{AdminRegistry, registry::AdminFieldMeta};
 
@@ -57,22 +60,33 @@ pub async fn entities_index(state: Option<&State<AdminState>>) -> Template {
     )
 }
 
-/// Entity list page — fetches records via service adapter when available.
-#[rocket::get("/ui/entities/<slug>")]
+/// Entity list page with filtering, sorting, and pagination.
+#[rocket::get("/ui/entities/<slug>?<params..>")]
 pub async fn entities_list(
     slug: &str,
+    params: FilterParams,
     state: Option<&State<AdminState>>,
 ) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
 
     let fields: Vec<AdminFieldMeta> = entity.fields().into_iter().filter(|f| !f.hidden).collect();
-    let field_names = fields.iter().map(|f| f.name.clone()).collect::<Vec<_>>();
+    let field_names: Vec<String> = fields.iter().map(|f| f.name.clone()).collect();
+    let valid_sort_fields: HashSet<String> = field_names.iter().cloned().collect();
 
-    let records = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
-        Some(adapter) => adapter.list_all().await.unwrap_or_default(),
-        None => Vec::new(),
+    let result = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
+        Some(adapter) => adapter
+            .list_filtered(&params, &valid_sort_fields)
+            .await
+            .unwrap_or_default(),
+        None => crate::admin::web::filter::FilteredResult {
+            records: Vec::new(),
+            total_count: 0,
+            page: params.page,
+            per_page: params.per_page,
+            total_pages: 0,
+        },
     };
-    let has_records = !records.is_empty();
+    let has_records = !result.records.is_empty();
 
     Ok(Template::render(
         "admin/entity_list",
@@ -83,8 +97,12 @@ pub async fn entities_list(
             entity_group: entity.group,
             fields: fields,
             field_names: field_names,
-            records: records,
+            records: result.records,
             has_records: has_records,
+            total_count: result.total_count,
+            page: result.page,
+            per_page: result.per_page,
+            total_pages: result.total_pages,
             nav_groups: nav_groups(),
         },
     ))

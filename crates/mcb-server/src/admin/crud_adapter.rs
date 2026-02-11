@@ -3,6 +3,7 @@
 //! Each entity slug maps to an adapter implementation that knows how to
 //! call the correct service methods and serialize results to JSON.
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -18,6 +19,7 @@ use mcb_domain::ports::repositories::{
 use serde_json::Value;
 
 use super::handlers::AdminState;
+use super::web::filter::{FilterParams, FilteredResult, SortOrder};
 
 /// Async CRUD operations that map entity slugs to domain service calls.
 #[async_trait]
@@ -32,6 +34,103 @@ pub trait EntityCrudAdapter: Send + Sync {
     async fn update_from_json(&self, data: Value) -> Result<(), String>;
     /// Delete a record by its primary key.
     async fn delete_by_id(&self, id: &str) -> Result<(), String>;
+
+    /// List records with in-memory filtering, sorting, and pagination.
+    ///
+    /// The default implementation fetches all records via [`list_all`](Self::list_all),
+    /// then applies search, date-range, sort, and pagination in memory.
+    /// `valid_sort_fields` restricts which field names are accepted for sorting;
+    /// an unrecognised sort field is silently ignored (no sort applied).
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let mut records = self.list_all().await?;
+
+        if let Some(ref q) = params.search {
+            if !q.is_empty() {
+                let q_lower = q.to_lowercase();
+                records.retain(|rec| {
+                    if let Value::Object(map) = rec {
+                        map.values().any(|v| match v {
+                            Value::String(s) => s.to_lowercase().contains(&q_lower),
+                            _ => {
+                                let s = v.to_string();
+                                s.to_lowercase().contains(&q_lower)
+                            }
+                        })
+                    } else {
+                        false
+                    }
+                });
+            }
+        }
+
+        if params.date_from.is_some() || params.date_to.is_some() {
+            records.retain(|rec| {
+                if let Value::Object(map) = rec {
+                    map.iter()
+                        .filter(|(k, _)| k.ends_with("_at"))
+                        .any(|(_, v)| {
+                            let ts = match v {
+                                Value::Number(n) => n.as_i64(),
+                                _ => None,
+                            };
+                            if let Some(ts) = ts {
+                                let after_from = params.date_from.map_or(true, |from| ts >= from);
+                                let before_to = params.date_to.map_or(true, |to| ts <= to);
+                                after_from && before_to
+                            } else {
+                                true
+                            }
+                        })
+                } else {
+                    true
+                }
+            });
+        }
+
+        if let Some(ref field) = params.sort_field {
+            if valid_sort_fields.contains(field.as_str()) {
+                let desc = matches!(params.sort_order, Some(SortOrder::Desc));
+                records.sort_by(|a, b| {
+                    let va = a.get(field).map(|v| json_sort_key(v));
+                    let vb = b.get(field).map(|v| json_sort_key(v));
+                    let cmp = va.cmp(&vb);
+                    if desc { cmp.reverse() } else { cmp }
+                });
+            }
+        }
+
+        let total_count = records.len();
+        let per_page = if params.per_page == 0 {
+            20
+        } else {
+            params.per_page
+        };
+        let total_pages = if total_count == 0 {
+            0
+        } else {
+            (total_count + per_page - 1) / per_page
+        };
+        let page = if params.page == 0 { 1 } else { params.page };
+        let start = (page - 1) * per_page;
+        let page_records = if start >= total_count {
+            Vec::new()
+        } else {
+            let end = (start + per_page).min(total_count);
+            records[start..end].to_vec()
+        };
+
+        Ok(FilteredResult {
+            records: page_records,
+            total_count,
+            page,
+            per_page,
+            total_pages,
+        })
+    }
 }
 
 /// Resolves a CRUD adapter for the given entity slug from AdminState.
@@ -117,6 +216,16 @@ fn from_json<T: serde::de::DeserializeOwned>(data: Value) -> Result<T, String> {
 
 fn map_err(e: mcb_domain::error::Error) -> String {
     e.to_string()
+}
+
+fn json_sort_key(v: &Value) -> String {
+    match v {
+        Value::String(s) => s.to_lowercase(),
+        Value::Number(n) => format!("{:020}", n.as_f64().unwrap_or(0.0)),
+        Value::Bool(b) => format!("{b}"),
+        Value::Null => String::new(),
+        other => other.to_string(),
+    }
 }
 
 // ─── Org group ───────────────────────────────────────────────────────

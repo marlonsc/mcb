@@ -39,13 +39,13 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use crate::templates::Template;
 use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::serde::json::Json;
 use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
-use rocket_dyn_templates::Template;
 use tracing::{error, info};
 
 use super::types::{McpRequest, McpResponse};

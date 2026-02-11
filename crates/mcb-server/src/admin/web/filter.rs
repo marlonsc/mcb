@@ -70,7 +70,7 @@ impl FilterParams {
 }
 
 /// Paginated result returned by `EntityCrudAdapter::list_filtered`.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct FilteredResult {
     /// Records for the current page.
     pub records: Vec<serde_json::Value>,
