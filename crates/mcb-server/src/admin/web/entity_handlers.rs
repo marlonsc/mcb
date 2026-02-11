@@ -1,10 +1,11 @@
 //! Entity CRUD handlers — schema-driven Handlebars template rendering.
 
+use crate::context;
+use crate::templates::Template;
 use rocket::State;
 use rocket::form::Form;
 use rocket::http::Status;
 use rocket::response::{Redirect, status};
-use rocket_dyn_templates::{Template, context};
 use serde::Serialize;
 
 use crate::admin::crud_adapter::resolve_adapter;

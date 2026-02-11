@@ -4,6 +4,7 @@
 
 use std::sync::Arc;
 
+use crate::templates::Template;
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
@@ -11,7 +12,6 @@ use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use rocket::{Build, Rocket, routes};
-use rocket_dyn_templates::Template;
 
 use super::entity_handlers;
 use super::handlers;
@@ -104,8 +104,8 @@ pub fn web_rocket() -> Rocket<Build> {
     rocket::custom(figment)
         .manage(default_admin_state())
         .attach(Template::custom(
-            |_engines: &mut rocket_dyn_templates::Engines| {
-                // T15 will register Handlebars custom filters here
+            |engines: &mut crate::templates::Engines| {
+                crate::admin::web::helpers::register_helpers(&mut engines.handlebars);
             },
         ))
         .mount(
