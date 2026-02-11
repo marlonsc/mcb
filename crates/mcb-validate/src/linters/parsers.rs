@@ -48,13 +48,13 @@ pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
         for ruff_violation in ruff_violations {
             violations.push(LintViolation {
                 rule: ruff_violation.code.clone(),
+                file_path_cache: Some(std::path::PathBuf::from(&ruff_violation.filename)),
                 file: ruff_violation.filename,
                 line: ruff_violation.location.row,
                 column: ruff_violation.location.column,
                 message: ruff_violation.message,
                 severity: map_ruff_severity(&ruff_violation.code),
                 category: "quality".to_string(),
-                file_path_cache: None,
             });
         }
         return violations;
@@ -65,13 +65,13 @@ pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
         if let Ok(ruff_violation) = serde_json::from_str::<RuffViolation>(line) {
             violations.push(LintViolation {
                 rule: ruff_violation.code.clone(),
+                file_path_cache: Some(std::path::PathBuf::from(&ruff_violation.filename)),
                 file: ruff_violation.filename,
                 line: ruff_violation.location.row,
                 column: ruff_violation.location.column,
                 message: ruff_violation.message,
                 severity: map_ruff_severity(&ruff_violation.code),
                 category: "quality".to_string(),
-                file_path_cache: None,
             });
         }
     }
@@ -143,6 +143,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
 
             violations.push(LintViolation {
                 rule: rule_code.clone(),
+                file_path_cache: Some(std::path::PathBuf::from(&span.file_name)),
                 file: span.file_name.clone(),
                 line: span.line_start,
                 column: span.column_start,
@@ -154,7 +155,6 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
                     "correctness"
                 }
                 .to_string(),
-                file_path_cache: None,
             });
         }
     }

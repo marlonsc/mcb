@@ -142,6 +142,7 @@ impl DeclarativeValidator {
         violations
     }
 
+    // Rust-only: non-Rust lint selectors (e.g. Ruff) receive no matching files.
     fn validate_lint_select_rules(
         &self,
         rules: &[ValidatedRule],
